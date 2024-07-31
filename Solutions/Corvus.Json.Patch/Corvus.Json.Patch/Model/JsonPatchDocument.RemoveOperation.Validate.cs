@@ -23,7 +23,12 @@ public readonly partial struct JsonPatchDocument
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
-    public readonly partial struct PatchOperationCommon
+    /// <remarks>
+    /// <para>
+    /// Remove operation. Only a path is specified.
+    /// </para>
+    /// </remarks>
+    public readonly partial struct RemoveOperation
     {
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
@@ -37,10 +42,16 @@ public readonly partial struct JsonPatchDocument
             if (level > ValidationLevel.Basic)
             {
                 result = result.UsingStack();
-                result = result.PushSchemaLocation("#/$defs/PatchOperationCommon");
+                result = result.PushSchemaLocation("#/$defs/RemoveOperation");
             }
 
             JsonValueKind valueKind = this.ValueKind;
+            result = CorvusValidation.CompositionAllOfValidationHandler(this, result, level);
+            if (level == ValidationLevel.Flag && !result.IsValid)
+            {
+                return result;
+            }
+
             result = CorvusValidation.ObjectValidationHandler(this, valueKind, result, level);
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
@@ -58,8 +69,43 @@ public readonly partial struct JsonPatchDocument
         private static partial class CorvusValidation
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static ValidationContext CompositionAllOfValidationHandler(
+                in RemoveOperation value,
+                in ValidationContext validationContext,
+                ValidationLevel level = ValidationLevel.Flag)
+            {
+                ValidationContext result = validationContext;
+                ValidationContext childContextBase = result;
+                ValidationContext allOfResult0 = childContextBase.CreateChildContext();
+                if (level > ValidationLevel.Basic)
+                {
+                    allOfResult0 = allOfResult0.PushValidationLocationReducedPathModifier(new("#/allOf/0/$ref"));
+                }
+
+                allOfResult0 = value.As<Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommon>().Validate(allOfResult0, level);
+                if (!allOfResult0.IsValid)
+                {
+                    if (level >= ValidationLevel.Basic)
+                    {
+                        result = result.MergeChildContext(allOfResult0, true).WithResult(isValid: false, "Validation - allOf failed to validate against the schema.");
+                    }
+                    else
+                    {
+                        result = result.MergeChildContext(allOfResult0, false).WithResult(isValid: false);
+                        return result;
+                    }
+                }
+                else
+                {
+                    result = result.MergeChildContext(allOfResult0, level >= ValidationLevel.Detailed);
+                }
+
+                return result;
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static ValidationContext ObjectValidationHandler(
-                in PatchOperationCommon value,
+                in RemoveOperation value,
                 JsonValueKind valueKind,
                 in ValidationContext validationContext,
                 ValidationLevel level = ValidationLevel.Flag)
@@ -73,9 +119,6 @@ public readonly partial struct JsonPatchDocument
                         ignoredResult = ignoredResult.PushValidationLocationProperty("properties");
                         ignoredResult = ignoredResult.WithResult(isValid: true, "Validation properties - ignored because the value is not an object");
                         ignoredResult = ignoredResult.PopLocation();
-                        ignoredResult = ignoredResult.PushValidationLocationProperty("required");
-                        ignoredResult = ignoredResult.WithResult(isValid: true, "Validation required - ignored because the value is not an object");
-                        ignoredResult = ignoredResult.PopLocation();
                         return ignoredResult;
                     }
 
@@ -83,7 +126,6 @@ public readonly partial struct JsonPatchDocument
                 }
 
                 bool hasSeenOp = false;
-                bool hasSeenPath = false;
                 int propertyCount = 0;
                 foreach (JsonObjectProperty property in value.EnumerateObject())
                 {
@@ -96,28 +138,7 @@ public readonly partial struct JsonPatchDocument
                             result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/op"), JsonPropertyNames.Op);
                         }
 
-                        ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonString>().Validate(result.CreateChildContext(), level);
-                        result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
-                        if (level > ValidationLevel.Basic)
-                        {
-                            result = result.PopLocation();
-                        }
-
-                        if (level == ValidationLevel.Flag && !result.IsValid)
-                        {
-                            return result;
-                        }
-                    }
-                    else if (property.NameEquals(JsonPropertyNames.PathUtf8, JsonPropertyNames.Path))
-                    {
-                        hasSeenPath = true;
-                        result = result.WithLocalProperty(propertyCount);
-                        if (level > ValidationLevel.Basic)
-                        {
-                            result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/path/$ref"), JsonPropertyNames.Path);
-                        }
-
-                        ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonPointer>().Validate(result.CreateChildContext(), level);
+                        ValidationContext propertyResult = property.Value.As<Corvus.Json.Patch.Model.JsonPatchDocument.RemoveOperation.OpEntity>().Validate(result.CreateChildContext(), level);
                         result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
                         if (level > ValidationLevel.Basic)
                         {
@@ -135,7 +156,7 @@ public readonly partial struct JsonPatchDocument
 
                 if (level > ValidationLevel.Basic)
                 {
-                    result = result.PushValidationLocationReducedPathModifier(new("#/required/1"));
+                    result = result.PushValidationLocationReducedPathModifier(new("#/required"));
                 }
 
                 if (!hasSeenOp)
@@ -152,32 +173,6 @@ public readonly partial struct JsonPatchDocument
                 else if (level == ValidationLevel.Verbose)
                 {
                     result = result.WithResult(isValid: true, "Validation properties - the required property 'op' was present.");
-                }
-
-                if (level > ValidationLevel.Basic)
-                {
-                    result = result.PopLocation();
-                }
-
-                if (level > ValidationLevel.Basic)
-                {
-                    result = result.PushValidationLocationReducedPathModifier(new("#/required/0"));
-                }
-
-                if (!hasSeenPath)
-                {
-                    if (level >= ValidationLevel.Basic)
-                    {
-                        result = result.WithResult(isValid: false, "Validation properties - the required property 'path' was not present.");
-                    }
-                    else
-                    {
-                        return result.WithResult(isValid: false);
-                    }
-                }
-                else if (level == ValidationLevel.Verbose)
-                {
-                    result = result.WithResult(isValid: true, "Validation properties - the required property 'path' was present.");
                 }
 
                 if (level > ValidationLevel.Basic)

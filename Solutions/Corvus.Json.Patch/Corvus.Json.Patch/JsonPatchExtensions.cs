@@ -318,16 +318,16 @@ public static partial class JsonPatchExtensions
 
     private static bool TryApplyAdd(in JsonAny node, in JsonPatchDocument.PatchOperation patchOperation, out JsonAny result)
     {
-        patchOperation.TryGetProperty(JsonPatchDocument.AddEntity.JsonPropertyNames.PathUtf8, out JsonString pathAny);
-        patchOperation.TryGetProperty(JsonPatchDocument.AddEntity.JsonPropertyNames.ValueUtf8, out JsonAny value);
+        patchOperation.TryGetProperty(JsonPatchDocument.AddOperation.JsonPropertyNames.PathUtf8, out JsonString pathAny);
+        patchOperation.TryGetProperty(JsonPatchDocument.AddOperation.JsonPropertyNames.ValueUtf8, out JsonAny value);
         string path = (string)pathAny;
         return TryAdd(node, path, value, out result);
     }
 
     private static bool TryApplyCopy(in JsonAny node, in JsonPatchDocument.PatchOperation patchOperation, out JsonAny result)
     {
-        patchOperation.TryGetProperty(JsonPatchDocument.Copy.JsonPropertyNames.FromValueUtf8, out JsonString fromAny);
-        patchOperation.TryGetProperty(JsonPatchDocument.Copy.JsonPropertyNames.PathUtf8, out JsonString pathAny);
+        patchOperation.TryGetProperty(JsonPatchDocument.CopyOperation.JsonPropertyNames.FromUtf8, out JsonString fromAny);
+        patchOperation.TryGetProperty(JsonPatchDocument.CopyOperation.JsonPropertyNames.PathUtf8, out JsonString pathAny);
 
         string from = (string)fromAny;
         string path = (string)pathAny;
@@ -356,8 +356,8 @@ public static partial class JsonPatchExtensions
 
     private static bool TryApplyMove(in JsonAny node, in JsonPatchDocument.PatchOperation patchOperation, out JsonAny result)
     {
-        patchOperation.TryGetProperty(JsonPatchDocument.Move.JsonPropertyNames.FromValueUtf8, out JsonString fromAny);
-        patchOperation.TryGetProperty(JsonPatchDocument.Move.JsonPropertyNames.PathUtf8, out JsonString pathAny);
+        patchOperation.TryGetProperty(JsonPatchDocument.MoveOperation.JsonPropertyNames.FromUtf8, out JsonString fromAny);
+        patchOperation.TryGetProperty(JsonPatchDocument.MoveOperation.JsonPropertyNames.PathUtf8, out JsonString pathAny);
 
         string from = (string)fromAny;
         string path = (string)pathAny;
@@ -386,7 +386,7 @@ public static partial class JsonPatchExtensions
 
     private static bool TryApplyRemove(in JsonAny node, in JsonPatchDocument.PatchOperation patchOperation, out JsonAny result)
     {
-        RemoveVisitor visitor = new(patchOperation.AsRemoveEntity);
+        RemoveVisitor visitor = new(patchOperation.AsRemoveOperation);
         bool transformed = node.Visit(visitor.Visit, out JsonAny transformedResult);
         result = transformedResult;
         return transformed;
@@ -394,7 +394,7 @@ public static partial class JsonPatchExtensions
 
     private static bool TryApplyReplace(in JsonAny node, in JsonPatchDocument.PatchOperation patchOperation, out JsonAny result)
     {
-        ReplaceVisitor visitor = new(patchOperation.AsReplaceEntity);
+        ReplaceVisitor visitor = new(patchOperation.AsReplaceOperation);
 
         if (visitor.Path.Length == 0)
         {
@@ -414,7 +414,7 @@ public static partial class JsonPatchExtensions
         // Find the node to test.
         if (node.TryResolvePointer(patchOperation.Path, out JsonAny itemToTest))
         {
-            if (patchOperation.TryGetProperty(JsonPatchDocument.Test.JsonPropertyNames.ValueUtf8, out JsonAny value))
+            if (patchOperation.TryGetProperty(JsonPatchDocument.TestOperation.JsonPropertyNames.ValueUtf8, out JsonAny value))
             {
                 // Verify that the value of the node is the one supplied in the test operation.
                 return itemToTest.Equals(value);

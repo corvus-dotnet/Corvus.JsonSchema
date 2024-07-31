@@ -26,8 +26,13 @@ public readonly partial struct JsonPatchDocument
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
-    [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<PatchOperationCommon>))]
-    public readonly partial struct PatchOperationCommon
+    /// <remarks>
+    /// <para>
+    /// Remove operation. Only a path is specified.
+    /// </para>
+    /// </remarks>
+    [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<RemoveOperation>))]
+    public readonly partial struct RemoveOperation
 
     {
         private readonly Backing backing;
@@ -35,9 +40,9 @@ public readonly partial struct JsonPatchDocument
         private readonly ImmutableList<JsonObjectProperty> objectBacking;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="PatchOperationCommon"/> struct.
+        /// Initializes a new instance of the <see cref="RemoveOperation"/> struct.
         /// </summary>
-        public PatchOperationCommon()
+        public RemoveOperation()
         {
             this.jsonElementBacking = default;
             this.backing = Backing.JsonElement;
@@ -45,10 +50,10 @@ public readonly partial struct JsonPatchDocument
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="PatchOperationCommon"/> struct.
+        /// Initializes a new instance of the <see cref="RemoveOperation"/> struct.
         /// </summary>
         /// <param name="value">The value from which to construct the instance.</param>
-        public PatchOperationCommon(in JsonElement value)
+        public RemoveOperation(in JsonElement value)
         {
             this.jsonElementBacking = value;
             this.backing = Backing.JsonElement;
@@ -56,10 +61,10 @@ public readonly partial struct JsonPatchDocument
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="PatchOperationCommon"/> struct.
+        /// Initializes a new instance of the <see cref="RemoveOperation"/> struct.
         /// </summary>
         /// <param name="value">The value from which to construct the instance.</param>
-        public PatchOperationCommon(ImmutableList<JsonObjectProperty> value)
+        public RemoveOperation(ImmutableList<JsonObjectProperty> value)
         {
             this.backing = Backing.Object;
             this.jsonElementBacking = default;
@@ -69,22 +74,22 @@ public readonly partial struct JsonPatchDocument
         /// <summary>
         /// Gets the schema location from which this type was generated.
         /// </summary>
-        public static string SchemaLocation { get; } = "#/$defs/PatchOperationCommon";
+        public static string SchemaLocation { get; } = "#/$defs/RemoveOperation";
 
         /// <summary>
         /// Gets a Null instance.
         /// </summary>
-        public static PatchOperationCommon Null { get; } = new(JsonValueHelpers.NullElement);
+        public static RemoveOperation Null { get; } = new(JsonValueHelpers.NullElement);
 
         /// <summary>
         /// Gets an Undefined instance.
         /// </summary>
-        public static PatchOperationCommon Undefined { get; }
+        public static RemoveOperation Undefined { get; }
 
         /// <summary>
         /// Gets the default instance.
         /// </summary>
-        public static PatchOperationCommon DefaultInstance { get; }
+        public static RemoveOperation DefaultInstance { get; }
 
         /// <inheritdoc/>
         public JsonAny AsAny
@@ -209,6 +214,28 @@ public readonly partial struct JsonPatchDocument
             }
         }
 
+        /// <summary>
+        /// Gets the instance as a <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommon" />.
+        /// </summary>
+        public Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommon AsPatchOperationCommon
+        {
+            get
+            {
+                return this.As<Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommon>();
+            }
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether the instance is a <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommon" />.
+        /// </summary>
+        public bool IsPatchOperationCommon
+        {
+            get
+            {
+                return this.As<Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommon>().IsValid();
+            }
+        }
+
         /// <inheritdoc/>
         public bool HasJsonElementBacking
         {
@@ -250,18 +277,36 @@ public readonly partial struct JsonPatchDocument
         /// Conversion from JsonAny.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
-        public static implicit operator PatchOperationCommon(JsonAny value)
+        public static implicit operator RemoveOperation(JsonAny value)
         {
-            return value.As<PatchOperationCommon>();
+            return value.As<RemoveOperation>();
         }
 
         /// <summary>
         /// Conversion to JsonAny.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
-        public static implicit operator JsonAny(PatchOperationCommon value)
+        public static implicit operator JsonAny(RemoveOperation value)
         {
             return value.AsAny;
+        }
+
+        /// <summary>
+        /// Conversion to <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommon"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommon(RemoveOperation value)
+        {
+            return value.As<Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommon>();
+        }
+
+        /// <summary>
+        /// Conversion from <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommon"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static explicit operator RemoveOperation(Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommon value)
+        {
+            return value.As<RemoveOperation>();
         }
 
         /// <summary>
@@ -272,7 +317,7 @@ public readonly partial struct JsonPatchDocument
         /// <returns>
         /// <c>True</c> if the values are equal.
         /// </returns>
-        public static bool operator ==(in PatchOperationCommon left, in PatchOperationCommon right)
+        public static bool operator ==(in RemoveOperation left, in RemoveOperation right)
         {
             return left.Equals(right);
         }
@@ -285,7 +330,7 @@ public readonly partial struct JsonPatchDocument
         /// <returns>
         /// <c>True</c> if the values are not equal.
         /// </returns>
-        public static bool operator !=(in PatchOperationCommon left, in PatchOperationCommon right)
+        public static bool operator !=(in RemoveOperation left, in RemoveOperation right)
         {
             return !left.Equals(right);
         }
@@ -299,7 +344,7 @@ public readonly partial struct JsonPatchDocument
         /// value cannot be constructed from the given instance (e.g. because they have an incompatible .NET backing type).
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static PatchOperationCommon FromJson(in JsonElement value)
+        public static RemoveOperation FromJson(in JsonElement value)
         {
             return new(value);
         }
@@ -310,7 +355,7 @@ public readonly partial struct JsonPatchDocument
         /// <param name="value">The <see cref="JsonAny"/> value from which to instantiate the instance.</param>
         /// <returns>An instance of this type, initialized from the <see cref="JsonAny"/> value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static PatchOperationCommon FromAny(in JsonAny value)
+        public static RemoveOperation FromAny(in JsonAny value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -333,7 +378,7 @@ public readonly partial struct JsonPatchDocument
         /// <param name="value">The value from which to instantiate the instance.</param>
         /// <returns>An instance of this type, initialized from the provided value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static PatchOperationCommon IJsonValue<PatchOperationCommon>.FromBoolean<TValue>(in TValue value)
+        static RemoveOperation IJsonValue<RemoveOperation>.FromBoolean<TValue>(in TValue value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -352,7 +397,7 @@ public readonly partial struct JsonPatchDocument
         /// <param name="value">The value from which to instantiate the instance.</param>
         /// <returns>An instance of this type, initialized from the provided value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static PatchOperationCommon IJsonValue<PatchOperationCommon>.FromString<TValue>(in TValue value)
+        static RemoveOperation IJsonValue<RemoveOperation>.FromString<TValue>(in TValue value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -371,7 +416,7 @@ public readonly partial struct JsonPatchDocument
         /// <param name="value">The value from which to instantiate the instance.</param>
         /// <returns>An instance of this type, initialized from the provided value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static PatchOperationCommon IJsonValue<PatchOperationCommon>.FromNumber<TValue>(in TValue value)
+        static RemoveOperation IJsonValue<RemoveOperation>.FromNumber<TValue>(in TValue value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -389,7 +434,7 @@ public readonly partial struct JsonPatchDocument
         /// <param name="value">The value from which to instantiate the instance.</param>
         /// <returns>An instance of this type, initialized from the provided value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static PatchOperationCommon FromObject<TValue>(in TValue value)
+        public static RemoveOperation FromObject<TValue>(in TValue value)
             where TValue : struct, IJsonObject<TValue>
         {
             if (value.HasJsonElementBacking)
@@ -413,7 +458,7 @@ public readonly partial struct JsonPatchDocument
         /// <param name="value">The value from which to instantiate the instance.</param>
         /// <returns>An instance of this type, initialized from the provided value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static PatchOperationCommon IJsonValue<PatchOperationCommon>.FromArray<TValue>(in TValue value)
+        static RemoveOperation IJsonValue<RemoveOperation>.FromArray<TValue>(in TValue value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -425,96 +470,96 @@ public readonly partial struct JsonPatchDocument
 #endif
 
         /// <summary>
-        /// Parses the PatchOperationCommon.
+        /// Parses the RemoveOperation.
         /// </summary>
         /// <param name="source">The source of the JSON string to parse.</param>
         /// <param name="options">The (optional) JsonDocumentOptions.</param>
-        public static PatchOperationCommon Parse(string source, JsonDocumentOptions options = default)
+        public static RemoveOperation Parse(string source, JsonDocumentOptions options = default)
         {
             using var jsonDocument = JsonDocument.Parse(source, options);
             return new(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses the PatchOperationCommon.
+        /// Parses the RemoveOperation.
         /// </summary>
         /// <param name="source">The source of the JSON string to parse.</param>
         /// <param name="options">The (optional) JsonDocumentOptions.</param>
-        public static PatchOperationCommon Parse(Stream source, JsonDocumentOptions options = default)
+        public static RemoveOperation Parse(Stream source, JsonDocumentOptions options = default)
         {
             using var jsonDocument = JsonDocument.Parse(source, options);
             return new(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses the PatchOperationCommon.
+        /// Parses the RemoveOperation.
         /// </summary>
         /// <param name="source">The source of the JSON string to parse.</param>
         /// <param name="options">The (optional) JsonDocumentOptions.</param>
-        public static PatchOperationCommon Parse(ReadOnlyMemory<byte> source, JsonDocumentOptions options = default)
+        public static RemoveOperation Parse(ReadOnlyMemory<byte> source, JsonDocumentOptions options = default)
         {
             using var jsonDocument = JsonDocument.Parse(source, options);
             return new(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses the PatchOperationCommon.
+        /// Parses the RemoveOperation.
         /// </summary>
         /// <param name="source">The source of the JSON string to parse.</param>
         /// <param name="options">The (optional) JsonDocumentOptions.</param>
-        public static PatchOperationCommon Parse(ReadOnlyMemory<char> source, JsonDocumentOptions options = default)
+        public static RemoveOperation Parse(ReadOnlyMemory<char> source, JsonDocumentOptions options = default)
         {
             using var jsonDocument = JsonDocument.Parse(source, options);
             return new(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses the PatchOperationCommon.
+        /// Parses the RemoveOperation.
         /// </summary>
         /// <param name="source">The source of the JSON string to parse.</param>
         /// <param name="options">The (optional) JsonDocumentOptions.</param>
-        public static PatchOperationCommon Parse(ReadOnlySequence<byte> source, JsonDocumentOptions options = default)
+        public static RemoveOperation Parse(ReadOnlySequence<byte> source, JsonDocumentOptions options = default)
         {
             using var jsonDocument = JsonDocument.Parse(source, options);
             return new(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses the PatchOperationCommon.
+        /// Parses the RemoveOperation.
         /// </summary>
         /// <param name="source">The source of the JSON string to parse.</param>
-        public static PatchOperationCommon ParseValue(ReadOnlySpan<char> source)
+        public static RemoveOperation ParseValue(ReadOnlySpan<char> source)
         {
 #if NET8_0_OR_GREATER
-            return IJsonValue<PatchOperationCommon>.ParseValue(source);
+            return IJsonValue<RemoveOperation>.ParseValue(source);
 #else
-            return JsonValueHelpers.ParseValue<PatchOperationCommon>(source);
+            return JsonValueHelpers.ParseValue<RemoveOperation>(source);
 #endif
         }
 
         /// <summary>
-        /// Parses the PatchOperationCommon.
+        /// Parses the RemoveOperation.
         /// </summary>
         /// <param name="source">The source of the JSON string to parse.</param>
-        public static PatchOperationCommon ParseValue(ReadOnlySpan<byte> source)
+        public static RemoveOperation ParseValue(ReadOnlySpan<byte> source)
         {
 #if NET8_0_OR_GREATER
-            return IJsonValue<PatchOperationCommon>.ParseValue(source);
+            return IJsonValue<RemoveOperation>.ParseValue(source);
 #else
-            return JsonValueHelpers.ParseValue<PatchOperationCommon>(source);
+            return JsonValueHelpers.ParseValue<RemoveOperation>(source);
 #endif
         }
 
         /// <summary>
-        /// Parses the PatchOperationCommon.
+        /// Parses the RemoveOperation.
         /// </summary>
         /// <param name="source">The source of the JSON string to parse.</param>
-        public static PatchOperationCommon ParseValue(ref Utf8JsonReader source)
+        public static RemoveOperation ParseValue(ref Utf8JsonReader source)
         {
 #if NET8_0_OR_GREATER
-            return IJsonValue<PatchOperationCommon>.ParseValue(ref source);
+            return IJsonValue<RemoveOperation>.ParseValue(ref source);
 #else
-            return JsonValueHelpers.ParseValue<PatchOperationCommon>(ref source);
+            return JsonValueHelpers.ParseValue<RemoveOperation>(ref source);
 #endif
         }
 
@@ -545,7 +590,7 @@ public readonly partial struct JsonPatchDocument
 
             return TTarget.Undefined;
 #else
-            return this.As<PatchOperationCommon, TTarget>();
+            return this.As<RemoveOperation, TTarget>();
 #endif
         }
 
@@ -569,7 +614,7 @@ public readonly partial struct JsonPatchDocument
         /// </summary>
         /// <param name="other">The other item with which to compare.</param>
         /// <returns><see langword="true"/> if the values were equal.</returns>
-        public bool Equals(in PatchOperationCommon other)
+        public bool Equals(in RemoveOperation other)
         {
             return JsonValueHelpers.CompareValues(this, other);
         }
@@ -612,6 +657,17 @@ public readonly partial struct JsonPatchDocument
         public override string ToString()
         {
             return this.Serialize();
+        }
+
+        /// <summary>
+        /// Gets the value as a <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommon" />.
+        /// </summary>
+        /// <param name="result">The result of the conversions.</param>
+        /// <returns><see langword="true" /> if the conversion was valid.</returns>
+        public bool TryGetAsPatchOperationCommon(out Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommon result)
+        {
+            result = this.As<Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommon>();
+            return result.IsValid();
         }
     }
 }

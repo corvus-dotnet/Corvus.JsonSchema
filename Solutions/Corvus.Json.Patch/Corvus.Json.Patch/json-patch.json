@@ -95,7 +95,8 @@
       }
     },
     "PatchOperation": {
-      "description": "A single JSON Patch operation",
+        "description": "A single JSON Patch operation",
+      "$ref":  "#/$defs/PatchOperationCommon",
       "oneOf": [
         { "$ref": "#/$defs/AddOperation" },
         { "$ref": "#/$defs/RemoveOperation" },

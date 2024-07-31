@@ -112,7 +112,7 @@ public class JsonPatchSteps
                 switch (op)
                 {
                     case "add":
-                        JsonPatchDocument.AddEntity add = operation.AsAddEntity;
+                        JsonPatchDocument.AddOperation add = operation.AsAddOperation;
 
                         if (!add.IsValid())
                         {
@@ -122,47 +122,47 @@ public class JsonPatchSteps
                         builder = builder.Add(add.Value, operation.Path);
                         break;
                     case "copy":
-                        JsonPatchDocument.Copy copy = operation.AsCopy;
+                        JsonPatchDocument.CopyOperation copy = operation.AsCopyOperation;
 
                         if (!copy.IsValid())
                         {
                             throw new JsonPatchException("Invalid copy operation.");
                         }
 
-                        builder = builder.Copy(copy.FromValue, operation.Path);
+                        builder = builder.Copy(copy.From, operation.Path);
                         break;
                     case "move":
-                        JsonPatchDocument.Move move = operation.AsMove;
+                        JsonPatchDocument.MoveOperation move = operation.AsMoveOperation;
 
                         if (!move.IsValid())
                         {
                             throw new JsonPatchException("Invalid move operation.");
                         }
 
-                        builder = builder.Move(move.FromValue, operation.Path);
+                        builder = builder.Move(move.From, operation.Path);
                         break;
                     case "remove":
                         builder = builder.Remove(operation.Path);
                         break;
                     case "replace":
-                        JsonPatchDocument.ReplaceEntity replace = operation.AsReplaceEntity;
+                        JsonPatchDocument.ReplaceOperation replace = operation.AsReplaceOperation;
 
                         if (!replace.IsValid())
                         {
                             throw new JsonPatchException("Invalid replace operation.");
                         }
 
-                        builder = builder.Replace(replace.Value, operation.Path);
+                        builder = builder.Replace(operation.Path, replace.Value);
                         break;
                     case "test":
-                        JsonPatchDocument.Test test = operation.AsTest;
+                        JsonPatchDocument.TestOperation test = operation.AsTestOperation;
 
                         if (!test.IsValid())
                         {
                             throw new JsonPatchException("Invalid test operation.");
                         }
 
-                        builder = builder.Test(test.Value, operation.Path);
+                        builder = builder.Test(operation.Path, test.Value);
                         break;
                     default:
                         throw new JsonPatchException("Unrecognized operation.");

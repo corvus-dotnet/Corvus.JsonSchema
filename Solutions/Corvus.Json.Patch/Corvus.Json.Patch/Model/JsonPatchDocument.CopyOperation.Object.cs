@@ -24,14 +24,19 @@ public readonly partial struct JsonPatchDocument
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
-    public readonly partial struct PatchOperationCommon
-        : IJsonObject<Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommon>
+    /// <remarks>
+    /// <para>
+    /// Copy operation. "from" is a JSON Pointer.
+    /// </para>
+    /// </remarks>
+    public readonly partial struct CopyOperation
+        : IJsonObject<Corvus.Json.Patch.Model.JsonPatchDocument.CopyOperation>
     {
         /// <summary>
         /// Conversion from <see cref="ImmutableList{JsonObjectProperty}"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
-        public static implicit operator PatchOperationCommon(ImmutableList<JsonObjectProperty> value)
+        public static implicit operator CopyOperation(ImmutableList<JsonObjectProperty> value)
         {
             return new(value);
         }
@@ -40,7 +45,7 @@ public readonly partial struct JsonPatchDocument
         /// Conversion to <see cref="ImmutableList{JsonObjectProperty}"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
-        public static implicit operator ImmutableList<JsonObjectProperty>(PatchOperationCommon value)
+        public static implicit operator ImmutableList<JsonObjectProperty>(CopyOperation value)
         {
             return
                 __CorvusObjectHelpers.GetPropertyBacking(value);
@@ -50,7 +55,7 @@ public readonly partial struct JsonPatchDocument
         /// Conversion from JsonObject.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
-        public static implicit operator PatchOperationCommon(JsonObject value)
+        public static implicit operator CopyOperation(JsonObject value)
         {
             if (value.HasDotnetBacking && value.ValueKind == JsonValueKind.Object)
             {
@@ -65,7 +70,7 @@ public readonly partial struct JsonPatchDocument
         /// Conversion to JsonObject.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
-        public static implicit operator JsonObject(PatchOperationCommon value)
+        public static implicit operator JsonObject(CopyOperation value)
         {
             return
                 value.AsObject;
@@ -112,6 +117,43 @@ public readonly partial struct JsonPatchDocument
         }
 
         /// <summary>
+        /// Gets the (optional) <c>from</c> property.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// If the instance is valid, this property will not be <c>undefined</c>.
+        /// </para>
+        /// </remarks>
+        public Corvus.Json.JsonPointer From
+        {
+            get
+            {
+                if ((this.backing & Backing.JsonElement) != 0)
+                {
+                    if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                    {
+                        return default;
+                    }
+
+                    if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.FromUtf8, out JsonElement result))
+                    {
+                        return new(result);
+                    }
+                }
+
+                if ((this.backing & Backing.Object) != 0)
+                {
+                    if (this.objectBacking.TryGetValue(JsonPropertyNames.From, out JsonAny result))
+                    {
+                        return result.As<Corvus.Json.JsonPointer>();
+                    }
+                }
+
+                return default;
+            }
+        }
+
+        /// <summary>
         /// Gets the (optional) <c>op</c> property.
         /// </summary>
         /// <remarks>
@@ -119,7 +161,7 @@ public readonly partial struct JsonPatchDocument
         /// If the instance is valid, this property will not be <c>undefined</c>.
         /// </para>
         /// </remarks>
-        public Corvus.Json.JsonString Op
+        public Corvus.Json.Patch.Model.JsonPatchDocument.CopyOperation.OpEntity Op
         {
             get
             {
@@ -140,7 +182,7 @@ public readonly partial struct JsonPatchDocument
                 {
                     if (this.objectBacking.TryGetValue(JsonPropertyNames.Op, out JsonAny result))
                     {
-                        return result.As<Corvus.Json.JsonString>();
+                        return result.As<Corvus.Json.Patch.Model.JsonPatchDocument.CopyOperation.OpEntity>();
                     }
                 }
 
@@ -186,13 +228,13 @@ public readonly partial struct JsonPatchDocument
         }
 
         /// <inheritdoc/>
-        public static PatchOperationCommon FromProperties(IDictionary<JsonPropertyName, JsonAny> source)
+        public static CopyOperation FromProperties(IDictionary<JsonPropertyName, JsonAny> source)
         {
             return new(source.Select(kvp => new JsonObjectProperty(kvp.Key, kvp.Value)).ToImmutableList());
         }
 
         /// <inheritdoc/>
-        public static PatchOperationCommon FromProperties(params (JsonPropertyName Name, JsonAny Value)[] source)
+        public static CopyOperation FromProperties(params (JsonPropertyName Name, JsonAny Value)[] source)
         {
             return new(source.Select(s => new JsonObjectProperty(s.Name, s.Value.AsAny)).ToImmutableList());
         }
@@ -202,18 +244,19 @@ public readonly partial struct JsonPatchDocument
         /// </summary>
         /// <param name="source">The list of properties.</param>
         /// <returns>An instance of the type initialized from the list of properties.</returns>
-        public static PatchOperationCommon FromProperties(ImmutableList<JsonObjectProperty> source)
+        public static CopyOperation FromProperties(ImmutableList<JsonObjectProperty> source)
         {
             return new(source);
         }
 
         /// <summary>
-        /// Creates an instance of a <see cref="PatchOperationCommon"/>.
+        /// Creates an instance of a <see cref="CopyOperation"/>.
         /// </summary>
-        public static PatchOperationCommon Create(in Corvus.Json.JsonString op, in Corvus.Json.JsonPointer path)
+        public static CopyOperation Create(in Corvus.Json.JsonPointer from, in Corvus.Json.JsonPointer path)
         {
             var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
-            builder.Add(JsonPropertyNames.Op, op.AsAny);
+            builder.Add(JsonPropertyNames.From, from.AsAny);
+            builder.Add(JsonPropertyNames.Op, Corvus.Json.Patch.Model.JsonPatchDocument.CopyOperation.OpEntity.ConstInstance.AsAny);
             builder.Add(JsonPropertyNames.Path, path.AsAny);
             return new(builder.ToImmutable());
         }
@@ -626,32 +669,32 @@ public readonly partial struct JsonPatchDocument
         }
 
         /// <inheritdoc />
-        public PatchOperationCommon SetProperty<TValue>(in JsonPropertyName name, TValue value)
+        public CopyOperation SetProperty<TValue>(in JsonPropertyName name, TValue value)
             where TValue : struct, IJsonValue
         {
             return new(__CorvusObjectHelpers.GetPropertyBackingWith(this, name, value.AsAny));
         }
 
         /// <inheritdoc />
-        public PatchOperationCommon RemoveProperty(in JsonPropertyName name)
+        public CopyOperation RemoveProperty(in JsonPropertyName name)
         {
             return new(__CorvusObjectHelpers.GetPropertyBackingWithout(this, name));
         }
 
         /// <inheritdoc />
-        public PatchOperationCommon RemoveProperty(string name)
+        public CopyOperation RemoveProperty(string name)
         {
             return new(__CorvusObjectHelpers.GetPropertyBackingWithout(this, name));
         }
 
         /// <inheritdoc />
-        public PatchOperationCommon RemoveProperty(ReadOnlySpan<char> name)
+        public CopyOperation RemoveProperty(ReadOnlySpan<char> name)
         {
             return new(__CorvusObjectHelpers.GetPropertyBackingWithout(this, name));
         }
 
         /// <inheritdoc />
-        public PatchOperationCommon RemoveProperty(ReadOnlySpan<byte> name)
+        public CopyOperation RemoveProperty(ReadOnlySpan<byte> name)
         {
             return new(__CorvusObjectHelpers.GetPropertyBackingWithout(this, name));
         }
@@ -662,6 +705,11 @@ public readonly partial struct JsonPatchDocument
         public static class JsonPropertyNames
         {
             /// <summary>
+            /// Gets the JSON property name for <see cref="From"/>.
+            /// </summary>
+            public const string From = "from";
+
+            /// <summary>
             /// Gets the JSON property name for <see cref="Op"/>.
             /// </summary>
             public const string Op = "op";
@@ -670,6 +718,11 @@ public readonly partial struct JsonPatchDocument
             /// Gets the JSON property name for <see cref="Path"/>.
             /// </summary>
             public const string Path = "path";
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="From"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> FromUtf8 => "from"u8;
 
             /// <summary>
             /// Gets the JSON property name for <see cref="Op"/>.
@@ -689,7 +742,7 @@ public readonly partial struct JsonPatchDocument
             /// </summary>
             /// <returns>An immutable list of <see cref="JsonAny"/> built from the object.</returns>
             /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-            public static ImmutableList<JsonObjectProperty> GetPropertyBacking(in PatchOperationCommon that)
+            public static ImmutableList<JsonObjectProperty> GetPropertyBacking(in CopyOperation that)
             {
                 if ((that.backing & Backing.Object) != 0)
                 {
@@ -709,7 +762,7 @@ public readonly partial struct JsonPatchDocument
             /// </summary>
             /// <returns>An immutable list of <see cref="JsonObjectProperty"/>, built from the existing object, without the given property.</returns>
             /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-            public static ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(in PatchOperationCommon that, in JsonPropertyName name)
+            public static ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(in CopyOperation that, in JsonPropertyName name)
             {
                 if ((that.backing & Backing.Object) != 0)
                 {
@@ -729,7 +782,7 @@ public readonly partial struct JsonPatchDocument
             /// </summary>
             /// <returns>An immutable list of <see cref="JsonObjectProperty"/>, built from the existing object, without the given property.</returns>
             /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-            public static ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(in PatchOperationCommon that, ReadOnlySpan<char> name)
+            public static ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(in CopyOperation that, ReadOnlySpan<char> name)
             {
                 if ((that.backing & Backing.Object) != 0)
                 {
@@ -749,7 +802,7 @@ public readonly partial struct JsonPatchDocument
             /// </summary>
             /// <returns>An immutable list of <see cref="JsonObjectProperty"/>, built from the existing object, without the given property.</returns>
             /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-            public static ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(in PatchOperationCommon that, ReadOnlySpan<byte> name)
+            public static ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(in CopyOperation that, ReadOnlySpan<byte> name)
             {
                 if ((that.backing & Backing.Object) != 0)
                 {
@@ -769,7 +822,7 @@ public readonly partial struct JsonPatchDocument
             /// </summary>
             /// <returns>An immutable list of <see cref="JsonObjectProperty"/>, built from the existing object, without the given property.</returns>
             /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-            public static ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(in PatchOperationCommon that, string name)
+            public static ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(in CopyOperation that, string name)
             {
                 if ((that.backing & Backing.Object) != 0)
                 {
@@ -789,7 +842,7 @@ public readonly partial struct JsonPatchDocument
             /// </summary>
             /// <returns>An immutable list of <see cref="JsonObjectProperty"/>, built from the existing object, with the given property.</returns>
             /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-            public static ImmutableList<JsonObjectProperty> GetPropertyBackingWith(in PatchOperationCommon that, in JsonPropertyName name, in JsonAny value)
+            public static ImmutableList<JsonObjectProperty> GetPropertyBackingWith(in CopyOperation that, in JsonPropertyName name, in JsonAny value)
             {
                 if ((that.backing & Backing.Object) != 0)
                 {

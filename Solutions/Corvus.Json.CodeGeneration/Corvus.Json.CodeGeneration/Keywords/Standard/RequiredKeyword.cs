@@ -98,7 +98,6 @@ public sealed class RequiredKeyword : IPropertyProviderKeyword, IObjectRequiredP
             return KeywordPathReference.AppendArrayIndexToFragment(index);
         }
 
-        Debug.Fail("The path modifier was not available for this keyword.");
         return KeywordPath;
     }
 }

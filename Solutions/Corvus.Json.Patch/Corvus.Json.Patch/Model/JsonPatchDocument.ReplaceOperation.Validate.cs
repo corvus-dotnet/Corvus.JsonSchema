@@ -23,7 +23,12 @@ public readonly partial struct JsonPatchDocument
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
-    public readonly partial struct PatchOperationCommon
+    /// <remarks>
+    /// <para>
+    /// Replace operation. Value can be any JSON value.
+    /// </para>
+    /// </remarks>
+    public readonly partial struct ReplaceOperation
     {
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
@@ -37,10 +42,16 @@ public readonly partial struct JsonPatchDocument
             if (level > ValidationLevel.Basic)
             {
                 result = result.UsingStack();
-                result = result.PushSchemaLocation("#/$defs/PatchOperationCommon");
+                result = result.PushSchemaLocation("#/$defs/ReplaceOperation");
             }
 
             JsonValueKind valueKind = this.ValueKind;
+            result = CorvusValidation.CompositionAllOfValidationHandler(this, result, level);
+            if (level == ValidationLevel.Flag && !result.IsValid)
+            {
+                return result;
+            }
+
             result = CorvusValidation.ObjectValidationHandler(this, valueKind, result, level);
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
@@ -58,8 +69,43 @@ public readonly partial struct JsonPatchDocument
         private static partial class CorvusValidation
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static ValidationContext CompositionAllOfValidationHandler(
+                in ReplaceOperation value,
+                in ValidationContext validationContext,
+                ValidationLevel level = ValidationLevel.Flag)
+            {
+                ValidationContext result = validationContext;
+                ValidationContext childContextBase = result;
+                ValidationContext allOfResult0 = childContextBase.CreateChildContext();
+                if (level > ValidationLevel.Basic)
+                {
+                    allOfResult0 = allOfResult0.PushValidationLocationReducedPathModifier(new("#/allOf/0/$ref"));
+                }
+
+                allOfResult0 = value.As<Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommon>().Validate(allOfResult0, level);
+                if (!allOfResult0.IsValid)
+                {
+                    if (level >= ValidationLevel.Basic)
+                    {
+                        result = result.MergeChildContext(allOfResult0, true).WithResult(isValid: false, "Validation - allOf failed to validate against the schema.");
+                    }
+                    else
+                    {
+                        result = result.MergeChildContext(allOfResult0, false).WithResult(isValid: false);
+                        return result;
+                    }
+                }
+                else
+                {
+                    result = result.MergeChildContext(allOfResult0, level >= ValidationLevel.Detailed);
+                }
+
+                return result;
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static ValidationContext ObjectValidationHandler(
-                in PatchOperationCommon value,
+                in ReplaceOperation value,
                 JsonValueKind valueKind,
                 in ValidationContext validationContext,
                 ValidationLevel level = ValidationLevel.Flag)
@@ -83,7 +129,7 @@ public readonly partial struct JsonPatchDocument
                 }
 
                 bool hasSeenOp = false;
-                bool hasSeenPath = false;
+                bool hasSeenValue = false;
                 int propertyCount = 0;
                 foreach (JsonObjectProperty property in value.EnumerateObject())
                 {
@@ -96,7 +142,7 @@ public readonly partial struct JsonPatchDocument
                             result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/op"), JsonPropertyNames.Op);
                         }
 
-                        ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonString>().Validate(result.CreateChildContext(), level);
+                        ValidationContext propertyResult = property.Value.As<Corvus.Json.Patch.Model.JsonPatchDocument.ReplaceOperation.OpEntity>().Validate(result.CreateChildContext(), level);
                         result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
                         if (level > ValidationLevel.Basic)
                         {
@@ -108,16 +154,16 @@ public readonly partial struct JsonPatchDocument
                             return result;
                         }
                     }
-                    else if (property.NameEquals(JsonPropertyNames.PathUtf8, JsonPropertyNames.Path))
+                    else if (property.NameEquals(JsonPropertyNames.ValueUtf8, JsonPropertyNames.Value))
                     {
-                        hasSeenPath = true;
+                        hasSeenValue = true;
                         result = result.WithLocalProperty(propertyCount);
                         if (level > ValidationLevel.Basic)
                         {
-                            result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/path/$ref"), JsonPropertyNames.Path);
+                            result = result.PushValidationLocationReducedPathModifierAndProperty(new(""), JsonPropertyNames.Value);
                         }
 
-                        ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonPointer>().Validate(result.CreateChildContext(), level);
+                        ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonAny>().Validate(result.CreateChildContext(), level);
                         result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
                         if (level > ValidationLevel.Basic)
                         {
@@ -164,11 +210,11 @@ public readonly partial struct JsonPatchDocument
                     result = result.PushValidationLocationReducedPathModifier(new("#/required/0"));
                 }
 
-                if (!hasSeenPath)
+                if (!hasSeenValue)
                 {
                     if (level >= ValidationLevel.Basic)
                     {
-                        result = result.WithResult(isValid: false, "Validation properties - the required property 'path' was not present.");
+                        result = result.WithResult(isValid: false, "Validation required - the required property 'value' was not present.");
                     }
                     else
                     {
@@ -177,7 +223,7 @@ public readonly partial struct JsonPatchDocument
                 }
                 else if (level == ValidationLevel.Verbose)
                 {
-                    result = result.WithResult(isValid: true, "Validation properties - the required property 'path' was present.");
+                    result = result.WithResult(isValid: true, "Validation required - the required property 'value' was present.");
                 }
 
                 if (level > ValidationLevel.Basic)
