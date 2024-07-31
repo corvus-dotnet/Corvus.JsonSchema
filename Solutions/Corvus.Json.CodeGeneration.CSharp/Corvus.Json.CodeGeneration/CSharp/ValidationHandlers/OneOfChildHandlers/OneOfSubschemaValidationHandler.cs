@@ -35,7 +35,11 @@ public class OneOfSubschemaValidationHandler : IChildValidationHandler
                 string localMethodName = generator.GetUniqueMethodNameInScope(keyword.Keyword, prefix: "Validate");
 
                 generator
-                    .AppendSeparatorLine()
+                    .AppendSeparatorLine();
+
+                if (subschemaDictionary.Count > 1)
+                {
+                    generator
                     .AppendLineIndent("result = ", localMethodName, "(value, result, level);")
                     .AppendLineIndent("if (!result.IsValid && level == ValidationLevel.Flag)")
                     .AppendLineIndent("{")
@@ -54,6 +58,7 @@ public class OneOfSubschemaValidationHandler : IChildValidationHandler
                     .AppendLineIndent("{")
                     .PushIndent()
                     .AppendLineIndent("ValidationContext result = validationContext;");
+                }
 
                 IReadOnlyCollection<TypeDeclaration> subschemaTypes = subschemaDictionary[keyword];
                 int i = 0;
@@ -181,10 +186,15 @@ public class OneOfSubschemaValidationHandler : IChildValidationHandler
                             .AppendLineIndent("result.PopLocation();")
                         .PopIndent()
                         .AppendLineIndent("}")
-                        .AppendSeparatorLine()
-                        .AppendLineIndent("return result;")
-                    .PopIndent()
-                    .AppendLineIndent("}");
+                        .AppendSeparatorLine();
+
+                if (subschemaDictionary.Count > 1)
+                {
+                    generator
+                         .AppendLineIndent("return result;")
+                         .PopIndent()
+                         .AppendLineIndent("}");
+                }
             }
         }
 

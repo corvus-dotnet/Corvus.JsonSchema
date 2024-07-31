@@ -45,7 +45,6 @@ public static partial class ValidationCodeGeneratorExtensions
                 .AppendBlockIndent(
                 """
                 ValidationContext result = validationContext;
-                bool isValid = false;
                 """)
             .PrependChildValidationCode(typeDeclaration, children, parentHandlerPriority)
             .AppendCoreTypeValidation(typeDeclaration.AllowedCoreTypes())
@@ -65,183 +64,203 @@ public static partial class ValidationCodeGeneratorExtensions
 
         try
         {
-            int coreTypesCount = 0;
-
-            if ((allowedCoreTypes & CoreTypes.String) != 0)
+            if (allowedCoreTypes.CountTypes() == 1)
             {
-                generator
-                    .AppendSeparatorLine()
-                    .ReserveName("localResultString")
-                    .AppendBlockIndent(
-                    """
-                    ValidationContext localResultString = Corvus.Json.Validate.TypeString(valueKind, result.CreateChildContext(), level);
-                    if (level == ValidationLevel.Flag && localResultString.IsValid)
-                    {
-                        return validationContext;
-                    }
-
-                    if (localResultString.IsValid)
-                    {
-                        isValid = true;
-                    }
-                    """);
-
-                coreTypeResultsToMerge[coreTypesCount++] = "localResultString";
+                if ((allowedCoreTypes & CoreTypes.Integer) != 0)
+                {
+                    generator
+                        .AppendLineIndent("return Corvus.Json.Validate.TypeInteger(value, result, level);");
+                }
+                else
+                {
+                    generator
+                        .AppendLineIndent("return Corvus.Json.Validate.Type", allowedCoreTypes.SingleCoreTypeName(), "(valueKind, result, level);");
+                }
             }
-
-            if ((allowedCoreTypes & CoreTypes.Object) != 0)
+            else
             {
                 generator
                     .AppendSeparatorLine()
-                    .ReserveName("localResultObject")
-                    .AppendBlockIndent(
-                    """
-                    ValidationContext localResultObject = Corvus.Json.Validate.TypeObject(valueKind, result.CreateChildContext(), level);
-                    if (level == ValidationLevel.Flag && localResultObject.IsValid)
-                    {
-                        return validationContext;
-                    }
+                    .AppendLineIndent("bool isValid = false;");
 
-                    if (localResultObject.IsValid)
-                    {
-                        isValid = true;
-                    }
-                    """);
+                int coreTypesCount = 0;
 
-                coreTypeResultsToMerge[coreTypesCount++] = "localResultObject";
-            }
+                if ((allowedCoreTypes & CoreTypes.String) != 0)
+                {
+                    generator
+                        .AppendSeparatorLine()
+                        .ReserveName("localResultString")
+                        .AppendBlockIndent(
+                        """
+                        ValidationContext localResultString = Corvus.Json.Validate.TypeString(valueKind, result.CreateChildContext(), level);
+                        if (level == ValidationLevel.Flag && localResultString.IsValid)
+                        {
+                            return validationContext;
+                        }
 
-            if ((allowedCoreTypes & CoreTypes.Array) != 0)
-            {
-                generator
-                    .AppendSeparatorLine()
-                    .ReserveName("localResultArray")
-                    .AppendBlockIndent(
-                    """
-                    ValidationContext localResultArray = Corvus.Json.Validate.TypeArray(valueKind, result.CreateChildContext(), level);
-                    if (level == ValidationLevel.Flag && localResultArray.IsValid)
-                    {
-                        return validationContext;
-                    }
+                        if (localResultString.IsValid)
+                        {
+                            isValid = true;
+                        }
+                        """);
 
-                    if (localResultArray.IsValid)
-                    {
-                        isValid = true;
-                    }
-                    """);
+                    coreTypeResultsToMerge[coreTypesCount++] = "localResultString";
+                }
 
-                coreTypeResultsToMerge[coreTypesCount++] = "localResultArray";
-            }
+                if ((allowedCoreTypes & CoreTypes.Object) != 0)
+                {
+                    generator
+                        .AppendSeparatorLine()
+                        .ReserveName("localResultObject")
+                        .AppendBlockIndent(
+                        """
+                        ValidationContext localResultObject = Corvus.Json.Validate.TypeObject(valueKind, result.CreateChildContext(), level);
+                        if (level == ValidationLevel.Flag && localResultObject.IsValid)
+                        {
+                            return validationContext;
+                        }
 
-            if ((allowedCoreTypes & CoreTypes.Number) != 0)
-            {
-                generator
-                    .AppendSeparatorLine()
-                    .ReserveName("localResultNumber")
-                    .AppendBlockIndent(
-                    """
-                    ValidationContext localResultNumber = Corvus.Json.Validate.TypeNumber(valueKind, result.CreateChildContext(), level);
-                    if (level == ValidationLevel.Flag && localResultNumber.IsValid)
-                    {
-                        return validationContext;
-                    }
+                        if (localResultObject.IsValid)
+                        {
+                            isValid = true;
+                        }
+                        """);
 
-                    if (localResultNumber.IsValid)
-                    {
-                        isValid = true;
-                    }
-                    """);
+                    coreTypeResultsToMerge[coreTypesCount++] = "localResultObject";
+                }
 
-                coreTypeResultsToMerge[coreTypesCount++] = "localResultNumber";
-            }
+                if ((allowedCoreTypes & CoreTypes.Array) != 0)
+                {
+                    generator
+                        .AppendSeparatorLine()
+                        .ReserveName("localResultArray")
+                        .AppendBlockIndent(
+                        """
+                        ValidationContext localResultArray = Corvus.Json.Validate.TypeArray(valueKind, result.CreateChildContext(), level);
+                        if (level == ValidationLevel.Flag && localResultArray.IsValid)
+                        {
+                            return validationContext;
+                        }
 
-            if ((allowedCoreTypes & CoreTypes.Integer) != 0)
-            {
-                generator
-                    .AppendSeparatorLine()
-                    .ReserveName("localResultInteger")
-                    .AppendBlockIndent(
-                    """
-                    ValidationContext localResultInteger = Corvus.Json.Validate.TypeInteger(value, result.CreateChildContext(), level);
-                    if (level == ValidationLevel.Flag && localResultInteger.IsValid)
-                    {
-                        return validationContext;
-                    }
+                        if (localResultArray.IsValid)
+                        {
+                            isValid = true;
+                        }
+                        """);
 
-                    if (localResultInteger.IsValid)
-                    {
-                        isValid = true;
-                    }
-                    """);
+                    coreTypeResultsToMerge[coreTypesCount++] = "localResultArray";
+                }
 
-                coreTypeResultsToMerge[coreTypesCount++] = "localResultInteger";
-            }
+                if ((allowedCoreTypes & CoreTypes.Number) != 0)
+                {
+                    generator
+                        .AppendSeparatorLine()
+                        .ReserveName("localResultNumber")
+                        .AppendBlockIndent(
+                        """
+                        ValidationContext localResultNumber = Corvus.Json.Validate.TypeNumber(valueKind, result.CreateChildContext(), level);
+                        if (level == ValidationLevel.Flag && localResultNumber.IsValid)
+                        {
+                            return validationContext;
+                        }
 
-            if ((allowedCoreTypes & CoreTypes.Boolean) != 0)
-            {
-                generator
-                    .AppendSeparatorLine()
-                    .ReserveName("localResultBoolean")
-                    .AppendBlockIndent(
-                    """
-                    ValidationContext localResultBoolean = Corvus.Json.Validate.TypeBoolean(valueKind, result.CreateChildContext(), level);
-                    if (level == ValidationLevel.Flag && localResultBoolean.IsValid)
-                    {
-                        return validationContext;
-                    }
+                        if (localResultNumber.IsValid)
+                        {
+                            isValid = true;
+                        }
+                        """);
 
-                    if (localResultBoolean.IsValid)
-                    {
-                        isValid = true;
-                    }
-                    """);
+                    coreTypeResultsToMerge[coreTypesCount++] = "localResultNumber";
+                }
 
-                coreTypeResultsToMerge[coreTypesCount++] = "localResultBoolean";
-            }
+                if ((allowedCoreTypes & CoreTypes.Integer) != 0)
+                {
+                    generator
+                        .AppendSeparatorLine()
+                        .ReserveName("localResultInteger")
+                        .AppendBlockIndent(
+                        """
+                        ValidationContext localResultInteger = Corvus.Json.Validate.TypeInteger(value, result.CreateChildContext(), level);
+                        if (level == ValidationLevel.Flag && localResultInteger.IsValid)
+                        {
+                            return validationContext;
+                        }
 
-            if ((allowedCoreTypes & CoreTypes.Null) != 0)
-            {
-                generator
-                    .AppendSeparatorLine()
-                    .ReserveName("localResultNull")
-                    .AppendBlockIndent(
-                    """
-                    ValidationContext localResultNull = Corvus.Json.Validate.TypeNull(valueKind, result.CreateChildContext(), level);
-                    if (level == ValidationLevel.Flag && localResultNull.IsValid)
-                    {
-                        return validationContext;
-                    }
+                        if (localResultInteger.IsValid)
+                        {
+                            isValid = true;
+                        }
+                        """);
 
-                    if (localResultNull.IsValid)
-                    {
-                        isValid = true;
-                    }
-                    """);
+                    coreTypeResultsToMerge[coreTypesCount++] = "localResultInteger";
+                }
 
-                coreTypeResultsToMerge[coreTypesCount++] = "localResultNull";
-            }
+                if ((allowedCoreTypes & CoreTypes.Boolean) != 0)
+                {
+                    generator
+                        .AppendSeparatorLine()
+                        .ReserveName("localResultBoolean")
+                        .AppendBlockIndent(
+                        """
+                        ValidationContext localResultBoolean = Corvus.Json.Validate.TypeBoolean(valueKind, result.CreateChildContext(), level);
+                        if (level == ValidationLevel.Flag && localResultBoolean.IsValid)
+                        {
+                            return validationContext;
+                        }
 
-            if (coreTypesCount > 0)
-            {
-                generator
-                    .AppendSeparatorLine()
-                    .AppendBlockIndent(
-                    """
+                        if (localResultBoolean.IsValid)
+                        {
+                            isValid = true;
+                        }
+                        """);
+
+                    coreTypeResultsToMerge[coreTypesCount++] = "localResultBoolean";
+                }
+
+                if ((allowedCoreTypes & CoreTypes.Null) != 0)
+                {
+                    generator
+                        .AppendSeparatorLine()
+                        .ReserveName("localResultNull")
+                        .AppendBlockIndent(
+                        """
+                        ValidationContext localResultNull = Corvus.Json.Validate.TypeNull(valueKind, result.CreateChildContext(), level);
+                        if (level == ValidationLevel.Flag && localResultNull.IsValid)
+                        {
+                            return validationContext;
+                        }
+
+                        if (localResultNull.IsValid)
+                        {
+                            isValid = true;
+                        }
+                        """);
+
+                    coreTypeResultsToMerge[coreTypesCount++] = "localResultNull";
+                }
+
+                if (coreTypesCount > 0)
+                {
+                    generator
+                        .AppendSeparatorLine()
+                        .AppendBlockIndent(
+                        """
                     return result.MergeResults(
                         isValid,
                     """)
-                    .PushIndent()
-                    .AppendIndent("level");
+                        .PushIndent()
+                        .AppendIndent("level");
 
-                for (int i = 0; i < coreTypesCount; ++i)
-                {
-                    generator.AppendLine(",");
-                    generator.AppendIndent(coreTypeResultsToMerge[i]);
+                    for (int i = 0; i < coreTypesCount; ++i)
+                    {
+                        generator.AppendLine(",");
+                        generator.AppendIndent(coreTypeResultsToMerge[i]);
+                    }
+
+                    return generator
+                        .AppendLine(");")
+                        .PopIndent();
                 }
-
-                return generator
-                    .AppendLine(");")
-                    .PopIndent();
             }
 
             return generator;

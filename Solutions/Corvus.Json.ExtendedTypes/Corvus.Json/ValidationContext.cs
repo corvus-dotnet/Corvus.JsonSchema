@@ -391,7 +391,7 @@ public readonly struct ValidationContext
         bool usingEvaluatedItems = (this.usingFeatures & UsingFeatures.EvaluatedItems) != 0;
         bool usingEvaluatedProperties = (this.usingFeatures & UsingFeatures.EvaluatedProperties) != 0;
 
-        return new ValidationContext(true, usingEvaluatedItems ? ImmutableArray.Create<ulong>(0) : [], usingEvaluatedProperties ? ImmutableArray.Create<ulong>(0) : [], usingEvaluatedItems ? ImmutableArray.Create<ulong>(0) : [], usingEvaluatedProperties ? ImmutableArray.Create<ulong>(0) : [], this.locationStack, [], this.usingFeatures);
+        return new ValidationContext(true, usingEvaluatedItems ? ImmutableArray.Create<ulong>(0) : ImmutableArray<ulong>.Empty, usingEvaluatedProperties ? ImmutableArray.Create<ulong>(0) : ImmutableArray<ulong>.Empty, usingEvaluatedItems ? ImmutableArray.Create<ulong>(0) : ImmutableArray<ulong>.Empty, usingEvaluatedProperties ? ImmutableArray.Create<ulong>(0) : ImmutableArray<ulong>.Empty, this.locationStack, ImmutableArray<ValidationResult>.Empty, this.usingFeatures);
     }
 
     /// <summary>

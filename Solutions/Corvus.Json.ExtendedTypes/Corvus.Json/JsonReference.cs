@@ -370,7 +370,7 @@ public readonly struct JsonReference
             }
             else
             {
-                authority = [];
+                authority = ReadOnlySpan<char>.Empty;
             }
         }
 
@@ -465,7 +465,7 @@ public readonly struct JsonReference
         {
             if (!strict && scheme.Equals(baseReference.Scheme, StringComparison.Ordinal))
             {
-                scheme = [];
+                scheme = ReadOnlySpan<char>.Empty;
             }
 
             if (scheme.Length > 0)

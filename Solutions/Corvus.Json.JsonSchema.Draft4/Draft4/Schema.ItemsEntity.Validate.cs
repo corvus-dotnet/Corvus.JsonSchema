@@ -86,100 +86,88 @@ public readonly partial struct Schema
                 ValidationLevel level = ValidationLevel.Flag)
             {
                 ValidationContext result = validationContext;
-                result = ValidateAnyOf(value, result, level);
-                if (!result.IsValid && level == ValidationLevel.Flag)
+                bool anyOfFoundValid = false;
+                ValidationContext anyOfChildContext0 = validationContext.CreateChildContext();
+                if (level > ValidationLevel.Basic)
                 {
-                    return result;
+                    anyOfChildContext0 = anyOfChildContext0.PushValidationLocationReducedPathModifier(new("#/anyOf/0/$ref"));
                 }
 
-                static ValidationContext ValidateAnyOf(in ItemsEntity value, in ValidationContext validationContext, ValidationLevel level)
+                ValidationContext anyOfResult0 = value.As<Corvus.Json.JsonSchema.Draft4.Schema>().Validate(anyOfChildContext0, level);
+                if (anyOfResult0.IsValid)
                 {
-                    ValidationContext result = validationContext;
-                    bool anyOfFoundValid = false;
-                    ValidationContext anyOfChildContext0 = validationContext.CreateChildContext();
-                    if (level > ValidationLevel.Basic)
+                    result = result.MergeChildContext(anyOfResult0, level >= ValidationLevel.Verbose);
+                    if (level == ValidationLevel.Flag)
                     {
-                        anyOfChildContext0 = anyOfChildContext0.PushValidationLocationReducedPathModifier(new("#/anyOf/0/$ref"));
-                    }
-
-                    ValidationContext anyOfResult0 = value.As<Corvus.Json.JsonSchema.Draft4.Schema>().Validate(anyOfChildContext0, level);
-                    if (anyOfResult0.IsValid)
-                    {
-                        result = result.MergeChildContext(anyOfResult0, level >= ValidationLevel.Verbose);
-                        if (level == ValidationLevel.Flag)
-                        {
-                            return result;
-                        }
-                        else
-                        {
-                            anyOfFoundValid = true;
-                        }
+                        return result;
                     }
                     else
                     {
-                        if (level >= ValidationLevel.Verbose)
-                        {
-                            result = result.MergeResults(result.IsValid, level, anyOfResult0);
-                        }
+                        anyOfFoundValid = true;
                     }
-
-                    ValidationContext anyOfChildContext1 = validationContext.CreateChildContext();
-                    if (level > ValidationLevel.Basic)
+                }
+                else
+                {
+                    if (level >= ValidationLevel.Verbose)
                     {
-                        anyOfChildContext1 = anyOfChildContext1.PushValidationLocationReducedPathModifier(new("#/anyOf/1/$ref"));
+                        result = result.MergeResults(result.IsValid, level, anyOfResult0);
                     }
+                }
 
-                    ValidationContext anyOfResult1 = value.As<Corvus.Json.JsonSchema.Draft4.Schema.SchemaArray>().Validate(anyOfChildContext1, level);
-                    if (anyOfResult1.IsValid)
+                ValidationContext anyOfChildContext1 = validationContext.CreateChildContext();
+                if (level > ValidationLevel.Basic)
+                {
+                    anyOfChildContext1 = anyOfChildContext1.PushValidationLocationReducedPathModifier(new("#/anyOf/1/$ref"));
+                }
+
+                ValidationContext anyOfResult1 = value.As<Corvus.Json.JsonSchema.Draft4.Schema.SchemaArray>().Validate(anyOfChildContext1, level);
+                if (anyOfResult1.IsValid)
+                {
+                    result = result.MergeChildContext(anyOfResult1, level >= ValidationLevel.Verbose);
+                    if (level == ValidationLevel.Flag)
                     {
-                        result = result.MergeChildContext(anyOfResult1, level >= ValidationLevel.Verbose);
-                        if (level == ValidationLevel.Flag)
-                        {
-                            return result;
-                        }
-                        else
-                        {
-                            anyOfFoundValid = true;
-                        }
+                        return result;
                     }
                     else
                     {
-                        if (level >= ValidationLevel.Verbose)
-                        {
-                            result = result.MergeResults(result.IsValid, level, anyOfResult1);
-                        }
+                        anyOfFoundValid = true;
                     }
+                }
+                else
+                {
+                    if (level >= ValidationLevel.Verbose)
+                    {
+                        result = result.MergeResults(result.IsValid, level, anyOfResult1);
+                    }
+                }
 
+                if (level >= ValidationLevel.Basic)
+                {
+                    result.PushValidationLocationProperty("anyOf");
+                }
+
+                if (anyOfFoundValid)
+                {
+                    if (level >= ValidationLevel.Verbose)
+                    {
+                        result = result.WithResult(isValid: true, "Validation anyOf - validated against the schema.");
+                    }
+                }
+                else
+                {
                     if (level >= ValidationLevel.Basic)
                     {
-                        result.PushValidationLocationProperty("anyOf");
-                    }
-
-                    if (anyOfFoundValid)
-                    {
-                        if (level >= ValidationLevel.Verbose)
-                        {
-                            result = result.WithResult(isValid: true, "Validation anyOf - validated against the schema.");
-                        }
+                        result = result.WithResult(isValid: false, "Validation anyOf - did not validate against the schema.");
                     }
                     else
                     {
-                        if (level >= ValidationLevel.Basic)
-                        {
-                            result = result.WithResult(isValid: false, "Validation anyOf - did not validate against the schema.");
-                        }
-                        else
-                        {
-                            result = result.WithResult(isValid: false);
-                        }
+                        result = result.WithResult(isValid: false);
                     }
+                }
 
-                    if (level >= ValidationLevel.Basic)
-                    {
-                        result.PopLocation();
-                    }
-
-                    return result;
+                if (level >= ValidationLevel.Basic)
+                {
+                    result.PopLocation();
                 }
 
                 return result;

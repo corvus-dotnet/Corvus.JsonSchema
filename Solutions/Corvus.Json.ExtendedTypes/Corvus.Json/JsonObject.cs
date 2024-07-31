@@ -27,7 +27,7 @@ public readonly partial struct JsonObject : IJsonObject<JsonObject>
     {
         this.jsonElementBacking = default;
         this.backing = Backing.JsonElement;
-        this.objectBacking = [];
+        this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
     }
 
     /// <summary>
@@ -38,7 +38,7 @@ public readonly partial struct JsonObject : IJsonObject<JsonObject>
     {
         this.jsonElementBacking = value;
         this.backing = Backing.JsonElement;
-        this.objectBacking = [];
+        this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
     }
 
     /// <summary>

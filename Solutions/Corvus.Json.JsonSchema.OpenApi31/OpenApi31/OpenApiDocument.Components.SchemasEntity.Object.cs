@@ -850,7 +850,7 @@ SchemasEntity IJsonObject<SchemasEntity>.SetProperty<TValue>(in JsonPropertyName
                 /// <summary>
                 /// Builds an <see cref="ImmutableList{JsonObjectProperty}"/> from the object, without a specific property.
                 /// </summary>
-                /// <returns>An immutable dictionary builder of <see cref="JsonPropertyName"/> to <see cref="JsonAny"/>, built from the existing object, without the given property.</returns>
+                /// <returns>An immutable list of <see cref="JsonObjectProperty"/>, built from the existing object, without the given property.</returns>
                 /// <exception cref="InvalidOperationException">The value is not an object.</exception>
                 public static ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(in SchemasEntity that, in JsonPropertyName name)
                 {
@@ -870,7 +870,7 @@ SchemasEntity IJsonObject<SchemasEntity>.SetProperty<TValue>(in JsonPropertyName
                 /// <summary>
                 /// Builds an <see cref="ImmutableList{JsonObjectProperty}"/> from the object, without a specific property.
                 /// </summary>
-                /// <returns>An immutable dictionary builder of <see cref="JsonPropertyName"/> to <see cref="JsonAny"/>, built from the existing object, without the given property.</returns>
+                /// <returns>An immutable list of <see cref="JsonObjectProperty"/>, built from the existing object, without the given property.</returns>
                 /// <exception cref="InvalidOperationException">The value is not an object.</exception>
                 public static ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(in SchemasEntity that, ReadOnlySpan<char> name)
                 {
@@ -890,7 +890,7 @@ SchemasEntity IJsonObject<SchemasEntity>.SetProperty<TValue>(in JsonPropertyName
                 /// <summary>
                 /// Builds an <see cref="ImmutableList{JsonObjectProperty}"/> from the object, without a specific property.
                 /// </summary>
-                /// <returns>An immutable dictionary builder of <see cref="JsonPropertyName"/> to <see cref="JsonAny"/>, built from the existing object, without the given property.</returns>
+                /// <returns>An immutable list of <see cref="JsonObjectProperty"/>, built from the existing object, without the given property.</returns>
                 /// <exception cref="InvalidOperationException">The value is not an object.</exception>
                 public static ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(in SchemasEntity that, ReadOnlySpan<byte> name)
                 {
@@ -910,7 +910,7 @@ SchemasEntity IJsonObject<SchemasEntity>.SetProperty<TValue>(in JsonPropertyName
                 /// <summary>
                 /// Builds an <see cref="ImmutableList{JsonObjectProperty}"/> from the object, without a specific property.
                 /// </summary>
-                /// <returns>An immutable dictionary builder of <see cref="JsonPropertyName"/> to <see cref="JsonAny"/>, built from the existing object, without the given property.</returns>
+                /// <returns>An immutable list of <see cref="JsonObjectProperty"/>, built from the existing object, without the given property.</returns>
                 /// <exception cref="InvalidOperationException">The value is not an object.</exception>
                 public static ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(in SchemasEntity that, string name)
                 {
@@ -930,7 +930,7 @@ SchemasEntity IJsonObject<SchemasEntity>.SetProperty<TValue>(in JsonPropertyName
                 /// <summary>
                 /// Builds an <see cref="ImmutableList{JsonObjectProperty}"/> from the object, without a specific property.
                 /// </summary>
-                /// <returns>An immutable dictionary builder of <see cref="JsonPropertyName"/> to <see cref="JsonAny"/>, built from the existing object, with the given property.</returns>
+                /// <returns>An immutable list of <see cref="JsonObjectProperty"/>, built from the existing object, with the given property.</returns>
                 /// <exception cref="InvalidOperationException">The value is not an object.</exception>
                 public static ImmutableList<JsonObjectProperty> GetPropertyBackingWith(in SchemasEntity that, in JsonPropertyName name, in JsonAny value)
                 {

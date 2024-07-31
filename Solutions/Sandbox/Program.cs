@@ -4,7 +4,7 @@ ValidateLargeDocument benchmark = new();
 benchmark.GlobalSetup().Wait();
 
 
-for (int i = 0; i < 50; ++i)
+for (int i = 0; i < 10; ++i)
 {
     benchmark.ValidateLargeArrayCorvusV3();
 }
