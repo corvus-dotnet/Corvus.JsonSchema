@@ -58,98 +58,85 @@ public readonly partial struct OtherNames
             ValidationLevel level = ValidationLevel.Flag)
         {
             ValidationContext result = validationContext;
-            result = ValidateOneOf(value, result, level);
-            if (!result.IsValid && level == ValidationLevel.Flag)
+            int oneOfFoundValid = 0;
+            ValidationContext oneOfChildContext0 = validationContext.CreateChildContext();
+            if (level > ValidationLevel.Basic)
             {
-                return result;
+                oneOfChildContext0 = oneOfChildContext0.PushValidationLocationReducedPathModifier(new("#/oneOf/0/$ref"));
             }
 
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            static ValidationContext ValidateOneOf(in OtherNames value, in ValidationContext validationContext, ValidationLevel level)
+            ValidationContext oneOfResult0 = value.As<Sandbox.Models.PersonNameElement>().Validate(oneOfChildContext0, level);
+            if (oneOfResult0.IsValid)
             {
-                ValidationContext result = validationContext;
-                int oneOfFoundValid = 0;
-                ValidationContext oneOfChildContext0 = validationContext.CreateChildContext();
-                if (level > ValidationLevel.Basic)
+                result = result.MergeChildContext(oneOfResult0, level >= ValidationLevel.Verbose);
+                oneOfFoundValid++;
+            }
+            else
+            {
+                if (level >= ValidationLevel.Verbose)
                 {
-                    oneOfChildContext0 = oneOfChildContext0.PushValidationLocationReducedPathModifier(new("#/oneOf/0/$ref"));
+                    result = result.MergeResults(result.IsValid, level, oneOfResult0);
                 }
+            }
 
-                ValidationContext oneOfResult0 = value.As<Sandbox.Models.PersonNameElement>().Validate(oneOfChildContext0, level);
-                if (oneOfResult0.IsValid)
-                {
-                    result = result.MergeChildContext(oneOfResult0, level >= ValidationLevel.Verbose);
-                    oneOfFoundValid++;
-                }
-                else
-                {
-                    if (level >= ValidationLevel.Verbose)
-                    {
-                        result = result.MergeResults(result.IsValid, level, oneOfResult0);
-                    }
-                }
+            ValidationContext oneOfChildContext1 = validationContext.CreateChildContext();
+            if (level > ValidationLevel.Basic)
+            {
+                oneOfChildContext1 = oneOfChildContext1.PushValidationLocationReducedPathModifier(new("#/oneOf/1/$ref"));
+            }
 
-                ValidationContext oneOfChildContext1 = validationContext.CreateChildContext();
-                if (level > ValidationLevel.Basic)
+            ValidationContext oneOfResult1 = value.As<Sandbox.Models.PersonNameElementArray>().Validate(oneOfChildContext1, level);
+            if (oneOfResult1.IsValid)
+            {
+                result = result.MergeChildContext(oneOfResult1, level >= ValidationLevel.Verbose);
+                oneOfFoundValid++;
+            }
+            else
+            {
+                if (level >= ValidationLevel.Verbose)
                 {
-                    oneOfChildContext1 = oneOfChildContext1.PushValidationLocationReducedPathModifier(new("#/oneOf/1/$ref"));
+                    result = result.MergeResults(result.IsValid, level, oneOfResult1);
                 }
+            }
 
-                ValidationContext oneOfResult1 = value.As<Sandbox.Models.PersonNameElementArray>().Validate(oneOfChildContext1, level);
-                if (oneOfResult1.IsValid)
-                {
-                    result = result.MergeChildContext(oneOfResult1, level >= ValidationLevel.Verbose);
-                    oneOfFoundValid++;
-                }
-                else
-                {
-                    if (level >= ValidationLevel.Verbose)
-                    {
-                        result = result.MergeResults(result.IsValid, level, oneOfResult1);
-                    }
-                }
+            if (level >= ValidationLevel.Basic)
+            {
+                result.PushValidationLocationProperty("oneOf");
+            }
 
+            if (oneOfFoundValid == 1)
+            {
+                if (level >= ValidationLevel.Verbose)
+                {
+                    result = result.WithResult(isValid: true, "Validation oneOf - validated against the schema.");
+                }
+            }
+            else if (oneOfFoundValid > 1)
+            {
                 if (level >= ValidationLevel.Basic)
                 {
-                    result.PushValidationLocationProperty("oneOf");
-                }
-
-                if (oneOfFoundValid == 1)
-                {
-                    if (level >= ValidationLevel.Verbose)
-                    {
-                        result = result.WithResult(isValid: true, "Validation oneOf - validated against the schema.");
-                    }
-                }
-                else if (oneOfFoundValid > 1)
-                {
-                    if (level >= ValidationLevel.Basic)
-                    {
-                        result = result.WithResult(isValid: false, "Validation oneOf - validated against more than 1 of the schema.");
-                    }
-                    else
-                    {
-                        result = result.WithResult(isValid: false);
-                    }
+                    result = result.WithResult(isValid: false, "Validation oneOf - validated against more than 1 of the schema.");
                 }
                 else
                 {
-                    if (level >= ValidationLevel.Basic)
-                    {
-                        result = result.WithResult(isValid: false, "Validation oneOf - did not validate against any of the schema.");
-                    }
-                    else
-                    {
-                        result = result.WithResult(isValid: false);
-                    }
+                    result = result.WithResult(isValid: false);
                 }
-
+            }
+            else
+            {
                 if (level >= ValidationLevel.Basic)
                 {
-                    result.PopLocation();
+                    result = result.WithResult(isValid: false, "Validation oneOf - did not validate against any of the schema.");
                 }
+                else
+                {
+                    result = result.WithResult(isValid: false);
+                }
+            }
 
-                return result;
+            if (level >= ValidationLevel.Basic)
+            {
+                result.PopLocation();
             }
 
             return result;

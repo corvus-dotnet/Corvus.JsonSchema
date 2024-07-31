@@ -73,22 +73,7 @@ public readonly partial struct Validation
                 ValidationLevel level = ValidationLevel.Flag)
             {
                 ValidationContext result = validationContext;
-                bool isValid = false;
-                ValidationContext localResultNumber = Corvus.Json.Validate.TypeNumber(valueKind, result.CreateChildContext(), level);
-                if (level == ValidationLevel.Flag && localResultNumber.IsValid)
-                {
-                    return validationContext;
-                }
-
-                if (localResultNumber.IsValid)
-                {
-                    isValid = true;
-                }
-
-                return result.MergeResults(
-                    isValid,
-                    level,
-                    localResultNumber);
+                return Corvus.Json.Validate.TypeNumber(valueKind, result, level);
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]

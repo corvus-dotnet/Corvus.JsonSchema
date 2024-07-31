@@ -144,22 +144,7 @@ public readonly partial struct OpenApiDocument
                     ValidationLevel level = ValidationLevel.Flag)
                 {
                     ValidationContext result = validationContext;
-                    bool isValid = false;
-                    ValidationContext localResultInteger = Corvus.Json.Validate.TypeInteger(value, result.CreateChildContext(), level);
-                    if (level == ValidationLevel.Flag && localResultInteger.IsValid)
-                    {
-                        return validationContext;
-                    }
-
-                    if (localResultInteger.IsValid)
-                    {
-                        isValid = true;
-                    }
-
-                    return result.MergeResults(
-                        isValid,
-                        level,
-                        localResultInteger);
+                    return Corvus.Json.Validate.TypeInteger(value, result, level);
                 }
             }
         }

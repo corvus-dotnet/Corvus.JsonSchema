@@ -28,7 +28,7 @@ public readonly partial struct JsonArray : IJsonArray<JsonArray>
     {
         this.jsonElementBacking = default;
         this.backing = Backing.JsonElement;
-        this.arrayBacking = [];
+        this.arrayBacking = ImmutableList<JsonAny>.Empty;
     }
 
     /// <summary>
@@ -39,7 +39,7 @@ public readonly partial struct JsonArray : IJsonArray<JsonArray>
     {
         this.jsonElementBacking = value;
         this.backing = Backing.JsonElement;
-        this.arrayBacking = [];
+        this.arrayBacking = ImmutableList<JsonAny>.Empty;
     }
 
     /// <summary>

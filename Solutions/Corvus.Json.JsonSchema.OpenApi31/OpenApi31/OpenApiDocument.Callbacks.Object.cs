@@ -845,7 +845,7 @@ Callbacks IJsonObject<Callbacks>.SetProperty<TValue>(in JsonPropertyName name, T
             /// <summary>
             /// Builds an <see cref="ImmutableList{JsonObjectProperty}"/> from the object, without a specific property.
             /// </summary>
-            /// <returns>An immutable dictionary builder of <see cref="JsonPropertyName"/> to <see cref="JsonAny"/>, built from the existing object, without the given property.</returns>
+            /// <returns>An immutable list of <see cref="JsonObjectProperty"/>, built from the existing object, without the given property.</returns>
             /// <exception cref="InvalidOperationException">The value is not an object.</exception>
             public static ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(in Callbacks that, in JsonPropertyName name)
             {
@@ -865,7 +865,7 @@ Callbacks IJsonObject<Callbacks>.SetProperty<TValue>(in JsonPropertyName name, T
             /// <summary>
             /// Builds an <see cref="ImmutableList{JsonObjectProperty}"/> from the object, without a specific property.
             /// </summary>
-            /// <returns>An immutable dictionary builder of <see cref="JsonPropertyName"/> to <see cref="JsonAny"/>, built from the existing object, without the given property.</returns>
+            /// <returns>An immutable list of <see cref="JsonObjectProperty"/>, built from the existing object, without the given property.</returns>
             /// <exception cref="InvalidOperationException">The value is not an object.</exception>
             public static ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(in Callbacks that, ReadOnlySpan<char> name)
             {
@@ -885,7 +885,7 @@ Callbacks IJsonObject<Callbacks>.SetProperty<TValue>(in JsonPropertyName name, T
             /// <summary>
             /// Builds an <see cref="ImmutableList{JsonObjectProperty}"/> from the object, without a specific property.
             /// </summary>
-            /// <returns>An immutable dictionary builder of <see cref="JsonPropertyName"/> to <see cref="JsonAny"/>, built from the existing object, without the given property.</returns>
+            /// <returns>An immutable list of <see cref="JsonObjectProperty"/>, built from the existing object, without the given property.</returns>
             /// <exception cref="InvalidOperationException">The value is not an object.</exception>
             public static ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(in Callbacks that, ReadOnlySpan<byte> name)
             {
@@ -905,7 +905,7 @@ Callbacks IJsonObject<Callbacks>.SetProperty<TValue>(in JsonPropertyName name, T
             /// <summary>
             /// Builds an <see cref="ImmutableList{JsonObjectProperty}"/> from the object, without a specific property.
             /// </summary>
-            /// <returns>An immutable dictionary builder of <see cref="JsonPropertyName"/> to <see cref="JsonAny"/>, built from the existing object, without the given property.</returns>
+            /// <returns>An immutable list of <see cref="JsonObjectProperty"/>, built from the existing object, without the given property.</returns>
             /// <exception cref="InvalidOperationException">The value is not an object.</exception>
             public static ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(in Callbacks that, string name)
             {
@@ -925,7 +925,7 @@ Callbacks IJsonObject<Callbacks>.SetProperty<TValue>(in JsonPropertyName name, T
             /// <summary>
             /// Builds an <see cref="ImmutableList{JsonObjectProperty}"/> from the object, without a specific property.
             /// </summary>
-            /// <returns>An immutable dictionary builder of <see cref="JsonPropertyName"/> to <see cref="JsonAny"/>, built from the existing object, with the given property.</returns>
+            /// <returns>An immutable list of <see cref="JsonObjectProperty"/>, built from the existing object, with the given property.</returns>
             /// <exception cref="InvalidOperationException">The value is not an object.</exception>
             public static ImmutableList<JsonObjectProperty> GetPropertyBackingWith(in Callbacks that, in JsonPropertyName name, in JsonAny value)
             {

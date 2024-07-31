@@ -89,22 +89,7 @@ public readonly partial struct OpenApiDocument
                 ValidationLevel level = ValidationLevel.Flag)
             {
                 ValidationContext result = validationContext;
-                bool isValid = false;
-                ValidationContext localResultObject = Corvus.Json.Validate.TypeObject(valueKind, result.CreateChildContext(), level);
-                if (level == ValidationLevel.Flag && localResultObject.IsValid)
-                {
-                    return validationContext;
-                }
-
-                if (localResultObject.IsValid)
-                {
-                    isValid = true;
-                }
-
-                return result.MergeResults(
-                    isValid,
-                    level,
-                    localResultObject);
+                return Corvus.Json.Validate.TypeObject(valueKind, result, level);
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -149,98 +134,85 @@ public readonly partial struct OpenApiDocument
                 ValidationLevel level = ValidationLevel.Flag)
             {
                 ValidationContext result = validationContext;
-                result = ValidateOneOf(value, result, level);
-                if (!result.IsValid && level == ValidationLevel.Flag)
+                int oneOfFoundValid = 0;
+                ValidationContext oneOfChildContext0 = validationContext.CreateChildContext();
+                if (level > ValidationLevel.Basic)
                 {
-                    return result;
+                    oneOfChildContext0 = oneOfChildContext0.PushValidationLocationReducedPathModifier(new("#/oneOf/0"));
                 }
 
-                [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                static ValidationContext ValidateOneOf(in Header value, in ValidationContext validationContext, ValidationLevel level)
+                ValidationContext oneOfResult0 = value.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.RequiredSchema>().Validate(oneOfChildContext0, level);
+                if (oneOfResult0.IsValid)
                 {
-                    ValidationContext result = validationContext;
-                    int oneOfFoundValid = 0;
-                    ValidationContext oneOfChildContext0 = validationContext.CreateChildContext();
-                    if (level > ValidationLevel.Basic)
+                    result = result.MergeChildContext(oneOfResult0, level >= ValidationLevel.Verbose);
+                    oneOfFoundValid++;
+                }
+                else
+                {
+                    if (level >= ValidationLevel.Verbose)
                     {
-                        oneOfChildContext0 = oneOfChildContext0.PushValidationLocationReducedPathModifier(new("#/oneOf/0"));
+                        result = result.MergeResults(result.IsValid, level, oneOfResult0);
                     }
+                }
 
-                    ValidationContext oneOfResult0 = value.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.RequiredSchema>().Validate(oneOfChildContext0, level);
-                    if (oneOfResult0.IsValid)
-                    {
-                        result = result.MergeChildContext(oneOfResult0, level >= ValidationLevel.Verbose);
-                        oneOfFoundValid++;
-                    }
-                    else
-                    {
-                        if (level >= ValidationLevel.Verbose)
-                        {
-                            result = result.MergeResults(result.IsValid, level, oneOfResult0);
-                        }
-                    }
+                ValidationContext oneOfChildContext1 = validationContext.CreateChildContext();
+                if (level > ValidationLevel.Basic)
+                {
+                    oneOfChildContext1 = oneOfChildContext1.PushValidationLocationReducedPathModifier(new("#/oneOf/1"));
+                }
 
-                    ValidationContext oneOfChildContext1 = validationContext.CreateChildContext();
-                    if (level > ValidationLevel.Basic)
+                ValidationContext oneOfResult1 = value.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.RequiredContent>().Validate(oneOfChildContext1, level);
+                if (oneOfResult1.IsValid)
+                {
+                    result = result.MergeChildContext(oneOfResult1, level >= ValidationLevel.Verbose);
+                    oneOfFoundValid++;
+                }
+                else
+                {
+                    if (level >= ValidationLevel.Verbose)
                     {
-                        oneOfChildContext1 = oneOfChildContext1.PushValidationLocationReducedPathModifier(new("#/oneOf/1"));
+                        result = result.MergeResults(result.IsValid, level, oneOfResult1);
                     }
+                }
 
-                    ValidationContext oneOfResult1 = value.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.RequiredContent>().Validate(oneOfChildContext1, level);
-                    if (oneOfResult1.IsValid)
-                    {
-                        result = result.MergeChildContext(oneOfResult1, level >= ValidationLevel.Verbose);
-                        oneOfFoundValid++;
-                    }
-                    else
-                    {
-                        if (level >= ValidationLevel.Verbose)
-                        {
-                            result = result.MergeResults(result.IsValid, level, oneOfResult1);
-                        }
-                    }
+                if (level >= ValidationLevel.Basic)
+                {
+                    result.PushValidationLocationProperty("oneOf");
+                }
 
+                if (oneOfFoundValid == 1)
+                {
+                    if (level >= ValidationLevel.Verbose)
+                    {
+                        result = result.WithResult(isValid: true, "Validation oneOf - validated against the schema.");
+                    }
+                }
+                else if (oneOfFoundValid > 1)
+                {
                     if (level >= ValidationLevel.Basic)
                     {
-                        result.PushValidationLocationProperty("oneOf");
-                    }
-
-                    if (oneOfFoundValid == 1)
-                    {
-                        if (level >= ValidationLevel.Verbose)
-                        {
-                            result = result.WithResult(isValid: true, "Validation oneOf - validated against the schema.");
-                        }
-                    }
-                    else if (oneOfFoundValid > 1)
-                    {
-                        if (level >= ValidationLevel.Basic)
-                        {
-                            result = result.WithResult(isValid: false, "Validation oneOf - validated against more than 1 of the schema.");
-                        }
-                        else
-                        {
-                            result = result.WithResult(isValid: false);
-                        }
+                        result = result.WithResult(isValid: false, "Validation oneOf - validated against more than 1 of the schema.");
                     }
                     else
                     {
-                        if (level >= ValidationLevel.Basic)
-                        {
-                            result = result.WithResult(isValid: false, "Validation oneOf - did not validate against any of the schema.");
-                        }
-                        else
-                        {
-                            result = result.WithResult(isValid: false);
-                        }
+                        result = result.WithResult(isValid: false);
                     }
-
+                }
+                else
+                {
                     if (level >= ValidationLevel.Basic)
                     {
-                        result.PopLocation();
+                        result = result.WithResult(isValid: false, "Validation oneOf - did not validate against any of the schema.");
                     }
+                    else
+                    {
+                        result = result.WithResult(isValid: false);
+                    }
+                }
 
-                    return result;
+                if (level >= ValidationLevel.Basic)
+                {
+                    result.PopLocation();
                 }
 
                 return result;

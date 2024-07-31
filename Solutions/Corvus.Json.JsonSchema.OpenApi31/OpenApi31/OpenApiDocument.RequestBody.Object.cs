@@ -761,7 +761,7 @@ public readonly partial struct OpenApiDocument
             /// <summary>
             /// Builds an <see cref="ImmutableList{JsonObjectProperty}"/> from the object, without a specific property.
             /// </summary>
-            /// <returns>An immutable dictionary builder of <see cref="JsonPropertyName"/> to <see cref="JsonAny"/>, built from the existing object, without the given property.</returns>
+            /// <returns>An immutable list of <see cref="JsonObjectProperty"/>, built from the existing object, without the given property.</returns>
             /// <exception cref="InvalidOperationException">The value is not an object.</exception>
             public static ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(in RequestBody that, in JsonPropertyName name)
             {
@@ -781,7 +781,7 @@ public readonly partial struct OpenApiDocument
             /// <summary>
             /// Builds an <see cref="ImmutableList{JsonObjectProperty}"/> from the object, without a specific property.
             /// </summary>
-            /// <returns>An immutable dictionary builder of <see cref="JsonPropertyName"/> to <see cref="JsonAny"/>, built from the existing object, without the given property.</returns>
+            /// <returns>An immutable list of <see cref="JsonObjectProperty"/>, built from the existing object, without the given property.</returns>
             /// <exception cref="InvalidOperationException">The value is not an object.</exception>
             public static ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(in RequestBody that, ReadOnlySpan<char> name)
             {
@@ -801,7 +801,7 @@ public readonly partial struct OpenApiDocument
             /// <summary>
             /// Builds an <see cref="ImmutableList{JsonObjectProperty}"/> from the object, without a specific property.
             /// </summary>
-            /// <returns>An immutable dictionary builder of <see cref="JsonPropertyName"/> to <see cref="JsonAny"/>, built from the existing object, without the given property.</returns>
+            /// <returns>An immutable list of <see cref="JsonObjectProperty"/>, built from the existing object, without the given property.</returns>
             /// <exception cref="InvalidOperationException">The value is not an object.</exception>
             public static ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(in RequestBody that, ReadOnlySpan<byte> name)
             {
@@ -821,7 +821,7 @@ public readonly partial struct OpenApiDocument
             /// <summary>
             /// Builds an <see cref="ImmutableList{JsonObjectProperty}"/> from the object, without a specific property.
             /// </summary>
-            /// <returns>An immutable dictionary builder of <see cref="JsonPropertyName"/> to <see cref="JsonAny"/>, built from the existing object, without the given property.</returns>
+            /// <returns>An immutable list of <see cref="JsonObjectProperty"/>, built from the existing object, without the given property.</returns>
             /// <exception cref="InvalidOperationException">The value is not an object.</exception>
             public static ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(in RequestBody that, string name)
             {
@@ -841,7 +841,7 @@ public readonly partial struct OpenApiDocument
             /// <summary>
             /// Builds an <see cref="ImmutableList{JsonObjectProperty}"/> from the object, without a specific property.
             /// </summary>
-            /// <returns>An immutable dictionary builder of <see cref="JsonPropertyName"/> to <see cref="JsonAny"/>, built from the existing object, with the given property.</returns>
+            /// <returns>An immutable list of <see cref="JsonObjectProperty"/>, built from the existing object, with the given property.</returns>
             /// <exception cref="InvalidOperationException">The value is not an object.</exception>
             public static ImmutableList<JsonObjectProperty> GetPropertyBackingWith(in RequestBody that, in JsonPropertyName name, in JsonAny value)
             {

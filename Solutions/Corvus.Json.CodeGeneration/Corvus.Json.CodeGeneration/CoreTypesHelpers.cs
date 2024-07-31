@@ -52,6 +52,28 @@ public static class CoreTypesHelpers
     }
 
     /// <summary>
+    /// Get the name of a single <see cref="CoreTypes"/> value.
+    /// </summary>
+    /// <param name="coreType">The core type for which to get the name.</param>
+    /// <returns>The corresponding name.</returns>
+    public static string SingleCoreTypeName(this CoreTypes coreType)
+    {
+        System.Diagnostics.Debug.Assert(coreType.CountTypes() == 1, "You must call this with a single core type.");
+
+        return coreType switch
+        {
+            CoreTypes.Object => "Object",
+            CoreTypes.Array => "Array",
+            CoreTypes.Boolean => "Boolean",
+            CoreTypes.Number => "Number",
+            CoreTypes.Integer => "Integer",
+            CoreTypes.String => "String",
+            CoreTypes.Null => "Null",
+            _ => throw new ArgumentException("Unknown CoreType", nameof(coreType)),
+        };
+    }
+
+    /// <summary>
     /// Counts the number of types in the <see cref="CoreTypes"/> union.
     /// </summary>
     /// <param name="coreTypes">The core types to count.</param>
