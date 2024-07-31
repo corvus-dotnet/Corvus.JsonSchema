@@ -179,7 +179,7 @@ public static partial class JsonTransformingVisitor
                 }
                 else
                 {
-                    builder.RemoveAt(index);
+                    builder.RemoveAt(builderIndex);
                 }
             }
             else
@@ -242,6 +242,7 @@ public static partial class JsonTransformingVisitor
         bool hasTransformedProperties = false;
         bool terminateEntireWalkApplyingChanges = false;
         ImmutableList<JsonObjectProperty>.Builder? builder = null;
+        int index = 0;
 
         foreach (JsonObjectProperty property in asObject.EnumerateObject())
         {
@@ -282,13 +283,16 @@ public static partial class JsonTransformingVisitor
             if (result.Walk != Walk.RemoveAndContinue)
             {
                 builder ??= asObject.AsPropertyBackingBuilder();
-                builder.SetItem(propertyName, result.Output);
+                builder[index] = new(builder[index].Name, result.Output);
             }
             else
             {
                 builder ??= asObject.AsPropertyBackingBuilder();
-                builder.Remove(propertyName);
+                builder.RemoveAt(index);
+                index--;
             }
+
+            ++index;
         }
 
         if (terminateEntireWalkApplyingChanges)
