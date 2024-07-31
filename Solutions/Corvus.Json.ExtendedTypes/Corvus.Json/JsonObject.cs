@@ -570,4 +570,18 @@ public readonly partial struct JsonObject : IJsonObject<JsonObject>
     {
         return Json.Validate.TypeObject(this.ValueKind, validationContext, level);
     }
+
+    /// <summary>
+    /// Get the object as an <see cref="ImmutableList{JsonObjectProperty}.Builder"/>.
+    /// </summary>
+    /// <returns>The builder for the object.</returns>
+    public ImmutableList<JsonObjectProperty>.Builder AsPropertyBackingBuilder()
+    {
+        if ((this.backing & Backing.Object) != 0)
+        {
+            return this.objectBacking.ToBuilder();
+        }
+
+        return PropertyBackingBuilders.GetPropertyBackingBuilder(this.jsonElementBacking);
+    }
 }

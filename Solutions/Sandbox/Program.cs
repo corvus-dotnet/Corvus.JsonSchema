@@ -1,12 +1,9 @@
-﻿using Corvus.Json.Benchmarking;
+﻿using Benchmarks;
 
-ValidateLargeDocument benchmark = new();
+LargeFileBenchmark benchmark = new();
 benchmark.GlobalSetup().Wait();
 
-
-for (int i = 0; i < 10; ++i)
+for(int i = 0; i < 50; ++i)
 {
-    benchmark.ValidateLargeArrayCorvusV3();
+    benchmark.PatchCorvus();
 }
-
-benchmark.GlobalCleanup().Wait();
