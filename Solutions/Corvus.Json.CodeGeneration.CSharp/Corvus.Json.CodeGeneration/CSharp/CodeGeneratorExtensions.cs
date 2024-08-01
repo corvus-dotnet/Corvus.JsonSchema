@@ -3124,6 +3124,35 @@ internal static partial class CodeGeneratorExtensions
     /// <param name="generator">The generator to which to append the beginning of the struct declaration.</param>
     /// <param name="dotnetTypeName">The .NET type name for the partial struct.</param>
     /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator BeginPublicStaticPartialClassDeclaration(this CodeGenerator generator, string dotnetTypeName)
+    {
+        return generator
+            .BeginReservedPublicStaticPartialClassDeclaration(dotnetTypeName);
+    }
+
+    /// <summary>
+    /// Emits the start of a public static class declaration.
+    /// </summary>
+    /// <param name="generator">The generator to which to append the beginning of the struct declaration.</param>
+    /// <param name="dotnetTypeName">The .NET type name for the partial struct.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator BeginReservedPublicStaticPartialClassDeclaration(this CodeGenerator generator, string dotnetTypeName)
+    {
+        return generator
+            .AppendIndent("public static partial class ")
+            .AppendLine(dotnetTypeName)
+            .AppendLineIndent("{")
+            .PushMemberScope(dotnetTypeName, ScopeType.Type)
+            .ReserveNameIfNotReserved(dotnetTypeName) // Reserve the name of the containing scope in its own scope
+            .PushIndent();
+    }
+
+    /// <summary>
+    /// Emits the start of a public static class declaration.
+    /// </summary>
+    /// <param name="generator">The generator to which to append the beginning of the struct declaration.</param>
+    /// <param name="dotnetTypeName">The .NET type name for the partial struct.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator BeginPublicStaticClassDeclaration(this CodeGenerator generator, string dotnetTypeName)
     {
         string name = generator.GetTypeNameInScope(dotnetTypeName);

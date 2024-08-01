@@ -103,6 +103,9 @@ public static partial class ValidationCodeGeneratorExtensions
         string memberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: index?.ToString());
 
         generator
+            .AppendLineIndent("/// <summary>")
+            .AppendLineIndent("/// A constant for the <c>", keyword.Keyword, "</c> keyword.")
+            .AppendLineIndent("/// </summary>")
             .AppendIndent("public static readonly BinaryJsonNumber ")
             .Append(memberName)
             .Append(" = new(")
@@ -119,6 +122,9 @@ public static partial class ValidationCodeGeneratorExtensions
         string memberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: index?.ToString());
 
         generator
+            .AppendLineIndent("/// <summary>")
+            .AppendLineIndent("/// A constant for the <c>", keyword.Keyword, "</c> keyword.")
+            .AppendLineIndent("/// </summary>")
             .AppendIndent("public static readonly long ")
             .Append(memberName)
             .Append(" = ")
@@ -135,6 +141,9 @@ public static partial class ValidationCodeGeneratorExtensions
         string memberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: index?.ToString());
 
         generator
+            .AppendLineIndent("/// <summary>")
+            .AppendLineIndent("/// A constant for the <c>", keyword.Keyword, "</c> keyword.")
+            .AppendLineIndent("/// </summary>")
             .AppendIndent("public static readonly JsonString ")
             .Append(memberName)
             .Append(" = JsonString.ParseValue(")
@@ -151,6 +160,9 @@ public static partial class ValidationCodeGeneratorExtensions
         string memberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: index?.ToString());
 
         generator
+            .AppendLineIndent("/// <summary>")
+            .AppendLineIndent("/// A constant for the <c>", keyword.Keyword, "</c> keyword.")
+            .AppendLineIndent("/// </summary>")
             .AppendIndent("public static readonly JsonNull ")
             .Append(memberName)
             .AppendLine(" = JsonNull.Null;");
@@ -165,6 +177,9 @@ public static partial class ValidationCodeGeneratorExtensions
         string memberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: index?.ToString());
 
         generator
+            .AppendLineIndent("/// <summary>")
+            .AppendLineIndent("/// A constant for the <c>", keyword.Keyword, "</c> keyword.")
+            .AppendLineIndent("/// </summary>")
             .AppendIndent("public static readonly JsonBoolean ")
             .Append(memberName)
             .Append(" = JsonBoolean.ParseValue(")
@@ -181,6 +196,9 @@ public static partial class ValidationCodeGeneratorExtensions
         string memberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: index?.ToString());
 
         generator
+            .AppendLineIndent("/// <summary>")
+            .AppendLineIndent("/// A constant for the <c>", keyword.Keyword, "</c> keyword.")
+            .AppendLineIndent("/// </summary>")
             .AppendIndent("public static readonly JsonObject ")
             .Append(memberName)
             .Append(" = JsonObject.ParseValue(")
@@ -197,6 +215,9 @@ public static partial class ValidationCodeGeneratorExtensions
         string memberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: index?.ToString());
 
         generator
+            .AppendLineIndent("/// <summary>")
+            .AppendLineIndent("/// A constant for the <c>", keyword.Keyword, "</c> keyword.")
+            .AppendLineIndent("/// </summary>")
             .AppendIndent("public static readonly JsonArray ")
             .Append(memberName)
             .Append(" = JsonArray.ParseValue(")
@@ -213,6 +234,9 @@ public static partial class ValidationCodeGeneratorExtensions
         string memberName = generator.GetPropertyNameInScope(keyword.Keyword, suffix: index?.ToString());
 
         generator
+            .AppendLineIndent("/// <summary>")
+            .AppendLineIndent("/// A constant for the <c>", keyword.Keyword, "</c> keyword.")
+            .AppendLineIndent("/// </summary>")
             .AppendIndent("public static ReadOnlySpan<byte> ")
             .Append(memberName)
             .Append("Utf8")
@@ -230,6 +254,9 @@ public static partial class ValidationCodeGeneratorExtensions
         string methodName = generator.GetMethodNameInScope(keyword.Keyword, prefix: "Create", suffix: suffix);
 
         generator
+            .AppendLineIndent("/// <summary>")
+            .AppendLineIndent("/// A regular expression for the <c>", keyword.Keyword, "</c> keyword.")
+            .AppendLineIndent("/// </summary>")
             .AppendIndent("public static readonly Regex ")
             .Append(memberName)
             .Append(" = ")
