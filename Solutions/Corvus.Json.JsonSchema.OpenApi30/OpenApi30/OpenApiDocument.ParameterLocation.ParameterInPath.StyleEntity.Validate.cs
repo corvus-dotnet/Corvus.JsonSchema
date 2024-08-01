@@ -131,18 +131,46 @@ public readonly partial struct OpenApiDocument
                     public static ReadOnlySpan<byte> SimpleUtf8 => CorvusValidation.Enum3Utf8;
                 }
 
-                private static partial class CorvusValidation
+                /// <summary>
+                /// Validation constants for the type.
+                /// </summary>
+                public static partial class CorvusValidation
                 {
+                    /// <summary>
+                    /// A constant for the <c>enum</c> keyword.
+                    /// </summary>
                     public static readonly JsonString Enum1 = JsonString.ParseValue("\"matrix\"");
+                    /// <summary>
+                    /// A constant for the <c>enum</c> keyword.
+                    /// </summary>
                     public static readonly JsonString Enum2 = JsonString.ParseValue("\"label\"");
+                    /// <summary>
+                    /// A constant for the <c>enum</c> keyword.
+                    /// </summary>
                     public static readonly JsonString Enum3 = JsonString.ParseValue("\"simple\"");
 
+                    /// <summary>
+                    /// A constant for the <c>enum</c> keyword.
+                    /// </summary>
                     public static ReadOnlySpan<byte> Enum1Utf8 => "\"matrix\""u8;
+                    /// <summary>
+                    /// A constant for the <c>enum</c> keyword.
+                    /// </summary>
                     public static ReadOnlySpan<byte> Enum2Utf8 => "\"label\""u8;
+                    /// <summary>
+                    /// A constant for the <c>enum</c> keyword.
+                    /// </summary>
                     public static ReadOnlySpan<byte> Enum3Utf8 => "\"simple\""u8;
 
+                    /// <summary>
+                    /// Composition validation (any-of).
+                    /// </summary>
+                    /// <param name="value">The value to validate.</param>
+                    /// <param name="validationContext">The current validation context.</param>
+                    /// <param name="level">The current validation level.</param>
+                    /// <returns>The resulting validation context after validation.</returns>
                     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                    public static ValidationContext CompositionAnyOfValidationHandler(
+                    internal static ValidationContext CompositionAnyOfValidationHandler(
                         in StyleEntity value,
                         in ValidationContext validationContext,
                         ValidationLevel level = ValidationLevel.Flag)

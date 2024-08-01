@@ -76,10 +76,21 @@ public readonly partial struct OpenApiDocument
             return result;
         }
 
-        private static partial class CorvusValidation
+        /// <summary>
+        /// Validation constants for the type.
+        /// </summary>
+        public static partial class CorvusValidation
         {
+            /// <summary>
+            /// Numeric and string format validation.
+            /// </summary>
+            /// <param name="value">The value to validate.</param>
+            /// <param name="valueKind">The <see cref="JsonValueKind" /> of the value to validate.</param>
+            /// <param name="validationContext">The current validation context.</param>
+            /// <param name="level">The current validation level.</param>
+            /// <returns>The resulting validation context after validation.</returns>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static ValidationContext FormatValidationHandler(
+            internal static ValidationContext FormatValidationHandler(
                 in JsonSchemaDialectEntity value,
                 JsonValueKind valueKind,
                 in ValidationContext validationContext,
@@ -100,8 +111,16 @@ public readonly partial struct OpenApiDocument
                 return Corvus.Json.Validate.TypeUri(value, validationContext, level);
             }
 
+            /// <summary>
+            /// Core type validation.
+            /// </summary>
+            /// <param name="value">The value to validate.</param>
+            /// <param name="valueKind">The <see cref="JsonValueKind" /> of the value to validate.</param>
+            /// <param name="validationContext">The current validation context.</param>
+            /// <param name="level">The current validation level.</param>
+            /// <returns>The resulting validation context after validation.</returns>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static ValidationContext TypeValidationHandler(
+            internal static ValidationContext TypeValidationHandler(
                 in JsonSchemaDialectEntity value,
                 JsonValueKind valueKind,
                 in ValidationContext validationContext,
