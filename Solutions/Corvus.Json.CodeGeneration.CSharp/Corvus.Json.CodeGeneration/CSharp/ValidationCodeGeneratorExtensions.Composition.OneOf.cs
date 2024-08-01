@@ -30,9 +30,16 @@ public static partial class ValidationCodeGeneratorExtensions
     {
         return generator
             .AppendSeparatorLine()
+            .AppendLineIndent("/// <summary>")
+            .AppendLineIndent("/// Composition validation (one-of).")
+            .AppendLineIndent("/// </summary>")
+            .AppendLineIndent("/// <param name=\"value\">The value to validate.</param>")
+            .AppendLineIndent("/// <param name=\"validationContext\">The current validation context.</param>")
+            .AppendLineIndent("/// <param name=\"level\">The current validation level.</param>")
+            .AppendLineIndent("/// <returns>The resulting validation context after validation.</returns>")
             .AppendLineIndent("[MethodImpl(MethodImplOptions.AggressiveInlining)]")
             .BeginReservedMethodDeclaration(
-                "public static",
+                "internal static",
                 "ValidationContext",
                 methodName,
                 new("in", typeDeclaration.DotnetTypeName(), "value"),
