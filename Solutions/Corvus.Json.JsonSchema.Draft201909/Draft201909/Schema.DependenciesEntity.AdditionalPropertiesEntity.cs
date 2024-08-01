@@ -923,26 +923,26 @@ public readonly partial struct Schema
             /// <typeparam name="TIn">The immutable context to pass in to the match function.</typeparam>
             /// <typeparam name="TOut">The result of calling the match function.</typeparam>
             /// <param name="context">The context to pass to the match function.</param>
-            /// <param name="matchCorvusJsonJsonSchemaDraft201909Schema">Match a <see cref="Corvus.Json.JsonSchema.Draft201909.Schema"/>.</param>
-            /// <param name="matchCorvusJsonJsonSchemaDraft201909ValidationStringArray">Match a <see cref="Corvus.Json.JsonSchema.Draft201909.Validation.StringArray"/>.</param>
+            /// <param name="matchSchema">Match a <see cref="Corvus.Json.JsonSchema.Draft201909.Schema"/>.</param>
+            /// <param name="matchStringArray">Match a <see cref="Corvus.Json.JsonSchema.Draft201909.Validation.StringArray"/>.</param>
             /// <param name="defaultMatch">Match any other value.</param>
             /// <returns>An instance of the value returned by the match function.</returns>
             public TOut Match<TIn, TOut>(
                 in TIn context,
-                Matcher<Corvus.Json.JsonSchema.Draft201909.Schema, TIn, TOut> matchCorvusJsonJsonSchemaDraft201909Schema,
-                Matcher<Corvus.Json.JsonSchema.Draft201909.Validation.StringArray, TIn, TOut> matchCorvusJsonJsonSchemaDraft201909ValidationStringArray,
-                Matcher<AdditionalPropertiesEntity, TIn, TOut> defaultMatch)
+                Matcher<Corvus.Json.JsonSchema.Draft201909.Schema, TIn, TOut> matchSchema,
+                Matcher<Corvus.Json.JsonSchema.Draft201909.Validation.StringArray, TIn, TOut> matchStringArray,
+                Matcher<Corvus.Json.JsonSchema.Draft201909.Schema.DependenciesEntity.AdditionalPropertiesEntity, TIn, TOut> defaultMatch)
             {
-                Corvus.Json.JsonSchema.Draft201909.Schema matchCorvusJsonJsonSchemaDraft201909SchemaValue = this.As<Corvus.Json.JsonSchema.Draft201909.Schema>();
-                if (matchCorvusJsonJsonSchemaDraft201909SchemaValue.IsValid())
+                Corvus.Json.JsonSchema.Draft201909.Schema matchSchemaValue = this.As<Corvus.Json.JsonSchema.Draft201909.Schema>();
+                if (matchSchemaValue.IsValid())
                 {
-                    return matchCorvusJsonJsonSchemaDraft201909Schema(matchCorvusJsonJsonSchemaDraft201909SchemaValue, context);
+                    return matchSchema(matchSchemaValue, context);
                 }
 
-                Corvus.Json.JsonSchema.Draft201909.Validation.StringArray matchCorvusJsonJsonSchemaDraft201909ValidationStringArrayValue = this.As<Corvus.Json.JsonSchema.Draft201909.Validation.StringArray>();
-                if (matchCorvusJsonJsonSchemaDraft201909ValidationStringArrayValue.IsValid())
+                Corvus.Json.JsonSchema.Draft201909.Validation.StringArray matchStringArrayValue = this.As<Corvus.Json.JsonSchema.Draft201909.Validation.StringArray>();
+                if (matchStringArrayValue.IsValid())
                 {
-                    return matchCorvusJsonJsonSchemaDraft201909ValidationStringArray(matchCorvusJsonJsonSchemaDraft201909ValidationStringArrayValue, context);
+                    return matchStringArray(matchStringArrayValue, context);
                 }
 
                 return defaultMatch(this, context);
@@ -952,25 +952,25 @@ public readonly partial struct Schema
             /// Matches the value against the composed values, and returns the result of calling the provided match function for the first match found.
             /// </summary>
             /// <typeparam name="TOut">The result of calling the match function.</typeparam>
-            /// <param name="matchCorvusJsonJsonSchemaDraft201909Schema">Match a <see cref="Corvus.Json.JsonSchema.Draft201909.Schema"/>.</param>
-            /// <param name="matchCorvusJsonJsonSchemaDraft201909ValidationStringArray">Match a <see cref="Corvus.Json.JsonSchema.Draft201909.Validation.StringArray"/>.</param>
+            /// <param name="matchSchema">Match a <see cref="Corvus.Json.JsonSchema.Draft201909.Schema"/>.</param>
+            /// <param name="matchStringArray">Match a <see cref="Corvus.Json.JsonSchema.Draft201909.Validation.StringArray"/>.</param>
             /// <param name="defaultMatch">Match any other value.</param>
             /// <returns>An instance of the value returned by the match function.</returns>
             public TOut Match<TOut>(
-                Matcher<Corvus.Json.JsonSchema.Draft201909.Schema, TOut> matchCorvusJsonJsonSchemaDraft201909Schema,
-                Matcher<Corvus.Json.JsonSchema.Draft201909.Validation.StringArray, TOut> matchCorvusJsonJsonSchemaDraft201909ValidationStringArray,
-                Matcher<AdditionalPropertiesEntity, TOut> defaultMatch)
+                Matcher<Corvus.Json.JsonSchema.Draft201909.Schema, TOut> matchSchema,
+                Matcher<Corvus.Json.JsonSchema.Draft201909.Validation.StringArray, TOut> matchStringArray,
+                Matcher<Corvus.Json.JsonSchema.Draft201909.Schema.DependenciesEntity.AdditionalPropertiesEntity, TOut> defaultMatch)
             {
-                Corvus.Json.JsonSchema.Draft201909.Schema matchCorvusJsonJsonSchemaDraft201909SchemaValue = this.As<Corvus.Json.JsonSchema.Draft201909.Schema>();
-                if (matchCorvusJsonJsonSchemaDraft201909SchemaValue.IsValid())
+                Corvus.Json.JsonSchema.Draft201909.Schema matchSchemaValue = this.As<Corvus.Json.JsonSchema.Draft201909.Schema>();
+                if (matchSchemaValue.IsValid())
                 {
-                    return matchCorvusJsonJsonSchemaDraft201909Schema(matchCorvusJsonJsonSchemaDraft201909SchemaValue);
+                    return matchSchema(matchSchemaValue);
                 }
 
-                Corvus.Json.JsonSchema.Draft201909.Validation.StringArray matchCorvusJsonJsonSchemaDraft201909ValidationStringArrayValue = this.As<Corvus.Json.JsonSchema.Draft201909.Validation.StringArray>();
-                if (matchCorvusJsonJsonSchemaDraft201909ValidationStringArrayValue.IsValid())
+                Corvus.Json.JsonSchema.Draft201909.Validation.StringArray matchStringArrayValue = this.As<Corvus.Json.JsonSchema.Draft201909.Validation.StringArray>();
+                if (matchStringArrayValue.IsValid())
                 {
-                    return matchCorvusJsonJsonSchemaDraft201909ValidationStringArray(matchCorvusJsonJsonSchemaDraft201909ValidationStringArrayValue);
+                    return matchStringArray(matchStringArrayValue);
                 }
 
                 return defaultMatch(this);

@@ -918,26 +918,26 @@ public readonly partial struct Applicator
         /// <typeparam name="TIn">The immutable context to pass in to the match function.</typeparam>
         /// <typeparam name="TOut">The result of calling the match function.</typeparam>
         /// <param name="context">The context to pass to the match function.</param>
-        /// <param name="matchCorvusJsonJsonSchemaDraft201909Schema">Match a <see cref="Corvus.Json.JsonSchema.Draft201909.Schema"/>.</param>
-        /// <param name="matchCorvusJsonJsonSchemaDraft201909ApplicatorSchemaArray">Match a <see cref="Corvus.Json.JsonSchema.Draft201909.Applicator.SchemaArray"/>.</param>
+        /// <param name="matchSchema">Match a <see cref="Corvus.Json.JsonSchema.Draft201909.Schema"/>.</param>
+        /// <param name="matchSchemaArray">Match a <see cref="Corvus.Json.JsonSchema.Draft201909.Applicator.SchemaArray"/>.</param>
         /// <param name="defaultMatch">Match any other value.</param>
         /// <returns>An instance of the value returned by the match function.</returns>
         public TOut Match<TIn, TOut>(
             in TIn context,
-            Matcher<Corvus.Json.JsonSchema.Draft201909.Schema, TIn, TOut> matchCorvusJsonJsonSchemaDraft201909Schema,
-            Matcher<Corvus.Json.JsonSchema.Draft201909.Applicator.SchemaArray, TIn, TOut> matchCorvusJsonJsonSchemaDraft201909ApplicatorSchemaArray,
-            Matcher<ItemsEntity, TIn, TOut> defaultMatch)
+            Matcher<Corvus.Json.JsonSchema.Draft201909.Schema, TIn, TOut> matchSchema,
+            Matcher<Corvus.Json.JsonSchema.Draft201909.Applicator.SchemaArray, TIn, TOut> matchSchemaArray,
+            Matcher<Corvus.Json.JsonSchema.Draft201909.Applicator.ItemsEntity, TIn, TOut> defaultMatch)
         {
-            Corvus.Json.JsonSchema.Draft201909.Schema matchCorvusJsonJsonSchemaDraft201909SchemaValue = this.As<Corvus.Json.JsonSchema.Draft201909.Schema>();
-            if (matchCorvusJsonJsonSchemaDraft201909SchemaValue.IsValid())
+            Corvus.Json.JsonSchema.Draft201909.Schema matchSchemaValue = this.As<Corvus.Json.JsonSchema.Draft201909.Schema>();
+            if (matchSchemaValue.IsValid())
             {
-                return matchCorvusJsonJsonSchemaDraft201909Schema(matchCorvusJsonJsonSchemaDraft201909SchemaValue, context);
+                return matchSchema(matchSchemaValue, context);
             }
 
-            Corvus.Json.JsonSchema.Draft201909.Applicator.SchemaArray matchCorvusJsonJsonSchemaDraft201909ApplicatorSchemaArrayValue = this.As<Corvus.Json.JsonSchema.Draft201909.Applicator.SchemaArray>();
-            if (matchCorvusJsonJsonSchemaDraft201909ApplicatorSchemaArrayValue.IsValid())
+            Corvus.Json.JsonSchema.Draft201909.Applicator.SchemaArray matchSchemaArrayValue = this.As<Corvus.Json.JsonSchema.Draft201909.Applicator.SchemaArray>();
+            if (matchSchemaArrayValue.IsValid())
             {
-                return matchCorvusJsonJsonSchemaDraft201909ApplicatorSchemaArray(matchCorvusJsonJsonSchemaDraft201909ApplicatorSchemaArrayValue, context);
+                return matchSchemaArray(matchSchemaArrayValue, context);
             }
 
             return defaultMatch(this, context);
@@ -947,25 +947,25 @@ public readonly partial struct Applicator
         /// Matches the value against the composed values, and returns the result of calling the provided match function for the first match found.
         /// </summary>
         /// <typeparam name="TOut">The result of calling the match function.</typeparam>
-        /// <param name="matchCorvusJsonJsonSchemaDraft201909Schema">Match a <see cref="Corvus.Json.JsonSchema.Draft201909.Schema"/>.</param>
-        /// <param name="matchCorvusJsonJsonSchemaDraft201909ApplicatorSchemaArray">Match a <see cref="Corvus.Json.JsonSchema.Draft201909.Applicator.SchemaArray"/>.</param>
+        /// <param name="matchSchema">Match a <see cref="Corvus.Json.JsonSchema.Draft201909.Schema"/>.</param>
+        /// <param name="matchSchemaArray">Match a <see cref="Corvus.Json.JsonSchema.Draft201909.Applicator.SchemaArray"/>.</param>
         /// <param name="defaultMatch">Match any other value.</param>
         /// <returns>An instance of the value returned by the match function.</returns>
         public TOut Match<TOut>(
-            Matcher<Corvus.Json.JsonSchema.Draft201909.Schema, TOut> matchCorvusJsonJsonSchemaDraft201909Schema,
-            Matcher<Corvus.Json.JsonSchema.Draft201909.Applicator.SchemaArray, TOut> matchCorvusJsonJsonSchemaDraft201909ApplicatorSchemaArray,
-            Matcher<ItemsEntity, TOut> defaultMatch)
+            Matcher<Corvus.Json.JsonSchema.Draft201909.Schema, TOut> matchSchema,
+            Matcher<Corvus.Json.JsonSchema.Draft201909.Applicator.SchemaArray, TOut> matchSchemaArray,
+            Matcher<Corvus.Json.JsonSchema.Draft201909.Applicator.ItemsEntity, TOut> defaultMatch)
         {
-            Corvus.Json.JsonSchema.Draft201909.Schema matchCorvusJsonJsonSchemaDraft201909SchemaValue = this.As<Corvus.Json.JsonSchema.Draft201909.Schema>();
-            if (matchCorvusJsonJsonSchemaDraft201909SchemaValue.IsValid())
+            Corvus.Json.JsonSchema.Draft201909.Schema matchSchemaValue = this.As<Corvus.Json.JsonSchema.Draft201909.Schema>();
+            if (matchSchemaValue.IsValid())
             {
-                return matchCorvusJsonJsonSchemaDraft201909Schema(matchCorvusJsonJsonSchemaDraft201909SchemaValue);
+                return matchSchema(matchSchemaValue);
             }
 
-            Corvus.Json.JsonSchema.Draft201909.Applicator.SchemaArray matchCorvusJsonJsonSchemaDraft201909ApplicatorSchemaArrayValue = this.As<Corvus.Json.JsonSchema.Draft201909.Applicator.SchemaArray>();
-            if (matchCorvusJsonJsonSchemaDraft201909ApplicatorSchemaArrayValue.IsValid())
+            Corvus.Json.JsonSchema.Draft201909.Applicator.SchemaArray matchSchemaArrayValue = this.As<Corvus.Json.JsonSchema.Draft201909.Applicator.SchemaArray>();
+            if (matchSchemaArrayValue.IsValid())
             {
-                return matchCorvusJsonJsonSchemaDraft201909ApplicatorSchemaArray(matchCorvusJsonJsonSchemaDraft201909ApplicatorSchemaArrayValue);
+                return matchSchemaArray(matchSchemaArrayValue);
             }
 
             return defaultMatch(this);

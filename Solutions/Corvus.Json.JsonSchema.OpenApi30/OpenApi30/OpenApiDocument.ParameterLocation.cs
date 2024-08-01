@@ -790,42 +790,42 @@ public readonly partial struct OpenApiDocument
         /// <typeparam name="TIn">The immutable context to pass in to the match function.</typeparam>
         /// <typeparam name="TOut">The result of calling the match function.</typeparam>
         /// <param name="context">The context to pass to the match function.</param>
-        /// <param name="matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentParameterLocationParameterInPath">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInPath"/>.</param>
-        /// <param name="matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentParameterLocationParameterInQuery">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInQuery"/>.</param>
-        /// <param name="matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentParameterLocationParameterInHeader">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInHeader"/>.</param>
-        /// <param name="matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentParameterLocationParameterInCookie">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInCookie"/>.</param>
+        /// <param name="matchParameterInPath">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInPath"/>.</param>
+        /// <param name="matchParameterInQuery">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInQuery"/>.</param>
+        /// <param name="matchParameterInHeader">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInHeader"/>.</param>
+        /// <param name="matchParameterInCookie">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInCookie"/>.</param>
         /// <param name="defaultMatch">Match any other value.</param>
         /// <returns>An instance of the value returned by the match function.</returns>
         public TOut Match<TIn, TOut>(
             in TIn context,
-            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInPath, TIn, TOut> matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentParameterLocationParameterInPath,
-            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInQuery, TIn, TOut> matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentParameterLocationParameterInQuery,
-            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInHeader, TIn, TOut> matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentParameterLocationParameterInHeader,
-            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInCookie, TIn, TOut> matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentParameterLocationParameterInCookie,
-            Matcher<ParameterLocation, TIn, TOut> defaultMatch)
+            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInPath, TIn, TOut> matchParameterInPath,
+            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInQuery, TIn, TOut> matchParameterInQuery,
+            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInHeader, TIn, TOut> matchParameterInHeader,
+            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInCookie, TIn, TOut> matchParameterInCookie,
+            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation, TIn, TOut> defaultMatch)
         {
-            Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInPath matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentParameterLocationParameterInPathValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInPath>();
-            if (matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentParameterLocationParameterInPathValue.IsValid())
+            Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInPath matchParameterInPathValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInPath>();
+            if (matchParameterInPathValue.IsValid())
             {
-                return matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentParameterLocationParameterInPath(matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentParameterLocationParameterInPathValue, context);
+                return matchParameterInPath(matchParameterInPathValue, context);
             }
 
-            Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInQuery matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentParameterLocationParameterInQueryValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInQuery>();
-            if (matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentParameterLocationParameterInQueryValue.IsValid())
+            Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInQuery matchParameterInQueryValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInQuery>();
+            if (matchParameterInQueryValue.IsValid())
             {
-                return matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentParameterLocationParameterInQuery(matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentParameterLocationParameterInQueryValue, context);
+                return matchParameterInQuery(matchParameterInQueryValue, context);
             }
 
-            Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInHeader matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentParameterLocationParameterInHeaderValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInHeader>();
-            if (matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentParameterLocationParameterInHeaderValue.IsValid())
+            Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInHeader matchParameterInHeaderValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInHeader>();
+            if (matchParameterInHeaderValue.IsValid())
             {
-                return matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentParameterLocationParameterInHeader(matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentParameterLocationParameterInHeaderValue, context);
+                return matchParameterInHeader(matchParameterInHeaderValue, context);
             }
 
-            Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInCookie matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentParameterLocationParameterInCookieValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInCookie>();
-            if (matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentParameterLocationParameterInCookieValue.IsValid())
+            Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInCookie matchParameterInCookieValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInCookie>();
+            if (matchParameterInCookieValue.IsValid())
             {
-                return matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentParameterLocationParameterInCookie(matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentParameterLocationParameterInCookieValue, context);
+                return matchParameterInCookie(matchParameterInCookieValue, context);
             }
 
             return defaultMatch(this, context);
@@ -835,41 +835,41 @@ public readonly partial struct OpenApiDocument
         /// Matches the value against the composed values, and returns the result of calling the provided match function for the first match found.
         /// </summary>
         /// <typeparam name="TOut">The result of calling the match function.</typeparam>
-        /// <param name="matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentParameterLocationParameterInPath">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInPath"/>.</param>
-        /// <param name="matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentParameterLocationParameterInQuery">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInQuery"/>.</param>
-        /// <param name="matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentParameterLocationParameterInHeader">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInHeader"/>.</param>
-        /// <param name="matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentParameterLocationParameterInCookie">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInCookie"/>.</param>
+        /// <param name="matchParameterInPath">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInPath"/>.</param>
+        /// <param name="matchParameterInQuery">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInQuery"/>.</param>
+        /// <param name="matchParameterInHeader">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInHeader"/>.</param>
+        /// <param name="matchParameterInCookie">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInCookie"/>.</param>
         /// <param name="defaultMatch">Match any other value.</param>
         /// <returns>An instance of the value returned by the match function.</returns>
         public TOut Match<TOut>(
-            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInPath, TOut> matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentParameterLocationParameterInPath,
-            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInQuery, TOut> matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentParameterLocationParameterInQuery,
-            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInHeader, TOut> matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentParameterLocationParameterInHeader,
-            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInCookie, TOut> matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentParameterLocationParameterInCookie,
-            Matcher<ParameterLocation, TOut> defaultMatch)
+            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInPath, TOut> matchParameterInPath,
+            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInQuery, TOut> matchParameterInQuery,
+            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInHeader, TOut> matchParameterInHeader,
+            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInCookie, TOut> matchParameterInCookie,
+            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation, TOut> defaultMatch)
         {
-            Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInPath matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentParameterLocationParameterInPathValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInPath>();
-            if (matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentParameterLocationParameterInPathValue.IsValid())
+            Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInPath matchParameterInPathValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInPath>();
+            if (matchParameterInPathValue.IsValid())
             {
-                return matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentParameterLocationParameterInPath(matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentParameterLocationParameterInPathValue);
+                return matchParameterInPath(matchParameterInPathValue);
             }
 
-            Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInQuery matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentParameterLocationParameterInQueryValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInQuery>();
-            if (matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentParameterLocationParameterInQueryValue.IsValid())
+            Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInQuery matchParameterInQueryValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInQuery>();
+            if (matchParameterInQueryValue.IsValid())
             {
-                return matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentParameterLocationParameterInQuery(matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentParameterLocationParameterInQueryValue);
+                return matchParameterInQuery(matchParameterInQueryValue);
             }
 
-            Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInHeader matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentParameterLocationParameterInHeaderValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInHeader>();
-            if (matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentParameterLocationParameterInHeaderValue.IsValid())
+            Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInHeader matchParameterInHeaderValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInHeader>();
+            if (matchParameterInHeaderValue.IsValid())
             {
-                return matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentParameterLocationParameterInHeader(matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentParameterLocationParameterInHeaderValue);
+                return matchParameterInHeader(matchParameterInHeaderValue);
             }
 
-            Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInCookie matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentParameterLocationParameterInCookieValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInCookie>();
-            if (matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentParameterLocationParameterInCookieValue.IsValid())
+            Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInCookie matchParameterInCookieValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInCookie>();
+            if (matchParameterInCookieValue.IsValid())
             {
-                return matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentParameterLocationParameterInCookie(matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentParameterLocationParameterInCookieValue);
+                return matchParameterInCookie(matchParameterInCookieValue);
             }
 
             return defaultMatch(this);

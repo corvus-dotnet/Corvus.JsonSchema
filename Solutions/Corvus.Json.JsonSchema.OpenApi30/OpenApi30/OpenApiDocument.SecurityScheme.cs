@@ -821,42 +821,42 @@ public readonly partial struct OpenApiDocument
         /// <typeparam name="TIn">The immutable context to pass in to the match function.</typeparam>
         /// <typeparam name="TOut">The result of calling the match function.</typeparam>
         /// <param name="context">The context to pass to the match function.</param>
-        /// <param name="matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentApiKeySecurityScheme">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ApiKeySecurityScheme"/>.</param>
-        /// <param name="matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentHttpSecurityScheme">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme"/>.</param>
-        /// <param name="matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentOAuth2SecurityScheme">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OAuth2SecurityScheme"/>.</param>
-        /// <param name="matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentOpenIdConnectSecurityScheme">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OpenIdConnectSecurityScheme"/>.</param>
+        /// <param name="matchApiKeySecurityScheme">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ApiKeySecurityScheme"/>.</param>
+        /// <param name="matchHttpSecurityScheme">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme"/>.</param>
+        /// <param name="matchOAuth2SecurityScheme">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OAuth2SecurityScheme"/>.</param>
+        /// <param name="matchOpenIdConnectSecurityScheme">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OpenIdConnectSecurityScheme"/>.</param>
         /// <param name="defaultMatch">Match any other value.</param>
         /// <returns>An instance of the value returned by the match function.</returns>
         public TOut Match<TIn, TOut>(
             in TIn context,
-            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ApiKeySecurityScheme, TIn, TOut> matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentApiKeySecurityScheme,
-            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme, TIn, TOut> matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentHttpSecurityScheme,
-            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OAuth2SecurityScheme, TIn, TOut> matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentOAuth2SecurityScheme,
-            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OpenIdConnectSecurityScheme, TIn, TOut> matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentOpenIdConnectSecurityScheme,
-            Matcher<SecurityScheme, TIn, TOut> defaultMatch)
+            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ApiKeySecurityScheme, TIn, TOut> matchApiKeySecurityScheme,
+            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme, TIn, TOut> matchHttpSecurityScheme,
+            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OAuth2SecurityScheme, TIn, TOut> matchOAuth2SecurityScheme,
+            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OpenIdConnectSecurityScheme, TIn, TOut> matchOpenIdConnectSecurityScheme,
+            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SecurityScheme, TIn, TOut> defaultMatch)
         {
-            Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ApiKeySecurityScheme matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentApiKeySecuritySchemeValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ApiKeySecurityScheme>();
-            if (matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentApiKeySecuritySchemeValue.IsValid())
+            Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ApiKeySecurityScheme matchApiKeySecuritySchemeValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ApiKeySecurityScheme>();
+            if (matchApiKeySecuritySchemeValue.IsValid())
             {
-                return matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentApiKeySecurityScheme(matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentApiKeySecuritySchemeValue, context);
+                return matchApiKeySecurityScheme(matchApiKeySecuritySchemeValue, context);
             }
 
-            Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentHttpSecuritySchemeValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme>();
-            if (matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentHttpSecuritySchemeValue.IsValid())
+            Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme matchHttpSecuritySchemeValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme>();
+            if (matchHttpSecuritySchemeValue.IsValid())
             {
-                return matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentHttpSecurityScheme(matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentHttpSecuritySchemeValue, context);
+                return matchHttpSecurityScheme(matchHttpSecuritySchemeValue, context);
             }
 
-            Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OAuth2SecurityScheme matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentOAuth2SecuritySchemeValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OAuth2SecurityScheme>();
-            if (matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentOAuth2SecuritySchemeValue.IsValid())
+            Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OAuth2SecurityScheme matchOAuth2SecuritySchemeValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OAuth2SecurityScheme>();
+            if (matchOAuth2SecuritySchemeValue.IsValid())
             {
-                return matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentOAuth2SecurityScheme(matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentOAuth2SecuritySchemeValue, context);
+                return matchOAuth2SecurityScheme(matchOAuth2SecuritySchemeValue, context);
             }
 
-            Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OpenIdConnectSecurityScheme matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentOpenIdConnectSecuritySchemeValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OpenIdConnectSecurityScheme>();
-            if (matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentOpenIdConnectSecuritySchemeValue.IsValid())
+            Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OpenIdConnectSecurityScheme matchOpenIdConnectSecuritySchemeValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OpenIdConnectSecurityScheme>();
+            if (matchOpenIdConnectSecuritySchemeValue.IsValid())
             {
-                return matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentOpenIdConnectSecurityScheme(matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentOpenIdConnectSecuritySchemeValue, context);
+                return matchOpenIdConnectSecurityScheme(matchOpenIdConnectSecuritySchemeValue, context);
             }
 
             return defaultMatch(this, context);
@@ -866,41 +866,41 @@ public readonly partial struct OpenApiDocument
         /// Matches the value against the composed values, and returns the result of calling the provided match function for the first match found.
         /// </summary>
         /// <typeparam name="TOut">The result of calling the match function.</typeparam>
-        /// <param name="matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentApiKeySecurityScheme">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ApiKeySecurityScheme"/>.</param>
-        /// <param name="matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentHttpSecurityScheme">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme"/>.</param>
-        /// <param name="matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentOAuth2SecurityScheme">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OAuth2SecurityScheme"/>.</param>
-        /// <param name="matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentOpenIdConnectSecurityScheme">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OpenIdConnectSecurityScheme"/>.</param>
+        /// <param name="matchApiKeySecurityScheme">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ApiKeySecurityScheme"/>.</param>
+        /// <param name="matchHttpSecurityScheme">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme"/>.</param>
+        /// <param name="matchOAuth2SecurityScheme">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OAuth2SecurityScheme"/>.</param>
+        /// <param name="matchOpenIdConnectSecurityScheme">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OpenIdConnectSecurityScheme"/>.</param>
         /// <param name="defaultMatch">Match any other value.</param>
         /// <returns>An instance of the value returned by the match function.</returns>
         public TOut Match<TOut>(
-            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ApiKeySecurityScheme, TOut> matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentApiKeySecurityScheme,
-            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme, TOut> matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentHttpSecurityScheme,
-            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OAuth2SecurityScheme, TOut> matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentOAuth2SecurityScheme,
-            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OpenIdConnectSecurityScheme, TOut> matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentOpenIdConnectSecurityScheme,
-            Matcher<SecurityScheme, TOut> defaultMatch)
+            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ApiKeySecurityScheme, TOut> matchApiKeySecurityScheme,
+            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme, TOut> matchHttpSecurityScheme,
+            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OAuth2SecurityScheme, TOut> matchOAuth2SecurityScheme,
+            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OpenIdConnectSecurityScheme, TOut> matchOpenIdConnectSecurityScheme,
+            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SecurityScheme, TOut> defaultMatch)
         {
-            Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ApiKeySecurityScheme matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentApiKeySecuritySchemeValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ApiKeySecurityScheme>();
-            if (matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentApiKeySecuritySchemeValue.IsValid())
+            Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ApiKeySecurityScheme matchApiKeySecuritySchemeValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ApiKeySecurityScheme>();
+            if (matchApiKeySecuritySchemeValue.IsValid())
             {
-                return matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentApiKeySecurityScheme(matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentApiKeySecuritySchemeValue);
+                return matchApiKeySecurityScheme(matchApiKeySecuritySchemeValue);
             }
 
-            Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentHttpSecuritySchemeValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme>();
-            if (matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentHttpSecuritySchemeValue.IsValid())
+            Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme matchHttpSecuritySchemeValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme>();
+            if (matchHttpSecuritySchemeValue.IsValid())
             {
-                return matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentHttpSecurityScheme(matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentHttpSecuritySchemeValue);
+                return matchHttpSecurityScheme(matchHttpSecuritySchemeValue);
             }
 
-            Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OAuth2SecurityScheme matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentOAuth2SecuritySchemeValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OAuth2SecurityScheme>();
-            if (matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentOAuth2SecuritySchemeValue.IsValid())
+            Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OAuth2SecurityScheme matchOAuth2SecuritySchemeValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OAuth2SecurityScheme>();
+            if (matchOAuth2SecuritySchemeValue.IsValid())
             {
-                return matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentOAuth2SecurityScheme(matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentOAuth2SecuritySchemeValue);
+                return matchOAuth2SecurityScheme(matchOAuth2SecuritySchemeValue);
             }
 
-            Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OpenIdConnectSecurityScheme matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentOpenIdConnectSecuritySchemeValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OpenIdConnectSecurityScheme>();
-            if (matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentOpenIdConnectSecuritySchemeValue.IsValid())
+            Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OpenIdConnectSecurityScheme matchOpenIdConnectSecuritySchemeValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OpenIdConnectSecurityScheme>();
+            if (matchOpenIdConnectSecuritySchemeValue.IsValid())
             {
-                return matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentOpenIdConnectSecurityScheme(matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentOpenIdConnectSecuritySchemeValue);
+                return matchOpenIdConnectSecurityScheme(matchOpenIdConnectSecuritySchemeValue);
             }
 
             return defaultMatch(this);

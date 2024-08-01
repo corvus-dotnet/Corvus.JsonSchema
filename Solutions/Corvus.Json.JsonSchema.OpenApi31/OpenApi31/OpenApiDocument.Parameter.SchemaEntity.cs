@@ -870,58 +870,58 @@ public readonly partial struct OpenApiDocument
             /// <typeparam name="TIn">The immutable context to pass in to the match function.</typeparam>
             /// <typeparam name="TOut">The result of calling the match function.</typeparam>
             /// <param name="context">The context to pass to the match function.</param>
-            /// <param name="matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentExamples">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Examples"/>.</param>
-            /// <param name="matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterSchemaEntityStylesForPathEntity">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity"/>.</param>
-            /// <param name="matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterSchemaEntityStylesForHeaderEntity">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForHeaderEntity"/>.</param>
-            /// <param name="matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterSchemaEntityStylesForQueryEntity">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForQueryEntity"/>.</param>
-            /// <param name="matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterSchemaEntityStylesForCookieEntity">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForCookieEntity"/>.</param>
-            /// <param name="matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentStylesForForm">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm"/>.</param>
+            /// <param name="matchExamples">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Examples"/>.</param>
+            /// <param name="matchStylesForPathEntity">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity"/>.</param>
+            /// <param name="matchStylesForHeaderEntity">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForHeaderEntity"/>.</param>
+            /// <param name="matchStylesForQueryEntity">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForQueryEntity"/>.</param>
+            /// <param name="matchStylesForCookieEntity">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForCookieEntity"/>.</param>
+            /// <param name="matchStylesForForm">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm"/>.</param>
             /// <param name="defaultMatch">Match any other value.</param>
             /// <returns>An instance of the value returned by the match function.</returns>
             public TOut Match<TIn, TOut>(
                 in TIn context,
-                Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Examples, TIn, TOut> matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentExamples,
-                Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity, TIn, TOut> matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterSchemaEntityStylesForPathEntity,
-                Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForHeaderEntity, TIn, TOut> matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterSchemaEntityStylesForHeaderEntity,
-                Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForQueryEntity, TIn, TOut> matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterSchemaEntityStylesForQueryEntity,
-                Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForCookieEntity, TIn, TOut> matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterSchemaEntityStylesForCookieEntity,
-                Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm, TIn, TOut> matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentStylesForForm,
-                Matcher<SchemaEntity, TIn, TOut> defaultMatch)
+                Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Examples, TIn, TOut> matchExamples,
+                Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity, TIn, TOut> matchStylesForPathEntity,
+                Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForHeaderEntity, TIn, TOut> matchStylesForHeaderEntity,
+                Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForQueryEntity, TIn, TOut> matchStylesForQueryEntity,
+                Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForCookieEntity, TIn, TOut> matchStylesForCookieEntity,
+                Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm, TIn, TOut> matchStylesForForm,
+                Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity, TIn, TOut> defaultMatch)
             {
-                Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Examples matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentExamplesValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Examples>();
-                if (matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentExamplesValue.IsValid())
+                Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Examples matchExamplesValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Examples>();
+                if (matchExamplesValue.IsValid())
                 {
-                    return matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentExamples(matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentExamplesValue, context);
+                    return matchExamples(matchExamplesValue, context);
                 }
 
-                Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterSchemaEntityStylesForPathEntityValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity>();
-                if (matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterSchemaEntityStylesForPathEntityValue.IsValid())
+                Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity matchStylesForPathEntityValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity>();
+                if (matchStylesForPathEntityValue.IsValid())
                 {
-                    return matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterSchemaEntityStylesForPathEntity(matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterSchemaEntityStylesForPathEntityValue, context);
+                    return matchStylesForPathEntity(matchStylesForPathEntityValue, context);
                 }
 
-                Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForHeaderEntity matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterSchemaEntityStylesForHeaderEntityValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForHeaderEntity>();
-                if (matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterSchemaEntityStylesForHeaderEntityValue.IsValid())
+                Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForHeaderEntity matchStylesForHeaderEntityValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForHeaderEntity>();
+                if (matchStylesForHeaderEntityValue.IsValid())
                 {
-                    return matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterSchemaEntityStylesForHeaderEntity(matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterSchemaEntityStylesForHeaderEntityValue, context);
+                    return matchStylesForHeaderEntity(matchStylesForHeaderEntityValue, context);
                 }
 
-                Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForQueryEntity matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterSchemaEntityStylesForQueryEntityValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForQueryEntity>();
-                if (matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterSchemaEntityStylesForQueryEntityValue.IsValid())
+                Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForQueryEntity matchStylesForQueryEntityValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForQueryEntity>();
+                if (matchStylesForQueryEntityValue.IsValid())
                 {
-                    return matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterSchemaEntityStylesForQueryEntity(matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterSchemaEntityStylesForQueryEntityValue, context);
+                    return matchStylesForQueryEntity(matchStylesForQueryEntityValue, context);
                 }
 
-                Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForCookieEntity matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterSchemaEntityStylesForCookieEntityValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForCookieEntity>();
-                if (matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterSchemaEntityStylesForCookieEntityValue.IsValid())
+                Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForCookieEntity matchStylesForCookieEntityValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForCookieEntity>();
+                if (matchStylesForCookieEntityValue.IsValid())
                 {
-                    return matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterSchemaEntityStylesForCookieEntity(matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterSchemaEntityStylesForCookieEntityValue, context);
+                    return matchStylesForCookieEntity(matchStylesForCookieEntityValue, context);
                 }
 
-                Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentStylesForFormValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm>();
-                if (matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentStylesForFormValue.IsValid())
+                Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm matchStylesForFormValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm>();
+                if (matchStylesForFormValue.IsValid())
                 {
-                    return matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentStylesForForm(matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentStylesForFormValue, context);
+                    return matchStylesForForm(matchStylesForFormValue, context);
                 }
 
                 return defaultMatch(this, context);
@@ -931,57 +931,57 @@ public readonly partial struct OpenApiDocument
             /// Matches the value against the composed values, and returns the result of calling the provided match function for the first match found.
             /// </summary>
             /// <typeparam name="TOut">The result of calling the match function.</typeparam>
-            /// <param name="matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentExamples">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Examples"/>.</param>
-            /// <param name="matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterSchemaEntityStylesForPathEntity">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity"/>.</param>
-            /// <param name="matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterSchemaEntityStylesForHeaderEntity">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForHeaderEntity"/>.</param>
-            /// <param name="matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterSchemaEntityStylesForQueryEntity">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForQueryEntity"/>.</param>
-            /// <param name="matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterSchemaEntityStylesForCookieEntity">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForCookieEntity"/>.</param>
-            /// <param name="matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentStylesForForm">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm"/>.</param>
+            /// <param name="matchExamples">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Examples"/>.</param>
+            /// <param name="matchStylesForPathEntity">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity"/>.</param>
+            /// <param name="matchStylesForHeaderEntity">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForHeaderEntity"/>.</param>
+            /// <param name="matchStylesForQueryEntity">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForQueryEntity"/>.</param>
+            /// <param name="matchStylesForCookieEntity">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForCookieEntity"/>.</param>
+            /// <param name="matchStylesForForm">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm"/>.</param>
             /// <param name="defaultMatch">Match any other value.</param>
             /// <returns>An instance of the value returned by the match function.</returns>
             public TOut Match<TOut>(
-                Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Examples, TOut> matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentExamples,
-                Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity, TOut> matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterSchemaEntityStylesForPathEntity,
-                Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForHeaderEntity, TOut> matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterSchemaEntityStylesForHeaderEntity,
-                Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForQueryEntity, TOut> matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterSchemaEntityStylesForQueryEntity,
-                Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForCookieEntity, TOut> matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterSchemaEntityStylesForCookieEntity,
-                Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm, TOut> matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentStylesForForm,
-                Matcher<SchemaEntity, TOut> defaultMatch)
+                Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Examples, TOut> matchExamples,
+                Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity, TOut> matchStylesForPathEntity,
+                Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForHeaderEntity, TOut> matchStylesForHeaderEntity,
+                Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForQueryEntity, TOut> matchStylesForQueryEntity,
+                Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForCookieEntity, TOut> matchStylesForCookieEntity,
+                Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm, TOut> matchStylesForForm,
+                Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity, TOut> defaultMatch)
             {
-                Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Examples matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentExamplesValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Examples>();
-                if (matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentExamplesValue.IsValid())
+                Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Examples matchExamplesValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Examples>();
+                if (matchExamplesValue.IsValid())
                 {
-                    return matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentExamples(matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentExamplesValue);
+                    return matchExamples(matchExamplesValue);
                 }
 
-                Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterSchemaEntityStylesForPathEntityValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity>();
-                if (matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterSchemaEntityStylesForPathEntityValue.IsValid())
+                Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity matchStylesForPathEntityValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity>();
+                if (matchStylesForPathEntityValue.IsValid())
                 {
-                    return matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterSchemaEntityStylesForPathEntity(matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterSchemaEntityStylesForPathEntityValue);
+                    return matchStylesForPathEntity(matchStylesForPathEntityValue);
                 }
 
-                Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForHeaderEntity matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterSchemaEntityStylesForHeaderEntityValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForHeaderEntity>();
-                if (matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterSchemaEntityStylesForHeaderEntityValue.IsValid())
+                Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForHeaderEntity matchStylesForHeaderEntityValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForHeaderEntity>();
+                if (matchStylesForHeaderEntityValue.IsValid())
                 {
-                    return matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterSchemaEntityStylesForHeaderEntity(matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterSchemaEntityStylesForHeaderEntityValue);
+                    return matchStylesForHeaderEntity(matchStylesForHeaderEntityValue);
                 }
 
-                Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForQueryEntity matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterSchemaEntityStylesForQueryEntityValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForQueryEntity>();
-                if (matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterSchemaEntityStylesForQueryEntityValue.IsValid())
+                Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForQueryEntity matchStylesForQueryEntityValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForQueryEntity>();
+                if (matchStylesForQueryEntityValue.IsValid())
                 {
-                    return matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterSchemaEntityStylesForQueryEntity(matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterSchemaEntityStylesForQueryEntityValue);
+                    return matchStylesForQueryEntity(matchStylesForQueryEntityValue);
                 }
 
-                Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForCookieEntity matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterSchemaEntityStylesForCookieEntityValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForCookieEntity>();
-                if (matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterSchemaEntityStylesForCookieEntityValue.IsValid())
+                Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForCookieEntity matchStylesForCookieEntityValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForCookieEntity>();
+                if (matchStylesForCookieEntityValue.IsValid())
                 {
-                    return matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterSchemaEntityStylesForCookieEntity(matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterSchemaEntityStylesForCookieEntityValue);
+                    return matchStylesForCookieEntity(matchStylesForCookieEntityValue);
                 }
 
-                Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentStylesForFormValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm>();
-                if (matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentStylesForFormValue.IsValid())
+                Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm matchStylesForFormValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm>();
+                if (matchStylesForFormValue.IsValid())
                 {
-                    return matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentStylesForForm(matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentStylesForFormValue);
+                    return matchStylesForForm(matchStylesForFormValue);
                 }
 
                 return defaultMatch(this);

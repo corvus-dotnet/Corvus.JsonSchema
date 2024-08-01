@@ -793,34 +793,34 @@ public readonly partial struct Scenario
     /// <typeparam name="TIn">The immutable context to pass in to the match function.</typeparam>
     /// <typeparam name="TOut">The result of calling the match function.</typeparam>
     /// <param name="context">The context to pass to the match function.</param>
-    /// <param name="matchCorvusJsonPatchSpecGeneratorScenarioWithResult">Match a <see cref="Corvus.Json.Patch.SpecGenerator.ScenarioWithResult"/>.</param>
-    /// <param name="matchCorvusJsonPatchSpecGeneratorScenarioWithError">Match a <see cref="Corvus.Json.Patch.SpecGenerator.ScenarioWithError"/>.</param>
-    /// <param name="matchCorvusJsonPatchSpecGeneratorDisabledScenario">Match a <see cref="Corvus.Json.Patch.SpecGenerator.DisabledScenario"/>.</param>
+    /// <param name="matchScenarioWithResult">Match a <see cref="Corvus.Json.Patch.SpecGenerator.ScenarioWithResult"/>.</param>
+    /// <param name="matchScenarioWithError">Match a <see cref="Corvus.Json.Patch.SpecGenerator.ScenarioWithError"/>.</param>
+    /// <param name="matchDisabledScenario">Match a <see cref="Corvus.Json.Patch.SpecGenerator.DisabledScenario"/>.</param>
     /// <param name="defaultMatch">Match any other value.</param>
     /// <returns>An instance of the value returned by the match function.</returns>
     public TOut Match<TIn, TOut>(
         in TIn context,
-        Matcher<Corvus.Json.Patch.SpecGenerator.ScenarioWithResult, TIn, TOut> matchCorvusJsonPatchSpecGeneratorScenarioWithResult,
-        Matcher<Corvus.Json.Patch.SpecGenerator.ScenarioWithError, TIn, TOut> matchCorvusJsonPatchSpecGeneratorScenarioWithError,
-        Matcher<Corvus.Json.Patch.SpecGenerator.DisabledScenario, TIn, TOut> matchCorvusJsonPatchSpecGeneratorDisabledScenario,
-        Matcher<Scenario, TIn, TOut> defaultMatch)
+        Matcher<Corvus.Json.Patch.SpecGenerator.ScenarioWithResult, TIn, TOut> matchScenarioWithResult,
+        Matcher<Corvus.Json.Patch.SpecGenerator.ScenarioWithError, TIn, TOut> matchScenarioWithError,
+        Matcher<Corvus.Json.Patch.SpecGenerator.DisabledScenario, TIn, TOut> matchDisabledScenario,
+        Matcher<Corvus.Json.Patch.SpecGenerator.Scenario, TIn, TOut> defaultMatch)
     {
-        Corvus.Json.Patch.SpecGenerator.ScenarioWithResult matchCorvusJsonPatchSpecGeneratorScenarioWithResultValue = this.As<Corvus.Json.Patch.SpecGenerator.ScenarioWithResult>();
-        if (matchCorvusJsonPatchSpecGeneratorScenarioWithResultValue.IsValid())
+        Corvus.Json.Patch.SpecGenerator.ScenarioWithResult matchScenarioWithResultValue = this.As<Corvus.Json.Patch.SpecGenerator.ScenarioWithResult>();
+        if (matchScenarioWithResultValue.IsValid())
         {
-            return matchCorvusJsonPatchSpecGeneratorScenarioWithResult(matchCorvusJsonPatchSpecGeneratorScenarioWithResultValue, context);
+            return matchScenarioWithResult(matchScenarioWithResultValue, context);
         }
 
-        Corvus.Json.Patch.SpecGenerator.ScenarioWithError matchCorvusJsonPatchSpecGeneratorScenarioWithErrorValue = this.As<Corvus.Json.Patch.SpecGenerator.ScenarioWithError>();
-        if (matchCorvusJsonPatchSpecGeneratorScenarioWithErrorValue.IsValid())
+        Corvus.Json.Patch.SpecGenerator.ScenarioWithError matchScenarioWithErrorValue = this.As<Corvus.Json.Patch.SpecGenerator.ScenarioWithError>();
+        if (matchScenarioWithErrorValue.IsValid())
         {
-            return matchCorvusJsonPatchSpecGeneratorScenarioWithError(matchCorvusJsonPatchSpecGeneratorScenarioWithErrorValue, context);
+            return matchScenarioWithError(matchScenarioWithErrorValue, context);
         }
 
-        Corvus.Json.Patch.SpecGenerator.DisabledScenario matchCorvusJsonPatchSpecGeneratorDisabledScenarioValue = this.As<Corvus.Json.Patch.SpecGenerator.DisabledScenario>();
-        if (matchCorvusJsonPatchSpecGeneratorDisabledScenarioValue.IsValid())
+        Corvus.Json.Patch.SpecGenerator.DisabledScenario matchDisabledScenarioValue = this.As<Corvus.Json.Patch.SpecGenerator.DisabledScenario>();
+        if (matchDisabledScenarioValue.IsValid())
         {
-            return matchCorvusJsonPatchSpecGeneratorDisabledScenario(matchCorvusJsonPatchSpecGeneratorDisabledScenarioValue, context);
+            return matchDisabledScenario(matchDisabledScenarioValue, context);
         }
 
         return defaultMatch(this, context);
@@ -830,33 +830,33 @@ public readonly partial struct Scenario
     /// Matches the value against the composed values, and returns the result of calling the provided match function for the first match found.
     /// </summary>
     /// <typeparam name="TOut">The result of calling the match function.</typeparam>
-    /// <param name="matchCorvusJsonPatchSpecGeneratorScenarioWithResult">Match a <see cref="Corvus.Json.Patch.SpecGenerator.ScenarioWithResult"/>.</param>
-    /// <param name="matchCorvusJsonPatchSpecGeneratorScenarioWithError">Match a <see cref="Corvus.Json.Patch.SpecGenerator.ScenarioWithError"/>.</param>
-    /// <param name="matchCorvusJsonPatchSpecGeneratorDisabledScenario">Match a <see cref="Corvus.Json.Patch.SpecGenerator.DisabledScenario"/>.</param>
+    /// <param name="matchScenarioWithResult">Match a <see cref="Corvus.Json.Patch.SpecGenerator.ScenarioWithResult"/>.</param>
+    /// <param name="matchScenarioWithError">Match a <see cref="Corvus.Json.Patch.SpecGenerator.ScenarioWithError"/>.</param>
+    /// <param name="matchDisabledScenario">Match a <see cref="Corvus.Json.Patch.SpecGenerator.DisabledScenario"/>.</param>
     /// <param name="defaultMatch">Match any other value.</param>
     /// <returns>An instance of the value returned by the match function.</returns>
     public TOut Match<TOut>(
-        Matcher<Corvus.Json.Patch.SpecGenerator.ScenarioWithResult, TOut> matchCorvusJsonPatchSpecGeneratorScenarioWithResult,
-        Matcher<Corvus.Json.Patch.SpecGenerator.ScenarioWithError, TOut> matchCorvusJsonPatchSpecGeneratorScenarioWithError,
-        Matcher<Corvus.Json.Patch.SpecGenerator.DisabledScenario, TOut> matchCorvusJsonPatchSpecGeneratorDisabledScenario,
-        Matcher<Scenario, TOut> defaultMatch)
+        Matcher<Corvus.Json.Patch.SpecGenerator.ScenarioWithResult, TOut> matchScenarioWithResult,
+        Matcher<Corvus.Json.Patch.SpecGenerator.ScenarioWithError, TOut> matchScenarioWithError,
+        Matcher<Corvus.Json.Patch.SpecGenerator.DisabledScenario, TOut> matchDisabledScenario,
+        Matcher<Corvus.Json.Patch.SpecGenerator.Scenario, TOut> defaultMatch)
     {
-        Corvus.Json.Patch.SpecGenerator.ScenarioWithResult matchCorvusJsonPatchSpecGeneratorScenarioWithResultValue = this.As<Corvus.Json.Patch.SpecGenerator.ScenarioWithResult>();
-        if (matchCorvusJsonPatchSpecGeneratorScenarioWithResultValue.IsValid())
+        Corvus.Json.Patch.SpecGenerator.ScenarioWithResult matchScenarioWithResultValue = this.As<Corvus.Json.Patch.SpecGenerator.ScenarioWithResult>();
+        if (matchScenarioWithResultValue.IsValid())
         {
-            return matchCorvusJsonPatchSpecGeneratorScenarioWithResult(matchCorvusJsonPatchSpecGeneratorScenarioWithResultValue);
+            return matchScenarioWithResult(matchScenarioWithResultValue);
         }
 
-        Corvus.Json.Patch.SpecGenerator.ScenarioWithError matchCorvusJsonPatchSpecGeneratorScenarioWithErrorValue = this.As<Corvus.Json.Patch.SpecGenerator.ScenarioWithError>();
-        if (matchCorvusJsonPatchSpecGeneratorScenarioWithErrorValue.IsValid())
+        Corvus.Json.Patch.SpecGenerator.ScenarioWithError matchScenarioWithErrorValue = this.As<Corvus.Json.Patch.SpecGenerator.ScenarioWithError>();
+        if (matchScenarioWithErrorValue.IsValid())
         {
-            return matchCorvusJsonPatchSpecGeneratorScenarioWithError(matchCorvusJsonPatchSpecGeneratorScenarioWithErrorValue);
+            return matchScenarioWithError(matchScenarioWithErrorValue);
         }
 
-        Corvus.Json.Patch.SpecGenerator.DisabledScenario matchCorvusJsonPatchSpecGeneratorDisabledScenarioValue = this.As<Corvus.Json.Patch.SpecGenerator.DisabledScenario>();
-        if (matchCorvusJsonPatchSpecGeneratorDisabledScenarioValue.IsValid())
+        Corvus.Json.Patch.SpecGenerator.DisabledScenario matchDisabledScenarioValue = this.As<Corvus.Json.Patch.SpecGenerator.DisabledScenario>();
+        if (matchDisabledScenarioValue.IsValid())
         {
-            return matchCorvusJsonPatchSpecGeneratorDisabledScenario(matchCorvusJsonPatchSpecGeneratorDisabledScenarioValue);
+            return matchDisabledScenario(matchDisabledScenarioValue);
         }
 
         return defaultMatch(this);

@@ -710,26 +710,26 @@ public readonly partial struct OpenApiDocument
             /// <typeparam name="TIn">The immutable context to pass in to the match function.</typeparam>
             /// <typeparam name="TOut">The result of calling the match function.</typeparam>
             /// <param name="context">The context to pass to the match function.</param>
-            /// <param name="matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchema">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema"/>.</param>
-            /// <param name="matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentReference">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Reference"/>.</param>
+            /// <param name="matchSchema">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema"/>.</param>
+            /// <param name="matchReference">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Reference"/>.</param>
             /// <param name="defaultMatch">Match any other value.</param>
             /// <returns>An instance of the value returned by the match function.</returns>
             public TOut Match<TIn, TOut>(
                 in TIn context,
-                Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema, TIn, TOut> matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchema,
-                Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Reference, TIn, TOut> matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentReference,
-                Matcher<SchemaEntity, TIn, TOut> defaultMatch)
+                Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema, TIn, TOut> matchSchema,
+                Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Reference, TIn, TOut> matchReference,
+                Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Parameter.SchemaEntity, TIn, TOut> defaultMatch)
             {
-                Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema>();
-                if (matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaValue.IsValid())
+                Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema matchSchemaValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema>();
+                if (matchSchemaValue.IsValid())
                 {
-                    return matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchema(matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaValue, context);
+                    return matchSchema(matchSchemaValue, context);
                 }
 
-                Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Reference matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentReferenceValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Reference>();
-                if (matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentReferenceValue.IsValid())
+                Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Reference matchReferenceValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Reference>();
+                if (matchReferenceValue.IsValid())
                 {
-                    return matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentReference(matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentReferenceValue, context);
+                    return matchReference(matchReferenceValue, context);
                 }
 
                 return defaultMatch(this, context);
@@ -739,25 +739,25 @@ public readonly partial struct OpenApiDocument
             /// Matches the value against the composed values, and returns the result of calling the provided match function for the first match found.
             /// </summary>
             /// <typeparam name="TOut">The result of calling the match function.</typeparam>
-            /// <param name="matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchema">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema"/>.</param>
-            /// <param name="matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentReference">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Reference"/>.</param>
+            /// <param name="matchSchema">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema"/>.</param>
+            /// <param name="matchReference">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Reference"/>.</param>
             /// <param name="defaultMatch">Match any other value.</param>
             /// <returns>An instance of the value returned by the match function.</returns>
             public TOut Match<TOut>(
-                Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema, TOut> matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchema,
-                Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Reference, TOut> matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentReference,
-                Matcher<SchemaEntity, TOut> defaultMatch)
+                Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema, TOut> matchSchema,
+                Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Reference, TOut> matchReference,
+                Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Parameter.SchemaEntity, TOut> defaultMatch)
             {
-                Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema>();
-                if (matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaValue.IsValid())
+                Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema matchSchemaValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema>();
+                if (matchSchemaValue.IsValid())
                 {
-                    return matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchema(matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaValue);
+                    return matchSchema(matchSchemaValue);
                 }
 
-                Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Reference matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentReferenceValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Reference>();
-                if (matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentReferenceValue.IsValid())
+                Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Reference matchReferenceValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Reference>();
+                if (matchReferenceValue.IsValid())
                 {
-                    return matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentReference(matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentReferenceValue);
+                    return matchReference(matchReferenceValue);
                 }
 
                 return defaultMatch(this);

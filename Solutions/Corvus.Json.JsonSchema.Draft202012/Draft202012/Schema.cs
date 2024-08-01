@@ -950,66 +950,66 @@ public readonly partial struct Schema
     /// <typeparam name="TIn">The immutable context to pass in to the match function.</typeparam>
     /// <typeparam name="TOut">The result of calling the match function.</typeparam>
     /// <param name="context">The context to pass to the match function.</param>
-    /// <param name="matchCorvusJsonJsonSchemaDraft202012Core">Match a <see cref="Corvus.Json.JsonSchema.Draft202012.Core"/>.</param>
-    /// <param name="matchCorvusJsonJsonSchemaDraft202012Applicator">Match a <see cref="Corvus.Json.JsonSchema.Draft202012.Applicator"/>.</param>
-    /// <param name="matchCorvusJsonJsonSchemaDraft202012Unevaluated">Match a <see cref="Corvus.Json.JsonSchema.Draft202012.Unevaluated"/>.</param>
-    /// <param name="matchCorvusJsonJsonSchemaDraft202012Validation">Match a <see cref="Corvus.Json.JsonSchema.Draft202012.Validation"/>.</param>
-    /// <param name="matchCorvusJsonJsonSchemaDraft202012MetaData">Match a <see cref="Corvus.Json.JsonSchema.Draft202012.MetaData"/>.</param>
-    /// <param name="matchCorvusJsonJsonSchemaDraft202012FormatAnnotation">Match a <see cref="Corvus.Json.JsonSchema.Draft202012.FormatAnnotation"/>.</param>
-    /// <param name="matchCorvusJsonJsonSchemaDraft202012Content">Match a <see cref="Corvus.Json.JsonSchema.Draft202012.Content"/>.</param>
+    /// <param name="matchCore">Match a <see cref="Corvus.Json.JsonSchema.Draft202012.Core"/>.</param>
+    /// <param name="matchApplicator">Match a <see cref="Corvus.Json.JsonSchema.Draft202012.Applicator"/>.</param>
+    /// <param name="matchUnevaluated">Match a <see cref="Corvus.Json.JsonSchema.Draft202012.Unevaluated"/>.</param>
+    /// <param name="matchValidation">Match a <see cref="Corvus.Json.JsonSchema.Draft202012.Validation"/>.</param>
+    /// <param name="matchMetaData">Match a <see cref="Corvus.Json.JsonSchema.Draft202012.MetaData"/>.</param>
+    /// <param name="matchFormatAnnotation">Match a <see cref="Corvus.Json.JsonSchema.Draft202012.FormatAnnotation"/>.</param>
+    /// <param name="matchContent">Match a <see cref="Corvus.Json.JsonSchema.Draft202012.Content"/>.</param>
     /// <param name="defaultMatch">Match any other value.</param>
     /// <returns>An instance of the value returned by the match function.</returns>
     public TOut Match<TIn, TOut>(
         in TIn context,
-        Matcher<Corvus.Json.JsonSchema.Draft202012.Core, TIn, TOut> matchCorvusJsonJsonSchemaDraft202012Core,
-        Matcher<Corvus.Json.JsonSchema.Draft202012.Applicator, TIn, TOut> matchCorvusJsonJsonSchemaDraft202012Applicator,
-        Matcher<Corvus.Json.JsonSchema.Draft202012.Unevaluated, TIn, TOut> matchCorvusJsonJsonSchemaDraft202012Unevaluated,
-        Matcher<Corvus.Json.JsonSchema.Draft202012.Validation, TIn, TOut> matchCorvusJsonJsonSchemaDraft202012Validation,
-        Matcher<Corvus.Json.JsonSchema.Draft202012.MetaData, TIn, TOut> matchCorvusJsonJsonSchemaDraft202012MetaData,
-        Matcher<Corvus.Json.JsonSchema.Draft202012.FormatAnnotation, TIn, TOut> matchCorvusJsonJsonSchemaDraft202012FormatAnnotation,
-        Matcher<Corvus.Json.JsonSchema.Draft202012.Content, TIn, TOut> matchCorvusJsonJsonSchemaDraft202012Content,
-        Matcher<Schema, TIn, TOut> defaultMatch)
+        Matcher<Corvus.Json.JsonSchema.Draft202012.Core, TIn, TOut> matchCore,
+        Matcher<Corvus.Json.JsonSchema.Draft202012.Applicator, TIn, TOut> matchApplicator,
+        Matcher<Corvus.Json.JsonSchema.Draft202012.Unevaluated, TIn, TOut> matchUnevaluated,
+        Matcher<Corvus.Json.JsonSchema.Draft202012.Validation, TIn, TOut> matchValidation,
+        Matcher<Corvus.Json.JsonSchema.Draft202012.MetaData, TIn, TOut> matchMetaData,
+        Matcher<Corvus.Json.JsonSchema.Draft202012.FormatAnnotation, TIn, TOut> matchFormatAnnotation,
+        Matcher<Corvus.Json.JsonSchema.Draft202012.Content, TIn, TOut> matchContent,
+        Matcher<Corvus.Json.JsonSchema.Draft202012.Schema, TIn, TOut> defaultMatch)
     {
-        Corvus.Json.JsonSchema.Draft202012.Core matchCorvusJsonJsonSchemaDraft202012CoreValue = this.As<Corvus.Json.JsonSchema.Draft202012.Core>();
-        if (matchCorvusJsonJsonSchemaDraft202012CoreValue.IsValid())
+        Corvus.Json.JsonSchema.Draft202012.Core matchCoreValue = this.As<Corvus.Json.JsonSchema.Draft202012.Core>();
+        if (matchCoreValue.IsValid())
         {
-            return matchCorvusJsonJsonSchemaDraft202012Core(matchCorvusJsonJsonSchemaDraft202012CoreValue, context);
+            return matchCore(matchCoreValue, context);
         }
 
-        Corvus.Json.JsonSchema.Draft202012.Applicator matchCorvusJsonJsonSchemaDraft202012ApplicatorValue = this.As<Corvus.Json.JsonSchema.Draft202012.Applicator>();
-        if (matchCorvusJsonJsonSchemaDraft202012ApplicatorValue.IsValid())
+        Corvus.Json.JsonSchema.Draft202012.Applicator matchApplicatorValue = this.As<Corvus.Json.JsonSchema.Draft202012.Applicator>();
+        if (matchApplicatorValue.IsValid())
         {
-            return matchCorvusJsonJsonSchemaDraft202012Applicator(matchCorvusJsonJsonSchemaDraft202012ApplicatorValue, context);
+            return matchApplicator(matchApplicatorValue, context);
         }
 
-        Corvus.Json.JsonSchema.Draft202012.Unevaluated matchCorvusJsonJsonSchemaDraft202012UnevaluatedValue = this.As<Corvus.Json.JsonSchema.Draft202012.Unevaluated>();
-        if (matchCorvusJsonJsonSchemaDraft202012UnevaluatedValue.IsValid())
+        Corvus.Json.JsonSchema.Draft202012.Unevaluated matchUnevaluatedValue = this.As<Corvus.Json.JsonSchema.Draft202012.Unevaluated>();
+        if (matchUnevaluatedValue.IsValid())
         {
-            return matchCorvusJsonJsonSchemaDraft202012Unevaluated(matchCorvusJsonJsonSchemaDraft202012UnevaluatedValue, context);
+            return matchUnevaluated(matchUnevaluatedValue, context);
         }
 
-        Corvus.Json.JsonSchema.Draft202012.Validation matchCorvusJsonJsonSchemaDraft202012ValidationValue = this.As<Corvus.Json.JsonSchema.Draft202012.Validation>();
-        if (matchCorvusJsonJsonSchemaDraft202012ValidationValue.IsValid())
+        Corvus.Json.JsonSchema.Draft202012.Validation matchValidationValue = this.As<Corvus.Json.JsonSchema.Draft202012.Validation>();
+        if (matchValidationValue.IsValid())
         {
-            return matchCorvusJsonJsonSchemaDraft202012Validation(matchCorvusJsonJsonSchemaDraft202012ValidationValue, context);
+            return matchValidation(matchValidationValue, context);
         }
 
-        Corvus.Json.JsonSchema.Draft202012.MetaData matchCorvusJsonJsonSchemaDraft202012MetaDataValue = this.As<Corvus.Json.JsonSchema.Draft202012.MetaData>();
-        if (matchCorvusJsonJsonSchemaDraft202012MetaDataValue.IsValid())
+        Corvus.Json.JsonSchema.Draft202012.MetaData matchMetaDataValue = this.As<Corvus.Json.JsonSchema.Draft202012.MetaData>();
+        if (matchMetaDataValue.IsValid())
         {
-            return matchCorvusJsonJsonSchemaDraft202012MetaData(matchCorvusJsonJsonSchemaDraft202012MetaDataValue, context);
+            return matchMetaData(matchMetaDataValue, context);
         }
 
-        Corvus.Json.JsonSchema.Draft202012.FormatAnnotation matchCorvusJsonJsonSchemaDraft202012FormatAnnotationValue = this.As<Corvus.Json.JsonSchema.Draft202012.FormatAnnotation>();
-        if (matchCorvusJsonJsonSchemaDraft202012FormatAnnotationValue.IsValid())
+        Corvus.Json.JsonSchema.Draft202012.FormatAnnotation matchFormatAnnotationValue = this.As<Corvus.Json.JsonSchema.Draft202012.FormatAnnotation>();
+        if (matchFormatAnnotationValue.IsValid())
         {
-            return matchCorvusJsonJsonSchemaDraft202012FormatAnnotation(matchCorvusJsonJsonSchemaDraft202012FormatAnnotationValue, context);
+            return matchFormatAnnotation(matchFormatAnnotationValue, context);
         }
 
-        Corvus.Json.JsonSchema.Draft202012.Content matchCorvusJsonJsonSchemaDraft202012ContentValue = this.As<Corvus.Json.JsonSchema.Draft202012.Content>();
-        if (matchCorvusJsonJsonSchemaDraft202012ContentValue.IsValid())
+        Corvus.Json.JsonSchema.Draft202012.Content matchContentValue = this.As<Corvus.Json.JsonSchema.Draft202012.Content>();
+        if (matchContentValue.IsValid())
         {
-            return matchCorvusJsonJsonSchemaDraft202012Content(matchCorvusJsonJsonSchemaDraft202012ContentValue, context);
+            return matchContent(matchContentValue, context);
         }
 
         return defaultMatch(this, context);
@@ -1019,65 +1019,65 @@ public readonly partial struct Schema
     /// Matches the value against the composed values, and returns the result of calling the provided match function for the first match found.
     /// </summary>
     /// <typeparam name="TOut">The result of calling the match function.</typeparam>
-    /// <param name="matchCorvusJsonJsonSchemaDraft202012Core">Match a <see cref="Corvus.Json.JsonSchema.Draft202012.Core"/>.</param>
-    /// <param name="matchCorvusJsonJsonSchemaDraft202012Applicator">Match a <see cref="Corvus.Json.JsonSchema.Draft202012.Applicator"/>.</param>
-    /// <param name="matchCorvusJsonJsonSchemaDraft202012Unevaluated">Match a <see cref="Corvus.Json.JsonSchema.Draft202012.Unevaluated"/>.</param>
-    /// <param name="matchCorvusJsonJsonSchemaDraft202012Validation">Match a <see cref="Corvus.Json.JsonSchema.Draft202012.Validation"/>.</param>
-    /// <param name="matchCorvusJsonJsonSchemaDraft202012MetaData">Match a <see cref="Corvus.Json.JsonSchema.Draft202012.MetaData"/>.</param>
-    /// <param name="matchCorvusJsonJsonSchemaDraft202012FormatAnnotation">Match a <see cref="Corvus.Json.JsonSchema.Draft202012.FormatAnnotation"/>.</param>
-    /// <param name="matchCorvusJsonJsonSchemaDraft202012Content">Match a <see cref="Corvus.Json.JsonSchema.Draft202012.Content"/>.</param>
+    /// <param name="matchCore">Match a <see cref="Corvus.Json.JsonSchema.Draft202012.Core"/>.</param>
+    /// <param name="matchApplicator">Match a <see cref="Corvus.Json.JsonSchema.Draft202012.Applicator"/>.</param>
+    /// <param name="matchUnevaluated">Match a <see cref="Corvus.Json.JsonSchema.Draft202012.Unevaluated"/>.</param>
+    /// <param name="matchValidation">Match a <see cref="Corvus.Json.JsonSchema.Draft202012.Validation"/>.</param>
+    /// <param name="matchMetaData">Match a <see cref="Corvus.Json.JsonSchema.Draft202012.MetaData"/>.</param>
+    /// <param name="matchFormatAnnotation">Match a <see cref="Corvus.Json.JsonSchema.Draft202012.FormatAnnotation"/>.</param>
+    /// <param name="matchContent">Match a <see cref="Corvus.Json.JsonSchema.Draft202012.Content"/>.</param>
     /// <param name="defaultMatch">Match any other value.</param>
     /// <returns>An instance of the value returned by the match function.</returns>
     public TOut Match<TOut>(
-        Matcher<Corvus.Json.JsonSchema.Draft202012.Core, TOut> matchCorvusJsonJsonSchemaDraft202012Core,
-        Matcher<Corvus.Json.JsonSchema.Draft202012.Applicator, TOut> matchCorvusJsonJsonSchemaDraft202012Applicator,
-        Matcher<Corvus.Json.JsonSchema.Draft202012.Unevaluated, TOut> matchCorvusJsonJsonSchemaDraft202012Unevaluated,
-        Matcher<Corvus.Json.JsonSchema.Draft202012.Validation, TOut> matchCorvusJsonJsonSchemaDraft202012Validation,
-        Matcher<Corvus.Json.JsonSchema.Draft202012.MetaData, TOut> matchCorvusJsonJsonSchemaDraft202012MetaData,
-        Matcher<Corvus.Json.JsonSchema.Draft202012.FormatAnnotation, TOut> matchCorvusJsonJsonSchemaDraft202012FormatAnnotation,
-        Matcher<Corvus.Json.JsonSchema.Draft202012.Content, TOut> matchCorvusJsonJsonSchemaDraft202012Content,
-        Matcher<Schema, TOut> defaultMatch)
+        Matcher<Corvus.Json.JsonSchema.Draft202012.Core, TOut> matchCore,
+        Matcher<Corvus.Json.JsonSchema.Draft202012.Applicator, TOut> matchApplicator,
+        Matcher<Corvus.Json.JsonSchema.Draft202012.Unevaluated, TOut> matchUnevaluated,
+        Matcher<Corvus.Json.JsonSchema.Draft202012.Validation, TOut> matchValidation,
+        Matcher<Corvus.Json.JsonSchema.Draft202012.MetaData, TOut> matchMetaData,
+        Matcher<Corvus.Json.JsonSchema.Draft202012.FormatAnnotation, TOut> matchFormatAnnotation,
+        Matcher<Corvus.Json.JsonSchema.Draft202012.Content, TOut> matchContent,
+        Matcher<Corvus.Json.JsonSchema.Draft202012.Schema, TOut> defaultMatch)
     {
-        Corvus.Json.JsonSchema.Draft202012.Core matchCorvusJsonJsonSchemaDraft202012CoreValue = this.As<Corvus.Json.JsonSchema.Draft202012.Core>();
-        if (matchCorvusJsonJsonSchemaDraft202012CoreValue.IsValid())
+        Corvus.Json.JsonSchema.Draft202012.Core matchCoreValue = this.As<Corvus.Json.JsonSchema.Draft202012.Core>();
+        if (matchCoreValue.IsValid())
         {
-            return matchCorvusJsonJsonSchemaDraft202012Core(matchCorvusJsonJsonSchemaDraft202012CoreValue);
+            return matchCore(matchCoreValue);
         }
 
-        Corvus.Json.JsonSchema.Draft202012.Applicator matchCorvusJsonJsonSchemaDraft202012ApplicatorValue = this.As<Corvus.Json.JsonSchema.Draft202012.Applicator>();
-        if (matchCorvusJsonJsonSchemaDraft202012ApplicatorValue.IsValid())
+        Corvus.Json.JsonSchema.Draft202012.Applicator matchApplicatorValue = this.As<Corvus.Json.JsonSchema.Draft202012.Applicator>();
+        if (matchApplicatorValue.IsValid())
         {
-            return matchCorvusJsonJsonSchemaDraft202012Applicator(matchCorvusJsonJsonSchemaDraft202012ApplicatorValue);
+            return matchApplicator(matchApplicatorValue);
         }
 
-        Corvus.Json.JsonSchema.Draft202012.Unevaluated matchCorvusJsonJsonSchemaDraft202012UnevaluatedValue = this.As<Corvus.Json.JsonSchema.Draft202012.Unevaluated>();
-        if (matchCorvusJsonJsonSchemaDraft202012UnevaluatedValue.IsValid())
+        Corvus.Json.JsonSchema.Draft202012.Unevaluated matchUnevaluatedValue = this.As<Corvus.Json.JsonSchema.Draft202012.Unevaluated>();
+        if (matchUnevaluatedValue.IsValid())
         {
-            return matchCorvusJsonJsonSchemaDraft202012Unevaluated(matchCorvusJsonJsonSchemaDraft202012UnevaluatedValue);
+            return matchUnevaluated(matchUnevaluatedValue);
         }
 
-        Corvus.Json.JsonSchema.Draft202012.Validation matchCorvusJsonJsonSchemaDraft202012ValidationValue = this.As<Corvus.Json.JsonSchema.Draft202012.Validation>();
-        if (matchCorvusJsonJsonSchemaDraft202012ValidationValue.IsValid())
+        Corvus.Json.JsonSchema.Draft202012.Validation matchValidationValue = this.As<Corvus.Json.JsonSchema.Draft202012.Validation>();
+        if (matchValidationValue.IsValid())
         {
-            return matchCorvusJsonJsonSchemaDraft202012Validation(matchCorvusJsonJsonSchemaDraft202012ValidationValue);
+            return matchValidation(matchValidationValue);
         }
 
-        Corvus.Json.JsonSchema.Draft202012.MetaData matchCorvusJsonJsonSchemaDraft202012MetaDataValue = this.As<Corvus.Json.JsonSchema.Draft202012.MetaData>();
-        if (matchCorvusJsonJsonSchemaDraft202012MetaDataValue.IsValid())
+        Corvus.Json.JsonSchema.Draft202012.MetaData matchMetaDataValue = this.As<Corvus.Json.JsonSchema.Draft202012.MetaData>();
+        if (matchMetaDataValue.IsValid())
         {
-            return matchCorvusJsonJsonSchemaDraft202012MetaData(matchCorvusJsonJsonSchemaDraft202012MetaDataValue);
+            return matchMetaData(matchMetaDataValue);
         }
 
-        Corvus.Json.JsonSchema.Draft202012.FormatAnnotation matchCorvusJsonJsonSchemaDraft202012FormatAnnotationValue = this.As<Corvus.Json.JsonSchema.Draft202012.FormatAnnotation>();
-        if (matchCorvusJsonJsonSchemaDraft202012FormatAnnotationValue.IsValid())
+        Corvus.Json.JsonSchema.Draft202012.FormatAnnotation matchFormatAnnotationValue = this.As<Corvus.Json.JsonSchema.Draft202012.FormatAnnotation>();
+        if (matchFormatAnnotationValue.IsValid())
         {
-            return matchCorvusJsonJsonSchemaDraft202012FormatAnnotation(matchCorvusJsonJsonSchemaDraft202012FormatAnnotationValue);
+            return matchFormatAnnotation(matchFormatAnnotationValue);
         }
 
-        Corvus.Json.JsonSchema.Draft202012.Content matchCorvusJsonJsonSchemaDraft202012ContentValue = this.As<Corvus.Json.JsonSchema.Draft202012.Content>();
-        if (matchCorvusJsonJsonSchemaDraft202012ContentValue.IsValid())
+        Corvus.Json.JsonSchema.Draft202012.Content matchContentValue = this.As<Corvus.Json.JsonSchema.Draft202012.Content>();
+        if (matchContentValue.IsValid())
         {
-            return matchCorvusJsonJsonSchemaDraft202012Content(matchCorvusJsonJsonSchemaDraft202012ContentValue);
+            return matchContent(matchContentValue);
         }
 
         return defaultMatch(this);

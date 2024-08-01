@@ -905,58 +905,58 @@ public readonly partial struct JsonPatchDocument
         /// <typeparam name="TIn">The immutable context to pass in to the match function.</typeparam>
         /// <typeparam name="TOut">The result of calling the match function.</typeparam>
         /// <param name="context">The context to pass to the match function.</param>
-        /// <param name="matchCorvusJsonPatchModelJsonPatchDocumentAddOperation">Match a <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.AddOperation"/>.</param>
-        /// <param name="matchCorvusJsonPatchModelJsonPatchDocumentRemoveOperation">Match a <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.RemoveOperation"/>.</param>
-        /// <param name="matchCorvusJsonPatchModelJsonPatchDocumentReplaceOperation">Match a <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.ReplaceOperation"/>.</param>
-        /// <param name="matchCorvusJsonPatchModelJsonPatchDocumentMoveOperation">Match a <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.MoveOperation"/>.</param>
-        /// <param name="matchCorvusJsonPatchModelJsonPatchDocumentCopyOperation">Match a <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.CopyOperation"/>.</param>
-        /// <param name="matchCorvusJsonPatchModelJsonPatchDocumentTestOperation">Match a <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.TestOperation"/>.</param>
+        /// <param name="matchAddOperation">Match a <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.AddOperation"/>.</param>
+        /// <param name="matchRemoveOperation">Match a <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.RemoveOperation"/>.</param>
+        /// <param name="matchReplaceOperation">Match a <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.ReplaceOperation"/>.</param>
+        /// <param name="matchMoveOperation">Match a <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.MoveOperation"/>.</param>
+        /// <param name="matchCopyOperation">Match a <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.CopyOperation"/>.</param>
+        /// <param name="matchTestOperation">Match a <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.TestOperation"/>.</param>
         /// <param name="defaultMatch">Match any other value.</param>
         /// <returns>An instance of the value returned by the match function.</returns>
         public TOut Match<TIn, TOut>(
             in TIn context,
-            Matcher<Corvus.Json.Patch.Model.JsonPatchDocument.AddOperation, TIn, TOut> matchCorvusJsonPatchModelJsonPatchDocumentAddOperation,
-            Matcher<Corvus.Json.Patch.Model.JsonPatchDocument.RemoveOperation, TIn, TOut> matchCorvusJsonPatchModelJsonPatchDocumentRemoveOperation,
-            Matcher<Corvus.Json.Patch.Model.JsonPatchDocument.ReplaceOperation, TIn, TOut> matchCorvusJsonPatchModelJsonPatchDocumentReplaceOperation,
-            Matcher<Corvus.Json.Patch.Model.JsonPatchDocument.MoveOperation, TIn, TOut> matchCorvusJsonPatchModelJsonPatchDocumentMoveOperation,
-            Matcher<Corvus.Json.Patch.Model.JsonPatchDocument.CopyOperation, TIn, TOut> matchCorvusJsonPatchModelJsonPatchDocumentCopyOperation,
-            Matcher<Corvus.Json.Patch.Model.JsonPatchDocument.TestOperation, TIn, TOut> matchCorvusJsonPatchModelJsonPatchDocumentTestOperation,
-            Matcher<PatchOperation, TIn, TOut> defaultMatch)
+            Matcher<Corvus.Json.Patch.Model.JsonPatchDocument.AddOperation, TIn, TOut> matchAddOperation,
+            Matcher<Corvus.Json.Patch.Model.JsonPatchDocument.RemoveOperation, TIn, TOut> matchRemoveOperation,
+            Matcher<Corvus.Json.Patch.Model.JsonPatchDocument.ReplaceOperation, TIn, TOut> matchReplaceOperation,
+            Matcher<Corvus.Json.Patch.Model.JsonPatchDocument.MoveOperation, TIn, TOut> matchMoveOperation,
+            Matcher<Corvus.Json.Patch.Model.JsonPatchDocument.CopyOperation, TIn, TOut> matchCopyOperation,
+            Matcher<Corvus.Json.Patch.Model.JsonPatchDocument.TestOperation, TIn, TOut> matchTestOperation,
+            Matcher<Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperation, TIn, TOut> defaultMatch)
         {
-            Corvus.Json.Patch.Model.JsonPatchDocument.AddOperation matchCorvusJsonPatchModelJsonPatchDocumentAddOperationValue = this.As<Corvus.Json.Patch.Model.JsonPatchDocument.AddOperation>();
-            if (matchCorvusJsonPatchModelJsonPatchDocumentAddOperationValue.IsValid())
+            Corvus.Json.Patch.Model.JsonPatchDocument.AddOperation matchAddOperationValue = this.As<Corvus.Json.Patch.Model.JsonPatchDocument.AddOperation>();
+            if (matchAddOperationValue.IsValid())
             {
-                return matchCorvusJsonPatchModelJsonPatchDocumentAddOperation(matchCorvusJsonPatchModelJsonPatchDocumentAddOperationValue, context);
+                return matchAddOperation(matchAddOperationValue, context);
             }
 
-            Corvus.Json.Patch.Model.JsonPatchDocument.RemoveOperation matchCorvusJsonPatchModelJsonPatchDocumentRemoveOperationValue = this.As<Corvus.Json.Patch.Model.JsonPatchDocument.RemoveOperation>();
-            if (matchCorvusJsonPatchModelJsonPatchDocumentRemoveOperationValue.IsValid())
+            Corvus.Json.Patch.Model.JsonPatchDocument.RemoveOperation matchRemoveOperationValue = this.As<Corvus.Json.Patch.Model.JsonPatchDocument.RemoveOperation>();
+            if (matchRemoveOperationValue.IsValid())
             {
-                return matchCorvusJsonPatchModelJsonPatchDocumentRemoveOperation(matchCorvusJsonPatchModelJsonPatchDocumentRemoveOperationValue, context);
+                return matchRemoveOperation(matchRemoveOperationValue, context);
             }
 
-            Corvus.Json.Patch.Model.JsonPatchDocument.ReplaceOperation matchCorvusJsonPatchModelJsonPatchDocumentReplaceOperationValue = this.As<Corvus.Json.Patch.Model.JsonPatchDocument.ReplaceOperation>();
-            if (matchCorvusJsonPatchModelJsonPatchDocumentReplaceOperationValue.IsValid())
+            Corvus.Json.Patch.Model.JsonPatchDocument.ReplaceOperation matchReplaceOperationValue = this.As<Corvus.Json.Patch.Model.JsonPatchDocument.ReplaceOperation>();
+            if (matchReplaceOperationValue.IsValid())
             {
-                return matchCorvusJsonPatchModelJsonPatchDocumentReplaceOperation(matchCorvusJsonPatchModelJsonPatchDocumentReplaceOperationValue, context);
+                return matchReplaceOperation(matchReplaceOperationValue, context);
             }
 
-            Corvus.Json.Patch.Model.JsonPatchDocument.MoveOperation matchCorvusJsonPatchModelJsonPatchDocumentMoveOperationValue = this.As<Corvus.Json.Patch.Model.JsonPatchDocument.MoveOperation>();
-            if (matchCorvusJsonPatchModelJsonPatchDocumentMoveOperationValue.IsValid())
+            Corvus.Json.Patch.Model.JsonPatchDocument.MoveOperation matchMoveOperationValue = this.As<Corvus.Json.Patch.Model.JsonPatchDocument.MoveOperation>();
+            if (matchMoveOperationValue.IsValid())
             {
-                return matchCorvusJsonPatchModelJsonPatchDocumentMoveOperation(matchCorvusJsonPatchModelJsonPatchDocumentMoveOperationValue, context);
+                return matchMoveOperation(matchMoveOperationValue, context);
             }
 
-            Corvus.Json.Patch.Model.JsonPatchDocument.CopyOperation matchCorvusJsonPatchModelJsonPatchDocumentCopyOperationValue = this.As<Corvus.Json.Patch.Model.JsonPatchDocument.CopyOperation>();
-            if (matchCorvusJsonPatchModelJsonPatchDocumentCopyOperationValue.IsValid())
+            Corvus.Json.Patch.Model.JsonPatchDocument.CopyOperation matchCopyOperationValue = this.As<Corvus.Json.Patch.Model.JsonPatchDocument.CopyOperation>();
+            if (matchCopyOperationValue.IsValid())
             {
-                return matchCorvusJsonPatchModelJsonPatchDocumentCopyOperation(matchCorvusJsonPatchModelJsonPatchDocumentCopyOperationValue, context);
+                return matchCopyOperation(matchCopyOperationValue, context);
             }
 
-            Corvus.Json.Patch.Model.JsonPatchDocument.TestOperation matchCorvusJsonPatchModelJsonPatchDocumentTestOperationValue = this.As<Corvus.Json.Patch.Model.JsonPatchDocument.TestOperation>();
-            if (matchCorvusJsonPatchModelJsonPatchDocumentTestOperationValue.IsValid())
+            Corvus.Json.Patch.Model.JsonPatchDocument.TestOperation matchTestOperationValue = this.As<Corvus.Json.Patch.Model.JsonPatchDocument.TestOperation>();
+            if (matchTestOperationValue.IsValid())
             {
-                return matchCorvusJsonPatchModelJsonPatchDocumentTestOperation(matchCorvusJsonPatchModelJsonPatchDocumentTestOperationValue, context);
+                return matchTestOperation(matchTestOperationValue, context);
             }
 
             return defaultMatch(this, context);
@@ -966,57 +966,57 @@ public readonly partial struct JsonPatchDocument
         /// Matches the value against the composed values, and returns the result of calling the provided match function for the first match found.
         /// </summary>
         /// <typeparam name="TOut">The result of calling the match function.</typeparam>
-        /// <param name="matchCorvusJsonPatchModelJsonPatchDocumentAddOperation">Match a <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.AddOperation"/>.</param>
-        /// <param name="matchCorvusJsonPatchModelJsonPatchDocumentRemoveOperation">Match a <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.RemoveOperation"/>.</param>
-        /// <param name="matchCorvusJsonPatchModelJsonPatchDocumentReplaceOperation">Match a <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.ReplaceOperation"/>.</param>
-        /// <param name="matchCorvusJsonPatchModelJsonPatchDocumentMoveOperation">Match a <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.MoveOperation"/>.</param>
-        /// <param name="matchCorvusJsonPatchModelJsonPatchDocumentCopyOperation">Match a <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.CopyOperation"/>.</param>
-        /// <param name="matchCorvusJsonPatchModelJsonPatchDocumentTestOperation">Match a <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.TestOperation"/>.</param>
+        /// <param name="matchAddOperation">Match a <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.AddOperation"/>.</param>
+        /// <param name="matchRemoveOperation">Match a <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.RemoveOperation"/>.</param>
+        /// <param name="matchReplaceOperation">Match a <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.ReplaceOperation"/>.</param>
+        /// <param name="matchMoveOperation">Match a <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.MoveOperation"/>.</param>
+        /// <param name="matchCopyOperation">Match a <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.CopyOperation"/>.</param>
+        /// <param name="matchTestOperation">Match a <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.TestOperation"/>.</param>
         /// <param name="defaultMatch">Match any other value.</param>
         /// <returns>An instance of the value returned by the match function.</returns>
         public TOut Match<TOut>(
-            Matcher<Corvus.Json.Patch.Model.JsonPatchDocument.AddOperation, TOut> matchCorvusJsonPatchModelJsonPatchDocumentAddOperation,
-            Matcher<Corvus.Json.Patch.Model.JsonPatchDocument.RemoveOperation, TOut> matchCorvusJsonPatchModelJsonPatchDocumentRemoveOperation,
-            Matcher<Corvus.Json.Patch.Model.JsonPatchDocument.ReplaceOperation, TOut> matchCorvusJsonPatchModelJsonPatchDocumentReplaceOperation,
-            Matcher<Corvus.Json.Patch.Model.JsonPatchDocument.MoveOperation, TOut> matchCorvusJsonPatchModelJsonPatchDocumentMoveOperation,
-            Matcher<Corvus.Json.Patch.Model.JsonPatchDocument.CopyOperation, TOut> matchCorvusJsonPatchModelJsonPatchDocumentCopyOperation,
-            Matcher<Corvus.Json.Patch.Model.JsonPatchDocument.TestOperation, TOut> matchCorvusJsonPatchModelJsonPatchDocumentTestOperation,
-            Matcher<PatchOperation, TOut> defaultMatch)
+            Matcher<Corvus.Json.Patch.Model.JsonPatchDocument.AddOperation, TOut> matchAddOperation,
+            Matcher<Corvus.Json.Patch.Model.JsonPatchDocument.RemoveOperation, TOut> matchRemoveOperation,
+            Matcher<Corvus.Json.Patch.Model.JsonPatchDocument.ReplaceOperation, TOut> matchReplaceOperation,
+            Matcher<Corvus.Json.Patch.Model.JsonPatchDocument.MoveOperation, TOut> matchMoveOperation,
+            Matcher<Corvus.Json.Patch.Model.JsonPatchDocument.CopyOperation, TOut> matchCopyOperation,
+            Matcher<Corvus.Json.Patch.Model.JsonPatchDocument.TestOperation, TOut> matchTestOperation,
+            Matcher<Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperation, TOut> defaultMatch)
         {
-            Corvus.Json.Patch.Model.JsonPatchDocument.AddOperation matchCorvusJsonPatchModelJsonPatchDocumentAddOperationValue = this.As<Corvus.Json.Patch.Model.JsonPatchDocument.AddOperation>();
-            if (matchCorvusJsonPatchModelJsonPatchDocumentAddOperationValue.IsValid())
+            Corvus.Json.Patch.Model.JsonPatchDocument.AddOperation matchAddOperationValue = this.As<Corvus.Json.Patch.Model.JsonPatchDocument.AddOperation>();
+            if (matchAddOperationValue.IsValid())
             {
-                return matchCorvusJsonPatchModelJsonPatchDocumentAddOperation(matchCorvusJsonPatchModelJsonPatchDocumentAddOperationValue);
+                return matchAddOperation(matchAddOperationValue);
             }
 
-            Corvus.Json.Patch.Model.JsonPatchDocument.RemoveOperation matchCorvusJsonPatchModelJsonPatchDocumentRemoveOperationValue = this.As<Corvus.Json.Patch.Model.JsonPatchDocument.RemoveOperation>();
-            if (matchCorvusJsonPatchModelJsonPatchDocumentRemoveOperationValue.IsValid())
+            Corvus.Json.Patch.Model.JsonPatchDocument.RemoveOperation matchRemoveOperationValue = this.As<Corvus.Json.Patch.Model.JsonPatchDocument.RemoveOperation>();
+            if (matchRemoveOperationValue.IsValid())
             {
-                return matchCorvusJsonPatchModelJsonPatchDocumentRemoveOperation(matchCorvusJsonPatchModelJsonPatchDocumentRemoveOperationValue);
+                return matchRemoveOperation(matchRemoveOperationValue);
             }
 
-            Corvus.Json.Patch.Model.JsonPatchDocument.ReplaceOperation matchCorvusJsonPatchModelJsonPatchDocumentReplaceOperationValue = this.As<Corvus.Json.Patch.Model.JsonPatchDocument.ReplaceOperation>();
-            if (matchCorvusJsonPatchModelJsonPatchDocumentReplaceOperationValue.IsValid())
+            Corvus.Json.Patch.Model.JsonPatchDocument.ReplaceOperation matchReplaceOperationValue = this.As<Corvus.Json.Patch.Model.JsonPatchDocument.ReplaceOperation>();
+            if (matchReplaceOperationValue.IsValid())
             {
-                return matchCorvusJsonPatchModelJsonPatchDocumentReplaceOperation(matchCorvusJsonPatchModelJsonPatchDocumentReplaceOperationValue);
+                return matchReplaceOperation(matchReplaceOperationValue);
             }
 
-            Corvus.Json.Patch.Model.JsonPatchDocument.MoveOperation matchCorvusJsonPatchModelJsonPatchDocumentMoveOperationValue = this.As<Corvus.Json.Patch.Model.JsonPatchDocument.MoveOperation>();
-            if (matchCorvusJsonPatchModelJsonPatchDocumentMoveOperationValue.IsValid())
+            Corvus.Json.Patch.Model.JsonPatchDocument.MoveOperation matchMoveOperationValue = this.As<Corvus.Json.Patch.Model.JsonPatchDocument.MoveOperation>();
+            if (matchMoveOperationValue.IsValid())
             {
-                return matchCorvusJsonPatchModelJsonPatchDocumentMoveOperation(matchCorvusJsonPatchModelJsonPatchDocumentMoveOperationValue);
+                return matchMoveOperation(matchMoveOperationValue);
             }
 
-            Corvus.Json.Patch.Model.JsonPatchDocument.CopyOperation matchCorvusJsonPatchModelJsonPatchDocumentCopyOperationValue = this.As<Corvus.Json.Patch.Model.JsonPatchDocument.CopyOperation>();
-            if (matchCorvusJsonPatchModelJsonPatchDocumentCopyOperationValue.IsValid())
+            Corvus.Json.Patch.Model.JsonPatchDocument.CopyOperation matchCopyOperationValue = this.As<Corvus.Json.Patch.Model.JsonPatchDocument.CopyOperation>();
+            if (matchCopyOperationValue.IsValid())
             {
-                return matchCorvusJsonPatchModelJsonPatchDocumentCopyOperation(matchCorvusJsonPatchModelJsonPatchDocumentCopyOperationValue);
+                return matchCopyOperation(matchCopyOperationValue);
             }
 
-            Corvus.Json.Patch.Model.JsonPatchDocument.TestOperation matchCorvusJsonPatchModelJsonPatchDocumentTestOperationValue = this.As<Corvus.Json.Patch.Model.JsonPatchDocument.TestOperation>();
-            if (matchCorvusJsonPatchModelJsonPatchDocumentTestOperationValue.IsValid())
+            Corvus.Json.Patch.Model.JsonPatchDocument.TestOperation matchTestOperationValue = this.As<Corvus.Json.Patch.Model.JsonPatchDocument.TestOperation>();
+            if (matchTestOperationValue.IsValid())
             {
-                return matchCorvusJsonPatchModelJsonPatchDocumentTestOperation(matchCorvusJsonPatchModelJsonPatchDocumentTestOperationValue);
+                return matchTestOperation(matchTestOperationValue);
             }
 
             return defaultMatch(this);

@@ -763,26 +763,26 @@ public readonly partial struct Schema
         /// <typeparam name="TIn">The immutable context to pass in to the match function.</typeparam>
         /// <typeparam name="TOut">The result of calling the match function.</typeparam>
         /// <param name="context">The context to pass to the match function.</param>
-        /// <param name="matchCorvusJsonJsonSchemaDraft7SchemaSimpleTypes">Match a <see cref="Corvus.Json.JsonSchema.Draft7.Schema.SimpleTypes"/>.</param>
-        /// <param name="matchCorvusJsonJsonSchemaDraft7SchemaTypeEntitySimpleTypesArray">Match a <see cref="Corvus.Json.JsonSchema.Draft7.Schema.TypeEntity.SimpleTypesArray"/>.</param>
+        /// <param name="matchSimpleTypes">Match a <see cref="Corvus.Json.JsonSchema.Draft7.Schema.SimpleTypes"/>.</param>
+        /// <param name="matchSimpleTypesArray">Match a <see cref="Corvus.Json.JsonSchema.Draft7.Schema.TypeEntity.SimpleTypesArray"/>.</param>
         /// <param name="defaultMatch">Match any other value.</param>
         /// <returns>An instance of the value returned by the match function.</returns>
         public TOut Match<TIn, TOut>(
             in TIn context,
-            Matcher<Corvus.Json.JsonSchema.Draft7.Schema.SimpleTypes, TIn, TOut> matchCorvusJsonJsonSchemaDraft7SchemaSimpleTypes,
-            Matcher<Corvus.Json.JsonSchema.Draft7.Schema.TypeEntity.SimpleTypesArray, TIn, TOut> matchCorvusJsonJsonSchemaDraft7SchemaTypeEntitySimpleTypesArray,
-            Matcher<TypeEntity, TIn, TOut> defaultMatch)
+            Matcher<Corvus.Json.JsonSchema.Draft7.Schema.SimpleTypes, TIn, TOut> matchSimpleTypes,
+            Matcher<Corvus.Json.JsonSchema.Draft7.Schema.TypeEntity.SimpleTypesArray, TIn, TOut> matchSimpleTypesArray,
+            Matcher<Corvus.Json.JsonSchema.Draft7.Schema.TypeEntity, TIn, TOut> defaultMatch)
         {
-            Corvus.Json.JsonSchema.Draft7.Schema.SimpleTypes matchCorvusJsonJsonSchemaDraft7SchemaSimpleTypesValue = this.As<Corvus.Json.JsonSchema.Draft7.Schema.SimpleTypes>();
-            if (matchCorvusJsonJsonSchemaDraft7SchemaSimpleTypesValue.IsValid())
+            Corvus.Json.JsonSchema.Draft7.Schema.SimpleTypes matchSimpleTypesValue = this.As<Corvus.Json.JsonSchema.Draft7.Schema.SimpleTypes>();
+            if (matchSimpleTypesValue.IsValid())
             {
-                return matchCorvusJsonJsonSchemaDraft7SchemaSimpleTypes(matchCorvusJsonJsonSchemaDraft7SchemaSimpleTypesValue, context);
+                return matchSimpleTypes(matchSimpleTypesValue, context);
             }
 
-            Corvus.Json.JsonSchema.Draft7.Schema.TypeEntity.SimpleTypesArray matchCorvusJsonJsonSchemaDraft7SchemaTypeEntitySimpleTypesArrayValue = this.As<Corvus.Json.JsonSchema.Draft7.Schema.TypeEntity.SimpleTypesArray>();
-            if (matchCorvusJsonJsonSchemaDraft7SchemaTypeEntitySimpleTypesArrayValue.IsValid())
+            Corvus.Json.JsonSchema.Draft7.Schema.TypeEntity.SimpleTypesArray matchSimpleTypesArrayValue = this.As<Corvus.Json.JsonSchema.Draft7.Schema.TypeEntity.SimpleTypesArray>();
+            if (matchSimpleTypesArrayValue.IsValid())
             {
-                return matchCorvusJsonJsonSchemaDraft7SchemaTypeEntitySimpleTypesArray(matchCorvusJsonJsonSchemaDraft7SchemaTypeEntitySimpleTypesArrayValue, context);
+                return matchSimpleTypesArray(matchSimpleTypesArrayValue, context);
             }
 
             return defaultMatch(this, context);
@@ -792,25 +792,25 @@ public readonly partial struct Schema
         /// Matches the value against the composed values, and returns the result of calling the provided match function for the first match found.
         /// </summary>
         /// <typeparam name="TOut">The result of calling the match function.</typeparam>
-        /// <param name="matchCorvusJsonJsonSchemaDraft7SchemaSimpleTypes">Match a <see cref="Corvus.Json.JsonSchema.Draft7.Schema.SimpleTypes"/>.</param>
-        /// <param name="matchCorvusJsonJsonSchemaDraft7SchemaTypeEntitySimpleTypesArray">Match a <see cref="Corvus.Json.JsonSchema.Draft7.Schema.TypeEntity.SimpleTypesArray"/>.</param>
+        /// <param name="matchSimpleTypes">Match a <see cref="Corvus.Json.JsonSchema.Draft7.Schema.SimpleTypes"/>.</param>
+        /// <param name="matchSimpleTypesArray">Match a <see cref="Corvus.Json.JsonSchema.Draft7.Schema.TypeEntity.SimpleTypesArray"/>.</param>
         /// <param name="defaultMatch">Match any other value.</param>
         /// <returns>An instance of the value returned by the match function.</returns>
         public TOut Match<TOut>(
-            Matcher<Corvus.Json.JsonSchema.Draft7.Schema.SimpleTypes, TOut> matchCorvusJsonJsonSchemaDraft7SchemaSimpleTypes,
-            Matcher<Corvus.Json.JsonSchema.Draft7.Schema.TypeEntity.SimpleTypesArray, TOut> matchCorvusJsonJsonSchemaDraft7SchemaTypeEntitySimpleTypesArray,
-            Matcher<TypeEntity, TOut> defaultMatch)
+            Matcher<Corvus.Json.JsonSchema.Draft7.Schema.SimpleTypes, TOut> matchSimpleTypes,
+            Matcher<Corvus.Json.JsonSchema.Draft7.Schema.TypeEntity.SimpleTypesArray, TOut> matchSimpleTypesArray,
+            Matcher<Corvus.Json.JsonSchema.Draft7.Schema.TypeEntity, TOut> defaultMatch)
         {
-            Corvus.Json.JsonSchema.Draft7.Schema.SimpleTypes matchCorvusJsonJsonSchemaDraft7SchemaSimpleTypesValue = this.As<Corvus.Json.JsonSchema.Draft7.Schema.SimpleTypes>();
-            if (matchCorvusJsonJsonSchemaDraft7SchemaSimpleTypesValue.IsValid())
+            Corvus.Json.JsonSchema.Draft7.Schema.SimpleTypes matchSimpleTypesValue = this.As<Corvus.Json.JsonSchema.Draft7.Schema.SimpleTypes>();
+            if (matchSimpleTypesValue.IsValid())
             {
-                return matchCorvusJsonJsonSchemaDraft7SchemaSimpleTypes(matchCorvusJsonJsonSchemaDraft7SchemaSimpleTypesValue);
+                return matchSimpleTypes(matchSimpleTypesValue);
             }
 
-            Corvus.Json.JsonSchema.Draft7.Schema.TypeEntity.SimpleTypesArray matchCorvusJsonJsonSchemaDraft7SchemaTypeEntitySimpleTypesArrayValue = this.As<Corvus.Json.JsonSchema.Draft7.Schema.TypeEntity.SimpleTypesArray>();
-            if (matchCorvusJsonJsonSchemaDraft7SchemaTypeEntitySimpleTypesArrayValue.IsValid())
+            Corvus.Json.JsonSchema.Draft7.Schema.TypeEntity.SimpleTypesArray matchSimpleTypesArrayValue = this.As<Corvus.Json.JsonSchema.Draft7.Schema.TypeEntity.SimpleTypesArray>();
+            if (matchSimpleTypesArrayValue.IsValid())
             {
-                return matchCorvusJsonJsonSchemaDraft7SchemaTypeEntitySimpleTypesArray(matchCorvusJsonJsonSchemaDraft7SchemaTypeEntitySimpleTypesArrayValue);
+                return matchSimpleTypesArray(matchSimpleTypesArrayValue);
             }
 
             return defaultMatch(this);

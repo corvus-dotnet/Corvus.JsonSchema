@@ -789,26 +789,26 @@ public readonly partial struct OpenApiDocument
         /// <typeparam name="TIn">The immutable context to pass in to the match function.</typeparam>
         /// <typeparam name="TOut">The result of calling the match function.</typeparam>
         /// <param name="context">The context to pass to the match function.</param>
-        /// <param name="matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterRequiredSchema">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.RequiredSchema"/>.</param>
-        /// <param name="matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterRequiredContent">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.RequiredContent"/>.</param>
+        /// <param name="matchRequiredSchema">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.RequiredSchema"/>.</param>
+        /// <param name="matchRequiredContent">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.RequiredContent"/>.</param>
         /// <param name="defaultMatch">Match any other value.</param>
         /// <returns>An instance of the value returned by the match function.</returns>
         public TOut Match<TIn, TOut>(
             in TIn context,
-            Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.RequiredSchema, TIn, TOut> matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterRequiredSchema,
-            Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.RequiredContent, TIn, TOut> matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterRequiredContent,
-            Matcher<Parameter, TIn, TOut> defaultMatch)
+            Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.RequiredSchema, TIn, TOut> matchRequiredSchema,
+            Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.RequiredContent, TIn, TOut> matchRequiredContent,
+            Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter, TIn, TOut> defaultMatch)
         {
-            Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.RequiredSchema matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterRequiredSchemaValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.RequiredSchema>();
-            if (matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterRequiredSchemaValue.IsValid())
+            Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.RequiredSchema matchRequiredSchemaValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.RequiredSchema>();
+            if (matchRequiredSchemaValue.IsValid())
             {
-                return matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterRequiredSchema(matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterRequiredSchemaValue, context);
+                return matchRequiredSchema(matchRequiredSchemaValue, context);
             }
 
-            Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.RequiredContent matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterRequiredContentValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.RequiredContent>();
-            if (matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterRequiredContentValue.IsValid())
+            Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.RequiredContent matchRequiredContentValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.RequiredContent>();
+            if (matchRequiredContentValue.IsValid())
             {
-                return matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterRequiredContent(matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterRequiredContentValue, context);
+                return matchRequiredContent(matchRequiredContentValue, context);
             }
 
             return defaultMatch(this, context);
@@ -818,25 +818,25 @@ public readonly partial struct OpenApiDocument
         /// Matches the value against the composed values, and returns the result of calling the provided match function for the first match found.
         /// </summary>
         /// <typeparam name="TOut">The result of calling the match function.</typeparam>
-        /// <param name="matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterRequiredSchema">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.RequiredSchema"/>.</param>
-        /// <param name="matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterRequiredContent">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.RequiredContent"/>.</param>
+        /// <param name="matchRequiredSchema">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.RequiredSchema"/>.</param>
+        /// <param name="matchRequiredContent">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.RequiredContent"/>.</param>
         /// <param name="defaultMatch">Match any other value.</param>
         /// <returns>An instance of the value returned by the match function.</returns>
         public TOut Match<TOut>(
-            Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.RequiredSchema, TOut> matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterRequiredSchema,
-            Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.RequiredContent, TOut> matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterRequiredContent,
-            Matcher<Parameter, TOut> defaultMatch)
+            Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.RequiredSchema, TOut> matchRequiredSchema,
+            Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.RequiredContent, TOut> matchRequiredContent,
+            Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter, TOut> defaultMatch)
         {
-            Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.RequiredSchema matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterRequiredSchemaValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.RequiredSchema>();
-            if (matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterRequiredSchemaValue.IsValid())
+            Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.RequiredSchema matchRequiredSchemaValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.RequiredSchema>();
+            if (matchRequiredSchemaValue.IsValid())
             {
-                return matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterRequiredSchema(matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterRequiredSchemaValue);
+                return matchRequiredSchema(matchRequiredSchemaValue);
             }
 
-            Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.RequiredContent matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterRequiredContentValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.RequiredContent>();
-            if (matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterRequiredContentValue.IsValid())
+            Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.RequiredContent matchRequiredContentValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.RequiredContent>();
+            if (matchRequiredContentValue.IsValid())
             {
-                return matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterRequiredContent(matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterRequiredContentValue);
+                return matchRequiredContent(matchRequiredContentValue);
             }
 
             return defaultMatch(this);
