@@ -38,7 +38,7 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
         public string? OutputMapFile { get; init; }
 
         [CommandOption("--outputPath")]
-        [Description("The dotnet type name for the root type.")]
+        [Description("The path to which to write the generated code.")]
         public string? OutputPath { get; init; }
 
         [CommandOption("--outputRootTypeName")]
@@ -60,6 +60,12 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
         [CommandArgument(0, "<schemaFile>")]
         [NotNull] // <> => NotNull
         public string? SchemaFile { get; init; }
+
+
+        [CommandOption("--disableOptionalNamingHeuristics")]
+        [Description("Disables optional naming heuristics.")]
+        [DefaultValue(false)]
+        public bool DisableOptionalNamingHeuristics { get; init; }
     }
 
     /// <inheritdoc/>
@@ -68,10 +74,10 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
         ArgumentNullException.ThrowIfNullOrEmpty(settings.SchemaFile); // We will never see this exception if the framework is doing its job; it should have blown up inside the CLI command handling
         ArgumentNullException.ThrowIfNullOrEmpty(settings.RootNamespace); // We will never see this exception if the framework is doing its job; it should have blown up inside the CLI command handling
 
-        return GenerateTypes(settings.SchemaFile, settings.RootNamespace, settings.RootPath, settings.RebaseToRootPath, settings.OutputPath, settings.OutputMapFile, settings.OutputRootTypeName, settings.UseSchema, settings.AssertFormat);
+        return GenerateTypes(settings.SchemaFile, settings.RootNamespace, settings.RootPath, settings.RebaseToRootPath, settings.OutputPath, settings.OutputMapFile, settings.OutputRootTypeName, settings.UseSchema, settings.AssertFormat, settings.DisableOptionalNamingHeuristics);
     }
 
-    private static async Task<int> GenerateTypes(string schemaFile, string rootNamespace, string? rootPath, bool rebaseToRootPath, string? outputPath, string? outputMapFile, string? rootTypeName, SchemaVariant schemaVariant, bool assertFormat)
+    private static async Task<int> GenerateTypes(string schemaFile, string rootNamespace, string? rootPath, bool rebaseToRootPath, string? outputPath, string? outputMapFile, string? rootTypeName, SchemaVariant schemaVariant, bool assertFormat, bool disableOptionalNameHeuristics)
     {
         try
         {
@@ -112,7 +118,8 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
                 var options = new CSharpLanguageProvider.Options(
                     rootNamespace,
                     namedTypes: rootTypeName is string rtn ? [new CSharpLanguageProvider.NamedType(rootType.LocatedSchema.Location, rtn)] : null,
-                    alwaysAssertFormat: assertFormat);
+                    alwaysAssertFormat: assertFormat,
+                    useOptionalNameHeuristics: !disableOptionalNameHeuristics);
 
                 currentTask = context.AddTask($"Generating code for {reference}");
                 var languageProvider = CSharpLanguageProvider.DefaultWithOptions(options);

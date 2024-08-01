@@ -341,6 +341,7 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
         typeDeclaration.SetDotnetNamespace(ns);
     }
 
+    // TODO: I would like to refactor this out into some kind of strategy pattern like the rest of the heuristics
     private static int FixTypeNameForCollisionWithParent(TypeDeclaration typeDeclaration, Span<char> typeNameBuffer, int written)
     {
         if (typeDeclaration.Parent() is TypeDeclaration parent && !typeDeclaration.IsInDefinitionsContainer() && parent.TryGetDotnetTypeName(out string? name))
