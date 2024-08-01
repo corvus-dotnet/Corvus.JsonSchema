@@ -1,17 +1,4 @@
-﻿using Corvus.Json;
-using Sandbox.Models;
+﻿string path = "./this/really/is/an/exceptionally/long/path/deep/down/in/the/mire/of/the/file/system/so/deep/in/fact/that/you/may/even/get/lost/tyring/to/find/yourself/and/you/will.definitely.find.that.it.will.require.at.least.a.very.little.bit.of.truncation.if.not.a.lot.of.truncation.you.just.see.if.it.doesnt.cs";
 
-var person = Person.Create(PersonName.Create("Doe", "John"), netWorth: 1, dateOfBirth: Person.DateOfBirthEntity.Null);
-
-if (person.NetWorth is JsonDecimal networth)
-{
-    JsonDecimal networth2 = 3.0m;
-
-    if (person.Name.OtherNamesValue is OtherNames names)
-    {
-    }
-
-    Console.WriteLine(networth * 1000);
-}
-
-Console.WriteLine(person.HasProperty(Person.JsonPropertyNames.DateOfBirth));
+Console.WriteLine(path);
+Console.WriteLine(PathTruncator.TruncatePath(path));

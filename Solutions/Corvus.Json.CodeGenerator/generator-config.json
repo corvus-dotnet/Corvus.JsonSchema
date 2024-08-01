@@ -1,0 +1,72 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "JSON Schema for a configuration file for the corvus codegenerator.",
+    "type": "object",
+    "required":  ["typesToGenerate"],
+    "properties": {
+        "rootNamespace": {
+            "type": "string",
+            "description": "The default root namespace for generated types."
+        },
+        "typesToGenerate": {"$ref":  "#/$defs/generationSpecifications"},
+        "assertFormat": {
+            "type": "boolean",
+            "description": "If true, assert format specifications."
+        },
+        "outputMapFile": {
+            "type": "string",
+            "description": "The name to use for a map file which includes details of the files that were written."
+        },
+        "useSchema": {
+            "type": "string",
+            "enum": [ "Draft4", "Draft6", "Draft7", "Draft201909", "Draft202012", "OpenApi30" ],
+            "default": "Draft202012",
+            "description": "Provides the fallback schema to use if vocabulary analysis fails."
+        },
+        "outputPath": {
+            "type": "string",
+            "description": "The path to which to write the generated code."
+        },
+        "disableOptionalNameHeuristics": {
+            "type": "boolean",
+            "default": false,
+            "description": "If true, do not use optional name heuristics."
+        },
+        "optionalAsNullable": {
+            "type": "string",
+            "enum": [ "None", "NullOrUndefined" ],
+            "description": "If NullOrUndefined, optional properties are emitted as .NET nullable values."
+        }
+    },
+    "$defs": {
+        "generationSpecifications": {
+            "type": "array",
+            "items": { "$ref": "#/$defs/generationSpecification" },
+            "minItems": 1,
+            "description": "The generation specification for the code generator."
+        },
+        "generationSpecification": {
+            "type": "object",
+            "required": [ "schemaFile" ],
+            "properties": {
+                "schemaFile": {
+                    "type": "string",
+                    "description": "The path to the schema file to process."
+                },
+                "rootPath": {
+                    "type": "string",
+                    "format": "uri-reference",
+                    "description": "The path in the document for the root type."
+                },
+                "outputRootTypeName": {
+                    "type": "string",
+                    "description": "The .NET name of the root type to generate."
+                },
+                "rebaseToRootPath": {
+                    "type": "boolean",
+                    "default": false
+                }
+            }
+        }
+    }
+}

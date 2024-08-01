@@ -70,7 +70,8 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
         [CommandOption("--optionalAsNullable")]
         [Description("If NullOrUndefined, optional properties are emitted as .NET nullable values.")]
         [DefaultValue(OptionalAsNullable.None)]
-        public OptionalAsNullable OptionalAsNullable { get; init; }   }
+        public OptionalAsNullable OptionalAsNullable { get; init; }
+    }
 
     /// <inheritdoc/>
     public override Task<int> ExecuteAsync(CommandContext context, Settings settings)
@@ -104,7 +105,7 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
 
             JsonReference reference = new(schemaFile, rootPath ?? string.Empty);
 
-            Progress progress = 
+            Progress progress =
                 AnsiConsole.Progress()
                     .Columns(
                     [
@@ -159,30 +160,27 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
                 {
                     ProgressTask subtask = context.AddTask($"{generatedCodeFile.FileName} [green]({generatedCodeFile.TypeDeclaration.RelativeSchemaLocation.ToString().EscapeMarkup()})[/]");
                     currentTask.Increment(1);
-                    try
+                    string source = generatedCodeFile.FileContent;
+
+                    string outputFile = Path.Combine(outputPath, generatedCodeFile.FileName);
+
+                    outputFile = PathTruncator.TruncatePath(outputFile);
+
+                    File.WriteAllText(outputFile, source);
+
+                    if (!string.IsNullOrEmpty(mapFile))
                     {
-                        string source = generatedCodeFile.FileContent;
-
-                        string outputFile = Path.Combine(outputPath, generatedCodeFile.FileName);
-                        File.WriteAllText(outputFile, source);
-
-                        if (!string.IsNullOrEmpty(mapFile))
+                        if (first)
                         {
-                            if (first)
-                            {
-                                first = false;
-                            }
-                            else
-                            {
-                                File.AppendAllText(mapFile, ", ");
-                            }
-                            File.AppendAllText(mapFile, $"{{\"key\": \"{JsonEncodedText.Encode(generatedCodeFile.TypeDeclaration.LocatedSchema.Location)}\", \"class\": \"{JsonEncodedText.Encode(CSharpLanguageProvider.GetFullyQualifiedDotnetTypeName(generatedCodeFile))}\", \"path\": \"{JsonEncodedText.Encode(outputFile)}\"}}\r\n");
+                            first = false;
                         }
+                        else
+                        {
+                            File.AppendAllText(mapFile, ", ");
+                        }
+                        File.AppendAllText(mapFile, $"{{\"key\": \"{JsonEncodedText.Encode(generatedCodeFile.TypeDeclaration.LocatedSchema.Location)}\", \"class\": \"{JsonEncodedText.Encode(CSharpLanguageProvider.GetFullyQualifiedDotnetTypeName(generatedCodeFile))}\", \"path\": \"{JsonEncodedText.Encode(outputFile)}\"}}\r\n");
                     }
-                    catch (Exception ex)
-                    {
-                        throw new InvalidOperationException($"Unable to parse generated type: {CSharpLanguageProvider.GetFullyQualifiedDotnetTypeName(generatedCodeFile)} from location {generatedCodeFile.TypeDeclaration.LocatedSchema.Location}", ex);
-                    }
+
                     subtask.Increment(100);
                     subtask.StopTask();
                 }
