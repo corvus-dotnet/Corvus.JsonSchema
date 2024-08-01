@@ -130,22 +130,62 @@ public readonly partial struct OpenApiDocument
                 public static ReadOnlySpan<byte> OpenIdConnectUtf8 => CorvusValidation.Enum5Utf8;
             }
 
-            private static partial class CorvusValidation
+            /// <summary>
+            /// Validation constants for the type.
+            /// </summary>
+            public static partial class CorvusValidation
             {
+                /// <summary>
+                /// A constant for the <c>enum</c> keyword.
+                /// </summary>
                 public static readonly JsonString Enum1 = JsonString.ParseValue("\"apiKey\"");
+                /// <summary>
+                /// A constant for the <c>enum</c> keyword.
+                /// </summary>
                 public static readonly JsonString Enum2 = JsonString.ParseValue("\"http\"");
+                /// <summary>
+                /// A constant for the <c>enum</c> keyword.
+                /// </summary>
                 public static readonly JsonString Enum3 = JsonString.ParseValue("\"mutualTLS\"");
+                /// <summary>
+                /// A constant for the <c>enum</c> keyword.
+                /// </summary>
                 public static readonly JsonString Enum4 = JsonString.ParseValue("\"oauth2\"");
+                /// <summary>
+                /// A constant for the <c>enum</c> keyword.
+                /// </summary>
                 public static readonly JsonString Enum5 = JsonString.ParseValue("\"openIdConnect\"");
 
+                /// <summary>
+                /// A constant for the <c>enum</c> keyword.
+                /// </summary>
                 public static ReadOnlySpan<byte> Enum1Utf8 => "\"apiKey\""u8;
+                /// <summary>
+                /// A constant for the <c>enum</c> keyword.
+                /// </summary>
                 public static ReadOnlySpan<byte> Enum2Utf8 => "\"http\""u8;
+                /// <summary>
+                /// A constant for the <c>enum</c> keyword.
+                /// </summary>
                 public static ReadOnlySpan<byte> Enum3Utf8 => "\"mutualTLS\""u8;
+                /// <summary>
+                /// A constant for the <c>enum</c> keyword.
+                /// </summary>
                 public static ReadOnlySpan<byte> Enum4Utf8 => "\"oauth2\""u8;
+                /// <summary>
+                /// A constant for the <c>enum</c> keyword.
+                /// </summary>
                 public static ReadOnlySpan<byte> Enum5Utf8 => "\"openIdConnect\""u8;
 
+                /// <summary>
+                /// Composition validation (any-of).
+                /// </summary>
+                /// <param name="value">The value to validate.</param>
+                /// <param name="validationContext">The current validation context.</param>
+                /// <param name="level">The current validation level.</param>
+                /// <returns>The resulting validation context after validation.</returns>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public static ValidationContext CompositionAnyOfValidationHandler(
+                internal static ValidationContext CompositionAnyOfValidationHandler(
                     in TypeEntity value,
                     in ValidationContext validationContext,
                     ValidationLevel level = ValidationLevel.Flag)

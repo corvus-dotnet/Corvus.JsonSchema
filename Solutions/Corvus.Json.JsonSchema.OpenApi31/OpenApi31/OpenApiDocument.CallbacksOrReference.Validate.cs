@@ -59,10 +59,20 @@ public readonly partial struct OpenApiDocument
             return result;
         }
 
-        private static partial class CorvusValidation
+        /// <summary>
+        /// Validation constants for the type.
+        /// </summary>
+        public static partial class CorvusValidation
         {
+            /// <summary>
+            /// If/then/else composition validation.
+            /// </summary>
+            /// <param name="value">The value to validate.</param>
+            /// <param name="validationContext">The current validation context.</param>
+            /// <param name="level">The current validation level.</param>
+            /// <returns>The resulting validation context after validation.</returns>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static ValidationContext TernaryIfValidationHandler(
+            internal static ValidationContext TernaryIfValidationHandler(
                 in CallbacksOrReference value,
                 in ValidationContext validationContext,
                 ValidationLevel level = ValidationLevel.Flag)

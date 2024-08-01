@@ -80,14 +80,31 @@ public readonly partial struct OpenApiDocument
             return result;
         }
 
-        private static partial class CorvusValidation
+        /// <summary>
+        /// Validation constants for the type.
+        /// </summary>
+        public static partial class CorvusValidation
         {
+            /// <summary>
+            /// A constant for the <c>minProperties</c> keyword.
+            /// </summary>
             public static readonly long MinProperties = 1;
 
+            /// <summary>
+            /// A regular expression for the <c>patternProperties</c> keyword.
+            /// </summary>
             public static readonly Regex PatternProperties = CreatePatternProperties();
 
+            /// <summary>
+            /// Core type validation.
+            /// </summary>
+            /// <param name="value">The value to validate.</param>
+            /// <param name="valueKind">The <see cref="JsonValueKind" /> of the value to validate.</param>
+            /// <param name="validationContext">The current validation context.</param>
+            /// <param name="level">The current validation level.</param>
+            /// <returns>The resulting validation context after validation.</returns>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static ValidationContext TypeValidationHandler(
+            internal static ValidationContext TypeValidationHandler(
                 in Responses value,
                 JsonValueKind valueKind,
                 in ValidationContext validationContext,
@@ -97,8 +114,15 @@ public readonly partial struct OpenApiDocument
                 return Corvus.Json.Validate.TypeObject(valueKind, result, level);
             }
 
+            /// <summary>
+            /// Composition validation (all-of).
+            /// </summary>
+            /// <param name="value">The value to validate.</param>
+            /// <param name="validationContext">The current validation context.</param>
+            /// <param name="level">The current validation level.</param>
+            /// <returns>The resulting validation context after validation.</returns>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static ValidationContext CompositionAllOfValidationHandler(
+            internal static ValidationContext CompositionAllOfValidationHandler(
                 in Responses value,
                 in ValidationContext validationContext,
                 ValidationLevel level = ValidationLevel.Flag)
@@ -132,8 +156,15 @@ public readonly partial struct OpenApiDocument
                 return result;
             }
 
+            /// <summary>
+            /// If/then/else composition validation.
+            /// </summary>
+            /// <param name="value">The value to validate.</param>
+            /// <param name="validationContext">The current validation context.</param>
+            /// <param name="level">The current validation level.</param>
+            /// <returns>The resulting validation context after validation.</returns>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static ValidationContext TernaryIfValidationHandler(
+            internal static ValidationContext TernaryIfValidationHandler(
                 in Responses value,
                 in ValidationContext validationContext,
                 ValidationLevel level = ValidationLevel.Flag)
@@ -210,8 +241,16 @@ public readonly partial struct OpenApiDocument
                 return result;
             }
 
+            /// <summary>
+            /// Object validation.
+            /// </summary>
+            /// <param name="value">The value to validate.</param>
+            /// <param name="valueKind">The <see cref="JsonValueKind" /> of the value to validate.</param>
+            /// <param name="validationContext">The current validation context.</param>
+            /// <param name="level">The current validation level.</param>
+            /// <returns>The resulting validation context after validation.</returns>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static ValidationContext ObjectValidationHandler(
+            internal static ValidationContext ObjectValidationHandler(
                 in Responses value,
                 JsonValueKind valueKind,
                 in ValidationContext validationContext,

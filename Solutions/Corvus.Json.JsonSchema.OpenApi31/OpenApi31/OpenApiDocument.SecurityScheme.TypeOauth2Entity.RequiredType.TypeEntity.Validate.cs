@@ -85,14 +85,30 @@ public readonly partial struct OpenApiDocument
                         return result;
                     }
 
-                    private static partial class CorvusValidation
+                    /// <summary>
+                    /// Validation constants for the type.
+                    /// </summary>
+                    public static partial class CorvusValidation
                     {
+                        /// <summary>
+                        /// A constant for the <c>const</c> keyword.
+                        /// </summary>
                         public static readonly JsonString Const = JsonString.ParseValue("\"oauth2\"");
 
+                        /// <summary>
+                        /// A constant for the <c>const</c> keyword.
+                        /// </summary>
                         public static ReadOnlySpan<byte> ConstUtf8 => "\"oauth2\""u8;
 
+                        /// <summary>
+                        /// Constant value validation.
+                        /// </summary>
+                        /// <param name="value">The value to validate.</param>
+                        /// <param name="validationContext">The current validation context.</param>
+                        /// <param name="level">The current validation level.</param>
+                        /// <returns>The resulting validation context after validation.</returns>
                         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                        public static ValidationContext ConstValidationHandler(
+                        internal static ValidationContext ConstValidationHandler(
                             in TypeEntity value,
                             in ValidationContext validationContext,
                             ValidationLevel level = ValidationLevel.Flag)
@@ -147,8 +163,15 @@ public readonly partial struct OpenApiDocument
                             }
                         }
 
+                        /// <summary>
+                        /// Composition validation (any-of).
+                        /// </summary>
+                        /// <param name="value">The value to validate.</param>
+                        /// <param name="validationContext">The current validation context.</param>
+                        /// <param name="level">The current validation level.</param>
+                        /// <returns>The resulting validation context after validation.</returns>
                         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                        public static ValidationContext CompositionAnyOfValidationHandler(
+                        internal static ValidationContext CompositionAnyOfValidationHandler(
                             in TypeEntity value,
                             in ValidationContext validationContext,
                             ValidationLevel level = ValidationLevel.Flag)

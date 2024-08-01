@@ -55,10 +55,21 @@ public readonly partial struct JsonPatchDocument
             return result;
         }
 
-        private static partial class CorvusValidation
+        /// <summary>
+        /// Validation constants for the type.
+        /// </summary>
+        public static partial class CorvusValidation
         {
+            /// <summary>
+            /// Object validation.
+            /// </summary>
+            /// <param name="value">The value to validate.</param>
+            /// <param name="valueKind">The <see cref="JsonValueKind" /> of the value to validate.</param>
+            /// <param name="validationContext">The current validation context.</param>
+            /// <param name="level">The current validation level.</param>
+            /// <returns>The resulting validation context after validation.</returns>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static ValidationContext ObjectValidationHandler(
+            internal static ValidationContext ObjectValidationHandler(
                 in PatchOperationCommon value,
                 JsonValueKind valueKind,
                 in ValidationContext validationContext,
