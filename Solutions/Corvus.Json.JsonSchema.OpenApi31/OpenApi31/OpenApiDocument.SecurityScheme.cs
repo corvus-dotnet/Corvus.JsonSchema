@@ -865,58 +865,58 @@ public readonly partial struct OpenApiDocument
         /// <typeparam name="TIn">The immutable context to pass in to the match function.</typeparam>
         /// <typeparam name="TOut">The result of calling the match function.</typeparam>
         /// <param name="context">The context to pass to the match function.</param>
-        /// <param name="matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSpecificationExtensions">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SpecificationExtensions"/>.</param>
-        /// <param name="matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSecuritySchemeTypeApikeyEntity">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeApikeyEntity"/>.</param>
-        /// <param name="matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSecuritySchemeTypeHttpEntity">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeHttpEntity"/>.</param>
-        /// <param name="matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSecuritySchemeTypeHttpBearerEntity">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeHttpBearerEntity"/>.</param>
-        /// <param name="matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSecuritySchemeTypeOauth2Entity">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeOauth2Entity"/>.</param>
-        /// <param name="matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSecuritySchemeTypeOidcEntity">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeOidcEntity"/>.</param>
+        /// <param name="matchSpecificationExtensions">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SpecificationExtensions"/>.</param>
+        /// <param name="matchTypeApikeyEntity">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeApikeyEntity"/>.</param>
+        /// <param name="matchTypeHttpEntity">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeHttpEntity"/>.</param>
+        /// <param name="matchTypeHttpBearerEntity">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeHttpBearerEntity"/>.</param>
+        /// <param name="matchTypeOauth2Entity">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeOauth2Entity"/>.</param>
+        /// <param name="matchTypeOidcEntity">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeOidcEntity"/>.</param>
         /// <param name="defaultMatch">Match any other value.</param>
         /// <returns>An instance of the value returned by the match function.</returns>
         public TOut Match<TIn, TOut>(
             in TIn context,
-            Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SpecificationExtensions, TIn, TOut> matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSpecificationExtensions,
-            Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeApikeyEntity, TIn, TOut> matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSecuritySchemeTypeApikeyEntity,
-            Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeHttpEntity, TIn, TOut> matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSecuritySchemeTypeHttpEntity,
-            Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeHttpBearerEntity, TIn, TOut> matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSecuritySchemeTypeHttpBearerEntity,
-            Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeOauth2Entity, TIn, TOut> matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSecuritySchemeTypeOauth2Entity,
-            Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeOidcEntity, TIn, TOut> matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSecuritySchemeTypeOidcEntity,
-            Matcher<SecurityScheme, TIn, TOut> defaultMatch)
+            Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SpecificationExtensions, TIn, TOut> matchSpecificationExtensions,
+            Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeApikeyEntity, TIn, TOut> matchTypeApikeyEntity,
+            Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeHttpEntity, TIn, TOut> matchTypeHttpEntity,
+            Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeHttpBearerEntity, TIn, TOut> matchTypeHttpBearerEntity,
+            Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeOauth2Entity, TIn, TOut> matchTypeOauth2Entity,
+            Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeOidcEntity, TIn, TOut> matchTypeOidcEntity,
+            Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme, TIn, TOut> defaultMatch)
         {
-            Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SpecificationExtensions matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSpecificationExtensionsValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SpecificationExtensions>();
-            if (matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSpecificationExtensionsValue.IsValid())
+            Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SpecificationExtensions matchSpecificationExtensionsValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SpecificationExtensions>();
+            if (matchSpecificationExtensionsValue.IsValid())
             {
-                return matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSpecificationExtensions(matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSpecificationExtensionsValue, context);
+                return matchSpecificationExtensions(matchSpecificationExtensionsValue, context);
             }
 
-            Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeApikeyEntity matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSecuritySchemeTypeApikeyEntityValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeApikeyEntity>();
-            if (matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSecuritySchemeTypeApikeyEntityValue.IsValid())
+            Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeApikeyEntity matchTypeApikeyEntityValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeApikeyEntity>();
+            if (matchTypeApikeyEntityValue.IsValid())
             {
-                return matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSecuritySchemeTypeApikeyEntity(matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSecuritySchemeTypeApikeyEntityValue, context);
+                return matchTypeApikeyEntity(matchTypeApikeyEntityValue, context);
             }
 
-            Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeHttpEntity matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSecuritySchemeTypeHttpEntityValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeHttpEntity>();
-            if (matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSecuritySchemeTypeHttpEntityValue.IsValid())
+            Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeHttpEntity matchTypeHttpEntityValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeHttpEntity>();
+            if (matchTypeHttpEntityValue.IsValid())
             {
-                return matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSecuritySchemeTypeHttpEntity(matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSecuritySchemeTypeHttpEntityValue, context);
+                return matchTypeHttpEntity(matchTypeHttpEntityValue, context);
             }
 
-            Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeHttpBearerEntity matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSecuritySchemeTypeHttpBearerEntityValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeHttpBearerEntity>();
-            if (matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSecuritySchemeTypeHttpBearerEntityValue.IsValid())
+            Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeHttpBearerEntity matchTypeHttpBearerEntityValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeHttpBearerEntity>();
+            if (matchTypeHttpBearerEntityValue.IsValid())
             {
-                return matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSecuritySchemeTypeHttpBearerEntity(matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSecuritySchemeTypeHttpBearerEntityValue, context);
+                return matchTypeHttpBearerEntity(matchTypeHttpBearerEntityValue, context);
             }
 
-            Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeOauth2Entity matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSecuritySchemeTypeOauth2EntityValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeOauth2Entity>();
-            if (matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSecuritySchemeTypeOauth2EntityValue.IsValid())
+            Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeOauth2Entity matchTypeOauth2EntityValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeOauth2Entity>();
+            if (matchTypeOauth2EntityValue.IsValid())
             {
-                return matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSecuritySchemeTypeOauth2Entity(matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSecuritySchemeTypeOauth2EntityValue, context);
+                return matchTypeOauth2Entity(matchTypeOauth2EntityValue, context);
             }
 
-            Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeOidcEntity matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSecuritySchemeTypeOidcEntityValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeOidcEntity>();
-            if (matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSecuritySchemeTypeOidcEntityValue.IsValid())
+            Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeOidcEntity matchTypeOidcEntityValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeOidcEntity>();
+            if (matchTypeOidcEntityValue.IsValid())
             {
-                return matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSecuritySchemeTypeOidcEntity(matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSecuritySchemeTypeOidcEntityValue, context);
+                return matchTypeOidcEntity(matchTypeOidcEntityValue, context);
             }
 
             return defaultMatch(this, context);
@@ -926,57 +926,57 @@ public readonly partial struct OpenApiDocument
         /// Matches the value against the composed values, and returns the result of calling the provided match function for the first match found.
         /// </summary>
         /// <typeparam name="TOut">The result of calling the match function.</typeparam>
-        /// <param name="matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSpecificationExtensions">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SpecificationExtensions"/>.</param>
-        /// <param name="matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSecuritySchemeTypeApikeyEntity">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeApikeyEntity"/>.</param>
-        /// <param name="matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSecuritySchemeTypeHttpEntity">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeHttpEntity"/>.</param>
-        /// <param name="matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSecuritySchemeTypeHttpBearerEntity">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeHttpBearerEntity"/>.</param>
-        /// <param name="matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSecuritySchemeTypeOauth2Entity">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeOauth2Entity"/>.</param>
-        /// <param name="matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSecuritySchemeTypeOidcEntity">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeOidcEntity"/>.</param>
+        /// <param name="matchSpecificationExtensions">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SpecificationExtensions"/>.</param>
+        /// <param name="matchTypeApikeyEntity">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeApikeyEntity"/>.</param>
+        /// <param name="matchTypeHttpEntity">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeHttpEntity"/>.</param>
+        /// <param name="matchTypeHttpBearerEntity">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeHttpBearerEntity"/>.</param>
+        /// <param name="matchTypeOauth2Entity">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeOauth2Entity"/>.</param>
+        /// <param name="matchTypeOidcEntity">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeOidcEntity"/>.</param>
         /// <param name="defaultMatch">Match any other value.</param>
         /// <returns>An instance of the value returned by the match function.</returns>
         public TOut Match<TOut>(
-            Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SpecificationExtensions, TOut> matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSpecificationExtensions,
-            Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeApikeyEntity, TOut> matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSecuritySchemeTypeApikeyEntity,
-            Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeHttpEntity, TOut> matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSecuritySchemeTypeHttpEntity,
-            Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeHttpBearerEntity, TOut> matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSecuritySchemeTypeHttpBearerEntity,
-            Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeOauth2Entity, TOut> matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSecuritySchemeTypeOauth2Entity,
-            Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeOidcEntity, TOut> matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSecuritySchemeTypeOidcEntity,
-            Matcher<SecurityScheme, TOut> defaultMatch)
+            Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SpecificationExtensions, TOut> matchSpecificationExtensions,
+            Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeApikeyEntity, TOut> matchTypeApikeyEntity,
+            Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeHttpEntity, TOut> matchTypeHttpEntity,
+            Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeHttpBearerEntity, TOut> matchTypeHttpBearerEntity,
+            Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeOauth2Entity, TOut> matchTypeOauth2Entity,
+            Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeOidcEntity, TOut> matchTypeOidcEntity,
+            Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme, TOut> defaultMatch)
         {
-            Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SpecificationExtensions matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSpecificationExtensionsValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SpecificationExtensions>();
-            if (matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSpecificationExtensionsValue.IsValid())
+            Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SpecificationExtensions matchSpecificationExtensionsValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SpecificationExtensions>();
+            if (matchSpecificationExtensionsValue.IsValid())
             {
-                return matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSpecificationExtensions(matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSpecificationExtensionsValue);
+                return matchSpecificationExtensions(matchSpecificationExtensionsValue);
             }
 
-            Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeApikeyEntity matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSecuritySchemeTypeApikeyEntityValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeApikeyEntity>();
-            if (matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSecuritySchemeTypeApikeyEntityValue.IsValid())
+            Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeApikeyEntity matchTypeApikeyEntityValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeApikeyEntity>();
+            if (matchTypeApikeyEntityValue.IsValid())
             {
-                return matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSecuritySchemeTypeApikeyEntity(matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSecuritySchemeTypeApikeyEntityValue);
+                return matchTypeApikeyEntity(matchTypeApikeyEntityValue);
             }
 
-            Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeHttpEntity matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSecuritySchemeTypeHttpEntityValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeHttpEntity>();
-            if (matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSecuritySchemeTypeHttpEntityValue.IsValid())
+            Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeHttpEntity matchTypeHttpEntityValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeHttpEntity>();
+            if (matchTypeHttpEntityValue.IsValid())
             {
-                return matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSecuritySchemeTypeHttpEntity(matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSecuritySchemeTypeHttpEntityValue);
+                return matchTypeHttpEntity(matchTypeHttpEntityValue);
             }
 
-            Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeHttpBearerEntity matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSecuritySchemeTypeHttpBearerEntityValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeHttpBearerEntity>();
-            if (matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSecuritySchemeTypeHttpBearerEntityValue.IsValid())
+            Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeHttpBearerEntity matchTypeHttpBearerEntityValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeHttpBearerEntity>();
+            if (matchTypeHttpBearerEntityValue.IsValid())
             {
-                return matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSecuritySchemeTypeHttpBearerEntity(matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSecuritySchemeTypeHttpBearerEntityValue);
+                return matchTypeHttpBearerEntity(matchTypeHttpBearerEntityValue);
             }
 
-            Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeOauth2Entity matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSecuritySchemeTypeOauth2EntityValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeOauth2Entity>();
-            if (matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSecuritySchemeTypeOauth2EntityValue.IsValid())
+            Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeOauth2Entity matchTypeOauth2EntityValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeOauth2Entity>();
+            if (matchTypeOauth2EntityValue.IsValid())
             {
-                return matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSecuritySchemeTypeOauth2Entity(matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSecuritySchemeTypeOauth2EntityValue);
+                return matchTypeOauth2Entity(matchTypeOauth2EntityValue);
             }
 
-            Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeOidcEntity matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSecuritySchemeTypeOidcEntityValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeOidcEntity>();
-            if (matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSecuritySchemeTypeOidcEntityValue.IsValid())
+            Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeOidcEntity matchTypeOidcEntityValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeOidcEntity>();
+            if (matchTypeOidcEntityValue.IsValid())
             {
-                return matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSecuritySchemeTypeOidcEntity(matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentSecuritySchemeTypeOidcEntityValue);
+                return matchTypeOidcEntity(matchTypeOidcEntityValue);
             }
 
             return defaultMatch(this);

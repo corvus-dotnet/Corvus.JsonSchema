@@ -840,50 +840,50 @@ public readonly partial struct OpenApiDocument
             /// <typeparam name="TIn">The immutable context to pass in to the match function.</typeparam>
             /// <typeparam name="TOut">The result of calling the match function.</typeparam>
             /// <param name="context">The context to pass to the match function.</param>
-            /// <param name="matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContentSomePropertiesAreNotAllowedIfContentIsPresentAllOf0Entity">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf0Entity"/>.</param>
-            /// <param name="matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContentSomePropertiesAreNotAllowedIfContentIsPresentAllOf1Entity">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf1Entity"/>.</param>
-            /// <param name="matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContentSomePropertiesAreNotAllowedIfContentIsPresentAllOf2Entity">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf2Entity"/>.</param>
-            /// <param name="matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContentSomePropertiesAreNotAllowedIfContentIsPresentAllOf3Entity">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf3Entity"/>.</param>
-            /// <param name="matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContentSomePropertiesAreNotAllowedIfContentIsPresentAllOf4Entity">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf4Entity"/>.</param>
+            /// <param name="matchAllOf0Entity">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf0Entity"/>.</param>
+            /// <param name="matchAllOf1Entity">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf1Entity"/>.</param>
+            /// <param name="matchAllOf2Entity">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf2Entity"/>.</param>
+            /// <param name="matchAllOf3Entity">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf3Entity"/>.</param>
+            /// <param name="matchAllOf4Entity">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf4Entity"/>.</param>
             /// <param name="defaultMatch">Match any other value.</param>
             /// <returns>An instance of the value returned by the match function.</returns>
             public TOut Match<TIn, TOut>(
                 in TIn context,
-                Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf0Entity, TIn, TOut> matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContentSomePropertiesAreNotAllowedIfContentIsPresentAllOf0Entity,
-                Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf1Entity, TIn, TOut> matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContentSomePropertiesAreNotAllowedIfContentIsPresentAllOf1Entity,
-                Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf2Entity, TIn, TOut> matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContentSomePropertiesAreNotAllowedIfContentIsPresentAllOf2Entity,
-                Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf3Entity, TIn, TOut> matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContentSomePropertiesAreNotAllowedIfContentIsPresentAllOf3Entity,
-                Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf4Entity, TIn, TOut> matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContentSomePropertiesAreNotAllowedIfContentIsPresentAllOf4Entity,
-                Matcher<SomePropertiesAreNotAllowedIfContentIsPresent, TIn, TOut> defaultMatch)
+                Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf0Entity, TIn, TOut> matchAllOf0Entity,
+                Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf1Entity, TIn, TOut> matchAllOf1Entity,
+                Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf2Entity, TIn, TOut> matchAllOf2Entity,
+                Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf3Entity, TIn, TOut> matchAllOf3Entity,
+                Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf4Entity, TIn, TOut> matchAllOf4Entity,
+                Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent, TIn, TOut> defaultMatch)
             {
-                Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf0Entity matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContentSomePropertiesAreNotAllowedIfContentIsPresentAllOf0EntityValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf0Entity>();
-                if (matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContentSomePropertiesAreNotAllowedIfContentIsPresentAllOf0EntityValue.IsValid())
+                Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf0Entity matchAllOf0EntityValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf0Entity>();
+                if (matchAllOf0EntityValue.IsValid())
                 {
-                    return matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContentSomePropertiesAreNotAllowedIfContentIsPresentAllOf0Entity(matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContentSomePropertiesAreNotAllowedIfContentIsPresentAllOf0EntityValue, context);
+                    return matchAllOf0Entity(matchAllOf0EntityValue, context);
                 }
 
-                Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf1Entity matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContentSomePropertiesAreNotAllowedIfContentIsPresentAllOf1EntityValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf1Entity>();
-                if (matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContentSomePropertiesAreNotAllowedIfContentIsPresentAllOf1EntityValue.IsValid())
+                Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf1Entity matchAllOf1EntityValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf1Entity>();
+                if (matchAllOf1EntityValue.IsValid())
                 {
-                    return matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContentSomePropertiesAreNotAllowedIfContentIsPresentAllOf1Entity(matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContentSomePropertiesAreNotAllowedIfContentIsPresentAllOf1EntityValue, context);
+                    return matchAllOf1Entity(matchAllOf1EntityValue, context);
                 }
 
-                Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf2Entity matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContentSomePropertiesAreNotAllowedIfContentIsPresentAllOf2EntityValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf2Entity>();
-                if (matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContentSomePropertiesAreNotAllowedIfContentIsPresentAllOf2EntityValue.IsValid())
+                Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf2Entity matchAllOf2EntityValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf2Entity>();
+                if (matchAllOf2EntityValue.IsValid())
                 {
-                    return matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContentSomePropertiesAreNotAllowedIfContentIsPresentAllOf2Entity(matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContentSomePropertiesAreNotAllowedIfContentIsPresentAllOf2EntityValue, context);
+                    return matchAllOf2Entity(matchAllOf2EntityValue, context);
                 }
 
-                Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf3Entity matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContentSomePropertiesAreNotAllowedIfContentIsPresentAllOf3EntityValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf3Entity>();
-                if (matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContentSomePropertiesAreNotAllowedIfContentIsPresentAllOf3EntityValue.IsValid())
+                Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf3Entity matchAllOf3EntityValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf3Entity>();
+                if (matchAllOf3EntityValue.IsValid())
                 {
-                    return matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContentSomePropertiesAreNotAllowedIfContentIsPresentAllOf3Entity(matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContentSomePropertiesAreNotAllowedIfContentIsPresentAllOf3EntityValue, context);
+                    return matchAllOf3Entity(matchAllOf3EntityValue, context);
                 }
 
-                Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf4Entity matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContentSomePropertiesAreNotAllowedIfContentIsPresentAllOf4EntityValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf4Entity>();
-                if (matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContentSomePropertiesAreNotAllowedIfContentIsPresentAllOf4EntityValue.IsValid())
+                Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf4Entity matchAllOf4EntityValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf4Entity>();
+                if (matchAllOf4EntityValue.IsValid())
                 {
-                    return matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContentSomePropertiesAreNotAllowedIfContentIsPresentAllOf4Entity(matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContentSomePropertiesAreNotAllowedIfContentIsPresentAllOf4EntityValue, context);
+                    return matchAllOf4Entity(matchAllOf4EntityValue, context);
                 }
 
                 return defaultMatch(this, context);
@@ -893,49 +893,49 @@ public readonly partial struct OpenApiDocument
             /// Matches the value against the composed values, and returns the result of calling the provided match function for the first match found.
             /// </summary>
             /// <typeparam name="TOut">The result of calling the match function.</typeparam>
-            /// <param name="matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContentSomePropertiesAreNotAllowedIfContentIsPresentAllOf0Entity">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf0Entity"/>.</param>
-            /// <param name="matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContentSomePropertiesAreNotAllowedIfContentIsPresentAllOf1Entity">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf1Entity"/>.</param>
-            /// <param name="matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContentSomePropertiesAreNotAllowedIfContentIsPresentAllOf2Entity">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf2Entity"/>.</param>
-            /// <param name="matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContentSomePropertiesAreNotAllowedIfContentIsPresentAllOf3Entity">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf3Entity"/>.</param>
-            /// <param name="matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContentSomePropertiesAreNotAllowedIfContentIsPresentAllOf4Entity">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf4Entity"/>.</param>
+            /// <param name="matchAllOf0Entity">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf0Entity"/>.</param>
+            /// <param name="matchAllOf1Entity">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf1Entity"/>.</param>
+            /// <param name="matchAllOf2Entity">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf2Entity"/>.</param>
+            /// <param name="matchAllOf3Entity">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf3Entity"/>.</param>
+            /// <param name="matchAllOf4Entity">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf4Entity"/>.</param>
             /// <param name="defaultMatch">Match any other value.</param>
             /// <returns>An instance of the value returned by the match function.</returns>
             public TOut Match<TOut>(
-                Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf0Entity, TOut> matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContentSomePropertiesAreNotAllowedIfContentIsPresentAllOf0Entity,
-                Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf1Entity, TOut> matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContentSomePropertiesAreNotAllowedIfContentIsPresentAllOf1Entity,
-                Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf2Entity, TOut> matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContentSomePropertiesAreNotAllowedIfContentIsPresentAllOf2Entity,
-                Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf3Entity, TOut> matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContentSomePropertiesAreNotAllowedIfContentIsPresentAllOf3Entity,
-                Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf4Entity, TOut> matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContentSomePropertiesAreNotAllowedIfContentIsPresentAllOf4Entity,
-                Matcher<SomePropertiesAreNotAllowedIfContentIsPresent, TOut> defaultMatch)
+                Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf0Entity, TOut> matchAllOf0Entity,
+                Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf1Entity, TOut> matchAllOf1Entity,
+                Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf2Entity, TOut> matchAllOf2Entity,
+                Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf3Entity, TOut> matchAllOf3Entity,
+                Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf4Entity, TOut> matchAllOf4Entity,
+                Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent, TOut> defaultMatch)
             {
-                Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf0Entity matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContentSomePropertiesAreNotAllowedIfContentIsPresentAllOf0EntityValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf0Entity>();
-                if (matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContentSomePropertiesAreNotAllowedIfContentIsPresentAllOf0EntityValue.IsValid())
+                Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf0Entity matchAllOf0EntityValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf0Entity>();
+                if (matchAllOf0EntityValue.IsValid())
                 {
-                    return matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContentSomePropertiesAreNotAllowedIfContentIsPresentAllOf0Entity(matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContentSomePropertiesAreNotAllowedIfContentIsPresentAllOf0EntityValue);
+                    return matchAllOf0Entity(matchAllOf0EntityValue);
                 }
 
-                Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf1Entity matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContentSomePropertiesAreNotAllowedIfContentIsPresentAllOf1EntityValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf1Entity>();
-                if (matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContentSomePropertiesAreNotAllowedIfContentIsPresentAllOf1EntityValue.IsValid())
+                Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf1Entity matchAllOf1EntityValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf1Entity>();
+                if (matchAllOf1EntityValue.IsValid())
                 {
-                    return matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContentSomePropertiesAreNotAllowedIfContentIsPresentAllOf1Entity(matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContentSomePropertiesAreNotAllowedIfContentIsPresentAllOf1EntityValue);
+                    return matchAllOf1Entity(matchAllOf1EntityValue);
                 }
 
-                Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf2Entity matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContentSomePropertiesAreNotAllowedIfContentIsPresentAllOf2EntityValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf2Entity>();
-                if (matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContentSomePropertiesAreNotAllowedIfContentIsPresentAllOf2EntityValue.IsValid())
+                Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf2Entity matchAllOf2EntityValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf2Entity>();
+                if (matchAllOf2EntityValue.IsValid())
                 {
-                    return matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContentSomePropertiesAreNotAllowedIfContentIsPresentAllOf2Entity(matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContentSomePropertiesAreNotAllowedIfContentIsPresentAllOf2EntityValue);
+                    return matchAllOf2Entity(matchAllOf2EntityValue);
                 }
 
-                Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf3Entity matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContentSomePropertiesAreNotAllowedIfContentIsPresentAllOf3EntityValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf3Entity>();
-                if (matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContentSomePropertiesAreNotAllowedIfContentIsPresentAllOf3EntityValue.IsValid())
+                Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf3Entity matchAllOf3EntityValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf3Entity>();
+                if (matchAllOf3EntityValue.IsValid())
                 {
-                    return matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContentSomePropertiesAreNotAllowedIfContentIsPresentAllOf3Entity(matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContentSomePropertiesAreNotAllowedIfContentIsPresentAllOf3EntityValue);
+                    return matchAllOf3Entity(matchAllOf3EntityValue);
                 }
 
-                Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf4Entity matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContentSomePropertiesAreNotAllowedIfContentIsPresentAllOf4EntityValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf4Entity>();
-                if (matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContentSomePropertiesAreNotAllowedIfContentIsPresentAllOf4EntityValue.IsValid())
+                Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf4Entity matchAllOf4EntityValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf4Entity>();
+                if (matchAllOf4EntityValue.IsValid())
                 {
-                    return matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContentSomePropertiesAreNotAllowedIfContentIsPresentAllOf4Entity(matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContentSomePropertiesAreNotAllowedIfContentIsPresentAllOf4EntityValue);
+                    return matchAllOf4Entity(matchAllOf4EntityValue);
                 }
 
                 return defaultMatch(this);

@@ -705,26 +705,26 @@ public readonly partial struct OpenApiDocument
         /// <typeparam name="TIn">The immutable context to pass in to the match function.</typeparam>
         /// <typeparam name="TOut">The result of calling the match function.</typeparam>
         /// <param name="context">The context to pass to the match function.</param>
-        /// <param name="matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentHttpSecuritySchemeBearer">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme.Bearer"/>.</param>
-        /// <param name="matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentHttpSecuritySchemeNonBearer">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme.NonBearer"/>.</param>
+        /// <param name="matchBearer">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme.Bearer"/>.</param>
+        /// <param name="matchNonBearer">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme.NonBearer"/>.</param>
         /// <param name="defaultMatch">Match any other value.</param>
         /// <returns>An instance of the value returned by the match function.</returns>
         public TOut Match<TIn, TOut>(
             in TIn context,
-            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme.Bearer, TIn, TOut> matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentHttpSecuritySchemeBearer,
-            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme.NonBearer, TIn, TOut> matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentHttpSecuritySchemeNonBearer,
-            Matcher<HttpSecurityScheme, TIn, TOut> defaultMatch)
+            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme.Bearer, TIn, TOut> matchBearer,
+            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme.NonBearer, TIn, TOut> matchNonBearer,
+            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme, TIn, TOut> defaultMatch)
         {
-            Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme.Bearer matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentHttpSecuritySchemeBearerValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme.Bearer>();
-            if (matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentHttpSecuritySchemeBearerValue.IsValid())
+            Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme.Bearer matchBearerValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme.Bearer>();
+            if (matchBearerValue.IsValid())
             {
-                return matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentHttpSecuritySchemeBearer(matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentHttpSecuritySchemeBearerValue, context);
+                return matchBearer(matchBearerValue, context);
             }
 
-            Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme.NonBearer matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentHttpSecuritySchemeNonBearerValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme.NonBearer>();
-            if (matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentHttpSecuritySchemeNonBearerValue.IsValid())
+            Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme.NonBearer matchNonBearerValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme.NonBearer>();
+            if (matchNonBearerValue.IsValid())
             {
-                return matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentHttpSecuritySchemeNonBearer(matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentHttpSecuritySchemeNonBearerValue, context);
+                return matchNonBearer(matchNonBearerValue, context);
             }
 
             return defaultMatch(this, context);
@@ -734,25 +734,25 @@ public readonly partial struct OpenApiDocument
         /// Matches the value against the composed values, and returns the result of calling the provided match function for the first match found.
         /// </summary>
         /// <typeparam name="TOut">The result of calling the match function.</typeparam>
-        /// <param name="matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentHttpSecuritySchemeBearer">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme.Bearer"/>.</param>
-        /// <param name="matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentHttpSecuritySchemeNonBearer">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme.NonBearer"/>.</param>
+        /// <param name="matchBearer">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme.Bearer"/>.</param>
+        /// <param name="matchNonBearer">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme.NonBearer"/>.</param>
         /// <param name="defaultMatch">Match any other value.</param>
         /// <returns>An instance of the value returned by the match function.</returns>
         public TOut Match<TOut>(
-            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme.Bearer, TOut> matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentHttpSecuritySchemeBearer,
-            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme.NonBearer, TOut> matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentHttpSecuritySchemeNonBearer,
-            Matcher<HttpSecurityScheme, TOut> defaultMatch)
+            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme.Bearer, TOut> matchBearer,
+            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme.NonBearer, TOut> matchNonBearer,
+            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme, TOut> defaultMatch)
         {
-            Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme.Bearer matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentHttpSecuritySchemeBearerValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme.Bearer>();
-            if (matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentHttpSecuritySchemeBearerValue.IsValid())
+            Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme.Bearer matchBearerValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme.Bearer>();
+            if (matchBearerValue.IsValid())
             {
-                return matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentHttpSecuritySchemeBearer(matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentHttpSecuritySchemeBearerValue);
+                return matchBearer(matchBearerValue);
             }
 
-            Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme.NonBearer matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentHttpSecuritySchemeNonBearerValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme.NonBearer>();
-            if (matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentHttpSecuritySchemeNonBearerValue.IsValid())
+            Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme.NonBearer matchNonBearerValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme.NonBearer>();
+            if (matchNonBearerValue.IsValid())
             {
-                return matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentHttpSecuritySchemeNonBearer(matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentHttpSecuritySchemeNonBearerValue);
+                return matchNonBearer(matchNonBearerValue);
             }
 
             return defaultMatch(this);

@@ -831,26 +831,26 @@ public readonly partial struct OpenApiDocument
         /// <typeparam name="TIn">The immutable context to pass in to the match function.</typeparam>
         /// <typeparam name="TOut">The result of calling the match function.</typeparam>
         /// <param name="context">The context to pass to the match function.</param>
-        /// <param name="matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentExampleXorExamples">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExampleXorExamples"/>.</param>
-        /// <param name="matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContent">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent"/>.</param>
+        /// <param name="matchExampleXorExamples">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExampleXorExamples"/>.</param>
+        /// <param name="matchSchemaXorContent">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent"/>.</param>
         /// <param name="defaultMatch">Match any other value.</param>
         /// <returns>An instance of the value returned by the match function.</returns>
         public TOut Match<TIn, TOut>(
             in TIn context,
-            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExampleXorExamples, TIn, TOut> matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentExampleXorExamples,
-            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent, TIn, TOut> matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContent,
-            Matcher<Header, TIn, TOut> defaultMatch)
+            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExampleXorExamples, TIn, TOut> matchExampleXorExamples,
+            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent, TIn, TOut> matchSchemaXorContent,
+            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Header, TIn, TOut> defaultMatch)
         {
-            Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExampleXorExamples matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentExampleXorExamplesValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExampleXorExamples>();
-            if (matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentExampleXorExamplesValue.IsValid())
+            Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExampleXorExamples matchExampleXorExamplesValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExampleXorExamples>();
+            if (matchExampleXorExamplesValue.IsValid())
             {
-                return matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentExampleXorExamples(matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentExampleXorExamplesValue, context);
+                return matchExampleXorExamples(matchExampleXorExamplesValue, context);
             }
 
-            Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContentValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent>();
-            if (matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContentValue.IsValid())
+            Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent matchSchemaXorContentValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent>();
+            if (matchSchemaXorContentValue.IsValid())
             {
-                return matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContent(matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContentValue, context);
+                return matchSchemaXorContent(matchSchemaXorContentValue, context);
             }
 
             return defaultMatch(this, context);
@@ -860,25 +860,25 @@ public readonly partial struct OpenApiDocument
         /// Matches the value against the composed values, and returns the result of calling the provided match function for the first match found.
         /// </summary>
         /// <typeparam name="TOut">The result of calling the match function.</typeparam>
-        /// <param name="matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentExampleXorExamples">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExampleXorExamples"/>.</param>
-        /// <param name="matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContent">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent"/>.</param>
+        /// <param name="matchExampleXorExamples">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExampleXorExamples"/>.</param>
+        /// <param name="matchSchemaXorContent">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent"/>.</param>
         /// <param name="defaultMatch">Match any other value.</param>
         /// <returns>An instance of the value returned by the match function.</returns>
         public TOut Match<TOut>(
-            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExampleXorExamples, TOut> matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentExampleXorExamples,
-            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent, TOut> matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContent,
-            Matcher<Header, TOut> defaultMatch)
+            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExampleXorExamples, TOut> matchExampleXorExamples,
+            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent, TOut> matchSchemaXorContent,
+            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Header, TOut> defaultMatch)
         {
-            Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExampleXorExamples matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentExampleXorExamplesValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExampleXorExamples>();
-            if (matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentExampleXorExamplesValue.IsValid())
+            Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExampleXorExamples matchExampleXorExamplesValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExampleXorExamples>();
+            if (matchExampleXorExamplesValue.IsValid())
             {
-                return matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentExampleXorExamples(matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentExampleXorExamplesValue);
+                return matchExampleXorExamples(matchExampleXorExamplesValue);
             }
 
-            Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContentValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent>();
-            if (matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContentValue.IsValid())
+            Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent matchSchemaXorContentValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent>();
+            if (matchSchemaXorContentValue.IsValid())
             {
-                return matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContent(matchCorvusJsonJsonSchemaOpenApi30OpenApiDocumentSchemaXorContentValue);
+                return matchSchemaXorContent(matchSchemaXorContentValue);
             }
 
             return defaultMatch(this);

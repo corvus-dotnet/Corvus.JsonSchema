@@ -748,26 +748,26 @@ public readonly partial struct OtherNames
     /// <typeparam name="TIn">The immutable context to pass in to the match function.</typeparam>
     /// <typeparam name="TOut">The result of calling the match function.</typeparam>
     /// <param name="context">The context to pass to the match function.</param>
-    /// <param name="matchCorvusJsonBenchmarkingModelsV3PersonNameElement">Match a <see cref="Corvus.Json.Benchmarking.Models.V3.PersonNameElement"/>.</param>
-    /// <param name="matchCorvusJsonBenchmarkingModelsV3PersonNameElementArray">Match a <see cref="Corvus.Json.Benchmarking.Models.V3.PersonNameElementArray"/>.</param>
+    /// <param name="matchPersonNameElement">Match a <see cref="Corvus.Json.Benchmarking.Models.V3.PersonNameElement"/>.</param>
+    /// <param name="matchPersonNameElementArray">Match a <see cref="Corvus.Json.Benchmarking.Models.V3.PersonNameElementArray"/>.</param>
     /// <param name="defaultMatch">Match any other value.</param>
     /// <returns>An instance of the value returned by the match function.</returns>
     public TOut Match<TIn, TOut>(
         in TIn context,
-        Matcher<Corvus.Json.Benchmarking.Models.V3.PersonNameElement, TIn, TOut> matchCorvusJsonBenchmarkingModelsV3PersonNameElement,
-        Matcher<Corvus.Json.Benchmarking.Models.V3.PersonNameElementArray, TIn, TOut> matchCorvusJsonBenchmarkingModelsV3PersonNameElementArray,
-        Matcher<OtherNames, TIn, TOut> defaultMatch)
+        Matcher<Corvus.Json.Benchmarking.Models.V3.PersonNameElement, TIn, TOut> matchPersonNameElement,
+        Matcher<Corvus.Json.Benchmarking.Models.V3.PersonNameElementArray, TIn, TOut> matchPersonNameElementArray,
+        Matcher<Corvus.Json.Benchmarking.Models.V3.OtherNames, TIn, TOut> defaultMatch)
     {
-        Corvus.Json.Benchmarking.Models.V3.PersonNameElement matchCorvusJsonBenchmarkingModelsV3PersonNameElementValue = this.As<Corvus.Json.Benchmarking.Models.V3.PersonNameElement>();
-        if (matchCorvusJsonBenchmarkingModelsV3PersonNameElementValue.IsValid())
+        Corvus.Json.Benchmarking.Models.V3.PersonNameElement matchPersonNameElementValue = this.As<Corvus.Json.Benchmarking.Models.V3.PersonNameElement>();
+        if (matchPersonNameElementValue.IsValid())
         {
-            return matchCorvusJsonBenchmarkingModelsV3PersonNameElement(matchCorvusJsonBenchmarkingModelsV3PersonNameElementValue, context);
+            return matchPersonNameElement(matchPersonNameElementValue, context);
         }
 
-        Corvus.Json.Benchmarking.Models.V3.PersonNameElementArray matchCorvusJsonBenchmarkingModelsV3PersonNameElementArrayValue = this.As<Corvus.Json.Benchmarking.Models.V3.PersonNameElementArray>();
-        if (matchCorvusJsonBenchmarkingModelsV3PersonNameElementArrayValue.IsValid())
+        Corvus.Json.Benchmarking.Models.V3.PersonNameElementArray matchPersonNameElementArrayValue = this.As<Corvus.Json.Benchmarking.Models.V3.PersonNameElementArray>();
+        if (matchPersonNameElementArrayValue.IsValid())
         {
-            return matchCorvusJsonBenchmarkingModelsV3PersonNameElementArray(matchCorvusJsonBenchmarkingModelsV3PersonNameElementArrayValue, context);
+            return matchPersonNameElementArray(matchPersonNameElementArrayValue, context);
         }
 
         return defaultMatch(this, context);
@@ -777,25 +777,25 @@ public readonly partial struct OtherNames
     /// Matches the value against the composed values, and returns the result of calling the provided match function for the first match found.
     /// </summary>
     /// <typeparam name="TOut">The result of calling the match function.</typeparam>
-    /// <param name="matchCorvusJsonBenchmarkingModelsV3PersonNameElement">Match a <see cref="Corvus.Json.Benchmarking.Models.V3.PersonNameElement"/>.</param>
-    /// <param name="matchCorvusJsonBenchmarkingModelsV3PersonNameElementArray">Match a <see cref="Corvus.Json.Benchmarking.Models.V3.PersonNameElementArray"/>.</param>
+    /// <param name="matchPersonNameElement">Match a <see cref="Corvus.Json.Benchmarking.Models.V3.PersonNameElement"/>.</param>
+    /// <param name="matchPersonNameElementArray">Match a <see cref="Corvus.Json.Benchmarking.Models.V3.PersonNameElementArray"/>.</param>
     /// <param name="defaultMatch">Match any other value.</param>
     /// <returns>An instance of the value returned by the match function.</returns>
     public TOut Match<TOut>(
-        Matcher<Corvus.Json.Benchmarking.Models.V3.PersonNameElement, TOut> matchCorvusJsonBenchmarkingModelsV3PersonNameElement,
-        Matcher<Corvus.Json.Benchmarking.Models.V3.PersonNameElementArray, TOut> matchCorvusJsonBenchmarkingModelsV3PersonNameElementArray,
-        Matcher<OtherNames, TOut> defaultMatch)
+        Matcher<Corvus.Json.Benchmarking.Models.V3.PersonNameElement, TOut> matchPersonNameElement,
+        Matcher<Corvus.Json.Benchmarking.Models.V3.PersonNameElementArray, TOut> matchPersonNameElementArray,
+        Matcher<Corvus.Json.Benchmarking.Models.V3.OtherNames, TOut> defaultMatch)
     {
-        Corvus.Json.Benchmarking.Models.V3.PersonNameElement matchCorvusJsonBenchmarkingModelsV3PersonNameElementValue = this.As<Corvus.Json.Benchmarking.Models.V3.PersonNameElement>();
-        if (matchCorvusJsonBenchmarkingModelsV3PersonNameElementValue.IsValid())
+        Corvus.Json.Benchmarking.Models.V3.PersonNameElement matchPersonNameElementValue = this.As<Corvus.Json.Benchmarking.Models.V3.PersonNameElement>();
+        if (matchPersonNameElementValue.IsValid())
         {
-            return matchCorvusJsonBenchmarkingModelsV3PersonNameElement(matchCorvusJsonBenchmarkingModelsV3PersonNameElementValue);
+            return matchPersonNameElement(matchPersonNameElementValue);
         }
 
-        Corvus.Json.Benchmarking.Models.V3.PersonNameElementArray matchCorvusJsonBenchmarkingModelsV3PersonNameElementArrayValue = this.As<Corvus.Json.Benchmarking.Models.V3.PersonNameElementArray>();
-        if (matchCorvusJsonBenchmarkingModelsV3PersonNameElementArrayValue.IsValid())
+        Corvus.Json.Benchmarking.Models.V3.PersonNameElementArray matchPersonNameElementArrayValue = this.As<Corvus.Json.Benchmarking.Models.V3.PersonNameElementArray>();
+        if (matchPersonNameElementArrayValue.IsValid())
         {
-            return matchCorvusJsonBenchmarkingModelsV3PersonNameElementArray(matchCorvusJsonBenchmarkingModelsV3PersonNameElementArrayValue);
+            return matchPersonNameElementArray(matchPersonNameElementArrayValue);
         }
 
         return defaultMatch(this);

@@ -760,26 +760,26 @@ public readonly partial struct Schema
         /// <typeparam name="TIn">The immutable context to pass in to the match function.</typeparam>
         /// <typeparam name="TOut">The result of calling the match function.</typeparam>
         /// <param name="context">The context to pass to the match function.</param>
-        /// <param name="matchCorvusJsonJsonBoolean">Match a <see cref="Corvus.Json.JsonBoolean"/>.</param>
-        /// <param name="matchCorvusJsonJsonSchemaDraft4Schema">Match a <see cref="Corvus.Json.JsonSchema.Draft4.Schema"/>.</param>
+        /// <param name="matchJsonBoolean">Match a <see cref="Corvus.Json.JsonBoolean"/>.</param>
+        /// <param name="matchSchema">Match a <see cref="Corvus.Json.JsonSchema.Draft4.Schema"/>.</param>
         /// <param name="defaultMatch">Match any other value.</param>
         /// <returns>An instance of the value returned by the match function.</returns>
         public TOut Match<TIn, TOut>(
             in TIn context,
-            Matcher<Corvus.Json.JsonBoolean, TIn, TOut> matchCorvusJsonJsonBoolean,
-            Matcher<Corvus.Json.JsonSchema.Draft4.Schema, TIn, TOut> matchCorvusJsonJsonSchemaDraft4Schema,
-            Matcher<AdditionalPropertiesEntity, TIn, TOut> defaultMatch)
+            Matcher<Corvus.Json.JsonBoolean, TIn, TOut> matchJsonBoolean,
+            Matcher<Corvus.Json.JsonSchema.Draft4.Schema, TIn, TOut> matchSchema,
+            Matcher<Corvus.Json.JsonSchema.Draft4.Schema.AdditionalPropertiesEntity, TIn, TOut> defaultMatch)
         {
-            Corvus.Json.JsonBoolean matchCorvusJsonJsonBooleanValue = this.As<Corvus.Json.JsonBoolean>();
-            if (matchCorvusJsonJsonBooleanValue.IsValid())
+            Corvus.Json.JsonBoolean matchJsonBooleanValue = this.As<Corvus.Json.JsonBoolean>();
+            if (matchJsonBooleanValue.IsValid())
             {
-                return matchCorvusJsonJsonBoolean(matchCorvusJsonJsonBooleanValue, context);
+                return matchJsonBoolean(matchJsonBooleanValue, context);
             }
 
-            Corvus.Json.JsonSchema.Draft4.Schema matchCorvusJsonJsonSchemaDraft4SchemaValue = this.As<Corvus.Json.JsonSchema.Draft4.Schema>();
-            if (matchCorvusJsonJsonSchemaDraft4SchemaValue.IsValid())
+            Corvus.Json.JsonSchema.Draft4.Schema matchSchemaValue = this.As<Corvus.Json.JsonSchema.Draft4.Schema>();
+            if (matchSchemaValue.IsValid())
             {
-                return matchCorvusJsonJsonSchemaDraft4Schema(matchCorvusJsonJsonSchemaDraft4SchemaValue, context);
+                return matchSchema(matchSchemaValue, context);
             }
 
             return defaultMatch(this, context);
@@ -789,25 +789,25 @@ public readonly partial struct Schema
         /// Matches the value against the composed values, and returns the result of calling the provided match function for the first match found.
         /// </summary>
         /// <typeparam name="TOut">The result of calling the match function.</typeparam>
-        /// <param name="matchCorvusJsonJsonBoolean">Match a <see cref="Corvus.Json.JsonBoolean"/>.</param>
-        /// <param name="matchCorvusJsonJsonSchemaDraft4Schema">Match a <see cref="Corvus.Json.JsonSchema.Draft4.Schema"/>.</param>
+        /// <param name="matchJsonBoolean">Match a <see cref="Corvus.Json.JsonBoolean"/>.</param>
+        /// <param name="matchSchema">Match a <see cref="Corvus.Json.JsonSchema.Draft4.Schema"/>.</param>
         /// <param name="defaultMatch">Match any other value.</param>
         /// <returns>An instance of the value returned by the match function.</returns>
         public TOut Match<TOut>(
-            Matcher<Corvus.Json.JsonBoolean, TOut> matchCorvusJsonJsonBoolean,
-            Matcher<Corvus.Json.JsonSchema.Draft4.Schema, TOut> matchCorvusJsonJsonSchemaDraft4Schema,
-            Matcher<AdditionalPropertiesEntity, TOut> defaultMatch)
+            Matcher<Corvus.Json.JsonBoolean, TOut> matchJsonBoolean,
+            Matcher<Corvus.Json.JsonSchema.Draft4.Schema, TOut> matchSchema,
+            Matcher<Corvus.Json.JsonSchema.Draft4.Schema.AdditionalPropertiesEntity, TOut> defaultMatch)
         {
-            Corvus.Json.JsonBoolean matchCorvusJsonJsonBooleanValue = this.As<Corvus.Json.JsonBoolean>();
-            if (matchCorvusJsonJsonBooleanValue.IsValid())
+            Corvus.Json.JsonBoolean matchJsonBooleanValue = this.As<Corvus.Json.JsonBoolean>();
+            if (matchJsonBooleanValue.IsValid())
             {
-                return matchCorvusJsonJsonBoolean(matchCorvusJsonJsonBooleanValue);
+                return matchJsonBoolean(matchJsonBooleanValue);
             }
 
-            Corvus.Json.JsonSchema.Draft4.Schema matchCorvusJsonJsonSchemaDraft4SchemaValue = this.As<Corvus.Json.JsonSchema.Draft4.Schema>();
-            if (matchCorvusJsonJsonSchemaDraft4SchemaValue.IsValid())
+            Corvus.Json.JsonSchema.Draft4.Schema matchSchemaValue = this.As<Corvus.Json.JsonSchema.Draft4.Schema>();
+            if (matchSchemaValue.IsValid())
             {
-                return matchCorvusJsonJsonSchemaDraft4Schema(matchCorvusJsonJsonSchemaDraft4SchemaValue);
+                return matchSchema(matchSchemaValue);
             }
 
             return defaultMatch(this);

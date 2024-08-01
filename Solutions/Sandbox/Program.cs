@@ -5,6 +5,12 @@ var person = Person.Create(PersonName.Create("Doe", "John"), netWorth: 1, dateOf
 
 if (person.NetWorth is JsonDecimal networth)
 {
+    JsonDecimal networth2 = 3.0m;
+
+    if (person.Name.OtherNamesValue is OtherNames names)
+    {
+    }
+
     Console.WriteLine(networth * 1000);
 }
 

@@ -753,26 +753,26 @@ public readonly partial struct Validation
         /// <typeparam name="TIn">The immutable context to pass in to the match function.</typeparam>
         /// <typeparam name="TOut">The result of calling the match function.</typeparam>
         /// <param name="context">The context to pass to the match function.</param>
-        /// <param name="matchCorvusJsonJsonSchemaDraft202012ValidationSimpleTypes">Match a <see cref="Corvus.Json.JsonSchema.Draft202012.Validation.SimpleTypes"/>.</param>
-        /// <param name="matchCorvusJsonJsonSchemaDraft202012ValidationTypeEntitySimpleTypesArray">Match a <see cref="Corvus.Json.JsonSchema.Draft202012.Validation.TypeEntity.SimpleTypesArray"/>.</param>
+        /// <param name="matchSimpleTypes">Match a <see cref="Corvus.Json.JsonSchema.Draft202012.Validation.SimpleTypes"/>.</param>
+        /// <param name="matchSimpleTypesArray">Match a <see cref="Corvus.Json.JsonSchema.Draft202012.Validation.TypeEntity.SimpleTypesArray"/>.</param>
         /// <param name="defaultMatch">Match any other value.</param>
         /// <returns>An instance of the value returned by the match function.</returns>
         public TOut Match<TIn, TOut>(
             in TIn context,
-            Matcher<Corvus.Json.JsonSchema.Draft202012.Validation.SimpleTypes, TIn, TOut> matchCorvusJsonJsonSchemaDraft202012ValidationSimpleTypes,
-            Matcher<Corvus.Json.JsonSchema.Draft202012.Validation.TypeEntity.SimpleTypesArray, TIn, TOut> matchCorvusJsonJsonSchemaDraft202012ValidationTypeEntitySimpleTypesArray,
-            Matcher<TypeEntity, TIn, TOut> defaultMatch)
+            Matcher<Corvus.Json.JsonSchema.Draft202012.Validation.SimpleTypes, TIn, TOut> matchSimpleTypes,
+            Matcher<Corvus.Json.JsonSchema.Draft202012.Validation.TypeEntity.SimpleTypesArray, TIn, TOut> matchSimpleTypesArray,
+            Matcher<Corvus.Json.JsonSchema.Draft202012.Validation.TypeEntity, TIn, TOut> defaultMatch)
         {
-            Corvus.Json.JsonSchema.Draft202012.Validation.SimpleTypes matchCorvusJsonJsonSchemaDraft202012ValidationSimpleTypesValue = this.As<Corvus.Json.JsonSchema.Draft202012.Validation.SimpleTypes>();
-            if (matchCorvusJsonJsonSchemaDraft202012ValidationSimpleTypesValue.IsValid())
+            Corvus.Json.JsonSchema.Draft202012.Validation.SimpleTypes matchSimpleTypesValue = this.As<Corvus.Json.JsonSchema.Draft202012.Validation.SimpleTypes>();
+            if (matchSimpleTypesValue.IsValid())
             {
-                return matchCorvusJsonJsonSchemaDraft202012ValidationSimpleTypes(matchCorvusJsonJsonSchemaDraft202012ValidationSimpleTypesValue, context);
+                return matchSimpleTypes(matchSimpleTypesValue, context);
             }
 
-            Corvus.Json.JsonSchema.Draft202012.Validation.TypeEntity.SimpleTypesArray matchCorvusJsonJsonSchemaDraft202012ValidationTypeEntitySimpleTypesArrayValue = this.As<Corvus.Json.JsonSchema.Draft202012.Validation.TypeEntity.SimpleTypesArray>();
-            if (matchCorvusJsonJsonSchemaDraft202012ValidationTypeEntitySimpleTypesArrayValue.IsValid())
+            Corvus.Json.JsonSchema.Draft202012.Validation.TypeEntity.SimpleTypesArray matchSimpleTypesArrayValue = this.As<Corvus.Json.JsonSchema.Draft202012.Validation.TypeEntity.SimpleTypesArray>();
+            if (matchSimpleTypesArrayValue.IsValid())
             {
-                return matchCorvusJsonJsonSchemaDraft202012ValidationTypeEntitySimpleTypesArray(matchCorvusJsonJsonSchemaDraft202012ValidationTypeEntitySimpleTypesArrayValue, context);
+                return matchSimpleTypesArray(matchSimpleTypesArrayValue, context);
             }
 
             return defaultMatch(this, context);
@@ -782,25 +782,25 @@ public readonly partial struct Validation
         /// Matches the value against the composed values, and returns the result of calling the provided match function for the first match found.
         /// </summary>
         /// <typeparam name="TOut">The result of calling the match function.</typeparam>
-        /// <param name="matchCorvusJsonJsonSchemaDraft202012ValidationSimpleTypes">Match a <see cref="Corvus.Json.JsonSchema.Draft202012.Validation.SimpleTypes"/>.</param>
-        /// <param name="matchCorvusJsonJsonSchemaDraft202012ValidationTypeEntitySimpleTypesArray">Match a <see cref="Corvus.Json.JsonSchema.Draft202012.Validation.TypeEntity.SimpleTypesArray"/>.</param>
+        /// <param name="matchSimpleTypes">Match a <see cref="Corvus.Json.JsonSchema.Draft202012.Validation.SimpleTypes"/>.</param>
+        /// <param name="matchSimpleTypesArray">Match a <see cref="Corvus.Json.JsonSchema.Draft202012.Validation.TypeEntity.SimpleTypesArray"/>.</param>
         /// <param name="defaultMatch">Match any other value.</param>
         /// <returns>An instance of the value returned by the match function.</returns>
         public TOut Match<TOut>(
-            Matcher<Corvus.Json.JsonSchema.Draft202012.Validation.SimpleTypes, TOut> matchCorvusJsonJsonSchemaDraft202012ValidationSimpleTypes,
-            Matcher<Corvus.Json.JsonSchema.Draft202012.Validation.TypeEntity.SimpleTypesArray, TOut> matchCorvusJsonJsonSchemaDraft202012ValidationTypeEntitySimpleTypesArray,
-            Matcher<TypeEntity, TOut> defaultMatch)
+            Matcher<Corvus.Json.JsonSchema.Draft202012.Validation.SimpleTypes, TOut> matchSimpleTypes,
+            Matcher<Corvus.Json.JsonSchema.Draft202012.Validation.TypeEntity.SimpleTypesArray, TOut> matchSimpleTypesArray,
+            Matcher<Corvus.Json.JsonSchema.Draft202012.Validation.TypeEntity, TOut> defaultMatch)
         {
-            Corvus.Json.JsonSchema.Draft202012.Validation.SimpleTypes matchCorvusJsonJsonSchemaDraft202012ValidationSimpleTypesValue = this.As<Corvus.Json.JsonSchema.Draft202012.Validation.SimpleTypes>();
-            if (matchCorvusJsonJsonSchemaDraft202012ValidationSimpleTypesValue.IsValid())
+            Corvus.Json.JsonSchema.Draft202012.Validation.SimpleTypes matchSimpleTypesValue = this.As<Corvus.Json.JsonSchema.Draft202012.Validation.SimpleTypes>();
+            if (matchSimpleTypesValue.IsValid())
             {
-                return matchCorvusJsonJsonSchemaDraft202012ValidationSimpleTypes(matchCorvusJsonJsonSchemaDraft202012ValidationSimpleTypesValue);
+                return matchSimpleTypes(matchSimpleTypesValue);
             }
 
-            Corvus.Json.JsonSchema.Draft202012.Validation.TypeEntity.SimpleTypesArray matchCorvusJsonJsonSchemaDraft202012ValidationTypeEntitySimpleTypesArrayValue = this.As<Corvus.Json.JsonSchema.Draft202012.Validation.TypeEntity.SimpleTypesArray>();
-            if (matchCorvusJsonJsonSchemaDraft202012ValidationTypeEntitySimpleTypesArrayValue.IsValid())
+            Corvus.Json.JsonSchema.Draft202012.Validation.TypeEntity.SimpleTypesArray matchSimpleTypesArrayValue = this.As<Corvus.Json.JsonSchema.Draft202012.Validation.TypeEntity.SimpleTypesArray>();
+            if (matchSimpleTypesArrayValue.IsValid())
             {
-                return matchCorvusJsonJsonSchemaDraft202012ValidationTypeEntitySimpleTypesArray(matchCorvusJsonJsonSchemaDraft202012ValidationTypeEntitySimpleTypesArrayValue);
+                return matchSimpleTypesArray(matchSimpleTypesArrayValue);
             }
 
             return defaultMatch(this);

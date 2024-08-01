@@ -748,26 +748,26 @@ public readonly partial struct OtherNames
     /// <typeparam name="TIn">The immutable context to pass in to the match function.</typeparam>
     /// <typeparam name="TOut">The result of calling the match function.</typeparam>
     /// <param name="context">The context to pass to the match function.</param>
-    /// <param name="matchSandboxModelsPersonNameElement">Match a <see cref="Sandbox.Models.PersonNameElement"/>.</param>
-    /// <param name="matchSandboxModelsPersonNameElementArray">Match a <see cref="Sandbox.Models.PersonNameElementArray"/>.</param>
+    /// <param name="matchPersonNameElement">Match a <see cref="Sandbox.Models.PersonNameElement"/>.</param>
+    /// <param name="matchPersonNameElementArray">Match a <see cref="Sandbox.Models.PersonNameElementArray"/>.</param>
     /// <param name="defaultMatch">Match any other value.</param>
     /// <returns>An instance of the value returned by the match function.</returns>
     public TOut Match<TIn, TOut>(
         in TIn context,
-        Matcher<Sandbox.Models.PersonNameElement, TIn, TOut> matchSandboxModelsPersonNameElement,
-        Matcher<Sandbox.Models.PersonNameElementArray, TIn, TOut> matchSandboxModelsPersonNameElementArray,
-        Matcher<OtherNames, TIn, TOut> defaultMatch)
+        Matcher<Sandbox.Models.PersonNameElement, TIn, TOut> matchPersonNameElement,
+        Matcher<Sandbox.Models.PersonNameElementArray, TIn, TOut> matchPersonNameElementArray,
+        Matcher<Sandbox.Models.OtherNames, TIn, TOut> defaultMatch)
     {
-        Sandbox.Models.PersonNameElement matchSandboxModelsPersonNameElementValue = this.As<Sandbox.Models.PersonNameElement>();
-        if (matchSandboxModelsPersonNameElementValue.IsValid())
+        Sandbox.Models.PersonNameElement matchPersonNameElementValue = this.As<Sandbox.Models.PersonNameElement>();
+        if (matchPersonNameElementValue.IsValid())
         {
-            return matchSandboxModelsPersonNameElement(matchSandboxModelsPersonNameElementValue, context);
+            return matchPersonNameElement(matchPersonNameElementValue, context);
         }
 
-        Sandbox.Models.PersonNameElementArray matchSandboxModelsPersonNameElementArrayValue = this.As<Sandbox.Models.PersonNameElementArray>();
-        if (matchSandboxModelsPersonNameElementArrayValue.IsValid())
+        Sandbox.Models.PersonNameElementArray matchPersonNameElementArrayValue = this.As<Sandbox.Models.PersonNameElementArray>();
+        if (matchPersonNameElementArrayValue.IsValid())
         {
-            return matchSandboxModelsPersonNameElementArray(matchSandboxModelsPersonNameElementArrayValue, context);
+            return matchPersonNameElementArray(matchPersonNameElementArrayValue, context);
         }
 
         return defaultMatch(this, context);
@@ -777,25 +777,25 @@ public readonly partial struct OtherNames
     /// Matches the value against the composed values, and returns the result of calling the provided match function for the first match found.
     /// </summary>
     /// <typeparam name="TOut">The result of calling the match function.</typeparam>
-    /// <param name="matchSandboxModelsPersonNameElement">Match a <see cref="Sandbox.Models.PersonNameElement"/>.</param>
-    /// <param name="matchSandboxModelsPersonNameElementArray">Match a <see cref="Sandbox.Models.PersonNameElementArray"/>.</param>
+    /// <param name="matchPersonNameElement">Match a <see cref="Sandbox.Models.PersonNameElement"/>.</param>
+    /// <param name="matchPersonNameElementArray">Match a <see cref="Sandbox.Models.PersonNameElementArray"/>.</param>
     /// <param name="defaultMatch">Match any other value.</param>
     /// <returns>An instance of the value returned by the match function.</returns>
     public TOut Match<TOut>(
-        Matcher<Sandbox.Models.PersonNameElement, TOut> matchSandboxModelsPersonNameElement,
-        Matcher<Sandbox.Models.PersonNameElementArray, TOut> matchSandboxModelsPersonNameElementArray,
-        Matcher<OtherNames, TOut> defaultMatch)
+        Matcher<Sandbox.Models.PersonNameElement, TOut> matchPersonNameElement,
+        Matcher<Sandbox.Models.PersonNameElementArray, TOut> matchPersonNameElementArray,
+        Matcher<Sandbox.Models.OtherNames, TOut> defaultMatch)
     {
-        Sandbox.Models.PersonNameElement matchSandboxModelsPersonNameElementValue = this.As<Sandbox.Models.PersonNameElement>();
-        if (matchSandboxModelsPersonNameElementValue.IsValid())
+        Sandbox.Models.PersonNameElement matchPersonNameElementValue = this.As<Sandbox.Models.PersonNameElement>();
+        if (matchPersonNameElementValue.IsValid())
         {
-            return matchSandboxModelsPersonNameElement(matchSandboxModelsPersonNameElementValue);
+            return matchPersonNameElement(matchPersonNameElementValue);
         }
 
-        Sandbox.Models.PersonNameElementArray matchSandboxModelsPersonNameElementArrayValue = this.As<Sandbox.Models.PersonNameElementArray>();
-        if (matchSandboxModelsPersonNameElementArrayValue.IsValid())
+        Sandbox.Models.PersonNameElementArray matchPersonNameElementArrayValue = this.As<Sandbox.Models.PersonNameElementArray>();
+        if (matchPersonNameElementArrayValue.IsValid())
         {
-            return matchSandboxModelsPersonNameElementArray(matchSandboxModelsPersonNameElementArrayValue);
+            return matchPersonNameElementArray(matchPersonNameElementArrayValue);
         }
 
         return defaultMatch(this);

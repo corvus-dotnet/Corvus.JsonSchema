@@ -712,26 +712,26 @@ public readonly partial struct Schema
         /// <typeparam name="TIn">The immutable context to pass in to the match function.</typeparam>
         /// <typeparam name="TOut">The result of calling the match function.</typeparam>
         /// <param name="context">The context to pass to the match function.</param>
-        /// <param name="matchCorvusJsonJsonSchemaDraft4SchemaPositiveInteger">Match a <see cref="Corvus.Json.JsonSchema.Draft4.Schema.PositiveInteger"/>.</param>
-        /// <param name="matchCorvusJsonJsonSchemaDraft4SchemaPositiveIntegerDefault0DefaultValueType0">Match a <see cref="Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0.DefaultValueType0"/>.</param>
+        /// <param name="matchPositiveInteger">Match a <see cref="Corvus.Json.JsonSchema.Draft4.Schema.PositiveInteger"/>.</param>
+        /// <param name="matchDefaultValueType0">Match a <see cref="Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0.DefaultValueType0"/>.</param>
         /// <param name="defaultMatch">Match any other value.</param>
         /// <returns>An instance of the value returned by the match function.</returns>
         public TOut Match<TIn, TOut>(
             in TIn context,
-            Matcher<Corvus.Json.JsonSchema.Draft4.Schema.PositiveInteger, TIn, TOut> matchCorvusJsonJsonSchemaDraft4SchemaPositiveInteger,
-            Matcher<Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0.DefaultValueType0, TIn, TOut> matchCorvusJsonJsonSchemaDraft4SchemaPositiveIntegerDefault0DefaultValueType0,
-            Matcher<PositiveIntegerDefault0, TIn, TOut> defaultMatch)
+            Matcher<Corvus.Json.JsonSchema.Draft4.Schema.PositiveInteger, TIn, TOut> matchPositiveInteger,
+            Matcher<Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0.DefaultValueType0, TIn, TOut> matchDefaultValueType0,
+            Matcher<Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0, TIn, TOut> defaultMatch)
         {
-            Corvus.Json.JsonSchema.Draft4.Schema.PositiveInteger matchCorvusJsonJsonSchemaDraft4SchemaPositiveIntegerValue = this.As<Corvus.Json.JsonSchema.Draft4.Schema.PositiveInteger>();
-            if (matchCorvusJsonJsonSchemaDraft4SchemaPositiveIntegerValue.IsValid())
+            Corvus.Json.JsonSchema.Draft4.Schema.PositiveInteger matchPositiveIntegerValue = this.As<Corvus.Json.JsonSchema.Draft4.Schema.PositiveInteger>();
+            if (matchPositiveIntegerValue.IsValid())
             {
-                return matchCorvusJsonJsonSchemaDraft4SchemaPositiveInteger(matchCorvusJsonJsonSchemaDraft4SchemaPositiveIntegerValue, context);
+                return matchPositiveInteger(matchPositiveIntegerValue, context);
             }
 
-            Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0.DefaultValueType0 matchCorvusJsonJsonSchemaDraft4SchemaPositiveIntegerDefault0DefaultValueType0Value = this.As<Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0.DefaultValueType0>();
-            if (matchCorvusJsonJsonSchemaDraft4SchemaPositiveIntegerDefault0DefaultValueType0Value.IsValid())
+            Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0.DefaultValueType0 matchDefaultValueType0Value = this.As<Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0.DefaultValueType0>();
+            if (matchDefaultValueType0Value.IsValid())
             {
-                return matchCorvusJsonJsonSchemaDraft4SchemaPositiveIntegerDefault0DefaultValueType0(matchCorvusJsonJsonSchemaDraft4SchemaPositiveIntegerDefault0DefaultValueType0Value, context);
+                return matchDefaultValueType0(matchDefaultValueType0Value, context);
             }
 
             return defaultMatch(this, context);
@@ -741,25 +741,25 @@ public readonly partial struct Schema
         /// Matches the value against the composed values, and returns the result of calling the provided match function for the first match found.
         /// </summary>
         /// <typeparam name="TOut">The result of calling the match function.</typeparam>
-        /// <param name="matchCorvusJsonJsonSchemaDraft4SchemaPositiveInteger">Match a <see cref="Corvus.Json.JsonSchema.Draft4.Schema.PositiveInteger"/>.</param>
-        /// <param name="matchCorvusJsonJsonSchemaDraft4SchemaPositiveIntegerDefault0DefaultValueType0">Match a <see cref="Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0.DefaultValueType0"/>.</param>
+        /// <param name="matchPositiveInteger">Match a <see cref="Corvus.Json.JsonSchema.Draft4.Schema.PositiveInteger"/>.</param>
+        /// <param name="matchDefaultValueType0">Match a <see cref="Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0.DefaultValueType0"/>.</param>
         /// <param name="defaultMatch">Match any other value.</param>
         /// <returns>An instance of the value returned by the match function.</returns>
         public TOut Match<TOut>(
-            Matcher<Corvus.Json.JsonSchema.Draft4.Schema.PositiveInteger, TOut> matchCorvusJsonJsonSchemaDraft4SchemaPositiveInteger,
-            Matcher<Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0.DefaultValueType0, TOut> matchCorvusJsonJsonSchemaDraft4SchemaPositiveIntegerDefault0DefaultValueType0,
-            Matcher<PositiveIntegerDefault0, TOut> defaultMatch)
+            Matcher<Corvus.Json.JsonSchema.Draft4.Schema.PositiveInteger, TOut> matchPositiveInteger,
+            Matcher<Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0.DefaultValueType0, TOut> matchDefaultValueType0,
+            Matcher<Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0, TOut> defaultMatch)
         {
-            Corvus.Json.JsonSchema.Draft4.Schema.PositiveInteger matchCorvusJsonJsonSchemaDraft4SchemaPositiveIntegerValue = this.As<Corvus.Json.JsonSchema.Draft4.Schema.PositiveInteger>();
-            if (matchCorvusJsonJsonSchemaDraft4SchemaPositiveIntegerValue.IsValid())
+            Corvus.Json.JsonSchema.Draft4.Schema.PositiveInteger matchPositiveIntegerValue = this.As<Corvus.Json.JsonSchema.Draft4.Schema.PositiveInteger>();
+            if (matchPositiveIntegerValue.IsValid())
             {
-                return matchCorvusJsonJsonSchemaDraft4SchemaPositiveInteger(matchCorvusJsonJsonSchemaDraft4SchemaPositiveIntegerValue);
+                return matchPositiveInteger(matchPositiveIntegerValue);
             }
 
-            Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0.DefaultValueType0 matchCorvusJsonJsonSchemaDraft4SchemaPositiveIntegerDefault0DefaultValueType0Value = this.As<Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0.DefaultValueType0>();
-            if (matchCorvusJsonJsonSchemaDraft4SchemaPositiveIntegerDefault0DefaultValueType0Value.IsValid())
+            Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0.DefaultValueType0 matchDefaultValueType0Value = this.As<Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0.DefaultValueType0>();
+            if (matchDefaultValueType0Value.IsValid())
             {
-                return matchCorvusJsonJsonSchemaDraft4SchemaPositiveIntegerDefault0DefaultValueType0(matchCorvusJsonJsonSchemaDraft4SchemaPositiveIntegerDefault0DefaultValueType0Value);
+                return matchDefaultValueType0(matchDefaultValueType0Value);
             }
 
             return defaultMatch(this);

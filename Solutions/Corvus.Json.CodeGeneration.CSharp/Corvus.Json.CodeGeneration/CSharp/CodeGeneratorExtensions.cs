@@ -3941,7 +3941,7 @@ internal static partial class CodeGeneratorExtensions
             {
                 // This is the parameter name for the match match method.
                 string matchTypeName = match.ReducedTypeDeclaration().ReducedType.FullyQualifiedDotnetTypeName();
-                string matchParamName = generator.GetUniqueParameterNameInScope(matchTypeName, childScope: scopeName, prefix: "match");
+                string matchParamName = generator.GetUniqueParameterNameInScope(match.ReducedTypeDeclaration().ReducedType.DotnetTypeName(), childScope: scopeName, prefix: "match");
 
                 parameterNames[i++] = matchParamName;
 
@@ -3984,7 +3984,7 @@ internal static partial class CodeGeneratorExtensions
                 .AppendLine(",")
                 .AppendLineIndent(
                     "Matcher<",
-                    typeDeclaration.DotnetTypeName(),
+                    typeDeclaration.FullyQualifiedDotnetTypeName(),
                     includeContext ? ", TIn" : string.Empty,
                     ", TOut> defaultMatch)")
                 .PopIndent()
