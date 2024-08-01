@@ -467,24 +467,24 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
     {
         return
             this.options.UseOptionalNameHeuristics
-                ? this.nameHeuristicRegistry.RegisteredHeuristics.OfType<IBuiltInTypeNameHeuristic>().OrderBy(h => h.Priority)
-                : this.nameHeuristicRegistry.RegisteredHeuristics.OfType<IBuiltInTypeNameHeuristic>().Where(h => !h.IsOptional).OrderBy(h => h.Priority);
+                ? this.nameHeuristicRegistry.RegisteredHeuristics.OfType<IBuiltInTypeNameHeuristic>().OrderBy(h => h.Priority).ThenBy(h => h.GetType().Name)
+                : this.nameHeuristicRegistry.RegisteredHeuristics.OfType<IBuiltInTypeNameHeuristic>().Where(h => !h.IsOptional).OrderBy(h => h.Priority).ThenBy(h => h.GetType().Name);
     }
 
     private IEnumerable<INameHeuristic> GetOrderedNameBeforeSubschemaHeuristics()
     {
         return
             this.options.UseOptionalNameHeuristics
-                ? this.nameHeuristicRegistry.RegisteredHeuristics.OfType<INameHeuristicBeforeSubschema>().OrderBy(h => h.Priority)
-                : this.nameHeuristicRegistry.RegisteredHeuristics.OfType<INameHeuristicBeforeSubschema>().Where(h => !h.IsOptional).OrderBy(h => h.Priority);
+                ? this.nameHeuristicRegistry.RegisteredHeuristics.OfType<INameHeuristicBeforeSubschema>().OrderBy(h => h.Priority).ThenBy(h => h.GetType().Name)
+                : this.nameHeuristicRegistry.RegisteredHeuristics.OfType<INameHeuristicBeforeSubschema>().Where(h => !h.IsOptional).OrderBy(h => h.Priority).ThenBy(h => h.GetType().Name);
     }
 
     private IEnumerable<INameHeuristic> GetOrderedNameAfterSubschemaHeuristics()
     {
         return
             this.options.UseOptionalNameHeuristics
-                ? this.nameHeuristicRegistry.RegisteredHeuristics.OfType<INameHeuristicAfterSubschema>().OrderBy(h => h.Priority)
-                : this.nameHeuristicRegistry.RegisteredHeuristics.OfType<INameHeuristicAfterSubschema>().Where(h => !h.IsOptional).OrderBy(h => h.Priority);
+                ? this.nameHeuristicRegistry.RegisteredHeuristics.OfType<INameHeuristicAfterSubschema>().OrderBy(h => h.Priority).ThenBy(h => h.GetType().Name)
+                : this.nameHeuristicRegistry.RegisteredHeuristics.OfType<INameHeuristicAfterSubschema>().Where(h => !h.IsOptional).OrderBy(h => h.Priority).ThenBy(h => h.GetType().Name);
     }
 
     /// <summary>
@@ -530,9 +530,9 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
     /// <param name="defaultNamespace">The default namespace into which to generate types if not otherwise specified.</param>
     /// <param name="namedTypes">Specifically named types.</param>
     /// <param name="namespaces">Specific namespaces for a given base URI.</param>
-    /// <param name="useTypeNameKeywordHeuristics">Indicates whether to use newer type name heuristics based on keyword inspection.</param>
+    /// <param name="useOptionalNameHeuristics">Indicates whether to use optional name heuristics.</param>
     /// <param name="alwaysAssertFormat">If true, then Format will always be treated as a validation assertion keyword, regardless of the vocabulary.</param>
-    public class Options(string defaultNamespace, NamedType[]? namedTypes = null, Namespace[]? namespaces = null, bool useTypeNameKeywordHeuristics = true, bool alwaysAssertFormat = true)
+    public class Options(string defaultNamespace, NamedType[]? namedTypes = null, Namespace[]? namespaces = null, bool useOptionalNameHeuristics = true, bool alwaysAssertFormat = true)
     {
         private readonly FrozenDictionary<string, string> namedTypeMap = namedTypes?.ToFrozenDictionary(kvp => kvp.Reference, kvp => kvp.DotnetTypeName) ?? FrozenDictionary<string, string>.Empty;
         private readonly FrozenDictionary<string, string> namespaceMap = namespaces?.ToFrozenDictionary(kvp => kvp.BaseUri, kvp => kvp.DotnetNamespace) ?? FrozenDictionary<string, string>.Empty;
@@ -540,7 +540,7 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
         /// <summary>
         /// Gets the default options.
         /// </summary>
-        public static Options Default { get; } = new("GeneratedCode", [], [], useTypeNameKeywordHeuristics: true, alwaysAssertFormat: true);
+        public static Options Default { get; } = new("GeneratedCode", [], [], useOptionalNameHeuristics: true, alwaysAssertFormat: true);
 
         /// <summary>
         /// Gets the root namespace for code generation.
@@ -550,7 +550,7 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
         /// <summary>
         /// Gets a value indicating whether to use newer type naming heuristics.
         /// </summary>
-        internal bool UseOptionalNameHeuristics { get; } = useTypeNameKeywordHeuristics;
+        internal bool UseOptionalNameHeuristics { get; } = useOptionalNameHeuristics;
 
         /// <summary>
         /// Gets a value indicating whether to always assert the format validation, regardless of the vocabularyy.
