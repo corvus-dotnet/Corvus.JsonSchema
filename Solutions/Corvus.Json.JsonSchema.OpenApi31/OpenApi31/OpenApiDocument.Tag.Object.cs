@@ -117,7 +117,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>description</c> property.
+        /// Gets the (optional) <c>description</c> property.
         /// </summary>
         public Corvus.Json.JsonString Description
         {
@@ -149,7 +149,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>externalDocs</c> property.
+        /// Gets the (optional) <c>externalDocs</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ExternalDocumentation ExternalDocs
         {
@@ -181,11 +181,11 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the (optional) <c>name</c> property.
+        /// Gets the <c>name</c> property.
         /// </summary>
         /// <remarks>
         /// <para>
-        /// If the instance is valid, this property will not be <c>undefined</c>.
+        /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
         public Corvus.Json.JsonString Name

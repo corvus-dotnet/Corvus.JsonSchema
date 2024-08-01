@@ -20,6 +20,7 @@ internal static class TypeDeclarationExtensions
     private const string FullyQualifiedDotnetTypeNameKey = "CSharp_LanguageProvider_FullyQualifiedDotnetTypeName";
     private const string PreferredDotnetNumericTypeNameKey = "CSharp_LanguageProvider_PreferredDotnetNumericTypeName";
     private const string AlwaysAssertFormatKey = "CSharp_LanguageProvider_AlwaysAssertFormat";
+    private const string OptionalAsNullableKey = "CSharp_LanguageProvider_OptionalAsNullable";
 
     /// <summary>
     /// Sets the relevant metadata from the <see cref="CSharpLanguageProvider.Options"/>.
@@ -29,6 +30,7 @@ internal static class TypeDeclarationExtensions
     public static void SetCSharpOptions(this TypeDeclaration typeDeclaration, CSharpLanguageProvider.Options options)
     {
         typeDeclaration.SetMetadata(AlwaysAssertFormatKey, options.AlwaysAssertFormat);
+        typeDeclaration.SetMetadata(OptionalAsNullableKey, options.OptionalAsNullable);
     }
 
     /// <summary>
@@ -42,6 +44,24 @@ internal static class TypeDeclarationExtensions
         if (typeDeclaration.TryGetMetadata(AlwaysAssertFormatKey, out bool? alwaysAssertFormat) &&
             alwaysAssertFormat is bool value)
         {
+            typeDeclaration.SetMetadata(AlwaysAssertFormatKey, value);
+            return value;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether to generate optional properties as nullable.
+    /// </summary>
+    /// <param name="typeDeclaration">The type declaration to test.</param>
+    /// <returns><see langword="true"/> if optional properties should be generated as nullable types.</returns>
+    public static bool OptionalAsNullable(this TypeDeclaration typeDeclaration)
+    {
+        if (typeDeclaration.TryGetMetadata(OptionalAsNullableKey, out bool? optionalAsNullable) &&
+            optionalAsNullable is bool value)
+        {
+            typeDeclaration.SetMetadata(OptionalAsNullableKey, value);
             return value;
         }
 

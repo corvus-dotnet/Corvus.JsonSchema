@@ -117,7 +117,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>mapping</c> property.
+        /// Gets the (optional) <c>mapping</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Discriminator.MappingEntity Mapping
         {
@@ -149,11 +149,11 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the (optional) <c>propertyName</c> property.
+        /// Gets the <c>propertyName</c> property.
         /// </summary>
         /// <remarks>
         /// <para>
-        /// If the instance is valid, this property will not be <c>undefined</c>.
+        /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
         public Corvus.Json.JsonString PropertyName

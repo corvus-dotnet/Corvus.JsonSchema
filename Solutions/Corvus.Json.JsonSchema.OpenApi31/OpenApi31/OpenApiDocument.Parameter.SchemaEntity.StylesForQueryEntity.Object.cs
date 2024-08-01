@@ -127,7 +127,7 @@ public readonly partial struct OpenApiDocument
                 }
 
                 /// <summary>
-                /// Gets the <c>allowReserved</c> property.
+                /// Gets the (optional) <c>allowReserved</c> property.
                 /// </summary>
                 public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForQueryEntity.ThenEntity.AllowReservedEntity AllowReserved
                 {
@@ -159,7 +159,7 @@ public readonly partial struct OpenApiDocument
                 }
 
                 /// <summary>
-                /// Gets the <c>style</c> property.
+                /// Gets the (optional) <c>style</c> property.
                 /// </summary>
                 public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForQueryEntity.ThenEntity.StyleEntity Style
                 {

@@ -122,7 +122,7 @@ public readonly partial struct OpenApiDocument
             }
 
             /// <summary>
-            /// Gets the <c>openIdConnectUrl</c> property.
+            /// Gets the (optional) <c>openIdConnectUrl</c> property.
             /// </summary>
             public Corvus.Json.JsonUri OpenIdConnectUrl
             {

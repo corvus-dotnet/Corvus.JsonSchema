@@ -147,6 +147,57 @@ public class JsonSchemaBuilderDriver : IDisposable
         throw new InvalidOperationException($"Unable to find FromValues(ReadOnlySpan<{typeof(TItems)}>) on {instanceType.Name}");
     }
 
+    public static bool CompareStringValue(Type instanceType, IJsonValue instance, string propertyName, string expectedValue)
+    {
+        PropertyInfo? property = instanceType.GetProperty(propertyName);
+        if (property is null)
+        {
+            return false;
+        }
+
+        object? value = property.GetValue(instance);
+
+        if (expectedValue == "null")
+        {
+            return value is null;
+        }
+
+        return value is not null && value.Equals((JsonString)expectedValue);
+    }
+
+    public static bool CompareNullableStringValue(Type instanceType, IJsonValue instance, string propertyName, string expectedValue)
+    {
+        PropertyInfo? property = instanceType.GetProperty(propertyName);
+        if (property is null)
+        {
+            return false;
+        }
+
+        object? value = property.GetValue(instance);
+
+        if (expectedValue == "null")
+        {
+            return value is null;
+        }
+
+        if (value is null)
+        {
+            return false;
+        }
+
+        if (expectedValue == "Null")
+        {
+            return ((IJsonValue)value).ValueKind == JsonValueKind.Null;
+        }
+
+        if (expectedValue == "Undefined")
+        {
+            return ((IJsonValue)value).ValueKind == JsonValueKind.Undefined;
+        }
+
+        return value.Equals((JsonString)expectedValue);
+    }
+
     /// <summary>
     /// Compare an instance of a numeric array type with an array of values.
     /// </summary>
@@ -247,8 +298,9 @@ public class JsonSchemaBuilderDriver : IDisposable
     /// <param name="featureName">The unique name of the feature.</param>
     /// <param name="scenarioName">The unique name of the scenario.</param>
     /// <param name="validateFormat">If true, the format keyword will be validated.</param>
+    /// <param name="optionalAsNullable">If true, optional properties are generated as nullable.</param>
     /// <returns>A <see cref="ValueTask{Type}"/> which, when complete, returns the <see cref="Type"/> generated for the schema.</returns>
-    public async ValueTask<Type> GenerateTypeForVirtualFile(string schema, string virtualFileName, string featureName, string scenarioName, bool validateFormat)
+    public async ValueTask<Type> GenerateTypeForVirtualFile(string schema, string virtualFileName, string featureName, string scenarioName, bool validateFormat, bool optionalAsNullable)
     {
         string baseDirectory = this.configuration[$"{this.settingsKey}:testBaseDirectory"]!;
         string path = Path.Combine(baseDirectory, virtualFileName);
@@ -264,7 +316,8 @@ public class JsonSchemaBuilderDriver : IDisposable
 
         var options = new CSharpLanguageProvider.Options(
             $"{featureName}Feature.{scenarioName}",
-            alwaysAssertFormat: validateFormat);
+            alwaysAssertFormat: validateFormat,
+            optionalAsNullable: optionalAsNullable);
 
         var languageProvider = CSharpLanguageProvider.DefaultWithOptions(options);
         IReadOnlyCollection<GeneratedCodeFile> generatedCode =
@@ -287,8 +340,9 @@ public class JsonSchemaBuilderDriver : IDisposable
     /// <param name="featureName">The feature name for the type.</param>
     /// <param name="scenarioName">The scenario name for the type.</param>
     /// <param name="validateFormat">If true, the format keyword will be validated.</param>
+    /// <param name="optionalAsNullable">If true, optional properties are generated as nullable.</param>
     /// <returns>The fully qualified type name of the entity we have generated.</returns>
-    public async ValueTask<Type> GenerateTypeForJsonSchemaTestSuite(string filename, string schemaPath, string featureName, string scenarioName, bool validateFormat)
+    public async ValueTask<Type> GenerateTypeForJsonSchemaTestSuite(string filename, string schemaPath, string featureName, string scenarioName, bool validateFormat, bool optionalAsNullable)
     {
         string baseDirectory = this.configuration[$"{this.settingsKey}:testBaseDirectory"]!;
         string path = Path.Combine(baseDirectory, filename) + schemaPath;
@@ -297,7 +351,8 @@ public class JsonSchemaBuilderDriver : IDisposable
 
         var options = new CSharpLanguageProvider.Options(
             $"{featureName}Feature.{scenarioName}",
-            alwaysAssertFormat: validateFormat);
+            alwaysAssertFormat: validateFormat,
+            optionalAsNullable: optionalAsNullable);
 
         var languageProvider = CSharpLanguageProvider.DefaultWithOptions(options);
         IReadOnlyCollection<GeneratedCodeFile> generatedCode =
@@ -320,8 +375,9 @@ public class JsonSchemaBuilderDriver : IDisposable
     /// <param name="featureName">The unique name of the feature.</param>
     /// <param name="scenarioName">The unique name of the scenario.</param>
     /// <param name="validateFormat">If true, the format keyword will be validated.</param>
+    /// <param name="optionalAsNullable">If true, optional properties are generated as nullable.</param>
     /// <returns>A <see cref="ValueTask{Type}"/> which, when complete, returns the <see cref="Type"/> generated for the schema.</returns>
-    public Type SynchronouslyGenerateTypeForVirtualFile(string schema, string virtualFileName, string featureName, string scenarioName, bool validateFormat)
+    public Type SynchronouslyGenerateTypeForVirtualFile(string schema, string virtualFileName, string featureName, string scenarioName, bool validateFormat, bool optionalAsNullable)
     {
         string baseDirectory = this.configuration[$"{this.settingsKey}:testBaseDirectory"]!;
         string path = Path.Combine(baseDirectory, virtualFileName);
@@ -337,7 +393,8 @@ public class JsonSchemaBuilderDriver : IDisposable
 
         var options = new CSharpLanguageProvider.Options(
             $"{featureName}Feature.{scenarioName}",
-            alwaysAssertFormat: validateFormat);
+            alwaysAssertFormat: validateFormat,
+            optionalAsNullable: optionalAsNullable);
 
         var languageProvider = CSharpLanguageProvider.DefaultWithOptions(options);
 
@@ -361,8 +418,9 @@ public class JsonSchemaBuilderDriver : IDisposable
     /// <param name="featureName">The feature name for the type.</param>
     /// <param name="scenarioName">The scenario name for the type.</param>
     /// <param name="validateFormat">If true, the format keyword will be validated.</param>
+    /// <param name="optionalAsNullable">If true, optional properties are generated as nullable.</param>
     /// <returns>The fully qualified type name of the entity we have generated.</returns>
-    public Type SynchronouslyGenerateTypeForJsonSchemaTestSuite(string filename, string schemaPath, string featureName, string scenarioName, bool validateFormat)
+    public Type SynchronouslyGenerateTypeForJsonSchemaTestSuite(string filename, string schemaPath, string featureName, string scenarioName, bool validateFormat, bool optionalAsNullable)
     {
         string baseDirectory = this.configuration[$"{this.settingsKey}:testBaseDirectory"]!;
         string path = Path.Combine(baseDirectory, filename) + schemaPath;
@@ -371,7 +429,8 @@ public class JsonSchemaBuilderDriver : IDisposable
 
         var options = new CSharpLanguageProvider.Options(
             $"{featureName}Feature.{scenarioName}",
-            alwaysAssertFormat: validateFormat);
+            alwaysAssertFormat: validateFormat,
+            optionalAsNullable: optionalAsNullable);
 
         var languageProvider = CSharpLanguageProvider.DefaultWithOptions(options);
 

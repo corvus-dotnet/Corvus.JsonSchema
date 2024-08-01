@@ -122,7 +122,7 @@ public readonly partial struct OpenApiDocument
             }
 
             /// <summary>
-            /// Gets the <c>flows</c> property.
+            /// Gets the (optional) <c>flows</c> property.
             /// </summary>
             public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OauthFlows Flows
             {

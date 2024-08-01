@@ -107,7 +107,7 @@ public readonly partial struct MetaData
     }
 
     /// <summary>
-    /// Gets the <c>default</c> property.
+    /// Gets the (optional) <c>default</c> property.
     /// </summary>
     public Corvus.Json.JsonAny Default
     {
@@ -139,7 +139,7 @@ public readonly partial struct MetaData
     }
 
     /// <summary>
-    /// Gets the <c>deprecated</c> property.
+    /// Gets the (optional) <c>deprecated</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft202012.MetaData.DeprecatedEntity Deprecated
     {
@@ -171,7 +171,7 @@ public readonly partial struct MetaData
     }
 
     /// <summary>
-    /// Gets the <c>description</c> property.
+    /// Gets the (optional) <c>description</c> property.
     /// </summary>
     public Corvus.Json.JsonString Description
     {
@@ -203,7 +203,7 @@ public readonly partial struct MetaData
     }
 
     /// <summary>
-    /// Gets the <c>examples</c> property.
+    /// Gets the (optional) <c>examples</c> property.
     /// </summary>
     public Corvus.Json.JsonArray Examples
     {
@@ -235,7 +235,7 @@ public readonly partial struct MetaData
     }
 
     /// <summary>
-    /// Gets the <c>readOnly</c> property.
+    /// Gets the (optional) <c>readOnly</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft202012.MetaData.ReadOnlyEntity ReadOnly
     {
@@ -267,7 +267,7 @@ public readonly partial struct MetaData
     }
 
     /// <summary>
-    /// Gets the <c>title</c> property.
+    /// Gets the (optional) <c>title</c> property.
     /// </summary>
     public Corvus.Json.JsonString Title
     {
@@ -299,7 +299,7 @@ public readonly partial struct MetaData
     }
 
     /// <summary>
-    /// Gets the <c>writeOnly</c> property.
+    /// Gets the (optional) <c>writeOnly</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft202012.MetaData.WriteOnlyEntity WriteOnly
     {

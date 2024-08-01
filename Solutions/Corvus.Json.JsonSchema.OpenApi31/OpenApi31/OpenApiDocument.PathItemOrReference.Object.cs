@@ -117,7 +117,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>$ref</c> property.
+        /// Gets the (optional) <c>$ref</c> property.
         /// </summary>
         public Corvus.Json.JsonUriReference Ref
         {
@@ -149,7 +149,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>delete</c> property.
+        /// Gets the (optional) <c>delete</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Operation Delete
         {
@@ -181,7 +181,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>description</c> property.
+        /// Gets the (optional) <c>description</c> property.
         /// </summary>
         public Corvus.Json.JsonString Description
         {
@@ -213,7 +213,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>get</c> property.
+        /// Gets the (optional) <c>get</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Operation Get
         {
@@ -245,7 +245,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>head</c> property.
+        /// Gets the (optional) <c>head</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Operation Head
         {
@@ -277,7 +277,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>options</c> property.
+        /// Gets the (optional) <c>options</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Operation Options
         {
@@ -309,7 +309,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>parameters</c> property.
+        /// Gets the (optional) <c>parameters</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.PropertiesParametersArray Parameters
         {
@@ -341,7 +341,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>patch</c> property.
+        /// Gets the (optional) <c>patch</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Operation Patch
         {
@@ -373,7 +373,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>post</c> property.
+        /// Gets the (optional) <c>post</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Operation Post
         {
@@ -405,7 +405,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>put</c> property.
+        /// Gets the (optional) <c>put</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Operation Put
         {
@@ -437,7 +437,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>servers</c> property.
+        /// Gets the (optional) <c>servers</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.PathItem.ServerArray Servers
         {
@@ -469,7 +469,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>summary</c> property.
+        /// Gets the (optional) <c>summary</c> property.
         /// </summary>
         public Corvus.Json.JsonString Summary
         {
@@ -501,7 +501,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>trace</c> property.
+        /// Gets the (optional) <c>trace</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Operation Trace
         {

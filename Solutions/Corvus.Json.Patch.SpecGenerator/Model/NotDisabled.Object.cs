@@ -107,7 +107,7 @@ public readonly partial struct NotDisabled
     }
 
     /// <summary>
-    /// Gets the <c>disabled</c> property.
+    /// Gets the (optional) <c>disabled</c> property.
     /// </summary>
     public Corvus.Json.JsonNotAny Disabled
     {

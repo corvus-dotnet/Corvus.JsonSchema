@@ -117,7 +117,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>bearerFormat</c> property.
+        /// Gets the (optional) <c>bearerFormat</c> property.
         /// </summary>
         public Corvus.Json.JsonString BearerFormat
         {
@@ -149,7 +149,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>description</c> property.
+        /// Gets the (optional) <c>description</c> property.
         /// </summary>
         public Corvus.Json.JsonString Description
         {
@@ -181,7 +181,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>flows</c> property.
+        /// Gets the (optional) <c>flows</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OauthFlows Flows
         {
@@ -213,7 +213,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>in</c> property.
+        /// Gets the (optional) <c>in</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeApikeyEntity.RequiredInAndName.InEntity In
         {
@@ -245,7 +245,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>name</c> property.
+        /// Gets the (optional) <c>name</c> property.
         /// </summary>
         public Corvus.Json.JsonString Name
         {
@@ -277,7 +277,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>openIdConnectUrl</c> property.
+        /// Gets the (optional) <c>openIdConnectUrl</c> property.
         /// </summary>
         public Corvus.Json.JsonUri OpenIdConnectUrl
         {
@@ -309,7 +309,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>scheme</c> property.
+        /// Gets the (optional) <c>scheme</c> property.
         /// </summary>
         public Corvus.Json.JsonString Scheme
         {
@@ -341,11 +341,11 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the (optional) <c>type</c> property.
+        /// Gets the <c>type</c> property.
         /// </summary>
         /// <remarks>
         /// <para>
-        /// If the instance is valid, this property will not be <c>undefined</c>.
+        /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
         public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeEntity Type

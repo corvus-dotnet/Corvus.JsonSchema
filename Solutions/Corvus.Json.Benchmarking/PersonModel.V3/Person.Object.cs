@@ -107,9 +107,9 @@ public readonly partial struct Person
     }
 
     /// <summary>
-    /// Gets the <c>dateOfBirth</c> property.
+    /// Gets the (optional) <c>dateOfBirth</c> property.
     /// </summary>
-    public Corvus.Json.JsonDate DateOfBirth
+    public Corvus.Json.Benchmarking.Models.V3.Person.DateOfBirthEntity DateOfBirth
     {
         get
         {
@@ -130,7 +130,7 @@ public readonly partial struct Person
             {
                 if (this.objectBacking.TryGetValue(JsonPropertyNames.DateOfBirth, out JsonAny result))
                 {
-                    return result.As<Corvus.Json.JsonDate>();
+                    return result.As<Corvus.Json.Benchmarking.Models.V3.Person.DateOfBirthEntity>();
                 }
             }
 
@@ -139,7 +139,7 @@ public readonly partial struct Person
     }
 
     /// <summary>
-    /// Gets the <c>email</c> property.
+    /// Gets the (optional) <c>email</c> property.
     /// </summary>
     public Corvus.Json.JsonEmail Email
     {
@@ -171,7 +171,7 @@ public readonly partial struct Person
     }
 
     /// <summary>
-    /// Gets the <c>height</c> property.
+    /// Gets the (optional) <c>height</c> property.
     /// </summary>
     public Corvus.Json.Benchmarking.Models.V3.HeightRangeDouble Height
     {
@@ -203,11 +203,11 @@ public readonly partial struct Person
     }
 
     /// <summary>
-    /// Gets the (optional) <c>name</c> property.
+    /// Gets the <c>name</c> property.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// If the instance is valid, this property will not be <c>undefined</c>.
+    /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// <para>
     /// A name of a person.
@@ -243,7 +243,7 @@ public readonly partial struct Person
     }
 
     /// <summary>
-    /// Gets the <c>netWorth</c> property.
+    /// Gets the (optional) <c>netWorth</c> property.
     /// </summary>
     public Corvus.Json.JsonDecimal NetWorth
     {
@@ -301,7 +301,7 @@ public readonly partial struct Person
     /// </summary>
     public static Person Create(
         in Corvus.Json.Benchmarking.Models.V3.PersonName name,
-        in Corvus.Json.JsonDate? dateOfBirth = null,
+        in Corvus.Json.Benchmarking.Models.V3.Person.DateOfBirthEntity? dateOfBirth = null,
         in Corvus.Json.JsonEmail? email = null,
         in Corvus.Json.Benchmarking.Models.V3.HeightRangeDouble? height = null,
         in Corvus.Json.JsonDecimal? netWorth = null)

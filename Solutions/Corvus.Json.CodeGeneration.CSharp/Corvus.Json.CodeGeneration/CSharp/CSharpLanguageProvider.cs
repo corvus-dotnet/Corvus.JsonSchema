@@ -533,7 +533,8 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
     /// <param name="namespaces">Specific namespaces for a given base URI.</param>
     /// <param name="useOptionalNameHeuristics">Indicates whether to use optional name heuristics.</param>
     /// <param name="alwaysAssertFormat">If true, then Format will always be treated as a validation assertion keyword, regardless of the vocabulary.</param>
-    public class Options(string defaultNamespace, NamedType[]? namedTypes = null, Namespace[]? namespaces = null, bool useOptionalNameHeuristics = true, bool alwaysAssertFormat = true)
+    /// <param name="optionalAsNullable">If true, then generate nullable types for optional parameters.</param>
+    public class Options(string defaultNamespace, NamedType[]? namedTypes = null, Namespace[]? namespaces = null, bool useOptionalNameHeuristics = true, bool alwaysAssertFormat = true, bool optionalAsNullable = false)
     {
         private readonly FrozenDictionary<string, string> namedTypeMap = namedTypes?.ToFrozenDictionary(kvp => kvp.Reference, kvp => kvp.DotnetTypeName) ?? FrozenDictionary<string, string>.Empty;
         private readonly FrozenDictionary<string, string> namespaceMap = namespaces?.ToFrozenDictionary(kvp => kvp.BaseUri, kvp => kvp.DotnetNamespace) ?? FrozenDictionary<string, string>.Empty;
@@ -557,6 +558,11 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
         /// Gets a value indicating whether to always assert the format validation, regardless of the vocabularyy.
         /// </summary>
         internal bool AlwaysAssertFormat { get; } = alwaysAssertFormat;
+
+        /// <summary>
+        /// Gets a value indicating whether to generate nullable types for optional parameters.
+        /// </summary>
+        internal bool OptionalAsNullable { get; } = optionalAsNullable;
 
         /// <summary>
         /// Gets the namespace for the base URI.

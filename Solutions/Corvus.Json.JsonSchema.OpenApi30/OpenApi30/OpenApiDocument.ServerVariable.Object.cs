@@ -125,11 +125,11 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the (optional) <c>default</c> property.
+        /// Gets the <c>default</c> property.
         /// </summary>
         /// <remarks>
         /// <para>
-        /// If the instance is valid, this property will not be <c>undefined</c>.
+        /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
         public Corvus.Json.JsonString Default
@@ -162,7 +162,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>description</c> property.
+        /// Gets the (optional) <c>description</c> property.
         /// </summary>
         public Corvus.Json.JsonString Description
         {
@@ -194,7 +194,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>enum</c> property.
+        /// Gets the (optional) <c>enum</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ServerVariable.JsonStringArray Enum
         {

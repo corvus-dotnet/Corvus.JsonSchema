@@ -117,7 +117,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>callbacks</c> property.
+        /// Gets the (optional) <c>callbacks</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Operation.CallbacksEntity Callbacks
         {
@@ -149,7 +149,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>deprecated</c> property.
+        /// Gets the (optional) <c>deprecated</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Operation.DeprecatedEntity Deprecated
         {
@@ -181,7 +181,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>description</c> property.
+        /// Gets the (optional) <c>description</c> property.
         /// </summary>
         public Corvus.Json.JsonString Description
         {
@@ -213,7 +213,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>externalDocs</c> property.
+        /// Gets the (optional) <c>externalDocs</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ExternalDocumentation ExternalDocs
         {
@@ -245,7 +245,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>operationId</c> property.
+        /// Gets the (optional) <c>operationId</c> property.
         /// </summary>
         public Corvus.Json.JsonString OperationId
         {
@@ -277,7 +277,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>parameters</c> property.
+        /// Gets the (optional) <c>parameters</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Operation.ParameterOrReferenceArray Parameters
         {
@@ -309,7 +309,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>requestBody</c> property.
+        /// Gets the (optional) <c>requestBody</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.RequestBodyOrReference RequestBody
         {
@@ -341,7 +341,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>responses</c> property.
+        /// Gets the (optional) <c>responses</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Responses ResponsesValue
         {
@@ -373,7 +373,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>security</c> property.
+        /// Gets the (optional) <c>security</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Operation.SecurityRequirementArray Security
         {
@@ -405,7 +405,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>servers</c> property.
+        /// Gets the (optional) <c>servers</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Operation.ServerArray Servers
         {
@@ -437,7 +437,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>summary</c> property.
+        /// Gets the (optional) <c>summary</c> property.
         /// </summary>
         public Corvus.Json.JsonString Summary
         {
@@ -469,7 +469,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>tags</c> property.
+        /// Gets the (optional) <c>tags</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Operation.JsonStringArray Tags
         {

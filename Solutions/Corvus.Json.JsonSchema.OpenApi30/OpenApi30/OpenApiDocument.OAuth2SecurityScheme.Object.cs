@@ -125,7 +125,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>description</c> property.
+        /// Gets the (optional) <c>description</c> property.
         /// </summary>
         public Corvus.Json.JsonString Description
         {
@@ -157,11 +157,11 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the (optional) <c>flows</c> property.
+        /// Gets the <c>flows</c> property.
         /// </summary>
         /// <remarks>
         /// <para>
-        /// If the instance is valid, this property will not be <c>undefined</c>.
+        /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
         public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OAuthFlows Flows
@@ -194,11 +194,11 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the (optional) <c>type</c> property.
+        /// Gets the <c>type</c> property.
         /// </summary>
         /// <remarks>
         /// <para>
-        /// If the instance is valid, this property will not be <c>undefined</c>.
+        /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
         public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OAuth2SecurityScheme.TypeEntity Type

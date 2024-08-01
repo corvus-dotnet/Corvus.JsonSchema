@@ -125,7 +125,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>default</c> property.
+        /// Gets the (optional) <c>default</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ResponseOrReference Default
         {

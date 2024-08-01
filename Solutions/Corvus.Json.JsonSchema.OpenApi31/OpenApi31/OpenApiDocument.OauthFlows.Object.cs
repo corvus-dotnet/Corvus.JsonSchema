@@ -117,7 +117,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>authorizationCode</c> property.
+        /// Gets the (optional) <c>authorizationCode</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OauthFlows.RequiredAuthorizationUrlAndScopesAndTokenUrl AuthorizationCode
         {
@@ -149,7 +149,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>clientCredentials</c> property.
+        /// Gets the (optional) <c>clientCredentials</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OauthFlows.RequiredScopesAndTokenUrl ClientCredentials
         {
@@ -181,7 +181,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>implicit</c> property.
+        /// Gets the (optional) <c>implicit</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OauthFlows.RequiredAuthorizationUrlAndScopes Implicit
         {
@@ -213,7 +213,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>password</c> property.
+        /// Gets the (optional) <c>password</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OauthFlows.DefssRequiredScopesAndTokenUr Password
         {

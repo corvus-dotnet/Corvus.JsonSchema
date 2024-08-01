@@ -122,7 +122,7 @@ public readonly partial struct OpenApiDocument
             }
 
             /// <summary>
-            /// Gets the <c>in</c> property.
+            /// Gets the (optional) <c>in</c> property.
             /// </summary>
             public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeApikeyEntity.RequiredInAndName.InEntity In
             {
@@ -154,7 +154,7 @@ public readonly partial struct OpenApiDocument
             }
 
             /// <summary>
-            /// Gets the <c>name</c> property.
+            /// Gets the (optional) <c>name</c> property.
             /// </summary>
             public Corvus.Json.JsonString Name
             {

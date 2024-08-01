@@ -125,7 +125,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>authorizationCode</c> property.
+        /// Gets the (optional) <c>authorizationCode</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.AuthorizationCodeOAuthFlow AuthorizationCode
         {
@@ -157,7 +157,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>clientCredentials</c> property.
+        /// Gets the (optional) <c>clientCredentials</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ClientCredentialsFlow ClientCredentials
         {
@@ -189,7 +189,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>implicit</c> property.
+        /// Gets the (optional) <c>implicit</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ImplicitOAuthFlow Implicit
         {
@@ -221,7 +221,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>password</c> property.
+        /// Gets the (optional) <c>password</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.PasswordOAuthFlow Password
         {

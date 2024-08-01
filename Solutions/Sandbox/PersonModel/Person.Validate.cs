@@ -125,7 +125,7 @@ public readonly partial struct Person
                         result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/dateOfBirth"), JsonPropertyNames.DateOfBirth);
                     }
 
-                    ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonDate>().Validate(result.CreateChildContext(), level);
+                    ValidationContext propertyResult = property.Value.As<Sandbox.Models.Person.DateOfBirthEntity>().Validate(result.CreateChildContext(), level);
                     result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
                     if (level > ValidationLevel.Basic)
                     {

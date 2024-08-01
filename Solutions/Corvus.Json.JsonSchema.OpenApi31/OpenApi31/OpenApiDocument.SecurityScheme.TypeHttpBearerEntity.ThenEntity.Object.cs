@@ -127,7 +127,7 @@ public readonly partial struct OpenApiDocument
                 }
 
                 /// <summary>
-                /// Gets the <c>bearerFormat</c> property.
+                /// Gets the (optional) <c>bearerFormat</c> property.
                 /// </summary>
                 public Corvus.Json.JsonString BearerFormat
                 {

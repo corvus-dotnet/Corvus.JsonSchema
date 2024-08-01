@@ -117,11 +117,11 @@ public readonly partial struct JsonPatchDocument
         }
 
         /// <summary>
-        /// Gets the (optional) <c>op</c> property.
+        /// Gets the <c>op</c> property.
         /// </summary>
         /// <remarks>
         /// <para>
-        /// If the instance is valid, this property will not be <c>undefined</c>.
+        /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
         public Corvus.Json.Patch.Model.JsonPatchDocument.TestOperation.OpEntity Op
@@ -154,11 +154,11 @@ public readonly partial struct JsonPatchDocument
         }
 
         /// <summary>
-        /// Gets the (optional) <c>path</c> property.
+        /// Gets the <c>path</c> property.
         /// </summary>
         /// <remarks>
         /// <para>
-        /// If the instance is valid, this property will not be <c>undefined</c>.
+        /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
         public Corvus.Json.JsonPointer Path
@@ -191,11 +191,11 @@ public readonly partial struct JsonPatchDocument
         }
 
         /// <summary>
-        /// Gets the (optional) <c>value</c> property.
+        /// Gets the <c>value</c> property.
         /// </summary>
         /// <remarks>
         /// <para>
-        /// If the instance is valid, this property will not be <c>undefined</c>, but may be <c>null</c>.
+        /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>, but may be <see cref="JsonValueKind.Null"/>.
         /// </para>
         /// </remarks>
         public Corvus.Json.JsonAny Value

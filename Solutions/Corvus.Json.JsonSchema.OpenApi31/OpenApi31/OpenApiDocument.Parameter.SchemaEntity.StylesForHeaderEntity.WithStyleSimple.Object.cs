@@ -132,7 +132,7 @@ public readonly partial struct OpenApiDocument
                     }
 
                     /// <summary>
-                    /// Gets the <c>style</c> property.
+                    /// Gets the (optional) <c>style</c> property.
                     /// </summary>
                     public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForHeaderEntity.WithStyleSimple.StyleEntity Style
                     {

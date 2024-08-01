@@ -721,12 +721,34 @@ public readonly partial struct OpenApiDocument
             /// <summary>
             /// Equality comparison.
             /// </summary>
-            /// <param name="other">The <see cref="BinaryJsonNumber"/> with which to compare.</param>
+            /// <param name="other">The <c>long</c> with which to compare.</param>
             /// <returns><see langword="true"/> if the values were equal.</returns>
-            public bool Equals(in BinaryJsonNumber other)            {
+            public bool Equals(long other)
+            {
                 if ((this.backing & Backing.JsonElement) != 0)
                 {
-return this.jsonElementBacking.ValueKind == JsonValueKind.Number && other.Equals(this.jsonElementBacking);                }
+                    return this.jsonElementBacking.ValueKind == JsonValueKind.Number && BinaryJsonNumber.Equals(this.jsonElementBacking, new BinaryJsonNumber(other));
+                }
+
+                if ((this.backing & Backing.Number) != 0)
+                {
+                    return BinaryJsonNumber.Equals(new BinaryJsonNumber(other), this.numberBacking);
+                }
+
+                return false;
+            }
+
+            /// <summary>
+            /// Equality comparison.
+            /// </summary>
+            /// <param name="other">The <see cref="BinaryJsonNumber"/> with which to compare.</param>
+            /// <returns><see langword="true"/> if the values were equal.</returns>
+            public bool Equals(in BinaryJsonNumber other)
+            {
+                if ((this.backing & Backing.JsonElement) != 0)
+                {
+                    return this.jsonElementBacking.ValueKind == JsonValueKind.Number && other.Equals(this.jsonElementBacking);
+                }
 
                 if ((this.backing & Backing.Number) != 0)
                 {

@@ -112,11 +112,11 @@ public readonly partial struct PersonName
     }
 
     /// <summary>
-    /// Gets the (optional) <c>familyName</c> property.
+    /// Gets the <c>familyName</c> property.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// If the instance is valid, this property will not be <c>undefined</c>.
+    /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// <para>
     /// The person's family name.
@@ -152,14 +152,17 @@ public readonly partial struct PersonName
     }
 
     /// <summary>
-    /// Gets the <c>givenName</c> property.
+    /// Gets the (optional) <c>givenName</c> property.
     /// </summary>
     /// <remarks>
+    /// <para>
+    /// If this JSON property is <see cref="JsonValueKind.Undefined"/> then the value returned will be <see langword="null" />.
+    /// </para>
     /// <para>
     /// The person's given name.
     /// </para>
     /// </remarks>
-    public Sandbox.Models.PersonNameElement GivenName
+    public Sandbox.Models.PersonNameElement? GivenName
     {
         get
         {
@@ -172,6 +175,11 @@ public readonly partial struct PersonName
 
                 if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.GivenNameUtf8, out JsonElement result))
                 {
+                    if (result.ValueKind == JsonValueKind.Null || result.ValueKind == JsonValueKind.Undefined)
+                    {
+                        return default;
+                    }
+
                     return new(result);
                 }
             }
@@ -180,6 +188,11 @@ public readonly partial struct PersonName
             {
                 if (this.objectBacking.TryGetValue(JsonPropertyNames.GivenName, out JsonAny result))
                 {
+                    if (result.IsNullOrUndefined())
+                    {
+                        return default;
+                    }
+
                     return result.As<Sandbox.Models.PersonNameElement>();
                 }
             }
@@ -189,14 +202,17 @@ public readonly partial struct PersonName
     }
 
     /// <summary>
-    /// Gets the <c>otherNames</c> property.
+    /// Gets the (optional) <c>otherNames</c> property.
     /// </summary>
     /// <remarks>
+    /// <para>
+    /// If this JSON property is <see cref="JsonValueKind.Undefined"/> then the value returned will be <see langword="null" />.
+    /// </para>
     /// <para>
     /// Other (middle) names for the person
     /// </para>
     /// </remarks>
-    public Sandbox.Models.OtherNames OtherNamesValue
+    public Sandbox.Models.OtherNames? OtherNamesValue
     {
         get
         {
@@ -209,6 +225,11 @@ public readonly partial struct PersonName
 
                 if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.OtherNamesValueUtf8, out JsonElement result))
                 {
+                    if (result.ValueKind == JsonValueKind.Null || result.ValueKind == JsonValueKind.Undefined)
+                    {
+                        return default;
+                    }
+
                     return new(result);
                 }
             }
@@ -217,6 +238,11 @@ public readonly partial struct PersonName
             {
                 if (this.objectBacking.TryGetValue(JsonPropertyNames.OtherNamesValue, out JsonAny result))
                 {
+                    if (result.IsNullOrUndefined())
+                    {
+                        return default;
+                    }
+
                     return result.As<Sandbox.Models.OtherNames>();
                 }
             }

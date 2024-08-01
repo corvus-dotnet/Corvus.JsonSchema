@@ -117,7 +117,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>body</c> property.
+        /// Gets the (optional) <c>body</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Server Body
         {
@@ -149,7 +149,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>description</c> property.
+        /// Gets the (optional) <c>description</c> property.
         /// </summary>
         public Corvus.Json.JsonString Description
         {
@@ -181,7 +181,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>operationId</c> property.
+        /// Gets the (optional) <c>operationId</c> property.
         /// </summary>
         public Corvus.Json.JsonString OperationId
         {
@@ -213,7 +213,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>operationRef</c> property.
+        /// Gets the (optional) <c>operationRef</c> property.
         /// </summary>
         public Corvus.Json.JsonUriReference OperationRef
         {
@@ -245,7 +245,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>parameters</c> property.
+        /// Gets the (optional) <c>parameters</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.MapOfStrings Parameters
         {
@@ -277,7 +277,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>requestBody</c> property.
+        /// Gets the (optional) <c>requestBody</c> property.
         /// </summary>
         public Corvus.Json.JsonAny RequestBody
         {

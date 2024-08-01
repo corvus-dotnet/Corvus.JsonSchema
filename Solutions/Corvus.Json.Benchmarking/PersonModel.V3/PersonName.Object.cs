@@ -112,11 +112,11 @@ public readonly partial struct PersonName
     }
 
     /// <summary>
-    /// Gets the (optional) <c>familyName</c> property.
+    /// Gets the <c>familyName</c> property.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// If the instance is valid, this property will not be <c>undefined</c>.
+    /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// <para>
     /// The person's family name.
@@ -152,7 +152,7 @@ public readonly partial struct PersonName
     }
 
     /// <summary>
-    /// Gets the <c>givenName</c> property.
+    /// Gets the (optional) <c>givenName</c> property.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -189,7 +189,7 @@ public readonly partial struct PersonName
     }
 
     /// <summary>
-    /// Gets the <c>otherNames</c> property.
+    /// Gets the (optional) <c>otherNames</c> property.
     /// </summary>
     /// <remarks>
     /// <para>

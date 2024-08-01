@@ -122,7 +122,7 @@ public readonly partial struct OpenApiDocument
             }
 
             /// <summary>
-            /// Gets the <c>scheme</c> property.
+            /// Gets the (optional) <c>scheme</c> property.
             /// </summary>
             public Corvus.Json.JsonString Scheme
             {

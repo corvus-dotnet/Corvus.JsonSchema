@@ -1,9 +1,11 @@
-﻿using Benchmarks;
+﻿using Corvus.Json;
+using Sandbox.Models;
 
-LargeFileBenchmark benchmark = new();
-benchmark.GlobalSetup().Wait();
+var person = Person.Create(PersonName.Create("Doe", "John"), netWorth: 1, dateOfBirth: Person.DateOfBirthEntity.Null);
 
-for(int i = 0; i < 50; ++i)
+if (person.NetWorth is JsonDecimal networth)
 {
-    benchmark.PatchCorvus();
+    Console.WriteLine(networth * 1000);
 }
+
+Console.WriteLine(person.HasProperty(Person.JsonPropertyNames.DateOfBirth));

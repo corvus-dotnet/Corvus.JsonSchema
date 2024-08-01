@@ -125,7 +125,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>additionalProperties</c> property.
+        /// Gets the (optional) <c>additionalProperties</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.AdditionalPropertiesEntity AdditionalProperties
         {
@@ -157,7 +157,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>allOf</c> property.
+        /// Gets the (optional) <c>allOf</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.AllOfEntityArray AllOf
         {
@@ -189,7 +189,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>anyOf</c> property.
+        /// Gets the (optional) <c>anyOf</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.AnyOfEntityArray AnyOf
         {
@@ -221,7 +221,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>default</c> property.
+        /// Gets the (optional) <c>default</c> property.
         /// </summary>
         public Corvus.Json.JsonAny Default
         {
@@ -253,7 +253,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>deprecated</c> property.
+        /// Gets the (optional) <c>deprecated</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.DeprecatedEntity Deprecated
         {
@@ -285,7 +285,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>description</c> property.
+        /// Gets the (optional) <c>description</c> property.
         /// </summary>
         public Corvus.Json.JsonString Description
         {
@@ -317,7 +317,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>discriminator</c> property.
+        /// Gets the (optional) <c>discriminator</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Discriminator DiscriminatorValue
         {
@@ -349,7 +349,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>enum</c> property.
+        /// Gets the (optional) <c>enum</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.JsonAnyArray Enum
         {
@@ -381,7 +381,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>example</c> property.
+        /// Gets the (optional) <c>example</c> property.
         /// </summary>
         public Corvus.Json.JsonAny Example
         {
@@ -413,7 +413,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>exclusiveMaximum</c> property.
+        /// Gets the (optional) <c>exclusiveMaximum</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.ExclusiveMaximumEntity ExclusiveMaximum
         {
@@ -445,7 +445,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>exclusiveMinimum</c> property.
+        /// Gets the (optional) <c>exclusiveMinimum</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.ExclusiveMinimumEntity ExclusiveMinimum
         {
@@ -477,7 +477,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>externalDocs</c> property.
+        /// Gets the (optional) <c>externalDocs</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExternalDocumentation ExternalDocs
         {
@@ -509,7 +509,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>format</c> property.
+        /// Gets the (optional) <c>format</c> property.
         /// </summary>
         public Corvus.Json.JsonString Format
         {
@@ -541,7 +541,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>items</c> property.
+        /// Gets the (optional) <c>items</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.ItemsEntity Items
         {
@@ -573,7 +573,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>maximum</c> property.
+        /// Gets the (optional) <c>maximum</c> property.
         /// </summary>
         public Corvus.Json.JsonNumber Maximum
         {
@@ -605,7 +605,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>maxItems</c> property.
+        /// Gets the (optional) <c>maxItems</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MaxItemsEntity MaxItems
         {
@@ -637,7 +637,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>maxLength</c> property.
+        /// Gets the (optional) <c>maxLength</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MaxLengthEntity MaxLength
         {
@@ -669,7 +669,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>maxProperties</c> property.
+        /// Gets the (optional) <c>maxProperties</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MaxPropertiesEntity MaxProperties
         {
@@ -701,7 +701,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>minimum</c> property.
+        /// Gets the (optional) <c>minimum</c> property.
         /// </summary>
         public Corvus.Json.JsonNumber Minimum
         {
@@ -733,7 +733,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>minItems</c> property.
+        /// Gets the (optional) <c>minItems</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MinItemsEntity MinItems
         {
@@ -765,7 +765,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>minLength</c> property.
+        /// Gets the (optional) <c>minLength</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MinLengthEntity MinLength
         {
@@ -797,7 +797,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>minProperties</c> property.
+        /// Gets the (optional) <c>minProperties</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MinPropertiesEntity MinProperties
         {
@@ -829,7 +829,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>multipleOf</c> property.
+        /// Gets the (optional) <c>multipleOf</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MultipleOfEntity MultipleOf
         {
@@ -861,7 +861,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>not</c> property.
+        /// Gets the (optional) <c>not</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.NotEntity Not
         {
@@ -893,7 +893,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>nullable</c> property.
+        /// Gets the (optional) <c>nullable</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.NullableEntity Nullable
         {
@@ -925,7 +925,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>oneOf</c> property.
+        /// Gets the (optional) <c>oneOf</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.OneOfEntityArray OneOf
         {
@@ -957,7 +957,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>pattern</c> property.
+        /// Gets the (optional) <c>pattern</c> property.
         /// </summary>
         public Corvus.Json.JsonRegex Pattern
         {
@@ -989,7 +989,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>properties</c> property.
+        /// Gets the (optional) <c>properties</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.PropertiesEntity Properties
         {
@@ -1021,7 +1021,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>readOnly</c> property.
+        /// Gets the (optional) <c>readOnly</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.ReadOnlyEntity ReadOnly
         {
@@ -1053,7 +1053,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>required</c> property.
+        /// Gets the (optional) <c>required</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.JsonStringArray Required
         {
@@ -1085,7 +1085,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>title</c> property.
+        /// Gets the (optional) <c>title</c> property.
         /// </summary>
         public Corvus.Json.JsonString Title
         {
@@ -1117,7 +1117,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>type</c> property.
+        /// Gets the (optional) <c>type</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.TypeEntity Type
         {
@@ -1149,7 +1149,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>uniqueItems</c> property.
+        /// Gets the (optional) <c>uniqueItems</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.UniqueItemsEntity UniqueItems
         {
@@ -1181,7 +1181,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>writeOnly</c> property.
+        /// Gets the (optional) <c>writeOnly</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.WriteOnlyEntity WriteOnly
         {
@@ -1213,7 +1213,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>xml</c> property.
+        /// Gets the (optional) <c>xml</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Xml XmlValue
         {

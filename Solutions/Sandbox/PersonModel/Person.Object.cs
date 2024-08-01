@@ -107,9 +107,14 @@ public readonly partial struct Person
     }
 
     /// <summary>
-    /// Gets the <c>dateOfBirth</c> property.
+    /// Gets the (optional) <c>dateOfBirth</c> property.
     /// </summary>
-    public Corvus.Json.JsonDate DateOfBirth
+    /// <remarks>
+    /// <para>
+    /// If this JSON property is <see cref="JsonValueKind.Undefined"/>, or <see cref="JsonValueKind.Null"/> then the value returned will be <see langword="null" />.
+    /// </para>
+    /// </remarks>
+    public Sandbox.Models.Person.DateOfBirthEntity? DateOfBirth
     {
         get
         {
@@ -122,6 +127,11 @@ public readonly partial struct Person
 
                 if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.DateOfBirthUtf8, out JsonElement result))
                 {
+                    if (result.ValueKind == JsonValueKind.Null || result.ValueKind == JsonValueKind.Undefined)
+                    {
+                        return default;
+                    }
+
                     return new(result);
                 }
             }
@@ -130,7 +140,12 @@ public readonly partial struct Person
             {
                 if (this.objectBacking.TryGetValue(JsonPropertyNames.DateOfBirth, out JsonAny result))
                 {
-                    return result.As<Corvus.Json.JsonDate>();
+                    if (result.IsNullOrUndefined())
+                    {
+                        return default;
+                    }
+
+                    return result.As<Sandbox.Models.Person.DateOfBirthEntity>();
                 }
             }
 
@@ -139,9 +154,14 @@ public readonly partial struct Person
     }
 
     /// <summary>
-    /// Gets the <c>email</c> property.
+    /// Gets the (optional) <c>email</c> property.
     /// </summary>
-    public Corvus.Json.JsonEmail Email
+    /// <remarks>
+    /// <para>
+    /// If this JSON property is <see cref="JsonValueKind.Undefined"/> then the value returned will be <see langword="null" />.
+    /// </para>
+    /// </remarks>
+    public Corvus.Json.JsonEmail? Email
     {
         get
         {
@@ -154,6 +174,11 @@ public readonly partial struct Person
 
                 if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.EmailUtf8, out JsonElement result))
                 {
+                    if (result.ValueKind == JsonValueKind.Null || result.ValueKind == JsonValueKind.Undefined)
+                    {
+                        return default;
+                    }
+
                     return new(result);
                 }
             }
@@ -162,6 +187,11 @@ public readonly partial struct Person
             {
                 if (this.objectBacking.TryGetValue(JsonPropertyNames.Email, out JsonAny result))
                 {
+                    if (result.IsNullOrUndefined())
+                    {
+                        return default;
+                    }
+
                     return result.As<Corvus.Json.JsonEmail>();
                 }
             }
@@ -171,9 +201,14 @@ public readonly partial struct Person
     }
 
     /// <summary>
-    /// Gets the <c>height</c> property.
+    /// Gets the (optional) <c>height</c> property.
     /// </summary>
-    public Sandbox.Models.HeightRangeDouble Height
+    /// <remarks>
+    /// <para>
+    /// If this JSON property is <see cref="JsonValueKind.Undefined"/> then the value returned will be <see langword="null" />.
+    /// </para>
+    /// </remarks>
+    public Sandbox.Models.HeightRangeDouble? Height
     {
         get
         {
@@ -186,6 +221,11 @@ public readonly partial struct Person
 
                 if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.HeightUtf8, out JsonElement result))
                 {
+                    if (result.ValueKind == JsonValueKind.Null || result.ValueKind == JsonValueKind.Undefined)
+                    {
+                        return default;
+                    }
+
                     return new(result);
                 }
             }
@@ -194,6 +234,11 @@ public readonly partial struct Person
             {
                 if (this.objectBacking.TryGetValue(JsonPropertyNames.Height, out JsonAny result))
                 {
+                    if (result.IsNullOrUndefined())
+                    {
+                        return default;
+                    }
+
                     return result.As<Sandbox.Models.HeightRangeDouble>();
                 }
             }
@@ -203,11 +248,11 @@ public readonly partial struct Person
     }
 
     /// <summary>
-    /// Gets the (optional) <c>name</c> property.
+    /// Gets the <c>name</c> property.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// If the instance is valid, this property will not be <c>undefined</c>.
+    /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// <para>
     /// A name of a person.
@@ -243,9 +288,14 @@ public readonly partial struct Person
     }
 
     /// <summary>
-    /// Gets the <c>netWorth</c> property.
+    /// Gets the (optional) <c>netWorth</c> property.
     /// </summary>
-    public Corvus.Json.JsonDecimal NetWorth
+    /// <remarks>
+    /// <para>
+    /// If this JSON property is <see cref="JsonValueKind.Undefined"/> then the value returned will be <see langword="null" />.
+    /// </para>
+    /// </remarks>
+    public Corvus.Json.JsonDecimal? NetWorth
     {
         get
         {
@@ -258,6 +308,11 @@ public readonly partial struct Person
 
                 if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.NetWorthUtf8, out JsonElement result))
                 {
+                    if (result.ValueKind == JsonValueKind.Null || result.ValueKind == JsonValueKind.Undefined)
+                    {
+                        return default;
+                    }
+
                     return new(result);
                 }
             }
@@ -266,6 +321,11 @@ public readonly partial struct Person
             {
                 if (this.objectBacking.TryGetValue(JsonPropertyNames.NetWorth, out JsonAny result))
                 {
+                    if (result.IsNullOrUndefined())
+                    {
+                        return default;
+                    }
+
                     return result.As<Corvus.Json.JsonDecimal>();
                 }
             }
@@ -301,7 +361,7 @@ public readonly partial struct Person
     /// </summary>
     public static Person Create(
         in Sandbox.Models.PersonName name,
-        in Corvus.Json.JsonDate? dateOfBirth = null,
+        in Sandbox.Models.Person.DateOfBirthEntity? dateOfBirth = null,
         in Corvus.Json.JsonEmail? email = null,
         in Sandbox.Models.HeightRangeDouble? height = null,
         in Corvus.Json.JsonDecimal? netWorth = null)

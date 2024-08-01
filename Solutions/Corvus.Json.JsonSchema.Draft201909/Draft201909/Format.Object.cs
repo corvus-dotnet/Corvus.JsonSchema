@@ -107,7 +107,7 @@ public readonly partial struct Format
     }
 
     /// <summary>
-    /// Gets the <c>format</c> property.
+    /// Gets the (optional) <c>format</c> property.
     /// </summary>
     public Corvus.Json.JsonString FormatValue
     {

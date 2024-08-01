@@ -125,11 +125,11 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the (optional) <c>$ref</c> property.
+        /// Gets the <c>$ref</c> property.
         /// </summary>
         /// <remarks>
         /// <para>
-        /// If the instance is valid, this property will not be <c>undefined</c>, but may be <c>null</c>.
+        /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>, but may be <see cref="JsonValueKind.Null"/>.
         /// </para>
         /// </remarks>
         public Corvus.Json.JsonAny Ref

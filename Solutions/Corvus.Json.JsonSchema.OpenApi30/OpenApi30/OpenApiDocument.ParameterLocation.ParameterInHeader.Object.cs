@@ -132,7 +132,7 @@ public readonly partial struct OpenApiDocument
             }
 
             /// <summary>
-            /// Gets the <c>in</c> property.
+            /// Gets the (optional) <c>in</c> property.
             /// </summary>
             public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInHeader.InEntity In
             {
@@ -164,7 +164,7 @@ public readonly partial struct OpenApiDocument
             }
 
             /// <summary>
-            /// Gets the <c>style</c> property.
+            /// Gets the (optional) <c>style</c> property.
             /// </summary>
             public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInHeader.StyleEntity Style
             {

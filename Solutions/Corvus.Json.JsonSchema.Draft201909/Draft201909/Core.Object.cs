@@ -107,7 +107,7 @@ public readonly partial struct Core
     }
 
     /// <summary>
-    /// Gets the <c>$anchor</c> property.
+    /// Gets the (optional) <c>$anchor</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft201909.Core.AnchorEntity Anchor
     {
@@ -139,7 +139,7 @@ public readonly partial struct Core
     }
 
     /// <summary>
-    /// Gets the <c>$comment</c> property.
+    /// Gets the (optional) <c>$comment</c> property.
     /// </summary>
     public Corvus.Json.JsonString Comment
     {
@@ -171,7 +171,7 @@ public readonly partial struct Core
     }
 
     /// <summary>
-    /// Gets the <c>$defs</c> property.
+    /// Gets the (optional) <c>$defs</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft201909.Core.DefsEntity Defs
     {
@@ -203,7 +203,7 @@ public readonly partial struct Core
     }
 
     /// <summary>
-    /// Gets the <c>$id</c> property.
+    /// Gets the (optional) <c>$id</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft201909.Core.IdEntity Id
     {
@@ -235,7 +235,7 @@ public readonly partial struct Core
     }
 
     /// <summary>
-    /// Gets the <c>$recursiveAnchor</c> property.
+    /// Gets the (optional) <c>$recursiveAnchor</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft201909.Core.RecursiveAnchorEntity RecursiveAnchor
     {
@@ -267,7 +267,7 @@ public readonly partial struct Core
     }
 
     /// <summary>
-    /// Gets the <c>$recursiveRef</c> property.
+    /// Gets the (optional) <c>$recursiveRef</c> property.
     /// </summary>
     public Corvus.Json.JsonUriReference RecursiveRef
     {
@@ -299,7 +299,7 @@ public readonly partial struct Core
     }
 
     /// <summary>
-    /// Gets the <c>$ref</c> property.
+    /// Gets the (optional) <c>$ref</c> property.
     /// </summary>
     public Corvus.Json.JsonUriReference Ref
     {
@@ -331,7 +331,7 @@ public readonly partial struct Core
     }
 
     /// <summary>
-    /// Gets the <c>$schema</c> property.
+    /// Gets the (optional) <c>$schema</c> property.
     /// </summary>
     public Corvus.Json.JsonUri Schema
     {
@@ -363,7 +363,7 @@ public readonly partial struct Core
     }
 
     /// <summary>
-    /// Gets the <c>$vocabulary</c> property.
+    /// Gets the (optional) <c>$vocabulary</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft201909.Core.VocabularyEntity Vocabulary
     {

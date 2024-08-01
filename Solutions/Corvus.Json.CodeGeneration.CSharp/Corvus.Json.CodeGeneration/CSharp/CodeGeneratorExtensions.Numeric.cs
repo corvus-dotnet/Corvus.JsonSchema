@@ -29,7 +29,7 @@ internal static partial class CodeGeneratorExtensions
                 /// <param name="other">The <see cref="BinaryJsonNumber"/> with which to compare.</param>
                 /// <returns><see langword="true"/> if the values were equal.</returns>
                 """)
-            .AppendIndent("public bool Equals(in BinaryJsonNumber other)")
+            .AppendLineIndent("public bool Equals(in BinaryJsonNumber other)")
             .AppendLineIndent("{")
             .PushIndent()
                 .AppendConditionalBackingValueCallbackIndent("Backing.JsonElement", "jsonElementBacking", AppendJsonElementComparison)
@@ -43,11 +43,11 @@ internal static partial class CodeGeneratorExtensions
         static void AppendJsonElementComparison(CodeGenerator generator, string fieldName)
         {
             generator
-                .Append("return this.")
+                .AppendIndent("return this.")
                 .Append(fieldName)
                 .Append(".ValueKind == JsonValueKind.Number && other.Equals(this.")
                 .Append(fieldName)
-                .Append(");");
+                .AppendLine(");");
         }
     }
 
@@ -168,6 +168,85 @@ internal static partial class CodeGeneratorExtensions
             .AppendNumericConversionsForDotnetType(typeDeclaration, "uint", "SafeGetUInt32")
             .AppendNumericConversionsForDotnetType(typeDeclaration, "ulong", "SafeGetUInt64")
             .AppendNumericConversionsForDotnetType(typeDeclaration, "UInt128", "SafeGetUInt128", FrameworkType.Net80OrGreater);
+    }
+
+    /// <summary>
+    /// Appends conversions to and from the .NET numeric types.
+    /// </summary>
+    /// <param name="generator">The code generator.</param>
+    /// <param name="typeDeclaration">The type declaration from which to convert.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendNumericEquals(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        return generator
+            .AppendNumericEqualsForDotnetType(typeDeclaration, "byte")
+            .AppendNumericEqualsForDotnetType(typeDeclaration, "decimal")
+            .AppendNumericEqualsForDotnetType(typeDeclaration, "double")
+            .AppendNumericEqualsForDotnetType(typeDeclaration, "short")
+            .AppendNumericEqualsForDotnetType(typeDeclaration, "int")
+            .AppendNumericEqualsForDotnetType(typeDeclaration, "long")
+            .AppendNumericEqualsForDotnetType(typeDeclaration, "Int128", FrameworkType.Net80OrGreater)
+            .AppendNumericEqualsForDotnetType(typeDeclaration, "sbyte")
+            .AppendNumericEqualsForDotnetType(typeDeclaration, "Half", FrameworkType.Net80OrGreater)
+            .AppendNumericEqualsForDotnetType(typeDeclaration, "float")
+            .AppendNumericEqualsForDotnetType(typeDeclaration, "ushort")
+            .AppendNumericEqualsForDotnetType(typeDeclaration, "uint")
+            .AppendNumericEqualsForDotnetType(typeDeclaration, "ulong")
+            .AppendNumericEqualsForDotnetType(typeDeclaration, "UInt128", FrameworkType.Net80OrGreater);
+    }
+
+    /// <summary>
+    /// Append the Equals() method overload for a dotnet type.
+    /// </summary>
+    /// <param name="generator">The code generator.</param>
+    /// <param name="typeDeclaration">The type declaration.</param>
+    /// <param name="dotnetType">The dotnet type for which to emit the method.</param>
+    /// <param name="frameworkType">The framework types for which to emit the method.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendNumericEqualsForDotnetType(this CodeGenerator generator, TypeDeclaration typeDeclaration, string dotnetType, FrameworkType frameworkType = FrameworkType.All)
+    {
+        if (typeDeclaration.PreferredDotnetNumericTypeName() != dotnetType)
+        {
+            return generator;
+        }
+
+        return ConditionalCodeSpecification.AppendConditional(generator, g => AppendEquals(g, typeDeclaration, dotnetType), frameworkType);
+
+        static void AppendEquals(CodeGenerator generator, TypeDeclaration typeDeclaration, string dotnetType)
+        {
+            generator
+                .ReserveNameIfNotReserved("Equals")
+                .AppendSeparatorLine()
+                .AppendBlockIndent(
+                    """
+                    /// <summary>
+                    /// Equality comparison.
+                    /// </summary>
+                    """)
+                .AppendLineIndent("/// <param name=\"other\">The <c>", dotnetType, "</c> with which to compare.</param>")
+                .AppendLineIndent("/// <returns><see langword=\"true\"/> if the values were equal.</returns>")
+                .AppendLineIndent("public bool Equals(", dotnetType, " other)")
+                .AppendLineIndent("{")
+                .PushIndent()
+                    .AppendConditionalBackingValueCallbackIndent("Backing.JsonElement", "jsonElementBacking", AppendJsonElementComparison)
+                    .AppendSeparatorLine()
+                    .AppendConditionalWrappedBackingValueLineIndent("Backing.Number", "return BinaryJsonNumber.Equals(new BinaryJsonNumber(other), ", "numberBacking", ");")
+                    .AppendSeparatorLine()
+                    .AppendLineIndent("return false;")
+                .PopIndent()
+                .AppendLineIndent("}");
+        }
+
+        static void AppendJsonElementComparison(CodeGenerator generator, string fieldName)
+        {
+            generator
+                .AppendLineIndent(
+                    "return this.",
+                    fieldName,
+                    ".ValueKind == JsonValueKind.Number && BinaryJsonNumber.Equals(this.",
+                    fieldName,
+                    ", new BinaryJsonNumber(other));");
+        }
     }
 
     /// <summary>

@@ -117,7 +117,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>explode</c> property.
+        /// Gets the (optional) <c>explode</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm.ElseEntity.DefaultValueFalse Explode
         {
