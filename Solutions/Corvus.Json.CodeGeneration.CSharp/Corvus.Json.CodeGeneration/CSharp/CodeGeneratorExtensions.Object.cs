@@ -175,13 +175,14 @@ internal static partial class CodeGeneratorExtensions
     {
         foreach (PropertyDeclaration property in typeDeclaration.PropertyDeclarations)
         {
+            bool isNullable = typeDeclaration.OptionalAsNullable() && property.RequiredOrOptional == RequiredOrOptional.Optional;
             generator
                 .AppendSeparatorLine()
                 .AppendPropertyDocumentation(property)
                 .AppendObsoleteAttribute(property)
-                .BeginPublicReadOnlyPropertyDeclaration(property.ReducedPropertyType.FullyQualifiedDotnetTypeName(), property.DotnetPropertyName())
-                    .AppendConditionalBackingValueCallbackIndent("Backing.JsonElement", "jsonElementBacking", (g, f) => AppendJsonBackedAccessor(g, f, property))
-                    .AppendConditionalBackingValueCallbackIndent("Backing.Object", "objectBacking", (g, f) => AppendObjectBackedAccessor(g, f, property))
+                .BeginPublicReadOnlyPropertyDeclaration(property.ReducedPropertyType.FullyQualifiedDotnetTypeName(), property.DotnetPropertyName(), isNullable)
+                    .AppendConditionalBackingValueCallbackIndent("Backing.JsonElement", "jsonElementBacking", (g, f) => AppendJsonBackedAccessor(g, typeDeclaration, f, property))
+                    .AppendConditionalBackingValueCallbackIndent("Backing.Object", "objectBacking", (g, f) => AppendObjectBackedAccessor(g, typeDeclaration, f, property))
                     .AppendSeparatorLine()
                     .AppendLineIndent("return default;")
                 .EndReadOnlyPropertyDeclaration();
@@ -189,7 +190,7 @@ internal static partial class CodeGeneratorExtensions
 
         return generator;
 
-        static void AppendJsonBackedAccessor(CodeGenerator generator, string fieldName, PropertyDeclaration property)
+        static void AppendJsonBackedAccessor(CodeGenerator generator, TypeDeclaration typeDeclaration, string fieldName, PropertyDeclaration property)
         {
             generator
                 .AppendLineIndent("if (this.", fieldName, ".ValueKind != JsonValueKind.Object)")
@@ -208,13 +209,27 @@ internal static partial class CodeGeneratorExtensions
                     property.DotnetPropertyName(),
                     "Utf8, out JsonElement result))")
                 .AppendLineIndent("{")
-                .PushIndent()
+                .PushIndent();
+
+            if (typeDeclaration.OptionalAsNullable() && property.RequiredOrOptional == RequiredOrOptional.Optional)
+            {
+                generator
+                    .AppendLineIndent("if (result.ValueKind == JsonValueKind.Null || result.ValueKind == JsonValueKind.Undefined)")
+                    .AppendLineIndent("{")
+                    .PushIndent()
+                        .AppendLineIndent("return default;")
+                    .PopIndent()
+                    .AppendLineIndent("}")
+                    .AppendSeparatorLine();
+            }
+
+            generator
                     .AppendLineIndent("return new(result);")
                 .PopIndent()
                 .AppendLineIndent("}");
         }
 
-        static void AppendObjectBackedAccessor(CodeGenerator generator, string fieldName, PropertyDeclaration property)
+        static void AppendObjectBackedAccessor(CodeGenerator generator, TypeDeclaration typeDeclaration, string fieldName, PropertyDeclaration property)
         {
             generator
                 .AppendSeparatorLine()
@@ -228,6 +243,18 @@ internal static partial class CodeGeneratorExtensions
                     ", out JsonAny result))")
                 .AppendLineIndent("{")
                 .PushIndent();
+
+            if (typeDeclaration.OptionalAsNullable() && property.RequiredOrOptional == RequiredOrOptional.Optional)
+            {
+                generator
+                    .AppendLineIndent("if (result.IsNullOrUndefined())")
+                    .AppendLineIndent("{")
+                    .PushIndent()
+                        .AppendLineIndent("return default;")
+                    .PopIndent()
+                    .AppendLineIndent("}")
+                    .AppendSeparatorLine();
+            }
 
             if (property.ReducedPropertyType.IsJsonAnyType())
             {
@@ -994,13 +1021,13 @@ internal static partial class CodeGeneratorExtensions
 
     private static CodeGenerator AppendPropertyDocumentation(this CodeGenerator generator, PropertyDeclaration property)
     {
-        bool required = property.RequiredOrOptional == RequiredOrOptional.Optional;
+        bool optional = property.RequiredOrOptional == RequiredOrOptional.Optional;
 
         generator
             .AppendLineIndent("/// <summary>")
             .AppendLineIndent(
             "/// Gets the ",
-            !required ? "(optional) " : string.Empty,
+            optional ? "(optional) " : string.Empty,
             "<c>",
             SymbolDisplay.FormatLiteral(property.JsonPropertyName, false),
             "</c> ",
@@ -1021,22 +1048,40 @@ internal static partial class CodeGeneratorExtensions
             .AppendLineIndent("/// </summary>");
 
         bool usingRemarks = false;
-        if (!required)
+        if (!optional)
         {
             usingRemarks = true;
 
             generator
                 .AppendLineIndent("/// <remarks>")
                 .AppendLineIndent("/// <para>")
-                .AppendIndent("/// If the instance is valid, this property will not be <c>undefined</c>");
+                .AppendIndent("/// If the instance is valid, this property will not be <see cref=\"JsonValueKind.Undefined\"/>");
 
             if ((property.ReducedPropertyType.ImpliedCoreTypesOrAny() & CoreTypes.Null) != 0)
             {
-                generator.Append(", but may be <c>null</c>");
+                generator.Append(", but may be <see cref=\"JsonValueKind.Null\"/>");
             }
 
             generator
                 .AppendLine(".")
+                .AppendLineIndent("/// </para>");
+        }
+        else if (property.Owner.OptionalAsNullable())
+        {
+            usingRemarks = true;
+
+            generator
+                .AppendLineIndent("/// <remarks>")
+                .AppendLineIndent("/// <para>")
+                .AppendIndent("/// If this JSON property is <see cref=\"JsonValueKind.Undefined\"/>");
+
+            if ((property.ReducedPropertyType.ImpliedCoreTypesOrAny() & CoreTypes.Null) != 0)
+            {
+                generator.Append(", or <see cref=\"JsonValueKind.Null\"/>");
+            }
+
+            generator
+                .AppendLine(" then the value returned will be <see langword=\"null\" />.")
                 .AppendLineIndent("/// </para>");
         }
 

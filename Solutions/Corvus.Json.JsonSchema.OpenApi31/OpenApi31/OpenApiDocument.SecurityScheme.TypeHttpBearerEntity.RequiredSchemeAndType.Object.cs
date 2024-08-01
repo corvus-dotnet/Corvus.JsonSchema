@@ -127,11 +127,11 @@ public readonly partial struct OpenApiDocument
                 }
 
                 /// <summary>
-                /// Gets the (optional) <c>scheme</c> property.
+                /// Gets the <c>scheme</c> property.
                 /// </summary>
                 /// <remarks>
                 /// <para>
-                /// If the instance is valid, this property will not be <c>undefined</c>.
+                /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
                 /// </para>
                 /// </remarks>
                 public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeHttpBearerEntity.RequiredSchemeAndType.SchemeEntity Scheme
@@ -164,11 +164,11 @@ public readonly partial struct OpenApiDocument
                 }
 
                 /// <summary>
-                /// Gets the (optional) <c>type</c> property.
+                /// Gets the <c>type</c> property.
                 /// </summary>
                 /// <remarks>
                 /// <para>
-                /// If the instance is valid, this property will not be <c>undefined</c>.
+                /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
                 /// </para>
                 /// </remarks>
                 public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeHttpBearerEntity.RequiredSchemeAndType.TypeEntity Type

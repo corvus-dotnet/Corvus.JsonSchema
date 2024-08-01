@@ -8,7 +8,7 @@ using Microsoft.CodeAnalysis;
 using Corvus.Json.CodeGeneration.CSharp;
 using Spectre.Console;
 
-namespace Corvus.Json.SchemaGenerator;
+namespace Corvus.Json.CodeGenerator;
 
 /// <summary>
 /// Spectre.Console.Cli command for code generation.
@@ -66,7 +66,11 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
         [Description("Disables optional naming heuristics.")]
         [DefaultValue(false)]
         public bool DisableOptionalNamingHeuristics { get; init; }
-    }
+
+        [CommandOption("--optionalAsNullable")]
+        [Description("If NullOrUndefined, optional properties are emitted as .NET nullable values.")]
+        [DefaultValue(OptionalAsNullable.None)]
+        public OptionalAsNullable OptionalAsNullable { get; init; }   }
 
     /// <inheritdoc/>
     public override Task<int> ExecuteAsync(CommandContext context, Settings settings)
@@ -74,10 +78,10 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
         ArgumentNullException.ThrowIfNullOrEmpty(settings.SchemaFile); // We will never see this exception if the framework is doing its job; it should have blown up inside the CLI command handling
         ArgumentNullException.ThrowIfNullOrEmpty(settings.RootNamespace); // We will never see this exception if the framework is doing its job; it should have blown up inside the CLI command handling
 
-        return GenerateTypes(settings.SchemaFile, settings.RootNamespace, settings.RootPath, settings.RebaseToRootPath, settings.OutputPath, settings.OutputMapFile, settings.OutputRootTypeName, settings.UseSchema, settings.AssertFormat, settings.DisableOptionalNamingHeuristics);
+        return GenerateTypes(settings.SchemaFile, settings.RootNamespace, settings.RootPath, settings.RebaseToRootPath, settings.OutputPath, settings.OutputMapFile, settings.OutputRootTypeName, settings.UseSchema, settings.AssertFormat, settings.DisableOptionalNamingHeuristics, settings.OptionalAsNullable);
     }
 
-    private static async Task<int> GenerateTypes(string schemaFile, string rootNamespace, string? rootPath, bool rebaseToRootPath, string? outputPath, string? outputMapFile, string? rootTypeName, SchemaVariant schemaVariant, bool assertFormat, bool disableOptionalNameHeuristics)
+    private static async Task<int> GenerateTypes(string schemaFile, string rootNamespace, string? rootPath, bool rebaseToRootPath, string? outputPath, string? outputMapFile, string? rootTypeName, SchemaVariant schemaVariant, bool assertFormat, bool disableOptionalNameHeuristics, OptionalAsNullable optionalAsNullable)
     {
         try
         {
@@ -119,7 +123,8 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
                     rootNamespace,
                     namedTypes: rootTypeName is string rtn ? [new CSharpLanguageProvider.NamedType(rootType.LocatedSchema.Location, rtn)] : null,
                     alwaysAssertFormat: assertFormat,
-                    useOptionalNameHeuristics: !disableOptionalNameHeuristics);
+                    useOptionalNameHeuristics: !disableOptionalNameHeuristics,
+                    optionalAsNullable: optionalAsNullable == OptionalAsNullable.NullOrUndefined);
 
                 currentTask = context.AddTask($"Generating code for {reference}");
                 var languageProvider = CSharpLanguageProvider.DefaultWithOptions(options);

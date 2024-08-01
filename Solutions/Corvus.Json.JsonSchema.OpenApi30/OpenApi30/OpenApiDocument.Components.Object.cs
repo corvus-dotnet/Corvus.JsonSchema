@@ -125,7 +125,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>callbacks</c> property.
+        /// Gets the (optional) <c>callbacks</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Components.CallbacksEntity Callbacks
         {
@@ -157,7 +157,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>examples</c> property.
+        /// Gets the (optional) <c>examples</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Components.ExamplesEntity Examples
         {
@@ -189,7 +189,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>headers</c> property.
+        /// Gets the (optional) <c>headers</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Components.HeadersEntity Headers
         {
@@ -221,7 +221,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>links</c> property.
+        /// Gets the (optional) <c>links</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Components.LinksEntity Links
         {
@@ -253,7 +253,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>parameters</c> property.
+        /// Gets the (optional) <c>parameters</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Components.ParametersEntity Parameters
         {
@@ -285,7 +285,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>requestBodies</c> property.
+        /// Gets the (optional) <c>requestBodies</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Components.RequestBodiesEntity RequestBodies
         {
@@ -317,7 +317,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>responses</c> property.
+        /// Gets the (optional) <c>responses</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Components.ResponsesEntity Responses
         {
@@ -349,7 +349,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>schemas</c> property.
+        /// Gets the (optional) <c>schemas</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Components.SchemasEntity Schemas
         {
@@ -381,7 +381,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>securitySchemes</c> property.
+        /// Gets the (optional) <c>securitySchemes</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Components.SecuritySchemesEntity SecuritySchemes
         {

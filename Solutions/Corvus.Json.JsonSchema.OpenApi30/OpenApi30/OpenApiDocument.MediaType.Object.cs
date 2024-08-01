@@ -125,7 +125,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>encoding</c> property.
+        /// Gets the (optional) <c>encoding</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.MediaType.EncodingEntity Encoding
         {
@@ -157,7 +157,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>example</c> property.
+        /// Gets the (optional) <c>example</c> property.
         /// </summary>
         public Corvus.Json.JsonAny Example
         {
@@ -189,7 +189,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>examples</c> property.
+        /// Gets the (optional) <c>examples</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.MediaType.ExamplesEntity Examples
         {
@@ -221,7 +221,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>schema</c> property.
+        /// Gets the (optional) <c>schema</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.MediaType.SchemaEntity Schema
         {

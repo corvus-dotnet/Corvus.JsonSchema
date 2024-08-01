@@ -112,7 +112,7 @@ public readonly partial struct OpenApiDocument
     }
 
     /// <summary>
-    /// Gets the <c>components</c> property.
+    /// Gets the (optional) <c>components</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Components ComponentsValue
     {
@@ -144,7 +144,7 @@ public readonly partial struct OpenApiDocument
     }
 
     /// <summary>
-    /// Gets the <c>externalDocs</c> property.
+    /// Gets the (optional) <c>externalDocs</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ExternalDocumentation ExternalDocs
     {
@@ -176,11 +176,11 @@ public readonly partial struct OpenApiDocument
     }
 
     /// <summary>
-    /// Gets the (optional) <c>info</c> property.
+    /// Gets the <c>info</c> property.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// If the instance is valid, this property will not be <c>undefined</c>.
+    /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// </remarks>
     public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Info InfoValue
@@ -213,7 +213,7 @@ public readonly partial struct OpenApiDocument
     }
 
     /// <summary>
-    /// Gets the <c>jsonSchemaDialect</c> property.
+    /// Gets the (optional) <c>jsonSchemaDialect</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.JsonSchemaDialectEntity JsonSchemaDialect
     {
@@ -245,11 +245,11 @@ public readonly partial struct OpenApiDocument
     }
 
     /// <summary>
-    /// Gets the (optional) <c>openapi</c> property.
+    /// Gets the <c>openapi</c> property.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// If the instance is valid, this property will not be <c>undefined</c>.
+    /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// </remarks>
     public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OpenapiEntity Openapi
@@ -282,7 +282,7 @@ public readonly partial struct OpenApiDocument
     }
 
     /// <summary>
-    /// Gets the <c>paths</c> property.
+    /// Gets the (optional) <c>paths</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Paths PathsValue
     {
@@ -314,7 +314,7 @@ public readonly partial struct OpenApiDocument
     }
 
     /// <summary>
-    /// Gets the <c>security</c> property.
+    /// Gets the (optional) <c>security</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityRequirementArray Security
     {
@@ -346,7 +346,7 @@ public readonly partial struct OpenApiDocument
     }
 
     /// <summary>
-    /// Gets the <c>servers</c> property.
+    /// Gets the (optional) <c>servers</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ServerArray Servers
     {
@@ -378,7 +378,7 @@ public readonly partial struct OpenApiDocument
     }
 
     /// <summary>
-    /// Gets the <c>tags</c> property.
+    /// Gets the (optional) <c>tags</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.TagArray Tags
     {
@@ -410,7 +410,7 @@ public readonly partial struct OpenApiDocument
     }
 
     /// <summary>
-    /// Gets the <c>webhooks</c> property.
+    /// Gets the (optional) <c>webhooks</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.WebhooksEntity Webhooks
     {

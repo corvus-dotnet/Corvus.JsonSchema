@@ -125,7 +125,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>attribute</c> property.
+        /// Gets the (optional) <c>attribute</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Xml.AttributeEntity Attribute
         {
@@ -157,7 +157,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>name</c> property.
+        /// Gets the (optional) <c>name</c> property.
         /// </summary>
         public Corvus.Json.JsonString Name
         {
@@ -189,7 +189,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>namespace</c> property.
+        /// Gets the (optional) <c>namespace</c> property.
         /// </summary>
         public Corvus.Json.JsonUri Namespace
         {
@@ -221,7 +221,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>prefix</c> property.
+        /// Gets the (optional) <c>prefix</c> property.
         /// </summary>
         public Corvus.Json.JsonString Prefix
         {
@@ -253,7 +253,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>wrapped</c> property.
+        /// Gets the (optional) <c>wrapped</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Xml.WrappedEntity Wrapped
         {

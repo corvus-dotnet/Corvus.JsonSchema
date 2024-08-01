@@ -107,7 +107,7 @@ public readonly partial struct Validation
     }
 
     /// <summary>
-    /// Gets the <c>const</c> property.
+    /// Gets the (optional) <c>const</c> property.
     /// </summary>
     public Corvus.Json.JsonAny Const
     {
@@ -139,7 +139,7 @@ public readonly partial struct Validation
     }
 
     /// <summary>
-    /// Gets the <c>dependentRequired</c> property.
+    /// Gets the (optional) <c>dependentRequired</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft202012.Validation.DependentRequiredEntity DependentRequired
     {
@@ -171,7 +171,7 @@ public readonly partial struct Validation
     }
 
     /// <summary>
-    /// Gets the <c>enum</c> property.
+    /// Gets the (optional) <c>enum</c> property.
     /// </summary>
     public Corvus.Json.JsonArray Enum
     {
@@ -203,7 +203,7 @@ public readonly partial struct Validation
     }
 
     /// <summary>
-    /// Gets the <c>exclusiveMaximum</c> property.
+    /// Gets the (optional) <c>exclusiveMaximum</c> property.
     /// </summary>
     public Corvus.Json.JsonNumber ExclusiveMaximum
     {
@@ -235,7 +235,7 @@ public readonly partial struct Validation
     }
 
     /// <summary>
-    /// Gets the <c>exclusiveMinimum</c> property.
+    /// Gets the (optional) <c>exclusiveMinimum</c> property.
     /// </summary>
     public Corvus.Json.JsonNumber ExclusiveMinimum
     {
@@ -267,7 +267,7 @@ public readonly partial struct Validation
     }
 
     /// <summary>
-    /// Gets the <c>maxContains</c> property.
+    /// Gets the (optional) <c>maxContains</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft202012.Validation.NonNegativeInteger MaxContains
     {
@@ -299,7 +299,7 @@ public readonly partial struct Validation
     }
 
     /// <summary>
-    /// Gets the <c>maximum</c> property.
+    /// Gets the (optional) <c>maximum</c> property.
     /// </summary>
     public Corvus.Json.JsonNumber Maximum
     {
@@ -331,7 +331,7 @@ public readonly partial struct Validation
     }
 
     /// <summary>
-    /// Gets the <c>maxItems</c> property.
+    /// Gets the (optional) <c>maxItems</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft202012.Validation.NonNegativeInteger MaxItems
     {
@@ -363,7 +363,7 @@ public readonly partial struct Validation
     }
 
     /// <summary>
-    /// Gets the <c>maxLength</c> property.
+    /// Gets the (optional) <c>maxLength</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft202012.Validation.NonNegativeInteger MaxLength
     {
@@ -395,7 +395,7 @@ public readonly partial struct Validation
     }
 
     /// <summary>
-    /// Gets the <c>maxProperties</c> property.
+    /// Gets the (optional) <c>maxProperties</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft202012.Validation.NonNegativeInteger MaxProperties
     {
@@ -427,7 +427,7 @@ public readonly partial struct Validation
     }
 
     /// <summary>
-    /// Gets the <c>minContains</c> property.
+    /// Gets the (optional) <c>minContains</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft202012.Validation.MinContainsEntity MinContains
     {
@@ -459,7 +459,7 @@ public readonly partial struct Validation
     }
 
     /// <summary>
-    /// Gets the <c>minimum</c> property.
+    /// Gets the (optional) <c>minimum</c> property.
     /// </summary>
     public Corvus.Json.JsonNumber Minimum
     {
@@ -491,7 +491,7 @@ public readonly partial struct Validation
     }
 
     /// <summary>
-    /// Gets the <c>minItems</c> property.
+    /// Gets the (optional) <c>minItems</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft202012.Validation.NonNegativeIntegerDefault0 MinItems
     {
@@ -523,7 +523,7 @@ public readonly partial struct Validation
     }
 
     /// <summary>
-    /// Gets the <c>minLength</c> property.
+    /// Gets the (optional) <c>minLength</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft202012.Validation.NonNegativeIntegerDefault0 MinLength
     {
@@ -555,7 +555,7 @@ public readonly partial struct Validation
     }
 
     /// <summary>
-    /// Gets the <c>minProperties</c> property.
+    /// Gets the (optional) <c>minProperties</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft202012.Validation.NonNegativeIntegerDefault0 MinProperties
     {
@@ -587,7 +587,7 @@ public readonly partial struct Validation
     }
 
     /// <summary>
-    /// Gets the <c>multipleOf</c> property.
+    /// Gets the (optional) <c>multipleOf</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft202012.Validation.MultipleOfEntity MultipleOf
     {
@@ -619,7 +619,7 @@ public readonly partial struct Validation
     }
 
     /// <summary>
-    /// Gets the <c>pattern</c> property.
+    /// Gets the (optional) <c>pattern</c> property.
     /// </summary>
     public Corvus.Json.JsonRegex Pattern
     {
@@ -651,7 +651,7 @@ public readonly partial struct Validation
     }
 
     /// <summary>
-    /// Gets the <c>required</c> property.
+    /// Gets the (optional) <c>required</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft202012.Validation.StringArray Required
     {
@@ -683,7 +683,7 @@ public readonly partial struct Validation
     }
 
     /// <summary>
-    /// Gets the <c>type</c> property.
+    /// Gets the (optional) <c>type</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft202012.Validation.TypeEntity Type
     {
@@ -715,7 +715,7 @@ public readonly partial struct Validation
     }
 
     /// <summary>
-    /// Gets the <c>uniqueItems</c> property.
+    /// Gets the (optional) <c>uniqueItems</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft202012.Validation.UniqueItemsEntity UniqueItems
     {

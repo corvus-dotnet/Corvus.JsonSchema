@@ -132,7 +132,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>$ref</c> property.
+        /// Gets the (optional) <c>$ref</c> property.
         /// </summary>
         public Corvus.Json.JsonString Ref
         {
@@ -164,7 +164,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>description</c> property.
+        /// Gets the (optional) <c>description</c> property.
         /// </summary>
         public Corvus.Json.JsonString Description
         {
@@ -196,7 +196,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>parameters</c> property.
+        /// Gets the (optional) <c>parameters</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.PathItem.ParametersEntityArray Parameters
         {
@@ -228,7 +228,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>servers</c> property.
+        /// Gets the (optional) <c>servers</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.PathItem.ServerArray Servers
         {
@@ -260,7 +260,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>summary</c> property.
+        /// Gets the (optional) <c>summary</c> property.
         /// </summary>
         public Corvus.Json.JsonString Summary
         {

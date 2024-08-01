@@ -125,7 +125,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>allowEmptyValue</c> property.
+        /// Gets the (optional) <c>allowEmptyValue</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Header.AllowEmptyValueEntity AllowEmptyValue
         {
@@ -157,7 +157,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>allowReserved</c> property.
+        /// Gets the (optional) <c>allowReserved</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Header.AllowReservedEntity AllowReserved
         {
@@ -189,7 +189,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>content</c> property.
+        /// Gets the (optional) <c>content</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Header.ContentEntity Content
         {
@@ -221,7 +221,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>deprecated</c> property.
+        /// Gets the (optional) <c>deprecated</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Header.DeprecatedEntity Deprecated
         {
@@ -253,7 +253,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>description</c> property.
+        /// Gets the (optional) <c>description</c> property.
         /// </summary>
         public Corvus.Json.JsonString Description
         {
@@ -285,7 +285,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>example</c> property.
+        /// Gets the (optional) <c>example</c> property.
         /// </summary>
         public Corvus.Json.JsonAny Example
         {
@@ -317,7 +317,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>examples</c> property.
+        /// Gets the (optional) <c>examples</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Header.ExamplesEntity Examples
         {
@@ -349,7 +349,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>explode</c> property.
+        /// Gets the (optional) <c>explode</c> property.
         /// </summary>
         public Corvus.Json.JsonBoolean Explode
         {
@@ -381,7 +381,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>required</c> property.
+        /// Gets the (optional) <c>required</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Header.RequiredEntity Required
         {
@@ -413,7 +413,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>schema</c> property.
+        /// Gets the (optional) <c>schema</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Header.SchemaEntity Schema
         {
@@ -445,7 +445,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>style</c> property.
+        /// Gets the (optional) <c>style</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Header.StyleEntity Style
         {

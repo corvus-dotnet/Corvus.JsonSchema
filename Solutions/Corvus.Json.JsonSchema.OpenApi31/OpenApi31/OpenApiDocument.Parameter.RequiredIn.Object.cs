@@ -122,11 +122,11 @@ public readonly partial struct OpenApiDocument
             }
 
             /// <summary>
-            /// Gets the (optional) <c>in</c> property.
+            /// Gets the <c>in</c> property.
             /// </summary>
             /// <remarks>
             /// <para>
-            /// If the instance is valid, this property will not be <c>undefined</c>.
+            /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
             /// </para>
             /// </remarks>
             public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.RequiredIn.InEntity In

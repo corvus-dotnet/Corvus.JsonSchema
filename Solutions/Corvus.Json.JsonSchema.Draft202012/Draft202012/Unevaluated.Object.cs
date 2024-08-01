@@ -107,7 +107,7 @@ public readonly partial struct Unevaluated
     }
 
     /// <summary>
-    /// Gets the <c>unevaluatedItems</c> property.
+    /// Gets the (optional) <c>unevaluatedItems</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft202012.Schema UnevaluatedItems
     {
@@ -139,7 +139,7 @@ public readonly partial struct Unevaluated
     }
 
     /// <summary>
-    /// Gets the <c>unevaluatedProperties</c> property.
+    /// Gets the (optional) <c>unevaluatedProperties</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft202012.Schema UnevaluatedProperties
     {

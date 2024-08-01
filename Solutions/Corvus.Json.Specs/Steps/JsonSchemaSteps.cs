@@ -29,6 +29,7 @@ public class JsonSchemaSteps
     private const string SchemaValidationResult = "SchemaValidationResult";
     private const string ValidateFormatKey = "ValidateFormat";
     private const string CreateException = "CreateException";
+    private const string NullablePropertiesKey = "NullableProperties";
     private readonly FeatureContext featureContext;
     private readonly ScenarioContext scenarioContext;
     private readonly JsonSchemaBuilderDriver driver;
@@ -572,6 +573,20 @@ After:
 #endif
     }
 
+    [Given("I generate a type for the schema with optional properties nullable")]
+    public Task GivenIGenerateATypeForTheSchemaWithOptionalPropertiesNullable()
+    {
+        this.scenarioContext.Set(true, NullablePropertiesKey);
+        return this.GivenIGenerateATypeForTheSchema();
+    }
+
+    [Given("I generate a type for the schema with optional properties not nullable")]
+    public Task GivenIGenerateATypeForTheSchemaWithOptionalPropertiesNotNullable()
+    {
+        this.scenarioContext.Set(false, NullablePropertiesKey);
+        return this.GivenIGenerateATypeForTheSchema();
+    }
+
     /// <summary>
     /// Generates the code for the schema in the scenario property <see cref="SchemaPath"/>, compiles it, and loads the assembly. The fully qualified type name is stored in a scenario property called <see cref="SchemaType"/>.
     /// </summary>
@@ -602,7 +617,8 @@ After:
                     schemaPath,
                     featureName,
                     scenarioName,
-                    validateFormat).ConfigureAwait(false);
+                    validateFormat,
+                    this.scenarioContext.TryGetValue(NullablePropertiesKey, out bool optionalAsNullable) && optionalAsNullable).ConfigureAwait(false);
             }
             else
             {
@@ -612,7 +628,8 @@ After:
                     filename,
                     featureName,
                     scenarioName,
-                    validateFormat).ConfigureAwait(false);
+                    validateFormat,
+                    this.scenarioContext.TryGetValue(NullablePropertiesKey, out bool optionalAsNullable) && optionalAsNullable).ConfigureAwait(false);
             }
 
             this.featureContext.Set(type, key);
@@ -650,7 +667,8 @@ After:
                     schemaPath,
                     featureName,
                     scenarioName,
-                    validateFormat);
+                    validateFormat,
+                    optionalAsNullable: false);
             }
             else
             {
@@ -660,7 +678,8 @@ After:
                     filename,
                     featureName,
                     scenarioName,
-                    validateFormat);
+                    validateFormat,
+                    optionalAsNullable: false);
             }
 
             this.featureContext.Set(type, key);
@@ -673,6 +692,7 @@ After:
     /// Constructs an instance of the type whose name is stored in the scenario property <see cref="SchemaType"/>, using the <see cref="JsonElement"/> stored in the scenario property called <see cref="InputData"/>, and stores it in the scenario property <see cref="SchemaInstance"/>.
     /// </summary>
     [Given("I construct an instance of the schema type from the data")]
+    [When("I construct an instance of the schema type from the data")]
     public void GivenIConstructAnInstanceOfTheSchemaTypeFromTheData()
     {
         IJsonValue value = JsonSchemaBuilderDriver.CreateInstance(this.scenarioContext.Get<Type>(SchemaType), this.scenarioContext.Get<JsonElement>(InputData));
@@ -688,6 +708,40 @@ After:
         IJsonValue jsonValue = this.scenarioContext.Get<IJsonValue>(SchemaInstance);
         ValidationContext validationContext = jsonValue.Validate(ValidationContext.ValidContext);
         this.scenarioContext.Set(validationContext, SchemaValidationResult);
+    }
+
+    /// <summary>
+    /// Gets a non-nullable property frrom the instance in the scenario property <see cref="SchemaInstance"/> and checks its value.
+    /// </summary>
+    /// <param name="propertyName">The .NET name of the property.</param>
+    /// <param name="value">The value to test against.</param>
+    [Then("the property '([^']*)' from the instance has the value '([^']*)'")]
+    public void WhenIGetThePropertyFromTheInstanceIsValueWillBe(string propertyName, string value)
+    {
+        bool result = JsonSchemaBuilderDriver.CompareStringValue(
+            this.scenarioContext.Get<Type>(SchemaType),
+            this.scenarioContext.Get<IJsonValue>(SchemaInstance),
+            propertyName,
+            value);
+
+        Assert.IsTrue(result);
+    }
+
+    /// <summary>
+    /// Gets a nullable property frrom the instance in the scenario property <see cref="SchemaInstance"/> and checks its value.
+    /// </summary>
+    /// <param name="propertyName">The .NET name of the property.</param>
+    /// <param name="value">The value to test against.</param>
+    [Then("the nullable property '([^']*)' from the instance has the value '([^']*)'")]
+    public void WhenIGetTheNullablePropertyFromTheInstanceIsValueWillBe(string propertyName, string value)
+    {
+        bool result = JsonSchemaBuilderDriver.CompareNullableStringValue(
+            this.scenarioContext.Get<Type>(SchemaType),
+            this.scenarioContext.Get<IJsonValue>(SchemaInstance),
+            propertyName,
+            value);
+
+        Assert.IsTrue(result);
     }
 
     /// <summary>

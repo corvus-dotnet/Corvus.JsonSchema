@@ -107,7 +107,7 @@ public readonly partial struct Applicator
     }
 
     /// <summary>
-    /// Gets the <c>additionalProperties</c> property.
+    /// Gets the (optional) <c>additionalProperties</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft202012.Schema AdditionalProperties
     {
@@ -139,7 +139,7 @@ public readonly partial struct Applicator
     }
 
     /// <summary>
-    /// Gets the <c>allOf</c> property.
+    /// Gets the (optional) <c>allOf</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft202012.Schema.SchemaArray AllOf
     {
@@ -171,7 +171,7 @@ public readonly partial struct Applicator
     }
 
     /// <summary>
-    /// Gets the <c>anyOf</c> property.
+    /// Gets the (optional) <c>anyOf</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft202012.Applicator.SchemaArray AnyOf
     {
@@ -203,7 +203,7 @@ public readonly partial struct Applicator
     }
 
     /// <summary>
-    /// Gets the <c>contains</c> property.
+    /// Gets the (optional) <c>contains</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft202012.Schema Contains
     {
@@ -235,7 +235,7 @@ public readonly partial struct Applicator
     }
 
     /// <summary>
-    /// Gets the <c>dependentSchemas</c> property.
+    /// Gets the (optional) <c>dependentSchemas</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft202012.Applicator.DependentSchemasEntity DependentSchemas
     {
@@ -267,7 +267,7 @@ public readonly partial struct Applicator
     }
 
     /// <summary>
-    /// Gets the <c>else</c> property.
+    /// Gets the (optional) <c>else</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft202012.Schema Else
     {
@@ -299,7 +299,7 @@ public readonly partial struct Applicator
     }
 
     /// <summary>
-    /// Gets the <c>if</c> property.
+    /// Gets the (optional) <c>if</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft202012.Schema If
     {
@@ -331,7 +331,7 @@ public readonly partial struct Applicator
     }
 
     /// <summary>
-    /// Gets the <c>items</c> property.
+    /// Gets the (optional) <c>items</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft202012.Schema Items
     {
@@ -363,7 +363,7 @@ public readonly partial struct Applicator
     }
 
     /// <summary>
-    /// Gets the <c>not</c> property.
+    /// Gets the (optional) <c>not</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft202012.Schema Not
     {
@@ -395,7 +395,7 @@ public readonly partial struct Applicator
     }
 
     /// <summary>
-    /// Gets the <c>oneOf</c> property.
+    /// Gets the (optional) <c>oneOf</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft202012.Applicator.SchemaArray OneOf
     {
@@ -427,7 +427,7 @@ public readonly partial struct Applicator
     }
 
     /// <summary>
-    /// Gets the <c>patternProperties</c> property.
+    /// Gets the (optional) <c>patternProperties</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft202012.Applicator.PatternPropertiesEntity PatternProperties
     {
@@ -459,7 +459,7 @@ public readonly partial struct Applicator
     }
 
     /// <summary>
-    /// Gets the <c>prefixItems</c> property.
+    /// Gets the (optional) <c>prefixItems</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft202012.Applicator.SchemaArray PrefixItems
     {
@@ -491,7 +491,7 @@ public readonly partial struct Applicator
     }
 
     /// <summary>
-    /// Gets the <c>properties</c> property.
+    /// Gets the (optional) <c>properties</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft202012.Applicator.PropertiesEntity Properties
     {
@@ -523,7 +523,7 @@ public readonly partial struct Applicator
     }
 
     /// <summary>
-    /// Gets the <c>propertyNames</c> property.
+    /// Gets the (optional) <c>propertyNames</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft202012.Schema PropertyNames
     {
@@ -555,7 +555,7 @@ public readonly partial struct Applicator
     }
 
     /// <summary>
-    /// Gets the <c>then</c> property.
+    /// Gets the (optional) <c>then</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft202012.Schema Then
     {

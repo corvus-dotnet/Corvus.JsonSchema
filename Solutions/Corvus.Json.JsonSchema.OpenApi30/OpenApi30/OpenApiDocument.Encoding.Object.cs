@@ -125,7 +125,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>allowReserved</c> property.
+        /// Gets the (optional) <c>allowReserved</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Encoding.AllowReservedEntity AllowReserved
         {
@@ -157,7 +157,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>contentType</c> property.
+        /// Gets the (optional) <c>contentType</c> property.
         /// </summary>
         public Corvus.Json.JsonString ContentType
         {
@@ -189,7 +189,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>explode</c> property.
+        /// Gets the (optional) <c>explode</c> property.
         /// </summary>
         public Corvus.Json.JsonBoolean Explode
         {
@@ -221,7 +221,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>headers</c> property.
+        /// Gets the (optional) <c>headers</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Encoding.HeadersEntity Headers
         {
@@ -253,7 +253,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>style</c> property.
+        /// Gets the (optional) <c>style</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Encoding.StyleEntity Style
         {

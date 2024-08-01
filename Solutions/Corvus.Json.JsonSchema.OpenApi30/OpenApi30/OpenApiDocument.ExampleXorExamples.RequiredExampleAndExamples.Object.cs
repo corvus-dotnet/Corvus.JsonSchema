@@ -127,11 +127,11 @@ public readonly partial struct OpenApiDocument
             }
 
             /// <summary>
-            /// Gets the (optional) <c>example</c> property.
+            /// Gets the <c>example</c> property.
             /// </summary>
             /// <remarks>
             /// <para>
-            /// If the instance is valid, this property will not be <c>undefined</c>, but may be <c>null</c>.
+            /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>, but may be <see cref="JsonValueKind.Null"/>.
             /// </para>
             /// </remarks>
             public Corvus.Json.JsonAny Example
@@ -164,11 +164,11 @@ public readonly partial struct OpenApiDocument
             }
 
             /// <summary>
-            /// Gets the (optional) <c>examples</c> property.
+            /// Gets the <c>examples</c> property.
             /// </summary>
             /// <remarks>
             /// <para>
-            /// If the instance is valid, this property will not be <c>undefined</c>, but may be <c>null</c>.
+            /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>, but may be <see cref="JsonValueKind.Null"/>.
             /// </para>
             /// </remarks>
             public Corvus.Json.JsonAny Examples

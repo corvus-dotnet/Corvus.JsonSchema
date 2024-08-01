@@ -125,7 +125,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>email</c> property.
+        /// Gets the (optional) <c>email</c> property.
         /// </summary>
         public Corvus.Json.JsonEmail Email
         {
@@ -157,7 +157,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>name</c> property.
+        /// Gets the (optional) <c>name</c> property.
         /// </summary>
         public Corvus.Json.JsonString Name
         {
@@ -189,7 +189,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>url</c> property.
+        /// Gets the (optional) <c>url</c> property.
         /// </summary>
         public Corvus.Json.JsonUriReference Url
         {

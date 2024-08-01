@@ -117,7 +117,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>allowEmptyValue</c> property.
+        /// Gets the (optional) <c>allowEmptyValue</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.ThenEntity.AllowEmptyValueEntity AllowEmptyValue
         {
@@ -149,7 +149,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>allowReserved</c> property.
+        /// Gets the (optional) <c>allowReserved</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForQueryEntity.ThenEntity.AllowReservedEntity AllowReserved
         {
@@ -181,7 +181,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>content</c> property.
+        /// Gets the (optional) <c>content</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.ContentEntity Content
         {
@@ -213,7 +213,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>deprecated</c> property.
+        /// Gets the (optional) <c>deprecated</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.DeprecatedEntity Deprecated
         {
@@ -245,7 +245,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>description</c> property.
+        /// Gets the (optional) <c>description</c> property.
         /// </summary>
         public Corvus.Json.JsonString Description
         {
@@ -277,7 +277,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>example</c> property.
+        /// Gets the (optional) <c>example</c> property.
         /// </summary>
         public Corvus.Json.JsonAny Example
         {
@@ -309,7 +309,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>examples</c> property.
+        /// Gets the (optional) <c>examples</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Examples.ExamplesEntity Examples
         {
@@ -341,7 +341,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>explode</c> property.
+        /// Gets the (optional) <c>explode</c> property.
         /// </summary>
         public Corvus.Json.JsonBoolean Explode
         {
@@ -373,11 +373,11 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the (optional) <c>in</c> property.
+        /// Gets the <c>in</c> property.
         /// </summary>
         /// <remarks>
         /// <para>
-        /// If the instance is valid, this property will not be <c>undefined</c>.
+        /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
         public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.InEntity In
@@ -410,11 +410,11 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the (optional) <c>name</c> property.
+        /// Gets the <c>name</c> property.
         /// </summary>
         /// <remarks>
         /// <para>
-        /// If the instance is valid, this property will not be <c>undefined</c>.
+        /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
         public Corvus.Json.JsonString Name
@@ -447,7 +447,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>required</c> property.
+        /// Gets the (optional) <c>required</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.RequiredEntity Required
         {
@@ -479,7 +479,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>schema</c> property.
+        /// Gets the (optional) <c>schema</c> property.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Schema SchemaValue
         {
@@ -511,7 +511,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>style</c> property.
+        /// Gets the (optional) <c>style</c> property.
         /// </summary>
         public Corvus.Json.JsonString Style
         {

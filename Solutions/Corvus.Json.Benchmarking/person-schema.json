@@ -17,7 +17,7 @@
       "properties": {
         "name": { "$ref": "#/$defs/PersonName" },
         "dateOfBirth": {
-          "type": "string",
+            "type": [ "string", "null" ],
           "format": "date"
         },
         "email": {

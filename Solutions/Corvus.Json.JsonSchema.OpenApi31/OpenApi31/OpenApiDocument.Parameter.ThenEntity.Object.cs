@@ -122,7 +122,7 @@ public readonly partial struct OpenApiDocument
             }
 
             /// <summary>
-            /// Gets the <c>allowEmptyValue</c> property.
+            /// Gets the (optional) <c>allowEmptyValue</c> property.
             /// </summary>
             public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.ThenEntity.AllowEmptyValueEntity AllowEmptyValue
             {

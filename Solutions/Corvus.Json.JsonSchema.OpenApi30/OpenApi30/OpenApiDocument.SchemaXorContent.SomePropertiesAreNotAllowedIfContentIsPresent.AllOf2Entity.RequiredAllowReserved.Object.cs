@@ -142,11 +142,11 @@ public readonly partial struct OpenApiDocument
                     }
 
                     /// <summary>
-                    /// Gets the (optional) <c>allowReserved</c> property.
+                    /// Gets the <c>allowReserved</c> property.
                     /// </summary>
                     /// <remarks>
                     /// <para>
-                    /// If the instance is valid, this property will not be <c>undefined</c>, but may be <c>null</c>.
+                    /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>, but may be <see cref="JsonValueKind.Null"/>.
                     /// </para>
                     /// </remarks>
                     public Corvus.Json.JsonAny AllowReserved

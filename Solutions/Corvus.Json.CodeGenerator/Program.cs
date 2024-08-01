@@ -1,6 +1,6 @@
 ﻿using Spectre.Console.Cli;
 
-namespace Corvus.Json.SchemaGenerator;
+namespace Corvus.Json.CodeGenerator;
 
 class Program
 {

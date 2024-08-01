@@ -107,7 +107,7 @@ public readonly partial struct Scenario
     }
 
     /// <summary>
-    /// Gets the <c>comment</c> property.
+    /// Gets the (optional) <c>comment</c> property.
     /// </summary>
     public Corvus.Json.JsonString Comment
     {
@@ -139,11 +139,11 @@ public readonly partial struct Scenario
     }
 
     /// <summary>
-    /// Gets the (optional) <c>doc</c> property.
+    /// Gets the <c>doc</c> property.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// If the instance is valid, this property will not be <c>undefined</c>, but may be <c>null</c>.
+    /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>, but may be <see cref="JsonValueKind.Null"/>.
     /// </para>
     /// </remarks>
     public Corvus.Json.JsonAny Doc
@@ -176,11 +176,11 @@ public readonly partial struct Scenario
     }
 
     /// <summary>
-    /// Gets the (optional) <c>patch</c> property.
+    /// Gets the <c>patch</c> property.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// If the instance is valid, this property will not be <c>undefined</c>, but may be <c>null</c>.
+    /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>, but may be <see cref="JsonValueKind.Null"/>.
     /// </para>
     /// </remarks>
     public Corvus.Json.JsonAny Patch

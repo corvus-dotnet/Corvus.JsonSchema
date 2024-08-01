@@ -263,11 +263,12 @@ internal static partial class CodeGeneratorExtensions
     /// <param name="generator">The generator to which to append the property.</param>
     /// <param name="propertyType">The type of the property.</param>
     /// <param name="propertyName">The name of the property.</param>
+    /// <param name="nullable">If true, make the property type nullable.</param>
     /// <returns>A reference to the generator having completed the operation.</returns>
-    public static CodeGenerator BeginPublicReadOnlyPropertyDeclaration(this CodeGenerator generator, string propertyType, string propertyName)
+    public static CodeGenerator BeginPublicReadOnlyPropertyDeclaration(this CodeGenerator generator, string propertyType, string propertyName, bool nullable = false)
     {
         return generator
-            .AppendLineIndent("public ", propertyType, " ", propertyName)
+            .AppendLineIndent("public ", propertyType, nullable ? "? " : " ", propertyName)
             .AppendLineIndent("{")
             .PushIndent()
             .AppendLineIndent("get")

@@ -117,7 +117,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>$ref</c> property.
+        /// Gets the (optional) <c>$ref</c> property.
         /// </summary>
         public Corvus.Json.JsonUriReference Ref
         {
@@ -149,7 +149,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>description</c> property.
+        /// Gets the (optional) <c>description</c> property.
         /// </summary>
         public Corvus.Json.JsonString Description
         {
@@ -181,7 +181,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>externalValue</c> property.
+        /// Gets the (optional) <c>externalValue</c> property.
         /// </summary>
         public Corvus.Json.JsonUri ExternalValue
         {
@@ -213,7 +213,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>summary</c> property.
+        /// Gets the (optional) <c>summary</c> property.
         /// </summary>
         public Corvus.Json.JsonString Summary
         {
@@ -245,7 +245,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>value</c> property.
+        /// Gets the (optional) <c>value</c> property.
         /// </summary>
         public Corvus.Json.JsonAny Value
         {

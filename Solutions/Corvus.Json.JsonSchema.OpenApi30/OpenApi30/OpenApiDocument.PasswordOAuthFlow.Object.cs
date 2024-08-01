@@ -125,7 +125,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the <c>refreshUrl</c> property.
+        /// Gets the (optional) <c>refreshUrl</c> property.
         /// </summary>
         public Corvus.Json.JsonUriReference RefreshUrl
         {
@@ -157,11 +157,11 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the (optional) <c>scopes</c> property.
+        /// Gets the <c>scopes</c> property.
         /// </summary>
         /// <remarks>
         /// <para>
-        /// If the instance is valid, this property will not be <c>undefined</c>.
+        /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
         public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.PasswordOAuthFlow.ScopesEntity Scopes
@@ -194,11 +194,11 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the (optional) <c>tokenUrl</c> property.
+        /// Gets the <c>tokenUrl</c> property.
         /// </summary>
         /// <remarks>
         /// <para>
-        /// If the instance is valid, this property will not be <c>undefined</c>.
+        /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
         public Corvus.Json.JsonUriReference TokenUrl

@@ -122,11 +122,11 @@ public readonly partial struct OpenApiDocument
             }
 
             /// <summary>
-            /// Gets the (optional) <c>style</c> property.
+            /// Gets the <c>style</c> property.
             /// </summary>
             /// <remarks>
             /// <para>
-            /// If the instance is valid, this property will not be <c>undefined</c>.
+            /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
             /// </para>
             /// </remarks>
             public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm.RequiredStyle.StyleEntity Style

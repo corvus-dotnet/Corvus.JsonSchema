@@ -127,7 +127,7 @@ public readonly partial struct OpenApiDocument
                 }
 
                 /// <summary>
-                /// Gets the <c>required</c> property.
+                /// Gets the (optional) <c>required</c> property.
                 /// </summary>
                 public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity.RequiredRequired.RequiredEntity Required
                 {
@@ -159,7 +159,7 @@ public readonly partial struct OpenApiDocument
                 }
 
                 /// <summary>
-                /// Gets the <c>style</c> property.
+                /// Gets the (optional) <c>style</c> property.
                 /// </summary>
                 public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity.RequiredRequired.StyleEntity Style
                 {

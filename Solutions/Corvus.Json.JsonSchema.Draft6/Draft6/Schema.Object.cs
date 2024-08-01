@@ -117,7 +117,7 @@ public readonly partial struct Schema
     }
 
     /// <summary>
-    /// Gets the <c>$id</c> property.
+    /// Gets the (optional) <c>$id</c> property.
     /// </summary>
     public Corvus.Json.JsonUriReference Id
     {
@@ -149,7 +149,7 @@ public readonly partial struct Schema
     }
 
     /// <summary>
-    /// Gets the <c>$ref</c> property.
+    /// Gets the (optional) <c>$ref</c> property.
     /// </summary>
     public Corvus.Json.JsonUriReference Ref
     {
@@ -181,7 +181,7 @@ public readonly partial struct Schema
     }
 
     /// <summary>
-    /// Gets the <c>$schema</c> property.
+    /// Gets the (optional) <c>$schema</c> property.
     /// </summary>
     public Corvus.Json.JsonUri SchemaValue
     {
@@ -213,7 +213,7 @@ public readonly partial struct Schema
     }
 
     /// <summary>
-    /// Gets the <c>additionalItems</c> property.
+    /// Gets the (optional) <c>additionalItems</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft6.Schema AdditionalItems
     {
@@ -245,7 +245,7 @@ public readonly partial struct Schema
     }
 
     /// <summary>
-    /// Gets the <c>additionalProperties</c> property.
+    /// Gets the (optional) <c>additionalProperties</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft6.Schema AdditionalProperties
     {
@@ -277,7 +277,7 @@ public readonly partial struct Schema
     }
 
     /// <summary>
-    /// Gets the <c>allOf</c> property.
+    /// Gets the (optional) <c>allOf</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft6.Schema.SchemaArray AllOf
     {
@@ -309,7 +309,7 @@ public readonly partial struct Schema
     }
 
     /// <summary>
-    /// Gets the <c>anyOf</c> property.
+    /// Gets the (optional) <c>anyOf</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft6.Schema.SchemaArray AnyOf
     {
@@ -341,7 +341,7 @@ public readonly partial struct Schema
     }
 
     /// <summary>
-    /// Gets the <c>const</c> property.
+    /// Gets the (optional) <c>const</c> property.
     /// </summary>
     public Corvus.Json.JsonAny Const
     {
@@ -373,7 +373,7 @@ public readonly partial struct Schema
     }
 
     /// <summary>
-    /// Gets the <c>contains</c> property.
+    /// Gets the (optional) <c>contains</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft6.Schema Contains
     {
@@ -405,7 +405,7 @@ public readonly partial struct Schema
     }
 
     /// <summary>
-    /// Gets the <c>default</c> property.
+    /// Gets the (optional) <c>default</c> property.
     /// </summary>
     public Corvus.Json.JsonAny Default
     {
@@ -437,7 +437,7 @@ public readonly partial struct Schema
     }
 
     /// <summary>
-    /// Gets the <c>definitions</c> property.
+    /// Gets the (optional) <c>definitions</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft6.Schema.DefinitionsEntity Definitions
     {
@@ -469,7 +469,7 @@ public readonly partial struct Schema
     }
 
     /// <summary>
-    /// Gets the <c>dependencies</c> property.
+    /// Gets the (optional) <c>dependencies</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft6.Schema.DependenciesEntity Dependencies
     {
@@ -501,7 +501,7 @@ public readonly partial struct Schema
     }
 
     /// <summary>
-    /// Gets the <c>description</c> property.
+    /// Gets the (optional) <c>description</c> property.
     /// </summary>
     public Corvus.Json.JsonString Description
     {
@@ -533,7 +533,7 @@ public readonly partial struct Schema
     }
 
     /// <summary>
-    /// Gets the <c>enum</c> property.
+    /// Gets the (optional) <c>enum</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft6.Schema.EnumArray Enum
     {
@@ -565,7 +565,7 @@ public readonly partial struct Schema
     }
 
     /// <summary>
-    /// Gets the <c>examples</c> property.
+    /// Gets the (optional) <c>examples</c> property.
     /// </summary>
     public Corvus.Json.JsonArray Examples
     {
@@ -597,7 +597,7 @@ public readonly partial struct Schema
     }
 
     /// <summary>
-    /// Gets the <c>exclusiveMaximum</c> property.
+    /// Gets the (optional) <c>exclusiveMaximum</c> property.
     /// </summary>
     public Corvus.Json.JsonNumber ExclusiveMaximum
     {
@@ -629,7 +629,7 @@ public readonly partial struct Schema
     }
 
     /// <summary>
-    /// Gets the <c>exclusiveMinimum</c> property.
+    /// Gets the (optional) <c>exclusiveMinimum</c> property.
     /// </summary>
     public Corvus.Json.JsonNumber ExclusiveMinimum
     {
@@ -661,7 +661,7 @@ public readonly partial struct Schema
     }
 
     /// <summary>
-    /// Gets the <c>format</c> property.
+    /// Gets the (optional) <c>format</c> property.
     /// </summary>
     public Corvus.Json.JsonString Format
     {
@@ -693,7 +693,7 @@ public readonly partial struct Schema
     }
 
     /// <summary>
-    /// Gets the <c>items</c> property.
+    /// Gets the (optional) <c>items</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft6.Schema.ItemsEntity Items
     {
@@ -725,7 +725,7 @@ public readonly partial struct Schema
     }
 
     /// <summary>
-    /// Gets the <c>maximum</c> property.
+    /// Gets the (optional) <c>maximum</c> property.
     /// </summary>
     public Corvus.Json.JsonNumber Maximum
     {
@@ -757,7 +757,7 @@ public readonly partial struct Schema
     }
 
     /// <summary>
-    /// Gets the <c>maxItems</c> property.
+    /// Gets the (optional) <c>maxItems</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft6.Schema.NonNegativeInteger MaxItems
     {
@@ -789,7 +789,7 @@ public readonly partial struct Schema
     }
 
     /// <summary>
-    /// Gets the <c>maxLength</c> property.
+    /// Gets the (optional) <c>maxLength</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft6.Schema.NonNegativeInteger MaxLength
     {
@@ -821,7 +821,7 @@ public readonly partial struct Schema
     }
 
     /// <summary>
-    /// Gets the <c>maxProperties</c> property.
+    /// Gets the (optional) <c>maxProperties</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft6.Schema.NonNegativeInteger MaxProperties
     {
@@ -853,7 +853,7 @@ public readonly partial struct Schema
     }
 
     /// <summary>
-    /// Gets the <c>minimum</c> property.
+    /// Gets the (optional) <c>minimum</c> property.
     /// </summary>
     public Corvus.Json.JsonNumber Minimum
     {
@@ -885,7 +885,7 @@ public readonly partial struct Schema
     }
 
     /// <summary>
-    /// Gets the <c>minItems</c> property.
+    /// Gets the (optional) <c>minItems</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft6.Schema.NonNegativeIntegerDefault0 MinItems
     {
@@ -917,7 +917,7 @@ public readonly partial struct Schema
     }
 
     /// <summary>
-    /// Gets the <c>minLength</c> property.
+    /// Gets the (optional) <c>minLength</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft6.Schema.NonNegativeIntegerDefault0 MinLength
     {
@@ -949,7 +949,7 @@ public readonly partial struct Schema
     }
 
     /// <summary>
-    /// Gets the <c>minProperties</c> property.
+    /// Gets the (optional) <c>minProperties</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft6.Schema.NonNegativeIntegerDefault0 MinProperties
     {
@@ -981,7 +981,7 @@ public readonly partial struct Schema
     }
 
     /// <summary>
-    /// Gets the <c>multipleOf</c> property.
+    /// Gets the (optional) <c>multipleOf</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft6.Schema.MultipleOfEntity MultipleOf
     {
@@ -1013,7 +1013,7 @@ public readonly partial struct Schema
     }
 
     /// <summary>
-    /// Gets the <c>not</c> property.
+    /// Gets the (optional) <c>not</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft6.Schema Not
     {
@@ -1045,7 +1045,7 @@ public readonly partial struct Schema
     }
 
     /// <summary>
-    /// Gets the <c>oneOf</c> property.
+    /// Gets the (optional) <c>oneOf</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft6.Schema.SchemaArray OneOf
     {
@@ -1077,7 +1077,7 @@ public readonly partial struct Schema
     }
 
     /// <summary>
-    /// Gets the <c>pattern</c> property.
+    /// Gets the (optional) <c>pattern</c> property.
     /// </summary>
     public Corvus.Json.JsonRegex Pattern
     {
@@ -1109,7 +1109,7 @@ public readonly partial struct Schema
     }
 
     /// <summary>
-    /// Gets the <c>patternProperties</c> property.
+    /// Gets the (optional) <c>patternProperties</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft6.Schema.PatternPropertiesEntity PatternProperties
     {
@@ -1141,7 +1141,7 @@ public readonly partial struct Schema
     }
 
     /// <summary>
-    /// Gets the <c>properties</c> property.
+    /// Gets the (optional) <c>properties</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft6.Schema.PropertiesEntity Properties
     {
@@ -1173,7 +1173,7 @@ public readonly partial struct Schema
     }
 
     /// <summary>
-    /// Gets the <c>propertyNames</c> property.
+    /// Gets the (optional) <c>propertyNames</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft6.Schema PropertyNames
     {
@@ -1205,7 +1205,7 @@ public readonly partial struct Schema
     }
 
     /// <summary>
-    /// Gets the <c>required</c> property.
+    /// Gets the (optional) <c>required</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft6.Schema.StringArray Required
     {
@@ -1237,7 +1237,7 @@ public readonly partial struct Schema
     }
 
     /// <summary>
-    /// Gets the <c>title</c> property.
+    /// Gets the (optional) <c>title</c> property.
     /// </summary>
     public Corvus.Json.JsonString Title
     {
@@ -1269,7 +1269,7 @@ public readonly partial struct Schema
     }
 
     /// <summary>
-    /// Gets the <c>type</c> property.
+    /// Gets the (optional) <c>type</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft6.Schema.TypeEntity Type
     {
@@ -1301,7 +1301,7 @@ public readonly partial struct Schema
     }
 
     /// <summary>
-    /// Gets the <c>uniqueItems</c> property.
+    /// Gets the (optional) <c>uniqueItems</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft6.Schema.UniqueItemsEntity UniqueItems
     {
