@@ -14,24 +14,19 @@ using System.Text.Json;
 using Corvus.Json;
 using Corvus.Json.Internal;
 
-namespace Corvus.Json.Benchmarking.Models.V3;
+namespace JsonSchemaSample.Api;
 
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
-/// <remarks>
-/// <para>
-/// A name of a person.
-/// </para>
-/// </remarks>
-public readonly partial struct PersonName
-    : IJsonObject<Corvus.Json.Benchmarking.Models.V3.PersonName>
+public readonly partial struct Person
+    : IJsonObject<JsonSchemaSample.Api.Person>
 {
     /// <summary>
     /// Conversion from <see cref="ImmutableList{JsonObjectProperty}"/>.
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
-    public static implicit operator PersonName(ImmutableList<JsonObjectProperty> value)
+    public static implicit operator Person(ImmutableList<JsonObjectProperty> value)
     {
         return new(value);
     }
@@ -40,7 +35,7 @@ public readonly partial struct PersonName
     /// Conversion to <see cref="ImmutableList{JsonObjectProperty}"/>.
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
-    public static implicit operator ImmutableList<JsonObjectProperty>(PersonName value)
+    public static implicit operator ImmutableList<JsonObjectProperty>(Person value)
     {
         return
             __CorvusObjectHelpers.GetPropertyBacking(value);
@@ -50,7 +45,7 @@ public readonly partial struct PersonName
     /// Conversion from JsonObject.
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
-    public static implicit operator PersonName(JsonObject value)
+    public static implicit operator Person(JsonObject value)
     {
         if (value.HasDotnetBacking && value.ValueKind == JsonValueKind.Object)
         {
@@ -65,7 +60,7 @@ public readonly partial struct PersonName
     /// Conversion to JsonObject.
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
-    public static implicit operator JsonObject(PersonName value)
+    public static implicit operator JsonObject(Person value)
     {
         return
             value.AsObject;
@@ -112,17 +107,49 @@ public readonly partial struct PersonName
     }
 
     /// <summary>
-    /// Gets the <c>familyName</c> property.
+    /// Gets the (optional) <c>dateOfBirth</c> property.
+    /// </summary>
+    public Corvus.Json.JsonDate DateOfBirth
+    {
+        get
+        {
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                {
+                    return default;
+                }
+
+                if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.DateOfBirthUtf8, out JsonElement result))
+                {
+                    return new(result);
+                }
+            }
+
+            if ((this.backing & Backing.Object) != 0)
+            {
+                if (this.objectBacking.TryGetValue(JsonPropertyNames.DateOfBirth, out JsonAny result))
+                {
+                    return result.As<Corvus.Json.JsonDate>();
+                }
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
+    /// Gets the <c>name</c> property.
     /// </summary>
     /// <remarks>
     /// <para>
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// <para>
-    /// The person's family name.
+    /// A name of a person.
     /// </para>
     /// </remarks>
-    public Corvus.Json.Benchmarking.Models.V3.PersonNameElement FamilyName
+    public JsonSchemaSample.Api.PersonName Name
     {
         get
         {
@@ -133,7 +160,7 @@ public readonly partial struct PersonName
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.FamilyNameUtf8, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.NameUtf8, out JsonElement result))
                 {
                     return new(result);
                 }
@@ -141,83 +168,9 @@ public readonly partial struct PersonName
 
             if ((this.backing & Backing.Object) != 0)
             {
-                if (this.objectBacking.TryGetValue(JsonPropertyNames.FamilyName, out JsonAny result))
+                if (this.objectBacking.TryGetValue(JsonPropertyNames.Name, out JsonAny result))
                 {
-                    return result.As<Corvus.Json.Benchmarking.Models.V3.PersonNameElement>();
-                }
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the (optional) <c>givenName</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// The person's given name.
-    /// </para>
-    /// </remarks>
-    public Corvus.Json.Benchmarking.Models.V3.PersonNameElement GivenName
-    {
-        get
-        {
-            if ((this.backing & Backing.JsonElement) != 0)
-            {
-                if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
-                {
-                    return default;
-                }
-
-                if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.GivenNameUtf8, out JsonElement result))
-                {
-                    return new(result);
-                }
-            }
-
-            if ((this.backing & Backing.Object) != 0)
-            {
-                if (this.objectBacking.TryGetValue(JsonPropertyNames.GivenName, out JsonAny result))
-                {
-                    return result.As<Corvus.Json.Benchmarking.Models.V3.PersonNameElement>();
-                }
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the (optional) <c>otherNames</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// Other (middle) names for the person
-    /// </para>
-    /// </remarks>
-    public Corvus.Json.Benchmarking.Models.V3.OtherNames OtherNames
-    {
-        get
-        {
-            if ((this.backing & Backing.JsonElement) != 0)
-            {
-                if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
-                {
-                    return default;
-                }
-
-                if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.OtherNamesUtf8, out JsonElement result))
-                {
-                    return new(result);
-                }
-            }
-
-            if ((this.backing & Backing.Object) != 0)
-            {
-                if (this.objectBacking.TryGetValue(JsonPropertyNames.OtherNames, out JsonAny result))
-                {
-                    return result.As<Corvus.Json.Benchmarking.Models.V3.OtherNames>();
+                    return result.As<JsonSchemaSample.Api.PersonName>();
                 }
             }
 
@@ -226,13 +179,13 @@ public readonly partial struct PersonName
     }
 
     /// <inheritdoc/>
-    public static PersonName FromProperties(IDictionary<JsonPropertyName, JsonAny> source)
+    public static Person FromProperties(IDictionary<JsonPropertyName, JsonAny> source)
     {
         return new(source.Select(kvp => new JsonObjectProperty(kvp.Key, kvp.Value)).ToImmutableList());
     }
 
     /// <inheritdoc/>
-    public static PersonName FromProperties(params (JsonPropertyName Name, JsonAny Value)[] source)
+    public static Person FromProperties(params (JsonPropertyName Name, JsonAny Value)[] source)
     {
         return new(source.Select(s => new JsonObjectProperty(s.Name, s.Value.AsAny)).ToImmutableList());
     }
@@ -242,29 +195,21 @@ public readonly partial struct PersonName
     /// </summary>
     /// <param name="source">The list of properties.</param>
     /// <returns>An instance of the type initialized from the list of properties.</returns>
-    public static PersonName FromProperties(ImmutableList<JsonObjectProperty> source)
+    public static Person FromProperties(ImmutableList<JsonObjectProperty> source)
     {
         return new(source);
     }
 
     /// <summary>
-    /// Creates an instance of a <see cref="PersonName"/>.
+    /// Creates an instance of a <see cref="Person"/>.
     /// </summary>
-    public static PersonName Create(
-        in Corvus.Json.Benchmarking.Models.V3.PersonNameElement familyName,
-        in Corvus.Json.Benchmarking.Models.V3.PersonNameElement? givenName = null,
-        in Corvus.Json.Benchmarking.Models.V3.OtherNames? otherNames = null)
+    public static Person Create(in JsonSchemaSample.Api.PersonName name, in Corvus.Json.JsonDate? dateOfBirth = null)
     {
         var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
-        builder.Add(JsonPropertyNames.FamilyName, familyName.AsAny);
-        if (givenName is not null)
+        builder.Add(JsonPropertyNames.Name, name.AsAny);
+        if (dateOfBirth is not null)
         {
-            builder.Add(JsonPropertyNames.GivenName, givenName.Value.AsAny);
-        }
-
-        if (otherNames is not null)
-        {
-            builder.Add(JsonPropertyNames.OtherNames, otherNames.Value.AsAny);
+            builder.Add(JsonPropertyNames.DateOfBirth, dateOfBirth.Value.AsAny);
         }
 
         return new(builder.ToImmutable());
@@ -678,32 +623,32 @@ public readonly partial struct PersonName
     }
 
     /// <inheritdoc />
-    public PersonName SetProperty<TValue>(in JsonPropertyName name, TValue value)
+    public Person SetProperty<TValue>(in JsonPropertyName name, TValue value)
         where TValue : struct, IJsonValue
     {
         return new(__CorvusObjectHelpers.GetPropertyBackingWith(this, name, value.AsAny));
     }
 
     /// <inheritdoc />
-    public PersonName RemoveProperty(in JsonPropertyName name)
+    public Person RemoveProperty(in JsonPropertyName name)
     {
         return new(__CorvusObjectHelpers.GetPropertyBackingWithout(this, name));
     }
 
     /// <inheritdoc />
-    public PersonName RemoveProperty(string name)
+    public Person RemoveProperty(string name)
     {
         return new(__CorvusObjectHelpers.GetPropertyBackingWithout(this, name));
     }
 
     /// <inheritdoc />
-    public PersonName RemoveProperty(ReadOnlySpan<char> name)
+    public Person RemoveProperty(ReadOnlySpan<char> name)
     {
         return new(__CorvusObjectHelpers.GetPropertyBackingWithout(this, name));
     }
 
     /// <inheritdoc />
-    public PersonName RemoveProperty(ReadOnlySpan<byte> name)
+    public Person RemoveProperty(ReadOnlySpan<byte> name)
     {
         return new(__CorvusObjectHelpers.GetPropertyBackingWithout(this, name));
     }
@@ -714,34 +659,24 @@ public readonly partial struct PersonName
     public static class JsonPropertyNames
     {
         /// <summary>
-        /// Gets the JSON property name for <see cref="FamilyName"/>.
+        /// Gets the JSON property name for <see cref="DateOfBirth"/>.
         /// </summary>
-        public const string FamilyName = "familyName";
+        public const string DateOfBirth = "dateOfBirth";
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="GivenName"/>.
+        /// Gets the JSON property name for <see cref="Name"/>.
         /// </summary>
-        public const string GivenName = "givenName";
+        public const string Name = "name";
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="OtherNames"/>.
+        /// Gets the JSON property name for <see cref="DateOfBirth"/>.
         /// </summary>
-        public const string OtherNames = "otherNames";
+        public static ReadOnlySpan<byte> DateOfBirthUtf8 => "dateOfBirth"u8;
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="FamilyName"/>.
+        /// Gets the JSON property name for <see cref="Name"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> FamilyNameUtf8 => "familyName"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="GivenName"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> GivenNameUtf8 => "givenName"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="OtherNames"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> OtherNamesUtf8 => "otherNames"u8;
+        public static ReadOnlySpan<byte> NameUtf8 => "name"u8;
     }
 
     private static class __CorvusObjectHelpers
@@ -751,7 +686,7 @@ public readonly partial struct PersonName
         /// </summary>
         /// <returns>An immutable list of <see cref="JsonAny"/> built from the object.</returns>
         /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-        public static ImmutableList<JsonObjectProperty> GetPropertyBacking(in PersonName that)
+        public static ImmutableList<JsonObjectProperty> GetPropertyBacking(in Person that)
         {
             if ((that.backing & Backing.Object) != 0)
             {
@@ -771,7 +706,7 @@ public readonly partial struct PersonName
         /// </summary>
         /// <returns>An immutable list of <see cref="JsonObjectProperty"/>, built from the existing object, without the given property.</returns>
         /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-        public static ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(in PersonName that, in JsonPropertyName name)
+        public static ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(in Person that, in JsonPropertyName name)
         {
             if ((that.backing & Backing.Object) != 0)
             {
@@ -791,7 +726,7 @@ public readonly partial struct PersonName
         /// </summary>
         /// <returns>An immutable list of <see cref="JsonObjectProperty"/>, built from the existing object, without the given property.</returns>
         /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-        public static ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(in PersonName that, ReadOnlySpan<char> name)
+        public static ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(in Person that, ReadOnlySpan<char> name)
         {
             if ((that.backing & Backing.Object) != 0)
             {
@@ -811,7 +746,7 @@ public readonly partial struct PersonName
         /// </summary>
         /// <returns>An immutable list of <see cref="JsonObjectProperty"/>, built from the existing object, without the given property.</returns>
         /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-        public static ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(in PersonName that, ReadOnlySpan<byte> name)
+        public static ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(in Person that, ReadOnlySpan<byte> name)
         {
             if ((that.backing & Backing.Object) != 0)
             {
@@ -831,7 +766,7 @@ public readonly partial struct PersonName
         /// </summary>
         /// <returns>An immutable list of <see cref="JsonObjectProperty"/>, built from the existing object, without the given property.</returns>
         /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-        public static ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(in PersonName that, string name)
+        public static ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(in Person that, string name)
         {
             if ((that.backing & Backing.Object) != 0)
             {
@@ -851,7 +786,7 @@ public readonly partial struct PersonName
         /// </summary>
         /// <returns>An immutable list of <see cref="JsonObjectProperty"/>, built from the existing object, with the given property.</returns>
         /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-        public static ImmutableList<JsonObjectProperty> GetPropertyBackingWith(in PersonName that, in JsonPropertyName name, in JsonAny value)
+        public static ImmutableList<JsonObjectProperty> GetPropertyBackingWith(in Person that, in JsonPropertyName name, in JsonAny value)
         {
             if ((that.backing & Backing.Object) != 0)
             {

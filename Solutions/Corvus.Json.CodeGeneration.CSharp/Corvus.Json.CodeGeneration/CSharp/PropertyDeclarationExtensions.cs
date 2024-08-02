@@ -95,7 +95,13 @@ internal static class PropertyDeclarationExtensions
     {
         foreach (TypeDeclaration typeDeclaration in typeDeclarations)
         {
-            if (typeDeclaration.ReducedTypeDeclaration().ReducedType.TryGetDotnetTypeName(out string? dotnetTypeName) &&
+            TypeDeclaration reducedType = typeDeclaration.ReducedTypeDeclaration().ReducedType;
+            if (reducedType.Parent() is null)
+            {
+                continue;
+            }
+
+            if (reducedType.TryGetDotnetTypeName(out string? dotnetTypeName) &&
                 writtenBuffer.Equals(dotnetTypeName.AsSpan(), StringComparison.Ordinal))
             {
                 return true;
