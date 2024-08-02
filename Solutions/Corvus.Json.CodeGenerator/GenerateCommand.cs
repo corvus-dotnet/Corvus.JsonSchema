@@ -28,7 +28,7 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
         public string? RootPath { get; init; }
 
         [CommandOption("--useSchema")]
-        [Description("Override the schema variant to use. If NotSpecified, and it cannot be picked up from the schema itself, it will use Draft2020-12.")]
+        [Description("Override the fallback schema variant to use. If NotSpecified, and it cannot be inferred from the schema itself, it will use Draft2020-12.")]
         [DefaultValue(SchemaVariant.NotSpecified)]
         public SchemaVariant UseSchema { get; init; }
 
