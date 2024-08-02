@@ -364,27 +364,31 @@ generatejsonschematypes -h
 You should see the help text - something like this at the time of writing.
 
 ```
-Description:
-  Generate C# types from a JSON schema.
+USAGE:
+    generatejsonschematypes <schemaFile> [OPTIONS]
 
-Usage:
-  generatejsonschematypes <schemaFile> [options]
+ARGUMENTS:
+    <schemaFile>    The path to the schema file to process
 
-Arguments:
-  <schemaFile>  The path to the schema file to process
-
-Options:
-  --rootNamespace <rootNamespace>            The default root namespace for generated types
-  --rootPath <rootPath>                      The path in the document for the root type.
-  --useSchema <Draft201909|Draft202012>      The schema variant to use. [default: Draft201909]
-  --outputMapFile <outputMapFile>            The name to use for a map file which includes details of the files that
-                                             were written.
-  --outputPath <outputPath>                  The output directory. It defaults to the same folder as the schema file.
-  --outputRootTypeName <outputRootTypeName>  The Dotnet TypeName for the root type. []
-  --rebaseToRootPath                         If a --rootPath is specified, rebase the document as if it was rooted on
-                                             the specified element.
-  --version                                  Show version information
-  -?, -h, --help                             Show help and usage information
+OPTIONS:
+                                             DEFAULT
+    -h, --help                                               Prints help information
+        --rootNamespace                                      The default root namespace for generated types
+        --rootPath                                           The path in the document for the root type
+        --useSchema                          NotSpecified    Override the schema variant to use. If NotSpecified, and it
+                                                             cannot be picked up from the schema itself, it will use
+                                                             Draft2020-12
+        --outputMapFile                                      The name to use for a map file which includes details of
+                                                             the files that were written
+        --outputPath                                         The path to which to write the generated code
+        --outputRootTypeName                                 The dotnet type name for the root type
+        --rebaseToRootPath                                   If a --rootPath is specified, rebase the document as if it
+                                                             was rooted on the specified element
+        --assertFormat                       True            If --assertFormat is specified, assert format
+                                                             specifications
+        --disableOptionalNamingHeuristics                    Disables optional naming heuristics
+        --optionalAsNullable                 None            If NullOrUndefined, optional properties are emitted as .NET
+                                                             nullable values
   ```
 
 So - how to generate some code from our schema?
