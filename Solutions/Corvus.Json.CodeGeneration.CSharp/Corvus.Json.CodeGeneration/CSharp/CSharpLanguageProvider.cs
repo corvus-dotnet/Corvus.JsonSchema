@@ -181,7 +181,7 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
     /// <inheritdoc/>
     public void SetNamesBeforeSubschema(TypeDeclaration typeDeclaration, string fallbackName)
     {
-        // We've already set the dotnet type name.
+        // We've already set the .NET type name.
         if (typeDeclaration.HasDotnetTypeName())
         {
             return;
@@ -492,7 +492,7 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
     /// An explicit name for a type at a given reference.
     /// </summary>
     /// <param name="reference">The reference to the schema.</param>
-    /// <param name="dotnetTypeName">The dotnet type name to use.</param>
+    /// <param name="dotnetTypeName">The .NET type name to use.</param>
     public readonly struct NamedType(JsonReference reference, string dotnetTypeName)
     {
         /// <summary>
@@ -501,7 +501,7 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
         internal string Reference { get; } = reference;
 
         /// <summary>
-        /// Gets the dotnet type name.
+        /// Gets the .NET type name.
         /// </summary>
         internal string DotnetTypeName { get; } = dotnetTypeName;
     }
