@@ -7,6 +7,7 @@ using Spectre.Console.Cli;
 using Microsoft.CodeAnalysis;
 using Corvus.Json.CodeGeneration.CSharp;
 using Spectre.Console;
+using Corvus.Json.Internal;
 
 namespace Corvus.Json.CodeGenerator;
 
@@ -156,6 +157,8 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
 
                 currentTask = context.AddTask("Writing files", true, generatedCode.Count);
 
+                HashSet<string> writtenFiles = [];
+
                 foreach (GeneratedCodeFile generatedCodeFile in generatedCode)
                 {
                     ProgressTask subtask = context.AddTask($"{generatedCodeFile.FileName} [green]({generatedCodeFile.TypeDeclaration.RelativeSchemaLocation.ToString().EscapeMarkup()})[/]");
@@ -163,8 +166,22 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
                     string source = generatedCodeFile.FileContent;
 
                     string outputFile = Path.Combine(outputPath, generatedCodeFile.FileName);
-
+                    string originalFileName = outputFile;
                     outputFile = PathTruncator.TruncatePath(outputFile);
+                    if (!writtenFiles.Add(outputFile))
+                    {
+                        if (originalFileName != outputFile)
+                        {
+                            AnsiConsole.WriteLine($"[red]The file path [/][white]{originalFileName}[/] [red]was too long.[/]");
+                            AnsiConsole.WriteLine($"[red]It was truncated to [/][white]{outputFile}[/][red], but that file name was already in use.[/]");
+                            AnsiConsole.WriteLine($"[red]Consider using a shallower path for your output files, or explicitly map types into a root namespace, rather than nesting in their parent.[/]");
+                            outputFile = originalFileName;
+                        }
+                        else
+                        {
+                            throw new InvalidOperationException("Unexpected duplicate file generated.");
+                        }
+                    }
 
                     File.WriteAllText(outputFile, source);
 
