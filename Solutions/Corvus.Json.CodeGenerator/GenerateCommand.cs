@@ -41,7 +41,7 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
         public string? OutputPath { get; init; }
 
         [CommandOption("--outputRootTypeName")]
-        [Description("The dotnet type name for the root type.")]
+        [Description("The .NET type name for the root type.")]
         [DefaultValue(null)]
         public string? OutputRootTypeName { get; init; }
 

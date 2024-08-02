@@ -70,11 +70,11 @@ There are 2 key features:
 
 ### Serialization
 
-You use our `generatejsonschematypes` tool to generate code (on Windows, Linux or MacOS) from an existing JSON Schema document, and compile it in a standard dotnet assembly.
+You use our `generatejsonschematypes` tool to generate code (on Windows, Linux or MacOS) from an existing JSON Schema document, and compile it in a standard .NET assembly.
 
 The generated code provides object models for JSON Schema documents that give you rich, idiomatic C# types with strongly typed properties, pattern matching and efficient cast operations.
 
-You can operate directly over the JSON data, or mix-and-match building new JSON models from dotnet primitive types.
+You can operate directly over the JSON data, or mix-and-match building new JSON models from .NET primitive types.
 
 ```csharp
 string jsonText = 
@@ -167,7 +167,7 @@ OPTIONS:
         --outputMapFile                                      The name to use for a map file which includes details of
                                                              the files that were written
         --outputPath                                         The path to which to write the generated code
-        --outputRootTypeName                                 The dotnet type name for the root type
+        --outputRootTypeName                                 The .NET type name for the root type
         --rebaseToRootPath                                   If a --rootPath is specified, rebase the document as if it
                                                              was rooted on the specified element
         --assertFormat                       True            If --assertFormat is specified, assert format
@@ -357,7 +357,7 @@ updating from there.)
 
 ### Corvus.Json.CodeGenerator
 
-A dotnet command line tool that generates C# code from JSON schema.
+A .NET command line tool that generates C# code from JSON schema.
 
 ### Corvus.Json.ExtendedTypes
 

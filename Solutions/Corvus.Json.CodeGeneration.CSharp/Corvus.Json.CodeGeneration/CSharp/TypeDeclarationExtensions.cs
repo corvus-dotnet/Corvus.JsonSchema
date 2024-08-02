@@ -246,7 +246,7 @@ internal static class TypeDeclarationExtensions
             typeDeclaration.SetMetadata(FullyQualifiedDotnetTypeNameKey, fqdntn);
         }
 
-        return fqdntn ?? throw new InvalidOperationException("The dotnet type name metadata is not available.");
+        return fqdntn ?? throw new InvalidOperationException("The .NET type name metadata is not available.");
     }
 
     /// <summary>
@@ -266,7 +266,7 @@ internal static class TypeDeclarationExtensions
             typeDeclaration.SetMetadata(DotnetTypeNameWithoutNamespaceKey, fqdntn);
         }
 
-        return fqdntn ?? throw new InvalidOperationException("The dotnet type name metadata is not available.");
+        return fqdntn ?? throw new InvalidOperationException("The .NET type name metadata is not available.");
     }
 
     /// <summary>
@@ -402,7 +402,7 @@ internal static class TypeDeclarationExtensions
             return name;
         }
 
-        throw new InvalidOperationException("The dotnet type name metadata is not available.");
+        throw new InvalidOperationException("The .NET type name metadata is not available.");
     }
 
     /// <summary>
@@ -419,7 +419,7 @@ internal static class TypeDeclarationExtensions
     /// Tries to gets the .NET type name for the type declaration..
     /// </summary>
     /// <param name="typeDeclaration">The type declaration.</param>
-    /// <param name="name">The dotnet type name.</param>
+    /// <param name="name">The .NET type name.</param>
     /// <returns><see langword="true"/> if the type name has been set.</returns>
     public static bool TryGetDotnetTypeName(this TypeDeclaration typeDeclaration, [NotNullWhen(true)] out string? name)
     {
