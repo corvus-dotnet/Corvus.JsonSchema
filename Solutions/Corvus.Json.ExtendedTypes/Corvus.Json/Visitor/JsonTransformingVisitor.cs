@@ -2,14 +2,10 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System;
 using System.Buffers;
 using System.Collections.Immutable;
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using System.Text.Json;
-using Corvus.Json.Internal;
 
 namespace Corvus.Json.Visitor;
 

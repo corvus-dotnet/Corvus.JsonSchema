@@ -2,9 +2,7 @@
 using System.Diagnostics.CodeAnalysis;
 using Corvus.Json.CodeGeneration;
 using System.Text.Json;
-using Microsoft.CodeAnalysis.CSharp;
 using Spectre.Console.Cli;
-using Microsoft.CodeAnalysis;
 using Corvus.Json.CodeGeneration.CSharp;
 using Spectre.Console;
 using Corvus.Json.Internal;
