@@ -1594,10 +1594,6 @@ This represents
 }
 ```
 
-## Modifying JSON
-
-TODO: Immutability, With() and walking the tree.
-
 ## JSON Schema and Union types
 
 We now know how to use our generated .NET types in standard "serialization" scenarios. We have seen property accessors that, thanks to the implicit conversions, let us treat our JSON primitives as their .NET equivalents: `string`, `bool`, and `null`, or even more sophisticated entities like `LocalDate`.
@@ -1712,3 +1708,20 @@ if (michaelOldroyd.Name.OtherNames.TryGetAsPersonNameElementArray(out PersonName
     otherNamesArray.EnumerateArray();
 }
 ```
+
+## Union types and pattern matching
+
+Any type that is a union of other types (e.g. anyOf, oneOf, allOf, if/then/else) will also emit a `Match()` method.
+
+This method takes a series of delegates, each of which is a function that takes a single parameter of the type of the union, and returns a value of the desired type.
+
+```csharp
+string result = audreyJones.Name.OtherNames.Match(
+    static (in PersonNameElement otherNames) => $"Other names: {otherNames}",
+    static (in PersonNameElementArray otherNames) => $"Other names: {string.Join(", ", otherNames)}",
+    static (in OtherNames value) => throw new InvalidOperationException($"Unexpected type: {value}"));
+```
+
+This is a very powerful way to work with union types. Because the match is exhaustive, you avoid common errors with "missing cases".
+
+> There are similar match methods for if/then/else and enum.
