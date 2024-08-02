@@ -6,10 +6,9 @@
 //     the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
-
 #nullable enable
-
 using System.Buffers;
+using System.ComponentModel;
 using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
@@ -17,25 +16,43 @@ using Corvus.Json;
 using Corvus.Json.Internal;
 
 namespace Corvus.Json.Benchmarking.Models.V3;
-
 /// <summary>
-/// Generated from JSON Schema.
+/// A name of a person.
 /// </summary>
 /// <remarks>
 /// <para>
-/// A name of a person.
+/// This supports the full range of names, including those with multiple parts, prefixes, and suffixes.
+/// </para>
+/// <para>
+/// It is not restricted to a single part, such as a given name or family name.
+/// </para>
+/// <para>
+/// Examples:
+/// <example>
+/// <code>
+/// {"familyName":"Jones","givenName":"Terry"}
+/// </code>
+/// </example>
+/// <example>
+/// <code>
+/// {"familyName":"Jones","givenName":"Terry","otherNames":["Lee","Gary"]}
+/// </code>
+/// </example>
+/// <example>
+/// <code>
+/// {"familyName":"Jones","givenName":"Terry","otherNames":"Lee"}
+/// </code>
+/// </example>
 /// </para>
 /// </remarks>
 [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<PersonName>))]
 public readonly partial struct PersonName
-
 {
     private readonly Backing backing;
     private readonly JsonElement jsonElementBacking;
     private readonly ImmutableList<JsonObjectProperty> objectBacking;
-
     /// <summary>
-    /// Initializes a new instance of the <see cref="PersonName"/> struct.
+    /// Initializes a new instance of the <see cref = "PersonName"/> struct.
     /// </summary>
     public PersonName()
     {
@@ -45,9 +62,9 @@ public readonly partial struct PersonName
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="PersonName"/> struct.
+    /// Initializes a new instance of the <see cref = "PersonName"/> struct.
     /// </summary>
-    /// <param name="value">The value from which to construct the instance.</param>
+    /// <param name = "value">The value from which to construct the instance.</param>
     public PersonName(in JsonElement value)
     {
         this.jsonElementBacking = value;
@@ -56,33 +73,19 @@ public readonly partial struct PersonName
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="PersonName"/> struct.
-    /// </summary>
-    /// <param name="value">The value from which to construct the instance.</param>
-    public PersonName(ImmutableList<JsonObjectProperty> value)
-    {
-        this.backing = Backing.Object;
-        this.jsonElementBacking = default;
-        this.objectBacking = value;
-    }
-
-    /// <summary>
     /// Gets the schema location from which this type was generated.
     /// </summary>
-    public static string SchemaLocation { get; } = "#/$defs/PersonName";
-
+    public static string SchemaLocation { get; } = "person-schema.json#/$defs/PersonName";
     /// <summary>
     /// Gets a Null instance.
     /// </summary>
     public static PersonName Null { get; } = new(JsonValueHelpers.NullElement);
-
     /// <summary>
     /// Gets an Undefined instance.
     /// </summary>
     public static PersonName Undefined { get; }
-
     /// <summary>
-    /// Gets the default instance.
+    /// Gets the default instance of the type.
     /// </summary>
     public static PersonName DefaultInstance { get; }
 
@@ -242,6 +245,11 @@ public readonly partial struct PersonName
                 return JsonValueKind.Object;
             }
 
+            if ((this.backing & Backing.Null) != 0)
+            {
+                return JsonValueKind.Null;
+            }
+
             return JsonValueKind.Undefined;
         }
     }
@@ -249,8 +257,9 @@ public readonly partial struct PersonName
     /// <summary>
     /// Conversion from JsonAny.
     /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator PersonName(JsonAny value)
+    /// <param name = "value">The value from which to convert.</param>
+    /// <exception cref = "InvalidOperationException">The value was not compatible with this type.</exception>
+    public static implicit operator PersonName(in JsonAny value)
     {
         return value.As<PersonName>();
     }
@@ -258,57 +267,43 @@ public readonly partial struct PersonName
     /// <summary>
     /// Conversion to JsonAny.
     /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator JsonAny(PersonName value)
+    /// <param name = "value">The value from which to convert.</param>
+    /// <exception cref = "InvalidOperationException">The value was not compatible with this type.</exception>
+    public static implicit operator JsonAny(in PersonName value)
     {
         return value.AsAny;
     }
 
     /// <summary>
-    /// Operator ==.
+    /// Equality operator.
     /// </summary>
-    /// <param name="left">The lhs of the operator.</param>
-    /// <param name="right">The rhs of the operator.</param>
-    /// <returns>
-    /// <c>True</c> if the values are equal.
-    /// </returns>
+    /// <param name = "left">The lhs.</param>
+    /// <param name = "right">The rhs.</param>
+    /// <returns><c>True</c> if the values are equal.</returns>
     public static bool operator ==(in PersonName left, in PersonName right)
     {
         return left.Equals(right);
     }
 
     /// <summary>
-    /// Operator !=.
+    /// Inequality operator.
     /// </summary>
-    /// <param name="left">The lhs of the operator.</param>
-    /// <param name="right">The rhs of the operator.</param>
-    /// <returns>
-    /// <c>True</c> if the values are not equal.
-    /// </returns>
+    /// <param name = "left">The lhs.</param>
+    /// <param name = "right">The rhs.</param>
+    /// <returns><c>True</c> if the values are equal.</returns>
     public static bool operator !=(in PersonName left, in PersonName right)
     {
         return !left.Equals(right);
     }
 
     /// <summary>
-    /// Gets an instance of the JSON value from a <see cref="JsonElement"/> value.
+    /// Gets an instance of the JSON value from a JsonAny value.
     /// </summary>
-    /// <param name="value">The <see cref="JsonElement"/> value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the <see cref="JsonElement"/>.</returns>
+    /// <param name = "value">The <see cref = "JsonAny"/> value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the <see cref = "JsonAny"/>.</returns>
     /// <remarks>The returned value will have a <see cref = "IJsonValue.ValueKind"/> of <see cref = "JsonValueKind.Undefined"/> if the
-    /// value cannot be constructed from the given instance (e.g. because they have an incompatible .NET backing type).
+    /// value cannot be constructed from the given instance (e.g. because they have an incompatible dotnet backing type.
     /// </remarks>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static PersonName FromJson(in JsonElement value)
-    {
-        return new(value);
-    }
-
-    /// <summary>
-    /// Gets an instance of the JSON value from a <see cref="JsonAny"/> value.
-    /// </summary>
-    /// <param name="value">The <see cref="JsonAny"/> value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the <see cref="JsonAny"/> value.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static PersonName FromAny(in JsonAny value)
     {
@@ -317,7 +312,8 @@ public readonly partial struct PersonName
             return new(value.AsJsonElement);
         }
 
-        return value.ValueKind switch
+        JsonValueKind valueKind = value.ValueKind;
+        return valueKind switch
         {
             JsonValueKind.Object => new(value.AsObject.AsPropertyBacking()),
             JsonValueKind.Null => Null,
@@ -325,13 +321,25 @@ public readonly partial struct PersonName
         };
     }
 
+    /// <summary>
+    /// Gets an instance of the JSON value from a <see cref = "JsonElement"/> value.
+    /// </summary>
+    /// <param name = "value">The <see cref = "JsonElement"/> value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the <see cref = "JsonElement"/>.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static PersonName FromJson(in JsonElement value)
+    {
+        return new(value);
+    }
+
 #if NET8_0_OR_GREATER
     /// <summary>
-    /// Gets an instance of the JSON value from the provided value.
+    /// Gets an instance of the JSON value from a boolean value.
     /// </summary>
-    /// <typeparam name="TValue">The type of the value.</typeparam>
+    /// <typeparam name = "TValue">The type of the value.</typeparam>
     /// <param name="value">The value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the provided value.</returns>
+    /// <returns>An instance of this type, initialized from the value.</returns>
+    /// <remarks>This will be PersonName.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     static PersonName IJsonValue<PersonName>.FromBoolean<TValue>(in TValue value)
     {
@@ -343,14 +351,14 @@ public readonly partial struct PersonName
         return Undefined;
     }
 #endif
-
 #if NET8_0_OR_GREATER
     /// <summary>
-    /// Gets an instance of the JSON value from the provided value.
+    /// Gets an instance of the JSON value from a string value.
     /// </summary>
     /// <typeparam name="TValue">The type of the value.</typeparam>
     /// <param name="value">The value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the provided value.</returns>
+    /// <returns>An instance of this type, initialized from the value.</returns>
+    /// <remarks>This will be PersonName.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     static PersonName IJsonValue<PersonName>.FromString<TValue>(in TValue value)
     {
@@ -362,14 +370,14 @@ public readonly partial struct PersonName
         return Undefined;
     }
 #endif
-
 #if NET8_0_OR_GREATER
     /// <summary>
-    /// Gets an instance of the JSON value from the provided value.
+    /// Gets an instance of the JSON value from a number value.
     /// </summary>
     /// <typeparam name="TValue">The type of the value.</typeparam>
     /// <param name="value">The value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the provided value.</returns>
+    /// <returns>An instance of this type, initialized from the value.</returns>
+    /// <remarks>This will be PersonName.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     static PersonName IJsonValue<PersonName>.FromNumber<TValue>(in TValue value)
     {
@@ -381,37 +389,14 @@ public readonly partial struct PersonName
         return Undefined;
     }
 #endif
-
-    /// <summary>
-    /// Gets an instance of the JSON value from the provided value.
-    /// </summary>
-    /// <typeparam name="TValue">The type of the value.</typeparam>
-    /// <param name="value">The value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the provided value.</returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static PersonName FromObject<TValue>(in TValue value)
-        where TValue : struct, IJsonObject<TValue>
-    {
-        if (value.HasJsonElementBacking)
-        {
-            return new(value.AsJsonElement);
-        }
-
-        return value.ValueKind switch
-        {
-            JsonValueKind.Object => new(value.AsObject.AsPropertyBacking()),
-            JsonValueKind.Null => Null,
-            _ => Undefined,
-        };
-    }
-
 #if NET8_0_OR_GREATER
     /// <summary>
-    /// Gets an instance of the JSON value from the provided value.
+    /// Gets an instance of the JSON value from an array value.
     /// </summary>
     /// <typeparam name="TValue">The type of the value.</typeparam>
     /// <param name="value">The value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the provided value.</returns>
+    /// <returns>An instance of this type, initialized from the value.</returns>
+    /// <remarks>This will be PersonName.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     static PersonName IJsonValue<PersonName>.FromArray<TValue>(in TValue value)
     {
@@ -423,105 +408,136 @@ public readonly partial struct PersonName
         return Undefined;
     }
 #endif
-
     /// <summary>
-    /// Parses the PersonName.
+    /// Gets an instance of the JSON value from an object value.
     /// </summary>
-    /// <param name="source">The source of the JSON string to parse.</param>
-    /// <param name="options">The (optional) JsonDocumentOptions.</param>
-    public static PersonName Parse(string source, JsonDocumentOptions options = default)
+    /// <typeparam name = "TValue">The type of the value.</typeparam>
+    /// <param name = "value">The value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the value.</returns>
+    /// <remarks>This will be PersonName.Undefined if the type is not compatible.</remarks>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static PersonName FromObject<TValue>(in TValue value)
+        where TValue : struct, IJsonObject<TValue>
     {
-        using var jsonDocument = JsonDocument.Parse(source, options);
-        return new(jsonDocument.RootElement.Clone());
+        if (value.HasJsonElementBacking)
+        {
+            return new(value.AsJsonElement);
+        }
+
+        if (value.ValueKind == JsonValueKind.Object)
+        {
+            return new(value.AsPropertyBacking());
+        }
+
+        return Undefined;
     }
 
     /// <summary>
-    /// Parses the PersonName.
+    /// Parses a JSON string into a PersonName.
     /// </summary>
-    /// <param name="source">The source of the JSON string to parse.</param>
-    /// <param name="options">The (optional) JsonDocumentOptions.</param>
-    public static PersonName Parse(Stream source, JsonDocumentOptions options = default)
+    /// <param name = "json">The json string to parse.</param>
+    /// <param name = "options">The (optional) JsonDocumentOptions.</param>
+    /// <returns>A <see cref = "PersonName"/> instance built from the JSON string.</returns>
+    public static PersonName Parse(string json, JsonDocumentOptions options = default)
     {
-        using var jsonDocument = JsonDocument.Parse(source, options);
-        return new(jsonDocument.RootElement.Clone());
+        using var jsonDocument = JsonDocument.Parse(json, options);
+        return new PersonName(jsonDocument.RootElement.Clone());
     }
 
     /// <summary>
-    /// Parses the PersonName.
+    /// Parses a JSON string into a PersonName.
     /// </summary>
-    /// <param name="source">The source of the JSON string to parse.</param>
-    /// <param name="options">The (optional) JsonDocumentOptions.</param>
-    public static PersonName Parse(ReadOnlyMemory<byte> source, JsonDocumentOptions options = default)
+    /// <param name = "utf8Json">The json string to parse.</param>
+    /// <param name = "options">The (optional) JsonDocumentOptions.</param>
+    /// <returns>A <see cref = "PersonName"/> instance built from the JSON string.</returns>
+    public static PersonName Parse(Stream utf8Json, JsonDocumentOptions options = default)
     {
-        using var jsonDocument = JsonDocument.Parse(source, options);
-        return new(jsonDocument.RootElement.Clone());
+        using var jsonDocument = JsonDocument.Parse(utf8Json, options);
+        return new PersonName(jsonDocument.RootElement.Clone());
     }
 
     /// <summary>
-    /// Parses the PersonName.
+    /// Parses a JSON string into a PersonName.
     /// </summary>
-    /// <param name="source">The source of the JSON string to parse.</param>
-    /// <param name="options">The (optional) JsonDocumentOptions.</param>
-    public static PersonName Parse(ReadOnlyMemory<char> source, JsonDocumentOptions options = default)
+    /// <param name = "utf8Json">The json string to parse.</param>
+    /// <param name = "options">The (optional) JsonDocumentOptions.</param>
+    /// <returns>A <see cref = "PersonName"/> instance built from the JSON string.</returns>
+    public static PersonName Parse(ReadOnlyMemory<byte> utf8Json, JsonDocumentOptions options = default)
     {
-        using var jsonDocument = JsonDocument.Parse(source, options);
-        return new(jsonDocument.RootElement.Clone());
+        using var jsonDocument = JsonDocument.Parse(utf8Json, options);
+        return new PersonName(jsonDocument.RootElement.Clone());
     }
 
     /// <summary>
-    /// Parses the PersonName.
+    /// Parses a JSON string into a PersonName.
     /// </summary>
-    /// <param name="source">The source of the JSON string to parse.</param>
-    /// <param name="options">The (optional) JsonDocumentOptions.</param>
-    public static PersonName Parse(ReadOnlySequence<byte> source, JsonDocumentOptions options = default)
+    /// <param name = "json">The json string to parse.</param>
+    /// <param name = "options">The (optional) JsonDocumentOptions.</param>
+    /// <returns>A <see cref = "PersonName"/> instance built from the JSON string.</returns>
+    public static PersonName Parse(ReadOnlyMemory<char> json, JsonDocumentOptions options = default)
     {
-        using var jsonDocument = JsonDocument.Parse(source, options);
-        return new(jsonDocument.RootElement.Clone());
+        using var jsonDocument = JsonDocument.Parse(json, options);
+        return new PersonName(jsonDocument.RootElement.Clone());
     }
 
     /// <summary>
-    /// Parses the PersonName.
+    /// Parses a JSON string into a PersonName.
     /// </summary>
-    /// <param name="source">The source of the JSON string to parse.</param>
-    public static PersonName ParseValue(ReadOnlySpan<char> source)
+    /// <param name = "utf8Json">The json string to parse.</param>
+    /// <param name = "options">The (optional) JsonDocumentOptions.</param>
+    /// <returns>A <see cref = "PersonName"/> instance built from the JSON string.</returns>
+    public static PersonName Parse(ReadOnlySequence<byte> utf8Json, JsonDocumentOptions options = default)
+    {
+        using var jsonDocument = JsonDocument.Parse(utf8Json, options);
+        return new PersonName(jsonDocument.RootElement.Clone());
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name = "buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    static PersonName ParseValue(ReadOnlySpan<char> buffer)
     {
 #if NET8_0_OR_GREATER
-        return IJsonValue<PersonName>.ParseValue(source);
+        return IJsonValue<PersonName>.ParseValue(buffer);
 #else
-        return JsonValueHelpers.ParseValue<PersonName>(source);
+        return JsonValueHelpers.ParseValue<PersonName>(buffer);
 #endif
     }
 
     /// <summary>
-    /// Parses the PersonName.
+    /// Parses a JSON value from a buffer.
     /// </summary>
-    /// <param name="source">The source of the JSON string to parse.</param>
-    public static PersonName ParseValue(ReadOnlySpan<byte> source)
+    /// <param name = "buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    static PersonName ParseValue(ReadOnlySpan<byte> buffer)
     {
 #if NET8_0_OR_GREATER
-        return IJsonValue<PersonName>.ParseValue(source);
+        return IJsonValue<PersonName>.ParseValue(buffer);
 #else
-        return JsonValueHelpers.ParseValue<PersonName>(source);
+        return JsonValueHelpers.ParseValue<PersonName>(buffer);
 #endif
     }
 
     /// <summary>
-    /// Parses the PersonName.
+    /// Parses a JSON value from a buffer.
     /// </summary>
-    /// <param name="source">The source of the JSON string to parse.</param>
-    public static PersonName ParseValue(ref Utf8JsonReader source)
+    /// <param name = "reader">The reader from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    static PersonName ParseValue(ref Utf8JsonReader reader)
     {
 #if NET8_0_OR_GREATER
-        return IJsonValue<PersonName>.ParseValue(ref source);
+        return IJsonValue<PersonName>.ParseValue(ref reader);
 #else
-        return JsonValueHelpers.ParseValue<PersonName>(ref source);
+        return JsonValueHelpers.ParseValue<PersonName>(ref reader);
 #endif
     }
 
     /// <summary>
     /// Gets the value as an instance of the target value.
     /// </summary>
-    /// <typeparam name="TTarget">The type of the target.</typeparam>
+    /// <typeparam name = "TTarget">The type of the target.</typeparam>
     /// <returns>An instance of the target type.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public TTarget As<TTarget>()
@@ -552,9 +568,7 @@ public readonly partial struct PersonName
     /// <inheritdoc/>
     public override bool Equals(object? obj)
     {
-        return
-            (obj is IJsonValue jv && this.Equals(jv.AsAny)) ||
-            (obj is null && this.IsNull());
+        return (obj is IJsonValue jv && this.Equals(jv.AsAny)) || (obj is null && this.IsNull());
     }
 
     /// <inheritdoc/>
@@ -567,7 +581,7 @@ public readonly partial struct PersonName
     /// <summary>
     /// Equality comparison.
     /// </summary>
-    /// <param name="other">The other item with which to compare.</param>
+    /// <param name = "other">The other item with which to compare.</param>
     /// <returns><see langword="true"/> if the values were equal.</returns>
     public bool Equals(in PersonName other)
     {
@@ -590,14 +604,12 @@ public readonly partial struct PersonName
         if ((this.backing & Backing.Object) != 0)
         {
             JsonValueHelpers.WriteProperties(this.objectBacking, writer);
-
             return;
         }
 
         if ((this.backing & Backing.Null) != 0)
         {
             writer.WriteNullValue();
-
             return;
         }
     }

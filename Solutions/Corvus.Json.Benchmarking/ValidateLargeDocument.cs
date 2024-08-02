@@ -34,8 +34,8 @@ public class ValidateLargeDocument
     private static readonly JsonEverything.EvaluationOptions Options = new() { OutputFormat = JsonEverything.OutputFormat.Flag };
 
     private JsonDocument? objectDocument;
-    private Models.V2.PersonArray personArrayV2;
     private Models.V3.PersonArray personArrayV3;
+    private Models.V4.PersonArray personArrayV4;
     private JsonNode? node;
     private JsonEverything.JsonSchema? schema;
 
@@ -51,14 +51,14 @@ public class ValidateLargeDocument
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
         for (int i = 0; i < 10000; ++i)
         {
-            builder.Add(Models.V2.Person.FromJson(this.objectDocument.RootElement));
+            builder.Add(Models.V3.Person.FromJson(this.objectDocument.RootElement));
         }
 
-        this.personArrayV2 = Models.V2.PersonArray.From(builder.ToImmutable()).AsJsonElementBackedValue();
         this.personArrayV3 = Models.V3.PersonArray.From(builder.ToImmutable()).AsJsonElementBackedValue();
+        this.personArrayV4 = Models.V4.PersonArray.From(builder.ToImmutable()).AsJsonElementBackedValue();
 
         this.schema = JsonEverything.JsonSchema.FromFile("./person-array-schema.json");
-        this.node = System.Text.Json.Nodes.JsonArray.Create(this.personArrayV2.AsJsonElement.Clone());
+        this.node = System.Text.Json.Nodes.JsonArray.Create(this.personArrayV3.AsJsonElement.Clone());
         return Task.CompletedTask;
     }
 
@@ -78,12 +78,12 @@ public class ValidateLargeDocument
     }
 
     /// <summary>
-    /// Validates using the Corvus V2 types.
+    /// Validates using the Corvus V3 types.
     /// </summary>
     [Benchmark(Baseline = true)]
-    public void ValidateLargeArrayCorvusV2()
+    public void ValidateLargeArrayCorvusV3()
     {
-        ValidationContext result = this.personArrayV2.Validate(ValidationContext.ValidContext);
+        ValidationContext result = this.personArrayV3.Validate(ValidationContext.ValidContext);
         if (!result.IsValid)
         {
             throw new InvalidOperationException();
@@ -91,12 +91,12 @@ public class ValidateLargeDocument
     }
 
     /// <summary>
-    /// Validates using the Corvus V3 types.
+    /// Validates using the Corvus V4 types.
     /// </summary>
     [Benchmark]
-    public void ValidateLargeArrayCorvusV3()
+    public void ValidateLargeArrayCorvusV4()
     {
-        ValidationContext result = this.personArrayV3.Validate(ValidationContext.ValidContext);
+        ValidationContext result = this.personArrayV4.Validate(ValidationContext.ValidContext);
         if (!result.IsValid)
         {
             throw new InvalidOperationException();

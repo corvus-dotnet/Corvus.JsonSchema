@@ -6,30 +6,27 @@
 //     the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
-
 #nullable enable
-
 using System.Buffers;
+using System.ComponentModel;
+using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
 using Corvus.Json.Internal;
 
 namespace Corvus.Json.Benchmarking.Models.V3;
-
 /// <summary>
-/// Generated from JSON Schema.
+/// A numeric representation of a person's height in meters.
 /// </summary>
 [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<HeightRangeDouble>))]
 public readonly partial struct HeightRangeDouble
-
 {
     private readonly Backing backing;
     private readonly JsonElement jsonElementBacking;
     private readonly BinaryJsonNumber numberBacking;
-
     /// <summary>
-    /// Initializes a new instance of the <see cref="HeightRangeDouble"/> struct.
+    /// Initializes a new instance of the <see cref = "HeightRangeDouble"/> struct.
     /// </summary>
     public HeightRangeDouble()
     {
@@ -39,9 +36,9 @@ public readonly partial struct HeightRangeDouble
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="HeightRangeDouble"/> struct.
+    /// Initializes a new instance of the <see cref = "HeightRangeDouble"/> struct.
     /// </summary>
-    /// <param name="value">The value from which to construct the instance.</param>
+    /// <param name = "value">The value from which to construct the instance.</param>
     public HeightRangeDouble(in JsonElement value)
     {
         this.jsonElementBacking = value;
@@ -50,33 +47,19 @@ public readonly partial struct HeightRangeDouble
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="HeightRangeDouble"/> struct.
-    /// </summary>
-    /// <param name="value">The value from which to construct the instance.</param>
-    public HeightRangeDouble(BinaryJsonNumber value)
-    {
-        this.backing = Backing.Number;
-        this.jsonElementBacking = default;
-        this.numberBacking = value;
-    }
-
-    /// <summary>
     /// Gets the schema location from which this type was generated.
     /// </summary>
-    public static string SchemaLocation { get; } = "#/$defs/HeightRangeDouble";
-
+    public static string SchemaLocation { get; } = "person-schema.json#/$defs/HeightRangeDouble";
     /// <summary>
     /// Gets a Null instance.
     /// </summary>
     public static HeightRangeDouble Null { get; } = new(JsonValueHelpers.NullElement);
-
     /// <summary>
     /// Gets an Undefined instance.
     /// </summary>
     public static HeightRangeDouble Undefined { get; }
-
     /// <summary>
-    /// Gets the default instance.
+    /// Gets the default instance of the type.
     /// </summary>
     public static HeightRangeDouble DefaultInstance { get; }
 
@@ -236,6 +219,11 @@ public readonly partial struct HeightRangeDouble
                 return JsonValueKind.Number;
             }
 
+            if ((this.backing & Backing.Null) != 0)
+            {
+                return JsonValueKind.Null;
+            }
+
             return JsonValueKind.Undefined;
         }
     }
@@ -243,8 +231,9 @@ public readonly partial struct HeightRangeDouble
     /// <summary>
     /// Conversion from JsonAny.
     /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator HeightRangeDouble(JsonAny value)
+    /// <param name = "value">The value from which to convert.</param>
+    /// <exception cref = "InvalidOperationException">The value was not compatible with this type.</exception>
+    public static implicit operator HeightRangeDouble(in JsonAny value)
     {
         return value.As<HeightRangeDouble>();
     }
@@ -252,57 +241,43 @@ public readonly partial struct HeightRangeDouble
     /// <summary>
     /// Conversion to JsonAny.
     /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator JsonAny(HeightRangeDouble value)
+    /// <param name = "value">The value from which to convert.</param>
+    /// <exception cref = "InvalidOperationException">The value was not compatible with this type.</exception>
+    public static implicit operator JsonAny(in HeightRangeDouble value)
     {
         return value.AsAny;
     }
 
     /// <summary>
-    /// Operator ==.
+    /// Equality operator.
     /// </summary>
-    /// <param name="left">The lhs of the operator.</param>
-    /// <param name="right">The rhs of the operator.</param>
-    /// <returns>
-    /// <c>True</c> if the values are equal.
-    /// </returns>
+    /// <param name = "left">The lhs.</param>
+    /// <param name = "right">The rhs.</param>
+    /// <returns><c>True</c> if the values are equal.</returns>
     public static bool operator ==(in HeightRangeDouble left, in HeightRangeDouble right)
     {
         return left.Equals(right);
     }
 
     /// <summary>
-    /// Operator !=.
+    /// Inequality operator.
     /// </summary>
-    /// <param name="left">The lhs of the operator.</param>
-    /// <param name="right">The rhs of the operator.</param>
-    /// <returns>
-    /// <c>True</c> if the values are not equal.
-    /// </returns>
+    /// <param name = "left">The lhs.</param>
+    /// <param name = "right">The rhs.</param>
+    /// <returns><c>True</c> if the values are equal.</returns>
     public static bool operator !=(in HeightRangeDouble left, in HeightRangeDouble right)
     {
         return !left.Equals(right);
     }
 
     /// <summary>
-    /// Gets an instance of the JSON value from a <see cref="JsonElement"/> value.
+    /// Gets an instance of the JSON value from a JsonAny value.
     /// </summary>
-    /// <param name="value">The <see cref="JsonElement"/> value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the <see cref="JsonElement"/>.</returns>
+    /// <param name = "value">The <see cref = "JsonAny"/> value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the <see cref = "JsonAny"/>.</returns>
     /// <remarks>The returned value will have a <see cref = "IJsonValue.ValueKind"/> of <see cref = "JsonValueKind.Undefined"/> if the
-    /// value cannot be constructed from the given instance (e.g. because they have an incompatible .NET backing type).
+    /// value cannot be constructed from the given instance (e.g. because they have an incompatible dotnet backing type.
     /// </remarks>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static HeightRangeDouble FromJson(in JsonElement value)
-    {
-        return new(value);
-    }
-
-    /// <summary>
-    /// Gets an instance of the JSON value from a <see cref="JsonAny"/> value.
-    /// </summary>
-    /// <param name="value">The <see cref="JsonAny"/> value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the <see cref="JsonAny"/> value.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static HeightRangeDouble FromAny(in JsonAny value)
     {
@@ -311,7 +286,8 @@ public readonly partial struct HeightRangeDouble
             return new(value.AsJsonElement);
         }
 
-        return value.ValueKind switch
+        JsonValueKind valueKind = value.ValueKind;
+        return valueKind switch
         {
             JsonValueKind.Number => new(value.AsNumber.AsBinaryJsonNumber),
             JsonValueKind.Null => Null,
@@ -319,13 +295,25 @@ public readonly partial struct HeightRangeDouble
         };
     }
 
+    /// <summary>
+    /// Gets an instance of the JSON value from a <see cref = "JsonElement"/> value.
+    /// </summary>
+    /// <param name = "value">The <see cref = "JsonElement"/> value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the <see cref = "JsonElement"/>.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static HeightRangeDouble FromJson(in JsonElement value)
+    {
+        return new(value);
+    }
+
 #if NET8_0_OR_GREATER
     /// <summary>
-    /// Gets an instance of the JSON value from the provided value.
+    /// Gets an instance of the JSON value from a boolean value.
     /// </summary>
-    /// <typeparam name="TValue">The type of the value.</typeparam>
+    /// <typeparam name = "TValue">The type of the value.</typeparam>
     /// <param name="value">The value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the provided value.</returns>
+    /// <returns>An instance of this type, initialized from the value.</returns>
+    /// <remarks>This will be HeightRangeDouble.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     static HeightRangeDouble IJsonValue<HeightRangeDouble>.FromBoolean<TValue>(in TValue value)
     {
@@ -337,14 +325,14 @@ public readonly partial struct HeightRangeDouble
         return Undefined;
     }
 #endif
-
 #if NET8_0_OR_GREATER
     /// <summary>
-    /// Gets an instance of the JSON value from the provided value.
+    /// Gets an instance of the JSON value from a string value.
     /// </summary>
     /// <typeparam name="TValue">The type of the value.</typeparam>
     /// <param name="value">The value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the provided value.</returns>
+    /// <returns>An instance of this type, initialized from the value.</returns>
+    /// <remarks>This will be HeightRangeDouble.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     static HeightRangeDouble IJsonValue<HeightRangeDouble>.FromString<TValue>(in TValue value)
     {
@@ -356,13 +344,13 @@ public readonly partial struct HeightRangeDouble
         return Undefined;
     }
 #endif
-
     /// <summary>
-    /// Gets an instance of the JSON value from the provided value.
+    /// Gets an instance of the JSON value from a number value.
     /// </summary>
-    /// <typeparam name="TValue">The type of the value.</typeparam>
-    /// <param name="value">The value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the provided value.</returns>
+    /// <typeparam name = "TValue">The type of the value.</typeparam>
+    /// <param name = "value">The value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the value.</returns>
+    /// <remarks>This will be HeightRangeDouble.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static HeightRangeDouble FromNumber<TValue>(in TValue value)
         where TValue : struct, IJsonNumber<TValue>
@@ -372,40 +360,22 @@ public readonly partial struct HeightRangeDouble
             return new(value.AsJsonElement);
         }
 
-        return value.ValueKind switch
+        if (value.ValueKind == JsonValueKind.Number)
         {
-            JsonValueKind.Number => new(value.AsNumber.AsBinaryJsonNumber),
-            JsonValueKind.Null => Null,
-            _ => Undefined,
-        };
-    }
-
-#if NET8_0_OR_GREATER
-    /// <summary>
-    /// Gets an instance of the JSON value from the provided value.
-    /// </summary>
-    /// <typeparam name="TValue">The type of the value.</typeparam>
-    /// <param name="value">The value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the provided value.</returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    static HeightRangeDouble IJsonValue<HeightRangeDouble>.FromObject<TValue>(in TValue value)
-    {
-        if (value.HasJsonElementBacking)
-        {
-            return new(value.AsJsonElement);
+            return new(value.AsBinaryJsonNumber);
         }
 
         return Undefined;
     }
-#endif
 
 #if NET8_0_OR_GREATER
     /// <summary>
-    /// Gets an instance of the JSON value from the provided value.
+    /// Gets an instance of the JSON value from an array value.
     /// </summary>
     /// <typeparam name="TValue">The type of the value.</typeparam>
     /// <param name="value">The value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the provided value.</returns>
+    /// <returns>An instance of this type, initialized from the value.</returns>
+    /// <remarks>This will be HeightRangeDouble.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     static HeightRangeDouble IJsonValue<HeightRangeDouble>.FromArray<TValue>(in TValue value)
     {
@@ -417,105 +387,131 @@ public readonly partial struct HeightRangeDouble
         return Undefined;
     }
 #endif
-
+#if NET8_0_OR_GREATER
     /// <summary>
-    /// Parses the HeightRangeDouble.
+    /// Gets an instance of the JSON value from an object value.
     /// </summary>
-    /// <param name="source">The source of the JSON string to parse.</param>
-    /// <param name="options">The (optional) JsonDocumentOptions.</param>
-    public static HeightRangeDouble Parse(string source, JsonDocumentOptions options = default)
+    /// <typeparam name="TValue">The type of the value.</typeparam>
+    /// <param name="value">The value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the value.</returns>
+    /// <remarks>This will be HeightRangeDouble.Undefined if the type is not compatible.</remarks>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    static HeightRangeDouble IJsonValue<HeightRangeDouble>.FromObject<TValue>(in TValue value)
     {
-        using var jsonDocument = JsonDocument.Parse(source, options);
-        return new(jsonDocument.RootElement.Clone());
+        if (value.HasJsonElementBacking)
+        {
+            return new(value.AsJsonElement);
+        }
+
+        return Undefined;
+    }
+#endif
+    /// <summary>
+    /// Parses a JSON string into a HeightRangeDouble.
+    /// </summary>
+    /// <param name = "json">The json string to parse.</param>
+    /// <param name = "options">The (optional) JsonDocumentOptions.</param>
+    /// <returns>A <see cref = "HeightRangeDouble"/> instance built from the JSON string.</returns>
+    public static HeightRangeDouble Parse(string json, JsonDocumentOptions options = default)
+    {
+        using var jsonDocument = JsonDocument.Parse(json, options);
+        return new HeightRangeDouble(jsonDocument.RootElement.Clone());
     }
 
     /// <summary>
-    /// Parses the HeightRangeDouble.
+    /// Parses a JSON string into a HeightRangeDouble.
     /// </summary>
-    /// <param name="source">The source of the JSON string to parse.</param>
-    /// <param name="options">The (optional) JsonDocumentOptions.</param>
-    public static HeightRangeDouble Parse(Stream source, JsonDocumentOptions options = default)
+    /// <param name = "utf8Json">The json string to parse.</param>
+    /// <param name = "options">The (optional) JsonDocumentOptions.</param>
+    /// <returns>A <see cref = "HeightRangeDouble"/> instance built from the JSON string.</returns>
+    public static HeightRangeDouble Parse(Stream utf8Json, JsonDocumentOptions options = default)
     {
-        using var jsonDocument = JsonDocument.Parse(source, options);
-        return new(jsonDocument.RootElement.Clone());
+        using var jsonDocument = JsonDocument.Parse(utf8Json, options);
+        return new HeightRangeDouble(jsonDocument.RootElement.Clone());
     }
 
     /// <summary>
-    /// Parses the HeightRangeDouble.
+    /// Parses a JSON string into a HeightRangeDouble.
     /// </summary>
-    /// <param name="source">The source of the JSON string to parse.</param>
-    /// <param name="options">The (optional) JsonDocumentOptions.</param>
-    public static HeightRangeDouble Parse(ReadOnlyMemory<byte> source, JsonDocumentOptions options = default)
+    /// <param name = "utf8Json">The json string to parse.</param>
+    /// <param name = "options">The (optional) JsonDocumentOptions.</param>
+    /// <returns>A <see cref = "HeightRangeDouble"/> instance built from the JSON string.</returns>
+    public static HeightRangeDouble Parse(ReadOnlyMemory<byte> utf8Json, JsonDocumentOptions options = default)
     {
-        using var jsonDocument = JsonDocument.Parse(source, options);
-        return new(jsonDocument.RootElement.Clone());
+        using var jsonDocument = JsonDocument.Parse(utf8Json, options);
+        return new HeightRangeDouble(jsonDocument.RootElement.Clone());
     }
 
     /// <summary>
-    /// Parses the HeightRangeDouble.
+    /// Parses a JSON string into a HeightRangeDouble.
     /// </summary>
-    /// <param name="source">The source of the JSON string to parse.</param>
-    /// <param name="options">The (optional) JsonDocumentOptions.</param>
-    public static HeightRangeDouble Parse(ReadOnlyMemory<char> source, JsonDocumentOptions options = default)
+    /// <param name = "json">The json string to parse.</param>
+    /// <param name = "options">The (optional) JsonDocumentOptions.</param>
+    /// <returns>A <see cref = "HeightRangeDouble"/> instance built from the JSON string.</returns>
+    public static HeightRangeDouble Parse(ReadOnlyMemory<char> json, JsonDocumentOptions options = default)
     {
-        using var jsonDocument = JsonDocument.Parse(source, options);
-        return new(jsonDocument.RootElement.Clone());
+        using var jsonDocument = JsonDocument.Parse(json, options);
+        return new HeightRangeDouble(jsonDocument.RootElement.Clone());
     }
 
     /// <summary>
-    /// Parses the HeightRangeDouble.
+    /// Parses a JSON string into a HeightRangeDouble.
     /// </summary>
-    /// <param name="source">The source of the JSON string to parse.</param>
-    /// <param name="options">The (optional) JsonDocumentOptions.</param>
-    public static HeightRangeDouble Parse(ReadOnlySequence<byte> source, JsonDocumentOptions options = default)
+    /// <param name = "utf8Json">The json string to parse.</param>
+    /// <param name = "options">The (optional) JsonDocumentOptions.</param>
+    /// <returns>A <see cref = "HeightRangeDouble"/> instance built from the JSON string.</returns>
+    public static HeightRangeDouble Parse(ReadOnlySequence<byte> utf8Json, JsonDocumentOptions options = default)
     {
-        using var jsonDocument = JsonDocument.Parse(source, options);
-        return new(jsonDocument.RootElement.Clone());
+        using var jsonDocument = JsonDocument.Parse(utf8Json, options);
+        return new HeightRangeDouble(jsonDocument.RootElement.Clone());
     }
 
     /// <summary>
-    /// Parses the HeightRangeDouble.
+    /// Parses a JSON value from a buffer.
     /// </summary>
-    /// <param name="source">The source of the JSON string to parse.</param>
-    public static HeightRangeDouble ParseValue(ReadOnlySpan<char> source)
+    /// <param name = "buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    static HeightRangeDouble ParseValue(ReadOnlySpan<char> buffer)
     {
 #if NET8_0_OR_GREATER
-        return IJsonValue<HeightRangeDouble>.ParseValue(source);
+        return IJsonValue<HeightRangeDouble>.ParseValue(buffer);
 #else
-        return JsonValueHelpers.ParseValue<HeightRangeDouble>(source);
+        return JsonValueHelpers.ParseValue<HeightRangeDouble>(buffer);
 #endif
     }
 
     /// <summary>
-    /// Parses the HeightRangeDouble.
+    /// Parses a JSON value from a buffer.
     /// </summary>
-    /// <param name="source">The source of the JSON string to parse.</param>
-    public static HeightRangeDouble ParseValue(ReadOnlySpan<byte> source)
+    /// <param name = "buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    static HeightRangeDouble ParseValue(ReadOnlySpan<byte> buffer)
     {
 #if NET8_0_OR_GREATER
-        return IJsonValue<HeightRangeDouble>.ParseValue(source);
+        return IJsonValue<HeightRangeDouble>.ParseValue(buffer);
 #else
-        return JsonValueHelpers.ParseValue<HeightRangeDouble>(source);
+        return JsonValueHelpers.ParseValue<HeightRangeDouble>(buffer);
 #endif
     }
 
     /// <summary>
-    /// Parses the HeightRangeDouble.
+    /// Parses a JSON value from a buffer.
     /// </summary>
-    /// <param name="source">The source of the JSON string to parse.</param>
-    public static HeightRangeDouble ParseValue(ref Utf8JsonReader source)
+    /// <param name = "reader">The reader from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    static HeightRangeDouble ParseValue(ref Utf8JsonReader reader)
     {
 #if NET8_0_OR_GREATER
-        return IJsonValue<HeightRangeDouble>.ParseValue(ref source);
+        return IJsonValue<HeightRangeDouble>.ParseValue(ref reader);
 #else
-        return JsonValueHelpers.ParseValue<HeightRangeDouble>(ref source);
+        return JsonValueHelpers.ParseValue<HeightRangeDouble>(ref reader);
 #endif
     }
 
     /// <summary>
     /// Gets the value as an instance of the target value.
     /// </summary>
-    /// <typeparam name="TTarget">The type of the target.</typeparam>
+    /// <typeparam name = "TTarget">The type of the target.</typeparam>
     /// <returns>An instance of the target type.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public TTarget As<TTarget>()
@@ -546,9 +542,7 @@ public readonly partial struct HeightRangeDouble
     /// <inheritdoc/>
     public override bool Equals(object? obj)
     {
-        return
-            (obj is IJsonValue jv && this.Equals(jv.AsAny)) ||
-            (obj is null && this.IsNull());
+        return (obj is IJsonValue jv && this.Equals(jv.AsAny)) || (obj is null && this.IsNull());
     }
 
     /// <inheritdoc/>
@@ -561,7 +555,7 @@ public readonly partial struct HeightRangeDouble
     /// <summary>
     /// Equality comparison.
     /// </summary>
-    /// <param name="other">The other item with which to compare.</param>
+    /// <param name = "other">The other item with which to compare.</param>
     /// <returns><see langword="true"/> if the values were equal.</returns>
     public bool Equals(in HeightRangeDouble other)
     {
@@ -584,14 +578,12 @@ public readonly partial struct HeightRangeDouble
         if ((this.backing & Backing.Number) != 0)
         {
             this.numberBacking.WriteTo(writer);
-
             return;
         }
 
         if ((this.backing & Backing.Null) != 0)
         {
             writer.WriteNullValue();
-
             return;
         }
     }

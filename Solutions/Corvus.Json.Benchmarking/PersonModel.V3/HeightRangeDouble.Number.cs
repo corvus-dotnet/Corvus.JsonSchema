@@ -6,75 +6,71 @@
 //     the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
-
 #nullable enable
-
-using System.Diagnostics.CodeAnalysis;
-#if NET8_0_OR_GREATER
+using System.Collections.Immutable;
 using System.Numerics;
-#endif
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
 using Corvus.Json.Internal;
 
 namespace Corvus.Json.Benchmarking.Models.V3;
-
 /// <summary>
-/// Generated from JSON Schema.
+/// A numeric representation of a person's height in meters.
 /// </summary>
-public readonly partial struct HeightRangeDouble
+public readonly partial struct HeightRangeDouble 
 #if NET8_0_OR_GREATER
-    : IJsonNumber<Corvus.Json.Benchmarking.Models.V3.HeightRangeDouble>,
-      IAdditionOperators<Corvus.Json.Benchmarking.Models.V3.HeightRangeDouble, Corvus.Json.Benchmarking.Models.V3.HeightRangeDouble, Corvus.Json.Benchmarking.Models.V3.HeightRangeDouble>,
-      ISubtractionOperators<Corvus.Json.Benchmarking.Models.V3.HeightRangeDouble, Corvus.Json.Benchmarking.Models.V3.HeightRangeDouble, Corvus.Json.Benchmarking.Models.V3.HeightRangeDouble>,
-      IMultiplyOperators<Corvus.Json.Benchmarking.Models.V3.HeightRangeDouble, Corvus.Json.Benchmarking.Models.V3.HeightRangeDouble, Corvus.Json.Benchmarking.Models.V3.HeightRangeDouble>,
-      IDivisionOperators<Corvus.Json.Benchmarking.Models.V3.HeightRangeDouble, Corvus.Json.Benchmarking.Models.V3.HeightRangeDouble, Corvus.Json.Benchmarking.Models.V3.HeightRangeDouble>,
-      IIncrementOperators<Corvus.Json.Benchmarking.Models.V3.HeightRangeDouble>,
-      IDecrementOperators<Corvus.Json.Benchmarking.Models.V3.HeightRangeDouble>
+: IJsonNumber<HeightRangeDouble>,
+  IAdditionOperators<HeightRangeDouble, HeightRangeDouble, HeightRangeDouble>,
+  ISubtractionOperators<HeightRangeDouble, HeightRangeDouble, HeightRangeDouble>,
+  IMultiplyOperators<HeightRangeDouble, HeightRangeDouble, HeightRangeDouble>,
+  IDivisionOperators<HeightRangeDouble, HeightRangeDouble, HeightRangeDouble>,
+  IIncrementOperators<HeightRangeDouble>,
+  IDecrementOperators<HeightRangeDouble>
 #else
-    : IJsonNumber<Corvus.Json.Benchmarking.Models.V3.HeightRangeDouble>
+: IJsonNumber<HeightRangeDouble>
 #endif
 {
     /// <summary>
     /// Initializes a new instance of the <see cref = "HeightRangeDouble"/> struct.
     /// </summary>
-    /// <param name="value">The value from which to construct the instance.</param>
-    public HeightRangeDouble(double value)
-        : this(new BinaryJsonNumber(value))
+    /// <param name = "value">The value from which to construct the instance.</param>
+    public HeightRangeDouble(in BinaryJsonNumber value)
+    {
+        this.jsonElementBacking = default;
+        this.backing = Backing.Number;
+        this.numberBacking = value;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref = "HeightRangeDouble"/> struct.
+    /// </summary>
+    /// <param name = "value">The value from which to initialize the number.</param>
+    public HeightRangeDouble(double value) : this(new BinaryJsonNumber(value))
     {
     }
 
     /// <summary>
     /// Conversion from JsonNumber.
     /// </summary>
-    /// <param name="value">The value from which to convert.</param>
+    /// <param name = "value">The value from which to convert.</param>
     public static implicit operator HeightRangeDouble(JsonNumber value)
     {
         if (value.HasDotnetBacking && value.ValueKind == JsonValueKind.Number)
         {
-            return new(
-                value.AsBinaryJsonNumber);
+            return new(value.AsBinaryJsonNumber);
         }
 
         return new(value.AsJsonElement);
     }
 
     /// <summary>
-    /// Conversion to JsonNumber.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator JsonNumber(HeightRangeDouble value)
-    {
-        return
-            value.AsNumber;
-    }
-
-    /// <summary>
     /// Conversion to byte.
     /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    /// <returns>An instance of the byte.</returns>
-    public static explicit operator byte(HeightRangeDouble value)
+    /// <param name = "value">The value to convert.</param>
+    /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
+    /// <exception cref = "FormatException">The value was not formatted as a byte.</exception>
+    public static explicit operator byte (HeightRangeDouble value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
@@ -90,21 +86,12 @@ public readonly partial struct HeightRangeDouble
     }
 
     /// <summary>
-    /// Conversion from byte.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    /// <returns>An instance of the <see cref="HeightRangeDouble"/>.</returns>
-    public static explicit operator HeightRangeDouble(byte value)
-    {
-        return new(new BinaryJsonNumber(value));
-    }
-
-    /// <summary>
     /// Conversion to decimal.
     /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    /// <returns>An instance of the decimal.</returns>
-    public static explicit operator decimal(HeightRangeDouble value)
+    /// <param name = "value">The value to convert.</param>
+    /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
+    /// <exception cref = "FormatException">The value was not formatted as a decimal.</exception>
+    public static explicit operator decimal (HeightRangeDouble value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
@@ -120,21 +107,12 @@ public readonly partial struct HeightRangeDouble
     }
 
     /// <summary>
-    /// Conversion from decimal.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    /// <returns>An instance of the <see cref="HeightRangeDouble"/>.</returns>
-    public static explicit operator HeightRangeDouble(decimal value)
-    {
-        return new(new BinaryJsonNumber(value));
-    }
-
-    /// <summary>
     /// Conversion to double.
     /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    /// <returns>An instance of the double.</returns>
-    public static implicit operator double(HeightRangeDouble value)
+    /// <param name = "value">The value to convert.</param>
+    /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
+    /// <exception cref = "FormatException">The value was not formatted as a double.</exception>
+    public static explicit operator double (HeightRangeDouble value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
@@ -150,21 +128,12 @@ public readonly partial struct HeightRangeDouble
     }
 
     /// <summary>
-    /// Conversion from double.
+    /// Conversion to Int16.
     /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    /// <returns>An instance of the <see cref="HeightRangeDouble"/>.</returns>
-    public static implicit operator HeightRangeDouble(double value)
-    {
-        return new(new BinaryJsonNumber(value));
-    }
-
-    /// <summary>
-    /// Conversion to short.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    /// <returns>An instance of the short.</returns>
-    public static explicit operator short(HeightRangeDouble value)
+    /// <param name = "value">The value to convert.</param>
+    /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
+    /// <exception cref = "FormatException">The value was not formatted as an Int16.</exception>
+    public static explicit operator short (HeightRangeDouble value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
@@ -180,21 +149,12 @@ public readonly partial struct HeightRangeDouble
     }
 
     /// <summary>
-    /// Conversion from short.
+    /// Conversion to Int32.
     /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    /// <returns>An instance of the <see cref="HeightRangeDouble"/>.</returns>
-    public static explicit operator HeightRangeDouble(short value)
-    {
-        return new(new BinaryJsonNumber(value));
-    }
-
-    /// <summary>
-    /// Conversion to int.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    /// <returns>An instance of the int.</returns>
-    public static explicit operator int(HeightRangeDouble value)
+    /// <param name = "value">The value to convert.</param>
+    /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
+    /// <exception cref = "FormatException">The value was not formatted as an Int32.</exception>
+    public static explicit operator int (HeightRangeDouble value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
@@ -210,21 +170,12 @@ public readonly partial struct HeightRangeDouble
     }
 
     /// <summary>
-    /// Conversion from int.
+    /// Conversion to Int64.
     /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    /// <returns>An instance of the <see cref="HeightRangeDouble"/>.</returns>
-    public static explicit operator HeightRangeDouble(int value)
-    {
-        return new(new BinaryJsonNumber(value));
-    }
-
-    /// <summary>
-    /// Conversion to long.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    /// <returns>An instance of the long.</returns>
-    public static explicit operator long(HeightRangeDouble value)
+    /// <param name = "value">The value to convert.</param>
+    /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
+    /// <exception cref = "FormatException">The value was not formatted as an Int64.</exception>
+    public static explicit operator long (HeightRangeDouble value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
@@ -239,22 +190,13 @@ public readonly partial struct HeightRangeDouble
         throw new InvalidOperationException();
     }
 
-    /// <summary>
-    /// Conversion from long.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    /// <returns>An instance of the <see cref="HeightRangeDouble"/>.</returns>
-    public static explicit operator HeightRangeDouble(long value)
-    {
-        return new(new BinaryJsonNumber(value));
-    }
-
 #if NET8_0_OR_GREATER
     /// <summary>
     /// Conversion to Int128.
     /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    /// <returns>An instance of the Int128.</returns>
+    /// <param name="value">The value to convert.</param>
+    /// <exception cref="InvalidOperationException">The value was not a number.</exception>
+    /// <exception cref="FormatException">The value was not formatted as an Int64.</exception>
     public static explicit operator Int128(HeightRangeDouble value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
@@ -269,24 +211,14 @@ public readonly partial struct HeightRangeDouble
 
         throw new InvalidOperationException();
     }
-
-    /// <summary>
-    /// Conversion from Int128.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    /// <returns>An instance of the <see cref="HeightRangeDouble"/>.</returns>
-    public static explicit operator HeightRangeDouble(Int128 value)
-    {
-        return new(new BinaryJsonNumber(value));
-    }
 #endif
-
     /// <summary>
-    /// Conversion to sbyte.
+    /// Conversion to SByte.
     /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    /// <returns>An instance of the sbyte.</returns>
-    public static explicit operator sbyte(HeightRangeDouble value)
+    /// <param name = "value">The value to convert.</param>
+    /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
+    /// <exception cref = "FormatException">The value was not formatted as an SByte.</exception>
+    public static explicit operator sbyte (HeightRangeDouble value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
@@ -301,22 +233,13 @@ public readonly partial struct HeightRangeDouble
         throw new InvalidOperationException();
     }
 
-    /// <summary>
-    /// Conversion from sbyte.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    /// <returns>An instance of the <see cref="HeightRangeDouble"/>.</returns>
-    public static explicit operator HeightRangeDouble(sbyte value)
-    {
-        return new(new BinaryJsonNumber(value));
-    }
-
 #if NET8_0_OR_GREATER
     /// <summary>
     /// Conversion to Half.
     /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    /// <returns>An instance of the Half.</returns>
+    /// <param name="value">The value to convert.</param>
+    /// <exception cref="InvalidOperationException">The value was not a number.</exception>
+    /// <exception cref="FormatException">The value was not formatted as a Single.</exception>
     public static explicit operator Half(HeightRangeDouble value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
@@ -331,24 +254,14 @@ public readonly partial struct HeightRangeDouble
 
         throw new InvalidOperationException();
     }
-
-    /// <summary>
-    /// Conversion from Half.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    /// <returns>An instance of the <see cref="HeightRangeDouble"/>.</returns>
-    public static explicit operator HeightRangeDouble(Half value)
-    {
-        return new(new BinaryJsonNumber(value));
-    }
 #endif
-
     /// <summary>
-    /// Conversion to float.
+    /// Conversion to Single.
     /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    /// <returns>An instance of the float.</returns>
-    public static explicit operator float(HeightRangeDouble value)
+    /// <param name = "value">The value to convert.</param>
+    /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
+    /// <exception cref = "FormatException">The value was not formatted as a Single.</exception>
+    public static explicit operator float (HeightRangeDouble value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
@@ -364,21 +277,12 @@ public readonly partial struct HeightRangeDouble
     }
 
     /// <summary>
-    /// Conversion from float.
+    /// Conversion to UInt16.
     /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    /// <returns>An instance of the <see cref="HeightRangeDouble"/>.</returns>
-    public static explicit operator HeightRangeDouble(float value)
-    {
-        return new(new BinaryJsonNumber(value));
-    }
-
-    /// <summary>
-    /// Conversion to ushort.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    /// <returns>An instance of the ushort.</returns>
-    public static explicit operator ushort(HeightRangeDouble value)
+    /// <param name = "value">The value to convert.</param>
+    /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
+    /// <exception cref = "FormatException">The value was not formatted as an UInt16.</exception>
+    public static explicit operator ushort (HeightRangeDouble value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
@@ -394,21 +298,12 @@ public readonly partial struct HeightRangeDouble
     }
 
     /// <summary>
-    /// Conversion from ushort.
+    /// Conversion to UInt32.
     /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    /// <returns>An instance of the <see cref="HeightRangeDouble"/>.</returns>
-    public static explicit operator HeightRangeDouble(ushort value)
-    {
-        return new(new BinaryJsonNumber(value));
-    }
-
-    /// <summary>
-    /// Conversion to uint.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    /// <returns>An instance of the uint.</returns>
-    public static explicit operator uint(HeightRangeDouble value)
+    /// <param name = "value">The value to convert.</param>
+    /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
+    /// <exception cref = "FormatException">The value was not formatted as an UInt32.</exception>
+    public static explicit operator uint (HeightRangeDouble value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
@@ -424,21 +319,12 @@ public readonly partial struct HeightRangeDouble
     }
 
     /// <summary>
-    /// Conversion from uint.
+    /// Conversion to UInt64.
     /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    /// <returns>An instance of the <see cref="HeightRangeDouble"/>.</returns>
-    public static explicit operator HeightRangeDouble(uint value)
-    {
-        return new(new BinaryJsonNumber(value));
-    }
-
-    /// <summary>
-    /// Conversion to ulong.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    /// <returns>An instance of the ulong.</returns>
-    public static explicit operator ulong(HeightRangeDouble value)
+    /// <param name = "value">The value to convert.</param>
+    /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
+    /// <exception cref = "FormatException">The value was not formatted as an UInt64.</exception>
+    public static explicit operator ulong (HeightRangeDouble value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
@@ -453,22 +339,13 @@ public readonly partial struct HeightRangeDouble
         throw new InvalidOperationException();
     }
 
-    /// <summary>
-    /// Conversion from ulong.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    /// <returns>An instance of the <see cref="HeightRangeDouble"/>.</returns>
-    public static explicit operator HeightRangeDouble(ulong value)
-    {
-        return new(new BinaryJsonNumber(value));
-    }
-
 #if NET8_0_OR_GREATER
     /// <summary>
     /// Conversion to UInt128.
     /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    /// <returns>An instance of the UInt128.</returns>
+    /// <param name="value">The value to convert.</param>
+    /// <exception cref="InvalidOperationException">The value was not a number.</exception>
+    /// <exception cref="FormatException">The value was not formatted as an UInt64.</exception>
     public static explicit operator UInt128(HeightRangeDouble value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
@@ -483,40 +360,164 @@ public readonly partial struct HeightRangeDouble
 
         throw new InvalidOperationException();
     }
+#endif
+    /// <summary>
+    /// Conversion from decimal.
+    /// </summary>
+    /// <param name = "value">The value to convert.</param>
+    public static explicit operator HeightRangeDouble(decimal value)
+    {
+        return new(new BinaryJsonNumber(value));
+    }
+
+    /// <summary>
+    /// Conversion from double.
+    /// </summary>
+    /// <param name = "value">The value to convert.</param>
+    public static explicit operator HeightRangeDouble(double value)
+    {
+        return new(new BinaryJsonNumber(value));
+    }
+
+#if NET8_0_OR_GREATER
+    /// <summary>
+    /// Conversion from Half.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    public static explicit operator HeightRangeDouble(Half value)
+    {
+        return new(new BinaryJsonNumber(value));
+    }
+#endif
+    /// <summary>
+    /// Conversion from float.
+    /// </summary>
+    /// <param name = "value">The value to convert.</param>
+    public static explicit operator HeightRangeDouble(float value)
+    {
+        return new(new BinaryJsonNumber(value));
+    }
+
+    /// <summary>
+    /// Conversion from byte.
+    /// </summary>
+    /// <param name = "value">The value to convert.</param>
+    public static explicit operator HeightRangeDouble(byte value)
+    {
+        return new(new BinaryJsonNumber(value));
+    }
+
+    /// <summary>
+    /// Conversion from short.
+    /// </summary>
+    /// <param name = "value">The value to convert.</param>
+    public static explicit operator HeightRangeDouble(short value)
+    {
+        return new(new BinaryJsonNumber(value));
+    }
+
+    /// <summary>
+    /// Conversion from int.
+    /// </summary>
+    /// <param name = "value">The value to convert.</param>
+    public static explicit operator HeightRangeDouble(int value)
+    {
+        return new(new BinaryJsonNumber(value));
+    }
+
+    /// <summary>
+    /// Conversion from long.
+    /// </summary>
+    /// <param name = "value">The value to convert.</param>
+    public static explicit operator HeightRangeDouble(long value)
+    {
+        return new(new BinaryJsonNumber(value));
+    }
+
+    /// <summary>
+    /// Conversion from sbyte.
+    /// </summary>
+    /// <param name = "value">The value to convert.</param>
+    public static explicit operator HeightRangeDouble(sbyte value)
+    {
+        return new(new BinaryJsonNumber(value));
+    }
+
+    /// <summary>
+    /// Conversion from ushort.
+    /// </summary>
+    /// <param name = "value">The value to convert.</param>
+    public static explicit operator HeightRangeDouble(ushort value)
+    {
+        return new(new BinaryJsonNumber(value));
+    }
+
+    /// <summary>
+    /// Conversion from uint.
+    /// </summary>
+    /// <param name = "value">The value to convert.</param>
+    public static explicit operator HeightRangeDouble(uint value)
+    {
+        return new(new BinaryJsonNumber(value));
+    }
+
+    /// <summary>
+    /// Conversion from ulong.
+    /// </summary>
+    /// <param name = "value">The value to convert.</param>
+    public static explicit operator HeightRangeDouble(ulong value)
+    {
+        return new(new BinaryJsonNumber(value));
+    }
+
+#if NET8_0_OR_GREATER
+    /// <summary>
+    /// Conversion from Int128.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    public static explicit operator HeightRangeDouble(Int128 value)
+    {
+        return new(new BinaryJsonNumber(value));
+    }
 
     /// <summary>
     /// Conversion from UInt128.
     /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    /// <returns>An instance of the <see cref="HeightRangeDouble"/>.</returns>
+    /// <param name="value">The value to convert.</param>
     public static explicit operator HeightRangeDouble(UInt128 value)
     {
         return new(new BinaryJsonNumber(value));
     }
 #endif
-
     /// <summary>
     /// Less than operator.
     /// </summary>
-    /// <param name="left">The LHS of the comparison.</param>
-    /// <param name="right">The RHS of the comparison.</param>
-    /// <returns>
-    /// <see langword="true"/> if the left is less than the right, otherwise <see langword="false"/>.
-    /// </returns>
-    public static bool operator <(HeightRangeDouble left, HeightRangeDouble right)
+    /// <param name = "left">The LHS of the comparison.</param>
+    /// <param name = "right">The RHS of the comparison.</param>
+    /// <returns><see langword="true"/> if the left is less than the right, otherwise <see langword="false"/>.</returns>
+    public static bool operator <(in HeightRangeDouble left, in HeightRangeDouble right)
     {
         return left.IsNotNullOrUndefined() && right.IsNotNullOrUndefined() && Compare(left, right) < 0;
     }
 
     /// <summary>
-    /// Less than or equals operator.
+    /// Greater than operator.
     /// </summary>
-    /// <param name="left">The LHS of the comparison.</param>
-    /// <param name="right">The RHS of the comparison.</param>
-    /// <returns>
-    /// <see langword="true"/> if the left is less than or equal to the right, otherwise <see langword="false"/>.
-    /// </returns>
-    public static bool operator <=(HeightRangeDouble left, HeightRangeDouble right)
+    /// <param name = "left">The LHS of the comparison.</param>
+    /// <param name = "right">The RHS of the comparison.</param>
+    /// <returns><see langword="true"/> if the left is greater than the right, otherwise <see langword="false"/>.</returns>
+    public static bool operator>(in HeightRangeDouble left, in HeightRangeDouble right)
+    {
+        return left.IsNotNullOrUndefined() && right.IsNotNullOrUndefined() && Compare(left, right) > 0;
+    }
+
+    /// <summary>
+    /// Less than operator.
+    /// </summary>
+    /// <param name = "left">The LHS of the comparison.</param>
+    /// <param name = "right">The RHS of the comparison.</param>
+    /// <returns><see langword="true"/> if the left is less than the right, otherwise <see langword="false"/>.</returns>
+    public static bool operator <=(in HeightRangeDouble left, in HeightRangeDouble right)
     {
         return left.IsNotNullOrUndefined() && right.IsNotNullOrUndefined() && Compare(left, right) <= 0;
     }
@@ -524,102 +525,86 @@ public readonly partial struct HeightRangeDouble
     /// <summary>
     /// Greater than operator.
     /// </summary>
-    /// <param name="left">The LHS of the comparison.</param>
-    /// <param name="right">The RHS of the comparison.</param>
-    /// <returns>
-    /// <see langword="true"/> if the left is greater than the right, otherwise <see langword="false"/>.
-    /// </returns>
-    public static bool operator >(HeightRangeDouble left, HeightRangeDouble right)
-    {
-        return left.IsNotNullOrUndefined() && right.IsNotNullOrUndefined() && Compare(left, right) > 0;
-    }
-
-    /// <summary>
-    /// Greater than or equals operator.
-    /// </summary>
-    /// <param name="left">The LHS of the comparison.</param>
-    /// <param name="right">The RHS of the comparison.</param>
-    /// <returns>
-    /// <see langword="true"/> if the left is greater than or equal to the right, otherwise <see langword="false"/>.
-    /// </returns>
-    public static bool operator >=(HeightRangeDouble left, HeightRangeDouble right)
+    /// <param name = "left">The LHS of the comparison.</param>
+    /// <param name = "right">The RHS of the comparison.</param>
+    /// <returns><see langword="true"/> if the left is greater than the right, otherwise <see langword="false"/>.</returns>
+    public static bool operator >=(in HeightRangeDouble left, in HeightRangeDouble right)
     {
         return left.IsNotNullOrUndefined() && right.IsNotNullOrUndefined() && Compare(left, right) >= 0;
     }
 
     /// <summary>
-    /// Adds two numbers to produce their sum.
+    /// Adds two values together to compute their sum.
     /// </summary>
-    /// <param name="left">The left hand side of the binary operator.</param>
-    /// <param name="right">The right hand side of the binary operator.</param>
-    /// <returns>The result of the operation.</returns>
+    /// <param name = "left">The left hand side.</param>
+    /// <param name = "right">The right hand side.</param>
+    /// <returns>The resulting value.</returns>
     public static HeightRangeDouble operator +(HeightRangeDouble left, HeightRangeDouble right)
     {
         return new(left.AsBinaryJsonNumber + right.AsBinaryJsonNumber);
     }
 
     /// <summary>
-    /// Subtracts two numbers to produce their difference.
+    /// Subtracts two values together to compute their difference.
     /// </summary>
-    /// <param name="left">The left hand side of the binary operator.</param>
-    /// <param name="right">The right hand side of the binary operator.</param>
-    /// <returns>The result of the operation.</returns>
+    /// <param name = "left">The left hand side.</param>
+    /// <param name = "right">The right hand side.</param>
+    /// <returns>The resulting value.</returns>
     public static HeightRangeDouble operator -(HeightRangeDouble left, HeightRangeDouble right)
     {
         return new(left.AsBinaryJsonNumber - right.AsBinaryJsonNumber);
     }
 
     /// <summary>
-    /// Multiplies two numbers.
+    /// Multiplies two values together.
     /// </summary>
-    /// <param name="left">The left hand side of the binary operator.</param>
-    /// <param name="right">The right hand side of the binary operator.</param>
-    /// <returns>The result of the operation.</returns>
+    /// <param name = "left">The left hand side.</param>
+    /// <param name = "right">The right hand side.</param>
+    /// <returns>The resulting value.</returns>
     public static HeightRangeDouble operator *(HeightRangeDouble left, HeightRangeDouble right)
     {
         return new(left.AsBinaryJsonNumber * right.AsBinaryJsonNumber);
     }
 
     /// <summary>
-    /// Divides two numbers.
+    /// Divides two values.
     /// </summary>
-    /// <param name="left">The left hand side of the binary operator.</param>
-    /// <param name="right">The right hand side of the binary operator.</param>
-    /// <returns>The result of the operation.</returns>
+    /// <param name = "left">The left hand side.</param>
+    /// <param name = "right">The right hand side.</param>
+    /// <returns>The resulting value.</returns>
     public static HeightRangeDouble operator /(HeightRangeDouble left, HeightRangeDouble right)
     {
         return new(left.AsBinaryJsonNumber / right.AsBinaryJsonNumber);
     }
 
     /// <summary>
-    /// Increments the number.
+    /// Increments the value.
     /// </summary>
-    /// <param name="value">The value on which to operate.</param>
-    /// <returns>The result of the operation.</returns>
+    /// <param name = "value">The value.</param>
+    /// <returns>The resulting value.</returns>
     public static HeightRangeDouble operator ++(HeightRangeDouble value)
     {
-        BinaryJsonNumber num = value.AsBinaryJsonNumber;        return new(num++);
+        BinaryJsonNumber num = value.AsBinaryJsonNumber;
+        return new(num++);
     }
 
     /// <summary>
-    /// Decrements the number.
+    /// Decrements the value.
     /// </summary>
-    /// <param name="value">The value on which to operate.</param>
-    /// <returns>The result of the operation.</returns>
+    /// <param name = "value">The value.</param>
+    /// <returns>The resulting value.</returns>
     public static HeightRangeDouble operator --(HeightRangeDouble value)
     {
-        BinaryJsonNumber num = value.AsBinaryJsonNumber;        return new(num--);
+        BinaryJsonNumber num = value.AsBinaryJsonNumber;
+        return new(num--);
     }
 
     /// <summary>
-    /// Compare two numbers.
+    /// Compare with another number.
     /// </summary>
-    /// <param name="lhs">The left hand side of the comparison.</param>
-    /// <param name="rhs">The right hand side of the comparison.</param>
-    /// <returns>
-    /// 0 if the numbers are equal, -1 if <paramref name="lhs"/> is less than <paramref name="rhs"/>,
-    /// and 1 if <paramref name="lhs"/> is greater than <paramref name="rhs"/>.
-    /// </returns>
+    /// <param name = "lhs">The lhs of the comparison.</param>
+    /// <param name = "rhs">The rhs of the comparison.</param>
+    /// <returns>0 if the numbers are equal, -1 if the lhs is less than the rhs, and 1 if the lhs is greater than the rhs.</returns>
     public static int Compare(in HeightRangeDouble lhs, in HeightRangeDouble rhs)
     {
         if (lhs.ValueKind != rhs.ValueKind)
@@ -634,6 +619,13 @@ public readonly partial struct HeightRangeDouble
             return 0;
         }
 
+        if (lhs.backing == Backing.Number && rhs.backing == Backing.Number)
+        {
+            return BinaryJsonNumber.Compare(lhs.numberBacking, rhs.numberBacking);
+        }
+
+        // After this point there is no need to check both value kinds because our first quick test verified that they were the same.
+        // If either one is a Backing.Number or a JsonValueKind.Number then we know the rhs is compatible.
         if (lhs.backing == Backing.Number && rhs.backing == Backing.Number)
         {
             return BinaryJsonNumber.Compare(lhs.numberBacking, rhs.numberBacking);
@@ -657,69 +649,6 @@ public readonly partial struct HeightRangeDouble
         throw new InvalidOperationException();
     }
 
-    /// <summary>
-    /// Gets the value as a <see cref="BinaryJsonNumber"/>.
-    /// </summary>
-    public BinaryJsonNumber AsBinaryJsonNumber
-    {
-        get
-        {
-            if ((this.backing & Backing.Number) != 0)
-            {
-                return this.numberBacking;
-            }
-
-            if ((this.backing & Backing.JsonElement) != 0)
-            {
-                return BinaryJsonNumber.FromJson(this.jsonElementBacking);
-            }
-
-            throw new InvalidOperationException();
-        }
-    }
-
-    /// <summary>
-    /// Gets the value as a double.
-    /// </summary>
-    public double AsDouble() => (double)this;
-
-    /// <summary>
-    /// Equality comparison.
-    /// </summary>
-    /// <param name="other">The <c>double</c> with which to compare.</param>
-    /// <returns><see langword="true"/> if the values were equal.</returns>
-    public bool Equals(double other)
-    {
-        if ((this.backing & Backing.JsonElement) != 0)
-        {
-            return this.jsonElementBacking.ValueKind == JsonValueKind.Number && BinaryJsonNumber.Equals(this.jsonElementBacking, new BinaryJsonNumber(other));
-        }
-
-        if ((this.backing & Backing.Number) != 0)
-        {
-            return BinaryJsonNumber.Equals(new BinaryJsonNumber(other), this.numberBacking);
-        }
-
-        return false;
-    }
-
-    /// <summary>
-    /// Equality comparison.
-    /// </summary>
-    /// <param name="other">The <see cref="BinaryJsonNumber"/> with which to compare.</param>
-    /// <returns><see langword="true"/> if the values were equal.</returns>
-    public bool Equals(in BinaryJsonNumber other)
-    {
-        if ((this.backing & Backing.JsonElement) != 0)
-        {
-            return this.jsonElementBacking.ValueKind == JsonValueKind.Number && other.Equals(this.jsonElementBacking);
-        }
-
-        if ((this.backing & Backing.Number) != 0)
-        {
-            return BinaryJsonNumber.Equals(other, this.numberBacking);
-        }
-
-        return false;
-    }
+    /// <inheritdoc/>
+    public BinaryJsonNumber AsBinaryJsonNumber => this.HasDotnetBacking ? this.numberBacking : BinaryJsonNumber.FromJson(this.jsonElementBacking);
 }

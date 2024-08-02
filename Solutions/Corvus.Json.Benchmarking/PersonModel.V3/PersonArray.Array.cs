@@ -6,12 +6,8 @@
 //     the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
-
 #nullable enable
-
-#if NET8_0_OR_GREATER
 using System.Buffers;
-#endif
 using System.Collections;
 using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
@@ -20,35 +16,51 @@ using Corvus.Json;
 using Corvus.Json.Internal;
 
 namespace Corvus.Json.Benchmarking.Models.V3;
-
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
+
 #if NET8_0_OR_GREATER
 [CollectionBuilder(typeof(PersonArray), "Create")]
+public readonly partial struct PersonArray : IJsonArray<PersonArray>, IReadOnlyCollection<Corvus.Json.Benchmarking.Models.V3.Person>
+#else
+public readonly partial struct PersonArray : IJsonArray<PersonArray>, IReadOnlyCollection<Corvus.Json.Benchmarking.Models.V3.Person>
 #endif
-public readonly partial struct PersonArray
-    : IJsonArray<Corvus.Json.Benchmarking.Models.V3.PersonArray>,
-      IReadOnlyCollection<Corvus.Json.Benchmarking.Models.V3.Person>
 {
     /// <summary>
     /// Gets an empty array.
     /// </summary>
-    public static PersonArray EmptyArray { get; } = From(ImmutableList<JsonAny>.Empty);
+    public static readonly PersonArray EmptyArray = From(ImmutableList<JsonAny>.Empty);
+    /// <summary>
+    /// Initializes a new instance of the <see cref = "PersonArray"/> struct.
+    /// </summary>
+    /// <param name = "value">The value from which to construct the instance.</param>
+    public PersonArray(ImmutableList<JsonAny> value)
+    {
+        this.jsonElementBacking = default;
+        this.backing = Backing.Array;
+        this.arrayBacking = value;
+    }
 
     /// <summary>
-    /// Gets the rank of the array.
+    /// Initializes a new instance of the <see cref = "PersonArray"/> struct.
     /// </summary>
-    public static int Rank => 1;
+    /// <param name = "value">The value from which to construct the instance.</param>
+    public PersonArray(IEnumerable<JsonAny> value)
+    {
+        this.jsonElementBacking = default;
+        this.backing = Backing.Array;
+        this.arrayBacking = value.ToImmutableList();
+    }
 
     /// <inheritdoc/>
-    Corvus.Json.JsonAny IJsonArray<PersonArray>.this[int index]
+    JsonAny IJsonArray<PersonArray>.this[int index]
     {
         get
         {
             if ((this.backing & Backing.JsonElement) != 0)
             {
-                return new(this.jsonElementBacking);
+                return new JsonAny(this.jsonElementBacking[index]);
             }
 
             if ((this.backing & Backing.Array) != 0)
@@ -70,17 +82,17 @@ public readonly partial struct PersonArray
     /// <summary>
     /// Gets the item at the given index.
     /// </summary>
-    /// <param name="index">The index at which to retrieve the item.</param>
+    /// <param name = "index">The index at which to retrieve the item.</param>
     /// <returns>The item at the given index.</returns>
-    /// <exception cref="IndexOutOfRangeException">The index was outside the bounds of the array.</exception>
-    /// <exception cref="InvalidOperationException">The value is not an array.</exception>
+    /// <exception cref = "IndexOutOfRangeException">The index was outside the bounds of the array.</exception>
+    /// <exception cref = "InvalidOperationException">The value is not an array.</exception>
     public Corvus.Json.Benchmarking.Models.V3.Person this[int index]
     {
         get
         {
             if ((this.backing & Backing.JsonElement) != 0)
             {
-                return new(this.jsonElementBacking);
+                return new Corvus.Json.Benchmarking.Models.V3.Person(this.jsonElementBacking[index]);
             }
 
             if ((this.backing & Backing.Array) != 0)
@@ -100,53 +112,41 @@ public readonly partial struct PersonArray
     }
 
     /// <summary>
-    /// Conversion from <see cref="ImmutableList{JsonAny}"/>.
+    /// Conversion from immutable list.
     /// </summary>
-    /// <param name="value">The value from which to convert.</param>
+    /// <param name = "value">The value from which to convert.</param>
+    public static implicit operator ImmutableList<JsonAny>(PersonArray value)
+    {
+        return value.GetImmutableList();
+    }
+
+    /// <summary>s
+    /// Conversion to immutable list.
+    /// </summary>
+    /// <param name = "value">The value from which to convert.</param>
     public static implicit operator PersonArray(ImmutableList<JsonAny> value)
     {
         return new(value);
     }
 
     /// <summary>
-    /// Conversion to <see cref="ImmutableList{JsonAny}"/>.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator ImmutableList<JsonAny>(PersonArray value)
-    {
-        return
-            __CorvusArrayHelpers.GetImmutableList(value);
-    }
-
-    /// <summary>
     /// Conversion from JsonArray.
     /// </summary>
-    /// <param name="value">The value from which to convert.</param>
+    /// <param name = "value">The value from which to convert.</param>
     public static implicit operator PersonArray(JsonArray value)
     {
         if (value.HasDotnetBacking && value.ValueKind == JsonValueKind.Array)
         {
-            return new(
-                value.AsImmutableList());
+            return new(value.AsImmutableList());
         }
 
         return new(value.AsJsonElement);
     }
 
     /// <summary>
-    /// Conversion to JsonArray.
+    /// Initializes a new instance of the <see cref = "PersonArray"/> struct.
     /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator JsonArray(PersonArray value)
-    {
-        return
-            value.AsArray;
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="PersonArray"/> struct.
-    /// </summary>
-    /// <param name="items">The list of items from which to construct the array.</param>
+    /// <param name = "items">The list of items from which to construct the array.</param>
     /// <returns>An instance of the array constructed from the list.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static PersonArray From(ImmutableList<JsonAny> items)
@@ -155,153 +155,158 @@ public readonly partial struct PersonArray
     }
 
     /// <summary>
-    /// Create an new instance of the <see cref="PersonArray"/>" struct from a span of items.
+    /// Create an array from the span of items.
     /// </summary>
-    /// <param name="items">The span of items from which to construct the array.</param>
-    /// <returns>An instance of the array constructed from the span.</returns>
-    public static PersonArray Create(ReadOnlySpan<Corvus.Json.Benchmarking.Models.V3.Person> items)    {
-        return new([..items]);
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="PersonArray"/> struct.
-    /// </summary>
-    /// <param name="items">The value from which to construct the instance.</param>
-    /// <returns>An instance of the array constructed from the value.</returns>
-    public static PersonArray FromItems(params Corvus.Json.Benchmarking.Models.V3.Person[] items)
+    /// <param name = "items">The items from which to create the array.</param>
+    /// <returns>The array containing the items.</returns>
+    public static PersonArray Create(ReadOnlySpan<Corvus.Json.Benchmarking.Models.V3.Person> items)
     {
         return new([..items]);
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="PersonArray"/> struct.
+    /// Initializes a new instance of the <see cref = "PersonArray"/> struct.
     /// </summary>
-    /// <param name="item1">The 1st item in the array.</param>
-    /// <returns>An instance of the array constructed from the values.</returns>
-    public static PersonArray FromItems(in Corvus.Json.Benchmarking.Models.V3.Person item1)
+    /// <param name = "value1">The first value from which to construct the instance.</param>
+    /// <returns>A PersonArray instantiated from the given items.</returns>
+    public static PersonArray FromItems(in Corvus.Json.Benchmarking.Models.V3.Person value1)
     {
-        return new([item1.AsAny]);
+        ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
+        builder.Add(value1.AsAny);
+        return new(builder.ToImmutable());
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="PersonArray"/> struct.
+    /// Initializes a new instance of the <see cref = "PersonArray"/> struct.
     /// </summary>
-    /// <param name="item1">The 1st item in the array.</param>
-    /// <param name="item2">The 2nd item in the array.</param>
-    /// <returns>An instance of the array constructed from the values.</returns>
-    public static PersonArray FromItems(in Corvus.Json.Benchmarking.Models.V3.Person item1, in Corvus.Json.Benchmarking.Models.V3.Person item2)
+    /// <param name = "value1">The first value from which to construct the instance.</param>
+    /// <param name = "value2">The second value from which to construct the instance.</param>
+    /// <returns>A PersonArray instantiated from the given items.</returns>
+    public static PersonArray FromItems(in Corvus.Json.Benchmarking.Models.V3.Person value1, in Corvus.Json.Benchmarking.Models.V3.Person value2)
     {
-        return new([item1.AsAny, item2.AsAny]);
+        ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
+        builder.Add(value1.AsAny);
+        builder.Add(value2.AsAny);
+        return new(builder.ToImmutable());
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="PersonArray"/> struct.
+    /// Initializes a new instance of the <see cref = "PersonArray"/> struct.
     /// </summary>
-    /// <param name="item1">The 1st item in the array.</param>
-    /// <param name="item2">The 2nd item in the array.</param>
-    /// <param name="item3">The 3rd item in the array.</param>
-    /// <returns>An instance of the array constructed from the values.</returns>
-    public static PersonArray FromItems(in Corvus.Json.Benchmarking.Models.V3.Person item1, in Corvus.Json.Benchmarking.Models.V3.Person item2, in Corvus.Json.Benchmarking.Models.V3.Person item3)
+    /// <param name = "value1">The first value from which to construct the instance.</param>
+    /// <param name = "value2">The second value from which to construct the instance.</param>
+    /// <param name = "value3">The thirdvalue from which to construct the instance.</param>
+    /// <returns>A PersonArray instantiated from the given items.</returns>
+    public static PersonArray FromItems(in Corvus.Json.Benchmarking.Models.V3.Person value1, in Corvus.Json.Benchmarking.Models.V3.Person value2, in Corvus.Json.Benchmarking.Models.V3.Person value3)
     {
-        return new([item1.AsAny, item2.AsAny, item3.AsAny]);
+        ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
+        builder.Add(value1.AsAny);
+        builder.Add(value2.AsAny);
+        builder.Add(value3.AsAny);
+        return new(builder.ToImmutable());
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="PersonArray"/> struct.
+    /// Initializes a new instance of the <see cref = "PersonArray"/> struct.
     /// </summary>
-    /// <param name="item1">The 1st item in the array.</param>
-    /// <param name="item2">The 2nd item in the array.</param>
-    /// <param name="item3">The 3rd item in the array.</param>
-    /// <param name="item4">The 4th item in the array.</param>
-    /// <returns>An instance of the array constructed from the values.</returns>
-    public static PersonArray FromItems(in Corvus.Json.Benchmarking.Models.V3.Person item1, in Corvus.Json.Benchmarking.Models.V3.Person item2, in Corvus.Json.Benchmarking.Models.V3.Person item3, in Corvus.Json.Benchmarking.Models.V3.Person item4)
+    /// <param name = "value">The value from which to construct the instance.</param>
+    /// <returns>A JsonAny instantiated from the given items.</returns>
+    public static PersonArray FromItems(params Corvus.Json.Benchmarking.Models.V3.Person[] value)
     {
-        return new([item1.AsAny, item2.AsAny, item3.AsAny, item4.AsAny]);
+        ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
+        foreach (Corvus.Json.Benchmarking.Models.V3.Person item in value)
+        {
+            builder.Add(item.AsAny);
+        }
+
+        return new(builder.ToImmutable());
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="PersonArray"/> struct.
+    /// Initializes a new instance of the <see cref = "PersonArray"/> struct.
     /// </summary>
-    /// <param name="item1">The 1st item in the array.</param>
-    /// <param name="item2">The 2nd item in the array.</param>
-    /// <param name="item3">The 3rd item in the array.</param>
-    /// <param name="item4">The 4th item in the array.</param>
-    /// <param name="item5">The 5th item in the array.</param>
-    /// <returns>An instance of the array constructed from the values.</returns>
-    public static PersonArray FromItems(in Corvus.Json.Benchmarking.Models.V3.Person item1, in Corvus.Json.Benchmarking.Models.V3.Person item2, in Corvus.Json.Benchmarking.Models.V3.Person item3, in Corvus.Json.Benchmarking.Models.V3.Person item4, in Corvus.Json.Benchmarking.Models.V3.Person item5)
+    /// <param name = "value">The value from which to construct the instance.</param>
+    /// <returns>A JsonAny instantiated from the given items.</returns>
+    public static PersonArray FromRange(IEnumerable<Corvus.Json.Benchmarking.Models.V3.Person> value)
     {
-        return new([item1.AsAny, item2.AsAny, item3.AsAny, item4.AsAny, item5.AsAny]);
+        ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
+        foreach (Corvus.Json.Benchmarking.Models.V3.Person item in value)
+        {
+            builder.Add(item.AsAny);
+        }
+
+        return new(builder.ToImmutable());
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="PersonArray"/> struct.
+    /// Create an array from the given items.
     /// </summary>
-    /// <param name="item1">The 1st item in the array.</param>
-    /// <param name="item2">The 2nd item in the array.</param>
-    /// <param name="item3">The 3rd item in the array.</param>
-    /// <param name="item4">The 4th item in the array.</param>
-    /// <param name="item5">The 5th item in the array.</param>
-    /// <param name="item6">The 6th item in the array.</param>
-    /// <returns>An instance of the array constructed from the values.</returns>
-    public static PersonArray FromItems(in Corvus.Json.Benchmarking.Models.V3.Person item1, in Corvus.Json.Benchmarking.Models.V3.Person item2, in Corvus.Json.Benchmarking.Models.V3.Person item3, in Corvus.Json.Benchmarking.Models.V3.Person item4, in Corvus.Json.Benchmarking.Models.V3.Person item5, in Corvus.Json.Benchmarking.Models.V3.Person item6)
+    /// <typeparam name = "T">The type of the <paramref name = "items"/> from which to create the array.</typeparam>
+    /// <param name = "items">The items from which to create the array.</param>
+    /// <returns>The new array created from the items.</returns>
+    /// <remarks>
+    /// This will serialize the items to create the underlying JsonArray. Note the
+    /// other overloads which avoid this serialization step.
+    /// </remarks>
+    public static PersonArray From<T>(IEnumerable<T> items)
     {
-        return new([item1.AsAny, item2.AsAny, item3.AsAny, item4.AsAny, item5.AsAny, item6.AsAny]);
+        ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
+        foreach (T item in items)
+        {
+            var abw = new ArrayBufferWriter<byte>();
+            using var writer = new Utf8JsonWriter(abw);
+            JsonSerializer.Serialize(writer, item);
+            writer.Flush();
+            builder.Add(JsonAny.Parse(abw.WrittenMemory));
+        }
+
+        return new PersonArray(builder.ToImmutable());
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="PersonArray"/> struct.
+    /// Create an array from the given items.
     /// </summary>
-    /// <param name="item1">The 1st item in the array.</param>
-    /// <param name="item2">The 2nd item in the array.</param>
-    /// <param name="item3">The 3rd item in the array.</param>
-    /// <param name="item4">The 4th item in the array.</param>
-    /// <param name="item5">The 5th item in the array.</param>
-    /// <param name="item6">The 6th item in the array.</param>
-    /// <param name="item7">The 7th item in the array.</param>
-    /// <returns>An instance of the array constructed from the values.</returns>
-    public static PersonArray FromItems(in Corvus.Json.Benchmarking.Models.V3.Person item1, in Corvus.Json.Benchmarking.Models.V3.Person item2, in Corvus.Json.Benchmarking.Models.V3.Person item3, in Corvus.Json.Benchmarking.Models.V3.Person item4, in Corvus.Json.Benchmarking.Models.V3.Person item5, in Corvus.Json.Benchmarking.Models.V3.Person item6, in Corvus.Json.Benchmarking.Models.V3.Person item7)
+    /// <param name = "items">The items from which to create the array.</param>
+    /// <returns>The new array created from the items.</returns>
+    public static PersonArray FromRange(IEnumerable<JsonAny> items)
     {
-        return new([item1.AsAny, item2.AsAny, item3.AsAny, item4.AsAny, item5.AsAny, item6.AsAny, item7.AsAny]);
+        ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
+        foreach (JsonAny item in items)
+        {
+            builder.Add(item);
+        }
+
+        return new PersonArray(builder.ToImmutable());
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="PersonArray"/> struct.
+    /// Create an array from the given items.
     /// </summary>
-    /// <param name="items">The items from which to construct the instance.</param>
-    /// <returns>An instance of the array constructed from the items.</returns>
-    public static PersonArray FromRange(IEnumerable<Corvus.Json.Benchmarking.Models.V3.Person> items)
+    /// <param name = "items">The items from which to create the array.</param>
+    /// <returns>The new array created from the items.</returns>
+    public static PersonArray FromRange<T>(IEnumerable<T> items)
+        where T : struct, IJsonValue<T>
     {
-        return new([..items]);
-    }
+        ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
+        foreach (T item in items)
+        {
+            builder.Add(item.AsAny);
+        }
 
-#if NET8_0_OR_GREATER
-    /// <summary>
-    /// Initializes a new instance of the <see cref="PersonArray"/> struct.
-    /// </summary>
-    /// <param name="items">The items from which to construct the instance.</param>
-    /// <returns>An instance of the array constructed from the items .</returns>
-    static PersonArray IJsonArray<PersonArray>.FromRange(IEnumerable<JsonAny> items)
-    {
-        return new([..items]);
+        return new PersonArray(builder.ToImmutable());
     }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="PersonArray"/> struct.
-    /// </summary>
-    /// <typeparam name="T">The type of the items to add.</typeparam>
-    /// <param name="items">The items from which to construct the instance.</param>
-    /// <returns>An instance of the array constructed from the items.</returns>
-    static PersonArray IJsonArray<PersonArray>.FromRange<T>(IEnumerable<T> items)
-    {
-        return new([..items.Select(item => item.AsAny)]);
-    }
-#endif
 
     /// <inheritdoc/>
-    IEnumerator<Corvus.Json.Benchmarking.Models.V3.Person> IEnumerable<Corvus.Json.Benchmarking.Models.V3.Person>.GetEnumerator() => this.EnumerateArray();
+    IEnumerator<Corvus.Json.Benchmarking.Models.V3.Person> IEnumerable<Corvus.Json.Benchmarking.Models.V3.Person>.GetEnumerator()
+    {
+        return EnumerateArray();
+    }
 
     /// <inheritdoc/>
-    IEnumerator IEnumerable.GetEnumerator() => this.EnumerateArray();
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+        return EnumerateArray();
+    }
 
     /// <inheritdoc/>
     int IReadOnlyCollection<Corvus.Json.Benchmarking.Models.V3.Person>.Count => this.GetArrayLength();
@@ -309,13 +314,13 @@ public readonly partial struct PersonArray
     /// <inheritdoc/>
     public ImmutableList<JsonAny> AsImmutableList()
     {
-        return __CorvusArrayHelpers.GetImmutableList(this);
+        return this.GetImmutableList();
     }
 
     /// <inheritdoc/>
     public ImmutableList<JsonAny>.Builder AsImmutableListBuilder()
     {
-        return __CorvusArrayHelpers.GetImmutableListBuilder(this);
+        return this.GetImmutableListBuilder();
     }
 
     /// <inheritdoc/>
@@ -339,12 +344,12 @@ public readonly partial struct PersonArray
     {
         if ((this.backing & Backing.JsonElement) != 0)
         {
-            return new(this.jsonElementBacking);
+            return new JsonArrayEnumerator<Corvus.Json.Benchmarking.Models.V3.Person>(this.jsonElementBacking);
         }
 
         if ((this.backing & Backing.Array) != 0)
         {
-            return new(this.arrayBacking);
+            return new JsonArrayEnumerator<Corvus.Json.Benchmarking.Models.V3.Person>(this.arrayBacking);
         }
 
         throw new InvalidOperationException();
@@ -355,12 +360,12 @@ public readonly partial struct PersonArray
     {
         if ((this.backing & Backing.JsonElement) != 0)
         {
-            return new(this.jsonElementBacking);
+            return new JsonArrayEnumerator(this.jsonElementBacking);
         }
 
         if ((this.backing & Backing.Array) != 0)
         {
-            return new(this.arrayBacking);
+            return new JsonArrayEnumerator(this.arrayBacking);
         }
 
         throw new InvalidOperationException();
@@ -371,414 +376,219 @@ public readonly partial struct PersonArray
     {
         if ((this.backing & Backing.JsonElement) != 0)
         {
-            return new(this.jsonElementBacking);
+            return new JsonArrayEnumerator<TItem>(this.jsonElementBacking);
         }
 
         if ((this.backing & Backing.Array) != 0)
         {
-            return new(this.arrayBacking);
+            return new JsonArrayEnumerator<TItem>(this.arrayBacking);
         }
 
         throw new InvalidOperationException();
     }
 
-    /// <inheritdoc/>
-    PersonArray IJsonArray<PersonArray>.Add(in JsonAny item1)
+    /// <summary>
+    /// Builds an <see cref = "ImmutableList{JsonAny}"/> from the array.
+    /// </summary>
+    /// <returns>An immutable list of <see cref = "JsonAny"/> built from the array.</returns>
+    /// <exception cref = "InvalidOperationException">The value is not an array.</exception>
+    private ImmutableList<JsonAny> GetImmutableList()
     {
-        ImmutableList<JsonAny>.Builder builder = __CorvusArrayHelpers.GetImmutableListBuilder(this);
-        builder.Add(item1);
-        return new(builder.ToImmutable());
-    }
-
-    /// <inheritdoc/>
-    PersonArray IJsonArray<PersonArray>.Add(params JsonAny[] items)
-    {
-        return new([..items]);
-    }
-
-    /// <inheritdoc/>
-    PersonArray IJsonArray<PersonArray>.AddRange<TArray>(in TArray items)
-    {
-        ImmutableList<JsonAny>.Builder builder = __CorvusArrayHelpers.GetImmutableListBuilder(this);
-        foreach (JsonAny item in items.EnumerateArray())
+        if ((this.backing & Backing.Array) != 0)
         {
-            builder.Add(item.AsAny);
+            return this.arrayBacking;
         }
 
-        return new(builder.ToImmutable());
+        return this.GetImmutableListBuilder().ToImmutable();
     }
 
-    /// <inheritdoc/>
-    PersonArray IJsonArray<PersonArray>.AddRange<TItem>(IEnumerable<TItem> items)
+    /// <summary>
+    /// Builds an <see cref = "ImmutableList{JsonAny}.Builder"/> from the array.
+    /// </summary>
+    /// <returns>An immutable list builder of <see cref = "JsonAny"/>, built from the existing array.</returns>
+    /// <exception cref = "InvalidOperationException">The value is not an array.</exception>
+    private ImmutableList<JsonAny>.Builder GetImmutableListBuilder()
     {
-        ImmutableList<JsonAny>.Builder builder = __CorvusArrayHelpers.GetImmutableListBuilder(this);
-        foreach (TItem item in items)
+        if ((this.backing & Backing.JsonElement) != 0 && this.jsonElementBacking.ValueKind == JsonValueKind.Array)
         {
-            builder.Add(item.AsAny);
+            ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
+            foreach (JsonElement item in this.jsonElementBacking.EnumerateArray())
+            {
+                builder.Add(new(item));
+            }
+
+            return builder;
         }
 
-        return new(builder.ToImmutable());
-    }
-
-    /// <inheritdoc/>
-    PersonArray IJsonArray<PersonArray>.AddRange(IEnumerable<JsonAny> items)
-    {
-        ImmutableList<JsonAny>.Builder builder = __CorvusArrayHelpers.GetImmutableListBuilder(this);
-        builder.AddRange(items);
-        return new(builder.ToImmutable());
-    }
-
-    /// <inheritdoc/>
-    PersonArray IJsonArray<PersonArray>.Insert(int index, in JsonAny item1)
-    {
-        return new(__CorvusArrayHelpers.GetImmutableListWith(this, index, item1));
-    }
-
-    /// <inheritdoc/>
-    PersonArray IJsonArray<PersonArray>.InsertRange<TArray>(int index, in TArray items)
-    {
-        return new(__CorvusArrayHelpers.GetImmutableListWith(this, index, items.EnumerateArray()));
-    }
-
-    /// <inheritdoc/>
-    PersonArray IJsonArray<PersonArray>.InsertRange<TItem>(int index, IEnumerable<TItem> items)
-    {
-        return new(__CorvusArrayHelpers.GetImmutableListWith(this, index, items.Select(item => item.AsAny)));
-    }
-
-    /// <inheritdoc/>
-    PersonArray IJsonArray<PersonArray>.InsertRange(int index, IEnumerable<JsonAny> items)
-    {
-        return new(__CorvusArrayHelpers.GetImmutableListWith(this, index, items));
-    }
-
-    /// <inheritdoc/>
-    PersonArray IJsonArray<PersonArray>.Replace(in JsonAny oldValue, in JsonAny newValue)
-    {
-        return new(__CorvusArrayHelpers.GetImmutableListReplacing(this, oldValue, newValue));
-    }
-
-    /// <inheritdoc/>
-    PersonArray IJsonArray<PersonArray>.SetItem(int index, in JsonAny value)
-    {
-        return new(__CorvusArrayHelpers.GetImmutableListSetting(this, index, value));
-    }
-
-    /// <inheritdoc/>
-    public PersonArray Add(in Corvus.Json.Benchmarking.Models.V3.Person item1)
-    {
-        ImmutableList<JsonAny>.Builder builder = __CorvusArrayHelpers.GetImmutableListBuilder(this);
-        builder.Add(item1.AsAny);
-        return new(builder.ToImmutable());
-    }
-
-    /// <inheritdoc/>
-    public PersonArray Add(params Corvus.Json.Benchmarking.Models.V3.Person[] items)
-    {
-        ImmutableList<JsonAny>.Builder builder = __CorvusArrayHelpers.GetImmutableListBuilder(this);
-        foreach (Corvus.Json.Benchmarking.Models.V3.Person item in items)
+        if ((this.backing & Backing.Array) != 0)
         {
-            builder.Add(item.AsAny);
+            return this.arrayBacking.ToBuilder();
         }
 
-        return new(builder.ToImmutable());
+        throw new InvalidOperationException();
     }
 
-    /// <inheritdoc/>
-    public PersonArray AddRange(IEnumerable<Corvus.Json.Benchmarking.Models.V3.Person> items)
+    /// <summary>
+    /// Builds an <see cref = "ImmutableList{JsonAny}"/> from the array, replacing the item at the specified index with the given item.
+    /// </summary>
+    /// <param name = "index">The index at which to add the element.</param>
+    /// <param name = "value">The value to add.</param>
+    /// <returns>An immutable list containing the contents of the list, with the specified item at the index.</returns>
+    /// <exception cref = "InvalidOperationException">The value is not an array.</exception>
+    /// <exception cref = "IndexOutOfRangeException">Thrown if the range is beyond the bounds of the array.</exception>
+    private ImmutableList<JsonAny> GetImmutableListSetting(int index, in JsonAny value)
     {
-        ImmutableList<JsonAny>.Builder builder = __CorvusArrayHelpers.GetImmutableListBuilder(this);
-        foreach (Corvus.Json.Benchmarking.Models.V3.Person item in items)
+        if ((this.backing & Backing.JsonElement) != 0 && this.jsonElementBacking.ValueKind == JsonValueKind.Array)
         {
-            builder.Add(item.AsAny);
+            return JsonValueHelpers.GetImmutableListFromJsonElementSetting(this.jsonElementBacking, index, value);
         }
 
-        return new(builder.ToImmutable());
-    }
-
-    /// <inheritdoc/>
-    public PersonArray Insert(int index, in Corvus.Json.Benchmarking.Models.V3.Person item1)
-    {
-        return new(__CorvusArrayHelpers.GetImmutableListWith(this, index, item1));
-    }
-
-    /// <inheritdoc/>
-    public PersonArray InsertRange(int index, IEnumerable<Corvus.Json.Benchmarking.Models.V3.Person> items)
-    {
-        return new(__CorvusArrayHelpers.GetImmutableListWith(this, index, items.Select(item => item.AsAny)));
-    }
-
-    /// <inheritdoc/>
-    public PersonArray Replace(in Corvus.Json.Benchmarking.Models.V3.Person oldValue, in Corvus.Json.Benchmarking.Models.V3.Person newValue)
-    {
-        return new(__CorvusArrayHelpers.GetImmutableListReplacing(this, oldValue, newValue));
-    }
-
-    /// <inheritdoc/>
-    public PersonArray SetItem(int index, in Corvus.Json.Benchmarking.Models.V3.Person value)
-    {
-        return new(__CorvusArrayHelpers.GetImmutableListSetting(this, index, value));
-    }
-
-    /// <inheritdoc/>
-    PersonArray IJsonArray<PersonArray>.Remove(in JsonAny oldValue)
-    {
-        return new(__CorvusArrayHelpers.GetImmutableListWithout(this, oldValue));
-    }
-
-    /// <inheritdoc/>
-    PersonArray IJsonArray<PersonArray>.RemoveAt(int index)
-    {
-        return new(__CorvusArrayHelpers.GetImmutableListWithoutRange(this, index, 1));
-    }
-
-    /// <inheritdoc/>
-    PersonArray IJsonArray<PersonArray>.RemoveRange(int index, int count)
-    {
-        return new(__CorvusArrayHelpers.GetImmutableListWithoutRange(this, index, count));
-    }
-
-    /// <inheritdoc/>
-    public PersonArray Remove(in Corvus.Json.Benchmarking.Models.V3.Person oldValue)
-    {
-        return new(__CorvusArrayHelpers.GetImmutableListWithout(this, oldValue));
-    }
-
-    private static class __CorvusArrayHelpers
-    {
-        /// <summary>
-        /// Builds an <see cref = "ImmutableList{JsonAny}"/> from the array.
-        /// </summary>
-        /// <param name="arrayInstance">The array instance.</param>
-        /// <returns>An immutable list of <see cref = "JsonAny"/> built from the array.</returns>
-        /// <exception cref = "InvalidOperationException">The value is not an array.</exception>
-        public static ImmutableList<JsonAny> GetImmutableList(in PersonArray arrayInstance)
+        if ((this.backing & Backing.Array) != 0)
         {
-            if ((arrayInstance.backing & Backing.Array) != 0)
+            try
             {
-                return arrayInstance.arrayBacking;
+                return this.arrayBacking.SetItem(index, value);
             }
-
-            return GetImmutableListBuilder(arrayInstance).ToImmutable();
+            catch (ArgumentOutOfRangeException ex)
+            {
+                throw new IndexOutOfRangeException(ex.Message, ex);
+            }
         }
 
-        /// <summary>
-        /// Builds an <see cref = "ImmutableList{JsonAny}.Builder"/> from the array.
-        /// </summary>
-        /// <param name="arrayInstance">The array instance.</param>
-        /// <returns>An immutable list builder of <see cref = "JsonAny"/>, built from the existing array.</returns>
-        /// <exception cref = "InvalidOperationException">The value is not an array.</exception>
-        public static ImmutableList<JsonAny>.Builder GetImmutableListBuilder(in PersonArray arrayInstance)
+        throw new InvalidOperationException();
+    }
+
+    /// <summary>
+    /// Builds an <see cref = "ImmutableList{JsonAny}"/> from the array, removing the first item that equals the given value, and replacing it with the specified item.
+    /// </summary>
+    /// <param name = "oldItem">The item to remove.</param>
+    /// <param name = "newItem">The item to insert.</param>
+    /// <returns>An immutable list containing the contents of the list, without the first instance that matches the old item, replacing it with the new item.</returns>
+    /// <exception cref = "InvalidOperationException">The value is not an array.</exception>
+    private ImmutableList<JsonAny> GetImmutableListReplacing(in JsonAny oldItem, in JsonAny newItem)
+    {
+        if ((this.backing & Backing.JsonElement) != 0 && this.jsonElementBacking.ValueKind == JsonValueKind.Array)
         {
-            if ((arrayInstance.backing & Backing.JsonElement) != 0)
-            {
-                if (arrayInstance.jsonElementBacking.ValueKind == JsonValueKind.Array)
-                {
-                    ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
-                    foreach (JsonElement item in arrayInstance.jsonElementBacking.EnumerateArray())
-                    {
-                        builder.Add(new(item));
-                    }
-
-                    return builder;
-                }
-            }
-
-            if ((arrayInstance.backing & Backing.Array) != 0)
-            {
-                return arrayInstance.arrayBacking.ToBuilder();
-            }
-
-            throw new InvalidOperationException();
+            return JsonValueHelpers.GetImmutableListFromJsonElementReplacing(this.jsonElementBacking, oldItem, newItem);
         }
 
-        /// <summary>
-        /// Builds an <see cref = "ImmutableList{JsonAny}"/> from the array, replacing the item at the specified index with the given item.
-        /// </summary>
-        /// <param name="arrayInstance">The array instance.</param>
-        /// <param name="index">The index at which to add the element.</param>
-        /// <param name="value">The value to add.</param>
-        /// <returns>An immutable list containing the contents of the list, with the specified item at the index.</returns>
-        /// <exception cref = "InvalidOperationException">The value is not an array.</exception>
-        /// <exception cref = "IndexOutOfRangeException">Thrown if the range is beyond the bounds of the array.</exception>
-        public static ImmutableList<JsonAny> GetImmutableListSetting(in PersonArray arrayInstance, int index, in JsonAny value)
+        if ((this.backing & Backing.Array) != 0)
         {
-            if ((arrayInstance.backing & Backing.JsonElement) != 0)
-            {
-                if (arrayInstance.jsonElementBacking.ValueKind == JsonValueKind.Array)
-                {
-                    return JsonValueHelpers.GetImmutableListFromJsonElementSetting(arrayInstance.jsonElementBacking, index, value);
-                }
-            }
-
-            if ((arrayInstance.backing & Backing.Array) != 0)
-            {
-                try
-                {
-                    return arrayInstance.arrayBacking.SetItem(index, value);
-                }
-                catch (ArgumentOutOfRangeException ex)
-                {
-                    throw new IndexOutOfRangeException(ex.Message, ex);
-                }
-            }
-
-            throw new InvalidOperationException();
+            return this.arrayBacking.Replace(oldItem, newItem);
         }
 
-        /// <summary>
-        /// Builds an <see cref = "ImmutableList{JsonAny}"/> from the array, removing the first item that equals the given value, and replacing it with the specified item.
-        /// </summary>
-        /// <param name="arrayInstance">The array instance.</param>
-        /// <param name="oldItem">The item to remove.</param>
-        /// <param name="newItem">The item to insert.</param>
-        /// <returns>An immutable list containing the contents of the list, without the first instance that matches the old item, replacing it with the new item.</returns>
-        /// <exception cref = "InvalidOperationException">The value is not an array.</exception>
-        public static ImmutableList<JsonAny> GetImmutableListReplacing(in PersonArray arrayInstance, in JsonAny oldItem, in JsonAny newItem)
+        throw new InvalidOperationException();
+    }
+
+    /// <summary>
+    /// Builds an <see cref = "ImmutableList{JsonAny}"/> from the array, removing the first item that equals the given value.
+    /// </summary>
+    /// <param name = "item">The item to remove.</param>
+    /// <returns>An immutable list containing the contents of the list, without the first instance that matches the given item.</returns>
+    /// <exception cref = "InvalidOperationException">The value is not an array.</exception>
+    private ImmutableList<JsonAny> GetImmutableListWithout(in JsonAny item)
+    {
+        if ((this.backing & Backing.JsonElement) != 0 && this.jsonElementBacking.ValueKind == JsonValueKind.Array)
         {
-            if ((arrayInstance.backing & Backing.JsonElement) != 0)
-            {
-                if (arrayInstance.jsonElementBacking.ValueKind == JsonValueKind.Array)
-                {
-                    return JsonValueHelpers.GetImmutableListFromJsonElementReplacing(arrayInstance.jsonElementBacking, oldItem, newItem);
-                }
-            }
-
-            if ((arrayInstance.backing & Backing.Array) != 0)
-            {
-                return  arrayInstance.arrayBacking.Replace(oldItem, newItem);
-            }
-
-            throw new InvalidOperationException();
+            return JsonValueHelpers.GetImmutableListFromJsonElementWithout(this.jsonElementBacking, item);
         }
 
-        /// <summary>
-        /// Builds an <see cref = "ImmutableList{JsonAny}"/> from the array, removing the first item arrayInstance equals the given value.
-        /// </summary>
-        /// <param name="arrayInstance">The array instance.</param>
-        /// <param name="item">The item to remove.</param>
-        /// <returns>An immutable list containing the contents of the list, without the first instance arrayInstance matches the given item.</returns>
-        /// <exception cref = "InvalidOperationException">The value is not an array.</exception>
-        public static ImmutableList<JsonAny> GetImmutableListWithout(in PersonArray arrayInstance, in JsonAny item)
+        if ((this.backing & Backing.Array) != 0)
         {
-            if ((arrayInstance.backing & Backing.JsonElement) != 0)
-            {
-                if (arrayInstance.jsonElementBacking.ValueKind == JsonValueKind.Array)
-                {
-                    return JsonValueHelpers.GetImmutableListFromJsonElementWithout(arrayInstance.jsonElementBacking, item);
-                }
-            }
-
-            if ((arrayInstance.backing & Backing.Array) != 0)
-            {
-                return  arrayInstance.arrayBacking.Remove(item);
-            }
-
-            throw new InvalidOperationException();
+            return this.arrayBacking.Remove(item);
         }
 
-        /// <summary>
-        /// Builds an <see cref = "ImmutableList{JsonAny}"/> from the array, removing the given range.
-        /// </summary>
-        /// <param name="arrayInstance">The array instance.</param>
-        /// <param name="index">The start index of the range to remove.</param>
-        /// <param name="count">The length of the range to remove.</param>
-        /// <returns>An immutable list containing the contents of the list, without the given range of items.</returns>
-        /// <exception cref = "InvalidOperationException">The value is not an array.</exception>
-        /// <exception cref = "IndexOutOfRangeException">Thrown if the range is beyond the bounds of the array.</exception>
-        public static ImmutableList<JsonAny> GetImmutableListWithoutRange(in PersonArray arrayInstance, int index, int count)
+        throw new InvalidOperationException();
+    }
+
+    /// <summary>
+    /// Builds an <see cref = "ImmutableList{JsonAny}"/> from the array, removing the given range.
+    /// </summary>
+    /// <param name = "index">The start index of the range to remove.</param>
+    /// <param name = "count">The length of the range to remove.</param>
+    /// <returns>An immutable list containing the contents of the list, without the given range of items.</returns>
+    /// <exception cref = "InvalidOperationException">The value is not an array.</exception>
+    /// <exception cref = "IndexOutOfRangeException">Thrown if the range is beyond the bounds of the array.</exception>
+    private ImmutableList<JsonAny> GetImmutableListWithoutRange(int index, int count)
+    {
+        if ((this.backing & Backing.JsonElement) != 0 && this.jsonElementBacking.ValueKind == JsonValueKind.Array)
         {
-            if ((arrayInstance.backing & Backing.JsonElement) != 0)
-            {
-                if (arrayInstance.jsonElementBacking.ValueKind == JsonValueKind.Array)
-                {
-                    return JsonValueHelpers.GetImmutableListFromJsonElementWithoutRange(arrayInstance.jsonElementBacking, index, count);
-                }
-            }
-
-            if ((arrayInstance.backing & Backing.Array) != 0)
-            {
-                try
-                {
-                    return arrayInstance.arrayBacking.RemoveRange(index, count);
-                }
-                catch (ArgumentOutOfRangeException ex)
-                {
-                    throw new IndexOutOfRangeException(ex.Message, ex);
-                }
-            }
-
-            throw new InvalidOperationException();
+            return JsonValueHelpers.GetImmutableListFromJsonElementWithoutRange(this.jsonElementBacking, index, count);
         }
 
-        // <summary>
-        // Builds an <see cref = "ImmutableList{JsonAny}"/> from the array, inserting the given item at the index.
-        // </summary>
-        // <param name="arrayInstance">The array instance.</param>
-        // <param name="index">The index at which to add the element.</param>
-        // <param name="value">The value to add.</param>
-        // <returns>An immutable list containing the contents of the list, without the array.</returns>
-        // <exception cref = "InvalidOperationException">The value is not an array.</exception>
-        // <exception cref = "IndexOutOfRangeException">Thrown if the range is beyond the bounds of the array.</exception>
-        public static ImmutableList<JsonAny> GetImmutableListWith(in PersonArray arrayInstance, int index, in JsonAny value)
+        if ((this.backing & Backing.Array) != 0)
         {
-            if ((arrayInstance.backing & Backing.JsonElement) != 0)
+            try
             {
-                if (arrayInstance.jsonElementBacking.ValueKind == JsonValueKind.Array)
-                {
-                    return JsonValueHelpers.GetImmutableListFromJsonElementWith(arrayInstance.jsonElementBacking, index, value);
-                }
+                return this.arrayBacking.RemoveRange(index, count);
             }
-
-            if ((arrayInstance.backing & Backing.Array) != 0)
+            catch (ArgumentOutOfRangeException ex)
             {
-                try
-                {
-                    return arrayInstance.arrayBacking.Insert(index, value);
-                }
-                catch (ArgumentOutOfRangeException ex)
-                {
-                    throw new IndexOutOfRangeException(ex.Message, ex);
-                }
+                throw new IndexOutOfRangeException(ex.Message, ex);
             }
-
-            throw new InvalidOperationException();
         }
 
-        /// <summary>
-        /// Builds an <see cref = "ImmutableList{JsonAny}"/> from the array, inserting the items at the
-        /// given index.
-        /// </summary>
-        /// <param name="arrayInstance">The array instance.</param>
-        /// <param name="index">The index at which to add the element.</param>
-        /// <param name="values">The values to add.</param>
-        /// <returns>An immutable list containing the contents of the list, without the array.</returns>
-        /// <exception cref = "InvalidOperationException">The value is not an array.</exception>
-        /// <exception cref = "IndexOutOfRangeException">Thrown if the range is beyond the bounds of the array.</exception>
-        public static ImmutableList<JsonAny> GetImmutableListWith<TEnumerable>(in PersonArray arrayInstance, int index, TEnumerable values)
-            where TEnumerable : IEnumerable<JsonAny>
+        throw new InvalidOperationException();
+    }
+
+    /// <summary>
+    /// Builds an <see cref = "ImmutableList{JsonAny}"/> from the array, adding the given item.
+    /// </summary>
+    /// <param name = "index">The index at which to add the element.</param>
+    /// <param name = "value">The value to add.</param>
+    /// <returns>An immutable list containing the contents of the list, without the array.</returns>
+    /// <exception cref = "InvalidOperationException">The value is not an array.</exception>
+    /// <exception cref = "IndexOutOfRangeException">Thrown if the range is beyond the bounds of the array.</exception>
+    private ImmutableList<JsonAny> GetImmutableListWith(int index, in JsonAny value)
+    {
+        if ((this.backing & Backing.JsonElement) != 0 && this.jsonElementBacking.ValueKind == JsonValueKind.Array)
         {
-            if ((arrayInstance.backing & Backing.JsonElement) != 0)
-            {
-                if (arrayInstance.jsonElementBacking.ValueKind == JsonValueKind.Array)
-                {
-                    return JsonValueHelpers.GetImmutableListFromJsonElementWith(arrayInstance.jsonElementBacking, index, values);
-                }
-            }
-
-            if ((arrayInstance.backing & Backing.Array) != 0)
-            {
-                try
-                {
-                    return arrayInstance.arrayBacking.InsertRange(index, values);
-                }
-                catch (ArgumentOutOfRangeException ex)
-                {
-                    throw new IndexOutOfRangeException(ex.Message, ex);
-                }
-            }
-
-            throw new InvalidOperationException();
+            return JsonValueHelpers.GetImmutableListFromJsonElementWith(this.jsonElementBacking, index, value);
         }
+
+        if ((this.backing & Backing.Array) != 0)
+        {
+            try
+            {
+                return this.arrayBacking.Insert(index, value);
+            }
+            catch (ArgumentOutOfRangeException ex)
+            {
+                throw new IndexOutOfRangeException(ex.Message, ex);
+            }
+        }
+
+        throw new InvalidOperationException();
+    }
+
+    /// <summary>
+    /// Builds an <see cref = "ImmutableList{JsonAny}"/> from the array, adding the given item.
+    /// </summary>
+    /// <param name = "index">The index at which to add the element.</param>
+    /// <param name = "values">The values to add.</param>
+    /// <returns>An immutable list containing the contents of the list, without the array.</returns>
+    /// <exception cref = "InvalidOperationException">The value is not an array.</exception>
+    /// <exception cref = "IndexOutOfRangeException">Thrown if the range is beyond the bounds of the array.</exception>
+    private ImmutableList<JsonAny> GetImmutableListWith<TEnumerable>(int index, TEnumerable values)
+        where TEnumerable : IEnumerable<JsonAny>
+    {
+        if ((this.backing & Backing.JsonElement) != 0 && this.jsonElementBacking.ValueKind == JsonValueKind.Array)
+        {
+            return JsonValueHelpers.GetImmutableListFromJsonElementWith(this.jsonElementBacking, index, values);
+        }
+
+        if ((this.backing & Backing.Array) != 0)
+        {
+            try
+            {
+                return this.arrayBacking.InsertRange(index, values);
+            }
+            catch (ArgumentOutOfRangeException ex)
+            {
+                throw new IndexOutOfRangeException(ex.Message, ex);
+            }
+        }
+
+        throw new InvalidOperationException();
     }
 }
