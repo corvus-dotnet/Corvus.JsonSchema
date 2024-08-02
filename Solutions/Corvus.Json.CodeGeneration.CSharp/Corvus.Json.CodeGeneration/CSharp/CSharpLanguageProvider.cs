@@ -19,6 +19,7 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
     private readonly KeywordValidationHandlerRegistry validationHandlerRegistry = new();
     private readonly CodeFileBuilderRegistry codeFileBuilderRegistry = new();
     private readonly NameHeuristicRegistry nameHeuristicRegistry = new();
+    private readonly NameCollisionResolverRegistry nameCollisionResolverRegistry = new();
     private readonly Options options = options ?? Options.Default;
 
     /// <summary>
@@ -101,6 +102,17 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
     public bool TryGetValidationHandlersFor(IKeyword keyword, [NotNullWhen(true)] out IReadOnlyCollection<IKeywordValidationHandler>? validationHandlers)
     {
         return this.validationHandlerRegistry.TryGetHandlersFor(keyword, out validationHandlers);
+    }
+
+    /// <summary>
+    /// Register name collision resolvers.
+    /// </summary>
+    /// <param name="resolvers">The name collision resolvers.</param>
+    /// <returns>A reference to the <see cref="ILanguageProvider"/> having completed the operation.</returns>
+    public ILanguageProvider RegisterNameCollisionResolvers(params INameCollisionResolver[] resolvers)
+    {
+        this.nameCollisionResolverRegistry.RegisterNameCollisionResolvers(resolvers);
+        return this;
     }
 
     /// <inheritdoc/>
@@ -200,14 +212,13 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
 
         Span<char> typeNameBuffer = stackalloc char[Formatting.MaxIdentifierLength];
 
-        SetTypeNameWithKeywordHeuristics(
-            this,
-            typeDeclaration,
-            reference,
-            typeNameBuffer,
-            ns,
-            fallbackName,
-            this.GetOrderedNameBeforeSubschemaHeuristics());
+        this.SetTypeNameWithKeywordHeuristics(
+             typeDeclaration,
+             reference,
+             typeNameBuffer,
+             ns,
+             fallbackName,
+             this.GetOrderedNameBeforeSubschemaHeuristics());
     }
 
     /// <inheritdoc/>
@@ -216,8 +227,7 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
         JsonReferenceBuilder reference = GetReferenceWithoutQuery(typeDeclaration);
 
         Span<char> typeNameBuffer = stackalloc char[Formatting.MaxIdentifierLength];
-        UpdateTypeNameWithKeywordHeuristics(
-            this,
+        this.UpdateTypeNameWithKeywordHeuristics(
             typeDeclaration,
             reference,
             typeNameBuffer,
@@ -289,6 +299,9 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
             SubschemaNameHeuristic.Instance,
             SingleTypeArrayNameHeuristic.Instance);
 
+        languageProvider.RegisterNameCollisionResolvers(
+            DefaultNameCollisionResolver.Instance);
+
         return languageProvider;
     }
 
@@ -309,129 +322,7 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
         }
     }
 
-    private static void SetTypeNameWithKeywordHeuristics(
-        CSharpLanguageProvider languageProvider,
-        TypeDeclaration typeDeclaration,
-        JsonReferenceBuilder reference,
-        Span<char> typeNameBuffer,
-        string ns,
-        string fallbackName,
-        IEnumerable<INameHeuristic> nameHeuristics)
-    {
-        foreach (INameHeuristic heuristic in nameHeuristics)
-        {
-            if (heuristic.TryGetName(languageProvider, typeDeclaration, reference, typeNameBuffer, out int written))
-            {
-                if (heuristic is IBuiltInTypeNameHeuristic)
-                {
-                    typeDeclaration.SetDoNotGenerate();
-                }
-                else
-                {
-                    written = FixTypeNameForCollisionWithParent(typeDeclaration, typeNameBuffer, written);
-                    typeDeclaration.SetDotnetTypeName(typeNameBuffer[..written].ToString());
-                    typeDeclaration.SetDotnetNamespace(ns);
-                }
-
-                return;
-            }
-        }
-
-        typeDeclaration.SetDotnetTypeName(Formatting.FormatTypeNameComponent(typeDeclaration, fallbackName.AsSpan(), typeNameBuffer).ToString());
-        typeDeclaration.SetDotnetNamespace(ns);
-    }
-
-    // TODO: I would like to refactor this out into some kind of strategy pattern like the rest of the heuristics
-    private static int FixTypeNameForCollisionWithParent(TypeDeclaration typeDeclaration, Span<char> typeNameBuffer, int written)
-    {
-        if (typeDeclaration.Parent() is TypeDeclaration parent && !typeDeclaration.IsInDefinitionsContainer() && parent.TryGetDotnetTypeName(out string? name))
-        {
-            ReadOnlySpan<char> parentSpan = name.AsSpan();
-
-            // Capture the reference outside the loop so we can work through it.
-            JsonReference updatedReference = typeDeclaration.LocatedSchema.Location.MoveToParentFragment();
-            Span<char> trimmedStringBuffer = stackalloc char[typeNameBuffer.Length];
-
-            for (int index = 1; parent.DotnetTypeName().AsSpan().Equals(typeNameBuffer[..written], StringComparison.Ordinal) || NameMatchesChildren(parent, typeDeclaration, typeNameBuffer[..written]); index++)
-            {
-                int trimmedStringLength = written;
-                while (trimmedStringLength > 1 && typeNameBuffer[trimmedStringLength - 1] >= '0' && typeNameBuffer[trimmedStringLength - 1] <= '9')
-                {
-                    trimmedStringLength--;
-                }
-
-                typeNameBuffer[..trimmedStringLength].CopyTo(trimmedStringBuffer);
-
-                ReadOnlySpan<char> trimmedString = trimmedStringBuffer[..trimmedStringLength];
-
-                while (updatedReference.HasFragment && IsPropertySubschemaKeywordFragment(typeDeclaration, updatedReference.Fragment))
-                {
-                    updatedReference = updatedReference.MoveToParentFragment();
-                }
-
-                int slashIndex = 0;
-
-                if (updatedReference.HasFragment && (slashIndex = updatedReference.Fragment.LastIndexOf('/')) >= 0 && slashIndex < updatedReference.Fragment.Length - 1)
-                {
-                    ReadOnlySpan<char> previousNode = updatedReference.Fragment[(slashIndex + 1)..];
-                    previousNode.CopyTo(typeNameBuffer);
-                    written = Formatting.ToPascalCase(typeNameBuffer[..previousNode.Length]);
-                    trimmedString.CopyTo(typeNameBuffer[previousNode.Length..]);
-                    written += trimmedString.Length;
-                }
-                else if (!trimmedString.Equals(parent.DotnetTypeName().AsSpan(), StringComparison.Ordinal))
-                {
-                    parentSpan.CopyTo(typeNameBuffer);
-                    trimmedString.CopyTo(typeNameBuffer[parentSpan.Length..]);
-                    written = parentSpan.Length + trimmedString.Length;
-                    index--;
-                }
-                else
-                {
-                    trimmedString.CopyTo(typeNameBuffer);
-                    written = trimmedStringLength;
-                    written += Formatting.ApplySuffix(index, typeNameBuffer[trimmedStringLength..]);
-                }
-            }
-        }
-
-        return written;
-    }
-
-    private static bool IsPropertySubschemaKeywordFragment(TypeDeclaration typeDeclaration, ReadOnlySpan<char> fragment)
-    {
-        foreach (IPropertySubchemaProviderKeyword keyword in typeDeclaration.LocatedSchema.Vocabulary.Keywords.OfType<IPropertySubchemaProviderKeyword>())
-        {
-            if (keyword.Keyword.AsSpan().Equals(fragment, StringComparison.Ordinal))
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private static TypeDeclaration? FindMatchingChild(TypeDeclaration parent, TypeDeclaration typeDeclaration, ReadOnlySpan<char> span)
-    {
-        foreach (TypeDeclaration child in parent.Children())
-        {
-            TypeDeclaration reducedChild = child.ReducedTypeDeclaration().ReducedType;
-            if (reducedChild != typeDeclaration && reducedChild.TryGetDotnetTypeName(out string? typeName) && typeName.AsSpan().Equals(span, StringComparison.Ordinal))
-            {
-                return reducedChild;
-            }
-        }
-
-        return null;
-    }
-
-    private static bool NameMatchesChildren(TypeDeclaration parent, TypeDeclaration typeDeclaration, ReadOnlySpan<char> span)
-    {
-        return FindMatchingChild(parent, typeDeclaration, span) is not null;
-    }
-
-    private static void UpdateTypeNameWithKeywordHeuristics(
-        CSharpLanguageProvider languageProvider,
+    private void UpdateTypeNameWithKeywordHeuristics(
         TypeDeclaration typeDeclaration,
         JsonReferenceBuilder reference,
         Span<char> typeNameBuffer,
@@ -439,7 +330,7 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
     {
         foreach (INameHeuristic heuristic in nameHeuristics)
         {
-            if (heuristic.TryGetName(languageProvider, typeDeclaration, reference, typeNameBuffer, out int written))
+            if (heuristic.TryGetName(this, typeDeclaration, reference, typeNameBuffer, out int written))
             {
                 typeDeclaration.SetDotnetTypeName(typeNameBuffer[..written].ToString());
                 break;
@@ -447,7 +338,7 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
         }
 
         if (typeDeclaration.Parent() is TypeDeclaration parent &&
-            FindMatchingChild(parent, typeDeclaration, typeDeclaration.DotnetTypeName().AsSpan()) is TypeDeclaration child
+            parent.FindChildNameCollision(typeDeclaration, typeDeclaration.DotnetTypeName().AsSpan()) is TypeDeclaration child
             && child.Parent() == parent)
         {
             // We have found this same type through multiple dynamic paths. If we are not the one with the dynamic reference, we will set ourselves
@@ -462,6 +353,55 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
                 child.SetDoNotGenerate(resetParent: false);
             }
         }
+    }
+
+    private void SetTypeNameWithKeywordHeuristics(
+        TypeDeclaration typeDeclaration,
+        JsonReferenceBuilder reference,
+        Span<char> typeNameBuffer,
+        string ns,
+        string fallbackName,
+        IEnumerable<INameHeuristic> nameHeuristics)
+    {
+        foreach (INameHeuristic heuristic in nameHeuristics)
+        {
+            if (heuristic.TryGetName(this, typeDeclaration, reference, typeNameBuffer, out int written))
+            {
+                if (heuristic is IBuiltInTypeNameHeuristic)
+                {
+                    typeDeclaration.SetDoNotGenerate();
+                }
+                else
+                {
+                    written = this.FixTypeNameForCollisionWithParent(typeDeclaration, typeNameBuffer, written);
+                    typeDeclaration.SetDotnetTypeName(typeNameBuffer[..written].ToString());
+                    typeDeclaration.SetDotnetNamespace(ns);
+                }
+
+                return;
+            }
+        }
+
+        typeDeclaration.SetDotnetTypeName(Formatting.FormatTypeNameComponent(typeDeclaration, fallbackName.AsSpan(), typeNameBuffer).ToString());
+        typeDeclaration.SetDotnetNamespace(ns);
+    }
+
+    private int FixTypeNameForCollisionWithParent(TypeDeclaration typeDeclaration, Span<char> typeNameBuffer, int written)
+    {
+        if (typeDeclaration.Parent() is TypeDeclaration parent &&
+            !typeDeclaration.IsInDefinitionsContainer() &&
+            parent.TryGetDotnetTypeName(out string? name))
+        {
+            foreach (INameCollisionResolver resolver in this.nameCollisionResolverRegistry.RegisteredCollisionResolvers)
+            {
+                if (resolver.TryResolveNameCollision(this, typeDeclaration, parent, name.AsSpan(), typeNameBuffer, written, out int newLength))
+                {
+                    return newLength;
+                }
+            }
+        }
+
+        return written;
     }
 
     private IEnumerable<IBuiltInTypeNameHeuristic> GetBuiltInTypeNameHeuristics()
