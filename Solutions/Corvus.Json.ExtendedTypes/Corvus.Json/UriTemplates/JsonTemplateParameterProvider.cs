@@ -3,7 +3,6 @@
 // </copyright>
 
 using System.Text.Json;
-using Corvus.Json;
 using Corvus.UriTemplates.Internal;
 using Corvus.UriTemplates.TemplateParameterProviders;
 

@@ -2,7 +2,6 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System;
 using System.Buffers;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
