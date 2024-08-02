@@ -52,6 +52,30 @@ internal static class TypeDeclarationExtensions
     }
 
     /// <summary>
+    /// Determines if there is a child of the parent type declaration whose name matches the proposed name
+    /// for a given child type declaration.
+    /// </summary>
+    /// <param name="parent">The parent type declaration.</param>
+    /// <param name="child">The child corresponding to the proposed name.</param>
+    /// <param name="span">The proposed name.</param>
+    /// <returns>The type declaration whose name collides with the proposed name, or <see langword="null"/> if
+    /// there is no collision.</returns>
+    public static TypeDeclaration? FindChildNameCollision(this TypeDeclaration parent, TypeDeclaration child, ReadOnlySpan<char> span)
+    {
+        foreach (TypeDeclaration childToTest in parent.Children())
+        {
+            TypeDeclaration reducedChild = childToTest.ReducedTypeDeclaration().ReducedType;
+            if (reducedChild != child && reducedChild.TryGetDotnetTypeName(out string? typeName) &&
+                typeName.AsSpan().Equals(span, StringComparison.Ordinal))
+            {
+                return reducedChild;
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
     /// Gets a value indicating whether to generate optional properties as nullable.
     /// </summary>
     /// <param name="typeDeclaration">The type declaration to test.</param>

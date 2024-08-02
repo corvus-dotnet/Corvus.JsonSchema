@@ -1,7 +1,4 @@
-﻿using System.Text.Json;
-using Corvus.Json;
-using JsonSchemaSample.Api;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
+﻿using JsonSchemaSample.Api;
 using NodaTime;
 
 Person audreyJones =

@@ -5,7 +5,7 @@
 namespace Corvus.Json.CodeGeneration;
 
 /// <summary>
-/// A validation handler registry for implementers of
+/// A name heuristic registry for implementers of
 /// <see cref="ILanguageProvider"/>.
 /// </summary>
 public sealed class NameHeuristicRegistry
