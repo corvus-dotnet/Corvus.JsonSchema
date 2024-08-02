@@ -13,7 +13,7 @@ using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
 
-namespace Sandbox.Models;
+namespace JsonSchemaSample.Api;
 
 /// <summary>
 /// Generated from JSON Schema.
@@ -131,7 +131,7 @@ public readonly partial struct PersonName
                         result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/familyName/$ref"), JsonPropertyNames.FamilyName);
                     }
 
-                    ValidationContext propertyResult = property.Value.As<Sandbox.Models.PersonNameElement>().Validate(result.CreateChildContext(), level);
+                    ValidationContext propertyResult = property.Value.As<JsonSchemaSample.Api.PersonNameElement>().Validate(result.CreateChildContext(), level);
                     result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
                     if (level > ValidationLevel.Basic)
                     {
@@ -151,7 +151,7 @@ public readonly partial struct PersonName
                         result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/givenName/$ref"), JsonPropertyNames.GivenName);
                     }
 
-                    ValidationContext propertyResult = property.Value.As<Sandbox.Models.PersonNameElement>().Validate(result.CreateChildContext(), level);
+                    ValidationContext propertyResult = property.Value.As<JsonSchemaSample.Api.PersonNameElement>().Validate(result.CreateChildContext(), level);
                     result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
                     if (level > ValidationLevel.Basic)
                     {
@@ -171,7 +171,7 @@ public readonly partial struct PersonName
                         result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/otherNames/$ref"), JsonPropertyNames.OtherNames);
                     }
 
-                    ValidationContext propertyResult = property.Value.As<Sandbox.Models.OtherNames>().Validate(result.CreateChildContext(), level);
+                    ValidationContext propertyResult = property.Value.As<JsonSchemaSample.Api.OtherNames>().Validate(result.CreateChildContext(), level);
                     result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
                     if (level > ValidationLevel.Basic)
                     {

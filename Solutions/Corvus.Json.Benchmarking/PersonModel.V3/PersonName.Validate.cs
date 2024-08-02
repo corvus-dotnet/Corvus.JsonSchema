@@ -163,12 +163,12 @@ public readonly partial struct PersonName
                         return result;
                     }
                 }
-                else if (property.NameEquals(JsonPropertyNames.OtherNamesValueUtf8, JsonPropertyNames.OtherNamesValue))
+                else if (property.NameEquals(JsonPropertyNames.OtherNamesUtf8, JsonPropertyNames.OtherNames))
                 {
                     result = result.WithLocalProperty(propertyCount);
                     if (level > ValidationLevel.Basic)
                     {
-                        result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/otherNames/$ref"), JsonPropertyNames.OtherNamesValue);
+                        result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/otherNames/$ref"), JsonPropertyNames.OtherNames);
                     }
 
                     ValidationContext propertyResult = property.Value.As<Corvus.Json.Benchmarking.Models.V3.OtherNames>().Validate(result.CreateChildContext(), level);

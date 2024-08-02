@@ -14,7 +14,7 @@ using System.Text.Json;
 using Corvus.Json;
 using Corvus.Json.Internal;
 
-namespace Corvus.Json.Benchmarking.Models.V3;
+namespace JsonSchemaSample.Api;
 
 /// <summary>
 /// Generated from JSON Schema.
@@ -25,7 +25,7 @@ namespace Corvus.Json.Benchmarking.Models.V3;
 /// </para>
 /// </remarks>
 public readonly partial struct PersonName
-    : IJsonObject<Corvus.Json.Benchmarking.Models.V3.PersonName>
+    : IJsonObject<JsonSchemaSample.Api.PersonName>
 {
     /// <summary>
     /// Conversion from <see cref="ImmutableList{JsonObjectProperty}"/>.
@@ -122,7 +122,7 @@ public readonly partial struct PersonName
     /// The person's family name.
     /// </para>
     /// </remarks>
-    public Corvus.Json.Benchmarking.Models.V3.PersonNameElement FamilyName
+    public JsonSchemaSample.Api.PersonNameElement FamilyName
     {
         get
         {
@@ -143,7 +143,7 @@ public readonly partial struct PersonName
             {
                 if (this.objectBacking.TryGetValue(JsonPropertyNames.FamilyName, out JsonAny result))
                 {
-                    return result.As<Corvus.Json.Benchmarking.Models.V3.PersonNameElement>();
+                    return result.As<JsonSchemaSample.Api.PersonNameElement>();
                 }
             }
 
@@ -159,7 +159,7 @@ public readonly partial struct PersonName
     /// The person's given name.
     /// </para>
     /// </remarks>
-    public Corvus.Json.Benchmarking.Models.V3.PersonNameElement GivenName
+    public JsonSchemaSample.Api.PersonNameElement GivenName
     {
         get
         {
@@ -180,7 +180,7 @@ public readonly partial struct PersonName
             {
                 if (this.objectBacking.TryGetValue(JsonPropertyNames.GivenName, out JsonAny result))
                 {
-                    return result.As<Corvus.Json.Benchmarking.Models.V3.PersonNameElement>();
+                    return result.As<JsonSchemaSample.Api.PersonNameElement>();
                 }
             }
 
@@ -196,7 +196,7 @@ public readonly partial struct PersonName
     /// Other (middle) names for the person
     /// </para>
     /// </remarks>
-    public Corvus.Json.Benchmarking.Models.V3.OtherNames OtherNames
+    public JsonSchemaSample.Api.OtherNames OtherNames
     {
         get
         {
@@ -217,7 +217,7 @@ public readonly partial struct PersonName
             {
                 if (this.objectBacking.TryGetValue(JsonPropertyNames.OtherNames, out JsonAny result))
                 {
-                    return result.As<Corvus.Json.Benchmarking.Models.V3.OtherNames>();
+                    return result.As<JsonSchemaSample.Api.OtherNames>();
                 }
             }
 
@@ -251,9 +251,9 @@ public readonly partial struct PersonName
     /// Creates an instance of a <see cref="PersonName"/>.
     /// </summary>
     public static PersonName Create(
-        in Corvus.Json.Benchmarking.Models.V3.PersonNameElement familyName,
-        in Corvus.Json.Benchmarking.Models.V3.PersonNameElement? givenName = null,
-        in Corvus.Json.Benchmarking.Models.V3.OtherNames? otherNames = null)
+        in JsonSchemaSample.Api.PersonNameElement familyName,
+        in JsonSchemaSample.Api.PersonNameElement? givenName = null,
+        in JsonSchemaSample.Api.OtherNames? otherNames = null)
     {
         var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
         builder.Add(JsonPropertyNames.FamilyName, familyName.AsAny);

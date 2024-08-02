@@ -1069,7 +1069,7 @@ public readonly partial struct Schema
     /// <summary>
     /// Gets the (optional) <c>format</c> property.
     /// </summary>
-    public Corvus.Json.JsonString FormatValue
+    public Corvus.Json.JsonString Format
     {
         get
         {
@@ -1080,7 +1080,7 @@ public readonly partial struct Schema
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.FormatValueUtf8, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.FormatUtf8, out JsonElement result))
                 {
                     return new(result);
                 }
@@ -1088,7 +1088,7 @@ public readonly partial struct Schema
 
             if ((this.backing & Backing.Object) != 0)
             {
-                if (this.objectBacking.TryGetValue(JsonPropertyNames.FormatValue, out JsonAny result))
+                if (this.objectBacking.TryGetValue(JsonPropertyNames.Format, out JsonAny result))
                 {
                     return result.As<Corvus.Json.JsonString>();
                 }
@@ -2050,7 +2050,7 @@ public readonly partial struct Schema
         in Corvus.Json.JsonArray? examples = null,
         in Corvus.Json.JsonNumber? exclusiveMaximum = null,
         in Corvus.Json.JsonNumber? exclusiveMinimum = null,
-        in Corvus.Json.JsonString? formatValue = null,
+        in Corvus.Json.JsonString? format = null,
         in Corvus.Json.JsonSchema.Draft201909.Schema? ifEntity = null,
         in Corvus.Json.JsonSchema.Draft201909.Applicator.ItemsEntity? items = null,
         in Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeInteger? maxContains = null,
@@ -2231,9 +2231,9 @@ public readonly partial struct Schema
             builder.Add(JsonPropertyNames.ExclusiveMinimum, exclusiveMinimum.Value.AsAny);
         }
 
-        if (formatValue is not null)
+        if (format is not null)
         {
-            builder.Add(JsonPropertyNames.FormatValue, formatValue.Value.AsAny);
+            builder.Add(JsonPropertyNames.Format, format.Value.AsAny);
         }
 
         if (ifEntity is not null)
@@ -2973,9 +2973,9 @@ public readonly partial struct Schema
         public const string ExclusiveMinimum = "exclusiveMinimum";
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="FormatValue"/>.
+        /// Gets the JSON property name for <see cref="Format"/>.
         /// </summary>
-        public const string FormatValue = "format";
+        public const string Format = "format";
 
         /// <summary>
         /// Gets the JSON property name for <see cref="If"/>.
@@ -3268,9 +3268,9 @@ public readonly partial struct Schema
         public static ReadOnlySpan<byte> ExclusiveMinimumUtf8 => "exclusiveMinimum"u8;
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="FormatValue"/>.
+        /// Gets the JSON property name for <see cref="Format"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> FormatValueUtf8 => "format"u8;
+        public static ReadOnlySpan<byte> FormatUtf8 => "format"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="If"/>.
