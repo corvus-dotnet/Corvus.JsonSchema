@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 	<Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
 
 	<PropertyGroup>
@@ -29,13 +29,15 @@
 		<Compile Remove="Steps\UriTemplateSteps.cs" />
     <SpecFlowFeatureFiles Remove="Features/**/*-net80.feature" />
     <Compile Remove="Features/**/*-net80.feature.cs" />
+    <SpecFlowFeatureFiles Remove="Features/**/TruncatePath.feature" />
+    <Compile Remove="Features/**/TruncatePath.feature.cs" />
   </ItemGroup>
 
 	<ItemGroup Condition="'$(TargetFramework)' == 'net80'">
-		<SpecFlowFeatureFiles Remove="Features/**/numeric-format-netstandard20.feature" />
+    <SpecFlowFeatureFiles Remove="Features/**/numeric-format-netstandard20.feature" />
 		<Compile Remove="Features/**/numeric-format-netstandard20.feature.cs" />
-	</ItemGroup>
-
+  </ItemGroup>
+  
 	<ItemGroup>
     <PackageReference Include="System.Text.RegularExpressions" Version="4.3.1" />
     <PackageReference Include="System.Text.Json" Version="8.0.4" />
@@ -154,6 +156,10 @@
 
 	<ItemGroup>
 		<PackageReference Update="Roslynator.Analyzers" Version="4.12.4" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="Features\PathTruncation\" />
 	</ItemGroup>
 
 </Project>
