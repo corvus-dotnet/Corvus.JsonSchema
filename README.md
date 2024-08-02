@@ -316,7 +316,9 @@ We also provide  a [full hands-on-lab](docs/GettingStartedWithJsonSchemaCodeGene
 
 ## Use of dotnet-t4 and PowerShell
 
-This project uses [dotnet-t4](https://www.nuget.org/packages/dotnet-t4) to generate code from t4 templates for the built-in JSON types in `Corvus.Json.ExtendedTypes`. If you add or update templates, you will need to run the relevant `BuildTemplates.ps1` batch file to regenerate them.
+This project uses [dotnet-t4](https://www.nuget.org/packages/dotnet-t4) to generate code from t4 templates
+for the built-in JSON types in `Corvus.Json.ExtendedTypes`. If you add or update templates, you will need to
+run the `./Solutions/BuildTemplates.ps1` batch file to regenerate them.
 
 ```
 dotnet tool install --global dotnet-t4 --version 2.2.1

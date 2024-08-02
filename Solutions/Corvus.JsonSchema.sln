@@ -26,6 +26,11 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Corvus.JsonSchema.SpecGenerator", "Corvus.JsonSchema.SpecGenerator\Corvus.JsonSchema.SpecGenerator.csproj", "{428FA47D-641B-41B4-A49C-D39CEAF48B0A}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Code Generation", "Code Generation", "{95D2B90C-DBBA-4AF7-BAE8-4E933E050E75}"
+	ProjectSection(SolutionItems) = preProject
+		buildtemplates.ps1 = buildtemplates.ps1
+		generatetypes-release.ps1 = generatetypes-release.ps1
+		generatetypes.ps1 = generatetypes.ps1
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Generated Schema Models", "Generated Schema Models", "{3D0E15DD-5C66-4C2E-BAD1-F10A3B7B4A31}"
 EndProject
@@ -82,6 +87,13 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Corvus.Json.CodeGeneration.OpenApi30", "Corvus.Json.CodeGeneration.OpenApi30\Corvus.Json.CodeGeneration.OpenApi30.csproj", "{C991F65F-AA10-4D3F-A7C8-FE80738DABDA}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sandbox", "Sandbox\Sandbox.csproj", "{0771CCDA-52A7-406E-90F2-CEC4C17C96B6}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "scripts", "scripts", "{39EB419E-DD94-44FE-9D66-85F2C45A345A}"
+	ProjectSection(SolutionItems) = preProject
+		buildtemplates.ps1 = buildtemplates.ps1
+		generatetypes-release.ps1 = generatetypes-release.ps1
+		generatetypes.ps1 = generatetypes.ps1
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -311,6 +323,7 @@ Global
 		{C74C1DB2-77CB-42F3-BC99-D998BFC91EA3} = {61768B8B-B9E7-4B3D-BD95-BE8358CDDDB0}
 		{667C2A80-D723-4DF7-86AC-E9978D8640A6} = {61768B8B-B9E7-4B3D-BD95-BE8358CDDDB0}
 		{C991F65F-AA10-4D3F-A7C8-FE80738DABDA} = {61768B8B-B9E7-4B3D-BD95-BE8358CDDDB0}
+		{39EB419E-DD94-44FE-9D66-85F2C45A345A} = {95D2B90C-DBBA-4AF7-BAE8-4E933E050E75}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {D744631F-1DD6-4290-BF2D-67925BA2341D}
