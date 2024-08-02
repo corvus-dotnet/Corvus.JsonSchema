@@ -33,8 +33,8 @@ public class ValidateSmallDocument
     private static readonly JsonEverything.EvaluationOptions Options = new() { OutputFormat = JsonEverything.OutputFormat.Flag };
 
     private JsonDocument? objectDocument;
-    private Models.V2.Person personV2;
     private Models.V3.Person personV3;
+    private Models.V4.Person personV4;
     private JsonNode? node;
     private JsonEverything.JsonSchema? schema;
 
@@ -45,10 +45,10 @@ public class ValidateSmallDocument
     public void GlobalSetup()
     {
         this.objectDocument = JsonDocument.Parse(JsonText);
-        this.personV2 = Models.V2.Person.FromJson(this.objectDocument.RootElement.Clone());
         this.personV3 = Models.V3.Person.FromJson(this.objectDocument.RootElement.Clone());
+        this.personV4 = Models.V4.Person.FromJson(this.objectDocument.RootElement.Clone());
         this.schema = JsonEverything.JsonSchema.FromFile("./person-schema.json");
-        this.node = System.Text.Json.Nodes.JsonObject.Create(this.personV2.AsJsonElement.Clone());
+        this.node = System.Text.Json.Nodes.JsonObject.Create(this.personV3.AsJsonElement.Clone());
     }
 
     /// <summary>
@@ -64,12 +64,12 @@ public class ValidateSmallDocument
     }
 
     /// <summary>
-    /// Validates using the Corvus V2 types.
+    /// Validates using the Corvus V3 types.
     /// </summary>
     [Benchmark(Baseline = true)]
-    public void ValidateSmallDocumentCorvusV2()
+    public void ValidateSmallDocumentCorvusV3()
     {
-        ValidationContext result = this.personV2.Validate(ValidationContext.ValidContext);
+        ValidationContext result = this.personV3.Validate(ValidationContext.ValidContext);
         if (!result.IsValid)
         {
             throw new InvalidOperationException();
@@ -77,12 +77,12 @@ public class ValidateSmallDocument
     }
 
     /// <summary>
-    /// Validates using the Corvus V2 types.
+    /// Validates using the Corvus V3 types.
     /// </summary>
     [Benchmark]
-    public void ValidateSmallDocumentCorvusV3()
+    public void ValidateSmallDocumentCorvusV4()
     {
-        ValidationContext result = this.personV3.Validate(ValidationContext.ValidContext);
+        ValidationContext result = this.personV4.Validate(ValidationContext.ValidContext);
         if (!result.IsValid)
         {
             throw new InvalidOperationException();

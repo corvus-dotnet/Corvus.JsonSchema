@@ -6,274 +6,118 @@
 //     the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
-
 #nullable enable
-
 using System.Collections.Immutable;
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
 using Corvus.Json.Internal;
 
 namespace Corvus.Json.Benchmarking.Models.V3;
-
 /// <summary>
-/// Generated from JSON Schema.
+/// A name of a person.
 /// </summary>
 /// <remarks>
 /// <para>
-/// A name of a person.
+/// This supports the full range of names, including those with multiple parts, prefixes, and suffixes.
+/// </para>
+/// <para>
+/// It is not restricted to a single part, such as a given name or family name.
+/// </para>
+/// <para>
+/// Examples:
+/// <example>
+/// <code>
+/// {"familyName":"Jones","givenName":"Terry"}
+/// </code>
+/// </example>
+/// <example>
+/// <code>
+/// {"familyName":"Jones","givenName":"Terry","otherNames":["Lee","Gary"]}
+/// </code>
+/// </example>
+/// <example>
+/// <code>
+/// {"familyName":"Jones","givenName":"Terry","otherNames":"Lee"}
+/// </code>
+/// </example>
 /// </para>
 /// </remarks>
-public readonly partial struct PersonName
-    : IJsonObject<Corvus.Json.Benchmarking.Models.V3.PersonName>
+public readonly partial struct PersonName : IJsonObject<PersonName>
 {
     /// <summary>
-    /// Conversion from <see cref="ImmutableList{JsonObjectProperty}"/>.
+    /// Initializes a new instance of the <see cref = "PersonName"/> struct.
     /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator PersonName(ImmutableList<JsonObjectProperty> value)
+    /// <param name = "value">The value from which to construct the instance.</param>
+    public PersonName(ImmutableList<JsonObjectProperty> value)
     {
-        return new(value);
-    }
-
-    /// <summary>
-    /// Conversion to <see cref="ImmutableList{JsonObjectProperty}"/>.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator ImmutableList<JsonObjectProperty>(PersonName value)
-    {
-        return
-            __CorvusObjectHelpers.GetPropertyBacking(value);
+        this.jsonElementBacking = default;
+        this.backing = Backing.Object;
+        this.objectBacking = value;
     }
 
     /// <summary>
     /// Conversion from JsonObject.
     /// </summary>
-    /// <param name="value">The value from which to convert.</param>
+    /// <param name = "value">The value from which to convert.</param>
     public static implicit operator PersonName(JsonObject value)
     {
         if (value.HasDotnetBacking && value.ValueKind == JsonValueKind.Object)
         {
-            return new(
-                __CorvusObjectHelpers.GetPropertyBacking(value));
+            return new(value.AsPropertyBacking());
         }
 
         return new(value.AsJsonElement);
     }
 
-    /// <summary>
-    /// Conversion to JsonObject.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator JsonObject(PersonName value)
+    /// <inheritdoc/>
+    public ImmutableList<JsonObjectProperty> AsPropertyBacking()
     {
-        return
-            value.AsObject;
+        return this.GetPropertyBacking();
     }
 
     /// <inheritdoc/>
-    public Corvus.Json.JsonAny this[in JsonPropertyName name]
+    public JsonAny this[in JsonPropertyName name]
     {
         get
         {
-            if (this.TryGetProperty(name, out Corvus.Json.JsonAny result))
+            if (this.TryGetProperty(name, out JsonAny result))
             {
                 return result;
             }
 
-            throw new InvalidOperationException();
+            throw new IndexOutOfRangeException();
         }
     }
 
     /// <summary>
-    /// Gets the number of properties in the object.
+    /// Creates an instance of the type from the given dictionary of properties.
     /// </summary>
-    public int Count
-    {
-        get
-        {
-            if ((this.backing & Backing.JsonElement) != 0)
-            {
-                int count = 0;
-                foreach (var _ in this.jsonElementBacking.EnumerateObject())
-                {
-                    count++;
-                }
-                return count;
-            }
-
-            if ((this.backing & Backing.Object) != 0)
-            {
-                return this.objectBacking.Count;
-            }
-
-            throw new InvalidOperationException();
-        }
-    }
-
-    /// <summary>
-    /// Gets the <c>familyName</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
-    /// </para>
-    /// <para>
-    /// The person's family name.
-    /// </para>
-    /// </remarks>
-    public Corvus.Json.Benchmarking.Models.V3.PersonNameElement FamilyName
-    {
-        get
-        {
-            if ((this.backing & Backing.JsonElement) != 0)
-            {
-                if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
-                {
-                    return default;
-                }
-
-                if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.FamilyNameUtf8, out JsonElement result))
-                {
-                    return new(result);
-                }
-            }
-
-            if ((this.backing & Backing.Object) != 0)
-            {
-                if (this.objectBacking.TryGetValue(JsonPropertyNames.FamilyName, out JsonAny result))
-                {
-                    return result.As<Corvus.Json.Benchmarking.Models.V3.PersonNameElement>();
-                }
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the (optional) <c>givenName</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// The person's given name.
-    /// </para>
-    /// </remarks>
-    public Corvus.Json.Benchmarking.Models.V3.PersonNameElement GivenName
-    {
-        get
-        {
-            if ((this.backing & Backing.JsonElement) != 0)
-            {
-                if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
-                {
-                    return default;
-                }
-
-                if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.GivenNameUtf8, out JsonElement result))
-                {
-                    return new(result);
-                }
-            }
-
-            if ((this.backing & Backing.Object) != 0)
-            {
-                if (this.objectBacking.TryGetValue(JsonPropertyNames.GivenName, out JsonAny result))
-                {
-                    return result.As<Corvus.Json.Benchmarking.Models.V3.PersonNameElement>();
-                }
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the (optional) <c>otherNames</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// Other (middle) names for the person
-    /// </para>
-    /// </remarks>
-    public Corvus.Json.Benchmarking.Models.V3.OtherNames OtherNames
-    {
-        get
-        {
-            if ((this.backing & Backing.JsonElement) != 0)
-            {
-                if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
-                {
-                    return default;
-                }
-
-                if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.OtherNamesUtf8, out JsonElement result))
-                {
-                    return new(result);
-                }
-            }
-
-            if ((this.backing & Backing.Object) != 0)
-            {
-                if (this.objectBacking.TryGetValue(JsonPropertyNames.OtherNames, out JsonAny result))
-                {
-                    return result.As<Corvus.Json.Benchmarking.Models.V3.OtherNames>();
-                }
-            }
-
-            return default;
-        }
-    }
-
-    /// <inheritdoc/>
+    /// <param name = "source">The dictionary of properties.</param>
+    /// <returns>An instance of the type initialized from the dictionary of properties.</returns>
     public static PersonName FromProperties(IDictionary<JsonPropertyName, JsonAny> source)
     {
         return new(source.Select(kvp => new JsonObjectProperty(kvp.Key, kvp.Value)).ToImmutableList());
     }
 
-    /// <inheritdoc/>
-    public static PersonName FromProperties(params (JsonPropertyName Name, JsonAny Value)[] source)
-    {
-        return new(source.Select(s => new JsonObjectProperty(s.Name, s.Value.AsAny)).ToImmutableList());
-    }
-
     /// <summary>
-    /// Creates an instance of the type from the given immutable list of properties.
+    /// Creates an instance of the type from the given dictionary of properties.
     /// </summary>
-    /// <param name="source">The list of properties.</param>
-    /// <returns>An instance of the type initialized from the list of properties.</returns>
+    /// <param name = "source">The dictionary of properties.</param>
+    /// <returns>An instance of the type initialized from the dictionary of properties.</returns>
     public static PersonName FromProperties(ImmutableList<JsonObjectProperty> source)
     {
         return new(source);
     }
 
     /// <summary>
-    /// Creates an instance of a <see cref="PersonName"/>.
+    /// Creates an instance of the type from the given dictionary of properties.
     /// </summary>
-    public static PersonName Create(
-        in Corvus.Json.Benchmarking.Models.V3.PersonNameElement familyName,
-        in Corvus.Json.Benchmarking.Models.V3.PersonNameElement? givenName = null,
-        in Corvus.Json.Benchmarking.Models.V3.OtherNames? otherNames = null)
+    /// <param name = "source">The dictionary of properties.</param>
+    /// <returns>An instance of the type initialized from the dictionary of properties.</returns>
+    public static PersonName FromProperties(params (JsonPropertyName Name, JsonAny Value)[] source)
     {
-        var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
-        builder.Add(JsonPropertyNames.FamilyName, familyName.AsAny);
-        if (givenName is not null)
-        {
-            builder.Add(JsonPropertyNames.GivenName, givenName.Value.AsAny);
-        }
-
-        if (otherNames is not null)
-        {
-            builder.Add(JsonPropertyNames.OtherNames, otherNames.Value.AsAny);
-        }
-
-        return new(builder.ToImmutable());
-    }
-
-    /// <inheritdoc/>
-    public ImmutableList<JsonObjectProperty> AsPropertyBacking()
-    {
-        return __CorvusObjectHelpers.GetPropertyBacking(this);
+        return new(source.Select(s => new JsonObjectProperty(s.Name, s.Value)).ToImmutableList());
     }
 
     /// <inheritdoc/>
@@ -309,84 +153,78 @@ public readonly partial struct PersonName
         throw new InvalidOperationException();
     }
 
-    /// <inheritdoc />
+    /// <inheritdoc/>
     public bool HasProperty(in JsonPropertyName name)
     {
-        if ((this.backing & Backing.Object) != 0)
-        {
-            return this.objectBacking.ContainsKey(name);
-        }
-
         if ((this.backing & Backing.JsonElement) != 0)
         {
             return name.TryGetProperty(this.jsonElementBacking, out JsonElement _);
         }
 
+        if ((this.backing & Backing.Object) != 0)
+        {
+            return this.objectBacking.ContainsKey(name);
+        }
+
         throw new InvalidOperationException();
     }
 
-    /// <inheritdoc />
+    /// <inheritdoc/>
     public bool HasProperty(string name)
     {
-        if ((this.backing & Backing.Object) != 0)
-        {
-            return this.objectBacking.ContainsKey(name);
-        }
-
         if ((this.backing & Backing.JsonElement) != 0)
         {
             return this.jsonElementBacking.TryGetProperty(name, out _);
         }
 
+        if ((this.backing & Backing.Object) != 0)
+        {
+            return this.objectBacking.ContainsKey(name);
+        }
+
         throw new InvalidOperationException();
     }
 
-    /// <inheritdoc />
+    /// <inheritdoc/>
     public bool HasProperty(ReadOnlySpan<char> name)
     {
-        if ((this.backing & Backing.Object) != 0)
-        {
-            return this.objectBacking.ContainsKey(name);
-        }
-
         if ((this.backing & Backing.JsonElement) != 0)
         {
             return this.jsonElementBacking.TryGetProperty(name, out _);
         }
 
+        if ((this.backing & Backing.Object) != 0)
+        {
+            return this.objectBacking.ContainsKey(name);
+        }
+
         throw new InvalidOperationException();
     }
 
-    /// <inheritdoc />
-    public bool HasProperty(ReadOnlySpan<byte> name)
+    /// <inheritdoc/>
+    public bool HasProperty(ReadOnlySpan<byte> utf8Name)
     {
-        if ((this.backing & Backing.Object) != 0)
-        {
-            return this.objectBacking.ContainsKey(name);
-        }
-
         if ((this.backing & Backing.JsonElement) != 0)
         {
-            return this.jsonElementBacking.TryGetProperty(name, out _);
+            return this.jsonElementBacking.TryGetProperty(utf8Name, out _);
+        }
+
+        if ((this.backing & Backing.Object) != 0)
+        {
+            return this.objectBacking.ContainsKey(utf8Name);
         }
 
         throw new InvalidOperationException();
     }
 
-    /// <summary>
-    /// Get a property.
-    /// </summary>
-    /// <param name="name">The name of the property.</param>
-    /// <param name="value">The value of the property.</param>
-    /// <returns><c>True</c> if the property was present.</returns>
-    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+    /// <inheritdoc/>
     public bool TryGetProperty(in JsonPropertyName name, out JsonAny value)
     {
         if ((this.backing & Backing.JsonElement) != 0)
         {
-            if (name.TryGetProperty(this.jsonElementBacking, out JsonElement element))
+            if (name.TryGetProperty(this.jsonElementBacking, out JsonElement result))
             {
-                value = new(element);
+                value = new(result);
                 return true;
             }
 
@@ -396,33 +234,20 @@ public readonly partial struct PersonName
 
         if ((this.backing & Backing.Object) != 0)
         {
-            if (this.objectBacking.TryGetValue(name, out JsonAny result))
-            {
-                value = result;
-                return true;
-            }
-
-            value = default;
-            return false;
+            return this.objectBacking.TryGetValue(name, out value);
         }
 
         throw new InvalidOperationException();
     }
 
-    /// <summary>
-    /// Get a property.
-    /// </summary>
-    /// <param name="name">The name of the property.</param>
-    /// <param name="value">The value of the property.</param>
-    /// <returns><c>True</c> if the property was present.</returns>
-    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+    /// <inheritdoc/>
     public bool TryGetProperty(string name, out JsonAny value)
     {
         if ((this.backing & Backing.JsonElement) != 0)
         {
-            if (this.jsonElementBacking.TryGetProperty(name, out JsonElement element))
+            if (this.jsonElementBacking.TryGetProperty(name, out JsonElement result))
             {
-                value = new(element);
+                value = new(result);
                 return true;
             }
 
@@ -432,33 +257,20 @@ public readonly partial struct PersonName
 
         if ((this.backing & Backing.Object) != 0)
         {
-            if (this.objectBacking.TryGetValue(name, out JsonAny result))
-            {
-                value = result;
-                return true;
-            }
-
-            value = default;
-            return false;
+            return this.objectBacking.TryGetValue(name, out value);
         }
 
         throw new InvalidOperationException();
     }
 
-    /// <summary>
-    /// Get a property.
-    /// </summary>
-    /// <param name="name">The name of the property.</param>
-    /// <param name="value">The value of the property.</param>
-    /// <returns><c>True</c> if the property was present.</returns>
-    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+    /// <inheritdoc/>
     public bool TryGetProperty(ReadOnlySpan<char> name, out JsonAny value)
     {
         if ((this.backing & Backing.JsonElement) != 0)
         {
-            if (this.jsonElementBacking.TryGetProperty(name, out JsonElement element))
+            if (this.jsonElementBacking.TryGetProperty(name, out JsonElement result))
             {
-                value = new(element);
+                value = new(result);
                 return true;
             }
 
@@ -468,33 +280,20 @@ public readonly partial struct PersonName
 
         if ((this.backing & Backing.Object) != 0)
         {
-            if (this.objectBacking.TryGetValue(name, out JsonAny result))
-            {
-                value = result;
-                return true;
-            }
-
-            value = default;
-            return false;
+            return this.objectBacking.TryGetValue(name, out value);
         }
 
         throw new InvalidOperationException();
     }
 
-    /// <summary>
-    /// Get a property.
-    /// </summary>
-    /// <param name="name">The name of the property.</param>
-    /// <param name="value">The value of the property.</param>
-    /// <returns><c>True</c> if the property was present.</returns>
-    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-    public bool TryGetProperty(ReadOnlySpan<byte> name, out JsonAny value)
+    /// <inheritdoc/>
+    public bool TryGetProperty(ReadOnlySpan<byte> utf8Name, out JsonAny value)
     {
         if ((this.backing & Backing.JsonElement) != 0)
         {
-            if (this.jsonElementBacking.TryGetProperty(name, out JsonElement element))
+            if (this.jsonElementBacking.TryGetProperty(utf8Name, out JsonElement result))
             {
-                value = new(element);
+                value = new(result);
                 return true;
             }
 
@@ -504,33 +303,25 @@ public readonly partial struct PersonName
 
         if ((this.backing & Backing.Object) != 0)
         {
-            if (this.objectBacking.TryGetValue(name, out JsonAny result))
-            {
-                value = result;
-                return true;
-            }
-
-            value = default;
-            return false;
+            return this.objectBacking.TryGetValue(utf8Name, out value);
         }
 
         throw new InvalidOperationException();
     }
 
-    /// <inheritdoc />
+    /// <inheritdoc/>
     public bool TryGetProperty<TValue>(in JsonPropertyName name, out TValue value)
         where TValue : struct, IJsonValue<TValue>
     {
         if ((this.backing & Backing.JsonElement) != 0)
         {
-            if (name.TryGetProperty(this.jsonElementBacking, out JsonElement element))
+            if (name.TryGetProperty(this.jsonElementBacking, out JsonElement result))
             {
 #if NET8_0_OR_GREATER
-                value = TValue.FromJson(element);
+                value = TValue.FromJson(result);
 #else
-                value = JsonValueNetStandard20Extensions.FromJsonElement<TValue>(element);
+                value = JsonValueNetStandard20Extensions.FromJsonElement<TValue>(result);
 #endif
-
                 return true;
             }
 
@@ -557,20 +348,19 @@ public readonly partial struct PersonName
         throw new InvalidOperationException();
     }
 
-    /// <inheritdoc />
+    /// <inheritdoc/>
     public bool TryGetProperty<TValue>(string name, out TValue value)
         where TValue : struct, IJsonValue<TValue>
     {
         if ((this.backing & Backing.JsonElement) != 0)
         {
-            if (this.jsonElementBacking.TryGetProperty(name, out JsonElement element))
+            if (this.jsonElementBacking.TryGetProperty(name, out JsonElement result))
             {
 #if NET8_0_OR_GREATER
-                value = TValue.FromJson(element);
+                value = TValue.FromJson(result);
 #else
-                value = JsonValueNetStandard20Extensions.FromJsonElement<TValue>(element);
+                value = JsonValueNetStandard20Extensions.FromJsonElement<TValue>(result);
 #endif
-
                 return true;
             }
 
@@ -597,20 +387,19 @@ public readonly partial struct PersonName
         throw new InvalidOperationException();
     }
 
-    /// <inheritdoc />
+    /// <inheritdoc/>
     public bool TryGetProperty<TValue>(ReadOnlySpan<char> name, out TValue value)
         where TValue : struct, IJsonValue<TValue>
     {
         if ((this.backing & Backing.JsonElement) != 0)
         {
-            if (this.jsonElementBacking.TryGetProperty(name, out JsonElement element))
+            if (this.jsonElementBacking.TryGetProperty(name, out JsonElement result))
             {
 #if NET8_0_OR_GREATER
-                value = TValue.FromJson(element);
+                value = TValue.FromJson(result);
 #else
-                value = JsonValueNetStandard20Extensions.FromJsonElement<TValue>(element);
+                value = JsonValueNetStandard20Extensions.FromJsonElement<TValue>(result);
 #endif
-
                 return true;
             }
 
@@ -637,20 +426,19 @@ public readonly partial struct PersonName
         throw new InvalidOperationException();
     }
 
-    /// <inheritdoc />
-    public bool TryGetProperty<TValue>(ReadOnlySpan<byte> name, out TValue value)
+    /// <inheritdoc/>
+    public bool TryGetProperty<TValue>(ReadOnlySpan<byte> utf8Name, out TValue value)
         where TValue : struct, IJsonValue<TValue>
     {
         if ((this.backing & Backing.JsonElement) != 0)
         {
-            if (this.jsonElementBacking.TryGetProperty(name, out JsonElement element))
+            if (this.jsonElementBacking.TryGetProperty(utf8Name, out JsonElement result))
             {
 #if NET8_0_OR_GREATER
-                value = TValue.FromJson(element);
+                value = TValue.FromJson(result);
 #else
-                value = JsonValueNetStandard20Extensions.FromJsonElement<TValue>(element);
+                value = JsonValueNetStandard20Extensions.FromJsonElement<TValue>(result);
 #endif
-
                 return true;
             }
 
@@ -660,7 +448,7 @@ public readonly partial struct PersonName
 
         if ((this.backing & Backing.Object) != 0)
         {
-            if (this.objectBacking.TryGetValue(name, out JsonAny result))
+            if (this.objectBacking.TryGetValue(utf8Name, out JsonAny result))
             {
 #if NET8_0_OR_GREATER
                 value = TValue.FromAny(result);
@@ -677,193 +465,125 @@ public readonly partial struct PersonName
         throw new InvalidOperationException();
     }
 
-    /// <inheritdoc />
+    /// <inheritdoc/>
     public PersonName SetProperty<TValue>(in JsonPropertyName name, TValue value)
         where TValue : struct, IJsonValue
     {
-        return new(__CorvusObjectHelpers.GetPropertyBackingWith(this, name, value.AsAny));
+        return new(this.GetPropertyBackingWith(name, value.AsAny));
     }
 
-    /// <inheritdoc />
+    /// <inheritdoc/>
     public PersonName RemoveProperty(in JsonPropertyName name)
     {
-        return new(__CorvusObjectHelpers.GetPropertyBackingWithout(this, name));
+        return new(this.GetPropertyBackingWithout(name));
     }
 
-    /// <inheritdoc />
+    /// <inheritdoc/>
     public PersonName RemoveProperty(string name)
     {
-        return new(__CorvusObjectHelpers.GetPropertyBackingWithout(this, name));
+        return new(this.GetPropertyBackingWithout(name));
     }
 
-    /// <inheritdoc />
+    /// <inheritdoc/>
     public PersonName RemoveProperty(ReadOnlySpan<char> name)
     {
-        return new(__CorvusObjectHelpers.GetPropertyBackingWithout(this, name));
+        return new(this.GetPropertyBackingWithout(name));
     }
 
-    /// <inheritdoc />
-    public PersonName RemoveProperty(ReadOnlySpan<byte> name)
+    /// <inheritdoc/>
+    public PersonName RemoveProperty(ReadOnlySpan<byte> utf8Name)
     {
-        return new(__CorvusObjectHelpers.GetPropertyBackingWithout(this, name));
+        return new(this.GetPropertyBackingWithout(utf8Name));
     }
 
     /// <summary>
-    /// Provides UTF8 and string versions of the JSON property names on the object.
+    /// Builds an <see cref = "ImmutableList{JsonObjectProperty}"/> from the object.
     /// </summary>
-    public static class JsonPropertyNames
+    /// <returns>An immutable list of <see cref = "JsonAny"/> built from the array.</returns>
+    /// <exception cref = "InvalidOperationException">The value is not an array.</exception>
+    private ImmutableList<JsonObjectProperty> GetPropertyBacking()
     {
-        /// <summary>
-        /// Gets the JSON property name for <see cref="FamilyName"/>.
-        /// </summary>
-        public const string FamilyName = "familyName";
+        if ((this.backing & Backing.Object) != 0)
+        {
+            return this.objectBacking;
+        }
 
-        /// <summary>
-        /// Gets the JSON property name for <see cref="GivenName"/>.
-        /// </summary>
-        public const string GivenName = "givenName";
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="OtherNames"/>.
-        /// </summary>
-        public const string OtherNames = "otherNames";
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="FamilyName"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> FamilyNameUtf8 => "familyName"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="GivenName"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> GivenNameUtf8 => "givenName"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="OtherNames"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> OtherNamesUtf8 => "otherNames"u8;
+        return PropertyBackingBuilders.GetPropertyBackingBuilder(this.jsonElementBacking).ToImmutable();
     }
 
-    private static class __CorvusObjectHelpers
+    /// <summary>
+    /// Builds an <see cref = "ImmutableList{JsonObjectProperty}"/> from the object, without a specific property.
+    /// </summary>
+    /// <returns>An immutable dictionary builder of <see cref = "JsonPropertyName"/> to <see cref = "JsonAny"/>, built from the existing object, without the given property.</returns>
+    /// <exception cref = "InvalidOperationException">The value is not an object.</exception>
+    private ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(in JsonPropertyName name)
     {
-        /// <summary>
-        /// Builds an <see cref="ImmutableList{JsonObjectProperty}"/> from the object.
-        /// </summary>
-        /// <returns>An immutable list of <see cref="JsonAny"/> built from the object.</returns>
-        /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-        public static ImmutableList<JsonObjectProperty> GetPropertyBacking(in PersonName that)
+        if ((this.backing & Backing.Object) != 0)
         {
-            if ((that.backing & Backing.Object) != 0)
-            {
-                return that.objectBacking;
-            }
-
-            if ((that.backing & Backing.JsonElement) != 0)
-            {
-                return PropertyBackingBuilders.GetPropertyBackingBuilder(that.jsonElementBacking).ToImmutable();
-            }
-
-            throw new InvalidOperationException();
+            return this.objectBacking.Remove(name);
         }
 
-        /// <summary>
-        /// Builds an <see cref="ImmutableList{JsonObjectProperty}"/> from the object, without a specific property.
-        /// </summary>
-        /// <returns>An immutable list of <see cref="JsonObjectProperty"/>, built from the existing object, without the given property.</returns>
-        /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-        public static ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(in PersonName that, in JsonPropertyName name)
+        return PropertyBackingBuilders.GetPropertyBackingBuilderWithout(this.jsonElementBacking, name).ToImmutable();
+    }
+
+    /// <summary>
+    /// Builds an <see cref = "ImmutableList{JsonObjectProperty}"/> from the object, without a specific property.
+    /// </summary>
+    /// <returns>An immutable dictionary builder of <see cref = "JsonPropertyName"/> to <see cref = "JsonAny"/>, built from the existing object, without the given property.</returns>
+    /// <exception cref = "InvalidOperationException">The value is not an object.</exception>
+    private ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(ReadOnlySpan<char> name)
+    {
+        if ((this.backing & Backing.Object) != 0)
         {
-            if ((that.backing & Backing.Object) != 0)
-            {
-                return that.objectBacking.Remove(name);
-            }
-
-            if ((that.backing & Backing.JsonElement) != 0)
-            {
-                return PropertyBackingBuilders.GetPropertyBackingBuilderWithout(that.jsonElementBacking, name).ToImmutable();
-            }
-
-            throw new InvalidOperationException();
+            return this.objectBacking.Remove(name);
         }
 
-        /// <summary>
-        /// Builds an <see cref="ImmutableList{JsonObjectProperty}"/> from the object, without a specific property.
-        /// </summary>
-        /// <returns>An immutable list of <see cref="JsonObjectProperty"/>, built from the existing object, without the given property.</returns>
-        /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-        public static ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(in PersonName that, ReadOnlySpan<char> name)
+        return PropertyBackingBuilders.GetPropertyBackingBuilderWithout(this.jsonElementBacking, name).ToImmutable();
+    }
+
+    /// <summary>
+    /// Builds an <see cref = "ImmutableList{JsonObjectProperty}"/> from the object, without a specific property.
+    /// </summary>
+    /// <returns>An immutable dictionary builder of <see cref = "JsonPropertyName"/> to <see cref = "JsonAny"/>, built from the existing object, without the given property.</returns>
+    /// <exception cref = "InvalidOperationException">The value is not an object.</exception>
+    private ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(ReadOnlySpan<byte> name)
+    {
+        if ((this.backing & Backing.Object) != 0)
         {
-            if ((that.backing & Backing.Object) != 0)
-            {
-                return that.objectBacking.Remove(name);
-            }
-
-            if ((that.backing & Backing.JsonElement) != 0)
-            {
-                return PropertyBackingBuilders.GetPropertyBackingBuilderWithout(that.jsonElementBacking, name).ToImmutable();
-            }
-
-            throw new InvalidOperationException();
+            return this.objectBacking.Remove(name);
         }
 
-        /// <summary>
-        /// Builds an <see cref="ImmutableList{JsonObjectProperty}"/> from the object, without a specific property.
-        /// </summary>
-        /// <returns>An immutable list of <see cref="JsonObjectProperty"/>, built from the existing object, without the given property.</returns>
-        /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-        public static ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(in PersonName that, ReadOnlySpan<byte> name)
+        return PropertyBackingBuilders.GetPropertyBackingBuilderWithout(this.jsonElementBacking, name).ToImmutable();
+    }
+
+    /// <summary>
+    /// Builds an <see cref = "ImmutableList{JsonObjectProperty}"/> from the object, without a specific property.
+    /// </summary>
+    /// <returns>An immutable dictionary builder of <see cref = "JsonPropertyName"/> to <see cref = "JsonAny"/>, built from the existing object, without the given property.</returns>
+    /// <exception cref = "InvalidOperationException">The value is not an object.</exception>
+    private ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(string name)
+    {
+        if ((this.backing & Backing.Object) != 0)
         {
-            if ((that.backing & Backing.Object) != 0)
-            {
-                return that.objectBacking.Remove(name);
-            }
-
-            if ((that.backing & Backing.JsonElement) != 0)
-            {
-                return PropertyBackingBuilders.GetPropertyBackingBuilderWithout(that.jsonElementBacking, name).ToImmutable();
-            }
-
-            throw new InvalidOperationException();
+            return this.objectBacking.Remove(name);
         }
 
-        /// <summary>
-        /// Builds an <see cref="ImmutableList{JsonObjectProperty}"/> from the object, without a specific property.
-        /// </summary>
-        /// <returns>An immutable list of <see cref="JsonObjectProperty"/>, built from the existing object, without the given property.</returns>
-        /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-        public static ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(in PersonName that, string name)
+        return PropertyBackingBuilders.GetPropertyBackingBuilderWithout(this.jsonElementBacking, name).ToImmutable();
+    }
+
+    /// <summary>
+    /// Builds an <see cref = "ImmutableList{JsonObjectProperty}"/> from the object, without a specific property.
+    /// </summary>
+    /// <returns>An immutable dictionary builder of <see cref = "JsonPropertyName"/> to <see cref = "JsonAny"/>, built from the existing object, without the given property.</returns>
+    /// <exception cref = "InvalidOperationException">The value is not an object.</exception>
+    private ImmutableList<JsonObjectProperty> GetPropertyBackingWith(in JsonPropertyName name, in JsonAny value)
+    {
+        if ((this.backing & Backing.Object) != 0)
         {
-            if ((that.backing & Backing.Object) != 0)
-            {
-                return that.objectBacking.Remove(name);
-            }
-
-            if ((that.backing & Backing.JsonElement) != 0)
-            {
-                return PropertyBackingBuilders.GetPropertyBackingBuilderWithout(that.jsonElementBacking, name).ToImmutable();
-            }
-
-            throw new InvalidOperationException();
+            return this.objectBacking.SetItem(name, value);
         }
 
-        /// <summary>
-        /// Builds an <see cref="ImmutableList{JsonObjectProperty}"/> from the object, without a specific property.
-        /// </summary>
-        /// <returns>An immutable list of <see cref="JsonObjectProperty"/>, built from the existing object, with the given property.</returns>
-        /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-        public static ImmutableList<JsonObjectProperty> GetPropertyBackingWith(in PersonName that, in JsonPropertyName name, in JsonAny value)
-        {
-            if ((that.backing & Backing.Object) != 0)
-            {
-                return that.objectBacking.SetItem(name, value);
-            }
-
-            if ((that.backing & Backing.JsonElement) != 0)
-            {
-                return PropertyBackingBuilders.GetPropertyBackingBuilderReplacing(that.jsonElementBacking, name, value).ToImmutable();
-            }
-
-            throw new InvalidOperationException();
-        }
+        ImmutableList<JsonObjectProperty>.Builder result = PropertyBackingBuilders.GetPropertyBackingBuilderReplacing(this.jsonElementBacking, name, value);
+        return result.ToImmutable();
     }
 }

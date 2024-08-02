@@ -34,8 +34,8 @@ public class ValidateLargeDocumentWithAnnotationCollection
     private static readonly JsonEverything.EvaluationOptions Options = new() { OutputFormat = JsonEverything.OutputFormat.List };
 
     private JsonDocument? objectDocument;
-    private Models.V2.PersonArray personArrayV2;
     private Models.V3.PersonArray personArrayV3;
+    private Models.V4.PersonArray personArrayV4;
     private JsonNode? node;
     private JsonEverything.JsonSchema? schema;
 
@@ -54,11 +54,11 @@ public class ValidateLargeDocumentWithAnnotationCollection
             builder.Add(JsonAny.FromJson(this.objectDocument.RootElement));
         }
 
-        this.personArrayV2 = Models.V2.PersonArray.From(builder.ToImmutable()).AsJsonElementBackedValue();
         this.personArrayV3 = Models.V3.PersonArray.From(builder.ToImmutable()).AsJsonElementBackedValue();
+        this.personArrayV4 = Models.V4.PersonArray.From(builder.ToImmutable()).AsJsonElementBackedValue();
 
         this.schema = JsonEverything.JsonSchema.FromFile("./person-array-schema.json");
-        this.node = System.Text.Json.Nodes.JsonArray.Create(this.personArrayV2.AsJsonElement.Clone());
+        this.node = System.Text.Json.Nodes.JsonArray.Create(this.personArrayV3.AsJsonElement.Clone());
         return Task.CompletedTask;
     }
 
@@ -78,12 +78,12 @@ public class ValidateLargeDocumentWithAnnotationCollection
     }
 
     /// <summary>
-    /// Validates using the V2 Corvus types.
+    /// Validates using the V3 Corvus types.
     /// </summary>
     [Benchmark(Baseline = true)]
-    public void ValidateLargeArrayCorvusV2()
+    public void ValidateLargeArrayCorvusV3()
     {
-        ValidationContext result = this.personArrayV2.Validate(ValidationContext.ValidContext, ValidationLevel.Basic);
+        ValidationContext result = this.personArrayV3.Validate(ValidationContext.ValidContext, ValidationLevel.Basic);
         if (!result.IsValid)
         {
             throw new InvalidOperationException();
@@ -91,12 +91,12 @@ public class ValidateLargeDocumentWithAnnotationCollection
     }
 
     /// <summary>
-    /// Validates using the V3 Corvus types.
+    /// Validates using the V4 Corvus types.
     /// </summary>
     [Benchmark]
-    public void ValidateLargeArrayCorvusV3()
+    public void ValidateLargeArrayCorvusV4()
     {
-        ValidationContext result = this.personArrayV3.Validate(ValidationContext.ValidContext, ValidationLevel.Basic);
+        ValidationContext result = this.personArrayV4.Validate(ValidationContext.ValidContext, ValidationLevel.Basic);
         if (!result.IsValid)
         {
             throw new InvalidOperationException();

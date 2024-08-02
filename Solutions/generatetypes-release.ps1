@@ -18,5 +18,5 @@ $toolPath = './Corvus.Json.CodeGenerator/bin/Release/net8.0/Corvus.Json.JsonSche
 
 & $toolPath --rootNamespace Sandbox.Models --outputPath .\Sandbox\PersonModel\ --rootPath '#/$defs/PersonArray' --optionalAsNullable NullOrUndefined .\Corvus.Json.Benchmarking\person-schema.json
 
-& $toolPath --rootNamespace Corvus.Json.Benchmarking.Models.V3 --outputPath .\Corvus.Json.Benchmarking\PersonModel.V3\ --rootPath '#/$defs/PersonArray' .\Corvus.Json.Benchmarking\person-schema.json
+& $toolPath --rootNamespace Corvus.Json.Benchmarking.Models.V4 --outputPath .\Corvus.Json.Benchmarking\PersonModel.V4\ --rootPath '#/$defs/PersonArray' .\Corvus.Json.Benchmarking\person-schema.json
 

@@ -6,21 +6,38 @@
 //     the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
-
 #nullable enable
-
-using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
 
 namespace Corvus.Json.Benchmarking.Models.V3;
-
 /// <summary>
-/// Generated from JSON Schema.
+/// A name of a person.
 /// </summary>
 /// <remarks>
 /// <para>
-/// A name of a person.
+/// This supports the full range of names, including those with multiple parts, prefixes, and suffixes.
+/// </para>
+/// <para>
+/// It is not restricted to a single part, such as a given name or family name.
+/// </para>
+/// <para>
+/// Examples:
+/// <example>
+/// <code>
+/// {"familyName":"Jones","givenName":"Terry"}
+/// </code>
+/// </example>
+/// <example>
+/// <code>
+/// {"familyName":"Jones","givenName":"Terry","otherNames":["Lee","Gary"]}
+/// </code>
+/// </example>
+/// <example>
+/// <code>
+/// {"familyName":"Jones","givenName":"Terry","otherNames":"Lee"}
+/// </code>
+/// </example>
 /// </para>
 /// </remarks>
 public readonly partial struct PersonName
@@ -37,183 +54,27 @@ public readonly partial struct PersonName
         if (level > ValidationLevel.Basic)
         {
             result = result.UsingStack();
-            result = result.PushSchemaLocation("#/$defs/PersonName");
+            result = result.PushSchemaLocation("person-schema.json#/$defs/PersonName");
         }
 
         JsonValueKind valueKind = this.ValueKind;
-        result = CorvusValidation.TypeValidationHandler(this, valueKind, result, level);
+        result = this.ValidateType(valueKind, result, level);
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
             return result;
         }
 
-        result = CorvusValidation.ObjectValidationHandler(this, valueKind, result, level);
+        result = this.ValidateObject(valueKind, result, level);
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
             return result;
         }
 
-        if (level > ValidationLevel.Basic)
+        if (level != ValidationLevel.Flag)
         {
             result = result.PopLocation();
         }
 
         return result;
-    }
-
-    /// <summary>
-    /// Validation constants for the type.
-    /// </summary>
-    public static partial class CorvusValidation
-    {
-        /// <summary>
-        /// Core type validation.
-        /// </summary>
-        /// <param name="value">The value to validate.</param>
-        /// <param name="valueKind">The <see cref="JsonValueKind" /> of the value to validate.</param>
-        /// <param name="validationContext">The current validation context.</param>
-        /// <param name="level">The current validation level.</param>
-        /// <returns>The resulting validation context after validation.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static ValidationContext TypeValidationHandler(
-            in PersonName value,
-            JsonValueKind valueKind,
-            in ValidationContext validationContext,
-            ValidationLevel level = ValidationLevel.Flag)
-        {
-            ValidationContext result = validationContext;
-            return Corvus.Json.Validate.TypeObject(valueKind, result, level);
-        }
-
-        /// <summary>
-        /// Object validation.
-        /// </summary>
-        /// <param name="value">The value to validate.</param>
-        /// <param name="valueKind">The <see cref="JsonValueKind" /> of the value to validate.</param>
-        /// <param name="validationContext">The current validation context.</param>
-        /// <param name="level">The current validation level.</param>
-        /// <returns>The resulting validation context after validation.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static ValidationContext ObjectValidationHandler(
-            in PersonName value,
-            JsonValueKind valueKind,
-            in ValidationContext validationContext,
-            ValidationLevel level = ValidationLevel.Flag)
-        {
-            ValidationContext result = validationContext;
-            if (valueKind != JsonValueKind.Object)
-            {
-                if (level == ValidationLevel.Verbose)
-                {
-                    ValidationContext ignoredResult = validationContext;
-                    ignoredResult = ignoredResult.PushValidationLocationProperty("properties");
-                    ignoredResult = ignoredResult.WithResult(isValid: true, "Validation properties - ignored because the value is not an object");
-                    ignoredResult = ignoredResult.PopLocation();
-                    ignoredResult = ignoredResult.PushValidationLocationProperty("required");
-                    ignoredResult = ignoredResult.WithResult(isValid: true, "Validation required - ignored because the value is not an object");
-                    ignoredResult = ignoredResult.PopLocation();
-                    return ignoredResult;
-                }
-
-                return validationContext;
-            }
-
-            bool hasSeenFamilyName = false;
-            int propertyCount = 0;
-            foreach (JsonObjectProperty property in value.EnumerateObject())
-            {
-                if (property.NameEquals(JsonPropertyNames.FamilyNameUtf8, JsonPropertyNames.FamilyName))
-                {
-                    hasSeenFamilyName = true;
-                    result = result.WithLocalProperty(propertyCount);
-                    if (level > ValidationLevel.Basic)
-                    {
-                        result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/familyName/$ref"), JsonPropertyNames.FamilyName);
-                    }
-
-                    ValidationContext propertyResult = property.Value.As<Corvus.Json.Benchmarking.Models.V3.PersonNameElement>().Validate(result.CreateChildContext(), level);
-                    result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
-                    if (level > ValidationLevel.Basic)
-                    {
-                        result = result.PopLocation();
-                    }
-
-                    if (level == ValidationLevel.Flag && !result.IsValid)
-                    {
-                        return result;
-                    }
-                }
-                else if (property.NameEquals(JsonPropertyNames.GivenNameUtf8, JsonPropertyNames.GivenName))
-                {
-                    result = result.WithLocalProperty(propertyCount);
-                    if (level > ValidationLevel.Basic)
-                    {
-                        result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/givenName/$ref"), JsonPropertyNames.GivenName);
-                    }
-
-                    ValidationContext propertyResult = property.Value.As<Corvus.Json.Benchmarking.Models.V3.PersonNameElement>().Validate(result.CreateChildContext(), level);
-                    result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
-                    if (level > ValidationLevel.Basic)
-                    {
-                        result = result.PopLocation();
-                    }
-
-                    if (level == ValidationLevel.Flag && !result.IsValid)
-                    {
-                        return result;
-                    }
-                }
-                else if (property.NameEquals(JsonPropertyNames.OtherNamesUtf8, JsonPropertyNames.OtherNames))
-                {
-                    result = result.WithLocalProperty(propertyCount);
-                    if (level > ValidationLevel.Basic)
-                    {
-                        result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/otherNames/$ref"), JsonPropertyNames.OtherNames);
-                    }
-
-                    ValidationContext propertyResult = property.Value.As<Corvus.Json.Benchmarking.Models.V3.OtherNames>().Validate(result.CreateChildContext(), level);
-                    result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
-                    if (level > ValidationLevel.Basic)
-                    {
-                        result = result.PopLocation();
-                    }
-
-                    if (level == ValidationLevel.Flag && !result.IsValid)
-                    {
-                        return result;
-                    }
-                }
-
-                propertyCount++;
-            }
-
-            if (level > ValidationLevel.Basic)
-            {
-                result = result.PushValidationLocationReducedPathModifier(new("#/required/0"));
-            }
-
-            if (!hasSeenFamilyName)
-            {
-                if (level >= ValidationLevel.Basic)
-                {
-                    result = result.WithResult(isValid: false, "Validation properties - the required property 'familyName' was not present.");
-                }
-                else
-                {
-                    return result.WithResult(isValid: false);
-                }
-            }
-            else if (level == ValidationLevel.Verbose)
-            {
-                result = result.WithResult(isValid: true, "Validation properties - the required property 'familyName' was present.");
-            }
-
-            if (level > ValidationLevel.Basic)
-            {
-                result = result.PopLocation();
-            }
-
-            return result;
-        }
     }
 }

@@ -6,20 +6,18 @@
 //     the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
-
 #nullable enable
-
-using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
 
 namespace Corvus.Json.Benchmarking.Models.V3;
-
 /// <summary>
-/// Generated from JSON Schema.
+/// A numeric representation of a person's height in meters.
 /// </summary>
 public readonly partial struct HeightRangeDouble
 {
+    private static readonly BinaryJsonNumber __Corvus_Maximum = new(3.0);
+    private static readonly BinaryJsonNumber __Corvus_Minimum = new(0);
     /// <inheritdoc/>
     public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
     {
@@ -32,171 +30,27 @@ public readonly partial struct HeightRangeDouble
         if (level > ValidationLevel.Basic)
         {
             result = result.UsingStack();
-            result = result.PushSchemaLocation("#/$defs/HeightRangeDouble");
+            result = result.PushSchemaLocation("person-schema.json#/$defs/HeightRangeDouble");
         }
 
         JsonValueKind valueKind = this.ValueKind;
-        result = CorvusValidation.TypeValidationHandler(this, valueKind, result, level);
+        result = this.ValidateType(valueKind, result, level);
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
             return result;
         }
 
-        result = CorvusValidation.NumberValidationHandler(this, valueKind, result, level);
+        result = Corvus.Json.Validate.ValidateNumber(this, result, level, BinaryJsonNumber.None, __Corvus_Maximum, BinaryJsonNumber.None, __Corvus_Minimum, BinaryJsonNumber.None);
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
             return result;
         }
 
-        if (level > ValidationLevel.Basic)
+        if (level != ValidationLevel.Flag)
         {
             result = result.PopLocation();
         }
 
         return result;
-    }
-
-    /// <summary>
-    /// Validation constants for the type.
-    /// </summary>
-    public static partial class CorvusValidation
-    {
-        /// <summary>
-        /// A constant for the <c>maximum</c> keyword.
-        /// </summary>
-        public static readonly BinaryJsonNumber Maximum = new(3.0);
-
-        /// <summary>
-        /// A constant for the <c>minimum</c> keyword.
-        /// </summary>
-        public static readonly BinaryJsonNumber Minimum = new(0);
-
-        /// <summary>
-        /// Core type validation.
-        /// </summary>
-        /// <param name="value">The value to validate.</param>
-        /// <param name="valueKind">The <see cref="JsonValueKind" /> of the value to validate.</param>
-        /// <param name="validationContext">The current validation context.</param>
-        /// <param name="level">The current validation level.</param>
-        /// <returns>The resulting validation context after validation.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static ValidationContext TypeValidationHandler(
-            in HeightRangeDouble value,
-            JsonValueKind valueKind,
-            in ValidationContext validationContext,
-            ValidationLevel level = ValidationLevel.Flag)
-        {
-            ValidationContext result = validationContext;
-            return Corvus.Json.Validate.TypeNumber(valueKind, result, level);
-        }
-
-        /// <summary>
-        /// Numeric validation.
-        /// </summary>
-        /// <param name="value">The value to validate.</param>
-        /// <param name="valueKind">The <see cref="JsonValueKind" /> of the value to validate.</param>
-        /// <param name="validationContext">The current validation context.</param>
-        /// <param name="level">The current validation level.</param>
-        /// <returns>The resulting validation context after validation.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static ValidationContext NumberValidationHandler(
-            in HeightRangeDouble value,
-            JsonValueKind valueKind,
-            in ValidationContext validationContext,
-            ValidationLevel level = ValidationLevel.Flag)
-        {
-            if (valueKind != JsonValueKind.Number)
-            {
-                if (level == ValidationLevel.Verbose)
-                {
-                    ValidationContext ignoredResult = validationContext;
-                    ignoredResult = ignoredResult.PushValidationLocationProperty("maximum");
-                    ignoredResult = ignoredResult.WithResult(isValid: true, "Validation maximum - ignored because the value is not a number");
-                    ignoredResult = ignoredResult.PopLocation();
-                    ignoredResult = ignoredResult.PushValidationLocationProperty("minimum");
-                    ignoredResult = ignoredResult.WithResult(isValid: true, "Validation minimum - ignored because the value is not a number");
-                    ignoredResult = ignoredResult.PopLocation();
-                    return ignoredResult;
-                }
-
-                return validationContext;
-            }
-
-            ValidationContext result = validationContext;
-            if ((value.HasJsonElementBacking
-                ? BinaryJsonNumber.Compare(value.AsJsonElement, Maximum)
-                : BinaryJsonNumber.Compare(value.AsBinaryJsonNumber, Maximum))<= 0)
-            {
-                if (level == ValidationLevel.Verbose)
-                {
-                    result = result.PushValidationLocationProperty("maximum");
-                    result = result.WithResult(isValid: true, $"Validation maximum - {value} is less than or equal to {Maximum}");
-                    result = result.PopLocation();
-                }
-            }
-            else
-            {
-                if (level >= ValidationLevel.Basic)
-                {
-                    result = result.PushValidationLocationProperty("maximum");
-                }
-
-                if (level >= ValidationLevel.Detailed)
-                {
-                    result = result.WithResult(isValid: false, $"Validation maximum - {value} is greater than {Maximum}");
-                }
-                else if (level >= ValidationLevel.Basic)
-                {
-                    result = result.WithResult(isValid: false, "Validation maximum - is greater than the required value.");
-                }
-                else
-                {
-                    return result.WithResult(isValid: false);
-                }
-
-                if (level >= ValidationLevel.Basic)
-                {
-                    result = result.PopLocation();
-                }
-            }
-
-            if ((value.HasJsonElementBacking
-                ? BinaryJsonNumber.Compare(value.AsJsonElement, Minimum)
-                : BinaryJsonNumber.Compare(value.AsBinaryJsonNumber, Minimum))>= 0)
-            {
-                if (level == ValidationLevel.Verbose)
-                {
-                    result = result.PushValidationLocationProperty("minimum");
-                    result = result.WithResult(isValid: true, $"Validation minimum - {value} is greater than or equal to {Minimum}");
-                    result = result.PopLocation();
-                }
-            }
-            else
-            {
-                if (level >= ValidationLevel.Basic)
-                {
-                    result = result.PushValidationLocationProperty("minimum");
-                }
-
-                if (level >= ValidationLevel.Detailed)
-                {
-                    result = result.WithResult(isValid: false, $"Validation minimum - {value} is less than {Minimum}");
-                }
-                else if (level >= ValidationLevel.Basic)
-                {
-                    result = result.WithResult(isValid: false, "Validation minimum - is less than the required value.");
-                }
-                else
-                {
-                    return result.WithResult(isValid: false);
-                }
-
-                if (level >= ValidationLevel.Basic)
-                {
-                    result = result.PopLocation();
-                }
-            }
-            return result;
-        }
     }
 }

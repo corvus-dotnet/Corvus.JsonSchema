@@ -6,12 +6,8 @@
 //     the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
-
 #nullable enable
-
-#if NET8_0_OR_GREATER
 using System.Buffers;
-#endif
 using System.Collections;
 using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
@@ -20,30 +16,61 @@ using Corvus.Json;
 using Corvus.Json.Internal;
 
 namespace Corvus.Json.Benchmarking.Models.V3;
-
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
+/// <remarks>
+/// <para>
+/// A person's other (middle) names.
+/// </para>
+/// <para>
+/// This may be either a single name represented as a string, or an array of strings, representing one or more other names.
+/// </para>
+/// </remarks>
+
 #if NET8_0_OR_GREATER
 [CollectionBuilder(typeof(OtherNames), "Create")]
+public readonly partial struct OtherNames : IJsonArray<OtherNames>, IReadOnlyCollection<JsonAny>
+#else
+public readonly partial struct OtherNames : IJsonArray<OtherNames>, IReadOnlyCollection<JsonAny>
 #endif
-public readonly partial struct OtherNames
-    : IJsonArray<Corvus.Json.Benchmarking.Models.V3.OtherNames>,
-      IReadOnlyCollection<Corvus.Json.JsonAny>
 {
     /// <summary>
     /// Gets an empty array.
     /// </summary>
-    public static OtherNames EmptyArray { get; } = From(ImmutableList<JsonAny>.Empty);
+    public static readonly OtherNames EmptyArray = From(ImmutableList<JsonAny>.Empty);
+    /// <summary>
+    /// Initializes a new instance of the <see cref = "OtherNames"/> struct.
+    /// </summary>
+    /// <param name = "value">The value from which to construct the instance.</param>
+    public OtherNames(ImmutableList<JsonAny> value)
+    {
+        this.jsonElementBacking = default;
+        this.backing = Backing.Array;
+        this.stringBacking = string.Empty;
+        this.arrayBacking = value;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref = "OtherNames"/> struct.
+    /// </summary>
+    /// <param name = "value">The value from which to construct the instance.</param>
+    public OtherNames(IEnumerable<JsonAny> value)
+    {
+        this.jsonElementBacking = default;
+        this.backing = Backing.Array;
+        this.stringBacking = string.Empty;
+        this.arrayBacking = value.ToImmutableList();
+    }
 
     /// <inheritdoc/>
-    public Corvus.Json.JsonAny this[int index]
+    public JsonAny this[int index]
     {
         get
         {
             if ((this.backing & Backing.JsonElement) != 0)
             {
-                return new(this.jsonElementBacking);
+                return new JsonAny(this.jsonElementBacking[index]);
             }
 
             if ((this.backing & Backing.Array) != 0)
@@ -63,53 +90,41 @@ public readonly partial struct OtherNames
     }
 
     /// <summary>
-    /// Conversion from <see cref="ImmutableList{JsonAny}"/>.
+    /// Conversion from immutable list.
     /// </summary>
-    /// <param name="value">The value from which to convert.</param>
+    /// <param name = "value">The value from which to convert.</param>
+    public static implicit operator ImmutableList<JsonAny>(OtherNames value)
+    {
+        return value.GetImmutableList();
+    }
+
+    /// <summary>s
+    /// Conversion to immutable list.
+    /// </summary>
+    /// <param name = "value">The value from which to convert.</param>
     public static implicit operator OtherNames(ImmutableList<JsonAny> value)
     {
         return new(value);
     }
 
     /// <summary>
-    /// Conversion to <see cref="ImmutableList{JsonAny}"/>.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator ImmutableList<JsonAny>(OtherNames value)
-    {
-        return
-            __CorvusArrayHelpers.GetImmutableList(value);
-    }
-
-    /// <summary>
     /// Conversion from JsonArray.
     /// </summary>
-    /// <param name="value">The value from which to convert.</param>
+    /// <param name = "value">The value from which to convert.</param>
     public static implicit operator OtherNames(JsonArray value)
     {
         if (value.HasDotnetBacking && value.ValueKind == JsonValueKind.Array)
         {
-            return new(
-                value.AsImmutableList());
+            return new(value.AsImmutableList());
         }
 
         return new(value.AsJsonElement);
     }
 
     /// <summary>
-    /// Conversion to JsonArray.
+    /// Initializes a new instance of the <see cref = "OtherNames"/> struct.
     /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator JsonArray(OtherNames value)
-    {
-        return
-            value.AsArray;
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="OtherNames"/> struct.
-    /// </summary>
-    /// <param name="items">The list of items from which to construct the array.</param>
+    /// <param name = "items">The list of items from which to construct the array.</param>
     /// <returns>An instance of the array constructed from the list.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static OtherNames From(ImmutableList<JsonAny> items)
@@ -118,311 +133,323 @@ public readonly partial struct OtherNames
     }
 
     /// <summary>
-    /// Create an new instance of the <see cref="OtherNames"/>" struct from a span of items.
+    /// Create an array from the span of items.
     /// </summary>
-    /// <param name="items">The span of items from which to construct the array.</param>
-    /// <returns>An instance of the array constructed from the span.</returns>
-    public static OtherNames Create(ReadOnlySpan<Corvus.Json.JsonAny> items)    {
-        return new([..items]);
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="OtherNames"/> struct.
-    /// </summary>
-    /// <param name="items">The value from which to construct the instance.</param>
-    /// <returns>An instance of the array constructed from the value.</returns>
-    public static OtherNames FromItems(params Corvus.Json.JsonAny[] items)
+    /// <param name = "items">The items from which to create the array.</param>
+    /// <returns>The array containing the items.</returns>
+    public static OtherNames Create(ReadOnlySpan<JsonAny> items)
     {
         return new([..items]);
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="OtherNames"/> struct.
+    /// Initializes a new instance of the <see cref = "OtherNames"/> struct.
     /// </summary>
-    /// <typeparam name="TItem">The type of the items in the list.</typeparam>
-    /// <param name="items">The value from which to construct the instance.</param>
-    /// <returns>An instance of the array constructed from the value.</returns>
-    public static OtherNames FromItems<TItem>(params TItem[] items)
+    /// <param name = "value">The value from which to construct the instance.</param>
+    /// <returns>A JsonAny instantiated from the given items.</returns>
+    public static OtherNames FromItems(params JsonAny[] value)
+    {
+        return new(value.ToImmutableList());
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref = "OtherNames"/> struct.
+    /// </summary>
+    /// <typeparam name = "TItem">The type of the items in the list.</typeparam>
+    /// <param name = "value">The value from which to construct the instance.</param>
+    /// <returns>A OtherNames instantiated from the given items.</returns>
+    public static OtherNames FromItems<TItem>(params TItem[] value)
         where TItem : struct, IJsonValue<TItem>
-    {
-        return new([..items.Select(item => item.AsAny)]);
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="OtherNames"/> struct.
-    /// </summary>
-    /// <typeparam name="TItem1">The type of the 1st item in the array.</typeparam>
-    /// <param name="item1">The 1st item in the array.</param>
-    /// <returns>An instance of the array constructed from the values.</returns>
-    public static OtherNames FromItems<TItem1>(in TItem1 item1)
-        where TItem1 : struct, IJsonValue<TItem1>
-    {
-        return new([item1.AsAny]);
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="OtherNames"/> struct.
-    /// </summary>
-    /// <typeparam name="TItem1">The type of the 1st item in the array.</typeparam>
-    /// <typeparam name="TItem2">The type of the 2nd item in the array.</typeparam>
-    /// <param name="item1">The 1st item in the array.</param>
-    /// <param name="item2">The 2nd item in the array.</param>
-    /// <returns>An instance of the array constructed from the values.</returns>
-    public static OtherNames FromItems<TItem1, TItem2>(in TItem1 item1, in TItem2 item2)
-        where TItem1 : struct, IJsonValue<TItem1>
-        where TItem2 : struct, IJsonValue<TItem2>
-    {
-        return new([item1.AsAny, item2.AsAny]);
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="OtherNames"/> struct.
-    /// </summary>
-    /// <typeparam name="TItem1">The type of the 1st item in the array.</typeparam>
-    /// <typeparam name="TItem2">The type of the 2nd item in the array.</typeparam>
-    /// <typeparam name="TItem3">The type of the 3rd item in the array.</typeparam>
-    /// <param name="item1">The 1st item in the array.</param>
-    /// <param name="item2">The 2nd item in the array.</param>
-    /// <param name="item3">The 3rd item in the array.</param>
-    /// <returns>An instance of the array constructed from the values.</returns>
-    public static OtherNames FromItems<TItem1, TItem2, TItem3>(in TItem1 item1, in TItem2 item2, in TItem3 item3)
-        where TItem1 : struct, IJsonValue<TItem1>
-        where TItem2 : struct, IJsonValue<TItem2>
-        where TItem3 : struct, IJsonValue<TItem3>
-    {
-        return new([item1.AsAny, item2.AsAny, item3.AsAny]);
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="OtherNames"/> struct.
-    /// </summary>
-    /// <typeparam name="TItem1">The type of the 1st item in the array.</typeparam>
-    /// <typeparam name="TItem2">The type of the 2nd item in the array.</typeparam>
-    /// <typeparam name="TItem3">The type of the 3rd item in the array.</typeparam>
-    /// <typeparam name="TItem4">The type of the 4th item in the array.</typeparam>
-    /// <param name="item1">The 1st item in the array.</param>
-    /// <param name="item2">The 2nd item in the array.</param>
-    /// <param name="item3">The 3rd item in the array.</param>
-    /// <param name="item4">The 4th item in the array.</param>
-    /// <returns>An instance of the array constructed from the values.</returns>
-    public static OtherNames FromItems<TItem1, TItem2, TItem3, TItem4>(in TItem1 item1, in TItem2 item2, in TItem3 item3, in TItem4 item4)
-        where TItem1 : struct, IJsonValue<TItem1>
-        where TItem2 : struct, IJsonValue<TItem2>
-        where TItem3 : struct, IJsonValue<TItem3>
-        where TItem4 : struct, IJsonValue<TItem4>
-    {
-        return new([item1.AsAny, item2.AsAny, item3.AsAny, item4.AsAny]);
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="OtherNames"/> struct.
-    /// </summary>
-    /// <typeparam name="TItem1">The type of the 1st item in the array.</typeparam>
-    /// <typeparam name="TItem2">The type of the 2nd item in the array.</typeparam>
-    /// <typeparam name="TItem3">The type of the 3rd item in the array.</typeparam>
-    /// <typeparam name="TItem4">The type of the 4th item in the array.</typeparam>
-    /// <typeparam name="TItem5">The type of the 5th item in the array.</typeparam>
-    /// <param name="item1">The 1st item in the array.</param>
-    /// <param name="item2">The 2nd item in the array.</param>
-    /// <param name="item3">The 3rd item in the array.</param>
-    /// <param name="item4">The 4th item in the array.</param>
-    /// <param name="item5">The 5th item in the array.</param>
-    /// <returns>An instance of the array constructed from the values.</returns>
-    public static OtherNames FromItems<TItem1, TItem2, TItem3, TItem4, TItem5>(in TItem1 item1, in TItem2 item2, in TItem3 item3, in TItem4 item4, in TItem5 item5)
-        where TItem1 : struct, IJsonValue<TItem1>
-        where TItem2 : struct, IJsonValue<TItem2>
-        where TItem3 : struct, IJsonValue<TItem3>
-        where TItem4 : struct, IJsonValue<TItem4>
-        where TItem5 : struct, IJsonValue<TItem5>
-    {
-        return new([item1.AsAny, item2.AsAny, item3.AsAny, item4.AsAny, item5.AsAny]);
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="OtherNames"/> struct.
-    /// </summary>
-    /// <typeparam name="TItem1">The type of the 1st item in the array.</typeparam>
-    /// <typeparam name="TItem2">The type of the 2nd item in the array.</typeparam>
-    /// <typeparam name="TItem3">The type of the 3rd item in the array.</typeparam>
-    /// <typeparam name="TItem4">The type of the 4th item in the array.</typeparam>
-    /// <typeparam name="TItem5">The type of the 5th item in the array.</typeparam>
-    /// <typeparam name="TItem6">The type of the 6th item in the array.</typeparam>
-    /// <param name="item1">The 1st item in the array.</param>
-    /// <param name="item2">The 2nd item in the array.</param>
-    /// <param name="item3">The 3rd item in the array.</param>
-    /// <param name="item4">The 4th item in the array.</param>
-    /// <param name="item5">The 5th item in the array.</param>
-    /// <param name="item6">The 6th item in the array.</param>
-    /// <returns>An instance of the array constructed from the values.</returns>
-    public static OtherNames FromItems<TItem1, TItem2, TItem3, TItem4, TItem5, TItem6>(in TItem1 item1, in TItem2 item2, in TItem3 item3, in TItem4 item4, in TItem5 item5, in TItem6 item6)
-        where TItem1 : struct, IJsonValue<TItem1>
-        where TItem2 : struct, IJsonValue<TItem2>
-        where TItem3 : struct, IJsonValue<TItem3>
-        where TItem4 : struct, IJsonValue<TItem4>
-        where TItem5 : struct, IJsonValue<TItem5>
-        where TItem6 : struct, IJsonValue<TItem6>
-    {
-        return new([item1.AsAny, item2.AsAny, item3.AsAny, item4.AsAny, item5.AsAny, item6.AsAny]);
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="OtherNames"/> struct.
-    /// </summary>
-    /// <typeparam name="TItem1">The type of the 1st item in the array.</typeparam>
-    /// <typeparam name="TItem2">The type of the 2nd item in the array.</typeparam>
-    /// <typeparam name="TItem3">The type of the 3rd item in the array.</typeparam>
-    /// <typeparam name="TItem4">The type of the 4th item in the array.</typeparam>
-    /// <typeparam name="TItem5">The type of the 5th item in the array.</typeparam>
-    /// <typeparam name="TItem6">The type of the 6th item in the array.</typeparam>
-    /// <typeparam name="TItem7">The type of the 7th item in the array.</typeparam>
-    /// <param name="item1">The 1st item in the array.</param>
-    /// <param name="item2">The 2nd item in the array.</param>
-    /// <param name="item3">The 3rd item in the array.</param>
-    /// <param name="item4">The 4th item in the array.</param>
-    /// <param name="item5">The 5th item in the array.</param>
-    /// <param name="item6">The 6th item in the array.</param>
-    /// <param name="item7">The 7th item in the array.</param>
-    /// <returns>An instance of the array constructed from the values.</returns>
-    public static OtherNames FromItems<TItem1, TItem2, TItem3, TItem4, TItem5, TItem6, TItem7>(in TItem1 item1, in TItem2 item2, in TItem3 item3, in TItem4 item4, in TItem5 item5, in TItem6 item6, in TItem7 item7)
-        where TItem1 : struct, IJsonValue<TItem1>
-        where TItem2 : struct, IJsonValue<TItem2>
-        where TItem3 : struct, IJsonValue<TItem3>
-        where TItem4 : struct, IJsonValue<TItem4>
-        where TItem5 : struct, IJsonValue<TItem5>
-        where TItem6 : struct, IJsonValue<TItem6>
-        where TItem7 : struct, IJsonValue<TItem7>
-    {
-        return new([item1.AsAny, item2.AsAny, item3.AsAny, item4.AsAny, item5.AsAny, item6.AsAny, item7.AsAny]);
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="OtherNames"/> struct.
-    /// </summary>
-    /// <param name="items">The items from which to construct the instance.</param>
-    /// <returns>An instance of the array constructed from the items.</returns>
-    public static OtherNames FromRange(IEnumerable<Corvus.Json.JsonAny> items)
-    {
-        return new([..items]);
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="OtherNames"/> struct.
-    /// </summary>
-    /// <typeparam name="TItem">The type of the items to add.</typeparam>
-    /// <param name="items">The items from which to construct the instance.</param>
-    /// <returns>An instance of the array constructed from the items.</returns>
-    public static OtherNames FromRange<TItem>(IEnumerable<TItem> items)
-        where TItem : struct, IJsonValue<TItem>
-    {
-        return new([..items.Select(item => item.AsAny)]);
-    }
-
-    /// <summary>
-    /// Create an array from the given items.
-    /// </summary>
-    /// <param name="items">The items from which to create the array.</param>
-    /// <returns>The new array created from the items.</returns>
-    public static OtherNames FromRange(IEnumerable<string> items)
-    {
-        return new([..items]);
-    }
-
-    /// <summary>
-    /// Create an array from the given items.
-    /// </summary>
-    /// <param name="items">The items from which to create the array.</param>
-    /// <returns>The new array created from the items.</returns>
-    public static OtherNames FromRange(IEnumerable<double> items)
-    {
-        return new([..items]);
-    }
-
-    /// <summary>
-    /// Create an array from the given items.
-    /// </summary>
-    /// <param name="items">The items from which to create the array.</param>
-    /// <returns>The new array created from the items.</returns>
-    public static OtherNames FromRange(IEnumerable<float> items)
-    {
-        return new([..items]);
-    }
-
-    /// <summary>
-    /// Create an array from the given items.
-    /// </summary>
-    /// <param name="items">The items from which to create the array.</param>
-    /// <returns>The new array created from the items.</returns>
-    public static OtherNames FromRange(IEnumerable<int> items)
-    {
-        return new([..items]);
-    }
-
-    /// <summary>
-    /// Create an array from the given items.
-    /// </summary>
-    /// <param name="items">The items from which to create the array.</param>
-    /// <returns>The new array created from the items.</returns>
-    public static OtherNames FromRange(IEnumerable<long> items)
-    {
-        return new([..items]);
-    }
-
-    /// <summary>
-    /// Create an array from the given items.
-    /// </summary>
-    /// <param name="items">The items from which to create the array.</param>
-    /// <returns>The new array created from the items.</returns>
-    public static OtherNames FromRange(IEnumerable<bool> items)
-    {
-        return new([..items]);
-    }
-
-    /// <summary>
-    /// Create an array from the given items.
-    /// </summary>
-    /// <typeparam name="T">The type of the <paramref name = "items"/> from which to create the array.</typeparam>
-    /// <param name="items">The items from which to create the array.</param>
-    /// <returns>The new array created from the items.</returns>
-    /// <remarks>
-    /// This will serialize the items to create the underlying array. Note the
-    /// other overloads which avoid this serialization step.
-    /// </remarks>
-    public static OtherNames From<T>(IEnumerable<T> items)
     {
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
-        var abw = new ArrayBufferWriter<byte>();
-        using var writer = new Utf8JsonWriter(abw);
-
-        foreach (T item in items)
+        foreach (TItem item in value)
         {
-            writer.Reset();
-            JsonSerializer.Serialize(writer, item);
-            writer.Flush();
-            builder.Add(JsonAny.Parse(abw.WrittenMemory));
+            builder.Add(item.AsAny);
         }
 
         return new(builder.ToImmutable());
     }
 
-    /// <inheritdoc/>
-    IEnumerator<Corvus.Json.JsonAny> IEnumerable<Corvus.Json.JsonAny>.GetEnumerator() => this.EnumerateArray();
+    /// <summary>
+    /// Initializes a new instance of the <see cref = "OtherNames"/> struct.
+    /// </summary>
+    /// <typeparam name = "TItem1">The type of the items in the list.</typeparam>
+    /// <param name = "value1">The first value from which to construct the instance.</param>
+    /// <returns>A OtherNames instantiated from the given items.</returns>
+    public static OtherNames FromItems<TItem1>(in TItem1 value1)
+        where TItem1 : struct, IJsonValue<TItem1>
+    {
+        ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
+        builder.Add(value1.AsAny);
+        return new(builder.ToImmutable());
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref = "OtherNames"/> struct.
+    /// </summary>
+    /// <typeparam name = "TItem1">The type of the first item in the list.</typeparam>
+    /// <typeparam name = "TItem2">The type of the second item in the list.</typeparam>
+    /// <param name = "value1">The first value from which to construct the instance.</param>
+    /// <param name = "value2">The second value from which to construct the instance.</param>
+    /// <returns>A OtherNames instantiated from the given items.</returns>
+    public static OtherNames FromItems<TItem1, TItem2>(in TItem1 value1, in TItem2 value2)
+        where TItem1 : struct, IJsonValue<TItem1> where TItem2 : struct, IJsonValue<TItem2>
+    {
+        ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
+        builder.Add(value1.AsAny);
+        builder.Add(value2.AsAny);
+        return new(builder.ToImmutable());
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref = "OtherNames"/> struct.
+    /// </summary>
+    /// <typeparam name = "TItem1">The type of the first item in the list.</typeparam>
+    /// <typeparam name = "TItem2">The type of the second item in the list.</typeparam>
+    /// <typeparam name = "TItem3">The type of the third item in the list.</typeparam>
+    /// <param name = "value1">The first value from which to construct the instance.</param>
+    /// <param name = "value2">The second value from which to construct the instance.</param>
+    /// <param name = "value3">The thirdvalue from which to construct the instance.</param>
+    /// <returns>A OtherNames instantiated from the given items.</returns>
+    public static OtherNames FromItems<TItem1, TItem2, TItem3>(in TItem1 value1, in TItem2 value2, in TItem3 value3)
+        where TItem1 : struct, IJsonValue<TItem1> where TItem2 : struct, IJsonValue<TItem2> where TItem3 : struct, IJsonValue<TItem3>
+    {
+        ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
+        builder.Add(value1.AsAny);
+        builder.Add(value2.AsAny);
+        builder.Add(value3.AsAny);
+        return new(builder.ToImmutable());
+    }
+
+    /// <summary>
+    /// Create an array from the given items.
+    /// </summary>
+    /// <typeparam name = "T">The type of the <paramref name = "items"/> from which to create the array.</typeparam>
+    /// <param name = "items">The items from which to create the array.</param>
+    /// <returns>The new array created from the items.</returns>
+    /// <remarks>
+    /// This will serialize the items to create the underlying JsonArray. Note the
+    /// other overloads which avoid this serialization step.
+    /// </remarks>
+    public static OtherNames From<T>(IEnumerable<T> items)
+    {
+        ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
+        foreach (T item in items)
+        {
+            var abw = new ArrayBufferWriter<byte>();
+            using var writer = new Utf8JsonWriter(abw);
+            JsonSerializer.Serialize(writer, item);
+            writer.Flush();
+            builder.Add(JsonAny.Parse(abw.WrittenMemory));
+        }
+
+        return new OtherNames(builder.ToImmutable());
+    }
+
+    /// <summary>
+    /// Create an array from the given items.
+    /// </summary>
+    /// <param name = "items">The items from which to create the array.</param>
+    /// <returns>The new array created from the items.</returns>
+    /// <remarks>
+    /// This will serialize the items to create the underlying JsonArray. Note the
+    /// other overloads which avoid this serialization step.
+    /// </remarks>
+    public static OtherNames FromRange(IEnumerable<JsonAny> items)
+    {
+        ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
+        foreach (JsonAny item in items)
+        {
+            builder.Add(item);
+        }
+
+        return new OtherNames(builder.ToImmutable());
+    }
+
+    /// <summary>
+    /// Create an array from the given items.
+    /// </summary>
+    /// <param name = "items">The items from which to create the array.</param>
+    /// <returns>The new array created from the items.</returns>
+    /// <remarks>
+    /// This will serialize the items to create the underlying JsonArray. Note the
+    /// other overloads which avoid this serialization step.
+    /// </remarks>
+    public static OtherNames FromRange<T>(IEnumerable<T> items)
+        where T : struct, IJsonValue<T>
+    {
+        ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
+        foreach (T item in items)
+        {
+            builder.Add(item.AsAny);
+        }
+
+        return new OtherNames(builder.ToImmutable());
+    }
+
+    /// <summary>
+    /// Create an array from the given items.
+    /// </summary>
+    /// <param name = "items">The items from which to create the array.</param>
+    /// <returns>The new array created from the items.</returns>
+    public static OtherNames FromRange(IEnumerable<string> items)
+    {
+        ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
+        foreach (string item in items)
+        {
+            builder.Add((JsonAny)item);
+        }
+
+        return new OtherNames(builder.ToImmutable());
+    }
+
+    /// <summary>
+    /// Create an array from the given items.
+    /// </summary>
+    /// <param name = "items">The items from which to create the array.</param>
+    /// <returns>The new array created from the items.</returns>
+    public static OtherNames FromRange(IEnumerable<double> items)
+    {
+        ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
+        foreach (double item in items)
+        {
+            builder.Add((JsonAny)item);
+        }
+
+        return new OtherNames(builder.ToImmutable());
+    }
+
+    /// <summary>
+    /// Create an array from the given items.
+    /// </summary>
+    /// <param name = "items">The items from which to create the array.</param>
+    /// <returns>The new array created from the items.</returns>
+    public static OtherNames FromRange(IEnumerable<float> items)
+    {
+        ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
+        foreach (float item in items)
+        {
+            builder.Add((JsonAny)item);
+        }
+
+        return new OtherNames(builder.ToImmutable());
+    }
+
+    /// <summary>
+    /// Create an array from the given items.
+    /// </summary>
+    /// <param name = "items">The items from which to create the array.</param>
+    /// <returns>The new array created from the items.</returns>
+    public static OtherNames FromRange(IEnumerable<int> items)
+    {
+        ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
+        foreach (int item in items)
+        {
+            builder.Add((JsonAny)item);
+        }
+
+        return new OtherNames(builder.ToImmutable());
+    }
+
+    /// <summary>
+    /// Create an array from the given items.
+    /// </summary>
+    /// <param name = "items">The items from which to create the array.</param>
+    /// <returns>The new array created from the items.</returns>
+    public static OtherNames FromRange(IEnumerable<long> items)
+    {
+        ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
+        foreach (long item in items)
+        {
+            builder.Add((JsonAny)item);
+        }
+
+        return new OtherNames(builder.ToImmutable());
+    }
+
+    /// <summary>
+    /// Create an array from the given items.
+    /// </summary>
+    /// <param name = "items">The items from which to create the array.</param>
+    /// <returns>The new array created from the items.</returns>
+    public static OtherNames FromRange(IEnumerable<bool> items)
+    {
+        ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
+        foreach (bool item in items)
+        {
+            builder.Add((JsonAny)item);
+        }
+
+        return new OtherNames(builder.ToImmutable());
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref = "OtherNames"/> struct.
+    /// </summary>
+    /// <param name = "value1">The first value from which to construct the instance.</param>
+    /// <returns>A OtherNames instantiated from the given items.</returns>
+    public static OtherNames FromItems(in JsonAny value1)
+    {
+        ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
+        builder.Add(value1);
+        return new(builder.ToImmutable());
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref = "OtherNames"/> struct.
+    /// </summary>
+    /// <param name = "value1">The first value from which to construct the instance.</param>
+    /// <param name = "value2">The second value from which to construct the instance.</param>
+    /// <returns>A OtherNames instantiated from the given items.</returns>
+    public static OtherNames FromItems(in JsonAny value1, in JsonAny value2)
+    {
+        ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
+        builder.Add(value1);
+        builder.Add(value2);
+        return new(builder.ToImmutable());
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref = "OtherNames"/> struct.
+    /// </summary>
+    /// <param name = "value1">The first value from which to construct the instance.</param>
+    /// <param name = "value2">The second value from which to construct the instance.</param>
+    /// <param name = "value3">The thirdvalue from which to construct the instance.</param>
+    /// <returns>A OtherNames instantiated from the given items.</returns>
+    public static OtherNames FromItems(in JsonAny value1, in JsonAny value2, in JsonAny value3)
+    {
+        ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
+        builder.Add(value1);
+        builder.Add(value2);
+        builder.Add(value3);
+        return new(builder.ToImmutable());
+    }
 
     /// <inheritdoc/>
-    IEnumerator IEnumerable.GetEnumerator() => this.EnumerateArray();
+    IEnumerator<JsonAny> IEnumerable<JsonAny>.GetEnumerator()
+    {
+        return EnumerateArray();
+    }
 
     /// <inheritdoc/>
-    int IReadOnlyCollection<Corvus.Json.JsonAny>.Count => this.GetArrayLength();
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+        return EnumerateArray();
+    }
+
+    /// <inheritdoc/>
+    int IReadOnlyCollection<JsonAny>.Count => this.GetArrayLength();
 
     /// <inheritdoc/>
     public ImmutableList<JsonAny> AsImmutableList()
     {
-        return __CorvusArrayHelpers.GetImmutableList(this);
+        return this.GetImmutableList();
     }
 
     /// <inheritdoc/>
     public ImmutableList<JsonAny>.Builder AsImmutableListBuilder()
     {
-        return __CorvusArrayHelpers.GetImmutableListBuilder(this);
+        return this.GetImmutableListBuilder();
     }
 
     /// <inheritdoc/>
@@ -446,12 +473,12 @@ public readonly partial struct OtherNames
     {
         if ((this.backing & Backing.JsonElement) != 0)
         {
-            return new(this.jsonElementBacking);
+            return new JsonArrayEnumerator(this.jsonElementBacking);
         }
 
         if ((this.backing & Backing.Array) != 0)
         {
-            return new(this.arrayBacking);
+            return new JsonArrayEnumerator(this.arrayBacking);
         }
 
         throw new InvalidOperationException();
@@ -463,356 +490,219 @@ public readonly partial struct OtherNames
     {
         if ((this.backing & Backing.JsonElement) != 0)
         {
-            return new(this.jsonElementBacking);
+            return new JsonArrayEnumerator<TItem>(this.jsonElementBacking);
         }
 
         if ((this.backing & Backing.Array) != 0)
         {
-            return new(this.arrayBacking);
+            return new JsonArrayEnumerator<TItem>(this.arrayBacking);
         }
 
         throw new InvalidOperationException();
     }
 
-    /// <inheritdoc/>
-    public OtherNames Add(in JsonAny item1)
+    /// <summary>
+    /// Builds an <see cref = "ImmutableList{JsonAny}"/> from the array.
+    /// </summary>
+    /// <returns>An immutable list of <see cref = "JsonAny"/> built from the array.</returns>
+    /// <exception cref = "InvalidOperationException">The value is not an array.</exception>
+    private ImmutableList<JsonAny> GetImmutableList()
     {
-        ImmutableList<JsonAny>.Builder builder = __CorvusArrayHelpers.GetImmutableListBuilder(this);
-        builder.Add(item1);
-        return new(builder.ToImmutable());
-    }
-
-    /// <inheritdoc/>
-    public OtherNames Add(params JsonAny[] items)
-    {
-        return new([..items]);
-    }
-
-    /// <inheritdoc/>
-    public OtherNames AddRange<TArray>(in TArray items)
-        where TArray : struct, IJsonArray<TArray>
-    {
-        ImmutableList<JsonAny>.Builder builder = __CorvusArrayHelpers.GetImmutableListBuilder(this);
-        foreach (JsonAny item in items.EnumerateArray())
+        if ((this.backing & Backing.Array) != 0)
         {
-            builder.Add(item.AsAny);
+            return this.arrayBacking;
         }
 
-        return new(builder.ToImmutable());
+        return this.GetImmutableListBuilder().ToImmutable();
     }
 
-    /// <inheritdoc/>
-    public OtherNames AddRange<TItem>(IEnumerable<TItem> items)
-        where TItem : struct, IJsonValue<TItem>
+    /// <summary>
+    /// Builds an <see cref = "ImmutableList{JsonAny}.Builder"/> from the array.
+    /// </summary>
+    /// <returns>An immutable list builder of <see cref = "JsonAny"/>, built from the existing array.</returns>
+    /// <exception cref = "InvalidOperationException">The value is not an array.</exception>
+    private ImmutableList<JsonAny>.Builder GetImmutableListBuilder()
     {
-        ImmutableList<JsonAny>.Builder builder = __CorvusArrayHelpers.GetImmutableListBuilder(this);
-        foreach (TItem item in items)
+        if ((this.backing & Backing.JsonElement) != 0 && this.jsonElementBacking.ValueKind == JsonValueKind.Array)
         {
-            builder.Add(item.AsAny);
+            ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
+            foreach (JsonElement item in this.jsonElementBacking.EnumerateArray())
+            {
+                builder.Add(new(item));
+            }
+
+            return builder;
         }
 
-        return new(builder.ToImmutable());
-    }
-
-    /// <inheritdoc/>
-    public OtherNames AddRange(IEnumerable<JsonAny> items)
-    {
-        ImmutableList<JsonAny>.Builder builder = __CorvusArrayHelpers.GetImmutableListBuilder(this);
-        builder.AddRange(items);
-        return new(builder.ToImmutable());
-    }
-
-    /// <inheritdoc/>
-    public OtherNames Insert(int index, in JsonAny item1)
-    {
-        return new(__CorvusArrayHelpers.GetImmutableListWith(this, index, item1));
-    }
-
-    /// <inheritdoc/>
-    public OtherNames InsertRange<TArray>(int index, in TArray items)
-        where TArray : struct, IJsonArray<TArray>
-    {
-        return new(__CorvusArrayHelpers.GetImmutableListWith(this, index, items.EnumerateArray()));
-    }
-
-    /// <inheritdoc/>
-    public OtherNames InsertRange<TItem>(int index, IEnumerable<TItem> items)
-        where TItem : struct, IJsonValue<TItem>
-    {
-        return new(__CorvusArrayHelpers.GetImmutableListWith(this, index, items.Select(item => item.AsAny)));
-    }
-
-    /// <inheritdoc/>
-    public OtherNames InsertRange(int index, IEnumerable<JsonAny> items)
-    {
-        return new(__CorvusArrayHelpers.GetImmutableListWith(this, index, items));
-    }
-
-    /// <inheritdoc/>
-    public OtherNames Replace(in JsonAny oldValue, in JsonAny newValue)
-    {
-        return new(__CorvusArrayHelpers.GetImmutableListReplacing(this, oldValue, newValue));
-    }
-
-    /// <inheritdoc/>
-    public OtherNames SetItem(int index, in JsonAny value)
-    {
-        return new(__CorvusArrayHelpers.GetImmutableListSetting(this, index, value));
-    }
-
-    /// <inheritdoc/>
-    public OtherNames Remove(in JsonAny oldValue)
-    {
-        return new(__CorvusArrayHelpers.GetImmutableListWithout(this, oldValue));
-    }
-
-    /// <inheritdoc/>
-    public OtherNames RemoveAt(int index)
-    {
-        return new(__CorvusArrayHelpers.GetImmutableListWithoutRange(this, index, 1));
-    }
-
-    /// <inheritdoc/>
-    public OtherNames RemoveRange(int index, int count)
-    {
-        return new(__CorvusArrayHelpers.GetImmutableListWithoutRange(this, index, count));
-    }
-
-    private static class __CorvusArrayHelpers
-    {
-        /// <summary>
-        /// Builds an <see cref = "ImmutableList{JsonAny}"/> from the array.
-        /// </summary>
-        /// <param name="arrayInstance">The array instance.</param>
-        /// <returns>An immutable list of <see cref = "JsonAny"/> built from the array.</returns>
-        /// <exception cref = "InvalidOperationException">The value is not an array.</exception>
-        public static ImmutableList<JsonAny> GetImmutableList(in OtherNames arrayInstance)
+        if ((this.backing & Backing.Array) != 0)
         {
-            if ((arrayInstance.backing & Backing.Array) != 0)
-            {
-                return arrayInstance.arrayBacking;
-            }
-
-            return GetImmutableListBuilder(arrayInstance).ToImmutable();
+            return this.arrayBacking.ToBuilder();
         }
 
-        /// <summary>
-        /// Builds an <see cref = "ImmutableList{JsonAny}.Builder"/> from the array.
-        /// </summary>
-        /// <param name="arrayInstance">The array instance.</param>
-        /// <returns>An immutable list builder of <see cref = "JsonAny"/>, built from the existing array.</returns>
-        /// <exception cref = "InvalidOperationException">The value is not an array.</exception>
-        public static ImmutableList<JsonAny>.Builder GetImmutableListBuilder(in OtherNames arrayInstance)
+        throw new InvalidOperationException();
+    }
+
+    /// <summary>
+    /// Builds an <see cref = "ImmutableList{JsonAny}"/> from the array, replacing the item at the specified index with the given item.
+    /// </summary>
+    /// <param name = "index">The index at which to add the element.</param>
+    /// <param name = "value">The value to add.</param>
+    /// <returns>An immutable list containing the contents of the list, with the specified item at the index.</returns>
+    /// <exception cref = "InvalidOperationException">The value is not an array.</exception>
+    /// <exception cref = "IndexOutOfRangeException">Thrown if the range is beyond the bounds of the array.</exception>
+    private ImmutableList<JsonAny> GetImmutableListSetting(int index, in JsonAny value)
+    {
+        if ((this.backing & Backing.JsonElement) != 0 && this.jsonElementBacking.ValueKind == JsonValueKind.Array)
         {
-            if ((arrayInstance.backing & Backing.JsonElement) != 0)
-            {
-                if (arrayInstance.jsonElementBacking.ValueKind == JsonValueKind.Array)
-                {
-                    ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
-                    foreach (JsonElement item in arrayInstance.jsonElementBacking.EnumerateArray())
-                    {
-                        builder.Add(new(item));
-                    }
-
-                    return builder;
-                }
-            }
-
-            if ((arrayInstance.backing & Backing.Array) != 0)
-            {
-                return arrayInstance.arrayBacking.ToBuilder();
-            }
-
-            throw new InvalidOperationException();
+            return JsonValueHelpers.GetImmutableListFromJsonElementSetting(this.jsonElementBacking, index, value);
         }
 
-        /// <summary>
-        /// Builds an <see cref = "ImmutableList{JsonAny}"/> from the array, replacing the item at the specified index with the given item.
-        /// </summary>
-        /// <param name="arrayInstance">The array instance.</param>
-        /// <param name="index">The index at which to add the element.</param>
-        /// <param name="value">The value to add.</param>
-        /// <returns>An immutable list containing the contents of the list, with the specified item at the index.</returns>
-        /// <exception cref = "InvalidOperationException">The value is not an array.</exception>
-        /// <exception cref = "IndexOutOfRangeException">Thrown if the range is beyond the bounds of the array.</exception>
-        public static ImmutableList<JsonAny> GetImmutableListSetting(in OtherNames arrayInstance, int index, in JsonAny value)
+        if ((this.backing & Backing.Array) != 0)
         {
-            if ((arrayInstance.backing & Backing.JsonElement) != 0)
+            try
             {
-                if (arrayInstance.jsonElementBacking.ValueKind == JsonValueKind.Array)
-                {
-                    return JsonValueHelpers.GetImmutableListFromJsonElementSetting(arrayInstance.jsonElementBacking, index, value);
-                }
+                return this.arrayBacking.SetItem(index, value);
             }
-
-            if ((arrayInstance.backing & Backing.Array) != 0)
+            catch (ArgumentOutOfRangeException ex)
             {
-                try
-                {
-                    return arrayInstance.arrayBacking.SetItem(index, value);
-                }
-                catch (ArgumentOutOfRangeException ex)
-                {
-                    throw new IndexOutOfRangeException(ex.Message, ex);
-                }
+                throw new IndexOutOfRangeException(ex.Message, ex);
             }
-
-            throw new InvalidOperationException();
         }
 
-        /// <summary>
-        /// Builds an <see cref = "ImmutableList{JsonAny}"/> from the array, removing the first item that equals the given value, and replacing it with the specified item.
-        /// </summary>
-        /// <param name="arrayInstance">The array instance.</param>
-        /// <param name="oldItem">The item to remove.</param>
-        /// <param name="newItem">The item to insert.</param>
-        /// <returns>An immutable list containing the contents of the list, without the first instance that matches the old item, replacing it with the new item.</returns>
-        /// <exception cref = "InvalidOperationException">The value is not an array.</exception>
-        public static ImmutableList<JsonAny> GetImmutableListReplacing(in OtherNames arrayInstance, in JsonAny oldItem, in JsonAny newItem)
+        throw new InvalidOperationException();
+    }
+
+    /// <summary>
+    /// Builds an <see cref = "ImmutableList{JsonAny}"/> from the array, removing the first item that equals the given value, and replacing it with the specified item.
+    /// </summary>
+    /// <param name = "oldItem">The item to remove.</param>
+    /// <param name = "newItem">The item to insert.</param>
+    /// <returns>An immutable list containing the contents of the list, without the first instance that matches the old item, replacing it with the new item.</returns>
+    /// <exception cref = "InvalidOperationException">The value is not an array.</exception>
+    private ImmutableList<JsonAny> GetImmutableListReplacing(in JsonAny oldItem, in JsonAny newItem)
+    {
+        if ((this.backing & Backing.JsonElement) != 0 && this.jsonElementBacking.ValueKind == JsonValueKind.Array)
         {
-            if ((arrayInstance.backing & Backing.JsonElement) != 0)
-            {
-                if (arrayInstance.jsonElementBacking.ValueKind == JsonValueKind.Array)
-                {
-                    return JsonValueHelpers.GetImmutableListFromJsonElementReplacing(arrayInstance.jsonElementBacking, oldItem, newItem);
-                }
-            }
-
-            if ((arrayInstance.backing & Backing.Array) != 0)
-            {
-                return  arrayInstance.arrayBacking.Replace(oldItem, newItem);
-            }
-
-            throw new InvalidOperationException();
+            return JsonValueHelpers.GetImmutableListFromJsonElementReplacing(this.jsonElementBacking, oldItem, newItem);
         }
 
-        /// <summary>
-        /// Builds an <see cref = "ImmutableList{JsonAny}"/> from the array, removing the first item arrayInstance equals the given value.
-        /// </summary>
-        /// <param name="arrayInstance">The array instance.</param>
-        /// <param name="item">The item to remove.</param>
-        /// <returns>An immutable list containing the contents of the list, without the first instance arrayInstance matches the given item.</returns>
-        /// <exception cref = "InvalidOperationException">The value is not an array.</exception>
-        public static ImmutableList<JsonAny> GetImmutableListWithout(in OtherNames arrayInstance, in JsonAny item)
+        if ((this.backing & Backing.Array) != 0)
         {
-            if ((arrayInstance.backing & Backing.JsonElement) != 0)
-            {
-                if (arrayInstance.jsonElementBacking.ValueKind == JsonValueKind.Array)
-                {
-                    return JsonValueHelpers.GetImmutableListFromJsonElementWithout(arrayInstance.jsonElementBacking, item);
-                }
-            }
-
-            if ((arrayInstance.backing & Backing.Array) != 0)
-            {
-                return  arrayInstance.arrayBacking.Remove(item);
-            }
-
-            throw new InvalidOperationException();
+            return this.arrayBacking.Replace(oldItem, newItem);
         }
 
-        /// <summary>
-        /// Builds an <see cref = "ImmutableList{JsonAny}"/> from the array, removing the given range.
-        /// </summary>
-        /// <param name="arrayInstance">The array instance.</param>
-        /// <param name="index">The start index of the range to remove.</param>
-        /// <param name="count">The length of the range to remove.</param>
-        /// <returns>An immutable list containing the contents of the list, without the given range of items.</returns>
-        /// <exception cref = "InvalidOperationException">The value is not an array.</exception>
-        /// <exception cref = "IndexOutOfRangeException">Thrown if the range is beyond the bounds of the array.</exception>
-        public static ImmutableList<JsonAny> GetImmutableListWithoutRange(in OtherNames arrayInstance, int index, int count)
+        throw new InvalidOperationException();
+    }
+
+    /// <summary>
+    /// Builds an <see cref = "ImmutableList{JsonAny}"/> from the array, removing the first item that equals the given value.
+    /// </summary>
+    /// <param name = "item">The item to remove.</param>
+    /// <returns>An immutable list containing the contents of the list, without the first instance that matches the given item.</returns>
+    /// <exception cref = "InvalidOperationException">The value is not an array.</exception>
+    private ImmutableList<JsonAny> GetImmutableListWithout(in JsonAny item)
+    {
+        if ((this.backing & Backing.JsonElement) != 0 && this.jsonElementBacking.ValueKind == JsonValueKind.Array)
         {
-            if ((arrayInstance.backing & Backing.JsonElement) != 0)
-            {
-                if (arrayInstance.jsonElementBacking.ValueKind == JsonValueKind.Array)
-                {
-                    return JsonValueHelpers.GetImmutableListFromJsonElementWithoutRange(arrayInstance.jsonElementBacking, index, count);
-                }
-            }
-
-            if ((arrayInstance.backing & Backing.Array) != 0)
-            {
-                try
-                {
-                    return arrayInstance.arrayBacking.RemoveRange(index, count);
-                }
-                catch (ArgumentOutOfRangeException ex)
-                {
-                    throw new IndexOutOfRangeException(ex.Message, ex);
-                }
-            }
-
-            throw new InvalidOperationException();
+            return JsonValueHelpers.GetImmutableListFromJsonElementWithout(this.jsonElementBacking, item);
         }
 
-        // <summary>
-        // Builds an <see cref = "ImmutableList{JsonAny}"/> from the array, inserting the given item at the index.
-        // </summary>
-        // <param name="arrayInstance">The array instance.</param>
-        // <param name="index">The index at which to add the element.</param>
-        // <param name="value">The value to add.</param>
-        // <returns>An immutable list containing the contents of the list, without the array.</returns>
-        // <exception cref = "InvalidOperationException">The value is not an array.</exception>
-        // <exception cref = "IndexOutOfRangeException">Thrown if the range is beyond the bounds of the array.</exception>
-        public static ImmutableList<JsonAny> GetImmutableListWith(in OtherNames arrayInstance, int index, in JsonAny value)
+        if ((this.backing & Backing.Array) != 0)
         {
-            if ((arrayInstance.backing & Backing.JsonElement) != 0)
-            {
-                if (arrayInstance.jsonElementBacking.ValueKind == JsonValueKind.Array)
-                {
-                    return JsonValueHelpers.GetImmutableListFromJsonElementWith(arrayInstance.jsonElementBacking, index, value);
-                }
-            }
-
-            if ((arrayInstance.backing & Backing.Array) != 0)
-            {
-                try
-                {
-                    return arrayInstance.arrayBacking.Insert(index, value);
-                }
-                catch (ArgumentOutOfRangeException ex)
-                {
-                    throw new IndexOutOfRangeException(ex.Message, ex);
-                }
-            }
-
-            throw new InvalidOperationException();
+            return this.arrayBacking.Remove(item);
         }
 
-        /// <summary>
-        /// Builds an <see cref = "ImmutableList{JsonAny}"/> from the array, inserting the items at the
-        /// given index.
-        /// </summary>
-        /// <param name="arrayInstance">The array instance.</param>
-        /// <param name="index">The index at which to add the element.</param>
-        /// <param name="values">The values to add.</param>
-        /// <returns>An immutable list containing the contents of the list, without the array.</returns>
-        /// <exception cref = "InvalidOperationException">The value is not an array.</exception>
-        /// <exception cref = "IndexOutOfRangeException">Thrown if the range is beyond the bounds of the array.</exception>
-        public static ImmutableList<JsonAny> GetImmutableListWith<TEnumerable>(in OtherNames arrayInstance, int index, TEnumerable values)
-            where TEnumerable : IEnumerable<JsonAny>
+        throw new InvalidOperationException();
+    }
+
+    /// <summary>
+    /// Builds an <see cref = "ImmutableList{JsonAny}"/> from the array, removing the given range.
+    /// </summary>
+    /// <param name = "index">The start index of the range to remove.</param>
+    /// <param name = "count">The length of the range to remove.</param>
+    /// <returns>An immutable list containing the contents of the list, without the given range of items.</returns>
+    /// <exception cref = "InvalidOperationException">The value is not an array.</exception>
+    /// <exception cref = "IndexOutOfRangeException">Thrown if the range is beyond the bounds of the array.</exception>
+    private ImmutableList<JsonAny> GetImmutableListWithoutRange(int index, int count)
+    {
+        if ((this.backing & Backing.JsonElement) != 0 && this.jsonElementBacking.ValueKind == JsonValueKind.Array)
         {
-            if ((arrayInstance.backing & Backing.JsonElement) != 0)
-            {
-                if (arrayInstance.jsonElementBacking.ValueKind == JsonValueKind.Array)
-                {
-                    return JsonValueHelpers.GetImmutableListFromJsonElementWith(arrayInstance.jsonElementBacking, index, values);
-                }
-            }
-
-            if ((arrayInstance.backing & Backing.Array) != 0)
-            {
-                try
-                {
-                    return arrayInstance.arrayBacking.InsertRange(index, values);
-                }
-                catch (ArgumentOutOfRangeException ex)
-                {
-                    throw new IndexOutOfRangeException(ex.Message, ex);
-                }
-            }
-
-            throw new InvalidOperationException();
+            return JsonValueHelpers.GetImmutableListFromJsonElementWithoutRange(this.jsonElementBacking, index, count);
         }
+
+        if ((this.backing & Backing.Array) != 0)
+        {
+            try
+            {
+                return this.arrayBacking.RemoveRange(index, count);
+            }
+            catch (ArgumentOutOfRangeException ex)
+            {
+                throw new IndexOutOfRangeException(ex.Message, ex);
+            }
+        }
+
+        throw new InvalidOperationException();
+    }
+
+    /// <summary>
+    /// Builds an <see cref = "ImmutableList{JsonAny}"/> from the array, adding the given item.
+    /// </summary>
+    /// <param name = "index">The index at which to add the element.</param>
+    /// <param name = "value">The value to add.</param>
+    /// <returns>An immutable list containing the contents of the list, without the array.</returns>
+    /// <exception cref = "InvalidOperationException">The value is not an array.</exception>
+    /// <exception cref = "IndexOutOfRangeException">Thrown if the range is beyond the bounds of the array.</exception>
+    private ImmutableList<JsonAny> GetImmutableListWith(int index, in JsonAny value)
+    {
+        if ((this.backing & Backing.JsonElement) != 0 && this.jsonElementBacking.ValueKind == JsonValueKind.Array)
+        {
+            return JsonValueHelpers.GetImmutableListFromJsonElementWith(this.jsonElementBacking, index, value);
+        }
+
+        if ((this.backing & Backing.Array) != 0)
+        {
+            try
+            {
+                return this.arrayBacking.Insert(index, value);
+            }
+            catch (ArgumentOutOfRangeException ex)
+            {
+                throw new IndexOutOfRangeException(ex.Message, ex);
+            }
+        }
+
+        throw new InvalidOperationException();
+    }
+
+    /// <summary>
+    /// Builds an <see cref = "ImmutableList{JsonAny}"/> from the array, adding the given item.
+    /// </summary>
+    /// <param name = "index">The index at which to add the element.</param>
+    /// <param name = "values">The values to add.</param>
+    /// <returns>An immutable list containing the contents of the list, without the array.</returns>
+    /// <exception cref = "InvalidOperationException">The value is not an array.</exception>
+    /// <exception cref = "IndexOutOfRangeException">Thrown if the range is beyond the bounds of the array.</exception>
+    private ImmutableList<JsonAny> GetImmutableListWith<TEnumerable>(int index, TEnumerable values)
+        where TEnumerable : IEnumerable<JsonAny>
+    {
+        if ((this.backing & Backing.JsonElement) != 0 && this.jsonElementBacking.ValueKind == JsonValueKind.Array)
+        {
+            return JsonValueHelpers.GetImmutableListFromJsonElementWith(this.jsonElementBacking, index, values);
+        }
+
+        if ((this.backing & Backing.Array) != 0)
+        {
+            try
+            {
+                return this.arrayBacking.InsertRange(index, values);
+            }
+            catch (ArgumentOutOfRangeException ex)
+            {
+                throw new IndexOutOfRangeException(ex.Message, ex);
+            }
+        }
+
+        throw new InvalidOperationException();
     }
 }

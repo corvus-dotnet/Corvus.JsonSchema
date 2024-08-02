@@ -6,9 +6,7 @@
 //     the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
-
 #nullable enable
-
 using System.Buffers;
 using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
@@ -18,22 +16,40 @@ using Corvus.Json;
 using Corvus.Json.Internal;
 
 namespace Corvus.Json.Benchmarking.Models.V3;
-
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
-public readonly partial struct OtherNames
+/// <remarks>
+/// <para>
+/// A person's other (middle) names.
+/// </para>
+/// <para>
+/// This may be either a single name represented as a string, or an array of strings, representing one or more other names.
+/// </para>
+/// </remarks>
+public readonly partial struct OtherNames 
 #if NET8_0_OR_GREATER
-    : IJsonString<Corvus.Json.Benchmarking.Models.V3.OtherNames>,
-      ISpanFormattable
+    : IJsonString<OtherNames>, ISpanFormattable
 #else
-    : IJsonString<Corvus.Json.Benchmarking.Models.V3.OtherNames>
+: IJsonString<OtherNames>
 #endif
 {
     /// <summary>
-    /// Conversion from <see cref="string"/>.
+    /// Initializes a new instance of the <see cref = "OtherNames"/> struct.
     /// </summary>
-    /// <param name="value">The value from which to convert.</param>
+    /// <param name = "value">The value from which to construct the instance.</param>
+    public OtherNames(string value)
+    {
+        this.jsonElementBacking = default;
+        this.backing = Backing.String;
+        this.stringBacking = value;
+        this.arrayBacking = ImmutableList<JsonAny>.Empty;
+    }
+
+    /// <summary>
+    /// Conversion from string.
+    /// </summary>
+    /// <param name = "value">The value from which to convert.</param>
     public static implicit operator OtherNames(string value)
     {
         return new(value);
@@ -42,38 +58,27 @@ public readonly partial struct OtherNames
     /// <summary>
     /// Conversion from JsonString.
     /// </summary>
-    /// <param name="value">The value from which to convert.</param>
+    /// <param name = "value">The value from which to convert.</param>
     public static implicit operator OtherNames(JsonString value)
     {
         if (value.HasDotnetBacking && value.ValueKind == JsonValueKind.String)
         {
-            return new(
-                (string)value);
+            return new((string)value);
         }
 
         return new(value.AsJsonElement);
     }
 
     /// <summary>
-    /// Conversion to JsonString.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator JsonString(OtherNames value)
-    {
-        return
-            value.AsString;
-    }
-
-    /// <summary>
     /// Conversion to string.
     /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    /// <exception cref="InvalidOperationException">The value was not a string.</exception>
-    public static explicit operator string(OtherNames value)
+    /// <param name = "value">The value from which to convert.</param>
+    /// <exception cref = "InvalidOperationException">The value was not a string.</exception>
+    public static explicit operator string (OtherNames value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
-            if (value.jsonElementBacking.GetString() is string result)
+            if (value.jsonElementBacking.GetString()is string result)
             {
                 return result;
             }
@@ -90,184 +95,156 @@ public readonly partial struct OtherNames
     }
 
     /// <summary>
-    /// Concatenate 2 JSON values, producing an instance of the string type OtherNames.
+    /// Concatenate two JSON values, producing an instance of the string type OtherNames.
     /// </summary>
-    /// <typeparam name="T1">The type of the 1st value.</typeparam>
-    /// <typeparam name="T2">The type of the 2nd value.</typeparam>
-    /// <param name="buffer">The buffer into which to concatenate the values.</param>
-    /// <param name="value1">The 1st value.</param>
-    /// <param name="value2">The 2nd value.</param>
+    /// <typeparam name = "T1">The type of the first value.</typeparam>
+    /// <typeparam name = "T2">The type of the second value.</typeparam>
+    /// <param name = "buffer">The buffer into which to concatenate the values.</param>
+    /// <param name = "firstValue">The first value.</param>
+    /// <param name = "secondValue">The second value.</param>
     /// <returns>An instance of this string type.</returns>
-    public static OtherNames Concatenate<T1, T2>(Span<byte> buffer, in T1 value1, in T2 value2)
-        where T1 : struct, IJsonValue<T1>
-        where T2 : struct, IJsonValue<T2>
+    public static OtherNames Concatenate<T1, T2>(Span<byte> buffer, in T1 firstValue, in T2 secondValue)
+        where T1 : struct, IJsonValue<T1> where T2 : struct, IJsonValue<T2>
     {
-        int written = LowAllocJsonUtils.ConcatenateAsUtf8JsonString(buffer, value1, value2);
+        int written = LowAllocJsonUtils.ConcatenateAsUtf8JsonString(buffer, firstValue, secondValue);
         return ParseValue(buffer[..written]);
     }
 
     /// <summary>
-    /// Concatenate 3 JSON values, producing an instance of the string type OtherNames.
+    /// Concatenate three JSON values, producing an instance of the string type OtherNames.
     /// </summary>
-    /// <typeparam name="T1">The type of the 1st value.</typeparam>
-    /// <typeparam name="T2">The type of the 2nd value.</typeparam>
-    /// <typeparam name="T3">The type of the 3rd value.</typeparam>
-    /// <param name="buffer">The buffer into which to concatenate the values.</param>
-    /// <param name="value1">The 1st value.</param>
-    /// <param name="value2">The 2nd value.</param>
-    /// <param name="value3">The 3rd value.</param>
+    /// <typeparam name = "T1">The type of the first value.</typeparam>
+    /// <typeparam name = "T2">The type of the second value.</typeparam>
+    /// <typeparam name = "T3">The type of the third value.</typeparam>
+    /// <param name = "buffer">The buffer into which to concatenate the values.</param>
+    /// <param name = "firstValue">The first value.</param>
+    /// <param name = "secondValue">The second value.</param>
+    /// <param name = "thirdValue">The third value.</param>
     /// <returns>An instance of this string type.</returns>
-    public static OtherNames Concatenate<T1, T2, T3>(Span<byte> buffer, in T1 value1, in T2 value2, in T3 value3)
-        where T1 : struct, IJsonValue<T1>
-        where T2 : struct, IJsonValue<T2>
-        where T3 : struct, IJsonValue<T3>
+    public static OtherNames Concatenate<T1, T2, T3>(Span<byte> buffer, in T1 firstValue, in T2 secondValue, in T3 thirdValue)
+        where T1 : struct, IJsonValue<T1> where T2 : struct, IJsonValue<T2> where T3 : struct, IJsonValue<T3>
     {
-        int written = LowAllocJsonUtils.ConcatenateAsUtf8JsonString(buffer, value1, value2, value3);
+        int written = LowAllocJsonUtils.ConcatenateAsUtf8JsonString(buffer, firstValue, secondValue, thirdValue);
         return ParseValue(buffer[..written]);
     }
 
     /// <summary>
-    /// Concatenate 4 JSON values, producing an instance of the string type OtherNames.
+    /// Concatenate four JSON values, producing an instance of the string type OtherNames.
     /// </summary>
-    /// <typeparam name="T1">The type of the 1st value.</typeparam>
-    /// <typeparam name="T2">The type of the 2nd value.</typeparam>
-    /// <typeparam name="T3">The type of the 3rd value.</typeparam>
-    /// <typeparam name="T4">The type of the 4th value.</typeparam>
-    /// <param name="buffer">The buffer into which to concatenate the values.</param>
-    /// <param name="value1">The 1st value.</param>
-    /// <param name="value2">The 2nd value.</param>
-    /// <param name="value3">The 3rd value.</param>
-    /// <param name="value4">The 4th value.</param>
+    /// <typeparam name = "T1">The type of the first value.</typeparam>
+    /// <typeparam name = "T2">The type of the second value.</typeparam>
+    /// <typeparam name = "T3">The type of the third value.</typeparam>
+    /// <typeparam name = "T4">The type of the fourth value.</typeparam>
+    /// <param name = "buffer">The buffer into which to concatenate the values.</param>
+    /// <param name = "firstValue">The first value.</param>
+    /// <param name = "secondValue">The second value.</param>
+    /// <param name = "thirdValue">The third value.</param>
+    /// <param name = "fourthValue">The fourth value.</param>
     /// <returns>An instance of this string type.</returns>
-    public static OtherNames Concatenate<T1, T2, T3, T4>(Span<byte> buffer, in T1 value1, in T2 value2, in T3 value3, in T4 value4)
-        where T1 : struct, IJsonValue<T1>
-        where T2 : struct, IJsonValue<T2>
-        where T3 : struct, IJsonValue<T3>
-        where T4 : struct, IJsonValue<T4>
+    public static OtherNames Concatenate<T1, T2, T3, T4>(Span<byte> buffer, in T1 firstValue, in T2 secondValue, in T3 thirdValue, in T4 fourthValue)
+        where T1 : struct, IJsonValue<T1> where T2 : struct, IJsonValue<T2> where T3 : struct, IJsonValue<T3> where T4 : struct, IJsonValue<T4>
     {
-        int written = LowAllocJsonUtils.ConcatenateAsUtf8JsonString(buffer, value1, value2, value3, value4);
+        int written = LowAllocJsonUtils.ConcatenateAsUtf8JsonString(buffer, firstValue, secondValue, thirdValue, fourthValue);
         return ParseValue(buffer[..written]);
     }
 
     /// <summary>
-    /// Concatenate 5 JSON values, producing an instance of the string type OtherNames.
+    /// Concatenate five JSON values, producing an instance of the string type OtherNames.
     /// </summary>
-    /// <typeparam name="T1">The type of the 1st value.</typeparam>
-    /// <typeparam name="T2">The type of the 2nd value.</typeparam>
-    /// <typeparam name="T3">The type of the 3rd value.</typeparam>
-    /// <typeparam name="T4">The type of the 4th value.</typeparam>
-    /// <typeparam name="T5">The type of the 5th value.</typeparam>
-    /// <param name="buffer">The buffer into which to concatenate the values.</param>
-    /// <param name="value1">The 1st value.</param>
-    /// <param name="value2">The 2nd value.</param>
-    /// <param name="value3">The 3rd value.</param>
-    /// <param name="value4">The 4th value.</param>
-    /// <param name="value5">The 5th value.</param>
+    /// <typeparam name = "T1">The type of the first value.</typeparam>
+    /// <typeparam name = "T2">The type of the second value.</typeparam>
+    /// <typeparam name = "T3">The type of the third value.</typeparam>
+    /// <typeparam name = "T4">The type of the fourth value.</typeparam>
+    /// <typeparam name = "T5">The type of the fifth value.</typeparam>
+    /// <param name = "buffer">The buffer into which to concatenate the values.</param>
+    /// <param name = "firstValue">The first value.</param>
+    /// <param name = "secondValue">The second value.</param>
+    /// <param name = "thirdValue">The third value.</param>
+    /// <param name = "fourthValue">The fourth value.</param>
+    /// <param name = "fifthValue">The fifth value.</param>
     /// <returns>An instance of this string type.</returns>
-    public static OtherNames Concatenate<T1, T2, T3, T4, T5>(Span<byte> buffer, in T1 value1, in T2 value2, in T3 value3, in T4 value4, in T5 value5)
-        where T1 : struct, IJsonValue<T1>
-        where T2 : struct, IJsonValue<T2>
-        where T3 : struct, IJsonValue<T3>
-        where T4 : struct, IJsonValue<T4>
-        where T5 : struct, IJsonValue<T5>
+    public static OtherNames Concatenate<T1, T2, T3, T4, T5>(Span<byte> buffer, in T1 firstValue, in T2 secondValue, in T3 thirdValue, in T4 fourthValue, in T5 fifthValue)
+        where T1 : struct, IJsonValue<T1> where T2 : struct, IJsonValue<T2> where T3 : struct, IJsonValue<T3> where T4 : struct, IJsonValue<T4> where T5 : struct, IJsonValue<T5>
     {
-        int written = LowAllocJsonUtils.ConcatenateAsUtf8JsonString(buffer, value1, value2, value3, value4, value5);
+        int written = LowAllocJsonUtils.ConcatenateAsUtf8JsonString(buffer, firstValue, secondValue, thirdValue, fourthValue, fifthValue);
         return ParseValue(buffer[..written]);
     }
 
     /// <summary>
-    /// Concatenate 6 JSON values, producing an instance of the string type OtherNames.
+    /// Concatenate six JSON values, producing an instance of the string type OtherNames.
     /// </summary>
-    /// <typeparam name="T1">The type of the 1st value.</typeparam>
-    /// <typeparam name="T2">The type of the 2nd value.</typeparam>
-    /// <typeparam name="T3">The type of the 3rd value.</typeparam>
-    /// <typeparam name="T4">The type of the 4th value.</typeparam>
-    /// <typeparam name="T5">The type of the 5th value.</typeparam>
-    /// <typeparam name="T6">The type of the 6th value.</typeparam>
-    /// <param name="buffer">The buffer into which to concatenate the values.</param>
-    /// <param name="value1">The 1st value.</param>
-    /// <param name="value2">The 2nd value.</param>
-    /// <param name="value3">The 3rd value.</param>
-    /// <param name="value4">The 4th value.</param>
-    /// <param name="value5">The 5th value.</param>
-    /// <param name="value6">The 6th value.</param>
+    /// <typeparam name = "T1">The type of the first value.</typeparam>
+    /// <typeparam name = "T2">The type of the second value.</typeparam>
+    /// <typeparam name = "T3">The type of the third value.</typeparam>
+    /// <typeparam name = "T4">The type of the fourth value.</typeparam>
+    /// <typeparam name = "T5">The type of the fifth value.</typeparam>
+    /// <typeparam name = "T6">The type of the sixth value.</typeparam>
+    /// <param name = "buffer">The buffer into which to concatenate the values.</param>
+    /// <param name = "firstValue">The first value.</param>
+    /// <param name = "secondValue">The second value.</param>
+    /// <param name = "thirdValue">The third value.</param>
+    /// <param name = "fourthValue">The fourth value.</param>
+    /// <param name = "fifthValue">The fifth value.</param>
+    /// <param name = "sixthValue">The sixth value.</param>
     /// <returns>An instance of this string type.</returns>
-    public static OtherNames Concatenate<T1, T2, T3, T4, T5, T6>(Span<byte> buffer, in T1 value1, in T2 value2, in T3 value3, in T4 value4, in T5 value5, in T6 value6)
-        where T1 : struct, IJsonValue<T1>
-        where T2 : struct, IJsonValue<T2>
-        where T3 : struct, IJsonValue<T3>
-        where T4 : struct, IJsonValue<T4>
-        where T5 : struct, IJsonValue<T5>
-        where T6 : struct, IJsonValue<T6>
+    public static OtherNames Concatenate<T1, T2, T3, T4, T5, T6>(Span<byte> buffer, in T1 firstValue, in T2 secondValue, in T3 thirdValue, in T4 fourthValue, in T5 fifthValue, in T6 sixthValue)
+        where T1 : struct, IJsonValue<T1> where T2 : struct, IJsonValue<T2> where T3 : struct, IJsonValue<T3> where T4 : struct, IJsonValue<T4> where T5 : struct, IJsonValue<T5> where T6 : struct, IJsonValue<T6>
     {
-        int written = LowAllocJsonUtils.ConcatenateAsUtf8JsonString(buffer, value1, value2, value3, value4, value5, value6);
+        int written = LowAllocJsonUtils.ConcatenateAsUtf8JsonString(buffer, firstValue, secondValue, thirdValue, fourthValue, fifthValue, sixthValue);
         return ParseValue(buffer[..written]);
     }
 
     /// <summary>
-    /// Concatenate 7 JSON values, producing an instance of the string type OtherNames.
+    /// Concatenate seven JSON values, producing an instance of the string type OtherNames.
     /// </summary>
-    /// <typeparam name="T1">The type of the 1st value.</typeparam>
-    /// <typeparam name="T2">The type of the 2nd value.</typeparam>
-    /// <typeparam name="T3">The type of the 3rd value.</typeparam>
-    /// <typeparam name="T4">The type of the 4th value.</typeparam>
-    /// <typeparam name="T5">The type of the 5th value.</typeparam>
-    /// <typeparam name="T6">The type of the 6th value.</typeparam>
-    /// <typeparam name="T7">The type of the 7th value.</typeparam>
-    /// <param name="buffer">The buffer into which to concatenate the values.</param>
-    /// <param name="value1">The 1st value.</param>
-    /// <param name="value2">The 2nd value.</param>
-    /// <param name="value3">The 3rd value.</param>
-    /// <param name="value4">The 4th value.</param>
-    /// <param name="value5">The 5th value.</param>
-    /// <param name="value6">The 6th value.</param>
-    /// <param name="value7">The 7th value.</param>
+    /// <typeparam name = "T1">The type of the first value.</typeparam>
+    /// <typeparam name = "T2">The type of the second value.</typeparam>
+    /// <typeparam name = "T3">The type of the third value.</typeparam>
+    /// <typeparam name = "T4">The type of the fourth value.</typeparam>
+    /// <typeparam name = "T5">The type of the fifth value.</typeparam>
+    /// <typeparam name = "T6">The type of the sixth value.</typeparam>
+    /// <typeparam name = "T7">The type of the seventh value.</typeparam>
+    /// <param name = "buffer">The buffer into which to concatenate the values.</param>
+    /// <param name = "firstValue">The first value.</param>
+    /// <param name = "secondValue">The second value.</param>
+    /// <param name = "thirdValue">The third value.</param>
+    /// <param name = "fourthValue">The fourth value.</param>
+    /// <param name = "fifthValue">The fifth value.</param>
+    /// <param name = "sixthValue">The sixth value.</param>
+    /// <param name = "seventhValue">The seventh value.</param>
     /// <returns>An instance of this string type.</returns>
-    public static OtherNames Concatenate<T1, T2, T3, T4, T5, T6, T7>(Span<byte> buffer, in T1 value1, in T2 value2, in T3 value3, in T4 value4, in T5 value5, in T6 value6, in T7 value7)
-        where T1 : struct, IJsonValue<T1>
-        where T2 : struct, IJsonValue<T2>
-        where T3 : struct, IJsonValue<T3>
-        where T4 : struct, IJsonValue<T4>
-        where T5 : struct, IJsonValue<T5>
-        where T6 : struct, IJsonValue<T6>
-        where T7 : struct, IJsonValue<T7>
+    public static OtherNames Concatenate<T1, T2, T3, T4, T5, T6, T7>(Span<byte> buffer, in T1 firstValue, in T2 secondValue, in T3 thirdValue, in T4 fourthValue, in T5 fifthValue, in T6 sixthValue, in T7 seventhValue)
+        where T1 : struct, IJsonValue<T1> where T2 : struct, IJsonValue<T2> where T3 : struct, IJsonValue<T3> where T4 : struct, IJsonValue<T4> where T5 : struct, IJsonValue<T5> where T6 : struct, IJsonValue<T6> where T7 : struct, IJsonValue<T7>
     {
-        int written = LowAllocJsonUtils.ConcatenateAsUtf8JsonString(buffer, value1, value2, value3, value4, value5, value6, value7);
+        int written = LowAllocJsonUtils.ConcatenateAsUtf8JsonString(buffer, firstValue, secondValue, thirdValue, fourthValue, fifthValue, sixthValue, seventhValue);
         return ParseValue(buffer[..written]);
     }
 
     /// <summary>
-    /// Concatenate 8 JSON values, producing an instance of the string type OtherNames.
+    /// Concatenate eight JSON values, producing an instance of the string type OtherNames.
     /// </summary>
-    /// <typeparam name="T1">The type of the 1st value.</typeparam>
-    /// <typeparam name="T2">The type of the 2nd value.</typeparam>
-    /// <typeparam name="T3">The type of the 3rd value.</typeparam>
-    /// <typeparam name="T4">The type of the 4th value.</typeparam>
-    /// <typeparam name="T5">The type of the 5th value.</typeparam>
-    /// <typeparam name="T6">The type of the 6th value.</typeparam>
-    /// <typeparam name="T7">The type of the 7th value.</typeparam>
-    /// <typeparam name="T8">The type of the 8th value.</typeparam>
-    /// <param name="buffer">The buffer into which to concatenate the values.</param>
-    /// <param name="value1">The 1st value.</param>
-    /// <param name="value2">The 2nd value.</param>
-    /// <param name="value3">The 3rd value.</param>
-    /// <param name="value4">The 4th value.</param>
-    /// <param name="value5">The 5th value.</param>
-    /// <param name="value6">The 6th value.</param>
-    /// <param name="value7">The 7th value.</param>
-    /// <param name="value8">The 8th value.</param>
+    /// <typeparam name = "T1">The type of the first value.</typeparam>
+    /// <typeparam name = "T2">The type of the second value.</typeparam>
+    /// <typeparam name = "T3">The type of the third value.</typeparam>
+    /// <typeparam name = "T4">The type of the fourth value.</typeparam>
+    /// <typeparam name = "T5">The type of the fifth value.</typeparam>
+    /// <typeparam name = "T6">The type of the sixth value.</typeparam>
+    /// <typeparam name = "T7">The type of the seventh value.</typeparam>
+    /// <typeparam name = "T8">The type of the eighth value.</typeparam>
+    /// <param name = "buffer">The buffer into which to concatenate the values.</param>
+    /// <param name = "firstValue">The first value.</param>
+    /// <param name = "secondValue">The second value.</param>
+    /// <param name = "thirdValue">The third value.</param>
+    /// <param name = "fourthValue">The fourth value.</param>
+    /// <param name = "fifthValue">The fifth value.</param>
+    /// <param name = "sixthValue">The sixth value.</param>
+    /// <param name = "seventhValue">The seventh value.</param>
+    /// <param name = "eighthValue">The eighth value.</param>
     /// <returns>An instance of this string type.</returns>
-    public static OtherNames Concatenate<T1, T2, T3, T4, T5, T6, T7, T8>(Span<byte> buffer, in T1 value1, in T2 value2, in T3 value3, in T4 value4, in T5 value5, in T6 value6, in T7 value7, in T8 value8)
-        where T1 : struct, IJsonValue<T1>
-        where T2 : struct, IJsonValue<T2>
-        where T3 : struct, IJsonValue<T3>
-        where T4 : struct, IJsonValue<T4>
-        where T5 : struct, IJsonValue<T5>
-        where T6 : struct, IJsonValue<T6>
-        where T7 : struct, IJsonValue<T7>
-        where T8 : struct, IJsonValue<T8>
+    public static OtherNames Concatenate<T1, T2, T3, T4, T5, T6, T7, T8>(Span<byte> buffer, in T1 firstValue, in T2 secondValue, in T3 thirdValue, in T4 fourthValue, in T5 fifthValue, in T6 sixthValue, in T7 seventhValue, in T8 eighthValue)
+        where T1 : struct, IJsonValue<T1> where T2 : struct, IJsonValue<T2> where T3 : struct, IJsonValue<T3> where T4 : struct, IJsonValue<T4> where T5 : struct, IJsonValue<T5> where T6 : struct, IJsonValue<T6> where T7 : struct, IJsonValue<T7> where T8 : struct, IJsonValue<T8>
     {
-        int written = LowAllocJsonUtils.ConcatenateAsUtf8JsonString(buffer, value1, value2, value3, value4, value5, value6, value7, value8);
+        int written = LowAllocJsonUtils.ConcatenateAsUtf8JsonString(buffer, firstValue, secondValue, thirdValue, fourthValue, fifthValue, sixthValue, seventhValue, eighthValue);
         return ParseValue(buffer[..written]);
     }
 
@@ -280,8 +257,7 @@ public readonly partial struct OtherNames
             return true;
         }
 
-        if ((this.backing & Backing.JsonElement) != 0 &&
-            this.jsonElementBacking.ValueKind == JsonValueKind.String)
+        if ((this.backing & Backing.JsonElement) != 0 && this.jsonElementBacking.ValueKind == JsonValueKind.String)
         {
             value = this.jsonElementBacking.GetString();
             return value is not null;
@@ -308,8 +284,8 @@ public readonly partial struct OtherNames
     /// <summary>
     /// Compare to a sequence of characters.
     /// </summary>
-    /// <param name="utf8Bytes">The UTF8-encoded character sequence to compare.</param>
-    /// <returns><c>True</c> if the sequences match.</returns>
+    /// <param name = "utf8Bytes">The UTF8-encoded character sequence to compare.</param>
+    /// <returns><c>True</c> if teh sequences match.</returns>
     public bool EqualsUtf8Bytes(ReadOnlySpan<byte> utf8Bytes)
     {
         if ((this.backing & Backing.JsonElement) != 0)
@@ -322,7 +298,7 @@ public readonly partial struct OtherNames
 
         if ((this.backing & Backing.String) != 0)
         {
-            int maxCharCount = System.Text.Encoding.UTF8.GetMaxCharCount(utf8Bytes.Length);
+            int maxCharCount = Encoding.UTF8.GetMaxCharCount(utf8Bytes.Length);
 #if NET8_0_OR_GREATER
             char[]? pooledChars = null;
 
@@ -332,7 +308,7 @@ public readonly partial struct OtherNames
 
             try
             {
-                int written = System.Text.Encoding.UTF8.GetChars(utf8Bytes, chars);
+                int written = Encoding.UTF8.GetChars(utf8Bytes, chars);
                 return chars[..written].SequenceEqual(this.stringBacking);
             }
             finally
@@ -346,10 +322,9 @@ public readonly partial struct OtherNames
             char[] chars = ArrayPool<char>.Shared.Rent(maxCharCount);
             byte[] bytes = ArrayPool<byte>.Shared.Rent(utf8Bytes.Length);
             utf8Bytes.CopyTo(bytes);
-
             try
             {
-                int written = System.Text.Encoding.UTF8.GetChars(bytes, 0, bytes.Length, chars, 0);
+                int written = Encoding.UTF8.GetChars(bytes, 0, bytes.Length, chars, 0);
                 return chars.SequenceEqual(this.stringBacking);
             }
             finally
@@ -366,8 +341,8 @@ public readonly partial struct OtherNames
     /// <summary>
     /// Compare to a sequence of characters.
     /// </summary>
-    /// <param name="chars">The character sequence to compare.</param>
-    /// <returns><c>True</c> if the sequences match.</returns>
+    /// <param name = "chars">The character sequence to compare.</param>
+    /// <returns><c>True</c> if teh sequences match.</returns>
     public bool EqualsString(string chars)
     {
         if ((this.backing & Backing.JsonElement) != 0)
@@ -391,8 +366,8 @@ public readonly partial struct OtherNames
     /// <summary>
     /// Compare to a sequence of characters.
     /// </summary>
-    /// <param name="chars">The character sequence to compare.</param>
-    /// <returns><c>True</c> if the sequences match.</returns>
+    /// <param name = "chars">The character sequence to compare.</param>
+    /// <returns><c>True</c> if teh sequences match.</returns>
     public bool EqualsString(ReadOnlySpan<char> chars)
     {
         if ((this.backing & Backing.JsonElement) != 0)
@@ -416,7 +391,6 @@ public readonly partial struct OtherNames
 
         return false;
     }
-
 #if NET8_0_OR_GREATER
     /// <inheritdoc/>
     public bool TryFormat(Span<char> destination, out int charsWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
@@ -434,7 +408,7 @@ public readonly partial struct OtherNames
             char[] buffer = ArrayPool<char>.Shared.Rent(destination.Length);
             try
             {
-                bool result = this.jsonElementBacking.TryGetValue(FormatSpan, new __Corvus__Output(buffer, destination.Length), out charsWritten);
+                bool result = this.jsonElementBacking.TryGetValue(FormatSpan, new Output(buffer, destination.Length), out charsWritten);
                 if (result)
                 {
                     buffer.AsSpan(0, charsWritten).CopyTo(destination);
@@ -451,7 +425,7 @@ public readonly partial struct OtherNames
         charsWritten = 0;
         return false;
 
-        static bool FormatSpan(ReadOnlySpan<char> source, in __Corvus__Output output, out int charsWritten)
+        static bool FormatSpan(ReadOnlySpan<char> source, in Output output, out int charsWritten)
         {
             int length = Math.Min(output.Length, source.Length);
             source[..length].CopyTo(output.Destination);
@@ -467,6 +441,6 @@ public readonly partial struct OtherNames
         return this.ToString();
     }
 
-    private readonly record struct __Corvus__Output(char[] Destination, int Length);
+    private readonly record struct Output(char[] Destination, int Length);
 #endif
 }

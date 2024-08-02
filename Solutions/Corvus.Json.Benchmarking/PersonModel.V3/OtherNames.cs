@@ -6,10 +6,9 @@
 //     the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
-
 #nullable enable
-
 using System.Buffers;
+using System.ComponentModel;
 using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
@@ -17,21 +16,26 @@ using Corvus.Json;
 using Corvus.Json.Internal;
 
 namespace Corvus.Json.Benchmarking.Models.V3;
-
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
+/// <remarks>
+/// <para>
+/// A person's other (middle) names.
+/// </para>
+/// <para>
+/// This may be either a single name represented as a string, or an array of strings, representing one or more other names.
+/// </para>
+/// </remarks>
 [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<OtherNames>))]
 public readonly partial struct OtherNames
-    : IJsonValue<Corvus.Json.Benchmarking.Models.V3.OtherNames>
 {
     private readonly Backing backing;
     private readonly JsonElement jsonElementBacking;
     private readonly string stringBacking;
     private readonly ImmutableList<JsonAny> arrayBacking;
-
     /// <summary>
-    /// Initializes a new instance of the <see cref="OtherNames"/> struct.
+    /// Initializes a new instance of the <see cref = "OtherNames"/> struct.
     /// </summary>
     public OtherNames()
     {
@@ -42,9 +46,9 @@ public readonly partial struct OtherNames
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="OtherNames"/> struct.
+    /// Initializes a new instance of the <see cref = "OtherNames"/> struct.
     /// </summary>
-    /// <param name="value">The value from which to construct the instance.</param>
+    /// <param name = "value">The value from which to construct the instance.</param>
     public OtherNames(in JsonElement value)
     {
         this.jsonElementBacking = value;
@@ -54,46 +58,19 @@ public readonly partial struct OtherNames
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="OtherNames"/> struct.
-    /// </summary>
-    /// <param name="value">The value from which to construct the instance.</param>
-    public OtherNames(ImmutableList<JsonAny> value)
-    {
-        this.backing = Backing.Array;
-        this.jsonElementBacking = default;
-        this.stringBacking = string.Empty;
-        this.arrayBacking = value;
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="OtherNames"/> struct.
-    /// </summary>
-    /// <param name="value">The value from which to construct the instance.</param>
-    public OtherNames(string value)
-    {
-        this.backing = Backing.String;
-        this.jsonElementBacking = default;
-        this.stringBacking = value;
-        this.arrayBacking = ImmutableList<JsonAny>.Empty;
-    }
-
-    /// <summary>
     /// Gets the schema location from which this type was generated.
     /// </summary>
-    public static string SchemaLocation { get; } = "#/$defs/OtherNames";
-
+    public static string SchemaLocation { get; } = "person-schema.json#/$defs/OtherNames";
     /// <summary>
     /// Gets a Null instance.
     /// </summary>
     public static OtherNames Null { get; } = new(JsonValueHelpers.NullElement);
-
     /// <summary>
     /// Gets an Undefined instance.
     /// </summary>
     public static OtherNames Undefined { get; }
-
     /// <summary>
-    /// Gets the default instance.
+    /// Gets the default instance of the type.
     /// </summary>
     public static OtherNames DefaultInstance { get; }
 
@@ -235,50 +212,6 @@ public readonly partial struct OtherNames
         }
     }
 
-    /// <summary>
-    /// Gets the instance as a <see cref="Corvus.Json.Benchmarking.Models.V3.PersonNameElement" />.
-    /// </summary>
-    public Corvus.Json.Benchmarking.Models.V3.PersonNameElement AsPersonNameElement
-    {
-        get
-        {
-            return this.As<Corvus.Json.Benchmarking.Models.V3.PersonNameElement>();
-        }
-    }
-
-    /// <summary>
-    /// Gets a value indicating whether the instance is a <see cref="Corvus.Json.Benchmarking.Models.V3.PersonNameElement" />.
-    /// </summary>
-    public bool IsPersonNameElement
-    {
-        get
-        {
-            return this.As<Corvus.Json.Benchmarking.Models.V3.PersonNameElement>().IsValid();
-        }
-    }
-
-    /// <summary>
-    /// Gets the instance as a <see cref="Corvus.Json.Benchmarking.Models.V3.PersonNameElementArray" />.
-    /// </summary>
-    public Corvus.Json.Benchmarking.Models.V3.PersonNameElementArray AsPersonNameElementArray
-    {
-        get
-        {
-            return this.As<Corvus.Json.Benchmarking.Models.V3.PersonNameElementArray>();
-        }
-    }
-
-    /// <summary>
-    /// Gets a value indicating whether the instance is a <see cref="Corvus.Json.Benchmarking.Models.V3.PersonNameElementArray" />.
-    /// </summary>
-    public bool IsPersonNameElementArray
-    {
-        get
-        {
-            return this.As<Corvus.Json.Benchmarking.Models.V3.PersonNameElementArray>().IsValid();
-        }
-    }
-
     /// <inheritdoc/>
     public bool HasJsonElementBacking
     {
@@ -317,6 +250,11 @@ public readonly partial struct OtherNames
                 return JsonValueKind.Array;
             }
 
+            if ((this.backing & Backing.Null) != 0)
+            {
+                return JsonValueKind.Null;
+            }
+
             return JsonValueKind.Undefined;
         }
     }
@@ -324,8 +262,9 @@ public readonly partial struct OtherNames
     /// <summary>
     /// Conversion from JsonAny.
     /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator OtherNames(JsonAny value)
+    /// <param name = "value">The value from which to convert.</param>
+    /// <exception cref = "InvalidOperationException">The value was not compatible with this type.</exception>
+    public static implicit operator OtherNames(in JsonAny value)
     {
         return value.As<OtherNames>();
     }
@@ -333,93 +272,43 @@ public readonly partial struct OtherNames
     /// <summary>
     /// Conversion to JsonAny.
     /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator JsonAny(OtherNames value)
+    /// <param name = "value">The value from which to convert.</param>
+    /// <exception cref = "InvalidOperationException">The value was not compatible with this type.</exception>
+    public static implicit operator JsonAny(in OtherNames value)
     {
         return value.AsAny;
     }
 
     /// <summary>
-    /// Conversion to <see cref="Corvus.Json.Benchmarking.Models.V3.PersonNameElement"/>.
+    /// Equality operator.
     /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static explicit operator Corvus.Json.Benchmarking.Models.V3.PersonNameElement(OtherNames value)
-    {
-        return value.As<Corvus.Json.Benchmarking.Models.V3.PersonNameElement>();
-    }
-
-    /// <summary>
-    /// Conversion from <see cref="Corvus.Json.Benchmarking.Models.V3.PersonNameElement"/>.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator OtherNames(Corvus.Json.Benchmarking.Models.V3.PersonNameElement value)
-    {
-        return value.As<OtherNames>();
-    }
-
-    /// <summary>
-    /// Conversion to <see cref="Corvus.Json.Benchmarking.Models.V3.PersonNameElementArray"/>.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static explicit operator Corvus.Json.Benchmarking.Models.V3.PersonNameElementArray(OtherNames value)
-    {
-        return value.As<Corvus.Json.Benchmarking.Models.V3.PersonNameElementArray>();
-    }
-
-    /// <summary>
-    /// Conversion from <see cref="Corvus.Json.Benchmarking.Models.V3.PersonNameElementArray"/>.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator OtherNames(Corvus.Json.Benchmarking.Models.V3.PersonNameElementArray value)
-    {
-        return value.As<OtherNames>();
-    }
-
-    /// <summary>
-    /// Operator ==.
-    /// </summary>
-    /// <param name="left">The lhs of the operator.</param>
-    /// <param name="right">The rhs of the operator.</param>
-    /// <returns>
-    /// <c>True</c> if the values are equal.
-    /// </returns>
+    /// <param name = "left">The lhs.</param>
+    /// <param name = "right">The rhs.</param>
+    /// <returns><c>True</c> if the values are equal.</returns>
     public static bool operator ==(in OtherNames left, in OtherNames right)
     {
         return left.Equals(right);
     }
 
     /// <summary>
-    /// Operator !=.
+    /// Inequality operator.
     /// </summary>
-    /// <param name="left">The lhs of the operator.</param>
-    /// <param name="right">The rhs of the operator.</param>
-    /// <returns>
-    /// <c>True</c> if the values are not equal.
-    /// </returns>
+    /// <param name = "left">The lhs.</param>
+    /// <param name = "right">The rhs.</param>
+    /// <returns><c>True</c> if the values are equal.</returns>
     public static bool operator !=(in OtherNames left, in OtherNames right)
     {
         return !left.Equals(right);
     }
 
     /// <summary>
-    /// Gets an instance of the JSON value from a <see cref="JsonElement"/> value.
+    /// Gets an instance of the JSON value from a JsonAny value.
     /// </summary>
-    /// <param name="value">The <see cref="JsonElement"/> value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the <see cref="JsonElement"/>.</returns>
+    /// <param name = "value">The <see cref = "JsonAny"/> value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the <see cref = "JsonAny"/>.</returns>
     /// <remarks>The returned value will have a <see cref = "IJsonValue.ValueKind"/> of <see cref = "JsonValueKind.Undefined"/> if the
-    /// value cannot be constructed from the given instance (e.g. because they have an incompatible .NET backing type).
+    /// value cannot be constructed from the given instance (e.g. because they have an incompatible dotnet backing type.
     /// </remarks>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OtherNames FromJson(in JsonElement value)
-    {
-        return new(value);
-    }
-
-    /// <summary>
-    /// Gets an instance of the JSON value from a <see cref="JsonAny"/> value.
-    /// </summary>
-    /// <param name="value">The <see cref="JsonAny"/> value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the <see cref="JsonAny"/> value.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static OtherNames FromAny(in JsonAny value)
     {
@@ -428,7 +317,8 @@ public readonly partial struct OtherNames
             return new(value.AsJsonElement);
         }
 
-        return value.ValueKind switch
+        JsonValueKind valueKind = value.ValueKind;
+        return valueKind switch
         {
             JsonValueKind.String => new((string)value.AsString),
             JsonValueKind.Array => new(value.AsArray.AsImmutableList()),
@@ -437,13 +327,25 @@ public readonly partial struct OtherNames
         };
     }
 
+    /// <summary>
+    /// Gets an instance of the JSON value from a <see cref = "JsonElement"/> value.
+    /// </summary>
+    /// <param name = "value">The <see cref = "JsonElement"/> value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the <see cref = "JsonElement"/>.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static OtherNames FromJson(in JsonElement value)
+    {
+        return new(value);
+    }
+
 #if NET8_0_OR_GREATER
     /// <summary>
-    /// Gets an instance of the JSON value from the provided value.
+    /// Gets an instance of the JSON value from a boolean value.
     /// </summary>
-    /// <typeparam name="TValue">The type of the value.</typeparam>
+    /// <typeparam name = "TValue">The type of the value.</typeparam>
     /// <param name="value">The value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the provided value.</returns>
+    /// <returns>An instance of this type, initialized from the value.</returns>
+    /// <remarks>This will be OtherNames.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     static OtherNames IJsonValue<OtherNames>.FromBoolean<TValue>(in TValue value)
     {
@@ -455,13 +357,13 @@ public readonly partial struct OtherNames
         return Undefined;
     }
 #endif
-
     /// <summary>
-    /// Gets an instance of the JSON value from the provided value.
+    /// Gets an instance of the JSON value from a string value.
     /// </summary>
-    /// <typeparam name="TValue">The type of the value.</typeparam>
-    /// <param name="value">The value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the provided value.</returns>
+    /// <typeparam name = "TValue">The type of the value.</typeparam>
+    /// <param name = "value">The value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the value.</returns>
+    /// <remarks>This will be OtherNames.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static OtherNames FromString<TValue>(in TValue value)
         where TValue : struct, IJsonString<TValue>
@@ -471,21 +373,26 @@ public readonly partial struct OtherNames
             return new(value.AsJsonElement);
         }
 
-        return value.ValueKind switch
+        if (value.ValueKind == JsonValueKind.String)
         {
-            JsonValueKind.String => new((string)value.AsString),
-            JsonValueKind.Null => Null,
-            _ => Undefined,
-        };
+#if NET8_0_OR_GREATER
+            return new((string)value);
+#else
+            return new((string)value.AsString);
+#endif
+        }
+
+        return Undefined;
     }
 
 #if NET8_0_OR_GREATER
     /// <summary>
-    /// Gets an instance of the JSON value from the provided value.
+    /// Gets an instance of the JSON value from a number value.
     /// </summary>
     /// <typeparam name="TValue">The type of the value.</typeparam>
     /// <param name="value">The value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the provided value.</returns>
+    /// <returns>An instance of this type, initialized from the value.</returns>
+    /// <remarks>This will be OtherNames.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     static OtherNames IJsonValue<OtherNames>.FromNumber<TValue>(in TValue value)
     {
@@ -497,14 +404,38 @@ public readonly partial struct OtherNames
         return Undefined;
     }
 #endif
+    /// <summary>
+    /// Gets an instance of the JSON value from an array value.
+    /// </summary>
+    /// <typeparam name = "TValue">The type of the value.</typeparam>
+    /// <param name = "value">The value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the value.</returns>
+    /// <remarks>This will be OtherNames.Undefined if the type is not compatible.</remarks>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static OtherNames FromArray<TValue>(in TValue value)
+        where TValue : struct, IJsonArray<TValue>
+    {
+        if (value.HasJsonElementBacking)
+        {
+            return new(value.AsJsonElement);
+        }
+
+        if (value.ValueKind == JsonValueKind.Array)
+        {
+            return new(value.AsImmutableList());
+        }
+
+        return Undefined;
+    }
 
 #if NET8_0_OR_GREATER
     /// <summary>
-    /// Gets an instance of the JSON value from the provided value.
+    /// Gets an instance of the JSON value from an object value.
     /// </summary>
     /// <typeparam name="TValue">The type of the value.</typeparam>
     /// <param name="value">The value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the provided value.</returns>
+    /// <returns>An instance of this type, initialized from the value.</returns>
+    /// <remarks>This will be OtherNames.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     static OtherNames IJsonValue<OtherNames>.FromObject<TValue>(in TValue value)
     {
@@ -516,128 +447,112 @@ public readonly partial struct OtherNames
         return Undefined;
     }
 #endif
-
     /// <summary>
-    /// Gets an instance of the JSON value from the provided value.
+    /// Parses a JSON string into a OtherNames.
     /// </summary>
-    /// <typeparam name="TValue">The type of the value.</typeparam>
-    /// <param name="value">The value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the provided value.</returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OtherNames FromArray<TValue>(in TValue value)
-        where TValue : struct, IJsonArray<TValue>
+    /// <param name = "json">The json string to parse.</param>
+    /// <param name = "options">The (optional) JsonDocumentOptions.</param>
+    /// <returns>A <see cref = "OtherNames"/> instance built from the JSON string.</returns>
+    public static OtherNames Parse(string json, JsonDocumentOptions options = default)
     {
-        if (value.HasJsonElementBacking)
-        {
-            return new(value.AsJsonElement);
-        }
-
-        return value.ValueKind switch
-        {
-            JsonValueKind.Array => new(value.AsArray.AsImmutableList()),
-            JsonValueKind.Null => Null,
-            _ => Undefined,
-        };
+        using var jsonDocument = JsonDocument.Parse(json, options);
+        return new OtherNames(jsonDocument.RootElement.Clone());
     }
 
     /// <summary>
-    /// Parses the OtherNames.
+    /// Parses a JSON string into a OtherNames.
     /// </summary>
-    /// <param name="source">The source of the JSON string to parse.</param>
-    /// <param name="options">The (optional) JsonDocumentOptions.</param>
-    public static OtherNames Parse(string source, JsonDocumentOptions options = default)
+    /// <param name = "utf8Json">The json string to parse.</param>
+    /// <param name = "options">The (optional) JsonDocumentOptions.</param>
+    /// <returns>A <see cref = "OtherNames"/> instance built from the JSON string.</returns>
+    public static OtherNames Parse(Stream utf8Json, JsonDocumentOptions options = default)
     {
-        using var jsonDocument = JsonDocument.Parse(source, options);
-        return new(jsonDocument.RootElement.Clone());
+        using var jsonDocument = JsonDocument.Parse(utf8Json, options);
+        return new OtherNames(jsonDocument.RootElement.Clone());
     }
 
     /// <summary>
-    /// Parses the OtherNames.
+    /// Parses a JSON string into a OtherNames.
     /// </summary>
-    /// <param name="source">The source of the JSON string to parse.</param>
-    /// <param name="options">The (optional) JsonDocumentOptions.</param>
-    public static OtherNames Parse(Stream source, JsonDocumentOptions options = default)
+    /// <param name = "utf8Json">The json string to parse.</param>
+    /// <param name = "options">The (optional) JsonDocumentOptions.</param>
+    /// <returns>A <see cref = "OtherNames"/> instance built from the JSON string.</returns>
+    public static OtherNames Parse(ReadOnlyMemory<byte> utf8Json, JsonDocumentOptions options = default)
     {
-        using var jsonDocument = JsonDocument.Parse(source, options);
-        return new(jsonDocument.RootElement.Clone());
+        using var jsonDocument = JsonDocument.Parse(utf8Json, options);
+        return new OtherNames(jsonDocument.RootElement.Clone());
     }
 
     /// <summary>
-    /// Parses the OtherNames.
+    /// Parses a JSON string into a OtherNames.
     /// </summary>
-    /// <param name="source">The source of the JSON string to parse.</param>
-    /// <param name="options">The (optional) JsonDocumentOptions.</param>
-    public static OtherNames Parse(ReadOnlyMemory<byte> source, JsonDocumentOptions options = default)
+    /// <param name = "json">The json string to parse.</param>
+    /// <param name = "options">The (optional) JsonDocumentOptions.</param>
+    /// <returns>A <see cref = "OtherNames"/> instance built from the JSON string.</returns>
+    public static OtherNames Parse(ReadOnlyMemory<char> json, JsonDocumentOptions options = default)
     {
-        using var jsonDocument = JsonDocument.Parse(source, options);
-        return new(jsonDocument.RootElement.Clone());
+        using var jsonDocument = JsonDocument.Parse(json, options);
+        return new OtherNames(jsonDocument.RootElement.Clone());
     }
 
     /// <summary>
-    /// Parses the OtherNames.
+    /// Parses a JSON string into a OtherNames.
     /// </summary>
-    /// <param name="source">The source of the JSON string to parse.</param>
-    /// <param name="options">The (optional) JsonDocumentOptions.</param>
-    public static OtherNames Parse(ReadOnlyMemory<char> source, JsonDocumentOptions options = default)
+    /// <param name = "utf8Json">The json string to parse.</param>
+    /// <param name = "options">The (optional) JsonDocumentOptions.</param>
+    /// <returns>A <see cref = "OtherNames"/> instance built from the JSON string.</returns>
+    public static OtherNames Parse(ReadOnlySequence<byte> utf8Json, JsonDocumentOptions options = default)
     {
-        using var jsonDocument = JsonDocument.Parse(source, options);
-        return new(jsonDocument.RootElement.Clone());
+        using var jsonDocument = JsonDocument.Parse(utf8Json, options);
+        return new OtherNames(jsonDocument.RootElement.Clone());
     }
 
     /// <summary>
-    /// Parses the OtherNames.
+    /// Parses a JSON value from a buffer.
     /// </summary>
-    /// <param name="source">The source of the JSON string to parse.</param>
-    /// <param name="options">The (optional) JsonDocumentOptions.</param>
-    public static OtherNames Parse(ReadOnlySequence<byte> source, JsonDocumentOptions options = default)
-    {
-        using var jsonDocument = JsonDocument.Parse(source, options);
-        return new(jsonDocument.RootElement.Clone());
-    }
-
-    /// <summary>
-    /// Parses the OtherNames.
-    /// </summary>
-    /// <param name="source">The source of the JSON string to parse.</param>
-    public static OtherNames ParseValue(ReadOnlySpan<char> source)
+    /// <param name = "buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    static OtherNames ParseValue(ReadOnlySpan<char> buffer)
     {
 #if NET8_0_OR_GREATER
-        return IJsonValue<OtherNames>.ParseValue(source);
+        return IJsonValue<OtherNames>.ParseValue(buffer);
 #else
-        return JsonValueHelpers.ParseValue<OtherNames>(source);
+        return JsonValueHelpers.ParseValue<OtherNames>(buffer);
 #endif
     }
 
     /// <summary>
-    /// Parses the OtherNames.
+    /// Parses a JSON value from a buffer.
     /// </summary>
-    /// <param name="source">The source of the JSON string to parse.</param>
-    public static OtherNames ParseValue(ReadOnlySpan<byte> source)
+    /// <param name = "buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    static OtherNames ParseValue(ReadOnlySpan<byte> buffer)
     {
 #if NET8_0_OR_GREATER
-        return IJsonValue<OtherNames>.ParseValue(source);
+        return IJsonValue<OtherNames>.ParseValue(buffer);
 #else
-        return JsonValueHelpers.ParseValue<OtherNames>(source);
+        return JsonValueHelpers.ParseValue<OtherNames>(buffer);
 #endif
     }
 
     /// <summary>
-    /// Parses the OtherNames.
+    /// Parses a JSON value from a buffer.
     /// </summary>
-    /// <param name="source">The source of the JSON string to parse.</param>
-    public static OtherNames ParseValue(ref Utf8JsonReader source)
+    /// <param name = "reader">The reader from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    static OtherNames ParseValue(ref Utf8JsonReader reader)
     {
 #if NET8_0_OR_GREATER
-        return IJsonValue<OtherNames>.ParseValue(ref source);
+        return IJsonValue<OtherNames>.ParseValue(ref reader);
 #else
-        return JsonValueHelpers.ParseValue<OtherNames>(ref source);
+        return JsonValueHelpers.ParseValue<OtherNames>(ref reader);
 #endif
     }
 
     /// <summary>
     /// Gets the value as an instance of the target value.
     /// </summary>
-    /// <typeparam name="TTarget">The type of the target.</typeparam>
+    /// <typeparam name = "TTarget">The type of the target.</typeparam>
     /// <returns>An instance of the target type.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public TTarget As<TTarget>()
@@ -651,12 +566,12 @@ public readonly partial struct OtherNames
 
         if ((this.backing & Backing.String) != 0)
         {
-            return TTarget.FromString(this.AsString);
+            return TTarget.FromString(this);
         }
 
         if ((this.backing & Backing.Array) != 0)
         {
-            return TTarget.FromArray(this.AsArray);
+            return TTarget.FromArray(this);
         }
 
         if ((this.backing & Backing.Null) != 0)
@@ -673,9 +588,7 @@ public readonly partial struct OtherNames
     /// <inheritdoc/>
     public override bool Equals(object? obj)
     {
-        return
-            (obj is IJsonValue jv && this.Equals(jv.AsAny)) ||
-            (obj is null && this.IsNull());
+        return (obj is IJsonValue jv && this.Equals(jv.AsAny)) || (obj is null && this.IsNull());
     }
 
     /// <inheritdoc/>
@@ -688,7 +601,7 @@ public readonly partial struct OtherNames
     /// <summary>
     /// Equality comparison.
     /// </summary>
-    /// <param name="other">The other item with which to compare.</param>
+    /// <param name = "other">The other item with which to compare.</param>
     /// <returns><see langword="true"/> if the values were equal.</returns>
     public bool Equals(in OtherNames other)
     {
@@ -711,21 +624,18 @@ public readonly partial struct OtherNames
         if ((this.backing & Backing.Array) != 0)
         {
             JsonValueHelpers.WriteItems(this.arrayBacking, writer);
-
             return;
         }
 
         if ((this.backing & Backing.String) != 0)
         {
             writer.WriteStringValue(this.stringBacking);
-
             return;
         }
 
         if ((this.backing & Backing.Null) != 0)
         {
             writer.WriteNullValue();
-
             return;
         }
     }
@@ -740,86 +650,5 @@ public readonly partial struct OtherNames
     public override string ToString()
     {
         return this.Serialize();
-    }
-
-    /// <summary>
-    /// Matches the value against the composed values, and returns the result of calling the provided match function for the first match found.
-    /// </summary>
-    /// <typeparam name="TIn">The immutable context to pass in to the match function.</typeparam>
-    /// <typeparam name="TOut">The result of calling the match function.</typeparam>
-    /// <param name="context">The context to pass to the match function.</param>
-    /// <param name="matchPersonNameElement">Match a <see cref="Corvus.Json.Benchmarking.Models.V3.PersonNameElement"/>.</param>
-    /// <param name="matchPersonNameElementArray">Match a <see cref="Corvus.Json.Benchmarking.Models.V3.PersonNameElementArray"/>.</param>
-    /// <param name="defaultMatch">Match any other value.</param>
-    /// <returns>An instance of the value returned by the match function.</returns>
-    public TOut Match<TIn, TOut>(
-        in TIn context,
-        Matcher<Corvus.Json.Benchmarking.Models.V3.PersonNameElement, TIn, TOut> matchPersonNameElement,
-        Matcher<Corvus.Json.Benchmarking.Models.V3.PersonNameElementArray, TIn, TOut> matchPersonNameElementArray,
-        Matcher<Corvus.Json.Benchmarking.Models.V3.OtherNames, TIn, TOut> defaultMatch)
-    {
-        Corvus.Json.Benchmarking.Models.V3.PersonNameElement matchPersonNameElementValue = this.As<Corvus.Json.Benchmarking.Models.V3.PersonNameElement>();
-        if (matchPersonNameElementValue.IsValid())
-        {
-            return matchPersonNameElement(matchPersonNameElementValue, context);
-        }
-
-        Corvus.Json.Benchmarking.Models.V3.PersonNameElementArray matchPersonNameElementArrayValue = this.As<Corvus.Json.Benchmarking.Models.V3.PersonNameElementArray>();
-        if (matchPersonNameElementArrayValue.IsValid())
-        {
-            return matchPersonNameElementArray(matchPersonNameElementArrayValue, context);
-        }
-
-        return defaultMatch(this, context);
-    }
-
-    /// <summary>
-    /// Matches the value against the composed values, and returns the result of calling the provided match function for the first match found.
-    /// </summary>
-    /// <typeparam name="TOut">The result of calling the match function.</typeparam>
-    /// <param name="matchPersonNameElement">Match a <see cref="Corvus.Json.Benchmarking.Models.V3.PersonNameElement"/>.</param>
-    /// <param name="matchPersonNameElementArray">Match a <see cref="Corvus.Json.Benchmarking.Models.V3.PersonNameElementArray"/>.</param>
-    /// <param name="defaultMatch">Match any other value.</param>
-    /// <returns>An instance of the value returned by the match function.</returns>
-    public TOut Match<TOut>(
-        Matcher<Corvus.Json.Benchmarking.Models.V3.PersonNameElement, TOut> matchPersonNameElement,
-        Matcher<Corvus.Json.Benchmarking.Models.V3.PersonNameElementArray, TOut> matchPersonNameElementArray,
-        Matcher<Corvus.Json.Benchmarking.Models.V3.OtherNames, TOut> defaultMatch)
-    {
-        Corvus.Json.Benchmarking.Models.V3.PersonNameElement matchPersonNameElementValue = this.As<Corvus.Json.Benchmarking.Models.V3.PersonNameElement>();
-        if (matchPersonNameElementValue.IsValid())
-        {
-            return matchPersonNameElement(matchPersonNameElementValue);
-        }
-
-        Corvus.Json.Benchmarking.Models.V3.PersonNameElementArray matchPersonNameElementArrayValue = this.As<Corvus.Json.Benchmarking.Models.V3.PersonNameElementArray>();
-        if (matchPersonNameElementArrayValue.IsValid())
-        {
-            return matchPersonNameElementArray(matchPersonNameElementArrayValue);
-        }
-
-        return defaultMatch(this);
-    }
-
-    /// <summary>
-    /// Gets the value as a <see cref="Corvus.Json.Benchmarking.Models.V3.PersonNameElement" />.
-    /// </summary>
-    /// <param name="result">The result of the conversions.</param>
-    /// <returns><see langword="true" /> if the conversion was valid.</returns>
-    public bool TryGetAsPersonNameElement(out Corvus.Json.Benchmarking.Models.V3.PersonNameElement result)
-    {
-        result = this.As<Corvus.Json.Benchmarking.Models.V3.PersonNameElement>();
-        return result.IsValid();
-    }
-
-    /// <summary>
-    /// Gets the value as a <see cref="Corvus.Json.Benchmarking.Models.V3.PersonNameElementArray" />.
-    /// </summary>
-    /// <param name="result">The result of the conversions.</param>
-    /// <returns><see langword="true" /> if the conversion was valid.</returns>
-    public bool TryGetAsPersonNameElementArray(out Corvus.Json.Benchmarking.Models.V3.PersonNameElementArray result)
-    {
-        result = this.As<Corvus.Json.Benchmarking.Models.V3.PersonNameElementArray>();
-        return result.IsValid();
     }
 }
