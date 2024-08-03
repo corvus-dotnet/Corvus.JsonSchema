@@ -200,12 +200,22 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
         }
 
         string ns = this.options.GetNamespace(typeDeclaration);
+
         JsonReferenceBuilder reference = GetReferenceWithoutQuery(typeDeclaration);
 
-        if (this.options.TryGetTypeName(reference.ToString(), out string? typeName))
+        if (this.options.TryGetTypeName(reference.ToString(), out NamedType typeName))
         {
-            typeDeclaration.SetDotnetTypeName(typeName);
-            typeDeclaration.SetDotnetNamespace(ns);
+            typeDeclaration.SetDotnetTypeName(typeName.DotnetTypeName);
+
+            if (typeName.DotnetNamespace is string nsOverride)
+            {
+                typeDeclaration.SetDotnetNamespace(ns);
+                typeDeclaration.SetParent(null);
+            }
+            else
+            {
+                typeDeclaration.SetDotnetNamespace(ns);
+            }
 
             return;
         }
@@ -408,24 +418,50 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
     {
         return
             this.options.UseOptionalNameHeuristics
-                ? this.nameHeuristicRegistry.RegisteredHeuristics.OfType<IBuiltInTypeNameHeuristic>().OrderBy(h => h.Priority).ThenBy(h => h.GetType().Name)
-                : this.nameHeuristicRegistry.RegisteredHeuristics.OfType<IBuiltInTypeNameHeuristic>().Where(h => !h.IsOptional).OrderBy(h => h.Priority).ThenBy(h => h.GetType().Name);
+                ? this.nameHeuristicRegistry.RegisteredHeuristics
+                    .OfType<IBuiltInTypeNameHeuristic>()
+                    .Where(h => !this.options.DisabledNamingHeuristics.Contains(h.GetType().Name))
+                    .OrderBy(h => h.Priority)
+                    .ThenBy(h => h.GetType().Name)
+                : this.nameHeuristicRegistry.RegisteredHeuristics
+                    .OfType<IBuiltInTypeNameHeuristic>()
+                    .Where(h => !h.IsOptional && !this.options.DisabledNamingHeuristics.Contains(h.GetType().Name))
+                    .OrderBy(h => h.Priority)
+                    .ThenBy(h => h.GetType().Name);
     }
 
     private IEnumerable<INameHeuristic> GetOrderedNameBeforeSubschemaHeuristics()
     {
         return
             this.options.UseOptionalNameHeuristics
-                ? this.nameHeuristicRegistry.RegisteredHeuristics.OfType<INameHeuristicBeforeSubschema>().OrderBy(h => h.Priority).ThenBy(h => h.GetType().Name)
-                : this.nameHeuristicRegistry.RegisteredHeuristics.OfType<INameHeuristicBeforeSubschema>().Where(h => !h.IsOptional).OrderBy(h => h.Priority).ThenBy(h => h.GetType().Name);
+                ? this.nameHeuristicRegistry.RegisteredHeuristics
+                    .OfType<INameHeuristicBeforeSubschema>()
+                    .Where(h => !this.options.DisabledNamingHeuristics
+                    .Contains(h.GetType().Name))
+                    .OrderBy(h => h.Priority)
+                    .ThenBy(h => h.GetType().Name)
+                : this.nameHeuristicRegistry.RegisteredHeuristics
+                    .OfType<INameHeuristicBeforeSubschema>()
+                    .Where(h => !h.IsOptional && !this.options.DisabledNamingHeuristics
+                    .Contains(h.GetType().Name))
+                    .OrderBy(h => h.Priority)
+                    .ThenBy(h => h.GetType().Name);
     }
 
     private IEnumerable<INameHeuristic> GetOrderedNameAfterSubschemaHeuristics()
     {
         return
             this.options.UseOptionalNameHeuristics
-                ? this.nameHeuristicRegistry.RegisteredHeuristics.OfType<INameHeuristicAfterSubschema>().OrderBy(h => h.Priority).ThenBy(h => h.GetType().Name)
-                : this.nameHeuristicRegistry.RegisteredHeuristics.OfType<INameHeuristicAfterSubschema>().Where(h => !h.IsOptional).OrderBy(h => h.Priority).ThenBy(h => h.GetType().Name);
+                ? this.nameHeuristicRegistry.RegisteredHeuristics
+                    .OfType<INameHeuristicAfterSubschema>()
+                    .Where(h => !this.options.DisabledNamingHeuristics.Contains(h.GetType().Name))
+                    .OrderBy(h => h.Priority)
+                    .ThenBy(h => h.GetType().Name)
+                : this.nameHeuristicRegistry.RegisteredHeuristics
+                    .OfType<INameHeuristicAfterSubschema>()
+                    .Where(h => !h.IsOptional && !this.options.DisabledNamingHeuristics.Contains(h.GetType().Name))
+                    .OrderBy(h => h.Priority)
+                    .ThenBy(h => h.GetType().Name);
     }
 
     /// <summary>
@@ -433,7 +469,8 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
     /// </summary>
     /// <param name="reference">The reference to the schema.</param>
     /// <param name="dotnetTypeName">The .NET type name to use.</param>
-    public readonly struct NamedType(JsonReference reference, string dotnetTypeName)
+    /// <param name="dotnetNamespace">The (optional) .NET namespace to use.</param>
+    public readonly struct NamedType(JsonReference reference, string dotnetTypeName, string? dotnetNamespace = null)
     {
         /// <summary>
         /// Gets the reference to schema with an explicit name.
@@ -444,6 +481,16 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
         /// Gets the .NET type name.
         /// </summary>
         internal string DotnetTypeName { get; } = dotnetTypeName;
+
+        /// <summary>
+        /// Gets the (optional) .NET namespace to use for the type.
+        /// </summary>
+        /// <remarks>
+        /// Providing a value for this property will ensure that the type
+        /// is generated in the root of this global namespace, rather than
+        /// as a child of its parent.
+        /// </remarks>
+        internal string? DotnetNamespace { get; } = dotnetNamespace;
     }
 
     /// <summary>
@@ -474,9 +521,10 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
     /// <param name="useOptionalNameHeuristics">Indicates whether to use optional name heuristics.</param>
     /// <param name="alwaysAssertFormat">If true, then Format will always be treated as a validation assertion keyword, regardless of the vocabulary.</param>
     /// <param name="optionalAsNullable">If true, then generate nullable types for optional parameters.</param>
-    public class Options(string defaultNamespace, NamedType[]? namedTypes = null, Namespace[]? namespaces = null, bool useOptionalNameHeuristics = true, bool alwaysAssertFormat = true, bool optionalAsNullable = false)
+    /// <param name="disabledNamingHeuristics">The list of well-known names of naming heuristics to disable.</param>
+    public class Options(string defaultNamespace, NamedType[]? namedTypes = null, Namespace[]? namespaces = null, bool useOptionalNameHeuristics = true, bool alwaysAssertFormat = true, bool optionalAsNullable = false, string[]? disabledNamingHeuristics = null)
     {
-        private readonly FrozenDictionary<string, string> namedTypeMap = namedTypes?.ToFrozenDictionary(kvp => kvp.Reference, kvp => kvp.DotnetTypeName) ?? FrozenDictionary<string, string>.Empty;
+        private readonly FrozenDictionary<string, NamedType> namedTypeMap = namedTypes?.ToFrozenDictionary(kvp => kvp.Reference, kvp => kvp) ?? FrozenDictionary<string, NamedType>.Empty;
         private readonly FrozenDictionary<string, string> namespaceMap = namespaces?.ToFrozenDictionary(kvp => kvp.BaseUri, kvp => kvp.DotnetNamespace) ?? FrozenDictionary<string, string>.Empty;
 
         /// <summary>
@@ -505,6 +553,11 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
         internal bool OptionalAsNullable { get; } = optionalAsNullable;
 
         /// <summary>
+        /// Gets the array of disabled naming heuristics.
+        /// </summary>
+        internal HashSet<string> DisabledNamingHeuristics { get; } = disabledNamingHeuristics is string[] n ? [..n] : [];
+
+        /// <summary>
         /// Gets the namespace for the base URI.
         /// </summary>
         /// <param name="typeDeclaration">The type declaration for which to get the namespace.</param>
@@ -525,7 +578,7 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
         /// <param name="reference">The reference .</param>
         /// <param name="typeName">The resulting type name.</param>
         /// <returns><see langword="true"/> if the name was provided.</returns>
-        internal bool TryGetTypeName(string reference, [NotNullWhen(true)] out string? typeName)
+        internal bool TryGetTypeName(string reference, [NotNullWhen(true)] out NamedType typeName)
         {
             return this.namedTypeMap.TryGetValue(reference, out typeName);
         }

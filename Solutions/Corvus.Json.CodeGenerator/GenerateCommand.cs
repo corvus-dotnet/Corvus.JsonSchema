@@ -62,9 +62,13 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
 
 
         [CommandOption("--disableOptionalNamingHeuristics")]
-        [Description("Disables optional naming heuristics.")]
+        [Description("Disables all optional naming heuristics.")]
         [DefaultValue(false)]
         public bool DisableOptionalNamingHeuristics { get; init; }
+
+        [CommandOption("--disableNamingHeuristic")]
+        [Description("Disables the specific naming heuristic.")]
+        public string[]? DisableNamingHeuristic{ get; init; }
 
         [CommandOption("--optionalAsNullable")]
         [Description("If NullOrUndefined, optional properties are emitted as .NET nullable values.")]
@@ -78,10 +82,10 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
         ArgumentNullException.ThrowIfNullOrEmpty(settings.SchemaFile); // We will never see this exception if the framework is doing its job; it should have blown up inside the CLI command handling
         ArgumentNullException.ThrowIfNullOrEmpty(settings.RootNamespace); // We will never see this exception if the framework is doing its job; it should have blown up inside the CLI command handling
 
-        return GenerateTypes(settings.SchemaFile, settings.RootNamespace, settings.RootPath, settings.RebaseToRootPath, settings.OutputPath, settings.OutputMapFile, settings.OutputRootTypeName, settings.UseSchema, settings.AssertFormat, settings.DisableOptionalNamingHeuristics, settings.OptionalAsNullable);
+        return GenerateTypes(settings.SchemaFile, settings.RootNamespace, settings.RootPath, settings.RebaseToRootPath, settings.OutputPath, settings.OutputMapFile, settings.OutputRootTypeName, settings.UseSchema, settings.AssertFormat, settings.DisableOptionalNamingHeuristics, settings.OptionalAsNullable, settings.DisableNamingHeuristic);
     }
 
-    private static async Task<int> GenerateTypes(string schemaFile, string rootNamespace, string? rootPath, bool rebaseToRootPath, string? outputPath, string? outputMapFile, string? rootTypeName, SchemaVariant schemaVariant, bool assertFormat, bool disableOptionalNameHeuristics, OptionalAsNullable optionalAsNullable)
+    private static async Task<int> GenerateTypes(string schemaFile, string rootNamespace, string? rootPath, bool rebaseToRootPath, string? outputPath, string? outputMapFile, string? rootTypeName, SchemaVariant schemaVariant, bool assertFormat, bool disableOptionalNameHeuristics, OptionalAsNullable optionalAsNullable, string[]? disabledNamingHeuristics)
     {
         try
         {
@@ -96,6 +100,10 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
             CodeGeneration.Draft6.VocabularyAnalyser.RegisterAnalyser(vocabularyRegistry);
             CodeGeneration.Draft4.VocabularyAnalyser.RegisterAnalyser(vocabularyRegistry);
             CodeGeneration.OpenApi30.VocabularyAnalyser.RegisterAnalyser(vocabularyRegistry);
+
+            // And register the custom vocabulary for Corvus extensions.
+            vocabularyRegistry.RegisterVocabularies(
+                CodeGeneration.CorvusVocabulary.SchemaVocabulary.DefaultInstance);
 
             // This will be our fallback vocabulary
             IVocabulary defaultVocabulary = GetFallbackVocabulary(schemaVariant);
@@ -124,7 +132,8 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
                     namedTypes: rootTypeName is string rtn ? [new CSharpLanguageProvider.NamedType(rootType.LocatedSchema.Location, rtn)] : null,
                     alwaysAssertFormat: assertFormat,
                     useOptionalNameHeuristics: !disableOptionalNameHeuristics,
-                    optionalAsNullable: optionalAsNullable == OptionalAsNullable.NullOrUndefined);
+                    optionalAsNullable: optionalAsNullable == OptionalAsNullable.NullOrUndefined,
+                    disabledNamingHeuristics: disabledNamingHeuristics);
 
                 currentTask = context.AddTask($"Generating code for {reference}");
                 var languageProvider = CSharpLanguageProvider.DefaultWithOptions(options);
