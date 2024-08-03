@@ -1,0 +1,186 @@
+{
+    "typesToGenerate": [
+        {
+            "schemaFile": "./json-extended-types.json",
+            "rootPath": "#/$defs/JsonAny"
+        },
+        {
+            "schemaFile": "./json-extended-types.json",
+            "rootPath": "#/$defs/JsonNotAny"
+        },
+        {
+            "schemaFile": "./json-extended-types.json",
+            "rootPath": "#/$defs/JsonArray"
+        },
+        {
+            "schemaFile": "./json-extended-types.json",
+            "rootPath": "#/$defs/JsonBoolean"
+        },
+        {
+            "schemaFile": "./json-extended-types.json",
+            "rootPath": "#/$defs/JsonNull"
+        },
+        {
+            "schemaFile": "./json-extended-types.json",
+            "rootPath": "#/$defs/JsonObject"
+        },
+        {
+            "schemaFile": "./json-extended-types.json",
+            "rootPath": "#/$defs/JsonString"
+        },
+        {
+            "schemaFile": "./json-extended-types.json",
+            "rootPath": "#/$defs/JsonBase64Content"
+        },
+        {
+            "schemaFile": "./json-extended-types.json",
+            "rootPath": "#/$defs/JsonBase64ContentPre201909"
+        },
+        {
+            "schemaFile": "./json-extended-types.json",
+            "rootPath": "#/$defs/JsonBase64String"
+        },
+        {
+            "schemaFile": "./json-extended-types.json",
+            "rootPath": "#/$defs/JsonContent"
+        },
+        {
+            "schemaFile": "./json-extended-types.json",
+            "rootPath": "#/$defs/JsonContentPre201909"
+        },
+        {
+            "schemaFile": "./json-extended-types.json",
+            "rootPath": "#/$defs/JsonDateTime"
+        },
+        {
+            "schemaFile": "./json-extended-types.json",
+            "rootPath": "#/$defs/JsonDate"
+        },
+        {
+            "schemaFile": "./json-extended-types.json",
+            "rootPath": "#/$defs/JsonDuration"
+        },
+        {
+            "schemaFile": "./json-extended-types.json",
+            "rootPath": "#/$defs/JsonTime"
+        },
+        {
+            "schemaFile": "./json-extended-types.json",
+            "rootPath": "#/$defs/JsonEmail"
+        },
+        {
+            "schemaFile": "./json-extended-types.json",
+            "rootPath": "#/$defs/JsonHostname"
+        },
+        {
+            "schemaFile": "./json-extended-types.json",
+            "rootPath": "#/$defs/JsonIdnEmail"
+        },
+        {
+            "schemaFile": "./json-extended-types.json",
+            "rootPath": "#/$defs/JsonIdnHostname"
+        },
+        {
+            "schemaFile": "./json-extended-types.json",
+            "rootPath": "#/$defs/JsonIpv4"
+        },
+        {
+            "schemaFile": "./json-extended-types.json",
+            "rootPath": "#/$defs/JsonIpv6"
+        },
+        {
+            "schemaFile": "./json-extended-types.json",
+            "rootPath": "#/$defs/JsonIri"
+        },
+        {
+            "schemaFile": "./json-extended-types.json",
+            "rootPath": "#/$defs/JsonIriReference"
+        },
+        {
+            "schemaFile": "./json-extended-types.json",
+            "rootPath": "#/$defs/JsonPointer"
+        },
+        {
+            "schemaFile": "./json-extended-types.json",
+            "rootPath": "#/$defs/JsonRegex"
+        },
+        {
+            "schemaFile": "./json-extended-types.json",
+            "rootPath": "#/$defs/JsonRelativePointer"
+        },
+        {
+            "schemaFile": "./json-extended-types.json",
+            "rootPath": "#/$defs/JsonUri"
+        },
+        {
+            "schemaFile": "./json-extended-types.json",
+            "rootPath": "#/$defs/JsonUuid"
+        },
+        {
+            "schemaFile": "./json-extended-types.json",
+            "rootPath": "#/$defs/JsonNumber"
+        },
+        {
+            "schemaFile": "./json-extended-types.json",
+            "rootPath": "#/$defs/JsonInteger"
+        },
+        {
+            "schemaFile": "./json-extended-types.json",
+            "rootPath": "#/$defs/JsonHalf"
+        },
+        {
+            "schemaFile": "./json-extended-types.json",
+            "rootPath": "#/$defs/JsonSingle"
+        },
+        {
+            "schemaFile": "./json-extended-types.json",
+            "rootPath": "#/$defs/JsonDouble"
+        },
+        {
+            "schemaFile": "./json-extended-types.json",
+            "rootPath": "#/$defs/JsonDecimal"
+        },
+        {
+            "schemaFile": "./json-extended-types.json",
+            "rootPath": "#/$defs/JsonSByte"
+        },
+        {
+            "schemaFile": "./json-extended-types.json",
+            "rootPath": "#/$defs/JsonInt16"
+        },
+        {
+            "schemaFile": "./json-extended-types.json",
+            "rootPath": "#/$defs/JsonInt32"
+        },
+        {
+            "schemaFile": "./json-extended-types.json",
+            "rootPath": "#/$defs/JsonInt64"
+        },
+        {
+            "schemaFile": "./json-extended-types.json",
+            "rootPath": "#/$defs/JsonInt128"
+        },
+        {
+            "schemaFile": "./json-extended-types.json",
+            "rootPath": "#/$defs/JsonByte"
+        },
+        {
+            "schemaFile": "./json-extended-types.json",
+            "rootPath": "#/$defs/JsonUInt16"
+        },
+        {
+            "schemaFile": "./json-extended-types.json",
+            "rootPath": "#/$defs/JsonUInt32"
+        },
+        {
+            "schemaFile": "./json-extended-types.json",
+            "rootPath": "#/$defs/JsonUInt64"
+        },
+        {
+            "schemaFile": "./json-extended-types.json",
+            "rootPath": "#/$defs/JsonUInt128"
+        }
+    ],
+    "outputPath": "./GeneratedFormatTypes",
+    "rootNamespace": "Corvus.Json2"
+}

@@ -9,7 +9,7 @@ namespace Corvus.Json.CodeGeneration.Keywords;
 /// <summary>
 /// The $corvusTypeName keyword.
 /// </summary>
-public sealed class DollarCorvusTypeNameKeyword : ITypeNameProviderKeyword, INonStructuralKeyword
+public sealed class DollarCorvusTypeNameKeyword : ITypeNameProviderKeyword
 {
     private DollarCorvusTypeNameKeyword()
     {
@@ -30,5 +30,5 @@ public sealed class DollarCorvusTypeNameKeyword : ITypeNameProviderKeyword, INon
     public CoreTypes ImpliesCoreTypes(TypeDeclaration typeDeclaration) => CoreTypes.None;
 
     /// <inheritdoc />
-    public bool CanReduce(in JsonElement corvustypenameValue) => true;
+    public bool CanReduce(in JsonElement corvustypenameValue) => false;
 }
