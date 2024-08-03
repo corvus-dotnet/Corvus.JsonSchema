@@ -18,6 +18,16 @@ namespace Corvus.Json;
 public static class JsonValueExtensions
 {
     /// <summary>
+    /// Gets a nullable <see langword="string"/> as a nullable <see cref="JsonString"/>.
+    /// </summary>
+    /// <param name="input">The nullable string.</param>
+    /// <returns>The nullable <see cref="JsonString"/>.</returns>
+    public static JsonString? AsNullableJsonString(this string? input)
+    {
+        return input is string i ? new JsonString(i) : default(JsonString?);
+    }
+
+    /// <summary>
     /// Gets a property.
     /// </summary>
     /// <typeparam name="T">The type of the <see cref="IJsonObject{T}"/> from which to get the property.</typeparam>

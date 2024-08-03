@@ -106,6 +106,17 @@ public class JsonSchemaTypeBuilder(
     /// <param name="languageProvider">The <see cref="ILanguageProvider"/> for which to generate code.</param>
     /// <param name="rootTypeDeclarations">The root type declarations for which to generate types.</param>
     /// <returns>The <see cref="GeneratedCodeFile"/> collection.</returns>
+    public IReadOnlyCollection<GeneratedCodeFile> GenerateCodeUsing(ILanguageProvider languageProvider, IEnumerable<TypeDeclaration> rootTypeDeclarations)
+    {
+        return this.GenerateCodeUsing(languageProvider, rootTypeDeclarations.ToArray());
+    }
+
+    /// <summary>
+    /// Generates code for the types using the given language provider.
+    /// </summary>
+    /// <param name="languageProvider">The <see cref="ILanguageProvider"/> for which to generate code.</param>
+    /// <param name="rootTypeDeclarations">The root type declarations for which to generate types.</param>
+    /// <returns>The <see cref="GeneratedCodeFile"/> collection.</returns>
     public IReadOnlyCollection<GeneratedCodeFile> GenerateCodeUsing(ILanguageProvider languageProvider, params TypeDeclaration[] rootTypeDeclarations)
     {
         IReadOnlyList<TypeDeclaration> candidateTypesToGenerate = GetCandidateTypesToGenerate(rootTypeDeclarations);

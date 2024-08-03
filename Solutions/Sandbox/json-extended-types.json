@@ -1,0 +1,271 @@
+{
+    "$schema": "https://endjin.com/corvus/json-schema/2020-12/schema",
+    "$id": "https://endjin.com/corvus/json-schema/json-extended-types",
+
+    "$defs": {
+        "JsonAny": {
+            "$corvusTypeName": "JsonAny"
+        },
+
+        "JsonNotAny": {
+            "$corvusTypeName": "JsonNotAny"
+        },
+
+        "JsonArray": {
+            "$corvusTypeName": "JsonArray",
+            "type": "array"
+        },
+
+        "JsonBoolean": {
+            "$corvusTypeName": "JsonBoolean",
+            "type": "boolean"
+        },
+
+        "JsonNull": {
+            "$corvusTypeName": "JsonNull",
+            "type": "null"
+        },
+
+        "JsonObject": {
+            "$corvusTypeName": "JsonObject",
+            "type": "object"
+        },
+
+        "JsonString": {
+            "$corvusTypeName": "JsonString",
+            "type": "string"
+        },
+
+        "JsonBase64Content": {
+            "$corvusTypeName": "JsonBase64Content",
+            "type": "string",
+            "format": "corvus-base64-content",
+            "contentMediaType": "application/json",
+            "contentEncoding": "base64"
+        },
+
+        "JsonBase64ContentPre201909": {
+            "$corvusTypeName": "JsonBase64ContentPre201909",
+            "type": "string",
+            "format": "corvus-base64-content-pre201909",
+            "contentMediaType": "application/json",
+            "contentEncoding": "base64"
+        },
+
+        "JsonBase64String": {
+            "$corvusTypeName": "JsonBase64String",
+            "type": "string",
+            "format": "corvus-base64-string"
+        },
+
+        "JsonContent": {
+            "$corvusTypeName": "JsonContent",
+            "type": "string",
+            "format": "corvus-json-content",
+            "contentMediaType": "application/json"
+        },
+
+        "JsonContentPre201909": {
+            "$corvusTypeName": "JsonContentPre201909",
+            "type": "string",
+            "format": "corvus-json-content-pre201909",
+            "contentMediaType": "application/json"
+        },
+
+        "JsonDateTime": {
+            "$corvusTypeName": "JsonDateTime",
+            "type": "string",
+            "format": "date-time"
+        },
+
+        "JsonDate": {
+            "$corvusTypeName": "JsonDate",
+            "type": "string",
+            "format": "date"
+        },
+
+        "JsonDuration": {
+            "$corvusTypeName": "JsonDuration",
+            "type": "string",
+            "format": "duration"
+        },
+
+        "JsonTime": {
+            "$corvusTypeName": "JsonTime",
+            "type": "string",
+            "format": "time"
+        },
+
+        "JsonEmail": {
+            "$corvusTypeName": "JsonEmail",
+            "type": "string",
+            "format": "email"
+        },
+
+        "JsonHostname": {
+            "$corvusTypeName": "JsonHostname",
+            "type": "string",
+            "format": "hostname"
+        },
+
+        "JsonIdnEmail": {
+            "$corvusTypeName": "JsonIdnEmail",
+            "type": "string",
+            "format": "idn-email"
+        },
+
+        "JsonIdnHostname": {
+            "$corvusTypeName": "JsonIdnHostname",
+            "type": "string",
+            "format": "idn-hostname"
+        },
+
+        "JsonIpv4": {
+            "$corvusTypeName": "JsonIpv4",
+            "type": "string",
+            "format": "ipv4"
+        },
+
+        "JsonIpv6": {
+            "$corvusTypeName": "JsonIpv6",
+            "type": "string",
+            "format": "ipv6"
+        },
+
+        "JsonIri": {
+            "$corvusTypeName": "JsonIri",
+            "type": "string",
+            "format": "iri"
+        },
+
+        "JsonIriReference": {
+            "$corvusTypeName": "JsonIriReference",
+            "type": "string",
+            "format": "iri-reference"
+        },
+
+        "JsonPointer": {
+            "$corvusTypeName": "JsonPointer",
+            "type": "string",
+            "format": "json-pointer"
+        },
+
+        "JsonRegex": {
+            "$corvusTypeName": "JsonRegex",
+            "type": "string",
+            "format": "regex"
+        },
+
+        "JsonRelativePointer": {
+            "$corvusTypeName": "JsonRelativePointer",
+            "type": "string",
+            "format": "relative-json-pointer"
+        },
+
+        "JsonUri": {
+            "$corvusTypeName": "JsonUri",
+            "type": "string",
+            "format": "uri"
+        },
+
+        "JsonUuid": {
+            "$corvusTypeName": "JsonUuid",
+            "type": "string",
+            "format": "uuid"
+        },
+
+        "JsonNumber": {
+            "$corvusTypeName": "JsonNumber",
+            "type": "number"
+        },
+
+        "JsonInteger": {
+            "$corvusTypeName": "JsonInteger",
+            "type": "integer"
+        },
+
+        "JsonHalf": {
+            "$corvusTypeName": "JsonHalf",
+            "type": "number",
+            "format": "half"
+        },
+
+        "JsonSingle": {
+            "$corvusTypeName": "JsonSingle",
+            "type": "number",
+            "format": "single"
+        },
+
+        "JsonDouble": {
+            "$corvusTypeName": "JsonDouble",
+            "type": "number",
+            "format": "double"
+        },
+
+        "JsonDecimal": {
+            "$corvusTypeName": "JsonDecimal",
+            "type": "number",
+            "format": "decimal"
+        },
+
+        "JsonSByte": {
+            "$corvusTypeName": "JsonSByte",
+            "type": "number",
+            "format": "sbyte"
+        },
+
+        "JsonInt16": {
+            "$corvusTypeName": "JsonInt16",
+            "type": "number",
+            "format": "int16"
+        },
+
+        "JsonInt32": {
+            "$corvusTypeName": "JsonInt32",
+            "type": "number",
+            "format": "int32"
+        },
+
+        "JsonInt64": {
+            "$corvusTypeName": "JsonInt64",
+            "type": "number",
+            "format": "int64"
+        },
+
+        "JsonInt128": {
+            "$corvusTypeName": "JsonInt128",
+            "type": "number",
+            "format": "int128"
+        },
+
+        "JsonByte": {
+            "$corvusTypeName": "JsonByte",
+            "type": "number",
+            "format": "byte"
+        },
+
+        "JsonUInt16": {
+            "$corvusTypeName": "JsonUInt16",
+            "type": "number",
+            "format": "uint16"
+        },
+
+        "JsonUInt32": {
+            "$corvusTypeName": "JsonUInt32",
+            "type": "number",
+            "format": "uint32"
+        },
+
+        "JsonUInt64": {
+            "$corvusTypeName": "JsonUInt64",
+            "type": "number",
+            "format": "uint64"
+        },
+
+        "JsonUInt128": {
+            "$corvusTypeName": "JsonUInt128",
+            "type": "number",
+            "format": "uint128"
+        }
+    }
+}

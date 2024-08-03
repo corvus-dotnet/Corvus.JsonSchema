@@ -253,6 +253,11 @@ public readonly struct JsonReference
     /// <returns>The JSON reference with the compound fragment.</returns>
     public JsonReference AppendFragment(JsonReference other)
     {
+        if (this.reference.IsEmpty)
+        {
+            return other;
+        }
+
         ReadOnlySpan<char> otherFragment = other.Fragment;
 
         if (otherFragment.Length < 2)

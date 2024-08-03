@@ -109,10 +109,11 @@ public class JsonSchemaRegistry(IDocumentResolver documentResolver, VocabularyRe
         async ValueTask<(JsonReference RootUri, JsonReference BaseReference)> HandleEmbeddedBaseSchema(VocabularyRegistry vocabularyRegistry, JsonReference jsonSchemaPath, IVocabulary ambientVocabulary, bool rebaseAsRoot, JsonReference basePath, JsonElement documentRoot)
         {
             JsonElement newBase = JsonPointerUtilities.ResolvePointer(documentRoot, jsonSchemaPath.Fragment);
-            IVocabulary referencedVocab = await vocabularyRegistry.AnalyseSchema(newBase).ConfigureAwait(false) ?? ambientVocabulary;
-
+            IVocabulary referencedVocab;
             if (rebaseAsRoot)
             {
+                referencedVocab = await vocabularyRegistry.AnalyseSchema(newBase).ConfigureAwait(false) ?? ambientVocabulary;
+
                 // Switch the root to be an absolute URI
                 jsonSchemaPath = DefaultAbsoluteLocation.Apply(new JsonReference($"{Guid.NewGuid()}/Schema"));
 
@@ -122,6 +123,9 @@ public class JsonSchemaRegistry(IDocumentResolver documentResolver, VocabularyRe
             }
             else
             {
+                JsonElement rootDocument = JsonPointerUtilities.ResolvePointer(documentRoot, "#".AsSpan());
+                referencedVocab = await vocabularyRegistry.AnalyseSchema(rootDocument).ConfigureAwait(false) ?? ambientVocabulary;
+
                 // This is not a root path, so we need to construct a JSON document that references the root path instead.
                 // This will not actually be constructed, as it will be resolved to the reference type instead.
                 // It allows us to indirect through this reference as if it were a "root" type.
