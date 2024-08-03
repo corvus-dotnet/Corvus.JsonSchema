@@ -82,7 +82,7 @@ public static class GenerationDriver
 
                     if (generatorSpecification.OutputRootTypeName is JsonString outputRootTypeName)
                     {
-                        namedTypes = namedTypes.Add(GeneratorConfig.NamedTypeSpecification.Create(outputRootTypeName, new JsonIriReference(rootType.LocatedSchema.Location)));
+                        namedTypes = namedTypes.Add(GeneratorConfig.NamedTypeSpecification.Create(outputRootTypeName, new JsonIriReference(rootType.LocatedSchema.Location), generatorSpecification.OutputRootNamespace));
                     }
 
                     typeBuilderTask.Increment(100);

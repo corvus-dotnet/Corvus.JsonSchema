@@ -141,6 +141,10 @@
                     "type": "string",
                     "description": "The .NET name of the root type to generate."
                 },
+                "outputRootNamespace": {
+                    "type": "string",
+                    "description": "The name of the .NET namespace into which to emit the root type"
+                },
                 "rebaseToRootPath": {
                     "type": "boolean",
                     "default": false

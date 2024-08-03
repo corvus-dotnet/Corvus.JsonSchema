@@ -122,7 +122,27 @@ public readonly partial struct GeneratorConfig
                 int propertyCount = 0;
                 foreach (JsonObjectProperty property in value.EnumerateObject())
                 {
-                    if (property.NameEquals(JsonPropertyNames.OutputRootTypeNameUtf8, JsonPropertyNames.OutputRootTypeName))
+                    if (property.NameEquals(JsonPropertyNames.OutputRootNamespaceUtf8, JsonPropertyNames.OutputRootNamespace))
+                    {
+                        result = result.WithLocalProperty(propertyCount);
+                        if (level > ValidationLevel.Basic)
+                        {
+                            result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/outputRootNamespace"), JsonPropertyNames.OutputRootNamespace);
+                        }
+
+                        ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonString>().Validate(result.CreateChildContext(), level);
+                        result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+                        if (level > ValidationLevel.Basic)
+                        {
+                            result = result.PopLocation();
+                        }
+
+                        if (level == ValidationLevel.Flag && !result.IsValid)
+                        {
+                            return result;
+                        }
+                    }
+                    else if (property.NameEquals(JsonPropertyNames.OutputRootTypeNameUtf8, JsonPropertyNames.OutputRootTypeName))
                     {
                         result = result.WithLocalProperty(propertyCount);
                         if (level > ValidationLevel.Basic)
