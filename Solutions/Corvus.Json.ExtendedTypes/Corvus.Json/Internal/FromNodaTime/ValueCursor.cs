@@ -7,6 +7,8 @@
 // as found in the LICENSE.txt file.
 // </licensing>
 
+#if NET8_0_OR_GREATER
+
 using System.Diagnostics;
 using System.Globalization;
 
@@ -55,23 +57,23 @@ internal ref struct ValueCursor
     /// </summary>
     internal char Current { get; private set; }
 
-    /// <summary>
-    /// Gets a value indicating whether this instance has more characters.
-    /// </summary>
-    /// <value>
-    /// <c>true</c> if this instance has more characters; otherwise, <c>false</c>.
-    /// </value>
-    internal readonly bool HasMoreCharacters => unchecked(this.Index + 1) < this.Length;
+    /////// <summary>
+    /////// Gets a value indicating whether this instance has more characters.
+    /////// </summary>
+    /////// <value>
+    /////// <c>true</c> if this instance has more characters; otherwise, <c>false</c>.
+    /////// </value>
+    ////internal readonly bool HasMoreCharacters => unchecked(this.Index + 1) < this.Length;
 
     /// <summary>
     /// Gets the current index into the string being parsed.
     /// </summary>
     internal int Index { get; private set; }
 
-    /// <summary>
-    /// Gets the remainder the string that has not been parsed yet.
-    /// </summary>
-    internal readonly ReadOnlySpan<char> Remainder => this.Value[this.Index..];
+    /////// <summary>
+    /////// Gets the remainder the string that has not been parsed yet.
+    /////// </summary>
+    ////internal readonly ReadOnlySpan<char> Remainder => this.Value[this.Index..];
 
     /// <summary>
     ///   Returns a <see cref="string" /> that represents this instance.
@@ -90,11 +92,11 @@ internal ref struct ValueCursor
             : this.Value.ToString().Insert(this.Index, "^");
 #endif
 
-    /// <summary>
-    /// Peek the next character.
-    /// </summary>
-    /// <returns>Returns the next character if there is one or <see cref="Nul" /> if there isn't.</returns>
-    internal char PeekNext() => unchecked(this.HasMoreCharacters ? this.Value[this.Index + 1] : Nul);
+    /////// <summary>
+    /////// Peek the next character.
+    /////// </summary>
+    /////// <returns>Returns the next character if there is one or <see cref="Nul" /> if there isn't.</returns>
+    ////internal char PeekNext() => unchecked(this.HasMoreCharacters ? this.Value[this.Index + 1] : Nul);
 
     /// <summary>
     /// Moves the specified target index. If the new index is out of range of the valid indices
@@ -153,129 +155,129 @@ internal ref struct ValueCursor
         }
     }
 
-    /// <summary>
-    /// Moves to the previous character.
-    /// </summary>
-    /// <returns><c>true</c> if the requested index is in range.</returns>
-    internal bool MovePrevious()
-    {
-        unchecked
-        {
-            // Logically this is Move(Index - 1), but it's micro-optimized as we
-            // know we'll never hit the upper limit this way.
-            if (this.Index > 0)
-            {
-                this.Index--;
-                this.Current = this.Value[this.Index];
-                return true;
-            }
+    /////// <summary>
+    /////// Moves to the previous character.
+    /////// </summary>
+    /////// <returns><c>true</c> if the requested index is in range.</returns>
+    ////internal bool MovePrevious()
+    ////{
+    ////    unchecked
+    ////    {
+    ////        // Logically this is Move(Index - 1), but it's micro-optimized as we
+    ////        // know we'll never hit the upper limit this way.
+    ////        if (this.Index > 0)
+    ////        {
+    ////            this.Index--;
+    ////            this.Current = this.Value[this.Index];
+    ////            return true;
+    ////        }
 
-            this.Current = Nul;
-            this.Index = -1;
-            return false;
-        }
-    }
+    ////        this.Current = Nul;
+    ////        this.Index = -1;
+    ////        return false;
+    ////    }
+    ////}
 
-    /// <summary>
-    ///   Attempts to match the specified character with the current character of the string. If the
-    ///   character matches then the index is moved passed the character.
-    /// </summary>
-    /// <param name="character">The character to match.</param>
-    /// <returns><c>true</c> if the character matches.</returns>
-    internal bool Match(char character)
-    {
-        if (this.Current == character)
-        {
-            this.MoveNext();
-            return true;
-        }
+    /////// <summary>
+    ///////   Attempts to match the specified character with the current character of the string. If the
+    ///////   character matches then the index is moved passed the character.
+    /////// </summary>
+    /////// <param name="character">The character to match.</param>
+    /////// <returns><c>true</c> if the character matches.</returns>
+    ////internal bool Match(char character)
+    ////{
+    ////    if (this.Current == character)
+    ////    {
+    ////        this.MoveNext();
+    ////        return true;
+    ////    }
 
-        return false;
-    }
+    ////    return false;
+    ////}
 
-    /// <summary>
-    /// Attempts to match the specified string with the current point in the string. If the
-    /// character matches then the index is moved past the string.
-    /// </summary>
-    /// <param name="match">The string to match.</param>
-    /// <returns><c>true</c> if the string matches.</returns>
-    internal bool Match(ReadOnlySpan<char> match)
-    {
-        unchecked
-        {
-            if (match.Length > this.Value.Length - this.Index)
-            {
-                return false;
-            }
+    /////// <summary>
+    /////// Attempts to match the specified string with the current point in the string. If the
+    /////// character matches then the index is moved past the string.
+    /////// </summary>
+    /////// <param name="match">The string to match.</param>
+    /////// <returns><c>true</c> if the string matches.</returns>
+    ////internal bool Match(ReadOnlySpan<char> match)
+    ////{
+    ////    unchecked
+    ////    {
+    ////        if (match.Length > this.Value.Length - this.Index)
+    ////        {
+    ////            return false;
+    ////        }
 
-            if (this.Value.Slice(this.Index, match.Length).SequenceEqual(match))
-            {
-                this.Move(this.Index + match.Length);
-                return true;
-            }
+    ////        if (this.Value.Slice(this.Index, match.Length).SequenceEqual(match))
+    ////        {
+    ////            this.Move(this.Index + match.Length);
+    ////            return true;
+    ////        }
 
-            return false;
-        }
-    }
+    ////        return false;
+    ////    }
+    ////}
 
-    /// <summary>
-    /// Attempts to match the specified string with the current point in the string in a case-insensitive
-    /// manner, according to the given comparison info. The cursor is optionally updated to the end of the match.
-    /// </summary>
-    /// <param name="match">The value to match.</param>
-    /// <param name="compareInfo">The comparison type to use.</param>
-    /// <param name="moveOnSuccess">If <see langword="true"/>, advance <see cref="Index"/> on success.</param>
-    /// <returns><c>True</c> if there is a case-insensitive match.</returns>
-    internal bool MatchCaseInsensitive(ReadOnlySpan<char> match, CompareInfo compareInfo, bool moveOnSuccess)
-    {
-        unchecked
-        {
-            if (match.Length > this.Value.Length - this.Index)
-            {
-                return false;
-            }
+    /////// <summary>
+    /////// Attempts to match the specified string with the current point in the string in a case-insensitive
+    /////// manner, according to the given comparison info. The cursor is optionally updated to the end of the match.
+    /////// </summary>
+    /////// <param name="match">The value to match.</param>
+    /////// <param name="compareInfo">The comparison type to use.</param>
+    /////// <param name="moveOnSuccess">If <see langword="true"/>, advance <see cref="Index"/> on success.</param>
+    /////// <returns><c>True</c> if there is a case-insensitive match.</returns>
+    ////internal bool MatchCaseInsensitive(ReadOnlySpan<char> match, CompareInfo compareInfo, bool moveOnSuccess)
+    ////{
+    ////    unchecked
+    ////    {
+    ////        if (match.Length > this.Value.Length - this.Index)
+    ////        {
+    ////            return false;
+    ////        }
 
-            // Note: This will fail if the length in the input string is different to the length in the
-            // match string for culture-specific reasons. It's not clear how to handle that...
-            // See issue 210 for details - we're not intending to fix this, but it's annoying.
-            if (compareInfo.Compare(this.Value.Slice(this.Index, match.Length), match, CompareOptions.IgnoreCase) == 0)
-            {
-                if (moveOnSuccess)
-                {
-                    this.Move(this.Index + match.Length);
-                }
+    ////        // Note: This will fail if the length in the input string is different to the length in the
+    ////        // match string for culture-specific reasons. It's not clear how to handle that...
+    ////        // See issue 210 for details - we're not intending to fix this, but it's annoying.
+    ////        if (compareInfo.Compare(this.Value.Slice(this.Index, match.Length), match, CompareOptions.IgnoreCase) == 0)
+    ////        {
+    ////            if (moveOnSuccess)
+    ////            {
+    ////                this.Move(this.Index + match.Length);
+    ////            }
 
-                return true;
-            }
+    ////            return true;
+    ////        }
 
-            return false;
-        }
-    }
+    ////        return false;
+    ////    }
+    ////}
 
-    /// <summary>
-    /// Compares the value from the current cursor position with the given match. If the
-    /// given match string is longer than the remaining length, the comparison still goes
-    /// ahead but the result is never 0: if the result of comparing to the end of the
-    /// value returns 0, the result is -1 to indicate that the value is earlier than the given match.
-    /// Conversely, if the remaining value is longer than the match string, the comparison only
-    /// goes as far as the end of the match. So "xabcd" with the cursor at "a" will return 0 when
-    /// matched with "abc".
-    /// </summary>
-    /// <param name="match">The value with which to match.</param>
-    /// <returns>A negative number if the value (from the current cursor position) is lexicographically
-    /// earlier than the given match string; 0 if they are equal (as far as the end of the match) and
-    /// a positive number if the value is lexicographically later than the given match string.</returns>
-    internal readonly int CompareOrdinal(ReadOnlySpan<char> match)
-    {
-        int remaining = this.Value.Length - this.Index;
-        if (match.Length > remaining)
-        {
-            int ret = this.Value[this.Index..].CompareTo(match[..remaining], StringComparison.Ordinal);
-            return ret == 0 ? -1 : ret;
-        }
+    /////// <summary>
+    /////// Compares the value from the current cursor position with the given match. If the
+    /////// given match string is longer than the remaining length, the comparison still goes
+    /////// ahead but the result is never 0: if the result of comparing to the end of the
+    /////// value returns 0, the result is -1 to indicate that the value is earlier than the given match.
+    /////// Conversely, if the remaining value is longer than the match string, the comparison only
+    /////// goes as far as the end of the match. So "xabcd" with the cursor at "a" will return 0 when
+    /////// matched with "abc".
+    /////// </summary>
+    /////// <param name="match">The value with which to match.</param>
+    /////// <returns>A negative number if the value (from the current cursor position) is lexicographically
+    /////// earlier than the given match string; 0 if they are equal (as far as the end of the match) and
+    /////// a positive number if the value is lexicographically later than the given match string.</returns>
+    ////internal readonly int CompareOrdinal(ReadOnlySpan<char> match)
+    ////{
+    ////    int remaining = this.Value.Length - this.Index;
+    ////    if (match.Length > remaining)
+    ////    {
+    ////        int ret = this.Value[this.Index..].CompareTo(match[..remaining], StringComparison.Ordinal);
+    ////        return ret == 0 ? -1 : ret;
+    ////    }
 
-        return this.Value.Slice(this.Index, match.Length).CompareTo(match, StringComparison.Ordinal);
-    }
+    ////    return this.Value.Slice(this.Index, match.Length).CompareTo(match, StringComparison.Ordinal);
+    ////}
 
     /// <summary>
     /// Parses digits at the current point in the string as a signed 64-bit integer value.
@@ -357,98 +359,98 @@ internal ref struct ValueCursor
         }
     }
 
-    /// <summary>
-    /// Parses digits at the current point in the string, as an <see cref="long"/> value.
-    /// If the minimum required
-    /// digits are not present then the index is unchanged. If there are more digits than
-    /// the maximum allowed they are ignored.
-    /// </summary>
-    /// <param name="minimumDigits">The minimum allowed digits.</param>
-    /// <param name="maximumDigits">The maximum allowed digits.</param>
-    /// <param name="result">The result integer value. The value of this is not guaranteed
-    /// to be anything specific if the return value is false.</param>
-    /// <returns><c>true</c> if the digits were parsed.</returns>
-    internal bool ParseInt64Digits(int minimumDigits, int maximumDigits, out long result)
-    {
-        unchecked
-        {
-            result = 0;
-            int localIndex = this.Index;
-            int maxIndex = localIndex + maximumDigits;
-            if (maxIndex >= this.Length)
-            {
-                maxIndex = this.Length;
-            }
+    /////// <summary>
+    /////// Parses digits at the current point in the string, as an <see cref="long"/> value.
+    /////// If the minimum required
+    /////// digits are not present then the index is unchanged. If there are more digits than
+    /////// the maximum allowed they are ignored.
+    /////// </summary>
+    /////// <param name="minimumDigits">The minimum allowed digits.</param>
+    /////// <param name="maximumDigits">The maximum allowed digits.</param>
+    /////// <param name="result">The result integer value. The value of this is not guaranteed
+    /////// to be anything specific if the return value is false.</param>
+    /////// <returns><c>true</c> if the digits were parsed.</returns>
+    ////internal bool ParseInt64Digits(int minimumDigits, int maximumDigits, out long result)
+    ////{
+    ////    unchecked
+    ////    {
+    ////        result = 0;
+    ////        int localIndex = this.Index;
+    ////        int maxIndex = localIndex + maximumDigits;
+    ////        if (maxIndex >= this.Length)
+    ////        {
+    ////            maxIndex = this.Length;
+    ////        }
 
-            for (; localIndex < maxIndex; localIndex++)
-            {
-                // Optimized digit handling: rather than checking for the range, returning -1
-                // and then checking whether the result is -1, we can do both checks at once.
-                int digit = this.Value[localIndex] - '0';
-                if (digit < 0 || digit > 9)
-                {
-                    break;
-                }
+    ////        for (; localIndex < maxIndex; localIndex++)
+    ////        {
+    ////            // Optimized digit handling: rather than checking for the range, returning -1
+    ////            // and then checking whether the result is -1, we can do both checks at once.
+    ////            int digit = this.Value[localIndex] - '0';
+    ////            if (digit < 0 || digit > 9)
+    ////            {
+    ////                break;
+    ////            }
 
-                result = (result * 10) + digit;
-            }
+    ////            result = (result * 10) + digit;
+    ////        }
 
-            int count = localIndex - this.Index;
-            if (count < minimumDigits)
-            {
-                return false;
-            }
+    ////        int count = localIndex - this.Index;
+    ////        if (count < minimumDigits)
+    ////        {
+    ////            return false;
+    ////        }
 
-            this.Move(localIndex);
-            return true;
-        }
-    }
+    ////        this.Move(localIndex);
+    ////        return true;
+    ////    }
+    ////}
 
-    /// <summary>
-    /// Parses digits at the current point in the string. If the minimum required
-    /// digits are not present then the index is unchanged. If there are more digits than
-    /// the maximum allowed they are ignored.
-    /// </summary>
-    /// <param name="minimumDigits">The minimum allowed digits.</param>
-    /// <param name="maximumDigits">The maximum allowed digits.</param>
-    /// <param name="result">The result integer value. The value of this is not guaranteed
-    /// to be anything specific if the return value is false.</param>
-    /// <returns><c>true</c> if the digits were parsed.</returns>
-    internal bool ParseDigits(int minimumDigits, int maximumDigits, out int result)
-    {
-        unchecked
-        {
-            result = 0;
-            int localIndex = this.Index;
-            int maxIndex = localIndex + maximumDigits;
-            if (maxIndex >= this.Length)
-            {
-                maxIndex = this.Length;
-            }
+    /////// <summary>
+    /////// Parses digits at the current point in the string. If the minimum required
+    /////// digits are not present then the index is unchanged. If there are more digits than
+    /////// the maximum allowed they are ignored.
+    /////// </summary>
+    /////// <param name="minimumDigits">The minimum allowed digits.</param>
+    /////// <param name="maximumDigits">The maximum allowed digits.</param>
+    /////// <param name="result">The result integer value. The value of this is not guaranteed
+    /////// to be anything specific if the return value is false.</param>
+    /////// <returns><c>true</c> if the digits were parsed.</returns>
+    ////internal bool ParseDigits(int minimumDigits, int maximumDigits, out int result)
+    ////{
+    ////    unchecked
+    ////    {
+    ////        result = 0;
+    ////        int localIndex = this.Index;
+    ////        int maxIndex = localIndex + maximumDigits;
+    ////        if (maxIndex >= this.Length)
+    ////        {
+    ////            maxIndex = this.Length;
+    ////        }
 
-            for (; localIndex < maxIndex; localIndex++)
-            {
-                // Optimized digit handling: rather than checking for the range, returning -1
-                // and then checking whether the result is -1, we can do both checks at once.
-                int digit = this.Value[localIndex] - '0';
-                if (digit < 0 || digit > 9)
-                {
-                    break;
-                }
+    ////        for (; localIndex < maxIndex; localIndex++)
+    ////        {
+    ////            // Optimized digit handling: rather than checking for the range, returning -1
+    ////            // and then checking whether the result is -1, we can do both checks at once.
+    ////            int digit = this.Value[localIndex] - '0';
+    ////            if (digit < 0 || digit > 9)
+    ////            {
+    ////                break;
+    ////            }
 
-                result = (result * 10) + digit;
-            }
+    ////            result = (result * 10) + digit;
+    ////        }
 
-            int count = localIndex - this.Index;
-            if (count < minimumDigits)
-            {
-                return false;
-            }
+    ////        int count = localIndex - this.Index;
+    ////        if (count < minimumDigits)
+    ////        {
+    ////            return false;
+    ////        }
 
-            this.Move(localIndex);
-            return true;
-        }
-    }
+    ////        this.Move(localIndex);
+    ////        return true;
+    ////    }
+    ////}
 
     /// <summary>
     /// Parses digits at the current point in the string as a fractional value.
@@ -515,3 +517,5 @@ internal ref struct ValueCursor
         }
     }
 }
+
+#endif

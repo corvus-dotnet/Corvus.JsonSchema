@@ -399,7 +399,7 @@ public readonly partial struct Validation
 
             return value.ValueKind switch
             {
-                JsonValueKind.Object => new(value.AsObject.AsPropertyBacking()),
+                JsonValueKind.Object => new(value.AsPropertyBacking()),
                 JsonValueKind.Null => Null,
                 _ => Undefined,
             };
@@ -483,6 +483,19 @@ public readonly partial struct Validation
         /// Parses the DependentRequiredEntity.
         /// </summary>
         /// <param name="source">The source of the JSON string to parse.</param>
+        public static DependentRequiredEntity ParseValue(string source)
+        {
+#if NET8_0_OR_GREATER
+            return IJsonValue<DependentRequiredEntity>.ParseValue(source);
+#else
+            return JsonValueHelpers.ParseValue<DependentRequiredEntity>(source.AsSpan());
+#endif
+        }
+
+        /// <summary>
+        /// Parses the DependentRequiredEntity.
+        /// </summary>
+        /// <param name="source">The source of the JSON string to parse.</param>
         public static DependentRequiredEntity ParseValue(ReadOnlySpan<char> source)
         {
 #if NET8_0_OR_GREATER
@@ -553,7 +566,7 @@ public readonly partial struct Validation
         public override bool Equals(object? obj)
         {
             return
-                (obj is IJsonValue jv && this.Equals(jv.AsAny)) ||
+                (obj is IJsonValue jv && this.Equals(jv.As<DependentRequiredEntity>())) ||
                 (obj is null && this.IsNull());
         }
 
@@ -561,7 +574,7 @@ public readonly partial struct Validation
         public bool Equals<T>(in T other)
             where T : struct, IJsonValue<T>
         {
-            return JsonValueHelpers.CompareValues(this, other);
+            return this.Equals(other.As<DependentRequiredEntity>());
         }
 
         /// <summary>
@@ -571,7 +584,45 @@ public readonly partial struct Validation
         /// <returns><see langword="true"/> if the values were equal.</returns>
         public bool Equals(in DependentRequiredEntity other)
         {
-            return JsonValueHelpers.CompareValues(this, other);
+            JsonValueKind thisKind = this.ValueKind;
+            JsonValueKind otherKind = other.ValueKind;
+            if (thisKind != otherKind)
+            {
+                return false;
+            }
+
+            if (thisKind == JsonValueKind.Null || thisKind == JsonValueKind.Undefined)
+            {
+                return true;
+            }
+
+            if (thisKind == JsonValueKind.Object)
+            {
+                int count = 0;
+                foreach (JsonObjectProperty<Corvus.Json.JsonSchema.Draft202012.Validation.StringArray> property in this.EnumerateObject())
+                {
+                    if (!other.TryGetProperty(property.Name, out Corvus.Json.JsonSchema.Draft202012.Validation.StringArray value) || !property.Value.Equals(value))
+                    {
+                        return false;
+                    }
+
+                    count++;
+                }
+
+                int otherCount = 0;
+                foreach (JsonObjectProperty<Corvus.Json.JsonSchema.Draft202012.Validation.StringArray> otherProperty in other.EnumerateObject())
+                {
+                    otherCount++;
+                    if (otherCount > count)
+                    {
+                        return false;
+                    }
+                }
+
+                return count == otherCount;
+            }
+
+            return false;
         }
 
         /// <inheritdoc/>

@@ -186,7 +186,7 @@ public static partial class ValidationCodeGeneratorExtensions
         static void AppendValidText(CodeGenerator generator, ISingleConstantValidationKeyword keyword, string constantValue)
         {
             generator
-                .Append("the value '{value}' matched match '")
+                .Append("the value '{value}' matched '")
                 .Append(SymbolDisplay.FormatLiteral(constantValue, true).Trim('"'))
                 .Append("'.");
         }

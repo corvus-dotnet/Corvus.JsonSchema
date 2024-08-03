@@ -62,7 +62,7 @@ public sealed class BuiltInStringTypeNameHeuristic : IBuiltInTypeNameHeuristic
 
             if (candidateFormat is string format)
             {
-                typeDeclaration.SetDotnetTypeName(FormatProviderRegistry.Instance.StringTypeFormatProviders.GetCorvusJsonTypeNameFor(format) ?? "JsonString");
+                typeDeclaration.SetDotnetTypeName(FormatHandlerRegistry.Instance.StringFormatHandlers.GetCorvusJsonTypeNameFor(format) ?? "JsonString");
             }
             else
             {

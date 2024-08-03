@@ -37,7 +37,7 @@ public sealed class ObjectPartial : ICodeFileBuilder
                         new("System.Diagnostics.CodeAnalysis", EmitIfIsMapObject(typeDeclaration)),
                         "System.Text.Json",
                         new("System.Text.RegularExpressions", EmitIfObjectHasPatternProperties(typeDeclaration)),
-                        "Corvus.Json",
+                        new("Corvus.Json", EmitIfNotCorvusJsonExtendedType(typeDeclaration)),
                         "Corvus.Json.Internal")
                     .AppendLine()
                     .BeginNamespace(typeDeclaration.DotnetNamespace())
@@ -99,6 +99,13 @@ public sealed class ObjectPartial : ICodeFileBuilder
                  : FrameworkType.NotEmitted;
         }
 
+        static FrameworkType EmitIfNotCorvusJsonExtendedType(TypeDeclaration typeDeclaration)
+        {
+            return typeDeclaration.IsCorvusJsonExtendedType()
+                 ? FrameworkType.NotEmitted
+                 : FrameworkType.All;
+        }
+
         static ConditionalCodeSpecification JsonObjectType(TypeDeclaration typeDeclaration)
         {
             return new(g => g.GenericTypeOf("IJsonObject", typeDeclaration));
@@ -108,7 +115,7 @@ public sealed class ObjectPartial : ICodeFileBuilder
         {
             return
                 typeDeclaration.FallbackObjectPropertyType() is FallbackObjectPropertyType objectPropertyType &&
-                !objectPropertyType.ReducedType.IsJsonAnyType()
+                !objectPropertyType.ReducedType.IsBuiltInJsonAnyType()
                 ? new(g =>
                     {
                         g

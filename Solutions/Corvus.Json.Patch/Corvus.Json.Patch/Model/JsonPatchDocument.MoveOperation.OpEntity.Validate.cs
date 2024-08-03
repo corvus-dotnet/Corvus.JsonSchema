@@ -120,7 +120,7 @@ public readonly partial struct JsonPatchDocument
                         {
                             if (level == ValidationLevel.Verbose)
                             {
-                                result = result.WithResult(isValid: true, $"Validation const - the value '{value}' matched match '\"move\'.");
+                                result = result.WithResult(isValid: true, $"Validation const - the value '{value}' matched '\"move\'.");
                             }
 
                             if (level > ValidationLevel.Basic)

@@ -413,7 +413,7 @@ public readonly partial struct PersonNameElementArray
 
         return value.ValueKind switch
         {
-            JsonValueKind.Array => new(value.AsArray.AsImmutableList()),
+            JsonValueKind.Array => new(value.AsImmutableList()),
             JsonValueKind.Null => Null,
             _ => Undefined,
         };
@@ -472,6 +472,19 @@ public readonly partial struct PersonNameElementArray
     {
         using var jsonDocument = JsonDocument.Parse(source, options);
         return new(jsonDocument.RootElement.Clone());
+    }
+
+    /// <summary>
+    /// Parses the PersonNameElementArray.
+    /// </summary>
+    /// <param name="source">The source of the JSON string to parse.</param>
+    public static PersonNameElementArray ParseValue(string source)
+    {
+#if NET8_0_OR_GREATER
+        return IJsonValue<PersonNameElementArray>.ParseValue(source);
+#else
+        return JsonValueHelpers.ParseValue<PersonNameElementArray>(source.AsSpan());
+#endif
     }
 
     /// <summary>
@@ -548,7 +561,7 @@ public readonly partial struct PersonNameElementArray
     public override bool Equals(object? obj)
     {
         return
-            (obj is IJsonValue jv && this.Equals(jv.AsAny)) ||
+            (obj is IJsonValue jv && this.Equals(jv.As<PersonNameElementArray>())) ||
             (obj is null && this.IsNull());
     }
 
@@ -556,7 +569,7 @@ public readonly partial struct PersonNameElementArray
     public bool Equals<T>(in T other)
         where T : struct, IJsonValue<T>
     {
-        return JsonValueHelpers.CompareValues(this, other);
+        return this.Equals(other.As<PersonNameElementArray>());
     }
 
     /// <summary>
@@ -566,7 +579,39 @@ public readonly partial struct PersonNameElementArray
     /// <returns><see langword="true"/> if the values were equal.</returns>
     public bool Equals(in PersonNameElementArray other)
     {
-        return JsonValueHelpers.CompareValues(this, other);
+        JsonValueKind thisKind = this.ValueKind;
+        JsonValueKind otherKind = other.ValueKind;
+        if (thisKind != otherKind)
+        {
+            return false;
+        }
+
+        if (thisKind == JsonValueKind.Null || thisKind == JsonValueKind.Undefined)
+        {
+            return true;
+        }
+
+        if (thisKind == JsonValueKind.Array)
+        {
+            JsonArrayEnumerator<Sandbox.Models.PersonNameElement> lhs = this.EnumerateArray();
+            JsonArrayEnumerator<Sandbox.Models.PersonNameElement> rhs = other.EnumerateArray();
+            while (lhs.MoveNext())
+            {
+                if (!rhs.MoveNext())
+                {
+                    return false;
+                }
+
+                if (!lhs.Current.Equals(rhs.Current))
+                {
+                    return false;
+                }
+            }
+
+            return !rhs.MoveNext();
+        }
+
+        return false;
     }
 
     /// <inheritdoc/>

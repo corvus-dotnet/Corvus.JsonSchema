@@ -63,7 +63,22 @@ public readonly partial struct OpenApiDocument
                 {
                     if ((this.backing & Backing.JsonElement) != 0)
                     {
-                        return new(this.jsonElementBacking);
+                        if (index < 0)
+                        {
+                            throw new IndexOutOfRangeException();
+                        }
+
+                        JsonElement.ArrayEnumerator enumerator = this.jsonElementBacking.EnumerateArray();
+                        while (index >= 0)
+                        {
+                            index--;
+                            if (!enumerator.MoveNext())
+                            {
+                                throw new IndexOutOfRangeException();
+                            }
+                        }
+
+                        return new(enumerator.Current);
                     }
 
                     if ((this.backing & Backing.Array) != 0)
@@ -95,7 +110,22 @@ public readonly partial struct OpenApiDocument
                 {
                     if ((this.backing & Backing.JsonElement) != 0)
                     {
-                        return new(this.jsonElementBacking);
+                        if (index < 0)
+                        {
+                            throw new IndexOutOfRangeException();
+                        }
+
+                        JsonElement.ArrayEnumerator enumerator = this.jsonElementBacking.EnumerateArray();
+                        while (index >= 0)
+                        {
+                            index--;
+                            if (!enumerator.MoveNext())
+                            {
+                                throw new IndexOutOfRangeException();
+                            }
+                        }
+
+                        return new(enumerator.Current);
                     }
 
                     if ((this.backing & Backing.Array) != 0)
@@ -174,7 +204,8 @@ public readonly partial struct OpenApiDocument
             /// </summary>
             /// <param name="items">The span of items from which to construct the array.</param>
             /// <returns>An instance of the array constructed from the span.</returns>
-            public static ParametersEntityArray Create(ReadOnlySpan<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Operation.ParametersEntityArray.ParametersEntity> items)            {
+            public static ParametersEntityArray Create(ReadOnlySpan<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Operation.ParametersEntityArray.ParametersEntity> items)
+            {
                 return new([..items]);
             }
 
@@ -408,7 +439,13 @@ public readonly partial struct OpenApiDocument
             /// <inheritdoc/>
             ParametersEntityArray IJsonArray<ParametersEntityArray>.Add(params JsonAny[] items)
             {
-                return new([..items]);
+                ImmutableList<JsonAny>.Builder builder = __CorvusArrayHelpers.GetImmutableListBuilder(this);
+                foreach (JsonAny item in items)
+                {
+                    builder.Add(item.AsAny);
+                }
+
+                return new(builder.ToImmutable());
             }
 
             /// <inheritdoc/>

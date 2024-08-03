@@ -127,15 +127,15 @@ public readonly partial struct OpenApiDocument
                                     }
 
                                     ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity.RequiredRequired.RequiredEntity>().Validate(result.CreateChildContext(), level);
+                                    if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                                    {
+                                        return propertyResult;
+                                    }
+
                                     result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
                                     if (level > ValidationLevel.Basic)
                                     {
                                         result = result.PopLocation();
-                                    }
-
-                                    if (level == ValidationLevel.Flag && !result.IsValid)
-                                    {
-                                        return result;
                                     }
                                 }
                                 else if (property.NameEquals(JsonPropertyNames.StyleUtf8, JsonPropertyNames.Style))
@@ -147,15 +147,15 @@ public readonly partial struct OpenApiDocument
                                     }
 
                                     ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity.RequiredRequired.StyleEntity>().Validate(result.CreateChildContext(), level);
+                                    if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                                    {
+                                        return propertyResult;
+                                    }
+
                                     result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
                                     if (level > ValidationLevel.Basic)
                                     {
                                         result = result.PopLocation();
-                                    }
-
-                                    if (level == ValidationLevel.Flag && !result.IsValid)
-                                    {
-                                        return result;
                                     }
                                 }
 

@@ -91,12 +91,14 @@ public static partial class ValidationCodeGeneratorExtensions
 
         bool requiresValueValidation = typeDeclaration.RequiresStringValueValidation();
 
+        string valueAccessor = (typeDeclaration.AllowedCoreTypes() & CoreTypes.String) != 0 ? "value" : "value.AsString";
+
         if (requiresValueValidation)
         {
             generator
                 .AppendSeparatorLine()
                 .AppendLineIndent("ValidationContext result = validationContext;")
-                .AppendLineIndent("value.AsString.TryGetValue(StringValidator, new Corvus.Json.Validate.ValidationContextWrapper(result, level), out result);")
+                .AppendLineIndent(valueAccessor, ".TryGetValue(StringValidator, new Corvus.Json.Validate.ValidationContextWrapper(result, level), out result);")
                 .AppendSeparatorLine()
                 .AppendLineIndent("return result;")
                 .AppendLine()

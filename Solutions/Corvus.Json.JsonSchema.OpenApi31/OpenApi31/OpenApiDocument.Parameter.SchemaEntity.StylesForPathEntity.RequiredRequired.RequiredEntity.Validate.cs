@@ -130,7 +130,7 @@ public readonly partial struct OpenApiDocument
                                     {
                                         if (level == ValidationLevel.Verbose)
                                         {
-                                            result = result.WithResult(isValid: true, $"Validation const - the value '{value}' matched match 'true'.");
+                                            result = result.WithResult(isValid: true, $"Validation const - the value '{value}' matched 'true'.");
                                         }
 
                                         if (level > ValidationLevel.Basic)

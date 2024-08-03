@@ -702,6 +702,18 @@ After:
     /// <summary>
     /// Calls the validation method on the instance in the scenario property <see cref="SchemaInstance"/> and stores the validation result in <see cref="SchemaValidationResult"/>.
     /// </summary>
+    /// <param name="level">The validation level.</param>
+    [When("I validate the instance with level (.*)")]
+    public void WhenIValidateTheInstanceWithLevel(ValidationLevel level)
+    {
+        IJsonValue jsonValue = this.scenarioContext.Get<IJsonValue>(SchemaInstance);
+        ValidationContext validationContext = jsonValue.Validate(ValidationContext.ValidContext, level);
+        this.scenarioContext.Set(validationContext, SchemaValidationResult);
+    }
+
+    /// <summary>
+    /// Calls the validation method on the instance in the scenario property <see cref="SchemaInstance"/> and stores the validation result in <see cref="SchemaValidationResult"/>.
+    /// </summary>
     [When("I validate the instance")]
     public void WhenIValidateTheInstance()
     {
@@ -753,6 +765,17 @@ After:
     {
         ValidationContext actual = this.scenarioContext.Get<ValidationContext>(SchemaValidationResult);
         Assert.AreEqual(expectedValidity, actual.IsValid);
+    }
+
+    /// <summary>
+    /// Uses the <see cref="ValidationResult"/> stored in the scenario property <see cref="SchemaValidationResult"/> and checks its <see cref="ValidationResult.Valid"/> property.
+    /// </summary>
+    /// <param name="count">The number of results expected in the result set.</param>
+    [Then("there will be (.*) results")]
+    public void ThenTheResultWillBe(int count)
+    {
+        ValidationContext actual = this.scenarioContext.Get<ValidationContext>(SchemaValidationResult);
+        Assert.AreEqual(count, actual.Results.Count);
     }
 
     private static string ToPascalCaseWithReservedWords(string input)

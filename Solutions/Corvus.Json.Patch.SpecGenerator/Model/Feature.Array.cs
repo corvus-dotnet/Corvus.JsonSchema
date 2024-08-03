@@ -48,7 +48,22 @@ public readonly partial struct Feature
         {
             if ((this.backing & Backing.JsonElement) != 0)
             {
-                return new(this.jsonElementBacking);
+                if (index < 0)
+                {
+                    throw new IndexOutOfRangeException();
+                }
+
+                JsonElement.ArrayEnumerator enumerator = this.jsonElementBacking.EnumerateArray();
+                while (index >= 0)
+                {
+                    index--;
+                    if (!enumerator.MoveNext())
+                    {
+                        throw new IndexOutOfRangeException();
+                    }
+                }
+
+                return new(enumerator.Current);
             }
 
             if ((this.backing & Backing.Array) != 0)
@@ -80,7 +95,22 @@ public readonly partial struct Feature
         {
             if ((this.backing & Backing.JsonElement) != 0)
             {
-                return new(this.jsonElementBacking);
+                if (index < 0)
+                {
+                    throw new IndexOutOfRangeException();
+                }
+
+                JsonElement.ArrayEnumerator enumerator = this.jsonElementBacking.EnumerateArray();
+                while (index >= 0)
+                {
+                    index--;
+                    if (!enumerator.MoveNext())
+                    {
+                        throw new IndexOutOfRangeException();
+                    }
+                }
+
+                return new(enumerator.Current);
             }
 
             if ((this.backing & Backing.Array) != 0)
@@ -159,7 +189,8 @@ public readonly partial struct Feature
     /// </summary>
     /// <param name="items">The span of items from which to construct the array.</param>
     /// <returns>An instance of the array constructed from the span.</returns>
-    public static Feature Create(ReadOnlySpan<Corvus.Json.Patch.SpecGenerator.Scenario> items)    {
+    public static Feature Create(ReadOnlySpan<Corvus.Json.Patch.SpecGenerator.Scenario> items)
+    {
         return new([..items]);
     }
 
@@ -393,7 +424,13 @@ public readonly partial struct Feature
     /// <inheritdoc/>
     Feature IJsonArray<Feature>.Add(params JsonAny[] items)
     {
-        return new([..items]);
+        ImmutableList<JsonAny>.Builder builder = __CorvusArrayHelpers.GetImmutableListBuilder(this);
+        foreach (JsonAny item in items)
+        {
+            builder.Add(item.AsAny);
+        }
+
+        return new(builder.ToImmutable());
     }
 
     /// <inheritdoc/>

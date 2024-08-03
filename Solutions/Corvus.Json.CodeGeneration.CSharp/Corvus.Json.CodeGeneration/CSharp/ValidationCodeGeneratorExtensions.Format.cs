@@ -64,7 +64,7 @@ public static partial class ValidationCodeGeneratorExtensions
             return generator;
         }
 
-        if (FormatProviderRegistry.Instance.FormatProviders.GetExpectedValueKind(explicitFormat) is not JsonValueKind expectedValueKind)
+        if (FormatHandlerRegistry.Instance.FormatHandlers.GetExpectedValueKind(explicitFormat) is not JsonValueKind expectedValueKind)
         {
             return AppendUnkownFormat(generator, typeDeclaration, explicitFormat);
         }
@@ -79,9 +79,15 @@ public static partial class ValidationCodeGeneratorExtensions
         generator
             .AppendSeparatorLine();
 
+        // Let the children have their go, then work through he standard
+        foreach (IChildValidationHandler child in children)
+        {
+            child.AppendValidationCode(generator, typeDeclaration);
+        }
+
         if (typeDeclaration.IsFormatAssertion() || typeDeclaration.AlwaysAssertFormat())
         {
-            FormatProviderRegistry.Instance.FormatProviders.AppendFormatAssertion(generator, explicitFormat, "value", "validationContext");
+            FormatHandlerRegistry.Instance.FormatHandlers.AppendFormatAssertion(generator, explicitFormat, "value", "validationContext");
         }
         else
         {

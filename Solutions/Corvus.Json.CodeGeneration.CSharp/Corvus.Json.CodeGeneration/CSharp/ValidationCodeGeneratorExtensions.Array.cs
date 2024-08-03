@@ -108,7 +108,7 @@ public static partial class ValidationCodeGeneratorExtensions
             .AppendLineIndent("}")
             .AppendSeparatorLine();
 
-        if (!arrayItems.ReducedType.IsJsonAnyType())
+        if (!arrayItems.ReducedType.IsBuiltInJsonAnyType())
         {
             if (enumeratorIsCorrectType)
             {
@@ -167,7 +167,7 @@ public static partial class ValidationCodeGeneratorExtensions
                 .AppendLineIndent("}")
                 .AppendSeparatorLine();
 
-        if (!arrayItems.ReducedType.IsJsonAnyType())
+        if (!arrayItems.ReducedType.IsBuiltInJsonAnyType())
         {
             if (enumeratorIsCorrectType)
             {

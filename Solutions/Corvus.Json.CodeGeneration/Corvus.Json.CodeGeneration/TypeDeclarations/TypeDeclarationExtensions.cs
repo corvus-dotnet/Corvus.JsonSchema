@@ -329,7 +329,7 @@ public static class TypeDeclarationExtensions
     }
 
     /// <summary>
-    /// Gets the then subschema type, if available.
+    /// Gets then subschema type, if available.
     /// </summary>
     /// <param name="that">The type declaration for which to get the subschema type.</param>
     /// <returns>The <see cref="SingleSubschemaKeywordTypeDeclaration"/>, or <see langword="null"/> if no type was available.</returns>

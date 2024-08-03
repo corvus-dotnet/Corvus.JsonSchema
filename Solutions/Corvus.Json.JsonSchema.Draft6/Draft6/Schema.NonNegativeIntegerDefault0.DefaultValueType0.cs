@@ -404,7 +404,7 @@ public readonly partial struct Schema
 
                 return value.ValueKind switch
                 {
-                    JsonValueKind.Number => new(value.AsNumber.AsBinaryJsonNumber),
+                    JsonValueKind.Number => new(value.AsBinaryJsonNumber),
                     JsonValueKind.Null => Null,
                     _ => Undefined,
                 };
@@ -507,6 +507,19 @@ public readonly partial struct Schema
             /// Parses the DefaultValueType0.
             /// </summary>
             /// <param name="source">The source of the JSON string to parse.</param>
+            public static DefaultValueType0 ParseValue(string source)
+            {
+#if NET8_0_OR_GREATER
+                return IJsonValue<DefaultValueType0>.ParseValue(source);
+#else
+                return JsonValueHelpers.ParseValue<DefaultValueType0>(source.AsSpan());
+#endif
+            }
+
+            /// <summary>
+            /// Parses the DefaultValueType0.
+            /// </summary>
+            /// <param name="source">The source of the JSON string to parse.</param>
             public static DefaultValueType0 ParseValue(ReadOnlySpan<char> source)
             {
 #if NET8_0_OR_GREATER
@@ -577,7 +590,7 @@ public readonly partial struct Schema
             public override bool Equals(object? obj)
             {
                 return
-                    (obj is IJsonValue jv && this.Equals(jv.AsAny)) ||
+                    (obj is IJsonValue jv && this.Equals(jv.As<DefaultValueType0>())) ||
                     (obj is null && this.IsNull());
             }
 
@@ -585,7 +598,7 @@ public readonly partial struct Schema
             public bool Equals<T>(in T other)
                 where T : struct, IJsonValue<T>
             {
-                return JsonValueHelpers.CompareValues(this, other);
+                return this.Equals(other.As<DefaultValueType0>());
             }
 
             /// <summary>
@@ -595,7 +608,53 @@ public readonly partial struct Schema
             /// <returns><see langword="true"/> if the values were equal.</returns>
             public bool Equals(in DefaultValueType0 other)
             {
-                return JsonValueHelpers.CompareValues(this, other);
+                JsonValueKind thisKind = this.ValueKind;
+                JsonValueKind otherKind = other.ValueKind;
+                if (thisKind != otherKind)
+                {
+                    return false;
+                }
+
+                if (thisKind == JsonValueKind.Null || thisKind == JsonValueKind.Undefined)
+                {
+                    return true;
+                }
+
+                if (thisKind == JsonValueKind.Number)
+                {
+                    if (this.backing == Backing.Number && other.backing == Backing.Number)
+                    {
+                        return BinaryJsonNumber.Equals(this.numberBacking, other.numberBacking);
+                    }
+
+                    if (this.backing == Backing.Number && other.backing == Backing.JsonElement)
+                    {
+                        return BinaryJsonNumber.Equals(this.numberBacking, other.jsonElementBacking);
+                    }
+
+                    if (this.backing == Backing.JsonElement && other.backing == Backing.Number)
+                    {
+                        return BinaryJsonNumber.Equals(this.jsonElementBacking, other.numberBacking);
+                    }
+
+                    if (this.jsonElementBacking.TryGetDouble(out double lDouble))
+                    {
+                        if (other.jsonElementBacking.TryGetDouble(out double rDouble))
+                        {
+                            return lDouble.Equals(rDouble);
+                        }
+                    }
+
+                    if (this.jsonElementBacking.TryGetDecimal(out decimal lDecimal))
+                    {
+                        if (other.jsonElementBacking.TryGetDecimal(out decimal rDecimal))
+                        {
+                            return lDecimal.Equals(rDecimal);
+                        }
+                    }
+                }
+
+                return false;
             }
 
             /// <inheritdoc/>

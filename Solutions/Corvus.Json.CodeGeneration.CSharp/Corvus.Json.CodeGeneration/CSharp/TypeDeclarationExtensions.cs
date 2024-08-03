@@ -25,12 +25,43 @@ internal static class TypeDeclarationExtensions
     /// <summary>
     /// Sets the relevant metadata from the <see cref="CSharpLanguageProvider.Options"/>.
     /// </summary>
-    /// <param name="typeDeclaration">The typedeclaration on which to set the options.</param>
+    /// <param name="typeDeclaration">The type declaration on which to set the options.</param>
     /// <param name="options">The <see cref="CSharpLanguageProvider.Options"/> to set.</param>
     public static void SetCSharpOptions(this TypeDeclaration typeDeclaration, CSharpLanguageProvider.Options options)
     {
         typeDeclaration.SetMetadata(AlwaysAssertFormatKey, options.AlwaysAssertFormat);
         typeDeclaration.SetMetadata(OptionalAsNullableKey, options.OptionalAsNullable);
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether this is a Corvus extended JSON type.
+    /// </summary>
+    /// <param name="typeDeclaration">The type declaration to test.</param>
+    /// <returns><see langword="true"/> if the type is a Corvus extended JSON type.</returns>
+    public static bool IsCorvusJsonExtendedType(this TypeDeclaration typeDeclaration)
+    {
+        return typeDeclaration.DotnetNamespace() == "Corvus.Json" && typeDeclaration.DotnetTypeName().StartsWith("Json");
+    }
+
+    /// <summary>
+    /// Try to get the Corvus extended type name for the given type declaration.
+    /// </summary>
+    /// <param name="typeDeclaration">The type declaration for which to get the .</param>
+    /// <param name="extendedTypeName">The corvus extended type name, or <see langword="null"/> if this was not a corvus extended type.</param>
+    /// <returns><see langword="true"/> if this type declaration represents a coruvs extended type.</returns>
+    public static bool TryGetCorvusJsonExtendedTypeName(this TypeDeclaration typeDeclaration, [NotNullWhen(true)] out string? extendedTypeName)
+    {
+        if (typeDeclaration.DotnetNamespace() == "Corvus.Json")
+        {
+            if (typeDeclaration.DotnetTypeName().StartsWith("Json"))
+            {
+                extendedTypeName = typeDeclaration.DotnetTypeName();
+                return true;
+            }
+        }
+
+        extendedTypeName = null;
+        return false;
     }
 
     /// <summary>
@@ -134,14 +165,48 @@ internal static class TypeDeclarationExtensions
     }
 
     /// <summary>
-    /// Gets a value which determines if this type is the JsonAny
+    /// Gets a value which determines if this type is the built-in JsonAny type
     /// type.
     /// </summary>
     /// <param name="typeDeclaration">The type declaration to test.</param>
     /// <returns><see langword="true"/> if the type declaration is the <see cref="WellKnownTypeDeclarations.JsonAny"/> type.</returns>
-    public static bool IsJsonAnyType(this TypeDeclaration typeDeclaration)
+    /// <remarks>This uses the <see cref="WellKnownTypeDeclarations.JsonAny"/> schema location IRI to identify the type. Contrast
+    /// with <see cref="IsCorvusJsonExtendedJsonAny"/> which uses the type name to distinguish the type.</remarks>
+    public static bool IsBuiltInJsonAnyType(this TypeDeclaration typeDeclaration)
     {
         return typeDeclaration.LocatedSchema.Location == WellKnownTypeDeclarations.JsonAny.LocatedSchema.Location;
+    }
+
+    /// <summary>
+    /// Gets a value which determines if this type is the built-in JsonAny type
+    /// type.
+    /// </summary>
+    /// <param name="typeDeclaration">The type declaration to test.</param>
+    /// <returns><see langword="true"/> if the type declaration is the <see cref="WellKnownTypeDeclarations.JsonAny"/> type.</returns>
+    /// <remarks>This uses the <see cref="WellKnownTypeDeclarations.JsonAny"/> schema location IRI to identify the type. Contrast
+    /// with <see cref="IsBuiltInJsonAnyType"/> which uses the type name to distinguish the type.</remarks>
+    public static bool IsCorvusJsonExtendedJsonAny(this TypeDeclaration typeDeclaration)
+    {
+        return
+            typeDeclaration.DotnetNamespace() == "Corvus.Json" &&
+            typeDeclaration.DotnetTypeName() == "JsonAny" &&
+            typeDeclaration.LocatedSchema.Location != WellKnownTypeDeclarations.JsonAny.LocatedSchema.Location;
+    }
+
+    /// <summary>
+    /// Gets a value which determines if this type is the built-in JsonAny type
+    /// type.
+    /// </summary>
+    /// <param name="typeDeclaration">The type declaration to test.</param>
+    /// <returns><see langword="true"/> if the type declaration is the <see cref="WellKnownTypeDeclarations.JsonAny"/> type.</returns>
+    /// <remarks>This uses the <see cref="WellKnownTypeDeclarations.JsonAny"/> schema location IRI to identify the type. Contrast
+    /// with <see cref="IsBuiltInJsonAnyType"/> which uses the type name to distinguish the type.</remarks>
+    public static bool IsCorvusJsonExtendedJsonNotAny(this TypeDeclaration typeDeclaration)
+    {
+        return
+            typeDeclaration.DotnetNamespace() == "Corvus.Json" &&
+            typeDeclaration.DotnetTypeName() == "JsonNotAny" &&
+            typeDeclaration.LocatedSchema.Location != WellKnownTypeDeclarations.JsonNotAny.LocatedSchema.Location;
     }
 
     /// <summary>
@@ -246,7 +311,7 @@ internal static class TypeDeclarationExtensions
 
             if ((typeDeclaration.ImpliedCoreTypes() & CoreTypes.String) != 0 && typeDeclaration.Format() is string candidateFormat)
             {
-                return FormatProviderRegistry.Instance.StringTypeFormatProviders.GetCorvusJsonTypeNameFor(candidateFormat);
+                return FormatHandlerRegistry.Instance.StringFormatHandlers.GetCorvusJsonTypeNameFor(candidateFormat);
             }
 
             return null;

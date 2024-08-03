@@ -127,15 +127,15 @@ public readonly partial struct OpenApiDocument
                                     }
 
                                     ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForQueryEntity.RequiredIn.InEntity>().Validate(result.CreateChildContext(), level);
+                                    if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                                    {
+                                        return propertyResult;
+                                    }
+
                                     result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
                                     if (level > ValidationLevel.Basic)
                                     {
                                         result = result.PopLocation();
-                                    }
-
-                                    if (level == ValidationLevel.Flag && !result.IsValid)
-                                    {
-                                        return result;
                                     }
                                 }
 

@@ -126,15 +126,15 @@ public readonly partial struct OpenApiDocument
                             }
 
                             ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInPath.InEntity>().Validate(result.CreateChildContext(), level);
+                            if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                            {
+                                return propertyResult;
+                            }
+
                             result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
                             if (level > ValidationLevel.Basic)
                             {
                                 result = result.PopLocation();
-                            }
-
-                            if (level == ValidationLevel.Flag && !result.IsValid)
-                            {
-                                return result;
                             }
                         }
                         else if (property.NameEquals(JsonPropertyNames.RequiredUtf8, JsonPropertyNames.Required))
@@ -147,15 +147,15 @@ public readonly partial struct OpenApiDocument
                             }
 
                             ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInPath.RequiredEntity>().Validate(result.CreateChildContext(), level);
+                            if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                            {
+                                return propertyResult;
+                            }
+
                             result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
                             if (level > ValidationLevel.Basic)
                             {
                                 result = result.PopLocation();
-                            }
-
-                            if (level == ValidationLevel.Flag && !result.IsValid)
-                            {
-                                return result;
                             }
                         }
                         else if (property.NameEquals(JsonPropertyNames.StyleUtf8, JsonPropertyNames.Style))
@@ -167,15 +167,15 @@ public readonly partial struct OpenApiDocument
                             }
 
                             ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInPath.StyleEntity>().Validate(result.CreateChildContext(), level);
+                            if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                            {
+                                return propertyResult;
+                            }
+
                             result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
                             if (level > ValidationLevel.Basic)
                             {
                                 result = result.PopLocation();
-                            }
-
-                            if (level == ValidationLevel.Flag && !result.IsValid)
-                            {
-                                return result;
                             }
                         }
 

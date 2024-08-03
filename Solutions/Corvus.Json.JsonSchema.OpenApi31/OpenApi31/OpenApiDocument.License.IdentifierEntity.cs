@@ -490,7 +490,7 @@ public readonly partial struct OpenApiDocument
 
                 return value.ValueKind switch
                 {
-                    JsonValueKind.String => new((string)value.AsString),
+                    JsonValueKind.String => new(value.AsString.GetString()!),
                     JsonValueKind.True => new(true),
                     JsonValueKind.False => new(false),
                     JsonValueKind.Number => new(value.AsNumber.AsBinaryJsonNumber),
@@ -542,7 +542,7 @@ public readonly partial struct OpenApiDocument
 
                 return value.ValueKind switch
                 {
-                    JsonValueKind.String => new((string)value.AsString),
+                    JsonValueKind.String => new(value.GetString()!),
                     JsonValueKind.Null => Null,
                     _ => Undefined,
                 };
@@ -565,7 +565,7 @@ public readonly partial struct OpenApiDocument
 
                 return value.ValueKind switch
                 {
-                    JsonValueKind.Number => new(value.AsNumber.AsBinaryJsonNumber),
+                    JsonValueKind.Number => new(value.AsBinaryJsonNumber),
                     JsonValueKind.Null => Null,
                     _ => Undefined,
                 };
@@ -588,7 +588,7 @@ public readonly partial struct OpenApiDocument
 
                 return value.ValueKind switch
                 {
-                    JsonValueKind.Object => new(value.AsObject.AsPropertyBacking()),
+                    JsonValueKind.Object => new(value.AsPropertyBacking()),
                     JsonValueKind.Null => Null,
                     _ => Undefined,
                 };
@@ -611,7 +611,7 @@ public readonly partial struct OpenApiDocument
 
                 return value.ValueKind switch
                 {
-                    JsonValueKind.Array => new(value.AsArray.AsImmutableList()),
+                    JsonValueKind.Array => new(value.AsImmutableList()),
                     JsonValueKind.Null => Null,
                     _ => Undefined,
                 };
@@ -670,6 +670,19 @@ public readonly partial struct OpenApiDocument
             {
                 using var jsonDocument = JsonDocument.Parse(source, options);
                 return new(jsonDocument.RootElement.Clone());
+            }
+
+            /// <summary>
+            /// Parses the IdentifierEntity.
+            /// </summary>
+            /// <param name="source">The source of the JSON string to parse.</param>
+            public static IdentifierEntity ParseValue(string source)
+            {
+#if NET8_0_OR_GREATER
+                return IJsonValue<IdentifierEntity>.ParseValue(source);
+#else
+                return JsonValueHelpers.ParseValue<IdentifierEntity>(source.AsSpan());
+#endif
             }
 
             /// <summary>
@@ -766,7 +779,7 @@ public readonly partial struct OpenApiDocument
             public override bool Equals(object? obj)
             {
                 return
-                    (obj is IJsonValue jv && this.Equals(jv.AsAny)) ||
+                    (obj is IJsonValue jv && this.Equals(jv.As<IdentifierEntity>())) ||
                     (obj is null && this.IsNull());
             }
 
@@ -774,7 +787,7 @@ public readonly partial struct OpenApiDocument
             public bool Equals<T>(in T other)
                 where T : struct, IJsonValue<T>
             {
-                return JsonValueHelpers.CompareValues(this, other);
+                return this.Equals(other.As<IdentifierEntity>());
             }
 
             /// <summary>
@@ -784,7 +797,138 @@ public readonly partial struct OpenApiDocument
             /// <returns><see langword="true"/> if the values were equal.</returns>
             public bool Equals(in IdentifierEntity other)
             {
-                return JsonValueHelpers.CompareValues(this, other);
+                JsonValueKind thisKind = this.ValueKind;
+                JsonValueKind otherKind = other.ValueKind;
+                if (thisKind != otherKind)
+                {
+                    return false;
+                }
+
+                if (thisKind == JsonValueKind.Null || thisKind == JsonValueKind.Undefined)
+                {
+                    return true;
+                }
+
+                if (thisKind == JsonValueKind.Array)
+                {
+                    JsonArray thisArray = this.AsArray;
+                    JsonArray otherArray = other.AsArray;
+                    JsonArrayEnumerator lhs = thisArray.EnumerateArray();
+                    JsonArrayEnumerator rhs = otherArray.EnumerateArray();
+                    while (lhs.MoveNext())
+                    {
+                        if (!rhs.MoveNext())
+                        {
+                            return false;
+                        }
+
+                        if (!lhs.Current.Equals(rhs.Current))
+                        {
+                            return false;
+                        }
+                    }
+
+                    return !rhs.MoveNext();
+                }
+
+                if (thisKind == JsonValueKind.True || thisKind == JsonValueKind.False)
+                {
+                    return true;
+                }
+
+                if (thisKind == JsonValueKind.Number)
+                {
+                    if (this.backing == Backing.Number && other.backing == Backing.Number)
+                    {
+                        return BinaryJsonNumber.Equals(this.numberBacking, other.numberBacking);
+                    }
+
+                    if (this.backing == Backing.Number && other.backing == Backing.JsonElement)
+                    {
+                        return BinaryJsonNumber.Equals(this.numberBacking, other.jsonElementBacking);
+                    }
+
+                    if (this.backing == Backing.JsonElement && other.backing == Backing.Number)
+                    {
+                        return BinaryJsonNumber.Equals(this.jsonElementBacking, other.numberBacking);
+                    }
+
+                    if (this.jsonElementBacking.TryGetDouble(out double lDouble))
+                    {
+                        if (other.jsonElementBacking.TryGetDouble(out double rDouble))
+                        {
+                            return lDouble.Equals(rDouble);
+                        }
+                    }
+
+                    if (this.jsonElementBacking.TryGetDecimal(out decimal lDecimal))
+                    {
+                        if (other.jsonElementBacking.TryGetDecimal(out decimal rDecimal))
+                        {
+                            return lDecimal.Equals(rDecimal);
+                        }
+                    }
+                }
+
+                if (thisKind == JsonValueKind.Object)
+                {
+                    JsonObject thisObject = this.AsObject;
+                    JsonObject otherObject = other.AsObject;
+                    int count = 0;
+                    foreach (JsonObjectProperty property in thisObject.EnumerateObject())
+                    {
+                        if (!otherObject.TryGetProperty(property.Name, out JsonAny value) || !property.Value.Equals(value))
+                        {
+                            return false;
+                        }
+
+                        count++;
+                    }
+
+                    int otherCount = 0;
+                    foreach (JsonObjectProperty otherProperty in otherObject.EnumerateObject())
+                    {
+                        otherCount++;
+                        if (otherCount > count)
+                        {
+                            return false;
+                        }
+                    }
+
+                    return count == otherCount;
+                }
+
+                if (thisKind == JsonValueKind.String)
+                {
+                    if (this.backing == Backing.JsonElement)
+                    {
+                        if (other.backing == Backing.String)
+                        {
+                            return this.jsonElementBacking.ValueEquals(other.stringBacking);
+                        }
+                        else
+                        {
+                            other.jsonElementBacking.TryGetValue(CompareValues, this.jsonElementBacking, out bool areEqual);
+                            return areEqual;
+                        }
+
+                    }
+
+                    if (other.backing == Backing.JsonElement)
+                    {
+                        return other.jsonElementBacking.ValueEquals(this.stringBacking);
+                    }
+
+                    return this.stringBacking.Equals(other.stringBacking);
+
+                    static bool CompareValues(ReadOnlySpan<byte> span, in JsonElement firstItem, out bool value)
+                    {
+                        value = firstItem.ValueEquals(span);
+                        return true;
+                    }
+                }
+
+                return false;
             }
 
             /// <inheritdoc/>

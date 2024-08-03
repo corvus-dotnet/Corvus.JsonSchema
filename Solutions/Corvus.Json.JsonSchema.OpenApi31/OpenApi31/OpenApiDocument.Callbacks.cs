@@ -444,7 +444,7 @@ public readonly partial struct OpenApiDocument
 
             return value.ValueKind switch
             {
-                JsonValueKind.Object => new(value.AsObject.AsPropertyBacking()),
+                JsonValueKind.Object => new(value.AsPropertyBacking()),
                 JsonValueKind.Null => Null,
                 _ => Undefined,
             };
@@ -528,6 +528,19 @@ public readonly partial struct OpenApiDocument
         /// Parses the Callbacks.
         /// </summary>
         /// <param name="source">The source of the JSON string to parse.</param>
+        public static Callbacks ParseValue(string source)
+        {
+#if NET8_0_OR_GREATER
+            return IJsonValue<Callbacks>.ParseValue(source);
+#else
+            return JsonValueHelpers.ParseValue<Callbacks>(source.AsSpan());
+#endif
+        }
+
+        /// <summary>
+        /// Parses the Callbacks.
+        /// </summary>
+        /// <param name="source">The source of the JSON string to parse.</param>
         public static Callbacks ParseValue(ReadOnlySpan<char> source)
         {
 #if NET8_0_OR_GREATER
@@ -598,7 +611,7 @@ public readonly partial struct OpenApiDocument
         public override bool Equals(object? obj)
         {
             return
-                (obj is IJsonValue jv && this.Equals(jv.AsAny)) ||
+                (obj is IJsonValue jv && this.Equals(jv.As<Callbacks>())) ||
                 (obj is null && this.IsNull());
         }
 
@@ -606,7 +619,7 @@ public readonly partial struct OpenApiDocument
         public bool Equals<T>(in T other)
             where T : struct, IJsonValue<T>
         {
-            return JsonValueHelpers.CompareValues(this, other);
+            return this.Equals(other.As<Callbacks>());
         }
 
         /// <summary>
@@ -616,7 +629,45 @@ public readonly partial struct OpenApiDocument
         /// <returns><see langword="true"/> if the values were equal.</returns>
         public bool Equals(in Callbacks other)
         {
-            return JsonValueHelpers.CompareValues(this, other);
+            JsonValueKind thisKind = this.ValueKind;
+            JsonValueKind otherKind = other.ValueKind;
+            if (thisKind != otherKind)
+            {
+                return false;
+            }
+
+            if (thisKind == JsonValueKind.Null || thisKind == JsonValueKind.Undefined)
+            {
+                return true;
+            }
+
+            if (thisKind == JsonValueKind.Object)
+            {
+                int count = 0;
+                foreach (JsonObjectProperty<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.PathItemOrReference> property in this.EnumerateObject())
+                {
+                    if (!other.TryGetProperty(property.Name, out Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.PathItemOrReference value) || !property.Value.Equals(value))
+                    {
+                        return false;
+                    }
+
+                    count++;
+                }
+
+                int otherCount = 0;
+                foreach (JsonObjectProperty<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.PathItemOrReference> otherProperty in other.EnumerateObject())
+                {
+                    otherCount++;
+                    if (otherCount > count)
+                    {
+                        return false;
+                    }
+                }
+
+                return count == otherCount;
+            }
+
+            return false;
         }
 
         /// <inheritdoc/>

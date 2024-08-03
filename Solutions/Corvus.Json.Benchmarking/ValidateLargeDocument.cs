@@ -42,9 +42,8 @@ public class ValidateLargeDocument
     /// <summary>
     /// Global setup.
     /// </summary>
-    /// <returns>A <see cref="Task"/> which completes once clean-up is complete.</returns>
     [GlobalSetup]
-    public Task GlobalSetup()
+    public void GlobalSetup()
     {
         this.objectDocument = JsonDocument.Parse(JsonText);
 
@@ -59,56 +58,46 @@ public class ValidateLargeDocument
 
         this.schema = JsonEverything.JsonSchema.FromFile("./person-array-schema.json");
         this.node = System.Text.Json.Nodes.JsonArray.Create(this.personArrayV3.AsJsonElement.Clone());
-        return Task.CompletedTask;
     }
 
     /// <summary>
     /// Global clean-up.
     /// </summary>
-    /// <returns>A <see cref="Task"/> which completes once clean-up is complete.</returns>
     [GlobalCleanup]
-    public Task GlobalCleanup()
+    public void GlobalCleanup()
     {
         if (this.objectDocument is JsonDocument doc)
         {
             doc.Dispose();
         }
-
-        return Task.CompletedTask;
     }
 
     /// <summary>
     /// Validates using the Corvus V3 types.
     /// </summary>
     [Benchmark(Baseline = true)]
-    public void ValidateLargeArrayCorvusV3()
+    public bool ValidateLargeArrayCorvusV3()
     {
         ValidationContext result = this.personArrayV3.Validate(ValidationContext.ValidContext);
-        if (!result.IsValid)
-        {
-            throw new InvalidOperationException();
-        }
+        return result.IsValid;
     }
 
     /// <summary>
     /// Validates using the Corvus V4 types.
     /// </summary>
     [Benchmark]
-    public void ValidateLargeArrayCorvusV4()
+    public bool ValidateLargeArrayCorvusV4()
     {
         ValidationContext result = this.personArrayV4.Validate(ValidationContext.ValidContext);
-        if (!result.IsValid)
-        {
-            throw new InvalidOperationException();
-        }
+        return result.IsValid;
     }
 
     /// <summary>
     /// Validates using the JsonEverything types.
     /// </summary>
     [Benchmark]
-    public void ValidateLargeArrayJsonEverything()
+    public JsonEverything.EvaluationResults ValidateLargeArrayJsonEverything()
     {
-        JsonEverything.EvaluationResults result = this.schema!.Evaluate(this.node, Options);
+         return this.schema!.Evaluate(this.node, Options);
     }
 }

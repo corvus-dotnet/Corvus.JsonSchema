@@ -109,7 +109,7 @@ public static class GenerationDriver
         {
             string schemaFile = (string)generatorSpecification.SchemaFile;
             JsonReference reference = new(schemaFile, generatorSpecification.RootPath is JsonUriReference rootPath ? (string)rootPath : string.Empty);
-            ProgressTask typeBuilderTask = context.AddTask($"Building type declarations for {reference}");
+            ProgressTask typeBuilderTask = context.AddTask($"Building type declarations for [green]{reference}[/]");
             TypeDeclaration rootType = await typeBuilder.AddTypeDeclarationsAsync(reference, defaultVocabulary, generatorSpecification.RebaseToRootPath ?? false);
             typesToGenerate.Add(rootType);
 

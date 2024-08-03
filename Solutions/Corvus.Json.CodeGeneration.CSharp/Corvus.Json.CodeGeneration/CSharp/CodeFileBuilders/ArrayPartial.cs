@@ -37,7 +37,7 @@ public sealed class ArrayPartial : ICodeFileBuilder
                         "System.Collections.Immutable",
                         "System.Runtime.CompilerServices",
                         "System.Text.Json",
-                        "Corvus.Json",
+                        new("Corvus.Json", EmitIfNotCorvusJsonExtendedType(typeDeclaration)),
                         "Corvus.Json.Internal")
                     .AppendLine()
                     .BeginNamespace(typeDeclaration.DotnetNamespace())
@@ -85,6 +85,13 @@ public sealed class ArrayPartial : ICodeFileBuilder
         }
 
         return generator;
+
+        static FrameworkType EmitIfNotCorvusJsonExtendedType(TypeDeclaration typeDeclaration)
+        {
+            return typeDeclaration.IsCorvusJsonExtendedType()
+                 ? FrameworkType.NotEmitted
+                 : FrameworkType.All;
+        }
 
         static ConditionalCodeSpecification JsonArrayType(TypeDeclaration typeDeclaration)
         {

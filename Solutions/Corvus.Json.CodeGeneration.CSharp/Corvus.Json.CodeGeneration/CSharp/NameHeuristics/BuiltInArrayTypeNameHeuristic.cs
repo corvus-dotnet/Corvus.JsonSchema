@@ -57,7 +57,7 @@ public sealed class BuiltInArrayTypeNameHeuristic : IBuiltInTypeNameHeuristic
                 return false;
             }
 
-            if (typeDeclaration.ArrayItemsType() is ArrayItemsTypeDeclaration aitd && aitd.ReducedType.IsJsonAnyType())
+            if (typeDeclaration.ArrayItemsType() is ArrayItemsTypeDeclaration aitd && aitd.ReducedType.IsBuiltInJsonAnyType())
             {
                 typeDeclaration.SetDotnetNamespace("Corvus.Json");
                 typeDeclaration.SetDotnetTypeName("JsonArray");

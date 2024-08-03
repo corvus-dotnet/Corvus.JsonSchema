@@ -1836,6 +1836,19 @@ public readonly struct BinaryJsonNumber :
     /// <summary>
     /// Determines if this value is a multiple of the other value.
     /// </summary>
+    /// <param name="x">The value to test.</param>
+    /// <param name="y">The factor to test.</param>
+    /// <returns><see langword="true"/> if the value is a multiple of the given factor.</returns>
+    /// <exception cref="NotSupportedException">The number format is not supported.</exception>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool IsMultipleOf(BinaryJsonNumber x, BinaryJsonNumber y)
+    {
+        return x.IsMultipleOf(y);
+    }
+
+    /// <summary>
+    /// Determines if this value is a multiple of the other value.
+    /// </summary>
     /// <typeparam name="TOther">The type of the number for comparison.</typeparam>
     /// <param name="x">The value to test.</param>
     /// <param name="y">The factor to test.</param>
@@ -1845,15 +1858,37 @@ public readonly struct BinaryJsonNumber :
     public static bool IsMultipleOf<TOther>(TOther x, BinaryJsonNumber y)
         where TOther : INumberBase<TOther>
     {
-        // We use the standard policy of working through a double if possible, falling back to a decimal if not.
-        if (PreciseConversionTo<double>.TryFrom(x, out double xAsDouble) &&
-            PreciseConversionTo<double>.TryFrom(y, out double yAsDouble))
+        bool triedDecimal = (y.numericKind & Kind.Decimal) != 0;
+        try
         {
-            return Math.Abs(Math.IEEERemainder(xAsDouble, yAsDouble)) <= 1.0E-9;
+            if (triedDecimal)
+            {
+                if (PreciseConversionTo<decimal>.TryFrom(x, out decimal xAsDecimal) &&
+                    PreciseConversionTo<decimal>.TryFrom(y, out decimal yAsDecimal))
+                {
+                    return decimal.Abs(decimal.Remainder(xAsDecimal, yAsDecimal)) <= 1.0E-5M;
+                }
+            }
+            else if (PreciseConversionTo<double>.TryFrom(x, out double xAsDouble) &&
+                PreciseConversionTo<double>.TryFrom(y, out double yAsDouble))
+            {
+                return Math.Abs(Math.IEEERemainder(xAsDouble, yAsDouble)) <= 1.0E-9;
+            }
+        }
+        catch (NotSupportedException)
+        {
         }
 
-        if (PreciseConversionTo<decimal>.TryFrom(x, out decimal xAsDecimal) &&
-            PreciseConversionTo<decimal>.TryFrom(y, out decimal yAsDecimal))
+        if (!triedDecimal)
+        {
+            if (PreciseConversionTo<decimal>.TryFrom(x, out decimal xAsDecimal) &&
+                PreciseConversionTo<decimal>.TryFrom(y, out decimal yAsDecimal))
+            {
+                return decimal.Abs(decimal.Remainder(xAsDecimal, yAsDecimal)) <= 1.0E-5M;
+            }
+        }
+        else if (PreciseConversionTo<decimal>.TryFrom(x, out decimal xAsDecimal) &&
+                    PreciseConversionTo<decimal>.TryFrom(y, out decimal yAsDecimal))
         {
             return decimal.Abs(decimal.Remainder(xAsDecimal, yAsDecimal)) <= 1.0E-5M;
         }
@@ -1871,20 +1906,20 @@ public readonly struct BinaryJsonNumber :
     {
         return numericKind switch
         {
-            Kind.Byte => 8,
-            Kind.Decimal => 128,
-            Kind.Double => 512,
-            Kind.Half => 64,
-            Kind.Int16 => 8,
-            Kind.Int32 => 16,
-            Kind.Int64 => 32,
-            Kind.Int128 => 64,
-            Kind.SByte => 8,
-            Kind.Single => 64,
-            Kind.UInt16 => 8,
-            Kind.UInt32 => 16,
-            Kind.UInt64 => 32,
-            Kind.UInt128 => 64,
+            Kind.Byte => 3,
+            Kind.Decimal => 29,
+            Kind.Double => 324,
+            Kind.Half => 7,
+            Kind.Int16 => 6,
+            Kind.Int32 => 11,
+            Kind.Int64 => 20,
+            Kind.Int128 => 40,
+            Kind.SByte => 4,
+            Kind.Single => 47,
+            Kind.UInt16 => 5,
+            Kind.UInt32 => 10,
+            Kind.UInt64 => 20,
+            Kind.UInt128 => 39,
             _ => throw new NotSupportedException(),
         };
     }
@@ -4895,12 +4930,25 @@ public readonly struct BinaryJsonNumber :
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsMultipleOf(decimal x, BinaryJsonNumber y)
     {
-        if (y.numericKind != Kind.Double)
+        if (y.numericKind != Kind.Decimal)
         {
             return Math.Abs(decimal.Remainder(x, (decimal)y.GetDouble())) <= 1.0E-5M;
         }
 
         return Math.Abs(decimal.Remainder(x, y.decimalBacking)) <= 1.0E-5M;
+    }
+
+    /// <summary>
+    /// Determines if this value is a multiple of the other value.
+    /// </summary>
+    /// <param name="x">The value to test.</param>
+    /// <param name="y">The factor to test.</param>
+    /// <returns><see langword="true"/> if the value is a multiple of the given factor.</returns>
+    /// <exception cref="NotSupportedException">The number format is not supported.</exception>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool IsMultipleOf(BinaryJsonNumber x, BinaryJsonNumber y)
+    {
+        return x.IsMultipleOf(y);
     }
 
     /// <summary>
@@ -4913,17 +4961,17 @@ public readonly struct BinaryJsonNumber :
     {
         return numericKind switch
         {
-            Kind.Byte => 8,
-            Kind.Decimal => 128,
-            Kind.Double => 512,
-            Kind.Int16 => 8,
-            Kind.Int32 => 16,
-            Kind.Int64 => 32,
-            Kind.SByte => 8,
-            Kind.Single => 64,
-            Kind.UInt16 => 8,
-            Kind.UInt32 => 16,
-            Kind.UInt64 => 32,
+            Kind.Byte => 3,
+            Kind.Decimal => 29,
+            Kind.Double => 324,
+            Kind.Int16 => 6,
+            Kind.Int32 => 11,
+            Kind.Int64 => 20,
+            Kind.SByte => 4,
+            Kind.Single => 47,
+            Kind.UInt16 => 5,
+            Kind.UInt32 => 10,
+            Kind.UInt64 => 20,
             _ => throw new NotSupportedException(),
         };
     }

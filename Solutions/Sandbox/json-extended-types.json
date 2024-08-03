@@ -120,14 +120,14 @@
             "format": "idn-hostname"
         },
 
-        "JsonIpv4": {
-            "$corvusTypeName": "JsonIpv4",
+        "JsonIpV4": {
+            "$corvusTypeName": "JsonIpV4",
             "type": "string",
             "format": "ipv4"
         },
 
-        "JsonIpv6": {
-            "$corvusTypeName": "JsonIpv6",
+        "JsonIpV6": {
+            "$corvusTypeName": "JsonIpV6",
             "type": "string",
             "format": "ipv6"
         },
@@ -166,6 +166,18 @@
             "$corvusTypeName": "JsonUri",
             "type": "string",
             "format": "uri"
+        },
+
+        "JsonUriReference": {
+            "$corvusTypeName": "JsonUriReference",
+            "type": "string",
+            "format": "uri-reference"
+        },
+
+        "JsonUriTemplate": {
+            "$corvusTypeName": "JsonUriTemplate",
+            "type": "string",
+            "format": "uri-template"
         },
 
         "JsonUuid": {

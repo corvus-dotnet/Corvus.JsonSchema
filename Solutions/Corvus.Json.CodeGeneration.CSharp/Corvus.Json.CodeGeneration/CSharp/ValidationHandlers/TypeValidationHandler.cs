@@ -19,7 +19,7 @@ public sealed class TypeValidationHandler : KeywordValidationHandlerBase
     public static TypeValidationHandler Instance { get; } = new();
 
     /// <inheritdoc/>
-    public override uint ValidationHandlerPriority => ValidationPriorities.Default;
+    public override uint ValidationHandlerPriority => ValidationPriorities.Default / 2;
 
     /// <inheritdoc/>
     public override CodeGenerator AppendValidationSetup(CodeGenerator generator, TypeDeclaration typeDeclaration)
@@ -42,11 +42,20 @@ public sealed class TypeValidationHandler : KeywordValidationHandlerBase
         TypeDeclaration typeDeclaration)
     {
         // This occurs in the parent context, so we need to add the validation class name to the scope.
+        if ((typeDeclaration.AllowedCoreTypes() & CoreTypes.Integer) != 0)
+        {
+            return generator
+                .AppendValidationMethodCall(
+                    generator.ValidationClassName(),
+                    generator.ValidationHandlerMethodName(this),
+                    ["this", generator.ValueKindIdentifierName(), generator.ResultIdentifierName(), generator.LevelIdentifierName()]);
+        }
+
         return generator
             .AppendValidationMethodCall(
                 generator.ValidationClassName(),
                 generator.ValidationHandlerMethodName(this),
-                ["this", generator.ValueKindIdentifierName(), generator.ResultIdentifierName(), generator.LevelIdentifierName()]);
+                [generator.ValueKindIdentifierName(), generator.ResultIdentifierName(), generator.LevelIdentifierName()]);
     }
 
     /// <inheritdoc/>

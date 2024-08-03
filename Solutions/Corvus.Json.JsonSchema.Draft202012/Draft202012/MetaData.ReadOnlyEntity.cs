@@ -494,6 +494,19 @@ public readonly partial struct MetaData
         /// Parses the ReadOnlyEntity.
         /// </summary>
         /// <param name="source">The source of the JSON string to parse.</param>
+        public static ReadOnlyEntity ParseValue(string source)
+        {
+#if NET8_0_OR_GREATER
+            return IJsonValue<ReadOnlyEntity>.ParseValue(source);
+#else
+            return JsonValueHelpers.ParseValue<ReadOnlyEntity>(source.AsSpan());
+#endif
+        }
+
+        /// <summary>
+        /// Parses the ReadOnlyEntity.
+        /// </summary>
+        /// <param name="source">The source of the JSON string to parse.</param>
         public static ReadOnlyEntity ParseValue(ReadOnlySpan<char> source)
         {
 #if NET8_0_OR_GREATER
@@ -564,7 +577,7 @@ public readonly partial struct MetaData
         public override bool Equals(object? obj)
         {
             return
-                (obj is IJsonValue jv && this.Equals(jv.AsAny)) ||
+                (obj is IJsonValue jv && this.Equals(jv.As<ReadOnlyEntity>())) ||
                 (obj is null && this.IsNull());
         }
 
@@ -572,7 +585,7 @@ public readonly partial struct MetaData
         public bool Equals<T>(in T other)
             where T : struct, IJsonValue<T>
         {
-            return JsonValueHelpers.CompareValues(this, other);
+            return this.Equals(other.As<ReadOnlyEntity>());
         }
 
         /// <summary>
@@ -582,7 +595,24 @@ public readonly partial struct MetaData
         /// <returns><see langword="true"/> if the values were equal.</returns>
         public bool Equals(in ReadOnlyEntity other)
         {
-            return JsonValueHelpers.CompareValues(this, other);
+            JsonValueKind thisKind = this.ValueKind;
+            JsonValueKind otherKind = other.ValueKind;
+            if (thisKind != otherKind)
+            {
+                return false;
+            }
+
+            if (thisKind == JsonValueKind.Null || thisKind == JsonValueKind.Undefined)
+            {
+                return true;
+            }
+
+            if (thisKind == JsonValueKind.True || thisKind == JsonValueKind.False)
+            {
+                return true;
+            }
+
+            return false;
         }
 
         /// <inheritdoc/>

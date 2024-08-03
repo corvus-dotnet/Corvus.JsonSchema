@@ -1,17 +1,17 @@
-﻿using JsonSchemaSample.Api;
-using NodaTime;
+﻿Benchmarks.LargeFileBenchmark benchmark = new();
 
-Person audreyJones =
-    Person.Create(
-        name: PersonName.Create(
-                givenName: "Audrey",
-                otherNames: PersonNameElementArray.FromItems("Margaret", "Nancy"),
-                familyName: "Jones"),
-        dateOfBirth: new LocalDate(1947, 11, 7));
+await benchmark.GlobalSetup();
 
-string result = audreyJones.Name.OtherNames.Match(
-    static (in PersonNameElement otherNames) => $"Other names: {otherNames}",
-    static (in PersonNameElementArray otherNames) => $"Other names: {string.Join(", ", otherNames)}",
-    static (in OtherNames value) => throw new InvalidOperationException($"Unexpected type: {value}"));
+for (int i = 0; i < 5; ++i)
+{
+    benchmark.PatchCorvus();
+}
 
-Console.WriteLine(result);
+Microsoft.DiagnosticsHub.UserMarkRange r2 = new("V4", "Corvus V4");
+
+for (int i = 0; i < 10; ++i)
+{
+    benchmark.PatchCorvus();
+}
+
+r2.Dispose();

@@ -41,13 +41,13 @@ public readonly partial struct Person
             }
 
             JsonValueKind valueKind = this.ValueKind;
-            result = CorvusValidation.FormatValidationHandler(this, valueKind, result, level);
+            result = CorvusValidation.TypeValidationHandler(valueKind, result, level);
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;
             }
 
-            result = CorvusValidation.TypeValidationHandler(this, valueKind, result, level);
+            result = CorvusValidation.FormatValidationHandler(this, valueKind, result, level);
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;
@@ -66,6 +66,50 @@ public readonly partial struct Person
         /// </summary>
         public static partial class CorvusValidation
         {
+            /// <summary>
+            /// Core type validation.
+            /// </summary>
+            /// <param name="valueKind">The <see cref="JsonValueKind" /> of the value to validate.</param>
+            /// <param name="validationContext">The current validation context.</param>
+            /// <param name="level">The current validation level.</param>
+            /// <returns>The resulting validation context after validation.</returns>
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            internal static ValidationContext TypeValidationHandler(
+                JsonValueKind valueKind,
+                in ValidationContext validationContext,
+                ValidationLevel level = ValidationLevel.Flag)
+            {
+                ValidationContext result = validationContext;
+                bool isValid = false;
+                ValidationContext localResultString = Corvus.Json.ValidateWithoutCoreType.TypeString(valueKind, ValidationContext.ValidContext, level);
+                if (level == ValidationLevel.Flag && localResultString.IsValid)
+                {
+                    return validationContext;
+                }
+
+                if (localResultString.IsValid)
+                {
+                    isValid = true;
+                }
+
+                ValidationContext localResultNull = Corvus.Json.ValidateWithoutCoreType.TypeNull(valueKind, ValidationContext.ValidContext, level);
+                if (level == ValidationLevel.Flag && localResultNull.IsValid)
+                {
+                    return validationContext;
+                }
+
+                if (localResultNull.IsValid)
+                {
+                    isValid = true;
+                }
+
+                return result.MergeResults(
+                    isValid,
+                    level,
+                    localResultString,
+                    localResultNull);
+            }
+
             /// <summary>
             /// Numeric and string format validation.
             /// </summary>
@@ -93,53 +137,7 @@ public readonly partial struct Person
                     return validationContext;
                 }
 
-                return Corvus.Json.Validate.TypeDate(value, validationContext, level);
-            }
-
-            /// <summary>
-            /// Core type validation.
-            /// </summary>
-            /// <param name="value">The value to validate.</param>
-            /// <param name="valueKind">The <see cref="JsonValueKind" /> of the value to validate.</param>
-            /// <param name="validationContext">The current validation context.</param>
-            /// <param name="level">The current validation level.</param>
-            /// <returns>The resulting validation context after validation.</returns>
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            internal static ValidationContext TypeValidationHandler(
-                in DateOfBirthEntity value,
-                JsonValueKind valueKind,
-                in ValidationContext validationContext,
-                ValidationLevel level = ValidationLevel.Flag)
-            {
-                ValidationContext result = validationContext;
-                bool isValid = false;
-                ValidationContext localResultString = Corvus.Json.Validate.TypeString(valueKind, result.CreateChildContext(), level);
-                if (level == ValidationLevel.Flag && localResultString.IsValid)
-                {
-                    return validationContext;
-                }
-
-                if (localResultString.IsValid)
-                {
-                    isValid = true;
-                }
-
-                ValidationContext localResultNull = Corvus.Json.Validate.TypeNull(valueKind, result.CreateChildContext(), level);
-                if (level == ValidationLevel.Flag && localResultNull.IsValid)
-                {
-                    return validationContext;
-                }
-
-                if (localResultNull.IsValid)
-                {
-                    isValid = true;
-                }
-
-                return result.MergeResults(
-                    isValid,
-                    level,
-                    localResultString,
-                    localResultNull);
+                return Corvus.Json.ValidateWithoutCoreType.TypeDate(value, validationContext, level);
             }
         }
     }

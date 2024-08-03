@@ -58,7 +58,7 @@ public readonly partial struct OtherNames
 
         return value.ValueKind switch
         {
-            JsonValueKind.String => new((string)value),
+            JsonValueKind.String => new(value.GetString()!),
             _ => Undefined
         };
     }

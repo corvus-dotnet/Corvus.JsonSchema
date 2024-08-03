@@ -35,7 +35,7 @@ public sealed class BooleanPartial : ICodeFileBuilder
                         new("System.Collections.Immutable", EmitIfIsObjectOrArray(typeDeclaration)),
                         "System.Diagnostics.CodeAnalysis",
                         "System.Text.Json",
-                        "Corvus.Json",
+                        new("Corvus.Json", EmitIfNotCorvusJsonExtendedType(typeDeclaration)),
                         "Corvus.Json.Internal")
                     .AppendLine()
                     .BeginNamespace(typeDeclaration.DotnetNamespace())
@@ -61,6 +61,13 @@ public sealed class BooleanPartial : ICodeFileBuilder
         }
 
         return generator;
+
+        static FrameworkType EmitIfNotCorvusJsonExtendedType(TypeDeclaration typeDeclaration)
+        {
+            return typeDeclaration.IsCorvusJsonExtendedType()
+                 ? FrameworkType.NotEmitted
+                 : FrameworkType.All;
+        }
 
         static FrameworkType EmitIfIsObjectOrArray(TypeDeclaration typeDeclaration)
         {
