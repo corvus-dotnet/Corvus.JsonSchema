@@ -411,6 +411,10 @@ There are a number of significant changes in this release
 - Opt-out of optional naming heuristics introduced in V3.0 with the `--disableOptionalNamingHeuristics` command line switch.
 - Safe truncation for extremely long file names
 - Access to all JSON schema validation constants via the `CorvusValidation` nested static class.
+- New `generatejsonschematypes config` command
+
+  Supply a json config file to the generate command, to configure and generate 1 or many schema in a single command. The configuration file also allows you to explicitly name arbitrary types, and optionally map them in to a specific .NET namespace. You can also map json schema base file URIs to specific .NET namespaces.
+  The [schema for the configuration file is here](./Corvus.Json.CodeGenerator/generator-config.json).
 - Brand new JSON Schema analyser engine, which is now language independent.
 - Brand new code generation engine, which is more flexible and extensible, and uses the result of the schema analyser.
 - An extensible C# language provider which generates code-using-code. No more T4 templates in the language engine.
