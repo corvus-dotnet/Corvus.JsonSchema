@@ -57,7 +57,7 @@ public sealed class BuiltInObjectTypeNameHeuristic : IBuiltInTypeNameHeuristic
                 return false;
             }
 
-            if (typeDeclaration.FallbackObjectPropertyType() is null || (typeDeclaration.FallbackObjectPropertyType() is FallbackObjectPropertyType fopt && fopt.ReducedType.IsJsonAnyType()))
+            if (typeDeclaration.FallbackObjectPropertyType() is null || (typeDeclaration.FallbackObjectPropertyType() is FallbackObjectPropertyType fopt && fopt.ReducedType.IsBuiltInJsonAnyType()))
             {
                 typeDeclaration.SetDotnetNamespace("Corvus.Json");
                 typeDeclaration.SetDotnetTypeName("JsonObject");

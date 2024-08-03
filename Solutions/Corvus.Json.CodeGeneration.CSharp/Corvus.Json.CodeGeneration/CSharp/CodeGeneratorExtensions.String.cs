@@ -67,7 +67,7 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendImplicitConversionToStringFormat(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
-        if (typeDeclaration.Format() is string format && FormatProviderRegistry.Instance.StringTypeFormatProviders.GetCorvusJsonTypeNameFor(format) is string formatType)
+        if (typeDeclaration.Format() is string format && FormatHandlerRegistry.Instance.StringFormatHandlers.GetCorvusJsonTypeNameFor(format) is string formatType)
         {
             return generator
                 .AppendImplicitConversionFromJsonValueTypeUsingAs(typeDeclaration, formatType)
@@ -79,7 +79,7 @@ internal static partial class CodeGeneratorExtensions
 
     /// <summary>
     /// Append a family of string concatenation functions.
-    /// </summary>
+    /// </summary>Horm
     /// <param name="generator">The code generator.</param>
     /// <param name="typeDeclaration">The type declaration to which to convert.</param>
     /// <returns>A reference to the generator having completed the operation.</returns>
@@ -336,8 +336,8 @@ internal static partial class CodeGeneratorExtensions
 
                         try
                         {
-                            int written = System.Text.Encoding.UTF8.GetChars(bytes, 0, bytes.Length, chars, 0);
-                            return chars.SequenceEqual(this.stringBacking);
+                            int written = System.Text.Encoding.UTF8.GetChars(bytes, 0, utf8Bytes.Length, chars, 0);
+                            return chars.AsSpan()[..written].SequenceEqual(this.stringBacking.AsSpan());
                         }
                         finally
                         {
@@ -352,6 +352,171 @@ internal static partial class CodeGeneratorExtensions
                 .AppendLineIndent("return false;")
             .PopIndent()
             .AppendLineIndent("}");
+    }
+
+    /// <summary>
+    /// Append public constructors for the string type.
+    /// </summary>
+    /// <param name="generator">The generator.</param>
+    /// <param name="typeDeclaration">The type declaration for which to add the string format methods.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendPublicStringConstructors(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        return generator
+            .AppendPublicConvertedValueConstructor(typeDeclaration, "in ReadOnlySpan<char>", CoreTypes.String, "value.ToString()")
+            .AppendPublicConvertedValueWithBodyConstructor(typeDeclaration, "in ReadOnlySpan<byte>", CoreTypes.String, AppendRoSByteConversion);
+
+        static void AppendRoSByteConversion(CodeGenerator generator, TypeDeclaration typeDeclaration, string backingFieldName)
+        {
+            generator
+                .AppendSeparatorLine()
+                .AppendLine("#if NET8_0_OR_GREATER")
+                .AppendLineIndent("this.", backingFieldName, " = System.Text.Encoding.UTF8.GetString(value);")
+                .AppendLine("#else")
+                .AppendLineIndent("byte[] bytes = ArrayPool<byte>.Shared.Rent(value.Length);")
+                .AppendLineIndent("try")
+                .AppendLineIndent("{")
+                .PushIndent()
+                    .AppendLineIndent("value.CopyTo(bytes);")
+                    .AppendLineIndent("this.", backingFieldName, " = System.Text.Encoding.UTF8.GetString(bytes);")
+                .PopIndent()
+                .AppendLineIndent("}")
+                .AppendLineIndent("finally")
+                .AppendLineIndent("{")
+                .PushIndent()
+                    .AppendLineIndent("ArrayPool<byte>.Shared.Return(bytes);")
+                .PopIndent()
+                .AppendLineIndent("}")
+                .AppendLine("#endif");
+        }
+    }
+
+    /// <summary>
+    /// Appends specific methods for the string format type.
+    /// </summary>
+    /// <param name="generator">The generator.</param>
+    /// <param name="typeDeclaration">The type declaration for which to add the string format methods.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendStringFormatPublicStaticMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        if (typeDeclaration.Format() is string format)
+        {
+            FormatHandlerRegistry.Instance.StringFormatHandlers.AppendFormatPublicStaticMethods(generator, typeDeclaration, format);
+        }
+
+        return generator;
+    }
+
+    /// <summary>
+    /// Appends specific methods for the string format type.
+    /// </summary>
+    /// <param name="generator">The generator.</param>
+    /// <param name="typeDeclaration">The type declaration for which to add the string format methods.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendStringFormatPublicMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        if (typeDeclaration.Format() is string format)
+        {
+            FormatHandlerRegistry.Instance.StringFormatHandlers.AppendFormatPublicMethods(generator, typeDeclaration, format);
+        }
+
+        return generator;
+    }
+
+    /// <summary>
+    /// Appends specific methods for the string format type.
+    /// </summary>
+    /// <param name="generator">The generator.</param>
+    /// <param name="typeDeclaration">The type declaration for which to add the string format methods.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendStringFormatPrivateStaticMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        if (typeDeclaration.Format() is string format)
+        {
+            FormatHandlerRegistry.Instance.StringFormatHandlers.AppendFormatPrivateStaticMethods(generator, typeDeclaration, format);
+        }
+
+        return generator;
+    }
+
+    /// <summary>
+    /// Appends specific methods for the string format type.
+    /// </summary>
+    /// <param name="generator">The generator.</param>
+    /// <param name="typeDeclaration">The type declaration for which to add the string format methods.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendStringFormatPrivateMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        if (typeDeclaration.Format() is string format)
+        {
+            FormatHandlerRegistry.Instance.StringFormatHandlers.AppendFormatPrivateMethods(generator, typeDeclaration, format);
+        }
+
+        return generator;
+    }
+
+    /// <summary>
+    /// Appends specific conversion operators for the string format type.
+    /// </summary>
+    /// <param name="generator">The generator.</param>
+    /// <param name="typeDeclaration">The type declaration for which to add the string format conversion operators.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendStringFormatConversionOperators(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        if (typeDeclaration.Format() is string format)
+        {
+            FormatHandlerRegistry.Instance.StringFormatHandlers.AppendFormatConversionOperators(generator, typeDeclaration, format);
+        }
+
+        return generator;
+    }
+
+    /// <summary>
+    /// Appends specific properties for the string format type.
+    /// </summary>
+    /// <param name="generator">The generator.</param>
+    /// <param name="typeDeclaration">The type declaration for which to add the string format properties.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendStringFormatPublicStaticProperties(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        if (typeDeclaration.Format() is string format)
+        {
+            FormatHandlerRegistry.Instance.StringFormatHandlers.AppendFormatPublicStaticProperties(generator, typeDeclaration, format);
+        }
+
+        return generator;
+    }
+
+    /// <summary>
+    /// Appends specific properties for the string format type.
+    /// </summary>
+    /// <param name="generator">The generator.</param>
+    /// <param name="typeDeclaration">The type declaration for which to add the string format properties.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendStringFormatPublicProperties(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        if (typeDeclaration.Format() is string format)
+        {
+            FormatHandlerRegistry.Instance.StringFormatHandlers.AppendFormatPublicProperties(generator, typeDeclaration, format);
+        }
+
+        return generator;
+    }
+
+    /// <summary>
+    /// Appends specific constructors for the string format type.
+    /// </summary>
+    /// <param name="generator">The generator.</param>
+    /// <param name="typeDeclaration">The type declaration for which to add the string format constructors.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendStringFormatConstructors(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        if (typeDeclaration.Format() is string format)
+        {
+            FormatHandlerRegistry.Instance.StringFormatHandlers.AppendFormatConstructors(generator, typeDeclaration, format);
+        }
+
+        return generator;
     }
 
     /// <summary>
@@ -439,9 +604,9 @@ internal static partial class CodeGeneratorExtensions
     {
         string backing = generator.GetFieldNameInScope("backing");
         string stringBacking = generator.GetFieldNameInScope("stringBacking");
+        string jsonElementBacking = generator.GetFieldNameInScope("jsonElementBacking");
 
         return generator
-            .ReserveName("__Corvus__Output")
             .ReserveNameIfNotReserved("TryFormat")
             .ReserveNameIfNotReserved("ToString")
             .AppendSeparatorLine()
@@ -461,20 +626,31 @@ internal static partial class CodeGeneratorExtensions
 
                 if ((this.{{backing}} & Backing.JsonElement) != 0)
                 {
-                    char[] buffer = ArrayPool<char>.Shared.Rent(destination.Length);
-                    try
+                    if (this.{{jsonElementBacking}}.ValueKind == JsonValueKind.String)
                     {
-                        bool result = this.jsonElementBacking.TryGetValue(FormatSpan, new __Corvus__Output(buffer, destination.Length), out charsWritten);
-                        if (result)
+                        char[] buffer = ArrayPool<char>.Shared.Rent(destination.Length);
+                        try
                         {
-                            buffer.AsSpan(0, charsWritten).CopyTo(destination);
-                        }
+                            bool result = this.{{jsonElementBacking}}.TryGetValue(FormatSpan, new __Corvus__Output(buffer, destination.Length), out charsWritten);
+                            if (result)
+                            {
+                                buffer.AsSpan(0, charsWritten).CopyTo(destination);
+                            }
 
-                        return result;
+                            return result;
+                        }
+                        finally
+                        {
+                            ArrayPool<char>.Shared.Return(buffer);
+                        }
                     }
-                    finally
+                    else
                     {
-                        ArrayPool<char>.Shared.Return(buffer);
+                        string value = this.{{jsonElementBacking}}.GetRawText();
+                        int length = Math.Min(destination.Length, this.{{stringBacking}}.Length);
+                        this.{{stringBacking}}.AsSpan(0, length).CopyTo(destination);
+                        charsWritten = length;
+                        return true;
                     }
                 }
 
@@ -496,10 +672,23 @@ internal static partial class CodeGeneratorExtensions
                 // There is no formatting for the string
                 return this.ToString();
             }
-
-            private readonly record struct __Corvus__Output(char[] Destination, int Length);
             #endif
             """);
+    }
+
+    /// <summary>
+    /// Appends <c>__Corvus__Output()</c> record struct for .NET 8.0 or greater.
+    /// </summary>
+    /// <param name="generator">The code generator.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendNet80FormattingStructs(this CodeGenerator generator)
+    {
+        return generator
+            .ReserveName("__Corvus__Output")
+            .AppendSeparatorLine()
+            .AppendLine("#if NET8_0_OR_GREATER")
+            .AppendLineIndent("private readonly record struct __Corvus__Output(char[] Destination, int Length);")
+            .AppendLine("#endif");
     }
 
     /// <summary>

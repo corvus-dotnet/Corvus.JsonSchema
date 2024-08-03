@@ -519,6 +519,144 @@ public readonly struct Period : IEquatable<Period>
         return NodaTime.Period.DaysBetween(start, end);
     }
 
+#if NET8_0_OR_GREATER
+    /// <summary>
+    /// A parser for a json period.
+    /// </summary>
+    /// <param name="text">The text to parse.</param>
+    /// <param name="builder">The resulting period builder.</param>
+    /// <returns>A period builder parsed from the read only span.</returns>
+    public static bool PeriodParser(ReadOnlySpan<char> text, out PeriodBuilder builder)
+    {
+        builder = default;
+
+        if (text.Length == 0)
+        {
+            return false;
+        }
+
+        ValueCursor valueCursor = new(text);
+        valueCursor.MoveNext();
+        if (valueCursor.Current != 'P')
+        {
+            return false;
+        }
+
+        bool inDate = true;
+        PeriodUnits unitsSoFar = 0;
+        while (valueCursor.MoveNext())
+        {
+            if (inDate && (valueCursor.Current == 'T' || valueCursor.Current == 't'))
+            {
+                inDate = false;
+                continue;
+            }
+
+            bool negative = valueCursor.Current == '-';
+            if (!valueCursor.ParseInt64(out long unitValue))
+            {
+                return false;
+            }
+
+            if (valueCursor.Length == valueCursor.Index)
+            {
+                return false;
+            }
+
+            // Various failure cases:
+            // - Repeated unit (e.g. P1M2M)
+            // - Time unit is in date part (e.g. P5M)
+            // - Date unit is in time part (e.g. PT1D)
+            // - Unit is in incorrect order (e.g. P5D1Y)
+            // - Unit is invalid (e.g. P5J)
+            // - Unit is missing (e.g. P5)
+            PeriodUnits unit;
+            switch (valueCursor.Current)
+            {
+                case 'Y': unit = PeriodUnits.Years; break;
+                case 'M': unit = inDate ? PeriodUnits.Months : PeriodUnits.Minutes; break;
+                case 'W': unit = PeriodUnits.Weeks; break;
+                case 'D': unit = PeriodUnits.Days; break;
+                case 'H': unit = PeriodUnits.Hours; break;
+                case 'S': unit = PeriodUnits.Seconds; break;
+                case ',':
+                case '.': unit = PeriodUnits.Nanoseconds; break; // Special handling below
+                default: return false;
+            }
+
+            if ((unit & unitsSoFar) != 0)
+            {
+                return false;
+            }
+
+            // This handles putting months before years, for example. Less significant units
+            // have higher integer representations.
+            if (unit < unitsSoFar)
+            {
+                return false;
+            }
+
+            // The result of checking "there aren't any time units in this unit" should be
+            // equal to "we're still in the date part".
+            if ((unit & PeriodUnits.AllTimeUnits) == 0 != inDate)
+            {
+                return false;
+            }
+
+            // Seen a . or , which need special handling.
+            if (unit == PeriodUnits.Nanoseconds)
+            {
+                // Check for already having seen seconds, e.g. PT5S0.5
+                if ((unitsSoFar & PeriodUnits.Seconds) != 0)
+                {
+                    return false;
+                }
+
+                builder.Seconds = unitValue;
+
+                if (!valueCursor.MoveNext())
+                {
+                    return false;
+                }
+
+                // Can cope with at most 999999999 nanoseconds
+                if (!valueCursor.ParseFraction(9, 9, out int totalNanoseconds, 1))
+                {
+                    return false;
+                }
+
+                // Use whether or not the seconds value was negative (even if 0)
+                // as the indication of whether this value is negative.
+                if (negative)
+                {
+                    totalNanoseconds = -totalNanoseconds;
+                }
+
+                builder.Milliseconds = (totalNanoseconds / NodaConstants.NanosecondsPerMillisecond) % NodaConstants.MillisecondsPerSecond;
+                builder.Ticks = (totalNanoseconds / NodaConstants.NanosecondsPerTick) % NodaConstants.TicksPerMillisecond;
+                builder.Nanoseconds = totalNanoseconds % NodaConstants.NanosecondsPerTick;
+
+                if (valueCursor.Current != 'S')
+                {
+                    return false;
+                }
+
+                if (valueCursor.MoveNext())
+                {
+                    return false;
+                }
+
+                return false;
+            }
+
+            builder[unit] = unitValue;
+            unitsSoFar |= unit;
+        }
+
+        return unitsSoFar != 0;
+    }
+#endif
+
     /// <summary>
     /// For periods that do not contain a non-zero number of years or months, returns a duration for this period
     /// assuming a standard 7-day week, 24-hour day, 60-minute hour etc.
@@ -650,144 +788,6 @@ public readonly struct Period : IEquatable<Period>
         this.Milliseconds == other.Milliseconds &&
         this.Ticks == other.Ticks &&
         this.Nanoseconds == other.Nanoseconds;
-
-#if NET8_0_OR_GREATER
-    /// <summary>
-    /// A parser for a json period.
-    /// </summary>
-    /// <param name="text">The text to parse.</param>
-    /// <param name="builder">The resulting period builder.</param>
-    /// <returns>A period builder parsed from the read only span.</returns>
-    internal static bool PeriodParser(ReadOnlySpan<char> text, out PeriodBuilder builder)
-    {
-        builder = default;
-
-        if (text.Length == 0)
-        {
-            return false;
-        }
-
-        ValueCursor valueCursor = new(text);
-        valueCursor.MoveNext();
-        if (valueCursor.Current != 'P')
-        {
-            return false;
-        }
-
-        bool inDate = true;
-        PeriodUnits unitsSoFar = 0;
-        while (valueCursor.MoveNext())
-        {
-            if (inDate && (valueCursor.Current == 'T' || valueCursor.Current == 't'))
-            {
-                inDate = false;
-                continue;
-            }
-
-            bool negative = valueCursor.Current == '-';
-            if (!valueCursor.ParseInt64(out long unitValue))
-            {
-                return false;
-            }
-
-            if (valueCursor.Length == valueCursor.Index)
-            {
-                return false;
-            }
-
-            // Various failure cases:
-            // - Repeated unit (e.g. P1M2M)
-            // - Time unit is in date part (e.g. P5M)
-            // - Date unit is in time part (e.g. PT1D)
-            // - Unit is in incorrect order (e.g. P5D1Y)
-            // - Unit is invalid (e.g. P5J)
-            // - Unit is missing (e.g. P5)
-            PeriodUnits unit;
-            switch (valueCursor.Current)
-            {
-                case 'Y': unit = PeriodUnits.Years; break;
-                case 'M': unit = inDate ? PeriodUnits.Months : PeriodUnits.Minutes; break;
-                case 'W': unit = PeriodUnits.Weeks; break;
-                case 'D': unit = PeriodUnits.Days; break;
-                case 'H': unit = PeriodUnits.Hours; break;
-                case 'S': unit = PeriodUnits.Seconds; break;
-                case ',':
-                case '.': unit = PeriodUnits.Nanoseconds; break; // Special handling below
-                default: return false;
-            }
-
-            if ((unit & unitsSoFar) != 0)
-            {
-                return false;
-            }
-
-            // This handles putting months before years, for example. Less significant units
-            // have higher integer representations.
-            if (unit < unitsSoFar)
-            {
-                return false;
-            }
-
-            // The result of checking "there aren't any time units in this unit" should be
-            // equal to "we're still in the date part".
-            if ((unit & PeriodUnits.AllTimeUnits) == 0 != inDate)
-            {
-                return false;
-            }
-
-            // Seen a . or , which need special handling.
-            if (unit == PeriodUnits.Nanoseconds)
-            {
-                // Check for already having seen seconds, e.g. PT5S0.5
-                if ((unitsSoFar & PeriodUnits.Seconds) != 0)
-                {
-                    return false;
-                }
-
-                builder.Seconds = unitValue;
-
-                if (!valueCursor.MoveNext())
-                {
-                    return false;
-                }
-
-                // Can cope with at most 999999999 nanoseconds
-                if (!valueCursor.ParseFraction(9, 9, out int totalNanoseconds, 1))
-                {
-                    return false;
-                }
-
-                // Use whether or not the seconds value was negative (even if 0)
-                // as the indication of whether this value is negative.
-                if (negative)
-                {
-                    totalNanoseconds = -totalNanoseconds;
-                }
-
-                builder.Milliseconds = (totalNanoseconds / NodaConstants.NanosecondsPerMillisecond) % NodaConstants.MillisecondsPerSecond;
-                builder.Ticks = (totalNanoseconds / NodaConstants.NanosecondsPerTick) % NodaConstants.TicksPerMillisecond;
-                builder.Nanoseconds = totalNanoseconds % NodaConstants.NanosecondsPerTick;
-
-                if (valueCursor.Current != 'S')
-                {
-                    return false;
-                }
-
-                if (valueCursor.MoveNext())
-                {
-                    return false;
-                }
-
-                return false;
-            }
-
-            builder[unit] = unitValue;
-            unitsSoFar |= unit;
-        }
-
-        return unitsSoFar != 0;
-    }
-#endif
 
     /// <summary>
     /// Equality comparer which simply normalizes periods before comparing them.

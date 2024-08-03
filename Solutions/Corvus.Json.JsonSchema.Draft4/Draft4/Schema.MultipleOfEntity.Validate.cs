@@ -54,13 +54,13 @@ public readonly partial struct Schema
             }
 
             JsonValueKind valueKind = this.ValueKind;
-            result = CorvusValidation.NumberValidationHandler(this, valueKind, result, level);
+            result = CorvusValidation.TypeValidationHandler(valueKind, result, level);
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;
             }
 
-            result = CorvusValidation.TypeValidationHandler(this, valueKind, result, level);
+            result = CorvusValidation.NumberValidationHandler(this, valueKind, result, level);
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;
@@ -83,6 +83,23 @@ public readonly partial struct Schema
             /// A constant for the <c>minimum</c> keyword.
             /// </summary>
             public static readonly BinaryJsonNumber Minimum = new(0);
+
+            /// <summary>
+            /// Core type validation.
+            /// </summary>
+            /// <param name="valueKind">The <see cref="JsonValueKind" /> of the value to validate.</param>
+            /// <param name="validationContext">The current validation context.</param>
+            /// <param name="level">The current validation level.</param>
+            /// <returns>The resulting validation context after validation.</returns>
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            internal static ValidationContext TypeValidationHandler(
+                JsonValueKind valueKind,
+                in ValidationContext validationContext,
+                ValidationLevel level = ValidationLevel.Flag)
+            {
+                ValidationContext result = validationContext;
+                return Corvus.Json.ValidateWithoutCoreType.TypeNumber(valueKind, result, level);
+            }
 
             /// <summary>
             /// Numeric validation.
@@ -151,25 +168,6 @@ public readonly partial struct Schema
                     }
                 }
                 return result;
-            }
-
-            /// <summary>
-            /// Core type validation.
-            /// </summary>
-            /// <param name="value">The value to validate.</param>
-            /// <param name="valueKind">The <see cref="JsonValueKind" /> of the value to validate.</param>
-            /// <param name="validationContext">The current validation context.</param>
-            /// <param name="level">The current validation level.</param>
-            /// <returns>The resulting validation context after validation.</returns>
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            internal static ValidationContext TypeValidationHandler(
-                in MultipleOfEntity value,
-                JsonValueKind valueKind,
-                in ValidationContext validationContext,
-                ValidationLevel level = ValidationLevel.Flag)
-            {
-                ValidationContext result = validationContext;
-                return Corvus.Json.Validate.TypeNumber(valueKind, result, level);
             }
         }
     }

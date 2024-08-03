@@ -437,13 +437,76 @@ public static partial class ValidationCodeGeneratorExtensions
     {
         generator
             .AppendSeparatorLine()
-            .AppendLineIndent("/// <inheritdoc/>")
-            .BeginReservedMethodDeclaration(
-                "public",
-                "ValidationContext",
-                "Validate",
-                ("in ValidationContext", "validationContext"),
-                ("ValidationLevel", "level", "ValidationLevel.Flag"))
+            .AppendLineIndent("/// <inheritdoc/>");
+
+        if (typeDeclaration.TryGetCorvusJsonExtendedTypeName(out string? corvusType))
+        {
+            generator
+                .AppendLineIndent("[MethodImpl(MethodImplOptions.AggressiveInlining)]")
+                .BeginReservedMethodDeclaration(
+                    "public",
+                    "ValidationContext",
+                    "Validate",
+                    ("in ValidationContext", "validationContext"),
+                    ("ValidationLevel", "level", "ValidationLevel.Flag"));
+
+            switch (corvusType)
+            {
+                case "JsonObject":
+                    generator
+                        .AppendLineIndent("return Json.Validate.TypeObject(this.ValueKind, validationContext, level);");
+                    break;
+                case "JsonArray":
+                    generator
+                        .AppendLineIndent("return Json.Validate.TypeArray(this.ValueKind, validationContext, level);");
+                    break;
+                case "JsonString":
+                    generator
+                        .AppendLineIndent("return Json.Validate.TypeString(this.ValueKind, validationContext, level);");
+                    break;
+                case "JsonBoolean":
+                    generator
+                        .AppendLineIndent("return Json.Validate.TypeBoolean(this.ValueKind, validationContext, level);");
+                    break;
+                case "JsonNumber":
+                    generator
+                        .AppendLineIndent("return Json.Validate.TypeNumber(this.ValueKind, validationContext, level);");
+                    break;
+                case "JsonInteger":
+                    generator
+                        .AppendLineIndent("return Json.Validate.TypeInteger(this, validationContext, level);");
+                    break;
+                case "JsonNull":
+                    generator
+                        .AppendLineIndent("return Json.Validate.TypeNull(this.ValueKind, validationContext, level);");
+                    break;
+                case "JsonNotAny":
+                    generator
+                        .AppendLineIndent("return validationContext.WithResult(false);");
+                    break;
+                case "JsonAny":
+                    generator
+                        .AppendLineIndent("return validationContext;");
+                    break;
+                default:
+                    FormatHandlerRegistry.Instance.FormatHandlers.AppendFormatAssertion(
+                        generator,
+                        typeDeclaration.ExplicitFormat() ?? throw new InvalidOperationException("There should be an explicit format for a JSON extended type that is not one of the Core types."),
+                        "this",
+                        "validationContext",
+                        includeType: true);
+                    break;
+            }
+        }
+        else
+        {
+            generator
+                .BeginReservedMethodDeclaration(
+                    "public",
+                    "ValidationContext",
+                    "Validate",
+                    ("in ValidationContext", "validationContext"),
+                    ("ValidationLevel", "level", "ValidationLevel.Flag"))
                 .AppendBlockIndent(
                     $$"""
                     ValidationContext result = validationContext;
@@ -477,7 +540,10 @@ public static partial class ValidationCodeGeneratorExtensions
                     """)
                 .PopLevelIdentifierName()
                 .PopResultIdentifierName()
-                .PopIdentifierIfRequiresJsonValueKind(typeDeclaration)
+                .PopIdentifierIfRequiresJsonValueKind(typeDeclaration);
+        }
+
+        generator
             .EndMethodDeclaration();
 
         return generator;

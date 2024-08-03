@@ -11,7 +11,6 @@
 
 using System.Buffers;
 using System.Diagnostics.CodeAnalysis;
-using System.Text;
 using System.Text.Json;
 using Corvus.Json;
 using Corvus.Json.Internal;
@@ -49,6 +48,72 @@ public readonly partial struct OpenApiDocument
         : IJsonString<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.JsonSchemaDialectEntity>
 #endif
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="JsonSchemaDialectEntity"/> struct.
+        /// </summary>
+        /// <param name="value">The value from which to construct the instance.</param>
+        public JsonSchemaDialectEntity(in ReadOnlySpan<char> value)
+        {
+            this.backing = Backing.String;
+            this.jsonElementBacking = default;
+            this.stringBacking = value.ToString();
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="JsonSchemaDialectEntity"/> struct.
+        /// </summary>
+        /// <param name="value">The value from which to construct the instance.</param>
+        public JsonSchemaDialectEntity(in ReadOnlySpan<byte> value)
+        {
+            this.backing = Backing.String;
+            this.jsonElementBacking = default;
+
+#if NET8_0_OR_GREATER
+            this.stringBacking = System.Text.Encoding.UTF8.GetString(value);
+#else
+            byte[] bytes = ArrayPool<byte>.Shared.Rent(value.Length);
+            try
+            {
+                value.CopyTo(bytes);
+                this.stringBacking = System.Text.Encoding.UTF8.GetString(bytes);
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(bytes);
+            }
+#endif
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="JsonSchemaDialectEntity"/> struct.
+        /// </summary>
+        /// <param name="value">The value from which to construct the instance.</param>
+        public JsonSchemaDialectEntity(Uri value)
+        {
+            this.backing = Backing.String;
+            this.jsonElementBacking = default;
+            this.stringBacking = StandardUri.FormatUri(value);
+        }
+
+        /// <summary>
+        /// Conversion to <see cref="Uri"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator Uri(JsonSchemaDialectEntity value)
+        {
+            return
+                value.GetUri();;
+        }
+
+        /// <summary>
+        /// Conversion from <see cref="Uri"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator JsonSchemaDialectEntity(in Uri value)
+        {
+            return new(value);
+        }
+
         /// <summary>
         /// Conversion from <see cref="string"/>.
         /// </summary>
@@ -386,8 +451,8 @@ public readonly partial struct OpenApiDocument
 
                 try
                 {
-                    int written = System.Text.Encoding.UTF8.GetChars(bytes, 0, bytes.Length, chars, 0);
-                    return chars.SequenceEqual(this.stringBacking);
+                    int written = System.Text.Encoding.UTF8.GetChars(bytes, 0, utf8Bytes.Length, chars, 0);
+                    return chars.AsSpan()[..written].SequenceEqual(this.stringBacking.AsSpan());
                 }
                 finally
                 {
@@ -454,6 +519,33 @@ public readonly partial struct OpenApiDocument
             return false;
         }
 
+        /// <summary>
+        /// Gets the value as a <see cref="Uri"/>.
+        /// </summary>
+        /// <returns>The value as a <see cref="Uri"/>.</returns>
+        /// <exception cref="InvalidOperationException">The value was not a uri.</exception>
+        public Uri GetUri()
+        {
+            if (this.TryGetUri(out Uri? result))
+            {
+                return result;
+            }
+
+            throw new InvalidOperationException();
+        }
+
+        /// <summary>
+        /// Try to get the uri value as a <see cref="Uri"/>.
+        /// </summary>
+        /// <param name="result">The value as a <see cref="Uri"/>.</param>
+        /// <returns><see langword="true"/> if it was possible to get a uri value from the instance.</returns>
+        public bool TryGetUri([NotNullWhen(true)] out Uri? result)
+        {
+            if (StandardUri.TryParseUri((string)this, out result)) { return true; }
+            result = StandardUri.EmptyUri;
+            return false;
+        }
+
 #if NET8_0_OR_GREATER
         /// <inheritdoc/>
         public bool TryFormat(Span<char> destination, out int charsWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
@@ -468,20 +560,31 @@ public readonly partial struct OpenApiDocument
 
             if ((this.backing & Backing.JsonElement) != 0)
             {
-                char[] buffer = ArrayPool<char>.Shared.Rent(destination.Length);
-                try
+                if (this.jsonElementBacking.ValueKind == JsonValueKind.String)
                 {
-                    bool result = this.jsonElementBacking.TryGetValue(FormatSpan, new __Corvus__Output(buffer, destination.Length), out charsWritten);
-                    if (result)
+                    char[] buffer = ArrayPool<char>.Shared.Rent(destination.Length);
+                    try
                     {
-                        buffer.AsSpan(0, charsWritten).CopyTo(destination);
-                    }
+                        bool result = this.jsonElementBacking.TryGetValue(FormatSpan, new __Corvus__Output(buffer, destination.Length), out charsWritten);
+                        if (result)
+                        {
+                            buffer.AsSpan(0, charsWritten).CopyTo(destination);
+                        }
 
-                    return result;
+                        return result;
+                    }
+                    finally
+                    {
+                        ArrayPool<char>.Shared.Return(buffer);
+                    }
                 }
-                finally
+                else
                 {
-                    ArrayPool<char>.Shared.Return(buffer);
+                    string value = this.jsonElementBacking.GetRawText();
+                    int length = Math.Min(destination.Length, this.stringBacking.Length);
+                    this.stringBacking.AsSpan(0, length).CopyTo(destination);
+                    charsWritten = length;
+                    return true;
                 }
             }
 
@@ -503,7 +606,9 @@ public readonly partial struct OpenApiDocument
             // There is no formatting for the string
             return this.ToString();
         }
+#endif
 
+#if NET8_0_OR_GREATER
         private readonly record struct __Corvus__Output(char[] Destination, int Length);
 #endif
     }

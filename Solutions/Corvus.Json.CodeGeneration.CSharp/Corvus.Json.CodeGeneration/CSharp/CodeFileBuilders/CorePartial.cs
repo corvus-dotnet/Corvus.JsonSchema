@@ -32,7 +32,7 @@ public sealed class CorePartial : ICodeFileBuilder
                     RequiresImmutableCollections(typeDeclaration) ? "System.Collections.Immutable" : ConditionalCodeSpecification.DoNotEmit,
                     "System.Runtime.CompilerServices",
                     "System.Text.Json",
-                    "Corvus.Json",
+                    new("Corvus.Json", EmitIfNotCorvusJsonExtendedType(typeDeclaration)),
                     "Corvus.Json.Internal")
                 .AppendLine()
                 .BeginNamespace(typeDeclaration.DotnetNamespace())
@@ -75,10 +75,11 @@ public sealed class CorePartial : ICodeFileBuilder
                         .AppendBinaryOperator(typeDeclaration, "bool", "==", "return left.Equals(right);", "<c>True</c> if the values are equal.")
                         .AppendBinaryOperator(typeDeclaration, "bool", "!=", "return !left.Equals(right);", "<c>True</c> if the values are not equal.")
                         .AppendFromJsonFactoryMethod(typeDeclaration)
+                        .AppendCreateFromSerializedInstanceFactoryMethod(typeDeclaration)
                         .AppendFromAnyFactoryMethod(typeDeclaration)
                         .AppendFromTValueFactoryMethod(typeDeclaration, CoreTypes.Boolean, "Boolean")
                         .AppendFromTValueFactoryMethod(typeDeclaration, CoreTypes.String, "String")
-                        .AppendFromTValueFactoryMethod(typeDeclaration, CoreTypes.Number, "Number")
+                        .AppendFromTValueFactoryMethod(typeDeclaration, CoreTypes.Number | CoreTypes.Integer, "Number")
                         .AppendFromTValueFactoryMethod(typeDeclaration, CoreTypes.Object, "Object")
                         .AppendFromTValueFactoryMethod(typeDeclaration, CoreTypes.Array, "Array")
                         .AppendParseMethod(typeDeclaration, "string")
@@ -86,6 +87,7 @@ public sealed class CorePartial : ICodeFileBuilder
                         .AppendParseMethod(typeDeclaration, "ReadOnlyMemory<byte>")
                         .AppendParseMethod(typeDeclaration, "ReadOnlyMemory<char>")
                         .AppendParseMethod(typeDeclaration, "ReadOnlySequence<byte>")
+                        .AppendParseValueMethod(typeDeclaration, "string")
                         .AppendParseValueMethod(typeDeclaration, "ReadOnlySpan<char>")
                         .AppendParseValueMethod(typeDeclaration, "ReadOnlySpan<byte>")
                         .AppendParseValueMethod(typeDeclaration, "Utf8JsonReader", byRef: true)
@@ -101,19 +103,26 @@ public sealed class CorePartial : ICodeFileBuilder
                 .EndTypeDeclarationNesting(typeDeclaration)
                 .EndNamespace()
             .EndFile(typeDeclaration, string.Empty);
-    }
 
-    private static bool RequiresImmutableCollections(TypeDeclaration typeDeclaration)
-    {
-        return (typeDeclaration.ImpliedCoreTypesOrAny() & (CoreTypes.Array | CoreTypes.Object)) != 0;
-    }
+        static FrameworkType EmitIfNotCorvusJsonExtendedType(TypeDeclaration typeDeclaration)
+        {
+            return typeDeclaration.IsCorvusJsonExtendedType()
+                 ? FrameworkType.NotEmitted
+                 : FrameworkType.All;
+        }
 
-    private static ConditionalCodeSpecification JsonAnyType(TypeDeclaration typeDeclaration)
-    {
-        bool isNull = (typeDeclaration.ImpliedCoreTypes() & CoreTypes.Null) != 0 && typeDeclaration.ImpliedCoreTypes().CountTypes() == 1;
-        bool isAny = typeDeclaration.LocallyImpliedCoreTypes().CountTypes() == 0;
-        return new(
-            g => g.GenericTypeOf("IJsonValue", typeDeclaration),
-            isNull || isAny ? FrameworkType.All : FrameworkType.NotEmitted);
+        static bool RequiresImmutableCollections(TypeDeclaration typeDeclaration)
+        {
+            return (typeDeclaration.ImpliedCoreTypesOrAny() & (CoreTypes.Array | CoreTypes.Object)) != 0;
+        }
+
+        static ConditionalCodeSpecification JsonAnyType(TypeDeclaration typeDeclaration)
+        {
+            bool isNull = (typeDeclaration.ImpliedCoreTypes() & CoreTypes.Null) != 0 && typeDeclaration.ImpliedCoreTypes().CountTypes() == 1;
+            bool isAny = typeDeclaration.LocallyImpliedCoreTypes().CountTypes() == 0;
+            return new(
+                g => g.GenericTypeOf("IJsonValue", typeDeclaration),
+                isNull || isAny ? FrameworkType.All : FrameworkType.NotEmitted);
+        }
     }
 }

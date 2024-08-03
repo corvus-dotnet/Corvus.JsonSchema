@@ -195,6 +195,11 @@ public readonly partial struct OpenApiDocument
             {
                 return __CorvusObjectHelpers.GetPropertyBacking(this);
             }
+            /// <inheritdoc/>
+            public ImmutableList<JsonObjectProperty>.Builder AsPropertyBackingBuilder()
+            {
+                return __CorvusObjectHelpers.GetPropertyBacking(this).ToBuilder();
+            }
 
             /// <inheritdoc/>
             public JsonObjectEnumerator EnumerateObject()
@@ -304,6 +309,12 @@ public readonly partial struct OpenApiDocument
             {
                 if ((this.backing & Backing.JsonElement) != 0)
                 {
+                    if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                    {
+                        value = default;
+                        return false;
+                    }
+
                     if (name.TryGetProperty(this.jsonElementBacking, out JsonElement element))
                     {
                         value = new(element);
@@ -340,6 +351,12 @@ public readonly partial struct OpenApiDocument
             {
                 if ((this.backing & Backing.JsonElement) != 0)
                 {
+                    if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                    {
+                        value = default;
+                        return false;
+                    }
+
                     if (this.jsonElementBacking.TryGetProperty(name, out JsonElement element))
                     {
                         value = new(element);
@@ -376,6 +393,12 @@ public readonly partial struct OpenApiDocument
             {
                 if ((this.backing & Backing.JsonElement) != 0)
                 {
+                    if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                    {
+                        value = default;
+                        return false;
+                    }
+
                     if (this.jsonElementBacking.TryGetProperty(name, out JsonElement element))
                     {
                         value = new(element);
@@ -412,6 +435,12 @@ public readonly partial struct OpenApiDocument
             {
                 if ((this.backing & Backing.JsonElement) != 0)
                 {
+                    if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                    {
+                        value = default;
+                        return false;
+                    }
+
                     if (this.jsonElementBacking.TryGetProperty(name, out JsonElement element))
                     {
                         value = new(element);
@@ -443,6 +472,12 @@ public readonly partial struct OpenApiDocument
             {
                 if ((this.backing & Backing.JsonElement) != 0)
                 {
+                    if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                    {
+                        value = default;
+                        return false;
+                    }
+
                     if (name.TryGetProperty(this.jsonElementBacking, out JsonElement element))
                     {
 #if NET8_0_OR_GREATER
@@ -483,6 +518,12 @@ public readonly partial struct OpenApiDocument
             {
                 if ((this.backing & Backing.JsonElement) != 0)
                 {
+                    if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                    {
+                        value = default;
+                        return false;
+                    }
+
                     if (this.jsonElementBacking.TryGetProperty(name, out JsonElement element))
                     {
 #if NET8_0_OR_GREATER
@@ -523,6 +564,12 @@ public readonly partial struct OpenApiDocument
             {
                 if ((this.backing & Backing.JsonElement) != 0)
                 {
+                    if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                    {
+                        value = default;
+                        return false;
+                    }
+
                     if (this.jsonElementBacking.TryGetProperty(name, out JsonElement element))
                     {
 #if NET8_0_OR_GREATER
@@ -563,6 +610,12 @@ public readonly partial struct OpenApiDocument
             {
                 if ((this.backing & Backing.JsonElement) != 0)
                 {
+                    if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                    {
+                        value = default;
+                        return false;
+                    }
+
                     if (this.jsonElementBacking.TryGetProperty(name, out JsonElement element))
                     {
 #if NET8_0_OR_GREATER

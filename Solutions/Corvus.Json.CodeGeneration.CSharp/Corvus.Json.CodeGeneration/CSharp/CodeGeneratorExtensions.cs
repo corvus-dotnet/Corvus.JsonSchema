@@ -10,6 +10,14 @@ using Microsoft.CodeAnalysis.CSharp;
 namespace Corvus.Json.CodeGeneration.CSharp;
 
 /// <summary>
+/// A delegate for a callback to assign a backing field with a value.
+/// </summary>
+/// <param name="generator">The code generator to which to append the assigment code.</param>
+/// <param name="typeDeclaration">The type declaration.</param>
+/// <param name="backingFieldName">The backing field name.</param>
+public delegate void AppendConstructorBackingFieldAssignmentCallback(CodeGenerator generator, TypeDeclaration typeDeclaration, string backingFieldName);
+
+/// <summary>
 /// Extension methods for the <see cref="CodeGenerator"/>.
 /// </summary>
 internal static partial class CodeGeneratorExtensions
@@ -607,7 +615,7 @@ internal static partial class CodeGeneratorExtensions
                     AppendArrayProperties(generator, typeDeclaration, keyword, requiresIndex ? (i + 1).ToString() : null, constantValue);
                     break;
                 case JsonValueKind.Null:
-                    AppendNullProperties(generator, typeDeclaration, keyword, requiresIndex ? (i + 1).ToString() : null, constantValue);
+                    AppendNullProperties(generator, typeDeclaration, requiresIndex ? (i + 1).ToString() : null, constantValue);
                     break;
             }
         }
@@ -719,7 +727,7 @@ internal static partial class CodeGeneratorExtensions
                     ">();");
         }
 
-        static void AppendNullProperties(CodeGenerator generator, TypeDeclaration typeDeclaration, IKeyword keyword, string? index, JsonElement constantValue)
+        static void AppendNullProperties(CodeGenerator generator, TypeDeclaration typeDeclaration, string? index, JsonElement constantValue)
         {
             string booleanValue = constantValue.GetRawText();
             string propertyName = index is string i ? $"Item{index}" : "Item1";
@@ -810,53 +818,66 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendAsAnyProperty(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
-        return generator
+        generator
             .ReserveName("AsAny")
             .AppendSeparatorLine()
             .AppendLineIndent("/// <inheritdoc/>")
-            .AppendLineIndent("public JsonAny AsAny")
-            .AppendLineIndent("{")
-            .PushIndent()
-                .AppendLineIndent("get")
+            .AppendIndent("public JsonAny AsAny");
+
+        if (typeDeclaration.IsCorvusJsonExtendedJsonAny())
+        {
+            generator
+                .AppendLine(" => this;");
+        }
+        else
+        {
+            generator
+                .AppendLine()
                 .AppendLineIndent("{")
                 .PushIndent()
-                    .AppendConditionalConstructFromBacking(
-                        "Backing.JsonElement",
-                        "jsonElementBacking",
-                        impliedCoreTypes: typeDeclaration.ImpliedCoreTypesOrAny(),
-                        forCoreTypes: CoreTypes.Any)
-                    .AppendConditionalConstructFromBacking(
-                        "Backing.String",
-                        "stringBacking",
-                        impliedCoreTypes: typeDeclaration.ImpliedCoreTypesOrAny(),
-                        forCoreTypes: CoreTypes.String)
-                    .AppendConditionalConstructFromBacking(
-                        "Backing.Bool",
-                        "boolBacking",
-                        impliedCoreTypes: typeDeclaration.ImpliedCoreTypesOrAny(),
-                        forCoreTypes: CoreTypes.Boolean)
-                    .AppendConditionalConstructFromBacking(
-                        "Backing.Number",
-                        "numberBacking",
-                        impliedCoreTypes: typeDeclaration.ImpliedCoreTypesOrAny(),
-                        forCoreTypes: CoreTypes.Number | CoreTypes.Integer)
-                    .AppendConditionalConstructFromBacking(
-                        "Backing.Array",
-                        "arrayBacking",
-                        impliedCoreTypes: typeDeclaration.ImpliedCoreTypesOrAny(),
-                        forCoreTypes: CoreTypes.Array)
-                    .AppendConditionalConstructFromBacking(
-                        "Backing.Object",
-                        "objectBacking",
-                        impliedCoreTypes: typeDeclaration.ImpliedCoreTypesOrAny(),
-                        forCoreTypes: CoreTypes.Object)
-                    .AppendReturnNullInstanceIfNull()
-                    .AppendSeparatorLine()
-                    .AppendLineIndent("return JsonAny.Undefined;")
+                    .AppendLineIndent("get")
+                    .AppendLineIndent("{")
+                    .PushIndent()
+                        .AppendConditionalConstructFromBacking(
+                            "Backing.JsonElement",
+                            "jsonElementBacking",
+                            impliedCoreTypes: typeDeclaration.ImpliedCoreTypesOrAny(),
+                            forCoreTypes: CoreTypes.Any)
+                        .AppendConditionalConstructFromBacking(
+                            "Backing.String",
+                            "stringBacking",
+                            impliedCoreTypes: typeDeclaration.ImpliedCoreTypesOrAny(),
+                            forCoreTypes: CoreTypes.String)
+                        .AppendConditionalConstructFromBacking(
+                            "Backing.Bool",
+                            "boolBacking",
+                            impliedCoreTypes: typeDeclaration.ImpliedCoreTypesOrAny(),
+                            forCoreTypes: CoreTypes.Boolean)
+                        .AppendConditionalConstructFromBacking(
+                            "Backing.Number",
+                            "numberBacking",
+                            impliedCoreTypes: typeDeclaration.ImpliedCoreTypesOrAny(),
+                            forCoreTypes: CoreTypes.Number | CoreTypes.Integer)
+                        .AppendConditionalConstructFromBacking(
+                            "Backing.Array",
+                            "arrayBacking",
+                            impliedCoreTypes: typeDeclaration.ImpliedCoreTypesOrAny(),
+                            forCoreTypes: CoreTypes.Array)
+                        .AppendConditionalConstructFromBacking(
+                            "Backing.Object",
+                            "objectBacking",
+                            impliedCoreTypes: typeDeclaration.ImpliedCoreTypesOrAny(),
+                            forCoreTypes: CoreTypes.Object)
+                        .AppendReturnNullInstanceIfNull()
+                        .AppendSeparatorLine()
+                        .AppendLineIndent("return JsonAny.Undefined;")
+                    .PopIndent()
+                    .AppendLineIndent("}")
                 .PopIndent()
-                .AppendLineIndent("}")
-            .PopIndent()
-            .AppendLineIndent("}");
+                .AppendLineIndent("}");
+        }
+
+        return generator;
     }
 
     /// <summary>
@@ -942,7 +963,7 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendAsStringProperty(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
-        return generator
+        generator
             .ReserveName("AsString")
             .AppendSeparatorLine()
             .AppendLineIndent("/// <inheritdoc/>")
@@ -954,8 +975,17 @@ internal static partial class CodeGeneratorExtensions
             .PushIndent()
                 .AppendLineIndent("get")
                 .AppendLineIndent("{")
-                .PushIndent()
-                    .AppendConditionalWrappedBackingValueLineIndent(
+                .PushIndent();
+
+        if (typeDeclaration.DotnetTypeName() == "JsonString" && typeDeclaration.DotnetNamespace() == "Corvus.Json")
+        {
+            generator
+                .AppendLineIndent("return this;");
+        }
+        else
+        {
+            generator
+                   .AppendConditionalWrappedBackingValueLineIndent(
                         "Backing.JsonElement",
                         "return new(",
                         "jsonElementBacking",
@@ -971,7 +1001,10 @@ internal static partial class CodeGeneratorExtensions
                         impliedCoreTypes: typeDeclaration.ImpliedCoreTypesOrAny(),
                         forCoreTypes: CoreTypes.String)
                     .AppendSeparatorLine()
-                    .AppendLineIndent("throw new InvalidOperationException();")
+                    .AppendLineIndent("throw new InvalidOperationException();");
+        }
+
+        return generator
                 .PopIndent()
                 .AppendLineIndent("}")
             .PopIndent()
@@ -986,7 +1019,7 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendAsBooleanProperty(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
-        return generator
+        generator
             .ReserveName("AsBoolean")
             .AppendSeparatorLine()
             .AppendLineIndent("/// <inheritdoc/>")
@@ -998,8 +1031,17 @@ internal static partial class CodeGeneratorExtensions
             .PushIndent()
                 .AppendLineIndent("get")
                 .AppendLineIndent("{")
-                .PushIndent()
-                    .AppendConditionalWrappedBackingValueLineIndent(
+                .PushIndent();
+
+        if (typeDeclaration.DotnetTypeName() == "JsonBoolean" && typeDeclaration.DotnetNamespace() == "Corvus.Json")
+        {
+            generator
+                .AppendLineIndent("return this;");
+        }
+        else
+        {
+            generator
+                .AppendConditionalWrappedBackingValueLineIndent(
                         "Backing.JsonElement",
                         "return new(",
                         "jsonElementBacking",
@@ -1015,7 +1057,10 @@ internal static partial class CodeGeneratorExtensions
                         impliedCoreTypes: typeDeclaration.ImpliedCoreTypesOrAny(),
                         forCoreTypes: CoreTypes.Boolean)
                     .AppendSeparatorLine()
-                    .AppendLineIndent("throw new InvalidOperationException();")
+                    .AppendLineIndent("throw new InvalidOperationException();");
+        }
+
+        return generator
                 .PopIndent()
                 .AppendLineIndent("}")
             .PopIndent()
@@ -1030,7 +1075,7 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendAsNumberProperty(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
-        return generator
+        generator
             .ReserveName("AsNumber")
             .AppendSeparatorLine()
             .AppendLineIndent("/// <inheritdoc/>")
@@ -1042,7 +1087,16 @@ internal static partial class CodeGeneratorExtensions
             .PushIndent()
                 .AppendLineIndent("get")
                 .AppendLineIndent("{")
-                .PushIndent()
+                .PushIndent();
+
+        if (typeDeclaration.DotnetTypeName() == "JsonNumber" && typeDeclaration.DotnetNamespace() == "Corvus.Json")
+        {
+            generator
+                .AppendLineIndent("return this;");
+        }
+        else
+        {
+            generator
                     .AppendConditionalWrappedBackingValueLineIndent(
                         "Backing.JsonElement",
                         "return new(",
@@ -1059,7 +1113,10 @@ internal static partial class CodeGeneratorExtensions
                         impliedCoreTypes: typeDeclaration.ImpliedCoreTypesOrAny(),
                         forCoreTypes: CoreTypes.Number | CoreTypes.Integer)
                     .AppendSeparatorLine()
-                    .AppendLineIndent("throw new InvalidOperationException();")
+                    .AppendLineIndent("throw new InvalidOperationException();");
+        }
+
+        return generator
                 .PopIndent()
                 .AppendLineIndent("}")
             .PopIndent()
@@ -1074,7 +1131,7 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendAsObjectProperty(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
-        return generator
+        generator
             .ReserveName("AsObject")
             .AppendSeparatorLine()
             .AppendLineIndent("/// <inheritdoc/>")
@@ -1086,7 +1143,16 @@ internal static partial class CodeGeneratorExtensions
             .PushIndent()
                 .AppendLineIndent("get")
                 .AppendLineIndent("{")
-                .PushIndent()
+                .PushIndent();
+
+        if (typeDeclaration.DotnetTypeName() == "JsonObject" && typeDeclaration.DotnetNamespace() == "Corvus.Json")
+        {
+            generator
+                .AppendLineIndent("return this;");
+        }
+        else
+        {
+            generator
                     .AppendConditionalWrappedBackingValueLineIndent(
                         "Backing.JsonElement",
                         "return new(",
@@ -1103,7 +1169,10 @@ internal static partial class CodeGeneratorExtensions
                         impliedCoreTypes: typeDeclaration.ImpliedCoreTypesOrAny(),
                         forCoreTypes: CoreTypes.Object)
                     .AppendSeparatorLine()
-                    .AppendLineIndent("throw new InvalidOperationException();")
+                    .AppendLineIndent("throw new InvalidOperationException();");
+        }
+
+        return generator
                 .PopIndent()
                 .AppendLineIndent("}")
             .PopIndent()
@@ -1118,7 +1187,7 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendAsArrayProperty(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
-        return generator
+        generator
             .ReserveName("AsArray")
             .AppendSeparatorLine()
             .AppendLineIndent("/// <inheritdoc/>")
@@ -1130,24 +1199,36 @@ internal static partial class CodeGeneratorExtensions
             .PushIndent()
                 .AppendLineIndent("get")
                 .AppendLineIndent("{")
-                .PushIndent()
-                    .AppendConditionalWrappedBackingValueLineIndent(
-                        "Backing.JsonElement",
-                        "return new(",
-                        "jsonElementBacking",
-                        ");",
-                        impliedCoreTypes: typeDeclaration.ImpliedCoreTypesOrAny(),
-                        forCoreTypes: CoreTypes.Any)
-                    .AppendSeparatorLine()
-                    .AppendConditionalWrappedBackingValueLineIndent(
-                        "Backing.Array",
-                        "return new(",
-                        "arrayBacking",
-                        ");",
-                        impliedCoreTypes: typeDeclaration.ImpliedCoreTypesOrAny(),
-                        forCoreTypes: CoreTypes.Array)
-                    .AppendSeparatorLine()
-                    .AppendLineIndent("throw new InvalidOperationException();")
+                .PushIndent();
+
+        if (typeDeclaration.DotnetTypeName() == "JsonArray" && typeDeclaration.DotnetNamespace() == "Corvus.Json")
+        {
+            generator
+                .AppendLineIndent("return this;");
+        }
+        else
+        {
+            generator
+                        .AppendConditionalWrappedBackingValueLineIndent(
+                            "Backing.JsonElement",
+                            "return new(",
+                            "jsonElementBacking",
+                            ");",
+                            impliedCoreTypes: typeDeclaration.ImpliedCoreTypesOrAny(),
+                            forCoreTypes: CoreTypes.Any)
+                        .AppendSeparatorLine()
+                        .AppendConditionalWrappedBackingValueLineIndent(
+                            "Backing.Array",
+                            "return new(",
+                            "arrayBacking",
+                            ");",
+                            impliedCoreTypes: typeDeclaration.ImpliedCoreTypesOrAny(),
+                            forCoreTypes: CoreTypes.Array)
+                        .AppendSeparatorLine()
+                        .AppendLineIndent("throw new InvalidOperationException();");
+        }
+
+        return generator
                 .PopIndent()
                 .AppendLineIndent("}")
             .PopIndent()
@@ -1349,12 +1430,21 @@ internal static partial class CodeGeneratorExtensions
     /// <param name="generator">The code generator.</param>
     /// <param name="typeDeclaration">The type declaration to which to convert.</param>
     /// <param name="sourceType">The name of the source type from which to convert.</param>
+    /// <param name="useInForSourceType">Determines whether the source type should have an in modifier (defaults to false).</param>
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendImplicitConversionFromTypeUsingConstructor(
         this CodeGenerator generator,
         TypeDeclaration typeDeclaration,
-        string sourceType)
+        string sourceType,
+        bool useInForSourceType = false)
     {
+        string targetType = typeDeclaration.DotnetTypeName();
+
+        if (targetType == sourceType)
+        {
+            return generator;
+        }
+
         return generator
             .AppendSeparatorLine()
             .AppendLineIndent("/// <summary>")
@@ -1364,8 +1454,9 @@ internal static partial class CodeGeneratorExtensions
             .AppendLineIndent("/// </summary>")
             .AppendLineIndent("/// <param name=\"value\">The value from which to convert.</param>")
             .AppendIndent("public static implicit operator ")
-            .Append(typeDeclaration.DotnetTypeName())
+            .Append(targetType)
             .Append('(')
+            .Append(useInForSourceType ? "in " : string.Empty)
             .Append(sourceType)
             .AppendLine(" value)")
             .AppendLineIndent("{")
@@ -1450,6 +1541,13 @@ internal static partial class CodeGeneratorExtensions
         JsonValueKind[] sourceValueKinds,
         string dotnetTypeConversion)
     {
+        string targetType = typeDeclaration.DotnetTypeName();
+
+        if (targetType == sourceType)
+        {
+            return generator;
+        }
+
         return generator
             .AppendSeparatorLine()
             .AppendLineIndent("/// <summary>")
@@ -1459,7 +1557,7 @@ internal static partial class CodeGeneratorExtensions
             .AppendLineIndent("/// </summary>")
             .AppendLineIndent("/// <param name=\"value\">The value from which to convert.</param>")
             .AppendIndent("public static implicit operator ")
-            .Append(typeDeclaration.DotnetTypeName())
+            .Append(targetType)
             .Append('(')
             .Append(sourceType)
             .AppendLine(" value)")
@@ -1505,6 +1603,13 @@ internal static partial class CodeGeneratorExtensions
             return generator;
         }
 
+        string sourceType = typeDeclaration.DotnetTypeName();
+
+        if (targetType == sourceType)
+        {
+            return generator;
+        }
+
         return generator
             .AppendSeparatorLine()
             .AppendLineIndent("/// <summary>")
@@ -1516,7 +1621,7 @@ internal static partial class CodeGeneratorExtensions
             .AppendIndent("public static implicit operator ")
             .Append(targetType)
             .Append('(')
-            .Append(typeDeclaration.DotnetTypeName())
+            .Append(sourceType)
             .AppendLine(" value)")
             .AppendLineIndent("{")
             .PushIndent()
@@ -1615,6 +1720,13 @@ internal static partial class CodeGeneratorExtensions
         TypeDeclaration typeDeclaration,
         string sourceType)
     {
+        string targetType = typeDeclaration.DotnetTypeName();
+
+        if (targetType == sourceType)
+        {
+            return generator;
+        }
+
         return generator
             .AppendSeparatorLine()
             .AppendLineIndent("/// <summary>")
@@ -1624,49 +1736,55 @@ internal static partial class CodeGeneratorExtensions
             .AppendLineIndent("/// </summary>")
             .AppendLineIndent("/// <param name=\"value\">The value from which to convert.</param>")
             .AppendIndent("public static implicit operator ")
-            .Append(typeDeclaration.DotnetTypeName())
+            .Append(targetType)
             .Append('(')
             .Append(sourceType)
             .AppendLine(" value)")
             .AppendLineIndent("{")
             .PushIndent()
                 .AppendIndent("return value.As<")
-                .Append(typeDeclaration.DotnetTypeName())
+                .Append(targetType)
                 .AppendLine(">();")
             .PopIndent()
             .AppendLineIndent("}");
     }
 
     /// <summary>
-    /// Appends an implicit conversion from <paramref name="sourceType"/> to the
+    /// Appends an implicit conversion to <paramref name="targetType"/> from the
     /// dotnet type of the <paramref name="typeDeclaration"/>.
     /// </summary>
     /// <param name="generator">The code generator.</param>
     /// <param name="typeDeclaration">The type declaration to which to convert.</param>
-    /// <param name="sourceType">The name of the source type from which to convert.</param>
+    /// <param name="targetType">The name of the target type to which to convert.</param>
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendImplicitConversionToJsonValueTypeUsingAs(
         this CodeGenerator generator,
         TypeDeclaration typeDeclaration,
-        string sourceType)
+        string targetType)
     {
+        string sourceType = typeDeclaration.DotnetTypeName();
+        if (sourceType == targetType)
+        {
+            return generator;
+        }
+
         return generator
             .AppendSeparatorLine()
             .AppendLineIndent("/// <summary>")
             .AppendIndent("/// Conversion to ")
-            .Append(sourceType)
+            .Append(targetType)
             .AppendLine(".")
             .AppendLineIndent("/// </summary>")
             .AppendLineIndent("/// <param name=\"value\">The value from which to convert.</param>")
             .AppendIndent("public static implicit operator ")
-            .Append(sourceType)
+            .Append(targetType)
             .Append('(')
-            .Append(typeDeclaration.DotnetTypeName())
+            .Append(sourceType)
             .AppendLine(" value)")
             .AppendLineIndent("{")
             .PushIndent()
                 .AppendIndent("return value.As<")
-                .Append(sourceType)
+                .Append(targetType)
                 .AppendLine(">();")
             .PopIndent()
             .AppendLineIndent("}");
@@ -1683,6 +1801,15 @@ internal static partial class CodeGeneratorExtensions
         this CodeGenerator generator,
         TypeDeclaration typeDeclaration)
     {
+        string sourceType = typeDeclaration.DotnetTypeName();
+        if (sourceType == "JsonAny")
+        {
+            return generator
+                .AppendNumericConversions(typeDeclaration, allImplicit: true, fromOnly: true)
+                .AppendImplicitConversionFromTypeUsingConstructor(typeDeclaration, "bool")
+                .AppendImplicitConversionFromTypeUsingConstructor(typeDeclaration, "string");
+        }
+
         return generator
             .AppendSeparatorLine()
             .AppendLineIndent("/// <summary>")
@@ -1690,7 +1817,7 @@ internal static partial class CodeGeneratorExtensions
             .AppendLineIndent("/// </summary>")
             .AppendLineIndent("/// <param name=\"value\">The value from which to convert.</param>")
             .AppendIndent("public static implicit operator JsonAny(")
-            .Append(typeDeclaration.DotnetTypeName())
+            .Append(sourceType)
             .AppendLine(" value)")
             .AppendLineIndent("{")
             .PushIndent()
@@ -1933,6 +2060,43 @@ internal static partial class CodeGeneratorExtensions
     }
 
     /// <summary>
+    /// Appends the CreateFromSerializedInstance static factory method.
+    /// to JsonAny.
+    /// </summary>
+    /// <param name="generator">The code generator.</param>
+    /// <param name="typeDeclaration">The type declaration to which to convert.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendCreateFromSerializedInstanceFactoryMethod(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        if (typeDeclaration.IsCorvusJsonExtendedJsonAny())
+        {
+            return generator
+                .ReserveName("CreateFromSerializedInstance")
+                .AppendSeparatorLine()
+                .AppendBlockIndent(
+                    """
+                /// <summary>
+                /// Create a <see cref="JsonAny"/> instance from an arbitrary object.
+                /// </summary>
+                /// <typeparam name="T">The type of the object from which to create the instance.</typeparam>
+                /// <param name="instance">The object from which to create the instance.</param>
+                /// <param name="options">The (optional) <see cref="JsonWriterOptions"/>.</param>
+                /// <returns>A <see cref="JsonAny"/> derived from serializing the object.</returns>
+                public static JsonAny CreateFromSerializedInstance<T>(T instance, JsonWriterOptions options = default)
+                {
+                    var abw = new ArrayBufferWriter<byte>();
+                    using var writer = new Utf8JsonWriter(abw, options);
+                    JsonSerializer.Serialize(writer, instance, typeof(T));
+                    writer.Flush();
+                    return Parse(abw.WrittenMemory);
+                }
+                """);
+        }
+
+        return generator;
+    }
+
+    /// <summary>
     /// Appends the FromJson static factory method.
     /// to JsonAny.
     /// </summary>
@@ -1975,7 +2139,7 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendFromAnyFactoryMethod(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
-        return generator
+        generator
             .ReserveName("FromAny")
             .AppendSeparatorLine()
             .AppendBlockIndent(
@@ -1989,12 +2153,25 @@ internal static partial class CodeGeneratorExtensions
                 """)
             .AppendIndent("public static ")
             .Append(typeDeclaration.DotnetTypeName())
-            .AppendLine(" FromAny(in JsonAny value)")
-            .AppendLineIndent("{")
-            .PushIndent()
-                .AppendConversionFromValue("value", typeDeclaration.ImpliedCoreTypesOrAny())
-            .PopIndent()
-            .AppendLineIndent("}");
+            .Append(" FromAny(in JsonAny value)");
+
+        if (typeDeclaration.IsCorvusJsonExtendedJsonAny())
+        {
+            generator
+                .AppendLine(" => value;");
+        }
+        else
+        {
+            generator
+                .AppendLine()
+                .AppendLineIndent("{")
+                .PushIndent()
+                    .AppendConversionFromValue("value", typeDeclaration.ImpliedCoreTypesOrAny(), requiresAs: true)
+                .PopIndent()
+                .AppendLineIndent("}");
+        }
+
+        return generator;
     }
 
     /// <summary>
@@ -2263,7 +2440,7 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendEqualsOverloads(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
-        return generator
+        generator
             .ReserveNameIfNotReserved("Equals")
             .AppendSeparatorLine()
             .AppendBlockIndent(
@@ -2272,7 +2449,10 @@ internal static partial class CodeGeneratorExtensions
                 public override bool Equals(object? obj)
                 {
                     return
-                        (obj is IJsonValue jv && this.Equals(jv.AsAny)) ||
+                """)
+            .AppendLineIndent("        (obj is IJsonValue jv && this.Equals(jv.As<", typeDeclaration.DotnetTypeName(), ">())) ||")
+            .AppendBlockIndent(
+                """
                         (obj is null && this.IsNull());
                 }
 
@@ -2280,9 +2460,14 @@ internal static partial class CodeGeneratorExtensions
                 public bool Equals<T>(in T other)
                     where T : struct, IJsonValue<T>
                 {
-                    return JsonValueHelpers.CompareValues(this, other);
-                }
-
+                """)
+            .PushIndent()
+            .AppendLineIndent("return this.Equals(other.As<", typeDeclaration.DotnetTypeName(), ">());")
+            .PopIndent()
+            .AppendLineIndent("}")
+            .AppendSeparatorLine()
+            .AppendBlockIndent(
+                """
                 /// <summary>
                 /// Equality comparison.
                 /// </summary>
@@ -2293,10 +2478,329 @@ internal static partial class CodeGeneratorExtensions
             .Append(typeDeclaration.DotnetTypeName())
             .AppendLine(" other)")
             .AppendLineIndent("{")
-            .PushIndent()
-            .AppendLineIndent("return JsonValueHelpers.CompareValues(this, other);")
+            .PushIndent();
+
+        bool appendDefault = true;
+        if (typeDeclaration.Format() is string format)
+        {
+            appendDefault = !FormatHandlerRegistry.Instance.FormatHandlers.AppendFormatEqualsTBody(generator, typeDeclaration, format);
+        }
+
+        if (appendDefault)
+        {
+            generator
+                .AppendComparer(typeDeclaration);
+        }
+
+        return generator
             .PopIndent()
             .AppendLineIndent("}");
+    }
+
+    /// <summary>
+    /// Appends standard comparer logic based on the core types.
+    /// <paramref name="typeDeclaration"/> type.
+    /// to JsonAny.
+    /// </summary>
+    /// <param name="generator">The code generator.</param>
+    /// <param name="typeDeclaration">The type declaration for which to produce the core types.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendComparer(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        generator
+            .AppendLineIndent("JsonValueKind thisKind = this.ValueKind;")
+            .AppendLineIndent("JsonValueKind otherKind = other.ValueKind;")
+            .AppendLineIndent("if (thisKind != otherKind)")
+            .AppendLineIndent("{")
+            .PushIndent()
+                .AppendLineIndent("return false;")
+            .PopIndent()
+            .AppendLineIndent("}");
+
+        AppendNullOrUndefinedComparer(generator);
+
+        CoreTypes coreTypes = typeDeclaration.ImpliedCoreTypesOrAny();
+        if ((coreTypes & CoreTypes.Array) != 0)
+        {
+            AppendArrayComparer(generator, typeDeclaration);
+        }
+
+        if ((coreTypes & CoreTypes.Boolean) != 0)
+        {
+            AppendBooleanComparer(generator);
+        }
+
+        if ((coreTypes & (CoreTypes.Integer | CoreTypes.Number)) != 0)
+        {
+            AppendNumberComparer(generator);
+        }
+
+        if ((coreTypes & CoreTypes.Object) != 0)
+        {
+            AppendObjectComparer(generator, typeDeclaration);
+        }
+
+        if ((coreTypes & CoreTypes.String) != 0)
+        {
+            AppendStringComparer(generator);
+        }
+
+        return generator
+            .AppendSeparatorLine()
+            .AppendLineIndent("return false;");
+
+        static void AppendArrayComparer(CodeGenerator generator, TypeDeclaration typeDeclaration)
+        {
+            string? arrayItemsType = typeDeclaration.ArrayItemsType()?.ReducedType.FullyQualifiedDotnetTypeName();
+            generator
+                .AppendSeparatorLine()
+                .AppendLineIndent("if (thisKind == JsonValueKind.Array)")
+                .AppendLineIndent("{")
+                .PushIndent();
+
+            string thisAccessor = "this";
+            string otherAccessor = "other";
+
+            if ((typeDeclaration.AllowedCoreTypes() & CoreTypes.Array) == 0)
+            {
+                thisAccessor = "thisArray";
+                otherAccessor = "otherArray";
+                generator
+                    .AppendSeparatorLine()
+                    .AppendLineIndent("JsonArray thisArray = this.AsArray;")
+                    .AppendLineIndent("JsonArray otherArray = other.AsArray;");
+                arrayItemsType = null;
+            }
+
+            generator
+                    .AppendIndent("JsonArrayEnumerator")
+                    .AppendGenericParameterIfRequired(arrayItemsType)
+                    .AppendLine(" lhs = ", thisAccessor, ".EnumerateArray();")
+                    .AppendIndent("JsonArrayEnumerator")
+                    .AppendGenericParameterIfRequired(arrayItemsType)
+                    .AppendLine(" rhs = ", otherAccessor, ".EnumerateArray();")
+                    .AppendBlockIndent(
+                        """
+                        while (lhs.MoveNext())
+                        {
+                            if (!rhs.MoveNext())
+                            {
+                                return false;
+                            }
+
+                            if (!lhs.Current.Equals(rhs.Current))
+                            {
+                                return false;
+                            }
+                        }
+
+                        return !rhs.MoveNext();
+                        """)
+                .PopIndent()
+                .AppendLineIndent("}");
+        }
+
+        static void AppendBooleanComparer(CodeGenerator generator)
+        {
+            generator
+                .AppendSeparatorLine()
+                .AppendLineIndent("if (thisKind == JsonValueKind.True || thisKind == JsonValueKind.False)")
+                .AppendLineIndent("{")
+                .PushIndent()
+                    .AppendLineIndent("return true;")
+                .PopIndent()
+                .AppendLineIndent("}");
+        }
+
+        static void AppendNumberComparer(CodeGenerator generator)
+        {
+            string backing = generator.GetFieldNameInScope("backing");
+            string numberBacking = generator.GetFieldNameInScope("numberBacking");
+            string jsonElementBacking = generator.GetFieldNameInScope("jsonElementBacking");
+
+            generator
+                .AppendSeparatorLine()
+                .AppendLineIndent("if (thisKind == JsonValueKind.Number)")
+                .AppendLineIndent("{")
+                .PushIndent()
+                    .AppendLineIndent("if (this.", backing, " == Backing.Number && other.", backing, " == Backing.Number)")
+                    .AppendLineIndent("{")
+                    .PushIndent()
+                        .AppendLineIndent("return BinaryJsonNumber.Equals(this.", numberBacking, ", other.", numberBacking, ");")
+                    .PopIndent()
+                    .AppendLineIndent("}")
+                    .AppendSeparatorLine()
+                    .AppendLineIndent("if (this.", backing, " == Backing.Number && other.", backing, " == Backing.JsonElement)")
+                    .AppendLineIndent("{")
+                    .PushIndent()
+                        .AppendLineIndent("return BinaryJsonNumber.Equals(this.", numberBacking, ", other.", jsonElementBacking, ");")
+                    .PopIndent()
+                    .AppendLineIndent("}")
+                    .AppendSeparatorLine()
+                    .AppendLineIndent("if (this.", backing, " == Backing.JsonElement && other.", backing, " == Backing.Number)")
+                    .AppendLineIndent("{")
+                    .PushIndent()
+                        .AppendLineIndent("return BinaryJsonNumber.Equals(this.", jsonElementBacking, ", other.", numberBacking, ");")
+                    .PopIndent()
+                    .AppendLineIndent("}")
+                    .AppendSeparatorLine()
+                    .AppendLineIndent("if (this.", jsonElementBacking, ".TryGetDouble(out double lDouble))")
+                    .AppendLineIndent("{")
+                    .PushIndent()
+                        .AppendLineIndent("if (other.", jsonElementBacking, ".TryGetDouble(out double rDouble))")
+                        .AppendLineIndent("{")
+                        .PushIndent()
+                            .AppendLineIndent("return lDouble.Equals(rDouble);")
+                        .PopIndent()
+                        .AppendLineIndent("}")
+                    .PopIndent()
+                    .AppendLineIndent("}")
+                    .AppendSeparatorLine()
+                    .AppendLineIndent("if (this.", jsonElementBacking, ".TryGetDecimal(out decimal lDecimal))")
+                    .AppendLineIndent("{")
+                    .PushIndent()
+                        .AppendLineIndent("if (other.", jsonElementBacking, ".TryGetDecimal(out decimal rDecimal))")
+                        .AppendLineIndent("{")
+                        .PushIndent()
+                            .AppendLineIndent("return lDecimal.Equals(rDecimal);")
+                        .PopIndent()
+                        .AppendLineIndent("}")
+                    .PopIndent()
+                    .AppendLineIndent("}")
+                .PopIndent()
+                .AppendLineIndent("}");
+        }
+
+        static void AppendNullOrUndefinedComparer(CodeGenerator generator)
+        {
+            generator
+                .AppendSeparatorLine()
+                .AppendLineIndent("if (thisKind == JsonValueKind.Null || thisKind == JsonValueKind.Undefined)")
+                .AppendLineIndent("{")
+                .PushIndent()
+                    .AppendLineIndent("return true;")
+                .PopIndent()
+                .AppendLineIndent("}");
+        }
+
+        static void AppendObjectComparer(CodeGenerator generator, TypeDeclaration typeDeclaration)
+        {
+            string? propertyTypeName = null;
+            if (typeDeclaration.FallbackObjectPropertyType() is FallbackObjectPropertyType propertyType && !propertyType.ReducedType.IsBuiltInJsonAnyType())
+            {
+                propertyTypeName = propertyType.ReducedType.FullyQualifiedDotnetTypeName();
+            }
+
+            generator
+                .AppendSeparatorLine()
+                .AppendLineIndent("if (thisKind == JsonValueKind.Object)")
+                .AppendLineIndent("{")
+                .PushIndent();
+
+            string thisAccessor = "this";
+            string otherAccessor = "other";
+
+            if ((typeDeclaration.AllowedCoreTypes() & CoreTypes.Object) == 0)
+            {
+                thisAccessor = "thisObject";
+                otherAccessor = "otherObject";
+                generator
+                    .AppendSeparatorLine()
+                    .AppendLineIndent("JsonObject thisObject = this.AsObject;")
+                    .AppendLineIndent("JsonObject otherObject = other.AsObject;");
+                propertyTypeName = null;
+            }
+
+            generator
+                    .AppendLineIndent("int count = 0;")
+                    .AppendIndent("foreach (JsonObjectProperty")
+                    .AppendGenericParameterIfRequired(propertyTypeName)
+                    .AppendLine(" property in ", thisAccessor, ".EnumerateObject())")
+                    .AppendLineIndent("{")
+                    .PushIndent()
+                        .AppendLineIndent("if (!", otherAccessor, ".TryGetProperty(property.Name, out ", propertyTypeName ?? "JsonAny", " value) || !property.Value.Equals(value))")
+                        .AppendLineIndent("{")
+                        .PushIndent()
+                            .AppendLineIndent("return false;")
+                        .PopIndent()
+                        .AppendLineIndent("}")
+                        .AppendSeparatorLine()
+                        .AppendLineIndent("count++;")
+                    .PopIndent()
+                    .AppendLineIndent("}")
+                    .AppendSeparatorLine()
+                    .AppendLineIndent("int otherCount = 0;")
+                    .AppendIndent("foreach (JsonObjectProperty")
+                    .AppendGenericParameterIfRequired(propertyTypeName)
+                    .AppendLine(" otherProperty in ", otherAccessor, ".EnumerateObject())")
+                    .AppendLineIndent("{")
+                    .PushIndent()
+                        .AppendLineIndent("otherCount++;")
+                        .AppendLineIndent("if (otherCount > count)")
+                        .AppendLineIndent("{")
+                        .PushIndent()
+                            .AppendLineIndent("return false;")
+                        .PopIndent()
+                        .AppendLineIndent("}")
+                    .PopIndent()
+                    .AppendLineIndent("}")
+                    .AppendSeparatorLine()
+                    .AppendLineIndent("return count == otherCount;")
+                .PopIndent()
+                .AppendLineIndent("}");
+        }
+
+        static void AppendStringComparer(CodeGenerator generator)
+        {
+            string backing = generator.GetFieldNameInScope("backing");
+            string stringBacking = generator.GetFieldNameInScope("stringBacking");
+            string jsonElementBacking = generator.GetFieldNameInScope("jsonElementBacking");
+
+            generator
+                .AppendSeparatorLine()
+                .AppendLineIndent("if (thisKind == JsonValueKind.String)")
+                .AppendLineIndent("{")
+                .PushIndent()
+                    .AppendLineIndent("if (this.", backing, " == Backing.JsonElement)")
+                    .AppendLineIndent("{")
+                    .PushIndent()
+                        .AppendLineIndent("if (other.", backing, " == Backing.String)")
+                        .AppendLineIndent("{")
+                        .PushIndent()
+                            .AppendLineIndent("return this.", jsonElementBacking, ".ValueEquals(other.", stringBacking, ");")
+                        .PopIndent()
+                        .AppendLineIndent("}")
+                        .AppendLineIndent("else")
+                        .AppendLineIndent("{")
+                        .PushIndent()
+                            .AppendLineIndent("other.", jsonElementBacking, ".TryGetValue(CompareValues, this.", jsonElementBacking, ", out bool areEqual);")
+                            .AppendLineIndent("return areEqual;")
+                        .PopIndent()
+                        .AppendLineIndent("}")
+                        .AppendSeparatorLine()
+                    .PopIndent()
+                    .AppendLineIndent("}")
+                    .AppendSeparatorLine()
+                    .AppendLineIndent("if (other.", backing, " == Backing.JsonElement)")
+                    .AppendLineIndent("{")
+                    .PushIndent()
+                        .AppendLineIndent("return other.", jsonElementBacking, ".ValueEquals(this.", stringBacking, ");")
+                    .PopIndent()
+                    .AppendLineIndent("}")
+                    .AppendSeparatorLine()
+                    .AppendLineIndent("return this.", stringBacking, ".Equals(other.", stringBacking, ");")
+                    .AppendSeparatorLine()
+                    .AppendBlockIndent(
+                        """
+                        static bool CompareValues(ReadOnlySpan<byte> span, in JsonElement firstItem, out bool value)
+                        {
+                            value = firstItem.ValueEquals(span);
+                            return true;
+                        }
+                        """)
+                .PopIndent()
+                .AppendLineIndent("}");
+        }
     }
 
     /// <summary>
@@ -2361,7 +2865,7 @@ internal static partial class CodeGeneratorExtensions
         }
 
         return generator
-            .AppendLine("source);")
+            .AppendLine("source", sourceType == "string" ? ".AsSpan()" : string.Empty, ");")
             .AppendLine("#endif")
             .PopIndent()
             .AppendLineIndent("}");
@@ -2510,18 +3014,75 @@ internal static partial class CodeGeneratorExtensions
     }
 
     /// <summary>
-    /// Append the default constructor for the type declaration.
+    /// Append the constructor for the type declaration from two parameters.
+    /// </summary>
+    /// <param name="generator">The code generator.</param>
+    /// <param name="typeDeclaration">The type declaration for which to emit the constructor.</param>
+    /// <param name="valueType1">The type of the first value.</param>
+    /// <param name="valueType2">The type of the second value.</param>
+    /// <param name="valueCoreType">The core type of the value type.</param>
+    /// <param name="valueConverter">The conversion expression. It may make use of the <c>value1</c> and <c>value2</c> parameters.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendPublicConvertedValueConstructor(
+        this CodeGenerator generator,
+        TypeDeclaration typeDeclaration,
+        string valueType1,
+        string valueType2,
+        CoreTypes valueCoreType,
+        string valueConverter)
+    {
+        CoreTypes impliedCoreTypes = typeDeclaration.ImpliedCoreTypesOrAny();
+
+        if ((impliedCoreTypes & valueCoreType) == 0)
+        {
+            return generator;
+        }
+
+        return generator
+            .AppendSeparatorLine()
+            .AppendLineIndent("/// <summary>")
+            .AppendIndent("/// Initializes a new instance of the ")
+            .AppendTypeAsSeeCref(typeDeclaration.DotnetTypeName())
+            .AppendLine(" struct.")
+            .AppendLineIndent("/// </summary>")
+            .AppendLineIndent("/// <param name=\"value1\">The <see cref=\"", valueType1, "\"/> from which to construct the instance.</param>")
+            .AppendLineIndent("/// <param name=\"value2\">The <see cref=\"", valueType2, "\"/> from which to construct the instance.</param>")
+            .AppendIndent("public ")
+            .Append(typeDeclaration.DotnetTypeName())
+            .Append("(")
+            .Append(valueType1)
+            .Append(" value1, ")
+            .Append(valueType2)
+            .AppendLine(" value2)")
+            .AppendLineIndent("{")
+            .PushIndent()
+                .AppendBackingFieldAssignment("backing", GetBacking(valueCoreType))
+                .AppendBackingFieldAssignment("jsonElementBacking", "default")
+                .AppendBackingFieldAssignment("stringBacking", GetValue(valueCoreType, CoreTypes.String, "string.Empty", valueConverter), impliedCoreTypes, CoreTypes.String)
+                .AppendBackingFieldAssignment("boolBacking", GetValue(valueCoreType, CoreTypes.Boolean, "default", valueConverter), impliedCoreTypes, CoreTypes.Boolean)
+                .AppendBackingFieldAssignment("numberBacking", GetValue(valueCoreType, CoreTypes.Number | CoreTypes.Integer, "default", valueConverter), impliedCoreTypes, CoreTypes.Number | CoreTypes.Integer)
+                .AppendBackingFieldAssignment("arrayBacking", GetValue(valueCoreType, CoreTypes.Array, "ImmutableList<JsonAny>.Empty", valueConverter), impliedCoreTypes, CoreTypes.Array)
+                .AppendBackingFieldAssignment("objectBacking", GetValue(valueCoreType, CoreTypes.Object, "ImmutableList<JsonObjectProperty>.Empty", valueConverter), impliedCoreTypes, CoreTypes.Object)
+            .PopIndent()
+            .AppendLineIndent("}");
+    }
+
+    /// <summary>
+    /// Append the constructor for the type declaration from a given value, where the value
+    /// must be converted.
     /// </summary>
     /// <param name="generator">The code generator.</param>
     /// <param name="typeDeclaration">The type declaration for which to emit the constructor.</param>
     /// <param name="valueType">The type of the value.</param>
     /// <param name="valueCoreType">The core type of the value type.</param>
+    /// <param name="valueConverter">The conversion expression. It may make use of the <c>value</c> parameter.</param>
     /// <returns>A reference to the generator having completed the operation.</returns>
-    public static CodeGenerator AppendPublicValueConstructor(
+    public static CodeGenerator AppendPublicConvertedValueConstructor(
         this CodeGenerator generator,
         TypeDeclaration typeDeclaration,
         string valueType,
-        CoreTypes valueCoreType)
+        CoreTypes valueCoreType,
+        string valueConverter)
     {
         CoreTypes impliedCoreTypes = typeDeclaration.ImpliedCoreTypesOrAny();
 
@@ -2547,35 +3108,82 @@ internal static partial class CodeGeneratorExtensions
             .PushIndent()
                 .AppendBackingFieldAssignment("backing", GetBacking(valueCoreType))
                 .AppendBackingFieldAssignment("jsonElementBacking", "default")
-                .AppendBackingFieldAssignment("stringBacking", GetValue(valueCoreType, CoreTypes.String, "string.Empty"), impliedCoreTypes, CoreTypes.String)
-                .AppendBackingFieldAssignment("boolBacking", GetValue(valueCoreType, CoreTypes.Boolean, "default"), impliedCoreTypes, CoreTypes.Boolean)
-                .AppendBackingFieldAssignment("numberBacking", GetValue(valueCoreType, CoreTypes.Number | CoreTypes.Integer, "default"), impliedCoreTypes, CoreTypes.Number | CoreTypes.Integer)
-                .AppendBackingFieldAssignment("arrayBacking", GetValue(valueCoreType, CoreTypes.Array, "ImmutableList<JsonAny>.Empty"), impliedCoreTypes, CoreTypes.Array)
-                .AppendBackingFieldAssignment("objectBacking", GetValue(valueCoreType, CoreTypes.Object, "ImmutableList<JsonObjectProperty>.Empty"), impliedCoreTypes, CoreTypes.Object)
+                .AppendBackingFieldAssignment("stringBacking", GetValue(valueCoreType, CoreTypes.String, "string.Empty", valueConverter), impliedCoreTypes, CoreTypes.String)
+                .AppendBackingFieldAssignment("boolBacking", GetValue(valueCoreType, CoreTypes.Boolean, "default", valueConverter), impliedCoreTypes, CoreTypes.Boolean)
+                .AppendBackingFieldAssignment("numberBacking", GetValue(valueCoreType, CoreTypes.Number | CoreTypes.Integer, "default", valueConverter), impliedCoreTypes, CoreTypes.Number | CoreTypes.Integer)
+                .AppendBackingFieldAssignment("arrayBacking", GetValue(valueCoreType, CoreTypes.Array, "ImmutableList<JsonAny>.Empty", valueConverter), impliedCoreTypes, CoreTypes.Array)
+                .AppendBackingFieldAssignment("objectBacking", GetValue(valueCoreType, CoreTypes.Object, "ImmutableList<JsonObjectProperty>.Empty", valueConverter), impliedCoreTypes, CoreTypes.Object)
             .PopIndent()
             .AppendLineIndent("}");
+    }
 
-        static string GetBacking(CoreTypes valueCoreTypes)
+    /// <summary>
+    /// Append the constructor for the type declaration from a given value, where the value
+    /// must be converted.
+    /// </summary>
+    /// <param name="generator">The code generator.</param>
+    /// <param name="typeDeclaration">The type declaration for which to emit the constructor.</param>
+    /// <param name="valueType">The type of the value.</param>
+    /// <param name="valueCoreType">The core type of the value type.</param>
+    /// <param name="appendAssignment">The code that appends the assignment.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendPublicConvertedValueWithBodyConstructor(
+        this CodeGenerator generator,
+        TypeDeclaration typeDeclaration,
+        string valueType,
+        CoreTypes valueCoreType,
+        AppendConstructorBackingFieldAssignmentCallback appendAssignment)
+    {
+        CoreTypes impliedCoreTypes = typeDeclaration.ImpliedCoreTypesOrAny();
+
+        if ((impliedCoreTypes & valueCoreType) == 0)
         {
-            return valueCoreTypes switch
-            {
-                CoreTypes.String => "Backing.String",
-                CoreTypes.Boolean => "Backing.Bool",
-                CoreTypes.Number => "Backing.Number",
-                CoreTypes.Integer => "Backing.Number",
-                CoreTypes.Number | CoreTypes.Integer => "Backing.Number",
-                CoreTypes.Array => "Backing.Array",
-                CoreTypes.Object => "Backing.Object",
-                _ => throw new InvalidOperationException($"Unsupported backing type {valueCoreTypes}"),
-            };
+            return generator;
         }
 
-        static string GetValue(CoreTypes typeDeclarationImpliedCoreTypes, CoreTypes valueCoreTypes, string defaultValue)
-        {
-            return (typeDeclarationImpliedCoreTypes & valueCoreTypes) != 0
-                ? "value"
-                : defaultValue;
-        }
+        return generator
+            .AppendSeparatorLine()
+            .AppendLineIndent("/// <summary>")
+            .AppendIndent("/// Initializes a new instance of the ")
+            .AppendTypeAsSeeCref(typeDeclaration.DotnetTypeName())
+            .AppendLine(" struct.")
+            .AppendLineIndent("/// </summary>")
+            .AppendLineIndent("/// <param name=\"value\">The value from which to construct the instance.</param>")
+            .AppendIndent("public ")
+            .Append(typeDeclaration.DotnetTypeName())
+            .Append("(")
+            .Append(valueType)
+            .AppendLine(" value)")
+            .AppendLineIndent("{")
+            .PushIndent()
+                .AppendBackingFieldAssignment("backing", GetBacking(valueCoreType))
+                .AppendBackingFieldAssignment("jsonElementBacking", "default")
+                .AppendBackingFieldAssignment(typeDeclaration, "stringBacking", GetValue(valueCoreType, CoreTypes.String, "string.Empty", appendAssignment), impliedCoreTypes, CoreTypes.String)
+                .AppendBackingFieldAssignment(typeDeclaration, "boolBacking", GetValue(valueCoreType, CoreTypes.Boolean, "default", appendAssignment), impliedCoreTypes, CoreTypes.Boolean)
+                .AppendBackingFieldAssignment(typeDeclaration, "numberBacking", GetValue(valueCoreType, CoreTypes.Number | CoreTypes.Integer, "default", appendAssignment), impliedCoreTypes, CoreTypes.Number | CoreTypes.Integer)
+                .AppendBackingFieldAssignment(typeDeclaration, "arrayBacking", GetValue(valueCoreType, CoreTypes.Array, "ImmutableList<JsonAny>.Empty", appendAssignment), impliedCoreTypes, CoreTypes.Array)
+                .AppendBackingFieldAssignment(typeDeclaration, "objectBacking", GetValue(valueCoreType, CoreTypes.Object, "ImmutableList<JsonObjectProperty>.Empty", appendAssignment), impliedCoreTypes, CoreTypes.Object)
+            .PopIndent()
+            .AppendLineIndent("}");
+    }
+
+    /// <summary>
+    /// Append the constructor for the type declaration from a given value, where the value
+    /// can be directly assigned to a backing field.
+    /// </summary>
+    /// <param name="generator">The code generator.</param>
+    /// <param name="typeDeclaration">The type declaration for which to emit the constructor.</param>
+    /// <param name="valueType">The type of the value.</param>
+    /// <param name="valueCoreType">The core type of the value type.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendPublicValueConstructor(
+        this CodeGenerator generator,
+        TypeDeclaration typeDeclaration,
+        string valueType,
+        CoreTypes valueCoreType)
+    {
+        return generator
+            .AppendPublicConvertedValueConstructor(typeDeclaration, valueType, valueCoreType, "value");
     }
 
     /// <summary>
@@ -3818,12 +4426,26 @@ internal static partial class CodeGeneratorExtensions
         {
             generator
                 .ReserveNameIfNotReserved("Validate")
-                .AppendSeparatorLine()
-                .AppendBlockIndent(
-                """
-                /// <inheritdoc/>
-                public ValidationContext Validate(in ValidationContext context, ValidationLevel validationLevel = ValidationLevel.Flag) => context;
-                """);
+                .AppendSeparatorLine();
+
+            if (typeDeclaration.IsCorvusJsonExtendedJsonNotAny())
+            {
+                generator
+                    .AppendBlockIndent(
+                    """
+                    /// <inheritdoc/>
+                    public ValidationContext Validate(in ValidationContext context, ValidationLevel validationLevel = ValidationLevel.Flag) => context.WithResult(false);
+                    """);
+            }
+            else
+            {
+                generator
+                    .AppendBlockIndent(
+                    """
+                    /// <inheritdoc/>
+                    public ValidationContext Validate(in ValidationContext context, ValidationLevel validationLevel = ValidationLevel.Flag) => context;
+                    """);
+            }
         }
 
         return generator;
@@ -3842,7 +4464,7 @@ internal static partial class CodeGeneratorExtensions
         {
             foreach (IAllOfSubschemaValidationKeyword keyword in allOf.Keys)
             {
-                IReadOnlyCollection<TypeDeclaration> subschema = allOf[keyword].Distinct().ToList();
+                var subschema = allOf[keyword].Distinct().ToList();
                 if (subschema.Count > 1)
                 {
                     AppendMatchCompositionMethod(generator, typeDeclaration, subschema, includeContext: true, matchOverloadIndex++);
@@ -3855,7 +4477,7 @@ internal static partial class CodeGeneratorExtensions
         {
             foreach (IAnyOfSubschemaValidationKeyword keyword in anyOf.Keys)
             {
-                IReadOnlyCollection<TypeDeclaration> subschema = anyOf[keyword].Distinct().ToList();
+                var subschema = anyOf[keyword].Distinct().ToList();
                 if (subschema.Count > 1)
                 {
                     AppendMatchCompositionMethod(generator, typeDeclaration, subschema, includeContext: true, matchOverloadIndex++);
@@ -3868,7 +4490,7 @@ internal static partial class CodeGeneratorExtensions
         {
             foreach (IOneOfSubschemaValidationKeyword keyword in oneOf.Keys)
             {
-                IReadOnlyCollection<TypeDeclaration> subschema = oneOf[keyword].Distinct().ToList();
+                var subschema = oneOf[keyword].Distinct().ToList();
                 if (subschema.Count > 1)
                 {
                     AppendMatchCompositionMethod(generator, typeDeclaration, subschema, includeContext: true, matchOverloadIndex++);
@@ -4366,7 +4988,8 @@ internal static partial class CodeGeneratorExtensions
     private static CodeGenerator AppendConversionFromValue(
         this CodeGenerator generator,
         string identifierName,
-        CoreTypes forTypes)
+        CoreTypes forTypes,
+        bool requiresAs = false)
     {
         generator
             .AppendIndent("if (")
@@ -4389,9 +5012,9 @@ internal static partial class CodeGeneratorExtensions
         if ((forTypes & CoreTypes.String) != 0)
         {
             generator
-                .AppendIndent("JsonValueKind.String => new((string)")
+                .AppendIndent("JsonValueKind.String => new(")
                 .Append(identifierName)
-                .AppendLine(".AsString),");
+                .AppendLine(requiresAs ? ".AsString" : string.Empty, ".GetString()!),");
         }
 
         if ((forTypes & CoreTypes.Boolean) != 0)
@@ -4407,7 +5030,7 @@ internal static partial class CodeGeneratorExtensions
             generator
                 .AppendIndent("JsonValueKind.Number => new(")
                 .Append(identifierName)
-                .AppendLine(".AsNumber.AsBinaryJsonNumber),");
+                .AppendLine(requiresAs ? ".AsNumber" : string.Empty, ".AsBinaryJsonNumber),");
         }
 
         if ((forTypes & CoreTypes.Array) != 0)
@@ -4415,7 +5038,7 @@ internal static partial class CodeGeneratorExtensions
             generator
                 .AppendIndent("JsonValueKind.Array => new(")
                 .Append(identifierName)
-                .AppendLine(".AsArray.AsImmutableList()),");
+                .AppendLine(requiresAs ? ".AsArray" : string.Empty, ".AsImmutableList()),");
         }
 
         if ((forTypes & CoreTypes.Object) != 0)
@@ -4423,7 +5046,7 @@ internal static partial class CodeGeneratorExtensions
             generator
                 .AppendIndent("JsonValueKind.Object => new(")
                 .Append(identifierName)
-                .AppendLine(".AsObject.AsPropertyBacking()),");
+                .AppendLine(requiresAs ? ".AsObject" : string.Empty, ".AsPropertyBacking()),");
         }
 
         return generator
@@ -4475,6 +5098,53 @@ internal static partial class CodeGeneratorExtensions
         return generator;
     }
 
+    private static CodeGenerator AppendBackingFieldAssignment(
+    this CodeGenerator generator,
+    TypeDeclaration typeDeclaration,
+    string fieldName,
+    AppendConstructorBackingFieldAssignmentCallback appendFieldValue,
+    CoreTypes impliedCoreTypes = CoreTypes.Any,
+    CoreTypes forCoreTypes = CoreTypes.Any)
+    {
+        if ((impliedCoreTypes & forCoreTypes) != 0)
+        {
+            generator
+                .AppendSeparatorLine();
+            appendFieldValue(generator, typeDeclaration, fieldName);
+        }
+
+        return generator;
+    }
+
+    private static string GetBacking(CoreTypes valueCoreTypes)
+    {
+        return valueCoreTypes switch
+        {
+            CoreTypes.String => "Backing.String",
+            CoreTypes.Boolean => "Backing.Bool",
+            CoreTypes.Number => "Backing.Number",
+            CoreTypes.Integer => "Backing.Number",
+            CoreTypes.Number | CoreTypes.Integer => "Backing.Number",
+            CoreTypes.Array => "Backing.Array",
+            CoreTypes.Object => "Backing.Object",
+            _ => throw new InvalidOperationException($"Unsupported backing type {valueCoreTypes}"),
+        };
+    }
+
+    private static string GetValue(CoreTypes typeDeclarationImpliedCoreTypes, CoreTypes valueCoreTypes, string defaultValue, string valueConverter)
+    {
+        return (typeDeclarationImpliedCoreTypes & valueCoreTypes) != 0
+            ? valueConverter
+            : defaultValue;
+    }
+
+    private static AppendConstructorBackingFieldAssignmentCallback GetValue(CoreTypes typeDeclarationImpliedCoreTypes, CoreTypes valueCoreTypes, string defaultValue, AppendConstructorBackingFieldAssignmentCallback fieldAssignmentCallback)
+    {
+        return (typeDeclarationImpliedCoreTypes & valueCoreTypes) != 0
+            ? fieldAssignmentCallback
+            : (g, _, f) => g.AppendLineIndent("this.", f, " = ", defaultValue, ";");
+    }
+
     private static CodeGenerator AppendConditionalConstructFromBacking(
         this CodeGenerator generator,
         string backingType,
@@ -4492,6 +5162,52 @@ internal static partial class CodeGeneratorExtensions
             identifier,
             impliedCoreTypes,
             forCoreTypes);
+    }
+
+    private static CodeGenerator AppendConditionalWrappedJsonElementBackingValueKindLineIndent(
+    this CodeGenerator generator,
+    JsonValueKind jsonElementValueKind,
+    string prefix,
+    string fieldName,
+    string suffix,
+    string identifier = "this",
+    CoreTypes impliedCoreTypes = CoreTypes.Any,
+    CoreTypes forCoreTypes = CoreTypes.Any,
+    bool returnFromClause = false)
+    {
+        if ((impliedCoreTypes & forCoreTypes) != 0)
+        {
+            string localBackingFieldName = generator.GetFieldNameInScope(fieldName);
+            generator
+                .AppendSeparatorLine()
+                .AppendIndent("if (")
+                .Append(identifier)
+                .Append('.')
+                .Append(localBackingFieldName)
+                .Append(".ValueKind == JsonValueKind.")
+                .Append(jsonElementValueKind.ToString())
+                .AppendLine(")")
+                .AppendLineIndent("{")
+                .PushIndent()
+                .AppendIndent(prefix)
+                .Append(identifier)
+                .Append('.')
+                .Append(localBackingFieldName)
+                .AppendLine(suffix);
+
+            if (returnFromClause)
+            {
+                generator
+                    .AppendSeparatorLine()
+                    .AppendLineIndent("return;");
+            }
+
+            generator
+                .PopIndent()
+                .AppendLineIndent("}");
+        }
+
+        return generator;
     }
 
     private static CodeGenerator AppendConditionalWrappedBackingValueLineIndent(

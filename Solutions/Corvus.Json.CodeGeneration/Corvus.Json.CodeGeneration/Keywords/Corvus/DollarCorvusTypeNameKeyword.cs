@@ -30,5 +30,5 @@ public sealed class DollarCorvusTypeNameKeyword : ITypeNameProviderKeyword
     public CoreTypes ImpliesCoreTypes(TypeDeclaration typeDeclaration) => CoreTypes.None;
 
     /// <inheritdoc />
-    public bool CanReduce(in JsonElement corvustypenameValue) => false;
+    public bool CanReduce(in JsonElement corvustypenameValue) => Reduction.CanReduceNonReducingKeyword(corvustypenameValue, this.KeywordUtf8);
 }

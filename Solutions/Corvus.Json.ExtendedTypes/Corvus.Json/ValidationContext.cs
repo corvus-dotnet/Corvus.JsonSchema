@@ -41,7 +41,7 @@ public readonly struct ValidationContext
     /// <param name="locationStack">The current location stack.</param>
     /// <param name="results">The validation results.</param>
     /// <param name="usingFeatures">Indicates which features are being used.</param>
-    private ValidationContext(bool isValid, in ImmutableArray<ulong> localEvaluatedItemIndex, in ImmutableArray<ulong> localEvaluatedProperties, in ImmutableArray<ulong> appliedEvaluatedItemIndex, in ImmutableArray<ulong> appliedEvaluatedProperties, in ImmutableStack<(JsonReference ValidationLocation, JsonReference SchemaLocation, JsonReference DocumentLocation)> locationStack, in ImmutableArray<ValidationResult> results, UsingFeatures usingFeatures)
+    private ValidationContext(bool isValid, in ImmutableArray<ulong> localEvaluatedItemIndex, in ImmutableArray<ulong> localEvaluatedProperties, in ImmutableArray<ulong> appliedEvaluatedItemIndex, in ImmutableArray<ulong> appliedEvaluatedProperties, in ImmutableStack<(JsonReference ValidationLocation, JsonReference SchemaLocation, JsonReference DocumentLocation)> locationStack, in ImmutableList<ValidationResult> results, UsingFeatures usingFeatures)
     {
         this.localEvaluatedItemIndex = localEvaluatedItemIndex;
         this.localEvaluatedProperties = localEvaluatedProperties;
@@ -71,7 +71,7 @@ public readonly struct ValidationContext
     /// <summary>
     /// Gets the validation results.
     /// </summary>
-    public ImmutableArray<ValidationResult> Results { get; }
+    public ImmutableList<ValidationResult> Results { get; }
 
     /// <summary>
     /// Use the results set.
@@ -391,7 +391,7 @@ public readonly struct ValidationContext
         bool usingEvaluatedItems = (this.usingFeatures & UsingFeatures.EvaluatedItems) != 0;
         bool usingEvaluatedProperties = (this.usingFeatures & UsingFeatures.EvaluatedProperties) != 0;
 
-        return new ValidationContext(true, usingEvaluatedItems ? ImmutableArray.Create<ulong>(0) : ImmutableArray<ulong>.Empty, usingEvaluatedProperties ? ImmutableArray.Create<ulong>(0) : ImmutableArray<ulong>.Empty, usingEvaluatedItems ? ImmutableArray.Create<ulong>(0) : ImmutableArray<ulong>.Empty, usingEvaluatedProperties ? ImmutableArray.Create<ulong>(0) : ImmutableArray<ulong>.Empty, this.locationStack, ImmutableArray<ValidationResult>.Empty, this.usingFeatures);
+        return new ValidationContext(true, usingEvaluatedItems ? ImmutableArray.Create<ulong>(0) : ImmutableArray<ulong>.Empty, usingEvaluatedProperties ? ImmutableArray.Create<ulong>(0) : ImmutableArray<ulong>.Empty, usingEvaluatedItems ? ImmutableArray.Create<ulong>(0) : ImmutableArray<ulong>.Empty, usingEvaluatedProperties ? ImmutableArray.Create<ulong>(0) : ImmutableArray<ulong>.Empty, this.locationStack, ImmutableList<ValidationResult>.Empty, this.usingFeatures);
     }
 
     /// <summary>
@@ -434,7 +434,7 @@ public readonly struct ValidationContext
                 this.usingFeatures);
         }
 
-        ImmutableArray<ValidationResult> results = this.Results;
+        ImmutableList<ValidationResult> results = this.Results;
         if (results.IsEmpty)
         {
             results = result1.Results;
@@ -949,7 +949,7 @@ public readonly struct ValidationContext
 
         foreach (ValidationContext result in results)
         {
-            if (result.Results is ImmutableArray<ValidationResult> resultResults)
+            if (result.Results is ImmutableList<ValidationResult> resultResults)
             {
                 builder.AddRange(resultResults);
             }

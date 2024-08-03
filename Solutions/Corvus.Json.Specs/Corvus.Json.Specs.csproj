@@ -37,7 +37,18 @@
     <SpecFlowFeatureFiles Remove="Features/**/numeric-format-netstandard20.feature" />
 		<Compile Remove="Features/**/numeric-format-netstandard20.feature.cs" />
   </ItemGroup>
-  
+
+	<ItemGroup>
+	  <SpecFlowObsoleteCodeBehindFiles Remove="Features\AdditionalSchema\Draft201909\validateWithDifferentFlagLevels.feature.cs" />
+	  <SpecFlowObsoleteCodeBehindFiles Remove="Features\AdditionalSchema\Draft202012\validateWithDifferentFlagLevels.feature.cs" />
+	  <SpecFlowObsoleteCodeBehindFiles Remove="Features\AdditionalSchema\Draft6\validateWithDifferentFlagLevels.feature.cs" />
+	  <SpecFlowObsoleteCodeBehindFiles Remove="Features\AdditionalSchema\Draft7\validateWithDifferentFlagLevels.feature.cs" />
+	  <SpecFlowObsoleteCodeBehindFiles Remove="Features\AdditionalSchema\OpenApi30\validateWithDifferentFlagLevels.feature.cs" />
+	  <SpecFlowObsoleteCodeBehindFiles Remove="Features\JsonModel\JsonStringEquals\StringEqualsCharSpan - Copy.feature.cs" />
+	  <SpecFlowObsoleteCodeBehindFiles Remove="Features\JsonModel\JsonStringEquals\StringEqualsUtf8Bytes - Copy.feature.cs" />
+	  <SpecFlowObsoleteCodeBehindFiles Remove="Features\JsonModel\NumericTypes\JsonComparisonOperators - Copy.feature.cs" />
+	</ItemGroup>
+
 	<ItemGroup>
     <PackageReference Include="System.Text.RegularExpressions" Version="4.3.1" />
     <PackageReference Include="System.Text.Json" Version="8.0.4" />
@@ -56,7 +67,7 @@
 
 		<PackageReference Include="SpecFlow.NUnit" Version="3.9.74" />
 		<PackageReference Include="nunit" Version="3.14.0" />
-		<PackageReference Include="NUnit3TestAdapter" Version="3.17.0" />
+		<PackageReference Include="NUnit3TestAdapter" Version="4.6.0" />
 		<!-- Required for publishing test results directly to Azure Pipelines -->
 		<PackageReference Include="azurepipelines.testlogger" Version="1.2.3" />
 
@@ -78,6 +89,27 @@
 
 		<ProjectReference Include="..\Corvus.Json.Patch\Corvus.Json.Patch.csproj" />
 
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Compile Update="Features\AdditionalSchema\Draft201909\validateWithDifferentFlagLevels.feature.cs">
+	    <DependentUpon>%(Filename)</DependentUpon>
+	  </Compile>
+	  <Compile Update="Features\AdditionalSchema\Draft202012\validateWithDifferentFlagLevels.feature.cs">
+	    <DependentUpon>%(Filename)</DependentUpon>
+	  </Compile>
+	  <Compile Update="Features\AdditionalSchema\Draft6\validateWithDifferentFlagLevels.feature.cs">
+	    <DependentUpon>%(Filename)</DependentUpon>
+	  </Compile>
+	  <Compile Update="Features\AdditionalSchema\Draft7\validateWithDifferentFlagLevels.feature.cs">
+	    <DependentUpon>%(Filename)</DependentUpon>
+	  </Compile>
+	  <Compile Update="Features\AdditionalSchema\OpenApi30\validateWithDifferentFlagLevels.feature.cs">
+	    <DependentUpon>%(Filename)</DependentUpon>
+	  </Compile>
+	  <Compile Update="Features\JsonModel\NumericTypes\JsonCompareMethod.feature.cs">
+	    <DependentUpon>JsonCompareMethod.feature</DependentUpon>
+	  </Compile>
 	</ItemGroup>
 
 	<ItemGroup>
@@ -159,7 +191,37 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Folder Include="Features\PathTruncation\" />
+	  <SpecFlowFeatureFiles Update="Features\AdditionalSchema\Draft201909\validateWithDifferentFlagLevels.feature">
+	    <Visible>$(UsingMicrosoftNETSdk)</Visible>
+	    <CodeBehindFile>%(RelativeDir)%(Filename).feature$(DefaultLanguageSourceExtension)</CodeBehindFile>
+	  </SpecFlowFeatureFiles>
+	  <SpecFlowFeatureFiles Update="Features\AdditionalSchema\Draft202012\validateWithDifferentFlagLevels.feature">
+	    <Visible>$(UsingMicrosoftNETSdk)</Visible>
+	    <CodeBehindFile>%(RelativeDir)%(Filename).feature$(DefaultLanguageSourceExtension)</CodeBehindFile>
+	  </SpecFlowFeatureFiles>
+	  <SpecFlowFeatureFiles Update="Features\AdditionalSchema\Draft6\validateWithDifferentFlagLevels.feature">
+	    <Visible>$(UsingMicrosoftNETSdk)</Visible>
+	    <CodeBehindFile>%(RelativeDir)%(Filename).feature$(DefaultLanguageSourceExtension)</CodeBehindFile>
+	  </SpecFlowFeatureFiles>
+	  <SpecFlowFeatureFiles Update="Features\AdditionalSchema\Draft7\validateWithDifferentFlagLevels.feature">
+	    <Visible>$(UsingMicrosoftNETSdk)</Visible>
+	    <CodeBehindFile>%(RelativeDir)%(Filename).feature$(DefaultLanguageSourceExtension)</CodeBehindFile>
+	  </SpecFlowFeatureFiles>
+	  <SpecFlowFeatureFiles Update="Features\AdditionalSchema\OpenApi30\validateWithDifferentFlagLevels.feature">
+	    <Visible>$(UsingMicrosoftNETSdk)</Visible>
+	    <CodeBehindFile>%(RelativeDir)%(Filename).feature$(DefaultLanguageSourceExtension)</CodeBehindFile>
+	  </SpecFlowFeatureFiles>
+	  <SpecFlowFeatureFiles Update="Features\JsonModel\JsonStringEquals\StringEqualsString.feature">
+	    <Visible>$(UsingMicrosoftNETSdk)</Visible>
+	    <CodeBehindFile>%(RelativeDir)%(Filename).feature$(DefaultLanguageSourceExtension)</CodeBehindFile>
+	  </SpecFlowFeatureFiles>
+	  <SpecFlowFeatureFiles Update="Features\JsonModel\JsonStringEquals\StringEqualsCharSpan.feature">
+	    <Visible>$(UsingMicrosoftNETSdk)</Visible>
+	    <CodeBehindFile>%(RelativeDir)%(Filename).feature$(DefaultLanguageSourceExtension)</CodeBehindFile>
+	  </SpecFlowFeatureFiles>
+	  <SpecFlowFeatureFiles Update="Features\JsonModel\NumericTypes\JsonCompareMethod.feature">
+	    <Visible>$(UsingMicrosoftNETSdk)</Visible>
+	    <CodeBehindFile>%(RelativeDir)%(Filename).feature$(DefaultLanguageSourceExtension)</CodeBehindFile>
+	  </SpecFlowFeatureFiles>
 	</ItemGroup>
-
 </Project>

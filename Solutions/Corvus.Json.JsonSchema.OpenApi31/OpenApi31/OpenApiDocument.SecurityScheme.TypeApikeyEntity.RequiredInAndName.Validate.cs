@@ -123,15 +123,15 @@ public readonly partial struct OpenApiDocument
                                 }
 
                                 ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeApikeyEntity.RequiredInAndName.InEntity>().Validate(result.CreateChildContext(), level);
+                                if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                                {
+                                    return propertyResult;
+                                }
+
                                 result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
                                 if (level > ValidationLevel.Basic)
                                 {
                                     result = result.PopLocation();
-                                }
-
-                                if (level == ValidationLevel.Flag && !result.IsValid)
-                                {
-                                    return result;
                                 }
                             }
                             else if (property.NameEquals(JsonPropertyNames.NameUtf8, JsonPropertyNames.Name))
@@ -144,15 +144,15 @@ public readonly partial struct OpenApiDocument
                                 }
 
                                 ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonString>().Validate(result.CreateChildContext(), level);
+                                if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                                {
+                                    return propertyResult;
+                                }
+
                                 result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
                                 if (level > ValidationLevel.Basic)
                                 {
                                     result = result.PopLocation();
-                                }
-
-                                if (level == ValidationLevel.Flag && !result.IsValid)
-                                {
-                                    return result;
                                 }
                             }
 

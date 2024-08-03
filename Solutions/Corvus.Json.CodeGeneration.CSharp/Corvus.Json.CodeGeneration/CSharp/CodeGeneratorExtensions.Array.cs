@@ -197,7 +197,7 @@ internal static partial class CodeGeneratorExtensions
 
             if (arrayRank == 1)
             {
-                string dotNetTypeName = FormatProviderRegistry.Instance.NumberTypeFormatProviders.GetTypeNameForNumericLangwordOrTypeName(preferredNumericTypeName) ?? "Double";
+                string dotNetTypeName = FormatHandlerRegistry.Instance.NumberFormatHandlers.GetTypeNameForNumericLangwordOrTypeName(preferredNumericTypeName) ?? "Double";
                 generator
                     .AppendLineIndent(
                         "if (item.ValueKind != JsonValueKind.Number || !item.TryGet",
@@ -1246,7 +1246,7 @@ internal static partial class CodeGeneratorExtensions
             .Append(typeDeclaration.DotnetTypeName())
             .Append(" Create(ReadOnlySpan<")
             .Append(arrayItemsType)
-            .Append("> items)")
+            .AppendLine("> items)")
             .AppendLineIndent("{")
             .PushIndent()
             .AppendLineIndent("return new([..items]);")
@@ -1505,9 +1505,10 @@ internal static partial class CodeGeneratorExtensions
             .AppendLineIndent("get")
                 .AppendLineIndent("{")
                 .PushIndent()
-                .AppendConditionalConstructFromBacking(
+                .AppendConditionalBackingValueCallbackIndent(
                     "Backing.JsonElement",
-                    "jsonElementBacking")
+                    "jsonElementBacking",
+                    AppendArrayIndex)
                 .AppendSeparatorLine()
                 .AppendConditionalBackingValueCallbackIndent(
                     "Backing.Array",
@@ -1549,6 +1550,33 @@ internal static partial class CodeGeneratorExtensions
                 .PopIndent()
                 .AppendLineIndent("}");
         }
+    }
+
+    private static void AppendArrayIndex(CodeGenerator generator, string fieldName)
+    {
+        generator
+            .AppendBlockIndent(
+                """
+                if (index < 0)
+                {
+                    throw new IndexOutOfRangeException();
+                }
+                """)
+            .AppendSeparatorLine()
+            .AppendLineIndent("JsonElement.ArrayEnumerator enumerator = this.", fieldName, ".EnumerateArray();")
+            .AppendBlockIndent(
+                """
+                while (index >= 0)
+                {
+                    index--;
+                    if (!enumerator.MoveNext())
+                    {
+                        throw new IndexOutOfRangeException();
+                    }
+                }
+
+                return new(enumerator.Current);
+                """);
     }
 
     private static CodeGenerator AppendGenericFromItemsFactoryMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
@@ -2183,7 +2211,13 @@ internal static partial class CodeGeneratorExtensions
             .PushIndent()
                 .AppendBlockIndent(
                 """
-                return new([..items]);
+                ImmutableList<JsonAny>.Builder builder = __CorvusArrayHelpers.GetImmutableListBuilder(this);
+                foreach (JsonAny item in items)
+                {
+                    builder.Add(item.AsAny);
+                }
+
+                return new(builder.ToImmutable());
                 """)
             .PopIndent()
             .AppendLineIndent("}");

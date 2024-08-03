@@ -1,4 +1,12 @@
 {
+    "outputPath": "./GeneratedFormatTypes",
+    "rootNamespace": "Corvus.Json",
+    "additionalFiles": [
+        {
+            "canonicalUri": "https://endjin.com/corvus/json-schema/2020-12/schema",
+            "contentPath": "..\\Corvus.Json.CodeGeneration.CorvusVocabulary\\Corvus.Json.CodeGeneration\\CorvusVocabulary\\schema.json"
+        }
+    ],
     "typesToGenerate": [
         {
             "schemaFile": "./json-extended-types.json",
@@ -82,11 +90,11 @@
         },
         {
             "schemaFile": "./json-extended-types.json",
-            "rootPath": "#/$defs/JsonIpv4"
+            "rootPath": "#/$defs/JsonIpV4"
         },
         {
             "schemaFile": "./json-extended-types.json",
-            "rootPath": "#/$defs/JsonIpv6"
+            "rootPath": "#/$defs/JsonIpV6"
         },
         {
             "schemaFile": "./json-extended-types.json",
@@ -111,6 +119,14 @@
         {
             "schemaFile": "./json-extended-types.json",
             "rootPath": "#/$defs/JsonUri"
+        },
+        {
+            "schemaFile": "./json-extended-types.json",
+            "rootPath": "#/$defs/JsonUriReference"
+        },
+        {
+            "schemaFile": "./json-extended-types.json",
+            "rootPath": "#/$defs/JsonUriTemplate"
         },
         {
             "schemaFile": "./json-extended-types.json",
@@ -180,7 +196,5 @@
             "schemaFile": "./json-extended-types.json",
             "rootPath": "#/$defs/JsonUInt128"
         }
-    ],
-    "outputPath": "./GeneratedFormatTypes",
-    "rootNamespace": "Corvus.Json2"
+    ]
 }

@@ -235,7 +235,7 @@ public readonly struct JsonObjectProperty
     /// <param name="name">The name to match as a string.</param>
     /// <returns><c>True</c> if the name matches.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool NameEquals(ReadOnlySpan<byte> utf8Name, string name)
+    public bool NameEquals(in ReadOnlySpan<byte> utf8Name, string name)
     {
         if ((this.backing & Backing.JsonProperty) != 0)
         {

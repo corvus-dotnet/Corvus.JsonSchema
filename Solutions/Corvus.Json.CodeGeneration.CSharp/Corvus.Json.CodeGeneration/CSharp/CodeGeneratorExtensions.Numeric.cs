@@ -69,7 +69,7 @@ internal static partial class CodeGeneratorExtensions
                     .AppendLine("#if NET8_0_OR_GREATER");
             }
 
-            string dotnetTypeSuffix = FormatProviderRegistry.Instance.NumberTypeFormatProviders.GetTypeNameForNumericLangwordOrTypeName(numericTypeName) ?? numericTypeName;
+            string dotnetTypeSuffix = FormatHandlerRegistry.Instance.NumberFormatHandlers.GetTypeNameForNumericLangwordOrTypeName(numericTypeName) ?? numericTypeName;
             generator
                 .AppendSeparatorLine()
                 .AppendLineIndent("/// <summary>")
@@ -124,6 +124,134 @@ internal static partial class CodeGeneratorExtensions
     }
 
     /// <summary>
+    /// Appends specific methods for the number format type.
+    /// </summary>
+    /// <param name="generator">The generator.</param>
+    /// <param name="typeDeclaration">The type declaration for which to add the number format methods.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendNumberFormatPublicStaticMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        if (typeDeclaration.Format() is string format)
+        {
+            FormatHandlerRegistry.Instance.NumberFormatHandlers.AppendFormatPublicStaticMethods(generator, typeDeclaration, format);
+        }
+
+        return generator;
+    }
+
+    /// <summary>
+    /// Appends specific methods for the number format type.
+    /// </summary>
+    /// <param name="generator">The generator.</param>
+    /// <param name="typeDeclaration">The type declaration for which to add the number format methods.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendNumberFormatPublicMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        if (typeDeclaration.Format() is string format)
+        {
+            FormatHandlerRegistry.Instance.NumberFormatHandlers.AppendFormatPublicMethods(generator, typeDeclaration, format);
+        }
+
+        return generator;
+    }
+
+    /// <summary>
+    /// Appends specific methods for the number format type.
+    /// </summary>
+    /// <param name="generator">The generator.</param>
+    /// <param name="typeDeclaration">The type declaration for which to add the number format methods.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendNumberFormatPrivateStaticMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        if (typeDeclaration.Format() is string format)
+        {
+            FormatHandlerRegistry.Instance.NumberFormatHandlers.AppendFormatPrivateStaticMethods(generator, typeDeclaration, format);
+        }
+
+        return generator;
+    }
+
+    /// <summary>
+    /// Appends specific methods for the number format type.
+    /// </summary>
+    /// <param name="generator">The generator.</param>
+    /// <param name="typeDeclaration">The type declaration for which to add the number format methods.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendNumberFormatPrivateMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        if (typeDeclaration.Format() is string format)
+        {
+            FormatHandlerRegistry.Instance.NumberFormatHandlers.AppendFormatPrivateMethods(generator, typeDeclaration, format);
+        }
+
+        return generator;
+    }
+
+    /// <summary>
+    /// Appends specific conversion operators for the number format type.
+    /// </summary>
+    /// <param name="generator">The generator.</param>
+    /// <param name="typeDeclaration">The type declaration for which to add the number format conversion operators.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendNumberFormatConversionOperators(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        if (typeDeclaration.Format() is string format)
+        {
+            FormatHandlerRegistry.Instance.NumberFormatHandlers.AppendFormatConversionOperators(generator, typeDeclaration, format);
+        }
+
+        return generator;
+    }
+
+    /// <summary>
+    /// Appends specific properties for the number format type.
+    /// </summary>
+    /// <param name="generator">The generator.</param>
+    /// <param name="typeDeclaration">The type declaration for which to add the number format properties.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendNumberFormatPublicStaticProperties(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        if (typeDeclaration.Format() is string format)
+        {
+            FormatHandlerRegistry.Instance.NumberFormatHandlers.AppendFormatPublicStaticProperties(generator, typeDeclaration, format);
+        }
+
+        return generator;
+    }
+
+    /// <summary>
+    /// Appends specific properties for the number format type.
+    /// </summary>
+    /// <param name="generator">The generator.</param>
+    /// <param name="typeDeclaration">The type declaration for which to add the number format properties.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendNumberFormatPublicProperties(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        if (typeDeclaration.Format() is string format)
+        {
+            FormatHandlerRegistry.Instance.NumberFormatHandlers.AppendFormatPublicProperties(generator, typeDeclaration, format);
+        }
+
+        return generator;
+    }
+
+    /// <summary>
+    /// Appends specific constructors for the number format type.
+    /// </summary>
+    /// <param name="generator">The generator.</param>
+    /// <param name="typeDeclaration">The type declaration for which to add the number format constructors.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendNumberFormatConstructors(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        if (typeDeclaration.Format() is string format)
+        {
+            FormatHandlerRegistry.Instance.NumberFormatHandlers.AppendFormatConstructors(generator, typeDeclaration, format);
+        }
+
+        return generator;
+    }
+
+    /// <summary>
     /// Appends numeric operators.
     /// </summary>
     /// <param name="generator">The code generator.</param>
@@ -150,24 +278,26 @@ internal static partial class CodeGeneratorExtensions
     /// </summary>
     /// <param name="generator">The code generator.</param>
     /// <param name="typeDeclaration">The type declaration from which to convert.</param>
+    /// <param name="allImplicit">All conversions should be implicit.</param>
+    /// <param name="fromOnly">Only emit "from" conversions.</param>
     /// <returns>A reference to the generator having completed the operation.</returns>
-    public static CodeGenerator AppendNumericConversions(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    public static CodeGenerator AppendNumericConversions(this CodeGenerator generator, TypeDeclaration typeDeclaration, bool allImplicit = false, bool fromOnly = false)
     {
         return generator
-            .AppendNumericConversionsForDotnetType(typeDeclaration, "byte", "SafeGetByte")
-            .AppendNumericConversionsForDotnetType(typeDeclaration, "decimal", "SafeGetDecimal")
-            .AppendNumericConversionsForDotnetType(typeDeclaration, "double", "SafeGetDouble")
-            .AppendNumericConversionsForDotnetType(typeDeclaration, "short", "SafeGetInt16")
-            .AppendNumericConversionsForDotnetType(typeDeclaration, "int", "SafeGetInt32")
-            .AppendNumericConversionsForDotnetType(typeDeclaration, "long", "SafeGetInt64")
-            .AppendNumericConversionsForDotnetType(typeDeclaration, "Int128", "SafeGetInt128", FrameworkType.Net80OrGreater)
-            .AppendNumericConversionsForDotnetType(typeDeclaration, "sbyte", "SafeGetSByte")
-            .AppendNumericConversionsForDotnetType(typeDeclaration, "Half", "SafeGetHalf", FrameworkType.Net80OrGreater)
-            .AppendNumericConversionsForDotnetType(typeDeclaration, "float", "SafeGetSingle")
-            .AppendNumericConversionsForDotnetType(typeDeclaration, "ushort", "SafeGetUInt16")
-            .AppendNumericConversionsForDotnetType(typeDeclaration, "uint", "SafeGetUInt32")
-            .AppendNumericConversionsForDotnetType(typeDeclaration, "ulong", "SafeGetUInt64")
-            .AppendNumericConversionsForDotnetType(typeDeclaration, "UInt128", "SafeGetUInt128", FrameworkType.Net80OrGreater);
+            .AppendNumericConversionsForDotnetType(typeDeclaration, "byte", "SafeGetByte", allImplicit: allImplicit, fromOnly: fromOnly)
+            .AppendNumericConversionsForDotnetType(typeDeclaration, "decimal", "SafeGetDecimal", allImplicit: allImplicit, fromOnly: fromOnly)
+            .AppendNumericConversionsForDotnetType(typeDeclaration, "double", "SafeGetDouble", allImplicit: allImplicit, fromOnly: fromOnly)
+            .AppendNumericConversionsForDotnetType(typeDeclaration, "short", "SafeGetInt16", allImplicit: allImplicit, fromOnly: fromOnly)
+            .AppendNumericConversionsForDotnetType(typeDeclaration, "int", "SafeGetInt32", allImplicit: allImplicit, fromOnly: fromOnly)
+            .AppendNumericConversionsForDotnetType(typeDeclaration, "long", "SafeGetInt64", allImplicit: allImplicit, fromOnly: fromOnly)
+            .AppendNumericConversionsForDotnetType(typeDeclaration, "Int128", "SafeGetInt128", FrameworkType.Net80OrGreater, allImplicit: allImplicit, fromOnly: fromOnly)
+            .AppendNumericConversionsForDotnetType(typeDeclaration, "sbyte", "SafeGetSByte", allImplicit: allImplicit, fromOnly: fromOnly)
+            .AppendNumericConversionsForDotnetType(typeDeclaration, "Half", "SafeGetHalf", FrameworkType.Net80OrGreater, allImplicit: allImplicit, fromOnly: fromOnly)
+            .AppendNumericConversionsForDotnetType(typeDeclaration, "float", "SafeGetSingle", allImplicit: allImplicit, fromOnly: fromOnly)
+            .AppendNumericConversionsForDotnetType(typeDeclaration, "ushort", "SafeGetUInt16", allImplicit: allImplicit, fromOnly: fromOnly)
+            .AppendNumericConversionsForDotnetType(typeDeclaration, "uint", "SafeGetUInt32", allImplicit: allImplicit, fromOnly: fromOnly)
+            .AppendNumericConversionsForDotnetType(typeDeclaration, "ulong", "SafeGetUInt64", allImplicit: allImplicit, fromOnly: fromOnly)
+            .AppendNumericConversionsForDotnetType(typeDeclaration, "UInt128", "SafeGetUInt128", FrameworkType.Net80OrGreater, allImplicit: allImplicit, fromOnly: fromOnly);
     }
 
     /// <summary>
@@ -210,9 +340,9 @@ internal static partial class CodeGeneratorExtensions
             return generator;
         }
 
-        return ConditionalCodeSpecification.AppendConditional(generator, g => AppendEquals(g, typeDeclaration, dotnetType), frameworkType);
+        return ConditionalCodeSpecification.AppendConditional(generator, g => AppendEquals(g, dotnetType), frameworkType);
 
-        static void AppendEquals(CodeGenerator generator, TypeDeclaration typeDeclaration, string dotnetType)
+        static void AppendEquals(CodeGenerator generator, string dotnetType)
         {
             generator
                 .ReserveNameIfNotReserved("Equals")
@@ -258,13 +388,17 @@ internal static partial class CodeGeneratorExtensions
     /// <param name="numericValueAccessorMethodName">The name of the method that converts from a <see cref="JsonElement"/>
     /// value to the <paramref name="numericType"/>.</param>
     /// <param name="frameworkType">The framework type for which to emit the code.</param>
+    /// <param name="allImplicit">All numeric conversions should be implicit.</param>
+    /// <param name="fromOnly">Only emit conversions from the type.</param>
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendNumericConversionsForDotnetType(
         this CodeGenerator generator,
         TypeDeclaration typeDeclaration,
         string numericType,
         string numericValueAccessorMethodName,
-        FrameworkType frameworkType = FrameworkType.All)
+        FrameworkType frameworkType = FrameworkType.All,
+        bool allImplicit = false,
+        bool fromOnly = false)
     {
         generator.AppendSeparatorLine();
 
@@ -272,51 +406,57 @@ internal static partial class CodeGeneratorExtensions
 
         void AppendConversions(CodeGenerator generator)
         {
-            string operatorKind = typeDeclaration.PreferredDotnetNumericTypeName() == numericType ? "implicit" : "explicit";
-            generator
-                .AppendSeparatorLine()
-                .AppendLineIndent("/// <summary>")
-                .AppendLineIndent("/// Conversion to ", numericType, ".")
-                .AppendLineIndent("/// </summary>")
-                .AppendLineIndent("/// <param name=\"value\">The value from which to convert.</param>")
-                .AppendLineIndent("/// <returns>An instance of the ", numericType, ".</returns>")
-                .AppendIndent("public static ")
-                .Append(operatorKind)
-                .Append(" operator ")
-                .Append(numericType)
-                .Append('(')
-                .Append(typeDeclaration.DotnetTypeName())
-                .AppendLine(" value)")
-                .AppendLineIndent("{")
-                .PushIndent()
-                    .AppendConditionalBackingValueCallbackIndent(
-                        "Backing.JsonElement",
-                        "jsonElementBacking",
-                        (g, f) =>
-                        {
-                            g.AppendIndent("return value.")
-                             .Append(f)
-                             .Append('.')
-                             .Append(numericValueAccessorMethodName)
-                             .AppendLine("();");
-                        },
-                        identifier: "value")
-                    .AppendConditionalBackingValueCallbackIndent(
-                        "Backing.Number",
-                        "numberBacking",
-                        (g, f) =>
-                        {
-                            g.AppendIndent("return value.")
-                             .Append(f)
-                             .Append(".CreateChecked<")
-                             .Append(numericType)
-                             .AppendLine(">();");
-                        },
-                        identifier: "value")
+            string operatorKind = typeDeclaration.PreferredDotnetNumericTypeName() == numericType || allImplicit ? "implicit" : "explicit";
+
+            if (!fromOnly)
+            {
+                generator
                     .AppendSeparatorLine()
-                    .AppendLineIndent("throw new InvalidOperationException();")
-                .PopIndent()
-                .AppendLineIndent("}")
+                    .AppendLineIndent("/// <summary>")
+                    .AppendLineIndent("/// Conversion to ", numericType, ".")
+                    .AppendLineIndent("/// </summary>")
+                    .AppendLineIndent("/// <param name=\"value\">The value from which to convert.</param>")
+                    .AppendLineIndent("/// <returns>An instance of the ", numericType, ".</returns>")
+                    .AppendIndent("public static ")
+                    .Append(operatorKind)
+                    .Append(" operator ")
+                    .Append(numericType)
+                    .Append('(')
+                    .Append(typeDeclaration.DotnetTypeName())
+                    .AppendLine(" value)")
+                    .AppendLineIndent("{")
+                    .PushIndent()
+                        .AppendConditionalBackingValueCallbackIndent(
+                            "Backing.JsonElement",
+                            "jsonElementBacking",
+                            (g, f) =>
+                            {
+                                g.AppendIndent("return value.")
+                                 .Append(f)
+                                 .Append('.')
+                                 .Append(numericValueAccessorMethodName)
+                                 .AppendLine("();");
+                            },
+                            identifier: "value")
+                        .AppendConditionalBackingValueCallbackIndent(
+                            "Backing.Number",
+                            "numberBacking",
+                            (g, f) =>
+                            {
+                                g.AppendIndent("return value.")
+                                 .Append(f)
+                                 .Append(".CreateChecked<")
+                                 .Append(numericType)
+                                 .AppendLine(">();");
+                            },
+                            identifier: "value")
+                        .AppendSeparatorLine()
+                        .AppendLineIndent("throw new InvalidOperationException();")
+                    .PopIndent()
+                    .AppendLineIndent("}");
+            }
+
+            generator
                 .AppendSeparatorLine()
                 .AppendLineIndent("/// <summary>")
                 .AppendLineIndent("/// Conversion from ", numericType, ".")

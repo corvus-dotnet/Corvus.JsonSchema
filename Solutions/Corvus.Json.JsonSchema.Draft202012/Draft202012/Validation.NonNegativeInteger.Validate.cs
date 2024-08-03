@@ -87,7 +87,7 @@ public readonly partial struct Validation
                 ValidationLevel level = ValidationLevel.Flag)
             {
                 ValidationContext result = validationContext;
-                return Corvus.Json.Validate.TypeInteger(value, result, level);
+                return Corvus.Json.ValidateWithoutCoreType.TypeInteger(value, result, level);
             }
 
             /// <summary>

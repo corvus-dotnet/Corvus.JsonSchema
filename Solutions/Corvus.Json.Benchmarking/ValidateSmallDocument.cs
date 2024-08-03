@@ -67,34 +67,28 @@ public class ValidateSmallDocument
     /// Validates using the Corvus V3 types.
     /// </summary>
     [Benchmark(Baseline = true)]
-    public void ValidateSmallDocumentCorvusV3()
+    public bool ValidateSmallDocumentCorvusV3()
     {
         ValidationContext result = this.personV3.Validate(ValidationContext.ValidContext);
-        if (!result.IsValid)
-        {
-            throw new InvalidOperationException();
-        }
+        return result.IsValid;
     }
 
     /// <summary>
     /// Validates using the Corvus V3 types.
     /// </summary>
     [Benchmark]
-    public void ValidateSmallDocumentCorvusV4()
+    public bool ValidateSmallDocumentCorvusV4()
     {
         ValidationContext result = this.personV4.Validate(ValidationContext.ValidContext);
-        if (!result.IsValid)
-        {
-            throw new InvalidOperationException();
-        }
+        return result.IsValid;
     }
 
     /// <summary>
     /// Validates using the JsonEverything types.
     /// </summary>
     [Benchmark]
-    public void ValidateSmallDocumentJsonEverything()
+    public JsonEverything.EvaluationResults ValidateSmallDocumentJsonEverything()
     {
-        JsonEverything.EvaluationResults result = this.schema!.Evaluate(this.node, Options);
+        return this.schema!.Evaluate(this.node, Options);
     }
 }

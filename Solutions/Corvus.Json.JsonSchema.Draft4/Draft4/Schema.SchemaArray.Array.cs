@@ -66,7 +66,22 @@ public readonly partial struct Schema
             {
                 if ((this.backing & Backing.JsonElement) != 0)
                 {
-                    return new(this.jsonElementBacking);
+                    if (index < 0)
+                    {
+                        throw new IndexOutOfRangeException();
+                    }
+
+                    JsonElement.ArrayEnumerator enumerator = this.jsonElementBacking.EnumerateArray();
+                    while (index >= 0)
+                    {
+                        index--;
+                        if (!enumerator.MoveNext())
+                        {
+                            throw new IndexOutOfRangeException();
+                        }
+                    }
+
+                    return new(enumerator.Current);
                 }
 
                 if ((this.backing & Backing.Array) != 0)
@@ -98,7 +113,22 @@ public readonly partial struct Schema
             {
                 if ((this.backing & Backing.JsonElement) != 0)
                 {
-                    return new(this.jsonElementBacking);
+                    if (index < 0)
+                    {
+                        throw new IndexOutOfRangeException();
+                    }
+
+                    JsonElement.ArrayEnumerator enumerator = this.jsonElementBacking.EnumerateArray();
+                    while (index >= 0)
+                    {
+                        index--;
+                        if (!enumerator.MoveNext())
+                        {
+                            throw new IndexOutOfRangeException();
+                        }
+                    }
+
+                    return new(enumerator.Current);
                 }
 
                 if ((this.backing & Backing.Array) != 0)
@@ -177,7 +207,8 @@ public readonly partial struct Schema
         /// </summary>
         /// <param name="items">The span of items from which to construct the array.</param>
         /// <returns>An instance of the array constructed from the span.</returns>
-        public static SchemaArray Create(ReadOnlySpan<Corvus.Json.JsonSchema.Draft4.Schema> items)        {
+        public static SchemaArray Create(ReadOnlySpan<Corvus.Json.JsonSchema.Draft4.Schema> items)
+        {
             return new([..items]);
         }
 
@@ -411,7 +442,13 @@ public readonly partial struct Schema
         /// <inheritdoc/>
         SchemaArray IJsonArray<SchemaArray>.Add(params JsonAny[] items)
         {
-            return new([..items]);
+            ImmutableList<JsonAny>.Builder builder = __CorvusArrayHelpers.GetImmutableListBuilder(this);
+            foreach (JsonAny item in items)
+            {
+                builder.Add(item.AsAny);
+            }
+
+            return new(builder.ToImmutable());
         }
 
         /// <inheritdoc/>

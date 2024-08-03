@@ -11,7 +11,6 @@
 
 using System.Buffers;
 using System.Diagnostics.CodeAnalysis;
-using System.Text;
 using System.Text.Json;
 using Corvus.Json;
 using Corvus.Json.Internal;
@@ -34,6 +33,95 @@ public readonly partial struct Person
         : IJsonString<Corvus.Json.Benchmarking.Models.V4.Person.DateOfBirthEntity>
 #endif
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="DateOfBirthEntity"/> struct.
+        /// </summary>
+        /// <param name="value">The value from which to construct the instance.</param>
+        public DateOfBirthEntity(in ReadOnlySpan<char> value)
+        {
+            this.backing = Backing.String;
+            this.jsonElementBacking = default;
+            this.stringBacking = value.ToString();
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="DateOfBirthEntity"/> struct.
+        /// </summary>
+        /// <param name="value">The value from which to construct the instance.</param>
+        public DateOfBirthEntity(in ReadOnlySpan<byte> value)
+        {
+            this.backing = Backing.String;
+            this.jsonElementBacking = default;
+
+#if NET8_0_OR_GREATER
+            this.stringBacking = System.Text.Encoding.UTF8.GetString(value);
+#else
+            byte[] bytes = ArrayPool<byte>.Shared.Rent(value.Length);
+            try
+            {
+                value.CopyTo(bytes);
+                this.stringBacking = System.Text.Encoding.UTF8.GetString(bytes);
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(bytes);
+            }
+#endif
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="DateOfBirthEntity"/> struct.
+        /// </summary>
+        /// <param name="value">The value from which to construct the instance.</param>
+        public DateOfBirthEntity(NodaTime.LocalDate value)
+        {
+            this.backing = Backing.String;
+            this.jsonElementBacking = default;
+            this.stringBacking = StandardDateFormat.FormatDate(value);
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="DateOfBirthEntity"/> struct.
+        /// </summary>
+        /// <param name="value">The value from which to construct the instance.</param>
+        public DateOfBirthEntity(DateTime value)
+        {
+            this.backing = Backing.String;
+            this.jsonElementBacking = default;
+            this.stringBacking = StandardDateFormat.FormatDate(NodaTime.LocalDate.FromDateTime(value));
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="DateOfBirthEntity"/> struct.
+        /// </summary>
+        /// <param name="value1">The <see cref="DateTime"/> from which to construct the instance.</param>
+        /// <param name="value2">The <see cref="NodaTime.CalendarSystem"/> from which to construct the instance.</param>
+        public DateOfBirthEntity(DateTime value1, NodaTime.CalendarSystem value2)
+        {
+            this.backing = Backing.String;
+            this.jsonElementBacking = default;
+            this.stringBacking = StandardDateFormat.FormatDate(NodaTime.LocalDate.FromDateTime(value1, value2));
+        }
+
+        /// <summary>
+        /// Conversion to <see cref="NodaTime.LocalDate"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator NodaTime.LocalDate(DateOfBirthEntity value)
+        {
+            return
+                value.GetDate();
+        }
+
+        /// <summary>
+        /// Conversion from <see cref="NodaTime.LocalDate"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator DateOfBirthEntity(in NodaTime.LocalDate value)
+        {
+            return new(value);
+        }
+
         /// <summary>
         /// Conversion from <see cref="string"/>.
         /// </summary>
@@ -371,8 +459,8 @@ public readonly partial struct Person
 
                 try
                 {
-                    int written = System.Text.Encoding.UTF8.GetChars(bytes, 0, bytes.Length, chars, 0);
-                    return chars.SequenceEqual(this.stringBacking);
+                    int written = System.Text.Encoding.UTF8.GetChars(bytes, 0, utf8Bytes.Length, chars, 0);
+                    return chars.AsSpan()[..written].SequenceEqual(this.stringBacking.AsSpan());
                 }
                 finally
                 {
@@ -439,6 +527,42 @@ public readonly partial struct Person
             return false;
         }
 
+        /// <summary>
+        /// Gets the value as a <see cref="NodaTime.LocalDate"/>.
+        /// </summary>
+        /// <returns>The value as a <see cref="NodaTime.LocalDate"/>.</returns>
+        /// <exception cref="InvalidOperationException">The value was not a date.</exception>
+        public NodaTime.LocalDate GetDate()
+        {
+            if (this.TryGetDate(out NodaTime.LocalDate result))
+            {
+                return result;
+            }
+
+            throw new InvalidOperationException();
+        }
+
+        /// <summary>
+        /// Try to get the date value.
+        /// </summary>
+        /// <param name="result">The value as a <see cref="NodaTime.LocalDate"/>.</param>
+        /// <returns><see langword="true"/> if it was possible to get a date value from the instance.</returns>
+        public bool TryGetDate(out NodaTime.LocalDate result)
+        {
+            if (this.jsonElementBacking.ValueKind == JsonValueKind.String)
+            {
+                return this.jsonElementBacking.TryGetValue(StandardDateFormat.DateParser, default(object?), out result);
+            }
+
+            if ((this.backing & Backing.String) != 0)
+            {
+                return StandardDateFormat.DateParser(this.stringBacking.AsSpan(), default, out result);
+            }
+
+            result = default;
+            return false;
+        }
+
 #if NET8_0_OR_GREATER
         /// <inheritdoc/>
         public bool TryFormat(Span<char> destination, out int charsWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
@@ -453,20 +577,31 @@ public readonly partial struct Person
 
             if ((this.backing & Backing.JsonElement) != 0)
             {
-                char[] buffer = ArrayPool<char>.Shared.Rent(destination.Length);
-                try
+                if (this.jsonElementBacking.ValueKind == JsonValueKind.String)
                 {
-                    bool result = this.jsonElementBacking.TryGetValue(FormatSpan, new __Corvus__Output(buffer, destination.Length), out charsWritten);
-                    if (result)
+                    char[] buffer = ArrayPool<char>.Shared.Rent(destination.Length);
+                    try
                     {
-                        buffer.AsSpan(0, charsWritten).CopyTo(destination);
-                    }
+                        bool result = this.jsonElementBacking.TryGetValue(FormatSpan, new __Corvus__Output(buffer, destination.Length), out charsWritten);
+                        if (result)
+                        {
+                            buffer.AsSpan(0, charsWritten).CopyTo(destination);
+                        }
 
-                    return result;
+                        return result;
+                    }
+                    finally
+                    {
+                        ArrayPool<char>.Shared.Return(buffer);
+                    }
                 }
-                finally
+                else
                 {
-                    ArrayPool<char>.Shared.Return(buffer);
+                    string value = this.jsonElementBacking.GetRawText();
+                    int length = Math.Min(destination.Length, this.stringBacking.Length);
+                    this.stringBacking.AsSpan(0, length).CopyTo(destination);
+                    charsWritten = length;
+                    return true;
                 }
             }
 
@@ -488,7 +623,9 @@ public readonly partial struct Person
             // There is no formatting for the string
             return this.ToString();
         }
+#endif
 
+#if NET8_0_OR_GREATER
         private readonly record struct __Corvus__Output(char[] Destination, int Length);
 #endif
     }

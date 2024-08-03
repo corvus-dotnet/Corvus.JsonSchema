@@ -63,7 +63,7 @@ public static partial class ValidationCodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendEnumeratorType(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
-        if (typeDeclaration.FallbackObjectPropertyType() is FallbackObjectPropertyType propertyType && !propertyType.ReducedType.IsJsonAnyType())
+        if (typeDeclaration.FallbackObjectPropertyType() is FallbackObjectPropertyType propertyType && !propertyType.ReducedType.IsBuiltInJsonAnyType())
         {
             generator
                 .GenericTypeOf("JsonObjectEnumerator", propertyType.ReducedType);
@@ -85,7 +85,7 @@ public static partial class ValidationCodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendJsonObjectPropertyType(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
-        if (typeDeclaration.FallbackObjectPropertyType() is FallbackObjectPropertyType propertyType && !propertyType.ReducedType.IsJsonAnyType())
+        if (typeDeclaration.FallbackObjectPropertyType() is FallbackObjectPropertyType propertyType && !propertyType.ReducedType.IsBuiltInJsonAnyType())
         {
             generator
                 .GenericTypeOf("JsonObjectProperty", propertyType.ReducedType);

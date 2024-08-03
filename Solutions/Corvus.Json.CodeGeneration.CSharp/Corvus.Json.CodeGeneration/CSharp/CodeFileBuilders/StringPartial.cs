@@ -35,9 +35,8 @@ public sealed class StringPartial : ICodeFileBuilder
                         "System.Buffers",
                         new("System.Collections.Immutable", EmitIfIsObjectOrArray(typeDeclaration)),
                         "System.Diagnostics.CodeAnalysis",
-                        "System.Text",
                         "System.Text.Json",
-                        "Corvus.Json",
+                        new("Corvus.Json", EmitIfNotCorvusJsonExtendedType(typeDeclaration)),
                         "Corvus.Json.Internal")
                     .AppendLine()
                     .BeginNamespace(typeDeclaration.DotnetNamespace())
@@ -51,6 +50,11 @@ public sealed class StringPartial : ICodeFileBuilder
                                     new(g => g.GenericTypeOf("IJsonString", typeDeclaration)),
                                     new("ISpanFormattable", FrameworkType.Net80OrGreater),
                                 ])
+                                .AppendPublicStringConstructors(typeDeclaration)
+                                .AppendStringFormatConstructors(typeDeclaration)
+                                .AppendStringFormatPublicStaticProperties(typeDeclaration)
+                                .AppendStringFormatPublicProperties(typeDeclaration)
+                                .AppendStringFormatConversionOperators(typeDeclaration)
                                 .AppendImplicitConversionFromTypeUsingConstructor(typeDeclaration, "string")
                                 .AppendImplicitConversionFromJsonValueTypeUsingConstructor(typeDeclaration, "JsonString", JsonValueKind.String, "(string)value")
                                 .AppendImplicitConversionToJsonValueType(typeDeclaration, "JsonString", CoreTypes.String, "value.AsString")
@@ -61,7 +65,12 @@ public sealed class StringPartial : ICodeFileBuilder
                                 .AppendGetString()
                                 .AppendEqualsUtf8Bytes()
                                 .AppendEqualsString()
+                                .AppendStringFormatPublicStaticMethods(typeDeclaration)
+                                .AppendStringFormatPublicMethods(typeDeclaration)
                                 .AppendNet80Formatting()
+                                .AppendStringFormatPrivateStaticMethods(typeDeclaration)
+                                .AppendStringFormatPrivateMethods(typeDeclaration)
+                                .AppendNet80FormattingStructs()
                         .EndClassOrStructDeclaration()
                     .EndTypeDeclarationNesting(typeDeclaration)
                     .EndNamespace()
@@ -75,6 +84,13 @@ public sealed class StringPartial : ICodeFileBuilder
             return (typeDeclaration.ImpliedCoreTypesOrAny() & (CoreTypes.Object | CoreTypes.Array)) != 0
                  ? FrameworkType.All
                  : FrameworkType.NotEmitted;
+        }
+
+        static FrameworkType EmitIfNotCorvusJsonExtendedType(TypeDeclaration typeDeclaration)
+        {
+            return typeDeclaration.IsCorvusJsonExtendedType()
+                 ? FrameworkType.NotEmitted
+                 : FrameworkType.All;
         }
     }
 }

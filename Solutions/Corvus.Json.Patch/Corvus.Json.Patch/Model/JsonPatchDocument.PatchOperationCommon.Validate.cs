@@ -108,15 +108,15 @@ public readonly partial struct JsonPatchDocument
                         }
 
                         ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonString>().Validate(result.CreateChildContext(), level);
+                        if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                        {
+                            return propertyResult;
+                        }
+
                         result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
                         if (level > ValidationLevel.Basic)
                         {
                             result = result.PopLocation();
-                        }
-
-                        if (level == ValidationLevel.Flag && !result.IsValid)
-                        {
-                            return result;
                         }
                     }
                     else if (property.NameEquals(JsonPropertyNames.PathUtf8, JsonPropertyNames.Path))
@@ -129,15 +129,15 @@ public readonly partial struct JsonPatchDocument
                         }
 
                         ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonPointer>().Validate(result.CreateChildContext(), level);
+                        if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                        {
+                            return propertyResult;
+                        }
+
                         result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
                         if (level > ValidationLevel.Basic)
                         {
                             result = result.PopLocation();
-                        }
-
-                        if (level == ValidationLevel.Flag && !result.IsValid)
-                        {
-                            return result;
                         }
                     }
 

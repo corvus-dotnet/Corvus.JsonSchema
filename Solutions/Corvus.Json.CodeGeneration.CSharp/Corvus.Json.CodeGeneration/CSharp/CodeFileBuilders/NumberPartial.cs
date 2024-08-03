@@ -36,7 +36,7 @@ public sealed class NumberPartial : ICodeFileBuilder
                         "System.Diagnostics.CodeAnalysis",
                         new("System.Numerics", FrameworkType.Net80OrGreater),
                         "System.Text.Json",
-                        "Corvus.Json",
+                        new("Corvus.Json", EmitIfNotCorvusJsonExtendedType(typeDeclaration)),
                         "Corvus.Json.Internal")
                     .AppendLine()
                     .BeginNamespace(typeDeclaration.DotnetNamespace())
@@ -56,8 +56,12 @@ public sealed class NumberPartial : ICodeFileBuilder
                                     new(g => g.GenericTypeOf("IDecrementOperators", typeDeclaration), FrameworkType.Net80OrGreater),
                                 ])
                             .AppendPublicNumericConstructor(typeDeclaration)
+                            .AppendNumberFormatConstructors(typeDeclaration)
+                            .AppendNumberFormatPublicStaticProperties(typeDeclaration)
+                            .AppendNumberFormatPublicProperties(typeDeclaration)
+                            .AppendNumberFormatConversionOperators(typeDeclaration)
                             .AppendImplicitConversionFromJsonValueTypeUsingConstructor(typeDeclaration, "JsonNumber", JsonValueKind.Number, "value.AsBinaryJsonNumber")
-                            .AppendImplicitConversionToJsonValueType(typeDeclaration, "JsonNumber", CoreTypes.Number, "value.AsNumber")
+                            .AppendImplicitConversionToJsonValueType(typeDeclaration, "JsonNumber", CoreTypes.Number | CoreTypes.Integer, "value.AsNumber")
                             .AppendImplicitConversionToJsonValueType(typeDeclaration, "JsonInteger", CoreTypes.Integer, "value.As<JsonInteger>()")
                             .AppendNumericConversions(typeDeclaration)
                             .AppendNumericOperators(typeDeclaration)
@@ -65,6 +69,10 @@ public sealed class NumberPartial : ICodeFileBuilder
                             .AppendAsDotnetNumericValue(typeDeclaration)
                             .AppendNumericEquals(typeDeclaration)
                             .AppendEqualsBinaryJsonNumber()
+                            .AppendNumberFormatPublicStaticMethods(typeDeclaration)
+                            .AppendNumberFormatPublicMethods(typeDeclaration)
+                            .AppendNumberFormatPrivateStaticMethods(typeDeclaration)
+                            .AppendNumberFormatPrivateMethods(typeDeclaration)
                         .EndClassOrStructDeclaration()
                     .EndTypeDeclarationNesting(typeDeclaration)
                     .EndNamespace()
@@ -72,6 +80,13 @@ public sealed class NumberPartial : ICodeFileBuilder
         }
 
         return generator;
+
+        static FrameworkType EmitIfNotCorvusJsonExtendedType(TypeDeclaration typeDeclaration)
+        {
+            return typeDeclaration.IsCorvusJsonExtendedType()
+                 ? FrameworkType.NotEmitted
+                 : FrameworkType.All;
+        }
 
         static FrameworkType EmitIfIsObjectOrArray(TypeDeclaration typeDeclaration)
         {

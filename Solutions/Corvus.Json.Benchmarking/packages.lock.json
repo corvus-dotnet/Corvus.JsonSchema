@@ -549,7 +549,8 @@
           "Corvus.UriTemplates": "[2.0.0, )",
           "Microsoft.Extensions.Http": "[8.0.0, )",
           "Microsoft.Extensions.ObjectPool": "[8.0.7, )",
-          "NodaTime": "[3.1.11, )"
+          "NodaTime": "[3.1.11, )",
+          "System.Text.Json": "[8.0.4, )"
         }
       }
     }

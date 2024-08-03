@@ -12,7 +12,6 @@
 using System.Buffers;
 using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
-using System.Text;
 using System.Text.Json;
 using Corvus.Json;
 using Corvus.Json.Internal;
@@ -30,6 +29,45 @@ public readonly partial struct OtherNames
     : IJsonString<Corvus.Json.Benchmarking.Models.V4.OtherNames>
 #endif
 {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="OtherNames"/> struct.
+    /// </summary>
+    /// <param name="value">The value from which to construct the instance.</param>
+    public OtherNames(in ReadOnlySpan<char> value)
+    {
+        this.backing = Backing.String;
+        this.jsonElementBacking = default;
+        this.stringBacking = value.ToString();
+        this.arrayBacking = ImmutableList<JsonAny>.Empty;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="OtherNames"/> struct.
+    /// </summary>
+    /// <param name="value">The value from which to construct the instance.</param>
+    public OtherNames(in ReadOnlySpan<byte> value)
+    {
+        this.backing = Backing.String;
+        this.jsonElementBacking = default;
+
+#if NET8_0_OR_GREATER
+        this.stringBacking = System.Text.Encoding.UTF8.GetString(value);
+#else
+        byte[] bytes = ArrayPool<byte>.Shared.Rent(value.Length);
+        try
+        {
+            value.CopyTo(bytes);
+            this.stringBacking = System.Text.Encoding.UTF8.GetString(bytes);
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(bytes);
+        }
+#endif
+
+        this.arrayBacking = ImmutableList<JsonAny>.Empty;
+    }
+
     /// <summary>
     /// Conversion from <see cref="string"/>.
     /// </summary>
@@ -349,8 +387,8 @@ public readonly partial struct OtherNames
 
             try
             {
-                int written = System.Text.Encoding.UTF8.GetChars(bytes, 0, bytes.Length, chars, 0);
-                return chars.SequenceEqual(this.stringBacking);
+                int written = System.Text.Encoding.UTF8.GetChars(bytes, 0, utf8Bytes.Length, chars, 0);
+                return chars.AsSpan()[..written].SequenceEqual(this.stringBacking.AsSpan());
             }
             finally
             {
@@ -431,20 +469,31 @@ public readonly partial struct OtherNames
 
         if ((this.backing & Backing.JsonElement) != 0)
         {
-            char[] buffer = ArrayPool<char>.Shared.Rent(destination.Length);
-            try
+            if (this.jsonElementBacking.ValueKind == JsonValueKind.String)
             {
-                bool result = this.jsonElementBacking.TryGetValue(FormatSpan, new __Corvus__Output(buffer, destination.Length), out charsWritten);
-                if (result)
+                char[] buffer = ArrayPool<char>.Shared.Rent(destination.Length);
+                try
                 {
-                    buffer.AsSpan(0, charsWritten).CopyTo(destination);
-                }
+                    bool result = this.jsonElementBacking.TryGetValue(FormatSpan, new __Corvus__Output(buffer, destination.Length), out charsWritten);
+                    if (result)
+                    {
+                        buffer.AsSpan(0, charsWritten).CopyTo(destination);
+                    }
 
-                return result;
+                    return result;
+                }
+                finally
+                {
+                    ArrayPool<char>.Shared.Return(buffer);
+                }
             }
-            finally
+            else
             {
-                ArrayPool<char>.Shared.Return(buffer);
+                string value = this.jsonElementBacking.GetRawText();
+                int length = Math.Min(destination.Length, this.stringBacking.Length);
+                this.stringBacking.AsSpan(0, length).CopyTo(destination);
+                charsWritten = length;
+                return true;
             }
         }
 
@@ -466,7 +515,9 @@ public readonly partial struct OtherNames
         // There is no formatting for the string
         return this.ToString();
     }
+#endif
 
+#if NET8_0_OR_GREATER
     private readonly record struct __Corvus__Output(char[] Destination, int Length);
 #endif
 }

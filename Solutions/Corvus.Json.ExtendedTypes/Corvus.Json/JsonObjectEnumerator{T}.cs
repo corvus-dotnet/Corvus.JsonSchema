@@ -127,14 +127,5 @@ public struct JsonObjectEnumerator<T> : IEnumerable, IEnumerator, IEnumerable<Js
     /// <inheritdoc/>
     public void Reset()
     {
-        if ((this.backing & Backing.JsonElementEnumerator) != 0)
-        {
-            this.jsonElementEnumerator.Reset();
-        }
-
-        if ((this.backing & Backing.PropertyBackingEnumerator) != 0)
-        {
-            this.propertyBackingEnumerator.Reset();
-        }
     }
 }

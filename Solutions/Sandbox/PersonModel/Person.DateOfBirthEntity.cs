@@ -323,7 +323,7 @@ public readonly partial struct Person
 
             return value.ValueKind switch
             {
-                JsonValueKind.String => new((string)value.AsString),
+                JsonValueKind.String => new(value.AsString.GetString()!),
                 JsonValueKind.Null => Null,
                 _ => Undefined,
             };
@@ -365,7 +365,7 @@ public readonly partial struct Person
 
             return value.ValueKind switch
             {
-                JsonValueKind.String => new((string)value.AsString),
+                JsonValueKind.String => new(value.GetString()!),
                 JsonValueKind.Null => Null,
                 _ => Undefined,
             };
@@ -487,6 +487,19 @@ public readonly partial struct Person
         /// Parses the DateOfBirthEntity.
         /// </summary>
         /// <param name="source">The source of the JSON string to parse.</param>
+        public static DateOfBirthEntity ParseValue(string source)
+        {
+#if NET8_0_OR_GREATER
+            return IJsonValue<DateOfBirthEntity>.ParseValue(source);
+#else
+            return JsonValueHelpers.ParseValue<DateOfBirthEntity>(source.AsSpan());
+#endif
+        }
+
+        /// <summary>
+        /// Parses the DateOfBirthEntity.
+        /// </summary>
+        /// <param name="source">The source of the JSON string to parse.</param>
         public static DateOfBirthEntity ParseValue(ReadOnlySpan<char> source)
         {
 #if NET8_0_OR_GREATER
@@ -557,7 +570,7 @@ public readonly partial struct Person
         public override bool Equals(object? obj)
         {
             return
-                (obj is IJsonValue jv && this.Equals(jv.AsAny)) ||
+                (obj is IJsonValue jv && this.Equals(jv.As<DateOfBirthEntity>())) ||
                 (obj is null && this.IsNull());
         }
 
@@ -565,7 +578,7 @@ public readonly partial struct Person
         public bool Equals<T>(in T other)
             where T : struct, IJsonValue<T>
         {
-            return JsonValueHelpers.CompareValues(this, other);
+            return this.Equals(other.As<DateOfBirthEntity>());
         }
 
         /// <summary>
@@ -575,7 +588,26 @@ public readonly partial struct Person
         /// <returns><see langword="true"/> if the values were equal.</returns>
         public bool Equals(in DateOfBirthEntity other)
         {
-            return JsonValueHelpers.CompareValues(this, other);
+            if (this.IsNull() && other.IsNull())
+            {
+                return true;
+            }
+
+            if (other.ValueKind != JsonValueKind.String)
+            {
+                return false;
+            }
+            if (!other.As<DateOfBirthEntity>().TryGetDate(out NodaTime.LocalDate otherDate))
+            {
+                return false;
+            }
+
+            if (!this.TryGetDate(out NodaTime.LocalDate thisDate))
+            {
+                return false;
+            }
+
+            return thisDate.Equals(otherDate);
         }
 
         /// <inheritdoc/>

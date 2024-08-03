@@ -437,7 +437,7 @@ public readonly partial struct Format
 
         return value.ValueKind switch
         {
-            JsonValueKind.Object => new(value.AsObject.AsPropertyBacking()),
+            JsonValueKind.Object => new(value.AsPropertyBacking()),
             JsonValueKind.Null => Null,
             _ => Undefined,
         };
@@ -521,6 +521,19 @@ public readonly partial struct Format
     /// Parses the Format.
     /// </summary>
     /// <param name="source">The source of the JSON string to parse.</param>
+    public static Format ParseValue(string source)
+    {
+#if NET8_0_OR_GREATER
+        return IJsonValue<Format>.ParseValue(source);
+#else
+        return JsonValueHelpers.ParseValue<Format>(source.AsSpan());
+#endif
+    }
+
+    /// <summary>
+    /// Parses the Format.
+    /// </summary>
+    /// <param name="source">The source of the JSON string to parse.</param>
     public static Format ParseValue(ReadOnlySpan<char> source)
     {
 #if NET8_0_OR_GREATER
@@ -596,7 +609,7 @@ public readonly partial struct Format
     public override bool Equals(object? obj)
     {
         return
-            (obj is IJsonValue jv && this.Equals(jv.AsAny)) ||
+            (obj is IJsonValue jv && this.Equals(jv.As<Format>())) ||
             (obj is null && this.IsNull());
     }
 
@@ -604,7 +617,7 @@ public readonly partial struct Format
     public bool Equals<T>(in T other)
         where T : struct, IJsonValue<T>
     {
-        return JsonValueHelpers.CompareValues(this, other);
+        return this.Equals(other.As<Format>());
     }
 
     /// <summary>
@@ -614,7 +627,50 @@ public readonly partial struct Format
     /// <returns><see langword="true"/> if the values were equal.</returns>
     public bool Equals(in Format other)
     {
-        return JsonValueHelpers.CompareValues(this, other);
+        JsonValueKind thisKind = this.ValueKind;
+        JsonValueKind otherKind = other.ValueKind;
+        if (thisKind != otherKind)
+        {
+            return false;
+        }
+
+        if (thisKind == JsonValueKind.Null || thisKind == JsonValueKind.Undefined)
+        {
+            return true;
+        }
+
+        if (thisKind == JsonValueKind.True || thisKind == JsonValueKind.False)
+        {
+            return true;
+        }
+
+        if (thisKind == JsonValueKind.Object)
+        {
+            int count = 0;
+            foreach (JsonObjectProperty property in this.EnumerateObject())
+            {
+                if (!other.TryGetProperty(property.Name, out JsonAny value) || !property.Value.Equals(value))
+                {
+                    return false;
+                }
+
+                count++;
+            }
+
+            int otherCount = 0;
+            foreach (JsonObjectProperty otherProperty in other.EnumerateObject())
+            {
+                otherCount++;
+                if (otherCount > count)
+                {
+                    return false;
+                }
+            }
+
+            return count == otherCount;
+        }
+
+        return false;
     }
 
     /// <inheritdoc/>

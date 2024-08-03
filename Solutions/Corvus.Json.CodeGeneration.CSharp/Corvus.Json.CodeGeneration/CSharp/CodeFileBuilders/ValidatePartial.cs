@@ -34,21 +34,34 @@ public sealed class ValidatePartial : ICodeFileBuilder
                         "System.Runtime.CompilerServices",
                         "System.Text.Json",
                         RequiresRegularExressions(typeDeclaration) ? "System.Text.RegularExpressions" : ConditionalCodeSpecification.DoNotEmit,
-                        "Corvus.Json")
+                        new("Corvus.Json", EmitIfNotCorvusJsonExtendedType(typeDeclaration)))
                     .AppendLine()
                     .BeginNamespace(typeDeclaration.DotnetNamespace())
                     .AppendLine()
                     .BeginTypeDeclarationNesting(typeDeclaration)
                         .AppendDocumentation(typeDeclaration)
-                        .BeginPublicReadonlyPartialStructDeclaration(typeDeclaration.DotnetTypeName())
-                            .PushValidationClassNameAndScope()
-                            .PushValidationHandlerMethodNames(typeDeclaration)
-                            .AppendConstInstanceStaticProperty(typeDeclaration)
-                            .AppendValidateMethod(typeDeclaration)
-                            .AppendAnyOfConstantValuesClasses(typeDeclaration)
-                            .AppendValidationClass(typeDeclaration)
-                            .PopValidationHandlerMethodNames(typeDeclaration)
-                            .PopValidationClassNameAndScope()
+                        .BeginPublicReadonlyPartialStructDeclaration(typeDeclaration.DotnetTypeName());
+
+            // This is a core type
+            if (typeDeclaration.IsCorvusJsonExtendedType())
+            {
+                generator
+                                .AppendValidateMethod(typeDeclaration);
+            }
+            else
+            {
+                generator
+                                .PushValidationClassNameAndScope()
+                                .PushValidationHandlerMethodNames(typeDeclaration)
+                                .AppendConstInstanceStaticProperty(typeDeclaration)
+                                .AppendValidateMethod(typeDeclaration)
+                                .AppendAnyOfConstantValuesClasses(typeDeclaration)
+                                .AppendValidationClass(typeDeclaration)
+                                .PopValidationHandlerMethodNames(typeDeclaration)
+                                .PopValidationClassNameAndScope();
+            }
+
+            generator
                         .EndClassOrStructDeclaration()
                     .EndTypeDeclarationNesting(typeDeclaration)
                     .EndNamespace()
@@ -56,6 +69,13 @@ public sealed class ValidatePartial : ICodeFileBuilder
         }
 
         return generator;
+
+        static FrameworkType EmitIfNotCorvusJsonExtendedType(TypeDeclaration typeDeclaration)
+        {
+            return typeDeclaration.IsCorvusJsonExtendedType()
+                 ? FrameworkType.NotEmitted
+                 : FrameworkType.All;
+        }
     }
 
     private static bool RequiresRegularExressions(TypeDeclaration typeDeclaration)
