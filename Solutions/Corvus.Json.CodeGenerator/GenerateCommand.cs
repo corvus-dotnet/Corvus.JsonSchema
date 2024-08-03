@@ -80,10 +80,10 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
         var config = GeneratorConfig.Create(
             settings.RootNamespace,
             [GeneratorConfig.GenerationSpecification.Create(
-                settings.SchemaFile,
-                settings.OutputRootTypeName.AsNullableJsonString(),
-                settings.RebaseToRootPath,
-                settings.RootPath.AsNullableJsonString())],
+                schemaFile: settings.SchemaFile,
+                outputRootTypeName: settings.OutputRootTypeName.AsNullableJsonString(),
+                rebaseToRootPath: settings.RebaseToRootPath,
+                rootPath: settings.RootPath.AsNullableJsonString())],
             additionalFiles: null,
             assertFormat: settings.AssertFormat,
             disabledNamingHeuristics: settings.DisableNamingHeuristic is string[] disabledItems ? JsonArray.FromRange(disabledItems) : default(GeneratorConfig.JsonStringArray?),

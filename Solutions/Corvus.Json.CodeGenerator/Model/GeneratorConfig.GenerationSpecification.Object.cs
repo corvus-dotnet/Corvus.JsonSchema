@@ -112,6 +112,59 @@ public readonly partial struct GeneratorConfig
         }
 
         /// <summary>
+        /// Gets the (optional) <c>outputRootNamespace</c> property.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// If this JSON property is <see cref="JsonValueKind.Undefined"/> then the value returned will be <see langword="null" />.
+        /// </para>
+        /// <para>
+        /// The name of the .NET namespace into which to emit the root type
+        /// </para>
+        /// <para>
+        /// The name of the .NET namespace into which to emit the root type
+        /// </para>
+        /// </remarks>
+        public Corvus.Json.JsonString? OutputRootNamespace
+        {
+            get
+            {
+                if ((this.backing & Backing.JsonElement) != 0)
+                {
+                    if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                    {
+                        return default;
+                    }
+
+                    if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.OutputRootNamespaceUtf8, out JsonElement result))
+                    {
+                        if (result.ValueKind == JsonValueKind.Null || result.ValueKind == JsonValueKind.Undefined)
+                        {
+                            return default;
+                        }
+
+                        return new(result);
+                    }
+                }
+
+                if ((this.backing & Backing.Object) != 0)
+                {
+                    if (this.objectBacking.TryGetValue(JsonPropertyNames.OutputRootNamespace, out JsonAny result))
+                    {
+                        if (result.IsNullOrUndefined())
+                        {
+                            return default;
+                        }
+
+                        return result.As<Corvus.Json.JsonString>();
+                    }
+                }
+
+                return default;
+            }
+        }
+
+        /// <summary>
         /// Gets the (optional) <c>outputRootTypeName</c> property.
         /// </summary>
         /// <remarks>
@@ -334,12 +387,18 @@ public readonly partial struct GeneratorConfig
         /// </summary>
         public static GenerationSpecification Create(
             in Corvus.Json.JsonString schemaFile,
+            in Corvus.Json.JsonString? outputRootNamespace = null,
             in Corvus.Json.JsonString? outputRootTypeName = null,
             in Corvus.Json.CodeGenerator.GeneratorConfig.GenerationSpecification.RebaseToRootPathEntity? rebaseToRootPath = null,
             in Corvus.Json.JsonUriReference? rootPath = null)
         {
             var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
             builder.Add(JsonPropertyNames.SchemaFile, schemaFile.AsAny);
+            if (outputRootNamespace is not null)
+            {
+                builder.Add(JsonPropertyNames.OutputRootNamespace, outputRootNamespace.Value.AsAny);
+            }
+
             if (outputRootTypeName is not null)
             {
                 builder.Add(JsonPropertyNames.OutputRootTypeName, outputRootTypeName.Value.AsAny);
@@ -802,6 +861,11 @@ public readonly partial struct GeneratorConfig
         public static class JsonPropertyNames
         {
             /// <summary>
+            /// Gets the JSON property name for <see cref="OutputRootNamespace"/>.
+            /// </summary>
+            public const string OutputRootNamespace = "outputRootNamespace";
+
+            /// <summary>
             /// Gets the JSON property name for <see cref="OutputRootTypeName"/>.
             /// </summary>
             public const string OutputRootTypeName = "outputRootTypeName";
@@ -820,6 +884,11 @@ public readonly partial struct GeneratorConfig
             /// Gets the JSON property name for <see cref="SchemaFile"/>.
             /// </summary>
             public const string SchemaFile = "schemaFile";
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="OutputRootNamespace"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> OutputRootNamespaceUtf8 => "outputRootNamespace"u8;
 
             /// <summary>
             /// Gets the JSON property name for <see cref="OutputRootTypeName"/>.
