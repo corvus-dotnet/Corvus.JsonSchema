@@ -50,6 +50,10 @@
         },
         {
             "schemaFile": "./json-extended-types.json",
+            "rootPath": "#/$defs/JsonBase64StringPre201909"
+        },
+        {
+            "schemaFile": "./json-extended-types.json",
             "rootPath": "#/$defs/JsonContent"
         },
         {

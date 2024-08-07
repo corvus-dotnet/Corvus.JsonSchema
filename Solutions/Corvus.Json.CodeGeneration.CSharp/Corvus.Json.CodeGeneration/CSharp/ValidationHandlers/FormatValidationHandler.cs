@@ -15,7 +15,7 @@ public class FormatValidationHandler : KeywordValidationHandlerBase
     public static FormatValidationHandler Instance { get; } = new();
 
     /// <inheritdoc/>
-    public override uint ValidationHandlerPriority => ValidationPriorities.Default;
+    public override uint ValidationHandlerPriority => ValidationPriorities.Default - 100;
 
     /// <inheritdoc/>
     public override CodeGenerator AppendValidationSetup(CodeGenerator generator, TypeDeclaration typeDeclaration)

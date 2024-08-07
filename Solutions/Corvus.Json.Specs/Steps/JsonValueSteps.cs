@@ -584,6 +584,35 @@ public class JsonValueSteps
         }
     }
 
+    /* base64StringPre201909 */
+
+    /// <summary>
+    /// Store a <see cref="JsonElement"/>-backed value in the context variable <c>Value</c>.
+    /// </summary>
+    /// <param name="value">The json value.</param>
+    [Given("the JsonElement backed JsonBase64StringPre201909 (.*)")]
+    public void GivenTheJsonElementBackedJsonBase64StringPre201909(string value)
+    {
+        this.scenarioContext.Set(JsonBase64StringPre201909.Parse(value), SubjectUnderTest);
+    }
+
+    /// <summary>
+    /// Store a dotnet-type-backed value in the context variable <c>Value</c>.
+    /// </summary>
+    /// <param name="value">The value.</param>
+    [Given("the dotnet backed JsonBase64StringPre201909 (.*)")]
+    public void GivenTheDotnetBackedJsonBase64StringPre201909(string value)
+    {
+        if (value == "null")
+        {
+            this.scenarioContext.Set(JsonBase64StringPre201909.Null, SubjectUnderTest);
+        }
+        else
+        {
+            this.scenarioContext.Set(JsonBase64StringPre201909.Parse(value).AsDotnetBackedValue(), SubjectUnderTest);
+        }
+    }
+
     /* content */
 
     /// <summary>
@@ -610,6 +639,35 @@ public class JsonValueSteps
         else
         {
             this.scenarioContext.Set(JsonContent.Parse(value).AsDotnetBackedValue(), SubjectUnderTest);
+        }
+    }
+
+    /* content-pre201909 */
+
+    /// <summary>
+    /// Store a <see cref="JsonElement"/>-backed value in the context variable <c>Value</c>.
+    /// </summary>
+    /// <param name="value">The json value.</param>
+    [Given("the JsonElement backed JsonContentPre201909 (.*)")]
+    public void GivenTheJsonElementBackedJsonContentPre201909(string value)
+    {
+        this.scenarioContext.Set(JsonContentPre201909.Parse(value), SubjectUnderTest);
+    }
+
+    /// <summary>
+    /// Store a dotnet-type-backed value in the context variable <c>Value</c>.
+    /// </summary>
+    /// <param name="value">The value.</param>
+    [Given("the dotnet backed JsonContentPre201909 (.*)")]
+    public void GivenTheDotnetBackedJsonContentPre201909(string value)
+    {
+        if (value == "null")
+        {
+            this.scenarioContext.Set(JsonContentPre201909.Null, SubjectUnderTest);
+        }
+        else
+        {
+            this.scenarioContext.Set(JsonContentPre201909.Parse(value).AsDotnetBackedValue(), SubjectUnderTest);
         }
     }
 
