@@ -1599,32 +1599,7 @@ public readonly struct BinaryJsonNumber :
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool Equals(in BinaryJsonNumber binaryNumber, in JsonElement jsonNumber)
     {
-        if (jsonNumber.ValueKind != JsonValueKind.Number)
-        {
-            throw new NotSupportedException();
-        }
-
-        if (binaryNumber.numericKind == Kind.Decimal)
-        {
-            if (jsonNumber.TryGetDecimal(out decimal jsonNumberDecimal))
-            {
-                return Equals(binaryNumber, jsonNumberDecimal);
-            }
-
-            if (jsonNumber.TryGetDouble(out double jsonNumberDouble))
-            {
-                return Equals(binaryNumber, jsonNumberDouble);
-            }
-        }
-        else
-        {
-            if (jsonNumber.TryGetDouble(out double jsonNumberDouble))
-            {
-                return Equals(binaryNumber, jsonNumberDouble);
-            }
-        }
-
-        throw new NotSupportedException();
+        return Compare(jsonNumber, binaryNumber) == 0;
     }
 
     /// <summary>
@@ -1708,32 +1683,294 @@ public readonly struct BinaryJsonNumber :
             throw new FormatException();
         }
 
-        if (right.numericKind == Kind.Decimal)
+        return right.numericKind switch
         {
-            if (left.TryGetDecimal(out decimal leftDecimal))
-            {
-                return Compare(leftDecimal, right);
-            }
+            Kind.Byte => ComparePreferByte(left, ReadByte(right.binaryData)),
+            Kind.Decimal => ComparePreferDecimal(left, ReadDecimal(right.binaryData)),
+            Kind.Double => ComparePreferDouble(left, ReadDouble(right.binaryData)),
+            Kind.Half => ComparePreferHalf(left, ReadHalf(right.binaryData)),
+            Kind.Int16 => ComparePreferInt16(left, ReadInt16(right.binaryData)),
+            Kind.Int32 => ComparePreferInt32(left, ReadInt32(right.binaryData)),
+            Kind.Int64 => ComparePreferInt64(left, ReadInt64(right.binaryData)),
+            Kind.Int128 => ComparePreferInt128(left, ReadInt128(right.binaryData)),
+            Kind.SByte => ComparePreferSByte(left, ReadSByte(right.binaryData)),
+            Kind.Single => ComparePreferSingle(left, ReadSingle(right.binaryData)),
+            Kind.UInt16 => ComparePreferUInt16(left, ReadUInt16(right.binaryData)),
+            Kind.UInt32 => ComparePreferUInt32(left, ReadUInt32(right.binaryData)),
+            Kind.UInt64 => ComparePreferUInt64(left, ReadUInt64(right.binaryData)),
+            Kind.UInt128 => ComparePreferUInt128(left, ReadUInt128(right.binaryData)),
+            _ => throw new NotSupportedException(),
+        };
 
-            if (left.TryGetDouble(out double leftDouble))
-            {
-                return Compare(leftDouble, right);
-            }
-        }
-        else
+        static int ComparePreferSingle(JsonElement left, float right)
         {
-            if (left.TryGetDouble(out double leftDouble))
+            if (left.TryGetSingle(out float l))
             {
-                return Compare(leftDouble, right);
+                return l.CompareTo(right);
             }
 
-            if (left.TryGetDecimal(out decimal leftDecimal))
+            if (left.TryGetDouble(out double d))
             {
-                return Compare(leftDecimal, right);
+                return d.CompareTo(right);
             }
+
+            if (left.TryGetDecimal(out decimal m))
+            {
+                return m.CompareTo(right);
+            }
+
+            throw new NotSupportedException();
         }
 
-        throw new NotSupportedException();
+        static int ComparePreferHalf(JsonElement left, Half right)
+        {
+            if (left.TryGetHalfWithFallbacks(out Half l))
+            {
+                return l.CompareTo(right);
+            }
+
+            if (left.TryGetDouble(out double d))
+            {
+                return d.CompareTo(right);
+            }
+
+            if (left.TryGetDecimal(out decimal m))
+            {
+                return m.CompareTo(right);
+            }
+
+            throw new NotSupportedException();
+        }
+
+        static int ComparePreferDouble(JsonElement left, double right)
+        {
+            if (left.TryGetDouble(out double d))
+            {
+                return d.CompareTo(right);
+            }
+
+            if (left.TryGetDecimal(out decimal m))
+            {
+                return m.CompareTo(right);
+            }
+
+            throw new NotSupportedException();
+        }
+
+        static int ComparePreferDecimal(JsonElement left, decimal right)
+        {
+            if (left.TryGetDecimal(out decimal m))
+            {
+                return m.CompareTo(right);
+            }
+
+            if (left.TryGetDouble(out double d))
+            {
+                return d.CompareTo(right);
+            }
+
+            throw new NotSupportedException();
+        }
+
+        static int ComparePreferByte(JsonElement left, byte right)
+        {
+            if (left.TryGetByte(out byte l))
+            {
+                return l.CompareTo(right);
+            }
+
+            if (left.TryGetDouble(out double d))
+            {
+                return d.CompareTo(right);
+            }
+
+            if (left.TryGetDecimal(out decimal m))
+            {
+                return m.CompareTo(right);
+            }
+
+            throw new NotSupportedException();
+        }
+
+        static int ComparePreferUInt16(JsonElement left, ushort right)
+        {
+            if (left.TryGetUInt16(out ushort l))
+            {
+                return l.CompareTo(right);
+            }
+
+            if (left.TryGetDouble(out double d))
+            {
+                return d.CompareTo(right);
+            }
+
+            if (left.TryGetDecimal(out decimal m))
+            {
+                return m.CompareTo(right);
+            }
+
+            throw new NotSupportedException();
+        }
+
+        static int ComparePreferUInt32(JsonElement left, uint right)
+        {
+            if (left.TryGetUInt32(out uint l))
+            {
+                return l.CompareTo(right);
+            }
+
+            if (left.TryGetDouble(out double d))
+            {
+                return d.CompareTo(right);
+            }
+
+            if (left.TryGetDecimal(out decimal m))
+            {
+                return m.CompareTo(right);
+            }
+
+            throw new NotSupportedException();
+        }
+
+        static int ComparePreferUInt64(JsonElement left, ulong right)
+        {
+            if (left.TryGetUInt64(out ulong l))
+            {
+                return l.CompareTo(right);
+            }
+
+            if (left.TryGetDouble(out double d))
+            {
+                return d.CompareTo(right);
+            }
+
+            if (left.TryGetDecimal(out decimal m))
+            {
+                return m.CompareTo(right);
+            }
+
+            throw new NotSupportedException();
+        }
+
+        static int ComparePreferUInt128(JsonElement left, UInt128 right)
+        {
+            if (left.TryGetUInt128WithFallbacks(out UInt128 l))
+            {
+                return l.CompareTo(right);
+            }
+
+            if (left.TryGetDouble(out double d))
+            {
+                return d.CompareTo(right);
+            }
+
+            if (left.TryGetDecimal(out decimal m))
+            {
+                return m.CompareTo(right);
+            }
+
+            throw new NotSupportedException();
+        }
+
+        static int ComparePreferSByte(JsonElement left, sbyte right)
+        {
+            if (left.TryGetSByte(out sbyte l))
+            {
+                return l.CompareTo(right);
+            }
+
+            if (left.TryGetDouble(out double d))
+            {
+                return d.CompareTo(right);
+            }
+
+            if (left.TryGetDecimal(out decimal m))
+            {
+                return m.CompareTo(right);
+            }
+
+            throw new NotSupportedException();
+        }
+
+        static int ComparePreferInt16(JsonElement left, short right)
+        {
+            if (left.TryGetInt16(out short l))
+            {
+                return l.CompareTo(right);
+            }
+
+            if (left.TryGetDouble(out double d))
+            {
+                return d.CompareTo(right);
+            }
+
+            if (left.TryGetDecimal(out decimal m))
+            {
+                return m.CompareTo(right);
+            }
+
+            throw new NotSupportedException();
+        }
+
+        static int ComparePreferInt32(JsonElement left, int right)
+        {
+            if (left.TryGetInt32(out int l))
+            {
+                return l.CompareTo(right);
+            }
+
+            if (left.TryGetDouble(out double d))
+            {
+                return d.CompareTo(right);
+            }
+
+            if (left.TryGetDecimal(out decimal m))
+            {
+                return m.CompareTo(right);
+            }
+
+            throw new NotSupportedException();
+        }
+
+        static int ComparePreferInt64(JsonElement left, long right)
+        {
+            if (left.TryGetInt64(out long l))
+            {
+                return l.CompareTo(right);
+            }
+
+            if (left.TryGetDouble(out double d))
+            {
+                return d.CompareTo(right);
+            }
+
+            if (left.TryGetDecimal(out decimal m))
+            {
+                return m.CompareTo(right);
+            }
+
+            throw new NotSupportedException();
+        }
+
+        static int ComparePreferInt128(JsonElement left, Int128 right)
+        {
+            if (left.TryGetInt128WithFallbacks(out Int128 l))
+            {
+                return l.CompareTo(right);
+            }
+
+            if (left.TryGetDouble(out double d))
+            {
+                return d.CompareTo(right);
+            }
+
+            if (left.TryGetDecimal(out decimal m))
+            {
+                return m.CompareTo(right);
+            }
+
+            throw new NotSupportedException();
+        }
     }
 
     /// <summary>
@@ -1744,44 +1981,311 @@ public readonly struct BinaryJsonNumber :
     /// <exception cref="FormatException">The JsonElement was not in a supported format.</exception>
     public static BinaryJsonNumber FromJson(in JsonElement jsonElement)
     {
+        return FromJson(jsonElement, Kind.Double);
+    }
+
+    /// <summary>
+    /// Gets a binary number from a <see cref="JsonElement"/>.
+    /// </summary>
+    /// <param name="jsonElement">The element from which to create the <see cref="BinaryJsonNumber"/>.</param>
+    /// <param name="preferredKind">Indicates whether to use 128 processing.</param>
+    /// <returns>The <see cref="BinaryJsonNumber"/> created from the <see cref="JsonElement"/>.</returns>
+    /// <exception cref="FormatException">The JsonElement was not in a supported format.</exception>
+    public static BinaryJsonNumber FromJson(in JsonElement jsonElement, Kind preferredKind)
+    {
         if (jsonElement.ValueKind != JsonValueKind.Number)
         {
             throw new FormatException();
         }
 
-        // When we read a JSON value we prefer a double
-        if (jsonElement.TryGetDouble(out double jsonNumberDouble))
+        return preferredKind switch
         {
-            if (jsonNumberDouble < 0)
-            {
-                if (jsonElement.TryGetInt128WithFallbacks(out Int128 jsonNumberInt128))
-                {
-                    if (jsonNumberInt128 != (Int128)jsonNumberDouble)
-                    {
-                        // This should be an int128 rather than a double
-                        return new BinaryJsonNumber(jsonNumberInt128);
-                    }
-                }
+            Kind.Byte => GetPreferByte(jsonElement),
+            Kind.Decimal => GetPreferDecimal(jsonElement),
+            Kind.Double => GetPreferDouble(jsonElement),
+            Kind.Half => GetPreferHalf(jsonElement),
+            Kind.Int16 => GetPreferInt16(jsonElement),
+            Kind.Int32 => GetPreferInt32(jsonElement),
+            Kind.Int64 => GetPreferInt64(jsonElement),
+            Kind.Int128 => GetPreferInt128(jsonElement),
+            Kind.SByte => GetPreferSByte(jsonElement),
+            Kind.Single => GetPreferSingle(jsonElement),
+            Kind.UInt16 => GetPreferUInt16(jsonElement),
+            Kind.UInt32 => GetPreferUInt32(jsonElement),
+            Kind.UInt64 => GetPreferUInt64(jsonElement),
+            Kind.UInt128 => GetPreferUInt128(jsonElement),
+            _ => throw new NotSupportedException(),
+        };
 
-                return new BinaryJsonNumber(jsonNumberDouble);
-            }
-            else
+        static BinaryJsonNumber GetPreferSingle(JsonElement left)
+        {
+            if (left.TryGetSingle(out float l))
             {
-                if (jsonElement.TryGetUInt128WithFallbacks(out UInt128 jsonNumberUInt128))
-                {
-                    if (jsonNumberUInt128 != (UInt128)jsonNumberDouble)
-                    {
-                        // This should be an int128 rather than a double
-                        return new BinaryJsonNumber(jsonNumberUInt128);
-                    }
-                }
-
-                return new BinaryJsonNumber(jsonNumberDouble);
+                return new(l);
             }
+
+            if (left.TryGetDouble(out double d))
+            {
+                return new(d);
+            }
+
+            if (left.TryGetDecimal(out decimal m))
+            {
+                return new(m);
+            }
+
+            throw new NotSupportedException();
         }
 
-        // But if we can't, we'll go with a decimal
-        return new BinaryJsonNumber(jsonElement.GetDecimal());
+        static BinaryJsonNumber GetPreferHalf(JsonElement left)
+        {
+            if (left.TryGetHalfWithFallbacks(out Half l))
+            {
+                return new(l);
+            }
+
+            if (left.TryGetDouble(out double d))
+            {
+                return new(d);
+            }
+
+            if (left.TryGetDecimal(out decimal m))
+            {
+                return new(m);
+            }
+
+            throw new NotSupportedException();
+        }
+
+        static BinaryJsonNumber GetPreferDouble(JsonElement left)
+        {
+            if (left.TryGetDouble(out double d))
+            {
+                return new(d);
+            }
+
+            if (left.TryGetDecimal(out decimal m))
+            {
+                return new(m);
+            }
+
+            throw new NotSupportedException();
+        }
+
+        static BinaryJsonNumber GetPreferDecimal(JsonElement left)
+        {
+            if (left.TryGetDecimal(out decimal m))
+            {
+                return new(m);
+            }
+
+            if (left.TryGetDouble(out double d))
+            {
+                return new(d);
+            }
+
+            throw new NotSupportedException();
+        }
+
+        static BinaryJsonNumber GetPreferByte(JsonElement left)
+        {
+            if (left.TryGetByte(out byte l))
+            {
+                return new(l);
+            }
+
+            if (left.TryGetDouble(out double d))
+            {
+                return new(d);
+            }
+
+            if (left.TryGetDecimal(out decimal m))
+            {
+                return new(m);
+            }
+
+            throw new NotSupportedException();
+        }
+
+        static BinaryJsonNumber GetPreferUInt16(JsonElement left)
+        {
+            if (left.TryGetUInt16(out ushort l))
+            {
+                return new(l);
+            }
+
+            if (left.TryGetDouble(out double d))
+            {
+                return new(d);
+            }
+
+            if (left.TryGetDecimal(out decimal m))
+            {
+                return new(m);
+            }
+
+            throw new NotSupportedException();
+        }
+
+        static BinaryJsonNumber GetPreferUInt32(JsonElement left)
+        {
+            if (left.TryGetUInt32(out uint l))
+            {
+                return new(l);
+            }
+
+            if (left.TryGetDouble(out double d))
+            {
+                return new(d);
+            }
+
+            if (left.TryGetDecimal(out decimal m))
+            {
+                return new(m);
+            }
+
+            throw new NotSupportedException();
+        }
+
+        static BinaryJsonNumber GetPreferUInt64(JsonElement left)
+        {
+            if (left.TryGetUInt64(out ulong l))
+            {
+                return new(l);
+            }
+
+            if (left.TryGetDouble(out double d))
+            {
+                return new(d);
+            }
+
+            if (left.TryGetDecimal(out decimal m))
+            {
+                return new(m);
+            }
+
+            throw new NotSupportedException();
+        }
+
+        static BinaryJsonNumber GetPreferUInt128(JsonElement left)
+        {
+            if (left.TryGetUInt128WithFallbacks(out UInt128 l))
+            {
+                return new(l);
+            }
+
+            if (left.TryGetDouble(out double d))
+            {
+                return new(d);
+            }
+
+            if (left.TryGetDecimal(out decimal m))
+            {
+                return new(m);
+            }
+
+            throw new NotSupportedException();
+        }
+
+        static BinaryJsonNumber GetPreferSByte(JsonElement left)
+        {
+            if (left.TryGetSByte(out sbyte l))
+            {
+                return new(l);
+            }
+
+            if (left.TryGetDouble(out double d))
+            {
+                return new(d);
+            }
+
+            if (left.TryGetDecimal(out decimal m))
+            {
+                return new(m);
+            }
+
+            throw new NotSupportedException();
+        }
+
+        static BinaryJsonNumber GetPreferInt16(JsonElement left)
+        {
+            if (left.TryGetInt16(out short l))
+            {
+                return new(l);
+            }
+
+            if (left.TryGetDouble(out double d))
+            {
+                return new(d);
+            }
+
+            if (left.TryGetDecimal(out decimal m))
+            {
+                return new(m);
+            }
+
+            throw new NotSupportedException();
+        }
+
+        static BinaryJsonNumber GetPreferInt32(JsonElement left)
+        {
+            if (left.TryGetInt32(out int l))
+            {
+                return new(l);
+            }
+
+            if (left.TryGetDouble(out double d))
+            {
+                return new(d);
+            }
+
+            if (left.TryGetDecimal(out decimal m))
+            {
+                return new(m);
+            }
+
+            throw new NotSupportedException();
+        }
+
+        static BinaryJsonNumber GetPreferInt64(JsonElement left)
+        {
+            if (left.TryGetInt64(out long l))
+            {
+                return new(l);
+            }
+
+            if (left.TryGetDouble(out double d))
+            {
+                return new(d);
+            }
+
+            if (left.TryGetDecimal(out decimal m))
+            {
+                return new(m);
+            }
+
+            throw new NotSupportedException();
+        }
+
+        static BinaryJsonNumber GetPreferInt128(JsonElement left)
+        {
+            if (left.TryGetInt128WithFallbacks(out Int128 l))
+            {
+                return new(l);
+            }
+
+            if (left.TryGetDouble(out double d))
+            {
+                return new(d);
+            }
+
+            if (left.TryGetDecimal(out decimal m))
+            {
+                return new(m);
+            }
+
+            throw new NotSupportedException();
+        }
     }
 
     /// <summary>
@@ -2317,6 +2821,7 @@ public readonly struct BinaryJsonNumber :
             Kind.Single => ((double)ReadSingle(this.binaryData)).GetHashCode(),
             Kind.UInt16 => ((double)ReadUInt16(this.binaryData)).GetHashCode(),
             Kind.UInt32 => ((double)ReadUInt32(this.binaryData)).GetHashCode(),
+            Kind.UInt64 => ((double)ReadUInt64(this.binaryData)).GetHashCode(),
             Kind.UInt128 => ((double)ReadUInt128(this.binaryData)).GetHashCode(),
             _ => throw new NotSupportedException(),
         };
@@ -3818,6 +4323,21 @@ public readonly struct BinaryJsonNumber :
         UInt64 = 0b0100_0000_0000,
 
         /// <summary>
+        /// Represents an <see cref="UInt128"/>.
+        /// </summary>
+        UInt128 = 0b1000_0000_0000,
+
+        /// <summary>
+        /// Represents an <see cref="Int128"/>.
+        /// </summary>
+        Int128 = 0b0001_0000_0000_0000,
+
+        /// <summary>
+        /// Represents an <see cref="Half"/>.
+        /// </summary>
+        Half = 0b0010_0000_0000_0000,
+
+        /// <summary>
         /// Represents a  <see cref="bool"/>.
         /// </summary>
         Bool = 0b0100_0000_0000_0000,
@@ -4711,37 +5231,7 @@ public readonly struct BinaryJsonNumber :
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool Equals(in BinaryJsonNumber binaryNumber, in JsonElement jsonNumber)
     {
-        if (jsonNumber.ValueKind != JsonValueKind.Number)
-        {
-            throw new NotSupportedException();
-        }
-
-        if (jsonNumber.ValueKind != JsonValueKind.Number)
-        {
-            throw new FormatException();
-        }
-
-        if (binaryNumber.numericKind == Kind.Decimal)
-        {
-            if (jsonNumber.TryGetDecimal(out decimal jsonNumberDecimal))
-            {
-                return Equals(binaryNumber.decimalBacking, jsonNumberDecimal);
-            }
-
-            if (jsonNumber.TryGetDouble(out double jsonNumberDouble))
-            {
-                return Equals(binaryNumber.decimalBacking, (decimal)jsonNumberDouble);
-            }
-        }
-        else
-        {
-            if (jsonNumber.TryGetDouble(out double jsonNumberDouble))
-            {
-                return Equals(binaryNumber.GetDouble(), jsonNumberDouble);
-            }
-        }
-
-        throw new NotSupportedException();
+        return Compare(jsonNumber, binaryNumber) == 0;
     }
 
     /// <summary>
@@ -4819,32 +5309,231 @@ public readonly struct BinaryJsonNumber :
             throw new FormatException();
         }
 
-        if (right.numericKind == Kind.Decimal)
+        return right.numericKind switch
         {
-            if (left.TryGetDecimal(out decimal leftDecimal))
-            {
-                return leftDecimal.CompareTo(right.decimalBacking);
-            }
+            Kind.Byte => ComparePreferByte(left, (byte)right.ulongBacking),
+            Kind.Decimal => ComparePreferDecimal(left, right.decimalBacking),
+            Kind.Double => ComparePreferDouble(left, right.doubleBacking),
+            Kind.Int16 => ComparePreferInt16(left, (short)right.longBacking),
+            Kind.Int32 => ComparePreferInt32(left, (int)right.longBacking),
+            Kind.Int64 => ComparePreferInt64(left, right.longBacking),
+            Kind.SByte => ComparePreferSByte(left, (sbyte)right.longBacking),
+            Kind.Single => ComparePreferSingle(left, right.singleBacking),
+            Kind.UInt16 => ComparePreferUInt16(left, (ushort)right.ulongBacking),
+            Kind.UInt32 => ComparePreferUInt32(left, (uint)right.ulongBacking),
+            Kind.UInt64 => ComparePreferUInt64(left, right.ulongBacking),
+            _ => throw new NotSupportedException(),
+        };
 
-            if (left.TryGetDouble(out double leftDouble))
-            {
-                return leftDouble.CompareTo(right.GetDouble());
-            }
-        }
-        else
+        static int ComparePreferSingle(JsonElement left, float right)
         {
-            if (left.TryGetDouble(out double leftDouble))
+            if (left.TryGetSingle(out float l))
             {
-                return leftDouble.CompareTo(right.GetDouble());
+                return l.CompareTo(right);
             }
 
-            if (left.TryGetDecimal(out decimal leftDecimal))
+            if (left.TryGetDouble(out double d))
             {
-                return leftDecimal.CompareTo((decimal)right.GetDouble());
+                return d.CompareTo(right);
             }
+
+            if (left.TryGetDecimal(out decimal m))
+            {
+                return m.CompareTo(right);
+            }
+
+            throw new NotSupportedException();
         }
 
-        throw new NotSupportedException();
+        static int ComparePreferDouble(JsonElement left, double right)
+        {
+            if (left.TryGetDouble(out double d))
+            {
+                return d.CompareTo(right);
+            }
+
+            if (left.TryGetDecimal(out decimal m))
+            {
+                return m.CompareTo(right);
+            }
+
+            throw new NotSupportedException();
+        }
+
+        static int ComparePreferDecimal(JsonElement left, decimal right)
+        {
+            if (left.TryGetDecimal(out decimal m))
+            {
+                return m.CompareTo(right);
+            }
+
+            if (left.TryGetDouble(out double d))
+            {
+                return d.CompareTo(right);
+            }
+
+            throw new NotSupportedException();
+        }
+
+        static int ComparePreferByte(JsonElement left, byte right)
+        {
+            if (left.TryGetByte(out byte l))
+            {
+                return l.CompareTo(right);
+            }
+
+            if (left.TryGetDouble(out double d))
+            {
+                return d.CompareTo(right);
+            }
+
+            if (left.TryGetDecimal(out decimal m))
+            {
+                return m.CompareTo(right);
+            }
+
+            throw new NotSupportedException();
+        }
+
+        static int ComparePreferUInt16(JsonElement left, ushort right)
+        {
+            if (left.TryGetUInt16(out ushort l))
+            {
+                return l.CompareTo(right);
+            }
+
+            if (left.TryGetDouble(out double d))
+            {
+                return d.CompareTo(right);
+            }
+
+            if (left.TryGetDecimal(out decimal m))
+            {
+                return m.CompareTo(right);
+            }
+
+            throw new NotSupportedException();
+        }
+
+        static int ComparePreferUInt32(JsonElement left, uint right)
+        {
+            if (left.TryGetUInt32(out uint l))
+            {
+                return l.CompareTo(right);
+            }
+
+            if (left.TryGetDouble(out double d))
+            {
+                return d.CompareTo(right);
+            }
+
+            if (left.TryGetDecimal(out decimal m))
+            {
+                return m.CompareTo(right);
+            }
+
+            throw new NotSupportedException();
+        }
+
+        static int ComparePreferUInt64(JsonElement left, ulong right)
+        {
+            if (left.TryGetUInt64(out ulong l))
+            {
+                return l.CompareTo(right);
+            }
+
+            if (left.TryGetDouble(out double d))
+            {
+                return d.CompareTo(right);
+            }
+
+            if (left.TryGetDecimal(out decimal m))
+            {
+                return m.CompareTo(right);
+            }
+
+            throw new NotSupportedException();
+        }
+
+        static int ComparePreferSByte(JsonElement left, sbyte right)
+        {
+            if (left.TryGetSByte(out sbyte l))
+            {
+                return l.CompareTo(right);
+            }
+
+            if (left.TryGetDouble(out double d))
+            {
+                return d.CompareTo(right);
+            }
+
+            if (left.TryGetDecimal(out decimal m))
+            {
+                return m.CompareTo(right);
+            }
+
+            throw new NotSupportedException();
+        }
+
+        static int ComparePreferInt16(JsonElement left, short right)
+        {
+            if (left.TryGetInt16(out short l))
+            {
+                return l.CompareTo(right);
+            }
+
+            if (left.TryGetDouble(out double d))
+            {
+                return d.CompareTo(right);
+            }
+
+            if (left.TryGetDecimal(out decimal m))
+            {
+                return m.CompareTo(right);
+            }
+
+            throw new NotSupportedException();
+        }
+
+        static int ComparePreferInt32(JsonElement left, int right)
+        {
+            if (left.TryGetInt32(out int l))
+            {
+                return l.CompareTo(right);
+            }
+
+            if (left.TryGetDouble(out double d))
+            {
+                return d.CompareTo(right);
+            }
+
+            if (left.TryGetDecimal(out decimal m))
+            {
+                return m.CompareTo(right);
+            }
+
+            throw new NotSupportedException();
+        }
+
+        static int ComparePreferInt64(JsonElement left, long right)
+        {
+            if (left.TryGetInt64(out long l))
+            {
+                return l.CompareTo(right);
+            }
+
+            if (left.TryGetDouble(out double d))
+            {
+                return d.CompareTo(right);
+            }
+
+            if (left.TryGetDecimal(out decimal m))
+            {
+                return m.CompareTo(right);
+            }
+
+            throw new NotSupportedException();
+        }
     }
 
     /// <summary>
@@ -4855,26 +5544,251 @@ public readonly struct BinaryJsonNumber :
     /// <exception cref="FormatException">The JsonElement was not in a supported format.</exception>
     public static BinaryJsonNumber FromJson(in JsonElement jsonElement)
     {
+        return FromJson(jsonElement, Kind.Double);
+    }
+
+    /// <summary>
+    /// Gets a binary number from a <see cref="JsonElement"/>.
+    /// </summary>
+    /// <param name="jsonElement">The element from which to create the <see cref="BinaryJsonNumber"/>.</param>
+    /// <param name="preferredKind">Indicates whether to use 128 processing.</param>
+    /// <returns>The <see cref="BinaryJsonNumber"/> created from the <see cref="JsonElement"/>.</returns>
+    /// <exception cref="FormatException">The JsonElement was not in a supported format.</exception>
+    public static BinaryJsonNumber FromJson(in JsonElement jsonElement, Kind preferredKind)
+    {
         if (jsonElement.ValueKind != JsonValueKind.Number)
         {
             throw new FormatException();
         }
 
-        // When we read a JSON value we prefer a double
-        if (jsonElement.TryGetDouble(out double jsonNumberDouble))
+        return preferredKind switch
         {
-            if (jsonNumberDouble < 0)
+            Kind.Byte => GetPreferByte(jsonElement),
+            Kind.Decimal => GetPreferDecimal(jsonElement),
+            Kind.Double => GetPreferDouble(jsonElement),
+            Kind.Int16 => GetPreferInt16(jsonElement),
+            Kind.Int32 => GetPreferInt32(jsonElement),
+            Kind.Int64 => GetPreferInt64(jsonElement),
+            Kind.SByte => GetPreferSByte(jsonElement),
+            Kind.Single => GetPreferSingle(jsonElement),
+            Kind.UInt16 => GetPreferUInt16(jsonElement),
+            Kind.UInt32 => GetPreferUInt32(jsonElement),
+            Kind.UInt64 => GetPreferUInt64(jsonElement),
+            Kind.Half => GetPreferDouble(jsonElement),
+            Kind.Int128 => GetPreferDouble(jsonElement),
+            Kind.UInt128 => GetPreferDouble(jsonElement),
+            _ => throw new NotSupportedException(),
+        };
+
+        static BinaryJsonNumber GetPreferSingle(JsonElement left)
+        {
+            if (left.TryGetSingle(out float l))
             {
-                return new BinaryJsonNumber(jsonNumberDouble);
+                return new(l);
             }
-            else
+
+            if (left.TryGetDouble(out double d))
             {
-                return new BinaryJsonNumber(jsonNumberDouble);
+                return new(d);
             }
+
+            if (left.TryGetDecimal(out decimal m))
+            {
+                return new(m);
+            }
+
+            throw new NotSupportedException();
         }
 
-        // But if we can't, we'll go with a decimal
-        return new BinaryJsonNumber(jsonElement.GetDecimal());
+        static BinaryJsonNumber GetPreferDouble(JsonElement left)
+        {
+            if (left.TryGetDouble(out double d))
+            {
+                return new(d);
+            }
+
+            if (left.TryGetDecimal(out decimal m))
+            {
+                return new(m);
+            }
+
+            throw new NotSupportedException();
+        }
+
+        static BinaryJsonNumber GetPreferDecimal(JsonElement left)
+        {
+            if (left.TryGetDecimal(out decimal m))
+            {
+                return new(m);
+            }
+
+            if (left.TryGetDouble(out double d))
+            {
+                return new(d);
+            }
+
+            throw new NotSupportedException();
+        }
+
+        static BinaryJsonNumber GetPreferByte(JsonElement left)
+        {
+            if (left.TryGetByte(out byte l))
+            {
+                return new(l);
+            }
+
+            if (left.TryGetDouble(out double d))
+            {
+                return new(d);
+            }
+
+            if (left.TryGetDecimal(out decimal m))
+            {
+                return new(m);
+            }
+
+            throw new NotSupportedException();
+        }
+
+        static BinaryJsonNumber GetPreferUInt16(JsonElement left)
+        {
+            if (left.TryGetUInt16(out ushort l))
+            {
+                return new(l);
+            }
+
+            if (left.TryGetDouble(out double d))
+            {
+                return new(d);
+            }
+
+            if (left.TryGetDecimal(out decimal m))
+            {
+                return new(m);
+            }
+
+            throw new NotSupportedException();
+        }
+
+        static BinaryJsonNumber GetPreferUInt32(JsonElement left)
+        {
+            if (left.TryGetUInt32(out uint l))
+            {
+                return new(l);
+            }
+
+            if (left.TryGetDouble(out double d))
+            {
+                return new(d);
+            }
+
+            if (left.TryGetDecimal(out decimal m))
+            {
+                return new(m);
+            }
+
+            throw new NotSupportedException();
+        }
+
+        static BinaryJsonNumber GetPreferUInt64(JsonElement left)
+        {
+            if (left.TryGetUInt64(out ulong l))
+            {
+                return new(l);
+            }
+
+            if (left.TryGetDouble(out double d))
+            {
+                return new(d);
+            }
+
+            if (left.TryGetDecimal(out decimal m))
+            {
+                return new(m);
+            }
+
+            throw new NotSupportedException();
+        }
+
+        static BinaryJsonNumber GetPreferSByte(JsonElement left)
+        {
+            if (left.TryGetSByte(out sbyte l))
+            {
+                return new(l);
+            }
+
+            if (left.TryGetDouble(out double d))
+            {
+                return new(d);
+            }
+
+            if (left.TryGetDecimal(out decimal m))
+            {
+                return new(m);
+            }
+
+            throw new NotSupportedException();
+        }
+
+        static BinaryJsonNumber GetPreferInt16(JsonElement left)
+        {
+            if (left.TryGetInt16(out short l))
+            {
+                return new(l);
+            }
+
+            if (left.TryGetDouble(out double d))
+            {
+                return new(d);
+            }
+
+            if (left.TryGetDecimal(out decimal m))
+            {
+                return new(m);
+            }
+
+            throw new NotSupportedException();
+        }
+
+        static BinaryJsonNumber GetPreferInt32(JsonElement left)
+        {
+            if (left.TryGetInt32(out int l))
+            {
+                return new(l);
+            }
+
+            if (left.TryGetDouble(out double d))
+            {
+                return new(d);
+            }
+
+            if (left.TryGetDecimal(out decimal m))
+            {
+                return new(m);
+            }
+
+            throw new NotSupportedException();
+        }
+
+        static BinaryJsonNumber GetPreferInt64(JsonElement left)
+        {
+            if (left.TryGetInt64(out long l))
+            {
+                return new(l);
+            }
+
+            if (left.TryGetDouble(out double d))
+            {
+                return new(d);
+            }
+
+            if (left.TryGetDecimal(out decimal m))
+            {
+                return new(m);
+            }
+
+            throw new NotSupportedException();
+        }
     }
 
     /// <summary>
@@ -5124,6 +6038,7 @@ public readonly struct BinaryJsonNumber :
             Kind.Single => this.GetDouble().GetHashCode(),
             Kind.UInt16 => this.GetDouble().GetHashCode(),
             Kind.UInt32 => this.GetDouble().GetHashCode(),
+            Kind.UInt64 => this.GetDouble().GetHashCode(),
             _ => throw new NotSupportedException(),
         };
     }

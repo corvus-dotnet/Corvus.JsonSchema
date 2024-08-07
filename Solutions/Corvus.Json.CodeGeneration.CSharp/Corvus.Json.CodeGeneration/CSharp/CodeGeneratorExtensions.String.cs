@@ -2,6 +2,8 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Text.Json;
+
 namespace Corvus.Json.CodeGeneration.CSharp;
 
 /// <summary>
@@ -695,8 +697,9 @@ internal static partial class CodeGeneratorExtensions
     /// Appends the GetHashCode() and ToString() methods.
     /// </summary>
     /// <param name="generator">The code generator.</param>
+    /// <param name="typeDeclaration">The type declaration for which to append the methods.</param>
     /// <returns>A reference to the generator having completed the operation.</returns>
-    public static CodeGenerator AppendGetHashCodeAndToStringMethods(this CodeGenerator generator)
+    public static CodeGenerator AppendGetHashCodeAndToStringMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
         return generator
             .ReserveNameIfNotReserved("GetHashCode")
@@ -707,7 +710,36 @@ internal static partial class CodeGeneratorExtensions
                 /// <inheritdoc/>
                 public override int GetHashCode()
                 {
-                    return JsonValueHelpers.GetHashCode(this);
+                    return this.ValueKind switch
+                    {
+                """)
+            .PushIndent()
+            .PushIndent()
+            .AppendLineIndent(
+                (typeDeclaration.ImpliedCoreTypes() & CoreTypes.Array) != 0
+                    ? "JsonValueKind.Array => JsonValueHelpers.GetArrayHashCode(this),"
+                    : "JsonValueKind.Array => JsonValueHelpers.GetArrayHashCode(((IJsonValue)this).AsArray),")
+            .AppendLineIndent(
+                (typeDeclaration.ImpliedCoreTypes() & CoreTypes.Object) != 0
+                    ? "JsonValueKind.Object => JsonValueHelpers.GetObjectHashCode(this),"
+                    : "JsonValueKind.Object => JsonValueHelpers.GetObjectHashCode(((IJsonValue)this).AsObject),")
+            .AppendLineIndent(
+                (typeDeclaration.ImpliedCoreTypes() & (CoreTypes.Number | CoreTypes.Integer)) != 0
+                    ? "JsonValueKind.Number => JsonValueHelpers.GetHashCodeForNumber(this),"
+                    : "JsonValueKind.Number => JsonValueHelpers.GetHashCodeForNumber(((IJsonValue)this).AsNumber),")
+            .AppendLineIndent(
+                (typeDeclaration.ImpliedCoreTypes() & CoreTypes.String) != 0
+                    ? "JsonValueKind.String => JsonValueHelpers.GetHashCodeForString(this),"
+                    : "JsonValueKind.String => JsonValueHelpers.GetHashCodeForString(((IJsonValue)this).AsString),")
+            .PopIndent()
+            .PopIndent()
+            .AppendBlockIndent(
+                """
+                        JsonValueKind.True => true.GetHashCode(),
+                        JsonValueKind.False => false.GetHashCode(),
+                        JsonValueKind.Null => JsonValueHelpers.NullHashCode,
+                        _ => JsonValueHelpers.UndefinedHashCode,
+                    };
                 }
 
                 /// <inheritdoc/>

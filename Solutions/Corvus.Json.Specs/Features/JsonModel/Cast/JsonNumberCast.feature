@@ -16,7 +16,7 @@ Examples:
 Scenario Outline: Cast to JsonAny for dotnet backed value as a number
 	Given the dotnet backed <TargetType> 1.2
 	When I cast the <TargetType> to JsonAny
-	Then the result should equal the JsonAny 1.2
+	Then the result should equal within 0.00005 the JsonAny 1.2
 
 Examples:
 	| TargetType  |

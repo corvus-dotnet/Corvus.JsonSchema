@@ -94,7 +94,7 @@ public sealed class CorePartial : ICodeFileBuilder
                         .AppendAsTMethod(typeDeclaration)
                         .AppendEqualsOverloads(typeDeclaration)
                         .AppendWriteToMethod(typeDeclaration)
-                        .AppendGetHashCodeAndToStringMethods()
+                        .AppendGetHashCodeAndToStringMethods(typeDeclaration)
                         .AppendValidateMethodForNoValidation(typeDeclaration)
                         .AppendMatchMethods(typeDeclaration)
                         .AppendTryGetMethods(typeDeclaration)

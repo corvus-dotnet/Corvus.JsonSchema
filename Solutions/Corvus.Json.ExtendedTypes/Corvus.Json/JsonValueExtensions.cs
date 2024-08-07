@@ -261,6 +261,59 @@ public static class JsonValueExtensions
         {
             JsonValueKind valueKind = value.ValueKind;
 
+            if (value is JsonSingle singleValue)
+            {
+                return (T)(object)new JsonSingle(singleValue.AsBinaryJsonNumber);
+            }
+            else if (value is JsonDouble doubleValue)
+            {
+                return (T)(object)new JsonDouble(doubleValue.AsBinaryJsonNumber);
+            }
+            else if (value is JsonDecimal decimalValue)
+            {
+                return (T)(object)new JsonDecimal(decimalValue.AsBinaryJsonNumber);
+            }
+            else if (value is JsonInt128 int128Value)
+            {
+                return (T)(object)new JsonInt128(int128Value.AsBinaryJsonNumber);
+            }
+            else if (value is JsonUInt128 uint128Value)
+            {
+                return (T)(object)new JsonUInt128(uint128Value.AsBinaryJsonNumber);
+            }
+            else if (value is JsonInt64 int64Value)
+            {
+                return (T)(object)new JsonInt64(int64Value.AsBinaryJsonNumber);
+            }
+            else if (value is JsonUInt64 uint64Value)
+            {
+                return (T)(object)new JsonUInt64(uint64Value.AsBinaryJsonNumber);
+            }
+            else if (value is JsonInt32 int32Value)
+            {
+                return (T)(object)new JsonInt32(int32Value.AsBinaryJsonNumber);
+            }
+            else if (value is JsonUInt32 uint32Value)
+            {
+                return (T)(object)new JsonUInt32(uint32Value.AsBinaryJsonNumber);
+            }
+            else if (value is JsonInt16 int16Value)
+            {
+                return (T)(object)new JsonInt16(int16Value.AsBinaryJsonNumber);
+            }
+            else if (value is JsonUInt16 uint16Value)
+            {
+                return (T)(object)new JsonUInt16(uint16Value.AsBinaryJsonNumber);
+            }
+            else if (value is JsonSByte sbyteValue)
+            {
+                return (T)(object)new JsonSByte(sbyteValue.AsBinaryJsonNumber);
+            }
+            else if (value is JsonByte byteValue)
+            {
+                return (T)(object)new JsonByte(byteValue.AsBinaryJsonNumber);
+            }
+
             return valueKind switch
             {
 #if NET8_0_OR_GREATER

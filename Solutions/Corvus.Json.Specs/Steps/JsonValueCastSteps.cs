@@ -3817,7 +3817,7 @@ public class JsonValueCastSteps
     [Then("the result should equal the double (.*)")]
     public void ThenTheResultShouldEqualTheDouble(double expectedValue)
     {
-        Assert.AreEqual(expectedValue, this.scenarioContext.Get<double>(CastResultKey));
+        Assert.AreEqual(expectedValue, this.scenarioContext.Get<double>(CastResultKey), 0.00001);
     }
 
     /// <summary>

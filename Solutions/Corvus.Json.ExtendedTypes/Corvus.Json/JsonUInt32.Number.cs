@@ -680,7 +680,7 @@ public readonly partial struct JsonUInt32
 
             if ((this.backing & Backing.JsonElement) != 0)
             {
-                return BinaryJsonNumber.FromJson(this.jsonElementBacking);
+                return BinaryJsonNumber.FromJson(this.jsonElementBacking, BinaryJsonNumber.Kind.UInt32);
             }
 
             throw new InvalidOperationException();

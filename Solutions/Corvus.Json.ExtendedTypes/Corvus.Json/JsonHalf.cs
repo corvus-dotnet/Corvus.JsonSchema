@@ -657,7 +657,17 @@ public readonly partial struct JsonHalf
     /// <inheritdoc/>
     public override int GetHashCode()
     {
-        return JsonValueHelpers.GetHashCode(this);
+        return this.ValueKind switch
+        {
+            JsonValueKind.Array => JsonValueHelpers.GetArrayHashCode(((IJsonValue)this).AsArray),
+            JsonValueKind.Object => JsonValueHelpers.GetObjectHashCode(((IJsonValue)this).AsObject),
+            JsonValueKind.Number => JsonValueHelpers.GetHashCodeForNumber(this),
+            JsonValueKind.String => JsonValueHelpers.GetHashCodeForString(((IJsonValue)this).AsString),
+            JsonValueKind.True => true.GetHashCode(),
+            JsonValueKind.False => false.GetHashCode(),
+            JsonValueKind.Null => JsonValueHelpers.NullHashCode,
+            _ => JsonValueHelpers.UndefinedHashCode,
+        };
     }
 
     /// <inheritdoc/>

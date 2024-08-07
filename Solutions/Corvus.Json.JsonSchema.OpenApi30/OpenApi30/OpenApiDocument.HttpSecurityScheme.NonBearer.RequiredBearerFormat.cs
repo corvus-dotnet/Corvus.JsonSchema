@@ -678,7 +678,17 @@ public readonly partial struct OpenApiDocument
                 /// <inheritdoc/>
                 public override int GetHashCode()
                 {
-                    return JsonValueHelpers.GetHashCode(this);
+                    return this.ValueKind switch
+                    {
+                        JsonValueKind.Array => JsonValueHelpers.GetArrayHashCode(((IJsonValue)this).AsArray),
+                        JsonValueKind.Object => JsonValueHelpers.GetObjectHashCode(this),
+                        JsonValueKind.Number => JsonValueHelpers.GetHashCodeForNumber(((IJsonValue)this).AsNumber),
+                        JsonValueKind.String => JsonValueHelpers.GetHashCodeForString(((IJsonValue)this).AsString),
+                        JsonValueKind.True => true.GetHashCode(),
+                        JsonValueKind.False => false.GetHashCode(),
+                        JsonValueKind.Null => JsonValueHelpers.NullHashCode,
+                        _ => JsonValueHelpers.UndefinedHashCode,
+                    };
                 }
 
                 /// <inheritdoc/>
