@@ -85,6 +85,36 @@ public readonly partial struct Applicator
             }
 
             /// <summary>
+            /// Initializes a new instance of the <see cref="PropertyNamesEntity"/> struct.
+            /// </summary>
+            /// <param name="value">The value from which to construct the instance.</param>
+            public PropertyNamesEntity(System.Text.RegularExpressions.Regex value)
+            {
+                this.backing = Backing.String;
+                this.jsonElementBacking = default;
+                this.stringBacking = StandardRegex.FormatRegex(value);
+            }
+
+            /// <summary>
+            /// Conversion to <see cref="System.Text.RegularExpressions.Regex"/>.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator System.Text.RegularExpressions.Regex(PropertyNamesEntity value)
+            {
+                return
+                    value.GetRegex();;
+            }
+
+            /// <summary>
+            /// Conversion from <see cref="System.Text.RegularExpressions.Regex"/>.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator PropertyNamesEntity(System.Text.RegularExpressions.Regex value)
+            {
+                return new(value);
+            }
+
+            /// <summary>
             /// Conversion from <see cref="string"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
@@ -486,6 +516,44 @@ public readonly partial struct Applicator
 #endif
                 }
 
+                return false;
+            }
+
+            /// <summary>
+            /// Gets the value as a <see cref="System.Text.RegularExpressions.Regex"/>.
+            /// </summary>
+            /// <param name="options">The regular expression generation options.</param>
+            /// <returns>The value as a <see cref="System.Text.RegularExpressions.Regex"/>.</returns>
+            /// <exception cref="InvalidOperationException">The value was not a regex.</exception>
+            public System.Text.RegularExpressions.Regex GetRegex(System.Text.RegularExpressions.RegexOptions options = System.Text.RegularExpressions.RegexOptions.None)
+            {
+                if (this.TryGetRegex(out System.Text.RegularExpressions.Regex result, options))
+                {
+                    return result;
+                }
+
+                throw new InvalidOperationException();
+            }
+
+            /// <summary>
+            /// Try to get the regex value as a <see cref="System.Text.RegularExpressions.Regex"/>.
+            /// </summary>
+            /// <param name="result">The value as a <see cref="System.Text.RegularExpressions.Regex"/>.</param>
+            /// <param name="options">The regular expression generation options.</param>
+            /// <returns><see langword="true"/> if it was possible to get a regex value from the instance.</returns>
+            public bool TryGetRegex(out System.Text.RegularExpressions.Regex result, System.Text.RegularExpressions.RegexOptions options = System.Text.RegularExpressions.RegexOptions.None)
+            {
+                if (this.jsonElementBacking.ValueKind == JsonValueKind.String)
+                {
+                    return StandardRegex.TryParseRegex(this.jsonElementBacking.GetString(), options, out result);
+                }
+
+                if ((this.backing & Backing.String) != 0)
+                {
+                    return StandardRegex.TryParseRegex(this.stringBacking, options, out result);
+                }
+
+                result = StandardRegex.Empty;
                 return false;
             }
 

@@ -8,26 +8,31 @@ Scenario Outline: Get a numeric value from a dotnet-backed string using a char p
 	And the parsed value should be equal to the number 6
 
 Examples:
-	| StringType          |
-	| JsonString          |
-	| JsonDate            |
-	| JsonDateTime        |
-	| JsonDuration        |
-	| JsonEmail           |
-	| JsonHostname        |
-	| JsonIdnEmail        |
-	| JsonIdnHostname     |
-	| JsonIpV4            |
-	| JsonIpV6            |
-	| JsonIri             |
-	| JsonIriReference    |
-	| JsonPointer         |
-	| JsonRegex           |
-	| JsonRelativePointer |
-	| JsonTime            |
-	| JsonUri             |
-	| JsonUriReference    |
-	| JsonUuid            |
+	| StringType                |
+	| JsonString                |
+	| JsonDate                  |
+	| JsonDateTime              |
+	| JsonDuration              |
+	| JsonEmail                 |
+	| JsonHostname              |
+	| JsonIdnEmail              |
+	| JsonIdnHostname           |
+	| JsonIpV4                  |
+	| JsonIpV6                  |
+	| JsonIri                   |
+	| JsonIriReference          |
+	| JsonPointer               |
+	| JsonRegex                 |
+	| JsonRelativePointer       |
+	| JsonTime                  |
+	| JsonUri                   |
+	| JsonUriReference          |
+	| JsonUuid                  |
+	| JsonContent               |
+	| JsonContentPre201909      |
+	| JsonBase64Content         |
+	| JsonBase64String          |
+	| JsonBase64StringPre201909 |
 
 Scenario Outline: Get a numeric value from a jsonelement-backed string using a char parser
 	Given the JsonElement backed <StringType> "2"
@@ -36,26 +41,31 @@ Scenario Outline: Get a numeric value from a jsonelement-backed string using a c
 	And the parsed value should be equal to the number 6
 
 Examples:
-	| StringType          |
-	| JsonString          |
-	| JsonDate            |
-	| JsonDateTime        |
-	| JsonDuration        |
-	| JsonEmail           |
-	| JsonHostname        |
-	| JsonIdnEmail        |
-	| JsonIdnHostname     |
-	| JsonIpV4            |
-	| JsonIpV6            |
-	| JsonIri             |
-	| JsonIriReference    |
-	| JsonPointer         |
-	| JsonRegex           |
-	| JsonRelativePointer |
-	| JsonTime            |
-	| JsonUri             |
-	| JsonUriReference    |
-	| JsonUuid            |
+	| StringType                |
+	| JsonString                |
+	| JsonDate                  |
+	| JsonDateTime              |
+	| JsonDuration              |
+	| JsonEmail                 |
+	| JsonHostname              |
+	| JsonIdnEmail              |
+	| JsonIdnHostname           |
+	| JsonIpV4                  |
+	| JsonIpV6                  |
+	| JsonIri                   |
+	| JsonIriReference          |
+	| JsonPointer               |
+	| JsonRegex                 |
+	| JsonRelativePointer       |
+	| JsonTime                  |
+	| JsonUri                   |
+	| JsonUriReference          |
+	| JsonUuid                  |
+	| JsonContent               |
+	| JsonContentPre201909      |
+	| JsonBase64Content         |
+	| JsonBase64String          |
+	| JsonBase64StringPre201909 |
 
 Scenario Outline: Get a numeric value from a dotnet-backed string which does not support the format using a char parser
 	Given the dotnet backed <StringType> "Hello"
@@ -64,26 +74,31 @@ Scenario Outline: Get a numeric value from a dotnet-backed string which does not
 	And the parsed value should be null
 
 Examples:
-	| StringType          |
-	| JsonString          |
-	| JsonDate            |
-	| JsonDateTime        |
-	| JsonDuration        |
-	| JsonEmail           |
-	| JsonHostname        |
-	| JsonIdnEmail        |
-	| JsonIdnHostname     |
-	| JsonIpV4            |
-	| JsonIpV6            |
-	| JsonIri             |
-	| JsonIriReference    |
-	| JsonPointer         |
-	| JsonRegex           |
-	| JsonRelativePointer |
-	| JsonTime            |
-	| JsonUri             |
-	| JsonUriReference    |
-	| JsonUuid            |
+	| StringType                |
+	| JsonString                |
+	| JsonDate                  |
+	| JsonDateTime              |
+	| JsonDuration              |
+	| JsonEmail                 |
+	| JsonHostname              |
+	| JsonIdnEmail              |
+	| JsonIdnHostname           |
+	| JsonIpV4                  |
+	| JsonIpV6                  |
+	| JsonIri                   |
+	| JsonIriReference          |
+	| JsonPointer               |
+	| JsonRegex                 |
+	| JsonRelativePointer       |
+	| JsonTime                  |
+	| JsonUri                   |
+	| JsonUriReference          |
+	| JsonUuid                  |
+	| JsonContent               |
+	| JsonContentPre201909      |
+	| JsonBase64Content         |
+	| JsonBase64String          |
+	| JsonBase64StringPre201909 |
 
 Scenario Outline: Get a numeric value from a jsonelement-backed string which does not support the format using a char parser
 	Given the JsonElement backed <StringType> "Hello"
@@ -92,26 +107,31 @@ Scenario Outline: Get a numeric value from a jsonelement-backed string which doe
 	And the parsed value should be null
 
 Examples:
-	| StringType          |
-	| JsonString          |
-	| JsonDate            |
-	| JsonDateTime        |
-	| JsonDuration        |
-	| JsonEmail           |
-	| JsonHostname        |
-	| JsonIdnEmail        |
-	| JsonIdnHostname     |
-	| JsonIpV4            |
-	| JsonIpV6            |
-	| JsonIri             |
-	| JsonIriReference    |
-	| JsonPointer         |
-	| JsonRegex           |
-	| JsonRelativePointer |
-	| JsonTime            |
-	| JsonUri             |
-	| JsonUriReference    |
-	| JsonUuid            |
+	| StringType                |
+	| JsonString                |
+	| JsonDate                  |
+	| JsonDateTime              |
+	| JsonDuration              |
+	| JsonEmail                 |
+	| JsonHostname              |
+	| JsonIdnEmail              |
+	| JsonIdnHostname           |
+	| JsonIpV4                  |
+	| JsonIpV6                  |
+	| JsonIri                   |
+	| JsonIriReference          |
+	| JsonPointer               |
+	| JsonRegex                 |
+	| JsonRelativePointer       |
+	| JsonTime                  |
+	| JsonUri                   |
+	| JsonUriReference          |
+	| JsonUuid                  |
+	| JsonContent               |
+	| JsonContentPre201909      |
+	| JsonBase64Content         |
+	| JsonBase64String          |
+	| JsonBase64StringPre201909 |
 
 Scenario Outline: Get a numeric value from a dotnet-backed string using a utf8 parser
 	Given the dotnet backed <StringType> "2"
@@ -120,26 +140,31 @@ Scenario Outline: Get a numeric value from a dotnet-backed string using a utf8 p
 	And the parsed value should be equal to the number 6
 
 Examples:
-	| StringType          |
-	| JsonString          |
-	| JsonDate            |
-	| JsonDateTime        |
-	| JsonDuration        |
-	| JsonEmail           |
-	| JsonHostname        |
-	| JsonIdnEmail        |
-	| JsonIdnHostname     |
-	| JsonIpV4            |
-	| JsonIpV6            |
-	| JsonIri             |
-	| JsonIriReference    |
-	| JsonPointer         |
-	| JsonRegex           |
-	| JsonRelativePointer |
-	| JsonTime            |
-	| JsonUri             |
-	| JsonUriReference    |
-	| JsonUuid            |
+	| StringType                |
+	| JsonString                |
+	| JsonDate                  |
+	| JsonDateTime              |
+	| JsonDuration              |
+	| JsonEmail                 |
+	| JsonHostname              |
+	| JsonIdnEmail              |
+	| JsonIdnHostname           |
+	| JsonIpV4                  |
+	| JsonIpV6                  |
+	| JsonIri                   |
+	| JsonIriReference          |
+	| JsonPointer               |
+	| JsonRegex                 |
+	| JsonRelativePointer       |
+	| JsonTime                  |
+	| JsonUri                   |
+	| JsonUriReference          |
+	| JsonUuid                  |
+	| JsonContent               |
+	| JsonContentPre201909      |
+	| JsonBase64Content         |
+	| JsonBase64String          |
+	| JsonBase64StringPre201909 |
 
 Scenario Outline: Get a numeric value from a jsonelement-backed string using a utf8 parser
 	Given the JsonElement backed <StringType> "2"
@@ -148,27 +173,31 @@ Scenario Outline: Get a numeric value from a jsonelement-backed string using a u
 	And the parsed value should be equal to the number 6
 
 Examples:
-	| StringType          |
-	| JsonString          |
-	| JsonDate            |
-	| JsonDateTime        |
-	| JsonDuration        |
-	| JsonEmail           |
-	| JsonHostname        |
-	| JsonIdnEmail        |
-	| JsonIdnHostname     |
-	| JsonIpV4            |
-	| JsonIpV6            |
-	| JsonIri             |
-	| JsonIriReference    |
-	| JsonPointer         |
-	| JsonRegex           |
-	| JsonRelativePointer |
-	| JsonTime            |
-	| JsonUri             |
-	| JsonUriReference    |
-	| JsonUuid            |
-
+	| StringType                |
+	| JsonString                |
+	| JsonDate                  |
+	| JsonDateTime              |
+	| JsonDuration              |
+	| JsonEmail                 |
+	| JsonHostname              |
+	| JsonIdnEmail              |
+	| JsonIdnHostname           |
+	| JsonIpV4                  |
+	| JsonIpV6                  |
+	| JsonIri                   |
+	| JsonIriReference          |
+	| JsonPointer               |
+	| JsonRegex                 |
+	| JsonRelativePointer       |
+	| JsonTime                  |
+	| JsonUri                   |
+	| JsonUriReference          |
+	| JsonUuid                  |
+	| JsonContent               |
+	| JsonContentPre201909      |
+	| JsonBase64Content         |
+	| JsonBase64String          |
+	| JsonBase64StringPre201909 |
 Scenario Outline: Get a numeric value from a dotnet-backed string which does not support the format using a utf8 parser
 	Given the dotnet backed <StringType> "Hello"
 	When you try get an integer from the <StringType> using a utf8 parser with the multiplier 3
@@ -176,26 +205,31 @@ Scenario Outline: Get a numeric value from a dotnet-backed string which does not
 	And the parsed value should be null
 
 Examples:
-	| StringType          |
-	| JsonString          |
-	| JsonDate            |
-	| JsonDateTime        |
-	| JsonDuration        |
-	| JsonEmail           |
-	| JsonHostname        |
-	| JsonIdnEmail        |
-	| JsonIdnHostname     |
-	| JsonIpV4            |
-	| JsonIpV6            |
-	| JsonIri             |
-	| JsonIriReference    |
-	| JsonPointer         |
-	| JsonRegex           |
-	| JsonRelativePointer |
-	| JsonTime            |
-	| JsonUri             |
-	| JsonUriReference    |
-	| JsonUuid            |
+	| StringType                |
+	| JsonString                |
+	| JsonDate                  |
+	| JsonDateTime              |
+	| JsonDuration              |
+	| JsonEmail                 |
+	| JsonHostname              |
+	| JsonIdnEmail              |
+	| JsonIdnHostname           |
+	| JsonIpV4                  |
+	| JsonIpV6                  |
+	| JsonIri                   |
+	| JsonIriReference          |
+	| JsonPointer               |
+	| JsonRegex                 |
+	| JsonRelativePointer       |
+	| JsonTime                  |
+	| JsonUri                   |
+	| JsonUriReference          |
+	| JsonUuid                  |
+	| JsonContent               |
+	| JsonContentPre201909      |
+	| JsonBase64Content         |
+	| JsonBase64String          |
+	| JsonBase64StringPre201909 |
 
 Scenario Outline: Get a numeric value from a jsonelement-backed string which does not support the format using a utf8 parser
 	Given the JsonElement backed <StringType> "Hello"
@@ -204,23 +238,28 @@ Scenario Outline: Get a numeric value from a jsonelement-backed string which doe
 	And the parsed value should be null
 
 Examples:
-	| StringType          |
-	| JsonString          |
-	| JsonDate            |
-	| JsonDateTime        |
-	| JsonDuration        |
-	| JsonEmail           |
-	| JsonHostname        |
-	| JsonIdnEmail        |
-	| JsonIdnHostname     |
-	| JsonIpV4            |
-	| JsonIpV6            |
-	| JsonIri             |
-	| JsonIriReference    |
-	| JsonPointer         |
-	| JsonRegex           |
-	| JsonRelativePointer |
-	| JsonTime            |
-	| JsonUri             |
-	| JsonUriReference    |
-	| JsonUuid            |
+	| StringType                |
+	| JsonString                |
+	| JsonDate                  |
+	| JsonDateTime              |
+	| JsonDuration              |
+	| JsonEmail                 |
+	| JsonHostname              |
+	| JsonIdnEmail              |
+	| JsonIdnHostname           |
+	| JsonIpV4                  |
+	| JsonIpV6                  |
+	| JsonIri                   |
+	| JsonIriReference          |
+	| JsonPointer               |
+	| JsonRegex                 |
+	| JsonRelativePointer       |
+	| JsonTime                  |
+	| JsonUri                   |
+	| JsonUriReference          |
+	| JsonUuid                  |
+	| JsonContent               |
+	| JsonContentPre201909      |
+	| JsonBase64Content         |
+	| JsonBase64String          |
+	| JsonBase64StringPre201909 |

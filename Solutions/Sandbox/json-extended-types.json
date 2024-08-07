@@ -58,6 +58,12 @@
             "format": "corvus-base64-string"
         },
 
+        "JsonBase64StringPre201909": {
+            "$corvusTypeName": "JsonBase64StringPre201909",
+            "type": "string",
+            "format": "corvus-base64-string-pre201909"
+        },
+
         "JsonContent": {
             "$corvusTypeName": "JsonContent",
             "type": "string",

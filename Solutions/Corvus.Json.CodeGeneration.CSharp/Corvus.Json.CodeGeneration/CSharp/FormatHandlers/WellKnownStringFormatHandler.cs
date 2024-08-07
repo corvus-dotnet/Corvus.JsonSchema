@@ -35,7 +35,7 @@ public class WellKnownStringFormatHandler : IStringFormatHandler
             "uri-reference" => generator.AppendUriReferenceFormatConstructors(typeDeclaration),
             "iri" => generator.AppendIriFormatConstructors(typeDeclaration),
             "iri-reference" => generator.AppendIriReferenceFormatConstructors(typeDeclaration),
-            ////"regex" => generator.AppendRegexFormatConstructors(typeDeclaration),
+            "regex" => generator.AppendRegexFormatConstructors(typeDeclaration),
             ////"corvus-base64-content" => generator.AppendBase64ContentFormatConstructors(typeDeclaration),
             ////"corvus-base64-content-pre201909" => generator.AppendBase64ContentPre201909FormatConstructors(typeDeclaration),
             ////"corvus-base64-string" => generator.AppendBase64StringFormatConstructors(typeDeclaration),
@@ -62,7 +62,7 @@ public class WellKnownStringFormatHandler : IStringFormatHandler
             "uri-reference" => generator.AppendUriReferenceFormatConversionOperators(typeDeclaration),
             "iri" => generator.AppendIriFormatConversionOperators(typeDeclaration),
             "iri-reference" => generator.AppendIriReferenceFormatConversionOperators(typeDeclaration),
-            ////"regex" => generator.AppendRegexFormatConversionOperators(typeDeclaration),
+            "regex" => generator.AppendRegexFormatConversionOperators(typeDeclaration),
             ////"corvus-base64-content" => generator.AppendBase64ContentFormatConversionOperators(typeDeclaration),
             ////"corvus-base64-content-pre201909" => generator.AppendBase64ContentPre201909FormatConversionOperators(typeDeclaration),
             ////"corvus-base64-string" => generator.AppendBase64StringFormatConversionOperators(typeDeclaration),
@@ -83,7 +83,6 @@ public class WellKnownStringFormatHandler : IStringFormatHandler
             "time" => generator.AppendTimeFormatEqualsTBody(typeDeclaration),
             "duration" => generator.AppendDurationFormatEqualsTBody(typeDeclaration),
             "uuid" => generator.AppendUuidFormatEqualsTBody(typeDeclaration),
-            ////"regex" => generator.AppendRegexFormatEqualsTBody(typeDeclaration),
             ////"corvus-base64-content" => generator.AppendBase64ContentFormatEqualsTBody(typeDeclaration),
             ////"corvus-base64-content-pre201909" => generator.AppendBase64ContentPre201909FormatEqualsTBody(typeDeclaration),
             ////"corvus-base64-string" => generator.AppendBase64StringFormatEqualsTBody(typeDeclaration),
@@ -99,7 +98,6 @@ public class WellKnownStringFormatHandler : IStringFormatHandler
     {
         return format switch
         {
-            ////"regex" => generator.AppendRegexFormatPublicStaticMethods(typeDeclaration),
             ////"corvus-base64-content" => generator.AppendBase64ContentFormatPublicStaticMethods(typeDeclaration),
             ////"corvus-base64-content-pre201909" => generator.AppendBase64ContentPre201909FormatPublicStaticMethods(typeDeclaration),
             ////"corvus-base64-string" => generator.AppendBase64StringFormatPublicStaticMethods(typeDeclaration),
@@ -127,7 +125,7 @@ public class WellKnownStringFormatHandler : IStringFormatHandler
             "iri" => generator.AppendIriFormatPublicMethods(typeDeclaration),
             "iri-reference" => generator.AppendIriReferenceFormatPublicMethods(typeDeclaration),
             "uri-template" => generator.AppendUriTemplateFormatPublicMethods(typeDeclaration),
-            ////"regex" => generator.AppendRegexFormatPublicMethods(typeDeclaration),
+            "regex" => generator.AppendRegexFormatPublicMethods(typeDeclaration),
             ////"corvus-base64-content" => generator.AppendBase64ContentFormatPublicMethods(typeDeclaration),
             ////"corvus-base64-content-pre201909" => generator.AppendBase64ContentPre201909FormatPublicMethods(typeDeclaration),
             ////"corvus-base64-string" => generator.AppendBase64StringFormatPublicMethods(typeDeclaration),
@@ -143,7 +141,6 @@ public class WellKnownStringFormatHandler : IStringFormatHandler
     {
         return format switch
         {
-            ////"regex" => generator.AppendRegexFormatPrivateStaticMethods(typeDeclaration),
             ////"corvus-base64-content" => generator.AppendBase64ContentFormatPrivateStaticMethods(typeDeclaration),
             ////"corvus-base64-content-pre201909" => generator.AppendBase64ContentPre201909FormatPrivateStaticMethods(typeDeclaration),
             ////"corvus-base64-string" => generator.AppendBase64StringFormatPrivateStaticMethods(typeDeclaration),
@@ -159,7 +156,6 @@ public class WellKnownStringFormatHandler : IStringFormatHandler
     {
         return format switch
         {
-            ////"regex" => generator.AppendRegexFormatPrivateMethods(typeDeclaration),
             ////"corvus-base64-content" => generator.AppendBase64ContentFormatPrivateMethods(typeDeclaration),
             ////"corvus-base64-content-pre201909" => generator.AppendBase64ContentPre201909FormatPrivateMethods(typeDeclaration),
             ////"corvus-base64-string" => generator.AppendBase64StringFormatPrivateMethods(typeDeclaration),
@@ -175,7 +171,6 @@ public class WellKnownStringFormatHandler : IStringFormatHandler
     {
         return format switch
         {
-            ////"regex" => generator.AppendRegexFormatPublicStaticProperties(typeDeclaration),
             ////"corvus-base64-content" => generator.AppendBase64ContentFormatPublicStaticProperties(typeDeclaration),
             ////"corvus-base64-content-pre201909" => generator.AppendBase64ContentPre201909FormatPublicStaticProperties(typeDeclaration),
             ////"corvus-base64-string" => generator.AppendBase64StringFormatPublicStaticProperties(typeDeclaration),
@@ -191,7 +186,6 @@ public class WellKnownStringFormatHandler : IStringFormatHandler
     {
         return format switch
         {
-            ////"regex" => generator.AppendRegexFormatPublicProperties(typeDeclaration),
             ////"corvus-base64-content" => generator.AppendBase64ContentFormatPublicProperties(typeDeclaration),
             ////"corvus-base64-content-pre201909" => generator.AppendBase64ContentPre201909FormatPublicProperties(typeDeclaration),
             ////"corvus-base64-string" => generator.AppendBase64StringFormatPublicProperties(typeDeclaration),

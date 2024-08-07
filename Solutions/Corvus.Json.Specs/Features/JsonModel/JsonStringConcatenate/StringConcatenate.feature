@@ -22,6 +22,13 @@ Scenario Outline: Concatenate multiple JSON values to a JSON string value
 	And the values are concatenated to a JsonUri
 	And the values are concatenated to a JsonUriReference
 	And the values are concatenated to a JsonUuid
+	And the values are concatenated to a JsonContent
+	And the values are concatenated to a JsonContentPre201909
+	And the values are concatenated to a JsonBase64Content
+	And the values are concatenated to a JsonBase64String
+	And the values are concatenated to a JsonBase64StringPre201909
+
+
 	Then the results should be equal to the JsonString <result>
 
 Examples:
@@ -107,4 +114,4 @@ Examples:
 	| ["there", 3.0, "world"]                                                                          | there3.0world                                                     |
 	| ["there", null, "world"]                                                                         | therenullworld                                                    |
 	| ["there", [1,2,3], "world"]                                                                      | there[1,2,3]world                                                 |
-	| ["there", {"foo": 3}, "world"]                                                                   | there{"foo":3}world                                               |	
+	| ["there", {"foo": 3}, "world"]                                                                   | there{"foo":3}world                                               |

@@ -188,6 +188,46 @@ public class JsonValueEqualitySteps
         this.scenarioContext.Set(result, EqualsResultKey);
     }
 
+    [When(@"the string ""([^""]*)"" is compared to the JsonContent")]
+    public void WhenTheStringIsComparedToTheJsonContent(string testString)
+    {
+        JsonContent sut = this.scenarioContext.Get<JsonContent>(JsonValueSteps.SubjectUnderTest);
+        bool result = sut.EqualsString(testString);
+        this.scenarioContext.Set(result, EqualsResultKey);
+    }
+
+    [When(@"the string ""([^""]*)"" is compared to the JsonContentPre201909")]
+    public void WhenTheStringIsComparedToTheJsonContentPre201909(string testString)
+    {
+        JsonContentPre201909 sut = this.scenarioContext.Get<JsonContentPre201909>(JsonValueSteps.SubjectUnderTest);
+        bool result = sut.EqualsString(testString);
+        this.scenarioContext.Set(result, EqualsResultKey);
+    }
+
+    [When(@"the string ""([^""]*)"" is compared to the JsonBase64Content")]
+    public void WhenTheStringIsComparedToTheJsonBase64Content(string testString)
+    {
+        JsonBase64Content sut = this.scenarioContext.Get<JsonBase64Content>(JsonValueSteps.SubjectUnderTest);
+        bool result = sut.EqualsString(testString);
+        this.scenarioContext.Set(result, EqualsResultKey);
+    }
+
+    [When(@"the string ""([^""]*)"" is compared to the JsonBase64String")]
+    public void WhenTheStringIsComparedToTheJsonBase64String(string testString)
+    {
+        JsonBase64String sut = this.scenarioContext.Get<JsonBase64String>(JsonValueSteps.SubjectUnderTest);
+        bool result = sut.EqualsString(testString);
+        this.scenarioContext.Set(result, EqualsResultKey);
+    }
+
+    [When(@"the string ""([^""]*)"" is compared to the JsonBase64StringPre201909")]
+    public void WhenTheStringIsComparedToTheJsonBase64StringPre201909(string testString)
+    {
+        JsonBase64StringPre201909 sut = this.scenarioContext.Get<JsonBase64StringPre201909>(JsonValueSteps.SubjectUnderTest);
+        bool result = sut.EqualsString(testString);
+        this.scenarioContext.Set(result, EqualsResultKey);
+    }
+
     /* ReadOnlySpan<char> Comparisons */
 
     [When(@"the charSpan ""([^""]*)"" is compared to the JsonString")]
@@ -342,6 +382,46 @@ public class JsonValueEqualitySteps
         this.scenarioContext.Set(result, EqualsResultKey);
     }
 
+    [When(@"the charSpan ""([^""]*)"" is compared to the JsonContent")]
+    public void WhenTheCharSpanIsComparedToTheJsonContent(string testString)
+    {
+        JsonContent sut = this.scenarioContext.Get<JsonContent>(JsonValueSteps.SubjectUnderTest);
+        bool result = sut.EqualsString(testString.AsSpan());
+        this.scenarioContext.Set(result, EqualsResultKey);
+    }
+
+    [When(@"the charSpan ""([^""]*)"" is compared to the JsonContentPre201909")]
+    public void WhenTheCharSpanIsComparedToTheJsonContentPre201909(string testString)
+    {
+        JsonContentPre201909 sut = this.scenarioContext.Get<JsonContentPre201909>(JsonValueSteps.SubjectUnderTest);
+        bool result = sut.EqualsString(testString.AsSpan());
+        this.scenarioContext.Set(result, EqualsResultKey);
+    }
+
+    [When(@"the charSpan ""([^""]*)"" is compared to the JsonBase64Content")]
+    public void WhenTheCharSpanIsComparedToTheJsonBase64Content(string testString)
+    {
+        JsonBase64Content sut = this.scenarioContext.Get<JsonBase64Content>(JsonValueSteps.SubjectUnderTest);
+        bool result = sut.EqualsString(testString.AsSpan());
+        this.scenarioContext.Set(result, EqualsResultKey);
+    }
+
+    [When(@"the charSpan ""([^""]*)"" is compared to the JsonBase64String")]
+    public void WhenTheCharSpanIsComparedToTheJsonBase64String(string testString)
+    {
+        JsonBase64String sut = this.scenarioContext.Get<JsonBase64String>(JsonValueSteps.SubjectUnderTest);
+        bool result = sut.EqualsString(testString.AsSpan());
+        this.scenarioContext.Set(result, EqualsResultKey);
+    }
+
+    [When(@"the charSpan ""([^""]*)"" is compared to the JsonBase64StringPre201909")]
+    public void WhenTheCharSpanIsComparedToTheJsonBase64StringPre201909(string testString)
+    {
+        JsonBase64StringPre201909 sut = this.scenarioContext.Get<JsonBase64StringPre201909>(JsonValueSteps.SubjectUnderTest);
+        bool result = sut.EqualsString(testString.AsSpan());
+        this.scenarioContext.Set(result, EqualsResultKey);
+    }
+
     /* Utf8 Bytes Comparisons */
 
     [When(@"the utf8bytes ""([^""]*)"" are compared to the JsonString")]
@@ -492,6 +572,46 @@ public class JsonValueEqualitySteps
     public void WhenTheUtfbytesAreComparedToTheJsonUuid(string testString)
     {
         JsonUuid sut = this.scenarioContext.Get<JsonUuid>(JsonValueSteps.SubjectUnderTest);
+        bool result = sut.EqualsUtf8Bytes(Encoding.UTF8.GetBytes(testString));
+        this.scenarioContext.Set(result, EqualsResultKey);
+    }
+
+    [When(@"the utf8bytes ""([^""]*)"" are compared to the JsonContent")]
+    public void WhenTheUtfbytesAreComparedToTheJsonContent(string testString)
+    {
+        JsonContent sut = this.scenarioContext.Get<JsonContent>(JsonValueSteps.SubjectUnderTest);
+        bool result = sut.EqualsUtf8Bytes(Encoding.UTF8.GetBytes(testString));
+        this.scenarioContext.Set(result, EqualsResultKey);
+    }
+
+    [When(@"the utf8bytes ""([^""]*)"" are compared to the JsonContentPre201909")]
+    public void WhenTheUtfbytesAreComparedToTheJsonContentPre201909(string testString)
+    {
+        JsonContentPre201909 sut = this.scenarioContext.Get<JsonContentPre201909>(JsonValueSteps.SubjectUnderTest);
+        bool result = sut.EqualsUtf8Bytes(Encoding.UTF8.GetBytes(testString));
+        this.scenarioContext.Set(result, EqualsResultKey);
+    }
+
+    [When(@"the utf8bytes ""([^""]*)"" are compared to the JsonBase64Content")]
+    public void WhenTheUtfbytesAreComparedToTheJsonBase64Content(string testString)
+    {
+        JsonBase64Content sut = this.scenarioContext.Get<JsonBase64Content>(JsonValueSteps.SubjectUnderTest);
+        bool result = sut.EqualsUtf8Bytes(Encoding.UTF8.GetBytes(testString));
+        this.scenarioContext.Set(result, EqualsResultKey);
+    }
+
+    [When(@"the utf8bytes ""([^""]*)"" are compared to the JsonBase64String")]
+    public void WhenTheUtfbytesAreComparedToTheJsonBase64String(string testString)
+    {
+        JsonBase64String sut = this.scenarioContext.Get<JsonBase64String>(JsonValueSteps.SubjectUnderTest);
+        bool result = sut.EqualsUtf8Bytes(Encoding.UTF8.GetBytes(testString));
+        this.scenarioContext.Set(result, EqualsResultKey);
+    }
+
+    [When(@"the utf8bytes ""([^""]*)"" are compared to the JsonBase64StringPre201909")]
+    public void WhenTheUtfbytesAreComparedToTheJsonBase64StringPre201909(string testString)
+    {
+        JsonBase64StringPre201909 sut = this.scenarioContext.Get<JsonBase64StringPre201909>(JsonValueSteps.SubjectUnderTest);
         bool result = sut.EqualsUtf8Bytes(Encoding.UTF8.GetBytes(testString));
         this.scenarioContext.Set(result, EqualsResultKey);
     }

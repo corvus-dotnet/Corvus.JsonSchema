@@ -492,6 +492,101 @@ internal static partial class CodeGeneratorExtensions
     }
 
     /// <summary>
+    /// Appends the regex format constructors.
+    /// </summary>
+    /// <param name="generator">The generator.</param>
+    /// <param name="typeDeclaration">The type declaration for which to append the constructors.</param>
+    /// <returns>A <see langword="true"/> if this handled the format for the type declaration.</returns>
+    public static bool AppendRegexFormatConstructors(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        generator
+            .AppendPublicConvertedValueConstructor(
+                typeDeclaration,
+                "System.Text.RegularExpressions.Regex",
+                CoreTypes.String,
+                "StandardRegex.FormatRegex(value)");
+
+        return true;
+    }
+
+    /// <summary>
+    /// Appends regex format conversions.
+    /// </summary>
+    /// <param name="generator">The generator.</param>
+    /// <param name="typeDeclaration">The type declaration for which to append the conversions.</param>
+    /// <returns>A <see langword="true"/> if this handled the format for the type declaration.</returns>
+    public static bool AppendRegexFormatConversionOperators(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        generator
+            .AppendImplicitConversionToType(typeDeclaration, "System.Text.RegularExpressions.Regex", "value.GetRegex();")
+            .AppendImplicitConversionFromTypeUsingConstructor(typeDeclaration, "System.Text.RegularExpressions.Regex");
+
+        return true;
+    }
+
+    /// <summary>
+    /// Appends regex format public methods.
+    /// </summary>
+    /// <param name="generator">The generator.</param>
+    /// <param name="typeDeclaration">The type declaration for which to append the methods.</param>
+    /// <returns>A <see langword="true"/> if this handled the format for the type declaration.</returns>
+    public static bool AppendRegexFormatPublicMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        generator
+            .AppendSeparatorLine()
+            .ReserveNameIfNotReserved("GetRegex")
+            .AppendBlockIndent(
+                """
+                /// <summary>
+                /// Gets the value as a <see cref="System.Text.RegularExpressions.Regex"/>.
+                /// </summary>
+                /// <param name="options">The regular expression generation options.</param>
+                /// <returns>The value as a <see cref="System.Text.RegularExpressions.Regex"/>.</returns>
+                /// <exception cref="InvalidOperationException">The value was not a regex.</exception>
+                public System.Text.RegularExpressions.Regex GetRegex(System.Text.RegularExpressions.RegexOptions options = System.Text.RegularExpressions.RegexOptions.None)
+                {
+                    if (this.TryGetRegex(out System.Text.RegularExpressions.Regex result, options))
+                    {
+                        return result;
+                    }
+
+                    throw new InvalidOperationException();
+                }
+                """)
+            .AppendSeparatorLine()
+            .AppendBlockIndent(
+                """
+                /// <summary>
+                /// Try to get the regex value as a <see cref="System.Text.RegularExpressions.Regex"/>.
+                /// </summary>
+                /// <param name="result">The value as a <see cref="System.Text.RegularExpressions.Regex"/>.</param>
+                /// <param name="options">The regular expression generation options.</param>
+                /// <returns><see langword="true"/> if it was possible to get a regex value from the instance.</returns>
+                """)
+            .ReserveName("TryGetIPAddress")
+            .AppendLineIndent("public bool TryGetRegex(out System.Text.RegularExpressions.Regex result, System.Text.RegularExpressions.RegexOptions options = System.Text.RegularExpressions.RegexOptions.None)")
+            .AppendLineIndent("{")
+            .PushIndent()
+                .AppendConditionalWrappedJsonElementBackingValueKindLineIndent(
+                    JsonValueKind.String,
+                    "return StandardRegex.TryParseRegex(",
+                    "jsonElementBacking",
+                    ".GetString(), options, out result);")
+                .AppendConditionalWrappedBackingValueLineIndent(
+                    "Backing.String",
+                    "return StandardRegex.TryParseRegex(",
+                    "stringBacking",
+                    ", options, out result);")
+                .AppendSeparatorLine()
+                .AppendLineIndent("result = StandardRegex.Empty;")
+                .AppendLineIndent("return false;")
+            .PopIndent()
+            .AppendLineIndent("}");
+
+        return true;
+    }
+
+    /// <summary>
     /// Appends the ipv4 format constructors.
     /// </summary>
     /// <param name="generator">The generator.</param>
