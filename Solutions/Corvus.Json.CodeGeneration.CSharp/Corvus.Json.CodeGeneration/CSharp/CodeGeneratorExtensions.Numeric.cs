@@ -99,8 +99,9 @@ internal static partial class CodeGeneratorExtensions
     /// Appends the <c>AsBinaryJsonNumber</c> property.
     /// </summary>
     /// <param name="generator">The code generator.</param>
+    /// <param name="typeDeclaration">The type declaraiton for which to append the property.</param>
     /// <returns>A reference to the generator having completed the operation.</returns>
-    public static CodeGenerator AppendAsBinaryJsonNumber(this CodeGenerator generator)
+    public static CodeGenerator AppendAsBinaryJsonNumber(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
         return generator
             .AppendSeparatorLine()
@@ -114,13 +115,23 @@ internal static partial class CodeGeneratorExtensions
                 .AppendLineIndent("{")
                 .PushIndent()
                     .AppendConditionalWrappedBackingValueLineIndent("Backing.Number", "return ", "numberBacking", ";")
-                    .AppendConditionalWrappedBackingValueLineIndent("Backing.JsonElement", "return BinaryJsonNumber.FromJson(", "jsonElementBacking", ");")
+                    .AppendConditionalBackingValueCallbackIndent("Backing.JsonElement", "jsonElementBacking", (g, f) => AppendParse(g, f, typeDeclaration))
                     .AppendSeparatorLine()
                     .AppendLineIndent("throw new InvalidOperationException();")
                 .PopIndent()
                 .AppendLineIndent("}")
             .PopIndent()
             .AppendLineIndent("}");
+
+        static void AppendParse(CodeGenerator generator, string fieldName, TypeDeclaration typeDeclaration)
+        {
+            generator.AppendLineIndent(
+                "return BinaryJsonNumber.FromJson(this.",
+                fieldName,
+                ", BinaryJsonNumber.Kind.",
+                typeDeclaration.PreferredBinaryJsonNumberKind().ToString(),
+                ");");
+        }
     }
 
     /// <summary>

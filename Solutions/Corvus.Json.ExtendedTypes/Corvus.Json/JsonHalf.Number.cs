@@ -681,7 +681,7 @@ public readonly partial struct JsonHalf
 
             if ((this.backing & Backing.JsonElement) != 0)
             {
-                return BinaryJsonNumber.FromJson(this.jsonElementBacking);
+                return BinaryJsonNumber.FromJson(this.jsonElementBacking, BinaryJsonNumber.Kind.Half);
             }
 
             throw new InvalidOperationException();

@@ -65,7 +65,7 @@ public sealed class NumberPartial : ICodeFileBuilder
                             .AppendImplicitConversionToJsonValueType(typeDeclaration, "JsonInteger", CoreTypes.Integer, "value.As<JsonInteger>()")
                             .AppendNumericConversions(typeDeclaration)
                             .AppendNumericOperators(typeDeclaration)
-                            .AppendAsBinaryJsonNumber()
+                            .AppendAsBinaryJsonNumber(typeDeclaration)
                             .AppendAsDotnetNumericValue(typeDeclaration)
                             .AppendNumericEquals(typeDeclaration)
                             .AppendEqualsBinaryJsonNumber()

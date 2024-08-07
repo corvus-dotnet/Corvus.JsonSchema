@@ -1505,6 +1505,90 @@ public class JsonValueEqualitySteps
         }
     }
 
+    [When("I compare the JsonNumber with the JsonNumber (.*)")]
+    public void WhenICompareTheJsonNumberWithTheJsonNumber(string expected)
+    {
+        double expectedValue = expected switch
+        {
+            "double.MinValue" => double.MinValue,
+            "double.MaxValue" => double.MaxValue,
+            "null" => 0,
+            _ => double.Parse(expected),
+        };
+
+        if (expected != "null")
+        {
+            this.scenarioContext.Set(JsonNumber.Compare(this.scenarioContext.Get<JsonNumber>(JsonValueSteps.SubjectUnderTest), new JsonNumber(expectedValue)), ComparisonResultKey);
+        }
+        else
+        {
+            this.scenarioContext.Set(JsonNumber.Compare(this.scenarioContext.Get<JsonNumber>(JsonValueSteps.SubjectUnderTest), JsonNumber.Null), ComparisonResultKey);
+        }
+    }
+
+    [When("I compare the JsonSingle with the JsonSingle (.*)")]
+    public void WhenICompareTheJsonSingleWithTheJsonSingle(string expected)
+    {
+        float expectedValue = expected switch
+        {
+            "float.MinValue" => float.MinValue,
+            "float.MaxValue" => float.MaxValue,
+            "null" => 0,
+            _ => float.Parse(expected),
+        };
+
+        if (expected != "null")
+        {
+            this.scenarioContext.Set(JsonSingle.Compare(this.scenarioContext.Get<JsonSingle>(JsonValueSteps.SubjectUnderTest), new JsonSingle(expectedValue)), ComparisonResultKey);
+        }
+        else
+        {
+            this.scenarioContext.Set(JsonSingle.Compare(this.scenarioContext.Get<JsonSingle>(JsonValueSteps.SubjectUnderTest), JsonSingle.Null), ComparisonResultKey);
+        }
+    }
+
+    [When("I compare the JsonDouble with the JsonDouble (.*)")]
+    public void WhenICompareTheJsonDoubleWithTheJsonDouble(string expected)
+    {
+        double expectedValue = expected switch
+        {
+            "double.MinValue" => double.MinValue,
+            "double.MaxValue" => double.MaxValue,
+            "null" => 0,
+            _ => double.Parse(expected),
+        };
+
+        if (expected != "null")
+        {
+            this.scenarioContext.Set(JsonDouble.Compare(this.scenarioContext.Get<JsonDouble>(JsonValueSteps.SubjectUnderTest), new JsonDouble(expectedValue)), ComparisonResultKey);
+        }
+        else
+        {
+            this.scenarioContext.Set(JsonDouble.Compare(this.scenarioContext.Get<JsonDouble>(JsonValueSteps.SubjectUnderTest), JsonDouble.Null), ComparisonResultKey);
+        }
+    }
+
+    [When("I compare the JsonDecimal with the JsonDecimal (.*)")]
+    public void WhenICompareTheJsonDecimalWithTheJsonDecimal(string expected)
+    {
+        decimal expectedValue = expected switch
+        {
+            "decimal.MinValue" => decimal.MinValue,
+            "decimal.MaxValue" => decimal.MaxValue,
+            "null" => 0,
+            _ => decimal.Parse(expected),
+        };
+
+        if (expected != "null")
+        {
+            this.scenarioContext.Set(JsonDecimal.Compare(this.scenarioContext.Get<JsonDecimal>(JsonValueSteps.SubjectUnderTest), new JsonDecimal(expectedValue)), ComparisonResultKey);
+        }
+        else
+        {
+            this.scenarioContext.Set(JsonDecimal.Compare(this.scenarioContext.Get<JsonDecimal>(JsonValueSteps.SubjectUnderTest), JsonDecimal.Null), ComparisonResultKey);
+        }
+    }
+
     /// <summary>
     /// Compares the <see cref="int"/> in the context value <see cref="ComparisonResultKey"/> with the given int.
     /// </summary>
@@ -1512,7 +1596,7 @@ public class JsonValueEqualitySteps
     [Then("the comparison result should equal the int (.*)")]
     public void ThenTheResultShouldEqualTheInt(int expectedValue)
     {
-        Assert.AreEqual(expectedValue, this.scenarioContext.Get<int>(ComparisonResultKey));
+        Assert.AreEqual(Math.Sign(expectedValue), Math.Sign(this.scenarioContext.Get<int>(ComparisonResultKey)));
     }
 
     /* self lt, gt, ge, le */
@@ -2973,7 +3057,7 @@ public class JsonValueEqualitySteps
     /// Compares the value in JsonNumber in the context variable <c>Value</c> with the expected number, and set it into the context variable <c>Result</c>.
     /// </summary>
     /// <param name="expected">The expected value.</param>
-    [When("I compare the JsonNumber to the JsonNumber(.*)")]
+    [When("I compare the JsonNumber to the JsonNumber (.*)")]
     public void WhenICompareItToTheNumber(string expected)
     {
         if (expected != "null")
@@ -2991,7 +3075,7 @@ public class JsonValueEqualitySteps
     /// Compares the value in JsonDouble in the context variable <c>Value</c> with the expected number, and set it into the context variable <c>Result</c>.
     /// </summary>
     /// <param name="expected">The expected value.</param>
-    [When("I compare the JsonDouble to the JsonDouble(.*)")]
+    [When("I compare the JsonDouble to the JsonDouble (.*)")]
     public void WhenICompareItToTheDouble(string expected)
     {
         if (expected != "null")
@@ -3009,7 +3093,7 @@ public class JsonValueEqualitySteps
     /// Compares the value in JsonSingle in the context variable <c>Value</c> with the expected base64String, and set it into the context variable <c>Result</c>.
     /// </summary>
     /// <param name="expected">The expected value.</param>
-    [When("I compare the JsonSingle to the JsonSingle(.*)")]
+    [When("I compare the JsonSingle to the JsonSingle (.*)")]
     public void WhenICompareItToTheSingle(string expected)
     {
         if (expected != "null")
@@ -3027,7 +3111,7 @@ public class JsonValueEqualitySteps
     /// Compares the value in JsonDecimal in the context variable <c>Value</c> with the expected base64String, and set it into the context variable <c>Result</c>.
     /// </summary>
     /// <param name="expected">The expected value.</param>
-    [When("I compare the JsonDecimal to the JsonDecimal(.*)")]
+    [When("I compare the JsonDecimal to the JsonDecimal (.*)")]
     public void WhenICompareItToTheDecimal(string expected)
     {
         if (expected != "null")

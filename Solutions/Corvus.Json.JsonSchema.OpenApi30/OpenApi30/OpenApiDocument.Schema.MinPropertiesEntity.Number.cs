@@ -706,7 +706,7 @@ public readonly partial struct OpenApiDocument
 
                     if ((this.backing & Backing.JsonElement) != 0)
                     {
-                        return BinaryJsonNumber.FromJson(this.jsonElementBacking);
+                        return BinaryJsonNumber.FromJson(this.jsonElementBacking, BinaryJsonNumber.Kind.Int64);
                     }
 
                     throw new InvalidOperationException();

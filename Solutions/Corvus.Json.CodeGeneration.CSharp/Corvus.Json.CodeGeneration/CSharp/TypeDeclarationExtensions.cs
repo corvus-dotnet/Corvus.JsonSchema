@@ -21,6 +21,7 @@ internal static class TypeDeclarationExtensions
     private const string PreferredDotnetNumericTypeNameKey = "CSharp_LanguageProvider_PreferredDotnetNumericTypeName";
     private const string AlwaysAssertFormatKey = "CSharp_LanguageProvider_AlwaysAssertFormat";
     private const string OptionalAsNullableKey = "CSharp_LanguageProvider_OptionalAsNullable";
+    private const string PreferredBinaryJsonNumberKindKey = "CSharp_LanguageProvider_PreferredBinaryJsonNumberKind";
 
     /// <summary>
     /// Sets the relevant metadata from the <see cref="CSharpLanguageProvider.Options"/>.
@@ -46,7 +47,7 @@ internal static class TypeDeclarationExtensions
     /// <summary>
     /// Try to get the Corvus extended type name for the given type declaration.
     /// </summary>
-    /// <param name="typeDeclaration">The type declaration for which to get the .</param>
+    /// <param name="typeDeclaration">The type declaration for which to get the corvus extended type name.</param>
     /// <param name="extendedTypeName">The corvus extended type name, or <see langword="null"/> if this was not a corvus extended type.</param>
     /// <returns><see langword="true"/> if this type declaration represents a coruvs extended type.</returns>
     public static bool TryGetCorvusJsonExtendedTypeName(this TypeDeclaration typeDeclaration, [NotNullWhen(true)] out string? extendedTypeName)
@@ -62,6 +63,46 @@ internal static class TypeDeclarationExtensions
 
         extendedTypeName = null;
         return false;
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether this type prefers 128bit integers.
+    /// </summary>
+    /// <param name="typeDeclaration">The type declaration to test.</param>
+    /// <returns><see langword="true"/> if the type prefers 128 bit integers.</returns>
+    public static BinaryJsonNumber.Kind PreferredBinaryJsonNumberKind(this TypeDeclaration typeDeclaration)
+    {
+        if (!typeDeclaration.TryGetMetadata(PreferredBinaryJsonNumberKindKey, out BinaryJsonNumber.Kind? numericType))
+        {
+            numericType = GetPreferredBinaryJsonNumberKind(typeDeclaration);
+            typeDeclaration.SetMetadata(PreferredBinaryJsonNumberKindKey, numericType);
+        }
+
+        return numericType ?? BinaryJsonNumber.Kind.Double;
+
+        static BinaryJsonNumber.Kind GetPreferredBinaryJsonNumberKind(TypeDeclaration typeDeclaration)
+        {
+            string? candidateName = typeDeclaration.PreferredDotnetNumericTypeName();
+
+            return candidateName switch
+            {
+                "double" => BinaryJsonNumber.Kind.Double,
+                "decimal" => BinaryJsonNumber.Kind.Decimal,
+                "Half" => BinaryJsonNumber.Kind.Half,
+                "float" => BinaryJsonNumber.Kind.Single,
+                "byte" => BinaryJsonNumber.Kind.Byte,
+                "short" => BinaryJsonNumber.Kind.Int16,
+                "int" => BinaryJsonNumber.Kind.Int32,
+                "long" => BinaryJsonNumber.Kind.Int64,
+                "Int128" => BinaryJsonNumber.Kind.Int128,
+                "sbyte" => BinaryJsonNumber.Kind.SByte,
+                "ushort" => BinaryJsonNumber.Kind.UInt16,
+                "uint" => BinaryJsonNumber.Kind.UInt32,
+                "ulong" => BinaryJsonNumber.Kind.UInt64,
+                "UInt128" => BinaryJsonNumber.Kind.UInt128,
+                _ => BinaryJsonNumber.Kind.Double,
+            };
+        }
     }
 
     /// <summary>

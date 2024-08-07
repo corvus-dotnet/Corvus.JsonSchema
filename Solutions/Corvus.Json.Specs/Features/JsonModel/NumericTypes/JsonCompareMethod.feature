@@ -1,9 +1,9 @@
 Feature: JsonCompareMethod
-  In order to ensure the correctness of the JsonUInt16 comparison operators
+  In order to ensure the correctness of the numeric comparison function
   As a developer
-  I want to test the static comparison operators with various scenarios
+  I want to test the static compare function with various scenarios
 
-Scenario Outline: Compare two json backeed integer values using the static Compare() method
+Scenario Outline: Compare two json backed values using the static Compare() method
 	Given the JsonElement backed <TargetType> <left>
 	When I compare the <TargetType> with the <TargetType> <right>
 	Then the comparison result should equal the int <result>
@@ -37,8 +37,20 @@ Examples:
 	| 10   | 20    | -1     | JsonByte    |
 	| 20   | 10    | 1      | JsonByte    |
 	| 15   | 15    | 0      | JsonByte    |
+	| 10.1 | 20.1  | -1     | JsonNumber  |
+	| 20.1 | 10.1  | 1      | JsonNumber  |
+	| 15.1 | 15.1  | 0      | JsonNumber  |
+	| 10.1 | 20.1  | -1     | JsonSingle  |
+	| 20.1 | 10.1  | 1      | JsonSingle  |
+	| 15.1 | 15.1  | 0      | JsonSingle  |
+	| 10.1 | 20.1  | -1     | JsonDecimal |
+	| 20.1 | 10.1  | 1      | JsonDecimal |
+	| 15.1 | 15.1  | 0      | JsonDecimal |
+	| 10.1 | 20.1  | -1     | JsonDouble  |
+	| 20.1 | 10.1  | 1      | JsonDouble  |
+	| 15.1 | 15.1  | 0      | JsonDouble  |
 
-Scenario Outline: Compare two dotnet backed integer values using the static Compare() method
+Scenario Outline: Compare two dotnet backed values using the static Compare() method
 	Given the dotnet backed <TargetType> <left>
 	When I compare the <TargetType> with the <TargetType> <right>
 	Then the comparison result should equal the int <result>
@@ -72,3 +84,15 @@ Examples:
 	| 10   | 20    | -1     | JsonByte    |
 	| 20   | 10    | 1      | JsonByte    |
 	| 15   | 15    | 0      | JsonByte    |
+	| 10.1 | 20.1  | -1     | JsonNumber  |
+	| 20.1 | 10.1  | 1      | JsonNumber  |
+	| 15.1 | 15.1  | 0      | JsonNumber  |
+	| 10.1 | 20.1  | -1     | JsonSingle  |
+	| 20.1 | 10.1  | 1      | JsonSingle  |
+	| 15.1 | 15.1  | 0      | JsonSingle  |
+	| 10.1 | 20.1  | -1     | JsonDecimal |
+	| 20.1 | 10.1  | 1      | JsonDecimal |
+	| 15.1 | 15.1  | 0      | JsonDecimal |
+	| 10.1 | 20.1  | -1     | JsonDouble  |
+	| 20.1 | 10.1  | 1      | JsonDouble  |
+	| 15.1 | 15.1  | 0      | JsonDouble  |

@@ -983,7 +983,17 @@ public readonly partial struct Applicator
         /// <inheritdoc/>
         public override int GetHashCode()
         {
-            return JsonValueHelpers.GetHashCode(this);
+            return this.ValueKind switch
+            {
+                JsonValueKind.Array => JsonValueHelpers.GetArrayHashCode(this),
+                JsonValueKind.Object => JsonValueHelpers.GetObjectHashCode(this),
+                JsonValueKind.Number => JsonValueHelpers.GetHashCodeForNumber(((IJsonValue)this).AsNumber),
+                JsonValueKind.String => JsonValueHelpers.GetHashCodeForString(((IJsonValue)this).AsString),
+                JsonValueKind.True => true.GetHashCode(),
+                JsonValueKind.False => false.GetHashCode(),
+                JsonValueKind.Null => JsonValueHelpers.NullHashCode,
+                _ => JsonValueHelpers.UndefinedHashCode,
+            };
         }
 
         /// <inheritdoc/>
