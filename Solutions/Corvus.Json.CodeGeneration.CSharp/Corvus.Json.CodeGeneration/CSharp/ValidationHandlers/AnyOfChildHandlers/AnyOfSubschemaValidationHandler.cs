@@ -99,11 +99,7 @@ public class AnyOfSubschemaValidationHandler : IChildValidationHandler
                         .AppendSeparatorLine()
                         .AppendLineIndent("if (", resultName, ".IsValid)")
                         .AppendLineIndent("{")
-                        .PushIndent()
-                        .AppendLineIndent(
-                            "result = result.MergeChildContext(",
-                            resultName,
-                            ", level >= ValidationLevel.Verbose);");
+                        .PushIndent();
 
                     if (!typeDeclaration.RequiresItemsEvaluationTracking() &&
                         !typeDeclaration.RequiresPropertyEvaluationTracking())
@@ -118,6 +114,10 @@ public class AnyOfSubschemaValidationHandler : IChildValidationHandler
                             .AppendLineIndent("else")
                             .AppendLineIndent("{")
                             .PushIndent()
+                                .AppendLineIndent(
+                                    "result = result.MergeChildContext(",
+                                    resultName,
+                                    ", level >= ValidationLevel.Verbose);")
                                 .AppendLineIndent(foundValidName, " = true;")
                             .PopIndent()
                             .AppendLineIndent("}");
@@ -125,6 +125,10 @@ public class AnyOfSubschemaValidationHandler : IChildValidationHandler
                     else
                     {
                         generator
+                            .AppendLineIndent(
+                                "result = result.MergeChildContext(",
+                                resultName,
+                                ", level >= ValidationLevel.Verbose);")
                             .AppendLineIndent(foundValidName, " = true;");
                     }
 
