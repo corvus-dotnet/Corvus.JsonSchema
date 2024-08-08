@@ -32,67 +32,133 @@ internal static partial class CodeGeneratorExtensions
             .AppendLineIndent("public static ", typeDeclaration.DotnetTypeName(), " FromByteArray(ReadOnlySpan<byte> value)")
             .AppendLineIndent("{")
             .PushIndent()
-                .AppendLine("#if NET8_0_OR_GREATER")
-                .AppendLineIndent("return new ", typeDeclaration.DotnetTypeName(), "(Encoding.UTF8.GetString(value));")
-                .AppendLine("#else")
-                .AppendLineIndent("byte[] bytes = ArrayPool<byte>.Shared.Rent(value.Length);")
-                .AppendLineIndent("try")
-                .AppendLineIndent("{")
-                .PushIndent()
-                    .AppendLineIndent("value.CopyTo(bytes);")
-                    .AppendLineIndent("return new ", typeDeclaration.DotnetTypeName(), "(Encoding.UTF8.GetString(bytes, 0, value.Length));")
-                .PopIndent()
-                .AppendLineIndent("}")
-                .AppendLineIndent("finally")
-                .AppendLineIndent("{")
-                .PushIndent()
-                    .AppendLineIndent("ArrayPool<byte>.Shared.Return(bytes);")
-                .PopIndent()
-                .AppendLineIndent("}")
-                .AppendLine("#endif")
-            .PopIndent()
-            .AppendLineIndent("}")
-            .AppendSeparatorLine()
-            .AppendLineIndent("/// <summary>")
-            .AppendLineIndent("/// Creates a new instance of the <see cref=\"", typeDeclaration.DotnetTypeName(), "\"/> struct from a byte arrary.")
-            .AppendLineIndent("/// </summary>")
-            .AppendLineIndent("/// <param name=\"value\">The <see langword=\"byte\"/> array from which to construct the Base64 content.</param>")
-            .AppendLineIndent("/// <param name=\"index\">The index into the array array from which to construct the Base64 content.</param>")
-            .AppendLineIndent("/// <param name=\"length\">The length of the array from which to construct the Base64 content.</param>")
-            .AppendLineIndent("/// <returns>The base 64 encoded string representation of the byte array.</returns>")
-            .AppendLineIndent("/// <remarks>Note that the byte array is not a UTF8 string, but an array of arbitrary bytes. This encodes the byte array as a base 64 string.</remarks>")
-            .AppendLineIndent("public static ", typeDeclaration.DotnetTypeName(), " FromByteArray(byte[] value, int index, int length)")
-            .AppendLineIndent("{")
-            .PushIndent()
-                .AppendLineIndent("return new ", typeDeclaration.DotnetTypeName(), "(Encoding.UTF8.GetString(bytes, index, length));")
-            .PopIndent()
-            .AppendLineIndent("}")
-            .AppendSeparatorLine()
-            .AppendLineIndent("/// <summary>")
-            .AppendLineIndent("/// Creates a new instance of the <see cref=\"", typeDeclaration.DotnetTypeName(), "\"/> struct from a byte arrary.")
-            .AppendLineIndent("/// </summary>")
-            .AppendLineIndent("/// <param name=\"value\">The <see langword=\"byte\"/> array from which to construct the Base64 content.</param>")
-            .AppendLineIndent("/// <returns>The base 64 encoded string representation of the byte array.</returns>")
-            .AppendLineIndent("/// <remarks>Note that the byte array is not a UTF8 string, but an array of arbitrary bytes. This encodes the byte array as a base 64 string.</remarks>")
-            .AppendLineIndent("public static ", typeDeclaration.DotnetTypeName(), " FromByteArray(byte[] value)")
-            .AppendLineIndent("{")
-            .PushIndent()
-                .AppendLineIndent("return new ", typeDeclaration.DotnetTypeName(), "(Encoding.UTF8.GetString(bytes));")
+                .AppendLineIndent("return new ", typeDeclaration.DotnetTypeName(), "(StandardBase64.EncodeToString(value));")
             .PopIndent()
             .AppendLineIndent("}")
             .AppendSeparatorLine()
             .ReserveNameIfNotReserved("GetBase64EncodedString")
-            .AppendLineIndent("/// <summmary>")
-            .AppendLineIndent("/// Get the base64 encoded string.")
-            .AppendLineIndent("/// </summmary>")
-            .AppendLineIndent("/// <returns>The base 64 encoded string.</returns>")
-            .AppendLineIndent("[Obsolete(\"Use the standard GetString() method.\")]")
-            .AppendLineIndent("public ReadOnlySpan<char> GetBase64EncodedString()")
+            .AppendBlockIndent(
+                """
+                /// <summary>
+                /// Get the base64 encoded string.
+                /// </summary>
+                /// <returns>The base 64 encoded string.</returns>
+                [Obsolete("Use the standard GetString() method.")]
+                public ReadOnlySpan<char> GetBase64EncodedString()
+                {
+                    return this.GetString().AsSpan();
+                }
+                """)
+            .AppendSeparatorLine()
+            .ReserveNameIfNotReserved("GetDecodedBufferSize")
+            .AppendBlockIndent(
+                """
+                /// <summary>
+                /// Gets the minimum size for a buffer to
+                /// pass to <see cref="TryGetDecodedBase64Bytes(Span{byte}, out int)"/>.
+                /// </summary>
+                /// <returns>A buffer that will be of a suitable length decoding the base64 content.</returns>
+                /// <remarks>This is not a zero-cost operation. If you know the expected maximum buffer size in advance,
+                /// you can improve performance by pre-allocating a reasonable buffer size and calling <see cref="TryGetDecodedBase64Bytes(Span{byte}, out int)"/>.
+                /// If the buffer was too small, the <c>written</c> value will be the desired buffer size.</remarks>
+                """)
+            .AppendLineIndent("public int GetDecodedBufferSize()")
             .AppendLineIndent("{")
             .PushIndent()
-                .AppendLineIndent("return this.GetString().AsSpan();")
+                .AppendConditionalWrappedBackingValueLineIndent(
+                    "Backing.String",
+                    "return StandardBase64.GetDecodedBufferSize(",
+                    "stringBacking",
+                    ");")
+                .AppendConditionalWrappedJsonElementBackingValueKindLineIndent(
+                    JsonValueKind.String,
+                    "return StandardBase64.GetDecodedBufferSize(",
+                    "jsonElementBacking",
+                    ");")
+                .AppendSeparatorLine()
+                .AppendLineIndent("throw new InvalidOperationException();")
             .PopIndent()
-            .AppendLineIndent("}");
+            .AppendLineIndent("}")
+            .AppendSeparatorLine()
+            .ReserveNameIfNotReserved("TryGetDecodedBase64Bytes")
+            .AppendBlockIndent(
+                """
+                /// <summary>
+                /// Try to get the decoded base64 bytes.
+                /// </summary>
+                /// <param name="result">The span into which to write the bytes.</param>
+                /// <param name="written">The number of bytes written.</param>
+                /// <returns><see langword="true"/> if the bytes were successfully decoded.</returns>
+                /// <remarks>
+                /// If the <paramref name="result"/> buffer was too short for the decoded bytes, the method will return <see langword="false"/>,
+                /// and <paramref name="written"/> will be a number representing a buffer of sufficient size to decode the value. Otherwise it will be <c>0</c>.
+                /// </remarks>
+                """)
+            .AppendLineIndent("public bool TryGetDecodedBase64Bytes(Span<byte> result, out int written)")
+            .AppendLineIndent("{")
+            .PushIndent()
+                .AppendConditionalWrappedBackingValueLineIndent(
+                    "Backing.String",
+                    "return StandardBase64.Decode(",
+                    "stringBacking",
+                    ", result, out written);")
+                .AppendConditionalWrappedJsonElementBackingValueKindLineIndent(
+                    JsonValueKind.String,
+                    "return StandardBase64.Decode(",
+                    "jsonElementBacking",
+                    ", result, out written);")
+                .AppendSeparatorLine()
+                .AppendLineIndent("written = 0;")
+                .AppendLineIndent("return false;")
+            .PopIndent()
+            .AppendLineIndent("}")
+            .AppendSeparatorLine()
+            .ReserveNameIfNotReserved("GetDecodedBase64Bytes")
+            .AppendBlockIndent(
+                """
+                /// <summary>
+                /// Get the decoded base64 bytes.
+                /// </summary>
+                /// <returns>The base 64 bytes.</returns>
+                [Obsolete("Use the TryDecodeBase64Bytes() method.")]
+                public ReadOnlySpan<byte> GetDecodedBase64Bytes()
+                {
+                    Span<byte> decoded = new byte[this.GetDecodedBufferSize()];
+                    if (this.TryGetDecodedBase64Bytes(decoded, out int written))
+                    {
+                        return decoded[..written];
+                    }
+
+                    throw new InvalidOperationException();
+                }
+                """)
+            .AppendSeparatorLine()
+            .ReserveNameIfNotReserved("HasBase64Bytes")
+            .AppendBlockIndent(
+                """
+                /// <summary>
+                /// Get a value indicating whether this instance has a Base64-encoded byte array.
+                /// </summary>
+                /// <returns><see langword="true" /> if the value is a properly formed base64 encoded string.</returns>
+                """)
+            .AppendLineIndent("public bool HasBase64Bytes()")
+            .AppendLineIndent("{")
+            .PushIndent()
+                .AppendConditionalWrappedBackingValueLineIndent(
+                    "Backing.String",
+                    "return StandardBase64.HasBase64Bytes(",
+                    "stringBacking",
+                    ");")
+                .AppendConditionalWrappedJsonElementBackingValueKindLineIndent(
+                    JsonValueKind.String,
+                    "return StandardBase64.HasBase64Bytes(",
+                    "jsonElementBacking",
+                    ");")
+                .AppendSeparatorLine()
+                .AppendLineIndent("return false;")
+            .PopIndent()
+            .AppendLineIndent("}")
+;
 
         return true;
     }
