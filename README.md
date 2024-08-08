@@ -96,7 +96,7 @@ Console.WriteLine($"{person.Name.FamilyName}"});
 
 ### Validation
 
-The same object-model provides ultra-fast, zero/low validation of JSON data against a JSON Schema.
+The same object-model provides ultra-fast, zero/low allocation validation of JSON data against a JSON Schema.
 
 Having "deserialized" (really 'mapped') the JSON into the object model you can make use of the validation:
 
@@ -430,6 +430,7 @@ There are a number of significant changes in this release
 ### Additional features
 
 - Opt-out of optional naming heuristics introduced in V3.0 with the `--disableOptionalNamingHeuristics` command line switch.
+- Opt-out of specific naming heuristics by specifying `--disableNamingHeuristic`. You can list the available name heuristics with the new `generatejsonschematypes listNameHeuristics` command 
 - Safe truncation for extremely long file names
 - Access to all JSON schema validation constants via the `CorvusValidation` nested static class.
 - All formatted types (e.g. string or number formats) are now convertible to the equivalent core types (e.g. your custom `"format": "date"` type is freely convertible to and from `JsonDate`) and offer the same accessors and conversions as the core types.

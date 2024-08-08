@@ -5,6 +5,7 @@
 using System.Collections.Frozen;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace Corvus.Json.CodeGeneration.CSharp;
 
@@ -75,6 +76,19 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
     public static string GetDotnetTypeName(TypeDeclaration typeDeclaration)
     {
         return typeDeclaration.DotnetTypeName();
+    }
+
+    /// <summary>
+    /// Gets the list of available name heuristics.
+    /// </summary>
+    /// <returns>The ordered list of name heuristics.</returns>
+    public IEnumerable<(string Name, bool IsOptional)> GetNameHeuristicNames()
+    {
+        return this.nameHeuristicRegistry.RegisteredHeuristics
+            .Select(h => (h.GetType().Name, h.IsOptional))
+            .Distinct()
+            .OrderBy(n => n.IsOptional)
+            .ThenBy(n => n.Name);
     }
 
     /// <inheritdoc/>
