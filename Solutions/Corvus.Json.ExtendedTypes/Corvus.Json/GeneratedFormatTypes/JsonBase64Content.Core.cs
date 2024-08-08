@@ -609,20 +609,31 @@ public readonly partial struct JsonBase64Content
 
         if ((this.backing & Backing.JsonElement) != 0)
         {
-            char[] buffer = ArrayPool<char>.Shared.Rent(destination.Length);
-            try
+            if (this.jsonElementBacking.ValueKind == JsonValueKind.String)
             {
-                bool result = this.jsonElementBacking.TryGetValue(FormatSpan, new Output(buffer, destination.Length), out charsWritten);
-                if (result)
+                char[] buffer = ArrayPool<char>.Shared.Rent(destination.Length);
+                try
                 {
-                    buffer.AsSpan(0, charsWritten).CopyTo(destination);
-                }
+                    bool result = this.jsonElementBacking.TryGetValue(FormatSpan, new Output(buffer, destination.Length), out charsWritten);
+                    if (result)
+                    {
+                        buffer.AsSpan(0, charsWritten).CopyTo(destination);
+                    }
 
-                return result;
+                    return result;
+                }
+                finally
+                {
+                    ArrayPool<char>.Shared.Return(buffer);
+                }
             }
-            finally
+            else
             {
-                ArrayPool<char>.Shared.Return(buffer);
+                string value = this.jsonElementBacking.GetRawText();
+                int length = Math.Min(destination.Length, this.stringBacking.Length);
+                this.stringBacking.AsSpan(0, length).CopyTo(destination);
+                charsWritten = length;
+                return true;
             }
         }
 

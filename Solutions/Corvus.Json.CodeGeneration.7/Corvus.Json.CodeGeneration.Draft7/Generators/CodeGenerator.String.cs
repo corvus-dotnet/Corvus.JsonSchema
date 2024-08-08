@@ -16,7 +16,7 @@ namespace Corvus.Json.CodeGeneration.Generators.Draft7 {
     public partial class CodeGeneratorString : CodeGeneratorStringBase {
         
         
-        #line 497 "CodeGenerator.String.tt"
+        #line 508 "CodeGenerator.String.tt"
 
     public bool ShouldGenerate
     {
@@ -677,58 +677,65 @@ namespace ");
                     "         }\r\n#else\r\n            char[] chars = ArrayPool<char>.Shared.Rent(maxCha" +
                     "rCount);\r\n            byte[] bytes = ArrayPool<byte>.Shared.Rent(utf8Bytes.Lengt" +
                     "h);\r\n            utf8Bytes.CopyTo(bytes);\r\n\r\n            try\r\n            {\r\n   " +
-                    "             int written = Encoding.UTF8.GetChars(bytes, 0, bytes.Length, chars," +
-                    " 0);\r\n                return chars.SequenceEqual(this.stringBacking);\r\n         " +
-                    "   }\r\n            finally\r\n            {\r\n                ArrayPool<char>.Shared" +
-                    ".Return(chars);\r\n                ArrayPool<byte>.Shared.Return(bytes);\r\n        " +
-                    "    }\r\n#endif\r\n        }\r\n\r\n        return false;\r\n    }\r\n\r\n    /// <summary>\r\n " +
-                    "   /// Compare to a sequence of characters.\r\n    /// </summary>\r\n    /// <param " +
-                    "name=\"chars\">The character sequence to compare.</param>\r\n    /// <returns><c>Tru" +
-                    "e</c> if teh sequences match.</returns>\r\n    public bool EqualsString(string cha" +
-                    "rs)\r\n    {\r\n        if ((this.backing & Backing.JsonElement) != 0)\r\n        {\r\n " +
-                    "           if (this.jsonElementBacking.ValueKind == JsonValueKind.String)\r\n     " +
-                    "       {\r\n                return this.jsonElementBacking.ValueEquals(chars);\r\n  " +
-                    "          }\r\n\r\n            return false;\r\n        }\r\n\r\n        if ((this.backing" +
-                    " & Backing.String) != 0)\r\n        {\r\n            return chars.Equals(this.string" +
-                    "Backing, StringComparison.Ordinal);\r\n        }\r\n\r\n        return false;\r\n    }\r\n" +
-                    "\r\n    /// <summary>\r\n    /// Compare to a sequence of characters.\r\n    /// </sum" +
-                    "mary>\r\n    /// <param name=\"chars\">The character sequence to compare.</param>\r\n " +
-                    "   /// <returns><c>True</c> if teh sequences match.</returns>\r\n    public bool E" +
-                    "qualsString(ReadOnlySpan<char> chars)\r\n    {\r\n        if ((this.backing & Backin" +
-                    "g.JsonElement) != 0)\r\n        {\r\n            if (this.jsonElementBacking.ValueKi" +
-                    "nd == JsonValueKind.String)\r\n            {\r\n                return this.jsonElem" +
-                    "entBacking.ValueEquals(chars);\r\n            }\r\n\r\n            return false;\r\n    " +
-                    "    }\r\n\r\n        if ((this.backing & Backing.String) != 0)\r\n        {\r\n#if NET8_" +
-                    "0_OR_GREATER\r\n            return chars.SequenceEqual(this.stringBacking);\r\n#else" +
-                    "\r\n            return chars.SequenceEqual(this.stringBacking.AsSpan());\r\n#endif\r\n" +
-                    "        }\r\n\r\n        return false;\r\n    }\r\n\r\n#if NET8_0_OR_GREATER\r\n    /// <inh" +
-                    "eritdoc/>\r\n    public bool TryFormat(Span<char> destination, out int charsWritte" +
-                    "n, ReadOnlySpan<char> format, IFormatProvider? provider)\r\n    {\r\n        if ((th" +
-                    "is.backing & Backing.String) != 0)\r\n        {\r\n            int length = Math.Min" +
-                    "(destination.Length, this.stringBacking.Length);\r\n            this.stringBacking" +
-                    ".AsSpan(0, length).CopyTo(destination);\r\n            charsWritten = length;\r\n   " +
-                    "         return true;\r\n        }\r\n\r\n        if ((this.backing & Backing.JsonElem" +
-                    "ent) != 0)\r\n        {\r\n            char[] buffer = ArrayPool<char>.Shared.Rent(d" +
-                    "estination.Length);\r\n            try\r\n            {\r\n                bool result" +
-                    " = this.jsonElementBacking.TryGetValue(FormatSpan, new Output(buffer, destinatio" +
-                    "n.Length), out charsWritten);\r\n                if (result)\r\n                {\r\n " +
-                    "                   buffer.AsSpan(0, charsWritten).CopyTo(destination);\r\n        " +
-                    "        }\r\n\r\n                return result;\r\n            }\r\n            finally\r" +
-                    "\n            {\r\n                ArrayPool<char>.Shared.Return(buffer);\r\n        " +
-                    "    }\r\n        }\r\n\r\n        charsWritten = 0;\r\n        return false;\r\n\r\n        " +
-                    "static bool FormatSpan(ReadOnlySpan<char> source, in Output output, out int char" +
-                    "sWritten)\r\n        {\r\n            int length = Math.Min(output.Length, source.Le" +
-                    "ngth);\r\n            source[..length].CopyTo(output.Destination);\r\n            ch" +
-                    "arsWritten = length;\r\n            return true;\r\n        }\r\n    }\r\n\r\n    /// <inh" +
-                    "eritdoc/>\r\n    public string ToString(string? format, IFormatProvider? formatPro" +
-                    "vider)\r\n    {\r\n        // There is no formatting for the string\r\n        return " +
-                    "this.ToString();\r\n    }\r\n\r\n    private readonly record struct Output(char[] Dest" +
-                    "ination, int Length);\r\n#endif\r\n}\r\n");
+                    "             int written = Encoding.UTF8.GetChars(bytes, 0, utf8Bytes.Length, ch" +
+                    "ars, 0);\r\n                return chars.AsSpan(0, written).SequenceEqual(this.str" +
+                    "ingBacking.AsSpan());\r\n            }\r\n            finally\r\n            {\r\n      " +
+                    "          ArrayPool<char>.Shared.Return(chars);\r\n                ArrayPool<byte>" +
+                    ".Shared.Return(bytes);\r\n            }\r\n#endif\r\n        }\r\n\r\n        return false" +
+                    ";\r\n    }\r\n\r\n    /// <summary>\r\n    /// Compare to a sequence of characters.\r\n   " +
+                    " /// </summary>\r\n    /// <param name=\"chars\">The character sequence to compare.<" +
+                    "/param>\r\n    /// <returns><c>True</c> if teh sequences match.</returns>\r\n    pub" +
+                    "lic bool EqualsString(string chars)\r\n    {\r\n        if ((this.backing & Backing." +
+                    "JsonElement) != 0)\r\n        {\r\n            if (this.jsonElementBacking.ValueKind" +
+                    " == JsonValueKind.String)\r\n            {\r\n                return this.jsonElemen" +
+                    "tBacking.ValueEquals(chars);\r\n            }\r\n\r\n            return false;\r\n      " +
+                    "  }\r\n\r\n        if ((this.backing & Backing.String) != 0)\r\n        {\r\n           " +
+                    " return chars.Equals(this.stringBacking, StringComparison.Ordinal);\r\n        }\r\n" +
+                    "\r\n        return false;\r\n    }\r\n\r\n    /// <summary>\r\n    /// Compare to a sequen" +
+                    "ce of characters.\r\n    /// </summary>\r\n    /// <param name=\"chars\">The character" +
+                    " sequence to compare.</param>\r\n    /// <returns><c>True</c> if teh sequences mat" +
+                    "ch.</returns>\r\n    public bool EqualsString(ReadOnlySpan<char> chars)\r\n    {\r\n  " +
+                    "      if ((this.backing & Backing.JsonElement) != 0)\r\n        {\r\n            if " +
+                    "(this.jsonElementBacking.ValueKind == JsonValueKind.String)\r\n            {\r\n    " +
+                    "            return this.jsonElementBacking.ValueEquals(chars);\r\n            }\r\n\r" +
+                    "\n            return false;\r\n        }\r\n\r\n        if ((this.backing & Backing.Str" +
+                    "ing) != 0)\r\n        {\r\n#if NET8_0_OR_GREATER\r\n            return chars.SequenceE" +
+                    "qual(this.stringBacking);\r\n#else\r\n            return chars.SequenceEqual(this.st" +
+                    "ringBacking.AsSpan());\r\n#endif\r\n        }\r\n\r\n        return false;\r\n    }\r\n\r\n#if" +
+                    " NET8_0_OR_GREATER\r\n    /// <inheritdoc/>\r\n    public bool TryFormat(Span<char> " +
+                    "destination, out int charsWritten, ReadOnlySpan<char> format, IFormatProvider? p" +
+                    "rovider)\r\n    {\r\n        if ((this.backing & Backing.String) != 0)\r\n        {\r\n " +
+                    "           int length = Math.Min(destination.Length, this.stringBacking.Length);" +
+                    "\r\n            this.stringBacking.AsSpan(0, length).CopyTo(destination);\r\n       " +
+                    "     charsWritten = length;\r\n            return true;\r\n        }\r\n\r\n        if (" +
+                    "(this.backing & Backing.JsonElement) != 0)\r\n        {\r\n            if (this.json" +
+                    "ElementBacking.ValueKind == JsonValueKind.String)\r\n            {\r\n              " +
+                    "  char[] buffer = ArrayPool<char>.Shared.Rent(destination.Length);\r\n            " +
+                    "    try\r\n                {\r\n                    bool result = this.jsonElementBa" +
+                    "cking.TryGetValue(FormatSpan, new Output(buffer, destination.Length), out charsW" +
+                    "ritten);\r\n                    if (result)\r\n                    {\r\n              " +
+                    "          buffer.AsSpan(0, charsWritten).CopyTo(destination);\r\n                 " +
+                    "   }\r\n\r\n                    return result;\r\n                }\r\n                f" +
+                    "inally\r\n                {\r\n                    ArrayPool<char>.Shared.Return(buf" +
+                    "fer);\r\n                }\r\n            }\r\n            else\r\n            {\r\n      " +
+                    "          string value = this.jsonElementBacking.GetRawText();\r\n                " +
+                    "int length = Math.Min(destination.Length, this.stringBacking.Length);\r\n         " +
+                    "       this.stringBacking.AsSpan(0, length).CopyTo(destination);\r\n              " +
+                    "  charsWritten = length;\r\n                return true;\r\n            }\r\n        }" +
+                    "\r\n\r\n        charsWritten = 0;\r\n        return false;\r\n\r\n        static bool Form" +
+                    "atSpan(ReadOnlySpan<char> source, in Output output, out int charsWritten)\r\n     " +
+                    "   {\r\n            int length = Math.Min(output.Length, source.Length);\r\n        " +
+                    "    source[..length].CopyTo(output.Destination);\r\n            charsWritten = len" +
+                    "gth;\r\n            return true;\r\n        }\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    p" +
+                    "ublic string ToString(string? format, IFormatProvider? formatProvider)\r\n    {\r\n " +
+                    "       // There is no formatting for the string\r\n        return this.ToString();" +
+                    "\r\n    }\r\n\r\n    private readonly record struct Output(char[] Destination, int Len" +
+                    "gth);\r\n#endif\r\n}\r\n");
             
             #line default
             #line hidden
             
-            #line 496 "CodeGenerator.String.tt"
+            #line 507 "CodeGenerator.String.tt"
  EndNesting(); 
             
             #line default
