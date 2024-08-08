@@ -186,7 +186,7 @@ public readonly partial struct JsonBase64Content
 
         if (this.jsonElementBacking.ValueKind == JsonValueKind.String)
         {
-            if (this.jsonElementBacking.TryGetBytesFromBase64(out byte[]? decoded))
+            if (this.jsonElementBacking.TryGetBytesFromBase64(out byte[]? decoded) && decoded.Length > 0)
             {
                 var reader = new Utf8JsonReader(decoded);
 #pragma warning disable RCS1075 // Avoid empty catch clause that catches System.Exception.

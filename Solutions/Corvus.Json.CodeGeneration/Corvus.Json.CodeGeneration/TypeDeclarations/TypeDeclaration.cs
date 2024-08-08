@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
@@ -37,7 +38,7 @@ namespace Corvus.Json.CodeGeneration;
 public sealed class TypeDeclaration(LocatedSchema locatedSchema)
 {
     private readonly Dictionary<string, TypeDeclaration> subschemaTypeDeclarations = [];
-    private readonly Dictionary<string, object?> metadata = [];
+    private readonly ConcurrentDictionary<string, object?> metadata = [];
     private readonly Dictionary<string, PropertyDeclaration> properties = [];
 
     /// <summary>
