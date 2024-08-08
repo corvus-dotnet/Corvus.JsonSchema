@@ -47,6 +47,7 @@
 	  <SpecFlowObsoleteCodeBehindFiles Remove="Features\JsonModel\JsonStringEquals\StringEqualsCharSpan - Copy.feature.cs" />
 	  <SpecFlowObsoleteCodeBehindFiles Remove="Features\JsonModel\JsonStringEquals\StringEqualsUtf8Bytes - Copy.feature.cs" />
 	  <SpecFlowObsoleteCodeBehindFiles Remove="Features\JsonModel\NumericTypes\JsonComparisonOperators - Copy.feature.cs" />
+	  <SpecFlowObsoleteCodeBehindFiles Remove="Features\JsonModel\V3Interop\validateWithDifferentFlagLevels.feature.cs" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -109,6 +110,9 @@
 	  </Compile>
 	  <Compile Update="Features\JsonModel\NumericTypes\JsonCompareMethod.feature.cs">
 	    <DependentUpon>JsonCompareMethod.feature</DependentUpon>
+	  </Compile>
+	  <Compile Update="Features\JsonModel\V3Interop\validateV3Model.feature.cs">
+	    <DependentUpon>validateV3Model.feature</DependentUpon>
 	  </Compile>
 	</ItemGroup>
 
@@ -220,6 +224,14 @@
 	    <CodeBehindFile>%(RelativeDir)%(Filename).feature$(DefaultLanguageSourceExtension)</CodeBehindFile>
 	  </SpecFlowFeatureFiles>
 	  <SpecFlowFeatureFiles Update="Features\JsonModel\NumericTypes\JsonCompareMethod.feature">
+	    <Visible>$(UsingMicrosoftNETSdk)</Visible>
+	    <CodeBehindFile>%(RelativeDir)%(Filename).feature$(DefaultLanguageSourceExtension)</CodeBehindFile>
+	  </SpecFlowFeatureFiles>
+	  <SpecFlowFeatureFiles Update="Features\JsonModel\V3Interop\ValidateV3GeneratedCode.feature">
+	    <Visible>$(UsingMicrosoftNETSdk)</Visible>
+	    <CodeBehindFile>%(RelativeDir)%(Filename).feature$(DefaultLanguageSourceExtension)</CodeBehindFile>
+	  </SpecFlowFeatureFiles>
+	  <SpecFlowFeatureFiles Update="Features\JsonModel\V3Interop\validateV3Model.feature">
 	    <Visible>$(UsingMicrosoftNETSdk)</Visible>
 	    <CodeBehindFile>%(RelativeDir)%(Filename).feature$(DefaultLanguageSourceExtension)</CodeBehindFile>
 	  </SpecFlowFeatureFiles>

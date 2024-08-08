@@ -27,7 +27,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Corvus.JsonSchema.SpecGener
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Code Generation", "Code Generation", "{95D2B90C-DBBA-4AF7-BAE8-4E933E050E75}"
 	ProjectSection(SolutionItems) = preProject
-		buildtemplates.ps1 = buildtemplates.ps1
 		generatetypes-release.ps1 = generatetypes-release.ps1
 		generatetypes.ps1 = generatetypes.ps1
 	EndProjectSection
@@ -95,7 +94,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "scripts", "scripts", "{39EB
 		generatetypes.ps1 = generatetypes.ps1
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Corvus.Json.CodeGeneration.CorvusVocabulary", "Corvus.Json.CodeGeneration.CorvusVocabulary\Corvus.Json.CodeGeneration.CorvusVocabulary.csproj", "{52FC50E3-4944-4B08-BDAC-F12CF132057B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Corvus.Json.CodeGeneration.CorvusVocabulary", "Corvus.Json.CodeGeneration.CorvusVocabulary\Corvus.Json.CodeGeneration.CorvusVocabulary.csproj", "{52FC50E3-4944-4B08-BDAC-F12CF132057B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
