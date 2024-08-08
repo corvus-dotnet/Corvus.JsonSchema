@@ -5210,6 +5210,48 @@ internal static partial class CodeGeneratorExtensions
         return generator;
     }
 
+    private static CodeGenerator AppendConditionaldJsonElementBackingValueKindCallbackIndent(
+    this CodeGenerator generator,
+    JsonValueKind jsonElementValueKind,
+    string fieldName,
+    Action<CodeGenerator, string> callback,
+    string identifier = "this",
+    CoreTypes impliedCoreTypes = CoreTypes.Any,
+    CoreTypes forCoreTypes = CoreTypes.Any,
+    bool returnFromClause = false)
+    {
+        if ((impliedCoreTypes & forCoreTypes) != 0)
+        {
+            string localBackingFieldName = generator.GetFieldNameInScope(fieldName);
+            generator
+                .AppendSeparatorLine()
+                .AppendIndent("if (")
+                .Append(identifier)
+                .Append('.')
+                .Append(localBackingFieldName)
+                .Append(".ValueKind == JsonValueKind.")
+                .Append(jsonElementValueKind.ToString())
+                .AppendLine(")")
+                .AppendLineIndent("{")
+                .PushIndent();
+
+            callback(generator, localBackingFieldName);
+
+            if (returnFromClause)
+            {
+                generator
+                    .AppendSeparatorLine()
+                    .AppendLineIndent("return;");
+            }
+
+            generator
+                .PopIndent()
+                .AppendLineIndent("}");
+        }
+
+        return generator;
+    }
+
     private static CodeGenerator AppendConditionalWrappedBackingValueLineIndent(
         this CodeGenerator generator,
         string backingType,
