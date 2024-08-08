@@ -455,6 +455,64 @@ public class JsonValueCastSteps
         this.scenarioContext.Set((JsonContent)this.scenarioContext.Get<string>(JsonValueSteps.SubjectUnderTest), CastResultKey);
     }
 
+    /* content */
+
+    /// <summary>
+    /// Casts the <see cref="JsonContentPre201909"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="JsonAny"/> and stores it in <see cref="CastResultKey"/>.
+    /// </summary>
+    [When("I cast the JsonContentPre201909 to JsonAny")]
+    public void WhenICastTheJsonContentPre201909ToJsonAny()
+    {
+        this.scenarioContext.Set((JsonAny)this.scenarioContext.Get<JsonContentPre201909>(JsonValueSteps.SubjectUnderTest), CastResultKey);
+    }
+
+    /// <summary>
+    /// Compares the <see cref="JsonContentPre201909"/> in the context value <see cref="CastResultKey"/> with the given JsonContentPre201909.
+    /// </summary>
+    /// <param name="expectedValue">The serialized form of the <see cref="JsonContentPre201909"/>.</param>
+    [Then("the result should equal the JsonContentPre201909 (.*)")]
+    public void ThenTheResultShouldEqualTheJsonContentPre201909(string expectedValue)
+    {
+        var expected = JsonContentPre201909.ParseValue(expectedValue);
+        Assert.AreEqual(expected, this.scenarioContext.Get<JsonContentPre201909>(CastResultKey));
+    }
+
+    /// <summary>
+    /// Casts the <see cref="JsonContentPre201909"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="JsonString"/> and stores it in <see cref="CastResultKey"/>.
+    /// </summary>
+    [When("I cast the JsonContentPre201909 to JsonString")]
+    public void WhenICastTheJsonContentPre201909ToJsonString()
+    {
+        this.scenarioContext.Set((JsonString)this.scenarioContext.Get<JsonContentPre201909>(JsonValueSteps.SubjectUnderTest), CastResultKey);
+    }
+
+    /// <summary>
+    /// Casts the <see cref="JsonString"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="JsonContentPre201909"/> and stores it in <see cref="CastResultKey"/>.
+    /// </summary>
+    [When("I cast the JsonString to JsonContentPre201909")]
+    public void WhenICastTheJsonStringToJsonContentPre201909()
+    {
+        this.scenarioContext.Set((JsonContentPre201909)this.scenarioContext.Get<JsonString>(JsonValueSteps.SubjectUnderTest), CastResultKey);
+    }
+
+    /// <summary>
+    /// Casts the <see cref="JsonContentPre201909"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="string"/> and stores it in <see cref="CastResultKey"/>.
+    /// </summary>
+    [When("I cast the JsonContentPre201909 to string")]
+    public void WhenICastTheJsonContentPre201909ToString()
+    {
+        this.scenarioContext.Set((string)this.scenarioContext.Get<JsonContentPre201909>(JsonValueSteps.SubjectUnderTest), CastResultKey);
+    }
+
+    /// <summary>
+    /// Casts the <see cref="string"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="JsonContentPre201909"/> and stores it in <see cref="CastResultKey"/>.
+    /// </summary>
+    [When("I cast the string to JsonContentPre201909")]
+    public void WhenICastTheStringToJsonContentPre201909()
+    {
+        this.scenarioContext.Set((JsonContentPre201909)this.scenarioContext.Get<string>(JsonValueSteps.SubjectUnderTest), CastResultKey);
+    }
+
     /* email */
 
     /// <summary>

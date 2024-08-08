@@ -36,10 +36,10 @@ public class WellKnownStringFormatHandler : IStringFormatHandler
             "iri" => generator.AppendIriFormatConstructors(typeDeclaration),
             "iri-reference" => generator.AppendIriReferenceFormatConstructors(typeDeclaration),
             "regex" => generator.AppendRegexFormatConstructors(typeDeclaration),
+            "corvus-json-content" => generator.AppendJsonContentFormatConstructors(typeDeclaration),
+            "corvus-json-content-pre201909" => generator.AppendJsonContentFormatConstructors(typeDeclaration),
             ////"corvus-base64-content" => generator.AppendBase64ContentFormatConstructors(typeDeclaration),
             ////"corvus-base64-content-pre201909" => generator.AppendBase64ContentPre201909FormatConstructors(typeDeclaration),
-            ////"corvus-json-content" => generator.AppendJsonContentFormatConstructors(typeDeclaration),
-            ////"corvus-json-content-pre201909" => generator.AppendJsonContentPre201909FormatConstructors(typeDeclaration),
             _ => false,
         };
     }
@@ -63,8 +63,6 @@ public class WellKnownStringFormatHandler : IStringFormatHandler
             "regex" => generator.AppendRegexFormatConversionOperators(typeDeclaration),
             ////"corvus-base64-content" => generator.AppendBase64ContentFormatConversionOperators(typeDeclaration),
             ////"corvus-base64-content-pre201909" => generator.AppendBase64ContentPre201909FormatConversionOperators(typeDeclaration),
-            ////"corvus-json-content" => generator.AppendJsonContentFormatConversionOperators(typeDeclaration),
-            ////"corvus-json-content-pre201909" => generator.AppendJsonContentPre201909FormatConversionOperators(typeDeclaration),
             _ => false,
         };
     }
@@ -79,10 +77,10 @@ public class WellKnownStringFormatHandler : IStringFormatHandler
             "time" => generator.AppendTimeFormatEqualsTBody(typeDeclaration),
             "duration" => generator.AppendDurationFormatEqualsTBody(typeDeclaration),
             "uuid" => generator.AppendUuidFormatEqualsTBody(typeDeclaration),
+            "corvus-json-content" => generator.AppendJsonContentFormatEqualsTBody(typeDeclaration),
+            "corvus-json-content-pre201909" => generator.AppendJsonContentFormatEqualsTBody(typeDeclaration),
             ////"corvus-base64-content" => generator.AppendBase64ContentFormatEqualsTBody(typeDeclaration),
             ////"corvus-base64-content-pre201909" => generator.AppendBase64ContentPre201909FormatEqualsTBody(typeDeclaration),
-            ////"corvus-json-content" => generator.AppendJsonContentFormatEqualsTBody(typeDeclaration),
-            ////"corvus-json-content-pre201909" => generator.AppendJsonContentPre201909FormatEqualsTBody(typeDeclaration),
             _ => false,
         };
     }
@@ -94,8 +92,6 @@ public class WellKnownStringFormatHandler : IStringFormatHandler
         {
             ////"corvus-base64-content" => generator.AppendBase64ContentFormatPublicStaticMethods(typeDeclaration),
             ////"corvus-base64-content-pre201909" => generator.AppendBase64ContentPre201909FormatPublicStaticMethods(typeDeclaration),
-            ////"corvus-json-content" => generator.AppendJsonContentFormatPublicStaticMethods(typeDeclaration),
-            ////"corvus-json-content-pre201909" => generator.AppendJsonContentPre201909FormatPublicStaticMethods(typeDeclaration),
             _ => false,
         };
     }
@@ -120,10 +116,10 @@ public class WellKnownStringFormatHandler : IStringFormatHandler
             "regex" => generator.AppendRegexFormatPublicMethods(typeDeclaration),
             "corvus-base64-string" => generator.AppendBase64StringFormatPublicMethods(typeDeclaration),
             "corvus-base64-string-pre201909" => generator.AppendBase64StringFormatPublicMethods(typeDeclaration),
+            "corvus-json-content" => generator.AppendJsonContentFormatPublicMethods(typeDeclaration),
+            "corvus-json-content-pre201909" => generator.AppendJsonContentFormatPublicMethods(typeDeclaration),
             ////"corvus-base64-content" => generator.AppendBase64ContentFormatPublicMethods(typeDeclaration),
             ////"corvus-base64-content-pre201909" => generator.AppendBase64ContentPre201909FormatPublicMethods(typeDeclaration),
-            ////"corvus-json-content" => generator.AppendJsonContentFormatPublicMethods(typeDeclaration),
-            ////"corvus-json-content-pre201909" => generator.AppendJsonContentPre201909FormatPublicMethods(typeDeclaration),
             _ => false,
         };
     }
@@ -135,8 +131,6 @@ public class WellKnownStringFormatHandler : IStringFormatHandler
         {
             ////"corvus-base64-content" => generator.AppendBase64ContentFormatPrivateStaticMethods(typeDeclaration),
             ////"corvus-base64-content-pre201909" => generator.AppendBase64ContentPre201909FormatPrivateStaticMethods(typeDeclaration),
-            ////"corvus-json-content" => generator.AppendJsonContentFormatPrivateStaticMethods(typeDeclaration),
-            ////"corvus-json-content-pre201909" => generator.AppendJsonContentPre201909FormatPrivateStaticMethods(typeDeclaration),
             _ => false,
         };
     }
@@ -148,8 +142,6 @@ public class WellKnownStringFormatHandler : IStringFormatHandler
         {
             ////"corvus-base64-content" => generator.AppendBase64ContentFormatPrivateMethods(typeDeclaration),
             ////"corvus-base64-content-pre201909" => generator.AppendBase64ContentPre201909FormatPrivateMethods(typeDeclaration),
-            ////"corvus-json-content" => generator.AppendJsonContentFormatPrivateMethods(typeDeclaration),
-            ////"corvus-json-content-pre201909" => generator.AppendJsonContentPre201909FormatPrivateMethods(typeDeclaration),
             _ => false,
         };
     }
@@ -161,8 +153,6 @@ public class WellKnownStringFormatHandler : IStringFormatHandler
         {
             ////"corvus-base64-content" => generator.AppendBase64ContentFormatPublicStaticProperties(typeDeclaration),
             ////"corvus-base64-content-pre201909" => generator.AppendBase64ContentPre201909FormatPublicStaticProperties(typeDeclaration),
-            ////"corvus-json-content" => generator.AppendJsonContentFormatPublicStaticProperties(typeDeclaration),
-            ////"corvus-json-content-pre201909" => generator.AppendJsonContentPre201909FormatMethods(typeDeclaration),
             _ => false,
         };
     }
@@ -174,8 +164,6 @@ public class WellKnownStringFormatHandler : IStringFormatHandler
         {
             ////"corvus-base64-content" => generator.AppendBase64ContentFormatPublicProperties(typeDeclaration),
             ////"corvus-base64-content-pre201909" => generator.AppendBase64ContentPre201909FormatPublicProperties(typeDeclaration),
-            ////"corvus-json-content" => generator.AppendJsonContentFormatPublicProperties(typeDeclaration),
-            ////"corvus-json-content-pre201909" => generator.AppendJsonContentPre201909FormatPublicProperties(typeDeclaration),
             _ => false,
         };
     }

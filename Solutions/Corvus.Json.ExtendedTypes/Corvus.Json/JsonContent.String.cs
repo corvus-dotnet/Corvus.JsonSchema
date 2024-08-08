@@ -19,19 +19,19 @@ namespace Corvus.Json;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
-public readonly partial struct JsonBase64String
+public readonly partial struct JsonContent
 #if NET8_0_OR_GREATER
-    : IJsonString<Corvus.Json.JsonBase64String>,
+    : IJsonString<Corvus.Json.JsonContent>,
       ISpanFormattable
 #else
-    : IJsonString<Corvus.Json.JsonBase64String>
+    : IJsonString<Corvus.Json.JsonContent>
 #endif
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="JsonBase64String"/> struct.
+    /// Initializes a new instance of the <see cref="JsonContent"/> struct.
     /// </summary>
     /// <param name="value">The value from which to construct the instance.</param>
-    public JsonBase64String(in ReadOnlySpan<char> value)
+    public JsonContent(in ReadOnlySpan<char> value)
     {
         this.backing = Backing.String;
         this.jsonElementBacking = default;
@@ -39,10 +39,10 @@ public readonly partial struct JsonBase64String
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="JsonBase64String"/> struct.
+    /// Initializes a new instance of the <see cref="JsonContent"/> struct.
     /// </summary>
     /// <param name="value">The value from which to construct the instance.</param>
-    public JsonBase64String(in ReadOnlySpan<byte> value)
+    public JsonContent(in ReadOnlySpan<byte> value)
     {
         this.backing = Backing.String;
         this.jsonElementBacking = default;
@@ -64,10 +64,21 @@ public readonly partial struct JsonBase64String
     }
 
     /// <summary>
+    /// Initializes a new instance of the <see cref="JsonContent"/> struct.
+    /// </summary>
+    /// <param name="value">The value from which to construct the instance.</param>
+    public JsonContent(JsonDocument value)
+    {
+        this.backing = Backing.String;
+        this.jsonElementBacking = default;
+        this.stringBacking = value.RootElement.GetRawText();;
+    }
+
+    /// <summary>
     /// Conversion from <see cref="string"/>.
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
-    public static implicit operator JsonBase64String(string value)
+    public static implicit operator JsonContent(string value)
     {
         return new(value);
     }
@@ -76,7 +87,7 @@ public readonly partial struct JsonBase64String
     /// Conversion from JsonString.
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
-    public static implicit operator JsonBase64String(JsonString value)
+    public static implicit operator JsonContent(JsonString value)
     {
         if (value.HasDotnetBacking && value.ValueKind == JsonValueKind.String)
         {
@@ -91,7 +102,7 @@ public readonly partial struct JsonBase64String
     /// Conversion to JsonString.
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
-    public static implicit operator JsonString(JsonBase64String value)
+    public static implicit operator JsonString(JsonContent value)
     {
         return
             value.AsString;
@@ -102,7 +113,7 @@ public readonly partial struct JsonBase64String
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
     /// <exception cref="InvalidOperationException">The value was not a string.</exception>
-    public static explicit operator string(JsonBase64String value)
+    public static explicit operator string(JsonContent value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
@@ -123,7 +134,7 @@ public readonly partial struct JsonBase64String
     }
 
     /// <summary>
-    /// Concatenate 2 JSON values, producing an instance of the string type JsonBase64String.
+    /// Concatenate 2 JSON values, producing an instance of the string type JsonContent.
     /// </summary>
     /// <typeparam name="T1">The type of the 1st value.</typeparam>
     /// <typeparam name="T2">The type of the 2nd value.</typeparam>
@@ -131,7 +142,7 @@ public readonly partial struct JsonBase64String
     /// <param name="value1">The 1st value.</param>
     /// <param name="value2">The 2nd value.</param>
     /// <returns>An instance of this string type.</returns>
-    public static JsonBase64String Concatenate<T1, T2>(Span<byte> buffer, in T1 value1, in T2 value2)
+    public static JsonContent Concatenate<T1, T2>(Span<byte> buffer, in T1 value1, in T2 value2)
         where T1 : struct, IJsonValue<T1>
         where T2 : struct, IJsonValue<T2>
     {
@@ -140,7 +151,7 @@ public readonly partial struct JsonBase64String
     }
 
     /// <summary>
-    /// Concatenate 3 JSON values, producing an instance of the string type JsonBase64String.
+    /// Concatenate 3 JSON values, producing an instance of the string type JsonContent.
     /// </summary>
     /// <typeparam name="T1">The type of the 1st value.</typeparam>
     /// <typeparam name="T2">The type of the 2nd value.</typeparam>
@@ -150,7 +161,7 @@ public readonly partial struct JsonBase64String
     /// <param name="value2">The 2nd value.</param>
     /// <param name="value3">The 3rd value.</param>
     /// <returns>An instance of this string type.</returns>
-    public static JsonBase64String Concatenate<T1, T2, T3>(Span<byte> buffer, in T1 value1, in T2 value2, in T3 value3)
+    public static JsonContent Concatenate<T1, T2, T3>(Span<byte> buffer, in T1 value1, in T2 value2, in T3 value3)
         where T1 : struct, IJsonValue<T1>
         where T2 : struct, IJsonValue<T2>
         where T3 : struct, IJsonValue<T3>
@@ -160,7 +171,7 @@ public readonly partial struct JsonBase64String
     }
 
     /// <summary>
-    /// Concatenate 4 JSON values, producing an instance of the string type JsonBase64String.
+    /// Concatenate 4 JSON values, producing an instance of the string type JsonContent.
     /// </summary>
     /// <typeparam name="T1">The type of the 1st value.</typeparam>
     /// <typeparam name="T2">The type of the 2nd value.</typeparam>
@@ -172,7 +183,7 @@ public readonly partial struct JsonBase64String
     /// <param name="value3">The 3rd value.</param>
     /// <param name="value4">The 4th value.</param>
     /// <returns>An instance of this string type.</returns>
-    public static JsonBase64String Concatenate<T1, T2, T3, T4>(Span<byte> buffer, in T1 value1, in T2 value2, in T3 value3, in T4 value4)
+    public static JsonContent Concatenate<T1, T2, T3, T4>(Span<byte> buffer, in T1 value1, in T2 value2, in T3 value3, in T4 value4)
         where T1 : struct, IJsonValue<T1>
         where T2 : struct, IJsonValue<T2>
         where T3 : struct, IJsonValue<T3>
@@ -183,7 +194,7 @@ public readonly partial struct JsonBase64String
     }
 
     /// <summary>
-    /// Concatenate 5 JSON values, producing an instance of the string type JsonBase64String.
+    /// Concatenate 5 JSON values, producing an instance of the string type JsonContent.
     /// </summary>
     /// <typeparam name="T1">The type of the 1st value.</typeparam>
     /// <typeparam name="T2">The type of the 2nd value.</typeparam>
@@ -197,7 +208,7 @@ public readonly partial struct JsonBase64String
     /// <param name="value4">The 4th value.</param>
     /// <param name="value5">The 5th value.</param>
     /// <returns>An instance of this string type.</returns>
-    public static JsonBase64String Concatenate<T1, T2, T3, T4, T5>(Span<byte> buffer, in T1 value1, in T2 value2, in T3 value3, in T4 value4, in T5 value5)
+    public static JsonContent Concatenate<T1, T2, T3, T4, T5>(Span<byte> buffer, in T1 value1, in T2 value2, in T3 value3, in T4 value4, in T5 value5)
         where T1 : struct, IJsonValue<T1>
         where T2 : struct, IJsonValue<T2>
         where T3 : struct, IJsonValue<T3>
@@ -209,7 +220,7 @@ public readonly partial struct JsonBase64String
     }
 
     /// <summary>
-    /// Concatenate 6 JSON values, producing an instance of the string type JsonBase64String.
+    /// Concatenate 6 JSON values, producing an instance of the string type JsonContent.
     /// </summary>
     /// <typeparam name="T1">The type of the 1st value.</typeparam>
     /// <typeparam name="T2">The type of the 2nd value.</typeparam>
@@ -225,7 +236,7 @@ public readonly partial struct JsonBase64String
     /// <param name="value5">The 5th value.</param>
     /// <param name="value6">The 6th value.</param>
     /// <returns>An instance of this string type.</returns>
-    public static JsonBase64String Concatenate<T1, T2, T3, T4, T5, T6>(Span<byte> buffer, in T1 value1, in T2 value2, in T3 value3, in T4 value4, in T5 value5, in T6 value6)
+    public static JsonContent Concatenate<T1, T2, T3, T4, T5, T6>(Span<byte> buffer, in T1 value1, in T2 value2, in T3 value3, in T4 value4, in T5 value5, in T6 value6)
         where T1 : struct, IJsonValue<T1>
         where T2 : struct, IJsonValue<T2>
         where T3 : struct, IJsonValue<T3>
@@ -238,7 +249,7 @@ public readonly partial struct JsonBase64String
     }
 
     /// <summary>
-    /// Concatenate 7 JSON values, producing an instance of the string type JsonBase64String.
+    /// Concatenate 7 JSON values, producing an instance of the string type JsonContent.
     /// </summary>
     /// <typeparam name="T1">The type of the 1st value.</typeparam>
     /// <typeparam name="T2">The type of the 2nd value.</typeparam>
@@ -256,7 +267,7 @@ public readonly partial struct JsonBase64String
     /// <param name="value6">The 6th value.</param>
     /// <param name="value7">The 7th value.</param>
     /// <returns>An instance of this string type.</returns>
-    public static JsonBase64String Concatenate<T1, T2, T3, T4, T5, T6, T7>(Span<byte> buffer, in T1 value1, in T2 value2, in T3 value3, in T4 value4, in T5 value5, in T6 value6, in T7 value7)
+    public static JsonContent Concatenate<T1, T2, T3, T4, T5, T6, T7>(Span<byte> buffer, in T1 value1, in T2 value2, in T3 value3, in T4 value4, in T5 value5, in T6 value6, in T7 value7)
         where T1 : struct, IJsonValue<T1>
         where T2 : struct, IJsonValue<T2>
         where T3 : struct, IJsonValue<T3>
@@ -270,7 +281,7 @@ public readonly partial struct JsonBase64String
     }
 
     /// <summary>
-    /// Concatenate 8 JSON values, producing an instance of the string type JsonBase64String.
+    /// Concatenate 8 JSON values, producing an instance of the string type JsonContent.
     /// </summary>
     /// <typeparam name="T1">The type of the 1st value.</typeparam>
     /// <typeparam name="T2">The type of the 2nd value.</typeparam>
@@ -290,7 +301,7 @@ public readonly partial struct JsonBase64String
     /// <param name="value7">The 7th value.</param>
     /// <param name="value8">The 8th value.</param>
     /// <returns>An instance of this string type.</returns>
-    public static JsonBase64String Concatenate<T1, T2, T3, T4, T5, T6, T7, T8>(Span<byte> buffer, in T1 value1, in T2 value2, in T3 value3, in T4 value4, in T5 value5, in T6 value6, in T7 value7, in T8 value8)
+    public static JsonContent Concatenate<T1, T2, T3, T4, T5, T6, T7, T8>(Span<byte> buffer, in T1 value1, in T2 value2, in T3 value3, in T4 value4, in T5 value5, in T6 value6, in T7 value7, in T8 value8)
         where T1 : struct, IJsonValue<T1>
         where T2 : struct, IJsonValue<T2>
         where T3 : struct, IJsonValue<T3>
@@ -451,69 +462,42 @@ public readonly partial struct JsonBase64String
     }
 
     /// <summary>
-    /// Creates a new instance of the <see cref="JsonBase64String"/> struct from a byte arrary.
+    /// Try to get the JSON document from the content.
     /// </summary>
-    /// <param name="value">The <see cref="ReadOnlySpan{T}"/> of <see langword="byte"/> from which to construct the Base64 content.</param>
-    /// <returns>The base 64 encoded string representation of the byte array.</returns>
-    /// <remarks>Note that the byte array is not a UTF8 string, but an array of arbitrary bytes. This encodes the byte array as a base 64 string.</remarks>
-    public static JsonBase64String FromByteArray(ReadOnlySpan<byte> value)
-    {
-        return new JsonBase64String(StandardBase64.EncodeToString(value));
-    }
-
-    /// <summary>
-    /// Get the base64 encoded string.
-    /// </summary>
-    /// <returns>The base 64 encoded string.</returns>
-    [Obsolete("Use the standard GetString() method.")]
-    public ReadOnlySpan<char> GetBase64EncodedString()
-    {
-        return this.GetString().AsSpan();
-    }
-
-    /// <summary>
-    /// Gets the minimum size for a buffer to
-    /// pass to <see cref="TryGetDecodedBase64Bytes(Span{byte}, out int)"/>.
-    /// </summary>
-    /// <returns>The buffer length will be suitable for decoding the base64 content.</returns>
-    /// <remarks>This is not a zero-cost operation. If you know the expected maximum buffer size in advance,
-    /// you can improve performance by pre-allocating a reasonable buffer size and calling <see cref="TryGetDecodedBase64Bytes(Span{byte}, out int)"/>.
-    /// If the buffer was too small, the <c>written</c> value will be the desired buffer size.</remarks>
-    public int GetDecodedBufferSize()
+    /// <param name="result">A JSON document produced from the content, or null if the content did not represent a Base64 encoded JSON document.</param>
+    /// <returns><see langword="true"/> if the document was parsed successfully.</returns>
+    public EncodedContentMediaTypeParseStatus TryGetJsonDocument(out JsonDocument? result)
     {
         if ((this.backing & Backing.String) != 0)
         {
-            return StandardBase64.GetDecodedBufferSize(this.stringBacking);
+            return StandardContent.ParseEscapedJsonContentInJsonString(this.stringBacking.AsSpan(), out result);
         }
 
         if (this.jsonElementBacking.ValueKind == JsonValueKind.String)
         {
-            return StandardBase64.GetDecodedBufferSize(this.jsonElementBacking);
+            return StandardContent.ParseEscapedJsonContentInJsonString(this.jsonElementBacking, out result);
         }
 
-        throw new InvalidOperationException();
+        result = null;
+        return EncodedContentMediaTypeParseStatus.UnableToDecode;
     }
 
     /// <summary>
-    /// Try to get the decoded base64 bytes.
+    /// Gets the value as an unescaped string.
     /// </summary>
-    /// <param name="result">The span into which to write the bytes.</param>
-    /// <param name="written">The number of bytes written.</param>
-    /// <returns><see langword="true"/> if the bytes were successfully decoded.</returns>
-    /// <remarks>
-    /// If the <paramref name="result"/> buffer was too short for the decoded bytes, the method will return <see langword="false"/>,
-    /// and <paramref name="written"/> will be a number representing a buffer of sufficient size to decode the value. Otherwise it will be <c>0</c>.
-    /// </remarks>
-    public bool TryGetDecodedBase64Bytes(Span<byte> result, out int written)
+    /// <param name="buffer">The buffer into which the unescaped string is written.</param>
+    /// <param name="written">The number of characters written.</param>
+    /// <returns><see langword="true"/> if the value could be retrieved.</returns>
+    public bool TryGetUnescapedString(Memory<char> buffer, out int written)
     {
         if ((this.backing & Backing.String) != 0)
         {
-            return StandardBase64.Decode(this.stringBacking, result, out written);
+            return StandardContent.Unescape(this.stringBacking.AsSpan(), buffer.Span, out written);
         }
 
         if (this.jsonElementBacking.ValueKind == JsonValueKind.String)
         {
-            return StandardBase64.Decode(this.jsonElementBacking, result, out written);
+            return StandardContent.Unescape(this.jsonElementBacking, buffer, out written);
         }
 
         written = 0;
@@ -521,38 +505,42 @@ public readonly partial struct JsonBase64String
     }
 
     /// <summary>
-    /// Get the decoded base64 bytes.
+    /// Gets the minimum size for a buffer to
+    /// pass to <see cref="TryGetUnescapedString(Memory{char}, out int)"/>.
     /// </summary>
-    /// <returns>The base 64 bytes.</returns>
-    [Obsolete("Use the TryDecodeBase64Bytes() method.")]
-    public ReadOnlySpan<byte> GetDecodedBase64Bytes()
+    /// <returns>The buffer length that will be suitable for unencoding the content.</returns>
+    /// <remarks>This is not a zero-cost operation. If you know the expected maximum buffer size in advance,
+    /// you can improve performance by pre-allocating a reasonable buffer size and calling <see cref="TryGetUnescapedString(Memory{char}, out int)"/>.
+    /// </remarks>
+    public int GetUnescapedBufferSize()
     {
-        Span<byte> decoded = new byte[this.GetDecodedBufferSize()];
-        if (this.TryGetDecodedBase64Bytes(decoded, out int written))
+        if ((this.backing & Backing.String) != 0)
         {
-            return decoded[..written];
+            return StandardContent.GetUnescapedBufferSize(this.stringBacking);
+        }
+
+        if (this.jsonElementBacking.ValueKind == JsonValueKind.String)
+        {
+            return StandardContent.GetUnescapedBufferSize(this.jsonElementBacking);
         }
 
         throw new InvalidOperationException();
     }
 
     /// <summary>
-    /// Get a value indicating whether this instance has a Base64-encoded byte array.
+    /// Gets the value as an unescaped span.
     /// </summary>
-    /// <returns><see langword="true" /> if the value is a properly formed base64 encoded string.</returns>
-    public bool HasBase64Bytes()
+    /// <returns>The unescaped value as a span of char.</returns>
+    [Obsolete("Use TryGetUnescapedString()")]
+    public ReadOnlySpan<char> AsUnescapedSpan()
     {
-        if ((this.backing & Backing.String) != 0)
+        Memory<char> decoded = new char[this.GetUnescapedBufferSize()];
+        if (this.TryGetUnescapedString(decoded, out int written))
         {
-            return StandardBase64.HasBase64Bytes(this.stringBacking);
+            return decoded[..written].Span;
         }
 
-        if (this.jsonElementBacking.ValueKind == JsonValueKind.String)
-        {
-            return StandardBase64.HasBase64Bytes(this.jsonElementBacking);
-        }
-
-        return false;
+        throw new InvalidOperationException();
     }
 
 #if NET8_0_OR_GREATER

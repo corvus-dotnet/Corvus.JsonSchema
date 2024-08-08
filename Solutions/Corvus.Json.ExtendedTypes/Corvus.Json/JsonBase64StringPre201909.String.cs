@@ -475,7 +475,7 @@ public readonly partial struct JsonBase64StringPre201909
     /// Gets the minimum size for a buffer to
     /// pass to <see cref="TryGetDecodedBase64Bytes(Span{byte}, out int)"/>.
     /// </summary>
-    /// <returns>A buffer that will be of a suitable length decoding the base64 content.</returns>
+    /// <returns>The buffer length will be suitable for decoding the base64 content.</returns>
     /// <remarks>This is not a zero-cost operation. If you know the expected maximum buffer size in advance,
     /// you can improve performance by pre-allocating a reasonable buffer size and calling <see cref="TryGetDecodedBase64Bytes(Span{byte}, out int)"/>.
     /// If the buffer was too small, the <c>written</c> value will be the desired buffer size.</remarks>

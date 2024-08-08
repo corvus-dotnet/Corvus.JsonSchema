@@ -2,7 +2,6 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Text;
 using System.Text.Json;
 
 namespace Corvus.Json.CodeGeneration.CSharp;
@@ -12,6 +11,205 @@ namespace Corvus.Json.CodeGeneration.CSharp;
 /// </summary>
 internal static partial class CodeGeneratorExtensions
 {
+    /// <summary>
+    /// Appends string JSON content public methods.
+    /// </summary>
+    /// <param name="generator">The generator.</param>
+    /// <param name="typeDeclaration">The type declaration for which to append the methods.</param>
+    /// <returns>A <see langword="true"/> if this handled the format for the type declaration.</returns>
+    public static bool AppendJsonContentFormatPublicMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        generator
+            .AppendSeparatorLine()
+            .AppendBlockIndent(
+            """
+            /// <summary>
+            /// Try to get the JSON document from the content.
+            /// </summary>
+            /// <param name="result">A JSON document produced from the content, or null if the content did not represent a Base64 encoded JSON document.</param>
+            /// <returns><see langword="true"/> if the document was parsed successfully.</returns>
+            """)
+            .ReserveNameIfNotReserved("TryGetJsonDocument")
+            .AppendLineIndent("public EncodedContentMediaTypeParseStatus TryGetJsonDocument(out JsonDocument? result)")
+            .AppendLineIndent("{")
+            .PushIndent()
+                .AppendConditionalWrappedBackingValueLineIndent(
+                    "Backing.String",
+                    "return StandardContent.ParseEscapedJsonContentInJsonString(",
+                    "stringBacking",
+                    ".AsSpan(), out result);")
+                .AppendConditionalWrappedJsonElementBackingValueKindLineIndent(
+                    JsonValueKind.String,
+                    "return StandardContent.ParseEscapedJsonContentInJsonString(",
+                    "jsonElementBacking",
+                    ", out result);")
+                .AppendSeparatorLine()
+                .AppendLineIndent("result = null;")
+                .AppendLineIndent("return EncodedContentMediaTypeParseStatus.UnableToDecode;")
+            .PopIndent()
+            .AppendLineIndent("}")
+            .AppendSeparatorLine()
+            .AppendBlockIndent(
+            """
+            /// <summary>
+            /// Gets the value as an unescaped string.
+            /// </summary>
+            /// <param name="buffer">The buffer into which the unescaped string is written.</param>
+            /// <param name="written">The number of characters written.</param>
+            /// <returns><see langword="true"/> if the value could be retrieved.</returns>
+            """)
+            .ReserveNameIfNotReserved("TryGetUnescapedString")
+            .AppendLineIndent("public bool TryGetUnescapedString(Memory<char> buffer, out int written)")
+            .AppendLineIndent("{")
+            .PushIndent()
+                .AppendConditionalWrappedBackingValueLineIndent(
+                    "Backing.String",
+                    "return StandardContent.Unescape(",
+                    "stringBacking",
+                    ".AsSpan(), buffer.Span, out written);")
+                .AppendConditionalWrappedJsonElementBackingValueKindLineIndent(
+                    JsonValueKind.String,
+                    "return StandardContent.Unescape(",
+                    "jsonElementBacking",
+                    ", buffer, out written);")
+                .AppendSeparatorLine()
+                .AppendLineIndent("written = 0;")
+                .AppendLineIndent("return false;")
+            .PopIndent()
+            .AppendLineIndent("}")
+            .AppendSeparatorLine()
+            .AppendBlockIndent(
+            """
+            /// <summary>
+            /// Gets the minimum size for a buffer to
+            /// pass to <see cref="TryGetUnescapedString(Memory{char}, out int)"/>.
+            /// </summary>
+            /// <returns>The buffer length that will be suitable for unencoding the content.</returns>
+            /// <remarks>This is not a zero-cost operation. If you know the expected maximum buffer size in advance,
+            /// you can improve performance by pre-allocating a reasonable buffer size and calling <see cref="TryGetUnescapedString(Memory{char}, out int)"/>.
+            /// </remarks>
+            """)
+            .ReserveNameIfNotReserved("GetUnescapedBufferSize")
+            .AppendLineIndent("public int GetUnescapedBufferSize()")
+            .AppendLineIndent("{")
+            .PushIndent()
+                .AppendConditionalWrappedBackingValueLineIndent(
+                    "Backing.String",
+                    "return StandardContent.GetUnescapedBufferSize(",
+                    "stringBacking",
+                    ");")
+                .AppendConditionalWrappedJsonElementBackingValueKindLineIndent(
+                    JsonValueKind.String,
+                    "return StandardContent.GetUnescapedBufferSize(",
+                    "jsonElementBacking",
+                    ");")
+                .AppendSeparatorLine()
+                .AppendLineIndent("throw new InvalidOperationException();")
+            .PopIndent()
+            .AppendLineIndent("}")
+            .AppendSeparatorLine()
+            .ReserveNameIfNotReserved("AsUnescapedSpan")
+            .AppendBlockIndent(
+            """
+            /// <summary>
+            /// Gets the value as an unescaped span.
+            /// </summary>
+            /// <returns>The unescaped value as a span of char.</returns>
+            [Obsolete("Use TryGetUnescapedString()")]
+            public ReadOnlySpan<char> AsUnescapedSpan()
+            {
+                Memory<char> decoded = new char[this.GetUnescapedBufferSize()];
+                if (this.TryGetUnescapedString(decoded, out int written))
+                {
+                    return decoded[..written].Span;
+                }
+
+                throw new InvalidOperationException();
+            }
+            """);
+
+        return true;
+    }
+
+    /// <summary>
+    /// Appends string JSON content constructors.
+    /// </summary>
+    /// <param name="generator">The generator.</param>
+    /// <param name="typeDeclaration">The type declaration for which to append the constructors.</param>
+    /// <returns>A <see langword="true"/> if this handled the format for the type declaration.</returns>
+    public static bool AppendJsonContentFormatConstructors(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        generator
+            .AppendPublicConvertedValueConstructor(typeDeclaration, "JsonDocument", CoreTypes.String, "value.RootElement.GetRawText();");
+
+        return true;
+    }
+
+    /// <summary>
+    /// Appends string JSON content <c>Equals&lt;T&gt;</c> method body.
+    /// </summary>
+    /// <param name="generator">The generator.</param>
+    /// <param name="typeDeclaration">The type declaration for which to append the methods.</param>
+    /// <returns>A <see langword="true"/> if this handled the format for the type declaration.</returns>
+    public static bool AppendJsonContentFormatEqualsTBody(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        generator
+            .AppendBlockIndent(
+            """
+            if (this.IsNull() && other.IsNull())
+            {
+                return true;
+            }
+
+            if (other.ValueKind != JsonValueKind.String)
+            {
+                return false;
+            }
+            """)
+            .AppendSeparatorLine()
+            .AppendBlockIndent(
+            """
+            JsonValueKind valueKind = this.ValueKind;
+            if (valueKind != JsonValueKind.String || valueKind != JsonValueKind.String)
+            {
+                return false;
+            }
+
+            int thisBufferSize = this.GetUnescapedBufferSize();
+            int otherBufferSize = other.As<JsonContent>().GetUnescapedBufferSize();
+
+            if (thisBufferSize == 0)
+            {
+                if (otherBufferSize == 0)
+                {
+                    return true;
+                }
+
+                return false;
+            }
+            """)
+            .AppendSeparatorLine()
+            .AppendLineIndent("char[] thisBuffer = ArrayPool<char>.Shared.Rent(thisBufferSize);")
+            .AppendLineIndent("char[] otherBuffer = ArrayPool<char>.Shared.Rent(otherBufferSize);")
+            .AppendBlockIndent(
+            """
+            try
+            {
+                this.TryGetUnescapedString(thisBuffer, out int thisWritten);
+                other.TryGetUnescapedString(otherBuffer, out int otherWritten);
+
+                return ((ReadOnlySpan<char>)thisBuffer.AsSpan(0, thisWritten)).Equals(otherBuffer.AsSpan(0, otherWritten), StringComparison.Ordinal);
+            }
+            finally
+            {
+                ArrayPool<char>.Shared.Return(thisBuffer);
+                ArrayPool<char>.Shared.Return(otherBuffer);
+            }
+            """);
+
+        return true;
+    }
+
     /// <summary>
     /// Appends base64 string content encoding public methods.
     /// </summary>
@@ -57,7 +255,7 @@ internal static partial class CodeGeneratorExtensions
                 /// Gets the minimum size for a buffer to
                 /// pass to <see cref="TryGetDecodedBase64Bytes(Span{byte}, out int)"/>.
                 /// </summary>
-                /// <returns>A buffer that will be of a suitable length decoding the base64 content.</returns>
+                /// <returns>The buffer length will be suitable for decoding the base64 content.</returns>
                 /// <remarks>This is not a zero-cost operation. If you know the expected maximum buffer size in advance,
                 /// you can improve performance by pre-allocating a reasonable buffer size and calling <see cref="TryGetDecodedBase64Bytes(Span{byte}, out int)"/>.
                 /// If the buffer was too small, the <c>written</c> value will be the desired buffer size.</remarks>

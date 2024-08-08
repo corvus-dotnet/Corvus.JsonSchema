@@ -106,6 +106,11 @@ public static class JsonValueExtensions
     public static string Serialize<TValue>(this TValue value)
         where TValue : struct, IJsonValue
     {
+        if (value.HasJsonElementBacking)
+        {
+            return value.AsJsonElement.GetRawText();
+        }
+
         var abw = new ArrayBufferWriter<byte>();
         using var writer = new Utf8JsonWriter(abw);
         value.WriteTo(writer);
