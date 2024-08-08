@@ -54,6 +54,15 @@ Scenario Outline: All of the format types
 				{ "$ref": "#/$defs/ExtJsonArray" },
 				{ "$ref": "#/$defs/ExtJsonObject" },
 				{ "$ref": "#/$defs/ExtJsonString" },
+				{ "$ref": "#/$defs/ExtJsonString2" },
+				{ "$ref": "#/$defs/ExtJsonString3" },
+				{ "$ref": "#/$defs/ExtJsonString4" },
+				{ "$ref": "#/$defs/ExtJsonString5" },
+				{ "$ref": "#/$defs/ExtJsonString6" },
+				{ "$ref": "#/$defs/ExtJsonString7" },
+				{ "$ref": "#/$defs/ExtJsonString8" },
+				{ "$ref": "#/$defs/ExtJsonString9" },
+				{ "$ref": "#/$defs/ExtJsonString10" },
 				{ "$ref": "#/$defs/ExtJsonDateTime" },
 				{ "$ref": "#/$defs/ExtJsonDate" },
 				{ "$ref": "#/$defs/ExtJsonDuration" },
@@ -319,6 +328,53 @@ Scenario Outline: All of the format types
 					"const": "wowsers"
 				},
 		
+				"ExtJsonString2": {
+					"type": ["string", "boolean"],
+					"enum": ["1"]
+				},
+		
+				"ExtJsonString3": {
+					"type": ["string", "boolean"],
+					"enum": ["1", "2"]
+				},
+		
+				"ExtJsonString4": {
+					"type": ["string", "boolean"],
+					"enum": ["1", "2", "3"]
+				},
+		
+				"ExtJsonString5": {
+					"type": ["string", "boolean"],
+					"enum": ["1", "2", "3", "4"]
+				},
+		
+				"ExtJsonString6": {
+					"type": ["string", "boolean"],
+					"enum": ["1", "2", "3", "4", "5"]
+				},
+		
+				"ExtJsonString7": {
+					"type": ["string", "boolean"],
+					"enum": ["1", "2", "3", "4", "5", "6"]
+				},
+		
+				"ExtJsonString8": {
+					"type": ["string", "boolean"],
+					"enum": ["1", "2", "3", "4", "5", "6", "7"]
+				},
+		
+				"ExtJsonString9": {
+					"type": ["string", "boolean"],
+					"enum": ["1", "2", "3", "4", "5", "6", "7", "8"]
+				},
+		
+				"ExtJsonString10": {
+					"type": ["string", "boolean"],
+					"minLength": 10,
+					"maxLength": 11
+				},
+		
+		
 				"ExtJsonDateTime": {
 					"type": ["string", "boolean"],
 					"format": "date-time",
@@ -541,15 +597,15 @@ Examples:
 	| ""               | false | Flag     | 0     |
 	| ""               | false | Basic    | 1     |
 	| ""               | false | Detailed | 1     |
-	| ""               | false | Verbose  | 93    |
+	| ""               | false | Verbose  | 103   |
 	| "foo"            | false | Flag     | 0     |
 	| "foo"            | false | Basic    | 1     |
 	| "foo"            | false | Detailed | 1     |
-	| "foo"            | false | Verbose  | 93    |
+	| "foo"            | false | Verbose  | 103   |
 	| null             | false | Flag     | 0     |
 	| null             | false | Basic    | 1     |
 	| null             | false | Detailed | 1     |
-	| null             | false | Verbose  | 111   |
+	| null             | false | Verbose  | 121   |
 	| -1               | false | Flag     | 0     |
 	| 0                | false | Flag     | 0     |
 	| 1                | false | Flag     | 0     |
@@ -619,26 +675,26 @@ Examples:
 	| true             | false | Detailed | 1     |
 	| [1,2,3]          | false | Detailed | 1     |
 	| { "foo": "bar" } | false | Detailed | 1     |
-	| -1               | false | Verbose  | 97    |
-	| 0                | false | Verbose  | 97    |
-	| 1                | false | Verbose  | 97    |
-	| 256              | false | Verbose  | 97    |
-	| -256             | false | Verbose  | 97    |
-	| 256.1            | false | Verbose  | 97    |
-	| -256.1           | false | Verbose  | 97    |
-	| 256              | false | Verbose  | 97    |
-	| -32769           | false | Verbose  | 97    |
-	| 32769            | false | Verbose  | 97    |
-	| -32769.1         | false | Verbose  | 97    |
-	| 32769.1          | false | Verbose  | 97    |
-	| -65536           | false | Verbose  | 97    |
-	| 65536            | false | Verbose  | 97    |
-	| -65536.1         | false | Verbose  | 97    |
-	| 65536.1          | false | Verbose  | 97    |
-	| -2147483648      | false | Verbose  | 97    |
-	| 2147483648       | false | Verbose  | 97    |
-	| -2147483648.1    | false | Verbose  | 97    |
-	| 2147483648.1     | false | Verbose  | 97    |
-	| true             | false | Verbose  | 111   |
-	| [1,2,3]          | false | Verbose  | 111   |
-	| { "foo": "bar" } | false | Verbose  | 110   |
+	| -1               | false | Verbose  | 107   |
+	| 0                | false | Verbose  | 107   |
+	| 1                | false | Verbose  | 107   |
+	| 256              | false | Verbose  | 107   |
+	| -256             | false | Verbose  | 107   |
+	| 256.1            | false | Verbose  | 107   |
+	| -256.1           | false | Verbose  | 107   |
+	| 256              | false | Verbose  | 107   |
+	| -32769           | false | Verbose  | 107   |
+	| 32769            | false | Verbose  | 107   |
+	| -32769.1         | false | Verbose  | 107   |
+	| 32769.1          | false | Verbose  | 107   |
+	| -65536           | false | Verbose  | 107   |
+	| 65536            | false | Verbose  | 107   |
+	| -65536.1         | false | Verbose  | 107   |
+	| 65536.1          | false | Verbose  | 107   |
+	| -2147483648      | false | Verbose  | 107   |
+	| 2147483648       | false | Verbose  | 107   |
+	| -2147483648.1    | false | Verbose  | 107   |
+	| 2147483648.1     | false | Verbose  | 107   |
+	| true             | false | Verbose  | 121   |
+	| [1,2,3]          | false | Verbose  | 121   |
+	| { "foo": "bar" } | false | Verbose  | 120   |
