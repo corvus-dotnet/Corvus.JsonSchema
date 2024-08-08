@@ -314,11 +314,11 @@ We also provide  a [full hands-on-lab](docs/GettingStartedWithJsonSchemaCodeGene
 
 # Development environment
 
-## Use of dotnet-t4 and PowerShell
+## Use of PowerShell
 
-This project uses [dotnet-t4](https://www.nuget.org/packages/dotnet-t4) to generate code from t4 templates
-for the built-in JSON types in `Corvus.Json.ExtendedTypes`. If you add or update templates, you will need to
-run the `./Solutions/BuildTemplates.ps1` batch file to regenerate them.
+This project uses its own code generation to generate code for the built-in JSON types in `Corvus.Json.ExtendedTypes`, and the
+types for working with various schema dialects such as `Corvus.Json.JsonSchema.Draft202012`.
+If you add or update core types, you will need to run the `./Solutions/generatetypes.ps1` script file to regenerate them.
 
 ```
 dotnet tool install --global dotnet-t4 --version 2.2.1
@@ -404,20 +404,35 @@ Benchmark suites for various components.
 
 There are a number of significant changes in this release
 
-- Support for cross-vocabulary schema generation.
+### Support for cross-vocabulary schema generation.
   
   So if you are upgrading a draft6 or draft7 schema set to 2020-12, for example, you can do it piecemeal and reference a schema with one dialect from a schema with another.
-- Opt-in support for .NET nullable properties where JSON Schema object properties are optional or nullable with the `--optionalAsNullable` command line switch.
-- Opt-out of optional naming heuristics introduced in V3.0 with the `--disableOptionalNamingHeuristics` command line switch.
-- Safe truncation for extremely long file names
-- Access to all JSON schema validation constants via the `CorvusValidation` nested static class.
-- New `generatejsonschematypes config` command
+### Opt-in support for .NET nullable properties
 
-  Supply a json config file to the generate command, to configure and generate 1 or many schema in a single command. The configuration file also allows you to explicitly name arbitrary types, and optionally map them in to a specific .NET namespace. You can also map json schema base file URIs to specific .NET namespaces.
+  Where JSON Schema object properties are optional or nullable, use the `--optionalAsNullable` command line switch to emit nullable properties.
+
+### New `generatejsonschematypes config` command
+
+  Supply a json config file to the generate command, to configure and generate 1 or many schema in a single command.
+  
+  The configuration file also allows you to explicitly name arbitrary types, and optionally map them in to a specific .NET namespace.
+  
+  You can also map json schema base file URIs to specific .NET namespaces, and pre-load known-good versions of file reference dependencies.
+  
   The [schema for the configuration file is here](./Corvus.Json.CodeGenerator/generator-config.json).
+
+### Multi-language code generator engine
+
 - Brand new JSON Schema analyser engine, which is now language independent.
 - Brand new code generation engine, which is more flexible and extensible, and uses the result of the schema analyser.
 - An extensible C# language provider which generates code-using-code. No more T4 templates in the language engine.
+
+### Additional features
+
+- Opt-out of optional naming heuristics introduced in V3.0 with the `--disableOptionalNamingHeuristics` command line switch.
+- Safe truncation for extremely long file names
+- Access to all JSON schema validation constants via the `CorvusValidation` nested static class.
+- All formatted types (e.g. string or number formats) are now convertible to the equivalent core types (e.g. your custom `"format": "date"` type is freely convertible to and from `JsonDate`) and offer the same accessors and conversions as the core types.
 
 ### Upgrading to V4
 - Code generated using V3.0 of the generator can still be built against V4 of Corvus.Json.ExtendedTypes, and used interoperably.
@@ -431,7 +446,7 @@ There are a number of significant changes in this release
 - We now generate fewer files for each type. You should delete your previous generated files before running the new version of the generator, to avoid leaving duplicate partial definitions.
 
 ### Breaking changes
-- We no longer generate the property default accessors.
+- We no longer generate the property 'default' accessors.
 
   Prior to V4 we emitted methods like `TryGetDefault(in JsonPropertyName name, out JsonAny value)` on objects whose properties had types with default values.
 
