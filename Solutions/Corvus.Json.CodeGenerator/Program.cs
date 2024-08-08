@@ -8,9 +8,12 @@ class Program
     {
         var app = new CommandApp<GenerateCommand>();
         app.Configure(
-            c => 
-                c.SetApplicationName("generatejsonschematypes")
-                 .AddCommand<GenerateWithDriverCommand>("config"));
+            c =>
+            {
+                c.SetApplicationName("generatejsonschematypes");
+                c.AddCommand<GenerateWithDriverCommand>("config");
+                c.AddCommand<ListNamingHeuristicsCommand>("listNameHeuristics");
+            });
         return app.RunAsync(args);
     }
 }
