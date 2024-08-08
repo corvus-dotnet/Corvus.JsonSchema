@@ -2,10 +2,6 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Buffers;
-using System.Buffers.Text;
-using System.Diagnostics.CodeAnalysis;
-using System.Text;
 using System.Text.Json;
 using Corvus.Json.Internal;
 
@@ -24,20 +20,7 @@ public readonly partial struct JsonBase64String
     /// <remarks>This encodes the byte array as a base 64 string.</remarks>
     public static JsonBase64String FromByteArray(ReadOnlySpan<byte> value)
     {
-#if NET8_0_OR_GREATER
-        return new JsonBase64String(Encoding.UTF8.GetString(value));
-#else
-        byte[] bytes = ArrayPool<byte>.Shared.Rent(value.Length);
-        try
-        {
-            value.CopyTo(bytes);
-            return new JsonBase64String(Encoding.UTF8.GetString(bytes));
-        }
-        finally
-        {
-            ArrayPool<byte>.Shared.Return(bytes);
-        }
-#endif
+        return new JsonBase64String(StandardBase64.EncodeToString(value));
     }
 
     /// <summary>
@@ -62,24 +45,15 @@ public readonly partial struct JsonBase64String
     {
         if ((this.backing & Backing.String) != 0)
         {
-            return this.stringBacking.Length;
+            return StandardBase64.GetDecodedBufferSize(this.stringBacking);
         }
 
         if (this.jsonElementBacking.ValueKind == JsonValueKind.String)
         {
-            if (this.jsonElementBacking.TryGetValue(GetStringLength, default(object?), out int length))
-            {
-                return length;
-            }
+            return StandardBase64.GetDecodedBufferSize(this.jsonElementBacking);
         }
 
         throw new InvalidOperationException();
-
-        static bool GetStringLength(ReadOnlySpan<byte> span, in object? state, out int value)
-        {
-            value = span.Length;
-            return true;
-        }
     }
 
     /// <summary>
@@ -96,97 +70,16 @@ public readonly partial struct JsonBase64String
     {
         if ((this.backing & Backing.String) != 0)
         {
-#if NET8_0_OR_GREATER
-            if (Convert.TryFromBase64String(this.stringBacking, result, out written))
-            {
-                return true;
-            }
-            else
-            {
-                if (result.Length >= this.stringBacking.Length)
-                {
-                    written = 0;
-                }
-                else
-                {
-                    written = this.stringBacking.Length;
-                }
-
-                return false;
-            }
-#else
-            return Decode(this.stringBacking, result, out written);
-#endif
+            return StandardBase64.Decode(this.stringBacking, result, out written);
         }
 
         if (this.jsonElementBacking.ValueKind == JsonValueKind.String)
         {
-#if NET8_0_OR_GREATER
-            if (this.jsonElementBacking.TryGetValue(RentBufferAndDecode, this.jsonElementBacking, out (byte[] RentedBuffer, int Written) rentedResult))
-            {
-                if (rentedResult.Written > result.Length)
-                {
-                    written = rentedResult.Written;
-                    ArrayPool<byte>.Shared.Return(rentedResult.RentedBuffer);
-                    return false;
-                }
-
-                written = rentedResult.Written;
-                rentedResult.RentedBuffer.AsSpan(0, rentedResult.Written).CopyTo(result);
-                ArrayPool<byte>.Shared.Return(rentedResult.RentedBuffer);
-                return true;
-            }
-#else
-            string? value = this.jsonElementBacking.GetString();
-            if (value is null)
-            {
-                written = 0;
-                return false;
-            }
-
-            return Decode(value, result, out written);
-#endif
+            return StandardBase64.Decode(this.jsonElementBacking, result, out written);
         }
 
         written = 0;
         return false;
-
-#if NET8_0_OR_GREATER
-        static bool RentBufferAndDecode(ReadOnlySpan<char> span, in JsonElement state, out (byte[] RentedBuffer, int Written) result)
-        {
-            byte[] rentedBuffer = ArrayPool<byte>.Shared.Rent(span.Length);
-            if (Convert.TryFromBase64Chars(span, rentedBuffer.AsSpan(), out int written))
-            {
-                result = (rentedBuffer, written);
-                return true;
-            }
-
-            ArrayPool<byte>.Shared.Return(rentedBuffer);
-            result = ([], span.Length);
-            return false;
-        }
-#else
-        static bool Decode(string value, Span<byte> result, out int written)
-        {
-            try
-            {
-                byte[] writtenBytes = Convert.FromBase64String(value);
-                written = writtenBytes.Length;
-                if (written > result.Length)
-                {
-                    return false;
-                }
-
-                writtenBytes.AsSpan().CopyTo(result);
-                return true;
-            }
-            catch (FormatException)
-            {
-                written = 0;
-                return false;
-            }
-        }
-#endif
     }
 
     /// <summary>
@@ -196,21 +89,10 @@ public readonly partial struct JsonBase64String
     [Obsolete("Use the TryDecodeBase64Bytes() method.")]
     public ReadOnlySpan<byte> GetDecodedBase64Bytes()
     {
-        if ((this.backing & Backing.String) != 0)
+        Span<byte> decoded = new byte[this.GetDecodedBufferSize()];
+        if (this.TryGetDecodedBase64Bytes(decoded, out int written))
         {
-            Span<byte> decoded = new byte[this.stringBacking.Length];
-            if (this.TryGetDecodedBase64Bytes(decoded, out int written))
-            {
-                return decoded[..written];
-            }
-        }
-
-        if (this.jsonElementBacking.ValueKind == JsonValueKind.String)
-        {
-            if (this.jsonElementBacking.TryGetBytesFromBase64(out byte[]? decoded))
-            {
-                return decoded;
-            }
+            return decoded[..written];
         }
 
         throw new InvalidOperationException();
@@ -224,36 +106,14 @@ public readonly partial struct JsonBase64String
     {
         if ((this.backing & Backing.String) != 0)
         {
-#if NET8_0_OR_GREATER
-            return Base64.IsValid(this.stringBacking, out _);
-#else
-            try
-            {
-                Convert.FromBase64String(this.stringBacking);
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
-#endif
+            return StandardBase64.HasBase64Bytes(this.stringBacking);
         }
 
         if (this.jsonElementBacking.ValueKind == JsonValueKind.String)
         {
-            return this.AsJsonElement.TryGetValue(this.HasBase64BytesCore, (object?)null, true, out bool result);
+            return StandardBase64.HasBase64Bytes(this.jsonElementBacking);
         }
 
         return false;
-    }
-
-    private bool HasBase64BytesCore(ReadOnlySpan<byte> span, in object? state, out bool result)
-    {
-#if NET8_0_OR_GREATER
-        result = Base64.IsValid(span, out _);
-#else
-        result = JsonReaderHelper.CanDecodeBase64(span);
-#endif
-        return result;
     }
 }
