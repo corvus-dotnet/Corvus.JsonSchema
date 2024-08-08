@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Text;
 using System.Text.Json;
 
 namespace Corvus.Json.CodeGeneration.CSharp;
@@ -11,6 +12,91 @@ namespace Corvus.Json.CodeGeneration.CSharp;
 /// </summary>
 internal static partial class CodeGeneratorExtensions
 {
+    /// <summary>
+    /// Appends base64 string content encoding public methods.
+    /// </summary>
+    /// <param name="generator">The generator.</param>
+    /// <param name="typeDeclaration">The type declaration for which to append the methods.</param>
+    /// <returns>A <see langword="true"/> if this handled the format for the type declaration.</returns>
+    public static bool AppendBase64StringFormatPublicMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        generator
+            .AppendSeparatorLine()
+            .ReserveNameIfNotReserved("FromByteArray")
+            .AppendLineIndent("/// <summary>")
+            .AppendLineIndent("/// Creates a new instance of the <see cref=\"", typeDeclaration.DotnetTypeName(), "\"/> struct from a byte arrary.")
+            .AppendLineIndent("/// </summary>")
+            .AppendLineIndent("/// <param name=\"value\">The <see cref=\"ReadOnlySpan{T}\"/> of <see langword=\"byte\"/> from which to construct the Base64 content.</param>")
+            .AppendLineIndent("/// <returns>The base 64 encoded string representation of the byte array.</returns>")
+            .AppendLineIndent("/// <remarks>Note that the byte array is not a UTF8 string, but an array of arbitrary bytes. This encodes the byte array as a base 64 string.</remarks>")
+            .AppendLineIndent("public static ", typeDeclaration.DotnetTypeName(), " FromByteArray(ReadOnlySpan<byte> value)")
+            .AppendLineIndent("{")
+            .PushIndent()
+                .AppendLine("#if NET8_0_OR_GREATER")
+                .AppendLineIndent("return new ", typeDeclaration.DotnetTypeName(), "(Encoding.UTF8.GetString(value));")
+                .AppendLine("#else")
+                .AppendLineIndent("byte[] bytes = ArrayPool<byte>.Shared.Rent(value.Length);")
+                .AppendLineIndent("try")
+                .AppendLineIndent("{")
+                .PushIndent()
+                    .AppendLineIndent("value.CopyTo(bytes);")
+                    .AppendLineIndent("return new ", typeDeclaration.DotnetTypeName(), "(Encoding.UTF8.GetString(bytes, 0, value.Length));")
+                .PopIndent()
+                .AppendLineIndent("}")
+                .AppendLineIndent("finally")
+                .AppendLineIndent("{")
+                .PushIndent()
+                    .AppendLineIndent("ArrayPool<byte>.Shared.Return(bytes);")
+                .PopIndent()
+                .AppendLineIndent("}")
+                .AppendLine("#endif")
+            .PopIndent()
+            .AppendLineIndent("}")
+            .AppendSeparatorLine()
+            .AppendLineIndent("/// <summary>")
+            .AppendLineIndent("/// Creates a new instance of the <see cref=\"", typeDeclaration.DotnetTypeName(), "\"/> struct from a byte arrary.")
+            .AppendLineIndent("/// </summary>")
+            .AppendLineIndent("/// <param name=\"value\">The <see langword=\"byte\"/> array from which to construct the Base64 content.</param>")
+            .AppendLineIndent("/// <param name=\"index\">The index into the array array from which to construct the Base64 content.</param>")
+            .AppendLineIndent("/// <param name=\"length\">The length of the array from which to construct the Base64 content.</param>")
+            .AppendLineIndent("/// <returns>The base 64 encoded string representation of the byte array.</returns>")
+            .AppendLineIndent("/// <remarks>Note that the byte array is not a UTF8 string, but an array of arbitrary bytes. This encodes the byte array as a base 64 string.</remarks>")
+            .AppendLineIndent("public static ", typeDeclaration.DotnetTypeName(), " FromByteArray(byte[] value, int index, int length)")
+            .AppendLineIndent("{")
+            .PushIndent()
+                .AppendLineIndent("return new ", typeDeclaration.DotnetTypeName(), "(Encoding.UTF8.GetString(bytes, index, length));")
+            .PopIndent()
+            .AppendLineIndent("}")
+            .AppendSeparatorLine()
+            .AppendLineIndent("/// <summary>")
+            .AppendLineIndent("/// Creates a new instance of the <see cref=\"", typeDeclaration.DotnetTypeName(), "\"/> struct from a byte arrary.")
+            .AppendLineIndent("/// </summary>")
+            .AppendLineIndent("/// <param name=\"value\">The <see langword=\"byte\"/> array from which to construct the Base64 content.</param>")
+            .AppendLineIndent("/// <returns>The base 64 encoded string representation of the byte array.</returns>")
+            .AppendLineIndent("/// <remarks>Note that the byte array is not a UTF8 string, but an array of arbitrary bytes. This encodes the byte array as a base 64 string.</remarks>")
+            .AppendLineIndent("public static ", typeDeclaration.DotnetTypeName(), " FromByteArray(byte[] value)")
+            .AppendLineIndent("{")
+            .PushIndent()
+                .AppendLineIndent("return new ", typeDeclaration.DotnetTypeName(), "(Encoding.UTF8.GetString(bytes));")
+            .PopIndent()
+            .AppendLineIndent("}")
+            .AppendSeparatorLine()
+            .ReserveNameIfNotReserved("GetBase64EncodedString")
+            .AppendLineIndent("/// <summmary>")
+            .AppendLineIndent("/// Get the base64 encoded string.")
+            .AppendLineIndent("/// </summmary>")
+            .AppendLineIndent("/// <returns>The base 64 encoded string.</returns>")
+            .AppendLineIndent("[Obsolete(\"Use the standard GetString() method.\")]")
+            .AppendLineIndent("public ReadOnlySpan<char> GetBase64EncodedString()")
+            .AppendLineIndent("{")
+            .PushIndent()
+                .AppendLineIndent("return this.GetString().AsSpan();")
+            .PopIndent()
+            .AppendLineIndent("}");
+
+        return true;
+    }
+
     /// <summary>
     /// Appends uri-template format public methods.
     /// </summary>
