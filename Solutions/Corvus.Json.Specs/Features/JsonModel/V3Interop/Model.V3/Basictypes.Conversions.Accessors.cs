@@ -115,6 +115,336 @@ public readonly partial struct Basictypes
     }
 
     /// <summary>
+    /// Gets the value as a <see cref = "Model.V3.Basictypes.ExtJsonString1"/>.
+    /// </summary>
+    public Model.V3.Basictypes.ExtJsonString1 AsExtJsonString1
+    {
+        get
+        {
+            return (Model.V3.Basictypes.ExtJsonString1)this;
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether this is a valid <see cref = "Model.V3.Basictypes.ExtJsonString1"/>.
+    /// </summary>
+    public bool IsExtJsonString1
+    {
+        get
+        {
+            return ((Model.V3.Basictypes.ExtJsonString1)this).IsValid();
+        }
+    }
+
+    /// <summary>
+    /// Gets the value as a <see cref = "Model.V3.Basictypes.ExtJsonString1"/>.
+    /// </summary>
+    /// <param name = "result">The result of the conversion.</param>
+    /// <returns><c>True</c> if the conversion was valid.</returns>
+    public bool TryGetAsExtJsonString1(out Model.V3.Basictypes.ExtJsonString1 result)
+    {
+        result = (Model.V3.Basictypes.ExtJsonString1)this;
+        return result.IsValid();
+    }
+
+    /// <summary>
+    /// Gets the value as a <see cref = "Model.V3.Basictypes.ExtJsonString2"/>.
+    /// </summary>
+    public Model.V3.Basictypes.ExtJsonString2 AsExtJsonString2
+    {
+        get
+        {
+            return (Model.V3.Basictypes.ExtJsonString2)this;
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether this is a valid <see cref = "Model.V3.Basictypes.ExtJsonString2"/>.
+    /// </summary>
+    public bool IsExtJsonString2
+    {
+        get
+        {
+            return ((Model.V3.Basictypes.ExtJsonString2)this).IsValid();
+        }
+    }
+
+    /// <summary>
+    /// Gets the value as a <see cref = "Model.V3.Basictypes.ExtJsonString2"/>.
+    /// </summary>
+    /// <param name = "result">The result of the conversion.</param>
+    /// <returns><c>True</c> if the conversion was valid.</returns>
+    public bool TryGetAsExtJsonString2(out Model.V3.Basictypes.ExtJsonString2 result)
+    {
+        result = (Model.V3.Basictypes.ExtJsonString2)this;
+        return result.IsValid();
+    }
+
+    /// <summary>
+    /// Gets the value as a <see cref = "Model.V3.Basictypes.ExtJsonString3"/>.
+    /// </summary>
+    public Model.V3.Basictypes.ExtJsonString3 AsExtJsonString3
+    {
+        get
+        {
+            return (Model.V3.Basictypes.ExtJsonString3)this;
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether this is a valid <see cref = "Model.V3.Basictypes.ExtJsonString3"/>.
+    /// </summary>
+    public bool IsExtJsonString3
+    {
+        get
+        {
+            return ((Model.V3.Basictypes.ExtJsonString3)this).IsValid();
+        }
+    }
+
+    /// <summary>
+    /// Gets the value as a <see cref = "Model.V3.Basictypes.ExtJsonString3"/>.
+    /// </summary>
+    /// <param name = "result">The result of the conversion.</param>
+    /// <returns><c>True</c> if the conversion was valid.</returns>
+    public bool TryGetAsExtJsonString3(out Model.V3.Basictypes.ExtJsonString3 result)
+    {
+        result = (Model.V3.Basictypes.ExtJsonString3)this;
+        return result.IsValid();
+    }
+
+    /// <summary>
+    /// Gets the value as a <see cref = "Model.V3.Basictypes.ExtJsonString4"/>.
+    /// </summary>
+    public Model.V3.Basictypes.ExtJsonString4 AsExtJsonString4
+    {
+        get
+        {
+            return (Model.V3.Basictypes.ExtJsonString4)this;
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether this is a valid <see cref = "Model.V3.Basictypes.ExtJsonString4"/>.
+    /// </summary>
+    public bool IsExtJsonString4
+    {
+        get
+        {
+            return ((Model.V3.Basictypes.ExtJsonString4)this).IsValid();
+        }
+    }
+
+    /// <summary>
+    /// Gets the value as a <see cref = "Model.V3.Basictypes.ExtJsonString4"/>.
+    /// </summary>
+    /// <param name = "result">The result of the conversion.</param>
+    /// <returns><c>True</c> if the conversion was valid.</returns>
+    public bool TryGetAsExtJsonString4(out Model.V3.Basictypes.ExtJsonString4 result)
+    {
+        result = (Model.V3.Basictypes.ExtJsonString4)this;
+        return result.IsValid();
+    }
+
+    /// <summary>
+    /// Gets the value as a <see cref = "Model.V3.Basictypes.ExtJsonString5"/>.
+    /// </summary>
+    public Model.V3.Basictypes.ExtJsonString5 AsExtJsonString5
+    {
+        get
+        {
+            return (Model.V3.Basictypes.ExtJsonString5)this;
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether this is a valid <see cref = "Model.V3.Basictypes.ExtJsonString5"/>.
+    /// </summary>
+    public bool IsExtJsonString5
+    {
+        get
+        {
+            return ((Model.V3.Basictypes.ExtJsonString5)this).IsValid();
+        }
+    }
+
+    /// <summary>
+    /// Gets the value as a <see cref = "Model.V3.Basictypes.ExtJsonString5"/>.
+    /// </summary>
+    /// <param name = "result">The result of the conversion.</param>
+    /// <returns><c>True</c> if the conversion was valid.</returns>
+    public bool TryGetAsExtJsonString5(out Model.V3.Basictypes.ExtJsonString5 result)
+    {
+        result = (Model.V3.Basictypes.ExtJsonString5)this;
+        return result.IsValid();
+    }
+
+    /// <summary>
+    /// Gets the value as a <see cref = "Model.V3.Basictypes.ExtJsonString6"/>.
+    /// </summary>
+    public Model.V3.Basictypes.ExtJsonString6 AsExtJsonString6
+    {
+        get
+        {
+            return (Model.V3.Basictypes.ExtJsonString6)this;
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether this is a valid <see cref = "Model.V3.Basictypes.ExtJsonString6"/>.
+    /// </summary>
+    public bool IsExtJsonString6
+    {
+        get
+        {
+            return ((Model.V3.Basictypes.ExtJsonString6)this).IsValid();
+        }
+    }
+
+    /// <summary>
+    /// Gets the value as a <see cref = "Model.V3.Basictypes.ExtJsonString6"/>.
+    /// </summary>
+    /// <param name = "result">The result of the conversion.</param>
+    /// <returns><c>True</c> if the conversion was valid.</returns>
+    public bool TryGetAsExtJsonString6(out Model.V3.Basictypes.ExtJsonString6 result)
+    {
+        result = (Model.V3.Basictypes.ExtJsonString6)this;
+        return result.IsValid();
+    }
+
+    /// <summary>
+    /// Gets the value as a <see cref = "Model.V3.Basictypes.ExtJsonString7"/>.
+    /// </summary>
+    public Model.V3.Basictypes.ExtJsonString7 AsExtJsonString7
+    {
+        get
+        {
+            return (Model.V3.Basictypes.ExtJsonString7)this;
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether this is a valid <see cref = "Model.V3.Basictypes.ExtJsonString7"/>.
+    /// </summary>
+    public bool IsExtJsonString7
+    {
+        get
+        {
+            return ((Model.V3.Basictypes.ExtJsonString7)this).IsValid();
+        }
+    }
+
+    /// <summary>
+    /// Gets the value as a <see cref = "Model.V3.Basictypes.ExtJsonString7"/>.
+    /// </summary>
+    /// <param name = "result">The result of the conversion.</param>
+    /// <returns><c>True</c> if the conversion was valid.</returns>
+    public bool TryGetAsExtJsonString7(out Model.V3.Basictypes.ExtJsonString7 result)
+    {
+        result = (Model.V3.Basictypes.ExtJsonString7)this;
+        return result.IsValid();
+    }
+
+    /// <summary>
+    /// Gets the value as a <see cref = "Model.V3.Basictypes.ExtJsonString8"/>.
+    /// </summary>
+    public Model.V3.Basictypes.ExtJsonString8 AsExtJsonString8
+    {
+        get
+        {
+            return (Model.V3.Basictypes.ExtJsonString8)this;
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether this is a valid <see cref = "Model.V3.Basictypes.ExtJsonString8"/>.
+    /// </summary>
+    public bool IsExtJsonString8
+    {
+        get
+        {
+            return ((Model.V3.Basictypes.ExtJsonString8)this).IsValid();
+        }
+    }
+
+    /// <summary>
+    /// Gets the value as a <see cref = "Model.V3.Basictypes.ExtJsonString8"/>.
+    /// </summary>
+    /// <param name = "result">The result of the conversion.</param>
+    /// <returns><c>True</c> if the conversion was valid.</returns>
+    public bool TryGetAsExtJsonString8(out Model.V3.Basictypes.ExtJsonString8 result)
+    {
+        result = (Model.V3.Basictypes.ExtJsonString8)this;
+        return result.IsValid();
+    }
+
+    /// <summary>
+    /// Gets the value as a <see cref = "Model.V3.Basictypes.ExtJsonString9"/>.
+    /// </summary>
+    public Model.V3.Basictypes.ExtJsonString9 AsExtJsonString9
+    {
+        get
+        {
+            return (Model.V3.Basictypes.ExtJsonString9)this;
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether this is a valid <see cref = "Model.V3.Basictypes.ExtJsonString9"/>.
+    /// </summary>
+    public bool IsExtJsonString9
+    {
+        get
+        {
+            return ((Model.V3.Basictypes.ExtJsonString9)this).IsValid();
+        }
+    }
+
+    /// <summary>
+    /// Gets the value as a <see cref = "Model.V3.Basictypes.ExtJsonString9"/>.
+    /// </summary>
+    /// <param name = "result">The result of the conversion.</param>
+    /// <returns><c>True</c> if the conversion was valid.</returns>
+    public bool TryGetAsExtJsonString9(out Model.V3.Basictypes.ExtJsonString9 result)
+    {
+        result = (Model.V3.Basictypes.ExtJsonString9)this;
+        return result.IsValid();
+    }
+
+    /// <summary>
+    /// Gets the value as a <see cref = "Model.V3.Basictypes.ExtJsonString10"/>.
+    /// </summary>
+    public Model.V3.Basictypes.ExtJsonString10 AsExtJsonString10
+    {
+        get
+        {
+            return (Model.V3.Basictypes.ExtJsonString10)this;
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether this is a valid <see cref = "Model.V3.Basictypes.ExtJsonString10"/>.
+    /// </summary>
+    public bool IsExtJsonString10
+    {
+        get
+        {
+            return ((Model.V3.Basictypes.ExtJsonString10)this).IsValid();
+        }
+    }
+
+    /// <summary>
+    /// Gets the value as a <see cref = "Model.V3.Basictypes.ExtJsonString10"/>.
+    /// </summary>
+    /// <param name = "result">The result of the conversion.</param>
+    /// <returns><c>True</c> if the conversion was valid.</returns>
+    public bool TryGetAsExtJsonString10(out Model.V3.Basictypes.ExtJsonString10 result)
+    {
+        result = (Model.V3.Basictypes.ExtJsonString10)this;
+        return result.IsValid();
+    }
+
+    /// <summary>
     /// Gets the value as a <see cref = "Model.V3.Basictypes.ExtJsonDateTime"/>.
     /// </summary>
     public Model.V3.Basictypes.ExtJsonDateTime AsExtJsonDateTime
@@ -342,6 +672,39 @@ public readonly partial struct Basictypes
     public bool TryGetAsExtJsonIdnEmail(out Model.V3.Basictypes.ExtJsonIdnEmail result)
     {
         result = (Model.V3.Basictypes.ExtJsonIdnEmail)this;
+        return result.IsValid();
+    }
+
+    /// <summary>
+    /// Gets the value as a <see cref = "Model.V3.Basictypes.ExtJsonIdnHostname"/>.
+    /// </summary>
+    public Model.V3.Basictypes.ExtJsonIdnHostname AsExtJsonIdnHostname
+    {
+        get
+        {
+            return (Model.V3.Basictypes.ExtJsonIdnHostname)this;
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether this is a valid <see cref = "Model.V3.Basictypes.ExtJsonIdnHostname"/>.
+    /// </summary>
+    public bool IsExtJsonIdnHostname
+    {
+        get
+        {
+            return ((Model.V3.Basictypes.ExtJsonIdnHostname)this).IsValid();
+        }
+    }
+
+    /// <summary>
+    /// Gets the value as a <see cref = "Model.V3.Basictypes.ExtJsonIdnHostname"/>.
+    /// </summary>
+    /// <param name = "result">The result of the conversion.</param>
+    /// <returns><c>True</c> if the conversion was valid.</returns>
+    public bool TryGetAsExtJsonIdnHostname(out Model.V3.Basictypes.ExtJsonIdnHostname result)
+    {
+        result = (Model.V3.Basictypes.ExtJsonIdnHostname)this;
         return result.IsValid();
     }
 
@@ -1134,6 +1497,39 @@ public readonly partial struct Basictypes
     public bool TryGetAsExtJsonUInt16(out Model.V3.Basictypes.ExtJsonUInt16 result)
     {
         result = (Model.V3.Basictypes.ExtJsonUInt16)this;
+        return result.IsValid();
+    }
+
+    /// <summary>
+    /// Gets the value as a <see cref = "Model.V3.Basictypes.ExtJsonUInt16ExMin"/>.
+    /// </summary>
+    public Model.V3.Basictypes.ExtJsonUInt16ExMin AsExtJsonUInt16ExMin
+    {
+        get
+        {
+            return (Model.V3.Basictypes.ExtJsonUInt16ExMin)this;
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether this is a valid <see cref = "Model.V3.Basictypes.ExtJsonUInt16ExMin"/>.
+    /// </summary>
+    public bool IsExtJsonUInt16ExMin
+    {
+        get
+        {
+            return ((Model.V3.Basictypes.ExtJsonUInt16ExMin)this).IsValid();
+        }
+    }
+
+    /// <summary>
+    /// Gets the value as a <see cref = "Model.V3.Basictypes.ExtJsonUInt16ExMin"/>.
+    /// </summary>
+    /// <param name = "result">The result of the conversion.</param>
+    /// <returns><c>True</c> if the conversion was valid.</returns>
+    public bool TryGetAsExtJsonUInt16ExMin(out Model.V3.Basictypes.ExtJsonUInt16ExMin result)
+    {
+        result = (Model.V3.Basictypes.ExtJsonUInt16ExMin)this;
         return result.IsValid();
     }
 

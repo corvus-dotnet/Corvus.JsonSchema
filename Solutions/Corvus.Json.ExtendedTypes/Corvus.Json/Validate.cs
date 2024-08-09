@@ -179,38 +179,6 @@ public static partial class Validate
     }
 
     /// <summary>
-    /// Validate an undefined type value.
-    /// </summary>
-    /// <param name="valueKind">The actual value kind.</param>
-    /// <param name="validationContext">The validation context.</param>
-    /// <param name="level">The validation level.</param>
-    /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeUndefined(JsonValueKind valueKind, in ValidationContext validationContext, ValidationLevel level)
-    {
-        if (valueKind != JsonValueKind.Null)
-        {
-            if (level >= ValidationLevel.Detailed)
-            {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been 'undefined' but was '{valueKind}'.");
-            }
-            else if (level >= ValidationLevel.Basic)
-            {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been 'undefined'.");
-            }
-            else
-            {
-                return validationContext.WithResult(isValid: false);
-            }
-        }
-        else if (level == ValidationLevel.Verbose)
-        {
-            return validationContext.WithResult(isValid: true, "Validation type - was 'undefined'.");
-        }
-
-        return validationContext;
-    }
-
-    /// <summary>
     /// Validates the format integer.
     /// </summary>
     /// <typeparam name="T">The type of <see cref="IJsonValue"/> to validate.</typeparam>
@@ -802,7 +770,7 @@ public static partial class Validate
             {
                 _ = (UInt128)instance.AsNumber;
             }
-            catch (FormatException)
+            catch
             {
                 if (level >= ValidationLevel.Detailed)
                 {

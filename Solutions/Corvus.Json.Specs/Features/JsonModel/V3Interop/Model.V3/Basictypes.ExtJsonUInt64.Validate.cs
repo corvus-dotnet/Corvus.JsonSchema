@@ -18,6 +18,8 @@ public readonly partial struct Basictypes
     /// </summary>
     public readonly partial struct ExtJsonUInt64
     {
+        private static readonly BinaryJsonNumber __Corvus_MultipleOf = new(1);
+        private static readonly BinaryJsonNumber __Corvus_Minimum = new(1);
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
         {
@@ -41,6 +43,12 @@ public readonly partial struct Basictypes
             }
 
             result = this.ValidateFormat(valueKind, result, level);
+            if (level == ValidationLevel.Flag && !result.IsValid)
+            {
+                return result;
+            }
+
+            result = Corvus.Json.Validate.ValidateNumber(this, result, level, __Corvus_MultipleOf, BinaryJsonNumber.None, BinaryJsonNumber.None, __Corvus_Minimum, BinaryJsonNumber.None);
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;

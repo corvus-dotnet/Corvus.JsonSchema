@@ -2,114 +2,298 @@ Feature: Validate a V3 Model against V4
 
 Scenario Outline: All of the format types
 	Given the input data value <inputData>
-	And I construct an instance of the V3 generated type
+	And I construct an instance of the V3 generated type as a <InstanceType> backed object
 	When I validate the instance with level <level>
 	Then the result will be <valid>
 	And there will be <count> results
 
 Examples:
-	| inputData        | valid | level    | count |
-	| ""               | false | Flag     | 0     |
-	| ""               | false | Basic    | 1     |
-	| ""               | false | Detailed | 1     |
-	| ""               | false | Verbose  | 126   |
-	| "foo"            | false | Flag     | 0     |
-	| "foo"            | false | Basic    | 1     |
-	| "foo"            | false | Detailed | 1     |
-	| "foo"            | false | Verbose  | 126   |
-	| null             | false | Flag     | 0     |
-	| null             | false | Basic    | 1     |
-	| null             | false | Detailed | 1     |
-	| null             | false | Verbose  | 108   |
-	| -1               | false | Flag     | 0     |
-	| 0                | false | Flag     | 0     |
-	| 1                | false | Flag     | 0     |
-	| 256              | false | Flag     | 0     |
-	| -256             | false | Flag     | 0     |
-	| 256.1            | false | Flag     | 0     |
-	| -256.1           | false | Flag     | 0     |
-	| 256              | false | Flag     | 0     |
-	| -32769           | false | Flag     | 0     |
-	| 32769            | false | Flag     | 0     |
-	| -32769.1         | false | Flag     | 0     |
-	| 32769.1          | false | Flag     | 0     |
-	| -65536           | false | Flag     | 0     |
-	| 65536            | false | Flag     | 0     |
-	| -65536.1         | false | Flag     | 0     |
-	| 65536.1          | false | Flag     | 0     |
-	| -2147483648      | false | Flag     | 0     |
-	| 2147483648       | false | Flag     | 0     |
-	| -2147483648.1    | false | Flag     | 0     |
-	| 2147483648.1     | false | Flag     | 0     |
-	| true             | false | Flag     | 0     |
-	| [1,2,3]          | false | Flag     | 0     |
-	| { "foo": "bar" } | true  | Flag     | 0     |
-	| -1               | false | Basic    | 1     |
-	| 0                | false | Basic    | 1     |
-	| 1                | false | Basic    | 1     |
-	| 256              | false | Basic    | 1     |
-	| -256             | false | Basic    | 1     |
-	| 256.1            | false | Basic    | 1     |
-	| -256.1           | false | Basic    | 1     |
-	| 256              | false | Basic    | 1     |
-	| -32769           | false | Basic    | 1     |
-	| 32769            | false | Basic    | 1     |
-	| -32769.1         | false | Basic    | 1     |
-	| 32769.1          | false | Basic    | 1     |
-	| -65536           | false | Basic    | 1     |
-	| 65536            | false | Basic    | 1     |
-	| -65536.1         | false | Basic    | 1     |
-	| 65536.1          | false | Basic    | 1     |
-	| -2147483648      | false | Basic    | 1     |
-	| 2147483648       | false | Basic    | 1     |
-	| -2147483648.1    | false | Basic    | 1     |
-	| 2147483648.1     | false | Basic    | 1     |
-	| true             | false | Basic    | 1     |
-	| [1,2,3]          | false | Basic    | 1     |
-	| { "foo": "bar" } | true  | Basic    | 0     |
-	| -1               | false | Detailed | 1     |
-	| 0                | false | Detailed | 1     |
-	| 1                | false | Detailed | 1     |
-	| 256              | false | Detailed | 1     |
-	| -256             | false | Detailed | 1     |
-	| 256.1            | false | Detailed | 1     |
-	| -256.1           | false | Detailed | 1     |
-	| 256              | false | Detailed | 1     |
-	| -32769           | false | Detailed | 1     |
-	| 32769            | false | Detailed | 1     |
-	| -32769.1         | false | Detailed | 1     |
-	| 32769.1          | false | Detailed | 1     |
-	| -65536           | false | Detailed | 1     |
-	| 65536            | false | Detailed | 1     |
-	| -65536.1         | false | Detailed | 1     |
-	| 65536.1          | false | Detailed | 1     |
-	| -2147483648      | false | Detailed | 1     |
-	| 2147483648       | false | Detailed | 1     |
-	| -2147483648.1    | false | Detailed | 1     |
-	| 2147483648.1     | false | Detailed | 1     |
-	| true             | false | Detailed | 1     |
-	| [1,2,3]          | false | Detailed | 1     |
-	| { "foo": "bar" } | true  | Detailed | 0     |
-	| -1               | false | Verbose  | 122   |
-	| 0                | false | Verbose  | 122   |
-	| 1                | false | Verbose  | 122   |
-	| 256              | false | Verbose  | 122   |
-	| -256             | false | Verbose  | 122   |
-	| 256.1            | false | Verbose  | 122   |
-	| -256.1           | false | Verbose  | 122   |
-	| 256              | false | Verbose  | 122   |
-	| -32769           | false | Verbose  | 122   |
-	| 32769            | false | Verbose  | 122   |
-	| -32769.1         | false | Verbose  | 122   |
-	| 32769.1          | false | Verbose  | 122   |
-	| -65536           | false | Verbose  | 122   |
-	| 65536            | false | Verbose  | 122   |
-	| -65536.1         | false | Verbose  | 122   |
-	| 65536.1          | false | Verbose  | 122   |
-	| -2147483648      | false | Verbose  | 122   |
-	| 2147483648       | false | Verbose  | 122   |
-	| -2147483648.1    | false | Verbose  | 122   |
-	| 2147483648.1     | false | Verbose  | 122   |
-	| true             | false | Verbose  | 108   |
-	| [1,2,3]          | false | Verbose  | 109   |
-	| { "foo": "bar" } | true  | Verbose  | 108   |
+	| inputData                                            | valid | level    | count | InstanceType |
+	| ""                                                   | false | Flag     | 0     | JsonElement  |
+	| ""                                                   | false | Basic    | 1     | JsonElement  |
+	| ""                                                   | false | Detailed | 1     | JsonElement  |
+	| ""                                                   | false | Verbose  | 198   | JsonElement  |
+	| "foo"                                                | false | Flag     | 0     | JsonElement  |
+	| "foo"                                                | false | Basic    | 1     | JsonElement  |
+	| "foo"                                                | false | Detailed | 1     | JsonElement  |
+	| "foo"                                                | false | Verbose  | 198   | JsonElement  |
+	| "#\\foor\\bar"                                       | false | Flag     | 0     | JsonElement  |
+	| "#\\foor\\bar"                                       | false | Basic    | 1     | JsonElement  |
+	| "#\\foor\\bar"                                       | false | Detailed | 1     | JsonElement  |
+	| "#\\foor\\bar"                                       | false | Verbose  | 198   | JsonElement  |
+	| "01234567890123456789012345678901234567890123456789" | false | Flag     | 0     | JsonElement  |
+	| "01234567890123456789012345678901234567890123456789" | false | Basic    | 1     | JsonElement  |
+	| "01234567890123456789012345678901234567890123456789" | false | Detailed | 1     | JsonElement  |
+	| "01234567890123456789012345678901234567890123456789" | false | Verbose  | 198   | JsonElement  |
+	| "1"                                                  | false | Flag     | 0     | JsonElement  |
+	| "2"                                                  | false | Flag     | 0     | JsonElement  |
+	| "3"                                                  | false | Flag     | 0     | JsonElement  |
+	| "4"                                                  | false | Flag     | 0     | JsonElement  |
+	| "5"                                                  | false | Flag     | 0     | JsonElement  |
+	| "6"                                                  | false | Flag     | 0     | JsonElement  |
+	| "7"                                                  | false | Flag     | 0     | JsonElement  |
+	| "8"                                                  | false | Flag     | 0     | JsonElement  |
+	| "1"                                                  | false | Basic    | 1     | JsonElement  |
+	| "2"                                                  | false | Basic    | 1     | JsonElement  |
+	| "3"                                                  | false | Basic    | 1     | JsonElement  |
+	| "4"                                                  | false | Basic    | 1     | JsonElement  |
+	| "5"                                                  | false | Basic    | 1     | JsonElement  |
+	| "6"                                                  | false | Basic    | 1     | JsonElement  |
+	| "7"                                                  | false | Basic    | 1     | JsonElement  |
+	| "8"                                                  | false | Basic    | 1     | JsonElement  |
+	| "1"                                                  | false | Detailed | 1     | JsonElement  |
+	| "2"                                                  | false | Detailed | 1     | JsonElement  |
+	| "3"                                                  | false | Detailed | 1     | JsonElement  |
+	| "4"                                                  | false | Detailed | 1     | JsonElement  |
+	| "5"                                                  | false | Detailed | 1     | JsonElement  |
+	| "6"                                                  | false | Detailed | 1     | JsonElement  |
+	| "7"                                                  | false | Detailed | 1     | JsonElement  |
+	| "8"                                                  | false | Detailed | 1     | JsonElement  |
+	| "1"                                                  | false | Verbose  | 198   | JsonElement  |
+	| "2"                                                  | false | Verbose  | 198   | JsonElement  |
+	| "3"                                                  | false | Verbose  | 198   | JsonElement  |
+	| "4"                                                  | false | Verbose  | 198   | JsonElement  |
+	| "5"                                                  | false | Verbose  | 198   | JsonElement  |
+	| "6"                                                  | false | Verbose  | 198   | JsonElement  |
+	| "7"                                                  | false | Verbose  | 198   | JsonElement  |
+	| "8"                                                  | false | Verbose  | 198   | JsonElement  |
+	| null                                                 | false | Flag     | 0     | JsonElement  |
+	| null                                                 | false | Basic    | 1     | JsonElement  |
+	| null                                                 | false | Detailed | 1     | JsonElement  |
+	| null                                                 | false | Verbose  | 179   | JsonElement  |
+	| -1                                                   | false | Flag     | 0     | JsonElement  |
+	| 0                                                    | false | Flag     | 0     | JsonElement  |
+	| 1                                                    | false | Flag     | 0     | JsonElement  |
+	| 256                                                  | false | Flag     | 0     | JsonElement  |
+	| -256                                                 | false | Flag     | 0     | JsonElement  |
+	| 256.1                                                | false | Flag     | 0     | JsonElement  |
+	| -256.1                                               | false | Flag     | 0     | JsonElement  |
+	| 256                                                  | false | Flag     | 0     | JsonElement  |
+	| -32769                                               | false | Flag     | 0     | JsonElement  |
+	| 32769                                                | false | Flag     | 0     | JsonElement  |
+	| -32769.1                                             | false | Flag     | 0     | JsonElement  |
+	| 32769.1                                              | false | Flag     | 0     | JsonElement  |
+	| -65536                                               | false | Flag     | 0     | JsonElement  |
+	| 65536                                                | false | Flag     | 0     | JsonElement  |
+	| -65536.1                                             | false | Flag     | 0     | JsonElement  |
+	| 65536.1                                              | false | Flag     | 0     | JsonElement  |
+	| -2147483648                                          | false | Flag     | 0     | JsonElement  |
+	| 2147483648                                           | false | Flag     | 0     | JsonElement  |
+	| -2147483648.1                                        | false | Flag     | 0     | JsonElement  |
+	| 2147483648.1                                         | false | Flag     | 0     | JsonElement  |
+	| true                                                 | false | Flag     | 0     | JsonElement  |
+	| [1,2,3]                                              | false | Flag     | 0     | JsonElement  |
+	| { "foo": "bar" }                                     | true  | Flag     | 0     | JsonElement  |
+	| -1                                                   | false | Basic    | 1     | JsonElement  |
+	| 0                                                    | false | Basic    | 1     | JsonElement  |
+	| 1                                                    | false | Basic    | 1     | JsonElement  |
+	| 256                                                  | false | Basic    | 1     | JsonElement  |
+	| -256                                                 | false | Basic    | 1     | JsonElement  |
+	| 256.1                                                | false | Basic    | 1     | JsonElement  |
+	| -256.1                                               | false | Basic    | 1     | JsonElement  |
+	| 256                                                  | false | Basic    | 1     | JsonElement  |
+	| -32769                                               | false | Basic    | 1     | JsonElement  |
+	| 32769                                                | false | Basic    | 1     | JsonElement  |
+	| -32769.1                                             | false | Basic    | 1     | JsonElement  |
+	| 32769.1                                              | false | Basic    | 1     | JsonElement  |
+	| -65536                                               | false | Basic    | 1     | JsonElement  |
+	| 65536                                                | false | Basic    | 1     | JsonElement  |
+	| -65536.1                                             | false | Basic    | 1     | JsonElement  |
+	| 65536.1                                              | false | Basic    | 1     | JsonElement  |
+	| -2147483648                                          | false | Basic    | 1     | JsonElement  |
+	| 2147483648                                           | false | Basic    | 1     | JsonElement  |
+	| -2147483648.1                                        | false | Basic    | 1     | JsonElement  |
+	| 2147483648.1                                         | false | Basic    | 1     | JsonElement  |
+	| true                                                 | false | Basic    | 1     | JsonElement  |
+	| [1,2,3]                                              | false | Basic    | 1     | JsonElement  |
+	| { "foo": "bar" }                                     | true  | Basic    | 0     | JsonElement  |
+	| -1                                                   | false | Detailed | 1     | JsonElement  |
+	| 0                                                    | false | Detailed | 1     | JsonElement  |
+	| 1                                                    | false | Detailed | 1     | JsonElement  |
+	| 256                                                  | false | Detailed | 1     | JsonElement  |
+	| -256                                                 | false | Detailed | 1     | JsonElement  |
+	| 256.1                                                | false | Detailed | 1     | JsonElement  |
+	| -256.1                                               | false | Detailed | 1     | JsonElement  |
+	| 256                                                  | false | Detailed | 1     | JsonElement  |
+	| -32769                                               | false | Detailed | 1     | JsonElement  |
+	| 32769                                                | false | Detailed | 1     | JsonElement  |
+	| -32769.1                                             | false | Detailed | 1     | JsonElement  |
+	| 32769.1                                              | false | Detailed | 1     | JsonElement  |
+	| -65536                                               | false | Detailed | 1     | JsonElement  |
+	| 65536                                                | false | Detailed | 1     | JsonElement  |
+	| -65536.1                                             | false | Detailed | 1     | JsonElement  |
+	| 65536.1                                              | false | Detailed | 1     | JsonElement  |
+	| -2147483648                                          | false | Detailed | 1     | JsonElement  |
+	| 2147483648                                           | false | Detailed | 1     | JsonElement  |
+	| -2147483648.1                                        | false | Detailed | 1     | JsonElement  |
+	| 2147483648.1                                         | false | Detailed | 1     | JsonElement  |
+	| true                                                 | false | Detailed | 1     | JsonElement  |
+	| [1,2,3]                                              | false | Detailed | 1     | JsonElement  |
+	| { "foo": "bar" }                                     | true  | Detailed | 0     | JsonElement  |
+	| -1                                                   | false | Verbose  | 194   | JsonElement  |
+	| 0                                                    | false | Verbose  | 194   | JsonElement  |
+	| 1                                                    | false | Verbose  | 194   | JsonElement  |
+	| 256                                                  | false | Verbose  | 194   | JsonElement  |
+	| -256                                                 | false | Verbose  | 194   | JsonElement  |
+	| 256.1                                                | false | Verbose  | 194   | JsonElement  |
+	| -256.1                                               | false | Verbose  | 194   | JsonElement  |
+	| 256                                                  | false | Verbose  | 194   | JsonElement  |
+	| -32769                                               | false | Verbose  | 194   | JsonElement  |
+	| 32769                                                | false | Verbose  | 194   | JsonElement  |
+	| -32769.1                                             | false | Verbose  | 194   | JsonElement  |
+	| 32769.1                                              | false | Verbose  | 194   | JsonElement  |
+	| -65536                                               | false | Verbose  | 194   | JsonElement  |
+	| 65536                                                | false | Verbose  | 194   | JsonElement  |
+	| -65536.1                                             | false | Verbose  | 194   | JsonElement  |
+	| 65536.1                                              | false | Verbose  | 194   | JsonElement  |
+	| -2147483648                                          | false | Verbose  | 194   | JsonElement  |
+	| 2147483648                                           | false | Verbose  | 194   | JsonElement  |
+	| -2147483648.1                                        | false | Verbose  | 194   | JsonElement  |
+	| 2147483648.1                                         | false | Verbose  | 194   | JsonElement  |
+	| true                                                 | false | Verbose  | 179   | JsonElement  |
+	| [1,2,3]                                              | false | Verbose  | 180   | JsonElement  |
+	| { "foo": "bar" }                                     | true  | Verbose  | 179   | JsonElement  |
+	| ""                                                   | false | Flag     | 0     | dotnet       |
+	| ""                                                   | false | Basic    | 1     | dotnet       |
+	| ""                                                   | false | Detailed | 1     | dotnet       |
+	| ""                                                   | false | Verbose  | 198   | dotnet       |
+	| "foo"                                                | false | Flag     | 0     | dotnet       |
+	| "foo"                                                | false | Basic    | 1     | dotnet       |
+	| "foo"                                                | false | Detailed | 1     | dotnet       |
+	| "foo"                                                | false | Verbose  | 198   | dotnet       |
+	| "01234567890123456789012345678901234567890123456789" | false | Flag     | 0     | dotnet       |
+	| "01234567890123456789012345678901234567890123456789" | false | Basic    | 1     | dotnet       |
+	| "01234567890123456789012345678901234567890123456789" | false | Detailed | 1     | dotnet       |
+	| "01234567890123456789012345678901234567890123456789" | false | Verbose  | 198   | dotnet       |
+	| "#\\foo\\bar"                                        | false | Flag     | 0     | dotnet       |
+	| "#\\foo\\bar"                                        | false | Basic    | 1     | dotnet       |
+	| "#\\foo\\bar"                                        | false | Detailed | 1     | dotnet       |
+	| "#\\foo\\bar"                                        | false | Verbose  | 198   | dotnet       |
+	| "1"                                                  | false | Flag     | 0     | dotnet       |
+	| "2"                                                  | false | Flag     | 0     | dotnet       |
+	| "3"                                                  | false | Flag     | 0     | dotnet       |
+	| "4"                                                  | false | Flag     | 0     | dotnet       |
+	| "5"                                                  | false | Flag     | 0     | dotnet       |
+	| "6"                                                  | false | Flag     | 0     | dotnet       |
+	| "7"                                                  | false | Flag     | 0     | dotnet       |
+	| "8"                                                  | false | Flag     | 0     | dotnet       |
+	| "1"                                                  | false | Basic    | 1     | dotnet       |
+	| "2"                                                  | false | Basic    | 1     | dotnet       |
+	| "3"                                                  | false | Basic    | 1     | dotnet       |
+	| "4"                                                  | false | Basic    | 1     | dotnet       |
+	| "5"                                                  | false | Basic    | 1     | dotnet       |
+	| "6"                                                  | false | Basic    | 1     | dotnet       |
+	| "7"                                                  | false | Basic    | 1     | dotnet       |
+	| "8"                                                  | false | Basic    | 1     | dotnet       |
+	| "1"                                                  | false | Detailed | 1     | dotnet       |
+	| "2"                                                  | false | Detailed | 1     | dotnet       |
+	| "3"                                                  | false | Detailed | 1     | dotnet       |
+	| "4"                                                  | false | Detailed | 1     | dotnet       |
+	| "5"                                                  | false | Detailed | 1     | dotnet       |
+	| "6"                                                  | false | Detailed | 1     | dotnet       |
+	| "7"                                                  | false | Detailed | 1     | dotnet       |
+	| "8"                                                  | false | Detailed | 1     | dotnet       |
+	| "1"                                                  | false | Verbose  | 198   | dotnet       |
+	| "2"                                                  | false | Verbose  | 198   | dotnet       |
+	| "3"                                                  | false | Verbose  | 198   | dotnet       |
+	| "4"                                                  | false | Verbose  | 198   | dotnet       |
+	| "5"                                                  | false | Verbose  | 198   | dotnet       |
+	| "6"                                                  | false | Verbose  | 198   | dotnet       |
+	| "7"                                                  | false | Verbose  | 198   | dotnet       |
+	| "8"                                                  | false | Verbose  | 198   | dotnet       |
+	| null                                                 | false | Flag     | 0     | dotnet       |
+	| null                                                 | false | Basic    | 1     | dotnet       |
+	| null                                                 | false | Detailed | 1     | dotnet       |
+	| null                                                 | false | Verbose  | 179   | dotnet       |
+	| -1                                                   | false | Flag     | 0     | dotnet       |
+	| 0                                                    | false | Flag     | 0     | dotnet       |
+	| 1                                                    | false | Flag     | 0     | dotnet       |
+	| 256                                                  | false | Flag     | 0     | dotnet       |
+	| -256                                                 | false | Flag     | 0     | dotnet       |
+	| 256.1                                                | false | Flag     | 0     | dotnet       |
+	| -256.1                                               | false | Flag     | 0     | dotnet       |
+	| 256                                                  | false | Flag     | 0     | dotnet       |
+	| -32769                                               | false | Flag     | 0     | dotnet       |
+	| 32769                                                | false | Flag     | 0     | dotnet       |
+	| -32769.1                                             | false | Flag     | 0     | dotnet       |
+	| 32769.1                                              | false | Flag     | 0     | dotnet       |
+	| -65536                                               | false | Flag     | 0     | dotnet       |
+	| 65536                                                | false | Flag     | 0     | dotnet       |
+	| -65536.1                                             | false | Flag     | 0     | dotnet       |
+	| 65536.1                                              | false | Flag     | 0     | dotnet       |
+	| -2147483648                                          | false | Flag     | 0     | dotnet       |
+	| 2147483648                                           | false | Flag     | 0     | dotnet       |
+	| -2147483648.1                                        | false | Flag     | 0     | dotnet       |
+	| 2147483648.1                                         | false | Flag     | 0     | dotnet       |
+	| true                                                 | false | Flag     | 0     | dotnet       |
+	| [1,2,3]                                              | false | Flag     | 0     | dotnet       |
+	| { "foo": "bar" }                                     | true  | Flag     | 0     | dotnet       |
+	| -1                                                   | false | Basic    | 1     | dotnet       |
+	| 0                                                    | false | Basic    | 1     | dotnet       |
+	| 1                                                    | false | Basic    | 1     | dotnet       |
+	| 256                                                  | false | Basic    | 1     | dotnet       |
+	| -256                                                 | false | Basic    | 1     | dotnet       |
+	| 256.1                                                | false | Basic    | 1     | dotnet       |
+	| -256.1                                               | false | Basic    | 1     | dotnet       |
+	| 256                                                  | false | Basic    | 1     | dotnet       |
+	| -32769                                               | false | Basic    | 1     | dotnet       |
+	| 32769                                                | false | Basic    | 1     | dotnet       |
+	| -32769.1                                             | false | Basic    | 1     | dotnet       |
+	| 32769.1                                              | false | Basic    | 1     | dotnet       |
+	| -65536                                               | false | Basic    | 1     | dotnet       |
+	| 65536                                                | false | Basic    | 1     | dotnet       |
+	| -65536.1                                             | false | Basic    | 1     | dotnet       |
+	| 65536.1                                              | false | Basic    | 1     | dotnet       |
+	| -2147483648                                          | false | Basic    | 1     | dotnet       |
+	| 2147483648                                           | false | Basic    | 1     | dotnet       |
+	| -2147483648.1                                        | false | Basic    | 1     | dotnet       |
+	| 2147483648.1                                         | false | Basic    | 1     | dotnet       |
+	| true                                                 | false | Basic    | 1     | dotnet       |
+	| [1,2,3]                                              | false | Basic    | 1     | dotnet       |
+	| { "foo": "bar" }                                     | true  | Basic    | 0     | dotnet       |
+	| -1                                                   | false | Detailed | 1     | dotnet       |
+	| 0                                                    | false | Detailed | 1     | dotnet       |
+	| 1                                                    | false | Detailed | 1     | dotnet       |
+	| 256                                                  | false | Detailed | 1     | dotnet       |
+	| -256                                                 | false | Detailed | 1     | dotnet       |
+	| 256.1                                                | false | Detailed | 1     | dotnet       |
+	| -256.1                                               | false | Detailed | 1     | dotnet       |
+	| 256                                                  | false | Detailed | 1     | dotnet       |
+	| -32769                                               | false | Detailed | 1     | dotnet       |
+	| 32769                                                | false | Detailed | 1     | dotnet       |
+	| -32769.1                                             | false | Detailed | 1     | dotnet       |
+	| 32769.1                                              | false | Detailed | 1     | dotnet       |
+	| -65536                                               | false | Detailed | 1     | dotnet       |
+	| 65536                                                | false | Detailed | 1     | dotnet       |
+	| -65536.1                                             | false | Detailed | 1     | dotnet       |
+	| 65536.1                                              | false | Detailed | 1     | dotnet       |
+	| -2147483648                                          | false | Detailed | 1     | dotnet       |
+	| 2147483648                                           | false | Detailed | 1     | dotnet       |
+	| -2147483648.1                                        | false | Detailed | 1     | dotnet       |
+	| 2147483648.1                                         | false | Detailed | 1     | dotnet       |
+	| true                                                 | false | Detailed | 1     | dotnet       |
+	| [1,2,3]                                              | false | Detailed | 1     | dotnet       |
+	| { "foo": "bar" }                                     | true  | Detailed | 0     | dotnet       |
+	| -1                                                   | false | Verbose  | 194   | dotnet       |
+	| 0                                                    | false | Verbose  | 194   | dotnet       |
+	| 1                                                    | false | Verbose  | 194   | dotnet       |
+	| 256                                                  | false | Verbose  | 194   | dotnet       |
+	| -256                                                 | false | Verbose  | 194   | dotnet       |
+	| 256.1                                                | false | Verbose  | 194   | dotnet       |
+	| -256.1                                               | false | Verbose  | 194   | dotnet       |
+	| 256                                                  | false | Verbose  | 194   | dotnet       |
+	| -32769                                               | false | Verbose  | 194   | dotnet       |
+	| 32769                                                | false | Verbose  | 194   | dotnet       |
+	| -32769.1                                             | false | Verbose  | 194   | dotnet       |
+	| 32769.1                                              | false | Verbose  | 194   | dotnet       |
+	| -65536                                               | false | Verbose  | 194   | dotnet       |
+	| 65536                                                | false | Verbose  | 194   | dotnet       |
+	| -65536.1                                             | false | Verbose  | 194   | dotnet       |
+	| 65536.1                                              | false | Verbose  | 194   | dotnet       |
+	| -2147483648                                          | false | Verbose  | 194   | dotnet       |
+	| 2147483648                                           | false | Verbose  | 194   | dotnet       |
+	| -2147483648.1                                        | false | Verbose  | 194   | dotnet       |
+	| 2147483648.1                                         | false | Verbose  | 194   | dotnet       |
+	| true                                                 | false | Verbose  | 179   | dotnet       |
+	| [1,2,3]                                              | false | Verbose  | 180   | dotnet       |
+	| { "foo": "bar" }                                     | true  | Verbose  | 179   | dotnet       |

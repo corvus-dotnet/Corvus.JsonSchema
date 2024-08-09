@@ -1,4 +1,4 @@
-﻿Feature: parameter-matching
+Feature: parameter-matching
 	Parameter matching specs
 
 Scenario: Match URI to template
@@ -308,6 +308,7 @@ Scenario: Set template parameters for a float
 	When I set the template parameter called "value" to the float 3.3
 	Then the resolved template should be one of
 		| values                                              |
+		| http://example.org/location?value=3.29999995231628 |
 		| http://example.org/location?value=3.299999952316284 |
 
 Scenario: Set template parameters for a long

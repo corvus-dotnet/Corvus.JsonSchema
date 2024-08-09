@@ -512,7 +512,7 @@ public static partial class ValidateWithoutCoreType
         {
             _ = (UInt128)instance.AsNumber;
         }
-        catch (FormatException)
+        catch
         {
             if (level >= ValidationLevel.Detailed)
             {
