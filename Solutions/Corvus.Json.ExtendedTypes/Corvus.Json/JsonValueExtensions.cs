@@ -111,42 +111,7 @@ public static class JsonValueExtensions
             return value.AsJsonElement.GetRawText();
         }
 
-        var abw = new ArrayBufferWriter<byte>();
-        using var writer = new Utf8JsonWriter(abw);
-        value.WriteTo(writer);
-        writer.Flush();
-
-#if NET8_0_OR_GREATER
-        int length = Encoding.UTF8.GetMaxCharCount(abw.WrittenCount);
-        char[]? pooledChars = null;
-
-        Span<char> chars = length <= JsonValueHelpers.MaxStackAlloc ?
-            stackalloc char[length] :
-            (pooledChars = ArrayPool<char>.Shared.Rent(length));
-
-        int count = Encoding.UTF8.GetChars(abw.WrittenSpan, chars);
-
-        Span<char> writtenChars = chars[..count];
-        string result = new(writtenChars);
-
-        if (pooledChars != null)
-        {
-            ArrayPool<char>.Shared.Return(pooledChars, true);
-        }
-
-        return result;
-#else
-        int length = Encoding.UTF8.GetMaxCharCount(abw.WrittenCount);
-        char[] chars = ArrayPool<char>.Shared.Rent(length);
-
-        int count = Encoding.UTF8.GetChars(abw.WrittenArray, 0, abw.WrittenCount, chars, 0);
-
-        string result = new(chars, 0, count);
-
-        ArrayPool<char>.Shared.Return(chars, true);
-
-        return result;
-#endif
+        return JsonSerializer.Serialize(value);
     }
 
     /// <summary>

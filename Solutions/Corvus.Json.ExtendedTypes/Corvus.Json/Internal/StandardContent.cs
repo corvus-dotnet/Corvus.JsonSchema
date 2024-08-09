@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Buffers;
+using System.Buffers.Text;
 using System.Diagnostics;
 using System.Text.Json;
 
@@ -17,18 +18,55 @@ public static class StandardContent
     /// This unescapes JSON data which has been escaped into a JSON string and parses it into a JSON document.
     /// </summary>
     /// <param name="jsonElement">The JSON string containing the escaped json text.</param>
+    /// <param name="base64Decode">Indicates whether to base64 decode the string before processing.</param>
     /// <param name="result">The parsed document.</param>
     /// <returns><see cref="EncodedContentMediaTypeParseStatus.Success"/> if the document was parsed successfully.</returns>
-    public static EncodedContentMediaTypeParseStatus ParseEscapedJsonContentInJsonString(in JsonElement jsonElement, out JsonDocument? result)
+    public static EncodedContentMediaTypeParseStatus ParseEscapedJsonContentInJsonString(in JsonElement jsonElement, bool base64Decode, out JsonDocument? result)
     {
         Debug.Assert(jsonElement.ValueKind == JsonValueKind.String, "You must provide a string element.");
 
-        jsonElement.TryGetValue(UnnescapeAndParseJsonDocument, default(object?), out (JsonDocument? Document, EncodedContentMediaTypeParseStatus Status) parseResult);
+        (JsonDocument? Document, EncodedContentMediaTypeParseStatus Status) parseResult;
+
+        if (base64Decode)
+        {
+            jsonElement.TryGetValue(DecodeUnescapeAndParseJsonDocument, default(object?), out parseResult);
+        }
+        else
+        {
+            jsonElement.TryGetValue(UnescapeAndParseJsonDocument, default(object?), out parseResult);
+        }
 
         result = parseResult.Document;
         return parseResult.Status;
 
-        static bool UnnescapeAndParseJsonDocument(ReadOnlySpan<byte> utf8Source, in object? state, out (JsonDocument? Document, EncodedContentMediaTypeParseStatus Status) result)
+        static bool DecodeUnescapeAndParseJsonDocument(ReadOnlySpan<byte> base64Source, in object? state, out (JsonDocument? Document, EncodedContentMediaTypeParseStatus Status) result)
+        {
+            int length = base64Source.Length;
+            byte[]? buffer = null;
+            Span<byte> utf8Source = length <= JsonConstants.StackallocThreshold ?
+                stackalloc byte[length] :
+                (buffer = ArrayPool<byte>.Shared.Rent(length));
+
+            try
+            {
+                if (Base64.DecodeFromUtf8(base64Source, utf8Source, out _, out int written) != OperationStatus.Done)
+                {
+                    result = (null, EncodedContentMediaTypeParseStatus.UnableToDecode);
+                    return false;
+                }
+
+                return UnescapeAndParseJsonDocument(utf8Source[..written], default, out result);
+            }
+            finally
+            {
+                if (buffer is byte[] b)
+                {
+                    ArrayPool<byte>.Shared.Return(b);
+                }
+            }
+        }
+
+        static bool UnescapeAndParseJsonDocument(ReadOnlySpan<byte> utf8Source, in object? state, out (JsonDocument? Document, EncodedContentMediaTypeParseStatus Status) result)
         {
             int idx = utf8Source.IndexOf(JsonConstants.BackSlash);
 
@@ -90,9 +128,10 @@ public static class StandardContent
     /// This unescapes JSON data which has been escaped into a JSON string and parses it into a JSON document.
     /// </summary>
     /// <param name="source">The JSON string containing the escaped json text.</param>
+    /// <param name="base64Decode">Indicates whether to base64 decode the string before processing.</param>
     /// <param name="result">The parsed document.</param>
     /// <returns><see cref="EncodedContentMediaTypeParseStatus.Success"/> if the document was parsed successfully.</returns>
-    public static EncodedContentMediaTypeParseStatus ParseEscapedJsonContentInJsonString(ReadOnlySpan<char> source, out JsonDocument? result)
+    public static EncodedContentMediaTypeParseStatus ParseEscapedJsonContentInJsonString(ReadOnlySpan<char> source, bool base64Decode, out JsonDocument? result)
     {
         int idx = source.IndexOf('\\');
 

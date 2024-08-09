@@ -212,6 +212,14 @@ public class JsonValueEqualitySteps
         this.scenarioContext.Set(result, EqualsResultKey);
     }
 
+    [When(@"the string ""([^""]*)"" is compared to the JsonBase64ContentPre201909")]
+    public void WhenTheStringIsComparedToTheJsonBase64ContentPre201909(string testString)
+    {
+        JsonBase64ContentPre201909 sut = this.scenarioContext.Get<JsonBase64ContentPre201909>(JsonValueSteps.SubjectUnderTest);
+        bool result = sut.EqualsString(testString);
+        this.scenarioContext.Set(result, EqualsResultKey);
+    }
+
     [When(@"the string ""([^""]*)"" is compared to the JsonBase64String")]
     public void WhenTheStringIsComparedToTheJsonBase64String(string testString)
     {
@@ -406,6 +414,14 @@ public class JsonValueEqualitySteps
         this.scenarioContext.Set(result, EqualsResultKey);
     }
 
+    [When(@"the charSpan ""([^""]*)"" is compared to the JsonBase64ContentPre201909")]
+    public void WhenTheCharSpanIsComparedToTheJsonBase64ContentPre201909(string testString)
+    {
+        JsonBase64ContentPre201909 sut = this.scenarioContext.Get<JsonBase64ContentPre201909>(JsonValueSteps.SubjectUnderTest);
+        bool result = sut.EqualsString(testString.AsSpan());
+        this.scenarioContext.Set(result, EqualsResultKey);
+    }
+
     [When(@"the charSpan ""([^""]*)"" is compared to the JsonBase64String")]
     public void WhenTheCharSpanIsComparedToTheJsonBase64String(string testString)
     {
@@ -596,6 +612,14 @@ public class JsonValueEqualitySteps
     public void WhenTheUtfbytesAreComparedToTheJsonBase64Content(string testString)
     {
         JsonBase64Content sut = this.scenarioContext.Get<JsonBase64Content>(JsonValueSteps.SubjectUnderTest);
+        bool result = sut.EqualsUtf8Bytes(Encoding.UTF8.GetBytes(testString));
+        this.scenarioContext.Set(result, EqualsResultKey);
+    }
+
+    [When(@"the utf8bytes ""([^""]*)"" are compared to the JsonBase64ContentPre201909")]
+    public void WhenTheUtfbytesAreComparedToTheJsonBase64ContentPre201909(string testString)
+    {
+        JsonBase64ContentPre201909 sut = this.scenarioContext.Get<JsonBase64ContentPre201909>(JsonValueSteps.SubjectUnderTest);
         bool result = sut.EqualsUtf8Bytes(Encoding.UTF8.GetBytes(testString));
         this.scenarioContext.Set(result, EqualsResultKey);
     }
@@ -897,7 +921,7 @@ public class JsonValueEqualitySteps
     /// Compares the value in JsonBase64Content in the context variable <c>Value</c> with the expected base64Content, and set it into the context variable <c>Result</c>.
     /// </summary>
     /// <param name="expected">The expected value.</param>
-    [When("I compare it to the base64content (.*)")]
+    [When("I compare it to the JsonBase64Content (.*)")]
     public void WhenICompareItToTheBase64Content(string expected)
     {
         if (expected != "null")
@@ -915,7 +939,7 @@ public class JsonValueEqualitySteps
     /// Compares the value in JsonBase64Content in the context variable <c>Value</c> with the expected base64Content, and set it into the context variable <c>Result</c>.
     /// </summary>
     /// <param name="expected">The expected value.</param>
-    [When("I compare the base64content to the IJsonValue (.*)")]
+    [When("I compare the JsonBase64Content to the IJsonValue (.*)")]
     public void WhenICompareTheBase64ContentToTheIJsonValue(string expected)
     {
         this.scenarioContext.Set(this.scenarioContext.Get<JsonBase64Content>(JsonValueSteps.SubjectUnderTest).Equals(JsonAny.Parse(expected)), EqualsResultKey);
@@ -925,7 +949,7 @@ public class JsonValueEqualitySteps
     /// Compares the value in JsonBase64Content in the context variable <c>Value</c> with the expected base64Content, and set it into the context variable <c>Result</c>.
     /// </summary>
     /// <param name="expected">The expected value.</param>
-    [When("I compare the base64content to the object (.*)")]
+    [When("I compare the JsonBase64Content to the object (.*)")]
     public void WhenICompareTheBase64ContentToTheObject(string expected)
     {
         object? obj = expected == "<undefined>" ? default(JsonBase64Content) : expected == "<null>" ? null : expected == "<new object()>" ? new object() : JsonAny.Parse(expected);
@@ -933,6 +957,51 @@ public class JsonValueEqualitySteps
         if (obj is not null)
         {
             this.scenarioContext.Set(((object)this.scenarioContext.Get<JsonBase64Content>(JsonValueSteps.SubjectUnderTest)).GetHashCode() == obj.GetHashCode(), HashCodeResultKey);
+        }
+    }
+
+    /* base64contentPre201909 */
+
+    /// <summary>
+    /// Compares the value in JsonBase64ContentPre201909 in the context variable <c>Value</c> with the expected base64Content, and set it into the context variable <c>Result</c>.
+    /// </summary>
+    /// <param name="expected">The expected value.</param>
+    [When("I compare it to the JsonBase64ContentPre201909 (.*)")]
+    public void WhenICompareItToTheBase64ContentPre201909(string expected)
+    {
+        if (expected != "null")
+        {
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonBase64ContentPre201909>(JsonValueSteps.SubjectUnderTest).Equals(JsonBase64ContentPre201909.Parse(expected).AsDotnetBackedValue()), EqualsObjectBackedResultKey);
+        }
+
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonBase64ContentPre201909>(JsonValueSteps.SubjectUnderTest).Equals(JsonBase64ContentPre201909.Parse(expected)), EqualsResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonBase64ContentPre201909>(JsonValueSteps.SubjectUnderTest) == JsonBase64ContentPre201909.Parse(expected), EqualityResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonBase64ContentPre201909>(JsonValueSteps.SubjectUnderTest) != JsonBase64ContentPre201909.Parse(expected), InequalityResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonBase64ContentPre201909>(JsonValueSteps.SubjectUnderTest).GetHashCode() == JsonBase64ContentPre201909.Parse(expected).GetHashCode(), HashCodeResultKey);
+    }
+
+    /// <summary>
+    /// Compares the value in JsonBase64ContentPre201909 in the context variable <c>Value</c> with the expected base64Content, and set it into the context variable <c>Result</c>.
+    /// </summary>
+    /// <param name="expected">The expected value.</param>
+    [When("I compare the JsonBase64ContentPre201909 to the IJsonValue (.*)")]
+    public void WhenICompareTheBase64ContentPre201909ToTheIJsonValue(string expected)
+    {
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonBase64ContentPre201909>(JsonValueSteps.SubjectUnderTest).Equals(JsonAny.Parse(expected)), EqualsResultKey);
+    }
+
+    /// <summary>
+    /// Compares the value in JsonBase64ContentPre201909 in the context variable <c>Value</c> with the expected base64Content, and set it into the context variable <c>Result</c>.
+    /// </summary>
+    /// <param name="expected">The expected value.</param>
+    [When("I compare the JsonBase64ContentPre201909 to the object (.*)")]
+    public void WhenICompareTheBase64ContentPre201909ToTheObject(string expected)
+    {
+        object? obj = expected == "<undefined>" ? default(JsonBase64ContentPre201909) : expected == "<null>" ? null : expected == "<new object()>" ? new object() : JsonAny.Parse(expected);
+        this.scenarioContext.Set(((object)this.scenarioContext.Get<JsonBase64ContentPre201909>(JsonValueSteps.SubjectUnderTest)).Equals(obj), EqualsResultKey);
+        if (obj is not null)
+        {
+            this.scenarioContext.Set(((object)this.scenarioContext.Get<JsonBase64ContentPre201909>(JsonValueSteps.SubjectUnderTest)).GetHashCode() == obj.GetHashCode(), HashCodeResultKey);
         }
     }
 

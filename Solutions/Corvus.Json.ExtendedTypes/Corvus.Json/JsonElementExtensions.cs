@@ -14,6 +14,79 @@ namespace Corvus.Json;
 public static class JsonElementExtensions
 {
     /// <summary>
+    ///   Attempts to represent the current JSON value as the given type.
+    /// </summary>
+    /// <typeparam name="TState">The type of the parser state.</typeparam>
+    /// <typeparam name="TResult">The type with which to represent the JSON string.</typeparam>
+    /// <param name="element">The JSON element to extend.</param>
+    /// <param name="parser">A delegate to the method that parses the JSON string.</param>
+    /// <param name="state">The state for the parser.</param>
+    /// <param name="value">Receives the value.</param>
+    /// <remarks>
+    ///   This method does not create a representation of values other than JSON strings.
+    /// </remarks>
+    /// <returns>
+    ///   <see langword="true"/> if the string can be represented as the given type,
+    ///   <see langword="false"/> otherwise.
+    /// </returns>
+    /// <exception cref="ObjectDisposedException">
+    ///   The parent <see cref="JsonDocument"/> has been disposed.
+    /// </exception>
+    public static bool TryGetRawText<TState, TResult>(this JsonElement element, in Utf8Parser<TState, TResult> parser, in TState state, [NotNullWhen(true)] out TResult? value)
+    {
+        return element.TryGetRawText(parser, state, true, out value);
+    }
+
+    /// <summary>
+    ///   Attempts to represent the current JSON string as the given type.
+    /// </summary>
+    /// <typeparam name="TState">The type of the parser state.</typeparam>
+    /// <typeparam name="TResult">The type with which to represent the JSON string.</typeparam>
+    /// <param name="element">The JSON element to extend.</param>
+    /// <param name="parser">A delegate to the method that parses the JSON string.</param>
+    /// <param name="state">The state for the parser.</param>
+    /// <param name="decode">Indicates whether the UTF8 JSON string should be decoded.</param>
+    /// <param name="value">Receives the value.</param>
+    /// <remarks>
+    ///   This method does not create a representation of values other than JSON strings.
+    /// </remarks>
+    /// <returns>
+    ///   <see langword="true"/> if the string can be represented as the given type,
+    ///   <see langword="false"/> otherwise.
+    /// </returns>
+    /// <exception cref="ObjectDisposedException">
+    ///   The parent <see cref="JsonDocument"/> has been disposed.
+    /// </exception>
+    public static bool TryGetRawText<TState, TResult>(this JsonElement element, in Utf8Parser<TState, TResult> parser, in TState state, bool decode, [NotNullWhen(true)] out TResult? value)
+    {
+        return element.ProcessRawText(new Utf8ParserStateWrapper<TState, TResult>(parser, state, decode), ProcessRawText, out value);
+    }
+
+    /// <summary>
+    ///   Attempts to represent the current JSON string as the given type.
+    /// </summary>
+    /// <typeparam name="TState">The type of the parser state.</typeparam>
+    /// <typeparam name="TResult">The type with which to represent the JSON string.</typeparam>
+    /// <param name="element">The JSON element to extend.</param>
+    /// <param name="parser">A delegate to the method that parses the JSON string.</param>
+    /// <param name="state">The state for the parser.</param>
+    /// <param name="value">Receives the value.</param>
+    /// <remarks>
+    ///   This method does not create a representation of values other than JSON strings.
+    /// </remarks>
+    /// <returns>
+    ///   <see langword="true"/> if the string can be represented as the given type,
+    ///   <see langword="false"/> otherwise.
+    /// </returns>
+    /// <exception cref="ObjectDisposedException">
+    ///   The parent <see cref="JsonDocument"/> has been disposed.
+    /// </exception>
+    public static bool TryGetRawText<TState, TResult>(this JsonElement element, in Parser<TState, TResult> parser, in TState state, [NotNullWhen(true)] out TResult? value)
+    {
+        return element.ProcessRawText(new ParserStateWrapper<TState, TResult>(parser, state), ProcessRawText, out value);
+    }
+
+    /// <summary>
     ///   Attempts to represent the current JSON string as the given type.
     /// </summary>
     /// <typeparam name="TState">The type of the parser state.</typeparam>

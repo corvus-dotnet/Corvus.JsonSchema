@@ -12,6 +12,169 @@ namespace Corvus.Json.CodeGeneration.CSharp;
 internal static partial class CodeGeneratorExtensions
 {
     /// <summary>
+    /// Appends base64-encoded string JSON content constructors.
+    /// </summary>
+    /// <param name="generator">The generator.</param>
+    /// <param name="typeDeclaration">The type declaration for which to append the constructors.</param>
+    /// <returns>A <see langword="true"/> if this handled the format for the type declaration.</returns>
+    public static bool AppendBase64ContentFormatConstructors(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        generator
+            .AppendPublicConvertedValueConstructor(typeDeclaration, "JsonDocument", CoreTypes.String, "StandardBase64.EncodeToString(value);");
+
+        return true;
+    }
+
+    /// <summary>
+    /// Appends base64-encoded string JSON content public methods.
+    /// </summary>
+    /// <param name="generator">The generator.</param>
+    /// <param name="typeDeclaration">The type declaration for which to append the methods.</param>
+    /// <returns>A <see langword="true"/> if this handled the format for the type declaration.</returns>
+    public static bool AppendBase64ContentFormatPublicMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        generator
+            .ReserveNameIfNotReserved("GetDecodedBufferSize")
+            .AppendBlockIndent(
+                """
+                /// <summary>
+                /// Gets the minimum size for a buffer to
+                /// pass to <see cref="TryGetDecodedBase64Bytes(Span{byte}, out int)"/>.
+                /// </summary>
+                /// <returns>The buffer length will be suitable for decoding the base64 content.</returns>
+                /// <remarks>This is not a zero-cost operation. If you know the expected maximum buffer size in advance,
+                /// you can improve performance by pre-allocating a reasonable buffer size and calling <see cref="TryGetDecodedBase64Bytes(Span{byte}, out int)"/>.
+                /// If the buffer was too small, the <c>written</c> value will be the desired buffer size.</remarks>
+                """)
+            .AppendLineIndent("public int GetDecodedBufferSize()")
+            .AppendLineIndent("{")
+            .PushIndent()
+                .AppendConditionalWrappedBackingValueLineIndent(
+                    "Backing.String",
+                    "return StandardBase64.GetDecodedBufferSize(",
+                    "stringBacking",
+                    ");")
+                .AppendConditionalWrappedJsonElementBackingValueKindLineIndent(
+                    JsonValueKind.String,
+                    "return StandardBase64.GetDecodedBufferSize(",
+                    "jsonElementBacking",
+                    ");")
+                .AppendSeparatorLine()
+                .AppendLineIndent("throw new InvalidOperationException();")
+            .PopIndent()
+            .AppendLineIndent("}")
+            .AppendSeparatorLine()
+            .ReserveNameIfNotReserved("TryGetDecodedBase64Bytes")
+            .AppendBlockIndent(
+                """
+                /// <summary>
+                /// Try to get the decoded base64 bytes.
+                /// </summary>
+                /// <param name="result">The span into which to write the bytes.</param>
+                /// <param name="written">The number of bytes written.</param>
+                /// <returns><see langword="true"/> if the bytes were successfully decoded.</returns>
+                /// <remarks>
+                /// If the <paramref name="result"/> buffer was too short for the decoded bytes, the method will return <see langword="false"/>,
+                /// and <paramref name="written"/> will be a number representing a buffer of sufficient size to decode the value. Otherwise it will be <c>0</c>.
+                /// </remarks>
+                """)
+            .AppendLineIndent("public bool TryGetDecodedBase64Bytes(Span<byte> result, out int written)")
+            .AppendLineIndent("{")
+            .PushIndent()
+                .AppendConditionalWrappedBackingValueLineIndent(
+                    "Backing.String",
+                    "return StandardBase64.Decode(",
+                    "stringBacking",
+                    ", result, out written);")
+                .AppendConditionalWrappedJsonElementBackingValueKindLineIndent(
+                    JsonValueKind.String,
+                    "return StandardBase64.Decode(",
+                    "jsonElementBacking",
+                    ", result, out written);")
+                .AppendSeparatorLine()
+                .AppendLineIndent("written = 0;")
+                .AppendLineIndent("return false;")
+            .PopIndent()
+            .AppendLineIndent("}")
+            .AppendSeparatorLine()
+            .ReserveNameIfNotReserved("GetDecodedBase64Bytes")
+            .AppendBlockIndent(
+                """
+                /// <summary>
+                /// Get the decoded base64 bytes.
+                /// </summary>
+                /// <returns>The base 64 bytes.</returns>
+                [Obsolete("Use the TryDecodeBase64Bytes() method.")]
+                public ReadOnlySpan<byte> GetDecodedBase64Bytes()
+                {
+                    Span<byte> decoded = new byte[this.GetDecodedBufferSize()];
+                    if (this.TryGetDecodedBase64Bytes(decoded, out int written))
+                    {
+                        return decoded[..written];
+                    }
+
+                    throw new InvalidOperationException();
+                }
+                """)
+            .AppendSeparatorLine()
+            .ReserveNameIfNotReserved("HasBase64Bytes")
+            .AppendBlockIndent(
+                """
+                /// <summary>
+                /// Get a value indicating whether this instance has a Base64-encoded byte array.
+                /// </summary>
+                /// <returns><see langword="true" /> if the value is a properly formed base64 encoded string.</returns>
+                """)
+            .AppendLineIndent("public bool HasBase64Bytes()")
+            .AppendLineIndent("{")
+            .PushIndent()
+                .AppendConditionalWrappedBackingValueLineIndent(
+                    "Backing.String",
+                    "return StandardBase64.HasBase64Bytes(",
+                    "stringBacking",
+                    ");")
+                .AppendConditionalWrappedJsonElementBackingValueKindLineIndent(
+                    JsonValueKind.String,
+                    "return StandardBase64.HasBase64Bytes(",
+                    "jsonElementBacking",
+                    ");")
+                .AppendSeparatorLine()
+                .AppendLineIndent("return false;")
+            .PopIndent()
+            .AppendLineIndent("}")
+            .AppendSeparatorLine()
+            .AppendBlockIndent(
+            """
+            /// <summary>
+            /// Try to get the JSON document from the content.
+            /// </summary>
+            /// <param name="result">A JSON document produced from the content, or null if the content did not represent a Base64 encoded JSON document.</param>
+            /// <returns><see langword="true"/> if the document was parsed successfully.</returns>
+            """)
+            .ReserveNameIfNotReserved("TryGetJsonDocument")
+            .AppendLineIndent("public EncodedContentMediaTypeParseStatus TryGetJsonDocument(out JsonDocument? result)")
+            .AppendLineIndent("{")
+            .PushIndent()
+                .AppendConditionalWrappedBackingValueLineIndent(
+                    "Backing.String",
+                    "return StandardContent.ParseEscapedJsonContentInJsonString(",
+                    "stringBacking",
+                    ".AsSpan(), base64Decode: true, out result);")
+                .AppendConditionalWrappedJsonElementBackingValueKindLineIndent(
+                    JsonValueKind.String,
+                    "return StandardContent.ParseEscapedJsonContentInJsonString(",
+                    "jsonElementBacking",
+                    ", base64Decode: true, out result);")
+                .AppendSeparatorLine()
+                .AppendLineIndent("result = null;")
+                .AppendLineIndent("return EncodedContentMediaTypeParseStatus.UnableToDecode;")
+            .PopIndent()
+            .AppendLineIndent("}");
+
+        return true;
+    }
+
+    /// <summary>
     /// Appends string JSON content public methods.
     /// </summary>
     /// <param name="generator">The generator.</param>
@@ -37,12 +200,12 @@ internal static partial class CodeGeneratorExtensions
                     "Backing.String",
                     "return StandardContent.ParseEscapedJsonContentInJsonString(",
                     "stringBacking",
-                    ".AsSpan(), out result);")
+                    ".AsSpan(), base64Decode: false, out result);")
                 .AppendConditionalWrappedJsonElementBackingValueKindLineIndent(
                     JsonValueKind.String,
                     "return StandardContent.ParseEscapedJsonContentInJsonString(",
                     "jsonElementBacking",
-                    ", out result);")
+                    ", base64Decode: false, out result);")
                 .AppendSeparatorLine()
                 .AppendLineIndent("result = null;")
                 .AppendLineIndent("return EncodedContentMediaTypeParseStatus.UnableToDecode;")
