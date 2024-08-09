@@ -157,6 +157,7 @@
 
 	<ItemGroup>
 	  <Folder Include="Features\JsonModel\Base64StringDecoding\" />
+	  <Folder Include="Features\JsonModel\WriteToUtf8\" />
 	</ItemGroup>
 
 </Project>
