@@ -56,5 +56,42 @@ public readonly partial struct OpenApiDocument
                 _ => Undefined
             };
         }
+
+        /// <summary>
+        /// Conversion to <see cref = "Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Responses.RequiredDefault"/>.
+        /// </summary>
+        /// <param name = "value">The value from which to convert.</param>
+        public static explicit operator Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Responses.RequiredDefault(Responses value)
+        {
+            if ((value.backing & Backing.JsonElement) != 0)
+            {
+                return new(value.AsJsonElement);
+            }
+
+            if ((value.backing & Backing.Object) != 0)
+            {
+                return new(value.objectBacking);
+            }
+
+            return Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Responses.RequiredDefault.Undefined;
+        }
+
+        /// <summary>
+        /// Conversion from <see cref = "Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Responses.RequiredDefault"/>.
+        /// </summary>
+        /// <param name = "value">The value from which to convert.</param>
+        public static explicit operator Responses(Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Responses.RequiredDefault value)
+        {
+            if (value.HasJsonElementBacking)
+            {
+                return new(value.AsJsonElement);
+            }
+
+            return value.ValueKind switch
+            {
+                JsonValueKind.Object => new(value.AsPropertyBacking()),
+                _ => Undefined
+            };
+        }
     }
 }

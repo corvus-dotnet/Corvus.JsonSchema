@@ -54,6 +54,20 @@ public readonly partial struct OpenApiDocument
                     }
                 }
 
+                string propertyName = property.Name.GetString();
+                foreach (System.Collections.Generic.KeyValuePair<Regex, PatternPropertyValidator> patternProperty in __CorvusPatternProperties)
+                {
+                    if (patternProperty.Key.IsMatch(propertyName))
+                    {
+                        result = result.WithLocalProperty(propertyCount);
+                        result = patternProperty.Value(property, result, level);
+                        if (level == ValidationLevel.Flag && !result.IsValid)
+                        {
+                            return result;
+                        }
+                    }
+                }
+
                 if (!result.HasEvaluatedLocalProperty(propertyCount))
                 {
                     result = property.ValueAs<Corvus.Json.JsonNotAny>().Validate(result, level);

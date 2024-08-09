@@ -638,7 +638,7 @@ public readonly partial struct JsonIpV6
         }
 
         charsWritten = 0;
-        return false;
+        return true;
 
         static bool FormatSpan(ReadOnlySpan<char> source, in Output output, out int charsWritten)
         {

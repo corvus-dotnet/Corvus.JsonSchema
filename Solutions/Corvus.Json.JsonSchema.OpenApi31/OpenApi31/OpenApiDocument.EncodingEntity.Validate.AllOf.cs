@@ -64,7 +64,7 @@ public readonly partial struct OpenApiDocument
                 childContext1 = childContext1.PushValidationLocationArrayIndex(1);
             }
 
-            ValidationContext allOfResult1 = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.EncodingEntity.ExplodeDefaultEntity>().Validate(childContext1.CreateChildContext(), level);
+            ValidationContext allOfResult1 = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm>().Validate(childContext1.CreateChildContext(), level);
             if (!allOfResult1.IsValid)
             {
                 if (level >= ValidationLevel.Detailed)

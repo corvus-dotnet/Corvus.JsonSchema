@@ -132,7 +132,7 @@ public readonly partial struct OpenApiDocument
         /// <summary>
         /// Gets the (optional) <c>headers</c> property.
         /// </summary>
-        public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Response.HeadersEntity Headers
+        public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ResponseHeadersEntity Headers
         {
             get
             {
@@ -145,7 +145,7 @@ public readonly partial struct OpenApiDocument
 
                     if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.HeadersUtf8, out JsonElement result))
                     {
-                        return new Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Response.HeadersEntity(result);
+                        return new Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ResponseHeadersEntity(result);
                     }
                 }
 
@@ -153,7 +153,7 @@ public readonly partial struct OpenApiDocument
                 {
                     if (this.objectBacking.TryGetValue(JsonPropertyNames.Headers, out JsonAny result))
                     {
-                        return result.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Response.HeadersEntity>();
+                        return result.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ResponseHeadersEntity>();
                     }
                 }
 
@@ -196,7 +196,7 @@ public readonly partial struct OpenApiDocument
         /// <summary>
         /// Creates an instance of a <see cref = "Response"/>.
         /// </summary>
-        public static Response Create(Corvus.Json.JsonString description, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Content? content = null, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Response.HeadersEntity? headers = null, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Response.LinksEntity? links = null)
+        public static Response Create(Corvus.Json.JsonString description, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Content? content = null, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ResponseHeadersEntity? headers = null, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Response.LinksEntity? links = null)
         {
             var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
             builder.Add(JsonPropertyNames.Description, description.AsAny);
@@ -205,7 +205,7 @@ public readonly partial struct OpenApiDocument
                 builder.Add(JsonPropertyNames.Content, content__.AsAny);
             }
 
-            if (headers is Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Response.HeadersEntity headers__)
+            if (headers is Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ResponseHeadersEntity headers__)
             {
                 builder.Add(JsonPropertyNames.Headers, headers__.AsAny);
             }
@@ -243,7 +243,7 @@ public readonly partial struct OpenApiDocument
         /// </summary>
         /// <param name = "value">The value to set.</param>
         /// <returns>The entity with the updated property.</returns>
-        public Response WithHeaders(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Response.HeadersEntity value)
+        public Response WithHeaders(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ResponseHeadersEntity value)
         {
             return this.SetProperty(JsonPropertyNames.Headers, value);
         }
@@ -265,7 +265,7 @@ public readonly partial struct OpenApiDocument
 
         private static ValidationContext __CorvusValidateHeaders(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
         {
-            return property.ValueAs<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Response.HeadersEntity>().Validate(validationContext, level);
+            return property.ValueAs<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ResponseHeadersEntity>().Validate(validationContext, level);
         }
 
         private static ValidationContext __CorvusValidateContent(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)

@@ -722,15 +722,15 @@ namespace ");
                     "int length = Math.Min(destination.Length, this.stringBacking.Length);\r\n         " +
                     "       this.stringBacking.AsSpan(0, length).CopyTo(destination);\r\n              " +
                     "  charsWritten = length;\r\n                return true;\r\n            }\r\n        }" +
-                    "\r\n\r\n        charsWritten = 0;\r\n        return false;\r\n\r\n        static bool Form" +
-                    "atSpan(ReadOnlySpan<char> source, in Output output, out int charsWritten)\r\n     " +
-                    "   {\r\n            int length = Math.Min(output.Length, source.Length);\r\n        " +
-                    "    source[..length].CopyTo(output.Destination);\r\n            charsWritten = len" +
-                    "gth;\r\n            return true;\r\n        }\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    p" +
-                    "ublic string ToString(string? format, IFormatProvider? formatProvider)\r\n    {\r\n " +
-                    "       // There is no formatting for the string\r\n        return this.ToString();" +
-                    "\r\n    }\r\n\r\n    private readonly record struct Output(char[] Destination, int Len" +
-                    "gth);\r\n#endif\r\n}\r\n");
+                    "\r\n\r\n        charsWritten = 0;\r\n        return true;\r\n\r\n        static bool Forma" +
+                    "tSpan(ReadOnlySpan<char> source, in Output output, out int charsWritten)\r\n      " +
+                    "  {\r\n            int length = Math.Min(output.Length, source.Length);\r\n         " +
+                    "   source[..length].CopyTo(output.Destination);\r\n            charsWritten = leng" +
+                    "th;\r\n            return true;\r\n        }\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    pu" +
+                    "blic string ToString(string? format, IFormatProvider? formatProvider)\r\n    {\r\n  " +
+                    "      // There is no formatting for the string\r\n        return this.ToString();\r" +
+                    "\n    }\r\n\r\n    private readonly record struct Output(char[] Destination, int Leng" +
+                    "th);\r\n#endif\r\n}\r\n");
             
             #line default
             #line hidden

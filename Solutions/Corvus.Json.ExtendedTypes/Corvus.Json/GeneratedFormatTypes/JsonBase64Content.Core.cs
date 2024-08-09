@@ -638,7 +638,7 @@ public readonly partial struct JsonBase64Content
         }
 
         charsWritten = 0;
-        return false;
+        return true;
 
         static bool FormatSpan(ReadOnlySpan<char> source, in Output output, out int charsWritten)
         {
