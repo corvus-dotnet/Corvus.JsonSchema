@@ -39,6 +39,9 @@ Examples:
 	| JsonBase64ContentPre201909 | "eyJmb28iOiJiYXIifQ=="                 |
 	| JsonBase64String           | "SGVsbG8gd29ybGQ="                     |
 	| JsonBase64StringPre201909  | "SGVsbG8gd29ybGQ="                     |
+	| JsonUInt128                | 4                                      |
+	| JsonInt128                 | 4                                      |
+	| JsonHalf                   | 4.1                                    |
 	| JsonInt64                  | 4                                      |
 	| JsonInt32                  | 4                                      |
 	| JsonInt16                  | 4                                      |
@@ -99,6 +102,8 @@ Examples:
 	| JsonUInt32                 | 4                                      |
 	| JsonUInt16                 | 4                                      |
 	| JsonByte                   | 4                                      |
+	| JsonInt128                 | 4                                      |
+	| JsonHalf                   | 4.1                                    |
 	| JsonSingle                 | 4.1                                    |
 	| JsonDouble                 | 4.1                                    |
 	| JsonDecimal                | 4.1                                    |

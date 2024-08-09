@@ -75,13 +75,8 @@ public class JsonValueCastSteps
         Assert.AreEqual(JsonAny.ParseValue(match.AsSpan()), this.scenarioContext.Get<JsonAny>(CastResultKey));
     }
 
-    /// <summary>
-    /// Gets the value store in <see cref="CastResultKey"/> and matches it against the JsonAny serialized in <paramref name="match"/>, as a double, within the given margin.
-    /// </summary>
-    /// <param name="match">The serialized form of the result to match.</param>
-    /// <param name="margin">The precision with which to match the JsonAny value.</param>
     [Then("the result should equal within (.*) the JsonAny (.*)")]
-    public void ThenTheResultShouldEqualTheJsonAnyWithin(string match, double margin)
+    public void ThenTheResultShouldEqualTheJsonAnyWithin(double margin, string match)
     {
         Assert.AreEqual((double)JsonNumber.ParseValue(match.AsSpan()), (double)this.scenarioContext.Get<JsonAny>(CastResultKey).AsNumber, margin);
     }
@@ -1602,6 +1597,304 @@ public class JsonValueCastSteps
     /* integer */
 
     /// <summary>
+    /// Casts the <see cref="JsonUInt128"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="JsonAny"/> and stores it in <see cref="CastResultKey"/>.
+    /// </summary>
+    [When("I cast the JsonUInt128 to JsonAny")]
+    public void WhenICastTheJsonUInt128ToJsonAny()
+    {
+        this.scenarioContext.Set((JsonAny)this.scenarioContext.Get<JsonUInt128>(JsonValueSteps.SubjectUnderTest), CastResultKey);
+    }
+
+    /// <summary>
+    /// Compares the <see cref="JsonUInt128"/> in the context value <see cref="CastResultKey"/> with the given JsonUInt128.
+    /// </summary>
+    /// <param name="expectedValue">The serialized form of the <see cref="JsonContent"/>.</param>
+    [Then("the result should equal the JsonUInt128 (.*)")]
+    public void ThenTheResultShouldEqualTheJsonUInt128(string expectedValue)
+    {
+        Assert.AreEqual(JsonUInt128.ParseValue(expectedValue), this.scenarioContext.Get<IJsonValue>(CastResultKey));
+    }
+
+    /// <summary>
+    /// Casts the <see cref="JsonUInt128"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="long"/> and stores it in <see cref="CastResultKey"/>.
+    /// </summary>
+    [When("I cast the JsonUInt128 to long")]
+    public void WhenICastTheJsonUInt128ToLong()
+    {
+        this.scenarioContext.Set((long)this.scenarioContext.Get<JsonUInt128>(JsonValueSteps.SubjectUnderTest), CastResultKey);
+    }
+
+    /// <summary>
+    /// Casts the <see cref="long"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="JsonUInt128"/> and stores it in <see cref="CastResultKey"/>.
+    /// </summary>
+    [When("I cast the long to JsonUInt128")]
+    public void WhenICastTheLongToJsonUInt128()
+    {
+        this.scenarioContext.Set<IJsonValue>((JsonUInt128)this.scenarioContext.Get<long>(JsonValueSteps.SubjectUnderTest), CastResultKey);
+    }
+
+    /// <summary>
+    /// Casts the <see cref="JsonUInt128"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="int"/> and stores it in <see cref="CastResultKey"/>.
+    /// </summary>
+    [When("I cast the JsonUInt128 to int")]
+    public void WhenICastTheJsonUInt128ToInt()
+    {
+        this.scenarioContext.Set((int)this.scenarioContext.Get<JsonUInt128>(JsonValueSteps.SubjectUnderTest), CastResultKey);
+    }
+
+    /// <summary>
+    /// Casts the <see cref="int"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="JsonUInt128"/> and stores it in <see cref="CastResultKey"/>.
+    /// </summary>
+    [When("I cast the int to JsonUInt128")]
+    public void WhenICastTheIntToJsonUInt128()
+    {
+        this.scenarioContext.Set<IJsonValue>((JsonUInt128)this.scenarioContext.Get<int>(JsonValueSteps.SubjectUnderTest), CastResultKey);
+    }
+
+    /// <summary>
+    /// Casts the <see cref="JsonUInt128"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="double"/> and stores it in <see cref="CastResultKey"/>.
+    /// </summary>
+    [When("I cast the JsonUInt128 to double")]
+    public void WhenICastTheJsonUInt128ToDouble()
+    {
+        this.scenarioContext.Set((double)this.scenarioContext.Get<JsonUInt128>(JsonValueSteps.SubjectUnderTest), CastResultKey);
+    }
+
+    /// <summary>
+    /// Casts the <see cref="double"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="JsonUInt128"/> and stores it in <see cref="CastResultKey"/>.
+    /// </summary>
+    [When("I cast the double to JsonUInt128")]
+    public void WhenICastTheDoubleToJsonUInt128()
+    {
+        this.scenarioContext.Set<IJsonValue>((JsonUInt128)this.scenarioContext.Get<double>(JsonValueSteps.SubjectUnderTest), CastResultKey);
+    }
+
+    /// <summary>
+    /// Casts the <see cref="JsonUInt128"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="float"/> and stores it in <see cref="CastResultKey"/>.
+    /// </summary>
+    [When("I cast the JsonUInt128 to float")]
+    public void WhenICastTheJsonUInt128ToFloat()
+    {
+        this.scenarioContext.Set((float)this.scenarioContext.Get<JsonUInt128>(JsonValueSteps.SubjectUnderTest), CastResultKey);
+    }
+
+    /// <summary>
+    /// Casts the <see cref="float"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="JsonUInt128"/> and stores it in <see cref="CastResultKey"/>.
+    /// </summary>
+    [When("I cast the float to JsonUInt128")]
+    public void WhenICastTheFloatToJsonUInt128()
+    {
+        this.scenarioContext.Set<IJsonValue>((JsonUInt128)this.scenarioContext.Get<float>(JsonValueSteps.SubjectUnderTest), CastResultKey);
+    }
+
+    /* additional cast */
+
+    /// <summary>
+    /// Casts the <see cref="JsonUInt128"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="ulong"/> and stores it in <see cref="CastResultKey"/>.
+    /// </summary>
+    [When("I cast the JsonUInt128 to ulong")]
+    public void WhenICastTheJsonUInt128ToUlong()
+    {
+        this.scenarioContext.Set((ulong)this.scenarioContext.Get<JsonUInt128>(JsonValueSteps.SubjectUnderTest), CastResultKey);
+    }
+
+    /// <summary>
+    /// Casts the <see cref="JsonUInt128"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="uint"/> and stores it in <see cref="CastResultKey"/>.
+    /// </summary>
+    [When("I cast the JsonUInt128 to uint")]
+    public void WhenICastTheJsonUInt128ToUint()
+    {
+        this.scenarioContext.Set((uint)this.scenarioContext.Get<JsonUInt128>(JsonValueSteps.SubjectUnderTest), CastResultKey);
+    }
+
+    /// <summary>
+    /// Casts the <see cref="JsonUInt128"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="ushort"/> and stores it in <see cref="CastResultKey"/>.
+    /// </summary>
+    [When("I cast the JsonUInt128 to ushort")]
+    public void WhenICastTheJsonUInt128ToUshort()
+    {
+        this.scenarioContext.Set((ushort)this.scenarioContext.Get<JsonUInt128>(JsonValueSteps.SubjectUnderTest), CastResultKey);
+    }
+
+    /// <summary>
+    /// Casts the <see cref="JsonUInt128"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="byte"/> and stores it in <see cref="CastResultKey"/>.
+    /// </summary>
+    [When("I cast the JsonUInt128 to byte")]
+    public void WhenICastTheJsonUInt128ToByte()
+    {
+        this.scenarioContext.Set((byte)this.scenarioContext.Get<JsonUInt128>(JsonValueSteps.SubjectUnderTest), CastResultKey);
+    }
+
+    /// <summary>
+    /// Casts the <see cref="JsonUInt128"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="short"/> and stores it in <see cref="CastResultKey"/>.
+    /// </summary>
+    [When("I cast the JsonUInt128 to short")]
+    public void WhenICastTheJsonUInt128ToShort()
+    {
+        this.scenarioContext.Set((short)this.scenarioContext.Get<JsonUInt128>(JsonValueSteps.SubjectUnderTest), CastResultKey);
+    }
+
+    /// <summary>
+    /// Casts the <see cref="JsonUInt128"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="sbyte"/> and stores it in <see cref="CastResultKey"/>.
+    /// </summary>
+    [When("I cast the JsonUInt128 to sbyte")]
+    public void WhenICastTheJsonUInt128ToSbyte()
+    {
+        this.scenarioContext.Set((sbyte)this.scenarioContext.Get<JsonUInt128>(JsonValueSteps.SubjectUnderTest), CastResultKey);
+    }
+
+    /* integer */
+
+    /// <summary>
+    /// Casts the <see cref="JsonInt128"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="JsonAny"/> and stores it in <see cref="CastResultKey"/>.
+    /// </summary>
+    [When("I cast the JsonInt128 to JsonAny")]
+    public void WhenICastTheJsonInt128ToJsonAny()
+    {
+        this.scenarioContext.Set((JsonAny)this.scenarioContext.Get<JsonInt128>(JsonValueSteps.SubjectUnderTest), CastResultKey);
+    }
+
+    /// <summary>
+    /// Compares the <see cref="JsonInt128"/> in the context value <see cref="CastResultKey"/> with the given JsonInt128.
+    /// </summary>
+    /// <param name="expectedValue">The serialized form of the <see cref="JsonContent"/>.</param>
+    [Then("the result should equal the JsonInt128 (.*)")]
+    public void ThenTheResultShouldEqualTheJsonInt128(string expectedValue)
+    {
+        Assert.AreEqual(JsonInt128.ParseValue(expectedValue), this.scenarioContext.Get<IJsonValue>(CastResultKey));
+    }
+
+    /// <summary>
+    /// Casts the <see cref="JsonInt128"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="long"/> and stores it in <see cref="CastResultKey"/>.
+    /// </summary>
+    [When("I cast the JsonInt128 to long")]
+    public void WhenICastTheJsonInt128ToLong()
+    {
+        this.scenarioContext.Set((long)this.scenarioContext.Get<JsonInt128>(JsonValueSteps.SubjectUnderTest), CastResultKey);
+    }
+
+    /// <summary>
+    /// Casts the <see cref="long"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="JsonInt128"/> and stores it in <see cref="CastResultKey"/>.
+    /// </summary>
+    [When("I cast the long to JsonInt128")]
+    public void WhenICastTheLongToJsonInt128()
+    {
+        this.scenarioContext.Set<IJsonValue>((JsonInt128)this.scenarioContext.Get<long>(JsonValueSteps.SubjectUnderTest), CastResultKey);
+    }
+
+    /// <summary>
+    /// Casts the <see cref="JsonInt128"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="int"/> and stores it in <see cref="CastResultKey"/>.
+    /// </summary>
+    [When("I cast the JsonInt128 to int")]
+    public void WhenICastTheJsonInt128ToInt()
+    {
+        this.scenarioContext.Set((int)this.scenarioContext.Get<JsonInt128>(JsonValueSteps.SubjectUnderTest), CastResultKey);
+    }
+
+    /// <summary>
+    /// Casts the <see cref="int"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="JsonInt128"/> and stores it in <see cref="CastResultKey"/>.
+    /// </summary>
+    [When("I cast the int to JsonInt128")]
+    public void WhenICastTheIntToJsonInt128()
+    {
+        this.scenarioContext.Set<IJsonValue>((JsonInt128)this.scenarioContext.Get<int>(JsonValueSteps.SubjectUnderTest), CastResultKey);
+    }
+
+    /// <summary>
+    /// Casts the <see cref="JsonInt128"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="double"/> and stores it in <see cref="CastResultKey"/>.
+    /// </summary>
+    [When("I cast the JsonInt128 to double")]
+    public void WhenICastTheJsonInt128ToDouble()
+    {
+        this.scenarioContext.Set((double)this.scenarioContext.Get<JsonInt128>(JsonValueSteps.SubjectUnderTest), CastResultKey);
+    }
+
+    /// <summary>
+    /// Casts the <see cref="double"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="JsonInt128"/> and stores it in <see cref="CastResultKey"/>.
+    /// </summary>
+    [When("I cast the double to JsonInt128")]
+    public void WhenICastTheDoubleToJsonInt128()
+    {
+        this.scenarioContext.Set<IJsonValue>((JsonInt128)this.scenarioContext.Get<double>(JsonValueSteps.SubjectUnderTest), CastResultKey);
+    }
+
+    /// <summary>
+    /// Casts the <see cref="JsonInt128"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="float"/> and stores it in <see cref="CastResultKey"/>.
+    /// </summary>
+    [When("I cast the JsonInt128 to float")]
+    public void WhenICastTheJsonInt128ToFloat()
+    {
+        this.scenarioContext.Set((float)this.scenarioContext.Get<JsonInt128>(JsonValueSteps.SubjectUnderTest), CastResultKey);
+    }
+
+    /// <summary>
+    /// Casts the <see cref="float"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="JsonInt128"/> and stores it in <see cref="CastResultKey"/>.
+    /// </summary>
+    [When("I cast the float to JsonInt128")]
+    public void WhenICastTheFloatToJsonInt128()
+    {
+        this.scenarioContext.Set<IJsonValue>((JsonInt128)this.scenarioContext.Get<float>(JsonValueSteps.SubjectUnderTest), CastResultKey);
+    }
+
+    /* additional cast */
+
+    /// <summary>
+    /// Casts the <see cref="JsonInt128"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="ulong"/> and stores it in <see cref="CastResultKey"/>.
+    /// </summary>
+    [When("I cast the JsonInt128 to ulong")]
+    public void WhenICastTheJsonInt128ToUlong()
+    {
+        this.scenarioContext.Set((ulong)this.scenarioContext.Get<JsonInt128>(JsonValueSteps.SubjectUnderTest), CastResultKey);
+    }
+
+    /// <summary>
+    /// Casts the <see cref="JsonInt128"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="uint"/> and stores it in <see cref="CastResultKey"/>.
+    /// </summary>
+    [When("I cast the JsonInt128 to uint")]
+    public void WhenICastTheJsonInt128ToUint()
+    {
+        this.scenarioContext.Set((uint)this.scenarioContext.Get<JsonInt128>(JsonValueSteps.SubjectUnderTest), CastResultKey);
+    }
+
+    /// <summary>
+    /// Casts the <see cref="JsonInt128"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="ushort"/> and stores it in <see cref="CastResultKey"/>.
+    /// </summary>
+    [When("I cast the JsonInt128 to ushort")]
+    public void WhenICastTheJsonInt128ToUshort()
+    {
+        this.scenarioContext.Set((ushort)this.scenarioContext.Get<JsonInt128>(JsonValueSteps.SubjectUnderTest), CastResultKey);
+    }
+
+    /// <summary>
+    /// Casts the <see cref="JsonInt128"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="byte"/> and stores it in <see cref="CastResultKey"/>.
+    /// </summary>
+    [When("I cast the JsonInt128 to byte")]
+    public void WhenICastTheJsonInt128ToByte()
+    {
+        this.scenarioContext.Set((byte)this.scenarioContext.Get<JsonInt128>(JsonValueSteps.SubjectUnderTest), CastResultKey);
+    }
+
+    /// <summary>
+    /// Casts the <see cref="JsonInt128"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="short"/> and stores it in <see cref="CastResultKey"/>.
+    /// </summary>
+    [When("I cast the JsonInt128 to short")]
+    public void WhenICastTheJsonInt128ToShort()
+    {
+        this.scenarioContext.Set((short)this.scenarioContext.Get<JsonInt128>(JsonValueSteps.SubjectUnderTest), CastResultKey);
+    }
+
+    /// <summary>
+    /// Casts the <see cref="JsonInt128"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="sbyte"/> and stores it in <see cref="CastResultKey"/>.
+    /// </summary>
+    [When("I cast the JsonInt128 to sbyte")]
+    public void WhenICastTheJsonInt128ToSbyte()
+    {
+        this.scenarioContext.Set((sbyte)this.scenarioContext.Get<JsonInt128>(JsonValueSteps.SubjectUnderTest), CastResultKey);
+    }
+
+    /* integer */
+
+    /// <summary>
     /// Casts the <see cref="JsonInt64"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="JsonAny"/> and stores it in <see cref="CastResultKey"/>.
     /// </summary>
     [When("I cast the JsonInt64 to JsonAny")]
@@ -2803,6 +3096,24 @@ public class JsonValueCastSteps
     }
 
     /// <summary>
+    /// Casts the <see cref="JsonUInt128"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="JsonNumber"/> and stores it in <see cref="CastResultKey"/>.
+    /// </summary>
+    [When("I cast the JsonUInt128 to JsonNumber")]
+    public void WhenICastTheJsonUInt128ToJsonNumber()
+    {
+        this.scenarioContext.Set((JsonNumber)this.scenarioContext.Get<JsonUInt128>(JsonValueSteps.SubjectUnderTest), CastResultKey);
+    }
+
+    /// <summary>
+    /// Casts the <see cref="JsonInt128"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="JsonNumber"/> and stores it in <see cref="CastResultKey"/>.
+    /// </summary>
+    [When("I cast the JsonInt128 to JsonNumber")]
+    public void WhenICastTheJsonInt128ToJsonNumber()
+    {
+        this.scenarioContext.Set((JsonNumber)this.scenarioContext.Get<JsonInt128>(JsonValueSteps.SubjectUnderTest), CastResultKey);
+    }
+
+    /// <summary>
     /// Casts the <see cref="JsonInt64"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="JsonNumber"/> and stores it in <see cref="CastResultKey"/>.
     /// </summary>
     [When("I cast the JsonInt64 to JsonNumber")]
@@ -2902,6 +3213,15 @@ public class JsonValueCastSteps
     }
 
     /// <summary>
+    /// Casts the <see cref="JsonHalf"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="JsonAny"/> and stores it in <see cref="CastResultKey"/>.
+    /// </summary>
+    [When("I cast the JsonHalf to JsonAny")]
+    public void WhenICastTheJsonHalfToJsonAny()
+    {
+        this.scenarioContext.Set((JsonAny)this.scenarioContext.Get<JsonHalf>(JsonValueSteps.SubjectUnderTest), CastResultKey);
+    }
+
+    /// <summary>
     /// Casts the <see cref="JsonDecimal"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="JsonAny"/> and stores it in <see cref="CastResultKey"/>.
     /// </summary>
     [When("I cast the JsonDecimal to JsonAny")]
@@ -2928,6 +3248,16 @@ public class JsonValueCastSteps
     public void ThenTheResultShouldEqualTheJsonSingle(string expectedValue)
     {
         Assert.AreEqual((double)JsonSingle.ParseValue(expectedValue), (double)this.scenarioContext.Get<IJsonValue>(CastResultKey).AsNumber, 0.00001);
+    }
+
+    /// <summary>
+    /// Compares the <see cref="JsonHalf"/> in the context value <see cref="CastResultKey"/> with the given JsonHalf.
+    /// </summary>
+    /// <param name="expectedValue">The serialized form of the <see cref="JsonContent"/>.</param>
+    [Then("the result should equal the JsonHalf (.*)")]
+    public void ThenTheResultShouldEqualTheJsonHalf(string expectedValue)
+    {
+        Assert.AreEqual((double)JsonHalf.ParseValue(expectedValue), (double)this.scenarioContext.Get<IJsonValue>(CastResultKey).AsNumber, 0.00001);
     }
 
     /// <summary>
@@ -3314,6 +3644,98 @@ public class JsonValueCastSteps
     public void WhenICastTheDecimalToJsonSingle()
     {
         this.scenarioContext.Set<IJsonValue>((JsonSingle)this.scenarioContext.Get<decimal>(JsonValueSteps.SubjectUnderTest), CastResultKey);
+    }
+
+    /* half */
+
+    /// <summary>
+    /// Casts the <see cref="JsonHalf"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="long"/> and stores it in <see cref="CastResultKey"/>.
+    /// </summary>
+    [When("I cast the JsonHalf to long")]
+    public void WhenICastTheJsonHalfToLong()
+    {
+        this.scenarioContext.Set((long)this.scenarioContext.Get<JsonHalf>(JsonValueSteps.SubjectUnderTest), CastResultKey);
+    }
+
+    /// <summary>
+    /// Casts the <see cref="long"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="JsonHalf"/> and stores it in <see cref="CastResultKey"/>.
+    /// </summary>
+    [When("I cast the long to JsonHalf")]
+    public void WhenICastTheLongToJsonHalf()
+    {
+        this.scenarioContext.Set<IJsonValue>((JsonHalf)this.scenarioContext.Get<long>(JsonValueSteps.SubjectUnderTest), CastResultKey);
+    }
+
+    /// <summary>
+    /// Casts the <see cref="JsonHalf"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="int"/> and stores it in <see cref="CastResultKey"/>.
+    /// </summary>
+    [When("I cast the JsonHalf to int")]
+    public void WhenICastTheJsonHalfToInt()
+    {
+        this.scenarioContext.Set((int)this.scenarioContext.Get<JsonHalf>(JsonValueSteps.SubjectUnderTest), CastResultKey);
+    }
+
+    /// <summary>
+    /// Casts the <see cref="int"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="JsonHalf"/> and stores it in <see cref="CastResultKey"/>.
+    /// </summary>
+    [When("I cast the int to JsonHalf")]
+    public void WhenICastTheIntToJsonHalf()
+    {
+        this.scenarioContext.Set<IJsonValue>((JsonHalf)this.scenarioContext.Get<int>(JsonValueSteps.SubjectUnderTest), CastResultKey);
+    }
+
+    /// <summary>
+    /// Casts the <see cref="JsonHalf"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="double"/> and stores it in <see cref="CastResultKey"/>.
+    /// </summary>
+    [When("I cast the JsonHalf to double")]
+    public void WhenICastTheJsonHalfToDouble()
+    {
+        this.scenarioContext.Set((double)this.scenarioContext.Get<JsonHalf>(JsonValueSteps.SubjectUnderTest), CastResultKey);
+    }
+
+    /// <summary>
+    /// Casts the <see cref="double"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="JsonHalf"/> and stores it in <see cref="CastResultKey"/>.
+    /// </summary>
+    [When("I cast the double to JsonHalf")]
+    public void WhenICastTheDoubleToJsonHalf()
+    {
+        this.scenarioContext.Set<IJsonValue>((JsonHalf)this.scenarioContext.Get<double>(JsonValueSteps.SubjectUnderTest), CastResultKey);
+    }
+
+    /// <summary>
+    /// Casts the <see cref="JsonHalf"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="float"/> and stores it in <see cref="CastResultKey"/>.
+    /// </summary>
+    [When("I cast the JsonHalf to float")]
+    public void WhenICastTheJsonHalfToFloat()
+    {
+        this.scenarioContext.Set((float)this.scenarioContext.Get<JsonHalf>(JsonValueSteps.SubjectUnderTest), CastResultKey);
+    }
+
+    /// <summary>
+    /// Casts the <see cref="float"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="JsonHalf"/> and stores it in <see cref="CastResultKey"/>.
+    /// </summary>
+    [When("I cast the float to JsonHalf")]
+    public void WhenICastTheFloatToJsonHalf()
+    {
+        this.scenarioContext.Set<IJsonValue>((JsonHalf)this.scenarioContext.Get<float>(JsonValueSteps.SubjectUnderTest), CastResultKey);
+    }
+
+    /// <summary>
+    /// Casts the <see cref="JsonHalf"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="decimal"/> and stores it in <see cref="CastResultKey"/>.
+    /// </summary>
+    [When("I cast the JsonHalf to decimal")]
+    public void WhenICastTheJsonHalfToDecimal()
+    {
+        this.scenarioContext.Set((decimal)this.scenarioContext.Get<JsonHalf>(JsonValueSteps.SubjectUnderTest), CastResultKey);
+    }
+
+    /// <summary>
+    /// Casts the <see cref="decimal"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="JsonHalf"/> and stores it in <see cref="CastResultKey"/>.
+    /// </summary>
+    [When("I cast the decimal to JsonHalf")]
+    public void WhenICastTheDecimalToJsonHalf()
+    {
+        this.scenarioContext.Set<IJsonValue>((JsonHalf)this.scenarioContext.Get<decimal>(JsonValueSteps.SubjectUnderTest), CastResultKey);
     }
 
     /* uuid */
@@ -3984,6 +4406,12 @@ public class JsonValueCastSteps
         Assert.AreEqual(new Uri(expectedValue, UriKind.RelativeOrAbsolute), this.scenarioContext.Get<Uri>(CastResultKey));
     }
 
+    [Then("the result should equal within (.*) the double (.*)")]
+    public void ThenTheResultShouldEqualTheDouble(double delta, double expectedValue)
+    {
+        Assert.AreEqual(expectedValue, this.scenarioContext.Get<double>(CastResultKey), delta);
+    }
+
     /// <summary>
     /// Compares the <see cref="double"/> in the context value <see cref="CastResultKey"/> with the given double.
     /// </summary>
@@ -4002,6 +4430,19 @@ public class JsonValueCastSteps
     public void ThenTheResultShouldEqualTheDecimal(decimal expectedValue)
     {
         Assert.AreEqual(expectedValue, this.scenarioContext.Get<decimal>(CastResultKey));
+    }
+
+    [Then("the result should equal within (.*) the float (.*)")]
+    public void ThenTheResultShouldEqualTheFloat(float delta, float expectedValue)
+    {
+        Assert.AreEqual(expectedValue, this.scenarioContext.Get<float>(CastResultKey), delta);
+    }
+
+    [Then("the result should equal within (.*) the decimal (.*)")]
+    public void ThenTheResultShouldEqualTheDecimal(decimal delta, decimal expectedValue)
+    {
+        Assert.LessOrEqual(expectedValue - delta, this.scenarioContext.Get<decimal>(CastResultKey));
+        Assert.GreaterOrEqual(expectedValue + delta, this.scenarioContext.Get<decimal>(CastResultKey));
     }
 
     /// <summary>

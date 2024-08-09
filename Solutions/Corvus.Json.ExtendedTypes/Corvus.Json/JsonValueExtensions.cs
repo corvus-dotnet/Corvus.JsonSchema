@@ -231,7 +231,11 @@ public static class JsonValueExtensions
         {
             JsonValueKind valueKind = value.ValueKind;
 
-            if (value is JsonSingle singleValue)
+            if (value is JsonHalf halfValue)
+            {
+                return (T)(object)new JsonHalf(halfValue.AsBinaryJsonNumber);
+            }
+            else if (value is JsonSingle singleValue)
             {
                 return (T)(object)new JsonSingle(singleValue.AsBinaryJsonNumber);
             }
