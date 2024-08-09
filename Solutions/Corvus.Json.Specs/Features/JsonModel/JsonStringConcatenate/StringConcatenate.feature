@@ -25,6 +25,7 @@ Scenario Outline: Concatenate multiple JSON values to a JSON string value
 	And the values are concatenated to a JsonContent
 	And the values are concatenated to a JsonContentPre201909
 	And the values are concatenated to a JsonBase64Content
+	And the values are concatenated to a JsonBase64ContentPre201909
 	And the values are concatenated to a JsonBase64String
 	And the values are concatenated to a JsonBase64StringPre201909
 

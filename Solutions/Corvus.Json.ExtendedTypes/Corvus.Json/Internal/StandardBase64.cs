@@ -5,6 +5,9 @@
 using System.Buffers;
 using System.Buffers.Text;
 using System.Diagnostics;
+#if NET8_0_OR_GREATER
+using System.Diagnostics.CodeAnalysis;
+#endif
 using System.Text;
 using System.Text.Json;
 
@@ -15,6 +18,34 @@ namespace Corvus.Json.Internal;
 /// </summary>
 public static class StandardBase64
 {
+    /// <summary>
+    /// Encode a <see cref="JsonDocument"/> to a base64 string.
+    /// </summary>
+    /// <param name="document">The document to encode.</param>
+    /// <returns>The base64 encoded string representing the bytes.</returns>
+    public static string EncodeToString(JsonDocument document)
+    {
+#if NET8_0_OR_GREATER
+        if (document.RootElement.TryGetRawText(EncodeToBase64, default(object?), out string? result))
+        {
+            return result;
+        }
+
+        throw new InvalidOperationException("Unable to encode the document");
+
+        static bool EncodeToBase64(ReadOnlySpan<byte> span, in object? state, [NotNullWhen(true)] out string? result)
+        {
+            result = Convert.ToBase64String(span);
+            return true;
+        }
+#else
+        var abw = new ArrayBufferWriter<byte>();
+        using var writer = new Utf8JsonWriter(abw);
+        document.WriteTo(writer);
+        return Convert.ToBase64String(abw.WrittenArray, 0, abw.WrittenCount);
+#endif
+    }
+
     /// <summary>
     /// Encode a <see cref="ReadOnlySpan{Byte}"/> to a base64 string.
     /// </summary>
@@ -93,6 +124,44 @@ public static class StandardBase64
         }
     }
 
+    /// <summary>
+    /// Decode a base64 string.
+    /// </summary>
+    /// <param name="jsonElementBacking">The JSON element containing the base64 string.</param>
+    /// <param name="result">A buffer for the decoded bytes to be written.</param>
+    /// <param name="written">The number of bytes written.</param>
+    /// <returns><see langword="true"/> if the buffer was decoded.</returns>
+    public static bool Decode(in JsonElement jsonElementBacking, Span<byte> result, out int written)
+    {
+        Debug.Assert(jsonElementBacking.ValueKind == JsonValueKind.String, "You must provide a string element.");
+
+        if (jsonElementBacking.TryGetValue(RentBufferAndDecode, jsonElementBacking, out (byte[]? RentedBuffer, int Written) rentedResult))
+        {
+            if (rentedResult.Written > result.Length)
+            {
+                written = rentedResult.Written;
+                if (rentedResult.RentedBuffer is byte[] b1)
+                {
+                    ArrayPool<byte>.Shared.Return(b1);
+                }
+
+                return false;
+            }
+
+            written = rentedResult.Written;
+            rentedResult.RentedBuffer.AsSpan(0, rentedResult.Written).CopyTo(result);
+            if (rentedResult.RentedBuffer is byte[] b2)
+            {
+                ArrayPool<byte>.Shared.Return(b2);
+            }
+
+            return true;
+        }
+
+        written = rentedResult.Written;
+        return false;
+    }
+
 #if NET8_0_OR_GREATER
     /// <summary>
     /// Gets a value indcating whether the string has valid base64 encoded content.
@@ -107,36 +176,6 @@ public static class StandardBase64
         }
 
         return Base64.IsValid(stringBacking, out _);
-    }
-
-    /// <summary>
-    /// Decode a base64 string.
-    /// </summary>
-    /// <param name="jsonElementBacking">The JSON element containing the base64 string.</param>
-    /// <param name="result">A buffer for the decoded bytes to be written.</param>
-    /// <param name="written">The number of bytes written.</param>
-    /// <returns><see langword="true"/> if the buffer was decoded.</returns>
-    public static bool Decode(in JsonElement jsonElementBacking, Span<byte> result, out int written)
-    {
-        Debug.Assert(jsonElementBacking.ValueKind == JsonValueKind.String, "You must provide a string element.");
-
-        if (jsonElementBacking.TryGetValue(RentBufferAndDecode, jsonElementBacking, out (byte[] RentedBuffer, int Written) rentedResult))
-        {
-            if (rentedResult.Written > result.Length)
-            {
-                written = rentedResult.Written;
-                ArrayPool<byte>.Shared.Return(rentedResult.RentedBuffer);
-                return false;
-            }
-
-            written = rentedResult.Written;
-            rentedResult.RentedBuffer.AsSpan(0, rentedResult.Written).CopyTo(result);
-            ArrayPool<byte>.Shared.Return(rentedResult.RentedBuffer);
-            return true;
-        }
-
-        written = rentedResult.Written;
-        return false;
     }
 
     /// <summary>
@@ -172,20 +211,6 @@ public static class StandardBase64
             return false;
         }
     }
-
-    private static bool RentBufferAndDecode(ReadOnlySpan<char> span, in JsonElement state, out (byte[] RentedBuffer, int Written) result)
-    {
-        byte[] rentedBuffer = ArrayPool<byte>.Shared.Rent(span.Length);
-        if (Convert.TryFromBase64Chars(span, rentedBuffer.AsSpan(), out int written))
-        {
-            result = (rentedBuffer, written);
-            return true;
-        }
-
-        ArrayPool<byte>.Shared.Return(rentedBuffer);
-        result = ([], span.Length);
-        return false;
-    }
 #else
     /// <summary>
     /// Gets a value indcating whether the string has valid base64 encoded content.
@@ -203,18 +228,6 @@ public static class StandardBase64
         {
             return false;
         }
-    }
-
-    /// <summary>
-    /// Decode a base64 string.
-    /// </summary>
-    /// <param name="jsonElementBacking">The JSON element containing the base64 string.</param>
-    /// <param name="result">A buffer for the decoded bytes to be written.</param>
-    /// <param name="written">The number of bytes written.</param>
-    /// <returns><see langword="true"/> if the buffer was decoded.</returns>
-    public static bool Decode(in JsonElement jsonElementBacking, Span<byte> result, out int written)
-    {
-        return Decode(jsonElementBacking.GetString(), result, out written);
     }
 
     /// <summary>
@@ -251,4 +264,19 @@ public static class StandardBase64
         }
     }
 #endif
+
+    private static bool RentBufferAndDecode(ReadOnlySpan<byte> span, in JsonElement state, out (byte[]? RentedBuffer, int Written) result)
+    {
+        byte[] rentedBuffer = ArrayPool<byte>.Shared.Rent(span.Length);
+        OperationStatus operationStatus = Base64.DecodeFromUtf8(span, rentedBuffer.AsSpan(), out _, out int written);
+        if (operationStatus == OperationStatus.Done)
+        {
+            result = (rentedBuffer, written);
+            return true;
+        }
+
+        ArrayPool<byte>.Shared.Return(rentedBuffer);
+        result = (null, operationStatus == OperationStatus.DestinationTooSmall ? span.Length : 0);
+        return false;
+    }
 }

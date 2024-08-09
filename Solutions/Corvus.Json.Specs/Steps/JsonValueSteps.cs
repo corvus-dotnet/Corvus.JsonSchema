@@ -557,6 +557,35 @@ public class JsonValueSteps
         }
     }
 
+    /* base64content */
+
+    /// <summary>
+    /// Store a <see cref="JsonElement"/>-backed value in the context variable <c>Value</c>.
+    /// </summary>
+    /// <param name="value">The json value.</param>
+    [Given("the JsonElement backed JsonBase64ContentPre201909 (.*)")]
+    public void GivenTheJsonElementBackedJsonBase64ContentPre201909(string value)
+    {
+        this.scenarioContext.Set(JsonBase64ContentPre201909.Parse(value), SubjectUnderTest);
+    }
+
+    /// <summary>
+    /// Store a dotnet-type-backed value in the context variable <c>Value</c>.
+    /// </summary>
+    /// <param name="value">The value.</param>
+    [Given("the dotnet backed JsonBase64ContentPre201909 (.*)")]
+    public void GivenTheDotnetBackedJsonBase64ContentPre201909(string value)
+    {
+        if (value == "null")
+        {
+            this.scenarioContext.Set(JsonBase64ContentPre201909.Null, SubjectUnderTest);
+        }
+        else
+        {
+            this.scenarioContext.Set(JsonBase64ContentPre201909.Parse(value).AsDotnetBackedValue(), SubjectUnderTest);
+        }
+    }
+
     /* base64string */
 
     [When(@"I get the decoded value for the JsonBase64String with a buffer size of (.*)")]

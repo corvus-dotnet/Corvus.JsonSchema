@@ -56,6 +56,7 @@ public class JsonStringConcatenateStepDefinitions
             "JsonContent" => ConcatenateResultsJsonContent(subjectUnderTest, buffer),
             "JsonContentPre201909" => ConcatenateResultsJsonContentPre201909(subjectUnderTest, buffer),
             "JsonBase64Content" => ConcatenateResultsJsonBase64Content(subjectUnderTest, buffer),
+            "JsonBase64ContentPre201909" => ConcatenateResultsJsonBase64ContentPre201909(subjectUnderTest, buffer),
             "JsonBase64String" => ConcatenateResultsJsonBase64String(subjectUnderTest, buffer),
             "JsonBase64StringPre201909" => ConcatenateResultsJsonBase64StringPre201909(subjectUnderTest, buffer),
             _ => throw new InvalidOperationException("Unsupported type"),
@@ -408,6 +409,21 @@ public class JsonStringConcatenateStepDefinitions
             6 => JsonBase64Content.Concatenate(buffer, subjectUnderTest[0], subjectUnderTest[1], subjectUnderTest[2], subjectUnderTest[3], subjectUnderTest[4], subjectUnderTest[5]),
             7 => JsonBase64Content.Concatenate(buffer, subjectUnderTest[0], subjectUnderTest[1], subjectUnderTest[2], subjectUnderTest[3], subjectUnderTest[4], subjectUnderTest[5], subjectUnderTest[6]),
             8 => JsonBase64Content.Concatenate(buffer, subjectUnderTest[0], subjectUnderTest[1], subjectUnderTest[2], subjectUnderTest[3], subjectUnderTest[4], subjectUnderTest[5], subjectUnderTest[6], subjectUnderTest[7]),
+            _ => throw new InvalidOperationException("Unsupported number of items"),
+        };
+    }
+
+    private static IJsonValue ConcatenateResultsJsonBase64ContentPre201909(JsonArray subjectUnderTest, Span<byte> buffer)
+    {
+        return subjectUnderTest.GetArrayLength() switch
+        {
+            2 => JsonBase64ContentPre201909.Concatenate(buffer, subjectUnderTest[0], subjectUnderTest[1]),
+            3 => JsonBase64ContentPre201909.Concatenate(buffer, subjectUnderTest[0], subjectUnderTest[1], subjectUnderTest[2]),
+            4 => JsonBase64ContentPre201909.Concatenate(buffer, subjectUnderTest[0], subjectUnderTest[1], subjectUnderTest[2], subjectUnderTest[3]),
+            5 => JsonBase64ContentPre201909.Concatenate(buffer, subjectUnderTest[0], subjectUnderTest[1], subjectUnderTest[2], subjectUnderTest[3], subjectUnderTest[4]),
+            6 => JsonBase64ContentPre201909.Concatenate(buffer, subjectUnderTest[0], subjectUnderTest[1], subjectUnderTest[2], subjectUnderTest[3], subjectUnderTest[4], subjectUnderTest[5]),
+            7 => JsonBase64ContentPre201909.Concatenate(buffer, subjectUnderTest[0], subjectUnderTest[1], subjectUnderTest[2], subjectUnderTest[3], subjectUnderTest[4], subjectUnderTest[5], subjectUnderTest[6]),
+            8 => JsonBase64ContentPre201909.Concatenate(buffer, subjectUnderTest[0], subjectUnderTest[1], subjectUnderTest[2], subjectUnderTest[3], subjectUnderTest[4], subjectUnderTest[5], subjectUnderTest[6], subjectUnderTest[7]),
             _ => throw new InvalidOperationException("Unsupported number of items"),
         };
     }

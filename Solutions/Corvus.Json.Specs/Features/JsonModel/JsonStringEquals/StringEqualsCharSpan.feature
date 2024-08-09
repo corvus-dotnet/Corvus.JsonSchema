@@ -7,31 +7,32 @@ Scenario Outline: Compare a JSON string using span of char success
 	Then the result should be true
 
 Examples:
-	| StringType                |
-	| JsonString                |
-	| JsonDate                  |
-	| JsonDateTime              |
-	| JsonDuration              |
-	| JsonEmail                 |
-	| JsonHostname              |
-	| JsonIdnEmail              |
-	| JsonIdnHostname           |
-	| JsonIpV4                  |
-	| JsonIpV6                  |
-	| JsonIri                   |
-	| JsonIriReference          |
-	| JsonPointer               |
-	| JsonRegex                 |
-	| JsonRelativePointer       |
-	| JsonTime                  |
-	| JsonUri                   |
-	| JsonUriReference          |
-	| JsonUuid                  |
-	| JsonContent               |
-	| JsonContentPre201909      |
-	| JsonBase64Content         |
-	| JsonBase64String          |
-	| JsonBase64StringPre201909 |
+	| StringType                 |
+	| JsonString                 |
+	| JsonDate                   |
+	| JsonDateTime               |
+	| JsonDuration               |
+	| JsonEmail                  |
+	| JsonHostname               |
+	| JsonIdnEmail               |
+	| JsonIdnHostname            |
+	| JsonIpV4                   |
+	| JsonIpV6                   |
+	| JsonIri                    |
+	| JsonIriReference           |
+	| JsonPointer                |
+	| JsonRegex                  |
+	| JsonRelativePointer        |
+	| JsonTime                   |
+	| JsonUri                    |
+	| JsonUriReference           |
+	| JsonUuid                   |
+	| JsonContent                |
+	| JsonContentPre201909       |
+	| JsonBase64Content          |
+	| JsonBase64ContentPre201909 |
+	| JsonBase64String           |
+	| JsonBase64StringPre201909  |
 
 Scenario Outline: Compare a JSON string using span of char failure
 	Given the JsonElement backed <StringType> "Hello"
@@ -62,6 +63,7 @@ Examples:
 	| JsonContent               |
 	| JsonContentPre201909      |
 	| JsonBase64Content         |
+	| JsonBase64ContentPre201909 |
 	| JsonBase64String          |
 	| JsonBase64StringPre201909 |
 
@@ -94,6 +96,7 @@ Examples:
 	| JsonContent               |
 	| JsonContentPre201909      |
 	| JsonBase64Content         |
+	| JsonBase64ContentPre201909 |
 	| JsonBase64String          |
 	| JsonBase64StringPre201909 |
 
@@ -126,5 +129,6 @@ Examples:
 	| JsonContent               |
 	| JsonContentPre201909      |
 	| JsonBase64Content         |
+	| JsonBase64ContentPre201909 |
 	| JsonBase64String          |
 	| JsonBase64StringPre201909 |

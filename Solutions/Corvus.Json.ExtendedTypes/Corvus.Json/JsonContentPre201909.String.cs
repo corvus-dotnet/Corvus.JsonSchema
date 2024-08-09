@@ -470,12 +470,12 @@ public readonly partial struct JsonContentPre201909
     {
         if ((this.backing & Backing.String) != 0)
         {
-            return StandardContent.ParseEscapedJsonContentInJsonString(this.stringBacking.AsSpan(), out result);
+            return StandardContent.ParseEscapedJsonContentInJsonString(this.stringBacking.AsSpan(), base64Decode: false, out result);
         }
 
         if (this.jsonElementBacking.ValueKind == JsonValueKind.String)
         {
-            return StandardContent.ParseEscapedJsonContentInJsonString(this.jsonElementBacking, out result);
+            return StandardContent.ParseEscapedJsonContentInJsonString(this.jsonElementBacking, base64Decode: false, out result);
         }
 
         result = null;
