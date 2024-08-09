@@ -155,9 +155,4 @@
 		<PackageReference Update="Roslynator.Analyzers" Version="4.12.4" />
 	</ItemGroup>
 
-	<ItemGroup>
-	  <Folder Include="Features\JsonModel\Base64StringDecoding\" />
-	  <Folder Include="Features\JsonModel\WriteToUtf8\" />
-	</ItemGroup>
-
 </Project>

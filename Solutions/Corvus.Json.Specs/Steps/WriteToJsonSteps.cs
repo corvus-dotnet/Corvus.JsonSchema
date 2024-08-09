@@ -195,6 +195,11 @@ public class WriteToJsonSteps
                 Assert.IsTrue(jsonBase64StringPre201909.IsValid());
                 Assert.AreEqual(jsonBase64StringPre201909, sut);
                 break;
+            case "JsonInt128":
+                var jsonInt128 = JsonInt128.Parse(result);
+                Assert.IsTrue(jsonInt128.IsValid());
+                Assert.AreEqual(jsonInt128, sut);
+                break;
             case "JsonInt64":
                 var jsonInt64 = JsonInt64.Parse(result);
                 Assert.IsTrue(jsonInt64.IsValid());
@@ -215,6 +220,11 @@ public class WriteToJsonSteps
                 Assert.IsTrue(jsonSByte.IsValid());
                 Assert.AreEqual(jsonSByte, sut);
                 break;
+            case "JsonUInt128":
+                var jsonUInt128 = JsonUInt128.Parse(result);
+                Assert.IsTrue(jsonUInt128.IsValid());
+                Assert.AreEqual(jsonUInt128, sut);
+                break;
             case "JsonUInt64":
                 var jsonUInt64 = JsonUInt64.Parse(result);
                 Assert.IsTrue(jsonUInt64.IsValid());
@@ -234,6 +244,11 @@ public class WriteToJsonSteps
                 var jsonByte = JsonByte.Parse(result);
                 Assert.IsTrue(jsonByte.IsValid());
                 Assert.AreEqual(jsonByte, sut);
+                break;
+            case "JsonHalf":
+                var jsonHalf = JsonHalf.Parse(result);
+                Assert.IsTrue(jsonHalf.IsValid());
+                Assert.AreEqual(jsonHalf, sut);
                 break;
             case "JsonSingle":
                 var jsonSingle = JsonSingle.Parse(result);
