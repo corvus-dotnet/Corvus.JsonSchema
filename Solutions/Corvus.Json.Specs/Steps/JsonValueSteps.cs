@@ -588,7 +588,7 @@ public class JsonValueSteps
 
     /* base64string */
 
-    [When(@"I get the decoded value for the JsonBase64String with a buffer size of (.*)")]
+    [When("I get the decoded value for the JsonBase64String with a buffer size of (.*)")]
     public void WhenIGetTheDecodedValueForTheJsonBase64String(int bufferSize)
     {
         JsonBase64String base64String = this.scenarioContext.Get<JsonBase64String>(SubjectUnderTest);
@@ -603,20 +603,20 @@ public class JsonValueSteps
         this.scenarioContext.Set(written, DecodedBase64ByteCount);
     }
 
-    [Then(@"the decoded value should be the UTF8 bytes for '([^']*)'")]
+    [Then("the decoded value should be the UTF8 bytes for '([^']*)'")]
     public void ThenTheDecodedValueShouldBeTheUTFBytesFor(string expected)
     {
         byte[] bytes = this.scenarioContext.Get<byte[]>(DecodedBase64Bytes);
         CollectionAssert.AreEqual(Encoding.UTF8.GetBytes(expected), bytes);
     }
 
-    [Then(@"the decoded byte count should be ([0-9]*)")]
+    [Then("the decoded byte count should be ([0-9]*)")]
     public void ThenTheDecodedByteCountShouldBe(int expected)
     {
         Assert.AreEqual(expected, this.scenarioContext.Get<int>(DecodedBase64ByteCount));
     }
 
-    [Then(@"the decoded byte count should be greater than or equal to (.*)")]
+    [Then("the decoded byte count should be greater than or equal to (.*)")]
     public void ThenTheDecodedByteCountShouldBeGreaterThanOrEqualTo(int expected)
     {
         Assert.GreaterOrEqual(this.scenarioContext.Get<int>(DecodedBase64ByteCount), expected);
@@ -649,13 +649,13 @@ public class JsonValueSteps
         }
     }
 
-    [Then(@"the JsonBase64String has base64 bytes")]
+    [Then("the JsonBase64String has base64 bytes")]
     public void ThenTheJsonBaseStringHasBase64Bytes()
     {
         Assert.IsTrue(this.scenarioContext.Get<JsonBase64String>(SubjectUnderTest).HasBase64Bytes());
     }
 
-    [Then(@"the JsonBase64String does not have base64 bytes")]
+    [Then("the JsonBase64String does not have base64 bytes")]
     public void ThenTheJsonBaseStringDoesNotHaveBase64Bytes()
     {
         Assert.IsFalse(this.scenarioContext.Get<JsonBase64String>(SubjectUnderTest).HasBase64Bytes());

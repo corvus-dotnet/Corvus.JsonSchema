@@ -588,8 +588,9 @@ public readonly partial struct OpenApiDocument
                 }
             }
 
+            // We return true from here because we have done our best to format it, and written no characters.
             charsWritten = 0;
-            return false;
+            return true;
 
             static bool FormatSpan(ReadOnlySpan<char> source, in __Corvus__Output output, out int charsWritten)
             {

@@ -149,6 +149,446 @@ public readonly partial struct Basictypes
     }
 
     /// <summary>
+    /// Conversion to <see cref = "Model.V3.Basictypes.ExtJsonString1"/>.
+    /// </summary>
+    /// <param name = "value">The value from which to convert.</param>
+    public static explicit operator Model.V3.Basictypes.ExtJsonString1(Basictypes value)
+    {
+        if ((value.backing & Backing.JsonElement) != 0)
+        {
+            return new(value.AsJsonElement);
+        }
+
+        if ((value.backing & Backing.String) != 0)
+        {
+            return new(value.stringBacking);
+        }
+
+        if ((value.backing & Backing.Bool) != 0)
+        {
+            return new(value.numberBacking.GetByteAsBool());
+        }
+
+        return Model.V3.Basictypes.ExtJsonString1.Undefined;
+    }
+
+    /// <summary>
+    /// Conversion from <see cref = "Model.V3.Basictypes.ExtJsonString1"/>.
+    /// </summary>
+    /// <param name = "value">The value from which to convert.</param>
+    public static implicit operator Basictypes(Model.V3.Basictypes.ExtJsonString1 value)
+    {
+        if (value.HasJsonElementBacking)
+        {
+            return new(value.AsJsonElement);
+        }
+
+        return value.ValueKind switch
+        {
+            JsonValueKind.String => new((string)value),
+            JsonValueKind.True => new(true),
+            JsonValueKind.False => new(false),
+            _ => Undefined
+        };
+    }
+
+    /// <summary>
+    /// Conversion to <see cref = "Model.V3.Basictypes.ExtJsonString2"/>.
+    /// </summary>
+    /// <param name = "value">The value from which to convert.</param>
+    public static explicit operator Model.V3.Basictypes.ExtJsonString2(Basictypes value)
+    {
+        if ((value.backing & Backing.JsonElement) != 0)
+        {
+            return new(value.AsJsonElement);
+        }
+
+        if ((value.backing & Backing.String) != 0)
+        {
+            return new(value.stringBacking);
+        }
+
+        if ((value.backing & Backing.Bool) != 0)
+        {
+            return new(value.numberBacking.GetByteAsBool());
+        }
+
+        return Model.V3.Basictypes.ExtJsonString2.Undefined;
+    }
+
+    /// <summary>
+    /// Conversion from <see cref = "Model.V3.Basictypes.ExtJsonString2"/>.
+    /// </summary>
+    /// <param name = "value">The value from which to convert.</param>
+    public static implicit operator Basictypes(Model.V3.Basictypes.ExtJsonString2 value)
+    {
+        if (value.HasJsonElementBacking)
+        {
+            return new(value.AsJsonElement);
+        }
+
+        return value.ValueKind switch
+        {
+            JsonValueKind.String => new((string)value),
+            JsonValueKind.True => new(true),
+            JsonValueKind.False => new(false),
+            _ => Undefined
+        };
+    }
+
+    /// <summary>
+    /// Conversion to <see cref = "Model.V3.Basictypes.ExtJsonString3"/>.
+    /// </summary>
+    /// <param name = "value">The value from which to convert.</param>
+    public static explicit operator Model.V3.Basictypes.ExtJsonString3(Basictypes value)
+    {
+        if ((value.backing & Backing.JsonElement) != 0)
+        {
+            return new(value.AsJsonElement);
+        }
+
+        if ((value.backing & Backing.String) != 0)
+        {
+            return new(value.stringBacking);
+        }
+
+        if ((value.backing & Backing.Bool) != 0)
+        {
+            return new(value.numberBacking.GetByteAsBool());
+        }
+
+        return Model.V3.Basictypes.ExtJsonString3.Undefined;
+    }
+
+    /// <summary>
+    /// Conversion from <see cref = "Model.V3.Basictypes.ExtJsonString3"/>.
+    /// </summary>
+    /// <param name = "value">The value from which to convert.</param>
+    public static implicit operator Basictypes(Model.V3.Basictypes.ExtJsonString3 value)
+    {
+        if (value.HasJsonElementBacking)
+        {
+            return new(value.AsJsonElement);
+        }
+
+        return value.ValueKind switch
+        {
+            JsonValueKind.String => new((string)value),
+            JsonValueKind.True => new(true),
+            JsonValueKind.False => new(false),
+            _ => Undefined
+        };
+    }
+
+    /// <summary>
+    /// Conversion to <see cref = "Model.V3.Basictypes.ExtJsonString4"/>.
+    /// </summary>
+    /// <param name = "value">The value from which to convert.</param>
+    public static explicit operator Model.V3.Basictypes.ExtJsonString4(Basictypes value)
+    {
+        if ((value.backing & Backing.JsonElement) != 0)
+        {
+            return new(value.AsJsonElement);
+        }
+
+        if ((value.backing & Backing.String) != 0)
+        {
+            return new(value.stringBacking);
+        }
+
+        if ((value.backing & Backing.Bool) != 0)
+        {
+            return new(value.numberBacking.GetByteAsBool());
+        }
+
+        return Model.V3.Basictypes.ExtJsonString4.Undefined;
+    }
+
+    /// <summary>
+    /// Conversion from <see cref = "Model.V3.Basictypes.ExtJsonString4"/>.
+    /// </summary>
+    /// <param name = "value">The value from which to convert.</param>
+    public static implicit operator Basictypes(Model.V3.Basictypes.ExtJsonString4 value)
+    {
+        if (value.HasJsonElementBacking)
+        {
+            return new(value.AsJsonElement);
+        }
+
+        return value.ValueKind switch
+        {
+            JsonValueKind.String => new((string)value),
+            JsonValueKind.True => new(true),
+            JsonValueKind.False => new(false),
+            _ => Undefined
+        };
+    }
+
+    /// <summary>
+    /// Conversion to <see cref = "Model.V3.Basictypes.ExtJsonString5"/>.
+    /// </summary>
+    /// <param name = "value">The value from which to convert.</param>
+    public static explicit operator Model.V3.Basictypes.ExtJsonString5(Basictypes value)
+    {
+        if ((value.backing & Backing.JsonElement) != 0)
+        {
+            return new(value.AsJsonElement);
+        }
+
+        if ((value.backing & Backing.String) != 0)
+        {
+            return new(value.stringBacking);
+        }
+
+        if ((value.backing & Backing.Bool) != 0)
+        {
+            return new(value.numberBacking.GetByteAsBool());
+        }
+
+        return Model.V3.Basictypes.ExtJsonString5.Undefined;
+    }
+
+    /// <summary>
+    /// Conversion from <see cref = "Model.V3.Basictypes.ExtJsonString5"/>.
+    /// </summary>
+    /// <param name = "value">The value from which to convert.</param>
+    public static implicit operator Basictypes(Model.V3.Basictypes.ExtJsonString5 value)
+    {
+        if (value.HasJsonElementBacking)
+        {
+            return new(value.AsJsonElement);
+        }
+
+        return value.ValueKind switch
+        {
+            JsonValueKind.String => new((string)value),
+            JsonValueKind.True => new(true),
+            JsonValueKind.False => new(false),
+            _ => Undefined
+        };
+    }
+
+    /// <summary>
+    /// Conversion to <see cref = "Model.V3.Basictypes.ExtJsonString6"/>.
+    /// </summary>
+    /// <param name = "value">The value from which to convert.</param>
+    public static explicit operator Model.V3.Basictypes.ExtJsonString6(Basictypes value)
+    {
+        if ((value.backing & Backing.JsonElement) != 0)
+        {
+            return new(value.AsJsonElement);
+        }
+
+        if ((value.backing & Backing.String) != 0)
+        {
+            return new(value.stringBacking);
+        }
+
+        if ((value.backing & Backing.Bool) != 0)
+        {
+            return new(value.numberBacking.GetByteAsBool());
+        }
+
+        return Model.V3.Basictypes.ExtJsonString6.Undefined;
+    }
+
+    /// <summary>
+    /// Conversion from <see cref = "Model.V3.Basictypes.ExtJsonString6"/>.
+    /// </summary>
+    /// <param name = "value">The value from which to convert.</param>
+    public static implicit operator Basictypes(Model.V3.Basictypes.ExtJsonString6 value)
+    {
+        if (value.HasJsonElementBacking)
+        {
+            return new(value.AsJsonElement);
+        }
+
+        return value.ValueKind switch
+        {
+            JsonValueKind.String => new((string)value),
+            JsonValueKind.True => new(true),
+            JsonValueKind.False => new(false),
+            _ => Undefined
+        };
+    }
+
+    /// <summary>
+    /// Conversion to <see cref = "Model.V3.Basictypes.ExtJsonString7"/>.
+    /// </summary>
+    /// <param name = "value">The value from which to convert.</param>
+    public static explicit operator Model.V3.Basictypes.ExtJsonString7(Basictypes value)
+    {
+        if ((value.backing & Backing.JsonElement) != 0)
+        {
+            return new(value.AsJsonElement);
+        }
+
+        if ((value.backing & Backing.String) != 0)
+        {
+            return new(value.stringBacking);
+        }
+
+        if ((value.backing & Backing.Bool) != 0)
+        {
+            return new(value.numberBacking.GetByteAsBool());
+        }
+
+        return Model.V3.Basictypes.ExtJsonString7.Undefined;
+    }
+
+    /// <summary>
+    /// Conversion from <see cref = "Model.V3.Basictypes.ExtJsonString7"/>.
+    /// </summary>
+    /// <param name = "value">The value from which to convert.</param>
+    public static implicit operator Basictypes(Model.V3.Basictypes.ExtJsonString7 value)
+    {
+        if (value.HasJsonElementBacking)
+        {
+            return new(value.AsJsonElement);
+        }
+
+        return value.ValueKind switch
+        {
+            JsonValueKind.String => new((string)value),
+            JsonValueKind.True => new(true),
+            JsonValueKind.False => new(false),
+            _ => Undefined
+        };
+    }
+
+    /// <summary>
+    /// Conversion to <see cref = "Model.V3.Basictypes.ExtJsonString8"/>.
+    /// </summary>
+    /// <param name = "value">The value from which to convert.</param>
+    public static explicit operator Model.V3.Basictypes.ExtJsonString8(Basictypes value)
+    {
+        if ((value.backing & Backing.JsonElement) != 0)
+        {
+            return new(value.AsJsonElement);
+        }
+
+        if ((value.backing & Backing.String) != 0)
+        {
+            return new(value.stringBacking);
+        }
+
+        if ((value.backing & Backing.Bool) != 0)
+        {
+            return new(value.numberBacking.GetByteAsBool());
+        }
+
+        return Model.V3.Basictypes.ExtJsonString8.Undefined;
+    }
+
+    /// <summary>
+    /// Conversion from <see cref = "Model.V3.Basictypes.ExtJsonString8"/>.
+    /// </summary>
+    /// <param name = "value">The value from which to convert.</param>
+    public static implicit operator Basictypes(Model.V3.Basictypes.ExtJsonString8 value)
+    {
+        if (value.HasJsonElementBacking)
+        {
+            return new(value.AsJsonElement);
+        }
+
+        return value.ValueKind switch
+        {
+            JsonValueKind.String => new((string)value),
+            JsonValueKind.True => new(true),
+            JsonValueKind.False => new(false),
+            _ => Undefined
+        };
+    }
+
+    /// <summary>
+    /// Conversion to <see cref = "Model.V3.Basictypes.ExtJsonString9"/>.
+    /// </summary>
+    /// <param name = "value">The value from which to convert.</param>
+    public static explicit operator Model.V3.Basictypes.ExtJsonString9(Basictypes value)
+    {
+        if ((value.backing & Backing.JsonElement) != 0)
+        {
+            return new(value.AsJsonElement);
+        }
+
+        if ((value.backing & Backing.String) != 0)
+        {
+            return new(value.stringBacking);
+        }
+
+        if ((value.backing & Backing.Bool) != 0)
+        {
+            return new(value.numberBacking.GetByteAsBool());
+        }
+
+        return Model.V3.Basictypes.ExtJsonString9.Undefined;
+    }
+
+    /// <summary>
+    /// Conversion from <see cref = "Model.V3.Basictypes.ExtJsonString9"/>.
+    /// </summary>
+    /// <param name = "value">The value from which to convert.</param>
+    public static implicit operator Basictypes(Model.V3.Basictypes.ExtJsonString9 value)
+    {
+        if (value.HasJsonElementBacking)
+        {
+            return new(value.AsJsonElement);
+        }
+
+        return value.ValueKind switch
+        {
+            JsonValueKind.String => new((string)value),
+            JsonValueKind.True => new(true),
+            JsonValueKind.False => new(false),
+            _ => Undefined
+        };
+    }
+
+    /// <summary>
+    /// Conversion to <see cref = "Model.V3.Basictypes.ExtJsonString10"/>.
+    /// </summary>
+    /// <param name = "value">The value from which to convert.</param>
+    public static explicit operator Model.V3.Basictypes.ExtJsonString10(Basictypes value)
+    {
+        if ((value.backing & Backing.JsonElement) != 0)
+        {
+            return new(value.AsJsonElement);
+        }
+
+        if ((value.backing & Backing.String) != 0)
+        {
+            return new(value.stringBacking);
+        }
+
+        if ((value.backing & Backing.Bool) != 0)
+        {
+            return new(value.numberBacking.GetByteAsBool());
+        }
+
+        return Model.V3.Basictypes.ExtJsonString10.Undefined;
+    }
+
+    /// <summary>
+    /// Conversion from <see cref = "Model.V3.Basictypes.ExtJsonString10"/>.
+    /// </summary>
+    /// <param name = "value">The value from which to convert.</param>
+    public static implicit operator Basictypes(Model.V3.Basictypes.ExtJsonString10 value)
+    {
+        if (value.HasJsonElementBacking)
+        {
+            return new(value.AsJsonElement);
+        }
+
+        return value.ValueKind switch
+        {
+            JsonValueKind.String => new((string)value),
+            JsonValueKind.True => new(true),
+            JsonValueKind.False => new(false),
+            _ => Undefined
+        };
+    }
+
+    /// <summary>
     /// Conversion to <see cref = "Model.V3.Basictypes.ExtJsonDateTime"/>.
     /// </summary>
     /// <param name = "value">The value from which to convert.</param>
@@ -441,6 +881,50 @@ public readonly partial struct Basictypes
     /// </summary>
     /// <param name = "value">The value from which to convert.</param>
     public static implicit operator Basictypes(Model.V3.Basictypes.ExtJsonIdnEmail value)
+    {
+        if (value.HasJsonElementBacking)
+        {
+            return new(value.AsJsonElement);
+        }
+
+        return value.ValueKind switch
+        {
+            JsonValueKind.String => new((string)value),
+            JsonValueKind.True => new(true),
+            JsonValueKind.False => new(false),
+            _ => Undefined
+        };
+    }
+
+    /// <summary>
+    /// Conversion to <see cref = "Model.V3.Basictypes.ExtJsonIdnHostname"/>.
+    /// </summary>
+    /// <param name = "value">The value from which to convert.</param>
+    public static explicit operator Model.V3.Basictypes.ExtJsonIdnHostname(Basictypes value)
+    {
+        if ((value.backing & Backing.JsonElement) != 0)
+        {
+            return new(value.AsJsonElement);
+        }
+
+        if ((value.backing & Backing.String) != 0)
+        {
+            return new(value.stringBacking);
+        }
+
+        if ((value.backing & Backing.Bool) != 0)
+        {
+            return new(value.numberBacking.GetByteAsBool());
+        }
+
+        return Model.V3.Basictypes.ExtJsonIdnHostname.Undefined;
+    }
+
+    /// <summary>
+    /// Conversion from <see cref = "Model.V3.Basictypes.ExtJsonIdnHostname"/>.
+    /// </summary>
+    /// <param name = "value">The value from which to convert.</param>
+    public static implicit operator Basictypes(Model.V3.Basictypes.ExtJsonIdnHostname value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -1490,6 +1974,50 @@ public readonly partial struct Basictypes
     /// </summary>
     /// <param name = "value">The value from which to convert.</param>
     public static implicit operator Basictypes(Model.V3.Basictypes.ExtJsonUInt16 value)
+    {
+        if (value.HasJsonElementBacking)
+        {
+            return new(value.AsJsonElement);
+        }
+
+        return value.ValueKind switch
+        {
+            JsonValueKind.True => new(true),
+            JsonValueKind.False => new(false),
+            JsonValueKind.Number => new(value.AsBinaryJsonNumber),
+            _ => Undefined
+        };
+    }
+
+    /// <summary>
+    /// Conversion to <see cref = "Model.V3.Basictypes.ExtJsonUInt16ExMin"/>.
+    /// </summary>
+    /// <param name = "value">The value from which to convert.</param>
+    public static explicit operator Model.V3.Basictypes.ExtJsonUInt16ExMin(Basictypes value)
+    {
+        if ((value.backing & Backing.JsonElement) != 0)
+        {
+            return new(value.AsJsonElement);
+        }
+
+        if ((value.backing & Backing.Bool) != 0)
+        {
+            return new(value.numberBacking.GetByteAsBool());
+        }
+
+        if ((value.backing & Backing.Number) != 0)
+        {
+            return new(value.numberBacking);
+        }
+
+        return Model.V3.Basictypes.ExtJsonUInt16ExMin.Undefined;
+    }
+
+    /// <summary>
+    /// Conversion from <see cref = "Model.V3.Basictypes.ExtJsonUInt16ExMin"/>.
+    /// </summary>
+    /// <param name = "value">The value from which to convert.</param>
+    public static implicit operator Basictypes(Model.V3.Basictypes.ExtJsonUInt16ExMin value)
     {
         if (value.HasJsonElementBacking)
         {

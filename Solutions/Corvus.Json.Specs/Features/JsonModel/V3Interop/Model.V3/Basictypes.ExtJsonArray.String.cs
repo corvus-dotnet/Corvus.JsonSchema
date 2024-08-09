@@ -428,7 +428,7 @@ public readonly partial struct Basictypes
         }
 
         charsWritten = 0;
-        return false;
+        return true;
 
         static bool FormatSpan(ReadOnlySpan<char> source, in Output output, out int charsWritten)
         {

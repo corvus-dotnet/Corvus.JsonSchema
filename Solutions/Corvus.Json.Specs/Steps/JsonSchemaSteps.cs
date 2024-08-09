@@ -50,11 +50,18 @@ public class JsonSchemaSteps
         this.configuration = configuration;
     }
 
-    [Given("I construct an instance of the V3 generated type")]
-    public void GivenAnInstanceOfTheV3GeneratedType()
+    [Given("I construct an instance of the V3 generated type as a JsonElement backed object")]
+    public void GivenAnInstanceOfTheV3GeneratedTypeJsonElement()
     {
         var value = Model.V3.Basictypes.FromJson(this.scenarioContext.Get<JsonElement>(InputData));
         this.scenarioContext.Set(value, SchemaInstance);
+    }
+
+    [Given("I construct an instance of the V3 generated type as a dotnet backed object")]
+    public void GivenAnInstanceOfTheV3GeneratedTypeDotnet()
+    {
+        var value = Model.V3.Basictypes.FromJson(this.scenarioContext.Get<JsonElement>(InputData));
+        this.scenarioContext.Set(value.AsDotnetBackedValue(), SchemaInstance);
     }
 
     /// <summary>

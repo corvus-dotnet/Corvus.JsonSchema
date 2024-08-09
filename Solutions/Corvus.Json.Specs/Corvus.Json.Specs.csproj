@@ -22,11 +22,8 @@
 		<PackageReference Include="Microsoft.Extensions.DependencyModel" Version="8.0.1" />
 		<PackageReference Include="System.Runtime.Loader" Version="4.3.0" />
 		<PackageReference Include="System.Net.Http" Version="4.3.4" />
-		<SpecFlowFeatureFiles Remove="Features/UriTemplates/*.feature" />
 		<SpecFlowFeatureFiles Remove="Features/**/numeric-format.feature" />
-		<Compile Remove="Features/UriTemplates/*.cs" />
 		<Compile Remove="Features/**/numeric-format.feature.cs" />
-		<Compile Remove="Steps\UriTemplateSteps.cs" />
     <SpecFlowFeatureFiles Remove="Features/**/*-net80.feature" />
     <Compile Remove="Features/**/*-net80.feature.cs" />
     <SpecFlowFeatureFiles Remove="Features/**/TruncatePath.feature" />

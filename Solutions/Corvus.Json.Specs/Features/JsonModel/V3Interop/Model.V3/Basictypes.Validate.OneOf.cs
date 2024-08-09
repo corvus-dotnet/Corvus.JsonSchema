@@ -106,7 +106,7 @@ public readonly partial struct Basictypes
             childContext3 = childContext3.PushValidationLocationArrayIndex(3);
         }
 
-        ValidationContext oneOfResult3 = this.As<Model.V3.Basictypes.ExtJsonDateTime>().Validate(childContext3.CreateChildContext(), level);
+        ValidationContext oneOfResult3 = this.As<Model.V3.Basictypes.ExtJsonString1>().Validate(childContext3.CreateChildContext(), level);
         if (oneOfResult3.IsValid)
         {
             result = result.MergeChildContext(oneOfResult3, level >= ValidationLevel.Verbose);
@@ -131,7 +131,7 @@ public readonly partial struct Basictypes
             childContext4 = childContext4.PushValidationLocationArrayIndex(4);
         }
 
-        ValidationContext oneOfResult4 = this.As<Model.V3.Basictypes.ExtJsonDate>().Validate(childContext4.CreateChildContext(), level);
+        ValidationContext oneOfResult4 = this.As<Model.V3.Basictypes.ExtJsonString2>().Validate(childContext4.CreateChildContext(), level);
         if (oneOfResult4.IsValid)
         {
             result = result.MergeChildContext(oneOfResult4, level >= ValidationLevel.Verbose);
@@ -156,7 +156,7 @@ public readonly partial struct Basictypes
             childContext5 = childContext5.PushValidationLocationArrayIndex(5);
         }
 
-        ValidationContext oneOfResult5 = this.As<Model.V3.Basictypes.ExtJsonDuration>().Validate(childContext5.CreateChildContext(), level);
+        ValidationContext oneOfResult5 = this.As<Model.V3.Basictypes.ExtJsonString3>().Validate(childContext5.CreateChildContext(), level);
         if (oneOfResult5.IsValid)
         {
             result = result.MergeChildContext(oneOfResult5, level >= ValidationLevel.Verbose);
@@ -181,7 +181,7 @@ public readonly partial struct Basictypes
             childContext6 = childContext6.PushValidationLocationArrayIndex(6);
         }
 
-        ValidationContext oneOfResult6 = this.As<Model.V3.Basictypes.ExtJsonTime>().Validate(childContext6.CreateChildContext(), level);
+        ValidationContext oneOfResult6 = this.As<Model.V3.Basictypes.ExtJsonString4>().Validate(childContext6.CreateChildContext(), level);
         if (oneOfResult6.IsValid)
         {
             result = result.MergeChildContext(oneOfResult6, level >= ValidationLevel.Verbose);
@@ -206,7 +206,7 @@ public readonly partial struct Basictypes
             childContext7 = childContext7.PushValidationLocationArrayIndex(7);
         }
 
-        ValidationContext oneOfResult7 = this.As<Model.V3.Basictypes.ExtJsonEmail>().Validate(childContext7.CreateChildContext(), level);
+        ValidationContext oneOfResult7 = this.As<Model.V3.Basictypes.ExtJsonString5>().Validate(childContext7.CreateChildContext(), level);
         if (oneOfResult7.IsValid)
         {
             result = result.MergeChildContext(oneOfResult7, level >= ValidationLevel.Verbose);
@@ -231,7 +231,7 @@ public readonly partial struct Basictypes
             childContext8 = childContext8.PushValidationLocationArrayIndex(8);
         }
 
-        ValidationContext oneOfResult8 = this.As<Model.V3.Basictypes.ExtJsonHostname>().Validate(childContext8.CreateChildContext(), level);
+        ValidationContext oneOfResult8 = this.As<Model.V3.Basictypes.ExtJsonString6>().Validate(childContext8.CreateChildContext(), level);
         if (oneOfResult8.IsValid)
         {
             result = result.MergeChildContext(oneOfResult8, level >= ValidationLevel.Verbose);
@@ -256,7 +256,7 @@ public readonly partial struct Basictypes
             childContext9 = childContext9.PushValidationLocationArrayIndex(9);
         }
 
-        ValidationContext oneOfResult9 = this.As<Model.V3.Basictypes.ExtJsonIdnEmail>().Validate(childContext9.CreateChildContext(), level);
+        ValidationContext oneOfResult9 = this.As<Model.V3.Basictypes.ExtJsonString7>().Validate(childContext9.CreateChildContext(), level);
         if (oneOfResult9.IsValid)
         {
             result = result.MergeChildContext(oneOfResult9, level >= ValidationLevel.Verbose);
@@ -281,7 +281,7 @@ public readonly partial struct Basictypes
             childContext10 = childContext10.PushValidationLocationArrayIndex(10);
         }
 
-        ValidationContext oneOfResult10 = this.As<Model.V3.Basictypes.ExtJsonIpV4>().Validate(childContext10.CreateChildContext(), level);
+        ValidationContext oneOfResult10 = this.As<Model.V3.Basictypes.ExtJsonString8>().Validate(childContext10.CreateChildContext(), level);
         if (oneOfResult10.IsValid)
         {
             result = result.MergeChildContext(oneOfResult10, level >= ValidationLevel.Verbose);
@@ -306,7 +306,7 @@ public readonly partial struct Basictypes
             childContext11 = childContext11.PushValidationLocationArrayIndex(11);
         }
 
-        ValidationContext oneOfResult11 = this.As<Model.V3.Basictypes.ExtJsonIpV6>().Validate(childContext11.CreateChildContext(), level);
+        ValidationContext oneOfResult11 = this.As<Model.V3.Basictypes.ExtJsonString9>().Validate(childContext11.CreateChildContext(), level);
         if (oneOfResult11.IsValid)
         {
             result = result.MergeChildContext(oneOfResult11, level >= ValidationLevel.Verbose);
@@ -331,7 +331,7 @@ public readonly partial struct Basictypes
             childContext12 = childContext12.PushValidationLocationArrayIndex(12);
         }
 
-        ValidationContext oneOfResult12 = this.As<Model.V3.Basictypes.ExtJsonIri>().Validate(childContext12.CreateChildContext(), level);
+        ValidationContext oneOfResult12 = this.As<Model.V3.Basictypes.ExtJsonString10>().Validate(childContext12.CreateChildContext(), level);
         if (oneOfResult12.IsValid)
         {
             result = result.MergeChildContext(oneOfResult12, level >= ValidationLevel.Verbose);
@@ -356,7 +356,7 @@ public readonly partial struct Basictypes
             childContext13 = childContext13.PushValidationLocationArrayIndex(13);
         }
 
-        ValidationContext oneOfResult13 = this.As<Model.V3.Basictypes.ExtJsonIriReference>().Validate(childContext13.CreateChildContext(), level);
+        ValidationContext oneOfResult13 = this.As<Model.V3.Basictypes.ExtJsonDateTime>().Validate(childContext13.CreateChildContext(), level);
         if (oneOfResult13.IsValid)
         {
             result = result.MergeChildContext(oneOfResult13, level >= ValidationLevel.Verbose);
@@ -381,7 +381,7 @@ public readonly partial struct Basictypes
             childContext14 = childContext14.PushValidationLocationArrayIndex(14);
         }
 
-        ValidationContext oneOfResult14 = this.As<Model.V3.Basictypes.ExtJsonPointer>().Validate(childContext14.CreateChildContext(), level);
+        ValidationContext oneOfResult14 = this.As<Model.V3.Basictypes.ExtJsonDate>().Validate(childContext14.CreateChildContext(), level);
         if (oneOfResult14.IsValid)
         {
             result = result.MergeChildContext(oneOfResult14, level >= ValidationLevel.Verbose);
@@ -406,7 +406,7 @@ public readonly partial struct Basictypes
             childContext15 = childContext15.PushValidationLocationArrayIndex(15);
         }
 
-        ValidationContext oneOfResult15 = this.As<Model.V3.Basictypes.ExtJsonRegex>().Validate(childContext15.CreateChildContext(), level);
+        ValidationContext oneOfResult15 = this.As<Model.V3.Basictypes.ExtJsonDuration>().Validate(childContext15.CreateChildContext(), level);
         if (oneOfResult15.IsValid)
         {
             result = result.MergeChildContext(oneOfResult15, level >= ValidationLevel.Verbose);
@@ -431,7 +431,7 @@ public readonly partial struct Basictypes
             childContext16 = childContext16.PushValidationLocationArrayIndex(16);
         }
 
-        ValidationContext oneOfResult16 = this.As<Model.V3.Basictypes.ExtJsonRelativePointer>().Validate(childContext16.CreateChildContext(), level);
+        ValidationContext oneOfResult16 = this.As<Model.V3.Basictypes.ExtJsonTime>().Validate(childContext16.CreateChildContext(), level);
         if (oneOfResult16.IsValid)
         {
             result = result.MergeChildContext(oneOfResult16, level >= ValidationLevel.Verbose);
@@ -456,7 +456,7 @@ public readonly partial struct Basictypes
             childContext17 = childContext17.PushValidationLocationArrayIndex(17);
         }
 
-        ValidationContext oneOfResult17 = this.As<Model.V3.Basictypes.ExtJsonUri>().Validate(childContext17.CreateChildContext(), level);
+        ValidationContext oneOfResult17 = this.As<Model.V3.Basictypes.ExtJsonEmail>().Validate(childContext17.CreateChildContext(), level);
         if (oneOfResult17.IsValid)
         {
             result = result.MergeChildContext(oneOfResult17, level >= ValidationLevel.Verbose);
@@ -481,7 +481,7 @@ public readonly partial struct Basictypes
             childContext18 = childContext18.PushValidationLocationArrayIndex(18);
         }
 
-        ValidationContext oneOfResult18 = this.As<Model.V3.Basictypes.ExtJsonUriReference>().Validate(childContext18.CreateChildContext(), level);
+        ValidationContext oneOfResult18 = this.As<Model.V3.Basictypes.ExtJsonHostname>().Validate(childContext18.CreateChildContext(), level);
         if (oneOfResult18.IsValid)
         {
             result = result.MergeChildContext(oneOfResult18, level >= ValidationLevel.Verbose);
@@ -506,7 +506,7 @@ public readonly partial struct Basictypes
             childContext19 = childContext19.PushValidationLocationArrayIndex(19);
         }
 
-        ValidationContext oneOfResult19 = this.As<Model.V3.Basictypes.ExtJsonUriTemplate>().Validate(childContext19.CreateChildContext(), level);
+        ValidationContext oneOfResult19 = this.As<Model.V3.Basictypes.ExtJsonIdnEmail>().Validate(childContext19.CreateChildContext(), level);
         if (oneOfResult19.IsValid)
         {
             result = result.MergeChildContext(oneOfResult19, level >= ValidationLevel.Verbose);
@@ -531,7 +531,7 @@ public readonly partial struct Basictypes
             childContext20 = childContext20.PushValidationLocationArrayIndex(20);
         }
 
-        ValidationContext oneOfResult20 = this.As<Model.V3.Basictypes.ExtJsonUuid>().Validate(childContext20.CreateChildContext(), level);
+        ValidationContext oneOfResult20 = this.As<Model.V3.Basictypes.ExtJsonIdnHostname>().Validate(childContext20.CreateChildContext(), level);
         if (oneOfResult20.IsValid)
         {
             result = result.MergeChildContext(oneOfResult20, level >= ValidationLevel.Verbose);
@@ -556,7 +556,7 @@ public readonly partial struct Basictypes
             childContext21 = childContext21.PushValidationLocationArrayIndex(21);
         }
 
-        ValidationContext oneOfResult21 = this.As<Model.V3.Basictypes.ExtJsonNumber>().Validate(childContext21.CreateChildContext(), level);
+        ValidationContext oneOfResult21 = this.As<Model.V3.Basictypes.ExtJsonIpV4>().Validate(childContext21.CreateChildContext(), level);
         if (oneOfResult21.IsValid)
         {
             result = result.MergeChildContext(oneOfResult21, level >= ValidationLevel.Verbose);
@@ -581,7 +581,7 @@ public readonly partial struct Basictypes
             childContext22 = childContext22.PushValidationLocationArrayIndex(22);
         }
 
-        ValidationContext oneOfResult22 = this.As<Model.V3.Basictypes.ExtJsonInteger>().Validate(childContext22.CreateChildContext(), level);
+        ValidationContext oneOfResult22 = this.As<Model.V3.Basictypes.ExtJsonIpV6>().Validate(childContext22.CreateChildContext(), level);
         if (oneOfResult22.IsValid)
         {
             result = result.MergeChildContext(oneOfResult22, level >= ValidationLevel.Verbose);
@@ -606,7 +606,7 @@ public readonly partial struct Basictypes
             childContext23 = childContext23.PushValidationLocationArrayIndex(23);
         }
 
-        ValidationContext oneOfResult23 = this.As<Model.V3.Basictypes.ExtJsonHalf>().Validate(childContext23.CreateChildContext(), level);
+        ValidationContext oneOfResult23 = this.As<Model.V3.Basictypes.ExtJsonIri>().Validate(childContext23.CreateChildContext(), level);
         if (oneOfResult23.IsValid)
         {
             result = result.MergeChildContext(oneOfResult23, level >= ValidationLevel.Verbose);
@@ -631,7 +631,7 @@ public readonly partial struct Basictypes
             childContext24 = childContext24.PushValidationLocationArrayIndex(24);
         }
 
-        ValidationContext oneOfResult24 = this.As<Model.V3.Basictypes.ExtJsonSingle>().Validate(childContext24.CreateChildContext(), level);
+        ValidationContext oneOfResult24 = this.As<Model.V3.Basictypes.ExtJsonIriReference>().Validate(childContext24.CreateChildContext(), level);
         if (oneOfResult24.IsValid)
         {
             result = result.MergeChildContext(oneOfResult24, level >= ValidationLevel.Verbose);
@@ -656,7 +656,7 @@ public readonly partial struct Basictypes
             childContext25 = childContext25.PushValidationLocationArrayIndex(25);
         }
 
-        ValidationContext oneOfResult25 = this.As<Model.V3.Basictypes.ExtJsonDouble>().Validate(childContext25.CreateChildContext(), level);
+        ValidationContext oneOfResult25 = this.As<Model.V3.Basictypes.ExtJsonPointer>().Validate(childContext25.CreateChildContext(), level);
         if (oneOfResult25.IsValid)
         {
             result = result.MergeChildContext(oneOfResult25, level >= ValidationLevel.Verbose);
@@ -681,7 +681,7 @@ public readonly partial struct Basictypes
             childContext26 = childContext26.PushValidationLocationArrayIndex(26);
         }
 
-        ValidationContext oneOfResult26 = this.As<Model.V3.Basictypes.ExtJsonDecimal>().Validate(childContext26.CreateChildContext(), level);
+        ValidationContext oneOfResult26 = this.As<Model.V3.Basictypes.ExtJsonRegex>().Validate(childContext26.CreateChildContext(), level);
         if (oneOfResult26.IsValid)
         {
             result = result.MergeChildContext(oneOfResult26, level >= ValidationLevel.Verbose);
@@ -706,7 +706,7 @@ public readonly partial struct Basictypes
             childContext27 = childContext27.PushValidationLocationArrayIndex(27);
         }
 
-        ValidationContext oneOfResult27 = this.As<Model.V3.Basictypes.ExtJsonSByte>().Validate(childContext27.CreateChildContext(), level);
+        ValidationContext oneOfResult27 = this.As<Model.V3.Basictypes.ExtJsonRelativePointer>().Validate(childContext27.CreateChildContext(), level);
         if (oneOfResult27.IsValid)
         {
             result = result.MergeChildContext(oneOfResult27, level >= ValidationLevel.Verbose);
@@ -731,7 +731,7 @@ public readonly partial struct Basictypes
             childContext28 = childContext28.PushValidationLocationArrayIndex(28);
         }
 
-        ValidationContext oneOfResult28 = this.As<Model.V3.Basictypes.ExtJsonInt16>().Validate(childContext28.CreateChildContext(), level);
+        ValidationContext oneOfResult28 = this.As<Model.V3.Basictypes.ExtJsonUri>().Validate(childContext28.CreateChildContext(), level);
         if (oneOfResult28.IsValid)
         {
             result = result.MergeChildContext(oneOfResult28, level >= ValidationLevel.Verbose);
@@ -756,7 +756,7 @@ public readonly partial struct Basictypes
             childContext29 = childContext29.PushValidationLocationArrayIndex(29);
         }
 
-        ValidationContext oneOfResult29 = this.As<Model.V3.Basictypes.ExtJsonInt32>().Validate(childContext29.CreateChildContext(), level);
+        ValidationContext oneOfResult29 = this.As<Model.V3.Basictypes.ExtJsonUriReference>().Validate(childContext29.CreateChildContext(), level);
         if (oneOfResult29.IsValid)
         {
             result = result.MergeChildContext(oneOfResult29, level >= ValidationLevel.Verbose);
@@ -781,7 +781,7 @@ public readonly partial struct Basictypes
             childContext30 = childContext30.PushValidationLocationArrayIndex(30);
         }
 
-        ValidationContext oneOfResult30 = this.As<Model.V3.Basictypes.ExtJsonInt64>().Validate(childContext30.CreateChildContext(), level);
+        ValidationContext oneOfResult30 = this.As<Model.V3.Basictypes.ExtJsonUriTemplate>().Validate(childContext30.CreateChildContext(), level);
         if (oneOfResult30.IsValid)
         {
             result = result.MergeChildContext(oneOfResult30, level >= ValidationLevel.Verbose);
@@ -806,7 +806,7 @@ public readonly partial struct Basictypes
             childContext31 = childContext31.PushValidationLocationArrayIndex(31);
         }
 
-        ValidationContext oneOfResult31 = this.As<Model.V3.Basictypes.ExtJsonInt128>().Validate(childContext31.CreateChildContext(), level);
+        ValidationContext oneOfResult31 = this.As<Model.V3.Basictypes.ExtJsonUuid>().Validate(childContext31.CreateChildContext(), level);
         if (oneOfResult31.IsValid)
         {
             result = result.MergeChildContext(oneOfResult31, level >= ValidationLevel.Verbose);
@@ -831,7 +831,7 @@ public readonly partial struct Basictypes
             childContext32 = childContext32.PushValidationLocationArrayIndex(32);
         }
 
-        ValidationContext oneOfResult32 = this.As<Model.V3.Basictypes.ExtJsonByte>().Validate(childContext32.CreateChildContext(), level);
+        ValidationContext oneOfResult32 = this.As<Model.V3.Basictypes.ExtJsonNumber>().Validate(childContext32.CreateChildContext(), level);
         if (oneOfResult32.IsValid)
         {
             result = result.MergeChildContext(oneOfResult32, level >= ValidationLevel.Verbose);
@@ -856,7 +856,7 @@ public readonly partial struct Basictypes
             childContext33 = childContext33.PushValidationLocationArrayIndex(33);
         }
 
-        ValidationContext oneOfResult33 = this.As<Model.V3.Basictypes.ExtJsonUInt16>().Validate(childContext33.CreateChildContext(), level);
+        ValidationContext oneOfResult33 = this.As<Model.V3.Basictypes.ExtJsonInteger>().Validate(childContext33.CreateChildContext(), level);
         if (oneOfResult33.IsValid)
         {
             result = result.MergeChildContext(oneOfResult33, level >= ValidationLevel.Verbose);
@@ -881,7 +881,7 @@ public readonly partial struct Basictypes
             childContext34 = childContext34.PushValidationLocationArrayIndex(34);
         }
 
-        ValidationContext oneOfResult34 = this.As<Model.V3.Basictypes.ExtJsonUInt32>().Validate(childContext34.CreateChildContext(), level);
+        ValidationContext oneOfResult34 = this.As<Model.V3.Basictypes.ExtJsonHalf>().Validate(childContext34.CreateChildContext(), level);
         if (oneOfResult34.IsValid)
         {
             result = result.MergeChildContext(oneOfResult34, level >= ValidationLevel.Verbose);
@@ -906,7 +906,7 @@ public readonly partial struct Basictypes
             childContext35 = childContext35.PushValidationLocationArrayIndex(35);
         }
 
-        ValidationContext oneOfResult35 = this.As<Model.V3.Basictypes.ExtJsonUInt64>().Validate(childContext35.CreateChildContext(), level);
+        ValidationContext oneOfResult35 = this.As<Model.V3.Basictypes.ExtJsonSingle>().Validate(childContext35.CreateChildContext(), level);
         if (oneOfResult35.IsValid)
         {
             result = result.MergeChildContext(oneOfResult35, level >= ValidationLevel.Verbose);
@@ -931,7 +931,7 @@ public readonly partial struct Basictypes
             childContext36 = childContext36.PushValidationLocationArrayIndex(36);
         }
 
-        ValidationContext oneOfResult36 = this.As<Model.V3.Basictypes.ExtJsonUInt128>().Validate(childContext36.CreateChildContext(), level);
+        ValidationContext oneOfResult36 = this.As<Model.V3.Basictypes.ExtJsonDouble>().Validate(childContext36.CreateChildContext(), level);
         if (oneOfResult36.IsValid)
         {
             result = result.MergeChildContext(oneOfResult36, level >= ValidationLevel.Verbose);
@@ -947,6 +947,306 @@ public readonly partial struct Basictypes
             if (level >= ValidationLevel.Verbose)
             {
                 result = result.MergeResults(result.IsValid, level, oneOfResult36);
+            }
+        }
+
+        ValidationContext childContext37 = childContextBase;
+        if (level > ValidationLevel.Basic)
+        {
+            childContext37 = childContext37.PushValidationLocationArrayIndex(37);
+        }
+
+        ValidationContext oneOfResult37 = this.As<Model.V3.Basictypes.ExtJsonDecimal>().Validate(childContext37.CreateChildContext(), level);
+        if (oneOfResult37.IsValid)
+        {
+            result = result.MergeChildContext(oneOfResult37, level >= ValidationLevel.Verbose);
+            oneOfCount += 1;
+            if (oneOfCount > 1 && level == ValidationLevel.Flag)
+            {
+                result = result.WithResult(isValid: false);
+                return result;
+            }
+        }
+        else
+        {
+            if (level >= ValidationLevel.Verbose)
+            {
+                result = result.MergeResults(result.IsValid, level, oneOfResult37);
+            }
+        }
+
+        ValidationContext childContext38 = childContextBase;
+        if (level > ValidationLevel.Basic)
+        {
+            childContext38 = childContext38.PushValidationLocationArrayIndex(38);
+        }
+
+        ValidationContext oneOfResult38 = this.As<Model.V3.Basictypes.ExtJsonSByte>().Validate(childContext38.CreateChildContext(), level);
+        if (oneOfResult38.IsValid)
+        {
+            result = result.MergeChildContext(oneOfResult38, level >= ValidationLevel.Verbose);
+            oneOfCount += 1;
+            if (oneOfCount > 1 && level == ValidationLevel.Flag)
+            {
+                result = result.WithResult(isValid: false);
+                return result;
+            }
+        }
+        else
+        {
+            if (level >= ValidationLevel.Verbose)
+            {
+                result = result.MergeResults(result.IsValid, level, oneOfResult38);
+            }
+        }
+
+        ValidationContext childContext39 = childContextBase;
+        if (level > ValidationLevel.Basic)
+        {
+            childContext39 = childContext39.PushValidationLocationArrayIndex(39);
+        }
+
+        ValidationContext oneOfResult39 = this.As<Model.V3.Basictypes.ExtJsonInt16>().Validate(childContext39.CreateChildContext(), level);
+        if (oneOfResult39.IsValid)
+        {
+            result = result.MergeChildContext(oneOfResult39, level >= ValidationLevel.Verbose);
+            oneOfCount += 1;
+            if (oneOfCount > 1 && level == ValidationLevel.Flag)
+            {
+                result = result.WithResult(isValid: false);
+                return result;
+            }
+        }
+        else
+        {
+            if (level >= ValidationLevel.Verbose)
+            {
+                result = result.MergeResults(result.IsValid, level, oneOfResult39);
+            }
+        }
+
+        ValidationContext childContext40 = childContextBase;
+        if (level > ValidationLevel.Basic)
+        {
+            childContext40 = childContext40.PushValidationLocationArrayIndex(40);
+        }
+
+        ValidationContext oneOfResult40 = this.As<Model.V3.Basictypes.ExtJsonInt32>().Validate(childContext40.CreateChildContext(), level);
+        if (oneOfResult40.IsValid)
+        {
+            result = result.MergeChildContext(oneOfResult40, level >= ValidationLevel.Verbose);
+            oneOfCount += 1;
+            if (oneOfCount > 1 && level == ValidationLevel.Flag)
+            {
+                result = result.WithResult(isValid: false);
+                return result;
+            }
+        }
+        else
+        {
+            if (level >= ValidationLevel.Verbose)
+            {
+                result = result.MergeResults(result.IsValid, level, oneOfResult40);
+            }
+        }
+
+        ValidationContext childContext41 = childContextBase;
+        if (level > ValidationLevel.Basic)
+        {
+            childContext41 = childContext41.PushValidationLocationArrayIndex(41);
+        }
+
+        ValidationContext oneOfResult41 = this.As<Model.V3.Basictypes.ExtJsonInt64>().Validate(childContext41.CreateChildContext(), level);
+        if (oneOfResult41.IsValid)
+        {
+            result = result.MergeChildContext(oneOfResult41, level >= ValidationLevel.Verbose);
+            oneOfCount += 1;
+            if (oneOfCount > 1 && level == ValidationLevel.Flag)
+            {
+                result = result.WithResult(isValid: false);
+                return result;
+            }
+        }
+        else
+        {
+            if (level >= ValidationLevel.Verbose)
+            {
+                result = result.MergeResults(result.IsValid, level, oneOfResult41);
+            }
+        }
+
+        ValidationContext childContext42 = childContextBase;
+        if (level > ValidationLevel.Basic)
+        {
+            childContext42 = childContext42.PushValidationLocationArrayIndex(42);
+        }
+
+        ValidationContext oneOfResult42 = this.As<Model.V3.Basictypes.ExtJsonInt128>().Validate(childContext42.CreateChildContext(), level);
+        if (oneOfResult42.IsValid)
+        {
+            result = result.MergeChildContext(oneOfResult42, level >= ValidationLevel.Verbose);
+            oneOfCount += 1;
+            if (oneOfCount > 1 && level == ValidationLevel.Flag)
+            {
+                result = result.WithResult(isValid: false);
+                return result;
+            }
+        }
+        else
+        {
+            if (level >= ValidationLevel.Verbose)
+            {
+                result = result.MergeResults(result.IsValid, level, oneOfResult42);
+            }
+        }
+
+        ValidationContext childContext43 = childContextBase;
+        if (level > ValidationLevel.Basic)
+        {
+            childContext43 = childContext43.PushValidationLocationArrayIndex(43);
+        }
+
+        ValidationContext oneOfResult43 = this.As<Model.V3.Basictypes.ExtJsonByte>().Validate(childContext43.CreateChildContext(), level);
+        if (oneOfResult43.IsValid)
+        {
+            result = result.MergeChildContext(oneOfResult43, level >= ValidationLevel.Verbose);
+            oneOfCount += 1;
+            if (oneOfCount > 1 && level == ValidationLevel.Flag)
+            {
+                result = result.WithResult(isValid: false);
+                return result;
+            }
+        }
+        else
+        {
+            if (level >= ValidationLevel.Verbose)
+            {
+                result = result.MergeResults(result.IsValid, level, oneOfResult43);
+            }
+        }
+
+        ValidationContext childContext44 = childContextBase;
+        if (level > ValidationLevel.Basic)
+        {
+            childContext44 = childContext44.PushValidationLocationArrayIndex(44);
+        }
+
+        ValidationContext oneOfResult44 = this.As<Model.V3.Basictypes.ExtJsonUInt16>().Validate(childContext44.CreateChildContext(), level);
+        if (oneOfResult44.IsValid)
+        {
+            result = result.MergeChildContext(oneOfResult44, level >= ValidationLevel.Verbose);
+            oneOfCount += 1;
+            if (oneOfCount > 1 && level == ValidationLevel.Flag)
+            {
+                result = result.WithResult(isValid: false);
+                return result;
+            }
+        }
+        else
+        {
+            if (level >= ValidationLevel.Verbose)
+            {
+                result = result.MergeResults(result.IsValid, level, oneOfResult44);
+            }
+        }
+
+        ValidationContext childContext45 = childContextBase;
+        if (level > ValidationLevel.Basic)
+        {
+            childContext45 = childContext45.PushValidationLocationArrayIndex(45);
+        }
+
+        ValidationContext oneOfResult45 = this.As<Model.V3.Basictypes.ExtJsonUInt16ExMin>().Validate(childContext45.CreateChildContext(), level);
+        if (oneOfResult45.IsValid)
+        {
+            result = result.MergeChildContext(oneOfResult45, level >= ValidationLevel.Verbose);
+            oneOfCount += 1;
+            if (oneOfCount > 1 && level == ValidationLevel.Flag)
+            {
+                result = result.WithResult(isValid: false);
+                return result;
+            }
+        }
+        else
+        {
+            if (level >= ValidationLevel.Verbose)
+            {
+                result = result.MergeResults(result.IsValid, level, oneOfResult45);
+            }
+        }
+
+        ValidationContext childContext46 = childContextBase;
+        if (level > ValidationLevel.Basic)
+        {
+            childContext46 = childContext46.PushValidationLocationArrayIndex(46);
+        }
+
+        ValidationContext oneOfResult46 = this.As<Model.V3.Basictypes.ExtJsonUInt32>().Validate(childContext46.CreateChildContext(), level);
+        if (oneOfResult46.IsValid)
+        {
+            result = result.MergeChildContext(oneOfResult46, level >= ValidationLevel.Verbose);
+            oneOfCount += 1;
+            if (oneOfCount > 1 && level == ValidationLevel.Flag)
+            {
+                result = result.WithResult(isValid: false);
+                return result;
+            }
+        }
+        else
+        {
+            if (level >= ValidationLevel.Verbose)
+            {
+                result = result.MergeResults(result.IsValid, level, oneOfResult46);
+            }
+        }
+
+        ValidationContext childContext47 = childContextBase;
+        if (level > ValidationLevel.Basic)
+        {
+            childContext47 = childContext47.PushValidationLocationArrayIndex(47);
+        }
+
+        ValidationContext oneOfResult47 = this.As<Model.V3.Basictypes.ExtJsonUInt64>().Validate(childContext47.CreateChildContext(), level);
+        if (oneOfResult47.IsValid)
+        {
+            result = result.MergeChildContext(oneOfResult47, level >= ValidationLevel.Verbose);
+            oneOfCount += 1;
+            if (oneOfCount > 1 && level == ValidationLevel.Flag)
+            {
+                result = result.WithResult(isValid: false);
+                return result;
+            }
+        }
+        else
+        {
+            if (level >= ValidationLevel.Verbose)
+            {
+                result = result.MergeResults(result.IsValid, level, oneOfResult47);
+            }
+        }
+
+        ValidationContext childContext48 = childContextBase;
+        if (level > ValidationLevel.Basic)
+        {
+            childContext48 = childContext48.PushValidationLocationArrayIndex(48);
+        }
+
+        ValidationContext oneOfResult48 = this.As<Model.V3.Basictypes.ExtJsonUInt128>().Validate(childContext48.CreateChildContext(), level);
+        if (oneOfResult48.IsValid)
+        {
+            result = result.MergeChildContext(oneOfResult48, level >= ValidationLevel.Verbose);
+            oneOfCount += 1;
+            if (oneOfCount > 1 && level == ValidationLevel.Flag)
+            {
+                result = result.WithResult(isValid: false);
+                return result;
+            }
+        }
+        else
+        {
+            if (level >= ValidationLevel.Verbose)
+            {
+                result = result.MergeResults(result.IsValid, level, oneOfResult48);
             }
         }
 
