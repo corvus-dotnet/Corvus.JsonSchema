@@ -320,10 +320,6 @@ This project uses its own code generation to generate code for the built-in JSON
 types for working with various schema dialects such as `Corvus.Json.JsonSchema.Draft202012`.
 If you add or update core types, you will need to run the `./Solutions/generatetypes.ps1` script file to regenerate them.
 
-```
-dotnet tool install --global dotnet-t4 --version 2.2.1
-```
-
 ## Use of JSON-Schema-Test-Suite
 
 This project uses test suites from https://github.com/json-schema-org/JSON-Schema-Test-Suite to
