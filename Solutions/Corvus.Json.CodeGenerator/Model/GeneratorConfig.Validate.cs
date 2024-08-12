@@ -36,7 +36,7 @@ public readonly partial struct GeneratorConfig
         }
 
         JsonValueKind valueKind = this.ValueKind;
-        result = CorvusValidation.TypeValidationHandler(this, valueKind, result, level);
+        result = CorvusValidation.TypeValidationHandler(valueKind, result, level);
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
             return result;
@@ -64,20 +64,18 @@ public readonly partial struct GeneratorConfig
         /// <summary>
         /// Core type validation.
         /// </summary>
-        /// <param name="value">The value to validate.</param>
         /// <param name="valueKind">The <see cref="JsonValueKind" /> of the value to validate.</param>
         /// <param name="validationContext">The current validation context.</param>
         /// <param name="level">The current validation level.</param>
         /// <returns>The resulting validation context after validation.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static ValidationContext TypeValidationHandler(
-            in GeneratorConfig value,
             JsonValueKind valueKind,
             in ValidationContext validationContext,
             ValidationLevel level = ValidationLevel.Flag)
         {
             ValidationContext result = validationContext;
-            return Corvus.Json.Validate.TypeObject(valueKind, result, level);
+            return Corvus.Json.ValidateWithoutCoreType.TypeObject(valueKind, result, level);
         }
 
         /// <summary>
@@ -127,15 +125,15 @@ public readonly partial struct GeneratorConfig
                     }
 
                     ValidationContext propertyResult = property.Value.As<Corvus.Json.CodeGenerator.GeneratorConfig.FileList>().Validate(result.CreateChildContext(), level);
+                    if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                    {
+                        return propertyResult;
+                    }
+
                     result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
                     if (level > ValidationLevel.Basic)
                     {
                         result = result.PopLocation();
-                    }
-
-                    if (level == ValidationLevel.Flag && !result.IsValid)
-                    {
-                        return result;
                     }
                 }
                 else if (property.NameEquals(JsonPropertyNames.AssertFormatUtf8, JsonPropertyNames.AssertFormat))
@@ -147,15 +145,15 @@ public readonly partial struct GeneratorConfig
                     }
 
                     ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonBoolean>().Validate(result.CreateChildContext(), level);
+                    if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                    {
+                        return propertyResult;
+                    }
+
                     result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
                     if (level > ValidationLevel.Basic)
                     {
                         result = result.PopLocation();
-                    }
-
-                    if (level == ValidationLevel.Flag && !result.IsValid)
-                    {
-                        return result;
                     }
                 }
                 else if (property.NameEquals(JsonPropertyNames.DisabledNamingHeuristicsUtf8, JsonPropertyNames.DisabledNamingHeuristics))
@@ -167,15 +165,15 @@ public readonly partial struct GeneratorConfig
                     }
 
                     ValidationContext propertyResult = property.Value.As<Corvus.Json.CodeGenerator.GeneratorConfig.JsonStringArray>().Validate(result.CreateChildContext(), level);
+                    if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                    {
+                        return propertyResult;
+                    }
+
                     result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
                     if (level > ValidationLevel.Basic)
                     {
                         result = result.PopLocation();
-                    }
-
-                    if (level == ValidationLevel.Flag && !result.IsValid)
-                    {
-                        return result;
                     }
                 }
                 else if (property.NameEquals(JsonPropertyNames.DisableOptionalNameHeuristicsUtf8, JsonPropertyNames.DisableOptionalNameHeuristics))
@@ -187,15 +185,15 @@ public readonly partial struct GeneratorConfig
                     }
 
                     ValidationContext propertyResult = property.Value.As<Corvus.Json.CodeGenerator.GeneratorConfig.DisableOptionalNameHeuristicsEntity>().Validate(result.CreateChildContext(), level);
+                    if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                    {
+                        return propertyResult;
+                    }
+
                     result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
                     if (level > ValidationLevel.Basic)
                     {
                         result = result.PopLocation();
-                    }
-
-                    if (level == ValidationLevel.Flag && !result.IsValid)
-                    {
-                        return result;
                     }
                 }
                 else if (property.NameEquals(JsonPropertyNames.NamedTypesUtf8, JsonPropertyNames.NamedTypes))
@@ -207,15 +205,15 @@ public readonly partial struct GeneratorConfig
                     }
 
                     ValidationContext propertyResult = property.Value.As<Corvus.Json.CodeGenerator.GeneratorConfig.NamedTypeList>().Validate(result.CreateChildContext(), level);
+                    if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                    {
+                        return propertyResult;
+                    }
+
                     result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
                     if (level > ValidationLevel.Basic)
                     {
                         result = result.PopLocation();
-                    }
-
-                    if (level == ValidationLevel.Flag && !result.IsValid)
-                    {
-                        return result;
                     }
                 }
                 else if (property.NameEquals(JsonPropertyNames.NamespacesUtf8, JsonPropertyNames.Namespaces))
@@ -227,15 +225,15 @@ public readonly partial struct GeneratorConfig
                     }
 
                     ValidationContext propertyResult = property.Value.As<Corvus.Json.CodeGenerator.GeneratorConfig.NamespaceMap>().Validate(result.CreateChildContext(), level);
+                    if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                    {
+                        return propertyResult;
+                    }
+
                     result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
                     if (level > ValidationLevel.Basic)
                     {
                         result = result.PopLocation();
-                    }
-
-                    if (level == ValidationLevel.Flag && !result.IsValid)
-                    {
-                        return result;
                     }
                 }
                 else if (property.NameEquals(JsonPropertyNames.OptionalAsNullableValueUtf8, JsonPropertyNames.OptionalAsNullableValue))
@@ -247,15 +245,15 @@ public readonly partial struct GeneratorConfig
                     }
 
                     ValidationContext propertyResult = property.Value.As<Corvus.Json.CodeGenerator.GeneratorConfig.OptionalAsNullable>().Validate(result.CreateChildContext(), level);
+                    if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                    {
+                        return propertyResult;
+                    }
+
                     result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
                     if (level > ValidationLevel.Basic)
                     {
                         result = result.PopLocation();
-                    }
-
-                    if (level == ValidationLevel.Flag && !result.IsValid)
-                    {
-                        return result;
                     }
                 }
                 else if (property.NameEquals(JsonPropertyNames.OutputMapFileUtf8, JsonPropertyNames.OutputMapFile))
@@ -267,15 +265,15 @@ public readonly partial struct GeneratorConfig
                     }
 
                     ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonString>().Validate(result.CreateChildContext(), level);
+                    if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                    {
+                        return propertyResult;
+                    }
+
                     result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
                     if (level > ValidationLevel.Basic)
                     {
                         result = result.PopLocation();
-                    }
-
-                    if (level == ValidationLevel.Flag && !result.IsValid)
-                    {
-                        return result;
                     }
                 }
                 else if (property.NameEquals(JsonPropertyNames.OutputPathUtf8, JsonPropertyNames.OutputPath))
@@ -287,15 +285,15 @@ public readonly partial struct GeneratorConfig
                     }
 
                     ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonString>().Validate(result.CreateChildContext(), level);
+                    if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                    {
+                        return propertyResult;
+                    }
+
                     result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
                     if (level > ValidationLevel.Basic)
                     {
                         result = result.PopLocation();
-                    }
-
-                    if (level == ValidationLevel.Flag && !result.IsValid)
-                    {
-                        return result;
                     }
                 }
                 else if (property.NameEquals(JsonPropertyNames.RootNamespaceUtf8, JsonPropertyNames.RootNamespace))
@@ -308,15 +306,15 @@ public readonly partial struct GeneratorConfig
                     }
 
                     ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonString>().Validate(result.CreateChildContext(), level);
+                    if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                    {
+                        return propertyResult;
+                    }
+
                     result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
                     if (level > ValidationLevel.Basic)
                     {
                         result = result.PopLocation();
-                    }
-
-                    if (level == ValidationLevel.Flag && !result.IsValid)
-                    {
-                        return result;
                     }
                 }
                 else if (property.NameEquals(JsonPropertyNames.TypesToGenerateUtf8, JsonPropertyNames.TypesToGenerate))
@@ -329,15 +327,15 @@ public readonly partial struct GeneratorConfig
                     }
 
                     ValidationContext propertyResult = property.Value.As<Corvus.Json.CodeGenerator.GeneratorConfig.GenerationSpecifications>().Validate(result.CreateChildContext(), level);
+                    if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                    {
+                        return propertyResult;
+                    }
+
                     result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
                     if (level > ValidationLevel.Basic)
                     {
                         result = result.PopLocation();
-                    }
-
-                    if (level == ValidationLevel.Flag && !result.IsValid)
-                    {
-                        return result;
                     }
                 }
                 else if (property.NameEquals(JsonPropertyNames.UseSchemaValueUtf8, JsonPropertyNames.UseSchemaValue))
@@ -349,15 +347,15 @@ public readonly partial struct GeneratorConfig
                     }
 
                     ValidationContext propertyResult = property.Value.As<Corvus.Json.CodeGenerator.GeneratorConfig.UseSchema>().Validate(result.CreateChildContext(), level);
+                    if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                    {
+                        return propertyResult;
+                    }
+
                     result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
                     if (level > ValidationLevel.Basic)
                     {
                         result = result.PopLocation();
-                    }
-
-                    if (level == ValidationLevel.Flag && !result.IsValid)
-                    {
-                        return result;
                     }
                 }
 

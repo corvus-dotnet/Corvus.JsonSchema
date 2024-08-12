@@ -475,7 +475,7 @@ public readonly partial struct Validation
                     char[] buffer = ArrayPool<char>.Shared.Rent(destination.Length);
                     try
                     {
-                        bool result = this.jsonElementBacking.TryGetValue(FormatSpan, new __Corvus__Output(buffer, destination.Length), out charsWritten);
+                        bool result = this.jsonElementBacking.TryGetValue(FormatSpan, new CorvusOutput(buffer, destination.Length), out charsWritten);
                         if (result)
                         {
                             buffer.AsSpan(0, charsWritten).CopyTo(destination);
@@ -502,7 +502,7 @@ public readonly partial struct Validation
             charsWritten = 0;
             return true;
 
-            static bool FormatSpan(ReadOnlySpan<char> source, in __Corvus__Output output, out int charsWritten)
+            static bool FormatSpan(ReadOnlySpan<char> source, in CorvusOutput output, out int charsWritten)
             {
                 int length = Math.Min(output.Length, source.Length);
                 source[..length].CopyTo(output.Destination);
@@ -517,10 +517,6 @@ public readonly partial struct Validation
             // There is no formatting for the string
             return this.ToString();
         }
-#endif
-
-#if NET8_0_OR_GREATER
-        private readonly record struct __Corvus__Output(char[] Destination, int Length);
 #endif
     }
 }

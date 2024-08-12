@@ -418,7 +418,7 @@ public readonly partial struct GeneratorConfig
 
             return value.ValueKind switch
             {
-                JsonValueKind.Array => new(value.AsArray.AsImmutableList()),
+                JsonValueKind.Array => new(value.AsImmutableList()),
                 JsonValueKind.Null => Null,
                 _ => Undefined,
             };
@@ -477,6 +477,19 @@ public readonly partial struct GeneratorConfig
         {
             using var jsonDocument = JsonDocument.Parse(source, options);
             return new(jsonDocument.RootElement.Clone());
+        }
+
+        /// <summary>
+        /// Parses the FileList.
+        /// </summary>
+        /// <param name="source">The source of the JSON string to parse.</param>
+        public static FileList ParseValue(string source)
+        {
+#if NET8_0_OR_GREATER
+            return IJsonValue<FileList>.ParseValue(source);
+#else
+            return JsonValueHelpers.ParseValue<FileList>(source.AsSpan());
+#endif
         }
 
         /// <summary>
@@ -553,7 +566,7 @@ public readonly partial struct GeneratorConfig
         public override bool Equals(object? obj)
         {
             return
-                (obj is IJsonValue jv && this.Equals(jv.AsAny)) ||
+                (obj is IJsonValue jv && this.Equals(jv.As<FileList>())) ||
                 (obj is null && this.IsNull());
         }
 
@@ -561,7 +574,7 @@ public readonly partial struct GeneratorConfig
         public bool Equals<T>(in T other)
             where T : struct, IJsonValue<T>
         {
-            return JsonValueHelpers.CompareValues(this, other);
+            return this.Equals(other.As<FileList>());
         }
 
         /// <summary>
@@ -571,7 +584,39 @@ public readonly partial struct GeneratorConfig
         /// <returns><see langword="true"/> if the values were equal.</returns>
         public bool Equals(in FileList other)
         {
-            return JsonValueHelpers.CompareValues(this, other);
+            JsonValueKind thisKind = this.ValueKind;
+            JsonValueKind otherKind = other.ValueKind;
+            if (thisKind != otherKind)
+            {
+                return false;
+            }
+
+            if (thisKind == JsonValueKind.Null || thisKind == JsonValueKind.Undefined)
+            {
+                return true;
+            }
+
+            if (thisKind == JsonValueKind.Array)
+            {
+                JsonArrayEnumerator<Corvus.Json.CodeGenerator.GeneratorConfig.FileSpecification> lhs = this.EnumerateArray();
+                JsonArrayEnumerator<Corvus.Json.CodeGenerator.GeneratorConfig.FileSpecification> rhs = other.EnumerateArray();
+                while (lhs.MoveNext())
+                {
+                    if (!rhs.MoveNext())
+                    {
+                        return false;
+                    }
+
+                    if (!lhs.Current.Equals(rhs.Current))
+                    {
+                        return false;
+                    }
+                }
+
+                return !rhs.MoveNext();
+            }
+
+            return false;
         }
 
         /// <inheritdoc/>
@@ -605,7 +650,17 @@ public readonly partial struct GeneratorConfig
         /// <inheritdoc/>
         public override int GetHashCode()
         {
-            return JsonValueHelpers.GetHashCode(this);
+            return this.ValueKind switch
+            {
+                JsonValueKind.Array => JsonValueHelpers.GetArrayHashCode(this),
+                JsonValueKind.Object => JsonValueHelpers.GetObjectHashCode(((IJsonValue)this).AsObject),
+                JsonValueKind.Number => JsonValueHelpers.GetHashCodeForNumber(((IJsonValue)this).AsNumber),
+                JsonValueKind.String => JsonValueHelpers.GetHashCodeForString(((IJsonValue)this).AsString),
+                JsonValueKind.True => true.GetHashCode(),
+                JsonValueKind.False => false.GetHashCode(),
+                JsonValueKind.Null => JsonValueHelpers.NullHashCode,
+                _ => JsonValueHelpers.UndefinedHashCode,
+            };
         }
 
         /// <inheritdoc/>

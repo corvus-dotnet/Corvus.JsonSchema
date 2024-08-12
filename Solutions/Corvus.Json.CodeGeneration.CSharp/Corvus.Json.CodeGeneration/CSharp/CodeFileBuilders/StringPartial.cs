@@ -70,7 +70,6 @@ public sealed class StringPartial : ICodeFileBuilder
                                 .AppendNet80Formatting()
                                 .AppendStringFormatPrivateStaticMethods(typeDeclaration)
                                 .AppendStringFormatPrivateMethods(typeDeclaration)
-                                .AppendNet80FormattingStructs()
                         .EndClassOrStructDeclaration()
                     .EndTypeDeclarationNesting(typeDeclaration)
                     .EndNamespace()

@@ -20,3 +20,6 @@ $toolPath = './Corvus.Json.CodeGenerator/bin/Release/net8.0/Corvus.Json.JsonSche
 
 & $toolPath --rootNamespace Corvus.Json.Benchmarking.Models.V4 --outputPath .\Corvus.Json.Benchmarking\PersonModel.V4\ --rootPath '#/$defs/PersonArray' .\Corvus.Json.Benchmarking\person-schema.json
 
+& $toolPath config ./coretypesgeneratorconfig.json
+
+& $toolPath --optionalAsNullable NullOrUndefined --disableNamingHeuristic DocumentationNameHeuristic --rootNamespace Corvus.Json.CodeGenerator --outputPath .\Corvus.Json.CodeGenerator\Model\ .\Corvus.Json.CodeGenerator\generator-config.json
