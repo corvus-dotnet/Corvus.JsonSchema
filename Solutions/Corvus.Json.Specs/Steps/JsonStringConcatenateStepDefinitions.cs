@@ -52,6 +52,7 @@ public class JsonStringConcatenateStepDefinitions
             "JsonTime" => ConcatenateResultsJsonTime(subjectUnderTest, buffer),
             "JsonUri" => ConcatenateResultsJsonUri(subjectUnderTest, buffer),
             "JsonUriReference" => ConcatenateResultsJsonUriReference(subjectUnderTest, buffer),
+            "JsonUriTemplate" => ConcatenateResultsJsonUriTemplate(subjectUnderTest, buffer),
             "JsonUuid" => ConcatenateResultsJsonUuid(subjectUnderTest, buffer),
             "JsonContent" => ConcatenateResultsJsonContent(subjectUnderTest, buffer),
             "JsonContentPre201909" => ConcatenateResultsJsonContentPre201909(subjectUnderTest, buffer),
@@ -349,6 +350,21 @@ public class JsonStringConcatenateStepDefinitions
             6 => JsonUriReference.Concatenate(buffer, subjectUnderTest[0], subjectUnderTest[1], subjectUnderTest[2], subjectUnderTest[3], subjectUnderTest[4], subjectUnderTest[5]),
             7 => JsonUriReference.Concatenate(buffer, subjectUnderTest[0], subjectUnderTest[1], subjectUnderTest[2], subjectUnderTest[3], subjectUnderTest[4], subjectUnderTest[5], subjectUnderTest[6]),
             8 => JsonUriReference.Concatenate(buffer, subjectUnderTest[0], subjectUnderTest[1], subjectUnderTest[2], subjectUnderTest[3], subjectUnderTest[4], subjectUnderTest[5], subjectUnderTest[6], subjectUnderTest[7]),
+            _ => throw new InvalidOperationException("Unsupported number of items"),
+        };
+    }
+
+    private static IJsonValue ConcatenateResultsJsonUriTemplate(JsonArray subjectUnderTest, Span<byte> buffer)
+    {
+        return subjectUnderTest.GetArrayLength() switch
+        {
+            2 => JsonUriTemplate.Concatenate(buffer, subjectUnderTest[0], subjectUnderTest[1]),
+            3 => JsonUriTemplate.Concatenate(buffer, subjectUnderTest[0], subjectUnderTest[1], subjectUnderTest[2]),
+            4 => JsonUriTemplate.Concatenate(buffer, subjectUnderTest[0], subjectUnderTest[1], subjectUnderTest[2], subjectUnderTest[3]),
+            5 => JsonUriTemplate.Concatenate(buffer, subjectUnderTest[0], subjectUnderTest[1], subjectUnderTest[2], subjectUnderTest[3], subjectUnderTest[4]),
+            6 => JsonUriTemplate.Concatenate(buffer, subjectUnderTest[0], subjectUnderTest[1], subjectUnderTest[2], subjectUnderTest[3], subjectUnderTest[4], subjectUnderTest[5]),
+            7 => JsonUriTemplate.Concatenate(buffer, subjectUnderTest[0], subjectUnderTest[1], subjectUnderTest[2], subjectUnderTest[3], subjectUnderTest[4], subjectUnderTest[5], subjectUnderTest[6]),
+            8 => JsonUriTemplate.Concatenate(buffer, subjectUnderTest[0], subjectUnderTest[1], subjectUnderTest[2], subjectUnderTest[3], subjectUnderTest[4], subjectUnderTest[5], subjectUnderTest[6], subjectUnderTest[7]),
             _ => throw new InvalidOperationException("Unsupported number of items"),
         };
     }

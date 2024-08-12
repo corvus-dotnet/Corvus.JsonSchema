@@ -27,6 +27,7 @@ Examples:
 	| JsonTime                   |
 	| JsonUri                    |
 	| JsonUriReference           |
+	| JsonUriTemplate            |
 	| JsonUuid                   |
 	| JsonContent                |
 	| JsonContentPre201909       |
@@ -61,6 +62,7 @@ Examples:
 	| JsonTime                   |
 	| JsonUri                    |
 	| JsonUriReference           |
+	| JsonUriTemplate            |
 	| JsonUuid                   |
 	| JsonContent                |
 	| JsonContentPre201909       |
@@ -95,6 +97,7 @@ Examples:
 	| JsonTime                   |
 	| JsonUri                    |
 	| JsonUriReference           |
+	| JsonUriTemplate            |
 	| JsonUuid                   |
 	| JsonContent                |
 	| JsonContentPre201909       |
@@ -129,6 +132,7 @@ Examples:
 	| JsonTime                   |
 	| JsonUri                    |
 	| JsonUriReference           |
+	| JsonUriTemplate            |
 	| JsonUuid                   |
 	| JsonContent                |
 	| JsonContentPre201909       |
@@ -163,6 +167,7 @@ Examples:
 	| JsonTime                   |
 	| JsonUri                    |
 	| JsonUriReference           |
+	| JsonUriTemplate            |
 	| JsonUuid                   |
 	| JsonContent                |
 	| JsonContentPre201909       |
@@ -197,6 +202,7 @@ Examples:
 	| JsonTime                   |
 	| JsonUri                    |
 	| JsonUriReference           |
+	| JsonUriTemplate            |
 	| JsonUuid                   |
 	| JsonContent                |
 	| JsonContentPre201909       |
@@ -230,6 +236,7 @@ Examples:
 	| JsonTime                   |
 	| JsonUri                    |
 	| JsonUriReference           |
+	| JsonUriTemplate            |
 	| JsonUuid                   |
 	| JsonContent                |
 	| JsonContentPre201909       |
@@ -264,6 +271,7 @@ Examples:
 	| JsonTime                   |
 	| JsonUri                    |
 	| JsonUriReference           |
+	| JsonUriTemplate            |
 	| JsonUuid                   |
 	| JsonContent                |
 	| JsonContentPre201909       |

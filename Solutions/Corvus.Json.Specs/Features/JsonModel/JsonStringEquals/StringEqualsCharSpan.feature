@@ -26,6 +26,7 @@ Examples:
 	| JsonTime                   |
 	| JsonUri                    |
 	| JsonUriReference           |
+	| JsonUriTemplate            |
 	| JsonUuid                   |
 	| JsonContent                |
 	| JsonContentPre201909       |
@@ -40,32 +41,33 @@ Scenario Outline: Compare a JSON string using span of char failure
 	Then the result should be false
 
 Examples:
-	| StringType                |
-	| JsonString                |
-	| JsonDate                  |
-	| JsonDateTime              |
-	| JsonDuration              |
-	| JsonEmail                 |
-	| JsonHostname              |
-	| JsonIdnEmail              |
-	| JsonIdnHostname           |
-	| JsonIpV4                  |
-	| JsonIpV6                  |
-	| JsonIri                   |
-	| JsonIriReference          |
-	| JsonPointer               |
-	| JsonRegex                 |
-	| JsonRelativePointer       |
-	| JsonTime                  |
-	| JsonUri                   |
-	| JsonUriReference          |
-	| JsonUuid                  |
-	| JsonContent               |
-	| JsonContentPre201909      |
-	| JsonBase64Content         |
+	| StringType                 |
+	| JsonString                 |
+	| JsonDate                   |
+	| JsonDateTime               |
+	| JsonDuration               |
+	| JsonEmail                  |
+	| JsonHostname               |
+	| JsonIdnEmail               |
+	| JsonIdnHostname            |
+	| JsonIpV4                   |
+	| JsonIpV6                   |
+	| JsonIri                    |
+	| JsonIriReference           |
+	| JsonPointer                |
+	| JsonRegex                  |
+	| JsonRelativePointer        |
+	| JsonTime                   |
+	| JsonUri                    |
+	| JsonUriReference           |
+	| JsonUriTemplate            |
+	| JsonUuid                   |
+	| JsonContent                |
+	| JsonContentPre201909       |
+	| JsonBase64Content          |
 	| JsonBase64ContentPre201909 |
-	| JsonBase64String          |
-	| JsonBase64StringPre201909 |
+	| JsonBase64String           |
+	| JsonBase64StringPre201909  |
 
 Scenario Outline: Compare a dotnet back JSON string using span of char success
 	Given the dotnet backed <StringType> "Hello"
@@ -73,32 +75,33 @@ Scenario Outline: Compare a dotnet back JSON string using span of char success
 	Then the result should be true
 
 Examples:
-	| StringType                |
-	| JsonString                |
-	| JsonDate                  |
-	| JsonDateTime              |
-	| JsonDuration              |
-	| JsonEmail                 |
-	| JsonHostname              |
-	| JsonIdnEmail              |
-	| JsonIdnHostname           |
-	| JsonIpV4                  |
-	| JsonIpV6                  |
-	| JsonIri                   |
-	| JsonIriReference          |
-	| JsonPointer               |
-	| JsonRegex                 |
-	| JsonRelativePointer       |
-	| JsonTime                  |
-	| JsonUri                   |
-	| JsonUriReference          |
-	| JsonUuid                  |
-	| JsonContent               |
-	| JsonContentPre201909      |
-	| JsonBase64Content         |
+	| StringType                 |
+	| JsonString                 |
+	| JsonDate                   |
+	| JsonDateTime               |
+	| JsonDuration               |
+	| JsonEmail                  |
+	| JsonHostname               |
+	| JsonIdnEmail               |
+	| JsonIdnHostname            |
+	| JsonIpV4                   |
+	| JsonIpV6                   |
+	| JsonIri                    |
+	| JsonIriReference           |
+	| JsonPointer                |
+	| JsonRegex                  |
+	| JsonRelativePointer        |
+	| JsonTime                   |
+	| JsonUri                    |
+	| JsonUriReference           |
+	| JsonUriTemplate            |
+	| JsonUuid                   |
+	| JsonContent                |
+	| JsonContentPre201909       |
+	| JsonBase64Content          |
 	| JsonBase64ContentPre201909 |
-	| JsonBase64String          |
-	| JsonBase64StringPre201909 |
+	| JsonBase64String           |
+	| JsonBase64StringPre201909  |
 
 Scenario Outline: Compare a dotnet backed JSON string using span of char failure
 	Given the dotnet backed <StringType> "Hello"
@@ -106,29 +109,30 @@ Scenario Outline: Compare a dotnet backed JSON string using span of char failure
 	Then the result should be false
 
 Examples:
-	| StringType                |
-	| JsonString                |
-	| JsonDate                  |
-	| JsonDateTime              |
-	| JsonDuration              |
-	| JsonEmail                 |
-	| JsonHostname              |
-	| JsonIdnEmail              |
-	| JsonIdnHostname           |
-	| JsonIpV4                  |
-	| JsonIpV6                  |
-	| JsonIri                   |
-	| JsonIriReference          |
-	| JsonPointer               |
-	| JsonRegex                 |
-	| JsonRelativePointer       |
-	| JsonTime                  |
-	| JsonUri                   |
-	| JsonUriReference          |
-	| JsonUuid                  |
-	| JsonContent               |
-	| JsonContentPre201909      |
-	| JsonBase64Content         |
+	| StringType                 |
+	| JsonString                 |
+	| JsonDate                   |
+	| JsonDateTime               |
+	| JsonDuration               |
+	| JsonEmail                  |
+	| JsonHostname               |
+	| JsonIdnEmail               |
+	| JsonIdnHostname            |
+	| JsonIpV4                   |
+	| JsonIpV6                   |
+	| JsonIri                    |
+	| JsonIriReference           |
+	| JsonPointer                |
+	| JsonRegex                  |
+	| JsonRelativePointer        |
+	| JsonTime                   |
+	| JsonUri                    |
+	| JsonUriReference           |
+	| JsonUriTemplate            |
+	| JsonUuid                   |
+	| JsonContent                |
+	| JsonContentPre201909       |
+	| JsonBase64Content          |
 	| JsonBase64ContentPre201909 |
-	| JsonBase64String          |
-	| JsonBase64StringPre201909 |
+	| JsonBase64String           |
+	| JsonBase64StringPre201909  |

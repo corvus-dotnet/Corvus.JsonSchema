@@ -21,6 +21,7 @@ Scenario Outline: Concatenate multiple JSON values to a JSON string value
 	And the values are concatenated to a JsonTime
 	And the values are concatenated to a JsonUri
 	And the values are concatenated to a JsonUriReference
+	And the values are concatenated to a JsonUriTemplate
 	And the values are concatenated to a JsonUuid
 	And the values are concatenated to a JsonContent
 	And the values are concatenated to a JsonContentPre201909
