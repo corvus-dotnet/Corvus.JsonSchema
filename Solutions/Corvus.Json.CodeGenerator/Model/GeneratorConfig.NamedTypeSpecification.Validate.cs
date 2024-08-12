@@ -41,7 +41,7 @@ public readonly partial struct GeneratorConfig
             }
 
             JsonValueKind valueKind = this.ValueKind;
-            result = CorvusValidation.TypeValidationHandler(this, valueKind, result, level);
+            result = CorvusValidation.TypeValidationHandler(valueKind, result, level);
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;
@@ -69,20 +69,18 @@ public readonly partial struct GeneratorConfig
             /// <summary>
             /// Core type validation.
             /// </summary>
-            /// <param name="value">The value to validate.</param>
             /// <param name="valueKind">The <see cref="JsonValueKind" /> of the value to validate.</param>
             /// <param name="validationContext">The current validation context.</param>
             /// <param name="level">The current validation level.</param>
             /// <returns>The resulting validation context after validation.</returns>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             internal static ValidationContext TypeValidationHandler(
-                in NamedTypeSpecification value,
                 JsonValueKind valueKind,
                 in ValidationContext validationContext,
                 ValidationLevel level = ValidationLevel.Flag)
             {
                 ValidationContext result = validationContext;
-                return Corvus.Json.Validate.TypeObject(valueKind, result, level);
+                return Corvus.Json.ValidateWithoutCoreType.TypeObject(valueKind, result, level);
             }
 
             /// <summary>
@@ -132,15 +130,15 @@ public readonly partial struct GeneratorConfig
                         }
 
                         ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonString>().Validate(result.CreateChildContext(), level);
+                        if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                        {
+                            return propertyResult;
+                        }
+
                         result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
                         if (level > ValidationLevel.Basic)
                         {
                             result = result.PopLocation();
-                        }
-
-                        if (level == ValidationLevel.Flag && !result.IsValid)
-                        {
-                            return result;
                         }
                     }
                     else if (property.NameEquals(JsonPropertyNames.DotnetTypeNameUtf8, JsonPropertyNames.DotnetTypeName))
@@ -153,15 +151,15 @@ public readonly partial struct GeneratorConfig
                         }
 
                         ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonString>().Validate(result.CreateChildContext(), level);
+                        if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                        {
+                            return propertyResult;
+                        }
+
                         result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
                         if (level > ValidationLevel.Basic)
                         {
                             result = result.PopLocation();
-                        }
-
-                        if (level == ValidationLevel.Flag && !result.IsValid)
-                        {
-                            return result;
                         }
                     }
                     else if (property.NameEquals(JsonPropertyNames.ReferenceUtf8, JsonPropertyNames.Reference))
@@ -174,15 +172,15 @@ public readonly partial struct GeneratorConfig
                         }
 
                         ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonIriReference>().Validate(result.CreateChildContext(), level);
+                        if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                        {
+                            return propertyResult;
+                        }
+
                         result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
                         if (level > ValidationLevel.Basic)
                         {
                             result = result.PopLocation();
-                        }
-
-                        if (level == ValidationLevel.Flag && !result.IsValid)
-                        {
-                            return result;
                         }
                     }
 

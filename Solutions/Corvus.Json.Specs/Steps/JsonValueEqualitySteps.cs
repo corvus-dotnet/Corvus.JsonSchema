@@ -1942,6 +1942,21 @@ public class JsonValueEqualitySteps
     /// Compares the value in JsonInteger in the context variable <c>Value</c> with the expected base64String, and set it into the context variable <c>Result</c>.
     /// </summary>
     /// <param name="expected">The expected value.</param>
+    [When("I compare the JsonInteger to the BinaryJsonNumber (.*)")]
+    public void WhenICompareTheJsonIntegerToTheBinaryJsonNumber(string expected)
+    {
+        if (expected != "null")
+        {
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonInteger>(JsonValueSteps.SubjectUnderTest).Equals(JsonInteger.Parse(expected).AsBinaryJsonNumber), EqualsObjectBackedResultKey);
+        }
+
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonInteger>(JsonValueSteps.SubjectUnderTest).Equals(JsonInteger.Parse(expected).AsBinaryJsonNumber), EqualsResultKey);
+    }
+
+    /// <summary>
+    /// Compares the value in JsonInteger in the context variable <c>Value</c> with the expected base64String, and set it into the context variable <c>Result</c>.
+    /// </summary>
+    /// <param name="expected">The expected value.</param>
     [When("I compare the JsonInteger to the IJsonValue (.*)")]
     public void WhenICompareTheJsonIntegerToTheIJsonValue(string expected)
     {
@@ -3118,6 +3133,21 @@ public class JsonValueEqualitySteps
         this.scenarioContext.Set(this.scenarioContext.Get<JsonUInt128>(JsonValueSteps.SubjectUnderTest).GetHashCode() == JsonInteger.Parse(expected).GetHashCode(), HashCodeResultKey);
     }
 
+    /// <summary>
+    /// Compares the value in JsonUInt128 in the context variable <c>Value</c> with the expected base64String, and set it into the context variable <c>Result</c>.
+    /// </summary>
+    /// <param name="expected">The expected value.</param>
+    [When("I compare the JsonUInt128 to the BinaryJsonNumber (.*)")]
+    public void WhenICompareTheJsonUInt128ToTheBinaryJsonNumber(string expected)
+    {
+        if (expected != "null")
+        {
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonUInt128>(JsonValueSteps.SubjectUnderTest).Equals(JsonUInt128.Parse(expected).AsBinaryJsonNumber), EqualsObjectBackedResultKey);
+        }
+
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonUInt128>(JsonValueSteps.SubjectUnderTest).Equals(JsonUInt128.Parse(expected).AsBinaryJsonNumber), EqualsResultKey);
+    }
+
     [When("I compare the JsonUInt128 to the IJsonValue (.*)")]
     public void WhenICompareTheJsonUInt128ToTheIJsonValue(string expected)
     {
@@ -3193,6 +3223,21 @@ public class JsonValueEqualitySteps
         this.scenarioContext.Set(this.scenarioContext.Get<JsonInt128>(JsonValueSteps.SubjectUnderTest) == JsonInteger.Parse(expected), EqualityResultKey);
         this.scenarioContext.Set(this.scenarioContext.Get<JsonInt128>(JsonValueSteps.SubjectUnderTest) != JsonInteger.Parse(expected), InequalityResultKey);
         this.scenarioContext.Set(this.scenarioContext.Get<JsonInt128>(JsonValueSteps.SubjectUnderTest).GetHashCode() == JsonInteger.Parse(expected).GetHashCode(), HashCodeResultKey);
+    }
+
+    /// <summary>
+    /// Compares the value in JsonInt128 in the context variable <c>Value</c> with the expected BinaryJsonNumber, and set it into the context variable <c>Result</c>.
+    /// </summary>
+    /// <param name="expected">The expected value.</param>
+    [When("I compare the JsonInt128 to the BinaryJsonNumber (.*)")]
+    public void WhenICompareTheJsonInt128ToTheBinaryJsonNumber(string expected)
+    {
+        if (expected != "null")
+        {
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonInt128>(JsonValueSteps.SubjectUnderTest).Equals(JsonInt128.Parse(expected).AsBinaryJsonNumber), EqualsObjectBackedResultKey);
+        }
+
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonInt128>(JsonValueSteps.SubjectUnderTest).Equals(JsonInt128.Parse(expected).AsBinaryJsonNumber), EqualsResultKey);
     }
 
     [When("I compare the JsonInt128 to the IJsonValue (.*)")]
@@ -3272,6 +3317,21 @@ public class JsonValueEqualitySteps
         this.scenarioContext.Set(this.scenarioContext.Get<JsonInt64>(JsonValueSteps.SubjectUnderTest).GetHashCode() == JsonInteger.Parse(expected).GetHashCode(), HashCodeResultKey);
     }
 
+    /// <summary>
+    /// Compares the value in JsonInt64 in the context variable <c>Value</c> with the expected BinaryJsonNumber, and set it into the context variable <c>Result</c>.
+    /// </summary>
+    /// <param name="expected">The expected value.</param>
+    [When("I compare the JsonInt64 to the BinaryJsonNumber (.*)")]
+    public void WhenICompareTheJsonInt64ToTheBinaryJsonNumber(string expected)
+    {
+        if (expected != "null")
+        {
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonInt64>(JsonValueSteps.SubjectUnderTest).Equals(JsonInt64.Parse(expected).AsBinaryJsonNumber), EqualsObjectBackedResultKey);
+        }
+
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonInt64>(JsonValueSteps.SubjectUnderTest).Equals(JsonInt64.Parse(expected).AsBinaryJsonNumber), EqualsResultKey);
+    }
+
     [When("I compare the JsonInt64 to the IJsonValue (.*)")]
     public void WhenICompareTheJsonInt64ToTheIJsonValue(string expected)
     {
@@ -3347,6 +3407,21 @@ public class JsonValueEqualitySteps
         this.scenarioContext.Set(this.scenarioContext.Get<JsonInt32>(JsonValueSteps.SubjectUnderTest) == JsonInteger.Parse(expected), EqualityResultKey);
         this.scenarioContext.Set(this.scenarioContext.Get<JsonInt32>(JsonValueSteps.SubjectUnderTest) != JsonInteger.Parse(expected), InequalityResultKey);
         this.scenarioContext.Set(this.scenarioContext.Get<JsonInt32>(JsonValueSteps.SubjectUnderTest).GetHashCode() == JsonInteger.Parse(expected).GetHashCode(), HashCodeResultKey);
+    }
+
+    /// <summary>
+    /// Compares the value in JsonInt32 in the context variable <c>Value</c> with the expected BinaryJsonNumber, and set it into the context variable <c>Result</c>.
+    /// </summary>
+    /// <param name="expected">The expected value.</param>
+    [When("I compare the JsonInt32 to the BinaryJsonNumber (.*)")]
+    public void WhenICompareTheJsonInt32ToTheBinaryJsonNumber(string expected)
+    {
+        if (expected != "null")
+        {
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonInt32>(JsonValueSteps.SubjectUnderTest).Equals(JsonInt32.Parse(expected).AsBinaryJsonNumber), EqualsObjectBackedResultKey);
+        }
+
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonInt32>(JsonValueSteps.SubjectUnderTest).Equals(JsonInt32.Parse(expected).AsBinaryJsonNumber), EqualsResultKey);
     }
 
     [When("I compare the JsonInt32 to the IJsonValue (.*)")]
@@ -3426,6 +3501,21 @@ public class JsonValueEqualitySteps
         this.scenarioContext.Set(this.scenarioContext.Get<JsonInt16>(JsonValueSteps.SubjectUnderTest).GetHashCode() == JsonInteger.Parse(expected).GetHashCode(), HashCodeResultKey);
     }
 
+    /// <summary>
+    /// Compares the value in JsonInt16 in the context variable <c>Value</c> with the expected BinaryJsonNumber, and set it into the context variable <c>Result</c>.
+    /// </summary>
+    /// <param name="expected">The expected value.</param>
+    [When("I compare the JsonInt16 to the BinaryJsonNumber (.*)")]
+    public void WhenICompareTheJsonInt16ToTheBinaryJsonNumber(string expected)
+    {
+        if (expected != "null")
+        {
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonInt16>(JsonValueSteps.SubjectUnderTest).Equals(JsonInt16.Parse(expected).AsBinaryJsonNumber), EqualsObjectBackedResultKey);
+        }
+
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonInt16>(JsonValueSteps.SubjectUnderTest).Equals(JsonInt16.Parse(expected).AsBinaryJsonNumber), EqualsResultKey);
+    }
+
     [When("I compare the JsonInt16 to the IJsonValue (.*)")]
     public void WhenICompareTheJsonInt16ToTheIJsonValue(string expected)
     {
@@ -3501,6 +3591,21 @@ public class JsonValueEqualitySteps
         this.scenarioContext.Set(this.scenarioContext.Get<JsonSByte>(JsonValueSteps.SubjectUnderTest) == JsonInteger.Parse(expected), EqualityResultKey);
         this.scenarioContext.Set(this.scenarioContext.Get<JsonSByte>(JsonValueSteps.SubjectUnderTest) != JsonInteger.Parse(expected), InequalityResultKey);
         this.scenarioContext.Set(this.scenarioContext.Get<JsonSByte>(JsonValueSteps.SubjectUnderTest).GetHashCode() == JsonInteger.Parse(expected).GetHashCode(), HashCodeResultKey);
+    }
+
+    /// <summary>
+    /// Compares the value in JsonSByte in the context variable <c>Value</c> with the expected BinaryJsonNumber, and set it into the context variable <c>Result</c>.
+    /// </summary>
+    /// <param name="expected">The expected value.</param>
+    [When("I compare the JsonSByte to the BinaryJsonNumber (.*)")]
+    public void WhenICompareTheJsonSByteToTheBinaryJsonNumber(string expected)
+    {
+        if (expected != "null")
+        {
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonSByte>(JsonValueSteps.SubjectUnderTest).Equals(JsonSByte.Parse(expected).AsBinaryJsonNumber), EqualsObjectBackedResultKey);
+        }
+
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonSByte>(JsonValueSteps.SubjectUnderTest).Equals(JsonSByte.Parse(expected).AsBinaryJsonNumber), EqualsResultKey);
     }
 
     [When("I compare the JsonSByte to the IJsonValue (.*)")]
@@ -3580,6 +3685,21 @@ public class JsonValueEqualitySteps
         this.scenarioContext.Set(this.scenarioContext.Get<JsonUInt64>(JsonValueSteps.SubjectUnderTest).GetHashCode() == JsonInteger.Parse(expected).GetHashCode(), HashCodeResultKey);
     }
 
+    /// <summary>
+    /// Compares the value in JsonUInt64 in the context variable <c>Value</c> with the expected BinaryJsonNumber, and set it into the context variable <c>Result</c>.
+    /// </summary>
+    /// <param name="expected">The expected value.</param>
+    [When("I compare the JsonUInt64 to the BinaryJsonNumber (.*)")]
+    public void WhenICompareTheJsonUInt64ToTheBinaryJsonNumber(string expected)
+    {
+        if (expected != "null")
+        {
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonUInt64>(JsonValueSteps.SubjectUnderTest).Equals(JsonUInt64.Parse(expected).AsBinaryJsonNumber), EqualsObjectBackedResultKey);
+        }
+
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonUInt64>(JsonValueSteps.SubjectUnderTest).Equals(JsonUInt64.Parse(expected).AsBinaryJsonNumber), EqualsResultKey);
+    }
+
     [When("I compare the JsonUInt64 to the IJsonValue (.*)")]
     public void WhenICompareTheJsonUInt64ToTheIJsonValue(string expected)
     {
@@ -3655,6 +3775,21 @@ public class JsonValueEqualitySteps
         this.scenarioContext.Set(this.scenarioContext.Get<JsonUInt32>(JsonValueSteps.SubjectUnderTest) == JsonInteger.Parse(expected), EqualityResultKey);
         this.scenarioContext.Set(this.scenarioContext.Get<JsonUInt32>(JsonValueSteps.SubjectUnderTest) != JsonInteger.Parse(expected), InequalityResultKey);
         this.scenarioContext.Set(this.scenarioContext.Get<JsonUInt32>(JsonValueSteps.SubjectUnderTest).GetHashCode() == JsonInteger.Parse(expected).GetHashCode(), HashCodeResultKey);
+    }
+
+    /// <summary>
+    /// Compares the value in JsonUInt32 in the context variable <c>Value</c> with the expected BinaryJsonNumber, and set it into the context variable <c>Result</c>.
+    /// </summary>
+    /// <param name="expected">The expected value.</param>
+    [When("I compare the JsonUInt32 to the BinaryJsonNumber (.*)")]
+    public void WhenICompareTheJsonUInt32ToTheBinaryJsonNumber(string expected)
+    {
+        if (expected != "null")
+        {
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonUInt32>(JsonValueSteps.SubjectUnderTest).Equals(JsonUInt32.Parse(expected).AsBinaryJsonNumber), EqualsObjectBackedResultKey);
+        }
+
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonUInt32>(JsonValueSteps.SubjectUnderTest).Equals(JsonUInt32.Parse(expected).AsBinaryJsonNumber), EqualsResultKey);
     }
 
     [When("I compare the JsonUInt32 to the IJsonValue (.*)")]
@@ -3734,6 +3869,21 @@ public class JsonValueEqualitySteps
         this.scenarioContext.Set(this.scenarioContext.Get<JsonUInt16>(JsonValueSteps.SubjectUnderTest).GetHashCode() == JsonInteger.Parse(expected).GetHashCode(), HashCodeResultKey);
     }
 
+    /// <summary>
+    /// Compares the value in JsonUInt16 in the context variable <c>Value</c> with the expected BinaryJsonNumber, and set it into the context variable <c>Result</c>.
+    /// </summary>
+    /// <param name="expected">The expected value.</param>
+    [When("I compare the JsonUInt16 to the BinaryJsonNumber (.*)")]
+    public void WhenICompareTheJsonUInt16ToTheBinaryJsonNumber(string expected)
+    {
+        if (expected != "null")
+        {
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonUInt16>(JsonValueSteps.SubjectUnderTest).Equals(JsonUInt16.Parse(expected).AsBinaryJsonNumber), EqualsObjectBackedResultKey);
+        }
+
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonUInt16>(JsonValueSteps.SubjectUnderTest).Equals(JsonUInt16.Parse(expected).AsBinaryJsonNumber), EqualsResultKey);
+    }
+
     [When("I compare the JsonUInt16 to the IJsonValue (.*)")]
     public void WhenICompareTheJsonUInt16ToTheIJsonValue(string expected)
     {
@@ -3743,7 +3893,7 @@ public class JsonValueEqualitySteps
     [When("I compare the JsonUInt16 to the object (.*)")]
     public void WhenICompareTheJsonUInt16ToTheObject(string expected)
     {
-        object? obj = expected == "<undefined>" ? default(JsonInteger) : expected == "<null>" ? null : expected == "<new object()>" ? new object() : JsonAny.Parse(expected);
+        object? obj = expected == "<undefined>" ? default(JsonUInt16) : expected == "<null>" ? null : expected == "<new object()>" ? new object() : JsonAny.Parse(expected);
         this.scenarioContext.Set(((object)this.scenarioContext.Get<JsonUInt16>(JsonValueSteps.SubjectUnderTest)).Equals(obj), EqualsResultKey);
         if (obj is not null)
         {
@@ -3809,6 +3959,21 @@ public class JsonValueEqualitySteps
         this.scenarioContext.Set(this.scenarioContext.Get<JsonByte>(JsonValueSteps.SubjectUnderTest) == JsonInteger.Parse(expected), EqualityResultKey);
         this.scenarioContext.Set(this.scenarioContext.Get<JsonByte>(JsonValueSteps.SubjectUnderTest) != JsonInteger.Parse(expected), InequalityResultKey);
         this.scenarioContext.Set(this.scenarioContext.Get<JsonByte>(JsonValueSteps.SubjectUnderTest).GetHashCode() == JsonInteger.Parse(expected).GetHashCode(), HashCodeResultKey);
+    }
+
+    /// <summary>
+    /// Compares the value in JsonByte in the context variable <c>Value</c> with the expected BinaryJsonNumber, and set it into the context variable <c>Result</c>.
+    /// </summary>
+    /// <param name="expected">The expected value.</param>
+    [When("I compare the JsonByte to the BinaryJsonNumber (.*)")]
+    public void WhenICompareTheJsonByteToTheBinaryJsonNumber(string expected)
+    {
+        if (expected != "null")
+        {
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonByte>(JsonValueSteps.SubjectUnderTest).Equals(JsonByte.Parse(expected).AsBinaryJsonNumber), EqualsObjectBackedResultKey);
+        }
+
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonByte>(JsonValueSteps.SubjectUnderTest).Equals(JsonByte.Parse(expected).AsBinaryJsonNumber), EqualsResultKey);
     }
 
     [When("I compare the JsonByte to the IJsonValue (.*)")]
@@ -4029,6 +4194,21 @@ public class JsonValueEqualitySteps
     }
 
     /// <summary>
+    /// Compares the value in JsonNumber in the context variable <c>Value</c> with the expected BinaryJsonNumber, and set it into the context variable <c>Result</c>.
+    /// </summary>
+    /// <param name="expected">The expected value.</param>
+    [When("I compare the JsonNumber to the BinaryJsonNumber (.*)")]
+    public void WhenICompareTheJsonNumberToTheBinaryJsonNumber(string expected)
+    {
+        if (expected != "null")
+        {
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonInteger>(JsonValueSteps.SubjectUnderTest).Equals(JsonNumber.Parse(expected).AsBinaryJsonNumber), EqualsObjectBackedResultKey);
+        }
+
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonInteger>(JsonValueSteps.SubjectUnderTest).Equals(JsonNumber.Parse(expected).AsBinaryJsonNumber), EqualsResultKey);
+    }
+
+    /// <summary>
     /// Compares the value in JsonDouble in the context variable <c>Value</c> with the expected number, and set it into the context variable <c>Result</c>.
     /// </summary>
     /// <param name="expected">The expected value.</param>
@@ -4044,6 +4224,21 @@ public class JsonValueEqualitySteps
         this.scenarioContext.Set(this.scenarioContext.Get<JsonDouble>(JsonValueSteps.SubjectUnderTest) == JsonDouble.Parse(expected), EqualityResultKey);
         this.scenarioContext.Set(this.scenarioContext.Get<JsonDouble>(JsonValueSteps.SubjectUnderTest) != JsonDouble.Parse(expected), InequalityResultKey);
         this.scenarioContext.Set(this.scenarioContext.Get<JsonDouble>(JsonValueSteps.SubjectUnderTest).GetHashCode() == JsonDouble.Parse(expected).GetHashCode(), HashCodeResultKey);
+    }
+
+    /// <summary>
+    /// Compares the value in JsonDouble in the context variable <c>Value</c> with the expected BinaryJsonNumber, and set it into the context variable <c>Result</c>.
+    /// </summary>
+    /// <param name="expected">The expected value.</param>
+    [When("I compare the JsonDouble to the BinaryJsonNumber (.*)")]
+    public void WhenICompareTheJsonDoubleToTheBinaryJsonNumber(string expected)
+    {
+        if (expected != "null")
+        {
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonInteger>(JsonValueSteps.SubjectUnderTest).Equals(JsonDouble.Parse(expected).AsBinaryJsonNumber), EqualsObjectBackedResultKey);
+        }
+
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonInteger>(JsonValueSteps.SubjectUnderTest).Equals(JsonDouble.Parse(expected).AsBinaryJsonNumber), EqualsResultKey);
     }
 
     /// <summary>
@@ -4065,6 +4260,21 @@ public class JsonValueEqualitySteps
     }
 
     /// <summary>
+    /// Compares the value in JsonSingle in the context variable <c>Value</c> with the expected BinaryJsonNumber, and set it into the context variable <c>Result</c>.
+    /// </summary>
+    /// <param name="expected">The expected value.</param>
+    [When("I compare the JsonSingle to the BinaryJsonNumber (.*)")]
+    public void WhenICompareTheJsonSingleToTheBinaryJsonNumber(string expected)
+    {
+        if (expected != "null")
+        {
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonInteger>(JsonValueSteps.SubjectUnderTest).Equals(JsonSingle.Parse(expected).AsBinaryJsonNumber), EqualsObjectBackedResultKey);
+        }
+
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonInteger>(JsonValueSteps.SubjectUnderTest).Equals(JsonSingle.Parse(expected).AsBinaryJsonNumber), EqualsResultKey);
+    }
+
+    /// <summary>
     /// Compares the value in JsonHalf in the context variable <c>Value</c> with the expected base64String, and set it into the context variable <c>Result</c>.
     /// </summary>
     /// <param name="expected">The expected value.</param>
@@ -4083,6 +4293,21 @@ public class JsonValueEqualitySteps
     }
 
     /// <summary>
+    /// Compares the value in JsonHalf in the context variable <c>Value</c> with the expected BinaryJsonNumber, and set it into the context variable <c>Result</c>.
+    /// </summary>
+    /// <param name="expected">The expected value.</param>
+    [When("I compare the JsonHalf to the BinaryJsonNumber (.*)")]
+    public void WhenICompareTheJsonHalfToTheBinaryJsonNumber(string expected)
+    {
+        if (expected != "null")
+        {
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonInteger>(JsonValueSteps.SubjectUnderTest).Equals(JsonHalf.Parse(expected).AsBinaryJsonNumber), EqualsObjectBackedResultKey);
+        }
+
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonInteger>(JsonValueSteps.SubjectUnderTest).Equals(JsonHalf.Parse(expected).AsBinaryJsonNumber), EqualsResultKey);
+    }
+
+    /// <summary>
     /// Compares the value in JsonDecimal in the context variable <c>Value</c> with the expected base64String, and set it into the context variable <c>Result</c>.
     /// </summary>
     /// <param name="expected">The expected value.</param>
@@ -4098,6 +4323,21 @@ public class JsonValueEqualitySteps
         this.scenarioContext.Set(this.scenarioContext.Get<JsonDecimal>(JsonValueSteps.SubjectUnderTest) == JsonDecimal.Parse(expected), EqualityResultKey);
         this.scenarioContext.Set(this.scenarioContext.Get<JsonDecimal>(JsonValueSteps.SubjectUnderTest) != JsonDecimal.Parse(expected), InequalityResultKey);
         this.scenarioContext.Set(this.scenarioContext.Get<JsonDecimal>(JsonValueSteps.SubjectUnderTest).GetHashCode() == JsonDecimal.Parse(expected).GetHashCode(), HashCodeResultKey);
+    }
+
+    /// <summary>
+    /// Compares the value in JsonDecimal in the context variable <c>Value</c> with the expected BinaryJsonNumber, and set it into the context variable <c>Result</c>.
+    /// </summary>
+    /// <param name="expected">The expected value.</param>
+    [When("I compare the JsonDecimal to the BinaryJsonNumber (.*)")]
+    public void WhenICompareTheJsonDecimalToTheBinaryJsonNumber(string expected)
+    {
+        if (expected != "null")
+        {
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonInteger>(JsonValueSteps.SubjectUnderTest).Equals(JsonDecimal.Parse(expected).AsBinaryJsonNumber), EqualsObjectBackedResultKey);
+        }
+
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonInteger>(JsonValueSteps.SubjectUnderTest).Equals(JsonDecimal.Parse(expected).AsBinaryJsonNumber), EqualsResultKey);
     }
 
     /// <summary>

@@ -11,7 +11,6 @@
 
 using System.Buffers;
 using System.Diagnostics.CodeAnalysis;
-using System.Text;
 using System.Text.Json;
 using Corvus.Json;
 using Corvus.Json.Internal;
@@ -47,6 +46,42 @@ public readonly partial struct GeneratorConfig
         : IJsonString<Corvus.Json.CodeGenerator.GeneratorConfig.UseSchema>
 #endif
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="UseSchema"/> struct.
+        /// </summary>
+        /// <param name="value">The value from which to construct the instance.</param>
+        public UseSchema(in ReadOnlySpan<char> value)
+        {
+            this.backing = Backing.String;
+            this.jsonElementBacking = default;
+            this.stringBacking = value.ToString();
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="UseSchema"/> struct.
+        /// </summary>
+        /// <param name="value">The value from which to construct the instance.</param>
+        public UseSchema(in ReadOnlySpan<byte> value)
+        {
+            this.backing = Backing.String;
+            this.jsonElementBacking = default;
+
+#if NET8_0_OR_GREATER
+            this.stringBacking = System.Text.Encoding.UTF8.GetString(value);
+#else
+            byte[] bytes = ArrayPool<byte>.Shared.Rent(value.Length);
+            try
+            {
+                value.CopyTo(bytes);
+                this.stringBacking = System.Text.Encoding.UTF8.GetString(bytes);
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(bytes);
+            }
+#endif
+        }
+
         /// <summary>
         /// Conversion from <see cref="string"/>.
         /// </summary>
@@ -366,8 +401,8 @@ public readonly partial struct GeneratorConfig
 
                 try
                 {
-                    int written = System.Text.Encoding.UTF8.GetChars(bytes, 0, bytes.Length, chars, 0);
-                    return chars.SequenceEqual(this.stringBacking);
+                    int written = System.Text.Encoding.UTF8.GetChars(bytes, 0, utf8Bytes.Length, chars, 0);
+                    return chars.AsSpan()[..written].SequenceEqual(this.stringBacking.AsSpan());
                 }
                 finally
                 {
@@ -448,27 +483,39 @@ public readonly partial struct GeneratorConfig
 
             if ((this.backing & Backing.JsonElement) != 0)
             {
-                char[] buffer = ArrayPool<char>.Shared.Rent(destination.Length);
-                try
+                if (this.jsonElementBacking.ValueKind == JsonValueKind.String)
                 {
-                    bool result = this.jsonElementBacking.TryGetValue(FormatSpan, new __Corvus__Output(buffer, destination.Length), out charsWritten);
-                    if (result)
+                    char[] buffer = ArrayPool<char>.Shared.Rent(destination.Length);
+                    try
                     {
-                        buffer.AsSpan(0, charsWritten).CopyTo(destination);
-                    }
+                        bool result = this.jsonElementBacking.TryGetValue(FormatSpan, new CorvusOutput(buffer, destination.Length), out charsWritten);
+                        if (result)
+                        {
+                            buffer.AsSpan(0, charsWritten).CopyTo(destination);
+                        }
 
-                    return result;
+                        return result;
+                    }
+                    finally
+                    {
+                        ArrayPool<char>.Shared.Return(buffer);
+                    }
                 }
-                finally
+                else
                 {
-                    ArrayPool<char>.Shared.Return(buffer);
+                    string value = this.jsonElementBacking.GetRawText();
+                    int length = Math.Min(destination.Length, this.stringBacking.Length);
+                    this.stringBacking.AsSpan(0, length).CopyTo(destination);
+                    charsWritten = length;
+                    return true;
                 }
             }
 
+            // We return true from here because we have done our best to format it, and written no characters.
             charsWritten = 0;
-            return false;
+            return true;
 
-            static bool FormatSpan(ReadOnlySpan<char> source, in __Corvus__Output output, out int charsWritten)
+            static bool FormatSpan(ReadOnlySpan<char> source, in CorvusOutput output, out int charsWritten)
             {
                 int length = Math.Min(output.Length, source.Length);
                 source[..length].CopyTo(output.Destination);
@@ -483,8 +530,6 @@ public readonly partial struct GeneratorConfig
             // There is no formatting for the string
             return this.ToString();
         }
-
-        private readonly record struct __Corvus__Output(char[] Destination, int Length);
 #endif
     }
 }

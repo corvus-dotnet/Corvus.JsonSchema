@@ -633,7 +633,7 @@ internal static partial class CodeGeneratorExtensions
                         char[] buffer = ArrayPool<char>.Shared.Rent(destination.Length);
                         try
                         {
-                            bool result = this.{{jsonElementBacking}}.TryGetValue(FormatSpan, new __Corvus__Output(buffer, destination.Length), out charsWritten);
+                            bool result = this.{{jsonElementBacking}}.TryGetValue(FormatSpan, new CorvusOutput(buffer, destination.Length), out charsWritten);
                             if (result)
                             {
                                 buffer.AsSpan(0, charsWritten).CopyTo(destination);
@@ -660,7 +660,7 @@ internal static partial class CodeGeneratorExtensions
                 charsWritten = 0;
                 return true;
 
-                static bool FormatSpan(ReadOnlySpan<char> source, in __Corvus__Output output, out int charsWritten)
+                static bool FormatSpan(ReadOnlySpan<char> source, in CorvusOutput output, out int charsWritten)
                 {
                     int length = Math.Min(output.Length, source.Length);
                     source[..length].CopyTo(output.Destination);
@@ -677,21 +677,6 @@ internal static partial class CodeGeneratorExtensions
             }
             #endif
             """);
-    }
-
-    /// <summary>
-    /// Appends <c>__Corvus__Output()</c> record struct for .NET 8.0 or greater.
-    /// </summary>
-    /// <param name="generator">The code generator.</param>
-    /// <returns>A reference to the generator having completed the operation.</returns>
-    public static CodeGenerator AppendNet80FormattingStructs(this CodeGenerator generator)
-    {
-        return generator
-            .ReserveName("__Corvus__Output")
-            .AppendSeparatorLine()
-            .AppendLine("#if NET8_0_OR_GREATER")
-            .AppendLineIndent("private readonly record struct __Corvus__Output(char[] Destination, int Length);")
-            .AppendLine("#endif");
     }
 
     /// <summary>
