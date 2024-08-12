@@ -2,6 +2,8 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+namespace Corvus.Json.Internal;
+
 #if NET8_0_OR_GREATER
 /// <summary>
 /// Wrapper structure for a string and a length.
