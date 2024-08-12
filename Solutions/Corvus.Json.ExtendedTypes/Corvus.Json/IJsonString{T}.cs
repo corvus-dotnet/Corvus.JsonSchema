@@ -51,13 +51,9 @@ public interface IJsonString<T> : IJsonValue<T>
     /// <param name="firstValue">The first value.</param>
     /// <param name="secondValue">The second value.</param>
     /// <returns>A count of the characters written.</returns>
-    static T Concatenate<T1, T2>(Span<byte> buffer, in T1 firstValue, in T2 secondValue)
+    static abstract T Concatenate<T1, T2>(Span<byte> buffer, in T1 firstValue, in T2 secondValue)
         where T1 : struct, IJsonValue<T1>
-        where T2 : struct, IJsonValue<T2>
-    {
-        int written = LowAllocJsonUtils.ConcatenateAsUtf8JsonString(buffer, firstValue, secondValue);
-        return ParseValue(buffer[..written]);
-    }
+        where T2 : struct, IJsonValue<T2>;
 
     /// <summary>
     /// Concatenate three JSON values, producing an instance of the string type <typeparamref name="T"/>.
@@ -70,14 +66,10 @@ public interface IJsonString<T> : IJsonValue<T>
     /// <param name="secondValue">The second value.</param>
     /// <param name="thirdValue">The third value.</param>
     /// <returns>A count of the characters written.</returns>
-    static T Concatenate<T1, T2, T3>(Span<byte> buffer, in T1 firstValue, in T2 secondValue, in T3 thirdValue)
+    static abstract T Concatenate<T1, T2, T3>(Span<byte> buffer, in T1 firstValue, in T2 secondValue, in T3 thirdValue)
         where T1 : struct, IJsonValue<T1>
         where T2 : struct, IJsonValue<T2>
-        where T3 : struct, IJsonValue<T3>
-    {
-        int written = LowAllocJsonUtils.ConcatenateAsUtf8JsonString(buffer, firstValue, secondValue, thirdValue);
-        return ParseValue(buffer[..written]);
-    }
+        where T3 : struct, IJsonValue<T3>;
 
     /// <summary>
     /// Concatenate four JSON values, producing an instance of the string type <typeparamref name="T"/>.
@@ -92,15 +84,11 @@ public interface IJsonString<T> : IJsonValue<T>
     /// <param name="thirdValue">The third value.</param>
     /// <param name="fourthValue">The fourth value.</param>
     /// <returns>A count of the characters written.</returns>
-    static T Concatenate<T1, T2, T3, T4>(Span<byte> buffer, in T1 firstValue, in T2 secondValue, in T3 thirdValue, in T4 fourthValue)
+    static abstract T Concatenate<T1, T2, T3, T4>(Span<byte> buffer, in T1 firstValue, in T2 secondValue, in T3 thirdValue, in T4 fourthValue)
         where T1 : struct, IJsonValue<T1>
         where T2 : struct, IJsonValue<T2>
         where T3 : struct, IJsonValue<T3>
-        where T4 : struct, IJsonValue<T4>
-    {
-        int written = LowAllocJsonUtils.ConcatenateAsUtf8JsonString(buffer, firstValue, secondValue, thirdValue, fourthValue);
-        return ParseValue(buffer[..written]);
-    }
+        where T4 : struct, IJsonValue<T4>;
 
     /// <summary>
     /// Concatenate five JSON values, producing an instance of the string type <typeparamref name="T"/>.
@@ -117,16 +105,12 @@ public interface IJsonString<T> : IJsonValue<T>
     /// <param name="fourthValue">The fourth value.</param>
     /// <param name="fifthValue">The fifth value.</param>
     /// <returns>A count of the characters written.</returns>
-    static T Concatenate<T1, T2, T3, T4, T5>(Span<byte> buffer, in T1 firstValue, in T2 secondValue, in T3 thirdValue, in T4 fourthValue, in T5 fifthValue)
+    static abstract T Concatenate<T1, T2, T3, T4, T5>(Span<byte> buffer, in T1 firstValue, in T2 secondValue, in T3 thirdValue, in T4 fourthValue, in T5 fifthValue)
         where T1 : struct, IJsonValue<T1>
         where T2 : struct, IJsonValue<T2>
         where T3 : struct, IJsonValue<T3>
         where T4 : struct, IJsonValue<T4>
-        where T5 : struct, IJsonValue<T5>
-    {
-        int written = LowAllocJsonUtils.ConcatenateAsUtf8JsonString(buffer, firstValue, secondValue, thirdValue, fourthValue, fifthValue);
-        return ParseValue(buffer[..written]);
-    }
+        where T5 : struct, IJsonValue<T5>;
 
     /// <summary>
     /// Concatenate six JSON values, producing an instance of the string type <typeparamref name="T"/>.
@@ -145,17 +129,13 @@ public interface IJsonString<T> : IJsonValue<T>
     /// <param name="fifthValue">The fifth value.</param>
     /// <param name="sixthValue">The sixth value.</param>
     /// <returns>A count of the characters written.</returns>
-    static T Concatenate<T1, T2, T3, T4, T5, T6>(Span<byte> buffer, in T1 firstValue, in T2 secondValue, in T3 thirdValue, in T4 fourthValue, in T5 fifthValue, in T6 sixthValue)
+    static abstract T Concatenate<T1, T2, T3, T4, T5, T6>(Span<byte> buffer, in T1 firstValue, in T2 secondValue, in T3 thirdValue, in T4 fourthValue, in T5 fifthValue, in T6 sixthValue)
         where T1 : struct, IJsonValue<T1>
         where T2 : struct, IJsonValue<T2>
         where T3 : struct, IJsonValue<T3>
         where T4 : struct, IJsonValue<T4>
         where T5 : struct, IJsonValue<T5>
-        where T6 : struct, IJsonValue<T6>
-    {
-        int written = LowAllocJsonUtils.ConcatenateAsUtf8JsonString(buffer, firstValue, secondValue, thirdValue, fourthValue, fifthValue, sixthValue);
-        return ParseValue(buffer[..written]);
-    }
+        where T6 : struct, IJsonValue<T6>;
 
     /// <summary>
     /// Concatenate seven JSON values, producing an instance of the string type <typeparamref name="T"/>.
@@ -176,18 +156,14 @@ public interface IJsonString<T> : IJsonValue<T>
     /// <param name="sixthValue">The sixth value.</param>
     /// <param name="seventhValue">The seventh value.</param>
     /// <returns>A count of the characters written.</returns>
-    static T Concatenate<T1, T2, T3, T4, T5, T6, T7>(Span<byte> buffer, in T1 firstValue, in T2 secondValue, in T3 thirdValue, in T4 fourthValue, in T5 fifthValue, in T6 sixthValue, in T7 seventhValue)
+    static abstract T Concatenate<T1, T2, T3, T4, T5, T6, T7>(Span<byte> buffer, in T1 firstValue, in T2 secondValue, in T3 thirdValue, in T4 fourthValue, in T5 fifthValue, in T6 sixthValue, in T7 seventhValue)
         where T1 : struct, IJsonValue<T1>
         where T2 : struct, IJsonValue<T2>
         where T3 : struct, IJsonValue<T3>
         where T4 : struct, IJsonValue<T4>
         where T5 : struct, IJsonValue<T5>
         where T6 : struct, IJsonValue<T6>
-        where T7 : struct, IJsonValue<T7>
-    {
-        int written = LowAllocJsonUtils.ConcatenateAsUtf8JsonString(buffer, firstValue, secondValue, thirdValue, fourthValue, fifthValue, sixthValue, seventhValue);
-        return ParseValue(buffer[..written]);
-    }
+        where T7 : struct, IJsonValue<T7>;
 
     /// <summary>
     /// Concatenate eight JSON values, producing an instance of the string type <typeparamref name="T"/>.
@@ -210,7 +186,7 @@ public interface IJsonString<T> : IJsonValue<T>
     /// <param name="seventhValue">The seventh value.</param>
     /// <param name="eighthValue">The eighth value.</param>
     /// <returns>A count of the characters written.</returns>
-    static T Concatenate<T1, T2, T3, T4, T5, T6, T7, T8>(Span<byte> buffer, in T1 firstValue, in T2 secondValue, in T3 thirdValue, in T4 fourthValue, in T5 fifthValue, in T6 sixthValue, in T7 seventhValue, in T8 eighthValue)
+    static abstract T Concatenate<T1, T2, T3, T4, T5, T6, T7, T8>(Span<byte> buffer, in T1 firstValue, in T2 secondValue, in T3 thirdValue, in T4 fourthValue, in T5 fifthValue, in T6 sixthValue, in T7 seventhValue, in T8 eighthValue)
         where T1 : struct, IJsonValue<T1>
         where T2 : struct, IJsonValue<T2>
         where T3 : struct, IJsonValue<T3>
@@ -218,10 +194,6 @@ public interface IJsonString<T> : IJsonValue<T>
         where T5 : struct, IJsonValue<T5>
         where T6 : struct, IJsonValue<T6>
         where T7 : struct, IJsonValue<T7>
-        where T8 : struct, IJsonValue<T8>
-    {
-        int written = LowAllocJsonUtils.ConcatenateAsUtf8JsonString(buffer, firstValue, secondValue, thirdValue, fourthValue, fifthValue, sixthValue, seventhValue, eighthValue);
-        return ParseValue(buffer[..written]);
-    }
+        where T8 : struct, IJsonValue<T8>;
 #endif
 }
