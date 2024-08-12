@@ -180,6 +180,14 @@ public class JsonValueEqualitySteps
         this.scenarioContext.Set(result, EqualsResultKey);
     }
 
+    [When(@"the string ""([^""]*)"" is compared to the JsonUriTemplate")]
+    public void WhenTheStringIsComparedToTheJsonUriTemplate(string testString)
+    {
+        JsonUriTemplate sut = this.scenarioContext.Get<JsonUriTemplate>(JsonValueSteps.SubjectUnderTest);
+        bool result = sut.EqualsString(testString);
+        this.scenarioContext.Set(result, EqualsResultKey);
+    }
+
     [When(@"the string ""([^""]*)"" is compared to the JsonUuid")]
     public void WhenTheStringIsComparedToTheJsonUuid(string testString)
     {
@@ -382,6 +390,14 @@ public class JsonValueEqualitySteps
         this.scenarioContext.Set(result, EqualsResultKey);
     }
 
+    [When(@"the charSpan ""([^""]*)"" is compared to the JsonUriTemplate")]
+    public void WhenTheCharSpanIsComparedToTheJsonUriTemplate(string testString)
+    {
+        JsonUriTemplate sut = this.scenarioContext.Get<JsonUriTemplate>(JsonValueSteps.SubjectUnderTest);
+        bool result = sut.EqualsString(testString.AsSpan());
+        this.scenarioContext.Set(result, EqualsResultKey);
+    }
+
     [When(@"the charSpan ""([^""]*)"" is compared to the JsonUuid")]
     public void WhenTheCharSpanIsComparedToTheJsonUuid(string testString)
     {
@@ -580,6 +596,14 @@ public class JsonValueEqualitySteps
     public void WhenTheUtfbytesAreComparedToTheJsonUriReference(string testString)
     {
         JsonUriReference sut = this.scenarioContext.Get<JsonUriReference>(JsonValueSteps.SubjectUnderTest);
+        bool result = sut.EqualsUtf8Bytes(Encoding.UTF8.GetBytes(testString));
+        this.scenarioContext.Set(result, EqualsResultKey);
+    }
+
+    [When(@"the utf8bytes ""([^""]*)"" are compared to the JsonUriTemplate")]
+    public void WhenTheUtfbytesAreComparedToTheJsonUriTemplate(string testString)
+    {
+        JsonUriTemplate sut = this.scenarioContext.Get<JsonUriTemplate>(JsonValueSteps.SubjectUnderTest);
         bool result = sut.EqualsUtf8Bytes(Encoding.UTF8.GetBytes(testString));
         this.scenarioContext.Set(result, EqualsResultKey);
     }

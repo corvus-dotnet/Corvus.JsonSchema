@@ -939,10 +939,62 @@ public class JsonStringTryGetValueSteps
         }
     }
 
+    [When("you try get an integer from the JsonUriTemplate using a char parser with the multiplier (.*)")]
+    public void WhenYouTryGetAnIntegerFromTheJsonUriTemplateUsingACharParser(int multiplier)
+    {
+        JsonUriTemplate subjectUnderTest = this.scenarioContext.Get<JsonUriTemplate>(JsonValueSteps.SubjectUnderTest);
+
+        bool success = subjectUnderTest.TryGetValue(TryGetIntegerUsingChar, multiplier, out int? result);
+
+        this.scenarioContext.Set(new ParseResult(success, result), TryParseResult);
+
+        static bool TryGetIntegerUsingChar(ReadOnlySpan<char> span, in int state, [NotNullWhen(true)] out int? value)
+        {
+#if NET8_0_OR_GREATER
+            if (int.TryParse(span, out int baseValue))
+#else
+            if (int.TryParse(span.ToString(), out int baseValue))
+#endif
+            {
+                value = baseValue * state;
+                return true;
+            }
+
+            value = default;
+            return false;
+        }
+    }
+
     [When("you try get an integer from the JsonUriReference using a utf8 parser with the multiplier (.*)")]
     public void WhenYouTryGetAnIntegerFromTheJsonUriReferenceUsingAUtf8Parser(int multiplier)
     {
         JsonUriReference subjectUnderTest = this.scenarioContext.Get<JsonUriReference>(JsonValueSteps.SubjectUnderTest);
+
+        bool success = subjectUnderTest.TryGetValue(TryGetIntegerUsingUtf8, multiplier, out int? result);
+
+        this.scenarioContext.Set(new ParseResult(success, result), TryParseResult);
+
+        static bool TryGetIntegerUsingUtf8(ReadOnlySpan<byte> span, in int state, [NotNullWhen(true)] out int? value)
+        {
+#if NET8_0_OR_GREATER
+            if (int.TryParse(Encoding.UTF8.GetString(span), out int baseValue))
+#else
+            if (int.TryParse(Encoding.UTF8.GetString(span.ToArray()), out int baseValue))
+#endif
+            {
+                value = baseValue * state;
+                return true;
+            }
+
+            value = default;
+            return false;
+        }
+    }
+
+    [When("you try get an integer from the JsonUriTemplate using a utf8 parser with the multiplier (.*)")]
+    public void WhenYouTryGetAnIntegerFromTheJsonUriTemplateUsingAUtf8Parser(int multiplier)
+    {
+        JsonUriTemplate subjectUnderTest = this.scenarioContext.Get<JsonUriTemplate>(JsonValueSteps.SubjectUnderTest);
 
         bool success = subjectUnderTest.TryGetValue(TryGetIntegerUsingUtf8, multiplier, out int? result);
 
