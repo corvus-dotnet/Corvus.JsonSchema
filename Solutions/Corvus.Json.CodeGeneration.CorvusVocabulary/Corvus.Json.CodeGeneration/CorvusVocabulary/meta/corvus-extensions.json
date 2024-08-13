@@ -1,6 +1,6 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "https://endjin.com/corvus/json-schema/2020-12/meta/corvus-extensions",
+    "$id": "https://corvus-oss.org/json-schema/2020-12/meta/corvus-extensions",
     "$dynamicAnchor": "meta",
 
     "title": "Corvus vocabulary meta-schema for corvus extension keywords",

@@ -25,7 +25,7 @@ public sealed class SchemaVocabulary : IVocabulary
     public static SchemaVocabulary DefaultInstance { get; } = new SchemaVocabulary();
 
     /// <inheritdoc/>
-    public string Uri => "https://endjin.com/corvus/json-schema/2020-12/vocab/corvus-extensions";
+    public string Uri => "https://corvus-oss.org/json-schema/2020-12/vocab/corvus-extensions";
 
     /// <inheritdoc/>
     public ReadOnlySpan<byte> UriUtf8 => "https://json-schema.org/draft/2020-12/vocab/corvus-extensions"u8;

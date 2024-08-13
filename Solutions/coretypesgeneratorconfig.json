@@ -3,7 +3,7 @@
     "rootNamespace": "Corvus.Json",
     "additionalFiles": [
         {
-            "canonicalUri": "https://endjin.com/corvus/json-schema/2020-12/schema",
+            "canonicalUri": "https://corvus-oss.org/json-schema/2020-12/schema",
             "contentPath": "./Corvus.Json.CodeGeneration.CorvusVocabulary/Corvus.Json.CodeGeneration/CorvusVocabulary/schema.json"
         }
     ],
