@@ -352,15 +352,20 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
         Span<char> typeNameBuffer,
         IEnumerable<INameHeuristic> nameHeuristics)
     {
-        foreach (INameHeuristic heuristic in nameHeuristics)
+        if (!this.options.TryGetTypeName(reference.ToString(), out _))
         {
-            if (heuristic.TryGetName(this, typeDeclaration, reference, typeNameBuffer, out int written))
+            // We only apply the heuristics if we do not have an explicit type name
+            foreach (INameHeuristic heuristic in nameHeuristics)
             {
-                typeDeclaration.SetDotnetTypeName(typeNameBuffer[..written].ToString());
-                break;
+                if (heuristic.TryGetName(this, typeDeclaration, reference, typeNameBuffer, out int written))
+                {
+                    typeDeclaration.SetDotnetTypeName(typeNameBuffer[..written].ToString());
+                    break;
+                }
             }
         }
 
+        // But we always apply the collision resolution
         if (typeDeclaration.Parent() is TypeDeclaration parent &&
             parent.FindChildNameCollision(typeDeclaration, typeDeclaration.DotnetTypeName().AsSpan()) is TypeDeclaration child
             && child.Parent() == parent)
@@ -569,7 +574,7 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
         /// <summary>
         /// Gets the array of disabled naming heuristics.
         /// </summary>
-        internal HashSet<string> DisabledNamingHeuristics { get; } = disabledNamingHeuristics is string[] n ? [..n] : [];
+        internal HashSet<string> DisabledNamingHeuristics { get; } = disabledNamingHeuristics is string[] n ? [.. n] : [];
 
         /// <summary>
         /// Gets the namespace for the base URI.
