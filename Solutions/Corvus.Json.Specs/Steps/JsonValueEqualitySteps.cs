@@ -1707,6 +1707,74 @@ public class JsonValueEqualitySteps
                 this.scenarioContext.Set(this.scenarioContext.Get<JsonByte>(JsonValueSteps.SubjectUnderTest) <= JsonByte.Null, EqualsResultKey);
             }
         }
+        else if (typeName == "JsonUInt128")
+        {
+#if NET8_0_OR_GREATER
+            UInt128 expectedValue =
+#else
+            ulong expectedValue =
+#endif
+                expected switch
+                {
+#if NET8_0_OR_GREATER
+                "UInt128.MinValue" => UInt128.MinValue,
+                "UInt128.MaxValue" => UInt128.MaxValue,
+#else
+                    "UInt128.MinValue" => ulong.MinValue,
+                    "UInt128.MaxValue" => ulong.MaxValue,
+#endif
+                    "null" => 0,
+#if NET8_0_OR_GREATER
+                    _ => UInt128.Parse(expected),
+#else
+                    _ => ulong.Parse(expected),
+#endif
+                };
+
+            if (expected != "null")
+            {
+                this.scenarioContext.Set(this.scenarioContext.Get<JsonUInt128>(JsonValueSteps.SubjectUnderTest) <= (JsonUInt128)expectedValue, EqualsObjectBackedResultKey);
+                this.scenarioContext.Set(this.scenarioContext.Get<JsonUInt128>(JsonValueSteps.SubjectUnderTest) <= ((JsonUInt128)expectedValue).AsJsonElementBackedValue(), EqualsResultKey);
+            }
+            else
+            {
+                this.scenarioContext.Set(this.scenarioContext.Get<JsonUInt128>(JsonValueSteps.SubjectUnderTest) <= JsonUInt128.Null, EqualsResultKey);
+            }
+        }
+        else if (typeName == "JsonInt128")
+        {
+#if NET8_0_OR_GREATER
+            Int128 expectedValue =
+#else
+            long expectedValue =
+#endif
+                expected switch
+                {
+#if NET8_0_OR_GREATER
+                "Int128.MinValue" => Int128.MinValue,
+                "Int128.MaxValue" => Int128.MaxValue,
+#else
+                    "Int128.MinValue" => long.MinValue,
+                    "Int128.MaxValue" => long.MaxValue,
+#endif
+                    "null" => 0,
+#if NET8_0_OR_GREATER
+                    _ => Int128.Parse(expected),
+#else
+                    _ => long.Parse(expected),
+#endif
+                };
+
+            if (expected != "null")
+            {
+                this.scenarioContext.Set(this.scenarioContext.Get<JsonInt128>(JsonValueSteps.SubjectUnderTest) <= (JsonInt128)expectedValue, EqualsObjectBackedResultKey);
+                this.scenarioContext.Set(this.scenarioContext.Get<JsonInt128>(JsonValueSteps.SubjectUnderTest) <= ((JsonInt128)expectedValue).AsJsonElementBackedValue(), EqualsResultKey);
+            }
+            else
+            {
+                this.scenarioContext.Set(this.scenarioContext.Get<JsonInt128>(JsonValueSteps.SubjectUnderTest) <= JsonInt128.Null, EqualsResultKey);
+            }
+        }
     }
 
     [When("I compare the (.*) as greater than or equal to the integer (.*)")]
@@ -1892,6 +1960,74 @@ public class JsonValueEqualitySteps
                 this.scenarioContext.Set(this.scenarioContext.Get<JsonByte>(JsonValueSteps.SubjectUnderTest) >= JsonByte.Null, EqualsResultKey);
             }
         }
+        else if (typeName == "JsonUInt128")
+        {
+#if NET8_0_OR_GREATER
+            UInt128 expectedValue =
+#else
+            ulong expectedValue =
+#endif
+                expected switch
+                {
+#if NET8_0_OR_GREATER
+                "UInt128.MinValue" => UInt128.MinValue,
+                "UInt128.MaxValue" => UInt128.MaxValue,
+#else
+                    "UInt128.MinValue" => ulong.MinValue,
+                    "UInt128.MaxValue" => ulong.MaxValue,
+#endif
+                    "null" => 0,
+#if NET8_0_OR_GREATER
+                    _ => UInt128.Parse(expected),
+#else
+                    _ => ulong.Parse(expected),
+#endif
+                };
+
+            if (expected != "null")
+            {
+                this.scenarioContext.Set(this.scenarioContext.Get<JsonUInt128>(JsonValueSteps.SubjectUnderTest) >= (JsonUInt128)expectedValue, EqualsObjectBackedResultKey);
+                this.scenarioContext.Set(this.scenarioContext.Get<JsonUInt128>(JsonValueSteps.SubjectUnderTest) >= ((JsonUInt128)expectedValue).AsJsonElementBackedValue(), EqualsResultKey);
+            }
+            else
+            {
+                this.scenarioContext.Set(this.scenarioContext.Get<JsonUInt128>(JsonValueSteps.SubjectUnderTest) >= JsonUInt128.Null, EqualsResultKey);
+            }
+        }
+        else if (typeName == "JsonInt128")
+        {
+#if NET8_0_OR_GREATER
+            Int128 expectedValue =
+#else
+            long expectedValue =
+#endif
+                expected switch
+                {
+#if NET8_0_OR_GREATER
+                "Int128.MinValue" => Int128.MinValue,
+                "Int128.MaxValue" => Int128.MaxValue,
+#else
+                    "Int128.MinValue" => long.MinValue,
+                    "Int128.MaxValue" => long.MaxValue,
+#endif
+                    "null" => 0,
+#if NET8_0_OR_GREATER
+                    _ => Int128.Parse(expected),
+#else
+                    _ => long.Parse(expected),
+#endif
+                };
+
+            if (expected != "null")
+            {
+                this.scenarioContext.Set(this.scenarioContext.Get<JsonInt128>(JsonValueSteps.SubjectUnderTest) >= (JsonInt128)expectedValue, EqualsObjectBackedResultKey);
+                this.scenarioContext.Set(this.scenarioContext.Get<JsonInt128>(JsonValueSteps.SubjectUnderTest) >= ((JsonInt128)expectedValue).AsJsonElementBackedValue(), EqualsResultKey);
+            }
+            else
+            {
+                this.scenarioContext.Set(this.scenarioContext.Get<JsonInt128>(JsonValueSteps.SubjectUnderTest) >= JsonInt128.Null, EqualsResultKey);
+            }
+        }
     }
 
     /* integer */
@@ -2046,6 +2182,36 @@ public class JsonValueEqualitySteps
         }
     }
 
+    [When("I compare the JsonInt128 with the JsonInt128 (.*)")]
+    public void WhenICompareTheJsonInt128WithTheJsonInt128(string expected)
+    {
+#if NET8_0_OR_GREATER
+        Int128 expectedValue = expected switch
+        {
+            "Int128.MinValue" => long.MinValue,
+            "Int128.MaxValue" => long.MaxValue,
+            "null" => 0,
+            _ => Int128.Parse(expected),
+        };
+#else
+        long expectedValue = expected switch
+        {
+            "Int128.MinValue" => long.MinValue,
+            "Int128.MaxValue" => long.MaxValue,
+            "null" => 0,
+            _ => long.Parse(expected),
+        };
+#endif
+        if (expected != "null")
+        {
+            this.scenarioContext.Set(JsonInt128.Compare(this.scenarioContext.Get<JsonInt128>(JsonValueSteps.SubjectUnderTest), (JsonInt128)expectedValue), ComparisonResultKey);
+        }
+        else
+        {
+            this.scenarioContext.Set(JsonInt128.Compare(this.scenarioContext.Get<JsonInt128>(JsonValueSteps.SubjectUnderTest), JsonInt128.Null), ComparisonResultKey);
+        }
+    }
+
     [When("I compare the JsonInt32 with the JsonInt32 (.*)")]
     public void WhenICompareTheJsonInt32WithTheJsonInt32(string expected)
     {
@@ -2130,6 +2296,36 @@ public class JsonValueEqualitySteps
         }
     }
 
+    [When("I compare the JsonUInt128 with the JsonUInt128 (.*)")]
+    public void WhenICompareTheJsonUInt128WithTheJsonUInt128(string expected)
+    {
+#if NET8_0_OR_GREATER
+        UInt128 expectedValue = expected switch
+        {
+            "UInt128.MinValue" => UInt128.MinValue,
+            "UInt128.MaxValue" => UInt128.MaxValue,
+            "null" => 0,
+            _ => UInt128.Parse(expected),
+        };
+#else
+        ulong expectedValue = expected switch
+        {
+            "UInt128.MinValue" => ulong.MinValue,
+            "UInt128.MaxValue" => ulong.MaxValue,
+            "null" => 0,
+            _ => ulong.Parse(expected),
+        };
+#endif
+        if (expected != "null")
+        {
+            this.scenarioContext.Set(JsonUInt128.Compare(this.scenarioContext.Get<JsonUInt128>(JsonValueSteps.SubjectUnderTest), (JsonUInt128)expectedValue), ComparisonResultKey);
+        }
+        else
+        {
+            this.scenarioContext.Set(JsonUInt128.Compare(this.scenarioContext.Get<JsonUInt128>(JsonValueSteps.SubjectUnderTest), JsonUInt128.Null), ComparisonResultKey);
+        }
+    }
+
     [When("I compare the JsonUInt32 with the JsonUInt32 (.*)")]
     public void WhenICompareTheJsonUInt32WithTheJsonUInt32(string expected)
     {
@@ -2211,6 +2407,36 @@ public class JsonValueEqualitySteps
         else
         {
             this.scenarioContext.Set(JsonNumber.Compare(this.scenarioContext.Get<JsonNumber>(JsonValueSteps.SubjectUnderTest), JsonNumber.Null), ComparisonResultKey);
+        }
+    }
+
+    [When("I compare the JsonHalf with the JsonHalf (.*)")]
+    public void WhenICompareTheJsonHalfWithTheJsonHalf(string expected)
+    {
+#if NET8_0_OR_GREATER
+        Half expectedValue = expected switch
+        {
+            "Half.MinValue" => Half.MinValue,
+            "Half.MaxValue" => Half.MaxValue,
+            "null" => Half.Zero,
+            _ => Half.Parse(expected),
+        };
+#else
+        double expectedValue = expected switch
+        {
+            "double.MinValue" => double.MinValue,
+            "double.MaxValue" => double.MaxValue,
+            "null" => 0,
+            _ => double.Parse(expected),
+        };
+#endif
+        if (expected != "null")
+        {
+            this.scenarioContext.Set(JsonHalf.Compare(this.scenarioContext.Get<JsonHalf>(JsonValueSteps.SubjectUnderTest), (JsonHalf)expectedValue), ComparisonResultKey);
+        }
+        else
+        {
+            this.scenarioContext.Set(JsonHalf.Compare(this.scenarioContext.Get<JsonHalf>(JsonValueSteps.SubjectUnderTest), JsonHalf.Null), ComparisonResultKey);
         }
     }
 
@@ -3098,48 +3324,75 @@ public class JsonValueEqualitySteps
     }
 
     /* integer */
-
     [When("I compare the JsonUInt128 as less than the integer (.*)")]
     public void WhenICompareTheJsonUInt128AsLessThanTheInteger(string expected)
     {
-        long expectedValue = expected switch
-        {
-            "long.MinValue" => long.MinValue,
-            "long.MaxValue" => long.MaxValue,
-            "null" => 0,
-            _ => long.Parse(expected),
-        };
+#if NET8_0_OR_GREATER
+        UInt128 expectedValue =
+#else
+        ulong expectedValue =
+#endif
+            expected switch
+            {
+#if NET8_0_OR_GREATER
+                "UInt128.MinValue" => UInt128.MinValue,
+                "UInt128.MaxValue" => UInt128.MaxValue,
+#else
+                "UInt128.MinValue" => ulong.MinValue,
+                "UInt128.MaxValue" => ulong.MaxValue,
+#endif
+                "null" => 0,
+#if NET8_0_OR_GREATER
+                    _ => UInt128.Parse(expected),
+#else
+                _ => ulong.Parse(expected),
+#endif
+            };
 
         if (expected != "null")
         {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonUInt128>(JsonValueSteps.SubjectUnderTest) < new JsonInteger(expectedValue), EqualsObjectBackedResultKey);
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonUInt128>(JsonValueSteps.SubjectUnderTest) < new JsonInteger(expectedValue).AsJsonElementBackedValue(), EqualsResultKey);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonUInt128>(JsonValueSteps.SubjectUnderTest) < (JsonUInt128)expectedValue, EqualsObjectBackedResultKey);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonUInt128>(JsonValueSteps.SubjectUnderTest) < ((JsonUInt128)expectedValue).AsJsonElementBackedValue(), EqualsResultKey);
         }
         else
         {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonUInt128>(JsonValueSteps.SubjectUnderTest) < JsonInteger.Null, EqualsResultKey);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonUInt128>(JsonValueSteps.SubjectUnderTest) < JsonUInt128.Null, EqualsResultKey);
         }
     }
 
     [When("I compare the JsonUInt128 as greater than the integer (.*)")]
     public void WhenICompareTheJsonUInt128AsGreaterThanTheInteger(string expected)
     {
-        long expectedValue = expected switch
-        {
-            "long.MinValue" => long.MinValue,
-            "long.MaxValue" => long.MaxValue,
-            "null" => 0,
-            _ => long.Parse(expected),
-        };
+#if NET8_0_OR_GREATER
+        UInt128 expectedValue =
+#else
+        ulong expectedValue =
+#endif
+            expected switch
+            {
+#if NET8_0_OR_GREATER
+                "UInt128.MinValue" => UInt128.MinValue,
+                "UInt128.MaxValue" => UInt128.MaxValue,
+#else
+                "UInt128.MinValue" => ulong.MinValue,
+                "UInt128.MaxValue" => ulong.MaxValue,
+#endif
+                "null" => 0,
+#if NET8_0_OR_GREATER
+                    _ => UInt128.Parse(expected),
+#else
+                _ => ulong.Parse(expected),
+#endif
+            };
 
         if (expected != "null")
         {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonUInt128>(JsonValueSteps.SubjectUnderTest) > new JsonInteger(expectedValue), EqualsObjectBackedResultKey);
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonUInt128>(JsonValueSteps.SubjectUnderTest) > new JsonInteger(expectedValue).AsJsonElementBackedValue(), EqualsResultKey);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonUInt128>(JsonValueSteps.SubjectUnderTest) > (JsonUInt128)expectedValue, EqualsObjectBackedResultKey);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonUInt128>(JsonValueSteps.SubjectUnderTest) > ((JsonUInt128)expectedValue).AsJsonElementBackedValue(), EqualsResultKey);
         }
         else
         {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonUInt128>(JsonValueSteps.SubjectUnderTest) > JsonInteger.Null, EqualsResultKey);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonUInt128>(JsonValueSteps.SubjectUnderTest) > JsonUInt128.Null, EqualsResultKey);
         }
     }
 
@@ -3148,13 +3401,13 @@ public class JsonValueEqualitySteps
     {
         if (expected != "null")
         {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonUInt128>(JsonValueSteps.SubjectUnderTest).Equals(JsonInteger.Parse(expected).AsDotnetBackedValue()), EqualsObjectBackedResultKey);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonUInt128>(JsonValueSteps.SubjectUnderTest).Equals(JsonUInt128.Parse(expected).AsDotnetBackedValue()), EqualsObjectBackedResultKey);
         }
 
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonUInt128>(JsonValueSteps.SubjectUnderTest).Equals(JsonInteger.Parse(expected)), EqualsResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonUInt128>(JsonValueSteps.SubjectUnderTest) == JsonInteger.Parse(expected), EqualityResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonUInt128>(JsonValueSteps.SubjectUnderTest) != JsonInteger.Parse(expected), InequalityResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonUInt128>(JsonValueSteps.SubjectUnderTest).GetHashCode() == JsonInteger.Parse(expected).GetHashCode(), HashCodeResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonUInt128>(JsonValueSteps.SubjectUnderTest).Equals(JsonUInt128.Parse(expected)), EqualsResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonUInt128>(JsonValueSteps.SubjectUnderTest) == JsonUInt128.Parse(expected), EqualityResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonUInt128>(JsonValueSteps.SubjectUnderTest) != JsonUInt128.Parse(expected), InequalityResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonUInt128>(JsonValueSteps.SubjectUnderTest).GetHashCode() == JsonUInt128.Parse(expected).GetHashCode(), HashCodeResultKey);
     }
 
     /// <summary>
@@ -3194,44 +3447,72 @@ public class JsonValueEqualitySteps
     [When("I compare the JsonInt128 as less than the integer (.*)")]
     public void WhenICompareTheJsonInt128AsLessThanTheInteger(string expected)
     {
-        long expectedValue = expected switch
-        {
-            "long.MinValue" => long.MinValue,
-            "long.MaxValue" => long.MaxValue,
-            "null" => 0,
-            _ => long.Parse(expected),
-        };
+#if NET8_0_OR_GREATER
+        Int128 expectedValue =
+#else
+        long expectedValue =
+#endif
+            expected switch
+            {
+#if NET8_0_OR_GREATER
+                "Int128.MinValue" => Int128.MinValue,
+                "Int128.MaxValue" => Int128.MaxValue,
+#else
+                "Int128.MinValue" => long.MinValue,
+                "Int128.MaxValue" => long.MaxValue,
+#endif
+                "null" => 0,
+#if NET8_0_OR_GREATER
+                _ => Int128.Parse(expected),
+#else
+                _ => long.Parse(expected),
+#endif
+            };
 
         if (expected != "null")
         {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonInt128>(JsonValueSteps.SubjectUnderTest) < new JsonInteger(expectedValue), EqualsObjectBackedResultKey);
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonInt128>(JsonValueSteps.SubjectUnderTest) < new JsonInteger(expectedValue).AsJsonElementBackedValue(), EqualsResultKey);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonInt128>(JsonValueSteps.SubjectUnderTest) < (JsonInt128)expectedValue, EqualsObjectBackedResultKey);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonInt128>(JsonValueSteps.SubjectUnderTest) < ((JsonInt128)expectedValue).AsJsonElementBackedValue(), EqualsResultKey);
         }
         else
         {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonInt128>(JsonValueSteps.SubjectUnderTest) < JsonInteger.Null, EqualsResultKey);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonInt128>(JsonValueSteps.SubjectUnderTest) < JsonInt128.Null, EqualsResultKey);
         }
     }
 
     [When("I compare the JsonInt128 as greater than the integer (.*)")]
     public void WhenICompareTheJsonInt128AsGreaterThanTheInteger(string expected)
     {
-        long expectedValue = expected switch
-        {
-            "long.MinValue" => long.MinValue,
-            "long.MaxValue" => long.MaxValue,
-            "null" => 0,
-            _ => long.Parse(expected),
-        };
+#if NET8_0_OR_GREATER
+        Int128 expectedValue =
+#else
+        long expectedValue =
+#endif
+            expected switch
+            {
+#if NET8_0_OR_GREATER
+                "Int128.MinValue" => Int128.MinValue,
+                "Int128.MaxValue" => Int128.MaxValue,
+#else
+                "Int128.MinValue" => long.MinValue,
+                "Int128.MaxValue" => long.MaxValue,
+#endif
+                "null" => 0,
+#if NET8_0_OR_GREATER
+                _ => Int128.Parse(expected),
+#else
+                _ => long.Parse(expected),
+#endif
+            };
 
         if (expected != "null")
         {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonInt128>(JsonValueSteps.SubjectUnderTest) > new JsonInteger(expectedValue), EqualsObjectBackedResultKey);
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonInt128>(JsonValueSteps.SubjectUnderTest) > new JsonInteger(expectedValue).AsJsonElementBackedValue(), EqualsResultKey);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonInt128>(JsonValueSteps.SubjectUnderTest) > (JsonInt128)expectedValue, EqualsObjectBackedResultKey);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonInt128>(JsonValueSteps.SubjectUnderTest) > ((JsonInt128)expectedValue).AsJsonElementBackedValue(), EqualsResultKey);
         }
         else
         {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonInt128>(JsonValueSteps.SubjectUnderTest) > JsonInteger.Null, EqualsResultKey);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonInt128>(JsonValueSteps.SubjectUnderTest) > JsonInt128.Null, EqualsResultKey);
         }
     }
 
@@ -3240,13 +3521,13 @@ public class JsonValueEqualitySteps
     {
         if (expected != "null")
         {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonInt128>(JsonValueSteps.SubjectUnderTest).Equals(JsonInteger.Parse(expected).AsDotnetBackedValue()), EqualsObjectBackedResultKey);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonInt128>(JsonValueSteps.SubjectUnderTest).Equals(JsonInt128.Parse(expected).AsDotnetBackedValue()), EqualsObjectBackedResultKey);
         }
 
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonInt128>(JsonValueSteps.SubjectUnderTest).Equals(JsonInteger.Parse(expected)), EqualsResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonInt128>(JsonValueSteps.SubjectUnderTest) == JsonInteger.Parse(expected), EqualityResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonInt128>(JsonValueSteps.SubjectUnderTest) != JsonInteger.Parse(expected), InequalityResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonInt128>(JsonValueSteps.SubjectUnderTest).GetHashCode() == JsonInteger.Parse(expected).GetHashCode(), HashCodeResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonInt128>(JsonValueSteps.SubjectUnderTest).Equals(JsonInt128.Parse(expected)), EqualsResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonInt128>(JsonValueSteps.SubjectUnderTest) == JsonInt128.Parse(expected), EqualityResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonInt128>(JsonValueSteps.SubjectUnderTest) != JsonInt128.Parse(expected), InequalityResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonInt128>(JsonValueSteps.SubjectUnderTest).GetHashCode() == JsonInt128.Parse(expected).GetHashCode(), HashCodeResultKey);
     }
 
     /// <summary>
@@ -4058,6 +4339,15 @@ public class JsonValueEqualitySteps
 
             this.scenarioContext.Set(this.scenarioContext.Get<JsonDecimal>(JsonValueSteps.SubjectUnderTest) <= JsonDecimal.Parse(expected), EqualsResultKey);
         }
+        else if (targetType == "JsonHalf")
+        {
+            if (expected != "null")
+            {
+                this.scenarioContext.Set(this.scenarioContext.Get<JsonHalf>(JsonValueSteps.SubjectUnderTest) <= JsonHalf.Parse(expected).AsDotnetBackedValue(), EqualsObjectBackedResultKey);
+            }
+
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonHalf>(JsonValueSteps.SubjectUnderTest) <= JsonHalf.Parse(expected), EqualsResultKey);
+        }
         else
         {
             throw new InvalidOperationException($"Unexpected type: {targetType}");
@@ -4102,6 +4392,15 @@ public class JsonValueEqualitySteps
             }
 
             this.scenarioContext.Set(this.scenarioContext.Get<JsonDecimal>(JsonValueSteps.SubjectUnderTest) < JsonDecimal.Parse(expected), EqualsResultKey);
+        }
+        else if (targetType == "JsonHalf")
+        {
+            if (expected != "null")
+            {
+                this.scenarioContext.Set(this.scenarioContext.Get<JsonHalf>(JsonValueSteps.SubjectUnderTest) < JsonHalf.Parse(expected).AsDotnetBackedValue(), EqualsObjectBackedResultKey);
+            }
+
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonHalf>(JsonValueSteps.SubjectUnderTest) < JsonHalf.Parse(expected), EqualsResultKey);
         }
         else
         {
@@ -4148,6 +4447,15 @@ public class JsonValueEqualitySteps
 
             this.scenarioContext.Set(this.scenarioContext.Get<JsonDecimal>(JsonValueSteps.SubjectUnderTest) > JsonDecimal.Parse(expected), EqualsResultKey);
         }
+        else if (targetType == "JsonHalf")
+        {
+            if (expected != "null")
+            {
+                this.scenarioContext.Set(this.scenarioContext.Get<JsonHalf>(JsonValueSteps.SubjectUnderTest) > JsonHalf.Parse(expected).AsDotnetBackedValue(), EqualsObjectBackedResultKey);
+            }
+
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonHalf>(JsonValueSteps.SubjectUnderTest) > JsonHalf.Parse(expected), EqualsResultKey);
+        }
         else
         {
             throw new InvalidOperationException($"Unexpected type: {targetType}");
@@ -4192,6 +4500,15 @@ public class JsonValueEqualitySteps
             }
 
             this.scenarioContext.Set(this.scenarioContext.Get<JsonDecimal>(JsonValueSteps.SubjectUnderTest) >= JsonDecimal.Parse(expected), EqualsResultKey);
+        }
+        else if (targetType == "JsonHalf")
+        {
+            if (expected != "null")
+            {
+                this.scenarioContext.Set(this.scenarioContext.Get<JsonHalf>(JsonValueSteps.SubjectUnderTest) >= JsonHalf.Parse(expected).AsDotnetBackedValue(), EqualsObjectBackedResultKey);
+            }
+
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonHalf>(JsonValueSteps.SubjectUnderTest) >= JsonHalf.Parse(expected), EqualsResultKey);
         }
         else
         {

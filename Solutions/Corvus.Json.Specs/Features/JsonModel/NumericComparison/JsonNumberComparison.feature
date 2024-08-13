@@ -23,6 +23,13 @@ Examples:
 	| 1.1       | 3     | true   | JsonSingle  |
 	| null      | null  | false  | JsonSingle  |
 	| null      | 1.1   | false  | JsonSingle  |
+	| 1         | 1     | false  | JsonHalf    |
+	| 1.1       | 1.1   | false  | JsonHalf    |
+	| 1.1       | 1     | false  | JsonHalf    |
+	| 2         | 1     | false  | JsonHalf    |
+	| 1.1       | 3     | true   | JsonHalf    |
+	| null      | null  | false  | JsonHalf    |
+	| null      | 1.1   | false  | JsonHalf    |
 	| 1         | 1     | false  | JsonDouble  |
 	| 1.1       | 1.1   | false  | JsonDouble  |
 	| 1.1       | 1     | false  | JsonDouble  |
@@ -53,6 +60,10 @@ Examples:
 	| 1.1       | 1.1   | false  | JsonSingle  |
 	| 1.1       | 1     | false  | JsonSingle  |
 	| 1         | 3     | true   | JsonSingle  |
+	| 1         | 1     | false  | JsonHalf    |
+	| 1.1       | 1.1   | false  | JsonHalf    |
+	| 1.1       | 1     | false  | JsonHalf    |
+	| 1         | 3     | true   | JsonHalf    |
 	| 1         | 1     | false  | JsonDouble  |
 	| 1.1       | 1.1   | false  | JsonDouble  |
 	| 1.1       | 1     | false  | JsonDouble  |
@@ -76,6 +87,13 @@ Examples:
 	| 1.1       | 3     | true   | JsonNumber  |
 	| null      | null  | false  | JsonNumber  |
 	| null      | 1.1   | false  | JsonNumber  |
+	| 1         | 1     | true   | JsonHalf    |
+	| 1.1       | 1.1   | true   | JsonHalf    |
+	| 1.1       | 1     | false  | JsonHalf    |
+	| 2         | 1     | false  | JsonHalf    |
+	| 1.1       | 3     | true   | JsonHalf    |
+	| null      | null  | false  | JsonHalf    |
+	| null      | 1.1   | false  | JsonHalf    |
 	| 1         | 1     | true   | JsonSingle  |
 	| 1.1       | 1.1   | true   | JsonSingle  |
 	| 1.1       | 1     | false  | JsonSingle  |
@@ -109,6 +127,10 @@ Examples:
 	| 1.1       | 1.1   | true   | JsonNumber  |
 	| 1.1       | 1     | false  | JsonNumber  |
 	| 1         | 3     | true   | JsonNumber  |
+	| 1         | 1     | true   | JsonHalf    |
+	| 1.1       | 1.1   | true   | JsonHalf    |
+	| 1.1       | 1     | false  | JsonHalf    |
+	| 1         | 3     | true   | JsonHalf    |
 	| 1         | 1     | true   | JsonSingle  |
 	| 1.1       | 1.1   | true   | JsonSingle  |
 	| 1.1       | 1     | false  | JsonSingle  |
@@ -144,6 +166,13 @@ Examples:
 	| 1.1       | 3     | false  | JsonSingle  |
 	| null      | null  | false  | JsonSingle  |
 	| null      | 1.1   | false  | JsonSingle  |
+	| 1         | 1     | false  | JsonHalf    |
+	| 1.1       | 1.1   | false  | JsonHalf    |
+	| 1.1       | 1     | true   | JsonHalf    |
+	| 2         | 1     | true   | JsonHalf    |
+	| 1.1       | 3     | false  | JsonHalf    |
+	| null      | null  | false  | JsonHalf    |
+	| null      | 1.1   | false  | JsonHalf    |
 	| 1         | 1     | false  | JsonDouble  |
 	| 1.1       | 1.1   | false  | JsonDouble  |
 	| 1.1       | 1     | true   | JsonDouble  |
@@ -170,17 +199,18 @@ Examples:
 	| 1.1       | 1.1   | false  | JsonNumber  |
 	| 1.1       | 1     | true   | JsonNumber  |
 	| 1         | 3     | false  | JsonNumber  |
-
+	| 1         | 1     | false  | JsonHalf    |
+	| 1.1       | 1.1   | false  | JsonHalf    |
+	| 1.1       | 1     | true   | JsonHalf    |
+	| 1         | 3     | false  | JsonHalf    |
 	| 1         | 1     | false  | JsonSingle  |
 	| 1.1       | 1.1   | false  | JsonSingle  |
 	| 1.1       | 1     | true   | JsonSingle  |
 	| 1         | 3     | false  | JsonSingle  |
-
 	| 1         | 1     | false  | JsonDouble  |
 	| 1.1       | 1.1   | false  | JsonDouble  |
 	| 1.1       | 1     | true   | JsonDouble  |
 	| 1         | 3     | false  | JsonDouble  |
-
 	| 1         | 1     | false  | JsonDecimal |
 	| 1.1       | 1.1   | false  | JsonDecimal |
 	| 1.1       | 1     | true   | JsonDecimal |
@@ -200,6 +230,13 @@ Examples:
 	| 1.1       | 3     | false  | JsonNumber  |
 	| null      | null  | false  | JsonNumber  |
 	| null      | 1.1   | false  | JsonNumber  |
+	| 1         | 1     | true   | JsonHalf    |
+	| 1.1       | 1.1   | true   | JsonHalf    |
+	| 1.1       | 1     | true   | JsonHalf    |
+	| 2         | 1     | true   | JsonHalf    |
+	| 1.1       | 3     | false  | JsonHalf    |
+	| null      | null  | false  | JsonHalf    |
+	| null      | 1.1   | false  | JsonHalf    |
 	| 1         | 1     | true   | JsonSingle  |
 	| 1.1       | 1.1   | true   | JsonSingle  |
 	| 1.1       | 1     | true   | JsonSingle  |
@@ -233,6 +270,10 @@ Examples:
 	| 1.1       | 1.1   | true   | JsonNumber  |
 	| 1.1       | 1     | true   | JsonNumber  |
 	| 1         | 3     | false  | JsonNumber  |
+	| 1         | 1     | true   | JsonHalf    |
+	| 1.1       | 1.1   | true   | JsonHalf    |
+	| 1.1       | 1     | true   | JsonHalf    |
+	| 1         | 3     | false  | JsonHalf    |
 	| 1         | 1     | true   | JsonSingle  |
 	| 1.1       | 1.1   | true   | JsonSingle  |
 	| 1.1       | 1     | true   | JsonSingle  |
