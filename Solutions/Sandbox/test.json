@@ -1,4 +1,5 @@
 {
+    "$schema": "https://endjin.com/corvus/json-schema/2020-12/schema",
     "type": "array",
     "prefixItems": [
         {

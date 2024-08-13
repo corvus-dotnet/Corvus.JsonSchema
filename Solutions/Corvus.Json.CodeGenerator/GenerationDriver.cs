@@ -23,6 +23,8 @@ public static class GenerationDriver
 
             var documentResolver = new CompoundDocumentResolver(new FileSystemDocumentResolver(), new HttpClientDocumentResolver(new HttpClient()));
 
+            Metaschema.AddMetaschema(documentResolver);
+
             await RegisterAdditionalFiles(generatorConfig, documentResolver);
 
             VocabularyRegistry vocabularyRegistry = ReigsterVocabularies(documentResolver);
