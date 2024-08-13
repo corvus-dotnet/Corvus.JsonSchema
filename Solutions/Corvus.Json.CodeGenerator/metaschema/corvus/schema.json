@@ -1,6 +1,6 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "https://endjin.com/corvus/json-schema/2020-12/schema",
+    "$id": "https://corvus-oss.org/json-schema/2020-12/schema",
     "$vocabulary": {
         "https://json-schema.org/draft/2020-12/vocab/core": true,
         "https://json-schema.org/draft/2020-12/vocab/applicator": true,
@@ -9,7 +9,7 @@
         "https://json-schema.org/draft/2020-12/vocab/meta-data": true,
         "https://json-schema.org/draft/2020-12/vocab/format-annotation": true,
         "https://json-schema.org/draft/2020-12/vocab/content": true,
-        "https://endjin.com/corvus/json-schema/2020-12/vocab/corvus-extensions": false
+        "https://corvus-oss.org/json-schema/2020-12/vocab/corvus-extensions": false
     },
     "$dynamicAnchor": "meta",
 
@@ -22,7 +22,7 @@
         { "$ref": "https://json-schema.org/draft/2020-12/meta/meta-data" },
         { "$ref": "https://json-schema.org/draft/2020-12/meta/format-annotation" },
         { "$ref": "https://json-schema.org/draft/2020-12/meta/content" },
-        { "$ref": "https://endjin.com/corvus/json-schema/2020-12/meta/corvus-extensions" }
+        { "$ref": "https://corvus-oss.org/json-schema/2020-12/meta/corvus-extensions" }
     ],
     "type": [ "object", "boolean" ],
     "$comment": "This meta-schema also defines keywords that have appeared in previous drafts in order to prevent incompatible extensions as they remain in common use.",

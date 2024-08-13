@@ -86,10 +86,10 @@ internal static class Metaschema
             JsonDocument.Parse(File.ReadAllText(Path.Combine(assemblyPath, "./metaschema/draft2020-12/meta/validation.json"))));
 
         documentResolver.AddDocument(
-            "https://endjin.com/corvus/json-schema/2020-12/schema",
+            "https://corvus-oss.org/json-schema/2020-12/schema",
             JsonDocument.Parse(File.ReadAllText(Path.Combine(assemblyPath, "./metaschema/corvus/schema.json"))));
         documentResolver.AddDocument(
-            "https://endjin.com/corvus/json-schema/2020-12/meta/corvus-extensions",
+            "https://corvus-oss.org/json-schema/2020-12/meta/corvus-extensions",
             JsonDocument.Parse(File.ReadAllText(Path.Combine(assemblyPath, "./metaschema/corvus/meta/corvus-extensions.json"))));
 
         return documentResolver;
