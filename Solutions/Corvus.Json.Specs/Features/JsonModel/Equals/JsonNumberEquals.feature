@@ -33,6 +33,12 @@ Examples:
 	| 1.1       | 3     | false  | JsonDecimal |
 	| null      | null  | true   | JsonDecimal |
 	| null      | 1.1   | false  | JsonDecimal |
+	| 1         | 1     | true   | JsonHalf    |
+	| 1.1       | 1.1   | true   | JsonHalf    |
+	| 1.1       | 1     | false  | JsonHalf    |
+	| 1.1       | 3     | false  | JsonHalf    |
+	| null      | null  | true   | JsonHalf    |
+	| null      | 1.1   | false  | JsonHalf    |
 
 Scenario Outline: Equals for dotnet backed value as a number
 	Given the dotnet backed <TargetType> <jsonValue>
@@ -57,6 +63,12 @@ Examples:
 	| 1.1       | 1.1   | true   | JsonDecimal |
 	| 1.1       | 1     | false  | JsonDecimal |
 	| 1         | 3     | false  | JsonDecimal |
+	| 1         | 1     | true   | JsonHalf    |
+	| 1.1       | 1.1   | true   | JsonHalf    |
+	| 1.1       | 1     | false  | JsonHalf    |
+	| 1.1       | 3     | false  | JsonHalf    |
+	| null      | null  | true   | JsonHalf    |
+	| null      | 1.1   | false  | JsonHalf    |
 
 Scenario Outline: Equals for number json element backed value as an IJsonValue
 	Given the JsonElement backed JsonNumber <jsonValue>

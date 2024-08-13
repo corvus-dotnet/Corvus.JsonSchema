@@ -13,6 +13,10 @@ Examples:
 	| 1         | 3     | false  | JsonInteger |
 	| null      | null  | true   | JsonInteger |
 	| null      | 1     | false  | JsonInteger |
+	| 1         | 1     | true   | JsonInt128  |
+	| 1         | 3     | false  | JsonInt128  |
+	| null      | null  | true   | JsonInt128  |
+	| null      | 1     | false  | JsonInt128  |
 	| 1         | 1     | true   | JsonInt64   |
 	| 1         | 3     | false  | JsonInt64   |
 	| null      | null  | true   | JsonInt64   |
@@ -45,6 +49,14 @@ Examples:
 	| 1         | 3     | false  | JsonByte    |
 	| null      | null  | true   | JsonByte    |
 	| null      | 1     | false  | JsonByte    |
+	| 1         | 1     | true   | JsonInt128  |
+	| 1         | 3     | false  | JsonInt128  |
+	| null      | null  | true   | JsonInt128  |
+	| null      | 1     | false  | JsonInt128  |
+	| 1         | 1     | true   | JsonUInt128 |
+	| 1         | 3     | false  | JsonUInt128 |
+	| null      | null  | true   | JsonUInt128 |
+	| null      | 1     | false  | JsonUInt128 |
 
 Scenario Outline: Equals for dotnet backed value as a integer
 	Given the dotnet backed <TargetType> <jsonValue>
@@ -71,6 +83,14 @@ Examples:
 	| 1         | 3     | false  | JsonUInt16  |
 	| 1         | 1     | true   | JsonByte    |
 	| 1         | 3     | false  | JsonByte    |
+	| 1         | 1     | true   | JsonInt128  |
+	| 1         | 3     | false  | JsonInt128  |
+	| null      | null  | true   | JsonInt128  |
+	| null      | 1     | false  | JsonInt128  |
+	| 1         | 1     | true   | JsonUInt128 |
+	| 1         | 3     | false  | JsonUInt128 |
+	| null      | null  | true   | JsonUInt128 |
+	| null      | 1     | false  | JsonUInt128 |
 
 Scenario Outline: Equals for dotnet backed value as a BinaryJsonNumber
 	Given the dotnet backed <TargetType> <jsonValue>
@@ -97,6 +117,10 @@ Examples:
 	| 1         | 3     | false  | JsonUInt16  |
 	| 1         | 1     | true   | JsonByte    |
 	| 1         | 3     | false  | JsonByte    |
+	| 1         | 1     | true   | JsonInt128  |
+	| 1         | 3     | false  | JsonInt128  |
+	| 1         | 1     | true   | JsonUInt128 |
+	| 1         | 3     | false  | JsonUInt128 |
 
 Scenario Outline: Equals for JsonElement backed value as a BinaryJsonNumber
 	Given the JsonElement backed <TargetType> <jsonValue>
@@ -123,6 +147,10 @@ Examples:
 	| 1         | 3     | false  | JsonUInt16  |
 	| 1         | 1     | true   | JsonByte    |
 	| 1         | 3     | false  | JsonByte    |
+	| 1         | 1     | true   | JsonInt128  |
+	| 1         | 3     | false  | JsonInt128  |
+	| 1         | 1     | true   | JsonUInt128 |
+	| 1         | 3     | false  | JsonUInt128 |
 
 Scenario Outline: Equals for integer json element backed value as an IJsonValue
 	Given the JsonElement backed <TargetType> <jsonValue>
@@ -311,6 +339,47 @@ Examples:
 	| 1         | "{ \\"first\\": \\"1\\" }"     | false  | JsonByte    |
 	| 1         | "192.168.0.1"                  | false  | JsonByte    |
 	| 1         | "0:0:0:0:0:ffff:c0a8:0001"     | false  | JsonByte    |
+	| 1         | "Hello"                        | false  | JsonInt128  |
+	| 1         | "Goodbye"                      | false  | JsonInt128  |
+	| 1         | 1                              | true   | JsonInt128  |
+	| 1         | 1.0                            | true   | JsonInt128  |
+	| 1         | 1.1                            | false  | JsonInt128  |
+	| 1         | [1,2,3]                        | false  | JsonInt128  |
+	| 1         | { "first": "1" }               | false  | JsonInt128  |
+	| 1         | true                           | false  | JsonInt128  |
+	| 1         | false                          | false  | JsonInt128  |
+	| 1         | "2018-11-13T20:20:39+00:00"    | false  | JsonInt128  |
+	| 1         | "2018-11-13"                   | false  | JsonInt128  |
+	| 1         | "P3Y6M4DT12H30M5S"             | false  | JsonInt128  |
+	| 1         | "2018-11-13"                   | false  | JsonInt128  |
+	| 1         | "hello@endjin.com"             | false  | JsonInt128  |
+	| 1         | "www.example.com"              | false  | JsonInt128  |
+	| 1         | "http://foo.bar/?baz=qux#quux" | false  | JsonInt128  |
+	| 1         | "eyAiaGVsbG8iOiAid29ybGQiIH0=" | false  | JsonInt128  |
+	| 1         | "{ \\"first\\": \\"1\\" }"     | false  | JsonInt128  |
+	| 1         | "192.168.0.1"                  | false  | JsonInt128  |
+	| 1         | "0:0:0:0:0:ffff:c0a8:0001"     | false  | JsonInt128  |
+	| 1         | "Hello"                        | false  | JsonUInt128 |
+	| 1         | "Goodbye"                      | false  | JsonUInt128 |
+	| 1         | 1                              | true   | JsonUInt128 |
+	| 1         | 1.0                            | true   | JsonUInt128 |
+	| 1         | 1.1                            | false  | JsonUInt128 |
+	| 1         | [1,2,3]                        | false  | JsonUInt128 |
+	| 1         | { "first": "1" }               | false  | JsonUInt128 |
+	| 1         | true                           | false  | JsonUInt128 |
+	| 1         | false                          | false  | JsonUInt128 |
+	| 1         | "2018-11-13T20:20:39+00:00"    | false  | JsonUInt128 |
+	| 1         | "2018-11-13"                   | false  | JsonUInt128 |
+	| 1         | "P3Y6M4DT12H30M5S"             | false  | JsonUInt128 |
+	| 1         | "2018-11-13"                   | false  | JsonUInt128 |
+	| 1         | "hello@endjin.com"             | false  | JsonUInt128 |
+	| 1         | "www.example.com"              | false  | JsonUInt128 |
+	| 1         | "http://foo.bar/?baz=qux#quux" | false  | JsonUInt128 |
+	| 1         | "eyAiaGVsbG8iOiAid29ybGQiIH0=" | false  | JsonUInt128 |
+	| 1         | "{ \\"first\\": \\"1\\" }"     | false  | JsonUInt128 |
+	| 1         | "192.168.0.1"                  | false  | JsonUInt128 |
+	| 1         | "0:0:0:0:0:ffff:c0a8:0001"     | false  | JsonUInt128 |
+
 
 Scenario Outline: Equals for integer dotnet backed value as an IJsonValue
 	Given the dotnet backed <TargetType> <jsonValue>
@@ -499,6 +568,47 @@ Examples:
 	| 1         | "{ \\"first\\": \\"1\\" }"     | false  | JsonByte    |
 	| 1         | "192.168.0.1"                  | false  | JsonByte    |
 	| 1         | "0:0:0:0:0:ffff:c0a8:0001"     | false  | JsonByte    |
+	| 1         | "Hello"                        | false  | JsonInt128  |
+	| 1         | "Goodbye"                      | false  | JsonInt128  |
+	| 1         | 1                              | true   | JsonInt128  |
+	| 1         | 1.0                            | true   | JsonInt128  |
+	| 1         | 1.1                            | false  | JsonInt128  |
+	| 1         | [1,2,3]                        | false  | JsonInt128  |
+	| 1         | { "first": "1" }               | false  | JsonInt128  |
+	| 1         | true                           | false  | JsonInt128  |
+	| 1         | false                          | false  | JsonInt128  |
+	| 1         | "2018-11-13T20:20:39+00:00"    | false  | JsonInt128  |
+	| 1         | "P3Y6M4DT12H30M5S"             | false  | JsonInt128  |
+	| 1         | "2018-11-13"                   | false  | JsonInt128  |
+	| 1         | "P3Y6M4DT12H30M5S"             | false  | JsonInt128  |
+	| 1         | "hello@endjin.com"             | false  | JsonInt128  |
+	| 1         | "www.example.com"              | false  | JsonInt128  |
+	| 1         | "http://foo.bar/?baz=qux#quux" | false  | JsonInt128  |
+	| 1         | "eyAiaGVsbG8iOiAid29ybGQiIH0=" | false  | JsonInt128  |
+	| 1         | "{ \\"first\\": \\"1\\" }"     | false  | JsonInt128  |
+	| 1         | "192.168.0.1"                  | false  | JsonInt128  |
+	| 1         | "0:0:0:0:0:ffff:c0a8:0001"     | false  | JsonInt128  |
+	| 1         | "Hello"                        | false  | JsonUInt128 |
+	| 1         | "Goodbye"                      | false  | JsonUInt128 |
+	| 1         | 1                              | true   | JsonUInt128 |
+	| 1         | 1.0                            | true   | JsonUInt128 |
+	| 1         | 1.1                            | false  | JsonUInt128 |
+	| 1         | [1,2,3]                        | false  | JsonUInt128 |
+	| 1         | { "first": "1" }               | false  | JsonUInt128 |
+	| 1         | true                           | false  | JsonUInt128 |
+	| 1         | false                          | false  | JsonUInt128 |
+	| 1         | "2018-11-13T20:20:39+00:00"    | false  | JsonUInt128 |
+	| 1         | "P3Y6M4DT12H30M5S"             | false  | JsonUInt128 |
+	| 1         | "2018-11-13"                   | false  | JsonUInt128 |
+	| 1         | "P3Y6M4DT12H30M5S"             | false  | JsonUInt128 |
+	| 1         | "hello@endjin.com"             | false  | JsonUInt128 |
+	| 1         | "www.example.com"              | false  | JsonUInt128 |
+	| 1         | "http://foo.bar/?baz=qux#quux" | false  | JsonUInt128 |
+	| 1         | "eyAiaGVsbG8iOiAid29ybGQiIH0=" | false  | JsonUInt128 |
+	| 1         | "{ \\"first\\": \\"1\\" }"     | false  | JsonUInt128 |
+	| 1         | "192.168.0.1"                  | false  | JsonUInt128 |
+	| 1         | "0:0:0:0:0:ffff:c0a8:0001"     | false  | JsonUInt128 |
+
 
 Scenario Outline: Equals for integer json element backed value as an object
 	Given the JsonElement backed <TargetType> <jsonValue>
@@ -704,6 +814,51 @@ Examples:
 	| 1         | "0:0:0:0:0:ffff:c0a8:0001"     | false  | JsonByte    |
 	| 1         | <new object()>                 | false  | JsonByte    |
 	| 1         | null                           | false  | JsonByte    |
+
+	| 1         | "Hello"                        | false  | JsonInt128  |
+	| 1         | "Goodbye"                      | false  | JsonInt128  |
+	| 1         | 1                              | true   | JsonInt128  |
+	| 1         | 1.0                            | true   | JsonInt128  |
+	| 1         | 1.1                            | false  | JsonInt128  |
+	| 1         | [1,2,3]                        | false  | JsonInt128  |
+	| 1         | { "first": "1" }               | false  | JsonInt128  |
+	| 1         | true                           | false  | JsonInt128  |
+	| 1         | false                          | false  | JsonInt128  |
+	| 1         | "2018-11-13T20:20:39+00:00"    | false  | JsonInt128  |
+	| 1         | "P3Y6M4DT12H30M5S"             | false  | JsonInt128  |
+	| 1         | "2018-11-13"                   | false  | JsonInt128  |
+	| 1         | "hello@endjin.com"             | false  | JsonInt128  |
+	| 1         | "www.example.com"              | false  | JsonInt128  |
+	| 1         | "http://foo.bar/?baz=qux#quux" | false  | JsonInt128  |
+	| 1         | "eyAiaGVsbG8iOiAid29ybGQiIH0=" | false  | JsonInt128  |
+	| 1         | "{ \\"first\\": \\"1\\" }"     | false  | JsonInt128  |
+	| 1         | "192.168.0.1"                  | false  | JsonInt128  |
+	| 1         | "0:0:0:0:0:ffff:c0a8:0001"     | false  | JsonInt128  |
+	| 1         | <new object()>                 | false  | JsonInt128  |
+	| 1         | null                           | false  | JsonInt128  |
+
+	| 1         | "Hello"                        | false  | JsonUInt128 |
+	| 1         | "Goodbye"                      | false  | JsonUInt128 |
+	| 1         | 1                              | true   | JsonUInt128 |
+	| 1         | 1.0                            | true   | JsonUInt128 |
+	| 1         | 1.1                            | false  | JsonUInt128 |
+	| 1         | [1,2,3]                        | false  | JsonUInt128 |
+	| 1         | { "first": "1" }               | false  | JsonUInt128 |
+	| 1         | true                           | false  | JsonUInt128 |
+	| 1         | false                          | false  | JsonUInt128 |
+	| 1         | "2018-11-13T20:20:39+00:00"    | false  | JsonUInt128 |
+	| 1         | "P3Y6M4DT12H30M5S"             | false  | JsonUInt128 |
+	| 1         | "2018-11-13"                   | false  | JsonUInt128 |
+	| 1         | "hello@endjin.com"             | false  | JsonUInt128 |
+	| 1         | "www.example.com"              | false  | JsonUInt128 |
+	| 1         | "http://foo.bar/?baz=qux#quux" | false  | JsonUInt128 |
+	| 1         | "eyAiaGVsbG8iOiAid29ybGQiIH0=" | false  | JsonUInt128 |
+	| 1         | "{ \\"first\\": \\"1\\" }"     | false  | JsonUInt128 |
+	| 1         | "192.168.0.1"                  | false  | JsonUInt128 |
+	| 1         | "0:0:0:0:0:ffff:c0a8:0001"     | false  | JsonUInt128 |
+	| 1         | <new object()>                 | false  | JsonUInt128 |
+	| 1         | null                           | false  | JsonUInt128 |
+
 
 Scenario Outline: Equals for integer dotnet backed value as an object
 	Given the dotnet backed <TargetType> <jsonValue>
@@ -954,3 +1109,57 @@ Examples:
 	| null      | null                           | true   | JsonByte    |
 	| null      | <null>                         | true   | JsonByte    |
 	| null      | <undefined>                    | false  | JsonByte    |
+
+	| 1         | "Hello"                        | false  | JsonUInt128 |
+	| 1         | "Goodbye"                      | false  | JsonUInt128 |
+	| 1         | 1                              | true   | JsonUInt128 |
+	| 1         | 1.0                            | true   | JsonUInt128 |
+	| 1         | 1.1                            | false  | JsonUInt128 |
+	| 1         | [1,2,3]                        | false  | JsonUInt128 |
+	| 1         | { "first": "1" }               | false  | JsonUInt128 |
+	| 1         | true                           | false  | JsonUInt128 |
+	| 1         | false                          | false  | JsonUInt128 |
+	| 1         | "2018-11-13T20:20:39+00:00"    | false  | JsonUInt128 |
+	| 1         | "2018-11-13"                   | false  | JsonUInt128 |
+	| 1         | "P3Y6M4DT12H30M5S"             | false  | JsonUInt128 |
+	| 1         | "hello@endjin.com"             | false  | JsonUInt128 |
+	| 1         | "www.example.com"              | false  | JsonUInt128 |
+	| 1         | "http://foo.bar/?baz=qux#quux" | false  | JsonUInt128 |
+	| 1         | "eyAiaGVsbG8iOiAid29ybGQiIH0=" | false  | JsonUInt128 |
+	| 1         | "{ \\"first\\": \\"1\\" }"     | false  | JsonUInt128 |
+	| 1         | "192.168.0.1"                  | false  | JsonUInt128 |
+	| 1         | "0:0:0:0:0:ffff:c0a8:0001"     | false  | JsonUInt128 |
+	| 1         | <new object()>                 | false  | JsonUInt128 |
+	| 1         | null                           | false  | JsonUInt128 |
+	| 1         | <null>                         | false  | JsonUInt128 |
+	| 1         | <undefined>                    | false  | JsonUInt128 |
+	| null      | null                           | true   | JsonUInt128 |
+	| null      | <null>                         | true   | JsonUInt128 |
+	| null      | <undefined>                    | false  | JsonUInt128 |
+
+	| 1         | "Hello"                        | false  | JsonInt128  |
+	| 1         | "Goodbye"                      | false  | JsonInt128  |
+	| 1         | 1                              | true   | JsonInt128  |
+	| 1         | 1.0                            | true   | JsonInt128  |
+	| 1         | 1.1                            | false  | JsonInt128  |
+	| 1         | [1,2,3]                        | false  | JsonInt128  |
+	| 1         | { "first": "1" }               | false  | JsonInt128  |
+	| 1         | true                           | false  | JsonInt128  |
+	| 1         | false                          | false  | JsonInt128  |
+	| 1         | "2018-11-13T20:20:39+00:00"    | false  | JsonInt128  |
+	| 1         | "2018-11-13"                   | false  | JsonInt128  |
+	| 1         | "P3Y6M4DT12H30M5S"             | false  | JsonInt128  |
+	| 1         | "hello@endjin.com"             | false  | JsonInt128  |
+	| 1         | "www.example.com"              | false  | JsonInt128  |
+	| 1         | "http://foo.bar/?baz=qux#quux" | false  | JsonInt128  |
+	| 1         | "eyAiaGVsbG8iOiAid29ybGQiIH0=" | false  | JsonInt128  |
+	| 1         | "{ \\"first\\": \\"1\\" }"     | false  | JsonInt128  |
+	| 1         | "192.168.0.1"                  | false  | JsonInt128  |
+	| 1         | "0:0:0:0:0:ffff:c0a8:0001"     | false  | JsonInt128  |
+	| 1         | <new object()>                 | false  | JsonInt128  |
+	| 1         | null                           | false  | JsonInt128  |
+	| 1         | <null>                         | false  | JsonInt128  |
+	| 1         | <undefined>                    | false  | JsonInt128  |
+	| null      | null                           | true   | JsonInt128  |
+	| null      | <null>                         | true   | JsonInt128  |
+	| null      | <undefined>                    | false  | JsonInt128  |

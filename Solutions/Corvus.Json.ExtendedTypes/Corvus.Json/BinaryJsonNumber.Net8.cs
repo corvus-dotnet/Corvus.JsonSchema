@@ -1861,12 +1861,12 @@ public readonly struct BinaryJsonNumber :
 
             if (left.TryGetDouble(out double d))
             {
-                return d.CompareTo(right);
+                return d.CompareTo((double)right);
             }
 
             if (left.TryGetDecimal(out decimal m))
             {
-                return m.CompareTo(right);
+                return m.CompareTo((decimal)right);
             }
 
             throw new NotSupportedException();
@@ -1961,12 +1961,12 @@ public readonly struct BinaryJsonNumber :
 
             if (left.TryGetDouble(out double d))
             {
-                return d.CompareTo(right);
+                return d.CompareTo((double)right);
             }
 
             if (left.TryGetDecimal(out decimal m))
             {
-                return m.CompareTo(right);
+                return m.CompareTo((decimal)right);
             }
 
             throw new NotSupportedException();
