@@ -36,7 +36,7 @@ public sealed class DollarRefKeyword : IReferenceKeyword, ICompositionKeyword
     public bool CanReduce(in JsonElement schemaValue) => true;
 
     /// <inheritdoc/>
-    public void CollectProperties(TypeDeclaration source, TypeDeclaration target, HashSet<TypeDeclaration> visitedTypeDeclarations, bool treatRequiredAsOptional)
+    public void CollectProperties(TypeDeclaration source, TypeDeclaration target, HashSet<TypeDeclaration> visitedTypeDeclarations, bool treatRequiredAsOptional, CancellationToken cancellationToken)
     {
         if (source.SubschemaTypeDeclarations.TryGetValue(KeywordPath, out TypeDeclaration? subschema))
         {
@@ -44,7 +44,8 @@ public sealed class DollarRefKeyword : IReferenceKeyword, ICompositionKeyword
                 subschema,
                 target,
                 visitedTypeDeclarations,
-                treatRequiredAsOptional);
+                treatRequiredAsOptional,
+                cancellationToken);
         }
     }
 
@@ -55,14 +56,14 @@ public sealed class DollarRefKeyword : IReferenceKeyword, ICompositionKeyword
             : CoreTypes.None;
 
     /// <inheritdoc/>
-    public async ValueTask BuildSubschemaTypes(TypeBuilderContext typeBuilderContext, TypeDeclaration typeDeclaration)
+    public async ValueTask BuildSubschemaTypes(TypeBuilderContext typeBuilderContext, TypeDeclaration typeDeclaration, CancellationToken cancellationToken)
     {
         LocatedSchema schema = typeDeclaration.LocatedSchema;
 
         if (schema.Schema.ValueKind == JsonValueKind.Object && schema.Schema.TryGetProperty(this.KeywordUtf8, out JsonElement value))
         {
             string referencePath = value.GetString() ?? throw new InvalidOperationException("The reference path cannot be null.");
-            await References.ResolveStandardReference(typeBuilderContext, typeDeclaration, KeywordPathReference, referencePath).ConfigureAwait(false);
+            await References.ResolveStandardReference(typeBuilderContext, typeDeclaration, KeywordPathReference, referencePath, cancellationToken);
         }
     }
 

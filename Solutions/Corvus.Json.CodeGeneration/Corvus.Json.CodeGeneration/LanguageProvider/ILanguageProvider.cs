@@ -45,12 +45,13 @@ public interface ILanguageProvider
     /// Generates code for one or more type declarations.
     /// </summary>
     /// <param name="typeDeclarations">The type declarations for which to generate code.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The generated code files.</returns>
     /// <remarks>
     /// The type declarations passed to this method should be reduced, and ready to be generated.
-    /// Typically, they will be provided by a call to <see cref="JsonSchemaTypeBuilder.GenerateCodeUsing(ILanguageProvider, TypeDeclaration[])"/>.
+    /// Typically, they will be provided by a call to <see cref="JsonSchemaTypeBuilder.GenerateCodeUsing(ILanguageProvider, CancellationToken, TypeDeclaration[])"/>.
     /// </remarks>
-    IReadOnlyCollection<GeneratedCodeFile> GenerateCodeFor(IEnumerable<TypeDeclaration> typeDeclarations);
+    IReadOnlyCollection<GeneratedCodeFile> GenerateCodeFor(IEnumerable<TypeDeclaration> typeDeclarations, CancellationToken cancellationToken);
 
     /// <summary>
     /// Gets a value indicating whether the type should be generated in this language.
@@ -67,18 +68,21 @@ public interface ILanguageProvider
     /// because it is a built-ins) and mark them appropriately.
     /// </summary>
     /// <param name="typeDeclaration">The type declaration to test.</param>
-    void IdentifyNonGeneratedType(TypeDeclaration typeDeclaration);
+    /// <param name="cancellationToken">The cancellation token.</param>
+    void IdentifyNonGeneratedType(TypeDeclaration typeDeclaration, CancellationToken cancellationToken);
 
     /// <summary>
     /// Set the name for the type declaration, and any outstanding properties, after its subschema names have been set.
     /// </summary>
     /// <param name="typeDeclaration">The type declaration for which to set the name.</param>
     /// <param name="fallbackName">The name to use as a fallback for the type declaration.</param>
-    void SetNamesBeforeSubschema(TypeDeclaration typeDeclaration, string fallbackName);
+    /// <param name="cancellationToken">The cancellation token.</param>
+    void SetNamesBeforeSubschema(TypeDeclaration typeDeclaration, string fallbackName, CancellationToken cancellationToken);
 
     /// <summary>
     /// Set the name for the type declaration, and any outstanding properties, after its subschema names have been set.
     /// </summary>
     /// <param name="typeDeclaration">The type declaration for which to set the name.</param>
-    void SetNamesAfterSubschema(TypeDeclaration typeDeclaration);
+    /// <param name="cancellationToken">The cancellation token.</param>
+    void SetNamesAfterSubschema(TypeDeclaration typeDeclaration, CancellationToken cancellationToken);
 }

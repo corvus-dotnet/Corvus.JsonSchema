@@ -50,7 +50,7 @@ public class CompoundDocumentResolver : IDocumentResolver
 
         foreach (IDocumentResolver resolver in this.documentResolvers)
         {
-            JsonElement? element = await resolver.TryResolve(reference).ConfigureAwait(false);
+            JsonElement? element = await resolver.TryResolve(reference);
             if (element is JsonElement je)
             {
                 return je;

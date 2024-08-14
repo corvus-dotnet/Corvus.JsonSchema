@@ -29,6 +29,11 @@ public static partial class ValidationCodeGeneratorExtensions
         TypeDeclaration typeDeclaration,
         IReadOnlyCollection<IChildValidationHandler> children)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         return generator
             .AppendSeparatorLine()
             .AppendLineIndent("/// <summary>")
@@ -63,6 +68,11 @@ public static partial class ValidationCodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendEnumeratorType(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.FallbackObjectPropertyType() is FallbackObjectPropertyType propertyType && !propertyType.ReducedType.IsBuiltInJsonAnyType())
         {
             generator
@@ -85,6 +95,11 @@ public static partial class ValidationCodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendJsonObjectPropertyType(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.FallbackObjectPropertyType() is FallbackObjectPropertyType propertyType && !propertyType.ReducedType.IsBuiltInJsonAnyType())
         {
             generator
@@ -108,6 +123,11 @@ public static partial class ValidationCodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendObjectEnumerator(this CodeGenerator generator, TypeDeclaration typeDeclaration, string variableName)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         return generator
             .AppendIndent("using ")
             .AppendEnumeratorType(typeDeclaration)
@@ -121,6 +141,11 @@ public static partial class ValidationCodeGeneratorExtensions
         TypeDeclaration typeDeclaration,
         IReadOnlyCollection<IChildValidationHandler> children)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         generator
             .AppendLineIndent("if (valueKind != JsonValueKind.Object)")
             .AppendLineIndent("{")
@@ -132,6 +157,11 @@ public static partial class ValidationCodeGeneratorExtensions
 
         foreach (IObjectValidationKeyword keyword in typeDeclaration.Keywords().OfType<IObjectValidationKeyword>())
         {
+            if (generator.IsCancellationRequested)
+            {
+                return generator;
+            }
+
             generator
                 .AppendLineIndent(
                     "ignoredResult = ignoredResult.PushValidationLocationProperty(",
@@ -154,6 +184,11 @@ public static partial class ValidationCodeGeneratorExtensions
 
         foreach (IChildValidationHandler child in children)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return generator;
+            }
+
             child.AppendValidateMethodSetup(generator, typeDeclaration);
         }
 
@@ -198,6 +233,11 @@ public static partial class ValidationCodeGeneratorExtensions
 
             foreach (IChildObjectPropertyValidationHandler child in children.OfType<IChildObjectPropertyValidationHandler>())
             {
+                if (generator.IsCancellationRequested)
+                {
+                    return generator;
+                }
+
                 child.AppendObjectPropertyValidationCode(generator, typeDeclaration);
             }
 
@@ -210,6 +250,11 @@ public static partial class ValidationCodeGeneratorExtensions
 
         foreach (IChildValidationHandler child in children)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return generator;
+            }
+
             child.AppendValidationCode(generator, typeDeclaration);
         }
 

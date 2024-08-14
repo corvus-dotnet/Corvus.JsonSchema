@@ -34,6 +34,11 @@ public class UniqueItemsValidationHandler : IChildArrayItemValidationHandler
     /// <inheritdoc/>
     public CodeGenerator AppendArrayItemValidationCode(CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         IUniqueItemsArrayValidationKeyword? keywordOrDefault = typeDeclaration.Keywords().OfType<IUniqueItemsArrayValidationKeyword>().FirstOrDefault(k => k.RequiresUniqueItems(typeDeclaration));
         if (keywordOrDefault is IUniqueItemsArrayValidationKeyword keyword)
         {

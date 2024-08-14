@@ -166,6 +166,11 @@ public static partial class ValidationCodeGeneratorExtensions
         string validationMethodName,
         string[] parameters)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         return generator
             .AppendSeparatorLine()
             .AppendIndent(generator.ResultIdentifierName())
@@ -187,6 +192,11 @@ public static partial class ValidationCodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendUsingEvaluatedItems(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.RequiresItemsEvaluationTracking())
         {
             generator
@@ -207,6 +217,11 @@ public static partial class ValidationCodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendUsingEvaluatedProperties(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.RequiresPropertyEvaluationTracking())
         {
             generator
@@ -233,10 +248,20 @@ public static partial class ValidationCodeGeneratorExtensions
         IReadOnlyCollection<IChildValidationHandler> children,
         uint parentHandlerPriority)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         foreach (IChildValidationHandler child in children
             .Where(c => c.ValidationHandlerPriority <= parentHandlerPriority)
             .OrderBy(c => c.ValidationHandlerPriority))
         {
+            if (generator.IsCancellationRequested)
+            {
+                return generator;
+            }
+
             child.AppendValidationSetup(generator, typeDeclaration);
         }
 
@@ -257,10 +282,20 @@ public static partial class ValidationCodeGeneratorExtensions
         IReadOnlyCollection<IChildValidationHandler> children,
         uint parentHandlerPriority)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         foreach (IChildValidationHandler child in children
             .Where(c => c.ValidationHandlerPriority > parentHandlerPriority)
             .OrderBy(c => c.ValidationHandlerPriority))
         {
+            if (generator.IsCancellationRequested)
+            {
+                return generator;
+            }
+
             child.AppendValidationSetup(generator, typeDeclaration);
         }
 
@@ -281,10 +316,20 @@ public static partial class ValidationCodeGeneratorExtensions
         IReadOnlyCollection<IChildValidationHandler> children,
         uint parentHandlerPriority)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         foreach (IChildValidationHandler child in children
             .Where(c => c.ValidationHandlerPriority <= parentHandlerPriority)
             .OrderBy(c => c.ValidationHandlerPriority))
         {
+            if (generator.IsCancellationRequested)
+            {
+                return generator;
+            }
+
             child.AppendValidationCode(generator, typeDeclaration);
         }
 
@@ -305,10 +350,20 @@ public static partial class ValidationCodeGeneratorExtensions
         IReadOnlyCollection<IChildValidationHandler> children,
         uint parentHandlerPriority)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         foreach (IChildValidationHandler child in children
             .Where(c => c.ValidationHandlerPriority > parentHandlerPriority)
             .OrderBy(c => c.ValidationHandlerPriority))
         {
+            if (generator.IsCancellationRequested)
+            {
+                return generator;
+            }
+
             child.AppendValidationCode(generator, typeDeclaration);
         }
 
@@ -322,6 +377,11 @@ public static partial class ValidationCodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator PushValidationClassNameAndScope(this CodeGenerator generator)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (!generator.TryPeekMetadata(ValidationClassNameKey, out (string, string) _))
         {
             string validationClassName = generator.GetTypeNameInScope(ValidationClassBaseName);
@@ -353,6 +413,11 @@ public static partial class ValidationCodeGeneratorExtensions
     /// </remarks>
     public static CodeGenerator PushJsonPropertyNamesClassNameAndScope(this CodeGenerator generator)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (generator.TryPeekMetadata(JsonPropertyNamesClassNameKey, out (string, string) _))
         {
             return generator;
@@ -382,8 +447,18 @@ public static partial class ValidationCodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator PushValidationHandlerMethodNames(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         foreach (IKeywordValidationHandler handler in typeDeclaration.OrderedValidationHandlers(generator.LanguageProvider))
         {
+            if (generator.IsCancellationRequested)
+            {
+                return generator;
+            }
+
             string validateMethodName = generator.GetMethodNameInScope(handler.GetType().Name, rootScope: generator.ValidationClassScope());
             generator
                 .PushMetadata(handler.GetType().FullName!, validateMethodName);
@@ -400,8 +475,18 @@ public static partial class ValidationCodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator PopValidationHandlerMethodNames(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         foreach (IKeywordValidationHandler handler in typeDeclaration.OrderedValidationHandlers(generator.LanguageProvider))
         {
+            if (generator.IsCancellationRequested)
+            {
+                return generator;
+            }
+
             generator
                 .PopMetadata(handler.GetType().FullName!);
         }
@@ -417,6 +502,11 @@ public static partial class ValidationCodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendValidationClass(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         return generator
             .BeginValidationClass()
                 .AppendValidationConstantFields(typeDeclaration)
@@ -435,6 +525,11 @@ public static partial class ValidationCodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendValidateMethod(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         generator
             .AppendSeparatorLine()
             .AppendLineIndent("/// <inheritdoc/>");
@@ -557,6 +652,11 @@ public static partial class ValidationCodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     private static CodeGenerator AppendRequiresJsonValueKind(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.RequiresJsonValueKind())
         {
             generator
@@ -570,6 +670,11 @@ public static partial class ValidationCodeGeneratorExtensions
 
     private static CodeGenerator PopIdentifierIfRequiresJsonValueKind(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.RequiresJsonValueKind())
         {
             generator
@@ -586,6 +691,11 @@ public static partial class ValidationCodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     private static CodeGenerator AppendShortCircuit(this CodeGenerator generator)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         return generator
             .AppendSeparatorLine()
             .AppendIndent("if (")
@@ -613,9 +723,19 @@ public static partial class ValidationCodeGeneratorExtensions
     this CodeGenerator generator,
     string[] parameters)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         bool isFirst = true;
         foreach (string parameter in parameters)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return generator;
+            }
+
             if (isFirst)
             {
                 isFirst = false;
@@ -633,6 +753,11 @@ public static partial class ValidationCodeGeneratorExtensions
 
     private static CodeGenerator BeginValidationClass(this CodeGenerator generator)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         string validationClassName = generator.ValidationClassName();
 
         return generator
@@ -650,6 +775,11 @@ public static partial class ValidationCodeGeneratorExtensions
 
     private static CodeGenerator AppendValidationHandlerSetup(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         generator.AppendUsingEvaluatedItems(typeDeclaration);
         generator.AppendUsingEvaluatedProperties(typeDeclaration);
 
@@ -665,8 +795,18 @@ public static partial class ValidationCodeGeneratorExtensions
         this CodeGenerator generator,
         TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         foreach (IKeywordValidationHandler handler in typeDeclaration.OrderedValidationHandlers(generator.LanguageProvider))
         {
+            if (generator.IsCancellationRequested)
+            {
+                return generator;
+            }
+
             handler.AppendValidationMethodCall(generator, typeDeclaration);
         }
 
@@ -675,8 +815,18 @@ public static partial class ValidationCodeGeneratorExtensions
 
     private static CodeGenerator AppendValidationMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         foreach (IKeywordValidationHandler handler in typeDeclaration.OrderedValidationHandlers(generator.LanguageProvider))
         {
+            if (generator.IsCancellationRequested)
+            {
+                return generator;
+            }
+
             handler.AppendValidationMethod(generator, typeDeclaration);
         }
 

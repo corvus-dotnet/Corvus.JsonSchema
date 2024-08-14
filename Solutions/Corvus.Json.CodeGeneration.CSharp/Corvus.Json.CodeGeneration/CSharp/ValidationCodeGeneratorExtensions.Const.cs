@@ -33,6 +33,11 @@ public static partial class ValidationCodeGeneratorExtensions
         IReadOnlyCollection<IChildValidationHandler> children,
         uint parentHandlerPriority)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         return generator
             .AppendSeparatorLine()
             .AppendLineIndent("/// <summary>")
@@ -58,6 +63,11 @@ public static partial class ValidationCodeGeneratorExtensions
 
     private static CodeGenerator AppendConstValidation(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         var keywords =
             typeDeclaration.Keywords()
                 .OfType<ISingleConstantValidationKeyword>()
@@ -72,6 +82,11 @@ public static partial class ValidationCodeGeneratorExtensions
 
         foreach (ISingleConstantValidationKeyword keyword in keywords)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return generator;
+            }
+
             string constField = generator.GetPropertyNameInScope(keyword.Keyword, rootScope: generator.ValidationClassScope());
 
             string realisedMethodName = generator.GetUniqueMethodNameInScope(keyword.Keyword, prefix: "Validate");
@@ -185,6 +200,11 @@ public static partial class ValidationCodeGeneratorExtensions
 
         static void AppendValidText(CodeGenerator generator, ISingleConstantValidationKeyword keyword, string constantValue)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             generator
                 .Append("the value '{value}' matched '")
                 .Append(SymbolDisplay.FormatLiteral(constantValue, true).Trim('"'))
@@ -193,6 +213,11 @@ public static partial class ValidationCodeGeneratorExtensions
 
         static void AppendDetailedInvalidText(CodeGenerator generator, ISingleConstantValidationKeyword keyword, string constantValue)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             generator
                 .Append("the value '{value}' did not match '")
                 .Append(SymbolDisplay.FormatLiteral(constantValue, true).Trim('"'))
@@ -201,6 +226,11 @@ public static partial class ValidationCodeGeneratorExtensions
 
         static void AppendInvalidText(CodeGenerator generator, ISingleConstantValidationKeyword keyword, string constantValue)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             generator
                 .Append("the value did not match '")
                 .Append(SymbolDisplay.FormatLiteral(constantValue, true).Trim('"'))

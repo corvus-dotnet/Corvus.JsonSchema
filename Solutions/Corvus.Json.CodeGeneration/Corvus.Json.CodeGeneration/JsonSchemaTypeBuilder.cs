@@ -31,11 +31,12 @@ public class JsonSchemaTypeBuilder(
     /// <param name="fallbackVocabulary">The default vocabulary to use if one cannot be analysed.</param>
     /// <param name="rebaseAsRoot">Whether to rebase the <paramref name="documentPath"/> as a root document. This should only be done for a JSON schema island in a larger non-schema document.
     /// If <see langword="true"/>, then references in this document should be taken as if the fragment was the root of a document. This will effectively generate a custom $id for the root scope.</param>
+    /// <param name="cancellationToken">A cancellation token to abandon generation.</param>
     /// <returns>A <see cref="ValueTask"/> which, when complete, provides the requested type declaration.</returns>
     /// <remarks>
     /// <para>This method may be called multiple times to build up a set of related types, perhaps from multiple fragments of a single document, or a family of related documents.</para>
     /// <para>Any re-used schema will (if possible) be reduced to the same type, to build a single coherent type system.</para>
-    /// <para>Once you have finished adding types, call <see cref="GenerateCodeUsing(ILanguageProvider, TypeDeclaration[])"/> to generate the code for each language you need to support.</para>
+    /// <para>Once you have finished adding types, call <see cref="GenerateCodeUsing(ILanguageProvider, CancellationToken, TypeDeclaration[])"/> to generate the code for each language you need to support.</para>
     /// <para>Note: this requires the <see cref="IDocumentResolver"/> to be pre-configured with all the files required by the type build.
     /// If the <see cref="ValueTask{JsonElement}"/> returned by <see cref="IDocumentResolver.TryResolve(JsonReference)"/> is not
     /// completed immediately on return, it will throw an invalid operation exception.</para>
@@ -43,7 +44,8 @@ public class JsonSchemaTypeBuilder(
     public TypeDeclaration AddTypeDeclarations(
         JsonReference documentPath,
         IVocabulary fallbackVocabulary,
-        bool rebaseAsRoot = false)
+        bool rebaseAsRoot = false,
+        CancellationToken? cancellationToken = null)
     {
         ValueTask<TypeDeclaration> task =
             this.AddTypeDeclarationsAsync(documentPath, fallbackVocabulary, rebaseAsRoot);
@@ -63,16 +65,24 @@ public class JsonSchemaTypeBuilder(
     /// <param name="fallbackVocabulary">The default vocabulary to use if one cannot be analysed.</param>
     /// <param name="rebaseAsRoot">Whether to rebase the <paramref name="documentPath"/> as a root document. This should only be done for a JSON schema island in a larger non-schema document.
     /// If <see langword="true"/>, then references in this document should be taken as if the fragment was the root of a document. This will effectively generate a custom $id for the root scope.</param>
+    /// <param name="cancellationToken">A cancellation token to abandon generation.</param>
     /// <returns>A <see cref="ValueTask"/> which, when complete, provides the requested type declaration.</returns>
     /// <remarks>
     /// <para>This method may be called multiple times to build up a set of related types, perhaps from multiple fragments of a single document, or a family of related documents.</para>
     /// <para>Any re-used schema will (if possible) be reduced to the same type, to build a single coherent type system.</para>
-    /// <para>Once you have finished adding types, call <see cref="GenerateCodeUsing(ILanguageProvider, TypeDeclaration[])"/> to generate the code for each language you need to support.</para>
+    /// <para>Once you have finished adding types, call <see cref="GenerateCodeUsing(ILanguageProvider, CancellationToken, TypeDeclaration[])"/> to generate the code for each language you need to support.</para>
     /// </remarks>
-    public async ValueTask<TypeDeclaration> AddTypeDeclarationsAsync(JsonReference documentPath, IVocabulary fallbackVocabulary, bool rebaseAsRoot = false)
+    public async ValueTask<TypeDeclaration> AddTypeDeclarationsAsync(JsonReference documentPath, IVocabulary fallbackVocabulary, bool rebaseAsRoot = false, CancellationToken? cancellationToken = null)
     {
+        CancellationToken ct = cancellationToken ?? CancellationToken.None;
+
         // First we do a document "load" - this enables us to build the map of the schema, anchors etc.
-        (JsonReference schemaLocation, JsonReference baseLocation) = await this.schemaRegistry.RegisterBaseSchema(documentPath, fallbackVocabulary, rebaseAsRoot).ConfigureAwait(false);
+        (JsonReference schemaLocation, JsonReference baseLocation) = await this.schemaRegistry.RegisterBaseSchema(documentPath, fallbackVocabulary, rebaseAsRoot, ct);
+
+        if (ct.IsCancellationRequested)
+        {
+            return WellKnownTypeDeclarations.JsonAny;
+        }
 
         if (!baseLocation.HasUri)
         {
@@ -93,9 +103,19 @@ public class JsonSchemaTypeBuilder(
         // schema.
         TypeBuilderContext typeBuilderContext = new(this.schemaRegistry, this.locatedTypeDeclarations, schema, baseLocation);
 
-        TypeDeclaration rootTypeDeclaration = await typeBuilderContext.BuildTypeDeclarationForCurrentScope().ConfigureAwait(false);
+        TypeDeclaration rootTypeDeclaration = await typeBuilderContext.BuildTypeDeclarationForCurrentScope(ct);
 
-        this.CollectProperties(rootTypeDeclaration);
+        if (ct.IsCancellationRequested)
+        {
+            return WellKnownTypeDeclarations.JsonAny;
+        }
+
+        this.CollectProperties(rootTypeDeclaration, ct);
+
+        if (ct.IsCancellationRequested)
+        {
+            return WellKnownTypeDeclarations.JsonAny;
+        }
 
         return rootTypeDeclaration;
     }
@@ -104,37 +124,39 @@ public class JsonSchemaTypeBuilder(
     /// Generates code for the types using the given language provider.
     /// </summary>
     /// <param name="languageProvider">The <see cref="ILanguageProvider"/> for which to generate code.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
     /// <param name="rootTypeDeclarations">The root type declarations for which to generate types.</param>
     /// <returns>The <see cref="GeneratedCodeFile"/> collection.</returns>
-    public IReadOnlyCollection<GeneratedCodeFile> GenerateCodeUsing(ILanguageProvider languageProvider, IEnumerable<TypeDeclaration> rootTypeDeclarations)
+    public IReadOnlyCollection<GeneratedCodeFile> GenerateCodeUsing(ILanguageProvider languageProvider, CancellationToken cancellationToken, IEnumerable<TypeDeclaration> rootTypeDeclarations)
     {
-        return this.GenerateCodeUsing(languageProvider, rootTypeDeclarations.ToArray());
+        return this.GenerateCodeUsing(languageProvider, cancellationToken, rootTypeDeclarations.ToArray());
     }
 
     /// <summary>
     /// Generates code for the types using the given language provider.
     /// </summary>
     /// <param name="languageProvider">The <see cref="ILanguageProvider"/> for which to generate code.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
     /// <param name="rootTypeDeclarations">The root type declarations for which to generate types.</param>
     /// <returns>The <see cref="GeneratedCodeFile"/> collection.</returns>
-    public IReadOnlyCollection<GeneratedCodeFile> GenerateCodeUsing(ILanguageProvider languageProvider, params TypeDeclaration[] rootTypeDeclarations)
+    public IReadOnlyCollection<GeneratedCodeFile> GenerateCodeUsing(ILanguageProvider languageProvider, CancellationToken cancellationToken, params TypeDeclaration[] rootTypeDeclarations)
     {
-        IReadOnlyList<TypeDeclaration> candidateTypesToGenerate = GetCandidateTypesToGenerate(rootTypeDeclarations);
+        IReadOnlyList<TypeDeclaration> candidateTypesToGenerate = GetCandidateTypesToGenerate(rootTypeDeclarations, cancellationToken);
 
-        MarkNonGeneratedTypes(languageProvider, rootTypeDeclarations);
+        MarkNonGeneratedTypes(languageProvider, rootTypeDeclarations, cancellationToken);
 
         // A language provider can opt out of being hierarchical by not implementing
         // the IHierarchicalLanguageProvider interface. In that case, we don't need to set parents.
         if (languageProvider is IHierarchicalLanguageProvider hierarchicalProvider)
         {
-            this.SetParents(hierarchicalProvider, rootTypeDeclarations);
+            this.SetParents(hierarchicalProvider, rootTypeDeclarations, cancellationToken);
         }
 
-        SetNames(languageProvider, rootTypeDeclarations);
+        SetNames(languageProvider, rootTypeDeclarations, cancellationToken);
 
         IEnumerable<TypeDeclaration> typeDeclarations = candidateTypesToGenerate.Where(languageProvider.ShouldGenerate);
 
-        return languageProvider.GenerateCodeFor(typeDeclarations);
+        return languageProvider.GenerateCodeFor(typeDeclarations, cancellationToken);
     }
 
     /// <summary>
@@ -151,19 +173,30 @@ public class JsonSchemaTypeBuilder(
     /// Gets the candidate set of types to build, given we start at the given root type declaration(s).
     /// </summary>
     /// <param name="rootTypeDeclarations">The root type declarations for which to generate types.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>A set of types that need to be built.</returns>
     /// <remarks>This will then be further filtered by the <see cref="ILanguageProvider"/> to eliminate built-in types.</remarks>
-    private static IReadOnlyList<TypeDeclaration> GetCandidateTypesToGenerate(TypeDeclaration[] rootTypeDeclarations)
+    private static IReadOnlyList<TypeDeclaration> GetCandidateTypesToGenerate(TypeDeclaration[] rootTypeDeclarations, CancellationToken cancellationToken)
     {
         HashSet<TypeDeclaration> typesToGenerate = [];
         foreach (TypeDeclaration rootTypeDeclaration in rootTypeDeclarations)
         {
-            GetTypesToGenerateCore(rootTypeDeclaration, typesToGenerate);
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return Array.Empty<TypeDeclaration>();
+            }
+
+            GetTypesToGenerateCore(rootTypeDeclaration, typesToGenerate, cancellationToken);
+        }
+
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return Array.Empty<TypeDeclaration>();
         }
 
         return [.. typesToGenerate.OrderBy(t => t.LocatedSchema.Location)];
 
-        static void GetTypesToGenerateCore(TypeDeclaration type, HashSet<TypeDeclaration> typesToGenerate)
+        static void GetTypesToGenerateCore(TypeDeclaration type, HashSet<TypeDeclaration> typesToGenerate, CancellationToken cancellationToken)
         {
             if (typesToGenerate.Contains(type))
             {
@@ -176,31 +209,41 @@ public class JsonSchemaTypeBuilder(
                 typesToGenerate.Add(type);
                 foreach (TypeDeclaration child in type.SubschemaTypeDeclarations.Values)
                 {
-                    GetTypesToGenerateCore(child, typesToGenerate);
+                    if (cancellationToken.IsCancellationRequested)
+                    {
+                        return;
+                    }
+
+                    GetTypesToGenerateCore(child, typesToGenerate, cancellationToken);
                 }
             }
             else
             {
                 ReducedTypeDeclaration reducedTypeDeclaration = type.ReducedTypeDeclaration();
-                GetTypesToGenerateCore(reducedTypeDeclaration.ReducedType, typesToGenerate);
+                GetTypesToGenerateCore(reducedTypeDeclaration.ReducedType, typesToGenerate, cancellationToken);
             }
         }
     }
 
-    private static void MarkNonGeneratedTypes(ILanguageProvider languageProvider, TypeDeclaration[] rootTypeDeclarations)
+    private static void MarkNonGeneratedTypes(ILanguageProvider languageProvider, TypeDeclaration[] rootTypeDeclarations, CancellationToken cancellationToken)
     {
         HashSet<TypeDeclaration> visitedTypes = [];
 
         // Deal with the well-known type declarations first.
-        IdentifyNonGeneratedTypes(WellKnownTypeDeclarations.JsonAny, visitedTypes);
-        IdentifyNonGeneratedTypes(WellKnownTypeDeclarations.JsonNotAny, visitedTypes);
+        IdentifyNonGeneratedTypes(WellKnownTypeDeclarations.JsonAny, visitedTypes, cancellationToken);
+        IdentifyNonGeneratedTypes(WellKnownTypeDeclarations.JsonNotAny, visitedTypes, cancellationToken);
 
         foreach (TypeDeclaration type in rootTypeDeclarations)
         {
-            IdentifyNonGeneratedTypes(type, visitedTypes);
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return;
+            }
+
+            IdentifyNonGeneratedTypes(type, visitedTypes, cancellationToken);
         }
 
-        void IdentifyNonGeneratedTypes(TypeDeclaration typeDeclaration, HashSet<TypeDeclaration> visitedTypeDeclarations)
+        void IdentifyNonGeneratedTypes(TypeDeclaration typeDeclaration, HashSet<TypeDeclaration> visitedTypeDeclarations, CancellationToken cancellationToken)
         {
             // Quit early if we are already visiting the type declaration.
             if (visitedTypeDeclarations.Contains(typeDeclaration))
@@ -215,34 +258,39 @@ public class JsonSchemaTypeBuilder(
             if (!typeDeclaration.CanReduce())
             {
                 // Set the name for this type
-                languageProvider.IdentifyNonGeneratedType(typeDeclaration);
+                languageProvider.IdentifyNonGeneratedType(typeDeclaration, cancellationToken);
             }
 
             // Then set the names for the subschema it requires.
             foreach (TypeDeclaration child in typeDeclaration.SubschemaTypeDeclarations.Values.OrderBy(t => t.LocatedSchema.Location.ToString()))
             {
-                IdentifyNonGeneratedTypes(child, visitedTypeDeclarations);
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    return;
+                }
+
+                IdentifyNonGeneratedTypes(child, visitedTypeDeclarations, cancellationToken);
             }
         }
     }
 
-    private static void SetNames(ILanguageProvider languageProvider, TypeDeclaration[] rootTypeDeclarations)
+    private static void SetNames(ILanguageProvider languageProvider, TypeDeclaration[] rootTypeDeclarations, CancellationToken cancellationToken)
     {
         HashSet<TypeDeclaration> visitedTypes = [];
 
         foreach (TypeDeclaration type in rootTypeDeclarations)
         {
-            SetNamesBeforeSubschema(type, visitedTypes);
+            SetNamesBeforeSubschema(type, visitedTypes, cancellationToken);
         }
 
         visitedTypes.Clear();
 
         foreach (TypeDeclaration type in rootTypeDeclarations)
         {
-            SetNamesAfterSubschema(type, visitedTypes);
+            SetNamesAfterSubschema(type, visitedTypes, cancellationToken);
         }
 
-        void SetNamesBeforeSubschema(TypeDeclaration typeDeclaration, HashSet<TypeDeclaration> visitedTypeDeclarations)
+        void SetNamesBeforeSubschema(TypeDeclaration typeDeclaration, HashSet<TypeDeclaration> visitedTypeDeclarations, CancellationToken cancellationToken)
         {
             // Quit early if we are already visiting the type declaration.
             if (visitedTypeDeclarations.Contains(typeDeclaration))
@@ -257,22 +305,32 @@ public class JsonSchemaTypeBuilder(
             if (typeDeclaration.CanReduce())
             {
                 typeDeclaration = typeDeclaration.ReducedTypeDeclaration().ReducedType;
-                SetNamesBeforeSubschema(typeDeclaration, visitedTypeDeclarations);
+                SetNamesBeforeSubschema(typeDeclaration, visitedTypeDeclarations, cancellationToken);
                 return;
             }
 
-            languageProvider.SetNamesBeforeSubschema(typeDeclaration, "Entity");
+            languageProvider.SetNamesBeforeSubschema(typeDeclaration, "Entity", cancellationToken);
+
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return;
+            }
 
             // Then set the names for the subschema it requires.
             foreach (TypeDeclaration child in typeDeclaration.SubschemaTypeDeclarations.Values
                         .Select(s => s.ReducedTypeDeclaration().ReducedType)
                         .OrderBy(t => t.LocatedSchema.Location.ToString()))
             {
-                SetNamesBeforeSubschema(child, visitedTypeDeclarations);
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    return;
+                }
+
+                SetNamesBeforeSubschema(child, visitedTypeDeclarations, cancellationToken);
             }
         }
 
-        void SetNamesAfterSubschema(TypeDeclaration typeDeclaration, HashSet<TypeDeclaration> visitedTypeDeclarations)
+        void SetNamesAfterSubschema(TypeDeclaration typeDeclaration, HashSet<TypeDeclaration> visitedTypeDeclarations, CancellationToken cancellationToken)
         {
             // Quit early if we are already visiting the type declaration.
             if (visitedTypeDeclarations.Contains(typeDeclaration))
@@ -287,7 +345,12 @@ public class JsonSchemaTypeBuilder(
             if (!typeDeclaration.CanReduce())
             {
                 // Set the name for this type
-                languageProvider.SetNamesAfterSubschema(typeDeclaration);
+                languageProvider.SetNamesAfterSubschema(typeDeclaration, cancellationToken);
+            }
+
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return;
             }
 
             // Then set the names for the subschema it requires.
@@ -295,7 +358,7 @@ public class JsonSchemaTypeBuilder(
                             .Select(s => s.ReducedTypeDeclaration().ReducedType)
                             .OrderBy(t => t.LocatedSchema.Location.ToString()))
             {
-                SetNamesAfterSubschema(child, visitedTypeDeclarations);
+                SetNamesAfterSubschema(child, visitedTypeDeclarations, cancellationToken);
             }
         }
     }
@@ -320,28 +383,33 @@ public class JsonSchemaTypeBuilder(
         return false;
     }
 
-    private void CollectProperties(TypeDeclaration typeDeclaration)
+    private void CollectProperties(TypeDeclaration typeDeclaration, CancellationToken cancellationToken)
     {
         // Collect properties for the type itself.
-        if (PropertyProvider.CollectProperties(typeDeclaration, typeDeclaration, this.propertiesCollected, false))
+        if (PropertyProvider.CollectProperties(typeDeclaration, typeDeclaration, this.propertiesCollected, false, cancellationToken))
         {
             // Then each of its subschema type declarations.
             foreach (TypeDeclaration subType in typeDeclaration.SubschemaTypeDeclarations.Values)
             {
-                this.CollectProperties(subType);
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    return;
+                }
+
+                this.CollectProperties(subType, cancellationToken);
             }
         }
     }
 
-    private void SetParents(IHierarchicalLanguageProvider languageProvider, TypeDeclaration[] rootTypeDeclarations)
+    private void SetParents(IHierarchicalLanguageProvider languageProvider, TypeDeclaration[] rootTypeDeclarations, CancellationToken cancellationToken)
     {
         HashSet<TypeDeclaration> visitedTypes = [];
         foreach (TypeDeclaration type in rootTypeDeclarations)
         {
-            SetParentsCore(type, visitedTypes);
+            SetParentsCore(type, visitedTypes, cancellationToken);
         }
 
-        void SetParentsCore(TypeDeclaration type, HashSet<TypeDeclaration> visitedTypes)
+        void SetParentsCore(TypeDeclaration type, HashSet<TypeDeclaration> visitedTypes, CancellationToken cancellationToken)
         {
             if (visitedTypes.Contains(type))
             {
@@ -353,7 +421,12 @@ public class JsonSchemaTypeBuilder(
             SetParent(type);
             foreach (TypeDeclaration child in type.SubschemaTypeDeclarations.Values)
             {
-                SetParentsCore(child, visitedTypes);
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    return;
+                }
+
+                SetParentsCore(child, visitedTypes, cancellationToken);
             }
 
             void SetParent(TypeDeclaration type)
@@ -386,6 +459,11 @@ public class JsonSchemaTypeBuilder(
 
                 while (true)
                 {
+                    if (cancellationToken.IsCancellationRequested)
+                    {
+                        return;
+                    }
+
                     if (!currentLocation.HasFragment)
                     {
                         // We have reached the root of a dynamic scope, and not found anything, so that's that.

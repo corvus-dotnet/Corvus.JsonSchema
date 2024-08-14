@@ -31,6 +31,11 @@ public static partial class ValidationCodeGeneratorExtensions
         IReadOnlyCollection<IChildValidationHandler> children,
         uint parentHandlerPriority)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         return generator
             .AppendSeparatorLine()
             .AppendLineIndent("/// <summary>")
@@ -56,6 +61,11 @@ public static partial class ValidationCodeGeneratorExtensions
 
     private static CodeGenerator AppendNotValidation(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         var keywords =
             typeDeclaration.Keywords()
                 .OfType<INotValidationKeyword>()
@@ -70,6 +80,11 @@ public static partial class ValidationCodeGeneratorExtensions
 
         foreach (INotValidationKeyword keyword in keywords)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return generator;
+            }
+
             if (keyword.TryGetNotType(typeDeclaration, out ReducedTypeDeclaration? value) &&
                 value is ReducedTypeDeclaration notType)
             {

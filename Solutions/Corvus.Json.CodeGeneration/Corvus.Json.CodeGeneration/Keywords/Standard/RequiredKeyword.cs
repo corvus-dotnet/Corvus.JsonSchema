@@ -39,7 +39,7 @@ public sealed class RequiredKeyword : IPropertyProviderKeyword, IObjectRequiredP
     public bool CanReduce(in JsonElement schemaValue) => Reduction.CanReduceNonReducingKeyword(schemaValue, this.KeywordUtf8);
 
     /// <inheritdoc />
-    public void CollectProperties(TypeDeclaration source, TypeDeclaration target, HashSet<TypeDeclaration> visitedTypeDeclarations, bool treatRequiredAsOptional)
+    public void CollectProperties(TypeDeclaration source, TypeDeclaration target, HashSet<TypeDeclaration> visitedTypeDeclarations, bool treatRequiredAsOptional, CancellationToken cancellationToken)
     {
         if (source.LocatedSchema.Schema.ValueKind == JsonValueKind.Object &&
             source.LocatedSchema.Schema.TryGetProperty(this.KeywordUtf8, out JsonElement value) &&
@@ -47,6 +47,11 @@ public sealed class RequiredKeyword : IPropertyProviderKeyword, IObjectRequiredP
         {
             foreach (JsonElement property in value.EnumerateArray())
             {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    return;
+                }
+
                 string propertyName = property.GetString() ?? throw new InvalidOperationException("The required properties must be strings.");
                 target.AddOrUpdatePropertyDeclaration(
                     new PropertyDeclaration(

@@ -16,9 +16,10 @@ namespace Corvus.Json.CodeGeneration;
 /// Initializes a new instance of the <see cref="CodeGenerator"/> class.
 /// </remarks>
 /// <param name="languageProvider">The language provider for the code generator.</param>
+/// <param name="cancellationToken">The cancellation token.</param>
 /// <param name="instancesPerIndent">The instances of the indent character sequence, per indent (defaults to 4).</param>
 /// <param name="indentSequence">The indent character sequence (defaults to ' ' (space).</param>
-public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerIndent = 4, string indentSequence = " ")
+public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken cancellationToken, int instancesPerIndent = 4, string indentSequence = " ")
 {
     private readonly string indentSequence = string.Concat(Enumerable.Repeat(indentSequence, instancesPerIndent));
     private readonly StringBuilder stringBuilder = new();
@@ -27,6 +28,7 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     private readonly Stack<ScopeValue> scope = [];
     private readonly Dictionary<string, Stack<object?>> metadata = [];
     private readonly Dictionary<TypeDeclaration, Dictionary<string, string>> generatedFiles = [];
+    private readonly CancellationToken cancellationToken = cancellationToken;
     private int indentationLevel = 0;
     private string? currentFileBuilderName;
     private TypeDeclaration? currentTypeDeclaration;
@@ -57,6 +59,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
         get => this.stringBuilder.Length;
         set => this.stringBuilder.Length = value;
     }
+
+    /// <summary>
+    /// Gets a value indicating whether cancellation has been requested.
+    /// </summary>
+    public bool IsCancellationRequested => this.cancellationToken.IsCancellationRequested;
 
     /// <summary>
     /// Gets the current scope type.
@@ -99,6 +106,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// </remarks>
     public CodeGenerator PushMetadata<T>(string key, T value)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         if (!this.metadata.TryGetValue(key, out Stack<object?>? values))
         {
             values = [];
@@ -116,6 +128,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator PopMetadata(string key)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         if (!this.metadata.TryGetValue(key, out Stack<object?>? values))
         {
             throw new InvalidOperationException("The key was not present on the stack.");
@@ -135,6 +152,12 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns><see langword="true"/> if the metadata was present with the given key and type.</returns>
     public bool TryPeekMetadata<T>(string key, [MaybeNullWhen(false)] out T? value)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            value = default;
+            return false;
+        }
+
         if (!this.metadata.TryGetValue(key, out Stack<object?>? values))
         {
             value = default;
@@ -175,6 +198,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns><see langword="true"/> if the type declaration has not yet been generated.</returns>
     public bool TryBeginTypeDeclaration(TypeDeclaration typeDeclaration)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return false;
+        }
+
         if (this.generatedFiles.ContainsKey(typeDeclaration))
         {
             return false;
@@ -203,6 +231,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator EndTypeDeclaration(TypeDeclaration typeDeclaration)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         Debug.Assert(this.currentTypeDeclaration is not null, "The type declaration has been ended out-of-sequence.");
         Debug.Assert(this.currentTypeDeclarationFiles is not null, "The type declaration has been ended out-of-sequence.");
         Debug.Assert(this.currentTypeDeclaration == typeDeclaration, "The type declaration has been ended out-of-sequence.");
@@ -219,6 +252,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator BeginFile(TypeDeclaration typeDeclaration, string fileName)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         Debug.Assert(this.currentTypeDeclaration is not null, "There is no type declaration for which to create the file.");
         Debug.Assert(this.currentTypeDeclarationFiles is not null, "The type declaration files have not been initialized.");
         Debug.Assert(this.currentTypeDeclaration == typeDeclaration, "A file has been started out-of-sequence for the current type declaration.");
@@ -237,6 +275,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator EndFile(TypeDeclaration typeDeclaration, string fileSuffix)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         Debug.Assert(this.currentTypeDeclaration is not null, "The type declaration has been ended out-of-sequence.");
         Debug.Assert(this.currentTypeDeclarationFiles is not null, "The type declaration has been ended out-of-sequence.");
         Debug.Assert(this.currentTypeDeclaration == typeDeclaration, "A file has been ended out-of-sequence for the current type declaration.");
@@ -258,6 +301,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>The new capacity of the builder.</returns>
     public int EnsureCapacity(int capacity)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return 0;
+        }
+
         return this.stringBuilder.EnsureCapacity(capacity);
     }
 
@@ -269,6 +317,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns><see langword="true"/> if the builder ends with the given sequence.</returns>
     public bool EndsWith(string sequence)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return false;
+        }
+
         for (int i = 1; i <= sequence.Length; i++)
         {
             if (this.stringBuilder[^i] != sequence[^i])
@@ -303,6 +356,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator Clear()
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.Clear();
         this.indentationLevel = 0;
         return this;
@@ -314,6 +372,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator PushIndent()
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.indentationLevel++;
         return this;
     }
@@ -325,6 +388,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <remarks>This will do nothing if the indentation level is already 0.</remarks>
     public CodeGenerator PopIndent()
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         if (this.indentationLevel > 0)
         {
             this.indentationLevel--;
@@ -341,6 +409,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator PushMemberScope(string scopeName, int scopeType)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.scope.Push(new(scopeName, scopeType));
         this.FullyQualifiedScope = this.BuildFullyQualifiedScope();
 
@@ -353,6 +426,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator PopMemberScope()
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.scope.Pop();
         this.FullyQualifiedScope = this.BuildFullyQualifiedScope();
         return this;
@@ -408,6 +486,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator Append(char value, int repeatCount)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.Append(value, repeatCount);
         return this;
     }
@@ -421,6 +504,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator Append(char[]? value, int startIndex, int charCount)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.Append(value, startIndex, charCount);
         return this;
     }
@@ -432,6 +520,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator Append(string? value)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.Append(value);
         return this;
     }
@@ -445,6 +538,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator Append(string? value, int startIndex, int count)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.Append(value, startIndex, count);
         return this;
     }
@@ -456,6 +554,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator Append(StringBuilder? value)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.Append(value);
         return this;
     }
@@ -467,6 +570,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator Append(CodeGenerator? value)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.Append(value?.stringBuilder);
         return this;
     }
@@ -479,6 +587,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator AppendIndent(char value, int repeatCount)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.WriteIndent();
         this.stringBuilder.Append(value, repeatCount);
         return this;
@@ -493,6 +606,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator AppendIndent(char[]? value, int startIndex, int charCount)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.WriteIndent();
         this.stringBuilder.Append(value, startIndex, charCount);
         return this;
@@ -505,6 +623,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator AppendIndent(string? value)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.WriteIndent();
         this.stringBuilder.Append(value);
         return this;
@@ -519,6 +642,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator AppendIndent(string? value, int startIndex, int count)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.WriteIndent();
         this.stringBuilder.Append(value, startIndex, count);
         return this;
@@ -531,6 +659,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator AppendIndent(StringBuilder? value)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.WriteIndent();
         this.stringBuilder.Append(value);
         return this;
@@ -543,6 +676,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator AppendIndent(CodeGenerator? value)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.WriteIndent();
         this.stringBuilder.Append(value?.stringBuilder);
         return this;
@@ -558,6 +696,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator Append(StringBuilder? value, int startIndex, int count)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.Append(value, startIndex, count);
         return this;
     }
@@ -571,6 +714,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator Append(CodeGenerator? value, int startIndex, int count)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.Append(value?.stringBuilder, startIndex, count);
         return this;
     }
@@ -584,6 +732,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator AppendIndent(StringBuilder? value, int startIndex, int count)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.WriteIndent();
         this.stringBuilder.Append(value, startIndex, count);
         return this;
@@ -598,6 +751,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator AppendIndent(CodeGenerator? value, int startIndex, int count)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.WriteIndent();
         this.stringBuilder.Append(value?.stringBuilder, startIndex, count);
         return this;
@@ -610,6 +768,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator AppendLine()
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.AppendLine();
         return this;
     }
@@ -621,6 +784,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator AppendLine(string? value)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.AppendLine(value);
         return this;
     }
@@ -633,6 +801,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator AppendLineIndent(string? value, bool trimWhitespaceOnlyLines = true)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         if (trimWhitespaceOnlyLines && string.IsNullOrWhiteSpace(value))
         {
             this.AppendLine();
@@ -653,6 +826,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     {
         for (int i = 0; i < segments.Length; ++i)
         {
+            if (this.cancellationToken.IsCancellationRequested)
+            {
+                return this;
+            }
+
             if (i == 0)
             {
                 if (i == segments.Length - 1)
@@ -686,6 +864,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     {
         for (int i = 0; i < segments.Length; ++i)
         {
+            if (this.cancellationToken.IsCancellationRequested)
+            {
+                return this;
+            }
+
             if (i == 0)
             {
                 segments[i].AppendIndent(this);
@@ -708,6 +891,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     {
         for (int i = 0; i < segments.Length; ++i)
         {
+            if (this.cancellationToken.IsCancellationRequested)
+            {
+                return this;
+            }
+
             if (i == segments.Length - 1)
             {
                 segments[i].AppendLine(this);
@@ -730,6 +918,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <param name="count">The number of characters to copy.</param>
     public void CopyTo(int sourceIndex, char[] destination, int destinationIndex, int count)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return;
+        }
+
         this.stringBuilder.CopyTo(sourceIndex, destination, destinationIndex, count);
     }
 
@@ -742,6 +935,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <param name="count">The number of characters to copy.</param>
     public void CopyTo(int sourceIndex, Span<char> destination, int count)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return;
+        }
+
         this.stringBuilder.CopyTo(sourceIndex, destination, count);
     }
 #endif
@@ -755,6 +953,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator Insert(int index, string? value, int count)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.Insert(index, value, count);
         return this;
     }
@@ -770,6 +973,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator Remove(int startIndex, int length)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.Remove(startIndex, length);
         return this;
     }
@@ -781,6 +989,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator Append(bool value)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.Append(value);
         return this;
     }
@@ -792,6 +1005,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator Append(char value)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.Append(value);
         return this;
     }
@@ -803,6 +1021,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator Append(sbyte value)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.Append(value);
         return this;
     }
@@ -814,6 +1037,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator Append(byte value)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.Append(value);
         return this;
     }
@@ -825,6 +1053,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator Append(short value)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.Append(value);
         return this;
     }
@@ -836,6 +1069,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator Append(int value)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.Append(value);
         return this;
     }
@@ -847,6 +1085,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator Append(long value)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.Append(value);
         return this;
     }
@@ -858,6 +1101,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator Append(float value)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.Append(value);
         return this;
     }
@@ -869,6 +1117,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator Append(double value)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.Append(value);
         return this;
     }
@@ -880,6 +1133,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator Append(decimal value)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.Append(value);
         return this;
     }
@@ -891,6 +1149,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator Append(ushort value)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.Append(value);
         return this;
     }
@@ -902,6 +1165,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator Append(uint value)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.Append(value);
         return this;
     }
@@ -913,6 +1181,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator Append(ulong value)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.Append(value);
         return this;
     }
@@ -924,6 +1197,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator Append(object? value)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.Append(value);
         return this;
     }
@@ -935,6 +1213,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator Append(char[]? value)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.Append(value);
         return this;
     }
@@ -947,6 +1230,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator Append(ReadOnlySpan<char> value)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.Append(value);
         return this;
     }
@@ -959,6 +1247,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator Append(ReadOnlyMemory<char> value)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.Append(value);
         return this;
     }
@@ -972,6 +1265,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator AppendJoin(string? separator, params object?[] values)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.AppendJoin(separator, values);
         return this;
     }
@@ -985,6 +1283,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator AppendJoin<TValue>(string? separator, IEnumerable<TValue> values)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.AppendJoin(separator, values);
         return this;
     }
@@ -997,6 +1300,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator AppendJoin(string? separator, params string?[] values)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.AppendJoin(separator, values);
         return this;
     }
@@ -1009,6 +1317,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator AppendJoin(char separator, params object?[] values)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.AppendJoin(separator, values);
         return this;
     }
@@ -1022,6 +1335,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator AppendJoin<TValue>(char separator, IEnumerable<TValue> values)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.AppendJoin(separator, values);
         return this;
     }
@@ -1034,6 +1352,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator AppendJoin(char separator, params string?[] values)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.AppendJoin(separator, values);
         return this;
     }
@@ -1047,6 +1370,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator Insert(int index, string? value)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.Insert(index, value);
         return this;
     }
@@ -1059,6 +1387,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator Insert(int index, bool value)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.Insert(index, value);
         return this;
     }
@@ -1071,6 +1404,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator Insert(int index, sbyte value)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.Insert(index, value);
         return this;
     }
@@ -1083,6 +1421,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator Insert(int index, byte value)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.Insert(index, value);
         return this;
     }
@@ -1095,6 +1438,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator Insert(int index, short value)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.Insert(index, value);
         return this;
     }
@@ -1107,6 +1455,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator Insert(int index, char value)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.Insert(index, value);
         return this;
     }
@@ -1119,6 +1472,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator Insert(int index, char[]? value)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.Insert(index, value);
         return this;
     }
@@ -1133,6 +1491,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator Insert(int index, char[]? value, int startIndex, int charCount)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.Insert(index, value, startIndex, charCount);
         return this;
     }
@@ -1145,6 +1508,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator Insert(int index, int value)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.Insert(index, value);
         return this;
     }
@@ -1157,6 +1525,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator Insert(int index, long value)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.Insert(index, value);
         return this;
     }
@@ -1169,6 +1542,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator Insert(int index, float value)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.Insert(index, value);
         return this;
     }
@@ -1181,6 +1559,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator Insert(int index, double value)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.Insert(index, value);
         return this;
     }
@@ -1193,6 +1576,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator Insert(int index, decimal value)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.Insert(index, value);
         return this;
     }
@@ -1205,6 +1593,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator Insert(int index, ushort value)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.Insert(index, value);
         return this;
     }
@@ -1217,6 +1610,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator Insert(int index, uint value)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.Insert(index, value);
         return this;
     }
@@ -1229,6 +1627,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator Insert(int index, ulong value)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.Insert(index, value);
         return this;
     }
@@ -1241,6 +1644,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator Insert(int index, object? value)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.Insert(index, value);
         return this;
     }
@@ -1254,6 +1662,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator Insert(int index, ReadOnlySpan<char> value)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.Insert(index, value);
         return this;
     }
@@ -1266,6 +1679,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator AppendFormat([StringSyntax(StringSyntaxAttribute.CompositeFormat)] string format, object? arg0)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.AppendFormat(format, arg0);
         return this;
     }
@@ -1279,6 +1697,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator AppendFormat([StringSyntax(StringSyntaxAttribute.CompositeFormat)] string format, object? arg0, object? arg1)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.AppendFormat(format, arg0, arg1);
         return this;
     }
@@ -1293,6 +1716,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator AppendFormat([StringSyntax(StringSyntaxAttribute.CompositeFormat)] string format, object? arg0, object? arg1, object? arg2)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.AppendFormat(format, arg0, arg1, arg2);
         return this;
     }
@@ -1305,6 +1733,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator AppendFormat([StringSyntax(StringSyntaxAttribute.CompositeFormat)] string format, params object?[] args)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.AppendFormat(format, args);
         return this;
     }
@@ -1318,6 +1751,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator AppendFormat(IFormatProvider? provider, [StringSyntax(StringSyntaxAttribute.CompositeFormat)] string format, object? arg0)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.AppendFormat(provider, format, arg0);
         return this;
     }
@@ -1332,6 +1770,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator AppendFormat(IFormatProvider? provider, [StringSyntax(StringSyntaxAttribute.CompositeFormat)] string format, object? arg0, object? arg1)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.AppendFormat(provider, format, arg0, arg1);
         return this;
     }
@@ -1347,6 +1790,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator AppendFormat(IFormatProvider? provider, [StringSyntax(StringSyntaxAttribute.CompositeFormat)] string format, object? arg0, object? arg1, object? arg2)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.AppendFormat(provider, format, arg0, arg1, arg2);
         return this;
     }
@@ -1360,6 +1808,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator AppendFormat(IFormatProvider? provider, [StringSyntax(StringSyntaxAttribute.CompositeFormat)] string format, params object?[] args)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.AppendFormat(provider, format, args);
         return this;
     }
@@ -1377,6 +1830,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <exception cref="FormatException">The index of a format item is greater than or equal to the number of supplied arguments.</exception>
     public CodeGenerator AppendFormat<TArg0>(IFormatProvider? provider, CompositeFormat format, TArg0 arg0)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.AppendFormat(provider, format, arg0);
         return this;
     }
@@ -1396,6 +1854,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <exception cref="FormatException">The index of a format item is greater than or equal to the number of supplied arguments.</exception>
     public CodeGenerator AppendFormat<TArg0, TArg1>(IFormatProvider? provider, CompositeFormat format, TArg0 arg0, TArg1 arg1)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.AppendFormat(provider, format, arg0, arg1);
         return this;
     }
@@ -1417,6 +1880,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <exception cref="FormatException">The index of a format item is greater than or equal to the number of supplied arguments.</exception>
     public CodeGenerator AppendFormat<TArg0, TArg1, TArg2>(IFormatProvider? provider, CompositeFormat format, TArg0 arg0, TArg1 arg1, TArg2 arg2)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.AppendFormat(provider, format, arg0, arg1, arg2);
         return this;
     }
@@ -1434,6 +1902,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <exception cref="FormatException">The index of a format item is greater than or equal to the number of supplied arguments.</exception>
     public CodeGenerator AppendFormat(IFormatProvider? provider, CompositeFormat format, params object?[] args)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.AppendFormat(provider, format, args);
         return this;
     }
@@ -1450,6 +1923,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <exception cref="FormatException">The index of a format item is greater than or equal to the number of supplied arguments.</exception>
     public CodeGenerator AppendFormat(IFormatProvider? provider, CompositeFormat format, ReadOnlySpan<object?> args)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.AppendFormat(provider, format, args);
         return this;
     }
@@ -1462,6 +1940,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator AppendFormatIndent([StringSyntax(StringSyntaxAttribute.CompositeFormat)] string format, object? arg0)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.WriteIndent();
         this.stringBuilder.AppendFormat(format, arg0);
         return this;
@@ -1476,6 +1959,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator AppendFormatIndent([StringSyntax(StringSyntaxAttribute.CompositeFormat)] string format, object? arg0, object? arg1)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.WriteIndent();
         this.stringBuilder.AppendFormat(format, arg0, arg1);
         return this;
@@ -1491,6 +1979,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator AppendFormatIndent([StringSyntax(StringSyntaxAttribute.CompositeFormat)] string format, object? arg0, object? arg1, object? arg2)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.WriteIndent();
         this.stringBuilder.AppendFormat(format, arg0, arg1, arg2);
         return this;
@@ -1504,6 +1997,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator AppendFormatIndent([StringSyntax(StringSyntaxAttribute.CompositeFormat)] string format, params object?[] args)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.WriteIndent();
         this.stringBuilder.AppendFormat(format, args);
         return this;
@@ -1518,6 +2016,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator AppendFormatIndent(IFormatProvider? provider, [StringSyntax(StringSyntaxAttribute.CompositeFormat)] string format, object? arg0)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.WriteIndent();
         this.stringBuilder.AppendFormat(provider, format, arg0);
         return this;
@@ -1533,6 +2036,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator AppendFormatIndent(IFormatProvider? provider, [StringSyntax(StringSyntaxAttribute.CompositeFormat)] string format, object? arg0, object? arg1)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.WriteIndent();
         this.stringBuilder.AppendFormat(provider, format, arg0, arg1);
         return this;
@@ -1549,6 +2057,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator AppendFormatIndent(IFormatProvider? provider, [StringSyntax(StringSyntaxAttribute.CompositeFormat)] string format, object? arg0, object? arg1, object? arg2)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.WriteIndent();
         this.stringBuilder.AppendFormat(provider, format, arg0, arg1, arg2);
         return this;
@@ -1563,6 +2076,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator AppendFormatIndent(IFormatProvider? provider, [StringSyntax(StringSyntaxAttribute.CompositeFormat)] string format, params object?[] args)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.WriteIndent();
         this.stringBuilder.AppendFormat(provider, format, args);
         return this;
@@ -1581,6 +2099,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <exception cref="FormatException">The index of a format item is greater than or equal to the number of supplied arguments.</exception>
     public CodeGenerator AppendFormatIndent<TArg0>(IFormatProvider? provider, CompositeFormat format, TArg0 arg0)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.WriteIndent();
         this.stringBuilder.AppendFormat(provider, format, arg0);
         return this;
@@ -1601,6 +2124,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <exception cref="FormatException">The index of a format item is greater than or equal to the number of supplied arguments.</exception>
     public CodeGenerator AppendFormatIndent<TArg0, TArg1>(IFormatProvider? provider, CompositeFormat format, TArg0 arg0, TArg1 arg1)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.WriteIndent();
         this.stringBuilder.AppendFormat(provider, format, arg0, arg1);
         return this;
@@ -1623,6 +2151,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <exception cref="FormatException">The index of a format item is greater than or equal to the number of supplied arguments.</exception>
     public CodeGenerator AppendFormatIndent<TArg0, TArg1, TArg2>(IFormatProvider? provider, CompositeFormat format, TArg0 arg0, TArg1 arg1, TArg2 arg2)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.WriteIndent();
         this.stringBuilder.AppendFormat(provider, format, arg0, arg1, arg2);
         return this;
@@ -1641,6 +2174,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <exception cref="FormatException">The index of a format item is greater than or equal to the number of supplied arguments.</exception>
     public CodeGenerator AppendFormatIndent(IFormatProvider? provider, CompositeFormat format, params object?[] args)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.WriteIndent();
         this.stringBuilder.AppendFormat(provider, format, args);
         return this;
@@ -1658,6 +2196,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <exception cref="FormatException">The index of a format item is greater than or equal to the number of supplied arguments.</exception>
     public CodeGenerator AppendFormatIndent(IFormatProvider? provider, CompositeFormat format, ReadOnlySpan<object?> args)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.WriteIndent();
         this.stringBuilder.AppendFormat(provider, format, args);
         return this;
@@ -1677,6 +2220,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// </remarks>
     public CodeGenerator Replace(string oldValue, string? newValue)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.Replace(oldValue, newValue);
         return this;
     }
@@ -1688,6 +2236,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns><see langword="true"/> if the values are equal.</returns>
     public bool Equals([NotNullWhen(true)] StringBuilder? sb)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return false;
+        }
+
         return this.stringBuilder.Equals(sb);
     }
 
@@ -1698,6 +2251,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns><see langword="true"/> if the values are equal.</returns>
     public bool Equals([NotNullWhen(true)] CodeGenerator? sb)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return false;
+        }
+
         return this.stringBuilder.Equals(sb?.stringBuilder);
     }
 
@@ -1709,6 +2267,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns><see langword="true"/> if the values are equal.</returns>
     public bool Equals(ReadOnlySpan<char> span)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return false;
+        }
+
         return this.stringBuilder.Equals(span);
     }
 #endif
@@ -1727,6 +2290,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// </remarks>
     public CodeGenerator Replace(string oldValue, string? newValue, int startIndex, int count)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.Replace(oldValue, newValue, startIndex, count);
         return this;
     }
@@ -1739,6 +2307,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the append operation has completed.</returns>
     public CodeGenerator Replace(char oldChar, char newChar)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.Replace(oldChar, newChar);
         return this;
     }
@@ -1753,6 +2326,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>A reference to this instance after the append operation has completed.</returns>
     public CodeGenerator Replace(char oldChar, char newChar, int startIndex, int count)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.stringBuilder.Replace(oldChar, newChar, startIndex, count);
         return this;
     }
@@ -1765,6 +2343,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <exception cref="ArgumentException">The name is already in use in the scope.</exception>
     public CodeGenerator ReserveName(MemberName memberName)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         if (!this.TryReserveName(memberName))
         {
             throw new ArgumentException("The name is already reserved in this scope.", nameof(memberName));
@@ -1781,6 +2364,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <exception cref="ArgumentException">The name is already in use in the scope.</exception>
     public CodeGenerator ReserveNameIfNotReserved(MemberName memberName)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
         this.TryReserveName(memberName);
         return this;
     }
@@ -1793,6 +2381,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <exception cref="ArgumentException">The name is already in use in the scope.</exception>
     public bool TryReserveName(MemberName memberName)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return false;
+        }
+
         if (this.memberNames.TryGetValue(memberName, out _))
         {
             return true;
@@ -1831,6 +2424,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// </remarks>
     public string GetOrAddMemberName(MemberName memberName)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return string.Empty;
+        }
+
         if (this.memberNames.TryGetValue(memberName, out string? name))
         {
             return name;
@@ -1853,6 +2451,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// </remarks>
     public string GetUniqueMemberName(MemberName memberName)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return string.Empty;
+        }
+
         return this.AddName(memberName);
     }
 
@@ -1864,6 +2467,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>The child scope.</returns>
     public string GetChildScope(string? childScope, string? rootScope)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return string.Empty;
+        }
+
         return childScope is string c ? $"{rootScope ?? this.FullyQualifiedScope}.{c}" : this.FullyQualifiedScope;
     }
 
@@ -1874,6 +2482,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     /// <returns>The collection of generated code files.</returns>
     public IReadOnlyCollection<GeneratedCodeFile> GetGeneratedCodeFiles(Func<TypeDeclaration, FileNameDescription> getFileNameDescription)
     {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return [];
+        }
+
         List<GeneratedCodeFile> generatedCode = [];
         HashSet<string> uniqueFileNames = [];
 

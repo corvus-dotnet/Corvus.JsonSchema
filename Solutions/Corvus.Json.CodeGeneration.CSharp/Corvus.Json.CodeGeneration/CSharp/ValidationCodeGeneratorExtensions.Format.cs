@@ -29,6 +29,11 @@ public static partial class ValidationCodeGeneratorExtensions
         TypeDeclaration typeDeclaration,
         IReadOnlyCollection<IChildValidationHandler> children)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         return generator
             .AppendSeparatorLine()
             .AppendLineIndent("/// <summary>")
@@ -59,6 +64,11 @@ public static partial class ValidationCodeGeneratorExtensions
         TypeDeclaration typeDeclaration,
         IReadOnlyCollection<IChildValidationHandler> children)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.ExplicitFormat() is not string explicitFormat)
         {
             return generator;
@@ -82,6 +92,11 @@ public static partial class ValidationCodeGeneratorExtensions
         // Let the children have their go, then work through he standard
         foreach (IChildValidationHandler child in children)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return generator;
+            }
+
             child.AppendValidationCode(generator, typeDeclaration);
         }
 
@@ -99,6 +114,11 @@ public static partial class ValidationCodeGeneratorExtensions
 
             foreach (IFormatProviderKeyword keyword in keywords)
             {
+                if (generator.IsCancellationRequested)
+                {
+                    return generator;
+                }
+
                 generator
                     .AppendKeywordValidationResult(isValid: true, keyword, "result", g => AppendIgnoredFormat(g, explicitFormat), useInterpolatedString: true);
             }
@@ -115,6 +135,11 @@ public static partial class ValidationCodeGeneratorExtensions
 
         static void AppendIgnoredFormat(CodeGenerator generator, string format)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             generator
                 .Append("ignored '")
                 .Append(format)
@@ -123,6 +148,11 @@ public static partial class ValidationCodeGeneratorExtensions
 
         static void AppendUnknownFormat(CodeGenerator generator, string format)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             generator
                 .Append("ignored '")
                 .Append(format)
@@ -131,6 +161,11 @@ public static partial class ValidationCodeGeneratorExtensions
 
         static void AppendIgnoredValueKind(CodeGenerator generator, string format, JsonValueKind expectedValueKind)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             generator
                 .Append("ignored '")
                 .Append(format)
@@ -141,6 +176,11 @@ public static partial class ValidationCodeGeneratorExtensions
 
         static CodeGenerator AppendUnkownFormat(CodeGenerator generator, TypeDeclaration typeDeclaration, string explicitFormat)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return generator;
+            }
+
             generator
                 .AppendLineIndent("if (level == ValidationLevel.Verbose)")
                 .AppendLineIndent("{")
@@ -151,6 +191,11 @@ public static partial class ValidationCodeGeneratorExtensions
 
             foreach (IFormatProviderKeyword keyword in unknownKeywords)
             {
+                if (generator.IsCancellationRequested)
+                {
+                    return generator;
+                }
+
                 generator
                     .AppendKeywordValidationResult(isValid: true, keyword, "unknownResult", g => AppendUnknownFormat(g, explicitFormat));
             }
@@ -166,6 +211,11 @@ public static partial class ValidationCodeGeneratorExtensions
 
         static CodeGenerator AppendValueKindCheck(CodeGenerator generator, TypeDeclaration typeDeclaration, string explicitFormat, JsonValueKind expectedValueKind)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return generator;
+            }
+
             generator
                 .AppendLineIndent("if (valueKind != JsonValueKind.", expectedValueKind.ToString(), ")")
                 .AppendLineIndent("{")
@@ -177,6 +227,11 @@ public static partial class ValidationCodeGeneratorExtensions
 
             foreach (IFormatProviderKeyword keyword in typeDeclaration.Keywords().OfType<IFormatProviderKeyword>())
             {
+                if (generator.IsCancellationRequested)
+                {
+                    return generator;
+                }
+
                 generator
                     .AppendKeywordValidationResult(isValid: true, keyword, "ignoredResult", g => AppendIgnoredValueKind(g, explicitFormat, expectedValueKind), useInterpolatedString: true);
             }

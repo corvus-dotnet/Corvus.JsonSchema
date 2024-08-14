@@ -111,7 +111,7 @@ public class JsonSchemaSteps
     [Given(@"the input data at ""(.*)""")]
     public async Task GivenTheInputDataAt(string referenceFragment)
     {
-        JsonElement? element = await this.driver.GetElementFromLocalFile(this.scenarioContext.Get<string>(InputJsonFileName), referenceFragment).ConfigureAwait(false);
+        JsonElement? element = await this.driver.GetElementFromLocalFile(this.scenarioContext.Get<string>(InputJsonFileName), referenceFragment);
         Assert.NotNull(
             element,
             $"Failed to load input data at {this.scenarioContext.Get<string>(InputJsonFileName)}, ref {referenceFragment}, jsonSchemaBuilder201909DriverSettings:testBaseDirectory: '{this.configuration["jsonSchemaBuilder201909DriverSettings:testBaseDirectory"]}', jsonSchemaBuilder202012DriverSettings: '{this.configuration["jsonSchemaBuilder202012DriverSettings:testBaseDirectory"]}' CWD: '{Environment.CurrentDirectory}'");
@@ -632,7 +632,7 @@ After:
                     featureName,
                     scenarioName,
                     validateFormat,
-                    this.scenarioContext.TryGetValue(NullablePropertiesKey, out bool optionalAsNullable) && optionalAsNullable).ConfigureAwait(false);
+                    this.scenarioContext.TryGetValue(NullablePropertiesKey, out bool optionalAsNullable) && optionalAsNullable);
             }
             else
             {
@@ -643,7 +643,7 @@ After:
                     featureName,
                     scenarioName,
                     validateFormat,
-                    this.scenarioContext.TryGetValue(NullablePropertiesKey, out bool optionalAsNullable) && optionalAsNullable).ConfigureAwait(false);
+                    this.scenarioContext.TryGetValue(NullablePropertiesKey, out bool optionalAsNullable) && optionalAsNullable);
             }
 
             this.featureContext.Set(type, key);

@@ -29,6 +29,11 @@ public static partial class ValidationCodeGeneratorExtensions
         IReadOnlyCollection<IChildValidationHandler> children,
         uint parentHandlerPriority)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         generator
             .AppendSeparatorLine()
             .AppendLineIndent("/// <summary>")
@@ -91,6 +96,11 @@ public static partial class ValidationCodeGeneratorExtensions
         this CodeGenerator generator,
         CoreTypes allowedCoreTypes)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
 #if NET8_0_OR_GREATER
         CoreTypesValidationResults coreTypeResultsToMerge = default;
 #else

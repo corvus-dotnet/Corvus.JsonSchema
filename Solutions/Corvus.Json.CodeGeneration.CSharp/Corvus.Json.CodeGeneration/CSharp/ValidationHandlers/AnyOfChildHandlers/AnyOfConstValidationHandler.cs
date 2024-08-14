@@ -29,10 +29,20 @@ public class AnyOfConstValidationHandler : IChildValidationHandler
     /// <inheritdoc/>
     public CodeGenerator AppendValidationCode(CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.AnyOfConstantValues() is IReadOnlyDictionary<IAnyOfConstantValidationKeyword, JsonElement[]> constDictionary)
         {
             foreach (IAnyOfConstantValidationKeyword keyword in constDictionary.Keys)
             {
+                if (generator.IsCancellationRequested)
+                {
+                    return generator;
+                }
+
                 string localMethodName = generator.GetUniqueMethodNameInScope(keyword.Keyword, prefix: "Validate");
 
                 generator
@@ -65,6 +75,11 @@ public class AnyOfConstValidationHandler : IChildValidationHandler
                 int count = constValues.Length;
                 for (int i = 1; i <= count; ++i)
                 {
+                    if (generator.IsCancellationRequested)
+                    {
+                        return generator;
+                    }
+
                     string constField =
                         generator.GetPropertyNameInScope(
                             keyword.Keyword,

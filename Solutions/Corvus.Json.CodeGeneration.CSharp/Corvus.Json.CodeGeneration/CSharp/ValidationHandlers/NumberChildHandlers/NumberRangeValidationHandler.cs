@@ -28,8 +28,18 @@ public class NumberRangeValidationHandler : IChildValidationHandler
     /// <inheritdoc/>
     public CodeGenerator AppendValidationCode(CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         foreach (INumberConstantValidationKeyword keyword in typeDeclaration.Keywords().OfType<INumberConstantValidationKeyword>())
         {
+            if (generator.IsCancellationRequested)
+            {
+                return generator;
+            }
+
             if (!keyword.TryGetOperator(typeDeclaration, out Operator op) || op == Operator.None)
             {
                 continue;
@@ -110,6 +120,11 @@ public class NumberRangeValidationHandler : IChildValidationHandler
 
         static void GetValidMessage(CodeGenerator generator, Operator op, string memberName)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             generator
                 .Append("{value} ")
                 .AppendTextForOperator(op)
@@ -120,6 +135,11 @@ public class NumberRangeValidationHandler : IChildValidationHandler
 
         static void GetInvalidMessage(CodeGenerator generator, Operator op, string memberName)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             generator
                 .Append("{value} ")
                 .AppendTextForInverseOperator(op)
@@ -130,6 +150,11 @@ public class NumberRangeValidationHandler : IChildValidationHandler
 
         static void GetSimplifiedInvalidMessage(CodeGenerator generator, Operator op)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             generator
                 .AppendTextForInverseOperator(op)
                 .Append(" the required value.");
@@ -137,6 +162,11 @@ public class NumberRangeValidationHandler : IChildValidationHandler
 
         static void AppendMultipleOf(CodeGenerator generator, INumberConstantValidationKeyword keyword, string memberName)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             generator
                 .AppendSeparatorLine()
                 .AppendLineIndent("if (value.HasJsonElementBacking")
@@ -148,6 +178,11 @@ public class NumberRangeValidationHandler : IChildValidationHandler
 
         static void AppendStandardOperator(CodeGenerator generator, INumberConstantValidationKeyword keyword, Operator op, string memberName)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             generator
                 .AppendSeparatorLine()
 

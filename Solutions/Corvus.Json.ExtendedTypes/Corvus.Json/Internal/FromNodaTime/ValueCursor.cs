@@ -10,7 +10,6 @@
 #if NET8_0_OR_GREATER
 
 using System.Diagnostics;
-using System.Globalization;
 
 namespace NodaTime.Text;
 

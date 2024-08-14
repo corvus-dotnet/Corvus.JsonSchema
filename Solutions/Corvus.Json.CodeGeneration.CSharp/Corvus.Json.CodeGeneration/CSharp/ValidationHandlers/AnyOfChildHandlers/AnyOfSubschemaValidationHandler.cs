@@ -28,10 +28,20 @@ public class AnyOfSubschemaValidationHandler : IChildValidationHandler
     /// <inheritdoc/>
     public CodeGenerator AppendValidationCode(CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.AnyOfCompositionTypes() is IReadOnlyDictionary<IAnyOfSubschemaValidationKeyword, IReadOnlyCollection<TypeDeclaration>> subschemaDictionary)
         {
             foreach (IAnyOfSubschemaValidationKeyword keyword in subschemaDictionary.Keys)
             {
+                if (generator.IsCancellationRequested)
+                {
+                    return generator;
+                }
+
                 string localMethodName = generator.GetUniqueMethodNameInScope(keyword.Keyword, prefix: "Validate");
 
                 generator
@@ -68,6 +78,11 @@ public class AnyOfSubschemaValidationHandler : IChildValidationHandler
 
                 foreach (TypeDeclaration subschemaType in subschemaTypes)
                 {
+                    if (generator.IsCancellationRequested)
+                    {
+                        return generator;
+                    }
+
                     ReducedTypeDeclaration reducedType = subschemaType.ReducedTypeDeclaration();
                     string pathModifier = keyword.GetPathModifier(reducedType, i);
                     string contextName = generator.GetUniqueVariableNameInScope("ChildContext", prefix: keyword.Keyword, suffix: i.ToString());

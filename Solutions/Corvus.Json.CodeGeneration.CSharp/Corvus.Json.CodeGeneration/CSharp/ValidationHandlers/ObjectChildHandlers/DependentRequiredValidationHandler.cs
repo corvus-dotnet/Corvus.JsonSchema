@@ -22,12 +22,27 @@ public class DependentRequiredValidationHandler : IChildValidationHandler
     /// <inheritdoc/>
     public CodeGenerator AppendValidationCode(CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.DependentRequired() is IReadOnlyDictionary<IObjectDependentRequiredValidationKeyword, IReadOnlyCollection<DependentRequiredDeclaration>> properties)
         {
             foreach (IObjectDependentRequiredValidationKeyword keyword in properties.Keys)
             {
+                if (generator.IsCancellationRequested)
+                {
+                    return generator;
+                }
+
                 foreach (DependentRequiredDeclaration dependentRequired in properties[keyword])
                 {
+                    if (generator.IsCancellationRequested)
+                    {
+                        return generator;
+                    }
+
                     string propertyNameAsQuotedString = SymbolDisplay.FormatLiteral(dependentRequired.JsonPropertyName, true);
 
                     generator
@@ -41,6 +56,11 @@ public class DependentRequiredValidationHandler : IChildValidationHandler
                     int i = 0;
                     foreach (string dependency in dependentRequired.Dependencies)
                     {
+                        if (generator.IsCancellationRequested)
+                        {
+                            return generator;
+                        }
+
                         string quotedDependency = SymbolDisplay.FormatLiteral(dependency, true);
                         string quotedPathModifier = SymbolDisplay.FormatLiteral(keyword.GetPathModifier(dependentRequired, i), true);
                         generator
@@ -67,6 +87,11 @@ public class DependentRequiredValidationHandler : IChildValidationHandler
                     i = 0;
                     foreach (string dependency in dependentRequired.Dependencies)
                     {
+                        if (generator.IsCancellationRequested)
+                        {
+                            return generator;
+                        }
+
                         string quotedDependency = SymbolDisplay.FormatLiteral(dependency, true);
                         string quotedPathModifier = SymbolDisplay.FormatLiteral(keyword.GetPathModifier(dependentRequired, i), true);
                         generator
@@ -91,6 +116,11 @@ public class DependentRequiredValidationHandler : IChildValidationHandler
 
         static void AppendErrorText(CodeGenerator generator, string quotedPropertyName, string quotedDependency)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             generator
                 .Append("the property '")
                 .Append(quotedPropertyName.Trim('"'))
@@ -101,6 +131,11 @@ public class DependentRequiredValidationHandler : IChildValidationHandler
 
         static void AppendValidText(CodeGenerator generator, string quotedPropertyName, string quotedDependency)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             generator
                 .Append("the property '")
                 .Append(quotedPropertyName.Trim('"'))
@@ -111,6 +146,11 @@ public class DependentRequiredValidationHandler : IChildValidationHandler
 
         static void AppendBody(CodeGenerator generator, IObjectDependentRequiredValidationKeyword keyword, string propertyNameAsQuotedString, string quotedDependency, string quotedPathModifier)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             generator
                 .AppendLineIndent("{")
                 .PushIndent()

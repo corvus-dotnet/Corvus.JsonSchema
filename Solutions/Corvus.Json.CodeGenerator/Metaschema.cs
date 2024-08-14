@@ -2,7 +2,6 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.IO;
 using System.Reflection;
 using System.Text.Json;
 

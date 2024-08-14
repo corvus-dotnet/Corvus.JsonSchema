@@ -39,7 +39,7 @@ public sealed class DependentRequiredKeyword : IPropertyProviderKeyword, IObject
     public bool CanReduce(in JsonElement schemaValue) => Reduction.CanReduceNonReducingKeyword(schemaValue, this.KeywordUtf8);
 
     /// <inheritdoc />
-    public void CollectProperties(TypeDeclaration source, TypeDeclaration target, HashSet<TypeDeclaration> visitedTypeDeclarations, bool treatDependentRequiredAsOptional)
+    public void CollectProperties(TypeDeclaration source, TypeDeclaration target, HashSet<TypeDeclaration> visitedTypeDeclarations, bool treatDependentRequiredAsOptional, CancellationToken cancellationToken)
     {
         if (source.LocatedSchema.Schema.ValueKind == JsonValueKind.Object &&
             source.LocatedSchema.Schema.TryGetProperty(this.KeywordUtf8, out JsonElement value) &&
@@ -47,6 +47,11 @@ public sealed class DependentRequiredKeyword : IPropertyProviderKeyword, IObject
         {
             foreach (JsonProperty property in value.EnumerateObject())
             {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    return;
+                }
+
                 if (property.Value.ValueKind != JsonValueKind.Array)
                 {
                     continue;
@@ -65,6 +70,11 @@ public sealed class DependentRequiredKeyword : IPropertyProviderKeyword, IObject
 
                 foreach (JsonElement requiredValue in property.Value.EnumerateArray())
                 {
+                    if (cancellationToken.IsCancellationRequested)
+                    {
+                        return;
+                    }
+
                     string propertyName = property.Value.GetString() ?? throw new InvalidOperationException("The dependentRequired properties must be strings.");
                     target.AddOrUpdatePropertyDeclaration(
                         new PropertyDeclaration(

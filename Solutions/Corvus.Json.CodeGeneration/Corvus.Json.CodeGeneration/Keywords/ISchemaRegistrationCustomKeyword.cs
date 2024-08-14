@@ -22,5 +22,6 @@ public interface ISchemaRegistrationCustomKeyword
     /// <param name="schemaValue">The current schema value.</param>
     /// <param name="currentLocation">The current location.</param>
     /// <param name="vocabulary">The current vocabulary.</param>
-    void Apply(JsonSchemaRegistry schemaRegistry, in JsonElement schemaValue, JsonReference currentLocation, IVocabulary vocabulary);
+    /// <param name="cancellationToken">The cancellation token.</param>
+    void Apply(JsonSchemaRegistry schemaRegistry, in JsonElement schemaValue, JsonReference currentLocation, IVocabulary vocabulary, CancellationToken cancellationToken);
 }

@@ -28,8 +28,18 @@ public class StringRegexValidationHandler : IChildValidationHandler
     /// <inheritdoc/>
     public CodeGenerator AppendValidationCode(CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         foreach (IStringRegexValidationProviderKeyword keyword in typeDeclaration.Keywords().OfType<IStringRegexValidationProviderKeyword>())
         {
+            if (generator.IsCancellationRequested)
+            {
+                return generator;
+            }
+
             // Gets the field name for the validation constant.
             string memberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword);
             if (keyword.TryGetValidationRegularExpressions(typeDeclaration, out IReadOnlyList<string>? regularExpressions))
@@ -99,6 +109,11 @@ public class StringRegexValidationHandler : IChildValidationHandler
 
         static void GetValidMessage(CodeGenerator generator, string expression)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             generator
                 .Append("{input.ToString()} matched ")
                 .Append(" '")
@@ -108,6 +123,11 @@ public class StringRegexValidationHandler : IChildValidationHandler
 
         static void GetInvalidMessage(CodeGenerator generator, string expression)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             generator
                 .Append("{input.ToString()} did not match ")
                 .Append(" '")
@@ -117,6 +137,11 @@ public class StringRegexValidationHandler : IChildValidationHandler
 
         static void GetSimplifiedInvalidMessage(CodeGenerator generator, string expression)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             generator
                 .Append("The value did not match ")
                 .Append(" '")

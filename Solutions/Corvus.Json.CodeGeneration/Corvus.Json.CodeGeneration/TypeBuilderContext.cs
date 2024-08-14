@@ -314,9 +314,10 @@ public class TypeBuilderContext
     /// <summary>
     /// Build the type declaration for the given type builder context.
     /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>A <see cref="ValueTask{TResult}"/> which, when complete, provides the built type declaration.</returns>
     /// <exception cref="InvalidOperationException">A registered schema could not be found at the current type builder context location.</exception>
-    public async ValueTask<TypeDeclaration> BuildTypeDeclarationForCurrentScope()
+    public async ValueTask<TypeDeclaration> BuildTypeDeclarationForCurrentScope(CancellationToken cancellationToken)
     {
         if (!this.TryGetLocatedSchemaForCurrentLocation(out LocatedSchema? schema))
         {
@@ -336,7 +337,7 @@ public class TypeBuilderContext
 
         TypeDeclaration typeDeclaration = new(schema);
 
-        CustomKeywords.ApplyBeforeScope(this, typeDeclaration);
+        CustomKeywords.ApplyBeforeScope(this, typeDeclaration, cancellationToken);
 
         if (this.TryGetTypeDeclarationForCurrentLocation(out TypeDeclaration? existingTypeDeclaration))
         {
@@ -355,7 +356,7 @@ public class TypeBuilderContext
         // Try to enter the dynamic scope of the ID - note that this *replaces*
         // the current scope, so we will be automatically popping it when we get done in the finally block.
         // Make sure all other code goes in the try/finally block to avoid scope leaks.
-        bool enteredDynamicScope = CodeGeneration.Scope.TryEnterScope(this, typeDeclaration, out TypeDeclaration? existingTypeDeclarationForScope);
+        bool enteredDynamicScope = CodeGeneration.Scope.TryEnterScope(this, typeDeclaration, cancellationToken, out TypeDeclaration? existingTypeDeclarationForScope);
 
         try
         {
@@ -364,11 +365,31 @@ public class TypeBuilderContext
                 return etd;
             }
 
-            CustomKeywords.ApplyBeforeSubschemas(this, typeDeclaration);
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return WellKnownTypeDeclarations.JsonAny;
+            }
 
-            await Subschemas.BuildSubschemaTypes(this, typeDeclaration).ConfigureAwait(false);
+            CustomKeywords.ApplyBeforeSubschemas(this, typeDeclaration, cancellationToken);
 
-            CustomKeywords.ApplyAfterSubschemas(this, typeDeclaration);
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return WellKnownTypeDeclarations.JsonAny;
+            }
+
+            await Subschemas.BuildSubschemaTypes(this, typeDeclaration, cancellationToken);
+
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return WellKnownTypeDeclarations.JsonAny;
+            }
+
+            CustomKeywords.ApplyAfterSubschemas(this, typeDeclaration, cancellationToken);
+
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return WellKnownTypeDeclarations.JsonAny;
+            }
 
             typeDeclaration.RelativeSchemaLocation = this.GetRelativeLocationFor(typeDeclaration.LocatedSchema.Location);
             typeDeclaration.BuildComplete = true;

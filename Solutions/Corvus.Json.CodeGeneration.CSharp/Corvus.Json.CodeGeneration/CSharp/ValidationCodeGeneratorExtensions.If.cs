@@ -23,6 +23,11 @@ public static partial class ValidationCodeGeneratorExtensions
         string methodName,
         TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         return generator
             .AppendSeparatorLine()
             .AppendLineIndent("/// <summary>")
@@ -56,6 +61,11 @@ public static partial class ValidationCodeGeneratorExtensions
         this CodeGenerator generator,
         TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.IfSubschemaType() is SingleSubschemaKeywordTypeDeclaration ifType)
         {
             AppendIf(generator, ifType);
@@ -75,6 +85,11 @@ public static partial class ValidationCodeGeneratorExtensions
 
         static void AppendElse(CodeGenerator generator, SingleSubschemaKeywordTypeDeclaration elseType)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             generator
                 .AppendSeparatorLine()
                 .AppendLineIndent("if (!ifResult.IsValid)")
@@ -143,6 +158,11 @@ public static partial class ValidationCodeGeneratorExtensions
 
         static void AppendThen(CodeGenerator generator, SingleSubschemaKeywordTypeDeclaration thenType)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             generator
                 .AppendSeparatorLine()
                 .AppendLineIndent("if (ifResult.IsValid)")
@@ -211,6 +231,11 @@ public static partial class ValidationCodeGeneratorExtensions
 
         static void AppendIf(CodeGenerator generator, SingleSubschemaKeywordTypeDeclaration ifType)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             generator
                 .AppendSeparatorLine()
                 .AppendLineIndent("if (level > ValidationLevel.Basic)")

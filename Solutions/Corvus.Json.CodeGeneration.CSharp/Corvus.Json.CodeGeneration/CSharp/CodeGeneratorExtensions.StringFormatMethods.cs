@@ -19,6 +19,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A <see langword="true"/> if this handled the format for the type declaration.</returns>
     public static bool AppendBase64ContentFormatConstructors(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return true;
+        }
+
         generator
             .AppendPublicConvertedValueConstructor(typeDeclaration, "JsonDocument", CoreTypes.String, "StandardBase64.EncodeToString(value);");
 
@@ -33,6 +38,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A <see langword="true"/> if this handled the format for the type declaration.</returns>
     public static bool AppendBase64ContentFormatPublicMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return true;
+        }
+
         generator
             .ReserveNameIfNotReserved("GetDecodedBufferSize")
             .AppendBlockIndent(
@@ -182,6 +192,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A <see langword="true"/> if this handled the format for the type declaration.</returns>
     public static bool AppendJsonContentFormatPublicMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return true;
+        }
+
         generator
             .AppendSeparatorLine()
             .AppendBlockIndent(
@@ -302,6 +317,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A <see langword="true"/> if this handled the format for the type declaration.</returns>
     public static bool AppendJsonContentFormatConstructors(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return true;
+        }
+
         generator
             .AppendPublicConvertedValueConstructor(typeDeclaration, "JsonDocument", CoreTypes.String, "value.RootElement.GetRawText();");
 
@@ -316,6 +336,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A <see langword="true"/> if this handled the format for the type declaration.</returns>
     public static bool AppendJsonContentFormatEqualsTBody(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return true;
+        }
+
         generator
             .AppendBlockIndent(
             """
@@ -381,6 +406,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A <see langword="true"/> if this handled the format for the type declaration.</returns>
     public static bool AppendBase64StringFormatPublicMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return true;
+        }
+
         generator
             .AppendSeparatorLine()
             .ReserveNameIfNotReserved("FromByteArray")
@@ -532,6 +562,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A <see langword="true"/> if this handled the format for the type declaration.</returns>
     public static bool AppendUriTemplateFormatPublicMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return true;
+        }
+
         generator
             .AppendSeparatorLine()
             .AppendBlockIndent(
@@ -605,6 +640,11 @@ internal static partial class CodeGeneratorExtensions
 
         static void AppendCreateParser(CodeGenerator generator, string backingValue)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             generator
                 .AppendLineIndent("result = Corvus.UriTemplates.UriTemplateParserFactory.CreateParser(this.", backingValue, ");")
                 .AppendLineIndent("return true;");
@@ -619,6 +659,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A <see langword="true"/> if this handled the format for the type declaration.</returns>
     public static bool AppendUriFormatConstructors(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return true;
+        }
+
         generator
             .AppendPublicConvertedValueConstructor(typeDeclaration, "Uri", CoreTypes.String, "StandardUri.FormatUri(value)");
 
@@ -633,6 +678,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A <see langword="true"/> if this handled the format for the type declaration.</returns>
     public static bool AppendUriFormatConversionOperators(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return true;
+        }
+
         generator
             .AppendImplicitConversionToType(typeDeclaration, "Uri", "value.GetUri();")
             .AppendImplicitConversionFromTypeUsingConstructor(typeDeclaration, "Uri", useInForSourceType: true);
@@ -648,6 +698,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A <see langword="true"/> if this handled the format for the type declaration.</returns>
     public static bool AppendUriFormatPublicMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return true;
+        }
+
         return AppendCommonUriFormatPublicMethods(generator);
     }
 
@@ -659,6 +714,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A <see langword="true"/> if this handled the format for the type declaration.</returns>
     public static bool AppendUriReferenceFormatConstructors(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return true;
+        }
+
         generator
             .AppendPublicConvertedValueConstructor(typeDeclaration, "Uri", CoreTypes.String, "StandardUri.FormatUri(value)");
 
@@ -673,6 +733,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A <see langword="true"/> if this handled the format for the type declaration.</returns>
     public static bool AppendUriReferenceFormatConversionOperators(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return true;
+        }
+
         generator
             .AppendImplicitConversionToType(typeDeclaration, "Uri", "value.GetUri();")
             .AppendImplicitConversionFromTypeUsingConstructor(typeDeclaration, "Uri", useInForSourceType: true);
@@ -688,6 +753,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A <see langword="true"/> if this handled the format for the type declaration.</returns>
     public static bool AppendUriReferenceFormatPublicMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return true;
+        }
+
         return AppendCommonUriReferenceFormatPublicMethods(generator);
     }
 
@@ -699,6 +769,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A <see langword="true"/> if this handled the format for the type declaration.</returns>
     public static bool AppendIriFormatConstructors(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return true;
+        }
+
         generator
             .AppendPublicConvertedValueConstructor(typeDeclaration, "Uri", CoreTypes.String, "StandardUri.FormatUri(value)");
 
@@ -713,6 +788,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A <see langword="true"/> if this handled the format for the type declaration.</returns>
     public static bool AppendIriFormatConversionOperators(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return true;
+        }
+
         generator
             .AppendImplicitConversionToType(typeDeclaration, "Uri", "value.GetUri();")
             .AppendImplicitConversionFromTypeUsingConstructor(typeDeclaration, "Uri", useInForSourceType: true);
@@ -728,6 +808,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A <see langword="true"/> if this handled the format for the type declaration.</returns>
     public static bool AppendIriFormatPublicMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return true;
+        }
+
         return AppendCommonUriFormatPublicMethods(generator);
     }
 
@@ -739,6 +824,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A <see langword="true"/> if this handled the format for the type declaration.</returns>
     public static bool AppendIriReferenceFormatConstructors(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return true;
+        }
+
         generator
             .AppendPublicConvertedValueConstructor(typeDeclaration, "Uri", CoreTypes.String, "StandardUri.FormatUri(value)");
 
@@ -753,6 +843,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A <see langword="true"/> if this handled the format for the type declaration.</returns>
     public static bool AppendIriReferenceFormatConversionOperators(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return true;
+        }
+
         generator
             .AppendImplicitConversionToType(typeDeclaration, "Uri", "value.GetUri();")
             .AppendImplicitConversionFromTypeUsingConstructor(typeDeclaration, "Uri", useInForSourceType: true);
@@ -768,6 +863,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A <see langword="true"/> if this handled the format for the type declaration.</returns>
     public static bool AppendIriReferenceFormatPublicMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return true;
+        }
+
         return AppendCommonUriReferenceFormatPublicMethods(generator);
     }
 
@@ -779,6 +879,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A <see langword="true"/> if this handled the format for the type declaration.</returns>
     public static bool AppendUuidFormatConstructors(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return true;
+        }
+
         generator
             .AppendPublicConvertedValueConstructor(typeDeclaration, "Guid", CoreTypes.String, "StandardUuid.FormatGuid(value)");
 
@@ -793,6 +898,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A <see langword="true"/> if this handled the format for the type declaration.</returns>
     public static bool AppendUuidFormatConversionOperators(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return true;
+        }
+
         generator
             .AppendImplicitConversionToType(typeDeclaration, "Guid", "value.GetGuid();")
             .AppendImplicitConversionFromTypeUsingConstructor(typeDeclaration, "Guid", useInForSourceType: true);
@@ -808,6 +918,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A <see langword="true"/> if this handled the format for the type declaration.</returns>
     public static bool AppendUuidFormatEqualsTBody(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return true;
+        }
+
         generator
             .AppendBlockIndent(
             """
@@ -847,6 +962,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A <see langword="true"/> if this handled the format for the type declaration.</returns>
     public static bool AppendUuidFormatPublicMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return true;
+        }
+
         generator
             .AppendSeparatorLine()
             .ReserveNameIfNotReserved("GetGuid")
@@ -915,6 +1035,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A <see langword="true"/> if this handled the format for the type declaration.</returns>
     public static bool AppendIpV6FormatConstructors(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return true;
+        }
+
         generator
             .AppendPublicConvertedValueConstructor(typeDeclaration, "System.Net.IPAddress", CoreTypes.String, "value.ToString()");
 
@@ -929,6 +1054,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A <see langword="true"/> if this handled the format for the type declaration.</returns>
     public static bool AppendIpV6FormatConversionOperators(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return true;
+        }
+
         generator
             .AppendImplicitConversionToType(typeDeclaration, "System.Net.IPAddress", "value.GetIPAddress();")
             .AppendImplicitConversionFromTypeUsingConstructor(typeDeclaration, "System.Net.IPAddress", useInForSourceType: true);
@@ -944,6 +1074,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A <see langword="true"/> if this handled the format for the type declaration.</returns>
     public static bool AppendIpV6FormatPublicMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return true;
+        }
+
         generator
             .AppendSeparatorLine()
             .ReserveNameIfNotReserved("GetIPAddress")
@@ -1012,6 +1147,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A <see langword="true"/> if this handled the format for the type declaration.</returns>
     public static bool AppendRegexFormatConstructors(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return true;
+        }
+
         generator
             .AppendPublicConvertedValueConstructor(
                 typeDeclaration,
@@ -1030,6 +1170,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A <see langword="true"/> if this handled the format for the type declaration.</returns>
     public static bool AppendRegexFormatConversionOperators(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return true;
+        }
+
         generator
             .AppendImplicitConversionToType(typeDeclaration, "System.Text.RegularExpressions.Regex", "value.GetRegex();")
             .AppendImplicitConversionFromTypeUsingConstructor(typeDeclaration, "System.Text.RegularExpressions.Regex");
@@ -1045,6 +1190,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A <see langword="true"/> if this handled the format for the type declaration.</returns>
     public static bool AppendRegexFormatPublicMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return true;
+        }
+
         generator
             .AppendSeparatorLine()
             .ReserveNameIfNotReserved("GetRegex")
@@ -1107,6 +1257,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A <see langword="true"/> if this handled the format for the type declaration.</returns>
     public static bool AppendIpV4FormatConstructors(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return true;
+        }
+
         generator
             .AppendPublicConvertedValueConstructor(typeDeclaration, "System.Net.IPAddress", CoreTypes.String, "value.ToString()");
 
@@ -1121,6 +1276,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A <see langword="true"/> if this handled the format for the type declaration.</returns>
     public static bool AppendIpV4FormatConversionOperators(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return true;
+        }
+
         generator
             .AppendImplicitConversionToType(typeDeclaration, "System.Net.IPAddress", "value.GetIPAddress();")
             .AppendImplicitConversionFromTypeUsingConstructor(typeDeclaration, "System.Net.IPAddress", useInForSourceType: true);
@@ -1136,6 +1296,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A <see langword="true"/> if this handled the format for the type declaration.</returns>
     public static bool AppendIpV4FormatPublicMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return true;
+        }
+
         generator
             .AppendSeparatorLine()
             .ReserveNameIfNotReserved("GetIPAddress")
@@ -1204,6 +1369,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A <see langword="true"/> if this handled the format for the type declaration.</returns>
     public static bool AppendDurationFormatConstructors(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return true;
+        }
+
         generator
             .AppendPublicConvertedValueConstructor(typeDeclaration, "Period", CoreTypes.String, "StandardDateFormat.FormatPeriod(value)")
             .AppendPublicConvertedValueConstructor(typeDeclaration, "NodaTime.Period", CoreTypes.String, "StandardDateFormat.FormatPeriod(value)");
@@ -1219,6 +1389,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A <see langword="true"/> if this handled the format for the type declaration.</returns>
     public static bool AppendDurationFormatConversionOperators(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return true;
+        }
+
         generator
             .AppendImplicitConversionToType(typeDeclaration, "NodaTime.Period", "(NodaTime.Period)value.GetPeriod()")
             .AppendImplicitConversionFromTypeUsingConstructor(typeDeclaration, "NodaTime.Period", useInForSourceType: true)
@@ -1236,6 +1411,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A <see langword="true"/> if this handled the format for the type declaration.</returns>
     public static bool AppendDurationFormatEqualsTBody(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return true;
+        }
+
         generator
             .AppendBlockIndent(
             """
@@ -1275,6 +1455,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A <see langword="true"/> if this handled the format for the type declaration.</returns>
     public static bool AppendDurationFormatPublicMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return true;
+        }
+
         generator
             .AppendSeparatorLine()
             .ReserveNameIfNotReserved("GetPeriod")
@@ -1356,6 +1541,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A <see langword="true"/> if this handled the format for the type declaration.</returns>
     public static bool AppendTimeFormatConstructors(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return true;
+        }
+
         generator
             .AppendPublicConvertedValueConstructor(typeDeclaration, "NodaTime.OffsetTime", CoreTypes.String, "StandardDateFormat.FormatTime(value)")
             .AppendSeparatorLine()
@@ -1374,6 +1564,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A <see langword="true"/> if this handled the format for the type declaration.</returns>
     public static bool AppendTimeFormatConversionOperators(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return true;
+        }
+
         generator
             .AppendImplicitConversionToType(typeDeclaration, "NodaTime.OffsetTime", "value.GetTime()")
             .AppendImplicitConversionFromTypeUsingConstructor(typeDeclaration, "NodaTime.OffsetTime", useInForSourceType: true)
@@ -1394,6 +1589,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A <see langword="true"/> if this handled the format for the type declaration.</returns>
     public static bool AppendTimeFormatEqualsTBody(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return true;
+        }
+
         generator
             .AppendBlockIndent(
             """
@@ -1433,6 +1633,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A <see langword="true"/> if this handled the format for the type declaration.</returns>
     public static bool AppendTimeFormatPublicMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return true;
+        }
+
         generator
             .AppendSeparatorLine()
             .ReserveNameIfNotReserved("GetTime")
@@ -1493,6 +1698,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A <see langword="true"/> if this handled the format for the type declaration.</returns>
     public static bool AppendDateTimeFormatConstructors(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return true;
+        }
+
         generator
             .AppendPublicConvertedValueConstructor(typeDeclaration, "NodaTime.OffsetDateTime", CoreTypes.String, "StandardDateFormat.FormatDateTime(value)")
             .AppendPublicConvertedValueConstructor(typeDeclaration, "DateTimeOffset", CoreTypes.String, "StandardDateFormat.FormatDateTime(NodaTime.OffsetDateTime.FromDateTimeOffset(value))");
@@ -1507,6 +1717,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A <see langword="true"/> if this handled the format for the type declaration.</returns>
     public static bool AppendDateTimeFormatConversionOperators(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return true;
+        }
+
         generator
             .AppendImplicitConversionToType(typeDeclaration, "NodaTime.OffsetDateTime", "value.GetDateTime()")
             .AppendImplicitConversionFromTypeUsingConstructor(typeDeclaration, "NodaTime.OffsetDateTime", useInForSourceType: true);
@@ -1522,6 +1737,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A <see langword="true"/> if this handled the format for the type declaration.</returns>
     public static bool AppendDateTimeFormatEqualsTBody(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return true;
+        }
+
         generator
             .AppendBlockIndent(
             """
@@ -1561,6 +1781,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A <see langword="true"/> if this handled the format for the type declaration.</returns>
     public static bool AppendDateTimeFormatPublicMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return true;
+        }
+
         generator
             .AppendSeparatorLine()
             .ReserveNameIfNotReserved("GetDateTime")
@@ -1621,6 +1846,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A <see langword="true"/> if this handled the format for the type declaration.</returns>
     public static bool AppendDateFormatEqualsTBody(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return true;
+        }
+
         generator
             .AppendBlockIndent(
             """
@@ -1660,6 +1890,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A <see langword="true"/> if this handled the format for the type declaration.</returns>
     public static bool AppendDateFormatConstructors(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return true;
+        }
+
         generator
             .AppendPublicConvertedValueConstructor(typeDeclaration, "NodaTime.LocalDate", CoreTypes.String, "StandardDateFormat.FormatDate(value)")
             .AppendPublicConvertedValueConstructor(typeDeclaration, "DateTime", CoreTypes.String, "StandardDateFormat.FormatDate(NodaTime.LocalDate.FromDateTime(value))")
@@ -1675,6 +1910,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A <see langword="true"/> if this handled the format for the type declaration.</returns>
     public static bool AppendDateFormatConversionOperators(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return true;
+        }
+
         generator
             .AppendImplicitConversionToType(typeDeclaration, "NodaTime.LocalDate", "value.GetDate()")
             .AppendImplicitConversionFromTypeUsingConstructor(typeDeclaration, "NodaTime.LocalDate", useInForSourceType: true);
@@ -1690,6 +1930,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A <see langword="true"/> if this handled the format for the type declaration.</returns>
     public static bool AppendDateFormatPublicMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return true;
+        }
+
         generator
             .AppendSeparatorLine()
             .ReserveNameIfNotReserved("GetDate")
@@ -1744,6 +1989,11 @@ internal static partial class CodeGeneratorExtensions
 
     private static bool AppendCommonUriReferenceFormatPublicMethods(CodeGenerator generator)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return true;
+        }
+
         generator
             .AppendSeparatorLine()
             .ReserveNameIfNotReserved("GetUri")
@@ -1788,6 +2038,11 @@ internal static partial class CodeGeneratorExtensions
 
     private static bool AppendCommonUriFormatPublicMethods(CodeGenerator generator)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return true;
+        }
+
         generator
             .AppendSeparatorLine()
             .ReserveNameIfNotReserved("GetUri")
