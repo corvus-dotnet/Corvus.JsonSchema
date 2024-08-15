@@ -101,7 +101,7 @@ public class FakeWebDocumentResolver : IDocumentResolver
 #else
             using Stream stream = File.OpenRead(path);
 #endif
-            result = await JsonDocument.ParseAsync(stream).ConfigureAwait(false);
+            result = await JsonDocument.ParseAsync(stream);
             return JsonPointerUtilities.ResolvePointer(result, reference.Fragment);
         }
         catch (Exception)

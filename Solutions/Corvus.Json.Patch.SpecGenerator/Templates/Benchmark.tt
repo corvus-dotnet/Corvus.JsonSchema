@@ -36,7 +36,7 @@ namespace Benchmarks
                 
             this.corvusPatch = Corvus.Json.Patch.Model.JsonPatchDocument.Parse("<#= Escape(Scenario.Patch.ToString()) #>");
 
-            await this.GlobalSetupJson("<#= Escape(Scenario.Doc.ToString()) #>").ConfigureAwait(false);
+            await this.GlobalSetupJson("<#= Escape(Scenario.Doc.ToString()) #>");
         }
 
         /// <summary>

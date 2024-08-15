@@ -12,8 +12,8 @@ namespace Corvus.Json.CodeGeneration;
 
 /// <summary>
 /// A type declaration built from a JSON schema, by calling
-/// <see cref="JsonSchemaTypeBuilder.AddTypeDeclarationsAsync(JsonReference, IVocabulary, bool)"/>
-/// or <see cref="JsonSchemaTypeBuilder.AddTypeDeclarations(Corvus.Json.JsonReference, Corvus.Json.CodeGeneration.IVocabulary, bool)"/>.
+/// <see cref="JsonSchemaTypeBuilder.AddTypeDeclarationsAsync(Corvus.Json.JsonReference, Corvus.Json.CodeGeneration.IVocabulary, bool, CancellationToken?)"/>
+/// or <see cref="JsonSchemaTypeBuilder.AddTypeDeclarations(Corvus.Json.JsonReference, Corvus.Json.CodeGeneration.IVocabulary, bool, CancellationToken?)"/>.
 /// </summary>
 /// <remarks>
 /// <para>

@@ -5,7 +5,6 @@
 using System.Collections.Frozen;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace Corvus.Json.CodeGeneration.CSharp;
 
@@ -130,15 +129,19 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
     }
 
     /// <inheritdoc/>
-    public IReadOnlyCollection<GeneratedCodeFile> GenerateCodeFor(IEnumerable<TypeDeclaration> typeDeclarations)
+    public IReadOnlyCollection<GeneratedCodeFile> GenerateCodeFor(IEnumerable<TypeDeclaration> typeDeclarations, CancellationToken cancellationToken)
     {
 #if DEBUG
         Dictionary<string, TypeDeclaration> namesSeen = [];
 #endif
-        CodeGenerator generator = new(this);
+        CodeGenerator generator = new(this, cancellationToken);
 
         foreach (TypeDeclaration typeDeclaration in typeDeclarations)
         {
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return [];
+            }
 #if DEBUG
             if (namesSeen.ContainsKey(typeDeclaration.FullyQualifiedDotnetTypeName()))
             {
@@ -156,14 +159,24 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
             {
                 foreach (ICodeFileBuilder codeFileBuilder in this.codeFileBuilderRegistry.RegisteredBuilders)
                 {
+                    if (cancellationToken.IsCancellationRequested)
+                    {
+                        return [];
+                    }
+
                     codeFileBuilder.EmitFile(generator, typeDeclaration);
+                }
+
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    return [];
                 }
 
                 generator.EndTypeDeclaration(typeDeclaration);
             }
         }
 
-        return generator.GetGeneratedCodeFiles(t => new(t.DotnetTypeNameWithoutNamespace(), ".cs"));
+        return generator.GetGeneratedCodeFiles(t => new(t.DotnetTypeNameWithoutNamespace(), this.options.FileExtension));
     }
 
     /// <inheritdoc/>
@@ -185,7 +198,7 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
     }
 
     /// <inheritdoc/>
-    public void IdentifyNonGeneratedType(TypeDeclaration typeDeclaration)
+    public void IdentifyNonGeneratedType(TypeDeclaration typeDeclaration, CancellationToken cancellationToken)
     {
         if (typeDeclaration.HasDotnetTypeName())
         {
@@ -201,11 +214,12 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
             typeDeclaration,
             reference,
             typeNameBuffer,
-            this.GetBuiltInTypeNameHeuristics());
+            this.GetBuiltInTypeNameHeuristics(),
+            cancellationToken);
     }
 
     /// <inheritdoc/>
-    public void SetNamesBeforeSubschema(TypeDeclaration typeDeclaration, string fallbackName)
+    public void SetNamesBeforeSubschema(TypeDeclaration typeDeclaration, string fallbackName, CancellationToken cancellationToken)
     {
         // We've already set the .NET type name.
         if (typeDeclaration.HasDotnetTypeName())
@@ -242,11 +256,12 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
              typeNameBuffer,
              ns,
              fallbackName,
-             this.GetOrderedNameBeforeSubschemaHeuristics());
+             this.GetOrderedNameBeforeSubschemaHeuristics(),
+             cancellationToken);
     }
 
     /// <inheritdoc/>
-    public void SetNamesAfterSubschema(TypeDeclaration typeDeclaration)
+    public void SetNamesAfterSubschema(TypeDeclaration typeDeclaration, CancellationToken cancellationToken)
     {
         JsonReferenceBuilder reference = GetReferenceWithoutQuery(typeDeclaration);
 
@@ -255,7 +270,8 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
             typeDeclaration,
             reference,
             typeNameBuffer,
-            this.GetOrderedNameAfterSubschemaHeuristics());
+            this.GetOrderedNameAfterSubschemaHeuristics(),
+            cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -334,10 +350,16 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
         TypeDeclaration typeDeclaration,
         JsonReferenceBuilder reference,
         Span<char> typeNameBuffer,
-        IEnumerable<IBuiltInTypeNameHeuristic> nameHeuristics)
+        IEnumerable<IBuiltInTypeNameHeuristic> nameHeuristics,
+        CancellationToken cancellationToken)
     {
         foreach (IBuiltInTypeNameHeuristic heuristic in nameHeuristics)
         {
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return;
+            }
+
             if (heuristic.TryGetName(languageProvider, typeDeclaration, reference, typeNameBuffer, out int _))
             {
                 typeDeclaration.SetDoNotGenerate();
@@ -350,13 +372,19 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
         TypeDeclaration typeDeclaration,
         JsonReferenceBuilder reference,
         Span<char> typeNameBuffer,
-        IEnumerable<INameHeuristic> nameHeuristics)
+        IEnumerable<INameHeuristic> nameHeuristics,
+        CancellationToken cancellationToken)
     {
         if (!this.options.TryGetTypeName(reference.ToString(), out _))
         {
             // We only apply the heuristics if we do not have an explicit type name
             foreach (INameHeuristic heuristic in nameHeuristics)
             {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    return;
+                }
+
                 if (heuristic.TryGetName(this, typeDeclaration, reference, typeNameBuffer, out int written))
                 {
                     typeDeclaration.SetDotnetTypeName(typeNameBuffer[..written].ToString());
@@ -390,10 +418,16 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
         Span<char> typeNameBuffer,
         string ns,
         string fallbackName,
-        IEnumerable<INameHeuristic> nameHeuristics)
+        IEnumerable<INameHeuristic> nameHeuristics,
+        CancellationToken cancellationToken)
     {
         foreach (INameHeuristic heuristic in nameHeuristics)
         {
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return;
+            }
+
             if (heuristic.TryGetName(this, typeDeclaration, reference, typeNameBuffer, out int written))
             {
                 if (heuristic is IBuiltInTypeNameHeuristic)
@@ -402,7 +436,18 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
                 }
                 else
                 {
-                    written = this.FixTypeNameForCollisionWithParent(typeDeclaration, typeNameBuffer, written);
+                    if (cancellationToken.IsCancellationRequested)
+                    {
+                        return;
+                    }
+
+                    written = this.FixTypeNameForCollisionWithParent(typeDeclaration, typeNameBuffer, written, cancellationToken);
+
+                    if (cancellationToken.IsCancellationRequested)
+                    {
+                        return;
+                    }
+
                     typeDeclaration.SetDotnetTypeName(typeNameBuffer[..written].ToString());
                     typeDeclaration.SetDotnetNamespace(ns);
                 }
@@ -415,7 +460,7 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
         typeDeclaration.SetDotnetNamespace(ns);
     }
 
-    private int FixTypeNameForCollisionWithParent(TypeDeclaration typeDeclaration, Span<char> typeNameBuffer, int written)
+    private int FixTypeNameForCollisionWithParent(TypeDeclaration typeDeclaration, Span<char> typeNameBuffer, int written, CancellationToken cancellationToken)
     {
         if (typeDeclaration.Parent() is TypeDeclaration parent &&
             !typeDeclaration.IsInDefinitionsContainer() &&
@@ -423,6 +468,11 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
         {
             foreach (INameCollisionResolver resolver in this.nameCollisionResolverRegistry.RegisteredCollisionResolvers)
             {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    return 0;
+                }
+
                 if (resolver.TryResolveNameCollision(this, typeDeclaration, parent, name.AsSpan(), typeNameBuffer, written, out int newLength))
                 {
                     return newLength;
@@ -541,7 +591,16 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
     /// <param name="alwaysAssertFormat">If true, then Format will always be treated as a validation assertion keyword, regardless of the vocabulary.</param>
     /// <param name="optionalAsNullable">If true, then generate nullable types for optional parameters.</param>
     /// <param name="disabledNamingHeuristics">The list of well-known names of naming heuristics to disable.</param>
-    public class Options(string defaultNamespace, NamedType[]? namedTypes = null, Namespace[]? namespaces = null, bool useOptionalNameHeuristics = true, bool alwaysAssertFormat = true, bool optionalAsNullable = false, string[]? disabledNamingHeuristics = null)
+    /// <param name="fileExtension">Gets the file extension to use. Defaults to <c>.cs</c>.</param>
+    public class Options(
+        string defaultNamespace,
+        NamedType[]? namedTypes = null,
+        Namespace[]? namespaces = null,
+        bool useOptionalNameHeuristics = true,
+        bool alwaysAssertFormat = true,
+        bool optionalAsNullable = false,
+        string[]? disabledNamingHeuristics = null,
+        string fileExtension = ".cs")
     {
         private readonly FrozenDictionary<string, NamedType> namedTypeMap = namedTypes?.ToFrozenDictionary(kvp => kvp.Reference, kvp => kvp) ?? FrozenDictionary<string, NamedType>.Empty;
         private readonly FrozenDictionary<string, string> namespaceMap = namespaces?.ToFrozenDictionary(kvp => kvp.BaseUri, kvp => kvp.DotnetNamespace) ?? FrozenDictionary<string, string>.Empty;
@@ -570,6 +629,11 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
         /// Gets a value indicating whether to generate nullable types for optional parameters.
         /// </summary>
         internal bool OptionalAsNullable { get; } = optionalAsNullable;
+
+        /// <summary>
+        /// Gets the file extension (including the leading '.').
+        /// </summary>
+        internal string FileExtension { get; } = fileExtension;
 
         /// <summary>
         /// Gets the array of disabled naming heuristics.

@@ -69,6 +69,11 @@ public readonly struct ConditionalCodeSpecification
         Action<CodeGenerator> conditionalCode,
         FrameworkType frameworkType)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (frameworkType == FrameworkType.NotEmitted)
         {
             return generator;
@@ -114,11 +119,21 @@ public readonly struct ConditionalCodeSpecification
         ConditionalCodeSpecification[] conditionalSpecifications,
         Action<CodeGenerator, Action<CodeGenerator>, int> appendCallback)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return;
+        }
+
         FrameworkType lastFrameworkType = FrameworkType.All;
         int i = 0;
 
         foreach (ConditionalCodeSpecification spec in conditionalSpecifications)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             if (spec.condition == FrameworkType.NotEmitted)
             {
                 continue;
@@ -175,6 +190,11 @@ public readonly struct ConditionalCodeSpecification
     ConditionalCodeSpecification[] conditionalSpecifications,
     Action<CodeGenerator, Action<CodeGenerator>, int> appendCallback)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return;
+        }
+
         if (conditionalSpecifications.Length == 0)
         {
             return;
@@ -196,6 +216,11 @@ public readonly struct ConditionalCodeSpecification
             // If we have no conditionals, just append the "all".
             for (int i = 0; i < all.Count; i++)
             {
+                if (generator.IsCancellationRequested)
+                {
+                    return;
+                }
+
                 ConditionalCodeSpecification spec = all[i];
                 appendCallback(generator, spec.Append, i);
             }
@@ -217,6 +242,11 @@ public readonly struct ConditionalCodeSpecification
                         .Concat(net80)
                         .Concat(net80OrGreater))
             {
+                if (generator.IsCancellationRequested)
+                {
+                    return;
+                }
+
                 appendCallback(generator, spec.Append, i);
                 i++;
             }
@@ -234,6 +264,11 @@ public readonly struct ConditionalCodeSpecification
                     all
                         .Concat(net80))
             {
+                if (generator.IsCancellationRequested)
+                {
+                    return;
+                }
+
                 appendCallback(generator, spec.Append, i);
                 i++;
             }
@@ -263,6 +298,11 @@ public readonly struct ConditionalCodeSpecification
                         all
                             .Concat(preNet80))
             {
+                if (generator.IsCancellationRequested)
+                {
+                    return;
+                }
+
                 appendCallback(generator, spec.Append, i);
                 i++;
             }
@@ -276,6 +316,11 @@ public readonly struct ConditionalCodeSpecification
             int i = 0;
             foreach (ConditionalCodeSpecification spec in all)
             {
+                if (generator.IsCancellationRequested)
+                {
+                    return;
+                }
+
                 appendCallback(generator, spec.Append, i);
                 i++;
             }

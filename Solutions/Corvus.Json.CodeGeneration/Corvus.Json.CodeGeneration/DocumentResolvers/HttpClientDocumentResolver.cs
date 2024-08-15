@@ -68,11 +68,11 @@ public class HttpClientDocumentResolver : IDocumentResolver
         try
         {
 #if NET8_0_OR_GREATER
-            await using Stream stream = await this.httpClient.GetStreamAsync(uri).ConfigureAwait(false);
+            await using Stream stream = await this.httpClient.GetStreamAsync(uri);
 #else
-            using Stream stream = await this.httpClient.GetStreamAsync(uri).ConfigureAwait(false);
+            using Stream stream = await this.httpClient.GetStreamAsync(uri);
 #endif
-            result = await JsonDocument.ParseAsync(stream).ConfigureAwait(false);
+            result = await JsonDocument.ParseAsync(stream);
             this.documents.Add(uri, result);
             if (JsonPointerUtilities.TryResolvePointer(result, reference.Fragment, out JsonElement? element))
             {

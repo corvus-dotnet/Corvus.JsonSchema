@@ -27,16 +27,16 @@ public sealed class DollarDefsKeyword : IDefinitionsKeyword, INonStructuralKeywo
     public ReadOnlySpan<byte> KeywordUtf8 => "$defs"u8;
 
     /// <inheritdoc />
-    public void RegisterLocalSubschema(JsonSchemaRegistry registry, JsonElement schema, JsonReference currentLocation, IVocabulary vocabulary)
+    public void RegisterLocalSubschema(JsonSchemaRegistry registry, JsonElement schema, JsonReference currentLocation, IVocabulary vocabulary, CancellationToken cancellationToken)
     {
         if (schema.TryGetKeyword(this, out JsonElement value))
         {
-            Subschemas.AddSubschemasForMapOfSchemaProperty(registry, this.Keyword, value, currentLocation, vocabulary);
+            Subschemas.AddSubschemasForMapOfSchemaProperty(registry, this.Keyword, value, currentLocation, vocabulary, cancellationToken);
         }
     }
 
     /// <inheritdoc />
-    public ValueTask BuildSubschemaTypes(TypeBuilderContext typeBuilderContext, TypeDeclaration typeDeclaration)
+    public ValueTask BuildSubschemaTypes(TypeBuilderContext typeBuilderContext, TypeDeclaration typeDeclaration, CancellationToken cancellationToken)
     {
         // We do not build types for $defs by default, unless they are referenced from elsewhere.
 #if NET8_0_OR_GREATER

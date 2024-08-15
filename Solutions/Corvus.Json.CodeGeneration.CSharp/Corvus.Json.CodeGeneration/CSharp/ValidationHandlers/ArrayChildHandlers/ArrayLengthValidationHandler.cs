@@ -34,8 +34,18 @@ public class ArrayLengthValidationHandler : IChildArrayItemValidationHandler
     /// <inheritdoc/>
     public CodeGenerator AppendValidationCode(CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         foreach (IArrayLengthConstantValidationKeyword keyword in typeDeclaration.Keywords().OfType<IArrayLengthConstantValidationKeyword>())
         {
+            if (generator.IsCancellationRequested)
+            {
+                return generator;
+            }
+
             if (!keyword.TryGetOperator(typeDeclaration, out Operator op) || op == Operator.None)
             {
                 continue;
@@ -106,6 +116,11 @@ public class ArrayLengthValidationHandler : IChildArrayItemValidationHandler
 
         static void GetValidMessage(CodeGenerator generator, Operator op, string memberName)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             generator
                 .Append("array of length {length} ")
                 .AppendTextForOperator(op)
@@ -116,6 +131,11 @@ public class ArrayLengthValidationHandler : IChildArrayItemValidationHandler
 
         static void GetInvalidMessage(CodeGenerator generator, Operator op, string memberName)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             generator
                 .Append("array of length {length} ")
                 .AppendTextForInverseOperator(op)
@@ -126,6 +146,11 @@ public class ArrayLengthValidationHandler : IChildArrayItemValidationHandler
 
         static void GetSimplifiedInvalidMessage(CodeGenerator generator, Operator op)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             generator
                 .AppendTextForInverseOperator(op)
                 .Append(" the required length.");

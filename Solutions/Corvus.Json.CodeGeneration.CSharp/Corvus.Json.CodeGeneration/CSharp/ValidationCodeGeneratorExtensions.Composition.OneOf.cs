@@ -28,6 +28,11 @@ public static partial class ValidationCodeGeneratorExtensions
         TypeDeclaration typeDeclaration,
         IReadOnlyCollection<IChildValidationHandler> children)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         return generator
             .AppendSeparatorLine()
             .AppendLineIndent("/// <summary>")
@@ -61,6 +66,11 @@ public static partial class ValidationCodeGeneratorExtensions
     {
         foreach (IChildValidationHandler child in children)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return generator;
+            }
+
             child.AppendValidationCode(generator, typeDeclaration);
         }
 

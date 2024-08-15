@@ -25,6 +25,11 @@ public class ContainsValidationHandler : IChildArrayItemValidationHandler
     /// <inheritdoc/>
     public CodeGenerator AppendValidationCode(CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         IArrayContainsValidationKeyword? keywordOrDefault = typeDeclaration.Keywords().OfType<IArrayContainsValidationKeyword>().FirstOrDefault();
         if (keywordOrDefault is IArrayContainsValidationKeyword containsKeyword)
         {
@@ -37,6 +42,11 @@ public class ContainsValidationHandler : IChildArrayItemValidationHandler
 
             foreach (IArrayContainsCountConstantValidationKeyword keyword in typeDeclaration.Keywords().OfType<IArrayContainsCountConstantValidationKeyword>())
             {
+                if (generator.IsCancellationRequested)
+                {
+                    return generator;
+                }
+
                 if (!keyword.TryGetOperator(typeDeclaration, out Operator op) || op == Operator.None)
                 {
                     continue;
@@ -167,6 +177,11 @@ public class ContainsValidationHandler : IChildArrayItemValidationHandler
 
         static void GetValidMessage(CodeGenerator generator, Operator op, string containsCountName, string memberName)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             generator
                 .Append("count of {")
                 .Append(containsCountName)
@@ -179,6 +194,11 @@ public class ContainsValidationHandler : IChildArrayItemValidationHandler
 
         static void GetInvalidMessage(CodeGenerator generator, Operator op, string containsCountName, string memberName)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             generator
                 .Append("count of {")
                 .Append(containsCountName)
@@ -200,6 +220,11 @@ public class ContainsValidationHandler : IChildArrayItemValidationHandler
     /// <inheritdoc/>
     public CodeGenerator AppendValidateMethodSetup(CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.Keywords().OfType<IArrayContainsValidationKeyword>().Any())
         {
             string containsCountName = generator.GetUniqueVariableNameInScope("containsCount");
@@ -217,6 +242,11 @@ public class ContainsValidationHandler : IChildArrayItemValidationHandler
     /// <inheritdoc/>
     public CodeGenerator AppendArrayItemValidationCode(CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         IArrayContainsValidationKeyword? keywordOrDefault = typeDeclaration.Keywords().OfType<IArrayContainsValidationKeyword>().FirstOrDefault();
         if (keywordOrDefault is IArrayContainsValidationKeyword keyword)
         {

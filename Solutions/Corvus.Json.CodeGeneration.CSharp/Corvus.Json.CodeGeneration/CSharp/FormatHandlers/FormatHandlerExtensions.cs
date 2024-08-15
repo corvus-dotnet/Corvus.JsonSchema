@@ -25,6 +25,11 @@ public static class FormatHandlerExtensions
     {
         foreach (T handler in handlers)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return false;
+            }
+
             if (handler.AppendFormatEqualsTBody(generator, typeDeclaration, format))
             {
                 return true;
@@ -48,6 +53,11 @@ public static class FormatHandlerExtensions
     {
         foreach (T handler in handlers)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return false;
+            }
+
             if (handler.AppendFormatPublicStaticMethods(generator, typeDeclaration, format))
             {
                 return true;
@@ -71,6 +81,11 @@ public static class FormatHandlerExtensions
     {
         foreach (T handler in handlers)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return false;
+            }
+
             if (handler.AppendFormatPublicMethods(generator, typeDeclaration, format))
             {
                 return true;
@@ -94,6 +109,11 @@ public static class FormatHandlerExtensions
     {
         foreach (T handler in handlers)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return false;
+            }
+
             if (handler.AppendFormatPrivateStaticMethods(generator, typeDeclaration, format))
             {
                 return true;
@@ -117,6 +137,11 @@ public static class FormatHandlerExtensions
     {
         foreach (T handler in handlers)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return false;
+            }
+
             if (handler.AppendFormatPrivateMethods(generator, typeDeclaration, format))
             {
                 return true;
@@ -140,6 +165,11 @@ public static class FormatHandlerExtensions
     {
         foreach (T handler in handlers)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return false;
+            }
+
             if (handler.AppendFormatConversionOperators(generator, typeDeclaration, format))
             {
                 return true;
@@ -163,6 +193,11 @@ public static class FormatHandlerExtensions
     {
         foreach (T handler in handlers)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return false;
+            }
+
             if (handler.AppendFormatPublicStaticProperties(generator, typeDeclaration, format))
             {
                 return true;
@@ -186,6 +221,11 @@ public static class FormatHandlerExtensions
     {
         foreach (T handler in handlers)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return false;
+            }
+
             if (handler.AppendFormatPublicProperties(generator, typeDeclaration, format))
             {
                 return true;
@@ -209,6 +249,11 @@ public static class FormatHandlerExtensions
     {
         foreach (T handler in handlers)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return false;
+            }
+
             if (handler.AppendFormatConstructors(generator, typeDeclaration, format))
             {
                 return true;
@@ -349,6 +394,11 @@ public static class FormatHandlerExtensions
     {
         foreach (T handler in handlers)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return false;
+            }
+
             if (handler.AppendFormatAssertion(generator, format, valueIdentifier, validationContextIdentifier, includeType))
             {
                 return true;

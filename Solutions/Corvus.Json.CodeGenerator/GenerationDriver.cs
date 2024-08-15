@@ -138,6 +138,7 @@ public static class GenerationDriver
         IReadOnlyCollection<GeneratedCodeFile> generatedCode =
             typeBuilder.GenerateCodeUsing(
                 languageProvider,
+                CancellationToken.None,
                 typesToGenerate);
         currentTask.Increment(100);
         currentTask.StopTask();

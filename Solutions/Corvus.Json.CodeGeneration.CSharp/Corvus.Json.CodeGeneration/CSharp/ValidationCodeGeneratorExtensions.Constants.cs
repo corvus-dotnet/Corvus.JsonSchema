@@ -15,6 +15,11 @@ public static partial class ValidationCodeGeneratorExtensions
 {
     private static CodeGenerator AppendValidationConstantFields(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.ValidationConstants() is IReadOnlyDictionary<IValidationConstantProviderKeyword, JsonElement[]> constants)
         {
             AppendValidationConstantFields(generator, constants);
@@ -25,6 +30,11 @@ public static partial class ValidationCodeGeneratorExtensions
 
     private static CodeGenerator AppendStringValidationConstantProperties(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.ValidationConstants() is IReadOnlyDictionary<IValidationConstantProviderKeyword, JsonElement[]> constants)
         {
             AppendStringValidationConstantProperties(generator, constants);
@@ -35,11 +45,21 @@ public static partial class ValidationCodeGeneratorExtensions
 
     private static CodeGenerator AppendRegexValidationFields(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.ValidationRegularExpressions() is IReadOnlyDictionary<IValidationRegexProviderKeyword, IReadOnlyList<string>> regexes)
         {
             // Ensure we have a got a stable ordering of the keywords.
             foreach (KeyValuePair<IValidationRegexProviderKeyword, IReadOnlyList<string>> constant in regexes.OrderBy(k => k.Key.Keyword))
             {
+                if (generator.IsCancellationRequested)
+                {
+                    return generator;
+                }
+
                 if (constant.Value.Count > 0)
                 {
                     generator.AppendSeparatorLine();
@@ -65,11 +85,21 @@ public static partial class ValidationCodeGeneratorExtensions
 
     private static CodeGenerator AppendRegexValidationFactoryMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.ValidationRegularExpressions() is IReadOnlyDictionary<IValidationRegexProviderKeyword, IReadOnlyList<string>> regexes)
         {
             // Ensure we have a got a stable ordering of the keywords.
             foreach (KeyValuePair<IValidationRegexProviderKeyword, IReadOnlyList<string>> constant in regexes.OrderBy(k => k.Key.Keyword))
             {
+                if (generator.IsCancellationRequested)
+                {
+                    return generator;
+                }
+
                 if (constant.Value.Count == 1)
                 {
                     generator
@@ -98,6 +128,11 @@ public static partial class ValidationCodeGeneratorExtensions
 
     private static CodeGenerator AppendNumberValidationConstantField(this CodeGenerator generator, IKeyword keyword, int? index, in JsonElement value)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         Debug.Assert(value.ValueKind == JsonValueKind.Number, "The value must be a number.");
 
         string memberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: index?.ToString());
@@ -117,6 +152,11 @@ public static partial class ValidationCodeGeneratorExtensions
 
     private static CodeGenerator AppendIntegerValidationConstantField(this CodeGenerator generator, IKeyword keyword, int? index, in JsonElement value)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         Debug.Assert(value.ValueKind == JsonValueKind.Number, "The value must be a number.");
 
         string memberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: index?.ToString());
@@ -136,6 +176,11 @@ public static partial class ValidationCodeGeneratorExtensions
 
     private static CodeGenerator AppendStringValidationConstantField(this CodeGenerator generator, IKeyword keyword, int? index, in JsonElement value)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         Debug.Assert(value.ValueKind == JsonValueKind.String, "The value must be a string.");
 
         string memberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: index?.ToString());
@@ -155,6 +200,11 @@ public static partial class ValidationCodeGeneratorExtensions
 
     private static CodeGenerator AppendNullValidationConstantField(this CodeGenerator generator, IKeyword keyword, int? index, in JsonElement value)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         Debug.Assert(value.ValueKind == JsonValueKind.Null, "The value must be null.");
 
         string memberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: index?.ToString());
@@ -172,6 +222,11 @@ public static partial class ValidationCodeGeneratorExtensions
 
     private static CodeGenerator AppendBooleanValidationConstantField(this CodeGenerator generator, IKeyword keyword, int? index, in JsonElement value)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         Debug.Assert(value.ValueKind == JsonValueKind.True || value.ValueKind == JsonValueKind.False, "The value must be a boolean.");
 
         string memberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: index?.ToString());
@@ -191,6 +246,11 @@ public static partial class ValidationCodeGeneratorExtensions
 
     private static CodeGenerator AppendObjectValidationConstantField(this CodeGenerator generator, IKeyword keyword, int? index, in JsonElement value)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         Debug.Assert(value.ValueKind == JsonValueKind.Object, "The value must be an object.");
 
         string memberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: index?.ToString());
@@ -210,6 +270,11 @@ public static partial class ValidationCodeGeneratorExtensions
 
     private static CodeGenerator AppendArrayValidationConstantField(this CodeGenerator generator, IKeyword keyword, int? index, in JsonElement value)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         Debug.Assert(value.ValueKind == JsonValueKind.Array, "The value must be an array.");
 
         string memberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: index?.ToString());
@@ -229,6 +294,11 @@ public static partial class ValidationCodeGeneratorExtensions
 
     private static CodeGenerator AppendStringValidationConstantProperty(this CodeGenerator generator, IKeyword keyword, int? index, in JsonElement value)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         Debug.Assert(value.ValueKind == JsonValueKind.String, "The value must be a string.");
 
         string memberName = generator.GetPropertyNameInScope(keyword.Keyword, suffix: index?.ToString());
@@ -249,6 +319,11 @@ public static partial class ValidationCodeGeneratorExtensions
 
     private static CodeGenerator AppendRegexValidationField(this CodeGenerator generator, IKeyword keyword, int? index)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         string? suffix = index?.ToString();
         string memberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: suffix);
         string methodName = generator.GetMethodNameInScope(keyword.Keyword, prefix: "Create", suffix: suffix);
@@ -268,10 +343,15 @@ public static partial class ValidationCodeGeneratorExtensions
 
     private static CodeGenerator AppendRegexValidationFactoryMethod(this CodeGenerator generator, IKeyword keyword, int? index, string value)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         string memberName = generator.GetMethodNameInScope(keyword.Keyword, prefix: "Create", suffix: index?.ToString());
 
         // TODO: Figure out how to get the SourceGenerator to run when generating code
-        // in the specs. This commented out code works fine in "real life".
+        // in the specs.
         return generator
                 .AppendLine("#if NET8_0_OR_GREATER && !SPECFLOW_BUILD")
                     .AppendIndent("[GeneratedRegex(")
@@ -294,6 +374,11 @@ public static partial class ValidationCodeGeneratorExtensions
         // Ensure we have a got a stable ordering of the keywords.
         foreach (KeyValuePair<IValidationConstantProviderKeyword, JsonElement[]> constant in constants.OrderBy(k => k.Key.Keyword))
         {
+            if (generator.IsCancellationRequested)
+            {
+                return generator;
+            }
+
             int count = constant.Value.Length;
 
             if (count > 0)
@@ -303,6 +388,11 @@ public static partial class ValidationCodeGeneratorExtensions
                 int? i = count == 1 ? null : 1;
                 foreach (JsonElement value in constant.Value)
                 {
+                    if (generator.IsCancellationRequested)
+                    {
+                        return generator;
+                    }
+
                     switch (value.ValueKind)
                     {
                         case JsonValueKind.Array:
@@ -358,6 +448,11 @@ public static partial class ValidationCodeGeneratorExtensions
         // Ensure we have a got a stable ordering of the keywords.
         foreach (KeyValuePair<IValidationConstantProviderKeyword, JsonElement[]> constant in constants.OrderBy(k => k.Key.Keyword))
         {
+            if (generator.IsCancellationRequested)
+            {
+                return generator;
+            }
+
             int count = constant.Value.Length;
 
             if (count > 0)
@@ -367,6 +462,11 @@ public static partial class ValidationCodeGeneratorExtensions
                 int i = 1;
                 foreach (JsonElement value in constant.Value)
                 {
+                    if (generator.IsCancellationRequested)
+                    {
+                        return generator;
+                    }
+
                     if (value.ValueKind == JsonValueKind.String)
                     {
                         if (count == 1)

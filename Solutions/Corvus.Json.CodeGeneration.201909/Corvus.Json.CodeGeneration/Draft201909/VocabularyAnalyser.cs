@@ -56,12 +56,12 @@ public sealed class VocabularyAnalyser : IVocabularyAnalyser
             this.documentResolver,
             this.vocabularyRegistry,
             schemaInstance,
-            AnalyseChild).ConfigureAwait(false);
+            AnalyseChild);
     }
 
     private static async ValueTask<IVocabulary?> AnalyseChild(IDocumentResolver documentResolver, VocabularyRegistry vocabularyRegistry, JsonReference childSchema)
     {
-        JsonElement? childSchemaInstance = await documentResolver.TryResolve(childSchema).ConfigureAwait(false);
+        JsonElement? childSchemaInstance = await documentResolver.TryResolve(childSchema);
         if (childSchemaInstance is null)
         {
             return default;
@@ -73,7 +73,7 @@ public sealed class VocabularyAnalyser : IVocabularyAnalyser
             documentResolver,
             vocabularyRegistry,
             childSchemaInstance.Value,
-            null).ConfigureAwait(false);
+            null);
     }
 
     private static async ValueTask<IVocabulary?> TryGetVocabularyCore(IDocumentResolver documentResolver, VocabularyRegistry vocabularyRegistry, JsonElement schemaInstance, Func<IDocumentResolver, VocabularyRegistry, JsonReference, ValueTask<IVocabulary?>>? processUnknownSchema)
@@ -101,7 +101,7 @@ public sealed class VocabularyAnalyser : IVocabularyAnalyser
         {
             if (dollarSchema.GetString() is string s)
             {
-                IVocabulary? result = await processUnknownSchema(documentResolver, vocabularyRegistry, new(s)).ConfigureAwait(false);
+                IVocabulary? result = await processUnknownSchema(documentResolver, vocabularyRegistry, new(s));
                 if (result is IVocabulary v)
                 {
                     return v;

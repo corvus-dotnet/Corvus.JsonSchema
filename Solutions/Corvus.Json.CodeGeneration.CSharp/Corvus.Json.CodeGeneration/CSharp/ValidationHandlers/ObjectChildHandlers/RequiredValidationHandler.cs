@@ -23,10 +23,20 @@ public class RequiredValidationHandler : IChildObjectPropertyValidationHandler
     /// <inheritdoc/>
     public CodeGenerator AppendValidationCode(CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.ExplicitRequiredProperties() is IReadOnlyCollection<PropertyDeclaration> properties)
         {
             foreach (PropertyDeclaration property in properties)
             {
+                if (generator.IsCancellationRequested)
+                {
+                    return generator;
+                }
+
                 // Don't bother with properties that have default values.
                 if (property.ReducedPropertyType.HasDefaultValue() || property.RequiredKeyword is not IObjectRequiredPropertyValidationKeyword keyword)
                 {
@@ -85,6 +95,11 @@ public class RequiredValidationHandler : IChildObjectPropertyValidationHandler
 
         static void AppendErrorText(CodeGenerator generator, PropertyDeclaration property)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             generator
                 .Append("the required property '")
                 .Append(SymbolDisplay.FormatLiteral(property.JsonPropertyName, true).Trim('"'))
@@ -93,6 +108,11 @@ public class RequiredValidationHandler : IChildObjectPropertyValidationHandler
 
         static void AppendValidText(CodeGenerator generator, PropertyDeclaration property)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             generator
                 .Append("the required property '")
                 .Append(SymbolDisplay.FormatLiteral(property.JsonPropertyName, true).Trim('"'))
@@ -103,6 +123,11 @@ public class RequiredValidationHandler : IChildObjectPropertyValidationHandler
     /// <inheritdoc/>
     public CodeGenerator AppendValidateMethodSetup(CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.ExplicitRequiredProperties() is IReadOnlyCollection<PropertyDeclaration> properties)
         {
             generator
@@ -110,6 +135,11 @@ public class RequiredValidationHandler : IChildObjectPropertyValidationHandler
 
             foreach (PropertyDeclaration property in properties)
             {
+                if (generator.IsCancellationRequested)
+                {
+                    return generator;
+                }
+
                 // Don't bother with properties that have default values.
                 if (property.ReducedPropertyType.HasDefaultValue())
                 {

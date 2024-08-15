@@ -34,6 +34,11 @@ public class PatternPropertiesValidationHandler : IChildObjectPropertyValidation
     /// <inheritdoc/>
     public CodeGenerator AppendObjectPropertyValidationCode(CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.PatternProperties() is IReadOnlyDictionary<IObjectPatternPropertyValidationKeyword, IReadOnlyCollection<PatternPropertyDeclaration>> patternProperties)
         {
             generator
@@ -42,6 +47,11 @@ public class PatternPropertiesValidationHandler : IChildObjectPropertyValidation
 
             foreach (IReadOnlyCollection<PatternPropertyDeclaration> patternPropertyCollection in patternProperties.Values)
             {
+                if (generator.IsCancellationRequested)
+                {
+                    return generator;
+                }
+
                 int index = 1;
                 bool hasIndex = patternPropertyCollection.Count > 1;
                 foreach (PatternPropertyDeclaration patternProperty in patternPropertyCollection)
@@ -56,6 +66,11 @@ public class PatternPropertiesValidationHandler : IChildObjectPropertyValidation
 
         static void AppendPatternPropertyValidation(CodeGenerator generator, PatternPropertyDeclaration property, int? index)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             string regexAccessor =
                 generator.GetStaticReadOnlyFieldNameInScope(
                     property.Keyword.Keyword,

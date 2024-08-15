@@ -2,8 +2,6 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Text.Json;
-
 namespace Corvus.Json.CodeGeneration.CSharp;
 
 /// <summary>
@@ -21,6 +19,11 @@ internal static partial class CodeGeneratorExtensions
         this CodeGenerator generator,
         TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         string backing = generator.GetFieldNameInScope("backing");
         string stringBacking = generator.GetFieldNameInScope("stringBacking");
         string jsonElementBacking = generator.GetFieldNameInScope("jsonElementBacking");
@@ -69,6 +72,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendImplicitConversionToStringFormat(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.Format() is string format && FormatHandlerRegistry.Instance.StringFormatHandlers.GetCorvusJsonTypeNameFor(format) is string formatType)
         {
             return generator
@@ -87,8 +95,18 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendStringConcatenation(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         for (int i = 2; i <= 8; ++i)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return generator;
+            }
+
             generator.AppendSeparatorLine();
             AppendStringConcatenation(generator, typeDeclaration, i);
         }
@@ -97,6 +115,11 @@ internal static partial class CodeGeneratorExtensions
 
         static void AppendStringConcatenation(CodeGenerator generator, TypeDeclaration typeDeclaration, int count)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             generator
                 .ReserveName("Concatenate")
                 .AppendLineIndent("/// <summary>")
@@ -109,6 +132,11 @@ internal static partial class CodeGeneratorExtensions
 
             for (int i = 1; i <= count; ++i)
             {
+                if (generator.IsCancellationRequested)
+                {
+                    return;
+                }
+
                 generator
                     .AppendIndent("/// <typeparam name=\"T")
                     .Append(i)
@@ -122,6 +150,11 @@ internal static partial class CodeGeneratorExtensions
 
             for (int i = 1; i <= count; ++i)
             {
+                if (generator.IsCancellationRequested)
+                {
+                    return;
+                }
+
                 generator
                     .AppendIndent("/// <param name=\"value")
                     .Append(i)
@@ -138,6 +171,11 @@ internal static partial class CodeGeneratorExtensions
 
             for (int i = 1; i <= count; ++i)
             {
+                if (generator.IsCancellationRequested)
+                {
+                    return;
+                }
+
                 if (i > 1)
                 {
                     generator.Append(", ");
@@ -153,6 +191,11 @@ internal static partial class CodeGeneratorExtensions
 
             for (int i = 1; i <= count; ++i)
             {
+                if (generator.IsCancellationRequested)
+                {
+                    return;
+                }
+
                 if (i > 1)
                 {
                     generator.Append(", ");
@@ -171,6 +214,11 @@ internal static partial class CodeGeneratorExtensions
 
             for (int i = 1; i <= count; ++i)
             {
+                if (generator.IsCancellationRequested)
+                {
+                    return;
+                }
+
                 generator
                     .AppendIndent("where T")
                     .Append(i)
@@ -187,6 +235,11 @@ internal static partial class CodeGeneratorExtensions
 
             for (int i = 1; i <= count; ++i)
             {
+                if (generator.IsCancellationRequested)
+                {
+                    return;
+                }
+
                 if (i > 1)
                 {
                     generator.Append(", ");
@@ -212,6 +265,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendTryGetString(this CodeGenerator generator)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         string backing = generator.GetFieldNameInScope("backing");
         string stringBacking = generator.GetFieldNameInScope("stringBacking");
         string jsonElementBacking = generator.GetFieldNameInScope("jsonElementBacking");
@@ -250,6 +308,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendGetString(this CodeGenerator generator)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         return generator
             .ReserveName("GetString")
             .AppendSeparatorLine()
@@ -278,6 +341,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendEqualsUtf8Bytes(this CodeGenerator generator)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         string backing = generator.GetFieldNameInScope("backing");
         string jsonElementBacking = generator.GetFieldNameInScope("jsonElementBacking");
 
@@ -364,12 +432,22 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendPublicStringConstructors(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         return generator
             .AppendPublicConvertedValueConstructor(typeDeclaration, "in ReadOnlySpan<char>", CoreTypes.String, "value.ToString()")
             .AppendPublicConvertedValueWithBodyConstructor(typeDeclaration, "in ReadOnlySpan<byte>", CoreTypes.String, AppendRoSByteConversion);
 
         static void AppendRoSByteConversion(CodeGenerator generator, TypeDeclaration typeDeclaration, string backingFieldName)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             generator
                 .AppendSeparatorLine()
                 .AppendLine("#if NET8_0_OR_GREATER")
@@ -401,6 +479,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendStringFormatPublicStaticMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.Format() is string format)
         {
             FormatHandlerRegistry.Instance.StringFormatHandlers.AppendFormatPublicStaticMethods(generator, typeDeclaration, format);
@@ -417,6 +500,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendStringFormatPublicMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.Format() is string format)
         {
             FormatHandlerRegistry.Instance.StringFormatHandlers.AppendFormatPublicMethods(generator, typeDeclaration, format);
@@ -433,6 +521,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendStringFormatPrivateStaticMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.Format() is string format)
         {
             FormatHandlerRegistry.Instance.StringFormatHandlers.AppendFormatPrivateStaticMethods(generator, typeDeclaration, format);
@@ -449,6 +542,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendStringFormatPrivateMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.Format() is string format)
         {
             FormatHandlerRegistry.Instance.StringFormatHandlers.AppendFormatPrivateMethods(generator, typeDeclaration, format);
@@ -465,6 +563,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendStringFormatConversionOperators(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.Format() is string format)
         {
             FormatHandlerRegistry.Instance.StringFormatHandlers.AppendFormatConversionOperators(generator, typeDeclaration, format);
@@ -481,6 +584,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendStringFormatPublicStaticProperties(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.Format() is string format)
         {
             FormatHandlerRegistry.Instance.StringFormatHandlers.AppendFormatPublicStaticProperties(generator, typeDeclaration, format);
@@ -497,6 +605,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendStringFormatPublicProperties(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.Format() is string format)
         {
             FormatHandlerRegistry.Instance.StringFormatHandlers.AppendFormatPublicProperties(generator, typeDeclaration, format);
@@ -513,6 +626,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendStringFormatConstructors(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.Format() is string format)
         {
             FormatHandlerRegistry.Instance.StringFormatHandlers.AppendFormatConstructors(generator, typeDeclaration, format);
@@ -528,6 +646,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendEqualsString(this CodeGenerator generator)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         string backing = generator.GetFieldNameInScope("backing");
         string stringBacking = generator.GetFieldNameInScope("stringBacking");
         string jsonElementBacking = generator.GetFieldNameInScope("jsonElementBacking");
@@ -604,6 +727,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendNet80Formatting(this CodeGenerator generator)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         string backing = generator.GetFieldNameInScope("backing");
         string stringBacking = generator.GetFieldNameInScope("stringBacking");
         string jsonElementBacking = generator.GetFieldNameInScope("jsonElementBacking");
@@ -687,6 +815,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendGetHashCodeAndToStringMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         return generator
             .ReserveNameIfNotReserved("GetHashCode")
             .ReserveNameIfNotReserved("ToString")

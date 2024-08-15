@@ -34,15 +34,30 @@ public class DependentSchemasValidationHandler : IChildObjectPropertyValidationH
     /// <inheritdoc/>
     public CodeGenerator AppendObjectPropertyValidationCode(CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.DependentSchemasSubschemaTypes()
             is IReadOnlyDictionary<IObjectPropertyDependentSchemasValidationKeyword, IReadOnlyCollection<DependentSchemaDeclaration>> dependentSchemas)
         {
             foreach (IObjectPropertyDependentSchemasValidationKeyword keyword in dependentSchemas.Keys)
             {
+                if (generator.IsCancellationRequested)
+                {
+                    return generator;
+                }
+
                 int i = 0;
 
                 foreach (DependentSchemaDeclaration dependentSchema in dependentSchemas[keyword])
                 {
+                    if (generator.IsCancellationRequested)
+                    {
+                        return generator;
+                    }
+
                     string resultName = generator.GetUniqueVariableNameInScope("Result", prefix: keyword.Keyword, suffix: i.ToString());
                     string quotedPropertyName = SymbolDisplay.FormatLiteral(dependentSchema.JsonPropertyName, true);
                     generator

@@ -38,24 +38,24 @@ public sealed class AdditionalItemsKeyword
     public uint ValidationPriority => ValidationPriorities.Default;
 
     /// <inheritdoc />
-    public void RegisterLocalSubschema(JsonSchemaRegistry registry, JsonElement schema, JsonReference currentLocation, IVocabulary vocabulary)
+    public void RegisterLocalSubschema(JsonSchemaRegistry registry, JsonElement schema, JsonReference currentLocation, IVocabulary vocabulary, CancellationToken cancellationToken)
     {
         // The 2019-09 and earlier additionalItems keyword only applies if the schema is also has an array-of-schema Items keyword.
         if (schema.TryGetKeyword(this, out JsonElement value) &&
             schema.TryGetKeyword(ItemsWithSchemaOrArrayOfSchemaKeyword.Instance, out JsonElement itemsKeywordValue) &&
             itemsKeywordValue.ValueKind == JsonValueKind.Array)
         {
-            Subschemas.AddSubschemasForSchemaProperty(registry, this.Keyword, value, currentLocation, vocabulary);
+            Subschemas.AddSubschemasForSchemaProperty(registry, this.Keyword, value, currentLocation, vocabulary, cancellationToken);
         }
     }
 
     /// <inheritdoc />
-    public async ValueTask BuildSubschemaTypes(TypeBuilderContext typeBuilderContext, TypeDeclaration typeDeclaration)
+    public async ValueTask BuildSubschemaTypes(TypeBuilderContext typeBuilderContext, TypeDeclaration typeDeclaration, CancellationToken cancellationToken)
     {
         // The 2019-09 and earlier additionalItems keyword only applies if the schema is also has an array-of-schema Items keyword.
         if (this.HasKeyword(typeDeclaration) && AllowsAdditionalItems(typeDeclaration))
         {
-            await Subschemas.BuildSubschemaTypesForSchemaProperty(typeBuilderContext, typeDeclaration, KeywordPathReference).ConfigureAwait(false);
+            await Subschemas.BuildSubschemaTypesForSchemaProperty(typeBuilderContext, typeDeclaration, KeywordPathReference, cancellationToken);
         }
     }
 

@@ -28,14 +28,29 @@ public class AllOfSubschemaValidationHandler : IChildValidationHandler
     /// <inheritdoc/>
     public CodeGenerator AppendValidationCode(CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.AllOfCompositionTypes() is IReadOnlyDictionary<IAllOfSubschemaValidationKeyword, IReadOnlyCollection<TypeDeclaration>> subschemaDictionary)
         {
             foreach (IAllOfSubschemaValidationKeyword keyword in subschemaDictionary.Keys)
             {
+                if (generator.IsCancellationRequested)
+                {
+                    return generator;
+                }
+
                 IReadOnlyCollection<TypeDeclaration> subschemaTypes = subschemaDictionary[keyword];
                 int i = 0;
                 foreach (TypeDeclaration subschemaType in subschemaTypes)
                 {
+                    if (generator.IsCancellationRequested)
+                    {
+                        return generator;
+                    }
+
                     ReducedTypeDeclaration reducedType = subschemaType.ReducedTypeDeclaration();
                     string pathModifier = keyword.GetPathModifier(reducedType, i);
                     string resultName = generator.GetUniqueVariableNameInScope("Result", prefix: keyword.Keyword, suffix: i.ToString());

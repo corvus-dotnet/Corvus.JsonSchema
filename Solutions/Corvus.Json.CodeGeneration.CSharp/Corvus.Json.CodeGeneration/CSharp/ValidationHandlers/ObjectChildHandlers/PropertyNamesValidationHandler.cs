@@ -34,6 +34,11 @@ public class PropertyNamesValidationHandler : IChildObjectPropertyValidationHand
     /// <inheritdoc/>
     public CodeGenerator AppendObjectPropertyValidationCode(CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.PropertyNamesSubschemaType() is SingleSubschemaKeywordTypeDeclaration propertyNameType)
         {
             generator

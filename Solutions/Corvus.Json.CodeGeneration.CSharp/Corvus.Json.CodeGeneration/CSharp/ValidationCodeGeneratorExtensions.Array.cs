@@ -29,6 +29,11 @@ public static partial class ValidationCodeGeneratorExtensions
         TypeDeclaration typeDeclaration,
         IReadOnlyCollection<IChildValidationHandler> children)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         return generator
             .AppendSeparatorLine()
             .AppendLineIndent("/// <summary>")
@@ -67,6 +72,11 @@ public static partial class ValidationCodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendArrayEnumerator(this CodeGenerator generator, TypeDeclaration typeDeclaration, string variableName)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         generator
             .AppendIndent("using ");
 
@@ -96,6 +106,11 @@ public static partial class ValidationCodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendValidateNonTupleItemsType(this CodeGenerator generator, ArrayItemsTypeDeclaration arrayItems, bool enumeratorIsCorrectType)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         generator
             .AppendLineIndent("if (level > ValidationLevel.Basic)")
             .AppendLineIndent("{")
@@ -152,6 +167,11 @@ public static partial class ValidationCodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendValidateUnevaluatedItemsType(this CodeGenerator generator, ArrayItemsTypeDeclaration arrayItems, bool enumeratorIsCorrectType)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         generator
             .AppendLineIndent("if (!result.HasEvaluatedLocalOrAppliedItemIndex(length))")
             .AppendLineIndent("{")
@@ -209,6 +229,11 @@ public static partial class ValidationCodeGeneratorExtensions
         TypeDeclaration typeDeclaration,
         IReadOnlyCollection<IChildValidationHandler> children)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         generator
             .AppendLineIndent("if (valueKind != JsonValueKind.Array)")
             .AppendLineIndent("{")
@@ -220,6 +245,11 @@ public static partial class ValidationCodeGeneratorExtensions
 
         foreach (IArrayValidationKeyword keyword in typeDeclaration.Keywords().OfType<IArrayValidationKeyword>())
         {
+            if (generator.IsCancellationRequested)
+            {
+                return generator;
+            }
+
             generator
                 .AppendLineIndent(
                     "ignoredResult = ignoredResult.PushValidationLocationProperty(",
@@ -242,6 +272,11 @@ public static partial class ValidationCodeGeneratorExtensions
 
         foreach (IChildValidationHandler child in children)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return generator;
+            }
+
             child.AppendValidateMethodSetup(generator, typeDeclaration);
         }
 
@@ -284,6 +319,11 @@ public static partial class ValidationCodeGeneratorExtensions
 
             foreach (IChildArrayItemValidationHandler child in children.OfType<IChildArrayItemValidationHandler>())
             {
+                if (generator.IsCancellationRequested)
+                {
+                    return generator;
+                }
+
                 child.AppendArrayItemValidationCode(generator, typeDeclaration);
             }
 
@@ -304,6 +344,11 @@ public static partial class ValidationCodeGeneratorExtensions
 
         foreach (IChildValidationHandler child in children)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return generator;
+            }
+
             child.AppendValidationCode(generator, typeDeclaration);
         }
 
