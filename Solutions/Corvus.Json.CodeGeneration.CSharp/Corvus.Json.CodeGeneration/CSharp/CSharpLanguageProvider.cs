@@ -237,7 +237,7 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
 
             if (typeName.DotnetNamespace is string nsOverride)
             {
-                typeDeclaration.SetDotnetNamespace(ns);
+                typeDeclaration.SetDotnetNamespace(nsOverride);
                 typeDeclaration.SetParent(null);
             }
             else
