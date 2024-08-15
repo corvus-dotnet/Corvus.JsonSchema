@@ -17,6 +17,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendEmptyArrayInstanceStaticProperty(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         return generator
             .ReserveName("EmptyArray")
             .AppendSeparatorLine()
@@ -39,6 +44,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendArrayRankStaticProperty(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.ArrayRank() is int rank)
         {
             generator
@@ -66,6 +76,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendArrayDimensionStaticProperty(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.ArrayDimension() is int dimension)
         {
             generator
@@ -93,6 +108,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendArrayValueBufferSizeStaticProperty(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.ArrayValueBufferSize() is int valueBufferSize)
         {
             generator
@@ -125,6 +145,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendTryGetNumericValuesMethod(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.ArrayItemsType() is not ArrayItemsTypeDeclaration arrayItemsType ||
             arrayItemsType.ReducedType.PreferredDotnetNumericTypeName() is not string preferredNumericTypeName ||
             typeDeclaration.ArrayRank() is not int arrayRank)
@@ -181,6 +206,11 @@ internal static partial class CodeGeneratorExtensions
 
         static void AppendForJsonElementBacking(CodeGenerator generator, string fieldName, string preferredNumericTypeName, string arrayItemsTypeName, int arrayRank)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             generator
                 .AppendLineIndent("if (this.", fieldName, ".ValueKind != JsonValueKind.Number)")
                 .AppendBlockIndent(
@@ -241,6 +271,11 @@ internal static partial class CodeGeneratorExtensions
 
         static void AppendForArrayBacking(CodeGenerator generator, string fieldName, string preferredNumericTypeName, string arrayItemsTypeName, int arrayRank)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             generator
                 .AppendLineIndent("foreach (", arrayItemsTypeName, " item in this.", fieldName, ")")
                 .AppendLineIndent("{")
@@ -292,6 +327,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendArrayIndexerProperties(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         generator
             .AppendSeparatorLine();
 
@@ -339,6 +379,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendTupleItemProperties(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.TupleType() is TupleTypeDeclaration tupleType)
         {
             generator
@@ -346,6 +391,11 @@ internal static partial class CodeGeneratorExtensions
 
             for (int i = 0; i < tupleType.ItemsTypes.Length; i++)
             {
+                if (generator.IsCancellationRequested)
+                {
+                    return generator;
+                }
+
                 TypeDeclaration tupleItem = tupleType.ItemsTypes[i].ReducedType;
                 generator
                     .ReserveName($"Item{i + 1}")
@@ -435,6 +485,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendArrayAddMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         bool isTupleOrHasArrayItemsType = typeDeclaration.IsTuple() || typeDeclaration.ArrayItemsType() is not null;
 
         return generator
@@ -470,6 +525,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendArrayRemoveMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         bool isTupleOrHasArrayItemsType = typeDeclaration.IsTuple() || typeDeclaration.ArrayItemsType() is not null;
 
         return generator
@@ -490,6 +550,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendCorvusArrayHelpers(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         return generator
             .ReserveName("__CorvusArrayHelpers")
             .AppendSeparatorLine()
@@ -686,6 +751,11 @@ internal static partial class CodeGeneratorExtensions
 
         static void AppendGetImmutableListInsertingEnumerable(CodeGenerator generator, string fieldName)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             generator
                 .AppendIndent("if (arrayInstance.")
                 .Append(fieldName)
@@ -701,6 +771,11 @@ internal static partial class CodeGeneratorExtensions
 
         static void AppendInsertEnumerable(CodeGenerator generator, string fieldName)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             generator
                 .AppendLineIndent("try")
                 .AppendLineIndent("{")
@@ -720,6 +795,11 @@ internal static partial class CodeGeneratorExtensions
 
         static void AppendGetImmutableListInserting(CodeGenerator generator, string fieldName)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             generator
                 .AppendIndent("if (arrayInstance.")
                 .Append(fieldName)
@@ -735,6 +815,11 @@ internal static partial class CodeGeneratorExtensions
 
         static void AppendInsertAtIndex(CodeGenerator generator, string fieldName)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             generator
                 .AppendLineIndent("try")
                 .AppendLineIndent("{")
@@ -754,6 +839,11 @@ internal static partial class CodeGeneratorExtensions
 
         static void AppendGetImmutableListWithoutRange(CodeGenerator generator, string fieldName)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             generator
                 .AppendIndent("if (arrayInstance.")
                 .Append(fieldName)
@@ -769,6 +859,11 @@ internal static partial class CodeGeneratorExtensions
 
         static void AppendRemoveRange(CodeGenerator generator, string fieldName)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             generator
                 .AppendLineIndent("try")
                 .AppendLineIndent("{")
@@ -788,6 +883,11 @@ internal static partial class CodeGeneratorExtensions
 
         static void AppendGetImmutableListWithout(CodeGenerator generator, string fieldName)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             generator
                 .AppendIndent("if (arrayInstance.")
                 .Append(fieldName)
@@ -803,6 +903,11 @@ internal static partial class CodeGeneratorExtensions
 
         static void AppendGetImmutableListReplacingValue(CodeGenerator generator, string fieldName)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             generator
                 .AppendIndent("if (arrayInstance.")
                 .Append(fieldName)
@@ -818,6 +923,11 @@ internal static partial class CodeGeneratorExtensions
 
         static void AppendGetImmutableListSettingIndexToValue(CodeGenerator generator, string fieldName)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             generator
                 .AppendIndent("if (arrayInstance.")
                 .Append(fieldName)
@@ -833,6 +943,11 @@ internal static partial class CodeGeneratorExtensions
 
         static void AppendSetItemAtIndexToValue(CodeGenerator generator, string fieldName)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             generator
                 .AppendLineIndent("try")
                 .AppendLineIndent("{")
@@ -852,6 +967,11 @@ internal static partial class CodeGeneratorExtensions
 
         static void AppendBuildImmutableList(CodeGenerator generator, string fieldName)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             generator
                 .AppendIndent("if (arrayInstance.")
                 .Append(fieldName)
@@ -881,6 +1001,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendEnumerateArrayMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         bool hasStrongType = false;
 
         if (typeDeclaration.ArrayItemsType() is ArrayItemsTypeDeclaration arrayItemsType)
@@ -976,6 +1101,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendGetArrayLengthMethod(this CodeGenerator generator)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         return generator
             .ReserveNameIfNotReserved("GetArrayLength")
             .AppendSeparatorLine()
@@ -998,6 +1128,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendAsImmutableListMethods(this CodeGenerator generator)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         return generator
             .ReserveNameIfNotReserved("AsImmutableList")
             .ReserveNameIfNotReserved("AsImmutableListBuilder")
@@ -1026,6 +1161,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendCollectionEnumerableMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.IsTuple())
         {
             return generator;
@@ -1063,6 +1203,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendCreateTupleFactoryMethod(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.TupleType() is TupleTypeDeclaration tupleType)
         {
             generator
@@ -1077,6 +1222,11 @@ internal static partial class CodeGeneratorExtensions
 
             for (int i = 0; i < tupleType.ItemsTypes.Length; ++i)
             {
+                if (generator.IsCancellationRequested)
+                {
+                    return generator;
+                }
+
                 generator
                     .AppendIndent("/// <param name=\"item")
                     .Append(i + 1)
@@ -1093,6 +1243,11 @@ internal static partial class CodeGeneratorExtensions
 
             for (int i = 0; i < tupleType.ItemsTypes.Length; ++i)
             {
+                if (generator.IsCancellationRequested)
+                {
+                    return generator;
+                }
+
                 if (i > 0)
                 {
                     generator.Append(", ");
@@ -1127,6 +1282,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendTupleConversions(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         // We can only do ValueTuple<T1,T2> so there must be more than two items in tuple.
         if (typeDeclaration.TupleType() is TupleTypeDeclaration tupleType &&
             tupleType.ItemsTypes.Length > 1)
@@ -1190,6 +1350,11 @@ internal static partial class CodeGeneratorExtensions
         this CodeGenerator generator,
         TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         return generator
             .AppendSeparatorLine()
             .ReserveNameIfNotReserved("From")
@@ -1222,6 +1387,11 @@ internal static partial class CodeGeneratorExtensions
         this CodeGenerator generator,
         TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         // Don't generate this if we have a tuple type or a fixed-size numeric array.
         if (typeDeclaration.IsFixedSizeArray() || typeDeclaration.IsTuple())
         {
@@ -1265,6 +1435,11 @@ internal static partial class CodeGeneratorExtensions
         this CodeGenerator generator,
         TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.IsFixedSizeArray() || typeDeclaration.IsTuple())
         {
             return generator;
@@ -1338,6 +1513,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendFromRangeFactoryMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         string arrayItemsType =
             typeDeclaration.ArrayItemsType()?.ReducedType.FullyQualifiedDotnetTypeName()
             ?? WellKnownTypeDeclarations.JsonAny.FullyQualifiedDotnetTypeName();
@@ -1361,6 +1541,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendFromValuesFactoryMethod(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (!typeDeclaration.IsFixedSizeNumericArray())
         {
             return generator;
@@ -1415,6 +1600,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendFromSerializedItemsMethod(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.IsFixedSizeArray() || typeDeclaration.IsTuple() || typeDeclaration.ArrayItemsType() is not null)
         {
             return generator;
@@ -1472,6 +1662,11 @@ internal static partial class CodeGeneratorExtensions
         this CodeGenerator generator,
         TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         return generator
             .AppendLine("#if NET8_0_OR_GREATER")
             .AppendIndent("[CollectionBuilder(typeof(")
@@ -1482,6 +1677,11 @@ internal static partial class CodeGeneratorExtensions
 
     private static CodeGenerator AppendArrayIndexer(this CodeGenerator generator, TypeDeclaration typeDeclaration, string itemsTypeName, bool isExplicit)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (!isExplicit)
         {
             generator
@@ -1523,6 +1723,11 @@ internal static partial class CodeGeneratorExtensions
 
         static void AppendArrayItem(CodeGenerator generator, string fieldName, string itemsTypeName)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             generator
                 .AppendLineIndent("try")
                 .AppendLineIndent("{")
@@ -1554,6 +1759,11 @@ internal static partial class CodeGeneratorExtensions
 
     private static void AppendArrayIndex(CodeGenerator generator, string fieldName)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return;
+        }
+
         generator
             .AppendBlockIndent(
                 """
@@ -1583,6 +1793,11 @@ internal static partial class CodeGeneratorExtensions
     {
         for (int i = 1; i <= 7; ++i)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return generator;
+            }
+
             generator
                 .AppendGenericFromItemsFactoryMethod(typeDeclaration, i);
         }
@@ -1594,6 +1809,11 @@ internal static partial class CodeGeneratorExtensions
     {
         for (int i = 1; i <= 7; ++i)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return generator;
+            }
+
             generator
                 .AppendNonGenericFromItemsFactoryMethod(typeDeclaration, arrayItemsType, i);
         }
@@ -1603,6 +1823,11 @@ internal static partial class CodeGeneratorExtensions
 
     private static CodeGenerator AppendFromRangeFactoryMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration, string arrayItemsType)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (!(typeDeclaration.IsFixedSizeArray() || typeDeclaration.IsTuple()))
         {
             // Adds the strongly typed implementation for either JsonAny or any other type.
@@ -1665,6 +1890,11 @@ internal static partial class CodeGeneratorExtensions
 
         static void AddExplicitImplementations(CodeGenerator generator, TypeDeclaration typeDeclaration)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             generator
                    .ReserveNameIfNotReserved("FromRange")
                    .AppendSeparatorLine()
@@ -1711,6 +1941,11 @@ internal static partial class CodeGeneratorExtensions
 
     private static CodeGenerator AppendNonGenericFromItemsFactoryMethod(this CodeGenerator generator, TypeDeclaration typeDeclaration, string arrayItemsType, int itemCount)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         generator
             .AppendSeparatorLine()
             .AppendLineIndent("/// <summary>")
@@ -1721,6 +1956,11 @@ internal static partial class CodeGeneratorExtensions
 
         for (int i = 1; i <= itemCount; ++i)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return generator;
+            }
+
             generator
                 .AppendIndent("/// <param name=\"item")
                 .Append(i)
@@ -1745,6 +1985,11 @@ internal static partial class CodeGeneratorExtensions
 
     private static CodeGenerator AppendGenericFromItemsFactoryMethod(this CodeGenerator generator, TypeDeclaration typeDeclaration, int itemCount)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         generator
             .AppendSeparatorLine()
             .AppendLineIndent("/// <summary>")
@@ -1755,6 +2000,11 @@ internal static partial class CodeGeneratorExtensions
 
         for (int i = 1; i <= itemCount; ++i)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return generator;
+            }
+
             generator
                 .AppendIndent("/// <typeparam name=\"TItem")
                 .Append(i)
@@ -1765,6 +2015,11 @@ internal static partial class CodeGeneratorExtensions
 
         for (int i = 1; i <= itemCount; ++i)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return generator;
+            }
+
             generator
                 .AppendIndent("/// <param name=\"item")
                 .Append(i)
@@ -1786,6 +2041,11 @@ internal static partial class CodeGeneratorExtensions
 
         for (int i = 1; i <= itemCount; ++i)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return generator;
+            }
+
             generator
                 .AppendIndent("where TItem")
                 .Append(i)
@@ -1805,12 +2065,22 @@ internal static partial class CodeGeneratorExtensions
 
     private static CodeGenerator AppendReturnNewArrayTypeBuiltFromItems(this CodeGenerator generator, int itemCount, bool isJsonAny)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         generator
             .AppendSeparatorLine()
             .AppendIndent("return new([");
 
         for (int i = 1; i <= itemCount; ++i)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return generator;
+            }
+
             if (i > 1)
             {
                 generator.Append(", ");
@@ -1833,6 +2103,11 @@ internal static partial class CodeGeneratorExtensions
 
     private static CodeGenerator AppendBuildNumericArray(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         TypeDeclaration arrayItemsType =
                  typeDeclaration.ArrayItemsType()?.ReducedType
                 ?? throw new InvalidOperationException("Unexpected missing ArrayItemsType() in numeric array build.");
@@ -1869,6 +2144,11 @@ internal static partial class CodeGeneratorExtensions
 
     private static CodeGenerator AppendReturnNewArrayTypeBuiltFromValue(this CodeGenerator generator, string valueName)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         return generator
             .AppendIndent("return new([..")
             .Append(valueName)
@@ -1877,6 +2157,11 @@ internal static partial class CodeGeneratorExtensions
 
     private static CodeGenerator AppendFromRangeBuiltInTypeFactoryMethod(this CodeGenerator generator, TypeDeclaration typeDeclaration, string itemsType)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.ArrayItemsType() is not null || typeDeclaration.IsTuple())
         {
             return generator;
@@ -1907,6 +2192,11 @@ internal static partial class CodeGeneratorExtensions
 
     private static CodeGenerator AppendInsertRangeTArray(this CodeGenerator generator, TypeDeclaration typeDeclaration, bool isTupleOrHasArrayItemsType)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         generator.AppendSeparatorLine();
 
         if (isTupleOrHasArrayItemsType)
@@ -1940,6 +2230,11 @@ internal static partial class CodeGeneratorExtensions
 
     private static CodeGenerator AppendInsertItemJsonAny(this CodeGenerator generator, TypeDeclaration typeDeclaration, bool isTupleOrHasArrayItemsType)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         generator.AppendSeparatorLine();
 
         if (isTupleOrHasArrayItemsType)
@@ -1970,6 +2265,11 @@ internal static partial class CodeGeneratorExtensions
 
     private static CodeGenerator AppendInsertItemArrayItemsType(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.ArrayItemsType() is ArrayItemsTypeDeclaration arrayItemsType)
         {
             generator
@@ -1992,6 +2292,11 @@ internal static partial class CodeGeneratorExtensions
 
     private static CodeGenerator AppendInsertRangeEnumerableJsonAny(this CodeGenerator generator, TypeDeclaration typeDeclaration, bool isTupleOrHasArrayItemsType)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         generator.AppendSeparatorLine();
 
         if (isTupleOrHasArrayItemsType)
@@ -2022,6 +2327,11 @@ internal static partial class CodeGeneratorExtensions
 
     private static CodeGenerator AppendInsertRangeEnumerableArrayItemsType(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.ArrayItemsType() is ArrayItemsTypeDeclaration arrayItemsType)
         {
             generator
@@ -2044,6 +2354,11 @@ internal static partial class CodeGeneratorExtensions
 
     private static CodeGenerator AppendInsertRangeEnumerableTItem(this CodeGenerator generator, TypeDeclaration typeDeclaration, bool isTupleOrHasArrayItemsType)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         generator.AppendSeparatorLine();
 
         if (isTupleOrHasArrayItemsType)
@@ -2077,6 +2392,11 @@ internal static partial class CodeGeneratorExtensions
 
     private static CodeGenerator AppendAddRangeEnumerableJsonAny(this CodeGenerator generator, TypeDeclaration typeDeclaration, bool isTupleOrHasArrayItemsType)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         generator.AppendSeparatorLine();
 
         if (isTupleOrHasArrayItemsType)
@@ -2112,6 +2432,11 @@ internal static partial class CodeGeneratorExtensions
 
     private static CodeGenerator AppendAddRangeEnumerableArrayItemsType(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.ArrayItemsType() is ArrayItemsTypeDeclaration arrayItemsType)
         {
             generator
@@ -2144,6 +2469,11 @@ internal static partial class CodeGeneratorExtensions
 
     private static CodeGenerator AppendAddRangeEnumerableTItem(this CodeGenerator generator, TypeDeclaration typeDeclaration, bool isTupleOrHasArrayItemsType)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         generator.AppendSeparatorLine();
 
         if (isTupleOrHasArrayItemsType)
@@ -2186,6 +2516,11 @@ internal static partial class CodeGeneratorExtensions
 
     private static CodeGenerator AppendAddParamsJsonAny(this CodeGenerator generator, TypeDeclaration typeDeclaration, bool isTupleOrHasArrayItemsType)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         generator.AppendSeparatorLine();
 
         if (isTupleOrHasArrayItemsType)
@@ -2225,6 +2560,11 @@ internal static partial class CodeGeneratorExtensions
 
     private static CodeGenerator AppendAddParamsArrayItemsType(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.ArrayItemsType() is ArrayItemsTypeDeclaration arrayItemsType)
         {
             generator
@@ -2257,6 +2597,11 @@ internal static partial class CodeGeneratorExtensions
 
     private static CodeGenerator AppendAddRangeTArray(this CodeGenerator generator, TypeDeclaration typeDeclaration, bool isTupleOrHasArrayItemsType)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         generator.AppendSeparatorLine();
 
         if (isTupleOrHasArrayItemsType)
@@ -2299,6 +2644,11 @@ internal static partial class CodeGeneratorExtensions
 
     private static CodeGenerator AppendAddItemJsonAny(this CodeGenerator generator, TypeDeclaration typeDeclaration, bool isTupleOrHasArrayItemsType)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         generator.AppendSeparatorLine();
 
         if (isTupleOrHasArrayItemsType)
@@ -2334,6 +2684,11 @@ internal static partial class CodeGeneratorExtensions
 
     private static CodeGenerator AppendAddItemArrayItemsType(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.ArrayItemsType() is ArrayItemsTypeDeclaration arrayItemsType)
         {
             generator
@@ -2361,6 +2716,11 @@ internal static partial class CodeGeneratorExtensions
 
     private static CodeGenerator AppendRemoveJsonAny(this CodeGenerator generator, TypeDeclaration typeDeclaration, bool isTupleOrHasArrayItemsType)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         generator.AppendSeparatorLine();
 
         if (isTupleOrHasArrayItemsType)
@@ -2391,6 +2751,11 @@ internal static partial class CodeGeneratorExtensions
 
     private static CodeGenerator AppendRemoveArrayItemsType(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.ArrayItemsType() is ArrayItemsTypeDeclaration arrayItemsType)
         {
             generator
@@ -2413,6 +2778,11 @@ internal static partial class CodeGeneratorExtensions
 
     private static CodeGenerator AppendReplaceJsonAny(this CodeGenerator generator, TypeDeclaration typeDeclaration, bool isTupleOrHasArrayItemsType)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         generator.AppendSeparatorLine();
 
         if (isTupleOrHasArrayItemsType)
@@ -2443,6 +2813,11 @@ internal static partial class CodeGeneratorExtensions
 
     private static CodeGenerator AppendReplaceArrayItemsType(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.ArrayItemsType() is ArrayItemsTypeDeclaration arrayItemsType)
         {
             generator
@@ -2467,6 +2842,11 @@ internal static partial class CodeGeneratorExtensions
 
     private static CodeGenerator AppendRemoveAt(this CodeGenerator generator, TypeDeclaration typeDeclaration, bool isTupleOrHasArrayItemsType)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         generator.AppendSeparatorLine();
 
         if (isTupleOrHasArrayItemsType)
@@ -2497,6 +2877,11 @@ internal static partial class CodeGeneratorExtensions
 
     private static CodeGenerator AppendRemoveRange(this CodeGenerator generator, TypeDeclaration typeDeclaration, bool isTupleOrHasArrayItemsType)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         generator.AppendSeparatorLine();
 
         if (isTupleOrHasArrayItemsType)
@@ -2527,6 +2912,11 @@ internal static partial class CodeGeneratorExtensions
 
     private static CodeGenerator AppendSetItemJsonAny(this CodeGenerator generator, TypeDeclaration typeDeclaration, bool isTupleOrHasArrayItemsType)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         generator.AppendSeparatorLine();
 
         if (isTupleOrHasArrayItemsType)
@@ -2557,6 +2947,11 @@ internal static partial class CodeGeneratorExtensions
 
     private static CodeGenerator AppendSetItemArrayItemsType(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.ArrayItemsType() is ArrayItemsTypeDeclaration arrayItemsType)
         {
             generator

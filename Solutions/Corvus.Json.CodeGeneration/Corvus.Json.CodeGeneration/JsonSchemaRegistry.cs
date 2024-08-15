@@ -27,9 +27,10 @@ public class JsonSchemaRegistry(IDocumentResolver documentResolver, VocabularyRe
     /// <param name="ambientVocabulary">The ambient vocabulary to use if the document's vocabulary cannot be analysed.</param>
     /// <param name="rebaseAsRoot">Whether to rebase this path as a root document. This should only be done for a JSON schema island in a larger non-schema document.
     /// If <see langoword="true"/>, then references in this document should be taken as if the fragment was the root of a document.</param>
+    /// <param name="cancellationToken">The cancellation token used to abandon the operation.</param>
     /// <returns>A <see cref="ValueTask"/> which, when complete, provides the root scope for the document (which may be a generated $ref for a path with a fragment), and the base reference to the document containing the root element.</returns>
     /// <remarks><paramref name="jsonSchemaPath"/> must point to a root scope. If it has a pointer into the document, then <paramref name="rebaseAsRoot"/> must be true.</remarks>
-    public async ValueTask<(JsonReference RootUri, JsonReference BaseReference)> RegisterBaseSchema(JsonReference jsonSchemaPath, IVocabulary ambientVocabulary, bool rebaseAsRoot = false)
+    public async ValueTask<(JsonReference RootUri, JsonReference BaseReference)> RegisterBaseSchema(JsonReference jsonSchemaPath, IVocabulary ambientVocabulary, bool rebaseAsRoot, CancellationToken cancellationToken)
     {
         if (SchemaReferenceNormalization.TryNormalizeSchemaReference(jsonSchemaPath, out string? result))
         {
@@ -43,27 +44,43 @@ public class JsonSchemaRegistry(IDocumentResolver documentResolver, VocabularyRe
             basePath = new JsonReference(jsonSchemaPath.Uri[DefaultAbsoluteLocation.Uri.Length..], []);
         }
 
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return default;
+        }
+
         // Load the document
-        JsonElement? optionalDocumentRoot = await documentResolver.TryResolve(basePath).ConfigureAwait(false) ?? throw new InvalidOperationException($"Unable to locate the root document at '{basePath}'");
+        JsonElement? optionalDocumentRoot = await documentResolver.TryResolve(basePath) ?? throw new InvalidOperationException($"Unable to locate the root document at '{basePath}'");
         if (optionalDocumentRoot is not JsonElement documentRoot)
         {
             throw new InvalidOperationException($"Unable to resolve the document at {basePath}");
         }
 
-        if (jsonSchemaPath.HasFragment)
+        if (cancellationToken.IsCancellationRequested)
         {
-            return await HandleEmbeddedBaseSchema(vocabularyRegistry, jsonSchemaPath, ambientVocabulary, rebaseAsRoot, basePath, documentRoot).ConfigureAwait(false);
+            return default;
         }
 
-        IVocabulary vocabulary = await vocabularyRegistry.AnalyseSchema(documentRoot).ConfigureAwait(false) ?? ambientVocabulary;
+        if (jsonSchemaPath.HasFragment)
+        {
+            return await HandleEmbeddedBaseSchema(vocabularyRegistry, jsonSchemaPath, ambientVocabulary, rebaseAsRoot, basePath, documentRoot);
+        }
+
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return default;
+        }
+
+        IVocabulary vocabulary = await vocabularyRegistry.AnalyseSchema(documentRoot) ?? ambientVocabulary;
+
         if (!vocabulary.ValidateSchemaInstance(documentRoot))
         {
             // This is not a valid schema overall, so this must be an island in the schema
             basePath = jsonSchemaPath;
-            if (await documentResolver.TryResolve(basePath).ConfigureAwait(false) is JsonElement island)
+            if (await documentResolver.TryResolve(basePath) is JsonElement island)
             {
                 // We've loaded a new document, so we need to see if we need to override the vocabulary.
-                vocabulary = await vocabularyRegistry.AnalyseSchema(island).ConfigureAwait(false) ?? vocabulary;
+                vocabulary = await vocabularyRegistry.AnalyseSchema(island) ?? vocabulary;
                 documentRoot = island;
 
                 if (!vocabulary.ValidateSchemaInstance(documentRoot))
@@ -77,17 +94,22 @@ public class JsonSchemaRegistry(IDocumentResolver documentResolver, VocabularyRe
             }
         }
 
-        return (this.AddSchemaAndSubschema(basePath, documentRoot, vocabulary), basePath);
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return default;
+        }
+
+        return (this.AddSchemaAndSubschema(basePath, documentRoot, vocabulary, cancellationToken), basePath);
 
         async ValueTask<JsonReference> AddSchemaForUpdatedPathAndElement(JsonReference jsonSchemaPath, JsonElement newBase, IVocabulary vocabulary)
         {
-            return await AddSchemaForUpdatedPathAndDocument(jsonSchemaPath, GetDocumentFrom(newBase), vocabulary).ConfigureAwait(false);
+            return await AddSchemaForUpdatedPathAndDocument(jsonSchemaPath, GetDocumentFrom(newBase), vocabulary);
         }
 
         async ValueTask<JsonReference> AddSchemaForUpdatedPathAndDocument(JsonReference jsonSchemaPath, JsonDocument newBase, IVocabulary vocabulary)
         {
             documentResolver.AddDocument(jsonSchemaPath, newBase);
-            JsonElement? resolvedBaseOptional = await documentResolver.TryResolve(jsonSchemaPath).ConfigureAwait(false) ?? throw new InvalidOperationException($"Expected to find a rebased schema at {jsonSchemaPath}");
+            JsonElement? resolvedBaseOptional = await documentResolver.TryResolve(jsonSchemaPath) ?? throw new InvalidOperationException($"Expected to find a rebased schema at {jsonSchemaPath}");
             if (resolvedBaseOptional is not JsonElement resolvedBase)
             {
                 throw new InvalidOperationException($"Unable to find the JSON schema at '{jsonSchemaPath}'.");
@@ -98,7 +120,7 @@ public class JsonSchemaRegistry(IDocumentResolver documentResolver, VocabularyRe
                 throw new InvalidOperationException($"The JSON schema at '{jsonSchemaPath}' was not valid, according to the vocabulary {vocabulary.Uri}.");
             }
 
-            return this.AddSchemaAndSubschema(jsonSchemaPath, resolvedBase, vocabulary);
+            return this.AddSchemaAndSubschema(jsonSchemaPath, resolvedBase, vocabulary, cancellationToken);
         }
 
         static JsonDocument GetDocumentFrom(JsonElement documentRoot)
@@ -112,19 +134,19 @@ public class JsonSchemaRegistry(IDocumentResolver documentResolver, VocabularyRe
             IVocabulary referencedVocab;
             if (rebaseAsRoot)
             {
-                referencedVocab = await vocabularyRegistry.AnalyseSchema(newBase).ConfigureAwait(false) ?? ambientVocabulary;
+                referencedVocab = await vocabularyRegistry.AnalyseSchema(newBase) ?? ambientVocabulary;
 
                 // Switch the root to be an absolute URI
                 jsonSchemaPath = DefaultAbsoluteLocation.Apply(new JsonReference($"{Guid.NewGuid()}/Schema"));
 
                 // And add the document back to the document resolver against that root URI
-                JsonReference docref = await AddSchemaForUpdatedPathAndElement(jsonSchemaPath, newBase, referencedVocab).ConfigureAwait(false);
+                JsonReference docref = await AddSchemaForUpdatedPathAndElement(jsonSchemaPath, newBase, referencedVocab);
                 return (docref, basePath);
             }
             else
             {
                 JsonElement rootDocument = JsonPointerUtilities.ResolvePointer(documentRoot, "#".AsSpan());
-                referencedVocab = await vocabularyRegistry.AnalyseSchema(rootDocument).ConfigureAwait(false) ?? ambientVocabulary;
+                referencedVocab = await vocabularyRegistry.AnalyseSchema(rootDocument) ?? ambientVocabulary;
 
                 // This is not a root path, so we need to construct a JSON document that references the root path instead.
                 // This will not actually be constructed, as it will be resolved to the reference type instead.
@@ -132,7 +154,7 @@ public class JsonSchemaRegistry(IDocumentResolver documentResolver, VocabularyRe
                 JsonDocument referenceSchema = referencedVocab.BuildReferenceSchemaInstance(jsonSchemaPath)
                     ?? throw new InvalidOperationException("The vocabulary does not support referencing");
                 jsonSchemaPath = DefaultAbsoluteLocation.Apply(new JsonReference($"{Guid.NewGuid()}/Schema"));
-                JsonReference docref = await AddSchemaForUpdatedPathAndDocument(jsonSchemaPath, referenceSchema, referencedVocab).ConfigureAwait(false);
+                JsonReference docref = await AddSchemaForUpdatedPathAndDocument(jsonSchemaPath, referenceSchema, referencedVocab);
                 return (docref, basePath);
             }
         }
@@ -145,9 +167,10 @@ public class JsonSchemaRegistry(IDocumentResolver documentResolver, VocabularyRe
     /// <param name="currentLocation">The location at which to add the schema.</param>
     /// <param name="schema">The schema to add.</param>
     /// <param name="vocabulary">The current vocabulary.</param>
+    /// <param name="cancellationToken">The cancellation token to abandon registration.</param>
     /// <returns>A reference to the located schema.</returns>
     /// <exception cref="InvalidOperationException">The schema could not be registered.</exception>
-    public JsonReference AddSchemaAndSubschema(JsonReference currentLocation, JsonElement schema, IVocabulary vocabulary)
+    public JsonReference AddSchemaAndSubschema(JsonReference currentLocation, JsonElement schema, IVocabulary vocabulary, CancellationToken cancellationToken)
     {
         // First, add the element at the current location.
         bool leavingEarlyBecauseTheLocatedSchemaHasAlreadyBeenRegistered = false;
@@ -167,7 +190,17 @@ public class JsonSchemaRegistry(IDocumentResolver documentResolver, VocabularyRe
             return currentLocation;
         }
 
-        CustomKeywords.ApplyBeforeScope(this, schema, currentLocation, vocabulary);
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return default;
+        }
+
+        CustomKeywords.ApplyBeforeScope(this, schema, currentLocation, vocabulary, cancellationToken);
+
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return default;
+        }
 
         if (Scope.ShouldEnterScope(schema, vocabulary, out string? scopeName))
         {
@@ -177,9 +210,31 @@ public class JsonSchemaRegistry(IDocumentResolver documentResolver, VocabularyRe
             }
             else
             {
-                CustomKeywords.ApplyBeforeEnteringScope(this, schema, currentLocation, vocabulary);
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    return default;
+                }
+
+                CustomKeywords.ApplyBeforeEnteringScope(this, schema, currentLocation, vocabulary, cancellationToken);
+
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    return default;
+                }
+
                 currentLocation = this.EnterScope(currentLocation, scopeName);
-                CustomKeywords.ApplyAfterEnteringScope(this, schema, currentLocation, vocabulary);
+
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    return default;
+                }
+
+                CustomKeywords.ApplyAfterEnteringScope(this, schema, currentLocation, vocabulary, cancellationToken);
+
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    return default;
+                }
             }
         }
 
@@ -189,15 +244,45 @@ public class JsonSchemaRegistry(IDocumentResolver documentResolver, VocabularyRe
             return currentLocation;
         }
 
-        CustomKeywords.ApplyBeforeAnchors(this, schema, currentLocation, vocabulary);
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return default;
+        }
+
+        CustomKeywords.ApplyBeforeAnchors(this, schema, currentLocation, vocabulary, cancellationToken);
+
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return default;
+        }
 
         Anchors.AddAnchors(this, schema, currentLocation, vocabulary);
 
-        CustomKeywords.ApplyBeforeSubschemas(this, schema, currentLocation, vocabulary);
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return default;
+        }
 
-        Subschemas.RegisterLocalSubschemas(this, schema, currentLocation, vocabulary);
+        CustomKeywords.ApplyBeforeSubschemas(this, schema, currentLocation, vocabulary, cancellationToken);
 
-        CustomKeywords.ApplyAfterSubschemas(this, schema, currentLocation, vocabulary);
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return default;
+        }
+
+        Subschemas.RegisterLocalSubschemas(this, schema, currentLocation, vocabulary, cancellationToken);
+
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return default;
+        }
+
+        CustomKeywords.ApplyAfterSubschemas(this, schema, currentLocation, vocabulary, cancellationToken);
+
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return default;
+        }
 
         return currentLocation;
     }
@@ -218,13 +303,14 @@ public class JsonSchemaRegistry(IDocumentResolver documentResolver, VocabularyRe
     /// </summary>
     /// <param name="baseSchemaForReferenceLocation">The base schema location.</param>
     /// <param name="vocabulary">The ambient vocabulary.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>A <see cref="ValueTask{TResult}"/> which, when complete, provides the located schema
     /// or <see langword="null"/> if no schema could be located.</returns>
-    public async ValueTask<LocatedSchema?> ResolveBaseReference(JsonReference baseSchemaForReferenceLocation, IVocabulary vocabulary)
+    public async ValueTask<LocatedSchema?> ResolveBaseReference(JsonReference baseSchemaForReferenceLocation, IVocabulary vocabulary, CancellationToken cancellationToken)
     {
         if (!this.TryGetLocatedSchema(baseSchemaForReferenceLocation, out LocatedSchema? baseReferenceSchema))
         {
-            (JsonReference registeredSchemaReference, _) = await this.RegisterBaseSchema(baseSchemaForReferenceLocation, vocabulary).ConfigureAwait(false);
+            (JsonReference registeredSchemaReference, _) = await this.RegisterBaseSchema(baseSchemaForReferenceLocation, vocabulary, false, cancellationToken);
             if (!this.TryGetLocatedSchema(registeredSchemaReference, out baseReferenceSchema))
             {
                 return null;
@@ -298,8 +384,9 @@ public class JsonSchemaRegistry(IDocumentResolver documentResolver, VocabularyRe
     /// <param name="currentLocation">The current location.</param>
     /// <param name="currentSchema">The current schema.</param>
     /// <param name="reference">The reference.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>A <see cref="ValueTask{TResult}"/> which completes once the base is resolved.</returns>
-    public async ValueTask<(JsonReference BaseSchemaForReferenceLocation, LocatedSchema BaseSchemaForReference)> ResolveBaseReference(JsonReference currentLocation, LocatedSchema currentSchema, JsonReference reference)
+    public async ValueTask<(JsonReference BaseSchemaForReferenceLocation, LocatedSchema BaseSchemaForReference)> ResolveBaseReference(JsonReference currentLocation, LocatedSchema currentSchema, JsonReference reference, CancellationToken cancellationToken)
     {
         LocatedSchema baseSchemaForReference;
         JsonReference baseSchemaForReferenceLocation;
@@ -311,13 +398,13 @@ public class JsonSchemaRegistry(IDocumentResolver documentResolver, VocabularyRe
             {
                 // Find the base schema, ignoring the fragment
                 baseSchemaForReferenceLocation = reference.WithFragment(string.Empty);
-                baseSchemaForReference = await this.ResolveBaseReference(baseSchemaForReferenceLocation, currentSchema.Vocabulary).ConfigureAwait(false) ?? throw new InvalidOperationException($"Unable to load the schema at location '{baseSchemaForReferenceLocation}'");
+                baseSchemaForReference = await this.ResolveBaseReference(baseSchemaForReferenceLocation, currentSchema.Vocabulary, cancellationToken) ?? throw new InvalidOperationException($"Unable to load the schema at location '{baseSchemaForReferenceLocation}'");
             }
             else
             {
                 // Apply to the parent scope, ignoring the fragment
                 baseSchemaForReferenceLocation = currentLocation.Apply(reference.WithFragment(string.Empty));
-                baseSchemaForReference = await this.ResolveBaseReference(baseSchemaForReferenceLocation, currentSchema.Vocabulary).ConfigureAwait(false) ?? throw new InvalidOperationException($"Unable to load the schema at location '{baseSchemaForReferenceLocation}'");
+                baseSchemaForReference = await this.ResolveBaseReference(baseSchemaForReferenceLocation, currentSchema.Vocabulary, cancellationToken) ?? throw new InvalidOperationException($"Unable to load the schema at location '{baseSchemaForReferenceLocation}'");
             }
         }
         else

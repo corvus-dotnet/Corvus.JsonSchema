@@ -17,6 +17,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendDocumentation(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.ShortDocumentation() is string shortDocumentation)
         {
             generator.AppendSummary(shortDocumentation);
@@ -38,6 +43,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendSummary(this CodeGenerator generator, string summaryText)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         return generator
             .AppendLineIndent("/// <summary>")
             .AppendBlockIndentWithPrefix(summaryText, "/// ")
@@ -56,6 +66,11 @@ internal static partial class CodeGeneratorExtensions
     /// </remarks>
     public static CodeGenerator AppendRemarks(this CodeGenerator generator, string? longDocumentation, string[]? documentationExamples)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (longDocumentation is null && documentationExamples is null)
         {
             return generator;
@@ -85,12 +100,22 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendExamples(this CodeGenerator generator, string[] examples)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         generator
             .AppendLineIndent("/// <para>")
             .AppendLineIndent("/// Examples:");
 
         foreach (string example in examples)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return generator;
+            }
+
             generator.AppendExample(example);
         }
 
@@ -106,6 +131,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendExample(this CodeGenerator generator, string example)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         return generator
             .AppendLineIndent("/// <example>")
             .AppendLineIndent("/// <code>")

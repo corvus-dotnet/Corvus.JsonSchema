@@ -21,9 +21,11 @@ public interface IPropertyProviderKeyword : IKeyword
     /// <param name="target">The target for the properties.</param>
     /// <param name="visitedTypeDeclarations">The type declarations we have already seen.</param>
     /// <param name="treatRequiredAsOptional">Whether to treat the required properties as optional.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
     void CollectProperties(
         TypeDeclaration source,
         TypeDeclaration target,
         HashSet<TypeDeclaration> visitedTypeDeclarations,
-        bool treatRequiredAsOptional);
+        bool treatRequiredAsOptional,
+        CancellationToken cancellationToken);
 }

@@ -30,10 +30,11 @@ public static class Scope
     /// </summary>
     /// <param name="typeBuilderContext">The type builder context.</param>
     /// <param name="typeDeclaration">The type declaration.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
     /// <param name="existingTypeDeclaration">The existing type declaration for the scope,
     /// if a scope was entered and a type declaration was built for the scope.</param>
     /// <returns><see langword="true"/> if the scope was entered.</returns>
-    public static bool TryEnterScope(TypeBuilderContext typeBuilderContext, TypeDeclaration typeDeclaration, out TypeDeclaration? existingTypeDeclaration)
+    public static bool TryEnterScope(TypeBuilderContext typeBuilderContext, TypeDeclaration typeDeclaration, CancellationToken cancellationToken, out TypeDeclaration? existingTypeDeclaration)
     {
         if (!ShouldEnterScope(typeDeclaration.LocatedSchema.Schema, typeDeclaration.LocatedSchema.Vocabulary, out string? scopeName, out IScopeKeyword? scopeKeyword))
         {
@@ -41,13 +42,13 @@ public static class Scope
             return false;
         }
 
-        CustomKeywords.ApplyBeforeEnteringScope(typeBuilderContext, typeDeclaration);
+        CustomKeywords.ApplyBeforeEnteringScope(typeBuilderContext, typeDeclaration, cancellationToken);
 
         bool result = scopeKeyword.TryEnterScope(typeBuilderContext, typeDeclaration, scopeName, out existingTypeDeclaration);
 
         if (result)
         {
-            CustomKeywords.ApplyAfterEnteringScope(typeBuilderContext, existingTypeDeclaration ?? typeDeclaration);
+            CustomKeywords.ApplyAfterEnteringScope(typeBuilderContext, existingTypeDeclaration ?? typeDeclaration, cancellationToken);
         }
 
         return result;

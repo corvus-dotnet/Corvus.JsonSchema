@@ -28,8 +28,18 @@ public class StringLengthValidationHandler : IChildValidationHandler
     /// <inheritdoc/>
     public CodeGenerator AppendValidationCode(CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         foreach (IStringLengthConstantValidationKeyword keyword in typeDeclaration.Keywords().OfType<IStringLengthConstantValidationKeyword>())
         {
+            if (generator.IsCancellationRequested)
+            {
+                return generator;
+            }
+
             if (!keyword.TryGetOperator(typeDeclaration, out Operator op) || op == Operator.None)
             {
                 continue;
@@ -103,6 +113,11 @@ public class StringLengthValidationHandler : IChildValidationHandler
 
         static void GetValidMessage(CodeGenerator generator, Operator op, string memberName)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             generator
                 .Append("{input.ToString()} of {length} ")
                 .AppendTextForOperator(op)
@@ -113,6 +128,11 @@ public class StringLengthValidationHandler : IChildValidationHandler
 
         static void GetInvalidMessage(CodeGenerator generator, Operator op, string memberName)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             generator
                 .Append("{input.ToString()} of {length} ")
                 .AppendTextForInverseOperator(op)
@@ -123,6 +143,11 @@ public class StringLengthValidationHandler : IChildValidationHandler
 
         static void GetSimplifiedInvalidMessage(CodeGenerator generator, Operator op)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             generator
                 .AppendTextForInverseOperator(op)
                 .Append(" the required length.");

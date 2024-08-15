@@ -20,6 +20,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendAsPropertyBackingMethod(this CodeGenerator generator)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         return generator
             .ReserveNameIfNotReserved("AsPropertyBacking")
             .AppendSeparatorLine()
@@ -49,6 +54,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendReadOnlyDictionaryProperties(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.FallbackObjectPropertyType() is FallbackObjectPropertyType propertyType
              && !propertyType.ReducedType.IsBuiltInJsonAnyType())
         {
@@ -79,6 +89,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendPropertyCount(this CodeGenerator generator)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         return generator
             .ReserveNameIfNotReserved("Count")
             .AppendSeparatorLine()
@@ -102,6 +117,11 @@ internal static partial class CodeGeneratorExtensions
 
         static void CountProperties(CodeGenerator generator, string fieldName)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             generator
                 .AppendLineIndent("int count = 0;")
                 .AppendIndent("foreach (var _ in this.")
@@ -124,6 +144,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendReadOnlyDictionaryMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.FallbackObjectPropertyType() is FallbackObjectPropertyType propertyType
              && !propertyType.ReducedType.IsBuiltInJsonAnyType())
         {
@@ -180,8 +205,18 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendPropertyAccessors(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         foreach (PropertyDeclaration property in typeDeclaration.PropertyDeclarations)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return generator;
+            }
+
             bool isNullable = typeDeclaration.OptionalAsNullable() && property.RequiredOrOptional == RequiredOrOptional.Optional;
             generator
                 .AppendSeparatorLine()
@@ -199,6 +234,11 @@ internal static partial class CodeGeneratorExtensions
 
         static void AppendJsonBackedAccessor(CodeGenerator generator, TypeDeclaration typeDeclaration, string fieldName, PropertyDeclaration property)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             generator
                 .AppendLineIndent("if (this.", fieldName, ".ValueKind != JsonValueKind.Object)")
                 .AppendLineIndent("{")
@@ -238,6 +278,11 @@ internal static partial class CodeGeneratorExtensions
 
         static void AppendObjectBackedAccessor(CodeGenerator generator, TypeDeclaration typeDeclaration, string fieldName, PropertyDeclaration property)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             generator
                 .AppendSeparatorLine()
                 .AppendLineIndent(
@@ -288,6 +333,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendJsonPropertyNamesClass(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (!typeDeclaration.HasPropertyDeclarations)
         {
             return generator;
@@ -303,6 +353,11 @@ internal static partial class CodeGeneratorExtensions
         int i = 0;
         foreach (PropertyDeclaration property in typeDeclaration.PropertyDeclarations)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return generator;
+            }
+
             if (i > 0)
             {
                 generator
@@ -324,6 +379,11 @@ internal static partial class CodeGeneratorExtensions
 
         foreach (PropertyDeclaration property in typeDeclaration.PropertyDeclarations)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return generator;
+            }
+
             if (i > 0)
             {
                 generator
@@ -355,6 +415,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendObjectIndexerProperties(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         generator
             .AppendSeparatorLine();
 
@@ -396,6 +461,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendEnumerateObjectMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         generator
             .ReserveNameIfNotReserved("EnumerateObject");
 
@@ -424,16 +494,31 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendPatternPropertiesMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.PatternProperties() is IReadOnlyDictionary<IObjectPatternPropertyValidationKeyword, IReadOnlyCollection<PatternPropertyDeclaration>> patternProperties)
         {
             foreach (IObjectPatternPropertyValidationKeyword keyword in patternProperties.Keys)
             {
+                if (generator.IsCancellationRequested)
+                {
+                    return generator;
+                }
+
                 IReadOnlyCollection<PatternPropertyDeclaration> declarations = patternProperties[keyword];
                 int index = 1;
                 bool hasIndex = declarations.Count > 1;
 
                 foreach (PatternPropertyDeclaration declaration in declarations)
                 {
+                    if (generator.IsCancellationRequested)
+                    {
+                        return generator;
+                    }
+
                     string regexAccessor =
                         generator.GetStaticReadOnlyFieldNameInScope(
                             declaration.Keyword.Keyword,
@@ -488,16 +573,31 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendPatternPropertiesStaticProperties(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.PatternProperties() is IReadOnlyDictionary<IObjectPatternPropertyValidationKeyword, IReadOnlyCollection<PatternPropertyDeclaration>> patternProperties)
         {
             foreach (IObjectPatternPropertyValidationKeyword keyword in patternProperties.Keys)
             {
+                if (generator.IsCancellationRequested)
+                {
+                    return generator;
+                }
+
                 IReadOnlyCollection<PatternPropertyDeclaration> declarations = patternProperties[keyword];
                 int index = 1;
                 bool hasIndex = declarations.Count > 1;
 
                 foreach (PatternPropertyDeclaration declaration in declarations)
                 {
+                    if (generator.IsCancellationRequested)
+                    {
+                        return generator;
+                    }
+
                     string regexAccessor =
                         generator.GetStaticReadOnlyFieldNameInScope(
                             declaration.Keyword.Keyword,
@@ -531,13 +631,28 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendTryGetAsDependentSchemaMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.DependentSchemasSubschemaTypes() is IReadOnlyDictionary<IObjectPropertyDependentSchemasValidationKeyword, IReadOnlyCollection<DependentSchemaDeclaration>> dependencies)
         {
             HashSet<string> visitedTypeNames = [];
             foreach (IReadOnlyCollection<DependentSchemaDeclaration> declarations in dependencies.Values)
             {
+                if (generator.IsCancellationRequested)
+                {
+                    return generator;
+                }
+
                 foreach (DependentSchemaDeclaration declaration in declarations)
                 {
+                    if (generator.IsCancellationRequested)
+                    {
+                        return generator;
+                    }
+
                     if (!visitedTypeNames.Add(declaration.JsonPropertyName))
                     {
                         continue;
@@ -593,6 +708,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendCreateFactoryMethod(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (!typeDeclaration.HasPropertyDeclarations)
         {
             return generator;
@@ -621,6 +741,11 @@ internal static partial class CodeGeneratorExtensions
 
         static MethodParameter[] BuildMethodParameters(CodeGenerator generator, TypeDeclaration typeDeclaration)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return [];
+            }
+
             // Filter out the constant values from the property list;
             // we don't need to supply them.
             return
@@ -660,11 +785,21 @@ internal static partial class CodeGeneratorExtensions
 
         static CodeGenerator AppendBuildObjectFromParameters(CodeGenerator generator, PropertyDeclaration[] properties)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return generator;
+            }
+
             generator
                 .AppendLineIndent("var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();");
 
             foreach (PropertyDeclaration property in properties)
             {
+                if (generator.IsCancellationRequested)
+                {
+                    return generator;
+                }
+
                 if (property.RequiredOrOptional == RequiredOrOptional.Required)
                 {
                     AddRequiredProperty(generator, property);
@@ -682,6 +817,11 @@ internal static partial class CodeGeneratorExtensions
 
         static void AddRequiredProperty(CodeGenerator generator, PropertyDeclaration property)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             string propertyNamesClass = generator.JsonPropertyNamesClassName();
             if (property.ReducedPropertyType.SingleConstantValue().ValueKind != JsonValueKind.Undefined)
             {
@@ -713,6 +853,11 @@ internal static partial class CodeGeneratorExtensions
 
         static void AddOptionalProperty(CodeGenerator generator, PropertyDeclaration property)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             string propertyNamesClass = generator.JsonPropertyNamesClassName();
             string parameterName = generator.GetParameterNameInScope(property.DotnetPropertyName());
 
@@ -742,6 +887,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendFromPropertiesFactoryMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         generator
             .ReserveNameIfNotReserved("FromProperties");
 
@@ -878,6 +1028,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendHasPropertiesMethod(this CodeGenerator generator)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         return generator
             .ReserveNameIfNotReserved("HasProperties")
             .AppendSeparatorLine()
@@ -894,6 +1049,11 @@ internal static partial class CodeGeneratorExtensions
 
         static void TestEnumerable(CodeGenerator generator, string fieldName)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             generator
                 .AppendIndent("using JsonElement.ObjectEnumerator enumerator = this.")
                 .Append(fieldName)
@@ -909,6 +1069,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendHasPropertyMethods(this CodeGenerator generator)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         return generator
             .ReserveNameIfNotReserved("HasProperty")
             .AppendHasPropertyForJsonPropertyNameMethod()
@@ -925,6 +1090,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendTryGetPropertyMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         return generator
             .ReserveNameIfNotReserved("TryGetProperty")
             .AppendTryGetPropertyForJsonPropertyNameMethod(typeDeclaration)
@@ -945,6 +1115,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendRemovePropertyMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         return generator
             .ReserveNameIfNotReserved("RemoveProperty")
             .AppendRemovePropertyMethod(typeDeclaration, "in JsonPropertyName")
@@ -961,6 +1136,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendSetPropertyMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         generator
             .ReserveNameIfNotReserved("SetProperty");
 
@@ -987,6 +1167,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendCorvusObjectHelpers(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         return generator
             .ReserveNameIfNotReserved("__CorvusObjectHelpers")
             .AppendSeparatorLine()
@@ -1028,6 +1213,11 @@ internal static partial class CodeGeneratorExtensions
 
     private static CodeGenerator AppendPropertyDocumentation(this CodeGenerator generator, PropertyDeclaration property)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         bool optional = property.RequiredOrOptional == RequiredOrOptional.Optional;
 
         generator
@@ -1128,6 +1318,11 @@ internal static partial class CodeGeneratorExtensions
 
     private static CodeGenerator AppendGetPropertyBackingWithout(this CodeGenerator generator, string dotnetTypeName, string parameterNameAndModifiers)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         return generator
             .AppendSeparatorLine()
             .AppendBlockIndent(
@@ -1160,6 +1355,11 @@ internal static partial class CodeGeneratorExtensions
 
     private static CodeGenerator AppendGetPropertyBackingWith(this CodeGenerator generator, string dotnetTypeName, string parameterNameAndModifiers)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         return generator
             .AppendSeparatorLine()
             .AppendBlockIndent(
@@ -1192,6 +1392,11 @@ internal static partial class CodeGeneratorExtensions
 
     private static CodeGenerator AppendSetPropertyMethod(this CodeGenerator generator, TypeDeclaration typeDeclaration, string propertyTypeName, bool isGeneric = false, bool isExplicit = false)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         generator
             .AppendSeparatorLine();
 
@@ -1271,6 +1476,11 @@ internal static partial class CodeGeneratorExtensions
 
     private static CodeGenerator AppendTryGetPropertyMethod(this CodeGenerator generator, TypeDeclaration typeDeclaration, string propertyNameType)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.FallbackObjectPropertyType() is FallbackObjectPropertyType propertyType && !propertyType.ReducedType.IsBuiltInJsonAnyType())
         {
             generator
@@ -1287,6 +1497,11 @@ internal static partial class CodeGeneratorExtensions
 
     private static CodeGenerator AppendTryGetPropertyForJsonPropertyNameMethod(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.FallbackObjectPropertyType() is FallbackObjectPropertyType propertyType && !propertyType.ReducedType.IsBuiltInJsonAnyType())
         {
             generator
@@ -1303,6 +1518,11 @@ internal static partial class CodeGeneratorExtensions
 
     private static CodeGenerator AppendRemovePropertyMethod(this CodeGenerator generator, TypeDeclaration typeDeclaration, string parameterTypeAndModifier)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         return generator
             .AppendSeparatorLine()
             .AppendLineIndent("/// <inheritdoc />")
@@ -1320,6 +1540,11 @@ internal static partial class CodeGeneratorExtensions
 
     private static CodeGenerator AppendTryGetPropertyForJsonPropertyNameMethod(this CodeGenerator generator, TypeDeclaration typeDeclaration, bool isExplicit, string? propertyTypeName = null, bool isGenericPropertyNameType = false)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         generator
             .AppendSeparatorLine();
 
@@ -1411,6 +1636,11 @@ internal static partial class CodeGeneratorExtensions
 
         static void TryGetPropertyFromJsonElement(CodeGenerator generator, string fieldName, string? propertyTypeName, bool isGenericPropertyNameType)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             generator
                 .AppendLineIndent("if (this.", fieldName, ".ValueKind != JsonValueKind.Object)")
                 .AppendLineIndent("{")
@@ -1458,6 +1688,11 @@ internal static partial class CodeGeneratorExtensions
 
     private static CodeGenerator AppendTryGetPropertyMethod(this CodeGenerator generator, TypeDeclaration typeDeclaration, string propertyNameType, bool isExplicit, string? propertyTypeName = null, bool isGenericPropertyNameType = false)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         generator
             .AppendSeparatorLine();
 
@@ -1551,6 +1786,11 @@ internal static partial class CodeGeneratorExtensions
 
         static void TryGetPropertyFromJsonElement(CodeGenerator generator, string fieldName, string? propertyTypeName, bool isGenericPropertyNameType)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             generator
                 .AppendLineIndent("if (this.", fieldName, ".ValueKind != JsonValueKind.Object)")
                 .AppendLineIndent("{")
@@ -1598,6 +1838,11 @@ internal static partial class CodeGeneratorExtensions
 
     private static void TryGetPropertyFromImmutableDictionary(CodeGenerator generator, string fieldName, string? propertyTypeName, bool isGenericPropertyNameType)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return;
+        }
+
         generator
             .AppendIndent("if (this.")
             .Append(fieldName)
@@ -1645,6 +1890,11 @@ internal static partial class CodeGeneratorExtensions
 
     private static CodeGenerator AppendGenericTryGetPropertyMethod(this CodeGenerator generator, TypeDeclaration typeDeclaration, string propertyNameType)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.FallbackObjectPropertyType() is not null)
         {
             generator
@@ -1660,6 +1910,11 @@ internal static partial class CodeGeneratorExtensions
 
     private static CodeGenerator AppendGenericTryGetPropertyForJsonPropertyNameMethod(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.FallbackObjectPropertyType() is not null)
         {
             generator
@@ -1675,6 +1930,11 @@ internal static partial class CodeGeneratorExtensions
 
     private static CodeGenerator AppendHasPropertyMethod(this CodeGenerator generator, string propertyNameType)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         return generator
             .AppendSeparatorLine()
             .AppendLineIndent("/// <inheritdoc />")
@@ -1693,6 +1953,11 @@ internal static partial class CodeGeneratorExtensions
 
     private static CodeGenerator AppendHasPropertyForJsonPropertyNameMethod(this CodeGenerator generator)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         return generator
             .AppendSeparatorLine()
             .AppendLineIndent("/// <inheritdoc />")
@@ -1709,6 +1974,11 @@ internal static partial class CodeGeneratorExtensions
 
     private static CodeGenerator AppendEnumerateObjectMethod(this CodeGenerator generator, TypeDeclaration typeDeclaration, string? propertyTypeName = null, bool isExplicit = false)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         generator
             .AppendSeparatorLine();
 
@@ -1762,6 +2032,11 @@ internal static partial class CodeGeneratorExtensions
 
     private static CodeGenerator AppendGenericParameterIfRequired(this CodeGenerator generator, string? propertyTypeName)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (propertyTypeName is string ptn)
         {
             generator
@@ -1775,6 +2050,11 @@ internal static partial class CodeGeneratorExtensions
 
     private static CodeGenerator AppendObjectIndexer(this CodeGenerator generator, TypeDeclaration typeDeclaration, string propertyTypeName, bool isExplicit)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (!isExplicit)
         {
             generator
@@ -1816,6 +2096,11 @@ internal static partial class CodeGeneratorExtensions
 
     private static CodeGenerator AppendReadOnlyDictionaryIndexer(this CodeGenerator generator, string propertyTypeName)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         return generator
             .AppendIndent(propertyTypeName)
             .Append(" IReadOnlyDictionary<JsonPropertyName, ")
@@ -1825,6 +2110,11 @@ internal static partial class CodeGeneratorExtensions
 
     private static CodeGenerator AppendReadOnlyDictionaryKeys(this CodeGenerator generator, string propertyTypeName)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         return generator
             .AppendIndent("IEnumerable<JsonPropertyName> IReadOnlyDictionary<JsonPropertyName, ")
             .Append(propertyTypeName)
@@ -1845,6 +2135,11 @@ internal static partial class CodeGeneratorExtensions
 
     private static CodeGenerator AppendReadOnlyDictionaryValues(this CodeGenerator generator, string propertyTypeName)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         return generator
             .AppendIndent("IEnumerable<")
             .Append(propertyTypeName)
@@ -1867,6 +2162,11 @@ internal static partial class CodeGeneratorExtensions
 
     private static CodeGenerator AppendObsoleteAttribute(this CodeGenerator generator, PropertyDeclaration property)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (property.UnreducedPropertyType.IsDeprecated(out string? message) ||
             property.ReducedPropertyType.IsDeprecated(out message))
         {
@@ -1882,6 +2182,11 @@ internal static partial class CodeGeneratorExtensions
 
     private static CodeGenerator AppendReadOnlyDictionaryCount(this CodeGenerator generator, string propertyTypeName)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         return generator
             .AppendIndent("int IReadOnlyCollection<KeyValuePair<JsonPropertyName, ")
             .Append(propertyTypeName)

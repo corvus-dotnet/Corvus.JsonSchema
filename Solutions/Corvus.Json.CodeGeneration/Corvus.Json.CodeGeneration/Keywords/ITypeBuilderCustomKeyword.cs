@@ -18,5 +18,6 @@ public interface ITypeBuilderCustomKeyword
     /// </summary>
     /// <param name="typeBuilderContext">The current type builder context.</param>
     /// <param name="typeDeclaration">The type declaration.</param>
-    void Apply(TypeBuilderContext typeBuilderContext, TypeDeclaration typeDeclaration);
+    /// <param name="cancellationToken">The cancellation token.</param>
+    void Apply(TypeBuilderContext typeBuilderContext, TypeDeclaration typeDeclaration, CancellationToken cancellationToken);
 }

@@ -34,6 +34,11 @@ public class PropertiesValidationHandler : IChildObjectPropertyValidationHandler
     /// <inheritdoc/>
     public CodeGenerator AppendObjectPropertyValidationCode(CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.ExplicitProperties() is IReadOnlyCollection<PropertyDeclaration> properties)
         {
             generator
@@ -72,6 +77,11 @@ public class PropertiesValidationHandler : IChildObjectPropertyValidationHandler
 
         static void AppendPropertyValidation(CodeGenerator generator, PropertyDeclaration property)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             generator
                 .AppendLine(
                     "if (property.NameEquals(",
@@ -132,6 +142,11 @@ public class PropertiesValidationHandler : IChildObjectPropertyValidationHandler
 
         static void AppendLocalEvaluatedProperty(CodeGenerator generator, FallbackObjectPropertyType fallbackProperty, bool enumeratorIsCorrectType)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             generator
                 .AppendLineIndent("if (!result.HasEvaluatedLocalProperty(propertyCount))")
                 .AppendLineIndent("{")
@@ -146,6 +161,11 @@ public class PropertiesValidationHandler : IChildObjectPropertyValidationHandler
 
         static void AppendLocalAndAppliedEvaluatedProperty(CodeGenerator generator, FallbackObjectPropertyType fallbackProperty, bool enumeratorIsCorrectType)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             generator
                 .AppendLineIndent("if (!result.HasEvaluatedLocalOrAppliedProperty(propertyCount))")
                 .AppendLineIndent("{")
@@ -160,6 +180,11 @@ public class PropertiesValidationHandler : IChildObjectPropertyValidationHandler
 
         static void AppendFallbackPropertyValidation(CodeGenerator generator, FallbackObjectPropertyType fallbackPropertyType, bool enumeratorIsCorrectType)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             generator
                     .AppendLineIndent("if (level > ValidationLevel.Basic)")
                     .AppendLineIndent("{")

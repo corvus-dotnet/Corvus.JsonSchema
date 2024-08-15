@@ -2,7 +2,6 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System;
 using NodaTime;
 using NodaTime.Calendars;
 using NodaTime.Text;

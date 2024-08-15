@@ -19,7 +19,8 @@ public static class Subschemas
     /// <param name="schema">The anchoring schema.</param>
     /// <param name="currentLocation">The current location.</param>
     /// <param name="vocabulary">The current vocabulary.</param>
-    public static void RegisterLocalSubschemas(JsonSchemaRegistry jsonSchemaRegistry, in JsonElement schema, in JsonReference currentLocation, IVocabulary vocabulary)
+    /// <param name="cancellationToken">The cancellation token.</param>
+    public static void RegisterLocalSubschemas(JsonSchemaRegistry jsonSchemaRegistry, in JsonElement schema, in JsonReference currentLocation, IVocabulary vocabulary, CancellationToken cancellationToken)
     {
         if (schema.ValueKind != JsonValueKind.Object)
         {
@@ -35,7 +36,7 @@ public static class Subschemas
         {
             // We have a keyword that hides its siblings
             // So we just add it and return
-            k.RegisterLocalSubschema(jsonSchemaRegistry, schemaValue, currentLocation, vocabulary);
+            k.RegisterLocalSubschema(jsonSchemaRegistry, schemaValue, currentLocation, vocabulary, cancellationToken);
             return;
         }
 
@@ -43,7 +44,12 @@ public static class Subschemas
         foreach (ILocalSubschemaRegistrationKeyword keyword in
             vocabulary.Keywords.OfType<ILocalSubschemaRegistrationKeyword>())
         {
-            keyword.RegisterLocalSubschema(jsonSchemaRegistry, schema, currentLocation, vocabulary);
+            if (cancellationToken.IsCancellationRequested)
+            {
+                break;
+            }
+
+            keyword.RegisterLocalSubschema(jsonSchemaRegistry, schema, currentLocation, vocabulary, cancellationToken);
         }
     }
 
@@ -52,8 +58,9 @@ public static class Subschemas
     /// </summary>
     /// <param name="typeBuilderContext">The type builder context.</param>
     /// <param name="typeDeclaration">The type declaration.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>A <see cref="ValueTask"/> which completes when the subschema types are built.</returns>
-    public static async ValueTask BuildSubschemaTypes(TypeBuilderContext typeBuilderContext, TypeDeclaration typeDeclaration)
+    public static async ValueTask BuildSubschemaTypes(TypeBuilderContext typeBuilderContext, TypeDeclaration typeDeclaration, CancellationToken cancellationToken)
     {
         IKeyword? hidesSiblingsKeyword =
             typeDeclaration.Keywords()
@@ -63,20 +70,25 @@ public static class Subschemas
         {
             // We have a keyword that hides its siblings
             // So we just add it and return
-            await BuildSubschemaTypes(typeBuilderContext, typeDeclaration, k).ConfigureAwait(false);
+            await BuildSubschemaTypes(typeBuilderContext, typeDeclaration, k, cancellationToken);
             return;
         }
 
         // Otherwise we are going to work through all the keywords.
         foreach (ISubschemaTypeBuilderKeyword keyword in typeDeclaration.Keywords().OfType<ISubschemaTypeBuilderKeyword>())
         {
-            await BuildSubschemaTypes(typeBuilderContext, typeDeclaration, keyword).ConfigureAwait(false);
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return;
+            }
+
+            await BuildSubschemaTypes(typeBuilderContext, typeDeclaration, keyword, cancellationToken);
         }
 
-        static async Task BuildSubschemaTypes(TypeBuilderContext typeBuilderContext, TypeDeclaration typeDeclaration, ISubschemaTypeBuilderKeyword k)
+        static async Task BuildSubschemaTypes(TypeBuilderContext typeBuilderContext, TypeDeclaration typeDeclaration, ISubschemaTypeBuilderKeyword k, CancellationToken cancellationToken)
         {
             typeBuilderContext.EnterSubschemaScopeForUnencodedPropertyName(k.Keyword);
-            await k.BuildSubschemaTypes(typeBuilderContext, typeDeclaration).ConfigureAwait(false);
+            await k.BuildSubschemaTypes(typeBuilderContext, typeDeclaration, cancellationToken);
             typeBuilderContext.LeaveScope();
         }
     }
@@ -87,11 +99,12 @@ public static class Subschemas
     /// <param name="typeBuilderContext">The type builder context.</param>
     /// <param name="typeDeclaration">The type declaration.</param>
     /// <param name="subschemaPath">The subschema path.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>A <see cref="ValueTask"/> that completes when the subschema types have been built.</returns>
     /// <exception cref="InvalidOperationException">The subschema.</exception>
-    public static async ValueTask BuildSubschemaTypesForSchemaProperty(TypeBuilderContext typeBuilderContext, TypeDeclaration typeDeclaration, JsonReference subschemaPath)
+    public static async ValueTask BuildSubschemaTypesForSchemaProperty(TypeBuilderContext typeBuilderContext, TypeDeclaration typeDeclaration, JsonReference subschemaPath, CancellationToken cancellationToken)
     {
-        TypeDeclaration subschemaTypeDeclaration = await typeBuilderContext.BuildTypeDeclarationForCurrentScope().ConfigureAwait(false);
+        TypeDeclaration subschemaTypeDeclaration = await typeBuilderContext.BuildTypeDeclarationForCurrentScope(cancellationToken);
         typeDeclaration.AddSubschemaTypeDeclaration(subschemaPath, subschemaTypeDeclaration);
     }
 
@@ -102,9 +115,10 @@ public static class Subschemas
     /// <param name="typeDeclaration">The type declaration.</param>
     /// <param name="subschemaPath">The subschema path.</param>
     /// <param name="value">The subschema value.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>A <see cref="ValueTask"/> that completes when the subschema types have been built.</returns>
     /// <exception cref="InvalidOperationException">The value was not an array.</exception>
-    public static async ValueTask BuildSubschemaTypesForArrayOfSchemaProperty(TypeBuilderContext typeBuilderContext, TypeDeclaration typeDeclaration, JsonReference subschemaPath, JsonElement value)
+    public static async ValueTask BuildSubschemaTypesForArrayOfSchemaProperty(TypeBuilderContext typeBuilderContext, TypeDeclaration typeDeclaration, JsonReference subschemaPath, JsonElement value, CancellationToken cancellationToken)
     {
         if (value.ValueKind != JsonValueKind.Array)
         {
@@ -114,8 +128,13 @@ public static class Subschemas
         int index = 0;
         foreach (JsonElement item in value.EnumerateArray())
         {
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return;
+            }
+
             typeBuilderContext.EnterSubschemaScopeForArrayIndex(index);
-            TypeDeclaration subschemaTypeDeclaration = await typeBuilderContext.BuildTypeDeclarationForCurrentScope().ConfigureAwait(false);
+            TypeDeclaration subschemaTypeDeclaration = await typeBuilderContext.BuildTypeDeclarationForCurrentScope(cancellationToken);
             typeDeclaration.AddSubschemaTypeDeclaration(subschemaPath.AppendArrayIndexToFragment(index), subschemaTypeDeclaration);
             typeBuilderContext.LeaveScope();
             ++index;
@@ -129,9 +148,10 @@ public static class Subschemas
     /// <param name="typeDeclaration">The type declaration.</param>
     /// <param name="subschemaPath">The subschema path.</param>
     /// <param name="value">The subschema value.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>A <see cref="ValueTask"/> that completes when the subschema types have been built.</returns>
     /// <exception cref="InvalidOperationException">The value was not an array.</exception>
-    public static async ValueTask BuildSubschemaTypesForMapOfSchemaProperty(TypeBuilderContext typeBuilderContext, TypeDeclaration typeDeclaration, JsonReference subschemaPath, JsonElement value)
+    public static async ValueTask BuildSubschemaTypesForMapOfSchemaProperty(TypeBuilderContext typeBuilderContext, TypeDeclaration typeDeclaration, JsonReference subschemaPath, JsonElement value, CancellationToken cancellationToken)
     {
         if (value.ValueKind != JsonValueKind.Object)
         {
@@ -140,12 +160,18 @@ public static class Subschemas
 
         foreach (JsonProperty item in value.EnumerateObject())
         {
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return;
+            }
+
             string name = item.Name;
             typeBuilderContext.EnterSubschemaScopeForUnencodedPropertyName(name);
             await BuildSubschemaTypesForSchemaProperty(
                 typeBuilderContext,
                 typeDeclaration,
-                subschemaPath.AppendUnencodedPropertyNameToFragment(name)).ConfigureAwait(false);
+                subschemaPath.AppendUnencodedPropertyNameToFragment(name),
+                cancellationToken);
             typeBuilderContext.LeaveScope();
         }
     }
@@ -157,9 +183,10 @@ public static class Subschemas
     /// <param name="typeDeclaration">The type declaration.</param>
     /// <param name="subschemaPath">The subschema path.</param>
     /// <param name="value">The subschema value.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>A <see cref="ValueTask"/> that completes when the subschema types have been built.</returns>
     /// <exception cref="InvalidOperationException">The value was not an array.</exception>
-    public static async ValueTask BuildSubschemaTypesForMapOfSchemaIfValueIsSchemaLikeProperty(TypeBuilderContext typeBuilderContext, TypeDeclaration typeDeclaration, JsonReference subschemaPath, JsonElement value)
+    public static async ValueTask BuildSubschemaTypesForMapOfSchemaIfValueIsSchemaLikeProperty(TypeBuilderContext typeBuilderContext, TypeDeclaration typeDeclaration, JsonReference subschemaPath, JsonElement value, CancellationToken cancellationToken)
     {
         if (value.ValueKind != JsonValueKind.Object)
         {
@@ -168,6 +195,11 @@ public static class Subschemas
 
         foreach (JsonProperty item in value.EnumerateObject())
         {
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return;
+            }
+
             if (item.Value.ValueKind == JsonValueKind.Object || item.Value.ValueKind == JsonValueKind.True || item.Value.ValueKind == JsonValueKind.False)
             {
                 string name = item.Name;
@@ -175,7 +207,8 @@ public static class Subschemas
                 await BuildSubschemaTypesForSchemaProperty(
                     typeBuilderContext,
                     typeDeclaration,
-                    subschemaPath.AppendUnencodedPropertyNameToFragment(name)).ConfigureAwait(false);
+                    subschemaPath.AppendUnencodedPropertyNameToFragment(name),
+                    cancellationToken);
                 typeBuilderContext.LeaveScope();
             }
         }
@@ -188,9 +221,10 @@ public static class Subschemas
     /// <param name="typeDeclaration">The type declaration.</param>
     /// <param name="subschemaPath">The subschema path.</param>
     /// <param name="value">The subschema value.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>A <see cref="ValueTask"/> that completes when the subschema types have been built.</returns>
     /// <exception cref="InvalidOperationException">The value was not an array.</exception>
-    public static async ValueTask BuildSubschemaTypesForSchemaIfValueIsSchemaLikeProperty(TypeBuilderContext typeBuilderContext, TypeDeclaration typeDeclaration, JsonReference subschemaPath, JsonElement value)
+    public static async ValueTask BuildSubschemaTypesForSchemaIfValueIsSchemaLikeProperty(TypeBuilderContext typeBuilderContext, TypeDeclaration typeDeclaration, JsonReference subschemaPath, JsonElement value, CancellationToken cancellationToken)
     {
         if (!typeDeclaration.LocatedSchema.Vocabulary.ValidateSchemaInstance(value))
         {
@@ -198,7 +232,7 @@ public static class Subschemas
             return;
         }
 
-        TypeDeclaration subschemaTypeDeclaration = await typeBuilderContext.BuildTypeDeclarationForCurrentScope().ConfigureAwait(false);
+        TypeDeclaration subschemaTypeDeclaration = await typeBuilderContext.BuildTypeDeclarationForCurrentScope(cancellationToken);
         typeDeclaration.AddSubschemaTypeDeclaration(subschemaPath, subschemaTypeDeclaration);
     }
 
@@ -209,16 +243,17 @@ public static class Subschemas
     /// <param name="typeDeclaration">The type declaration.</param>
     /// <param name="subschemaPath">The subschema path.</param>
     /// <param name="value">The subschema value.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>A <see cref="ValueTask"/> that completes when the subschema types have been built.</returns>
-    public static async ValueTask BuildSubschemaTypesForSchemaOrArrayOfSchemaProperty(TypeBuilderContext typeBuilderContext, TypeDeclaration typeDeclaration, JsonReference subschemaPath, JsonElement value)
+    public static async ValueTask BuildSubschemaTypesForSchemaOrArrayOfSchemaProperty(TypeBuilderContext typeBuilderContext, TypeDeclaration typeDeclaration, JsonReference subschemaPath, JsonElement value, CancellationToken cancellationToken)
     {
         if (value.ValueKind == JsonValueKind.Array)
         {
-            await BuildSubschemaTypesForArrayOfSchemaProperty(typeBuilderContext, typeDeclaration, subschemaPath, value).ConfigureAwait(false);
+            await BuildSubschemaTypesForArrayOfSchemaProperty(typeBuilderContext, typeDeclaration, subschemaPath, value, cancellationToken);
         }
         else
         {
-            await BuildSubschemaTypesForSchemaProperty(typeBuilderContext, typeDeclaration, subschemaPath).ConfigureAwait(false);
+            await BuildSubschemaTypesForSchemaProperty(typeBuilderContext, typeDeclaration, subschemaPath, cancellationToken);
         }
     }
 
@@ -230,8 +265,9 @@ public static class Subschemas
     /// <param name="propertyValue">The property value.</param>
     /// <param name="currentLocation">The current location.</param>
     /// <param name="vocabulary">The current vocabulary.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
     /// <exception cref="InvalidOperationException">The <paramref name="propertyValue"/> was not a valid schema instance.</exception>
-    public static void AddSubschemasForSchemaProperty(JsonSchemaRegistry jsonSchemaRegistry, string propertyName, in JsonElement propertyValue, JsonReference currentLocation, IVocabulary vocabulary)
+    public static void AddSubschemasForSchemaProperty(JsonSchemaRegistry jsonSchemaRegistry, string propertyName, in JsonElement propertyValue, JsonReference currentLocation, IVocabulary vocabulary, CancellationToken cancellationToken)
     {
         JsonReference propertyLocation = currentLocation.AppendUnencodedPropertyNameToFragment(propertyName);
 
@@ -240,7 +276,7 @@ public static class Subschemas
             throw new InvalidOperationException($"The property at {propertyLocation} was expected to be a schema object.");
         }
 
-        jsonSchemaRegistry.AddSchemaAndSubschema(propertyLocation, propertyValue, vocabulary);
+        jsonSchemaRegistry.AddSchemaAndSubschema(propertyLocation, propertyValue, vocabulary, cancellationToken);
     }
 
     /// <summary>
@@ -251,8 +287,9 @@ public static class Subschemas
     /// <param name="propertyValue">The property value.</param>
     /// <param name="currentLocation">The current location.</param>
     /// <param name="vocabulary">The current vocabulary.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
     /// <exception cref="InvalidOperationException">The <paramref name="propertyValue"/> was not a valid schema instance.</exception>
-    public static void AddSubschemasForArrayOfSchemaProperty(JsonSchemaRegistry jsonSchemaRegistry, string propertyName, in JsonElement propertyValue, JsonReference currentLocation, IVocabulary vocabulary)
+    public static void AddSubschemasForArrayOfSchemaProperty(JsonSchemaRegistry jsonSchemaRegistry, string propertyName, in JsonElement propertyValue, JsonReference currentLocation, IVocabulary vocabulary, CancellationToken cancellationToken)
     {
         JsonReference propertyLocation = currentLocation.AppendUnencodedPropertyNameToFragment(propertyName);
         if (propertyValue.ValueKind != JsonValueKind.Array)
@@ -263,8 +300,13 @@ public static class Subschemas
         int index = 0;
         foreach (JsonElement subschema in propertyValue.EnumerateArray())
         {
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return;
+            }
+
             JsonReference subschemaLocation = propertyLocation.AppendArrayIndexToFragment(index);
-            jsonSchemaRegistry.AddSchemaAndSubschema(subschemaLocation, subschema, vocabulary);
+            jsonSchemaRegistry.AddSchemaAndSubschema(subschemaLocation, subschema, vocabulary, cancellationToken);
             ++index;
         }
     }
@@ -277,16 +319,17 @@ public static class Subschemas
     /// <param name="propertyValue">The property value.</param>
     /// <param name="currentLocation">The current location.</param>
     /// <param name="vocabulary">The current vocabulary.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
     /// <exception cref="InvalidOperationException">The <paramref name="propertyValue"/> was not a valid schema instance.</exception>
-    public static void AddSubschemasForSchemaOrArrayOfSchemaProperty(JsonSchemaRegistry jsonSchemaRegistry, string propertyName, in JsonElement propertyValue, JsonReference currentLocation, IVocabulary vocabulary)
+    public static void AddSubschemasForSchemaOrArrayOfSchemaProperty(JsonSchemaRegistry jsonSchemaRegistry, string propertyName, in JsonElement propertyValue, JsonReference currentLocation, IVocabulary vocabulary, CancellationToken cancellationToken)
     {
         if (propertyValue.ValueKind == JsonValueKind.Object || propertyValue.ValueKind == JsonValueKind.True || propertyValue.ValueKind == JsonValueKind.False)
         {
-            AddSubschemasForSchemaProperty(jsonSchemaRegistry, propertyName, propertyValue, currentLocation, vocabulary);
+            AddSubschemasForSchemaProperty(jsonSchemaRegistry, propertyName, propertyValue, currentLocation, vocabulary, cancellationToken);
         }
         else if (propertyValue.ValueKind == JsonValueKind.Array)
         {
-            AddSubschemasForArrayOfSchemaProperty(jsonSchemaRegistry, propertyName, propertyValue, currentLocation, vocabulary);
+            AddSubschemasForArrayOfSchemaProperty(jsonSchemaRegistry, propertyName, propertyValue, currentLocation, vocabulary, cancellationToken);
         }
         else
         {
@@ -303,8 +346,9 @@ public static class Subschemas
     /// <param name="propertyValue">The property value.</param>
     /// <param name="currentLocation">The current location.</param>
     /// <param name="vocabulary">The current vocabulary.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
     /// <exception cref="InvalidOperationException">The <paramref name="propertyValue"/> was not a valid schema instance.</exception>
-    public static void AddSubschemasForMapOfSchemaIfValueIsSchemaLikeProperty(JsonSchemaRegistry jsonSchemaRegistry, string propertyName, in JsonElement propertyValue, JsonReference currentLocation, IVocabulary vocabulary)
+    public static void AddSubschemasForMapOfSchemaIfValueIsSchemaLikeProperty(JsonSchemaRegistry jsonSchemaRegistry, string propertyName, in JsonElement propertyValue, JsonReference currentLocation, IVocabulary vocabulary, CancellationToken cancellationToken)
     {
         JsonReference propertyLocation = currentLocation.AppendUnencodedPropertyNameToFragment(propertyName);
         if (propertyValue.ValueKind != JsonValueKind.Object)
@@ -314,10 +358,15 @@ public static class Subschemas
 
         foreach (JsonProperty property in propertyValue.EnumerateObject())
         {
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return;
+            }
+
             if (property.Value.ValueKind == JsonValueKind.Object || property.Value.ValueKind == JsonValueKind.True || property.Value.ValueKind == JsonValueKind.False)
             {
                 JsonReference subschemaLocation = propertyLocation.AppendUnencodedPropertyNameToFragment(property.Name);
-                jsonSchemaRegistry.AddSchemaAndSubschema(subschemaLocation, property.Value, vocabulary);
+                jsonSchemaRegistry.AddSchemaAndSubschema(subschemaLocation, property.Value, vocabulary, cancellationToken);
             }
         }
     }
@@ -330,8 +379,9 @@ public static class Subschemas
     /// <param name="propertyValue">The property value.</param>
     /// <param name="currentLocation">The current location.</param>
     /// <param name="vocabulary">The current vocabulary.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
     /// <exception cref="InvalidOperationException">The <paramref name="propertyValue"/> was not a valid schema instance.</exception>
-    public static void AddSubschemasForMapOfSchemaProperty(JsonSchemaRegistry jsonSchemaRegistry, string propertyName, in JsonElement propertyValue, JsonReference currentLocation, IVocabulary vocabulary)
+    public static void AddSubschemasForMapOfSchemaProperty(JsonSchemaRegistry jsonSchemaRegistry, string propertyName, in JsonElement propertyValue, JsonReference currentLocation, IVocabulary vocabulary, CancellationToken cancellationToken)
     {
         JsonReference propertyLocation = currentLocation.AppendUnencodedPropertyNameToFragment(propertyName);
         if (propertyValue.ValueKind != JsonValueKind.Object)
@@ -341,8 +391,13 @@ public static class Subschemas
 
         foreach (JsonProperty property in propertyValue.EnumerateObject())
         {
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return;
+            }
+
             JsonReference subschemaLocation = propertyLocation.AppendUnencodedPropertyNameToFragment(property.Name);
-            jsonSchemaRegistry.AddSchemaAndSubschema(subschemaLocation, property.Value, vocabulary);
+            jsonSchemaRegistry.AddSchemaAndSubschema(subschemaLocation, property.Value, vocabulary, cancellationToken);
         }
     }
 
@@ -354,8 +409,9 @@ public static class Subschemas
     /// <param name="propertyValue">The property value.</param>
     /// <param name="currentLocation">The current location.</param>
     /// <param name="vocabulary">The current vocabulary.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
     /// <exception cref="InvalidOperationException">The <paramref name="propertyValue"/> was not a valid schema instance.</exception>
-    public static void AddSubschemasForSchemaIfValueIsASchemaLikeProperty(JsonSchemaRegistry jsonSchemaRegistry, string propertyName, in JsonElement propertyValue, JsonReference currentLocation, IVocabulary vocabulary)
+    public static void AddSubschemasForSchemaIfValueIsASchemaLikeProperty(JsonSchemaRegistry jsonSchemaRegistry, string propertyName, in JsonElement propertyValue, JsonReference currentLocation, IVocabulary vocabulary, CancellationToken cancellationToken)
     {
         JsonReference propertyLocation = currentLocation.AppendUnencodedPropertyNameToFragment(propertyName);
 
@@ -365,6 +421,6 @@ public static class Subschemas
             return;
         }
 
-        jsonSchemaRegistry.AddSchemaAndSubschema(propertyLocation, propertyValue, vocabulary);
+        jsonSchemaRegistry.AddSchemaAndSubschema(propertyLocation, propertyValue, vocabulary, cancellationToken);
     }
 }

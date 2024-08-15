@@ -47,8 +47,14 @@ public static class References
     /// <param name="typeDeclaration">The type declaration.</param>
     /// <param name="subschemaPath">The subschema path.</param>
     /// <param name="referenceValue">The reference value.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>A <see cref="ValueTask"/> which completes when the reference is resolved.</returns>
-    public static async ValueTask ResolveStandardReference(TypeBuilderContext typeBuilderContext, TypeDeclaration typeDeclaration, JsonReference subschemaPath, string referenceValue)
+    public static async ValueTask ResolveStandardReference(
+        TypeBuilderContext typeBuilderContext,
+        TypeDeclaration typeDeclaration,
+        JsonReference subschemaPath,
+        string referenceValue,
+        CancellationToken cancellationToken)
     {
         JsonReference reference = new(HttpUtility.UrlDecode(referenceValue));
 
@@ -56,7 +62,13 @@ public static class References
             await typeBuilderContext.SchemaRegistry.ResolveBaseReference(
                 typeBuilderContext.Scope.Location,
                 typeBuilderContext.Scope.LocatedSchema,
-                reference);
+                reference,
+                cancellationToken);
+
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return;
+        }
 
         // Now, figure out the pointer or anchor if we have one
         JsonReference schemaForRefPointer;
@@ -66,16 +78,37 @@ public static class References
         if (referenceHasAnchor)
         {
             // The fragment is an anchor
-            (baseSchemaForReferenceLocation, schemaForRefPointer) = Anchors.GetLocationAndPointerForAnchor(baseSchemaForReferenceLocation, baseSchemaForReference, fragmentWithoutLeadingHash);
+            (baseSchemaForReferenceLocation, schemaForRefPointer) =
+                Anchors.GetLocationAndPointerForAnchor(
+                    baseSchemaForReferenceLocation,
+                    baseSchemaForReference,
+                    fragmentWithoutLeadingHash);
         }
         else
         {
             // The fragment is a reference
-            (baseSchemaForReferenceLocation, schemaForRefPointer) = References.GetPointerForReference(typeBuilderContext.SchemaRegistry, baseSchemaForReference, baseSchemaForReferenceLocation, reference);
+            (baseSchemaForReferenceLocation, schemaForRefPointer) =
+                References.GetPointerForReference(
+                    typeBuilderContext.SchemaRegistry,
+                    baseSchemaForReference,
+                    baseSchemaForReferenceLocation,
+                    reference,
+                    cancellationToken);
+        }
+
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return;
         }
 
         typeBuilderContext.EnterReferenceScope(baseSchemaForReferenceLocation, baseSchemaForReference, schemaForRefPointer);
-        TypeDeclaration subschemaTypeDeclaration = await typeBuilderContext.BuildTypeDeclarationForCurrentScope().ConfigureAwait(false);
+        TypeDeclaration subschemaTypeDeclaration = await typeBuilderContext.BuildTypeDeclarationForCurrentScope(cancellationToken);
+
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return;
+        }
+
         typeDeclaration.AddSubschemaTypeDeclaration(subschemaPath, subschemaTypeDeclaration);
         typeBuilderContext.LeaveScope();
     }
@@ -87,8 +120,14 @@ public static class References
     /// <param name="typeDeclaration">The type declaration.</param>
     /// <param name="subschemaPath">The subschema path.</param>
     /// <param name="referenceValue">The reference value.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>A <see cref="ValueTask"/> which completes when the reference is resolved.</returns>
-    public static async ValueTask ResolveRecursiveReference(TypeBuilderContext typeBuilderContext, TypeDeclaration typeDeclaration, JsonReference subschemaPath, string referenceValue)
+    public static async ValueTask ResolveRecursiveReference(
+        TypeBuilderContext typeBuilderContext,
+        TypeDeclaration typeDeclaration,
+        JsonReference subschemaPath,
+        string referenceValue,
+        CancellationToken cancellationToken)
     {
         JsonReference reference = new(HttpUtility.UrlDecode(referenceValue));
 
@@ -96,7 +135,13 @@ public static class References
             await typeBuilderContext.SchemaRegistry.ResolveBaseReference(
                 typeBuilderContext.Scope.Location,
                 typeBuilderContext.Scope.LocatedSchema,
-                reference);
+                reference,
+                cancellationToken);
+
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return;
+        }
 
         // Now, figure out the pointer or anchor if we have one
         JsonReference schemaForRefPointer;
@@ -122,16 +167,37 @@ public static class References
         if (referenceHasAnchor)
         {
             // The fragment is an anchor
-            (baseSchemaForReferenceLocation, schemaForRefPointer) = Anchors.GetLocationAndPointerForAnchor(baseSchemaForReferenceLocation, baseSchemaForReference, fragmentWithoutLeadingHash);
+            (baseSchemaForReferenceLocation, schemaForRefPointer) =
+                Anchors.GetLocationAndPointerForAnchor(
+                    baseSchemaForReferenceLocation,
+                    baseSchemaForReference,
+                    fragmentWithoutLeadingHash);
         }
         else
         {
             // The fragment is a reference
-            (baseSchemaForReferenceLocation, schemaForRefPointer) = References.GetPointerForReference(typeBuilderContext.SchemaRegistry, baseSchemaForReference, baseSchemaForReferenceLocation, reference);
+            (baseSchemaForReferenceLocation, schemaForRefPointer) =
+                References.GetPointerForReference(
+                    typeBuilderContext.SchemaRegistry,
+                    baseSchemaForReference,
+                    baseSchemaForReferenceLocation,
+                    reference,
+                    cancellationToken);
+        }
+
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return;
         }
 
         typeBuilderContext.EnterReferenceScope(baseSchemaForReferenceLocation, baseSchemaForReference, schemaForRefPointer);
-        TypeDeclaration subschemaTypeDeclaration = await typeBuilderContext.BuildTypeDeclarationForCurrentScope().ConfigureAwait(false);
+        TypeDeclaration subschemaTypeDeclaration = await typeBuilderContext.BuildTypeDeclarationForCurrentScope(cancellationToken);
+
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return;
+        }
+
         typeDeclaration.AddSubschemaTypeDeclaration(subschemaPath, subschemaTypeDeclaration);
         typeBuilderContext.LeaveScope();
     }
@@ -143,8 +209,14 @@ public static class References
     /// <param name="typeDeclaration">The type declaration.</param>
     /// <param name="subschemaPath">The subschema path.</param>
     /// <param name="referenceValue">The reference value.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>A <see cref="ValueTask"/> which completes when the reference is resolved.</returns>
-    public static async ValueTask ResolveDynamicReference(TypeBuilderContext typeBuilderContext, TypeDeclaration typeDeclaration, JsonReference subschemaPath, string referenceValue)
+    public static async ValueTask ResolveDynamicReference(
+        TypeBuilderContext typeBuilderContext,
+        TypeDeclaration typeDeclaration,
+        JsonReference subschemaPath,
+        string referenceValue,
+        CancellationToken cancellationToken)
     {
         JsonReference reference = new(HttpUtility.UrlDecode(referenceValue));
 
@@ -152,7 +224,13 @@ public static class References
             await typeBuilderContext.SchemaRegistry.ResolveBaseReference(
                 typeBuilderContext.Scope.Location,
                 typeBuilderContext.Scope.LocatedSchema,
-                reference);
+                reference,
+                cancellationToken);
+
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return;
+        }
 
         // Now, figure out the pointer or anchor if we have one
         JsonReference schemaForRefPointer;
@@ -182,16 +260,34 @@ public static class References
         if (referenceHasAnchor)
         {
             // The fragment is an anchor
-            (baseSchemaForReferenceLocation, schemaForRefPointer) = Anchors.GetLocationAndPointerForAnchor(baseSchemaForReferenceLocation, baseSchemaForReference, fragmentWithoutLeadingHash);
+            (baseSchemaForReferenceLocation, schemaForRefPointer) =
+                Anchors.GetLocationAndPointerForAnchor(baseSchemaForReferenceLocation, baseSchemaForReference, fragmentWithoutLeadingHash);
         }
         else
         {
             // The fragment is a reference
-            (baseSchemaForReferenceLocation, schemaForRefPointer) = References.GetPointerForReference(typeBuilderContext.SchemaRegistry, baseSchemaForReference, baseSchemaForReferenceLocation, reference);
+            (baseSchemaForReferenceLocation, schemaForRefPointer) =
+                References.GetPointerForReference(
+                    typeBuilderContext.SchemaRegistry,
+                    baseSchemaForReference,
+                    baseSchemaForReferenceLocation,
+                    reference,
+                    cancellationToken);
+        }
+
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return;
         }
 
         typeBuilderContext.EnterReferenceScope(baseSchemaForReferenceLocation, baseSchemaForReference, schemaForRefPointer);
-        TypeDeclaration subschemaTypeDeclaration = await typeBuilderContext.BuildTypeDeclarationForCurrentScope().ConfigureAwait(false);
+        TypeDeclaration subschemaTypeDeclaration = await typeBuilderContext.BuildTypeDeclarationForCurrentScope(cancellationToken);
+
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return;
+        }
+
         typeDeclaration.AddSubschemaTypeDeclaration(subschemaPath, subschemaTypeDeclaration);
         typeBuilderContext.LeaveScope();
     }
@@ -203,9 +299,15 @@ public static class References
     /// <param name="baseSchemaForReference">The base schema for the reference.</param>
     /// <param name="baseSchemaForReferenceLocation">The base schema location for the reference.</param>
     /// <param name="reference">The reference.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The location and pointer for the reference, as applied to the base schema location.</returns>
     /// <exception cref="InvalidOperationException">It was not possible to resolve the schema from the base element using the reference fragment.</exception>
-    public static (JsonReference Location, JsonReference Pointer) GetPointerForReference(JsonSchemaRegistry schemaRegistry, LocatedSchema baseSchemaForReference, JsonReference baseSchemaForReferenceLocation, JsonReference reference)
+    public static (JsonReference Location, JsonReference Pointer) GetPointerForReference(
+        JsonSchemaRegistry schemaRegistry,
+        LocatedSchema baseSchemaForReference,
+        JsonReference baseSchemaForReferenceLocation,
+        JsonReference reference,
+        CancellationToken cancellationToken)
     {
         JsonReference schemaForRefPointer;
         if (reference.HasFragment)
@@ -218,9 +320,20 @@ public static class References
             else
             {
                 // Resolve the pointer, and add the type
-                if (TryResolvePointer(schemaRegistry, baseSchemaForReferenceLocation, baseSchemaForReference, reference.Fragment, out (JsonReference Location, JsonReference Pointer)? result))
+                if (TryResolvePointer(
+                        schemaRegistry,
+                        baseSchemaForReferenceLocation,
+                        baseSchemaForReference,
+                        reference.Fragment,
+                        cancellationToken,
+                        out (JsonReference Location, JsonReference Pointer)? result))
                 {
                     return result.Value;
+                }
+
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    return default;
                 }
 
                 throw new InvalidOperationException($"Unable to resolve the schema from the base element '{baseSchemaForReferenceLocation}' with the pointer '{reference.Fragment.ToString()}'");
@@ -321,6 +434,7 @@ public static class References
         JsonReference baseSchemaForReferenceLocation,
         LocatedSchema baseSchemaFoReference,
         ReadOnlySpan<char> fragment,
+        CancellationToken cancellationToken,
         [NotNullWhen(true)] out (JsonReference Location, JsonReference Pointer)? result)
     {
         JsonElement rootElement = baseSchemaFoReference.Schema;
@@ -369,7 +483,14 @@ public static class References
             {
                 var pointerRef = new JsonReference([], fragment);
                 JsonReference location = baseSchemaForReferenceLocation.Apply(pointerRef);
-                schemaRegistry.AddSchemaAndSubschema(location, resolvedElement.Value, currentSchema.Vocabulary);
+                schemaRegistry.AddSchemaAndSubschema(location, resolvedElement.Value, currentSchema.Vocabulary, cancellationToken);
+
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    result = null;
+                    return false;
+                }
+
                 result = (baseSchemaForReferenceLocation, pointerRef);
                 return true;
             }

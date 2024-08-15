@@ -64,7 +64,7 @@ public class VocabularyRegistry
     {
         foreach (IVocabularyAnalyser analyser in this.analysers)
         {
-            if (await analyser.TryGetVocabulary(schemaElement).ConfigureAwait(false) is IVocabulary vocabulary)
+            if (await analyser.TryGetVocabulary(schemaElement) is IVocabulary vocabulary)
             {
                 return vocabulary;
             }

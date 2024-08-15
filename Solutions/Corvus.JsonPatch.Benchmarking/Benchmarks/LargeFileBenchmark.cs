@@ -161,7 +161,7 @@ public class LargeFileBenchmark : BenchmarkBase
                 Corvus.Json.Patch.Model.JsonPatchDocument.CopyOperation.Create("/42/actor/id", "/45/actor/id"),
                 Corvus.Json.Patch.Model.JsonPatchDocument.CopyOperation.Create("/43/actor/id", "/46/actor/id"));
 
-        await this.GlobalSetup("large-array-file.json").ConfigureAwait(false);
+        await this.GlobalSetup("large-array-file.json");
     }
 
     /// <summary>

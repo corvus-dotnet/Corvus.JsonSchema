@@ -1,7 +1,4 @@
-﻿using System.ComponentModel;
-using System.Diagnostics.CodeAnalysis;
-using Corvus.Json.CodeGeneration.CSharp;
-using Microsoft.CSharp;
+﻿using Corvus.Json.CodeGeneration.CSharp;
 using Spectre.Console;
 using Spectre.Console.Cli;
 

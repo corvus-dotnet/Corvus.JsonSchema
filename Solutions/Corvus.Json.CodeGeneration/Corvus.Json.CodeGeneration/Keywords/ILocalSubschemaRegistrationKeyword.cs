@@ -18,5 +18,6 @@ public interface ILocalSubschemaRegistrationKeyword : IKeyword
     /// <param name="schema">The parent schema containing the keyword.</param>
     /// <param name="currentLocation">The current location in the tree.</param>
     /// <param name="vocabulary">The current vocabulary.</param>
-    void RegisterLocalSubschema(JsonSchemaRegistry registry, JsonElement schema, JsonReference currentLocation, IVocabulary vocabulary);
+    /// <param name="cancellationToken">The cancellation token.</param>
+    void RegisterLocalSubschema(JsonSchemaRegistry registry, JsonElement schema, JsonReference currentLocation, IVocabulary vocabulary, CancellationToken cancellationToken);
 }

@@ -34,6 +34,11 @@ public class TupleValidationHandler : IChildArrayItemValidationHandler
     /// <inheritdoc/>
     public CodeGenerator AppendArrayItemValidationCode(CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.ExplicitTupleType() is TupleTypeDeclaration tupleTypeDeclaration)
         {
             generator
@@ -45,6 +50,11 @@ public class TupleValidationHandler : IChildArrayItemValidationHandler
             int i = 0;
             foreach (ReducedTypeDeclaration item in tupleTypeDeclaration.ItemsTypes)
             {
+                if (generator.IsCancellationRequested)
+                {
+                    return generator;
+                }
+
                 generator
                     .AppendSeparatorLine()
                     .AppendIndent("case ")

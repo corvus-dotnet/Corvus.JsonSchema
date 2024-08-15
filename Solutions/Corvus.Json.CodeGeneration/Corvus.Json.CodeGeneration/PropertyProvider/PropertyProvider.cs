@@ -17,18 +17,25 @@ public static class PropertyProvider
     /// <param name="target">The target type to which properties are to be added.</param>
     /// <param name="visitedTypeDeclarations">The types we have already visited.</param>
     /// <param name="treatRequiredAsOptional">Whether required properties are to be treated as optional.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns><see langword="true"/> if properties were collected from this type.</returns>
     public static bool CollectPropertiesForMapOfPropertyNameToSchema(
         string keywordPath,
         TypeDeclaration source,
         TypeDeclaration target,
         HashSet<TypeDeclaration> visitedTypeDeclarations,
-        bool treatRequiredAsOptional)
+        bool treatRequiredAsOptional,
+        CancellationToken cancellationToken)
     {
         foreach (KeyValuePair<string, TypeDeclaration> subschema in
                     source.SubschemaTypeDeclarations
                     .Where(kvp => kvp.Key.StartsWith(keywordPath)))
         {
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return false;
+            }
+
             target.AddOrUpdatePropertyDeclaration(
                 new(
                     target,
@@ -43,7 +50,8 @@ public static class PropertyProvider
                 subschema.Value,
                 target,
                 visitedTypeDeclarations,
-                treatRequiredAsOptional);
+                treatRequiredAsOptional,
+                cancellationToken);
         }
 
         return true;
@@ -61,8 +69,9 @@ public static class PropertyProvider
     /// <param name="target">The target type to which properties are to be added.</param>
     /// <param name="visitedTypeDeclarations">The types we have already visited.</param>
     /// <param name="treatRequiredAsOptional">Whether required properties are to be treated as optional.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns><see langword="true"/> if properties were collected from this type.</returns>
-    public static bool CollectProperties(TypeDeclaration source, TypeDeclaration target, HashSet<TypeDeclaration> visitedTypeDeclarations, bool treatRequiredAsOptional)
+    public static bool CollectProperties(TypeDeclaration source, TypeDeclaration target, HashSet<TypeDeclaration> visitedTypeDeclarations, bool treatRequiredAsOptional, CancellationToken cancellationToken)
     {
         if (visitedTypeDeclarations.Contains(source))
         {
@@ -78,7 +87,12 @@ public static class PropertyProvider
         // been added for hidden siblings.
         foreach (IPropertyProviderKeyword? propertyProviderKeyword in source.Keywords().OfType<IPropertyProviderKeyword>().OrderBy(k => k.PropertyProviderPriority))
         {
-            propertyProviderKeyword.CollectProperties(source, target, childContext, treatRequiredAsOptional);
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return false;
+            }
+
+            propertyProviderKeyword.CollectProperties(source, target, childContext, treatRequiredAsOptional, cancellationToken);
         }
 
         return true;

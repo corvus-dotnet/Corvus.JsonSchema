@@ -16,6 +16,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendTryGetBoolean(this CodeGenerator generator)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         return generator
             .ReserveName("TryGetBoolean")
             .AppendSeparatorLine()
@@ -51,6 +56,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendGetBoolean(this CodeGenerator generator)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         return generator
             .ReserveName("GetBoolean")
             .AppendSeparatorLine()

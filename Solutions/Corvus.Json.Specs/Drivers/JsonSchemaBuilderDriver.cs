@@ -323,6 +323,7 @@ public class JsonSchemaBuilderDriver : IDisposable
         IReadOnlyCollection<GeneratedCodeFile> generatedCode =
             this.builder.GenerateCodeUsing(
             languageProvider,
+            CancellationToken.None,
             rootType);
 
 #if NET8_0_OR_GREATER
@@ -358,6 +359,7 @@ public class JsonSchemaBuilderDriver : IDisposable
         IReadOnlyCollection<GeneratedCodeFile> generatedCode =
             this.builder.GenerateCodeUsing(
             languageProvider,
+            CancellationToken.None,
             rootType);
 
 #if NET8_0_OR_GREATER
@@ -401,6 +403,7 @@ public class JsonSchemaBuilderDriver : IDisposable
         IReadOnlyCollection<GeneratedCodeFile> generatedCode =
             this.builder.GenerateCodeUsing(
             languageProvider,
+            CancellationToken.None,
             rootType);
 
 #if NET8_0_OR_GREATER
@@ -437,6 +440,7 @@ public class JsonSchemaBuilderDriver : IDisposable
         IReadOnlyCollection<GeneratedCodeFile> generatedCode =
             this.builder.GenerateCodeUsing(
             languageProvider,
+            CancellationToken.None,
             rootType);
 
 #if NET8_0_OR_GREATER

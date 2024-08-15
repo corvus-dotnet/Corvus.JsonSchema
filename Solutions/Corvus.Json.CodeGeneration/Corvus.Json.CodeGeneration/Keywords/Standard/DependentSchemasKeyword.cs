@@ -37,20 +37,20 @@ public sealed class DependentSchemasKeyword
     public uint ValidationPriority => ValidationPriorities.Default;
 
     /// <inheritdoc />
-    public void RegisterLocalSubschema(JsonSchemaRegistry registry, JsonElement schema, JsonReference currentLocation, IVocabulary vocabulary)
+    public void RegisterLocalSubschema(JsonSchemaRegistry registry, JsonElement schema, JsonReference currentLocation, IVocabulary vocabulary, CancellationToken cancellationToken)
     {
         if (schema.TryGetKeyword(this, out JsonElement value))
         {
-            Subschemas.AddSubschemasForMapOfSchemaProperty(registry, this.Keyword, value, currentLocation, vocabulary);
+            Subschemas.AddSubschemasForMapOfSchemaProperty(registry, this.Keyword, value, currentLocation, vocabulary, cancellationToken);
         }
     }
 
     /// <inheritdoc />
-    public async ValueTask BuildSubschemaTypes(TypeBuilderContext typeBuilderContext, TypeDeclaration typeDeclaration)
+    public async ValueTask BuildSubschemaTypes(TypeBuilderContext typeBuilderContext, TypeDeclaration typeDeclaration, CancellationToken cancellationToken)
     {
         if (typeDeclaration.TryGetKeyword(this, out JsonElement value))
         {
-            await Subschemas.BuildSubschemaTypesForMapOfSchemaProperty(typeBuilderContext, typeDeclaration, KeywordPathReference, value).ConfigureAwait(false);
+            await Subschemas.BuildSubschemaTypesForMapOfSchemaProperty(typeBuilderContext, typeDeclaration, KeywordPathReference, value, cancellationToken);
         }
     }
 
@@ -58,14 +58,15 @@ public sealed class DependentSchemasKeyword
     public bool CanReduce(in JsonElement schemaValue) => Reduction.CanReduceNonReducingKeyword(schemaValue, this.KeywordUtf8);
 
     /// <inheritdoc />
-    public void CollectProperties(TypeDeclaration source, TypeDeclaration target, HashSet<TypeDeclaration> visitedTypeDeclarations, bool treatRequiredAsOptional)
+    public void CollectProperties(TypeDeclaration source, TypeDeclaration target, HashSet<TypeDeclaration> visitedTypeDeclarations, bool treatRequiredAsOptional, CancellationToken cancellationToken)
     {
         PropertyProvider.CollectPropertiesForMapOfPropertyNameToSchema(
             KeywordPath,
             source,
             target,
             visitedTypeDeclarations,
-            true);
+            true,
+            cancellationToken);
     }
 
     /// <inheritdoc />

@@ -36,6 +36,11 @@ public class PropertyCountValidationHandler : IChildArrayItemValidationHandler
     {
         foreach (IPropertyCountConstantValidationKeyword keyword in typeDeclaration.Keywords().OfType<IPropertyCountConstantValidationKeyword>())
         {
+            if (generator.IsCancellationRequested)
+            {
+                return generator;
+            }
+
             if (!keyword.TryGetOperator(typeDeclaration, out Operator op) || op == Operator.None)
             {
                 continue;
@@ -107,6 +112,11 @@ public class PropertyCountValidationHandler : IChildArrayItemValidationHandler
 
         static void GetValidMessage(CodeGenerator generator, Operator op, string memberName)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             generator
                 .Append("property count {propertyCount} ")
                 .AppendTextForOperator(op)
@@ -117,6 +127,11 @@ public class PropertyCountValidationHandler : IChildArrayItemValidationHandler
 
         static void GetInvalidMessage(CodeGenerator generator, Operator op, string memberName)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             generator
                 .Append("array of length {propertyCount} ")
                 .AppendTextForInverseOperator(op)
@@ -127,6 +142,11 @@ public class PropertyCountValidationHandler : IChildArrayItemValidationHandler
 
         static void GetSimplifiedInvalidMessage(CodeGenerator generator, Operator op)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             generator
                 .AppendTextForInverseOperator(op)
                 .Append(" the required count.");

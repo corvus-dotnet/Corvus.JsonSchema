@@ -70,7 +70,7 @@ public class FileSystemDocumentResolver : IDocumentResolver
 #else
             using Stream stream = File.OpenRead(path);
 #endif
-            result = await JsonDocument.ParseAsync(stream).ConfigureAwait(false);
+            result = await JsonDocument.ParseAsync(stream);
             this.documents.Add(path, result);
             return JsonPointerUtilities.ResolvePointer(result, reference.Fragment);
         }

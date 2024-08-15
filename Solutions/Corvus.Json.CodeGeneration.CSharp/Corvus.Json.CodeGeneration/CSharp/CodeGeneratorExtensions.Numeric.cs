@@ -18,6 +18,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendEqualsBinaryJsonNumber(this CodeGenerator generator)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         return generator
             .ReserveNameIfNotReserved("Equals")
             .AppendSeparatorLine()
@@ -42,6 +47,11 @@ internal static partial class CodeGeneratorExtensions
 
         static void AppendJsonElementComparison(CodeGenerator generator, string fieldName)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             generator
                 .AppendIndent("return this.")
                 .Append(fieldName)
@@ -59,6 +69,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendAsDotnetNumericValue(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.PreferredDotnetNumericTypeName() is string numericTypeName)
         {
             bool isNet80OrGreaterType = IsNet8OrGreaterNumericType(numericTypeName);
@@ -103,6 +118,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendAsBinaryJsonNumber(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         return generator
             .AppendSeparatorLine()
             .AppendLineIndent("/// <summary>")
@@ -125,6 +145,11 @@ internal static partial class CodeGeneratorExtensions
 
         static void AppendParse(CodeGenerator generator, string fieldName, TypeDeclaration typeDeclaration)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             generator.AppendLineIndent(
                 "return BinaryJsonNumber.FromJson(this.",
                 fieldName,
@@ -142,6 +167,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendNumberFormatPublicStaticMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.Format() is string format)
         {
             FormatHandlerRegistry.Instance.NumberFormatHandlers.AppendFormatPublicStaticMethods(generator, typeDeclaration, format);
@@ -158,6 +188,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendNumberFormatPublicMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.Format() is string format)
         {
             FormatHandlerRegistry.Instance.NumberFormatHandlers.AppendFormatPublicMethods(generator, typeDeclaration, format);
@@ -174,6 +209,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendNumberFormatPrivateStaticMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.Format() is string format)
         {
             FormatHandlerRegistry.Instance.NumberFormatHandlers.AppendFormatPrivateStaticMethods(generator, typeDeclaration, format);
@@ -190,6 +230,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendNumberFormatPrivateMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.Format() is string format)
         {
             FormatHandlerRegistry.Instance.NumberFormatHandlers.AppendFormatPrivateMethods(generator, typeDeclaration, format);
@@ -206,6 +251,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendNumberFormatConversionOperators(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.Format() is string format)
         {
             FormatHandlerRegistry.Instance.NumberFormatHandlers.AppendFormatConversionOperators(generator, typeDeclaration, format);
@@ -222,6 +272,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendNumberFormatPublicStaticProperties(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.Format() is string format)
         {
             FormatHandlerRegistry.Instance.NumberFormatHandlers.AppendFormatPublicStaticProperties(generator, typeDeclaration, format);
@@ -238,6 +293,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendNumberFormatPublicProperties(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.Format() is string format)
         {
             FormatHandlerRegistry.Instance.NumberFormatHandlers.AppendFormatPublicProperties(generator, typeDeclaration, format);
@@ -254,6 +314,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendNumberFormatConstructors(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.Format() is string format)
         {
             FormatHandlerRegistry.Instance.NumberFormatHandlers.AppendFormatConstructors(generator, typeDeclaration, format);
@@ -270,6 +335,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendNumericOperators(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         return generator
             .AppendNumericComparison(typeDeclaration, "<", "Less than operator.", "<see langword=\"true\"/> if the left is less than the right, otherwise <see langword=\"false\"/>.")
             .AppendNumericComparison(typeDeclaration, "<=", "Less than or equals operator.", "<see langword=\"true\"/> if the left is less than or equal to the right, otherwise <see langword=\"false\"/>.")
@@ -294,6 +364,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendNumericConversions(this CodeGenerator generator, TypeDeclaration typeDeclaration, bool allImplicit = false, bool fromOnly = false)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         return generator
             .AppendNumericConversionsForDotnetType(typeDeclaration, "byte", "SafeGetByte", allImplicit: allImplicit, fromOnly: fromOnly)
             .AppendNumericConversionsForDotnetType(typeDeclaration, "decimal", "SafeGetDecimal", allImplicit: allImplicit, fromOnly: fromOnly)
@@ -319,6 +394,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendNumericEquals(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         return generator
             .AppendNumericEqualsForDotnetType(typeDeclaration, "byte")
             .AppendNumericEqualsForDotnetType(typeDeclaration, "decimal")
@@ -346,6 +426,11 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendNumericEqualsForDotnetType(this CodeGenerator generator, TypeDeclaration typeDeclaration, string dotnetType, FrameworkType frameworkType = FrameworkType.All)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         if (typeDeclaration.PreferredDotnetNumericTypeName() != dotnetType)
         {
             return generator;
@@ -355,6 +440,11 @@ internal static partial class CodeGeneratorExtensions
 
         static void AppendEquals(CodeGenerator generator, string dotnetType)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             generator
                 .ReserveNameIfNotReserved("Equals")
                 .AppendSeparatorLine()
@@ -380,6 +470,11 @@ internal static partial class CodeGeneratorExtensions
 
         static void AppendJsonElementComparison(CodeGenerator generator, string fieldName)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             generator
                 .AppendLineIndent(
                     "return this.",
@@ -411,12 +506,22 @@ internal static partial class CodeGeneratorExtensions
         bool allImplicit = false,
         bool fromOnly = false)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         generator.AppendSeparatorLine();
 
         return ConditionalCodeSpecification.AppendConditional(generator, AppendConversions, frameworkType);
 
         void AppendConversions(CodeGenerator generator)
         {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
             string operatorKind = typeDeclaration.PreferredDotnetNumericTypeName() == numericType || allImplicit ? "implicit" : "explicit";
 
             if (!fromOnly)
@@ -500,6 +605,11 @@ internal static partial class CodeGeneratorExtensions
         this CodeGenerator generator,
         TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         string preferredNumericTypeName =
             typeDeclaration.PreferredDotnetNumericTypeName()
             ?? throw new InvalidOperationException("There must be a preferred numeric type name for a numeric type");
@@ -555,6 +665,11 @@ internal static partial class CodeGeneratorExtensions
         TypeDeclaration typeDeclaration,
         string numericTypeName)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         return generator
             .AppendSeparatorLine()
             .AppendLineIndent("/// <summary>")
@@ -575,6 +690,11 @@ internal static partial class CodeGeneratorExtensions
 
     private static CodeGenerator AppendNumericCompare(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         string backingName = generator.GetFieldNameInScope("backing");
         string numberBacking = generator.GetFieldNameInScope("numberBacking");
         string jsonElementBacking = generator.GetFieldNameInScope("jsonElementBacking");
@@ -688,6 +808,11 @@ internal static partial class CodeGeneratorExtensions
 
     private static CodeGenerator AppendNumericUnaryOperator(this CodeGenerator generator, TypeDeclaration typeDeclaration, string op, string summary)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         return generator
             .AppendSeparatorLine()
             .AppendLineIndent("/// <summary>")
@@ -714,6 +839,11 @@ internal static partial class CodeGeneratorExtensions
 
     private static CodeGenerator AppendNumericBinaryOperator(this CodeGenerator generator, TypeDeclaration typeDeclaration, string op, string summary)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         return generator
             .AppendSeparatorLine()
             .AppendLineIndent("/// <summary>")
@@ -742,6 +872,11 @@ internal static partial class CodeGeneratorExtensions
 
     private static CodeGenerator AppendNumericComparison(this CodeGenerator generator, TypeDeclaration typeDeclaration, string op, string summary, string returns)
     {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
         return generator
             .AppendSeparatorLine()
             .AppendLineIndent("/// <summary>")
