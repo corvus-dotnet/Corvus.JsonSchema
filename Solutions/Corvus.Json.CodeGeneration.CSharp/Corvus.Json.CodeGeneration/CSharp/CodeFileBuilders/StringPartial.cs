@@ -39,8 +39,6 @@ public sealed class StringPartial : ICodeFileBuilder
                         new("Corvus.Json", EmitIfNotCorvusJsonExtendedType(typeDeclaration)),
                         "Corvus.Json.Internal")
                     .AppendLine()
-                    .BeginNamespace(typeDeclaration.DotnetNamespace())
-                    .AppendLine()
                     .BeginTypeDeclarationNesting(typeDeclaration)
                         .AppendDocumentation(typeDeclaration)
                         .BeginPublicReadonlyPartialStructDeclaration(

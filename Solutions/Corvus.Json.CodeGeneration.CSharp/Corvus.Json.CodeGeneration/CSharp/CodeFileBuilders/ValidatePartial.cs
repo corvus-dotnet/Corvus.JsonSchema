@@ -36,8 +36,6 @@ public sealed class ValidatePartial : ICodeFileBuilder
                         RequiresRegularExressions(typeDeclaration) ? "System.Text.RegularExpressions" : ConditionalCodeSpecification.DoNotEmit,
                         new("Corvus.Json", EmitIfNotCorvusJsonExtendedType(typeDeclaration)))
                     .AppendLine()
-                    .BeginNamespace(typeDeclaration.DotnetNamespace())
-                    .AppendLine()
                     .BeginTypeDeclarationNesting(typeDeclaration)
                         .AppendDocumentation(typeDeclaration)
                         .BeginPublicReadonlyPartialStructDeclaration(typeDeclaration.DotnetTypeName());
