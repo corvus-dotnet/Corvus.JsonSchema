@@ -3888,6 +3888,8 @@ internal static partial class CodeGeneratorExtensions
             current = current.Parent();
         }
 
+        bool isFirst = true;
+
         // ...and then pop them off again.
         while (parentTypes.Count > 0)
         {
@@ -3897,6 +3899,14 @@ internal static partial class CodeGeneratorExtensions
             }
 
             TypeDeclaration parent = parentTypes.Pop();
+
+            if (isFirst)
+            {
+                generator
+                    .BeginNamespace(parent.DotnetNamespace());
+                isFirst = false;
+            }
+
             generator
                 .AppendSeparatorLine()
                 .AppendDocumentation(parent)
