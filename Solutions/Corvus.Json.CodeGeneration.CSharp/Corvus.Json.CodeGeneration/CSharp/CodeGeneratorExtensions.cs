@@ -3890,6 +3890,13 @@ internal static partial class CodeGeneratorExtensions
 
         bool isFirst = true;
 
+        // Just begin our namespace if we have no parents.
+        if (parentTypes.Count == 0)
+        {
+            return generator
+                .BeginNamespace(typeDeclaration.DotnetNamespace());
+        }
+
         // ...and then pop them off again.
         while (parentTypes.Count > 0)
         {
