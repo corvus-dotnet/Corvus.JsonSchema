@@ -375,6 +375,10 @@ A C# `ILanguageProvider` that can take the anlysis of a JSON Schema document fro
 
 Specific dialects that collect keywords into vocabularies, and provide analysers to determine the specific vocabulary in play for a particular JSON Schema document.
 
+### Corvus.Json.Validator
+
+Dynamic JSON Schema validator that can validate JSON data against a JSON Schema document loaded at runtime, without the need to generate code ahead-of-time.
+
 ### Corvus.Json.Patch
 
 An implementation of JSON Patch over `Corvus.Json.ExtendedTypes`.
@@ -403,9 +407,41 @@ There are a number of significant changes in this release
 ### Support for cross-vocabulary schema generation.
   
   So if you are upgrading a draft6 or draft7 schema set to 2020-12, for example, you can do it piecemeal and reference a schema with one dialect from a schema with another.
+
 ### Opt-in support for .NET nullable properties
 
   Where JSON Schema object properties are optional or nullable, use the `--optionalAsNullable` command line switch to emit nullable properties.
+
+### New dynamic schema validation
+
+There is a new `Corvus.Json.Validator` assembly, containing a `JsonSchema` type.
+
+This is a new *dynamic* JSON Schema validator that can validate JSON data against a JSON Schema document, without the need to generate code ahead-of-time.
+
+This is useful for scenarios where you have a JSON Schema document that is not known at compile time, and you only require validation, not deserialization.
+
+You can load the schema with
+
+```csharp
+var corvusSchema = CorvusValidator.JsonSchema.FromFile("./person-array-schema.json");
+```
+
+This builds and caches a schema object from the file, and you can then validate JSON data against it with
+
+```csharp
+JsonElement elementToValidate = ...
+ValidationContext result = this.corvusSchema.Validate(elementToValidate);
+```
+
+Note that this uses dynamic code generation under the hood, with Roslyn, so there is an appreciable cold-start cost for the very first schema you validate in this way
+while the Roslyn components are jitted. Subsequent schema are much faster, and reused schema come from the cache.
+
+If you reference the `Corvus.Validator` package directly in your executing assembly, it will include a target that ensures `<PreserveCompilationContext>true</PreserveCompilationContext>`
+is added to a `<PropertyGroup>` in your project.
+
+If you are using the `Corvus.Json.Validator` package in a library, you should ensure that the consuming project has this property set, to avoid issues with dynamic code generation.
+
+You will have to do this manually if it is consumed via a Project Reference.
 
 ### New `generatejsonschematypes config` command
 
@@ -417,6 +453,55 @@ There are a number of significant changes in this release
   
   The [schema for the configuration file is here](./Corvus.Json.CodeGenerator/generator-config.json).
 
+### New command line validator with `generatejsonschematypes validateDocument`
+
+This command will validate a JSON document against a JSON schema, and output the results to the console.
+
+For example, given schema `schema.json`
+
+```json
+{
+    "$schema": "https://corvus-oss.org/json-schema/2020-12/schema",
+    "type": "array",
+    "prefixItems": [
+        {
+            "$corvusTypeName": "PositiveInt32",
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+        },
+        { "type": "string" },
+        {
+            "type": "string",
+            "format": "date-time"
+        }
+    ],
+    "unevaluatedItems": false
+}
+```
+
+and the document `document_to_validate.json`
+
+```json
+[
+    -1,
+    "Hello",
+    "Goodbye"
+]
+```
+
+If we run:
+
+```
+generatejsonschematypes validateDocument ./schema.json ./document_to_validate.json`
+```
+
+We see the output:
+
+```
+Validation minimum - -1 is less than 0 (#/prefixItems/0/minimum, #/prefixItems/0, #/0, ./testdoc.json#1:4)
+Validation type - should have been 'string' with format 'datetime' but was 'Goodbye'. (#/prefixItems/2, , #/2, ./testdoc.json#3:4)
+```
 ### Multi-language code generator engine
 
 - Brand new JSON Schema analyser engine, which is now language independent.
