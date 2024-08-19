@@ -18,16 +18,13 @@
 
   <PropertyGroup>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
-    <Description>A support library for generating code from .NET types representing data types found in JSON Schema.</Description>
+    <Description>Dynamically load JSON Schema and validate JSON documents.</Description>
   </PropertyGroup>
 
   <ItemGroup>
-    <None Update="build\Corvus.Json.Validator.targets">
-      <Pack>true</Pack>
-      <PackagePath>build\</PackagePath>
-    </None>
+    <None Include="build\**" Pack="true" PackagePath="build\" />
   </ItemGroup>
-  
+
   <ItemGroup>
     <PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.12">
       <PrivateAssets>all</PrivateAssets>
