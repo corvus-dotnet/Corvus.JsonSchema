@@ -535,7 +535,7 @@ public class JsonSchemaBuilderDriver : IDisposable
             : ((IEnumerable<MetadataReference> MetadataReferences, IEnumerable<string?> Defines))(from l in ctx.CompileLibraries
                                                                                                   from r in l.ResolveReferencePaths()
                                                                                                   select MetadataReference.CreateFromFile(r),
-               ctx.CompilationOptions.Defines.AsEnumerable().Union(["SPECFLOW_BUILD"]));
+               ctx.CompilationOptions.Defines.AsEnumerable().Union(["DYNAMIC_BUILD"]));
     }
 
     private static IEnumerable<SyntaxTree> ParseSyntaxTrees(IReadOnlyCollection<GeneratedCodeFile> generatedTypes, IEnumerable<string?> defines)
