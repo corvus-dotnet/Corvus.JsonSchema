@@ -5,6 +5,7 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using BenchmarkDotNet.Attributes;
+using CorvusValidator = global::Corvus.Json.Validator;
 using JsonEverything = global::Json.Schema;
 
 namespace Corvus.Json.Benchmarking;
@@ -36,7 +37,9 @@ public class ValidateSmallDocument
     private Models.V3.Person personV3;
     private Models.V4.Person personV4;
     private JsonNode? node;
+    private JsonElement element;
     private JsonEverything.JsonSchema? schema;
+    private CorvusValidator.JsonSchema corvusSchema;
 
     /// <summary>
     /// Global setup.
@@ -48,7 +51,9 @@ public class ValidateSmallDocument
         this.personV3 = Models.V3.Person.FromJson(this.objectDocument.RootElement.Clone());
         this.personV4 = Models.V4.Person.FromJson(this.objectDocument.RootElement.Clone());
         this.schema = JsonEverything.JsonSchema.FromFile("./person-schema.json");
+        this.corvusSchema = CorvusValidator.JsonSchema.FromFile("./person-schema.json");
         this.node = System.Text.Json.Nodes.JsonObject.Create(this.personV3.AsJsonElement.Clone());
+        this.element = this.personV3.AsJsonElement.Clone();
     }
 
     /// <summary>
@@ -90,5 +95,15 @@ public class ValidateSmallDocument
     public JsonEverything.EvaluationResults ValidateSmallDocumentJsonEverything()
     {
         return this.schema!.Evaluate(this.node, Options);
+    }
+
+    /// <summary>
+    /// Validates using the Corvus Validator.
+    /// </summary>
+    [Benchmark]
+    public bool ValidateLargeArrayCorvusValidator()
+    {
+        ValidationContext result = this.corvusSchema.Validate(this.element, ValidationLevel.Flag);
+        return result.IsValid;
     }
 }
