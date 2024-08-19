@@ -4,6 +4,7 @@ ValidateLargeDocument validateLargeDocument = new();
 validateLargeDocument.GlobalSetup();
 
 bool valid = validateLargeDocument.ValidateLargeArrayCorvusValidator();
+valid = validateLargeDocument.ValidateLargeArrayCorvusValidator();
 
 Console.WriteLine(valid);
 validateLargeDocument.GlobalCleanup();

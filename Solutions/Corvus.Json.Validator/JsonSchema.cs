@@ -89,17 +89,17 @@ public readonly struct JsonSchema
     /// <returns>The JSON schema instance.</returns>
     public static JsonSchema FromFile(string fileName)
     {
+        if (SchemaReferenceNormalization.TryNormalizeSchemaReference(fileName, out string? result))
+        {
+            fileName = result;
+        }
+
         if (CachedSchema.TryGetValue(fileName, out ValidateCallback? value))
         {
             return new(value);
         }
 
         CompoundDocumentResolver resolver = CompoundWithMetaschemaResolver();
-
-        if (SchemaReferenceNormalization.TryNormalizeSchemaReference(fileName, out string? result))
-        {
-            fileName = result;
-        }
 
         resolver.AddDocument(fileName, JsonDocument.Parse(File.ReadAllText(fileName)));
 
