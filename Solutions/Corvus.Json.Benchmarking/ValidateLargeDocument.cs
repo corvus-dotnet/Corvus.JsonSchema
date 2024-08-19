@@ -6,6 +6,7 @@ using System.Collections.Immutable;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using BenchmarkDotNet.Attributes;
+using CorvusValidator = global::Corvus.Json.Validator;
 using JsonEverything = global::Json.Schema;
 
 namespace Corvus.Json.Benchmarking;
@@ -37,7 +38,9 @@ public class ValidateLargeDocument
     private Models.V3.PersonArray personArrayV3;
     private Models.V4.PersonArray personArrayV4;
     private JsonNode? node;
+    private JsonElement element;
     private JsonEverything.JsonSchema? schema;
+    private CorvusValidator.JsonSchema corvusSchema;
 
     /// <summary>
     /// Global setup.
@@ -57,7 +60,9 @@ public class ValidateLargeDocument
         this.personArrayV4 = Models.V4.PersonArray.From(builder.ToImmutable()).AsJsonElementBackedValue();
 
         this.schema = JsonEverything.JsonSchema.FromFile("./person-array-schema.json");
+        this.corvusSchema = CorvusValidator.JsonSchema.FromFile("./person-array-schema.json");
         this.node = System.Text.Json.Nodes.JsonArray.Create(this.personArrayV3.AsJsonElement.Clone());
+        this.element = this.personArrayV3.AsJsonElement.Clone();
     }
 
     /// <summary>
@@ -89,6 +94,16 @@ public class ValidateLargeDocument
     public bool ValidateLargeArrayCorvusV4()
     {
         ValidationContext result = this.personArrayV4.Validate(ValidationContext.ValidContext);
+        return result.IsValid;
+    }
+
+    /// <summary>
+    /// Validates using the Corvus V4 types.
+    /// </summary>
+    [Benchmark]
+    public bool ValidateLargeArrayCorvusValidator()
+    {
+        ValidationContext result = this.corvusSchema.Validate(this.element, ValidationLevel.Flag);
         return result.IsValid;
     }
 

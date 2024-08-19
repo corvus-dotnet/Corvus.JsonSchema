@@ -13,6 +13,7 @@ class Program
                 c.SetApplicationName("generatejsonschematypes");
                 c.AddCommand<GenerateWithDriverCommand>("config");
                 c.AddCommand<ListNamingHeuristicsCommand>("listNameHeuristics");
+                c.AddCommand<ValidateDocumentCommand>("validateDocument");
             });
         return app.RunAsync(args);
     }

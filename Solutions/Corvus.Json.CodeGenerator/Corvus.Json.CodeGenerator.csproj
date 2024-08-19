@@ -9,6 +9,7 @@
 		<PackAsTool>true</PackAsTool>
 		<ToolCommandName>generatejsonschematypes</ToolCommandName>
 		<PackageOutputPath>./nupkg</PackageOutputPath>
+    <PreserveCompilationContext>true</PreserveCompilationContext>
 	</PropertyGroup>
 
 	<PropertyGroup>
@@ -29,6 +30,7 @@
 	  <ProjectReference Include="..\Corvus.Json.CodeGeneration.CorvusVocabulary\Corvus.Json.CodeGeneration.CorvusVocabulary.csproj" />
 	  <ProjectReference Include="..\Corvus.Json.CodeGeneration.CSharp\Corvus.Json.CodeGeneration.CSharp.csproj" />
 	  <ProjectReference Include="..\Corvus.Json.CodeGeneration.OpenApi30\Corvus.Json.CodeGeneration.OpenApi30.csproj" />
+	  <ProjectReference Include="..\Corvus.Json.Validator\Corvus.Json.Validator.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

@@ -59,7 +59,7 @@ public static class JsonElementExtensions
     /// </exception>
     public static bool TryGetRawText<TState, TResult>(this JsonElement element, in Utf8Parser<TState, TResult> parser, in TState state, bool decode, [NotNullWhen(true)] out TResult? value)
     {
-        return element.ProcessRawText(new Utf8ParserStateWrapper<TState, TResult>(parser, state, decode), ProcessRawText, out value);
+        return element.ProcessRawValue(new Utf8ParserStateWrapper<TState, TResult>(parser, state, decode), ProcessRawText, out value);
     }
 
     /// <summary>

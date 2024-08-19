@@ -137,7 +137,7 @@ public readonly partial struct OpenApiDocument
                     return result;
                 }
 
-#if NET8_0_OR_GREATER && !SPECFLOW_BUILD
+#if NET8_0_OR_GREATER && !DYNAMIC_BUILD
                 [GeneratedRegex("^[1-5](?:[0-9]{2}|XX)$")]
                 private static partial Regex CreatePatternProperties();
 #else

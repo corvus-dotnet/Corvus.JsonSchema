@@ -9,10 +9,12 @@
 		<IsPackable>false</IsPackable>
     <NoWarn>SA1615</NoWarn>
     <Platforms>AnyCPU</Platforms>
-	</PropertyGroup>
+    <PreserveCompilationContext>true</PreserveCompilationContext>
+  </PropertyGroup>
 
 	<ItemGroup>
 		<ProjectReference Include="..\Corvus.Json.ExtendedTypes\Corvus.Json.ExtendedTypes.csproj" />
+		<ProjectReference Include="..\Corvus.Json.Validator\Corvus.Json.Validator.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

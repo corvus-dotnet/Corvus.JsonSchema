@@ -17,6 +17,12 @@ config.AddJob(
         .WithOutlierMode(OutlierMode.RemoveAll)
         .WithStrategy(RunStrategy.Throughput));
 
+config.AddJob(
+    Job.Default
+        .WithRuntime(CoreRuntime.Core80)
+        .WithOutlierMode(OutlierMode.RemoveAll)
+        .WithStrategy(RunStrategy.ColdStart));
+
 ////config.AddJob(
 ////    Job.Default
 ////        .WithRuntime(ClrRuntime.Net481)

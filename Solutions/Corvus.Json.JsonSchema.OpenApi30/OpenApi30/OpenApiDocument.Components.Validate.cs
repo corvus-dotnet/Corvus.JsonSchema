@@ -364,7 +364,7 @@ public readonly partial struct OpenApiDocument
                 return result;
             }
 
-#if NET8_0_OR_GREATER && !SPECFLOW_BUILD
+#if NET8_0_OR_GREATER && !DYNAMIC_BUILD
             [GeneratedRegex("^x-")]
             private static partial Regex CreatePatternProperties();
 #else

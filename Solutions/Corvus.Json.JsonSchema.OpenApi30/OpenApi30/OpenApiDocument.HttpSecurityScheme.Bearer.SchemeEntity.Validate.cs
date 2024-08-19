@@ -183,7 +183,7 @@ public readonly partial struct OpenApiDocument
                         }
                     }
 
-#if NET8_0_OR_GREATER && !SPECFLOW_BUILD
+#if NET8_0_OR_GREATER && !DYNAMIC_BUILD
                     [GeneratedRegex("^[Bb][Ee][Aa][Rr][Ee][Rr]$")]
                     private static partial Regex CreatePattern();
 #else
