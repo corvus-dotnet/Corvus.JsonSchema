@@ -308,13 +308,13 @@ public readonly partial struct OpenApiDocument
                 return result;
             }
 
-#if NET8_0_OR_GREATER && !SPECFLOW_BUILD
+#if NET8_0_OR_GREATER && !DYNAMIC_BUILD
             [GeneratedRegex("^(get|put|post|delete|options|head|patch|trace)$")]
             private static partial Regex CreatePatternProperties1();
 #else
             private static Regex CreatePatternProperties1() => new("^(get|put|post|delete|options|head|patch|trace)$", RegexOptions.Compiled);
 #endif
-#if NET8_0_OR_GREATER && !SPECFLOW_BUILD
+#if NET8_0_OR_GREATER && !DYNAMIC_BUILD
             [GeneratedRegex("^x-")]
             private static partial Regex CreatePatternProperties2();
 #else

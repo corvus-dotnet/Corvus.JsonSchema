@@ -353,7 +353,7 @@ public static partial class ValidationCodeGeneratorExtensions
         // TODO: Figure out how to get the SourceGenerator to run when generating code
         // in the specs.
         return generator
-                .AppendLine("#if NET8_0_OR_GREATER && !SPECFLOW_BUILD")
+                .AppendLine("#if NET8_0_OR_GREATER && !DYNAMIC_BUILD")
                     .AppendIndent("[GeneratedRegex(")
                     .Append(SymbolDisplay.FormatLiteral(value, true))
                     .AppendLine(")]")

@@ -269,13 +269,13 @@ public readonly partial struct OpenApiDocument
                 return result;
             }
 
-#if NET8_0_OR_GREATER && !SPECFLOW_BUILD
+#if NET8_0_OR_GREATER && !DYNAMIC_BUILD
             [GeneratedRegex("^[1-5](?:\\d{2}|XX)$")]
             private static partial Regex CreatePatternProperties1();
 #else
             private static Regex CreatePatternProperties1() => new("^[1-5](?:\\d{2}|XX)$", RegexOptions.Compiled);
 #endif
-#if NET8_0_OR_GREATER && !SPECFLOW_BUILD
+#if NET8_0_OR_GREATER && !DYNAMIC_BUILD
             [GeneratedRegex("^x-")]
             private static partial Regex CreatePatternProperties2();
 #else

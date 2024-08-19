@@ -163,7 +163,7 @@ public readonly partial struct Core
                 }
             }
 
-#if NET8_0_OR_GREATER && !SPECFLOW_BUILD
+#if NET8_0_OR_GREATER && !DYNAMIC_BUILD
             [GeneratedRegex("^[A-Za-z_][-A-Za-z0-9._]*$")]
             private static partial Regex CreatePattern();
 #else

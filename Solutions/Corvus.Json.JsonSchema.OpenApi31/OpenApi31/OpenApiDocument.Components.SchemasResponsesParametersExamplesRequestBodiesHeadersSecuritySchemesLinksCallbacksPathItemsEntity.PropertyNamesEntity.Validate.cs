@@ -155,7 +155,7 @@ public readonly partial struct OpenApiDocument
                         }
                     }
 
-#if NET8_0_OR_GREATER && !SPECFLOW_BUILD
+#if NET8_0_OR_GREATER && !DYNAMIC_BUILD
                     [GeneratedRegex("^[a-zA-Z0-9._-]+$")]
                     private static partial Regex CreatePattern();
 #else

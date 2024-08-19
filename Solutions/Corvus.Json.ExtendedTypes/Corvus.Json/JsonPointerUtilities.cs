@@ -301,6 +301,199 @@ public static class JsonPointerUtilities
     }
 
     /// <summary>
+    /// Get s the line and offset for the pointer in the input.
+    /// </summary>
+    /// <param name="utf8Input">The UTF8 input text.</param>
+    /// <param name="fragment">The fragment for teh JSON pointer.</param>
+    /// <param name="line">If the pointer was successfully resolved, this is the line in the input text.</param>
+    /// <param name="chars">If the pointer was successfully resolved, this is the character offset in the line.</param>
+    /// <param name="lineOffset">If the pointer was successfully resolved, this is the total offset to the start of the line in the input text.</param>
+    /// <returns><see langword="true"/> if teh pointer was successfully resolved.</returns>
+    public static bool TryGetLineAndOffsetForPointer(ReadOnlySpan<byte> utf8Input, ReadOnlySpan<char> fragment, out int line, out int chars, out long lineOffset)
+    {
+        int lineCount = 0;
+        int accumulatedOffset = 0;
+        if (TryResolvePointer(utf8Input, fragment, false, out long longOffset))
+        {
+            while (true)
+            {
+                int index = utf8Input[accumulatedOffset..].IndexOf(JsonConstants.LineFeed);
+                if (index == -1)
+                {
+                    line = lineCount;
+                    chars = (int)(longOffset - accumulatedOffset);
+                    lineOffset = accumulatedOffset;
+                    return true;
+                }
+
+                if (accumulatedOffset + index < longOffset)
+                {
+                    // We go one longer to skip over the \n
+                    accumulatedOffset += index + 1;
+                    lineCount++;
+                }
+                else
+                {
+                    line = lineCount;
+                    chars = (int)(longOffset - accumulatedOffset);
+                    lineOffset = accumulatedOffset;
+                    return true;
+                }
+            }
+        }
+
+        line = -1;
+        lineOffset = -1;
+        chars = -1;
+        return false;
+    }
+
+    /// <summary>
+    /// Resolve a json element from a fragment pointer into a json document.
+    /// </summary>
+    /// <param name="input">The UTF8 input bytes.</param>
+    /// <param name="fragment">The fragment in <c>#/blah/foo/3/bar/baz</c> form.</param>
+    /// <param name="throwOnFailure">If true, we throw on failure.</param>
+    /// <param name="offset">The element found at the given location.</param>
+    /// <returns><c>true</c> if the element was found.</returns>
+    public static bool TryResolvePointer(ReadOnlySpan<byte> input, ReadOnlySpan<char> fragment, bool throwOnFailure, out long offset)
+    {
+        var reader = new Utf8JsonReader(input);
+        if (!reader.Read())
+        {
+            offset = reader.BytesConsumed;
+            return false;
+        }
+
+        int index = 0;
+        int startRun = 0;
+        Span<char> decodedComponent = stackalloc char[fragment.Length];
+
+        while (index < fragment.Length)
+        {
+            if (index == 0 && fragment[index] == '#')
+            {
+                ++index;
+            }
+
+            if (index >= fragment.Length)
+            {
+                break;
+            }
+
+            if (fragment[index] == '/')
+            {
+                ++index;
+            }
+
+            startRun = index;
+
+            if (index >= fragment.Length)
+            {
+                break;
+            }
+
+            while (index < fragment.Length && fragment[index] != '/')
+            {
+                ++index;
+            }
+
+            // We've either reached the fragment.Length (so have to go 1 back from the end)
+            // or we're sitting on the terminating '/'
+            int endRun = index;
+            ReadOnlySpan<char> encodedComponent = fragment[startRun..endRun];
+            int decodedWritten = DecodePointer(encodedComponent, decodedComponent);
+            ReadOnlySpan<char> component = decodedComponent[..decodedWritten];
+            if (reader.TokenType == JsonTokenType.StartObject)
+            {
+                reader.Read();
+
+                bool found = false;
+
+                while (reader.TokenType == JsonTokenType.PropertyName)
+                {
+                    if (reader.ValueTextEquals(component))
+                    {
+                        found = true;
+                        break;
+                    }
+
+                    reader.Read();
+                }
+
+                if (!found)
+                {
+                    // We were unable to find the element at that location.
+                    if (throwOnFailure)
+                    {
+                        throw new JsonException($"Unable to find the element at path {fragment[0..endRun].ToString()}.");
+                    }
+                    else
+                    {
+                        offset = 0;
+                        return false;
+                    }
+                }
+            }
+            else if (reader.TokenType == JsonTokenType.StartArray)
+            {
+                // Read to the start of the first element
+                reader.Read();
+
+#if NET8_0_OR_GREATER
+                if (int.TryParse(component, out int targetArrayIndex))
+#else
+                if (int.TryParse(component.ToString(), out int targetArrayIndex))
+#endif
+                {
+                    int arrayIndex = 0;
+                    while (arrayIndex < targetArrayIndex && reader.TokenType != JsonTokenType.EndArray)
+                    {
+                        arrayIndex++;
+                        reader.Skip();
+                        reader.Read();
+                    }
+
+                    // Check to see if we reached the target, and didn't go off the end of the enumeration.
+                    if (arrayIndex == targetArrayIndex && reader.TokenType != JsonTokenType.EndArray)
+                    {
+                        continue;
+                    }
+                    else
+                    {
+                        // We were unable to find the element at that index in the array.
+                        if (throwOnFailure)
+                        {
+                            throw new JsonException($"Unable to find the array element at path {fragment[0..endRun].ToString()}.");
+                        }
+                        else
+                        {
+                            offset = 0;
+                            return false;
+                        }
+                    }
+                }
+                else
+                {
+                    // We couldn't parse the integer of the index
+                    if (throwOnFailure)
+                    {
+                        throw new JsonException($"Expected to find an integer array index at path {fragment[0..endRun].ToString()}, but found {fragment[startRun..endRun].ToString()}.");
+                    }
+                    else
+                    {
+                        offset = 0;
+                        return false;
+                    }
+                }
+            }
+        }
+
+        offset = reader.TokenStartIndex;
+        return true;
+    }
+
+    /// <summary>
     /// Resolve a json element from a fragment pointer into a json document.
     /// </summary>
     /// <param name="root">The root element from which to start resolving the pointer.</param>

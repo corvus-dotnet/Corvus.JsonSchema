@@ -199,7 +199,7 @@ public readonly partial struct Core
                 }
             }
 
-#if NET8_0_OR_GREATER && !SPECFLOW_BUILD
+#if NET8_0_OR_GREATER && !DYNAMIC_BUILD
             [GeneratedRegex("^[^#]*#?$")]
             private static partial Regex CreatePattern();
 #else
