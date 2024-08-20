@@ -29,10 +29,10 @@ config.AddJob(
 ////        .WithOutlierMode(OutlierMode.RemoveAll)
 ////        .WithStrategy(RunStrategy.Throughput));
 
-////config.AddJob(
-////    Job.Default
-////        .WithRuntime(CoreRuntime.Core90)
-////        .WithOutlierMode(OutlierMode.RemoveAll)
-////        .WithStrategy(RunStrategy.Throughput));
+config.AddJob(
+    Job.Default
+        .WithRuntime(CoreRuntime.Core90)
+        .WithOutlierMode(OutlierMode.RemoveAll)
+        .WithStrategy(RunStrategy.Throughput));
 
 BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).Run(config: config);
