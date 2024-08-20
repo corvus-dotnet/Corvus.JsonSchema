@@ -9,7 +9,7 @@ namespace Corvus.Json.CodeGeneration.CSharp;
 /// <summary>
 /// Extension methods for <see cref="TypeDeclaration"/>.
 /// </summary>
-internal static class TypeDeclarationExtensions
+public static class TypeDeclarationExtensions
 {
     private const string DotnetNamespaceKey = "CSharp_DotnetNamespace";
     private const string DotnetTypeNameKey = "CSharp_DotnetTypeName";
