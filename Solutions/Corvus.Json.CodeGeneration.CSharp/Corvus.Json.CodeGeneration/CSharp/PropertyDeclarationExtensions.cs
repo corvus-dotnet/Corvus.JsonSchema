@@ -10,7 +10,7 @@ namespace Corvus.Json.CodeGeneration.CSharp;
 /// <summary>
 /// Extension methods for property declaration.
 /// </summary>
-internal static class PropertyDeclarationExtensions
+public static class PropertyDeclarationExtensions
 {
     private static ReadOnlySpan<char> ValueSpan => "Value".AsSpan();
 
