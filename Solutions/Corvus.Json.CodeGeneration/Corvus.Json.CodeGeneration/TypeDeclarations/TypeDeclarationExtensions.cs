@@ -1957,6 +1957,57 @@ public static class TypeDeclarationExtensions
     }
 
     /// <summary>
+    /// Gets the (optional) typed validation constants for this type declaration.
+    /// </summary>
+    /// <param name="that">The type declaration.</param>
+    /// <returns>The typed validation constants for the type declaration.</returns>
+    public static IReadOnlyDictionary<ITypedValidationConstantProviderKeyword, TypedValidationConstantDefinition[]>? TypedValidationConstants(this TypeDeclaration that)
+    {
+        if (!that.BuildComplete)
+        {
+            throw new InvalidOperationException("You cannot get the validation constants during the type build process.");
+        }
+
+        if (!that.TryGetMetadata(nameof(TypedValidationConstants), out IReadOnlyDictionary<ITypedValidationConstantProviderKeyword, TypedValidationConstantDefinition[]>? constants))
+        {
+            constants = TryGetTypedValidationConstants(that, out constants) ? constants : null;
+            that.SetMetadata(nameof(TypedValidationConstants), constants);
+        }
+
+        return constants;
+
+        static bool TryGetTypedValidationConstants(
+            TypeDeclaration typeDeclaration,
+            [NotNullWhen(true)] out IReadOnlyDictionary<ITypedValidationConstantProviderKeyword, TypedValidationConstantDefinition[]>? validationConstants)
+        {
+            if (typeDeclaration.HasSiblingHidingKeyword())
+            {
+                validationConstants = null;
+                return false;
+            }
+
+            Dictionary<ITypedValidationConstantProviderKeyword, TypedValidationConstantDefinition[]> constants = [];
+
+            foreach (ITypedValidationConstantProviderKeyword keyword in typeDeclaration.Keywords().OfType<ITypedValidationConstantProviderKeyword>())
+            {
+                if (keyword.TryGetValidationConstants(typeDeclaration, out TypedValidationConstantDefinition[]? keywordConstants))
+                {
+                    constants.Add(keyword, keywordConstants);
+                }
+            }
+
+            if (constants.Count > 0)
+            {
+                validationConstants = constants;
+                return true;
+            }
+
+            validationConstants = null;
+            return false;
+        }
+    }
+
+    /// <summary>
     /// Gets the (optional) validation regular expressions for this type declaration.
     /// </summary>
     /// <param name="that">The type declaration.</param>

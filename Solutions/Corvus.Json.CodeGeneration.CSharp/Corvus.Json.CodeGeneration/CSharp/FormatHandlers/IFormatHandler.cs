@@ -126,4 +126,15 @@ public interface IFormatHandler
     /// <param name="format">The format for which to append methods.</param>
     /// <returns><see langword="true"/> if the instance handled this format.</returns>
     bool AppendFormatPrivateMethods(CodeGenerator generator, TypeDeclaration typeDeclaration, string format);
+
+    /// <summary>
+    /// Append a format-specific constant value.
+    /// </summary>
+    /// <param name="generator">The generator to which to append the constant value.</param>
+    /// <param name="keyword">The keyword producing the constant.</param>
+    /// <param name="format">The format for which to append the constant value.</param>
+    /// <param name="fieldName">The field name for the constant.</param>
+    /// <param name="constantValue">The constant value as a <see cref="JsonElement"/>.</param>
+    /// <returns><see langword="true"/> if the instance handled this format.</returns>
+    bool AppendFormatConstant(CodeGenerator generator, ITypedValidationConstantProviderKeyword keyword, string format, string fieldName, JsonElement constantValue);
 }

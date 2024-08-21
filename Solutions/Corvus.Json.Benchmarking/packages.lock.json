@@ -71,6 +71,12 @@
           "System.Text.Json": "8.0.0"
         }
       },
+      "Microsoft.VisualStudio.DiagnosticsHub.BenchmarkDotNetDiagnosers": {
+        "type": "Direct",
+        "requested": "[17.12.35209.2, )",
+        "resolved": "17.12.35209.2",
+        "contentHash": "4zjVbCbmOwgY56TO9MZX5o2Amy3uwL4iBqktg0ouWlxt90BRoUh7X50nq6ypKsbf0QSzK1lV5Tm/hwa06Z3AqA=="
+      },
       "Roslynator.Analyzers": {
         "type": "Direct",
         "requested": "[4.12.3, )",

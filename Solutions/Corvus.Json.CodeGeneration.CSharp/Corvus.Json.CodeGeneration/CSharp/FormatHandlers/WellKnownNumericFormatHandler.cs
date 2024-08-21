@@ -298,4 +298,10 @@ public class WellKnownNumericFormatHandler : INumberFormatHandler
     {
         return false;
     }
+
+    /// <inheritdoc/>
+    public bool AppendFormatConstant(CodeGenerator generator, ITypedValidationConstantProviderKeyword keyword, string format, string fieldName, JsonElement constantValue)
+    {
+        return false;
+    }
 }

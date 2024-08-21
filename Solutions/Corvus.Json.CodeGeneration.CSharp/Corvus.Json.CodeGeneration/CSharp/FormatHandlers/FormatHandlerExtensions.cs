@@ -264,6 +264,42 @@ public static class FormatHandlerExtensions
     }
 
     /// <summary>
+    /// Append format-specific constant values to the generator.
+    /// </summary>
+    /// <typeparam name="T">The type of the format handler.</typeparam>
+    /// <param name="handlers">The handlers which may append properties.</param>
+    /// <param name="generator">The generator to which to append the format constant value.</param>
+    /// <param name="keyword">The keyword that produced the constant value.</param>
+    /// <param name="format">The format for which to append the format constant value.</param>
+    /// <param name="fieldName">The name of the field to generate.</param>
+    /// <param name="constantValue">The constant value as a <see cref="JsonElement"/>.</param>
+    /// <returns><see langword="true"/> if the instance handled this format.</returns>
+    public static bool AppendFormatConstant<T>(
+        this IEnumerable<T> handlers,
+        CodeGenerator generator,
+        ITypedValidationConstantProviderKeyword keyword,
+        string format,
+        string fieldName,
+        JsonElement constantValue)
+        where T : notnull, IFormatHandler
+    {
+        foreach (T handler in handlers)
+        {
+            if (generator.IsCancellationRequested)
+            {
+                return false;
+            }
+
+            if (handler.AppendFormatConstant(generator, keyword, format, fieldName, constantValue))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
     /// Gets the Corvus.Json type name for the given candidate format (e.g. JsonUuid, JsonIri, JsonInt64 etc).
     /// </summary>
     /// <typeparam name="T">The type of the format handler.</typeparam>
