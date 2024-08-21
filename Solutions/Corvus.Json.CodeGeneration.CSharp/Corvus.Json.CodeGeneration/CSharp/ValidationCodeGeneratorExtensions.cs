@@ -511,6 +511,7 @@ public static partial class ValidationCodeGeneratorExtensions
             .BeginValidationClass()
                 .AppendValidationConstantFields(typeDeclaration)
                 .AppendRegexValidationFields(typeDeclaration)
+                .AppendTypedValidationConstantFields(typeDeclaration)
                 .AppendStringValidationConstantProperties(typeDeclaration)
                 .AppendValidationMethods(typeDeclaration)
                 .AppendRegexValidationFactoryMethods(typeDeclaration)

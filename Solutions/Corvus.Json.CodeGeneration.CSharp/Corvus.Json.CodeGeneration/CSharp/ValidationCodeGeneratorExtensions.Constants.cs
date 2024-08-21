@@ -28,6 +28,21 @@ public static partial class ValidationCodeGeneratorExtensions
         return generator;
     }
 
+    private static CodeGenerator AppendTypedValidationConstantFields(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
+        if (typeDeclaration.TypedValidationConstants() is IReadOnlyDictionary<ITypedValidationConstantProviderKeyword, TypedValidationConstantDefinition[]> constants)
+        {
+            AppendTypedValidationConstantFields(generator, constants);
+        }
+
+        return generator;
+    }
+
     private static CodeGenerator AppendStringValidationConstantProperties(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
         if (generator.IsCancellationRequested)
@@ -170,6 +185,22 @@ public static partial class ValidationCodeGeneratorExtensions
             .Append(" = ")
             .AppendIntegerLiteral(value)
             .AppendLine(";");
+
+        return generator;
+    }
+
+    private static CodeGenerator AppendTypedValidationConstantField(this CodeGenerator generator, ITypedValidationConstantProviderKeyword keyword, int? index, in TypedValidationConstantDefinition definition)
+    {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
+        Debug.Assert(definition.Value.ValueKind == JsonValueKind.String, "The value must be a string.");
+
+        string memberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: index?.ToString());
+
+        FormatHandlerRegistry.Instance.FormatHandlers.AppendFormatConstant(generator, keyword, definition.Format, memberName, definition.Value);
 
         return generator;
     }
@@ -431,6 +462,43 @@ public static partial class ValidationCodeGeneratorExtensions
                         default:
                             break;
                     }
+
+                    if (count > 1)
+                    {
+                        i++;
+                    }
+                }
+            }
+        }
+
+        return generator;
+    }
+
+    private static CodeGenerator AppendTypedValidationConstantFields(CodeGenerator generator, IReadOnlyDictionary<ITypedValidationConstantProviderKeyword, TypedValidationConstantDefinition[]> constants)
+    {
+        // Ensure we have a got a stable ordering of the keywords.
+        foreach (KeyValuePair<ITypedValidationConstantProviderKeyword, TypedValidationConstantDefinition[]> constant in constants.OrderBy(k => k.Key.Keyword))
+        {
+            if (generator.IsCancellationRequested)
+            {
+                return generator;
+            }
+
+            int count = constant.Value.Length;
+
+            if (count > 0)
+            {
+                generator.AppendSeparatorLine();
+
+                int? i = count == 1 ? null : 1;
+                foreach (TypedValidationConstantDefinition value in constant.Value)
+                {
+                    if (generator.IsCancellationRequested)
+                    {
+                        return generator;
+                    }
+
+                    generator.AppendTypedValidationConstantField(constant.Key, i, value);
 
                     if (count > 1)
                     {

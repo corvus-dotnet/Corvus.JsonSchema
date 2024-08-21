@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Text.Json;
+using Microsoft.CodeAnalysis.CSharp;
 
 namespace Corvus.Json.CodeGeneration.CSharp;
 
@@ -444,5 +445,207 @@ public class WellKnownStringFormatHandler : IStringFormatHandler
         }
 
         return null;
+    }
+
+    /// <inheritdoc/>
+    public bool AppendFormatConstant(CodeGenerator generator, ITypedValidationConstantProviderKeyword keyword, string format, string staticFieldName, JsonElement constantValue)
+    {
+        if (constantValue.ValueKind != JsonValueKind.String)
+        {
+            return false;
+        }
+
+        return format switch
+        {
+            "date" => AppendDate(generator, keyword, staticFieldName, constantValue),
+            "date-time" => AppendDateTime(generator, keyword, staticFieldName, constantValue),
+            "time" => AppendTime(generator, keyword, staticFieldName, constantValue),
+            "duration" => AppendDuration(generator, keyword, staticFieldName, constantValue),
+            "ipv4" => AppendIpV4(generator, keyword, staticFieldName, constantValue),
+            "ipv6" => AppendIpV6(generator, keyword, staticFieldName, constantValue),
+            "uuid" => AppendUuid(generator, keyword, staticFieldName, constantValue),
+            "uri" => AppendUri(generator, keyword, staticFieldName, constantValue),
+            "uri-reference" => AppendUriReference(generator, keyword, staticFieldName, constantValue),
+            "iri" => AppendIri(generator, keyword, staticFieldName, constantValue),
+            "iri-reference" => AppendIriReference(generator, keyword, staticFieldName, constantValue),
+            //// "regex" => We don't support regex here; there is a custom regex support with IValidationRegexProviderKeyword,
+            _ => false,
+        };
+    }
+
+    private static bool AppendIriReference(CodeGenerator generator, ITypedValidationConstantProviderKeyword keyword, string staticFieldName, JsonElement constantValue)
+    {
+        generator
+            .AppendLineIndent("/// <summary>")
+            .AppendLineIndent("/// A constant for the <c>", keyword.Keyword, "</c> keyword.")
+            .AppendLineIndent("/// </summary>")
+            .AppendLineIndent(
+                "public static readonly Uri ",
+                staticFieldName,
+                " = JsonIriReference.ParseValue(",
+                SymbolDisplay.FormatLiteral(constantValue.GetRawText(), true),
+                "u8).GetUri();");
+
+        return true;
+    }
+
+    private static bool AppendIri(CodeGenerator generator, ITypedValidationConstantProviderKeyword keyword, string staticFieldName, JsonElement constantValue)
+    {
+        generator
+            .AppendLineIndent("/// <summary>")
+            .AppendLineIndent("/// A constant for the <c>", keyword.Keyword, "</c> keyword.")
+            .AppendLineIndent("/// </summary>")
+            .AppendLineIndent(
+                "public static readonly Uri ",
+                staticFieldName,
+                " = JsonIri.ParseValue(",
+                SymbolDisplay.FormatLiteral(constantValue.GetRawText(), true),
+                "u8).GetUri();");
+
+        return true;
+    }
+
+    private static bool AppendUriReference(CodeGenerator generator, ITypedValidationConstantProviderKeyword keyword, string staticFieldName, JsonElement constantValue)
+    {
+        generator
+            .AppendLineIndent("/// <summary>")
+            .AppendLineIndent("/// A constant for the <c>", keyword.Keyword, "</c> keyword.")
+            .AppendLineIndent("/// </summary>")
+            .AppendLineIndent(
+                "public static readonly Uri ",
+                staticFieldName,
+                " = JsonUriReference.ParseValue(",
+                SymbolDisplay.FormatLiteral(constantValue.GetRawText(), true),
+                "u8).GetUri();");
+
+        return true;
+    }
+
+    private static bool AppendUri(CodeGenerator generator, ITypedValidationConstantProviderKeyword keyword, string staticFieldName, JsonElement constantValue)
+    {
+        generator
+            .AppendLineIndent("/// <summary>")
+            .AppendLineIndent("/// A constant for the <c>", keyword.Keyword, "</c> keyword.")
+            .AppendLineIndent("/// </summary>")
+            .AppendLineIndent(
+                "public static readonly Uri ",
+                staticFieldName,
+                " = JsonUri.ParseValue(",
+                SymbolDisplay.FormatLiteral(constantValue.GetRawText(), true),
+                "u8).GetUri();");
+
+        return true;
+    }
+
+    private static bool AppendUuid(CodeGenerator generator, ITypedValidationConstantProviderKeyword keyword, string staticFieldName, JsonElement constantValue)
+    {
+        generator
+            .AppendLineIndent("/// <summary>")
+            .AppendLineIndent("/// A constant for the <c>", keyword.Keyword, "</c> keyword.")
+            .AppendLineIndent("/// </summary>")
+            .AppendLineIndent(
+                "public static readonly Guid ",
+                staticFieldName,
+                " = JsonUuid.ParseValue(",
+                SymbolDisplay.FormatLiteral(constantValue.GetRawText(), true),
+                "u8).GetGuid();");
+
+        return true;
+    }
+
+    private static bool AppendIpV6(CodeGenerator generator, ITypedValidationConstantProviderKeyword keyword, string staticFieldName, JsonElement constantValue)
+    {
+        generator
+            .AppendLineIndent("/// <summary>")
+            .AppendLineIndent("/// A constant for the <c>", keyword.Keyword, "</c> keyword.")
+            .AppendLineIndent("/// </summary>")
+            .AppendLineIndent(
+                "public static readonly System.Net.IPAddress ",
+                staticFieldName,
+                " = JsonIpV6.ParseValue(",
+                SymbolDisplay.FormatLiteral(constantValue.GetRawText(), true),
+                "u8).GetPeriod();");
+
+        return true;
+    }
+
+    private static bool AppendIpV4(CodeGenerator generator, ITypedValidationConstantProviderKeyword keyword, string staticFieldName, JsonElement constantValue)
+    {
+        generator
+            .AppendLineIndent("/// <summary>")
+            .AppendLineIndent("/// A constant for the <c>", keyword.Keyword, "</c> keyword.")
+            .AppendLineIndent("/// </summary>")
+            .AppendLineIndent(
+            "public static readonly System.Net.IPAddress ",
+            staticFieldName,
+            " = JsonIpV4.ParseValue(",
+            SymbolDisplay.FormatLiteral(constantValue.GetRawText(), true),
+            "u8).GetPeriod();");
+
+        return true;
+    }
+
+    private static bool AppendDuration(CodeGenerator generator, ITypedValidationConstantProviderKeyword keyword, string staticFieldName, JsonElement constantValue)
+    {
+        generator
+            .AppendLineIndent("/// <summary>")
+            .AppendLineIndent("/// A constant for the <c>", keyword.Keyword, "</c> keyword.")
+            .AppendLineIndent("/// </summary>")
+            .AppendLineIndent(
+                "public static readonly Corvus.Json.Period ",
+                staticFieldName,
+                " = JsonDuration.ParseValue(",
+                SymbolDisplay.FormatLiteral(constantValue.GetRawText(), true),
+                "u8).GetPeriod();");
+
+        return true;
+    }
+
+    private static bool AppendTime(CodeGenerator generator, ITypedValidationConstantProviderKeyword keyword, string staticFieldName, JsonElement constantValue)
+    {
+        generator
+            .AppendLineIndent("/// <summary>")
+            .AppendLineIndent("/// A constant for the <c>", keyword.Keyword, "</c> keyword.")
+            .AppendLineIndent("/// </summary>")
+            .AppendLineIndent(
+                "public static readonly NodaTime.OffsetTime ",
+                staticFieldName,
+                " = JsonTime.ParseValue(",
+                SymbolDisplay.FormatLiteral(constantValue.GetRawText(), true),
+                "u8).GetTime();");
+
+        return true;
+    }
+
+    private static bool AppendDateTime(CodeGenerator generator, ITypedValidationConstantProviderKeyword keyword, string staticFieldName, JsonElement constantValue)
+    {
+        generator
+            .AppendLineIndent("/// <summary>")
+            .AppendLineIndent("/// A constant for the <c>", keyword.Keyword, "</c> keyword.")
+            .AppendLineIndent("/// </summary>")
+            .AppendLineIndent(
+                "public static readonly NodaTime.OffsetDateTime ",
+                staticFieldName,
+                " = JsonDateTime.ParseValue(",
+                SymbolDisplay.FormatLiteral(constantValue.GetRawText(), true),
+                "u8).GetDateTime();");
+
+        return true;
+    }
+
+    private static bool AppendDate(CodeGenerator generator, ITypedValidationConstantProviderKeyword keyword, string staticFieldName, JsonElement constantValue)
+    {
+        generator
+            .AppendLineIndent("/// <summary>")
+            .AppendLineIndent("/// A constant for the <c>", keyword.Keyword, "</c> keyword.")
+            .AppendLineIndent("/// </summary>")
+            .AppendLineIndent(
+                "public static readonly NodaTime.LocalDate ",
+                staticFieldName,
+                " = JsonDate.ParseValue(",
+                SymbolDisplay.FormatLiteral(constantValue.GetRawText(), true),
+                "u8).GetDate();");
+
+        return true;
     }
 }

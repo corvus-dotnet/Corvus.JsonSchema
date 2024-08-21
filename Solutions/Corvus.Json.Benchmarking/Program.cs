@@ -15,7 +15,7 @@ config.AddJob(
     Job.Default
         .AsBaseline()
         .WithRuntime(CoreRuntime.Core80)
-        .WithAffinity(0x0001)
+        .WithAffinity(0xFFFF)
         .WithOutlierMode(OutlierMode.RemoveAll)
         .WithStrategy(RunStrategy.Throughput));
 
@@ -35,7 +35,7 @@ config.AddJob(
 config.AddJob(
     Job.Default
         .WithRuntime(CoreRuntime.Core90)
-        .WithAffinity(0x0001)
+        .WithAffinity(0xFFFF)
         .WithOutlierMode(OutlierMode.RemoveAll)
         .WithStrategy(RunStrategy.Throughput));
 

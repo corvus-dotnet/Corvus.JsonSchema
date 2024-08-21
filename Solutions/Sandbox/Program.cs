@@ -3,8 +3,9 @@
 ValidateLargeDocument validateLargeDocument = new();
 validateLargeDocument.GlobalSetup();
 
-bool valid = validateLargeDocument.ValidateLargeArrayCorvusValidator();
-valid = validateLargeDocument.ValidateLargeArrayCorvusValidator();
+for (int i = 0; i < 10; ++i)
+{
+    bool valid = validateLargeDocument.ValidateLargeArrayCorvusV4();
+}
 
-Console.WriteLine(valid);
 validateLargeDocument.GlobalCleanup();
