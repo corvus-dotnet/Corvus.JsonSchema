@@ -148,7 +148,7 @@ public readonly partial struct Validation
                     }
                     else
                     {
-                        return result.WithResult(isValid: false);
+                        return ValidationContext.InvalidContext;
                     }
 
                     if (level >= ValidationLevel.Basic)

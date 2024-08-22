@@ -316,7 +316,7 @@ public readonly partial struct OpenApiDocument
                     }
                     else
                     {
-                        return result.WithResult(isValid: false);
+                        return ValidationContext.InvalidContext;
                     }
                 }
                 else if (level == ValidationLevel.Verbose)
@@ -342,7 +342,7 @@ public readonly partial struct OpenApiDocument
                     }
                     else
                     {
-                        return result.WithResult(isValid: false);
+                        return ValidationContext.InvalidContext;
                     }
                 }
                 else if (level == ValidationLevel.Verbose)

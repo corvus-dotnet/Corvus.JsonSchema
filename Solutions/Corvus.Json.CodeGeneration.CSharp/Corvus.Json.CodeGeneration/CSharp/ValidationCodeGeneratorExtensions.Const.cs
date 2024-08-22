@@ -181,7 +181,7 @@ public static partial class ValidationCodeGeneratorExtensions
                     .AppendLineIndent("else")
                     .AppendLineIndent("{")
                     .PushIndent()
-                        .AppendLineIndent("return result.WithResult(isValid: false);")
+                        .AppendLineIndent("return ValidationContext.InvalidContext;")
                     .PopIndent()
                     .AppendLineIndent("}")
                     .AppendSeparatorLine()

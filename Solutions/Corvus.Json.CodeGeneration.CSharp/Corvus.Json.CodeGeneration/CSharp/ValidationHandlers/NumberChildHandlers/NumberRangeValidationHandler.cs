@@ -101,7 +101,7 @@ public class NumberRangeValidationHandler : IChildValidationHandler
                     .AppendLineIndent("else")
                     .AppendLineIndent("{")
                     .PushIndent()
-                        .AppendLineIndent("return result.WithResult(isValid: false);")
+                        .AppendLineIndent("return ValidationContext.InvalidContext;")
                     .PopIndent()
                     .AppendLineIndent("}")
                     .AppendSeparatorLine()

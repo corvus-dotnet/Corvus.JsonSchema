@@ -160,7 +160,7 @@ innerEnumerator.MoveNext())
                                 }
                                 else
                                 {
-                                    return result.WithResult(isValid: false);
+                                    return ValidationContext.InvalidContext;
                                 }
 
                                 if (level >= ValidationLevel.Basic)

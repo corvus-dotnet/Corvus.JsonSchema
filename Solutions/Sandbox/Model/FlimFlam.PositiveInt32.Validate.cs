@@ -183,7 +183,7 @@ public readonly partial struct FlimFlam
                     }
                     else
                     {
-                        return result.WithResult(isValid: false);
+                        return ValidationContext.InvalidContext;
                     }
 
                     if (level >= ValidationLevel.Basic)

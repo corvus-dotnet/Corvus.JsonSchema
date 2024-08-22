@@ -233,7 +233,7 @@ public readonly partial struct Person
                 }
                 else
                 {
-                    return result.WithResult(isValid: false);
+                    return ValidationContext.InvalidContext;
                 }
             }
             else if (level == ValidationLevel.Verbose)

@@ -91,7 +91,7 @@ public class DependentSchemasValidationHandler : IChildObjectPropertyValidationH
                             .AppendLineIndent("if (level == ValidationLevel.Flag && !", resultName, ".IsValid)")
                             .AppendLineIndent("{")
                             .PushIndent()
-                                    .AppendLineIndent("return result.WithResult(isValid: false);")
+                                    .AppendLineIndent("return ValidationContext.InvalidContext;")
                             .PopIndent()
                             .AppendLineIndent("}")
                             .AppendSeparatorLine()

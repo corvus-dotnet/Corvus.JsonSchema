@@ -99,7 +99,7 @@ public class ArrayLengthValidationHandler : IChildArrayItemValidationHandler
                     .AppendLineIndent("else")
                     .AppendLineIndent("{")
                     .PushIndent()
-                        .AppendLineIndent("return result.WithResult(isValid: false);")
+                        .AppendLineIndent("return ValidationContext.InvalidContext;")
                     .PopIndent()
                     .AppendLineIndent("}")
                 .PopIndent()

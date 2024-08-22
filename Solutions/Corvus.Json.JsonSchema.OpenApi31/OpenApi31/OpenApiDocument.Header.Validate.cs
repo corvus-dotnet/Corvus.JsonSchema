@@ -291,7 +291,7 @@ public readonly partial struct OpenApiDocument
                         ValidationContext dependentSchemasResult0 = value.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.WithStyleSimple>().Validate(result.CreateChildContext(), level);
                         if (level == ValidationLevel.Flag && !dependentSchemasResult0.IsValid)
                         {
-                            return result.WithResult(isValid: false);
+                            return ValidationContext.InvalidContext;
                         }
 
                         if (level > ValidationLevel.Basic)
