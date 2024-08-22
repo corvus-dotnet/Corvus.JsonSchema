@@ -199,7 +199,7 @@ public readonly partial struct ScenarioWithResult
                 }
                 else
                 {
-                    return result.WithResult(isValid: false);
+                    return ValidationContext.InvalidContext;
                 }
             }
             else if (level == ValidationLevel.Verbose)

@@ -387,7 +387,7 @@ public readonly partial struct OpenApiDocument
                         ValidationContext dependentSchemasResult0 = value.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity>().Validate(result.CreateChildContext(), level);
                         if (level == ValidationLevel.Flag && !dependentSchemasResult0.IsValid)
                         {
-                            return result.WithResult(isValid: false);
+                            return ValidationContext.InvalidContext;
                         }
 
                         if (level > ValidationLevel.Basic)
@@ -578,7 +578,7 @@ public readonly partial struct OpenApiDocument
                     }
                     else
                     {
-                        return result.WithResult(isValid: false);
+                        return ValidationContext.InvalidContext;
                     }
                 }
                 else if (level == ValidationLevel.Verbose)
@@ -604,7 +604,7 @@ public readonly partial struct OpenApiDocument
                     }
                     else
                     {
-                        return result.WithResult(isValid: false);
+                        return ValidationContext.InvalidContext;
                     }
                 }
                 else if (level == ValidationLevel.Verbose)

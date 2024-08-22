@@ -198,7 +198,7 @@ public readonly partial struct PersonName
                 }
                 else
                 {
-                    return result.WithResult(isValid: false);
+                    return ValidationContext.InvalidContext;
                 }
             }
             else if (level == ValidationLevel.Verbose)

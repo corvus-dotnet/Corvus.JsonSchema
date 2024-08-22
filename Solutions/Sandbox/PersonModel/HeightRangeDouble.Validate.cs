@@ -149,7 +149,7 @@ public readonly partial struct HeightRangeDouble
                 }
                 else
                 {
-                    return result.WithResult(isValid: false);
+                    return ValidationContext.InvalidContext;
                 }
 
                 if (level >= ValidationLevel.Basic)
@@ -186,7 +186,7 @@ public readonly partial struct HeightRangeDouble
                 }
                 else
                 {
-                    return result.WithResult(isValid: false);
+                    return ValidationContext.InvalidContext;
                 }
 
                 if (level >= ValidationLevel.Basic)
