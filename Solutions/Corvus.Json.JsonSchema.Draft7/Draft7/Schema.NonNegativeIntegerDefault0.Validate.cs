@@ -14,7 +14,6 @@ using System.Text.Json;
 using Corvus.Json;
 
 namespace Corvus.Json.JsonSchema.Draft7;
-
 /// <summary>
 /// Core schema meta-schema
 /// </summary>

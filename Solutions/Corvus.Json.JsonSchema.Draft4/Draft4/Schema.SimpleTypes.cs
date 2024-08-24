@@ -16,7 +16,6 @@ using Corvus.Json;
 using Corvus.Json.Internal;
 
 namespace Corvus.Json.JsonSchema.Draft4;
-
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>

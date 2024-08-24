@@ -14,7 +14,6 @@ using System.Text.Json;
 using Corvus.Json;
 
 namespace Corvus.Json.JsonSchema.Draft202012;
-
 /// <summary>
 /// Validation vocabulary meta-schema
 /// </summary>

@@ -20,7 +20,6 @@ using Corvus.Json;
 using Corvus.Json.Internal;
 
 namespace Corvus.Json.JsonSchema.Draft6;
-
 /// <summary>
 /// Core schema meta-schema
 /// </summary>

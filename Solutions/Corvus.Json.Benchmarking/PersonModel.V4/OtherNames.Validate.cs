@@ -14,7 +14,6 @@ using System.Text.Json;
 using Corvus.Json;
 
 namespace Corvus.Json.Benchmarking.Models.V4;
-
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>

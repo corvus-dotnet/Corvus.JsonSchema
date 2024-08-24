@@ -13,7 +13,6 @@ using System.Runtime.CompilerServices;
 using System.Text.Json;
 
 namespace Corvus.Json;
-
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>

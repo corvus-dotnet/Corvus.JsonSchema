@@ -14,7 +14,6 @@ using System.Text.Json;
 using Corvus.Json;
 
 namespace Corvus.Json.JsonSchema.Draft201909;
-
 /// <summary>
 /// Applicator vocabulary meta-schema
 /// </summary>

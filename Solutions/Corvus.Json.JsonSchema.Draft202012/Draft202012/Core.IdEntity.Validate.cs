@@ -15,7 +15,6 @@ using System.Text.RegularExpressions;
 using Corvus.Json;
 
 namespace Corvus.Json.JsonSchema.Draft202012;
-
 /// <summary>
 /// Core vocabulary meta-schema
 /// </summary>

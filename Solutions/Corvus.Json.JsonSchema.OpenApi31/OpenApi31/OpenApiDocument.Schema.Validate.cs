@@ -14,7 +14,6 @@ using System.Text.Json;
 using Corvus.Json;
 
 namespace Corvus.Json.JsonSchema.OpenApi31;
-
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -78,7 +77,6 @@ public readonly partial struct OpenApiDocument
                 in ValidationContext validationContext,
                 ValidationLevel level = ValidationLevel.Flag)
             {
-                ValidationContext result = validationContext;
                 bool isValid = false;
                 ValidationContext localResultObject = Corvus.Json.ValidateWithoutCoreType.TypeObject(valueKind, ValidationContext.ValidContext, level);
                 if (level == ValidationLevel.Flag && localResultObject.IsValid)
@@ -102,7 +100,7 @@ public readonly partial struct OpenApiDocument
                     isValid = true;
                 }
 
-                return result.MergeResults(
+                return validationContext.MergeResults(
                     isValid,
                     level,
                     localResultObject,

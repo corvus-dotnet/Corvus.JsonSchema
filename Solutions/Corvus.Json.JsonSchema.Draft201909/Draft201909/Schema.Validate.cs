@@ -14,7 +14,6 @@ using System.Text.Json;
 using Corvus.Json;
 
 namespace Corvus.Json.JsonSchema.Draft201909;
-
 /// <summary>
 /// Core and Validation specifications meta-schema
 /// </summary>
@@ -80,7 +79,6 @@ public readonly partial struct Schema
             in ValidationContext validationContext,
             ValidationLevel level = ValidationLevel.Flag)
         {
-            ValidationContext result = validationContext;
             bool isValid = false;
             ValidationContext localResultObject = Corvus.Json.ValidateWithoutCoreType.TypeObject(valueKind, ValidationContext.ValidContext, level);
             if (level == ValidationLevel.Flag && localResultObject.IsValid)
@@ -104,7 +102,7 @@ public readonly partial struct Schema
                 isValid = true;
             }
 
-            return result.MergeResults(
+            return validationContext.MergeResults(
                 isValid,
                 level,
                 localResultObject,

@@ -14,7 +14,6 @@ using System.Text.Json;
 using Corvus.Json;
 
 namespace Corvus.Json.JsonSchema.Draft201909;
-
 /// <summary>
 /// Applicator vocabulary meta-schema
 /// </summary>
@@ -80,8 +79,7 @@ public readonly partial struct Applicator
                 in ValidationContext validationContext,
                 ValidationLevel level = ValidationLevel.Flag)
             {
-                ValidationContext result = validationContext;
-                return Corvus.Json.ValidateWithoutCoreType.TypeObject(valueKind, result, level);
+                return Corvus.Json.ValidateWithoutCoreType.TypeObject(valueKind, validationContext, level);
             }
 
             /// <summary>

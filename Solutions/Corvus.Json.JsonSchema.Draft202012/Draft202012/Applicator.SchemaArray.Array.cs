@@ -20,7 +20,6 @@ using Corvus.Json;
 using Corvus.Json.Internal;
 
 namespace Corvus.Json.JsonSchema.Draft202012;
-
 /// <summary>
 /// Applicator vocabulary meta-schema
 /// </summary>

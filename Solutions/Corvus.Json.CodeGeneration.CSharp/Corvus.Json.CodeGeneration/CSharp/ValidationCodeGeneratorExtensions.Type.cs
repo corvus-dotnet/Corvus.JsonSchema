@@ -79,22 +79,35 @@ public static partial class ValidationCodeGeneratorExtensions
                     ("ValidationLevel", "level", "ValidationLevel.Flag"));
         }
 
-        return generator
+        generator
             .ReserveName("result")
-            .ReserveName("isValid")
-            .AppendBlockIndent(
-                """
-                ValidationContext result = validationContext;
-                """)
-            .PrependChildValidationCode(typeDeclaration, children, parentHandlerPriority)
-            .AppendCoreTypeValidation(typeDeclaration.AllowedCoreTypes())
-            .AppendChildValidationCode(typeDeclaration, children, parentHandlerPriority)
+            .ReserveName("isValid");
+        bool hasChildren = children.Count > 0;
+        if (hasChildren)
+        {
+            generator
+                .AppendBlockIndent(
+                    """
+                    ValidationContext result = validationContext;
+                    """)
+                .PrependChildValidationCode(typeDeclaration, children, parentHandlerPriority)
+                .AppendCoreTypeValidation(typeDeclaration.AllowedCoreTypes(), hasChildren)
+                .AppendChildValidationCode(typeDeclaration, children, parentHandlerPriority);
+        }
+        else
+        {
+            generator
+                .AppendCoreTypeValidation(typeDeclaration.AllowedCoreTypes(), hasChildren);
+        }
+
+        return generator
             .EndMethodDeclaration();
     }
 
     private static CodeGenerator AppendCoreTypeValidation(
         this CodeGenerator generator,
-        CoreTypes allowedCoreTypes)
+        CoreTypes allowedCoreTypes,
+        bool hasChildren)
     {
         if (generator.IsCancellationRequested)
         {
@@ -114,12 +127,12 @@ public static partial class ValidationCodeGeneratorExtensions
                 if ((allowedCoreTypes & CoreTypes.Integer) != 0)
                 {
                     generator
-                        .AppendLineIndent("return Corvus.Json.ValidateWithoutCoreType.TypeInteger(value, result, level);");
+                        .AppendLineIndent("return Corvus.Json.ValidateWithoutCoreType.TypeInteger(value, ", hasChildren ? "result, " : "validationContext, ", "level);");
                 }
                 else
                 {
                     generator
-                        .AppendLineIndent("return Corvus.Json.ValidateWithoutCoreType.Type", allowedCoreTypes.SingleCoreTypeName(), "(valueKind, result, level);");
+                        .AppendLineIndent("return Corvus.Json.ValidateWithoutCoreType.Type", allowedCoreTypes.SingleCoreTypeName(), "(valueKind, ", hasChildren ? "result, " : "validationContext, ", "level);");
                 }
             }
             else
@@ -287,12 +300,28 @@ public static partial class ValidationCodeGeneratorExtensions
                 if (coreTypesCount > 0)
                 {
                     generator
-                        .AppendSeparatorLine()
-                        .AppendBlockIndent(
-                        """
-                    return result.MergeResults(
-                        isValid,
-                    """)
+                        .AppendSeparatorLine();
+
+                    if (hasChildren)
+                    {
+                        generator
+                            .AppendBlockIndent(
+                                """
+                            return result.MergeResults(
+                                isValid,
+                            """);
+                    }
+                    else
+                    {
+                        generator
+                            .AppendBlockIndent(
+                                """
+                            return validationContext.MergeResults(
+                                isValid,
+                            """);
+                    }
+
+                    generator
                         .PushIndent()
                         .AppendIndent("level");
 

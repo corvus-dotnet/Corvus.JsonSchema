@@ -304,11 +304,11 @@ public static class JsonPointerUtilities
     /// Get s the line and offset for the pointer in the input.
     /// </summary>
     /// <param name="utf8Input">The UTF8 input text.</param>
-    /// <param name="fragment">The fragment for teh JSON pointer.</param>
+    /// <param name="fragment">The fragment for the JSON pointer.</param>
     /// <param name="line">If the pointer was successfully resolved, this is the line in the input text.</param>
     /// <param name="chars">If the pointer was successfully resolved, this is the character offset in the line.</param>
     /// <param name="lineOffset">If the pointer was successfully resolved, this is the total offset to the start of the line in the input text.</param>
-    /// <returns><see langword="true"/> if teh pointer was successfully resolved.</returns>
+    /// <returns><see langword="true"/> if the pointer was successfully resolved.</returns>
     public static bool TryGetLineAndOffsetForPointer(ReadOnlySpan<byte> utf8Input, ReadOnlySpan<char> fragment, out int line, out int chars, out long lineOffset)
     {
         int lineCount = 0;

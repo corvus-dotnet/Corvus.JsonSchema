@@ -14,7 +14,6 @@ using System.Text.Json;
 using Corvus.Json;
 
 namespace Corvus.Json.Patch.Model;
-
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>

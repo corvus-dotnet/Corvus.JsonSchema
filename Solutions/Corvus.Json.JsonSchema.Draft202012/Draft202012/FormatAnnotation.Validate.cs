@@ -14,7 +14,6 @@ using System.Text.Json;
 using Corvus.Json;
 
 namespace Corvus.Json.JsonSchema.Draft202012;
-
 /// <summary>
 /// Format vocabulary meta-schema for annotation results
 /// </summary>
@@ -74,7 +73,6 @@ public readonly partial struct FormatAnnotation
             in ValidationContext validationContext,
             ValidationLevel level = ValidationLevel.Flag)
         {
-            ValidationContext result = validationContext;
             bool isValid = false;
             ValidationContext localResultObject = Corvus.Json.ValidateWithoutCoreType.TypeObject(valueKind, ValidationContext.ValidContext, level);
             if (level == ValidationLevel.Flag && localResultObject.IsValid)
@@ -98,7 +96,7 @@ public readonly partial struct FormatAnnotation
                 isValid = true;
             }
 
-            return result.MergeResults(
+            return validationContext.MergeResults(
                 isValid,
                 level,
                 localResultObject,
