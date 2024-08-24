@@ -20,7 +20,6 @@ using Corvus.Json;
 using Corvus.Json.Internal;
 
 namespace Corvus.Json.JsonSchema.OpenApi30;
-
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>

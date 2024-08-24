@@ -14,7 +14,6 @@ using System.Text.Json;
 using Corvus.Json;
 
 namespace Sandbox.Models;
-
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>

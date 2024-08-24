@@ -17,7 +17,6 @@ using Corvus.Json;
 using Corvus.Json.Internal;
 
 namespace Corvus.Json.JsonSchema.Draft202012;
-
 /// <summary>
 /// Format vocabulary meta-schema for annotation results
 /// </summary>

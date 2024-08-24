@@ -15,7 +15,6 @@ using System.Text.RegularExpressions;
 using Corvus.Json;
 
 namespace Corvus.Json.JsonSchema.OpenApi31;
-
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>

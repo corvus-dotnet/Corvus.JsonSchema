@@ -15,7 +15,6 @@ using System.Text.RegularExpressions;
 using Corvus.Json;
 
 namespace Corvus.Json.JsonSchema.Draft201909;
-
 /// <summary>
 /// Core vocabulary meta-schema
 /// </summary>
@@ -91,8 +90,7 @@ public readonly partial struct Core
                 in ValidationContext validationContext,
                 ValidationLevel level = ValidationLevel.Flag)
             {
-                ValidationContext result = validationContext;
-                return Corvus.Json.ValidateWithoutCoreType.TypeString(valueKind, result, level);
+                return Corvus.Json.ValidateWithoutCoreType.TypeString(valueKind, validationContext, level);
             }
 
             /// <summary>

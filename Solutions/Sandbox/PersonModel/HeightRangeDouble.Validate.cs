@@ -14,7 +14,6 @@ using System.Text.Json;
 using Corvus.Json;
 
 namespace Sandbox.Models;
-
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -84,8 +83,7 @@ public readonly partial struct HeightRangeDouble
             in ValidationContext validationContext,
             ValidationLevel level = ValidationLevel.Flag)
         {
-            ValidationContext result = validationContext;
-            return Corvus.Json.ValidateWithoutCoreType.TypeNumber(valueKind, result, level);
+            return Corvus.Json.ValidateWithoutCoreType.TypeNumber(valueKind, validationContext, level);
         }
 
         /// <summary>

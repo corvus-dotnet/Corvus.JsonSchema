@@ -18,7 +18,6 @@ using Corvus.Json;
 using Corvus.Json.Internal;
 
 namespace Corvus.Json.Benchmarking.Models.V4;
-
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>

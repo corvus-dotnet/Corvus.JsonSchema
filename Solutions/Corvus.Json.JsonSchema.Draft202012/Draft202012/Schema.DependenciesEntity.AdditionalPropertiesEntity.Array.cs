@@ -20,7 +20,6 @@ using Corvus.Json;
 using Corvus.Json.Internal;
 
 namespace Corvus.Json.JsonSchema.Draft202012;
-
 /// <summary>
 /// Core and Validation specifications meta-schema
 /// </summary>

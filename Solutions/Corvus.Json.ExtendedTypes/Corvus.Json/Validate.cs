@@ -78,7 +78,7 @@ public static partial class Validate
     internal static readonly Regex IdnEmailMatchPattern = CreateIdnEmailMatchPattern();
 
     /// <summary>
-    /// Gets teh standard IDN mapping.
+    /// Gets the standard IDN mapping.
     /// </summary>
     internal static readonly IdnMapping IdnMapping = new() { AllowUnassigned = true, UseStd3AsciiRules = true };
 

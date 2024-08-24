@@ -14,7 +14,6 @@ using System.Text.Json;
 using Corvus.Json;
 
 namespace Corvus.Json.JsonSchema.Draft202012;
-
 /// <summary>
 /// Validation vocabulary meta-schema
 /// </summary>
@@ -83,8 +82,7 @@ public readonly partial struct Validation
                 in ValidationContext validationContext,
                 ValidationLevel level = ValidationLevel.Flag)
             {
-                ValidationContext result = validationContext;
-                return Corvus.Json.ValidateWithoutCoreType.TypeBoolean(valueKind, result, level);
+                return Corvus.Json.ValidateWithoutCoreType.TypeBoolean(valueKind, validationContext, level);
             }
         }
     }

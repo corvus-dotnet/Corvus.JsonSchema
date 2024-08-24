@@ -14,7 +14,6 @@ using System.Text.Json;
 using Corvus.Json;
 
 namespace Sandbox.Models;
-
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -79,8 +78,7 @@ public readonly partial struct PersonName
             in ValidationContext validationContext,
             ValidationLevel level = ValidationLevel.Flag)
         {
-            ValidationContext result = validationContext;
-            return Corvus.Json.ValidateWithoutCoreType.TypeObject(valueKind, result, level);
+            return Corvus.Json.ValidateWithoutCoreType.TypeObject(valueKind, validationContext, level);
         }
 
         /// <summary>

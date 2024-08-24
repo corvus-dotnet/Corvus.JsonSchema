@@ -14,7 +14,6 @@ using System.Text.Json;
 using Corvus.Json;
 
 namespace Corvus.Json.JsonSchema.Draft4;
-
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -99,8 +98,7 @@ public readonly partial struct Schema
                 in ValidationContext validationContext,
                 ValidationLevel level = ValidationLevel.Flag)
             {
-                ValidationContext result = validationContext;
-                return Corvus.Json.ValidateWithoutCoreType.TypeInteger(value, result, level);
+                return Corvus.Json.ValidateWithoutCoreType.TypeInteger(value, validationContext, level);
             }
 
             /// <summary>

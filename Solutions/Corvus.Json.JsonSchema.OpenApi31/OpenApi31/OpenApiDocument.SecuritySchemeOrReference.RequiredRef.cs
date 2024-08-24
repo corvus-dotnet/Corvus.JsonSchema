@@ -17,7 +17,6 @@ using Corvus.Json;
 using Corvus.Json.Internal;
 
 namespace Corvus.Json.JsonSchema.OpenApi31;
-
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>

@@ -14,7 +14,6 @@ using System.Text.Json;
 using Corvus.Json;
 
 namespace Sandbox.Models;
-
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -79,7 +78,6 @@ public readonly partial struct Person
                 in ValidationContext validationContext,
                 ValidationLevel level = ValidationLevel.Flag)
             {
-                ValidationContext result = validationContext;
                 bool isValid = false;
                 ValidationContext localResultString = Corvus.Json.ValidateWithoutCoreType.TypeString(valueKind, ValidationContext.ValidContext, level);
                 if (level == ValidationLevel.Flag && localResultString.IsValid)
@@ -103,7 +101,7 @@ public readonly partial struct Person
                     isValid = true;
                 }
 
-                return result.MergeResults(
+                return validationContext.MergeResults(
                     isValid,
                     level,
                     localResultString,

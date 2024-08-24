@@ -16,7 +16,6 @@ using Corvus.Json;
 using Corvus.Json.Internal;
 
 namespace Corvus.Json.JsonSchema.Draft201909;
-
 /// <summary>
 /// Core and Validation specifications meta-schema
 /// </summary>

@@ -15,7 +15,6 @@ using Corvus.Json;
 using Corvus.Json.Internal;
 
 namespace Corvus.Json.Patch.SpecGenerator;
-
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
