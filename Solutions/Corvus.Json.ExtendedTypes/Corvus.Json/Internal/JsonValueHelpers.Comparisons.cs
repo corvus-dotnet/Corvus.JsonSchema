@@ -329,7 +329,7 @@ public static partial class JsonValueHelpers
             if (item2.HasDotnetBacking)
             {
 #if NET8_0_OR_GREATER
-                return item1.AsJsonElement.ValueEquals((string)item2);
+                return item1.AsJsonElement.ValueEquals(item2.GetString());
 #else
                 return item1.AsJsonElement.ValueEquals((string)item2.AsString);
 #endif
@@ -346,7 +346,7 @@ public static partial class JsonValueHelpers
             if (item1.HasDotnetBacking)
             {
 #if NET8_0_OR_GREATER
-                return item2.AsJsonElement.ValueEquals((string)item1);
+                return item2.AsJsonElement.ValueEquals(item1.GetString());
 #else
                 return item2.AsJsonElement.ValueEquals((string)item1.AsString);
 #endif
@@ -360,7 +360,7 @@ public static partial class JsonValueHelpers
         }
 
 #if NET8_0_OR_GREATER
-        return ((string)item1).Equals((string)item2, StringComparison.Ordinal);
+        return string.Equals(item1.GetString(), item2.GetString(), StringComparison.Ordinal);
 #else
         return ((string)item1.AsString).Equals((string)item2.AsString, StringComparison.Ordinal);
 #endif
