@@ -98,7 +98,7 @@ public readonly partial struct JsonIdnEmail
     {
         if (value.HasDotnetBacking && value.ValueKind == JsonValueKind.String)
         {
-            return new((string)value);
+            return new(value.GetString()!);
         }
 
         return new(value.AsJsonElement);
