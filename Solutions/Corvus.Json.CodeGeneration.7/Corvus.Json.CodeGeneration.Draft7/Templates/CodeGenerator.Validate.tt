@@ -62,7 +62,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
         if (level > ValidationLevel.Basic)
         {
             result = result.UsingStack();
-            result = result.PushSchemaLocation("<#= TypeDeclaration.RelativeSchemaLocation #>");
+            result = result.PushSchemaLocation(<#= Formatting.FormatLiteralOrNull(TypeDeclaration.RelativeSchemaLocation, true) #>);
         }
 <#  if (HasAdditionalProperties)
     { #>
@@ -99,7 +99,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
             return result;
         }
 <#      }
-        if (HasFormat)
+        if (HasFormat && ValidateFormat)
         { #>
 
         result = this.ValidateFormat(valueKind, result, level);

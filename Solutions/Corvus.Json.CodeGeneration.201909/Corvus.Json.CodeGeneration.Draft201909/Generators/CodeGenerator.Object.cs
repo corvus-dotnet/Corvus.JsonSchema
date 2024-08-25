@@ -16,7 +16,7 @@ namespace Corvus.Json.CodeGeneration.Generators.Draft201909 {
     public partial class CodeGeneratorObject : CodeGeneratorObjectBase {
         
         
-        #line 593 "CodeGenerator.Object.tt"
+        #line 1077 "CodeGenerator.Object.tt"
 
     public bool ShouldGenerate
     {
@@ -56,111 +56,231 @@ namespace Corvus.Json.CodeGeneration.Generators.Draft201909 {
 
 #nullable enable
 
-using System.Collections.Immutable;
-using System.Runtime.CompilerServices;
-using System.Text.Json;
-using Corvus.Json;
-using Corvus.Json.Internal;
-
-namespace ");
+");
+            
+            #line default
+            #line hidden
+            
+            #line 21 "CodeGenerator.Object.tt"
+  if (CanEnumerateObjectAsSpecificType)
+    { 
+            
+            #line default
+            #line hidden
+            
+            #line 23 "CodeGenerator.Object.tt"
+            this.Write("using System.Collections;\r\nusing System.Collections.Generic;\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 25 "CodeGenerator.Object.tt"
+  } 
+            
+            #line default
+            #line hidden
+            
+            #line 26 "CodeGenerator.Object.tt"
+            this.Write("using System.Collections.Immutable;\r\n");
             
             #line default
             #line hidden
             
             #line 27 "CodeGenerator.Object.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( Namespace ));
-            
-            #line default
-            #line hidden
-            
-            #line 27 "CodeGenerator.Object.tt"
-            this.Write(";\r\n\r\n");
+  if (CanEnumerateObjectAsSpecificType)
+    { 
             
             #line default
             #line hidden
             
             #line 29 "CodeGenerator.Object.tt"
+            this.Write("using System.Diagnostics.CodeAnalysis;\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 30 "CodeGenerator.Object.tt"
+  } 
+            
+            #line default
+            #line hidden
+            
+            #line 31 "CodeGenerator.Object.tt"
+            this.Write("using System.Runtime.CompilerServices;\r\nusing System.Text.Json;\r\nusing Corvus.Jso" +
+                    "n;\r\nusing Corvus.Json.Internal;\r\n\r\nnamespace ");
+            
+            #line default
+            #line hidden
+            
+            #line 36 "CodeGenerator.Object.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( Namespace ));
+            
+            #line default
+            #line hidden
+            
+            #line 36 "CodeGenerator.Object.tt"
+            this.Write(";\r\n\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 38 "CodeGenerator.Object.tt"
  BeginNesting(); 
             
             #line default
             #line hidden
             
-            #line 30 "CodeGenerator.Object.tt"
+            #line 39 "CodeGenerator.Object.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( FormattedTypeDocumentation ));
             
             #line default
             #line hidden
             
-            #line 30 "CodeGenerator.Object.tt"
-            this.Write("\r\npublic readonly partial struct ");
+            #line 39 "CodeGenerator.Object.tt"
+            this.Write("\r\n");
             
             #line default
             #line hidden
             
-            #line 31 "CodeGenerator.Object.tt"
+            #line 40 "CodeGenerator.Object.tt"
+  if (CanEnumerateObjectAsSpecificType)
+    { 
+            
+            #line default
+            #line hidden
+            
+            #line 42 "CodeGenerator.Object.tt"
+            this.Write("public readonly partial struct ");
+            
+            #line default
+            #line hidden
+            
+            #line 42 "CodeGenerator.Object.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 31 "CodeGenerator.Object.tt"
+            #line 42 "CodeGenerator.Object.tt"
             this.Write(" : IJsonObject<");
             
             #line default
             #line hidden
             
-            #line 31 "CodeGenerator.Object.tt"
+            #line 42 "CodeGenerator.Object.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 31 "CodeGenerator.Object.tt"
-            this.Write(">\r\n{\r\n    /// <summary>\r\n    /// Initializes a new instance of the <see cref=\"");
+            #line 42 "CodeGenerator.Object.tt"
+            this.Write(">, IReadOnlyDictionary<JsonPropertyName, ");
             
             #line default
             #line hidden
             
-            #line 34 "CodeGenerator.Object.tt"
+            #line 42 "CodeGenerator.Object.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( SinglePropertyDotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 42 "CodeGenerator.Object.tt"
+            this.Write(">\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 43 "CodeGenerator.Object.tt"
+  }
+    else
+    { 
+            
+            #line default
+            #line hidden
+            
+            #line 46 "CodeGenerator.Object.tt"
+            this.Write("public readonly partial struct ");
+            
+            #line default
+            #line hidden
+            
+            #line 46 "CodeGenerator.Object.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 34 "CodeGenerator.Object.tt"
+            #line 46 "CodeGenerator.Object.tt"
+            this.Write(" : IJsonObject<");
+            
+            #line default
+            #line hidden
+            
+            #line 46 "CodeGenerator.Object.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 46 "CodeGenerator.Object.tt"
+            this.Write(">\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 47 "CodeGenerator.Object.tt"
+  } 
+            
+            #line default
+            #line hidden
+            
+            #line 48 "CodeGenerator.Object.tt"
+            this.Write("{\r\n    /// <summary>\r\n    /// Initializes a new instance of the <see cref=\"");
+            
+            #line default
+            #line hidden
+            
+            #line 50 "CodeGenerator.Object.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 50 "CodeGenerator.Object.tt"
             this.Write("\"/> struct.\r\n    /// </summary>\r\n    /// <param name=\"value\">The value from which" +
                     " to construct the instance.</param>\r\n    public ");
             
             #line default
             #line hidden
             
-            #line 37 "CodeGenerator.Object.tt"
+            #line 53 "CodeGenerator.Object.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 37 "CodeGenerator.Object.tt"
+            #line 53 "CodeGenerator.Object.tt"
             this.Write("(ImmutableList<JsonObjectProperty> value)\r\n    {\r\n        this.jsonElementBacking" +
                     " = default;\r\n        this.backing = Backing.Object;\r\n");
             
             #line default
             #line hidden
             
-            #line 41 "CodeGenerator.Object.tt"
+            #line 57 "CodeGenerator.Object.tt"
   if(IsImplicitString || IsNotImplicitType)
     { 
             
             #line default
             #line hidden
             
-            #line 43 "CodeGenerator.Object.tt"
+            #line 59 "CodeGenerator.Object.tt"
             this.Write("        this.stringBacking = string.Empty;\r\n");
             
             #line default
             #line hidden
             
-            #line 44 "CodeGenerator.Object.tt"
+            #line 60 "CodeGenerator.Object.tt"
   }
     if (IsImplicitBoolean && !(IsImplicitNumber || IsNotImplicitType))
     { 
@@ -168,13 +288,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 47 "CodeGenerator.Object.tt"
+            #line 63 "CodeGenerator.Object.tt"
             this.Write("        this.boolBacking = default;\r\n");
             
             #line default
             #line hidden
             
-            #line 48 "CodeGenerator.Object.tt"
+            #line 64 "CodeGenerator.Object.tt"
   }
     if(IsImplicitNumber || IsNotImplicitType)
     { 
@@ -182,13 +302,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 51 "CodeGenerator.Object.tt"
+            #line 67 "CodeGenerator.Object.tt"
             this.Write("        this.numberBacking = default;\r\n");
             
             #line default
             #line hidden
             
-            #line 52 "CodeGenerator.Object.tt"
+            #line 68 "CodeGenerator.Object.tt"
   }
     if(IsImplicitArray || IsNotImplicitType)
     { 
@@ -196,19 +316,19 @@ namespace ");
             #line default
             #line hidden
             
-            #line 55 "CodeGenerator.Object.tt"
+            #line 71 "CodeGenerator.Object.tt"
             this.Write("        this.arrayBacking = ImmutableList<JsonAny>.Empty;\r\n");
             
             #line default
             #line hidden
             
-            #line 56 "CodeGenerator.Object.tt"
+            #line 72 "CodeGenerator.Object.tt"
   } 
             
             #line default
             #line hidden
             
-            #line 57 "CodeGenerator.Object.tt"
+            #line 73 "CodeGenerator.Object.tt"
             this.Write("        this.objectBacking = value;\r\n    }\r\n\r\n    /// <summary>\r\n    /// Conversi" +
                     "on from JsonObject.\r\n    /// </summary>\r\n    /// <param name=\"value\">The value f" +
                     "rom which to convert.</param>\r\n    public static implicit operator ");
@@ -216,13 +336,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 64 "CodeGenerator.Object.tt"
+            #line 80 "CodeGenerator.Object.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 64 "CodeGenerator.Object.tt"
+            #line 80 "CodeGenerator.Object.tt"
             this.Write(@"(JsonObject value)
     {
         if (value.HasDotnetBacking && value.ValueKind == JsonValueKind.Object)
@@ -240,26 +360,20 @@ namespace ");
         return this.GetPropertyBacking();
     }
 
-    /// <inheritdoc/>
-    public JsonAny this[in JsonPropertyName name]
-    {
-        get
-        {
-            if (this.TryGetProperty(name, out JsonAny result))
-            {
-                return result;
-            }
-
-            throw new IndexOutOfRangeException();
-        }
-    }
-
-    /// <summary>
-    /// Creates an instance of the type from the given dictionary of properties.
-    /// </summary>
-    /// <param name=""source"">The dictionary of properties.</param>
-    /// <returns>An instance of the type initialized from the dictionary of properties.</returns>
-    public static ");
+");
+            
+            #line default
+            #line hidden
+            
+            #line 97 "CodeGenerator.Object.tt"
+  if (CanEnumerateObjectAsSpecificType)
+    { 
+            
+            #line default
+            #line hidden
+            
+            #line 99 "CodeGenerator.Object.tt"
+            this.Write("    /// <inheritdoc/>\r\n    JsonAny IJsonObject<");
             
             #line default
             #line hidden
@@ -271,7 +385,484 @@ namespace ");
             #line hidden
             
             #line 100 "CodeGenerator.Object.tt"
-            this.Write(@" FromProperties(IDictionary<JsonPropertyName, JsonAny> source)
+            this.Write(">.this[in JsonPropertyName name]\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 101 "CodeGenerator.Object.tt"
+  }
+    else
+    { 
+            
+            #line default
+            #line hidden
+            
+            #line 104 "CodeGenerator.Object.tt"
+            this.Write("    /// <inheritdoc/>\r\n    public JsonAny this[in JsonPropertyName name]\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 106 "CodeGenerator.Object.tt"
+  } 
+            
+            #line default
+            #line hidden
+            
+            #line 107 "CodeGenerator.Object.tt"
+            this.Write("    {\r\n        get\r\n        {\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 110 "CodeGenerator.Object.tt"
+  if (CanEnumerateObjectAsSpecificType)
+    { 
+            
+            #line default
+            #line hidden
+            
+            #line 112 "CodeGenerator.Object.tt"
+            this.Write("            if (this.TryGetProperty(name, out ");
+            
+            #line default
+            #line hidden
+            
+            #line 112 "CodeGenerator.Object.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( SinglePropertyDotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 112 "CodeGenerator.Object.tt"
+            this.Write(" result))\r\n            {\r\n                return result.AsAny;\r\n            }\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 116 "CodeGenerator.Object.tt"
+  }
+    else
+    { 
+            
+            #line default
+            #line hidden
+            
+            #line 119 "CodeGenerator.Object.tt"
+            this.Write("            if (this.TryGetProperty(name, out JsonAny result))\r\n            {\r\n  " +
+                    "              return result;\r\n            }\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 123 "CodeGenerator.Object.tt"
+  } 
+            
+            #line default
+            #line hidden
+            
+            #line 124 "CodeGenerator.Object.tt"
+            this.Write("\r\n            throw new IndexOutOfRangeException();\r\n        }\r\n    }\r\n\r\n    ");
+            
+            #line default
+            #line hidden
+            
+            #line 129 "CodeGenerator.Object.tt"
+  if (CanEnumerateObjectAsSpecificType)
+    { 
+            
+            #line default
+            #line hidden
+            
+            #line 131 "CodeGenerator.Object.tt"
+            this.Write("    /// <summary>\r\n    /// Get the property with the given name.\r\n    /// </summa" +
+                    "ry>\r\n    public ");
+            
+            #line default
+            #line hidden
+            
+            #line 134 "CodeGenerator.Object.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( SinglePropertyDotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 134 "CodeGenerator.Object.tt"
+            this.Write(" this[in JsonPropertyName name]\r\n    {\r\n        get\r\n        {\r\n            if (t" +
+                    "his.TryGetProperty(name, out ");
+            
+            #line default
+            #line hidden
+            
+            #line 138 "CodeGenerator.Object.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( SinglePropertyDotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 138 "CodeGenerator.Object.tt"
+            this.Write(" result))\r\n            {\r\n                return result;\r\n            }\r\n\r\n      " +
+                    "      throw new IndexOutOfRangeException();\r\n        }\r\n    }\r\n\r\n    /// <inheri" +
+                    "tdoc/>\r\n    ");
+            
+            #line default
+            #line hidden
+            
+            #line 148 "CodeGenerator.Object.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( SinglePropertyDotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 148 "CodeGenerator.Object.tt"
+            this.Write(" IReadOnlyDictionary<JsonPropertyName, ");
+            
+            #line default
+            #line hidden
+            
+            #line 148 "CodeGenerator.Object.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( SinglePropertyDotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 148 "CodeGenerator.Object.tt"
+            this.Write(">.this[JsonPropertyName key] => this[key];\r\n\r\n\r\n    /// <inheritdoc/>\r\n    IEnume" +
+                    "rable<JsonPropertyName> IReadOnlyDictionary<JsonPropertyName, ");
+            
+            #line default
+            #line hidden
+            
+            #line 152 "CodeGenerator.Object.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( SinglePropertyDotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 152 "CodeGenerator.Object.tt"
+            this.Write(">.Keys\r\n    {\r\n        get\r\n        {\r\n            foreach(var property in this.E" +
+                    "numerateObject())\r\n            {\r\n                yield return property.Name;\r\n " +
+                    "           }\r\n        }\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    IEnumerable<");
+            
+            #line default
+            #line hidden
+            
+            #line 164 "CodeGenerator.Object.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( SinglePropertyDotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 164 "CodeGenerator.Object.tt"
+            this.Write("> IReadOnlyDictionary<JsonPropertyName, ");
+            
+            #line default
+            #line hidden
+            
+            #line 164 "CodeGenerator.Object.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( SinglePropertyDotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 164 "CodeGenerator.Object.tt"
+            this.Write(@">.Values 
+    { 
+        get
+        {
+            foreach (var property in this.EnumerateObject())
+            {
+                yield return property.Value;
+            }
+        }
+    }
+
+    /// <inheritdoc/>
+    int IReadOnlyCollection<KeyValuePair<JsonPropertyName, ");
+            
+            #line default
+            #line hidden
+            
+            #line 176 "CodeGenerator.Object.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( SinglePropertyDotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 176 "CodeGenerator.Object.tt"
+            this.Write(@">>.Count
+    {
+        get
+        {
+            if (this.HasJsonElementBacking)
+            {
+                int count = 0;
+                foreach (var _ in this.jsonElementBacking.EnumerateObject())
+                {
+                    count++;
+                }
+
+                return count;
+            }
+
+            if (this.HasDotnetBacking)
+            {
+                return this.objectBacking.Count;
+            }
+
+            throw new InvalidOperationException();
+        }
+    }
+");
+            
+            #line default
+            #line hidden
+            
+            #line 199 "CodeGenerator.Object.tt"
+ } 
+            
+            #line default
+            #line hidden
+            
+            #line 200 "CodeGenerator.Object.tt"
+            this.Write("\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 201 "CodeGenerator.Object.tt"
+  if (CanEnumerateObjectAsSpecificType)
+    { 
+            
+            #line default
+            #line hidden
+            
+            #line 203 "CodeGenerator.Object.tt"
+            this.Write(@"#if NET8_0_OR_GREATER
+    /// <summary>
+    /// Creates an instance of the type from the given dictionary of properties.
+    /// </summary>
+    /// <param name=""source"">The dictionary of properties.</param>
+    /// <returns>An instance of the type initialized from the dictionary of properties.</returns>
+    static ");
+            
+            #line default
+            #line hidden
+            
+            #line 209 "CodeGenerator.Object.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 209 "CodeGenerator.Object.tt"
+            this.Write(" IJsonObject<");
+            
+            #line default
+            #line hidden
+            
+            #line 209 "CodeGenerator.Object.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 209 "CodeGenerator.Object.tt"
+            this.Write(">.FromProperties(IDictionary<JsonPropertyName, JsonAny> source)\r\n    {\r\n        r" +
+                    "eturn new(source.Select(kvp => new JsonObjectProperty(kvp.Key, kvp.Value)).ToImm" +
+                    "utableList());\r\n    }\r\n#endif\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 214 "CodeGenerator.Object.tt"
+  }
+    else
+    { 
+            
+            #line default
+            #line hidden
+            
+            #line 217 "CodeGenerator.Object.tt"
+            this.Write(@"    /// <summary>
+    /// Creates an instance of the type from the given dictionary of properties.
+    /// </summary>
+    /// <param name=""source"">The dictionary of properties.</param>
+    /// <returns>An instance of the type initialized from the dictionary of properties.</returns>
+    public static ");
+            
+            #line default
+            #line hidden
+            
+            #line 222 "CodeGenerator.Object.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 222 "CodeGenerator.Object.tt"
+            this.Write(" FromProperties(IDictionary<JsonPropertyName, JsonAny> source)\r\n    {\r\n        re" +
+                    "turn new(source.Select(kvp => new JsonObjectProperty(kvp.Key, kvp.Value)).ToImmu" +
+                    "tableList());\r\n    }\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 226 "CodeGenerator.Object.tt"
+  } 
+            
+            #line default
+            #line hidden
+            
+            #line 227 "CodeGenerator.Object.tt"
+            this.Write(@"
+    /// <summary>
+    /// Creates an instance of the type from the given dictionary of properties.
+    /// </summary>
+    /// <param name=""source"">The dictionary of properties.</param>
+    /// <returns>An instance of the type initialized from the dictionary of properties.</returns>
+    public static ");
+            
+            #line default
+            #line hidden
+            
+            #line 233 "CodeGenerator.Object.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 233 "CodeGenerator.Object.tt"
+            this.Write(" FromProperties(ImmutableList<JsonObjectProperty> source)\r\n    {\r\n        return " +
+                    "new(source);\r\n    }\r\n\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 238 "CodeGenerator.Object.tt"
+  if (CanEnumerateObjectAsSpecificType)
+    { 
+            
+            #line default
+            #line hidden
+            
+            #line 240 "CodeGenerator.Object.tt"
+            this.Write(@"#if NET8_0_OR_GREATER
+    /// <summary>
+    /// Creates an instance of the type from the given dictionary of properties.
+    /// </summary>
+    /// <param name=""source"">The dictionary of properties.</param>
+    /// <returns>An instance of the type initialized from the dictionary of properties.</returns>
+    static ");
+            
+            #line default
+            #line hidden
+            
+            #line 246 "CodeGenerator.Object.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 246 "CodeGenerator.Object.tt"
+            this.Write(" IJsonObject<");
+            
+            #line default
+            #line hidden
+            
+            #line 246 "CodeGenerator.Object.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 246 "CodeGenerator.Object.tt"
+            this.Write(">.FromProperties(params (JsonPropertyName Name, JsonAny Value)[] source)\r\n    {\r\n" +
+                    "        return new(source.Select(s => new JsonObjectProperty(s.Name, s.Value)).T" +
+                    "oImmutableList());\r\n    }\r\n#endif\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 251 "CodeGenerator.Object.tt"
+  }
+    else
+    { 
+            
+            #line default
+            #line hidden
+            
+            #line 254 "CodeGenerator.Object.tt"
+            this.Write(@"    /// <summary>
+    /// Creates an instance of the type from the given dictionary of properties.
+    /// </summary>
+    /// <param name=""source"">The dictionary of properties.</param>
+    /// <returns>An instance of the type initialized from the dictionary of properties.</returns>
+    public static ");
+            
+            #line default
+            #line hidden
+            
+            #line 259 "CodeGenerator.Object.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 259 "CodeGenerator.Object.tt"
+            this.Write(" FromProperties(params (JsonPropertyName Name, JsonAny Value)[] source)\r\n    {\r\n " +
+                    "       return new(source.Select(s => new JsonObjectProperty(s.Name, s.Value)).To" +
+                    "ImmutableList());\r\n    }\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 263 "CodeGenerator.Object.tt"
+  } 
+            
+            #line default
+            #line hidden
+            
+            #line 264 "CodeGenerator.Object.tt"
+  if (CanEnumerateObjectAsSpecificType)
+    { 
+            
+            #line default
+            #line hidden
+            
+            #line 266 "CodeGenerator.Object.tt"
+            this.Write(@"
+    /// <summary>
+    /// Creates an instance of the type from the given dictionary of properties.
+    /// </summary>
+    /// <param name=""source"">The dictionary of properties.</param>
+    /// <returns>An instance of the type initialized from the dictionary of properties.</returns>
+    public static ");
+            
+            #line default
+            #line hidden
+            
+            #line 272 "CodeGenerator.Object.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 272 "CodeGenerator.Object.tt"
+            this.Write(" FromProperties(IDictionary<JsonPropertyName, ");
+            
+            #line default
+            #line hidden
+            
+            #line 272 "CodeGenerator.Object.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( SinglePropertyDotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 272 "CodeGenerator.Object.tt"
+            this.Write(@"> source)
     {
         return new(source.Select(kvp => new JsonObjectProperty(kvp.Key, kvp.Value)).ToImmutableList());
     }
@@ -286,286 +877,1580 @@ namespace ");
             #line default
             #line hidden
             
-            #line 110 "CodeGenerator.Object.tt"
+            #line 282 "CodeGenerator.Object.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 110 "CodeGenerator.Object.tt"
-            this.Write(@" FromProperties(ImmutableList<JsonObjectProperty> source)
-    {
-        return new(source);
-    }
+            #line 282 "CodeGenerator.Object.tt"
+            this.Write(" FromProperties(params (JsonPropertyName Name, ");
+            
+            #line default
+            #line hidden
+            
+            #line 282 "CodeGenerator.Object.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( SinglePropertyDotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 282 "CodeGenerator.Object.tt"
+            this.Write(" Value)[] source)\r\n    {\r\n        return new(source.Select(s => new JsonObjectPro" +
+                    "perty(s.Name, s.Value.AsAny)).ToImmutableList());\r\n    }\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 286 "CodeGenerator.Object.tt"
+  } 
+            
+            #line default
+            #line hidden
+            
+            #line 287 "CodeGenerator.Object.tt"
+            this.Write("\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 288 "CodeGenerator.Object.tt"
+  if (CanEnumerateObjectAsSpecificType)
+    { 
+            
+            #line default
+            #line hidden
+            
+            #line 290 "CodeGenerator.Object.tt"
+            this.Write("    /// <inheritdoc/>\r\n    JsonObjectEnumerator IJsonObject<");
+            
+            #line default
+            #line hidden
+            
+            #line 291 "CodeGenerator.Object.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 291 "CodeGenerator.Object.tt"
+            this.Write(">.EnumerateObject()\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 292 "CodeGenerator.Object.tt"
+  }
+    else
+    { 
+            
+            #line default
+            #line hidden
+            
+            #line 295 "CodeGenerator.Object.tt"
+            this.Write("    /// <inheritdoc/>\r\n    public JsonObjectEnumerator EnumerateObject()\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 297 "CodeGenerator.Object.tt"
+  } 
+            
+            #line default
+            #line hidden
+            
+            #line 298 "CodeGenerator.Object.tt"
+            this.Write(@"    {
+        if ((this.backing & Backing.JsonElement) != 0)
+        {
+            return new(this.jsonElementBacking);
+        }
 
-    /// <summary>
-    /// Creates an instance of the type from the given dictionary of properties.
-    /// </summary>
-    /// <param name=""source"">The dictionary of properties.</param>
-    /// <returns>An instance of the type initialized from the dictionary of properties.</returns>
-    public static ");
+        if ((this.backing & Backing.Object) != 0)
+        {
+            return new(this.objectBacking);
+        }
+
+        throw new InvalidOperationException();
+    }
+");
             
             #line default
             #line hidden
             
-            #line 120 "CodeGenerator.Object.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            #line 311 "CodeGenerator.Object.tt"
+  if (CanEnumerateObjectAsSpecificType)
+    { 
             
             #line default
             #line hidden
             
-            #line 120 "CodeGenerator.Object.tt"
-            this.Write(" FromProperties(params (JsonPropertyName Name, JsonAny Value)[] source)\r\n    {\r\n " +
-                    "       return new(source.Select(s => new JsonObjectProperty(s.Name, s.Value)).To" +
-                    "ImmutableList());\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    public JsonObjectEnumerat" +
-                    "or EnumerateObject()\r\n    {\r\n        if ((this.backing & Backing.JsonElement) !=" +
-                    " 0)\r\n        {\r\n            return new(this.jsonElementBacking);\r\n        }\r\n\r\n " +
-                    "       if ((this.backing & Backing.Object) != 0)\r\n        {\r\n            return " +
-                    "new(this.objectBacking);\r\n        }\r\n\r\n        throw new InvalidOperationExcepti" +
-                    "on();\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    public bool HasProperties()\r\n    {\r\n " +
-                    "       if ((this.backing & Backing.Object) != 0)\r\n        {\r\n            return " +
-                    "this.objectBacking.Count > 0;\r\n        }\r\n\r\n        if ((this.backing & Backing." +
-                    "JsonElement) != 0)\r\n        {\r\n            using JsonElement.ObjectEnumerator en" +
-                    "umerator = this.jsonElementBacking.EnumerateObject();\r\n            return enumer" +
-                    "ator.MoveNext();\r\n        }\r\n\r\n        throw new InvalidOperationException();\r\n " +
-                    "   }\r\n\r\n    /// <inheritdoc/>\r\n    public bool HasProperty(in JsonPropertyName n" +
-                    "ame)\r\n    {\r\n        if ((this.backing & Backing.JsonElement) != 0)\r\n        {\r\n" +
-                    "            return name.TryGetProperty(this.jsonElementBacking, out JsonElement " +
+            #line 313 "CodeGenerator.Object.tt"
+            this.Write("\r\n    /// <summary>\r\n    /// Enumerate the object.\r\n    /// </summary>\r\n    /// <" +
+                    "returns>An enumerator for the object.</returns>\r\n    /// <exception cref=\"Invali" +
+                    "dOperationException\">The value is not an object.</exception>\r\n    public JsonObj" +
+                    "ectEnumerator<");
+            
+            #line default
+            #line hidden
+            
+            #line 319 "CodeGenerator.Object.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( SinglePropertyDotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 319 "CodeGenerator.Object.tt"
+            this.Write(@"> EnumerateObject()
+    {
+        if ((this.backing & Backing.JsonElement) != 0)
+        {
+            return new(this.jsonElementBacking);
+        }
+
+        if ((this.backing & Backing.Object) != 0)
+        {
+            return new(this.objectBacking);
+        }
+
+        throw new InvalidOperationException();
+    }
+");
+            
+            #line default
+            #line hidden
+            
+            #line 333 "CodeGenerator.Object.tt"
+  } 
+            
+            #line default
+            #line hidden
+            
+            #line 334 "CodeGenerator.Object.tt"
+            this.Write("\r\n    /// <inheritdoc/>\r\n    public bool HasProperties()\r\n    {\r\n        if ((thi" +
+                    "s.backing & Backing.Object) != 0)\r\n        {\r\n            return this.objectBack" +
+                    "ing.Count > 0;\r\n        }\r\n\r\n        if ((this.backing & Backing.JsonElement) !=" +
+                    " 0)\r\n        {\r\n            using JsonElement.ObjectEnumerator enumerator = this" +
+                    ".jsonElementBacking.EnumerateObject();\r\n            return enumerator.MoveNext()" +
+                    ";\r\n        }\r\n\r\n        throw new InvalidOperationException();\r\n    }\r\n\r\n    ///" +
+                    " <inheritdoc/>\r\n    public bool HasProperty(in JsonPropertyName name)\r\n    {\r\n  " +
+                    "      if ((this.backing & Backing.JsonElement) != 0)\r\n        {\r\n            ret" +
+                    "urn name.TryGetProperty(this.jsonElementBacking, out JsonElement _);\r\n        }\r" +
+                    "\n\r\n        if ((this.backing & Backing.Object) != 0)\r\n        {\r\n            ret" +
+                    "urn this.objectBacking.ContainsKey(name);\r\n        }\r\n\r\n        throw new Invali" +
+                    "dOperationException();\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    public bool HasPrope" +
+                    "rty(string name)\r\n    {\r\n        if ((this.backing & Backing.JsonElement) != 0)\r" +
+                    "\n        {\r\n            return this.jsonElementBacking.TryGetProperty(name, out " +
                     "_);\r\n        }\r\n\r\n        if ((this.backing & Backing.Object) != 0)\r\n        {\r\n" +
                     "            return this.objectBacking.ContainsKey(name);\r\n        }\r\n\r\n        t" +
                     "hrow new InvalidOperationException();\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    publi" +
-                    "c bool HasProperty(string name)\r\n    {\r\n        if ((this.backing & Backing.Json" +
-                    "Element) != 0)\r\n        {\r\n            return this.jsonElementBacking.TryGetProp" +
-                    "erty(name, out _);\r\n        }\r\n\r\n        if ((this.backing & Backing.Object) != " +
-                    "0)\r\n        {\r\n            return this.objectBacking.ContainsKey(name);\r\n       " +
-                    " }\r\n\r\n        throw new InvalidOperationException();\r\n    }\r\n\r\n    /// <inheritd" +
-                    "oc/>\r\n    public bool HasProperty(ReadOnlySpan<char> name)\r\n    {\r\n        if ((" +
-                    "this.backing & Backing.JsonElement) != 0)\r\n        {\r\n            return this.js" +
-                    "onElementBacking.TryGetProperty(name, out _);\r\n        }\r\n\r\n        if ((this.ba" +
-                    "cking & Backing.Object) != 0)\r\n        {\r\n            return this.objectBacking." +
-                    "ContainsKey(name);\r\n        }\r\n\r\n        throw new InvalidOperationException();\r" +
-                    "\n    }\r\n\r\n    /// <inheritdoc/>\r\n    public bool HasProperty(ReadOnlySpan<byte> " +
-                    "utf8Name)\r\n    {\r\n        if ((this.backing & Backing.JsonElement) != 0)\r\n      " +
-                    "  {\r\n            return this.jsonElementBacking.TryGetProperty(utf8Name, out _);" +
-                    "\r\n        }\r\n\r\n        if ((this.backing & Backing.Object) != 0)\r\n        {\r\n   " +
-                    "         return this.objectBacking.ContainsKey(utf8Name);\r\n        }\r\n\r\n        " +
-                    "throw new InvalidOperationException();\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    publ" +
-                    "ic bool TryGetProperty(in JsonPropertyName name, out JsonAny value)\r\n    {\r\n    " +
-                    "    if ((this.backing & Backing.JsonElement) != 0)\r\n        {\r\n            if (n" +
-                    "ame.TryGetProperty(this.jsonElementBacking, out JsonElement result))\r\n          " +
-                    "  {\r\n                value = new(result);\r\n                return true;\r\n       " +
-                    "     }\r\n\r\n            value = default;\r\n            return false;\r\n        }\r\n\r\n" +
+                    "c bool HasProperty(ReadOnlySpan<char> name)\r\n    {\r\n        if ((this.backing & " +
+                    "Backing.JsonElement) != 0)\r\n        {\r\n            return this.jsonElementBackin" +
+                    "g.TryGetProperty(name, out _);\r\n        }\r\n\r\n        if ((this.backing & Backing" +
+                    ".Object) != 0)\r\n        {\r\n            return this.objectBacking.ContainsKey(nam" +
+                    "e);\r\n        }\r\n\r\n        throw new InvalidOperationException();\r\n    }\r\n\r\n    /" +
+                    "// <inheritdoc/>\r\n    public bool HasProperty(ReadOnlySpan<byte> utf8Name)\r\n    " +
+                    "{\r\n        if ((this.backing & Backing.JsonElement) != 0)\r\n        {\r\n          " +
+                    "  return this.jsonElementBacking.TryGetProperty(utf8Name, out _);\r\n        }\r\n\r\n" +
                     "        if ((this.backing & Backing.Object) != 0)\r\n        {\r\n            return" +
-                    " this.objectBacking.TryGetValue(name, out value);\r\n        }\r\n\r\n        throw ne" +
-                    "w InvalidOperationException();\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    public bool " +
-                    "TryGetProperty(string name, out JsonAny value)\r\n    {\r\n        if ((this.backing" +
-                    " & Backing.JsonElement) != 0)\r\n        {\r\n            if (this.jsonElementBackin" +
-                    "g.TryGetProperty(name, out JsonElement result))\r\n            {\r\n                " +
-                    "value = new(result);\r\n                return true;\r\n            }\r\n\r\n           " +
-                    " value = default;\r\n            return false;\r\n        }\r\n\r\n        if ((this.bac" +
-                    "king & Backing.Object) != 0)\r\n        {\r\n            return this.objectBacking.T" +
-                    "ryGetValue(name, out value);\r\n        }\r\n\r\n        throw new InvalidOperationExc" +
-                    "eption();\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    public bool TryGetProperty(ReadOn" +
-                    "lySpan<char> name, out JsonAny value)\r\n    {\r\n        if ((this.backing & Backin" +
-                    "g.JsonElement) != 0)\r\n        {\r\n            if (this.jsonElementBacking.TryGetP" +
-                    "roperty(name, out JsonElement result))\r\n            {\r\n                value = n" +
-                    "ew(result);\r\n                return true;\r\n            }\r\n\r\n            value = " +
-                    "default;\r\n            return false;\r\n        }\r\n\r\n        if ((this.backing & Ba" +
-                    "cking.Object) != 0)\r\n        {\r\n            return this.objectBacking.TryGetValu" +
-                    "e(name, out value);\r\n        }\r\n\r\n        throw new InvalidOperationException();" +
-                    "\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    public bool TryGetProperty(ReadOnlySpan<by" +
-                    "te> utf8Name, out JsonAny value)\r\n    {\r\n        if ((this.backing & Backing.Jso" +
-                    "nElement) != 0)\r\n        {\r\n            if (this.jsonElementBacking.TryGetProper" +
-                    "ty(utf8Name, out JsonElement result))\r\n            {\r\n                value = ne" +
-                    "w(result);\r\n                return true;\r\n            }\r\n\r\n            value = d" +
-                    "efault;\r\n            return false;\r\n        }\r\n\r\n        if ((this.backing & Bac" +
-                    "king.Object) != 0)\r\n        {\r\n            return this.objectBacking.TryGetValue" +
-                    "(utf8Name, out value);\r\n        }\r\n\r\n        throw new InvalidOperationException" +
-                    "();\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    public bool TryGetProperty<TValue>(in J" +
-                    "sonPropertyName name, out TValue value)\r\n        where TValue : struct, IJsonVal" +
-                    "ue<TValue>\r\n    {\r\n        if ((this.backing & Backing.JsonElement) != 0)\r\n     " +
-                    "   {\r\n            if (name.TryGetProperty(this.jsonElementBacking, out JsonEleme" +
-                    "nt result))\r\n            {\r\n#if NET8_0_OR_GREATER\r\n                value = TValu" +
-                    "e.FromJson(result);\r\n#else\r\n                value = JsonValueNetStandard20Extens" +
-                    "ions.FromJsonElement<TValue>(result);\r\n#endif\r\n                return true;\r\n   " +
-                    "         }\r\n\r\n            value = default;\r\n            return false;\r\n        }" +
-                    "\r\n\r\n        if ((this.backing & Backing.Object) != 0)\r\n        {\r\n            if" +
-                    " (this.objectBacking.TryGetValue(name, out JsonAny result))\r\n            {\r\n#if " +
-                    "NET8_0_OR_GREATER\r\n                value = TValue.FromAny(result);\r\n#else\r\n     " +
-                    "           value = result.As<TValue>();\r\n#endif\r\n                return true;\r\n " +
-                    "           }\r\n\r\n            value = default;\r\n            return false;\r\n       " +
-                    " }\r\n\r\n        throw new InvalidOperationException();\r\n    }\r\n\r\n    /// <inheritd" +
-                    "oc/>\r\n    public bool TryGetProperty<TValue>(string name, out TValue value)\r\n   " +
-                    "     where TValue : struct, IJsonValue<TValue>\r\n    {\r\n        if ((this.backing" +
-                    " & Backing.JsonElement) != 0)\r\n        {\r\n            if (this.jsonElementBackin" +
-                    "g.TryGetProperty(name, out JsonElement result))\r\n            {\r\n#if NET8_0_OR_GR" +
-                    "EATER\r\n                value = TValue.FromJson(result);\r\n#else\r\n                " +
-                    "value = JsonValueNetStandard20Extensions.FromJsonElement<TValue>(result);\r\n#endi" +
-                    "f\r\n                return true;\r\n            }\r\n\r\n            value = default;\r\n" +
-                    "            return false;\r\n        }\r\n\r\n        if ((this.backing & Backing.Obje" +
-                    "ct) != 0)\r\n        {\r\n            if (this.objectBacking.TryGetValue(name, out J" +
-                    "sonAny result))\r\n            {\r\n#if NET8_0_OR_GREATER\r\n                value = T" +
-                    "Value.FromAny(result);\r\n#else\r\n                value = result.As<TValue>();\r\n#en" +
-                    "dif\r\n                return true;\r\n            }\r\n\r\n            value = default;" +
-                    "\r\n            return false;\r\n        }\r\n\r\n        throw new InvalidOperationExce" +
-                    "ption();\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    public bool TryGetProperty<TValue>" +
-                    "(ReadOnlySpan<char> name, out TValue value)\r\n        where TValue : struct, IJso" +
-                    "nValue<TValue>\r\n    {\r\n        if ((this.backing & Backing.JsonElement) != 0)\r\n " +
-                    "       {\r\n            if (this.jsonElementBacking.TryGetProperty(name, out JsonE" +
-                    "lement result))\r\n            {\r\n#if NET8_0_OR_GREATER\r\n                value = T" +
-                    "Value.FromJson(result);\r\n#else\r\n                value = JsonValueNetStandard20Ex" +
-                    "tensions.FromJsonElement<TValue>(result);\r\n#endif\r\n                return true;\r" +
-                    "\n            }\r\n\r\n            value = default;\r\n            return false;\r\n     " +
-                    "   }\r\n\r\n        if ((this.backing & Backing.Object) != 0)\r\n        {\r\n          " +
-                    "  if (this.objectBacking.TryGetValue(name, out JsonAny result))\r\n            {\r\n" +
-                    "#if NET8_0_OR_GREATER\r\n                value = TValue.FromAny(result);\r\n#else\r\n " +
-                    "               value = result.As<TValue>();\r\n#endif\r\n                return true" +
-                    ";\r\n            }\r\n\r\n            value = default;\r\n            return false;\r\n   " +
-                    "     }\r\n\r\n        throw new InvalidOperationException();\r\n    }\r\n\r\n    /// <inhe" +
-                    "ritdoc/>\r\n    public bool TryGetProperty<TValue>(ReadOnlySpan<byte> utf8Name, ou" +
-                    "t TValue value)\r\n        where TValue : struct, IJsonValue<TValue>\r\n    {\r\n     " +
-                    "   if ((this.backing & Backing.JsonElement) != 0)\r\n        {\r\n            if (th" +
-                    "is.jsonElementBacking.TryGetProperty(utf8Name, out JsonElement result))\r\n       " +
-                    "     {\r\n#if NET8_0_OR_GREATER\r\n                value = TValue.FromJson(result);\r" +
-                    "\n#else\r\n                value = JsonValueNetStandard20Extensions.FromJsonElement" +
-                    "<TValue>(result);\r\n#endif\r\n                return true;\r\n            }\r\n\r\n      " +
-                    "      value = default;\r\n            return false;\r\n        }\r\n\r\n        if ((thi" +
-                    "s.backing & Backing.Object) != 0)\r\n        {\r\n            if (this.objectBacking" +
-                    ".TryGetValue(utf8Name, out JsonAny result))\r\n            {\r\n#if NET8_0_OR_GREATE" +
-                    "R\r\n                value = TValue.FromAny(result);\r\n#else\r\n                value" +
-                    " = result.As<TValue>();\r\n#endif\r\n                return true;\r\n            }\r\n\r\n" +
-                    "            value = default;\r\n            return false;\r\n        }\r\n\r\n        th" +
-                    "row new InvalidOperationException();\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    public" +
-                    " ");
+                    " this.objectBacking.ContainsKey(utf8Name);\r\n        }\r\n\r\n        throw new Inval" +
+                    "idOperationException();\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n");
             
             #line default
             #line hidden
             
-            #line 471 "CodeGenerator.Object.tt"
+            #line 417 "CodeGenerator.Object.tt"
+  if (CanEnumerateObjectAsSpecificType)
+    { 
+            
+            #line default
+            #line hidden
+            
+            #line 419 "CodeGenerator.Object.tt"
+            this.Write("    bool IJsonObject<");
+            
+            #line default
+            #line hidden
+            
+            #line 419 "CodeGenerator.Object.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 471 "CodeGenerator.Object.tt"
+            #line 419 "CodeGenerator.Object.tt"
+            this.Write(">.TryGetProperty(in JsonPropertyName name, out JsonAny value)\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 420 "CodeGenerator.Object.tt"
+  }
+    else
+    { 
+            
+            #line default
+            #line hidden
+            
+            #line 423 "CodeGenerator.Object.tt"
+            this.Write("    public bool TryGetProperty(in JsonPropertyName name, out JsonAny value)\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 424 "CodeGenerator.Object.tt"
+  } 
+            
+            #line default
+            #line hidden
+            
+            #line 425 "CodeGenerator.Object.tt"
+            this.Write(@"    {
+        if ((this.backing & Backing.JsonElement) != 0)
+        {
+            if (name.TryGetProperty(this.jsonElementBacking, out JsonElement result))
+            {
+                value = new(result);
+                return true;
+            }
+
+            value = default;
+            return false;
+        }
+
+        if ((this.backing & Backing.Object) != 0)
+        {
+            return this.objectBacking.TryGetValue(name, out value);
+        }
+
+        throw new InvalidOperationException();
+    }
+
+    /// <inheritdoc/>
+");
+            
+            #line default
+            #line hidden
+            
+            #line 447 "CodeGenerator.Object.tt"
+  if (CanEnumerateObjectAsSpecificType)
+    { 
+            
+            #line default
+            #line hidden
+            
+            #line 449 "CodeGenerator.Object.tt"
+            this.Write("    bool IJsonObject<");
+            
+            #line default
+            #line hidden
+            
+            #line 449 "CodeGenerator.Object.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 449 "CodeGenerator.Object.tt"
+            this.Write(">.TryGetProperty(string name, out JsonAny value)\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 450 "CodeGenerator.Object.tt"
+  }
+    else
+    { 
+            
+            #line default
+            #line hidden
+            
+            #line 453 "CodeGenerator.Object.tt"
+            this.Write("    public bool TryGetProperty(string name, out JsonAny value)\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 454 "CodeGenerator.Object.tt"
+  } 
+            
+            #line default
+            #line hidden
+            
+            #line 455 "CodeGenerator.Object.tt"
+            this.Write(@"    {
+        if ((this.backing & Backing.JsonElement) != 0)
+        {
+            if (this.jsonElementBacking.TryGetProperty(name, out JsonElement result))
+            {
+                value = new(result);
+                return true;
+            }
+
+            value = default;
+            return false;
+        }
+
+        if ((this.backing & Backing.Object) != 0)
+        {
+            return this.objectBacking.TryGetValue(name, out value);
+        }
+
+        throw new InvalidOperationException();
+    }
+
+    /// <inheritdoc/>
+");
+            
+            #line default
+            #line hidden
+            
+            #line 477 "CodeGenerator.Object.tt"
+  if (CanEnumerateObjectAsSpecificType)
+    { 
+            
+            #line default
+            #line hidden
+            
+            #line 479 "CodeGenerator.Object.tt"
+            this.Write("    bool IJsonObject<");
+            
+            #line default
+            #line hidden
+            
+            #line 479 "CodeGenerator.Object.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 479 "CodeGenerator.Object.tt"
+            this.Write(">.TryGetProperty(ReadOnlySpan<char> name, out JsonAny value)\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 480 "CodeGenerator.Object.tt"
+  }
+    else
+    { 
+            
+            #line default
+            #line hidden
+            
+            #line 483 "CodeGenerator.Object.tt"
+            this.Write("    public bool TryGetProperty(ReadOnlySpan<char> name, out JsonAny value)\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 484 "CodeGenerator.Object.tt"
+  } 
+            
+            #line default
+            #line hidden
+            
+            #line 485 "CodeGenerator.Object.tt"
+            this.Write(@"    {
+        if ((this.backing & Backing.JsonElement) != 0)
+        {
+            if (this.jsonElementBacking.TryGetProperty(name, out JsonElement result))
+            {
+                value = new(result);
+                return true;
+            }
+
+            value = default;
+            return false;
+        }
+
+        if ((this.backing & Backing.Object) != 0)
+        {
+            return this.objectBacking.TryGetValue(name, out value);
+        }
+
+        throw new InvalidOperationException();
+    }
+
+    /// <inheritdoc/>
+");
+            
+            #line default
+            #line hidden
+            
+            #line 507 "CodeGenerator.Object.tt"
+  if (CanEnumerateObjectAsSpecificType)
+    { 
+            
+            #line default
+            #line hidden
+            
+            #line 509 "CodeGenerator.Object.tt"
+            this.Write("    bool IJsonObject<");
+            
+            #line default
+            #line hidden
+            
+            #line 509 "CodeGenerator.Object.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 509 "CodeGenerator.Object.tt"
+            this.Write(">.TryGetProperty(ReadOnlySpan<byte> utf8Name, out JsonAny value)\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 510 "CodeGenerator.Object.tt"
+  }
+    else
+    { 
+            
+            #line default
+            #line hidden
+            
+            #line 513 "CodeGenerator.Object.tt"
+            this.Write("    public bool TryGetProperty(ReadOnlySpan<byte> utf8Name, out JsonAny value)\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 514 "CodeGenerator.Object.tt"
+  } 
+            
+            #line default
+            #line hidden
+            
+            #line 515 "CodeGenerator.Object.tt"
+            this.Write(@"    {
+        if ((this.backing & Backing.JsonElement) != 0)
+        {
+            if (this.jsonElementBacking.TryGetProperty(utf8Name, out JsonElement result))
+            {
+                value = new(result);
+                return true;
+            }
+
+            value = default;
+            return false;
+        }
+
+        if ((this.backing & Backing.Object) != 0)
+        {
+            return this.objectBacking.TryGetValue(utf8Name, out value);
+        }
+
+        throw new InvalidOperationException();
+    }
+
+    /// <inheritdoc/>
+");
+            
+            #line default
+            #line hidden
+            
+            #line 537 "CodeGenerator.Object.tt"
+  if (CanEnumerateObjectAsSpecificType)
+    { 
+            
+            #line default
+            #line hidden
+            
+            #line 539 "CodeGenerator.Object.tt"
+            this.Write("    bool IJsonObject<");
+            
+            #line default
+            #line hidden
+            
+            #line 539 "CodeGenerator.Object.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 539 "CodeGenerator.Object.tt"
+            this.Write(">.TryGetProperty<TValue>(in JsonPropertyName name, out TValue value)\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 540 "CodeGenerator.Object.tt"
+  }
+    else
+    { 
+            
+            #line default
+            #line hidden
+            
+            #line 543 "CodeGenerator.Object.tt"
+            this.Write("    public bool TryGetProperty<TValue>(in JsonPropertyName name, out TValue value" +
+                    ")\r\n        where TValue : struct, IJsonValue<TValue>\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 545 "CodeGenerator.Object.tt"
+  } 
+            
+            #line default
+            #line hidden
+            
+            #line 546 "CodeGenerator.Object.tt"
+            this.Write(@"    {
+        if ((this.backing & Backing.JsonElement) != 0)
+        {
+            if (name.TryGetProperty(this.jsonElementBacking, out JsonElement result))
+            {
+#if NET8_0_OR_GREATER
+                value = TValue.FromJson(result);
+#else
+                value = JsonValueNetStandard20Extensions.FromJsonElement<TValue>(result);
+#endif
+                return true;
+            }
+
+            value = default;
+            return false;
+        }
+
+        if ((this.backing & Backing.Object) != 0)
+        {
+            if (this.objectBacking.TryGetValue(name, out JsonAny result))
+            {
+#if NET8_0_OR_GREATER
+                value = TValue.FromAny(result);
+#else
+                value = result.As<TValue>();
+#endif
+                return true;
+            }
+
+            value = default;
+            return false;
+        }
+
+        throw new InvalidOperationException();
+    }
+
+    /// <inheritdoc/>
+");
+            
+            #line default
+            #line hidden
+            
+            #line 583 "CodeGenerator.Object.tt"
+  if (CanEnumerateObjectAsSpecificType)
+    { 
+            
+            #line default
+            #line hidden
+            
+            #line 585 "CodeGenerator.Object.tt"
+            this.Write("    bool IJsonObject<");
+            
+            #line default
+            #line hidden
+            
+            #line 585 "CodeGenerator.Object.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 585 "CodeGenerator.Object.tt"
+            this.Write(">.TryGetProperty<TValue>(string name, out TValue value)\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 586 "CodeGenerator.Object.tt"
+  }
+    else
+    { 
+            
+            #line default
+            #line hidden
+            
+            #line 589 "CodeGenerator.Object.tt"
+            this.Write("    public bool TryGetProperty<TValue>(string name, out TValue value)\r\n        wh" +
+                    "ere TValue : struct, IJsonValue<TValue>\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 591 "CodeGenerator.Object.tt"
+  } 
+            
+            #line default
+            #line hidden
+            
+            #line 592 "CodeGenerator.Object.tt"
+            this.Write(@"    {
+        if ((this.backing & Backing.JsonElement) != 0)
+        {
+            if (this.jsonElementBacking.TryGetProperty(name, out JsonElement result))
+            {
+#if NET8_0_OR_GREATER
+                value = TValue.FromJson(result);
+#else
+                value = JsonValueNetStandard20Extensions.FromJsonElement<TValue>(result);
+#endif
+                return true;
+            }
+
+            value = default;
+            return false;
+        }
+
+        if ((this.backing & Backing.Object) != 0)
+        {
+            if (this.objectBacking.TryGetValue(name, out JsonAny result))
+            {
+#if NET8_0_OR_GREATER
+                value = TValue.FromAny(result);
+#else
+                value = result.As<TValue>();
+#endif
+                return true;
+            }
+
+            value = default;
+            return false;
+        }
+
+        throw new InvalidOperationException();
+    }
+
+    /// <inheritdoc/>
+");
+            
+            #line default
+            #line hidden
+            
+            #line 629 "CodeGenerator.Object.tt"
+  if (CanEnumerateObjectAsSpecificType)
+    { 
+            
+            #line default
+            #line hidden
+            
+            #line 631 "CodeGenerator.Object.tt"
+            this.Write("    bool IJsonObject<");
+            
+            #line default
+            #line hidden
+            
+            #line 631 "CodeGenerator.Object.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 631 "CodeGenerator.Object.tt"
+            this.Write(">.TryGetProperty<TValue>(ReadOnlySpan<char> name, out TValue value)\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 632 "CodeGenerator.Object.tt"
+  }
+    else
+    { 
+            
+            #line default
+            #line hidden
+            
+            #line 635 "CodeGenerator.Object.tt"
+            this.Write("    public bool TryGetProperty<TValue>(ReadOnlySpan<char> name, out TValue value)" +
+                    "\r\n        where TValue : struct, IJsonValue<TValue>\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 637 "CodeGenerator.Object.tt"
+  } 
+            
+            #line default
+            #line hidden
+            
+            #line 638 "CodeGenerator.Object.tt"
+            this.Write(@"    {
+        if ((this.backing & Backing.JsonElement) != 0)
+        {
+            if (this.jsonElementBacking.TryGetProperty(name, out JsonElement result))
+            {
+#if NET8_0_OR_GREATER
+                value = TValue.FromJson(result);
+#else
+                value = JsonValueNetStandard20Extensions.FromJsonElement<TValue>(result);
+#endif
+                return true;
+            }
+
+            value = default;
+            return false;
+        }
+
+        if ((this.backing & Backing.Object) != 0)
+        {
+            if (this.objectBacking.TryGetValue(name, out JsonAny result))
+            {
+#if NET8_0_OR_GREATER
+                value = TValue.FromAny(result);
+#else
+                value = result.As<TValue>();
+#endif
+                return true;
+            }
+
+            value = default;
+            return false;
+        }
+
+        throw new InvalidOperationException();
+    }
+
+    /// <inheritdoc/>
+");
+            
+            #line default
+            #line hidden
+            
+            #line 675 "CodeGenerator.Object.tt"
+  if (CanEnumerateObjectAsSpecificType)
+    { 
+            
+            #line default
+            #line hidden
+            
+            #line 677 "CodeGenerator.Object.tt"
+            this.Write("    bool IJsonObject<");
+            
+            #line default
+            #line hidden
+            
+            #line 677 "CodeGenerator.Object.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 677 "CodeGenerator.Object.tt"
+            this.Write(">.TryGetProperty<TValue>(ReadOnlySpan<byte> utf8Name, out TValue value)\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 678 "CodeGenerator.Object.tt"
+  }
+    else
+    { 
+            
+            #line default
+            #line hidden
+            
+            #line 681 "CodeGenerator.Object.tt"
+            this.Write("    public bool TryGetProperty<TValue>(ReadOnlySpan<byte> utf8Name, out TValue va" +
+                    "lue)\r\n        where TValue : struct, IJsonValue<TValue>\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 683 "CodeGenerator.Object.tt"
+  } 
+            
+            #line default
+            #line hidden
+            
+            #line 684 "CodeGenerator.Object.tt"
+            this.Write(@"    {
+        if ((this.backing & Backing.JsonElement) != 0)
+        {
+            if (this.jsonElementBacking.TryGetProperty(utf8Name, out JsonElement result))
+            {
+#if NET8_0_OR_GREATER
+                value = TValue.FromJson(result);
+#else
+                value = JsonValueNetStandard20Extensions.FromJsonElement<TValue>(result);
+#endif
+                return true;
+            }
+
+            value = default;
+            return false;
+        }
+
+        if ((this.backing & Backing.Object) != 0)
+        {
+            if (this.objectBacking.TryGetValue(utf8Name, out JsonAny result))
+            {
+#if NET8_0_OR_GREATER
+                value = TValue.FromAny(result);
+#else
+                value = result.As<TValue>();
+#endif
+                return true;
+            }
+
+            value = default;
+            return false;
+        }
+
+        throw new InvalidOperationException();
+    }
+
+    /// <inheritdoc/>
+");
+            
+            #line default
+            #line hidden
+            
+            #line 721 "CodeGenerator.Object.tt"
+  if (CanEnumerateObjectAsSpecificType)
+    { 
+            
+            #line default
+            #line hidden
+            
+            #line 723 "CodeGenerator.Object.tt"
+            this.Write("    ");
+            
+            #line default
+            #line hidden
+            
+            #line 723 "CodeGenerator.Object.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 723 "CodeGenerator.Object.tt"
+            this.Write(" IJsonObject<");
+            
+            #line default
+            #line hidden
+            
+            #line 723 "CodeGenerator.Object.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 723 "CodeGenerator.Object.tt"
+            this.Write(">.SetProperty<TValue>(in JsonPropertyName name, TValue value)\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 724 "CodeGenerator.Object.tt"
+  }
+    else
+    { 
+            
+            #line default
+            #line hidden
+            
+            #line 727 "CodeGenerator.Object.tt"
+            this.Write("    public ");
+            
+            #line default
+            #line hidden
+            
+            #line 727 "CodeGenerator.Object.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 727 "CodeGenerator.Object.tt"
             this.Write(" SetProperty<TValue>(in JsonPropertyName name, TValue value)\r\n        where TValu" +
-                    "e : struct, IJsonValue\r\n    {\r\n        return new(this.GetPropertyBackingWith(na" +
-                    "me, value.AsAny));\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    public ");
+                    "e : struct, IJsonValue\r\n");
             
             #line default
             #line hidden
             
-            #line 478 "CodeGenerator.Object.tt"
+            #line 729 "CodeGenerator.Object.tt"
+  } 
+            
+            #line default
+            #line hidden
+            
+            #line 730 "CodeGenerator.Object.tt"
+            this.Write("    {\r\n        return new(this.GetPropertyBackingWith(name, value.AsAny));\r\n    }" +
+                    "\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 733 "CodeGenerator.Object.tt"
+  if (CanEnumerateObjectAsSpecificType)
+    { 
+            
+            #line default
+            #line hidden
+            
+            #line 735 "CodeGenerator.Object.tt"
+            this.Write(@"    
+    /// <summary>
+    /// Get a property.
+    /// </summary>
+    /// <param name=""name"">The name of the property.</param>
+    /// <param name=""value"">The value of the property.</param>
+    /// <returns><c>True</c> if the property was present.</returns>
+    /// <exception cref=""InvalidOperationException"">The value is not an object.</exception>
+    public bool TryGetProperty(in JsonPropertyName name, out ");
+            
+            #line default
+            #line hidden
+            
+            #line 743 "CodeGenerator.Object.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( SinglePropertyDotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 743 "CodeGenerator.Object.tt"
+            this.Write(" value)\r\n    {\r\n        if ((this.backing & Backing.JsonElement) != 0)\r\n        {" +
+                    "\r\n            if (name.TryGetProperty(this.jsonElementBacking, out JsonElement r" +
+                    "esult))\r\n            {\r\n#if NET8_0_OR_GREATER\r\n                value = ");
+            
+            #line default
+            #line hidden
+            
+            #line 750 "CodeGenerator.Object.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( SinglePropertyDotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 750 "CodeGenerator.Object.tt"
+            this.Write(".FromJson(result);\r\n#else\r\n                value = JsonValueNetStandard20Extensio" +
+                    "ns.FromJsonElement<");
+            
+            #line default
+            #line hidden
+            
+            #line 752 "CodeGenerator.Object.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( SinglePropertyDotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 752 "CodeGenerator.Object.tt"
+            this.Write(@">(result);
+#endif
+                return true;
+            }
+
+            value = default;
+            return false;
+        }
+
+        if ((this.backing & Backing.Object) != 0)
+        {
+            if (this.objectBacking.TryGetValue(name, out JsonAny result))
+            {
+#if NET8_0_OR_GREATER
+                value = ");
+            
+            #line default
+            #line hidden
+            
+            #line 766 "CodeGenerator.Object.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( SinglePropertyDotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 766 "CodeGenerator.Object.tt"
+            this.Write(".FromAny(result);\r\n#else\r\n                value = result.As<");
+            
+            #line default
+            #line hidden
+            
+            #line 768 "CodeGenerator.Object.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( SinglePropertyDotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 768 "CodeGenerator.Object.tt"
+            this.Write(@">();
+#endif
+                return true;
+            }
+
+            value = default;
+            return false;
+        }
+
+        throw new InvalidOperationException();
+    }
+
+    /// <summary>
+    /// Get a property.
+    /// </summary>
+    /// <param name=""name"">The name of the property.</param>
+    /// <param name=""value"">The value of the property.</param>
+    /// <returns><c>True</c> if the property was present.</returns>
+    /// <exception cref=""InvalidOperationException"">The value is not an object.</exception>
+    public bool TryGetProperty(string name, out ");
+            
+            #line default
+            #line hidden
+            
+            #line 787 "CodeGenerator.Object.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( SinglePropertyDotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 787 "CodeGenerator.Object.tt"
+            this.Write(" value)\r\n    {\r\n        if ((this.backing & Backing.JsonElement) != 0)\r\n        {" +
+                    "\r\n            if (this.jsonElementBacking.TryGetProperty(name, out JsonElement r" +
+                    "esult))\r\n            {\r\n#if NET8_0_OR_GREATER\r\n                value = ");
+            
+            #line default
+            #line hidden
+            
+            #line 794 "CodeGenerator.Object.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( SinglePropertyDotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 794 "CodeGenerator.Object.tt"
+            this.Write(".FromJson(result);\r\n#else\r\n                value = JsonValueNetStandard20Extensio" +
+                    "ns.FromJsonElement<");
+            
+            #line default
+            #line hidden
+            
+            #line 796 "CodeGenerator.Object.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( SinglePropertyDotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 796 "CodeGenerator.Object.tt"
+            this.Write(@">(result);
+#endif
+                return true;
+            }
+
+            value = default;
+            return false;
+        }
+
+        if ((this.backing & Backing.Object) != 0)
+        {
+            if (this.objectBacking.TryGetValue(name, out JsonAny result))
+            {
+#if NET8_0_OR_GREATER
+                value = ");
+            
+            #line default
+            #line hidden
+            
+            #line 810 "CodeGenerator.Object.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( SinglePropertyDotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 810 "CodeGenerator.Object.tt"
+            this.Write(".FromAny(result);\r\n#else\r\n                value = result.As<");
+            
+            #line default
+            #line hidden
+            
+            #line 812 "CodeGenerator.Object.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( SinglePropertyDotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 812 "CodeGenerator.Object.tt"
+            this.Write(@">();
+#endif
+                return true;
+            }
+
+            value = default;
+            return false;
+        }
+
+        throw new InvalidOperationException();
+    }
+
+    /// <summary>
+    /// Get a property.
+    /// </summary>
+    /// <param name=""name"">The name of the property.</param>
+    /// <param name=""value"">The value of the property.</param>
+    /// <returns><c>True</c> if the property was present.</returns>
+    /// <exception cref=""InvalidOperationException"">The value is not an object.</exception>
+    public bool TryGetProperty(ReadOnlySpan<char> name, out ");
+            
+            #line default
+            #line hidden
+            
+            #line 831 "CodeGenerator.Object.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( SinglePropertyDotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 831 "CodeGenerator.Object.tt"
+            this.Write(" value)\r\n    {\r\n        if ((this.backing & Backing.JsonElement) != 0)\r\n        {" +
+                    "\r\n            if (this.jsonElementBacking.TryGetProperty(name, out JsonElement r" +
+                    "esult))\r\n            {\r\n#if NET8_0_OR_GREATER\r\n                value = ");
+            
+            #line default
+            #line hidden
+            
+            #line 838 "CodeGenerator.Object.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( SinglePropertyDotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 838 "CodeGenerator.Object.tt"
+            this.Write(".FromJson(result);\r\n#else\r\n                value = JsonValueNetStandard20Extensio" +
+                    "ns.FromJsonElement<");
+            
+            #line default
+            #line hidden
+            
+            #line 840 "CodeGenerator.Object.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( SinglePropertyDotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 840 "CodeGenerator.Object.tt"
+            this.Write(@">(result);
+#endif
+                return true;
+            }
+
+            value = default;
+            return false;
+        }
+
+        if ((this.backing & Backing.Object) != 0)
+        {
+            if (this.objectBacking.TryGetValue(name, out JsonAny result))
+            {
+#if NET8_0_OR_GREATER
+                value = ");
+            
+            #line default
+            #line hidden
+            
+            #line 854 "CodeGenerator.Object.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( SinglePropertyDotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 854 "CodeGenerator.Object.tt"
+            this.Write(".FromAny(result);\r\n#else\r\n                value = result.As<");
+            
+            #line default
+            #line hidden
+            
+            #line 856 "CodeGenerator.Object.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( SinglePropertyDotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 856 "CodeGenerator.Object.tt"
+            this.Write(@">();
+#endif
+                return true;
+            }
+
+            value = default;
+            return false;
+        }
+
+        throw new InvalidOperationException();
+    }
+
+    /// <summary>
+    /// Get a property.
+    /// </summary>
+    /// <param name=""utf8Name"">The name of the property as a UTF8 string.</param>
+    /// <param name=""value"">The value of the property.</param>
+    /// <returns><c>True</c> if the property was present.</returns>
+    /// <exception cref=""InvalidOperationException"">The value is not an object.</exception>
+    public bool TryGetProperty(ReadOnlySpan<byte> utf8Name, out ");
+            
+            #line default
+            #line hidden
+            
+            #line 875 "CodeGenerator.Object.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( SinglePropertyDotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 875 "CodeGenerator.Object.tt"
+            this.Write(" value)\r\n    {\r\n        if ((this.backing & Backing.JsonElement) != 0)\r\n        {" +
+                    "\r\n            if (this.jsonElementBacking.TryGetProperty(utf8Name, out JsonEleme" +
+                    "nt result))\r\n            {\r\n#if NET8_0_OR_GREATER\r\n                value = ");
+            
+            #line default
+            #line hidden
+            
+            #line 882 "CodeGenerator.Object.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( SinglePropertyDotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 882 "CodeGenerator.Object.tt"
+            this.Write(".FromJson(result);\r\n#else\r\n                value = JsonValueNetStandard20Extensio" +
+                    "ns.FromJsonElement<");
+            
+            #line default
+            #line hidden
+            
+            #line 884 "CodeGenerator.Object.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( SinglePropertyDotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 884 "CodeGenerator.Object.tt"
+            this.Write(@">(result);
+#endif
+                return true;
+            }
+
+            value = default;
+            return false;
+        }
+
+        if ((this.backing & Backing.Object) != 0)
+        {
+            if (this.objectBacking.TryGetValue(utf8Name, out JsonAny result))
+            {
+#if NET8_0_OR_GREATER
+                value = ");
+            
+            #line default
+            #line hidden
+            
+            #line 898 "CodeGenerator.Object.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( SinglePropertyDotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 898 "CodeGenerator.Object.tt"
+            this.Write(".FromAny(result);\r\n#else\r\n                value = result.As<");
+            
+            #line default
+            #line hidden
+            
+            #line 900 "CodeGenerator.Object.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( SinglePropertyDotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 900 "CodeGenerator.Object.tt"
+            this.Write(@">();
+#endif
+                return true;
+            }
+
+            value = default;
+            return false;
+        }
+
+        throw new InvalidOperationException();
+    }
+
+    /// <summary>
+    /// Sets the given property value.
+    /// </summary>
+    /// <param name=""name"">The name of the property.</param>
+    /// <param name=""value"">The value of the property.</param>
+    /// <returns>The instance with the property set.</returns>
+    public ");
+            
+            #line default
+            #line hidden
+            
+            #line 918 "CodeGenerator.Object.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 478 "CodeGenerator.Object.tt"
+            #line 918 "CodeGenerator.Object.tt"
+            this.Write(" SetProperty(in JsonPropertyName name, in ");
+            
+            #line default
+            #line hidden
+            
+            #line 918 "CodeGenerator.Object.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( SinglePropertyDotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 918 "CodeGenerator.Object.tt"
+            this.Write(" value)\r\n    {\r\n        return new(this.GetPropertyBackingWith(name, value.AsAny)" +
+                    ");\r\n    }\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 922 "CodeGenerator.Object.tt"
+  } 
+            
+            #line default
+            #line hidden
+            
+            #line 923 "CodeGenerator.Object.tt"
+            this.Write("\r\n    /// <inheritdoc/>\r\n    public ");
+            
+            #line default
+            #line hidden
+            
+            #line 925 "CodeGenerator.Object.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 925 "CodeGenerator.Object.tt"
             this.Write(" RemoveProperty(in JsonPropertyName name)\r\n    {\r\n        return new(this.GetProp" +
                     "ertyBackingWithout(name));\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    public ");
             
             #line default
             #line hidden
             
-            #line 484 "CodeGenerator.Object.tt"
+            #line 931 "CodeGenerator.Object.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 484 "CodeGenerator.Object.tt"
+            #line 931 "CodeGenerator.Object.tt"
             this.Write(" RemoveProperty(string name)\r\n    {\r\n        return new(this.GetPropertyBackingWi" +
                     "thout(name));\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    public ");
             
             #line default
             #line hidden
             
-            #line 490 "CodeGenerator.Object.tt"
+            #line 937 "CodeGenerator.Object.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 490 "CodeGenerator.Object.tt"
+            #line 937 "CodeGenerator.Object.tt"
             this.Write(" RemoveProperty(ReadOnlySpan<char> name)\r\n    {\r\n        return new(this.GetPrope" +
                     "rtyBackingWithout(name));\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    public ");
             
             #line default
             #line hidden
             
-            #line 496 "CodeGenerator.Object.tt"
+            #line 943 "CodeGenerator.Object.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 496 "CodeGenerator.Object.tt"
+            #line 943 "CodeGenerator.Object.tt"
             this.Write(" RemoveProperty(ReadOnlySpan<byte> utf8Name)\r\n    {\r\n        return new(this.GetP" +
-                    "ropertyBackingWithout(utf8Name));\r\n    }\r\n\r\n    /// <summary>\r\n    /// Builds an" +
-                    " <see cref=\"ImmutableList{JsonObjectProperty}\"/> from the object.\r\n    /// </sum" +
-                    "mary>\r\n    /// <returns>An immutable list of <see cref=\"JsonAny\"/> built from th" +
-                    "e array.</returns>\r\n    /// <exception cref=\"InvalidOperationException\">The valu" +
-                    "e is not an array.</exception>\r\n    private ImmutableList<JsonObjectProperty> Ge" +
-                    "tPropertyBacking()\r\n    {\r\n        if ((this.backing & Backing.Object) != 0)\r\n  " +
-                    "      {\r\n            return this.objectBacking;\r\n        }\r\n\r\n        return Pro" +
-                    "pertyBackingBuilders.GetPropertyBackingBuilder(this.jsonElementBacking).ToImmuta" +
-                    "ble();\r\n    }\r\n\r\n    /// <summary>\r\n    /// Builds an <see cref=\"ImmutableList{J" +
-                    "sonObjectProperty}\"/> from the object, without a specific property.\r\n    /// </s" +
-                    "ummary>\r\n    /// <returns>An immutable dictionary builder of <see cref=\"JsonProp" +
-                    "ertyName\"/> to <see cref=\"JsonAny\"/>, built from the existing object, without th" +
-                    "e given property.</returns>\r\n    /// <exception cref=\"InvalidOperationException\"" +
-                    ">The value is not an object.</exception>\r\n    private ImmutableList<JsonObjectPr" +
-                    "operty> GetPropertyBackingWithout(in JsonPropertyName name)\r\n    {\r\n        if (" +
-                    "(this.backing & Backing.Object) != 0)\r\n        {\r\n            return this.object" +
-                    "Backing.Remove(name);\r\n        }\r\n\r\n        return PropertyBackingBuilders.GetPr" +
-                    "opertyBackingBuilderWithout(this.jsonElementBacking, name).ToImmutable();\r\n    }" +
-                    "\r\n\r\n    /// <summary>\r\n    /// Builds an <see cref=\"ImmutableList{JsonObjectProp" +
-                    "erty}\"/> from the object, without a specific property.\r\n    /// </summary>\r\n    " +
-                    "/// <returns>An immutable dictionary builder of <see cref=\"JsonPropertyName\"/> t" +
-                    "o <see cref=\"JsonAny\"/>, built from the existing object, without the given prope" +
-                    "rty.</returns>\r\n    /// <exception cref=\"InvalidOperationException\">The value is" +
-                    " not an object.</exception>\r\n    private ImmutableList<JsonObjectProperty> GetPr" +
-                    "opertyBackingWithout(ReadOnlySpan<char> name)\r\n    {\r\n        if ((this.backing " +
-                    "& Backing.Object) != 0)\r\n        {\r\n            return this.objectBacking.Remove" +
-                    "(name);\r\n        }\r\n\r\n        return PropertyBackingBuilders.GetPropertyBackingB" +
-                    "uilderWithout(this.jsonElementBacking, name).ToImmutable();\r\n    }\r\n\r\n    /// <s" +
-                    "ummary>\r\n    /// Builds an <see cref=\"ImmutableList{JsonObjectProperty}\"/> from " +
-                    "the object, without a specific property.\r\n    /// </summary>\r\n    /// <returns>A" +
-                    "n immutable dictionary builder of <see cref=\"JsonPropertyName\"/> to <see cref=\"J" +
-                    "sonAny\"/>, built from the existing object, without the given property.</returns>" +
-                    "\r\n    /// <exception cref=\"InvalidOperationException\">The value is not an object" +
-                    ".</exception>\r\n    private ImmutableList<JsonObjectProperty> GetPropertyBackingW" +
-                    "ithout(ReadOnlySpan<byte> name)\r\n    {\r\n        if ((this.backing & Backing.Obje" +
-                    "ct) != 0)\r\n        {\r\n            return this.objectBacking.Remove(name);\r\n     " +
-                    "   }\r\n\r\n        return PropertyBackingBuilders.GetPropertyBackingBuilderWithout(" +
-                    "this.jsonElementBacking, name).ToImmutable();\r\n    }\r\n\r\n    /// <summary>\r\n    /" +
-                    "// Builds an <see cref=\"ImmutableList{JsonObjectProperty}\"/> from the object, wi" +
-                    "thout a specific property.\r\n    /// </summary>\r\n    /// <returns>An immutable di" +
-                    "ctionary builder of <see cref=\"JsonPropertyName\"/> to <see cref=\"JsonAny\"/>, bui" +
-                    "lt from the existing object, without the given property.</returns>\r\n    /// <exc" +
-                    "eption cref=\"InvalidOperationException\">The value is not an object.</exception>\r" +
-                    "\n    private ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(string " +
-                    "name)\r\n    {\r\n        if ((this.backing & Backing.Object) != 0)\r\n        {\r\n    " +
-                    "        return this.objectBacking.Remove(name);\r\n        }\r\n\r\n        return Pro" +
-                    "pertyBackingBuilders.GetPropertyBackingBuilderWithout(this.jsonElementBacking, n" +
-                    "ame).ToImmutable();\r\n    }\r\n\r\n    /// <summary>\r\n    /// Builds an <see cref=\"Im" +
-                    "mutableList{JsonObjectProperty}\"/> from the object, without a specific property." +
-                    "\r\n    /// </summary>\r\n    /// <returns>An immutable dictionary builder of <see c" +
-                    "ref=\"JsonPropertyName\"/> to <see cref=\"JsonAny\"/>, built from the existing objec" +
-                    "t, without the given property.</returns>\r\n    /// <exception cref=\"InvalidOperat" +
-                    "ionException\">The value is not an object.</exception>\r\n    private ImmutableList" +
-                    "<JsonObjectProperty> GetPropertyBackingWith(in JsonPropertyName name, in JsonAny" +
-                    " value)\r\n    {\r\n        if ((this.backing & Backing.Object) != 0)\r\n        {\r\n  " +
-                    "          return this.objectBacking.SetItem(name, value);\r\n        }\r\n\r\n        " +
-                    "ImmutableList<JsonObjectProperty>.Builder result = PropertyBackingBuilders.GetPr" +
-                    "opertyBackingBuilderReplacing(this.jsonElementBacking, name, value);\r\n        re" +
-                    "turn result.ToImmutable();\r\n    }\r\n}\r\n");
+                    "ropertyBackingWithout(utf8Name));\r\n    }\r\n\r\n");
             
             #line default
             #line hidden
             
-            #line 592 "CodeGenerator.Object.tt"
+            #line 948 "CodeGenerator.Object.tt"
+  if (CanEnumerateObjectAsSpecificType)
+    { 
+            
+            #line default
+            #line hidden
+            
+            #line 950 "CodeGenerator.Object.tt"
+            this.Write("    /// <inheritdoc/>\r\n    bool IReadOnlyDictionary<JsonPropertyName, ");
+            
+            #line default
+            #line hidden
+            
+            #line 951 "CodeGenerator.Object.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( SinglePropertyDotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 951 "CodeGenerator.Object.tt"
+            this.Write(">.ContainsKey(JsonPropertyName key)\r\n    {\r\n        return this.HasProperty(key);" +
+                    "\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    bool IReadOnlyDictionary<JsonPropertyName," +
+                    " ");
+            
+            #line default
+            #line hidden
+            
+            #line 957 "CodeGenerator.Object.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( SinglePropertyDotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 957 "CodeGenerator.Object.tt"
+            this.Write(">.TryGetValue(JsonPropertyName key, [MaybeNullWhen(false)] out ");
+            
+            #line default
+            #line hidden
+            
+            #line 957 "CodeGenerator.Object.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( SinglePropertyDotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 957 "CodeGenerator.Object.tt"
+            this.Write(" value)\r\n    {\r\n        return this.TryGetProperty(key, out value);\r\n    }\r\n\r\n   " +
+                    " /// <inheritdoc/>\r\n    IEnumerator<KeyValuePair<JsonPropertyName, ");
+            
+            #line default
+            #line hidden
+            
+            #line 963 "CodeGenerator.Object.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( SinglePropertyDotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 963 "CodeGenerator.Object.tt"
+            this.Write(">> IEnumerable<KeyValuePair<JsonPropertyName, ");
+            
+            #line default
+            #line hidden
+            
+            #line 963 "CodeGenerator.Object.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( SinglePropertyDotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 963 "CodeGenerator.Object.tt"
+            this.Write(">>.GetEnumerator()\r\n    {\r\n        if (this.HasJsonElementBacking)\r\n        {\r\n  " +
+                    "          return new ReadOnlyDictionaryJsonObjectEnumerator<");
+            
+            #line default
+            #line hidden
+            
+            #line 967 "CodeGenerator.Object.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( SinglePropertyDotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 967 "CodeGenerator.Object.tt"
+            this.Write(">(this.jsonElementBacking);\r\n        }\r\n\r\n        if (this.HasDotnetBacking)\r\n   " +
+                    "     {\r\n            return new ReadOnlyDictionaryJsonObjectEnumerator<");
+            
+            #line default
+            #line hidden
+            
+            #line 972 "CodeGenerator.Object.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( SinglePropertyDotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 972 "CodeGenerator.Object.tt"
+            this.Write(">(this.objectBacking);\r\n        }\r\n\r\n        throw new InvalidOperationException(" +
+                    ");\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    IEnumerator IEnumerable.GetEnumerator()\r" +
+                    "\n    {\r\n        return this.EnumerateObject();\r\n    }\r\n\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 984 "CodeGenerator.Object.tt"
+  } 
+            
+            #line default
+            #line hidden
+            
+            #line 985 "CodeGenerator.Object.tt"
+            this.Write("    /// <summary>\r\n    /// Builds an <see cref=\"ImmutableList{JsonObjectProperty}" +
+                    "\"/> from the object.\r\n    /// </summary>\r\n    /// <returns>An immutable list of " +
+                    "<see cref=\"JsonAny\"/> built from the array.</returns>\r\n    /// <exception cref=\"" +
+                    "InvalidOperationException\">The value is not an array.</exception>\r\n    private I" +
+                    "mmutableList<JsonObjectProperty> GetPropertyBacking()\r\n    {\r\n        if ((this." +
+                    "backing & Backing.Object) != 0)\r\n        {\r\n            return this.objectBackin" +
+                    "g;\r\n        }\r\n\r\n        return PropertyBackingBuilders.GetPropertyBackingBuilde" +
+                    "r(this.jsonElementBacking).ToImmutable();\r\n    }\r\n\r\n    /// <summary>\r\n    /// B" +
+                    "uilds an <see cref=\"ImmutableList{JsonObjectProperty}\"/> from the object, withou" +
+                    "t a specific property.\r\n    /// </summary>\r\n    /// <returns>An immutable dictio" +
+                    "nary builder of <see cref=\"JsonPropertyName\"/> to <see cref=\"JsonAny\"/>, built f" +
+                    "rom the existing object, without the given property.</returns>\r\n    /// <excepti" +
+                    "on cref=\"InvalidOperationException\">The value is not an object.</exception>\r\n   " +
+                    " private ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(in JsonProp" +
+                    "ertyName name)\r\n    {\r\n        if ((this.backing & Backing.Object) != 0)\r\n      " +
+                    "  {\r\n            return this.objectBacking.Remove(name);\r\n        }\r\n\r\n        r" +
+                    "eturn PropertyBackingBuilders.GetPropertyBackingBuilderWithout(this.jsonElementB" +
+                    "acking, name).ToImmutable();\r\n    }\r\n\r\n    /// <summary>\r\n    /// Builds an <see" +
+                    " cref=\"ImmutableList{JsonObjectProperty}\"/> from the object, without a specific " +
+                    "property.\r\n    /// </summary>\r\n    /// <returns>An immutable dictionary builder " +
+                    "of <see cref=\"JsonPropertyName\"/> to <see cref=\"JsonAny\"/>, built from the exist" +
+                    "ing object, without the given property.</returns>\r\n    /// <exception cref=\"Inva" +
+                    "lidOperationException\">The value is not an object.</exception>\r\n    private Immu" +
+                    "tableList<JsonObjectProperty> GetPropertyBackingWithout(ReadOnlySpan<char> name)" +
+                    "\r\n    {\r\n        if ((this.backing & Backing.Object) != 0)\r\n        {\r\n         " +
+                    "   return this.objectBacking.Remove(name);\r\n        }\r\n\r\n        return Property" +
+                    "BackingBuilders.GetPropertyBackingBuilderWithout(this.jsonElementBacking, name)." +
+                    "ToImmutable();\r\n    }\r\n\r\n    /// <summary>\r\n    /// Builds an <see cref=\"Immutab" +
+                    "leList{JsonObjectProperty}\"/> from the object, without a specific property.\r\n   " +
+                    " /// </summary>\r\n    /// <returns>An immutable dictionary builder of <see cref=\"" +
+                    "JsonPropertyName\"/> to <see cref=\"JsonAny\"/>, built from the existing object, wi" +
+                    "thout the given property.</returns>\r\n    /// <exception cref=\"InvalidOperationEx" +
+                    "ception\">The value is not an object.</exception>\r\n    private ImmutableList<Json" +
+                    "ObjectProperty> GetPropertyBackingWithout(ReadOnlySpan<byte> name)\r\n    {\r\n     " +
+                    "   if ((this.backing & Backing.Object) != 0)\r\n        {\r\n            return this" +
+                    ".objectBacking.Remove(name);\r\n        }\r\n\r\n        return PropertyBackingBuilder" +
+                    "s.GetPropertyBackingBuilderWithout(this.jsonElementBacking, name).ToImmutable();" +
+                    "\r\n    }\r\n\r\n    /// <summary>\r\n    /// Builds an <see cref=\"ImmutableList{JsonObj" +
+                    "ectProperty}\"/> from the object, without a specific property.\r\n    /// </summary" +
+                    ">\r\n    /// <returns>An immutable dictionary builder of <see cref=\"JsonPropertyNa" +
+                    "me\"/> to <see cref=\"JsonAny\"/>, built from the existing object, without the give" +
+                    "n property.</returns>\r\n    /// <exception cref=\"InvalidOperationException\">The v" +
+                    "alue is not an object.</exception>\r\n    private ImmutableList<JsonObjectProperty" +
+                    "> GetPropertyBackingWithout(string name)\r\n    {\r\n        if ((this.backing & Bac" +
+                    "king.Object) != 0)\r\n        {\r\n            return this.objectBacking.Remove(name" +
+                    ");\r\n        }\r\n\r\n        return PropertyBackingBuilders.GetPropertyBackingBuilde" +
+                    "rWithout(this.jsonElementBacking, name).ToImmutable();\r\n    }\r\n\r\n    /// <summar" +
+                    "y>\r\n    /// Builds an <see cref=\"ImmutableList{JsonObjectProperty}\"/> from the o" +
+                    "bject, without a specific property.\r\n    /// </summary>\r\n    /// <returns>An imm" +
+                    "utable dictionary builder of <see cref=\"JsonPropertyName\"/> to <see cref=\"JsonAn" +
+                    "y\"/>, built from the existing object, without the given property.</returns>\r\n   " +
+                    " /// <exception cref=\"InvalidOperationException\">The value is not an object.</ex" +
+                    "ception>\r\n    private ImmutableList<JsonObjectProperty> GetPropertyBackingWith(i" +
+                    "n JsonPropertyName name, in JsonAny value)\r\n    {\r\n        if ((this.backing & B" +
+                    "acking.Object) != 0)\r\n        {\r\n            return this.objectBacking.SetItem(n" +
+                    "ame, value);\r\n        }\r\n\r\n        ImmutableList<JsonObjectProperty>.Builder res" +
+                    "ult = PropertyBackingBuilders.GetPropertyBackingBuilderReplacing(this.jsonElemen" +
+                    "tBacking, name, value);\r\n        return result.ToImmutable();\r\n    }\r\n}\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 1076 "CodeGenerator.Object.tt"
  EndNesting(); 
             
             #line default

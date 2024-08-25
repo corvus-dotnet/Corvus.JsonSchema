@@ -12,6 +12,7 @@ Scenario Outline: email format
     Given the input JSON file "format.json"
     And the schema at "#/0/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -39,6 +40,7 @@ Scenario Outline: ipv4 format
     Given the input JSON file "format.json"
     And the schema at "#/1/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -66,6 +68,7 @@ Scenario Outline: ipv6 format
     Given the input JSON file "format.json"
     And the schema at "#/2/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -93,6 +96,7 @@ Scenario Outline: hostname format
     Given the input JSON file "format.json"
     And the schema at "#/3/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -120,6 +124,7 @@ Scenario Outline: date-time format
     Given the input JSON file "format.json"
     And the schema at "#/4/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -147,6 +152,7 @@ Scenario Outline: json-pointer format
     Given the input JSON file "format.json"
     And the schema at "#/5/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -174,6 +180,7 @@ Scenario Outline: uri format
     Given the input JSON file "format.json"
     And the schema at "#/6/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -201,6 +208,7 @@ Scenario Outline: uri-reference format
     Given the input JSON file "format.json"
     And the schema at "#/7/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -228,6 +236,7 @@ Scenario Outline: uri-template format
     Given the input JSON file "format.json"
     And the schema at "#/8/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance

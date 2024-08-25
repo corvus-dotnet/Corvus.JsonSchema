@@ -43,7 +43,7 @@ public readonly partial struct Validation
         /// Conversion from <see cref = "Corvus.Json.JsonSchema.Draft201909.Validation.SimpleTypes"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator TypeEntity(Corvus.Json.JsonSchema.Draft201909.Validation.SimpleTypes value)
+        public static explicit operator TypeEntity(Corvus.Json.JsonSchema.Draft201909.Validation.SimpleTypes value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -80,7 +80,7 @@ public readonly partial struct Validation
         /// Conversion from <see cref = "Corvus.Json.JsonSchema.Draft201909.Validation.TypeEntity.SimpleTypesArray"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator TypeEntity(Corvus.Json.JsonSchema.Draft201909.Validation.TypeEntity.SimpleTypesArray value)
+        public static explicit operator TypeEntity(Corvus.Json.JsonSchema.Draft201909.Validation.TypeEntity.SimpleTypesArray value)
         {
             if (value.HasJsonElementBacking)
             {

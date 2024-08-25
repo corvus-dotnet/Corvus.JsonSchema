@@ -15,6 +15,7 @@ Scenario Outline: simple enum validation
     Given the input JSON file "enum.json"
     And the schema at "#/0/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -37,6 +38,7 @@ Scenario Outline: heterogeneous enum validation
     Given the input JSON file "enum.json"
     And the schema at "#/1/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -65,6 +67,7 @@ Scenario Outline: heterogeneous enum-with-null validation
     Given the input JSON file "enum.json"
     And the schema at "#/2/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -94,6 +97,7 @@ Scenario Outline: enums in properties
     Given the input JSON file "enum.json"
     And the schema at "#/3/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -124,6 +128,7 @@ Scenario Outline: enum with escaped characters
     Given the input JSON file "enum.json"
     And the schema at "#/4/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -148,6 +153,7 @@ Scenario Outline: enum with false does not match 0
     Given the input JSON file "enum.json"
     And the schema at "#/5/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -172,6 +178,7 @@ Scenario Outline: enum with array[false] does not match array[0]
     Given the input JSON file "enum.json"
     And the schema at "#/6/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -196,6 +203,7 @@ Scenario Outline: enum with true does not match 1
     Given the input JSON file "enum.json"
     And the schema at "#/7/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -220,6 +228,7 @@ Scenario Outline: enum with array[true] does not match array[1]
     Given the input JSON file "enum.json"
     And the schema at "#/8/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -244,6 +253,7 @@ Scenario Outline: enum with 0 does not match false
     Given the input JSON file "enum.json"
     And the schema at "#/9/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -268,6 +278,7 @@ Scenario Outline: enum with array[0] does not match array[false]
     Given the input JSON file "enum.json"
     And the schema at "#/10/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -292,6 +303,7 @@ Scenario Outline: enum with 1 does not match true
     Given the input JSON file "enum.json"
     And the schema at "#/11/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -316,6 +328,7 @@ Scenario Outline: enum with array[1] does not match array[true]
     Given the input JSON file "enum.json"
     And the schema at "#/12/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -340,6 +353,7 @@ Scenario Outline: nul characters in strings
     Given the input JSON file "enum.json"
     And the schema at "#/13/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance

@@ -1,0 +1,68 @@
+@openApi30
+
+Feature: refRemote openApi30
+    In order to use json-schema
+    As a developer
+    I want to support refRemote in openApi30
+
+Scenario Outline: remote ref
+/* Schema: 
+{"$ref": "http://localhost:1234/integer.json"}
+*/
+    Given the input JSON file "refRemote.json"
+    And the schema at "#/0/schema"
+    And the input data at "<inputDataReference>"
+    And I assert format
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        # 1
+        | #/000/tests/000/data | true  | remote ref valid                                                                 |
+        # a
+        | #/000/tests/001/data | false | remote ref invalid                                                               |
+
+Scenario Outline: fragment within remote ref
+/* Schema: 
+{"$ref": "http://localhost:1234/subSchemas.json#/definitions/integer"}
+*/
+    Given the input JSON file "refRemote.json"
+    And the schema at "#/1/schema"
+    And the input data at "<inputDataReference>"
+    And I assert format
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        # 1
+        | #/001/tests/000/data | true  | remote fragment valid                                                            |
+        # a
+        | #/001/tests/001/data | false | remote fragment invalid                                                          |
+
+Scenario Outline: ref within remote ref
+/* Schema: 
+{
+            "$ref": "http://localhost:1234/subSchemas.json#/definitions/refToInteger"
+        }
+*/
+    Given the input JSON file "refRemote.json"
+    And the schema at "#/2/schema"
+    And the input data at "<inputDataReference>"
+    And I assert format
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        # 1
+        | #/002/tests/000/data | true  | ref within ref valid                                                             |
+        # a
+        | #/002/tests/001/data | false | ref within ref invalid                                                           |

@@ -490,7 +490,7 @@ public partial class JsonSchemaTypeBuilder
         }
     }
 
-    private async Task<LocatedSchema?> ResolveBaseReference(JsonReference baseSchemaForReferenceLocation)
+    private async ValueTask<LocatedSchema?> ResolveBaseReference(JsonReference baseSchemaForReferenceLocation)
     {
         if (!this.schemaRegistry.TryGetValue(baseSchemaForReferenceLocation, out LocatedSchema? baseReferenceSchema))
         {

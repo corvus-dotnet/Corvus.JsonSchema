@@ -22,7 +22,7 @@ public readonly partial struct ScenarioWithError
     /// Conversion to <see cref = "Corvus.Json.Patch.SpecGenerator.ScenarioCommon"/>.
     /// </summary>
     /// <param name = "value">The value from which to convert.</param>
-    public static explicit operator Corvus.Json.Patch.SpecGenerator.ScenarioCommon(ScenarioWithError value)
+    public static implicit operator Corvus.Json.Patch.SpecGenerator.ScenarioCommon(ScenarioWithError value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
@@ -41,7 +41,7 @@ public readonly partial struct ScenarioWithError
     /// Conversion from <see cref = "Corvus.Json.Patch.SpecGenerator.ScenarioCommon"/>.
     /// </summary>
     /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator ScenarioWithError(Corvus.Json.Patch.SpecGenerator.ScenarioCommon value)
+    public static explicit operator ScenarioWithError(Corvus.Json.Patch.SpecGenerator.ScenarioCommon value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -59,7 +59,7 @@ public readonly partial struct ScenarioWithError
     /// Conversion to <see cref = "Corvus.Json.Patch.SpecGenerator.NotDisabled"/>.
     /// </summary>
     /// <param name = "value">The value from which to convert.</param>
-    public static explicit operator Corvus.Json.Patch.SpecGenerator.NotDisabled(ScenarioWithError value)
+    public static implicit operator Corvus.Json.Patch.SpecGenerator.NotDisabled(ScenarioWithError value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
@@ -78,7 +78,7 @@ public readonly partial struct ScenarioWithError
     /// Conversion from <see cref = "Corvus.Json.Patch.SpecGenerator.NotDisabled"/>.
     /// </summary>
     /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator ScenarioWithError(Corvus.Json.Patch.SpecGenerator.NotDisabled value)
+    public static explicit operator ScenarioWithError(Corvus.Json.Patch.SpecGenerator.NotDisabled value)
     {
         if (value.HasJsonElementBacking)
         {

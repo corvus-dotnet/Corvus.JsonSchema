@@ -1,0 +1,13 @@
+{
+    "type": "object",
+    "required": [ "count" ],
+    "properties": {
+        "count": { "$ref": "#/$defs/positiveInt32" }
+    },
+    "$defs": {
+        "positiveInt32": {
+            "type": "integer",
+            "format": "int32"
+        }
+    }
+}

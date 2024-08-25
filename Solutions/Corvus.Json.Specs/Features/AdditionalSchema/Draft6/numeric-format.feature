@@ -15,6 +15,7 @@ Scenario Outline: byte format
 
 	And the schema at "#/0/schema"
 	And the input data value <inputData>
+	And I assert format
 	And I generate a type for the schema
 	And I construct an instance of the schema type from the data
 	When I validate the instance
@@ -36,6 +37,7 @@ Scenario Outline: sbyte format
 
 	And the schema at "#/0/schema"
 	And the input data value <inputData>
+	And I assert format
 	And I generate a type for the schema
 	And I construct an instance of the schema type from the data
 	When I validate the instance
@@ -58,6 +60,7 @@ Scenario Outline: int16 format
 
 	And the schema at "#/0/schema"
 	And the input data value <inputData>
+	And I assert format
 	And I generate a type for the schema
 	And I construct an instance of the schema type from the data
 	When I validate the instance
@@ -80,6 +83,7 @@ Scenario Outline: uint16 format
 
 	And the schema at "#/0/schema"
 	And the input data value <inputData>
+	And I assert format
 	And I generate a type for the schema
 	And I construct an instance of the schema type from the data
 	When I validate the instance
@@ -102,6 +106,7 @@ Scenario Outline: int32 format
 
 	And the schema at "#/0/schema"
 	And the input data value <inputData>
+	And I assert format
 	And I generate a type for the schema
 	And I construct an instance of the schema type from the data
 	When I validate the instance
@@ -124,6 +129,7 @@ Scenario Outline: uint32 format
 
 	And the schema at "#/0/schema"
 	And the input data value <inputData>
+	And I assert format
 	And I generate a type for the schema
 	And I construct an instance of the schema type from the data
 	When I validate the instance
@@ -146,6 +152,7 @@ Scenario Outline: int64 format
 
 	And the schema at "#/0/schema"
 	And the input data value <inputData>
+	And I assert format
 	And I generate a type for the schema
 	And I construct an instance of the schema type from the data
 	When I validate the instance
@@ -168,6 +175,7 @@ Scenario Outline: uint64 format
 
 	And the schema at "#/0/schema"
 	And the input data value <inputData>
+	And I assert format
 	And I generate a type for the schema
 	And I construct an instance of the schema type from the data
 	When I validate the instance
@@ -190,6 +198,7 @@ Scenario Outline: int128 format
 
 	And the schema at "#/0/schema"
 	And the input data value <inputData>
+	And I assert format
 	And I generate a type for the schema
 	And I construct an instance of the schema type from the data
 	When I validate the instance
@@ -212,6 +221,7 @@ Scenario Outline: uint128 format
 
 	And the schema at "#/0/schema"
 	And the input data value <inputData>
+	And I assert format
 	And I generate a type for the schema
 	And I construct an instance of the schema type from the data
 	When I validate the instance
@@ -234,6 +244,7 @@ Scenario Outline: half format
 
 	And the schema at "#/0/schema"
 	And the input data value <inputData>
+	And I assert format
 	And I generate a type for the schema
 	And I construct an instance of the schema type from the data
 	When I validate the instance
@@ -257,6 +268,7 @@ Scenario Outline: single format
 
 	And the schema at "#/0/schema"
 	And the input data value <inputData>
+	And I assert format
 	And I generate a type for the schema
 	And I construct an instance of the schema type from the data
 	When I validate the instance
@@ -280,6 +292,7 @@ Scenario Outline: double format
 
 	And the schema at "#/0/schema"
 	And the input data value <inputData>
+	And I assert format
 	And I generate a type for the schema
 	And I construct an instance of the schema type from the data
 	When I validate the instance
@@ -301,6 +314,7 @@ Scenario Outline: decimal format
 
 	And the schema at "#/0/schema"
 	And the input data value <inputData>
+	And I assert format
 	And I generate a type for the schema
 	And I construct an instance of the schema type from the data
 	When I validate the instance

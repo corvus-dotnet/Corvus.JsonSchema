@@ -110,7 +110,7 @@ internal struct SpecDirectories
     public readonly IEnumerable<TestSet> EnumerateTests()
     {
         IEnumerable<TestSet>
-            EnumerateCore(string parentTestSetInputDirectory, string inputDirectory, string outputDirectory, string? parentTestSet, TestSelector selector)
+            EnumerateCore(string parentTestSetInputDirectory, string inputDirectory, string outputDirectory, string? parentTestSet, TestSelector selector, bool? assertFormat)
         {
             string? currentTestSet = selector.TestSet ?? parentTestSet;
             string testSetInputDirectory = selector.TestSet is null
@@ -119,6 +119,8 @@ internal struct SpecDirectories
 
             var includePatterns = selector.IncludeInThisDirectory.Select(pattern => new Regex(pattern)).ToList();
             var excludePatterns = selector.ExcludeFromThisDirectory.Select(pattern => new Regex(pattern)).ToList();
+
+            bool localAssertFormat = selector.AssertFormat ?? assertFormat ?? false;
             foreach (string inputFile in Directory.EnumerateFiles(inputDirectory))
             {
                 string filename = Path.GetFileName(inputFile);
@@ -145,6 +147,7 @@ internal struct SpecDirectories
                         inputFile,
                         inputRelativePath,
                         Path.Combine(outputDirectory, Path.ChangeExtension(Path.GetFileName(inputRelativePath.Replace("/", "-")), ".feature")),
+                        localAssertFormat,
                         testToIgnoreIndicesAsSetByScenarioName);
                 }
             }
@@ -168,7 +171,7 @@ internal struct SpecDirectories
                         foundAtLeastOneMatch = true;
 
                         IEnumerable<TestSet> subdirectoryResults =
-                            EnumerateCore(testSetInputDirectory, subdirectoryPath, outputSubdirectory, currentTestSet, subdirectorySelector);
+                            EnumerateCore(testSetInputDirectory, subdirectoryPath, outputSubdirectory, currentTestSet, subdirectorySelector, localAssertFormat);
                         foreach (TestSet result in subdirectoryResults)
                         {
                             yield return result;
@@ -183,7 +186,7 @@ internal struct SpecDirectories
             }
         }
 
-        return EnumerateCore(this.TestsDirectory, this.TestsDirectory, this.OutputDirectory, null, this.Selector);
+        return EnumerateCore(this.TestsDirectory, this.TestsDirectory, this.OutputDirectory, null, this.Selector, this.Selector.AssertFormat ?? false);
     }
 
     /// <inheritdoc/>
@@ -206,5 +209,6 @@ internal struct SpecDirectories
         string InputFile,
         string InputFileSpecFolderRelativePath,
         string OutputFile,
+        bool AssertFormat,
         IReadOnlyDictionary<string, IReadOnlySet<int>> TestsToIgnoreIndicesByScenarioName);
 }

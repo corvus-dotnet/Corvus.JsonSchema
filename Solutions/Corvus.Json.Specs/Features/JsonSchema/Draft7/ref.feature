@@ -17,6 +17,7 @@ Scenario Outline: root pointer ref
     Given the input JSON file "ref.json"
     And the schema at "#/0/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -45,6 +46,7 @@ Scenario Outline: relative pointer ref to object
     Given the input JSON file "ref.json"
     And the schema at "#/1/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -69,6 +71,7 @@ Scenario Outline: relative pointer ref to array
     Given the input JSON file "ref.json"
     And the schema at "#/2/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -99,6 +102,7 @@ Scenario Outline: escaped pointer ref
     Given the input JSON file "ref.json"
     And the schema at "#/3/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -133,6 +137,7 @@ Scenario Outline: nested refs
     Given the input JSON file "ref.json"
     And the schema at "#/4/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -164,6 +169,7 @@ Scenario Outline: ref overrides any sibling keywords
     Given the input JSON file "ref.json"
     And the schema at "#/5/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -205,6 +211,7 @@ Scenario Outline: $ref prevents a sibling $id from changing the base uri
     Given the input JSON file "ref.json"
     And the schema at "#/6/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -224,6 +231,7 @@ Scenario Outline: remote ref, containing refs itself
     Given the input JSON file "ref.json"
     And the schema at "#/7/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -247,6 +255,7 @@ Scenario Outline: property named $ref that is not a reference
     Given the input JSON file "ref.json"
     And the schema at "#/8/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -275,6 +284,7 @@ Scenario Outline: property named $ref, containing an actual $ref
     Given the input JSON file "ref.json"
     And the schema at "#/9/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -299,6 +309,7 @@ Scenario Outline: $ref to boolean schema true
     Given the input JSON file "ref.json"
     And the schema at "#/10/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -321,6 +332,7 @@ Scenario Outline: $ref to boolean schema false
     Given the input JSON file "ref.json"
     And the schema at "#/11/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -362,6 +374,7 @@ Scenario Outline: Recursive references between schemas
     Given the input JSON file "ref.json"
     And the schema at "#/12/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -388,6 +401,7 @@ Scenario Outline: refs with quote
     Given the input JSON file "ref.json"
     And the schema at "#/13/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -417,6 +431,7 @@ Scenario Outline: Location-independent identifier
     Given the input JSON file "ref.json"
     And the schema at "#/14/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -447,6 +462,7 @@ Scenario Outline: Reference an anchor with a non-relative URI
     Given the input JSON file "ref.json"
     And the schema at "#/15/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -482,6 +498,7 @@ Scenario Outline: Location-independent identifier with base URI change in subsch
     Given the input JSON file "ref.json"
     And the schema at "#/16/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -508,6 +525,7 @@ Scenario Outline: naive replacement of $ref with its destination is not correct
     Given the input JSON file "ref.json"
     And the schema at "#/17/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -545,6 +563,7 @@ Scenario Outline: refs with relative uris and defs
     Given the input JSON file "ref.json"
     And the schema at "#/18/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -582,6 +601,7 @@ Scenario Outline: relative refs with absolute uris and defs
     Given the input JSON file "ref.json"
     And the schema at "#/19/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -623,6 +643,7 @@ Scenario Outline: $id must be resolved against nearest parent, not just immediat
     Given the input JSON file "ref.json"
     And the schema at "#/20/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -649,6 +670,7 @@ Scenario Outline: simple URN base URI with $ref via the URN
     Given the input JSON file "ref.json"
     And the schema at "#/21/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -677,6 +699,7 @@ Scenario Outline: simple URN base URI with JSON pointer
     Given the input JSON file "ref.json"
     And the schema at "#/22/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -705,6 +728,7 @@ Scenario Outline: URN base URI with NSS
     Given the input JSON file "ref.json"
     And the schema at "#/23/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -733,6 +757,7 @@ Scenario Outline: URN base URI with r-component
     Given the input JSON file "ref.json"
     And the schema at "#/24/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -761,6 +786,7 @@ Scenario Outline: URN base URI with q-component
     Given the input JSON file "ref.json"
     And the schema at "#/25/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -788,6 +814,7 @@ Scenario Outline: URN base URI with URN and JSON pointer ref
     Given the input JSON file "ref.json"
     And the schema at "#/26/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -818,6 +845,7 @@ Scenario Outline: URN base URI with URN and anchor ref
     Given the input JSON file "ref.json"
     And the schema at "#/27/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -847,6 +875,7 @@ Scenario Outline: ref to if
     Given the input JSON file "ref.json"
     And the schema at "#/28/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -876,6 +905,7 @@ Scenario Outline: ref to then
     Given the input JSON file "ref.json"
     And the schema at "#/29/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -905,6 +935,7 @@ Scenario Outline: ref to else
     Given the input JSON file "ref.json"
     And the schema at "#/30/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -939,6 +970,7 @@ Scenario Outline: ref with absolute-path-reference
     Given the input JSON file "ref.json"
     And the schema at "#/31/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -970,6 +1002,7 @@ Scenario Outline: $id with file URI still resolves pointers - *nix
     Given the input JSON file "ref.json"
     And the schema at "#/32/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -1001,6 +1034,7 @@ Scenario Outline: $id with file URI still resolves pointers - windows
     Given the input JSON file "ref.json"
     And the schema at "#/33/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -1033,6 +1067,7 @@ Scenario Outline: empty tokens in $ref json-pointer
     Given the input JSON file "ref.json"
     And the schema at "#/34/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance

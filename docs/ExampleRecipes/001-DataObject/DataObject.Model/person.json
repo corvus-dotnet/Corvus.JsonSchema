@@ -1,0 +1,14 @@
+{
+  "title": "The person schema https://schema.org/Person",
+  "type": "object",
+  "properties": {
+    "familyName": { "type": "string" },
+    "givenName": { "type": "string" },
+    "otherNames": { "type": "string" },
+    "birthDate": {
+      "type": "string",
+      "format": "date"
+    },
+    "height": { "type": "number" }
+  }
+}

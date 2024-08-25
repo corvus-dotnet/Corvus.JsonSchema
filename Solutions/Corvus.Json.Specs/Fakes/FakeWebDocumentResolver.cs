@@ -63,13 +63,13 @@ public class FakeWebDocumentResolver : IDocumentResolver
     /// <inheritdoc/>
     public void Dispose()
     {
-        // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+        // Do not change this code. Put clean-up code in 'Dispose(bool disposing)' method
         this.Dispose(disposing: true);
         System.GC.SuppressFinalize(this);
     }
 
     /// <inheritdoc/>
-    public async Task<JsonElement?> TryResolve(JsonReference reference)
+    public async ValueTask<JsonElement?> TryResolve(JsonReference reference)
     {
         this.CheckDisposed();
 

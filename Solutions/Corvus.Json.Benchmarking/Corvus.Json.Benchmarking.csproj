@@ -16,7 +16,7 @@
 	<ItemGroup>
 		<PackageReference Include="BenchmarkDotNet" Version="0.13.12" />
 		<PackageReference Include="BenchmarkDotNet.Diagnostics.Windows" Version="0.13.12" />
-		<PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.9">
+		<PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.12">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
@@ -44,3 +44,4 @@
 	</ItemGroup>
 
 </Project>
+

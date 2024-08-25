@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Text.Json;
 using Corvus.Json.JsonSchema.Draft202012;
@@ -34,10 +35,114 @@ public static class JsonSchemaHelpers
         configuration.ValidateSchema = CreateDraft202012ValidateSchema();
         configuration.GetBuiltInTypeName = CreateDraft202012GetBuiltInTypeNameFunction();
         configuration.IsExplicitArrayType = CreateDraft202012IsExplicitArrayType();
+        configuration.IsExplicitMapType = CreateDraft202012IsExplicitMapType();
+        configuration.ProposeName = ProposeName;
         configuration.GeneratorReservedWords = CreateDraft202012GeneratorReservedWords();
         configuration.IsSimpleType = CreateDraft202012IsSimpleType();
         configuration.FindAndBuildPropertiesAdapter = CreateDraft202012FindAndBuildPropertiesAdapter();
         return builder;
+    }
+
+    private static bool ProposeName(TypeDeclaration typeDeclaration, JsonReferenceBuilder reference, [NotNullWhen(true)] out string? name)
+    {
+        if (typeDeclaration.LocatedSchema.Schema.ValueKind == JsonValueKind.Object &&
+            typeDeclaration.Schema().Title.IsNotUndefined() &&
+            typeDeclaration.Schema().Title.TryGetString(out string? titleValueString) &&
+            titleValueString.Length > 0 && titleValueString.Length < 64)
+        {
+            name = titleValueString;
+            return true;
+        }
+        else if (typeDeclaration.LocatedSchema.Schema.ValueKind == JsonValueKind.Object &&
+            typeDeclaration.Schema().Description.IsNotUndefined() &&
+            typeDeclaration.Schema().Description.TryGetString(out string? descriptionString) &&
+            descriptionString.Length > 0 && descriptionString.Length < 64)
+         {
+            name = descriptionString;
+            return true;
+        }
+        else if (typeDeclaration.LocatedSchema.Schema.ValueKind == JsonValueKind.Object &&
+            typeDeclaration.Schema().Default.IsNotUndefined() &&
+            typeDeclaration.Schema().EnumerateObject().Count() == 1)
+        {
+            name = $"DefaultValue{(typeDeclaration.Schema().Default.ValueKind == JsonValueKind.String ? (string)typeDeclaration.Schema().Default.AsString : typeDeclaration.Schema().Default.ToString())}";
+            return true;
+        }
+        else if (typeDeclaration.LocatedSchema.Schema.ValueKind == JsonValueKind.Object &&
+            typeDeclaration.Schema().IsObjectType() &&
+            typeDeclaration.Schema().Required.IsNotUndefined() &&
+            typeDeclaration.Schema().Required.GetArrayLength() < 3)
+        {
+            StringBuilder s = new();
+            foreach (JsonString required in typeDeclaration.Schema().Required.EnumerateArray())
+            {
+                if (s.Length == 0)
+                {
+                    s.Append("Required ");
+                }
+                else
+                {
+                    s.Append(" and ");
+                }
+
+#if NET8_0_OR_GREATER
+                s.Append(Formatting.ToPascalCaseWithReservedWords((string)required));
+#else
+                s.Append(Formatting.ToPascalCaseWithReservedWords((string)required).ToString());
+#endif
+            }
+
+            name = s.ToString();
+            return true;
+        }
+        else if (typeDeclaration.LocatedSchema.Schema.ValueKind == JsonValueKind.Object &&
+            typeDeclaration.Schema().IsObjectType() &&
+            typeDeclaration.Schema().Properties.IsNotUndefined())
+        {
+            var constProperties = typeDeclaration.Schema().Properties.Where(
+                p => p.Value.Const.ValueKind == JsonValueKind.String ||
+                     p.Value.Const.ValueKind == JsonValueKind.Null ||
+                     p.Value.Const.ValueKind == JsonValueKind.Number ||
+                     p.Value.Const.ValueKind == JsonValueKind.True ||
+                     p.Value.Const.ValueKind == JsonValueKind.False).ToList();
+
+            if (constProperties.Count > 0 && constProperties.Count < 3)
+            {
+                StringBuilder s = new();
+                foreach (KeyValuePair<JsonPropertyName, Schema> constProperty in constProperties)
+                {
+                    if (s.Length == 0)
+                    {
+                        s.Append("With ");
+                    }
+                    else
+                    {
+                        s.Append(" and ");
+                    }
+
+#if NET8_0_OR_GREATER
+                    s.Append(Formatting.ToPascalCaseWithReservedWords((string)constProperty.Key));
+                    s.Append(Formatting.ToPascalCaseWithReservedWords(
+                        constProperty.Value.Const.ValueKind == JsonValueKind.String ?
+                            (string)constProperty.Value.Const.AsString :
+                            constProperty.Value.Const.ToString()));
+#else
+                    s.Append(Formatting.ToPascalCaseWithReservedWords((string)constProperty.Key).ToString());
+                    s.Append(Formatting.ToPascalCaseWithReservedWords(
+                        constProperty.Value.Const.ValueKind == JsonValueKind.String ?
+                            (string)constProperty.Value.Const.AsString :
+                            constProperty.Value.Const.ToString()).ToString());
+
+#endif
+                }
+
+                name = s.ToString();
+                return true;
+            }
+        }
+
+        name = null;
+        return false;
     }
 
     private static ImmutableHashSet<string> CreateDraft202012GeneratorReservedWords()
@@ -324,6 +429,15 @@ public static class JsonSchemaHelpers
     }
 
     /// <summary>
+    /// Creates the predicate that determines whether this Schema() represents an explicit map type.
+    /// </summary>
+    /// <returns><see langword="true"/> if the Schema() is an explicit map type.</returns>
+    private static Predicate<JsonAny> CreateDraft202012IsExplicitMapType()
+    {
+        return static s => s.As<JsonSchema.Draft202012.Schema>().IsExplicitMapType();
+    }
+
+    /// <summary>
     /// Creates the predicate that determines whether this Schema() represents a simple type.
     /// </summary>
     /// <returns><see langword="true"/> if the Schema() is a simple type.</returns>
@@ -392,7 +506,7 @@ public static class JsonSchemaHelpers
             {
                 foreach (JsonString requiredName in schema.Required.EnumerateArray())
                 {
-                    target.AddOrReplaceProperty(new PropertyDeclaration(builder.AnyTypeDeclarationInstance, Uri.UnescapeDataString((string)requiredName), !treatRequiredAsOptional, source == target, false, null, null));
+                    target.AddOrReplaceProperty(new PropertyDeclaration(builder.AnyTypeDeclarationInstance, Uri.UnescapeDataString((string)requiredName), !treatRequiredAsOptional, source == target, false, null, null, false));
                 }
             }
 
@@ -465,7 +579,7 @@ public static class JsonSchemaHelpers
 
                     if (source.RefResolvablePropertyDeclarations.TryGetValue(propertyRef.AppendUnencodedPropertyNameToFragment(propertyName), out TypeDeclaration? propertyTypeDeclaration))
                     {
-                        target.AddOrReplaceProperty(new PropertyDeclaration(propertyTypeDeclaration, propertyName, isRequired, source == target, propertyTypeDeclaration.Schema().Default.IsNotUndefined(), propertyTypeDeclaration.Schema().Default is JsonAny def ? def.ToString() : default, FormatDocumentation(property.Value.As<Schema>())));
+                        target.AddOrReplaceProperty(new PropertyDeclaration(propertyTypeDeclaration, propertyName, isRequired, source == target, propertyTypeDeclaration.Schema().Default.IsNotUndefined(), propertyTypeDeclaration.Schema().Default is JsonAny def ? def.ToString() : default, FormatDocumentation(property.Value.As<Schema>()), propertyTypeDeclaration.Schema().Deprecated.ValueKind == JsonValueKind.True));
                     }
                 }
             }

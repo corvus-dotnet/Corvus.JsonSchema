@@ -1,0 +1,8 @@
+{
+    "$title":  "A list of currencies",
+    "enum": [
+        "gbp",
+        "usd",
+        "eur"
+    ]
+}

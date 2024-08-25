@@ -1,0 +1,14 @@
+{
+    "description": "A value in a specific currency",
+    "required": [ "currency", "value" ],
+    "properties": {
+        "currency": { "$ref": "./currencies.json" },
+        "value": { "$ref": "#/$defs/monetaryValue" }
+    },
+    "$defs": {
+        "monetaryValue": {
+            "type": "number",
+            "format": "decimal"
+        }
+    }
+}

@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Corvus.Json.CodeGeneration;
 
@@ -11,6 +12,15 @@ namespace Corvus.Json.CodeGeneration;
 /// </summary>
 public class JsonSchemaConfiguration
 {
+    /// <summary>
+    /// A callback for name generation.
+    /// </summary>
+    /// <param name="type">The type for which to generate a name.</param>
+    /// <param name="reference">The reference to the type.</param>
+    /// <param name="name">The proposed name, or <c>null</c> if no name is proposed.</param>
+    /// <returns><see langword="true"/> if the generator proposes a name.</returns>
+    public delegate bool NameGenerator(TypeDeclaration type, JsonReferenceBuilder reference, [NotNullWhen(true)] out string? name);
+
     /// <summary>
     /// Gets or sets the ID keyword for the schema model.
     /// </summary>
@@ -83,9 +93,19 @@ public class JsonSchemaConfiguration
     public Predicate<JsonAny> IsExplicitArrayType { get; set; } = static _ => false;
 
     /// <summary>
+    /// Gets or sets a predicate that indicates whether the given schema is an explicit map type.
+    /// </summary>
+    public Predicate<JsonAny> IsExplicitMapType { get; set; } = static _ => false;
+
+    /// <summary>
     /// Gets or sets a predicate that indicates whether the given schema is a simple type.
     /// </summary>
     public Predicate<JsonAny> IsSimpleType { get; set; } = static _ => false;
+
+    /// <summary>
+    /// Gets or sets a callback that proposes a name for <see cref="TypeDeclaration"/>.
+    /// </summary>
+    public NameGenerator ProposeName { get; set; } = NullNameGenerator;
 
     /// <summary>
     /// Gets or sets a function to get the built-in type name for a schema with particular validation semantics.
@@ -96,4 +116,10 @@ public class JsonSchemaConfiguration
     /// Gets or sets a function to build dotnet properties for given type declaration.
     /// </summary>
     public Action<IPropertyBuilder, TypeDeclaration, TypeDeclaration, HashSet<TypeDeclaration>, bool> FindAndBuildPropertiesAdapter { get; set; } = static (_, _, _, _, _) => { };
+
+    private static bool NullNameGenerator(TypeDeclaration type, JsonReferenceBuilder reference, [NotNullWhen(true)] out string? name)
+    {
+        name = null;
+        return false;
+    }
 }

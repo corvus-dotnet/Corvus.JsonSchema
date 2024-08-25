@@ -232,19 +232,19 @@ namespace ");
         if (level > ValidationLevel.Basic)
         {
             result = result.UsingStack();
-            result = result.PushSchemaLocation(""");
+            result = result.PushSchemaLocation(");
             
             #line default
             #line hidden
             
             #line 65 "CodeGenerator.Validate.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.RelativeSchemaLocation ));
+            this.Write(this.ToStringHelper.ToStringWithCulture( Formatting.FormatLiteralOrNull(TypeDeclaration.RelativeSchemaLocation, true) ));
             
             #line default
             #line hidden
             
             #line 65 "CodeGenerator.Validate.tt"
-            this.Write("\");\r\n        }\r\n");
+            this.Write(");\r\n        }\r\n");
             
             #line default
             #line hidden
@@ -326,7 +326,7 @@ namespace ");
             
             #line 101 "CodeGenerator.Validate.tt"
       }
-        if (HasFormat)
+        if (HasFormat && ValidateFormat)
         { 
             
             #line default

@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using Microsoft.CodeAnalysis;
@@ -12,6 +13,7 @@ namespace Corvus.Json.CodeGeneration;
 /// <summary>
 /// A type declaration for a Json Schema.
 /// </summary>
+[DebuggerDisplay("{DotnetTypeName} Location={LocatedSchema.Location}")]
 public class TypeDeclaration
 {
     private readonly JsonSchemaTypeBuilder typeBuilder;
@@ -391,6 +393,28 @@ public class TypeDeclaration
     }
 
     /// <summary>
+    /// Try to get the <c>$corvusTypeName</c> for the type.
+    /// </summary>
+    /// <param name="typeName">The type name.</param>
+    /// <returns><see langword="true"/> if the type had an explicit type name specified by the <c>$corvusTypeName</c> keyword.</returns>
+    internal bool TryGetCorvusTypeName([NotNullWhen(true)] out string? typeName)
+    {
+        if (this.LocatedSchema.Schema.ValueKind == JsonValueKind.Object &&
+            this.LocatedSchema.Schema.AsObject.TryGetProperty("$corvusTypeName", out JsonAny value) &&
+            value.ValueKind == JsonValueKind.String &&
+            value.AsString.TryGetString(out typeName))
+        {
+            if (typeName.Length > 1)
+            {
+                return true;
+            }
+        }
+
+        typeName = null;
+        return false;
+    }
+
+    /// <summary>
     /// Sets the recursive scope.
     /// </summary>
     /// <param name="recursiveScope">The recursive scope.</param>
@@ -422,11 +446,13 @@ public class TypeDeclaration
     {
         PropertyDeclaration? original = this.Properties[index];
 
-        // Merge whether this is a required property with the parent
+        // Merge whether this is a required / deprecated property with the parent
         PropertyDeclaration propertyToAdd =
-            propertyDeclaration.WithRequired(
+            propertyDeclaration
+            .WithRequired(
                 propertyDeclaration.IsRequired || original.IsRequired)
-            .WithXmlDocumentationRemarks(propertyDeclaration.XmlDocumentationRemarks ?? original.XmlDocumentationRemarks);
+            .WithXmlDocumentationRemarks(propertyDeclaration.XmlDocumentationRemarks ?? original.XmlDocumentationRemarks)
+            .WithDeprecated(propertyDeclaration.IsDeprecated || original.IsDeprecated);
 
         this.Properties = this.Properties.SetItem(index, propertyToAdd);
     }

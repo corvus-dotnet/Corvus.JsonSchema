@@ -1,0 +1,17 @@
+{
+    "$title":  "A tuple of int32, string, boolean",
+    "type": "array",
+    "prefixItems": [
+        {
+            "type": "integer",
+            "format": "int32"
+        },
+        {
+            "type": "string"
+        },
+        {
+            "type": "boolean"
+        }
+    ],
+    "unevaluatedItems": false
+}

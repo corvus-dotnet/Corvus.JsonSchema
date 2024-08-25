@@ -25,7 +25,7 @@ public readonly partial struct Test
         }
 
         int arrayLength = 0;
-        using JsonArrayEnumerator arrayEnumerator = this.EnumerateArray();
+        using JsonArrayEnumerator<Corvus.Json.JsonNotAny> arrayEnumerator = this.EnumerateArray();
         while (arrayEnumerator.MoveNext())
         {
             if (level > ValidationLevel.Basic)
@@ -41,7 +41,7 @@ public readonly partial struct Test
                         result = result.PushValidationLocationProperty("prefixItems");
                     }
 
-                    result = arrayEnumerator.Current.As<Corvus.Json.JsonInt32>().Validate(result, level);
+                    result = arrayEnumerator.Current.As<JsonSchemaSample.Api.Test.PositiveInt32>().Validate(result, level);
                     if (level == ValidationLevel.Flag && !result.IsValid)
                     {
                         return result;

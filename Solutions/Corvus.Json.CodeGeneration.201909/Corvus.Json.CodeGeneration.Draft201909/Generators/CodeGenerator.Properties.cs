@@ -16,7 +16,7 @@ namespace Corvus.Json.CodeGeneration.Generators.Draft201909 {
     public partial class CodeGeneratorProperties : CodeGeneratorPropertiesBase {
         
         
-        #line 224 "CodeGenerator.Properties.tt"
+        #line 230 "CodeGenerator.Properties.tt"
 
     public bool ShouldGenerate
     {
@@ -283,36 +283,51 @@ namespace ");
             #line hidden
             
             #line 62 "CodeGenerator.Properties.tt"
+      }
+
+        if (property.IsDeprecated)
+        { 
+            
+            #line default
+            #line hidden
+            
+            #line 66 "CodeGenerator.Properties.tt"
+            this.Write("    [Obsolete(\"This property is defined as deprecated in the JSON schema\")]\r\n\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 68 "CodeGenerator.Properties.tt"
       } 
             
             #line default
             #line hidden
             
-            #line 63 "CodeGenerator.Properties.tt"
+            #line 69 "CodeGenerator.Properties.tt"
             this.Write("    public ");
             
             #line default
             #line hidden
             
-            #line 63 "CodeGenerator.Properties.tt"
+            #line 69 "CodeGenerator.Properties.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( property.Type.FullyQualifiedDotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 63 "CodeGenerator.Properties.tt"
+            #line 69 "CodeGenerator.Properties.tt"
             this.Write(" ");
             
             #line default
             #line hidden
             
-            #line 63 "CodeGenerator.Properties.tt"
+            #line 69 "CodeGenerator.Properties.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( property.DotnetPropertyName ));
             
             #line default
             #line hidden
             
-            #line 63 "CodeGenerator.Properties.tt"
+            #line 69 "CodeGenerator.Properties.tt"
             this.Write(@"
     {
         get
@@ -329,26 +344,26 @@ namespace ");
             #line default
             #line hidden
             
-            #line 74 "CodeGenerator.Properties.tt"
+            #line 80 "CodeGenerator.Properties.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( property.DotnetPropertyName ));
             
             #line default
             #line hidden
             
-            #line 74 "CodeGenerator.Properties.tt"
+            #line 80 "CodeGenerator.Properties.tt"
             this.Write("Utf8, out JsonElement result))\r\n                {\r\n                    return new" +
                     "  ");
             
             #line default
             #line hidden
             
-            #line 76 "CodeGenerator.Properties.tt"
+            #line 82 "CodeGenerator.Properties.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( property.Type.FullyQualifiedDotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 76 "CodeGenerator.Properties.tt"
+            #line 82 "CodeGenerator.Properties.tt"
             this.Write("(result);\r\n                }\r\n            }\r\n\r\n            if ((this.backing & Ba" +
                     "cking.Object) != 0)\r\n            {\r\n                if(this.objectBacking.TryGet" +
                     "Value(JsonPropertyNames.");
@@ -356,68 +371,68 @@ namespace ");
             #line default
             #line hidden
             
-            #line 82 "CodeGenerator.Properties.tt"
+            #line 88 "CodeGenerator.Properties.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( property.DotnetPropertyName ));
             
             #line default
             #line hidden
             
-            #line 82 "CodeGenerator.Properties.tt"
+            #line 88 "CodeGenerator.Properties.tt"
             this.Write(", out JsonAny result))\r\n                {\r\n                    return result.As<");
             
             #line default
             #line hidden
             
-            #line 84 "CodeGenerator.Properties.tt"
+            #line 90 "CodeGenerator.Properties.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( property.Type.FullyQualifiedDotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 84 "CodeGenerator.Properties.tt"
+            #line 90 "CodeGenerator.Properties.tt"
             this.Write(">();\r\n                }\r\n            }\r\n\r\n            return default;\r\n        }\r" +
                     "\n    }\r\n");
             
             #line default
             #line hidden
             
-            #line 91 "CodeGenerator.Properties.tt"
+            #line 97 "CodeGenerator.Properties.tt"
   } 
             
             #line default
             #line hidden
             
-            #line 92 "CodeGenerator.Properties.tt"
+            #line 98 "CodeGenerator.Properties.tt"
             this.Write("\r\n    /// <summary>\r\n    /// Creates an instance of a <see cref=\"");
             
             #line default
             #line hidden
             
-            #line 94 "CodeGenerator.Properties.tt"
+            #line 100 "CodeGenerator.Properties.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 94 "CodeGenerator.Properties.tt"
+            #line 100 "CodeGenerator.Properties.tt"
             this.Write("\"/>.\r\n    /// </summary>\r\n    public static ");
             
             #line default
             #line hidden
             
-            #line 96 "CodeGenerator.Properties.tt"
+            #line 102 "CodeGenerator.Properties.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 96 "CodeGenerator.Properties.tt"
+            #line 102 "CodeGenerator.Properties.tt"
             this.Write(" Create(\r\n");
             
             #line default
             #line hidden
             
-            #line 97 "CodeGenerator.Properties.tt"
+            #line 103 "CodeGenerator.Properties.tt"
   bool isFirstCreateParameter = true;
     foreach(var property in RequiredAllOfAndRefProperties)
     {
@@ -434,13 +449,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 109 "CodeGenerator.Properties.tt"
+            #line 115 "CodeGenerator.Properties.tt"
             this.Write(", ");
             
             #line default
             #line hidden
             
-            #line 109 "CodeGenerator.Properties.tt"
+            #line 115 "CodeGenerator.Properties.tt"
 
             }
     
@@ -448,37 +463,37 @@ namespace ");
             #line default
             #line hidden
             
-            #line 112 "CodeGenerator.Properties.tt"
+            #line 118 "CodeGenerator.Properties.tt"
             this.Write("        ");
             
             #line default
             #line hidden
             
-            #line 112 "CodeGenerator.Properties.tt"
+            #line 118 "CodeGenerator.Properties.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( property.Type.FullyQualifiedDotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 112 "CodeGenerator.Properties.tt"
+            #line 118 "CodeGenerator.Properties.tt"
             this.Write(" ");
             
             #line default
             #line hidden
             
-            #line 112 "CodeGenerator.Properties.tt"
+            #line 118 "CodeGenerator.Properties.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( property.DotnetParameterName ));
             
             #line default
             #line hidden
             
-            #line 112 "CodeGenerator.Properties.tt"
+            #line 118 "CodeGenerator.Properties.tt"
             this.Write("\r\n");
             
             #line default
             #line hidden
             
-            #line 113 "CodeGenerator.Properties.tt"
+            #line 119 "CodeGenerator.Properties.tt"
       }
     }
 
@@ -495,13 +510,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 125 "CodeGenerator.Properties.tt"
+            #line 131 "CodeGenerator.Properties.tt"
             this.Write(",");
             
             #line default
             #line hidden
             
-            #line 125 "CodeGenerator.Properties.tt"
+            #line 131 "CodeGenerator.Properties.tt"
 
         }
     
@@ -509,37 +524,37 @@ namespace ");
             #line default
             #line hidden
             
-            #line 128 "CodeGenerator.Properties.tt"
+            #line 134 "CodeGenerator.Properties.tt"
             this.Write("        ");
             
             #line default
             #line hidden
             
-            #line 128 "CodeGenerator.Properties.tt"
+            #line 134 "CodeGenerator.Properties.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( property.Type.FullyQualifiedDotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 128 "CodeGenerator.Properties.tt"
+            #line 134 "CodeGenerator.Properties.tt"
             this.Write("? ");
             
             #line default
             #line hidden
             
-            #line 128 "CodeGenerator.Properties.tt"
+            #line 134 "CodeGenerator.Properties.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( property.DotnetParameterName ));
             
             #line default
             #line hidden
             
-            #line 128 "CodeGenerator.Properties.tt"
+            #line 134 "CodeGenerator.Properties.tt"
             this.Write(" = null ");
             
             #line default
             #line hidden
             
-            #line 128 "CodeGenerator.Properties.tt"
+            #line 134 "CodeGenerator.Properties.tt"
 
     }
     
@@ -547,14 +562,14 @@ namespace ");
             #line default
             #line hidden
             
-            #line 131 "CodeGenerator.Properties.tt"
+            #line 137 "CodeGenerator.Properties.tt"
             this.Write(")\r\n    {\r\n        var builder = ImmutableList.CreateBuilder<JsonObjectProperty>()" +
                     ";\r\n");
             
             #line default
             #line hidden
             
-            #line 134 "CodeGenerator.Properties.tt"
+            #line 140 "CodeGenerator.Properties.tt"
   foreach(var property in RequiredAllOfAndRefProperties)
     {
         if (IsConst(property.Type))
@@ -563,37 +578,37 @@ namespace ");
             #line default
             #line hidden
             
-            #line 138 "CodeGenerator.Properties.tt"
+            #line 144 "CodeGenerator.Properties.tt"
             this.Write("        builder.Add(JsonPropertyNames.");
             
             #line default
             #line hidden
             
-            #line 138 "CodeGenerator.Properties.tt"
+            #line 144 "CodeGenerator.Properties.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( property.DotnetPropertyName));
             
             #line default
             #line hidden
             
-            #line 138 "CodeGenerator.Properties.tt"
+            #line 144 "CodeGenerator.Properties.tt"
             this.Write(", new ");
             
             #line default
             #line hidden
             
-            #line 138 "CodeGenerator.Properties.tt"
+            #line 144 "CodeGenerator.Properties.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( property.Type.FullyQualifiedDotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 138 "CodeGenerator.Properties.tt"
+            #line 144 "CodeGenerator.Properties.tt"
             this.Write("().AsAny);\r\n");
             
             #line default
             #line hidden
             
-            #line 139 "CodeGenerator.Properties.tt"
+            #line 145 "CodeGenerator.Properties.tt"
       }
         else
         { 
@@ -601,37 +616,37 @@ namespace ");
             #line default
             #line hidden
             
-            #line 142 "CodeGenerator.Properties.tt"
+            #line 148 "CodeGenerator.Properties.tt"
             this.Write("        builder.Add(JsonPropertyNames.");
             
             #line default
             #line hidden
             
-            #line 142 "CodeGenerator.Properties.tt"
+            #line 148 "CodeGenerator.Properties.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( property.DotnetPropertyName));
             
             #line default
             #line hidden
             
-            #line 142 "CodeGenerator.Properties.tt"
+            #line 148 "CodeGenerator.Properties.tt"
             this.Write(", ");
             
             #line default
             #line hidden
             
-            #line 142 "CodeGenerator.Properties.tt"
+            #line 148 "CodeGenerator.Properties.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( property.DotnetParameterName ));
             
             #line default
             #line hidden
             
-            #line 142 "CodeGenerator.Properties.tt"
+            #line 148 "CodeGenerator.Properties.tt"
             this.Write(".AsAny);\r\n");
             
             #line default
             #line hidden
             
-            #line 143 "CodeGenerator.Properties.tt"
+            #line 149 "CodeGenerator.Properties.tt"
       }
     }
 
@@ -641,85 +656,85 @@ namespace ");
             #line default
             #line hidden
             
-            #line 148 "CodeGenerator.Properties.tt"
+            #line 154 "CodeGenerator.Properties.tt"
             this.Write("\r\n        if (");
             
             #line default
             #line hidden
             
-            #line 149 "CodeGenerator.Properties.tt"
+            #line 155 "CodeGenerator.Properties.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( property.DotnetParameterName ));
             
             #line default
             #line hidden
             
-            #line 149 "CodeGenerator.Properties.tt"
+            #line 155 "CodeGenerator.Properties.tt"
             this.Write(" is ");
             
             #line default
             #line hidden
             
-            #line 149 "CodeGenerator.Properties.tt"
+            #line 155 "CodeGenerator.Properties.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( property.Type.FullyQualifiedDotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 149 "CodeGenerator.Properties.tt"
+            #line 155 "CodeGenerator.Properties.tt"
             this.Write(" ");
             
             #line default
             #line hidden
             
-            #line 149 "CodeGenerator.Properties.tt"
+            #line 155 "CodeGenerator.Properties.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( property.DotnetParameterName ));
             
             #line default
             #line hidden
             
-            #line 149 "CodeGenerator.Properties.tt"
+            #line 155 "CodeGenerator.Properties.tt"
             this.Write("__)\r\n        {\r\n            builder.Add(JsonPropertyNames.");
             
             #line default
             #line hidden
             
-            #line 151 "CodeGenerator.Properties.tt"
+            #line 157 "CodeGenerator.Properties.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( property.DotnetPropertyName));
             
             #line default
             #line hidden
             
-            #line 151 "CodeGenerator.Properties.tt"
+            #line 157 "CodeGenerator.Properties.tt"
             this.Write(", ");
             
             #line default
             #line hidden
             
-            #line 151 "CodeGenerator.Properties.tt"
+            #line 157 "CodeGenerator.Properties.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( property.DotnetParameterName ));
             
             #line default
             #line hidden
             
-            #line 151 "CodeGenerator.Properties.tt"
+            #line 157 "CodeGenerator.Properties.tt"
             this.Write("__.AsAny);\r\n        }\r\n");
             
             #line default
             #line hidden
             
-            #line 153 "CodeGenerator.Properties.tt"
+            #line 159 "CodeGenerator.Properties.tt"
   } 
             
             #line default
             #line hidden
             
-            #line 154 "CodeGenerator.Properties.tt"
+            #line 160 "CodeGenerator.Properties.tt"
             this.Write("        return new(builder.ToImmutable());\r\n    }\r\n");
             
             #line default
             #line hidden
             
-            #line 156 "CodeGenerator.Properties.tt"
+            #line 162 "CodeGenerator.Properties.tt"
   foreach(var property in Properties)
     {
         if (IsConst(property.Type))
@@ -730,130 +745,130 @@ namespace ");
             #line default
             #line hidden
             
-            #line 162 "CodeGenerator.Properties.tt"
+            #line 168 "CodeGenerator.Properties.tt"
             this.Write("\r\n    /// <summary>\r\n    /// Sets ");
             
             #line default
             #line hidden
             
-            #line 164 "CodeGenerator.Properties.tt"
+            #line 170 "CodeGenerator.Properties.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( Formatting.FormatLiteralOrNull(property.JsonPropertyName, true).Trim('"') ));
             
             #line default
             #line hidden
             
-            #line 164 "CodeGenerator.Properties.tt"
+            #line 170 "CodeGenerator.Properties.tt"
             this.Write(".\r\n    /// </summary>\r\n    /// <param name=\"value\">The value to set.</param>\r\n   " +
                     " /// <returns>The entity with the updated property.</returns>\r\n    public ");
             
             #line default
             #line hidden
             
-            #line 168 "CodeGenerator.Properties.tt"
+            #line 174 "CodeGenerator.Properties.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 168 "CodeGenerator.Properties.tt"
+            #line 174 "CodeGenerator.Properties.tt"
             this.Write(" With");
             
             #line default
             #line hidden
             
-            #line 168 "CodeGenerator.Properties.tt"
+            #line 174 "CodeGenerator.Properties.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( property.DotnetPropertyName ));
-            
-            #line default
-            #line hidden
-            
-            #line 168 "CodeGenerator.Properties.tt"
-            this.Write("(in ");
-            
-            #line default
-            #line hidden
-            
-            #line 168 "CodeGenerator.Properties.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( property.Type.FullyQualifiedDotnetTypeName ));
-            
-            #line default
-            #line hidden
-            
-            #line 168 "CodeGenerator.Properties.tt"
-            this.Write(" value)\r\n    {\r\n        return this.SetProperty(JsonPropertyNames.");
-            
-            #line default
-            #line hidden
-            
-            #line 170 "CodeGenerator.Properties.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( property.DotnetPropertyName ));
-            
-            #line default
-            #line hidden
-            
-            #line 170 "CodeGenerator.Properties.tt"
-            this.Write(", value);\r\n    }\r\n");
-            
-            #line default
-            #line hidden
-            
-            #line 172 "CodeGenerator.Properties.tt"
-  } 
-            
-            #line default
-            #line hidden
-            
-            #line 173 "CodeGenerator.Properties.tt"
-            this.Write("\r\n");
             
             #line default
             #line hidden
             
             #line 174 "CodeGenerator.Properties.tt"
+            this.Write("(in ");
+            
+            #line default
+            #line hidden
+            
+            #line 174 "CodeGenerator.Properties.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( property.Type.FullyQualifiedDotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 174 "CodeGenerator.Properties.tt"
+            this.Write(" value)\r\n    {\r\n        return this.SetProperty(JsonPropertyNames.");
+            
+            #line default
+            #line hidden
+            
+            #line 176 "CodeGenerator.Properties.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( property.DotnetPropertyName ));
+            
+            #line default
+            #line hidden
+            
+            #line 176 "CodeGenerator.Properties.tt"
+            this.Write(", value);\r\n    }\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 178 "CodeGenerator.Properties.tt"
+  } 
+            
+            #line default
+            #line hidden
+            
+            #line 179 "CodeGenerator.Properties.tt"
+            this.Write("\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 180 "CodeGenerator.Properties.tt"
   foreach (var property in LocalProperties)
     { 
             
             #line default
             #line hidden
             
-            #line 176 "CodeGenerator.Properties.tt"
+            #line 182 "CodeGenerator.Properties.tt"
             this.Write("\r\n    private static ValidationContext __CorvusValidate");
             
             #line default
             #line hidden
             
-            #line 177 "CodeGenerator.Properties.tt"
+            #line 183 "CodeGenerator.Properties.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( property.DotnetPropertyName ));
             
             #line default
             #line hidden
             
-            #line 177 "CodeGenerator.Properties.tt"
+            #line 183 "CodeGenerator.Properties.tt"
             this.Write("(in JsonObjectProperty property, in ValidationContext validationContext, Validati" +
                     "onLevel level)\r\n    {\r\n        return property.ValueAs<");
             
             #line default
             #line hidden
             
-            #line 179 "CodeGenerator.Properties.tt"
+            #line 185 "CodeGenerator.Properties.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( property.Type.FullyQualifiedDotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 179 "CodeGenerator.Properties.tt"
+            #line 185 "CodeGenerator.Properties.tt"
             this.Write(">().Validate(validationContext, level);\r\n    }\r\n");
             
             #line default
             #line hidden
             
-            #line 181 "CodeGenerator.Properties.tt"
+            #line 187 "CodeGenerator.Properties.tt"
   } 
             
             #line default
             #line hidden
             
-            #line 182 "CodeGenerator.Properties.tt"
+            #line 188 "CodeGenerator.Properties.tt"
             this.Write(@"
     /// <summary>
     /// Tries to get the validator for the given property.
@@ -871,7 +886,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 194 "CodeGenerator.Properties.tt"
+            #line 200 "CodeGenerator.Properties.tt"
   bool isFirst = true;
     foreach (var property in LocalProperties)
     { 
@@ -879,62 +894,62 @@ namespace ");
             #line default
             #line hidden
             
-            #line 197 "CodeGenerator.Properties.tt"
+            #line 203 "CodeGenerator.Properties.tt"
             this.Write("            ");
             
             #line default
             #line hidden
             
-            #line 197 "CodeGenerator.Properties.tt"
+            #line 203 "CodeGenerator.Properties.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( isFirst ? string.Empty : "else " ));
             
             #line default
             #line hidden
             
-            #line 197 "CodeGenerator.Properties.tt"
+            #line 203 "CodeGenerator.Properties.tt"
             this.Write("if (property.NameEquals(JsonPropertyNames.");
             
             #line default
             #line hidden
             
-            #line 197 "CodeGenerator.Properties.tt"
+            #line 203 "CodeGenerator.Properties.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( property.DotnetPropertyName ));
             
             #line default
             #line hidden
             
-            #line 197 "CodeGenerator.Properties.tt"
+            #line 203 "CodeGenerator.Properties.tt"
             this.Write("Utf8))\r\n            {\r\n                propertyValidator = __CorvusValidate");
             
             #line default
             #line hidden
             
-            #line 199 "CodeGenerator.Properties.tt"
+            #line 205 "CodeGenerator.Properties.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( property.DotnetPropertyName ));
             
             #line default
             #line hidden
             
-            #line 199 "CodeGenerator.Properties.tt"
+            #line 205 "CodeGenerator.Properties.tt"
             this.Write(";\r\n                return true;\r\n            }\r\n");
             
             #line default
             #line hidden
             
-            #line 202 "CodeGenerator.Properties.tt"
+            #line 208 "CodeGenerator.Properties.tt"
       isFirst = false;
     } 
             
             #line default
             #line hidden
             
-            #line 204 "CodeGenerator.Properties.tt"
+            #line 210 "CodeGenerator.Properties.tt"
             this.Write("        }\r\n        else\r\n        {\r\n");
             
             #line default
             #line hidden
             
-            #line 207 "CodeGenerator.Properties.tt"
+            #line 213 "CodeGenerator.Properties.tt"
   isFirst = true;
     foreach (var property in LocalProperties)
     { 
@@ -942,63 +957,63 @@ namespace ");
             #line default
             #line hidden
             
-            #line 210 "CodeGenerator.Properties.tt"
+            #line 216 "CodeGenerator.Properties.tt"
             this.Write("            ");
             
             #line default
             #line hidden
             
-            #line 210 "CodeGenerator.Properties.tt"
+            #line 216 "CodeGenerator.Properties.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( isFirst ? string.Empty : "else " ));
             
             #line default
             #line hidden
             
-            #line 210 "CodeGenerator.Properties.tt"
+            #line 216 "CodeGenerator.Properties.tt"
             this.Write("if (property.NameEquals(JsonPropertyNames.");
             
             #line default
             #line hidden
             
-            #line 210 "CodeGenerator.Properties.tt"
+            #line 216 "CodeGenerator.Properties.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( property.DotnetPropertyName ));
             
             #line default
             #line hidden
             
-            #line 210 "CodeGenerator.Properties.tt"
+            #line 216 "CodeGenerator.Properties.tt"
             this.Write("))\r\n            {\r\n                propertyValidator = __CorvusValidate");
             
             #line default
             #line hidden
             
-            #line 212 "CodeGenerator.Properties.tt"
+            #line 218 "CodeGenerator.Properties.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( property.DotnetPropertyName ));
             
             #line default
             #line hidden
             
-            #line 212 "CodeGenerator.Properties.tt"
+            #line 218 "CodeGenerator.Properties.tt"
             this.Write(";\r\n                return true;\r\n            }\r\n");
             
             #line default
             #line hidden
             
-            #line 215 "CodeGenerator.Properties.tt"
+            #line 221 "CodeGenerator.Properties.tt"
       isFirst = false;
     } 
             
             #line default
             #line hidden
             
-            #line 217 "CodeGenerator.Properties.tt"
+            #line 223 "CodeGenerator.Properties.tt"
             this.Write("        }\r\n\r\n        propertyValidator = null;\r\n        return false;\r\n    }\r\n}\r\n" +
                     "");
             
             #line default
             #line hidden
             
-            #line 223 "CodeGenerator.Properties.tt"
+            #line 229 "CodeGenerator.Properties.tt"
  EndNesting(); 
             
             #line default
