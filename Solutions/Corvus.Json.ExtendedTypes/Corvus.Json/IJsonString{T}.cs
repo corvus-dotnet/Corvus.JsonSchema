@@ -19,13 +19,6 @@ public interface IJsonString<T> : IJsonValue<T>
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
     static abstract implicit operator T(string value);
-
-    /// <summary>
-    /// Conversion to string.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    /// <exception cref="InvalidOperationException">The value was not a string.</exception>
-    static abstract explicit operator string(T value);
 #endif
 
     /// <summary>

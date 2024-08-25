@@ -369,11 +369,7 @@ public readonly partial struct Basictypes
 
             if (value.ValueKind == JsonValueKind.String)
             {
-#if NET8_0_OR_GREATER
-            return new((string)value);
-#else
-                return new((string)value.AsString);
-#endif
+                return new(value.GetString()!);
             }
 
             return Undefined;

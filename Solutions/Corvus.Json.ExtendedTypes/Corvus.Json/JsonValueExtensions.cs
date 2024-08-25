@@ -45,11 +45,7 @@ public static class JsonValueExtensions
 
         if (name.HasDotnetBacking)
         {
-#if NET8_0_OR_GREATER
-            return jsonObject.TryGetProperty((string)name, out property);
-#else
-            return jsonObject.TryGetProperty((string)name.AsString, out property);
-#endif
+            return jsonObject.TryGetProperty(name.GetString()!, out property);
         }
         else
         {
@@ -353,11 +349,7 @@ public static class JsonValueExtensions
             return jsonValue.AsJsonElement.TryGetValue(parser, state, out result);
         }
 
-#if NET8_0_OR_GREATER
-        return parser(((string)jsonValue).AsSpan(), state, out result);
-#else
-        return parser(((string)jsonValue.AsString).AsSpan(), state, out result);
-#endif
+        return parser(jsonValue.GetString()!.AsSpan(), state, out result);
     }
 
     /// <summary>

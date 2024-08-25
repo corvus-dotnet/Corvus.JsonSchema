@@ -152,11 +152,7 @@ public readonly struct JsonPropertyName
             return new(value.AsJsonElement);
         }
 
-#if NET8_0_OR_GREATER
-        return new((string)value);
-#else
-        return new((string)value.AsString);
-#endif
+        return new(value.GetString()!);
     }
 
     /// <summary>
