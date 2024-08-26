@@ -52,7 +52,7 @@ jobs:
 
   build:
     needs: prepareConfig
-    uses: endjin/Endjin.RecommendedPractices.GitHubActions/.github/workflows/scripted-build-matrix-pipeline.yml@feature/add-matrix-build
+    uses: endjin/Endjin.RecommendedPractices.GitHubActions/.github/workflows/scripted-build-matrix-pipeline.yml@main
     with:
       netSdkVersion: '8.0.x'
       # additionalNetSdkVersion: '7.0.x'
