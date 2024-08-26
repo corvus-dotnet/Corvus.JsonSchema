@@ -22,6 +22,7 @@ public static class TypeDeclarationExtensions
     private const string AlwaysAssertFormatKey = "CSharp_LanguageProvider_AlwaysAssertFormat";
     private const string OptionalAsNullableKey = "CSharp_LanguageProvider_OptionalAsNullable";
     private const string PreferredBinaryJsonNumberKindKey = "CSharp_LanguageProvider_PreferredBinaryJsonNumberKind";
+    private const string UseImplicitOperatorStringKey = "CSharp_LanguageProvider_UseImplicitOperatorString";
 
     /// <summary>
     /// Sets the relevant metadata from the <see cref="CSharpLanguageProvider.Options"/>.
@@ -32,6 +33,7 @@ public static class TypeDeclarationExtensions
     {
         typeDeclaration.SetMetadata(AlwaysAssertFormatKey, options.AlwaysAssertFormat);
         typeDeclaration.SetMetadata(OptionalAsNullableKey, options.OptionalAsNullable);
+        typeDeclaration.SetMetadata(UseImplicitOperatorStringKey, options.UseImplicitOperatorString);
     }
 
     /// <summary>
@@ -116,7 +118,6 @@ public static class TypeDeclarationExtensions
         if (typeDeclaration.TryGetMetadata(AlwaysAssertFormatKey, out bool? alwaysAssertFormat) &&
             alwaysAssertFormat is bool value)
         {
-            typeDeclaration.SetMetadata(AlwaysAssertFormatKey, value);
             return value;
         }
 
@@ -157,7 +158,22 @@ public static class TypeDeclarationExtensions
         if (typeDeclaration.TryGetMetadata(OptionalAsNullableKey, out bool? optionalAsNullable) &&
             optionalAsNullable is bool value)
         {
-            typeDeclaration.SetMetadata(OptionalAsNullableKey, value);
+            return value;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether to generate an implicit operator for conversion to <see langword="string"/>.
+    /// </summary>
+    /// <param name="typeDeclaration">The type declaration to test.</param>
+    /// <returns><see langword="true"/> if the conversion operator to <see langword="string"/> should be implicit.</returns>
+    public static bool UseImplicitOperatorString(this TypeDeclaration typeDeclaration)
+    {
+        if (typeDeclaration.TryGetMetadata(UseImplicitOperatorStringKey, out bool? useImplicitOperatorString) &&
+            useImplicitOperatorString is bool value)
+        {
             return value;
         }
 

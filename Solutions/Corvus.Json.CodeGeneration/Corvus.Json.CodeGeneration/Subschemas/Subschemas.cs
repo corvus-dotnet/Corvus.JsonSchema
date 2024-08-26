@@ -400,27 +400,4 @@ public static class Subschemas
             jsonSchemaRegistry.AddSchemaAndSubschema(subschemaLocation, property.Value, vocabulary, cancellationToken);
         }
     }
-
-    /// <summary>
-    /// Add the given property name and value as a subschema.
-    /// </summary>
-    /// <param name="jsonSchemaRegistry">The JSON schema registry.</param>
-    /// <param name="propertyName">The property name.</param>
-    /// <param name="propertyValue">The property value.</param>
-    /// <param name="currentLocation">The current location.</param>
-    /// <param name="vocabulary">The current vocabulary.</param>
-    /// <param name="cancellationToken">The cancellation token.</param>
-    /// <exception cref="InvalidOperationException">The <paramref name="propertyValue"/> was not a valid schema instance.</exception>
-    public static void AddSubschemasForSchemaIfValueIsASchemaLikeProperty(JsonSchemaRegistry jsonSchemaRegistry, string propertyName, in JsonElement propertyValue, JsonReference currentLocation, IVocabulary vocabulary, CancellationToken cancellationToken)
-    {
-        JsonReference propertyLocation = currentLocation.AppendUnencodedPropertyNameToFragment(propertyName);
-
-        if (propertyValue.ValueKind != JsonValueKind.Object && propertyValue.ValueKind != JsonValueKind.False && propertyValue.ValueKind != JsonValueKind.True)
-        {
-            // If we are not an object, that's OK - we just ignore it in this case.
-            return;
-        }
-
-        jsonSchemaRegistry.AddSchemaAndSubschema(propertyLocation, propertyValue, vocabulary, cancellationToken);
-    }
 }

@@ -833,33 +833,6 @@ public static class TypeDeclarationExtensions
     }
 
     /// <summary>
-    /// Gets the leaf array items type of a higher-rank array.
-    /// </summary>
-    /// <param name="that">The type declaration for which to get the leaf array items type.</param>
-    /// <returns>The <see cref="ArrayItemsTypeDeclaration"/> for the deepest-nested array.</returns>
-    public static ArrayItemsTypeDeclaration? LeafArrayItemsType(this TypeDeclaration that)
-    {
-        if (!that.TryGetMetadata(nameof(LeafArrayItemsType), out ArrayItemsTypeDeclaration? leafArrayItemsType))
-        {
-            leafArrayItemsType = that.ArrayItemsType();
-
-            // Set the value before we correct for the child (to protect against
-            // recursive references)
-            that.SetMetadata(nameof(LeafArrayItemsType), leafArrayItemsType);
-
-            if (
-                leafArrayItemsType is ArrayItemsTypeDeclaration childItemsType &&
-                (childItemsType.ReducedType.ImpliedCoreTypes() & CoreTypes.Array) != 0)
-            {
-                // Overwrite the value if our items type was not in fact that leaf
-                that.SetMetadata(nameof(LeafArrayItemsType), childItemsType.ReducedType.LeafArrayItemsType());
-            }
-        }
-
-        return leafArrayItemsType;
-    }
-
-    /// <summary>
     /// Gets the value buffer size for the full fixed-size array in all ranks.
     /// </summary>
     /// <param name="that">The type declaration for which to get the buffer size.</param>

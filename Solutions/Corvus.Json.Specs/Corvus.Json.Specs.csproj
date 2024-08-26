@@ -41,14 +41,14 @@
 
     <PackageReference Include="Corvus.Testing.SpecFlow.NUnit" Version="3.0.2" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.0" />
-		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.10.0" />
+		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.0" />
 		<PackageReference Include="SolidToken.SpecFlow.DependencyInjection" Version="3.9.3" />
 
-		<PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.12">
+		<PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.13">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.10.0" />
+		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.11.0" />
 
 
 		<PackageReference Include="SpecFlow.NUnit" Version="3.9.74" />
@@ -153,6 +153,10 @@
 
 	<ItemGroup>
 		<PackageReference Update="Roslynator.Analyzers" Version="4.12.4" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="Features\ImplicitConversionToString\" />
 	</ItemGroup>
 
 </Project>

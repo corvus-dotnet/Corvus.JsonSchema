@@ -21,11 +21,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.12">
+    <PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.13">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.10.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.11.0" />
     <PackageReference Include="System.CodeDom" Version="8.0.0" />
     <PackageReference Include="CommunityToolkit.HighPerformance" Version="8.2.2" />
   </ItemGroup>

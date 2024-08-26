@@ -30,6 +30,7 @@ public class JsonSchemaSteps
     private const string ValidateFormatKey = "ValidateFormat";
     private const string CreateException = "CreateException";
     private const string NullablePropertiesKey = "NullableProperties";
+    private const string UseImplicitOperatorStringKey = "UseImplicitOperatorString";
     private readonly FeatureContext featureContext;
     private readonly ScenarioContext scenarioContext;
     private readonly JsonSchemaBuilderDriver driver;
@@ -594,6 +595,13 @@ After:
         return this.GivenIGenerateATypeForTheSchema();
     }
 
+    [Given("I generate a type for the schema with implicit conversion to string enabled")]
+    public Task GivenIGenerateATypeForTheSchemaWithImplicitConversionToStringEnabled()
+    {
+        this.scenarioContext.Set(true, UseImplicitOperatorStringKey);
+        return this.GivenIGenerateATypeForTheSchema();
+    }
+
     [Given("I generate a type for the schema with optional properties not nullable")]
     public Task GivenIGenerateATypeForTheSchemaWithOptionalPropertiesNotNullable()
     {
@@ -632,7 +640,8 @@ After:
                     featureName,
                     scenarioName,
                     validateFormat,
-                    this.scenarioContext.TryGetValue(NullablePropertiesKey, out bool optionalAsNullable) && optionalAsNullable);
+                    this.scenarioContext.TryGetValue(NullablePropertiesKey, out bool optionalAsNullable) && optionalAsNullable,
+                    this.scenarioContext.TryGetValue(UseImplicitOperatorStringKey, out bool useImplicitOperatorString) && useImplicitOperatorString);
             }
             else
             {
@@ -643,7 +652,8 @@ After:
                     featureName,
                     scenarioName,
                     validateFormat,
-                    this.scenarioContext.TryGetValue(NullablePropertiesKey, out bool optionalAsNullable) && optionalAsNullable);
+                    this.scenarioContext.TryGetValue(NullablePropertiesKey, out bool optionalAsNullable) && optionalAsNullable,
+                    this.scenarioContext.TryGetValue(UseImplicitOperatorStringKey, out bool useImplicitOperatorString) && useImplicitOperatorString);
             }
 
             this.featureContext.Set(type, key);
@@ -790,6 +800,25 @@ After:
     {
         ValidationContext actual = this.scenarioContext.Get<ValidationContext>(SchemaValidationResult);
         Assert.AreEqual(count, actual.Results.Count);
+    }
+
+    /// <summary>
+    /// Gets the value as an string, using an implicit conversion.
+    /// </summary>
+    /// <param name="scenarioContext">The scenario context.</param>
+    /// <returns>The value as a string, using implicit conversion.</returns>
+    internal static string GetTheValueAsStringImplicit(ScenarioContext scenarioContext)
+    {
+        Type type = scenarioContext.Get<Type>(SchemaType);
+        IJsonValue value = scenarioContext.Get<IJsonValue>(SchemaInstance);
+        return
+            type
+                .GetMethods()
+                .SingleOrDefault(m => m.Name == "op_Implicit" && m.ReturnType == typeof(string))
+                ?.Invoke(null, [value])
+            is string s
+                ? s
+                : throw new InvalidOperationException("No string returned from the implicit conversion.");
     }
 
     private static string ToPascalCaseWithReservedWords(string input)

@@ -69,6 +69,11 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
         [Description("If NullOrUndefined, optional properties are emitted as .NET nullable values.")]
         [DefaultValue(OptionalAsNullable.None)]
         public OptionalAsNullable OptionalAsNullable { get; init; }
+
+        [CommandOption("--useImplicitOperatorString")]
+        [Description("If true, conversion operators to string are implicit, rather than explicit.")]
+        [DefaultValue(false)]
+        public bool UseImplicitOperatorString { get; init; }
     }
 
     /// <inheritdoc/>
@@ -91,7 +96,8 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
             optionalAsNullableValue: settings.OptionalAsNullable.ToString(),
             outputMapFile: settings.OutputMapFile.AsNullableJsonString(),
             outputPath: settings.OutputPath.AsNullableJsonString(),
-            useSchemaValue: settings.UseSchema != SchemaVariant.NotSpecified ? (GeneratorConfig.UseSchema)settings.UseSchema.ToString() : default(GeneratorConfig.UseSchema?));
+            useSchemaValue: settings.UseSchema != SchemaVariant.NotSpecified ? (GeneratorConfig.UseSchema)settings.UseSchema.ToString() : default(GeneratorConfig.UseSchema?),
+            useImplicitOperatorString: settings.UseImplicitOperatorString);
 
         return GenerationDriver.GenerateTypes(config);
     }
