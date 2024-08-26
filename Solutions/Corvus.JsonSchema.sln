@@ -45,9 +45,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Generators", "Generators", 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "DevOps", "DevOps", "{12DBCC2E-9BA0-4470-83C6-BBA9682F0155}"
 	ProjectSection(SolutionItems) = preProject
-		..\azure-pipelines.release.yml = ..\azure-pipelines.release.yml
-		..\azure-pipelines.yml = ..\azure-pipelines.yml
+		..\.github\workflows\auto_release.yml = ..\.github\workflows\auto_release.yml
 		..\build.ps1 = ..\build.ps1
+		..\.github\workflows\build.yml = ..\.github\workflows\build.yml
+		..\.github\workflows\dependabot_approve_and_label.yml = ..\.github\workflows\dependabot_approve_and_label.yml
 		..\GitVersion.yml = ..\GitVersion.yml
 	EndProjectSection
 EndProject
