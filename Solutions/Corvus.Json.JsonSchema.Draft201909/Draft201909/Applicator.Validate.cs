@@ -96,11 +96,30 @@ public readonly partial struct Applicator
                 isValid = true;
             }
 
-            return validationContext.MergeResults(
-                isValid,
-                level,
-                localResultObject,
-                localResultBoolean);
+            if (!isValid)
+            {
+                if (level >= ValidationLevel.Verbose)
+                {
+                    return validationContext.WithResult(isValid: false, $"Validation type - should have been 'object', 'boolean' but was {valueKind}");
+                }
+            }
+            else
+            {
+                if (level >= ValidationLevel.Detailed)
+                {
+                    return validationContext.WithResult(isValid: false, $"Validation type - should have been 'object', 'boolean'.");
+                }
+                else
+                {
+                    return validationContext.WithResult(isValid: false);
+                }
+            }
+
+            if (level >= ValidationLevel.Verbose)
+            {
+                return validationContext.WithResult(isValid: true, $"Validation type - should be 'object', 'boolean' but was {valueKind}");
+            }
+            return validationContext;
         }
 
         /// <summary>

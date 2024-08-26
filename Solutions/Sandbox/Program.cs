@@ -1,11 +1,21 @@
-﻿using Corvus.Json.Benchmarking;
+﻿using Corvus.Json;
+using Feature408;
 
-ValidateLargeDocument validateLargeDocument = new();
-validateLargeDocument.GlobalSetup();
+var documentContent = @"{
+    ""size"": null,
+    ""extendedSize"": """"
+}";
+var document = CombinedDocument.Parse(documentContent);
 
-for (int i = 0; i < 10; ++i)
+var validationContext = document.Validate(ValidationContext.ValidContext, ValidationLevel.Detailed);
+if (!validationContext.IsValid)
 {
-    bool valid = validateLargeDocument.ValidateLargeArrayCorvusV4();
+    Console.WriteLine("Validation failed");
+    foreach (var result in validationContext.Results.OrderBy(r => r.Location?.DocumentLocation).ThenBy(r => r.Location?.ValidationLocation))
+    {
+        if (!result.Valid)
+        {
+            Console.WriteLine($"{result.Location}: {result.Message}");
+        }
+    }
 }
-
-validateLargeDocument.GlobalCleanup();

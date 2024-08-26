@@ -127,11 +127,11 @@ public static partial class ValidateWithoutCoreType
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been 'number' but was '{valueKind}'.");
+                return validationContext.WithResult(isValid: false, $"Validation type - should have been 'integer' but was '{valueKind}'.");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been 'number'.");
+                return validationContext.WithResult(isValid: false, "Validation type - should have been 'integer'.");
             }
             else
             {
@@ -144,11 +144,11 @@ public static partial class ValidateWithoutCoreType
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been 'number' with zero fractional part but was '{instance.ValueKind}' with fractional part {value - Math.Floor(value)}.");
+                return validationContext.WithResult(isValid: false, $"Validation type - should have been 'integer' with zero fractional part but was '{instance.ValueKind}' with fractional part {value - Math.Floor(value)}.");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been 'number' with zero fractional part.");
+                return validationContext.WithResult(isValid: false, "Validation type - should have been 'integer' with zero fractional part.");
             }
             else
             {

@@ -31,7 +31,7 @@ public readonly partial struct GeneratorConfig
         if (level > ValidationLevel.Basic)
         {
             result = result.UsingStack();
-            result = result.PushSchemaLocation("");
+            result = result.PushSchemaLocation("generator-config.json");
         }
 
         JsonValueKind valueKind = this.ValueKind;

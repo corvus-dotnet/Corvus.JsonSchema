@@ -15,74 +15,90 @@ using System.Text.Json;
 using Corvus.Json;
 using Corvus.Json.Internal;
 
-namespace JsonSchemaSample.Api;
+namespace Feature408;
 /// <summary>
-/// Generated from JSON Schema.
+/// Document extensions
 /// </summary>
-public readonly partial struct FlimFlam
+public readonly partial struct DocumentExtensionsSchema
 {
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
-    [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<PositiveInt32>))]
-    public readonly partial struct PositiveInt32
+    [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<ExtendedSizeEntity>))]
+    public readonly partial struct ExtendedSizeEntity
 
     {
         private readonly Backing backing;
         private readonly JsonElement jsonElementBacking;
+        private readonly string stringBacking;
         private readonly BinaryJsonNumber numberBacking;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="PositiveInt32"/> struct.
+        /// Initializes a new instance of the <see cref="ExtendedSizeEntity"/> struct.
         /// </summary>
-        public PositiveInt32()
+        public ExtendedSizeEntity()
         {
             this.jsonElementBacking = default;
             this.backing = Backing.JsonElement;
+            this.stringBacking = string.Empty;
             this.numberBacking = default;
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="PositiveInt32"/> struct.
+        /// Initializes a new instance of the <see cref="ExtendedSizeEntity"/> struct.
         /// </summary>
         /// <param name="value">The value from which to construct the instance.</param>
-        public PositiveInt32(in JsonElement value)
+        public ExtendedSizeEntity(in JsonElement value)
         {
             this.jsonElementBacking = value;
             this.backing = Backing.JsonElement;
+            this.stringBacking = string.Empty;
             this.numberBacking = default;
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="PositiveInt32"/> struct.
+        /// Initializes a new instance of the <see cref="ExtendedSizeEntity"/> struct.
         /// </summary>
         /// <param name="value">The value from which to construct the instance.</param>
-        public PositiveInt32(BinaryJsonNumber value)
+        public ExtendedSizeEntity(BinaryJsonNumber value)
         {
             this.backing = Backing.Number;
             this.jsonElementBacking = default;
+            this.stringBacking = string.Empty;
             this.numberBacking = value;
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ExtendedSizeEntity"/> struct.
+        /// </summary>
+        /// <param name="value">The value from which to construct the instance.</param>
+        public ExtendedSizeEntity(string value)
+        {
+            this.backing = Backing.String;
+            this.jsonElementBacking = default;
+            this.stringBacking = value;
+            this.numberBacking = default;
         }
 
         /// <summary>
         /// Gets the schema location from which this type was generated.
         /// </summary>
-        public static string SchemaLocation { get; } = "#/prefixItems/0";
+        public static string SchemaLocation { get; } = "DocumentExtensionsSchema.json#/properties/extendedSize";
 
         /// <summary>
         /// Gets a Null instance.
         /// </summary>
-        public static PositiveInt32 Null { get; } = new(JsonValueHelpers.NullElement);
+        public static ExtendedSizeEntity Null { get; } = new(JsonValueHelpers.NullElement);
 
         /// <summary>
         /// Gets an Undefined instance.
         /// </summary>
-        public static PositiveInt32 Undefined { get; }
+        public static ExtendedSizeEntity Undefined { get; }
 
         /// <summary>
         /// Gets the default instance.
         /// </summary>
-        public static PositiveInt32 DefaultInstance { get; }
+        public static ExtendedSizeEntity DefaultInstance { get; }
 
         /// <inheritdoc/>
         public JsonAny AsAny
@@ -92,6 +108,11 @@ public readonly partial struct FlimFlam
                 if ((this.backing & Backing.JsonElement) != 0)
                 {
                     return new(this.jsonElementBacking);
+                }
+
+                if ((this.backing & Backing.String) != 0)
+                {
+                    return new(this.stringBacking);
                 }
 
                 if ((this.backing & Backing.Number) != 0)
@@ -118,6 +139,11 @@ public readonly partial struct FlimFlam
                     return this.jsonElementBacking;
                 }
 
+                if ((this.backing & Backing.String) != 0)
+                {
+                    return JsonValueHelpers.StringToJsonElement(this.stringBacking);
+                }
+
                 if ((this.backing & Backing.Number) != 0)
                 {
                     return JsonValueHelpers.NumberToJsonElement(this.numberBacking);
@@ -133,13 +159,18 @@ public readonly partial struct FlimFlam
         }
 
         /// <inheritdoc/>
-        JsonString IJsonValue.AsString
+        public JsonString AsString
         {
             get
             {
                 if ((this.backing & Backing.JsonElement) != 0)
                 {
                     return new(this.jsonElementBacking);
+                }
+
+                if ((this.backing & Backing.String) != 0)
+                {
+                    return new(this.stringBacking);
                 }
 
                 throw new InvalidOperationException();
@@ -235,6 +266,11 @@ public readonly partial struct FlimFlam
                     return this.jsonElementBacking.ValueKind;
                 }
 
+                if ((this.backing & Backing.String) != 0)
+                {
+                    return JsonValueKind.String;
+                }
+
                 if ((this.backing & Backing.Number) != 0)
                 {
                     return JsonValueKind.Number;
@@ -248,16 +284,16 @@ public readonly partial struct FlimFlam
         /// Conversion from JsonAny.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
-        public static implicit operator PositiveInt32(JsonAny value)
+        public static implicit operator ExtendedSizeEntity(JsonAny value)
         {
-            return value.As<PositiveInt32>();
+            return value.As<ExtendedSizeEntity>();
         }
 
         /// <summary>
         /// Conversion to JsonAny.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
-        public static implicit operator JsonAny(PositiveInt32 value)
+        public static implicit operator JsonAny(ExtendedSizeEntity value)
         {
             return value.AsAny;
         }
@@ -270,7 +306,7 @@ public readonly partial struct FlimFlam
         /// <returns>
         /// <c>True</c> if the values are equal.
         /// </returns>
-        public static bool operator ==(in PositiveInt32 left, in PositiveInt32 right)
+        public static bool operator ==(in ExtendedSizeEntity left, in ExtendedSizeEntity right)
         {
             return left.Equals(right);
         }
@@ -283,7 +319,7 @@ public readonly partial struct FlimFlam
         /// <returns>
         /// <c>True</c> if the values are not equal.
         /// </returns>
-        public static bool operator !=(in PositiveInt32 left, in PositiveInt32 right)
+        public static bool operator !=(in ExtendedSizeEntity left, in ExtendedSizeEntity right)
         {
             return !left.Equals(right);
         }
@@ -297,7 +333,7 @@ public readonly partial struct FlimFlam
         /// value cannot be constructed from the given instance (e.g. because they have an incompatible .NET backing type).
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static PositiveInt32 FromJson(in JsonElement value)
+        public static ExtendedSizeEntity FromJson(in JsonElement value)
         {
             return new(value);
         }
@@ -308,7 +344,7 @@ public readonly partial struct FlimFlam
         /// <param name="value">The <see cref="JsonAny"/> value from which to instantiate the instance.</param>
         /// <returns>An instance of this type, initialized from the <see cref="JsonAny"/> value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static PositiveInt32 FromAny(in JsonAny value)
+        public static ExtendedSizeEntity FromAny(in JsonAny value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -317,6 +353,7 @@ public readonly partial struct FlimFlam
 
             return value.ValueKind switch
             {
+                JsonValueKind.String => new(value.AsString.GetString()!),
                 JsonValueKind.Number => new(value.AsNumber.AsBinaryJsonNumber),
                 JsonValueKind.Null => Null,
                 _ => Undefined,
@@ -331,26 +368,7 @@ public readonly partial struct FlimFlam
         /// <param name="value">The value from which to instantiate the instance.</param>
         /// <returns>An instance of this type, initialized from the provided value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static PositiveInt32 IJsonValue<PositiveInt32>.FromBoolean<TValue>(in TValue value)
-        {
-            if (value.HasJsonElementBacking)
-            {
-                return new(value.AsJsonElement);
-            }
-
-            return Undefined;
-        }
-#endif
-
-#if NET8_0_OR_GREATER
-        /// <summary>
-        /// Gets an instance of the JSON value from the provided value.
-        /// </summary>
-        /// <typeparam name="TValue">The type of the value.</typeparam>
-        /// <param name="value">The value from which to instantiate the instance.</param>
-        /// <returns>An instance of this type, initialized from the provided value.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static PositiveInt32 IJsonValue<PositiveInt32>.FromString<TValue>(in TValue value)
+        static ExtendedSizeEntity IJsonValue<ExtendedSizeEntity>.FromBoolean<TValue>(in TValue value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -368,7 +386,30 @@ public readonly partial struct FlimFlam
         /// <param name="value">The value from which to instantiate the instance.</param>
         /// <returns>An instance of this type, initialized from the provided value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static PositiveInt32 FromNumber<TValue>(in TValue value)
+        public static ExtendedSizeEntity FromString<TValue>(in TValue value)
+            where TValue : struct, IJsonString<TValue>
+        {
+            if (value.HasJsonElementBacking)
+            {
+                return new(value.AsJsonElement);
+            }
+
+            return value.ValueKind switch
+            {
+                JsonValueKind.String => new(value.GetString()!),
+                JsonValueKind.Null => Null,
+                _ => Undefined,
+            };
+        }
+
+        /// <summary>
+        /// Gets an instance of the JSON value from the provided value.
+        /// </summary>
+        /// <typeparam name="TValue">The type of the value.</typeparam>
+        /// <param name="value">The value from which to instantiate the instance.</param>
+        /// <returns>An instance of this type, initialized from the provided value.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ExtendedSizeEntity FromNumber<TValue>(in TValue value)
             where TValue : struct, IJsonNumber<TValue>
         {
             if (value.HasJsonElementBacking)
@@ -392,7 +433,7 @@ public readonly partial struct FlimFlam
         /// <param name="value">The value from which to instantiate the instance.</param>
         /// <returns>An instance of this type, initialized from the provided value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static PositiveInt32 IJsonValue<PositiveInt32>.FromObject<TValue>(in TValue value)
+        static ExtendedSizeEntity IJsonValue<ExtendedSizeEntity>.FromObject<TValue>(in TValue value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -411,7 +452,7 @@ public readonly partial struct FlimFlam
         /// <param name="value">The value from which to instantiate the instance.</param>
         /// <returns>An instance of this type, initialized from the provided value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static PositiveInt32 IJsonValue<PositiveInt32>.FromArray<TValue>(in TValue value)
+        static ExtendedSizeEntity IJsonValue<ExtendedSizeEntity>.FromArray<TValue>(in TValue value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -423,109 +464,109 @@ public readonly partial struct FlimFlam
 #endif
 
         /// <summary>
-        /// Parses the PositiveInt32.
+        /// Parses the ExtendedSizeEntity.
         /// </summary>
         /// <param name="source">The source of the JSON string to parse.</param>
         /// <param name="options">The (optional) JsonDocumentOptions.</param>
-        public static PositiveInt32 Parse(string source, JsonDocumentOptions options = default)
+        public static ExtendedSizeEntity Parse(string source, JsonDocumentOptions options = default)
         {
             using var jsonDocument = JsonDocument.Parse(source, options);
             return new(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses the PositiveInt32.
+        /// Parses the ExtendedSizeEntity.
         /// </summary>
         /// <param name="source">The source of the JSON string to parse.</param>
         /// <param name="options">The (optional) JsonDocumentOptions.</param>
-        public static PositiveInt32 Parse(Stream source, JsonDocumentOptions options = default)
+        public static ExtendedSizeEntity Parse(Stream source, JsonDocumentOptions options = default)
         {
             using var jsonDocument = JsonDocument.Parse(source, options);
             return new(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses the PositiveInt32.
+        /// Parses the ExtendedSizeEntity.
         /// </summary>
         /// <param name="source">The source of the JSON string to parse.</param>
         /// <param name="options">The (optional) JsonDocumentOptions.</param>
-        public static PositiveInt32 Parse(ReadOnlyMemory<byte> source, JsonDocumentOptions options = default)
+        public static ExtendedSizeEntity Parse(ReadOnlyMemory<byte> source, JsonDocumentOptions options = default)
         {
             using var jsonDocument = JsonDocument.Parse(source, options);
             return new(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses the PositiveInt32.
+        /// Parses the ExtendedSizeEntity.
         /// </summary>
         /// <param name="source">The source of the JSON string to parse.</param>
         /// <param name="options">The (optional) JsonDocumentOptions.</param>
-        public static PositiveInt32 Parse(ReadOnlyMemory<char> source, JsonDocumentOptions options = default)
+        public static ExtendedSizeEntity Parse(ReadOnlyMemory<char> source, JsonDocumentOptions options = default)
         {
             using var jsonDocument = JsonDocument.Parse(source, options);
             return new(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses the PositiveInt32.
+        /// Parses the ExtendedSizeEntity.
         /// </summary>
         /// <param name="source">The source of the JSON string to parse.</param>
         /// <param name="options">The (optional) JsonDocumentOptions.</param>
-        public static PositiveInt32 Parse(ReadOnlySequence<byte> source, JsonDocumentOptions options = default)
+        public static ExtendedSizeEntity Parse(ReadOnlySequence<byte> source, JsonDocumentOptions options = default)
         {
             using var jsonDocument = JsonDocument.Parse(source, options);
             return new(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses the PositiveInt32.
+        /// Parses the ExtendedSizeEntity.
         /// </summary>
         /// <param name="source">The source of the JSON string to parse.</param>
-        public static PositiveInt32 ParseValue(string source)
+        public static ExtendedSizeEntity ParseValue(string source)
         {
 #if NET8_0_OR_GREATER
-            return IJsonValue<PositiveInt32>.ParseValue(source);
+            return IJsonValue<ExtendedSizeEntity>.ParseValue(source);
 #else
-            return JsonValueHelpers.ParseValue<PositiveInt32>(source.AsSpan());
+            return JsonValueHelpers.ParseValue<ExtendedSizeEntity>(source.AsSpan());
 #endif
         }
 
         /// <summary>
-        /// Parses the PositiveInt32.
+        /// Parses the ExtendedSizeEntity.
         /// </summary>
         /// <param name="source">The source of the JSON string to parse.</param>
-        public static PositiveInt32 ParseValue(ReadOnlySpan<char> source)
+        public static ExtendedSizeEntity ParseValue(ReadOnlySpan<char> source)
         {
 #if NET8_0_OR_GREATER
-            return IJsonValue<PositiveInt32>.ParseValue(source);
+            return IJsonValue<ExtendedSizeEntity>.ParseValue(source);
 #else
-            return JsonValueHelpers.ParseValue<PositiveInt32>(source);
+            return JsonValueHelpers.ParseValue<ExtendedSizeEntity>(source);
 #endif
         }
 
         /// <summary>
-        /// Parses the PositiveInt32.
+        /// Parses the ExtendedSizeEntity.
         /// </summary>
         /// <param name="source">The source of the JSON string to parse.</param>
-        public static PositiveInt32 ParseValue(ReadOnlySpan<byte> source)
+        public static ExtendedSizeEntity ParseValue(ReadOnlySpan<byte> source)
         {
 #if NET8_0_OR_GREATER
-            return IJsonValue<PositiveInt32>.ParseValue(source);
+            return IJsonValue<ExtendedSizeEntity>.ParseValue(source);
 #else
-            return JsonValueHelpers.ParseValue<PositiveInt32>(source);
+            return JsonValueHelpers.ParseValue<ExtendedSizeEntity>(source);
 #endif
         }
 
         /// <summary>
-        /// Parses the PositiveInt32.
+        /// Parses the ExtendedSizeEntity.
         /// </summary>
         /// <param name="source">The source of the JSON string to parse.</param>
-        public static PositiveInt32 ParseValue(ref Utf8JsonReader source)
+        public static ExtendedSizeEntity ParseValue(ref Utf8JsonReader source)
         {
 #if NET8_0_OR_GREATER
-            return IJsonValue<PositiveInt32>.ParseValue(ref source);
+            return IJsonValue<ExtendedSizeEntity>.ParseValue(ref source);
 #else
-            return JsonValueHelpers.ParseValue<PositiveInt32>(ref source);
+            return JsonValueHelpers.ParseValue<ExtendedSizeEntity>(ref source);
 #endif
         }
 
@@ -544,6 +585,11 @@ public readonly partial struct FlimFlam
                 return TTarget.FromJson(this.jsonElementBacking);
             }
 
+            if ((this.backing & Backing.String) != 0)
+            {
+                return TTarget.FromString(this);
+            }
+
             if ((this.backing & Backing.Number) != 0)
             {
                 return TTarget.FromNumber(this);
@@ -556,7 +602,7 @@ public readonly partial struct FlimFlam
 
             return TTarget.Undefined;
 #else
-            return this.As<PositiveInt32, TTarget>();
+            return this.As<ExtendedSizeEntity, TTarget>();
 #endif
         }
 
@@ -564,7 +610,7 @@ public readonly partial struct FlimFlam
         public override bool Equals(object? obj)
         {
             return
-                (obj is IJsonValue jv && this.Equals(jv.As<PositiveInt32>())) ||
+                (obj is IJsonValue jv && this.Equals(jv.As<ExtendedSizeEntity>())) ||
                 (obj is null && this.IsNull());
         }
 
@@ -572,7 +618,7 @@ public readonly partial struct FlimFlam
         public bool Equals<T>(in T other)
             where T : struct, IJsonValue<T>
         {
-            return this.Equals(other.As<PositiveInt32>());
+            return this.Equals(other.As<ExtendedSizeEntity>());
         }
 
         /// <summary>
@@ -580,7 +626,7 @@ public readonly partial struct FlimFlam
         /// </summary>
         /// <param name="other">The other item with which to compare.</param>
         /// <returns><see langword="true"/> if the values were equal.</returns>
-        public bool Equals(in PositiveInt32 other)
+        public bool Equals(in ExtendedSizeEntity other)
         {
             JsonValueKind thisKind = this.ValueKind;
             JsonValueKind otherKind = other.ValueKind;
@@ -628,6 +674,36 @@ public readonly partial struct FlimFlam
                 }
             }
 
+            if (thisKind == JsonValueKind.String)
+            {
+                if (this.backing == Backing.JsonElement)
+                {
+                    if (other.backing == Backing.String)
+                    {
+                        return this.jsonElementBacking.ValueEquals(other.stringBacking);
+                    }
+                    else
+                    {
+                        other.jsonElementBacking.TryGetValue(CompareValues, this.jsonElementBacking, out bool areEqual);
+                        return areEqual;
+                    }
+
+                }
+
+                if (other.backing == Backing.JsonElement)
+                {
+                    return other.jsonElementBacking.ValueEquals(this.stringBacking);
+                }
+
+                return this.stringBacking.Equals(other.stringBacking);
+
+                static bool CompareValues(ReadOnlySpan<byte> span, in JsonElement firstItem, out bool value)
+                {
+                    value = firstItem.ValueEquals(span);
+                    return true;
+                }
+            }
+
             return false;
         }
 
@@ -651,6 +727,13 @@ public readonly partial struct FlimFlam
                 return;
             }
 
+            if ((this.backing & Backing.String) != 0)
+            {
+                writer.WriteStringValue(this.stringBacking);
+
+                return;
+            }
+
             if ((this.backing & Backing.Null) != 0)
             {
                 writer.WriteNullValue();
@@ -667,7 +750,7 @@ public readonly partial struct FlimFlam
                 JsonValueKind.Array => JsonValueHelpers.GetArrayHashCode(((IJsonValue)this).AsArray),
                 JsonValueKind.Object => JsonValueHelpers.GetObjectHashCode(((IJsonValue)this).AsObject),
                 JsonValueKind.Number => JsonValueHelpers.GetHashCodeForNumber(this),
-                JsonValueKind.String => JsonValueHelpers.GetHashCodeForString(((IJsonValue)this).AsString),
+                JsonValueKind.String => JsonValueHelpers.GetHashCodeForString(this),
                 JsonValueKind.True => true.GetHashCode(),
                 JsonValueKind.False => false.GetHashCode(),
                 JsonValueKind.Null => JsonValueHelpers.NullHashCode,
@@ -679,6 +762,131 @@ public readonly partial struct FlimFlam
         public override string ToString()
         {
             return this.Serialize();
+        }
+
+        /// <summary>
+        /// Matches the value against the constant values, and returns the result of calling the provided match function for the first match found.
+        /// </summary>
+        /// <typeparam name="TIn">The immutable context to pass in to the match function.</typeparam>
+        /// <typeparam name="TOut">The result of calling the match function.</typeparam>
+        /// <param name="context">The context to pass to the match function.</param>
+        /// <param name="matchEmpty">Match 1st item.</param>
+        /// <param name="matchNumber1">Match 2nd item.</param>
+        /// <param name="matchNumber2">Match 3rd item.</param>
+        /// <param name="matchNumber3">Match 4th item.</param>
+        /// <param name="match1">Match 5th item.</param>
+        /// <param name="match2">Match 6th item.</param>
+        /// <param name="match3">Match 7th item.</param>
+        /// <param name="defaultMatch">Match any other value.</param>
+        /// <returns>An instance of the value returned by the match function.</returns>
+        public TOut Match<TIn, TOut>(
+            in TIn context,
+            Func<TIn, TOut> matchEmpty,
+            Func<TIn, TOut> matchNumber1,
+            Func<TIn, TOut> matchNumber2,
+            Func<TIn, TOut> matchNumber3,
+            Func<TIn, TOut> match1,
+            Func<TIn, TOut> match2,
+            Func<TIn, TOut> match3,
+            Func<TIn, TOut> defaultMatch)
+        {
+            if (this.Equals(CorvusValidation.Enum1))
+            {
+                return matchEmpty(context);
+            }
+
+            if (this.Equals(CorvusValidation.Enum2))
+            {
+                return matchNumber1(context);
+            }
+
+            if (this.Equals(CorvusValidation.Enum3))
+            {
+                return matchNumber2(context);
+            }
+
+            if (this.Equals(CorvusValidation.Enum4))
+            {
+                return matchNumber3(context);
+            }
+
+            if (this.Equals(CorvusValidation.Enum5))
+            {
+                return match1(context);
+            }
+
+            if (this.Equals(CorvusValidation.Enum6))
+            {
+                return match2(context);
+            }
+
+            if (this.Equals(CorvusValidation.Enum7))
+            {
+                return match3(context);
+            }
+
+            return defaultMatch(context);
+        }
+
+        /// <summary>
+        /// Matches the value against the constant values, and returns the result of calling the provided match function for the first match found.
+        /// </summary>
+        /// <typeparam name="TOut">The result of calling the match function.</typeparam>
+        /// <param name="matchEmpty">Match 1st item.</param>
+        /// <param name="matchNumber1">Match 2nd item.</param>
+        /// <param name="matchNumber2">Match 3rd item.</param>
+        /// <param name="matchNumber3">Match 4th item.</param>
+        /// <param name="match1">Match 5th item.</param>
+        /// <param name="match2">Match 6th item.</param>
+        /// <param name="match3">Match 7th item.</param>
+        /// <param name="defaultMatch">Match any other value.</param>
+        /// <returns>An instance of the value returned by the match function.</returns>
+        public TOut Match<TOut>(
+            Func<TOut> matchEmpty,
+            Func<TOut> matchNumber1,
+            Func<TOut> matchNumber2,
+            Func<TOut> matchNumber3,
+            Func<TOut> match1,
+            Func<TOut> match2,
+            Func<TOut> match3,
+            Func<TOut> defaultMatch)
+        {
+            if (this.Equals(CorvusValidation.Enum1))
+            {
+                return matchEmpty();
+            }
+
+            if (this.Equals(CorvusValidation.Enum2))
+            {
+                return matchNumber1();
+            }
+
+            if (this.Equals(CorvusValidation.Enum3))
+            {
+                return matchNumber2();
+            }
+
+            if (this.Equals(CorvusValidation.Enum4))
+            {
+                return matchNumber3();
+            }
+
+            if (this.Equals(CorvusValidation.Enum5))
+            {
+                return match1();
+            }
+
+            if (this.Equals(CorvusValidation.Enum6))
+            {
+                return match2();
+            }
+
+            if (this.Equals(CorvusValidation.Enum7))
+            {
+                return match3();
+            }
+
+            return defaultMatch();
         }
     }
 }

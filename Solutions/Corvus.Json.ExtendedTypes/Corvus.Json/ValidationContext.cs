@@ -320,7 +320,7 @@ public readonly struct ValidationContext
             return this;
         }
 
-        return new ValidationContext(this.localEvaluatedItemIndex, this.localEvaluatedProperties, this.appliedEvaluatedItemIndex, this.appliedEvaluatedProperties, this.locationStack.Push((this.locationStack.Peek().ValidationLocation.AppendUnencodedPropertyNameToFragment(propertyName), this.locationStack.Peek().SchemaLocation, this.locationStack.Peek().DocumentLocation)), this.Results, this.usingFeatures);
+        return new ValidationContext(this.localEvaluatedItemIndex, this.localEvaluatedProperties, this.appliedEvaluatedItemIndex, this.appliedEvaluatedProperties, this.locationStack.Push((this.locationStack.Peek().ValidationLocation.AppendUnencodedPropertyNameToFragment(propertyName), this.locationStack.Peek().SchemaLocation.AppendUnencodedPropertyNameToFragment(propertyName), this.locationStack.Peek().DocumentLocation)), this.Results, this.usingFeatures);
     }
 
     /// <summary>
@@ -335,7 +335,7 @@ public readonly struct ValidationContext
             return this;
         }
 
-        return new ValidationContext(this.localEvaluatedItemIndex, this.localEvaluatedProperties, this.appliedEvaluatedItemIndex, this.appliedEvaluatedProperties, this.locationStack.Push((this.locationStack.Peek().ValidationLocation.AppendFragment(reducedPathModifier), this.locationStack.Peek().SchemaLocation, this.locationStack.Peek().DocumentLocation)), this.Results, this.usingFeatures);
+        return new ValidationContext(this.localEvaluatedItemIndex, this.localEvaluatedProperties, this.appliedEvaluatedItemIndex, this.appliedEvaluatedProperties, this.locationStack.Push((this.locationStack.Peek().ValidationLocation.AppendFragment(reducedPathModifier), this.locationStack.Peek().SchemaLocation.AppendFragment(reducedPathModifier), this.locationStack.Peek().DocumentLocation)), this.Results, this.usingFeatures);
     }
 
     /// <summary>
@@ -366,7 +366,7 @@ public readonly struct ValidationContext
             return this;
         }
 
-        return new ValidationContext(this.localEvaluatedItemIndex, this.localEvaluatedProperties, this.appliedEvaluatedItemIndex, this.appliedEvaluatedProperties, this.locationStack.Push((this.locationStack.Peek().ValidationLocation.AppendArrayIndexToFragment(arrayIndex), this.locationStack.Peek().SchemaLocation, this.locationStack.Peek().DocumentLocation)), this.Results, this.usingFeatures);
+        return new ValidationContext(this.localEvaluatedItemIndex, this.localEvaluatedProperties, this.appliedEvaluatedItemIndex, this.appliedEvaluatedProperties, this.locationStack.Push((this.locationStack.Peek().ValidationLocation.AppendArrayIndexToFragment(arrayIndex), this.locationStack.Peek().SchemaLocation.AppendArrayIndexToFragment(arrayIndex), this.locationStack.Peek().DocumentLocation)), this.Results, this.usingFeatures);
     }
 
     /// <summary>

@@ -102,11 +102,30 @@ public readonly partial struct Schema
                 isValid = true;
             }
 
-            return validationContext.MergeResults(
-                isValid,
-                level,
-                localResultObject,
-                localResultBoolean);
+            if (!isValid)
+            {
+                if (level >= ValidationLevel.Verbose)
+                {
+                    return validationContext.WithResult(isValid: false, $"Validation type - should have been 'object', 'boolean' but was {valueKind}");
+                }
+            }
+            else
+            {
+                if (level >= ValidationLevel.Detailed)
+                {
+                    return validationContext.WithResult(isValid: false, $"Validation type - should have been 'object', 'boolean'.");
+                }
+                else
+                {
+                    return validationContext.WithResult(isValid: false);
+                }
+            }
+
+            if (level >= ValidationLevel.Verbose)
+            {
+                return validationContext.WithResult(isValid: true, $"Validation type - should be 'object', 'boolean' but was {valueKind}");
+            }
+            return validationContext;
         }
 
         /// <summary>
@@ -135,7 +154,7 @@ public readonly partial struct Schema
             {
                 if (level >= ValidationLevel.Basic)
                 {
-                    result = result.MergeChildContext(allOfResult0, true).WithResult(isValid: false, "Validation - allOf failed to validate against the schema.");
+                    result = result.MergeChildContext(allOfResult0, true).PushValidationLocationProperty("allOf").WithResult(isValid: false, "Validation - allOf failed to validate against the schema.").PopLocation();
                 }
                 else
                 {
@@ -159,7 +178,7 @@ public readonly partial struct Schema
             {
                 if (level >= ValidationLevel.Basic)
                 {
-                    result = result.MergeChildContext(allOfResult1, true).WithResult(isValid: false, "Validation - allOf failed to validate against the schema.");
+                    result = result.MergeChildContext(allOfResult1, true).PushValidationLocationProperty("allOf").WithResult(isValid: false, "Validation - allOf failed to validate against the schema.").PopLocation();
                 }
                 else
                 {
@@ -183,7 +202,7 @@ public readonly partial struct Schema
             {
                 if (level >= ValidationLevel.Basic)
                 {
-                    result = result.MergeChildContext(allOfResult2, true).WithResult(isValid: false, "Validation - allOf failed to validate against the schema.");
+                    result = result.MergeChildContext(allOfResult2, true).PushValidationLocationProperty("allOf").WithResult(isValid: false, "Validation - allOf failed to validate against the schema.").PopLocation();
                 }
                 else
                 {
@@ -207,7 +226,7 @@ public readonly partial struct Schema
             {
                 if (level >= ValidationLevel.Basic)
                 {
-                    result = result.MergeChildContext(allOfResult3, true).WithResult(isValid: false, "Validation - allOf failed to validate against the schema.");
+                    result = result.MergeChildContext(allOfResult3, true).PushValidationLocationProperty("allOf").WithResult(isValid: false, "Validation - allOf failed to validate against the schema.").PopLocation();
                 }
                 else
                 {
@@ -231,7 +250,7 @@ public readonly partial struct Schema
             {
                 if (level >= ValidationLevel.Basic)
                 {
-                    result = result.MergeChildContext(allOfResult4, true).WithResult(isValid: false, "Validation - allOf failed to validate against the schema.");
+                    result = result.MergeChildContext(allOfResult4, true).PushValidationLocationProperty("allOf").WithResult(isValid: false, "Validation - allOf failed to validate against the schema.").PopLocation();
                 }
                 else
                 {
@@ -255,7 +274,7 @@ public readonly partial struct Schema
             {
                 if (level >= ValidationLevel.Basic)
                 {
-                    result = result.MergeChildContext(allOfResult5, true).WithResult(isValid: false, "Validation - allOf failed to validate against the schema.");
+                    result = result.MergeChildContext(allOfResult5, true).PushValidationLocationProperty("allOf").WithResult(isValid: false, "Validation - allOf failed to validate against the schema.").PopLocation();
                 }
                 else
                 {
@@ -279,7 +298,7 @@ public readonly partial struct Schema
             {
                 if (level >= ValidationLevel.Basic)
                 {
-                    result = result.MergeChildContext(allOfResult6, true).WithResult(isValid: false, "Validation - allOf failed to validate against the schema.");
+                    result = result.MergeChildContext(allOfResult6, true).PushValidationLocationProperty("allOf").WithResult(isValid: false, "Validation - allOf failed to validate against the schema.").PopLocation();
                 }
                 else
                 {
