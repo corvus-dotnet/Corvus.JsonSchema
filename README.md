@@ -412,6 +412,21 @@ There are a number of significant changes in this release
 
   Where JSON Schema object properties are optional or nullable, use the `--optionalAsNullable` command line switch to emit nullable properties.
 
+### Opt-in support for implicit conversions to `string` from JSON `string` types
+
+If you have a JSON `string` type, we currently emit an `explicit` operator to convert to a .NET `string` (the counterpart of the `implicit` conversion operator *from* a .NET `string`).
+
+We do this because conversion to string causes an allocation, and it is very easy to inadvertently do this when working with APIs that offer `string`-based overloads, in addition to e.g.
+`ReadOnlySpan<char>` overloads. When passing an instance of the generated type directly to the API, the implicit conversion would kick in, allocating a string, with no warning that this
+is what you have done. In a high-performance/low-allocation scenario this would be undesirable, and you would prefer to use the `GetValue()` method on the instance,
+and pass the `ReadOnlySpan<char>` provided to the callback for that method.
+
+However, sometimes you just want the convenience of being able to behave as if your JSON value is a `string`.
+
+If so, you can now use the `--useImplicitOperatorString` command line switch to emit an implicit conversion operator to `string` for JSON `string` types.
+
+Note: this means you will never use the built-in `Corvus.Json` types for your string-like types. This could increase the amount of code generated for your schema.
+
 ### New dynamic schema validation
 
 There is a new `Corvus.Json.Validator` assembly, containing a `JsonSchema` type.
