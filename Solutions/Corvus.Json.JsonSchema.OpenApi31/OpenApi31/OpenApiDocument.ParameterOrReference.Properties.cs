@@ -231,7 +231,7 @@ public readonly partial struct OpenApiDocument
         /// <summary>
         /// Gets the (optional) <c>content</c> property.
         /// </summary>
-        public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.ContentEntity Content
+        public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ContentEntity Content
         {
             get
             {
@@ -244,7 +244,7 @@ public readonly partial struct OpenApiDocument
 
                     if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.ContentUtf8, out JsonElement result))
                     {
-                        return new Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.ContentEntity(result);
+                        return new Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ContentEntity(result);
                     }
                 }
 
@@ -252,7 +252,7 @@ public readonly partial struct OpenApiDocument
                 {
                     if (this.objectBacking.TryGetValue(JsonPropertyNames.Content, out JsonAny result))
                     {
-                        return result.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.ContentEntity>();
+                        return result.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ContentEntity>();
                     }
                 }
 
@@ -647,7 +647,7 @@ public readonly partial struct OpenApiDocument
         /// <summary>
         /// Creates an instance of a <see cref = "ParameterOrReference"/>.
         /// </summary>
-        public static ParameterOrReference Create(Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.ThenEntity.AllowEmptyValueEntity? allowEmptyValue = null, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForQueryEntity.ThenEntity.AllowReservedEntity? allowReserved = null, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.ContentEntity? content = null, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.DeprecatedEntity? deprecated = null, Corvus.Json.JsonString? description = null, Corvus.Json.JsonAny? example = null, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Examples.ExamplesEntity? examples = null, Corvus.Json.JsonBoolean? explode = null, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.InEntity? @in = null, Corvus.Json.JsonString? name = null, Corvus.Json.JsonUriReference? @ref = null, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.RequiredEntity? required = null, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Schema? schema = null, Corvus.Json.JsonString? style = null, Corvus.Json.JsonString? summary = null)
+        public static ParameterOrReference Create(Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.ThenEntity.AllowEmptyValueEntity? allowEmptyValue = null, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForQueryEntity.ThenEntity.AllowReservedEntity? allowReserved = null, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ContentEntity? content = null, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.DeprecatedEntity? deprecated = null, Corvus.Json.JsonString? description = null, Corvus.Json.JsonAny? example = null, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Examples.ExamplesEntity? examples = null, Corvus.Json.JsonBoolean? explode = null, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.InEntity? @in = null, Corvus.Json.JsonString? name = null, Corvus.Json.JsonUriReference? @ref = null, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.RequiredEntity? required = null, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Schema? schema = null, Corvus.Json.JsonString? style = null, Corvus.Json.JsonString? summary = null)
         {
             var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
             if (allowEmptyValue is Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.ThenEntity.AllowEmptyValueEntity allowEmptyValue__)
@@ -660,7 +660,7 @@ public readonly partial struct OpenApiDocument
                 builder.Add(JsonPropertyNames.AllowReserved, allowReserved__.AsAny);
             }
 
-            if (content is Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.ContentEntity content__)
+            if (content is Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ContentEntity content__)
             {
                 builder.Add(JsonPropertyNames.Content, content__.AsAny);
             }
@@ -753,7 +753,7 @@ public readonly partial struct OpenApiDocument
         /// </summary>
         /// <param name = "value">The value to set.</param>
         /// <returns>The entity with the updated property.</returns>
-        public ParameterOrReference WithContent(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.ContentEntity value)
+        public ParameterOrReference WithContent(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ContentEntity value)
         {
             return this.SetProperty(JsonPropertyNames.Content, value);
         }

@@ -173,7 +173,7 @@ public readonly partial struct OpenApiDocument
         /// <summary>
         /// Gets the (optional) <c>headers</c> property.
         /// </summary>
-        public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.EncodingEntity.HeadersEntity Headers
+        public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.HeadersEntity Headers
         {
             get
             {
@@ -186,7 +186,7 @@ public readonly partial struct OpenApiDocument
 
                     if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.HeadersUtf8, out JsonElement result))
                     {
-                        return new Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.EncodingEntity.HeadersEntity(result);
+                        return new Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.HeadersEntity(result);
                     }
                 }
 
@@ -194,7 +194,7 @@ public readonly partial struct OpenApiDocument
                 {
                     if (this.objectBacking.TryGetValue(JsonPropertyNames.Headers, out JsonAny result))
                     {
-                        return result.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.EncodingEntity.HeadersEntity>();
+                        return result.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.HeadersEntity>();
                     }
                 }
 
@@ -237,7 +237,7 @@ public readonly partial struct OpenApiDocument
         /// <summary>
         /// Creates an instance of a <see cref = "EncodingEntity"/>.
         /// </summary>
-        public static EncodingEntity Create(Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.EncodingEntity.AllowReservedEntity? allowReserved = null, Corvus.Json.JsonString? contentType = null, Corvus.Json.JsonBoolean? explode = null, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.EncodingEntity.HeadersEntity? headers = null, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.EncodingEntity.StyleEntity? style = null)
+        public static EncodingEntity Create(Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.EncodingEntity.AllowReservedEntity? allowReserved = null, Corvus.Json.JsonString? contentType = null, Corvus.Json.JsonBoolean? explode = null, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.HeadersEntity? headers = null, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.EncodingEntity.StyleEntity? style = null)
         {
             var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
             if (allowReserved is Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.EncodingEntity.AllowReservedEntity allowReserved__)
@@ -255,7 +255,7 @@ public readonly partial struct OpenApiDocument
                 builder.Add(JsonPropertyNames.Explode, explode__.AsAny);
             }
 
-            if (headers is Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.EncodingEntity.HeadersEntity headers__)
+            if (headers is Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.HeadersEntity headers__)
             {
                 builder.Add(JsonPropertyNames.Headers, headers__.AsAny);
             }
@@ -303,7 +303,7 @@ public readonly partial struct OpenApiDocument
         /// </summary>
         /// <param name = "value">The value to set.</param>
         /// <returns>The entity with the updated property.</returns>
-        public EncodingEntity WithHeaders(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.EncodingEntity.HeadersEntity value)
+        public EncodingEntity WithHeaders(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.HeadersEntity value)
         {
             return this.SetProperty(JsonPropertyNames.Headers, value);
         }
@@ -330,7 +330,7 @@ public readonly partial struct OpenApiDocument
 
         private static ValidationContext __CorvusValidateHeaders(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
         {
-            return property.ValueAs<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.EncodingEntity.HeadersEntity>().Validate(validationContext, level);
+            return property.ValueAs<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.HeadersEntity>().Validate(validationContext, level);
         }
 
         private static ValidationContext __CorvusValidateStyle(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)

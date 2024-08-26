@@ -379,6 +379,17 @@ Generates Feature Files in `Corvus.Json.Specs` for the JSON Patch tests.
 
 Benchmark suites for various components.
 
+## V3.1.0
+
+Breaking change: 
+
+Under .NET 8.0 `IJsonString<T>` no longer has an explicit operator conversion to `string`. This is in preperation for enabling
+optional implicit conversions to string in V4.0.
+
+The code generator now generates code that uses the `GetString()` method instead of the cast when get a `string` from `IJsonString<T>`.
+
+To use V3.1.0, you need to regenerate your code with the new code generator.
+
 ## V3.0 Updates
 
 The big change with v3.0 is support for older (supported) versions of .NET, including the .NET Framework, through netstandard2.0.

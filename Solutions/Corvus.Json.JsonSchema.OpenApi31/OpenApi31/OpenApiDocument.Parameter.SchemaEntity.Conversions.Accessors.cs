@@ -185,35 +185,35 @@ public readonly partial struct OpenApiDocument
             }
 
             /// <summary>
-            /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForFormEntity"/>.
+            /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm"/>.
             /// </summary>
-            public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForFormEntity AsStylesForFormEntity
+            public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm AsStylesForForm
             {
                 get
                 {
-                    return (Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForFormEntity)this;
+                    return (Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm)this;
                 }
             }
 
             /// <summary>
-            /// Gets a value indicating whether this is a valid <see cref = "Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForFormEntity"/>.
+            /// Gets a value indicating whether this is a valid <see cref = "Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm"/>.
             /// </summary>
-            public bool IsStylesForFormEntity
+            public bool IsStylesForForm
             {
                 get
                 {
-                    return ((Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForFormEntity)this).IsValid();
+                    return ((Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm)this).IsValid();
                 }
             }
 
             /// <summary>
-            /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForFormEntity"/>.
+            /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm"/>.
             /// </summary>
             /// <param name = "result">The result of the conversion.</param>
             /// <returns><c>True</c> if the conversion was valid.</returns>
-            public bool TryGetAsStylesForFormEntity(out Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForFormEntity result)
+            public bool TryGetAsStylesForForm(out Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm result)
             {
-                result = (Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForFormEntity)this;
+                result = (Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm)this;
                 return result.IsValid();
             }
         }

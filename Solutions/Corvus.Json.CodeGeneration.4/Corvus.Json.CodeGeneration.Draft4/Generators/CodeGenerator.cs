@@ -2004,58 +2004,57 @@ namespace ");
             #line hidden
             
             #line 683 "CodeGenerator.tt"
-            this.Write("\r\n        if (value.ValueKind == JsonValueKind.String)\r\n        {\r\n#if NET8_0_OR_" +
-                    "GREATER\r\n            return new((string)value);\r\n#else\r\n            return new((" +
-                    "string)value.AsString);\r\n#endif\r\n        }\r\n");
+            this.Write("\r\n        if (value.ValueKind == JsonValueKind.String)\r\n        {\r\n            re" +
+                    "turn new(value.GetString()!);\r\n        }\r\n");
             
             #line default
             #line hidden
             
-            #line 692 "CodeGenerator.tt"
+            #line 688 "CodeGenerator.tt"
   } 
             
             #line default
             #line hidden
             
-            #line 693 "CodeGenerator.tt"
+            #line 689 "CodeGenerator.tt"
             this.Write("\r\n        return Undefined;\r\n    }\r\n");
             
             #line default
             #line hidden
             
-            #line 696 "CodeGenerator.tt"
+            #line 692 "CodeGenerator.tt"
   if(!IsImplicitString)
     { 
             
             #line default
             #line hidden
             
-            #line 698 "CodeGenerator.tt"
+            #line 694 "CodeGenerator.tt"
             this.Write("#endif\r\n");
             
             #line default
             #line hidden
             
-            #line 699 "CodeGenerator.tt"
+            #line 695 "CodeGenerator.tt"
   } 
             
             #line default
             #line hidden
             
-            #line 700 "CodeGenerator.tt"
+            #line 696 "CodeGenerator.tt"
             this.Write("\r\n");
             
             #line default
             #line hidden
             
-            #line 701 "CodeGenerator.tt"
+            #line 697 "CodeGenerator.tt"
   if(!IsImplicitNumber)
     { 
             
             #line default
             #line hidden
             
-            #line 703 "CodeGenerator.tt"
+            #line 699 "CodeGenerator.tt"
             this.Write(@"#if NET8_0_OR_GREATER
     /// <summary>
     /// Gets an instance of the JSON value from a number value.
@@ -2068,44 +2067,44 @@ namespace ");
             #line default
             #line hidden
             
-            #line 710 "CodeGenerator.tt"
+            #line 706 "CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 710 "CodeGenerator.tt"
+            #line 706 "CodeGenerator.tt"
             this.Write(".Undefined if the type is not compatible.</remarks>\r\n    [MethodImpl(MethodImplOp" +
                     "tions.AggressiveInlining)]\r\n    static ");
             
             #line default
             #line hidden
             
-            #line 712 "CodeGenerator.tt"
+            #line 708 "CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 712 "CodeGenerator.tt"
+            #line 708 "CodeGenerator.tt"
             this.Write(" IJsonValue<");
             
             #line default
             #line hidden
             
-            #line 712 "CodeGenerator.tt"
+            #line 708 "CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 712 "CodeGenerator.tt"
+            #line 708 "CodeGenerator.tt"
             this.Write(">.FromNumber<TValue>(in TValue value)\r\n");
             
             #line default
             #line hidden
             
-            #line 713 "CodeGenerator.tt"
+            #line 709 "CodeGenerator.tt"
   }
     else
     {
@@ -2113,7 +2112,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 716 "CodeGenerator.tt"
+            #line 712 "CodeGenerator.tt"
             this.Write(@"    /// <summary>
     /// Gets an instance of the JSON value from a number value.
     /// </summary>
@@ -2125,104 +2124,104 @@ namespace ");
             #line default
             #line hidden
             
-            #line 722 "CodeGenerator.tt"
+            #line 718 "CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 722 "CodeGenerator.tt"
+            #line 718 "CodeGenerator.tt"
             this.Write(".Undefined if the type is not compatible.</remarks>\r\n    [MethodImpl(MethodImplOp" +
                     "tions.AggressiveInlining)]\r\n    public static ");
             
             #line default
             #line hidden
             
-            #line 724 "CodeGenerator.tt"
+            #line 720 "CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 724 "CodeGenerator.tt"
+            #line 720 "CodeGenerator.tt"
             this.Write(" FromNumber<TValue>(in TValue value)\r\n        where TValue : struct, IJsonNumber<" +
                     "TValue>\r\n");
             
             #line default
             #line hidden
             
-            #line 726 "CodeGenerator.tt"
+            #line 722 "CodeGenerator.tt"
   } 
             
             #line default
             #line hidden
             
-            #line 727 "CodeGenerator.tt"
+            #line 723 "CodeGenerator.tt"
             this.Write("    {\r\n        if (value.HasJsonElementBacking)\r\n        {\r\n            return ne" +
                     "w(value.AsJsonElement);\r\n        }\r\n");
             
             #line default
             #line hidden
             
-            #line 732 "CodeGenerator.tt"
+            #line 728 "CodeGenerator.tt"
   if(IsImplicitNumber || IsNotImplicitType)
     { 
             
             #line default
             #line hidden
             
-            #line 734 "CodeGenerator.tt"
+            #line 730 "CodeGenerator.tt"
             this.Write("\r\n        if (value.ValueKind == JsonValueKind.Number)\r\n        {\r\n            re" +
                     "turn new(value.AsBinaryJsonNumber);\r\n        }\r\n");
             
             #line default
             #line hidden
             
-            #line 739 "CodeGenerator.tt"
+            #line 735 "CodeGenerator.tt"
   } 
             
             #line default
             #line hidden
             
-            #line 740 "CodeGenerator.tt"
+            #line 736 "CodeGenerator.tt"
             this.Write("\r\n        return Undefined;\r\n    }\r\n");
             
             #line default
             #line hidden
             
-            #line 743 "CodeGenerator.tt"
+            #line 739 "CodeGenerator.tt"
   if(!IsImplicitNumber)
     { 
             
             #line default
             #line hidden
             
-            #line 745 "CodeGenerator.tt"
+            #line 741 "CodeGenerator.tt"
             this.Write("#endif\r\n");
             
             #line default
             #line hidden
             
-            #line 746 "CodeGenerator.tt"
+            #line 742 "CodeGenerator.tt"
   } 
             
             #line default
             #line hidden
             
-            #line 747 "CodeGenerator.tt"
+            #line 743 "CodeGenerator.tt"
             this.Write("\r\n");
             
             #line default
             #line hidden
             
-            #line 748 "CodeGenerator.tt"
+            #line 744 "CodeGenerator.tt"
   if(!IsImplicitArray)
     { 
             
             #line default
             #line hidden
             
-            #line 750 "CodeGenerator.tt"
+            #line 746 "CodeGenerator.tt"
             this.Write(@"#if NET8_0_OR_GREATER
     /// <summary>
     /// Gets an instance of the JSON value from an array value.
@@ -2235,44 +2234,44 @@ namespace ");
             #line default
             #line hidden
             
-            #line 757 "CodeGenerator.tt"
+            #line 753 "CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 757 "CodeGenerator.tt"
+            #line 753 "CodeGenerator.tt"
             this.Write(".Undefined if the type is not compatible.</remarks>\r\n    [MethodImpl(MethodImplOp" +
                     "tions.AggressiveInlining)]\r\n    static ");
             
             #line default
             #line hidden
             
-            #line 759 "CodeGenerator.tt"
+            #line 755 "CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 759 "CodeGenerator.tt"
+            #line 755 "CodeGenerator.tt"
             this.Write(" IJsonValue<");
             
             #line default
             #line hidden
             
-            #line 759 "CodeGenerator.tt"
+            #line 755 "CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 759 "CodeGenerator.tt"
+            #line 755 "CodeGenerator.tt"
             this.Write(">.FromArray<TValue>(in TValue value)\r\n");
             
             #line default
             #line hidden
             
-            #line 760 "CodeGenerator.tt"
+            #line 756 "CodeGenerator.tt"
   }
     else
     {
@@ -2280,7 +2279,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 763 "CodeGenerator.tt"
+            #line 759 "CodeGenerator.tt"
             this.Write(@"    /// <summary>
     /// Gets an instance of the JSON value from an array value.
     /// </summary>
@@ -2292,104 +2291,104 @@ namespace ");
             #line default
             #line hidden
             
-            #line 769 "CodeGenerator.tt"
+            #line 765 "CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 769 "CodeGenerator.tt"
+            #line 765 "CodeGenerator.tt"
             this.Write(".Undefined if the type is not compatible.</remarks>\r\n    [MethodImpl(MethodImplOp" +
                     "tions.AggressiveInlining)]\r\n    public static ");
             
             #line default
             #line hidden
             
-            #line 771 "CodeGenerator.tt"
+            #line 767 "CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 771 "CodeGenerator.tt"
+            #line 767 "CodeGenerator.tt"
             this.Write(" FromArray<TValue>(in TValue value)\r\n        where TValue : struct, IJsonArray<TV" +
                     "alue>\r\n");
             
             #line default
             #line hidden
             
-            #line 773 "CodeGenerator.tt"
+            #line 769 "CodeGenerator.tt"
   } 
             
             #line default
             #line hidden
             
-            #line 774 "CodeGenerator.tt"
+            #line 770 "CodeGenerator.tt"
             this.Write("    {\r\n        if (value.HasJsonElementBacking)\r\n        {\r\n            return ne" +
                     "w(value.AsJsonElement);\r\n        }\r\n");
             
             #line default
             #line hidden
             
-            #line 779 "CodeGenerator.tt"
+            #line 775 "CodeGenerator.tt"
   if(IsImplicitArray || IsNotImplicitType)
     { 
             
             #line default
             #line hidden
             
-            #line 781 "CodeGenerator.tt"
+            #line 777 "CodeGenerator.tt"
             this.Write("\r\n        if (value.ValueKind == JsonValueKind.Array)\r\n        {\r\n            ret" +
                     "urn new(value.AsImmutableList());\r\n        }\r\n");
             
             #line default
             #line hidden
             
-            #line 786 "CodeGenerator.tt"
+            #line 782 "CodeGenerator.tt"
   } 
             
             #line default
             #line hidden
             
-            #line 787 "CodeGenerator.tt"
+            #line 783 "CodeGenerator.tt"
             this.Write("\r\n        return Undefined;\r\n    }\r\n");
             
             #line default
             #line hidden
             
-            #line 790 "CodeGenerator.tt"
+            #line 786 "CodeGenerator.tt"
   if(!IsImplicitArray)
     { 
             
             #line default
             #line hidden
             
-            #line 792 "CodeGenerator.tt"
+            #line 788 "CodeGenerator.tt"
             this.Write("#endif\r\n");
             
             #line default
             #line hidden
             
-            #line 793 "CodeGenerator.tt"
+            #line 789 "CodeGenerator.tt"
   } 
             
             #line default
             #line hidden
             
-            #line 794 "CodeGenerator.tt"
+            #line 790 "CodeGenerator.tt"
             this.Write("\r\n");
             
             #line default
             #line hidden
             
-            #line 795 "CodeGenerator.tt"
+            #line 791 "CodeGenerator.tt"
   if(!IsImplicitObject)
     { 
             
             #line default
             #line hidden
             
-            #line 797 "CodeGenerator.tt"
+            #line 793 "CodeGenerator.tt"
             this.Write(@"#if NET8_0_OR_GREATER
     /// <summary>
     /// Gets an instance of the JSON value from an object value.
@@ -2402,44 +2401,44 @@ namespace ");
             #line default
             #line hidden
             
-            #line 804 "CodeGenerator.tt"
+            #line 800 "CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 804 "CodeGenerator.tt"
+            #line 800 "CodeGenerator.tt"
             this.Write(".Undefined if the type is not compatible.</remarks>\r\n    [MethodImpl(MethodImplOp" +
                     "tions.AggressiveInlining)]\r\n    static ");
             
             #line default
             #line hidden
             
-            #line 806 "CodeGenerator.tt"
+            #line 802 "CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 806 "CodeGenerator.tt"
+            #line 802 "CodeGenerator.tt"
             this.Write(" IJsonValue<");
             
             #line default
             #line hidden
             
-            #line 806 "CodeGenerator.tt"
+            #line 802 "CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 806 "CodeGenerator.tt"
+            #line 802 "CodeGenerator.tt"
             this.Write(">.FromObject<TValue>(in TValue value)\r\n");
             
             #line default
             #line hidden
             
-            #line 807 "CodeGenerator.tt"
+            #line 803 "CodeGenerator.tt"
   }
     else
     {
@@ -2447,7 +2446,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 810 "CodeGenerator.tt"
+            #line 806 "CodeGenerator.tt"
             this.Write(@"    /// <summary>
     /// Gets an instance of the JSON value from an object value.
     /// </summary>
@@ -2459,103 +2458,103 @@ namespace ");
             #line default
             #line hidden
             
-            #line 816 "CodeGenerator.tt"
+            #line 812 "CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 816 "CodeGenerator.tt"
+            #line 812 "CodeGenerator.tt"
             this.Write(".Undefined if the type is not compatible.</remarks>\r\n    [MethodImpl(MethodImplOp" +
                     "tions.AggressiveInlining)]\r\n    public static ");
             
             #line default
             #line hidden
             
-            #line 818 "CodeGenerator.tt"
+            #line 814 "CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 818 "CodeGenerator.tt"
+            #line 814 "CodeGenerator.tt"
             this.Write(" FromObject<TValue>(in TValue value)\r\n        where TValue : struct, IJsonObject<" +
                     "TValue>\r\n");
             
             #line default
             #line hidden
             
-            #line 820 "CodeGenerator.tt"
+            #line 816 "CodeGenerator.tt"
   } 
             
             #line default
             #line hidden
             
-            #line 821 "CodeGenerator.tt"
+            #line 817 "CodeGenerator.tt"
             this.Write("    {\r\n        if (value.HasJsonElementBacking)\r\n        {\r\n            return ne" +
                     "w(value.AsJsonElement);\r\n        }\r\n");
             
             #line default
             #line hidden
             
-            #line 826 "CodeGenerator.tt"
+            #line 822 "CodeGenerator.tt"
   if(IsImplicitObject || IsNotImplicitType)
     { 
             
             #line default
             #line hidden
             
-            #line 828 "CodeGenerator.tt"
+            #line 824 "CodeGenerator.tt"
             this.Write("\r\n        if (value.ValueKind == JsonValueKind.Object)\r\n        {\r\n            re" +
                     "turn new(value.AsPropertyBacking());\r\n        }\r\n");
             
             #line default
             #line hidden
             
-            #line 833 "CodeGenerator.tt"
+            #line 829 "CodeGenerator.tt"
   } 
             
             #line default
             #line hidden
             
-            #line 834 "CodeGenerator.tt"
+            #line 830 "CodeGenerator.tt"
             this.Write("\r\n        return Undefined;\r\n    }\r\n");
             
             #line default
             #line hidden
             
-            #line 837 "CodeGenerator.tt"
+            #line 833 "CodeGenerator.tt"
   if(!IsImplicitObject)
     { 
             
             #line default
             #line hidden
             
-            #line 839 "CodeGenerator.tt"
+            #line 835 "CodeGenerator.tt"
             this.Write("#endif\r\n");
             
             #line default
             #line hidden
             
-            #line 840 "CodeGenerator.tt"
+            #line 836 "CodeGenerator.tt"
   } 
             
             #line default
             #line hidden
             
-            #line 841 "CodeGenerator.tt"
+            #line 837 "CodeGenerator.tt"
             this.Write("\r\n    /// <summary>\r\n    /// Parses a JSON string into a ");
             
             #line default
             #line hidden
             
-            #line 843 "CodeGenerator.tt"
+            #line 839 "CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 843 "CodeGenerator.tt"
+            #line 839 "CodeGenerator.tt"
             this.Write(".\r\n    /// </summary>\r\n    /// <param name=\"json\">The json string to parse.</para" +
                     "m>\r\n    /// <param name=\"options\">The (optional) JsonDocumentOptions.</param>\r\n " +
                     "   /// <returns>A <see cref=\"");
@@ -2563,51 +2562,51 @@ namespace ");
             #line default
             #line hidden
             
-            #line 847 "CodeGenerator.tt"
+            #line 843 "CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 847 "CodeGenerator.tt"
+            #line 843 "CodeGenerator.tt"
             this.Write("\"/> instance built from the JSON string.</returns>\r\n    public static ");
             
             #line default
             #line hidden
             
-            #line 848 "CodeGenerator.tt"
+            #line 844 "CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 848 "CodeGenerator.tt"
+            #line 844 "CodeGenerator.tt"
             this.Write(" Parse(string json, JsonDocumentOptions options = default)\r\n    {\r\n        using " +
                     "var jsonDocument = JsonDocument.Parse(json, options);\r\n        return new ");
             
             #line default
             #line hidden
             
-            #line 851 "CodeGenerator.tt"
+            #line 847 "CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 851 "CodeGenerator.tt"
+            #line 847 "CodeGenerator.tt"
             this.Write("(jsonDocument.RootElement.Clone());\r\n    }\r\n\r\n    /// <summary>\r\n    /// Parses a" +
                     " JSON string into a ");
             
             #line default
             #line hidden
             
-            #line 855 "CodeGenerator.tt"
+            #line 851 "CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 855 "CodeGenerator.tt"
+            #line 851 "CodeGenerator.tt"
             this.Write(".\r\n    /// </summary>\r\n    /// <param name=\"utf8Json\">The json string to parse.</" +
                     "param>\r\n    /// <param name=\"options\">The (optional) JsonDocumentOptions.</param" +
                     ">\r\n    /// <returns>A <see cref=\"");
@@ -2615,25 +2614,25 @@ namespace ");
             #line default
             #line hidden
             
-            #line 859 "CodeGenerator.tt"
+            #line 855 "CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 859 "CodeGenerator.tt"
+            #line 855 "CodeGenerator.tt"
             this.Write("\"/> instance built from the JSON string.</returns>\r\n    public static ");
             
             #line default
             #line hidden
             
-            #line 860 "CodeGenerator.tt"
+            #line 856 "CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 860 "CodeGenerator.tt"
+            #line 856 "CodeGenerator.tt"
             this.Write(" Parse(Stream utf8Json, JsonDocumentOptions options = default)\r\n    {\r\n        us" +
                     "ing var jsonDocument = JsonDocument.Parse(utf8Json, options);\r\n        return ne" +
                     "w ");
@@ -2641,26 +2640,26 @@ namespace ");
             #line default
             #line hidden
             
-            #line 863 "CodeGenerator.tt"
+            #line 859 "CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 863 "CodeGenerator.tt"
+            #line 859 "CodeGenerator.tt"
             this.Write("(jsonDocument.RootElement.Clone());\r\n    }\r\n\r\n    /// <summary>\r\n    /// Parses a" +
                     " JSON string into a ");
             
             #line default
             #line hidden
             
-            #line 867 "CodeGenerator.tt"
+            #line 863 "CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 867 "CodeGenerator.tt"
+            #line 863 "CodeGenerator.tt"
             this.Write(".\r\n    /// </summary>\r\n    /// <param name=\"utf8Json\">The json string to parse.</" +
                     "param>\r\n    /// <param name=\"options\">The (optional) JsonDocumentOptions.</param" +
                     ">\r\n    /// <returns>A <see cref=\"");
@@ -2668,25 +2667,25 @@ namespace ");
             #line default
             #line hidden
             
-            #line 871 "CodeGenerator.tt"
+            #line 867 "CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 871 "CodeGenerator.tt"
+            #line 867 "CodeGenerator.tt"
             this.Write("\"/> instance built from the JSON string.</returns>\r\n    public static ");
             
             #line default
             #line hidden
             
-            #line 872 "CodeGenerator.tt"
+            #line 868 "CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 872 "CodeGenerator.tt"
+            #line 868 "CodeGenerator.tt"
             this.Write(" Parse(ReadOnlyMemory<byte> utf8Json, JsonDocumentOptions options = default)\r\n   " +
                     " {\r\n        using var jsonDocument = JsonDocument.Parse(utf8Json, options);\r\n   " +
                     "     return new ");
@@ -2694,26 +2693,26 @@ namespace ");
             #line default
             #line hidden
             
-            #line 875 "CodeGenerator.tt"
+            #line 871 "CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 875 "CodeGenerator.tt"
+            #line 871 "CodeGenerator.tt"
             this.Write("(jsonDocument.RootElement.Clone());\r\n    }\r\n\r\n    /// <summary>\r\n    /// Parses a" +
                     " JSON string into a ");
             
             #line default
             #line hidden
             
-            #line 879 "CodeGenerator.tt"
+            #line 875 "CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 879 "CodeGenerator.tt"
+            #line 875 "CodeGenerator.tt"
             this.Write(".\r\n    /// </summary>\r\n    /// <param name=\"json\">The json string to parse.</para" +
                     "m>\r\n    /// <param name=\"options\">The (optional) JsonDocumentOptions.</param>\r\n " +
                     "   /// <returns>A <see cref=\"");
@@ -2721,25 +2720,25 @@ namespace ");
             #line default
             #line hidden
             
-            #line 883 "CodeGenerator.tt"
+            #line 879 "CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 883 "CodeGenerator.tt"
+            #line 879 "CodeGenerator.tt"
             this.Write("\"/> instance built from the JSON string.</returns>\r\n    public static ");
             
             #line default
             #line hidden
             
-            #line 884 "CodeGenerator.tt"
+            #line 880 "CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 884 "CodeGenerator.tt"
+            #line 880 "CodeGenerator.tt"
             this.Write(" Parse(ReadOnlyMemory<char> json, JsonDocumentOptions options = default)\r\n    {\r\n" +
                     "        using var jsonDocument = JsonDocument.Parse(json, options);\r\n        ret" +
                     "urn new ");
@@ -2747,26 +2746,26 @@ namespace ");
             #line default
             #line hidden
             
-            #line 887 "CodeGenerator.tt"
+            #line 883 "CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 887 "CodeGenerator.tt"
+            #line 883 "CodeGenerator.tt"
             this.Write("(jsonDocument.RootElement.Clone());\r\n    }\r\n\r\n    /// <summary>\r\n    /// Parses a" +
                     " JSON string into a ");
             
             #line default
             #line hidden
             
-            #line 891 "CodeGenerator.tt"
+            #line 887 "CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 891 "CodeGenerator.tt"
+            #line 887 "CodeGenerator.tt"
             this.Write(".\r\n    /// </summary>\r\n    /// <param name=\"utf8Json\">The json string to parse.</" +
                     "param>\r\n    /// <param name=\"options\">The (optional) JsonDocumentOptions.</param" +
                     ">\r\n    /// <returns>A <see cref=\"");
@@ -2774,25 +2773,25 @@ namespace ");
             #line default
             #line hidden
             
-            #line 895 "CodeGenerator.tt"
+            #line 891 "CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 895 "CodeGenerator.tt"
+            #line 891 "CodeGenerator.tt"
             this.Write("\"/> instance built from the JSON string.</returns>\r\n    public static ");
             
             #line default
             #line hidden
             
-            #line 896 "CodeGenerator.tt"
+            #line 892 "CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 896 "CodeGenerator.tt"
+            #line 892 "CodeGenerator.tt"
             this.Write(" Parse(ReadOnlySequence<byte> utf8Json, JsonDocumentOptions options = default)\r\n " +
                     "   {\r\n        using var jsonDocument = JsonDocument.Parse(utf8Json, options);\r\n " +
                     "       return new ");
@@ -2800,13 +2799,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 899 "CodeGenerator.tt"
+            #line 895 "CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 899 "CodeGenerator.tt"
+            #line 895 "CodeGenerator.tt"
             this.Write(@"(jsonDocument.RootElement.Clone());
     }
 
@@ -2820,38 +2819,38 @@ namespace ");
             #line default
             #line hidden
             
-            #line 907 "CodeGenerator.tt"
+            #line 903 "CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 907 "CodeGenerator.tt"
+            #line 903 "CodeGenerator.tt"
             this.Write(" ParseValue(ReadOnlySpan<char> buffer)\r\n    {\r\n#if NET8_0_OR_GREATER\r\n        ret" +
                     "urn IJsonValue<");
             
             #line default
             #line hidden
             
-            #line 910 "CodeGenerator.tt"
+            #line 906 "CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 910 "CodeGenerator.tt"
+            #line 906 "CodeGenerator.tt"
             this.Write(">.ParseValue(buffer);\r\n#else\r\n        return JsonValueHelpers.ParseValue<");
             
             #line default
             #line hidden
             
-            #line 912 "CodeGenerator.tt"
+            #line 908 "CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 912 "CodeGenerator.tt"
+            #line 908 "CodeGenerator.tt"
             this.Write(">(buffer);\r\n#endif\r\n    }\r\n\r\n    /// <summary>\r\n    /// Parses a JSON value from " +
                     "a buffer.\r\n    /// </summary>\r\n    /// <param name=\"buffer\">The buffer from whic" +
                     "h to parse the value.</param>\r\n    /// <returns>The parsed value.</returns>\r\n   " +
@@ -2860,38 +2859,38 @@ namespace ");
             #line default
             #line hidden
             
-            #line 921 "CodeGenerator.tt"
+            #line 917 "CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 921 "CodeGenerator.tt"
+            #line 917 "CodeGenerator.tt"
             this.Write(" ParseValue(ReadOnlySpan<byte> buffer)\r\n    {\r\n#if NET8_0_OR_GREATER\r\n        ret" +
                     "urn IJsonValue<");
             
             #line default
             #line hidden
             
-            #line 924 "CodeGenerator.tt"
+            #line 920 "CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 924 "CodeGenerator.tt"
+            #line 920 "CodeGenerator.tt"
             this.Write(">.ParseValue(buffer);\r\n#else\r\n        return JsonValueHelpers.ParseValue<");
             
             #line default
             #line hidden
             
-            #line 926 "CodeGenerator.tt"
+            #line 922 "CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 926 "CodeGenerator.tt"
+            #line 922 "CodeGenerator.tt"
             this.Write(">(buffer);\r\n#endif\r\n    }\r\n\r\n    /// <summary>\r\n    /// Parses a JSON value from " +
                     "a buffer.\r\n    /// </summary>\r\n    /// <param name=\"reader\">The reader from whic" +
                     "h to parse the value.</param>\r\n    /// <returns>The parsed value.</returns>\r\n   " +
@@ -2900,38 +2899,38 @@ namespace ");
             #line default
             #line hidden
             
-            #line 935 "CodeGenerator.tt"
+            #line 931 "CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 935 "CodeGenerator.tt"
+            #line 931 "CodeGenerator.tt"
             this.Write(" ParseValue(ref Utf8JsonReader reader)\r\n    {\r\n#if NET8_0_OR_GREATER\r\n        ret" +
                     "urn IJsonValue<");
             
             #line default
             #line hidden
             
-            #line 938 "CodeGenerator.tt"
+            #line 934 "CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 938 "CodeGenerator.tt"
+            #line 934 "CodeGenerator.tt"
             this.Write(">.ParseValue(ref reader);\r\n#else\r\n        return JsonValueHelpers.ParseValue<");
             
             #line default
             #line hidden
             
-            #line 940 "CodeGenerator.tt"
+            #line 936 "CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 940 "CodeGenerator.tt"
+            #line 936 "CodeGenerator.tt"
             this.Write(@">(ref reader);
 #endif
     }
@@ -2955,21 +2954,21 @@ namespace ");
             #line default
             #line hidden
             
-            #line 958 "CodeGenerator.tt"
+            #line 954 "CodeGenerator.tt"
   if(IsImplicitString || IsNotImplicitType)
     { 
             
             #line default
             #line hidden
             
-            #line 960 "CodeGenerator.tt"
+            #line 956 "CodeGenerator.tt"
             this.Write("\r\n        if ((this.backing & Backing.String) != 0)\r\n        {\r\n            retur" +
                     "n TTarget.FromString(this);\r\n        }\r\n");
             
             #line default
             #line hidden
             
-            #line 965 "CodeGenerator.tt"
+            #line 961 "CodeGenerator.tt"
   }
     if(IsImplicitBoolean || IsNotImplicitType)
     { 
@@ -2977,14 +2976,14 @@ namespace ");
             #line default
             #line hidden
             
-            #line 968 "CodeGenerator.tt"
+            #line 964 "CodeGenerator.tt"
             this.Write("\r\n        if ((this.backing & Backing.Bool) != 0)\r\n        {\r\n            return " +
                     "TTarget.FromBoolean(this);\r\n        }\r\n");
             
             #line default
             #line hidden
             
-            #line 973 "CodeGenerator.tt"
+            #line 969 "CodeGenerator.tt"
   }
     if(IsImplicitNumber || IsNotImplicitType)
     { 
@@ -2992,14 +2991,14 @@ namespace ");
             #line default
             #line hidden
             
-            #line 976 "CodeGenerator.tt"
+            #line 972 "CodeGenerator.tt"
             this.Write("\r\n        if ((this.backing & Backing.Number) != 0)\r\n        {\r\n            retur" +
                     "n TTarget.FromNumber(this);\r\n        }\r\n");
             
             #line default
             #line hidden
             
-            #line 981 "CodeGenerator.tt"
+            #line 977 "CodeGenerator.tt"
   }
     if(IsImplicitArray || IsNotImplicitType)
     { 
@@ -3007,14 +3006,14 @@ namespace ");
             #line default
             #line hidden
             
-            #line 984 "CodeGenerator.tt"
+            #line 980 "CodeGenerator.tt"
             this.Write("\r\n        if ((this.backing & Backing.Array) != 0)\r\n        {\r\n            return" +
                     " TTarget.FromArray(this);\r\n        }\r\n");
             
             #line default
             #line hidden
             
-            #line 989 "CodeGenerator.tt"
+            #line 985 "CodeGenerator.tt"
   }
     if(IsImplicitObject || IsNotImplicitType)
     { 
@@ -3022,20 +3021,20 @@ namespace ");
             #line default
             #line hidden
             
-            #line 992 "CodeGenerator.tt"
+            #line 988 "CodeGenerator.tt"
             this.Write("\r\n        if ((this.backing & Backing.Object) != 0)\r\n        {\r\n            retur" +
                     "n TTarget.FromObject(this);\r\n        }\r\n");
             
             #line default
             #line hidden
             
-            #line 997 "CodeGenerator.tt"
+            #line 993 "CodeGenerator.tt"
   } 
             
             #line default
             #line hidden
             
-            #line 998 "CodeGenerator.tt"
+            #line 994 "CodeGenerator.tt"
             this.Write("\r\n        if ((this.backing & Backing.Null) != 0)\r\n        {\r\n            return " +
                     "TTarget.Null;\r\n        }\r\n\r\n        return TTarget.Undefined;\r\n#else\r\n        re" +
                     "turn this.As<");
@@ -3043,13 +3042,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 1006 "CodeGenerator.tt"
+            #line 1002 "CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 1006 "CodeGenerator.tt"
+            #line 1002 "CodeGenerator.tt"
             this.Write(@", TTarget>();
 #endif
     }
@@ -3079,13 +3078,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 1030 "CodeGenerator.tt"
+            #line 1026 "CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 1030 "CodeGenerator.tt"
+            #line 1026 "CodeGenerator.tt"
             this.Write(@" other)
     {
         return JsonValueHelpers.CompareValues(this, other);
@@ -3108,14 +3107,14 @@ namespace ");
             #line default
             #line hidden
             
-            #line 1047 "CodeGenerator.tt"
+            #line 1043 "CodeGenerator.tt"
   if(IsImplicitArray || IsNotImplicitType)
     { 
             
             #line default
             #line hidden
             
-            #line 1049 "CodeGenerator.tt"
+            #line 1045 "CodeGenerator.tt"
             this.Write("\r\n        if ((this.backing & Backing.Array) != 0)\r\n        {\r\n            JsonVa" +
                     "lueHelpers.WriteItems(this.arrayBacking, writer);\r\n            return;\r\n        " +
                     "}\r\n");
@@ -3123,7 +3122,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 1055 "CodeGenerator.tt"
+            #line 1051 "CodeGenerator.tt"
   }
     if(IsImplicitBoolean || IsNotImplicitType)
     { 
@@ -3131,26 +3130,26 @@ namespace ");
             #line default
             #line hidden
             
-            #line 1058 "CodeGenerator.tt"
+            #line 1054 "CodeGenerator.tt"
             this.Write("\r\n        if ((this.backing & Backing.Bool) != 0)\r\n        {\r\n");
             
             #line default
             #line hidden
             
-            #line 1061 "CodeGenerator.tt"
+            #line 1057 "CodeGenerator.tt"
       if (IsImplicitNumber || !IsNotImplicitType)
         { 
             
             #line default
             #line hidden
             
-            #line 1063 "CodeGenerator.tt"
+            #line 1059 "CodeGenerator.tt"
             this.Write("            writer.WriteBooleanValue(this.boolBacking);\r\n");
             
             #line default
             #line hidden
             
-            #line 1064 "CodeGenerator.tt"
+            #line 1060 "CodeGenerator.tt"
       }
         else
         {
@@ -3158,25 +3157,25 @@ namespace ");
             #line default
             #line hidden
             
-            #line 1067 "CodeGenerator.tt"
+            #line 1063 "CodeGenerator.tt"
             this.Write("            writer.WriteBooleanValue(this.numberBacking.GetByteAsBool());\r\n");
             
             #line default
             #line hidden
             
-            #line 1068 "CodeGenerator.tt"
+            #line 1064 "CodeGenerator.tt"
       }
             
             #line default
             #line hidden
             
-            #line 1069 "CodeGenerator.tt"
+            #line 1065 "CodeGenerator.tt"
             this.Write("            return;\r\n        }\r\n");
             
             #line default
             #line hidden
             
-            #line 1071 "CodeGenerator.tt"
+            #line 1067 "CodeGenerator.tt"
   }
     if(IsImplicitNumber || IsNotImplicitType)
     { 
@@ -3184,14 +3183,14 @@ namespace ");
             #line default
             #line hidden
             
-            #line 1074 "CodeGenerator.tt"
+            #line 1070 "CodeGenerator.tt"
             this.Write("\r\n        if ((this.backing & Backing.Number) != 0)\r\n        {\r\n            this." +
                     "numberBacking.WriteTo(writer);\r\n            return;\r\n        }\r\n");
             
             #line default
             #line hidden
             
-            #line 1080 "CodeGenerator.tt"
+            #line 1076 "CodeGenerator.tt"
   }
     if(IsImplicitObject || IsNotImplicitType)
     { 
@@ -3199,7 +3198,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 1083 "CodeGenerator.tt"
+            #line 1079 "CodeGenerator.tt"
             this.Write("\r\n        if ((this.backing & Backing.Object) != 0)\r\n        {\r\n            JsonV" +
                     "alueHelpers.WriteProperties(this.objectBacking, writer);\r\n            return;\r\n " +
                     "       }\r\n");
@@ -3207,7 +3206,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 1089 "CodeGenerator.tt"
+            #line 1085 "CodeGenerator.tt"
   }
     if(IsImplicitString || IsNotImplicitType)
     { 
@@ -3215,20 +3214,20 @@ namespace ");
             #line default
             #line hidden
             
-            #line 1092 "CodeGenerator.tt"
+            #line 1088 "CodeGenerator.tt"
             this.Write("\r\n        if ((this.backing & Backing.String) != 0)\r\n        {\r\n            write" +
                     "r.WriteStringValue(this.stringBacking);\r\n            return;\r\n        }\r\n");
             
             #line default
             #line hidden
             
-            #line 1098 "CodeGenerator.tt"
+            #line 1094 "CodeGenerator.tt"
   } 
             
             #line default
             #line hidden
             
-            #line 1099 "CodeGenerator.tt"
+            #line 1095 "CodeGenerator.tt"
             this.Write(@"
         if ((this.backing & Backing.Null) != 0)
         {
@@ -3254,7 +3253,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 1119 "CodeGenerator.tt"
+            #line 1115 "CodeGenerator.tt"
  EndNesting(); 
             
             #line default

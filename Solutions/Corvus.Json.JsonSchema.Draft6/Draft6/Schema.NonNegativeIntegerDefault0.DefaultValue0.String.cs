@@ -322,8 +322,8 @@ public readonly partial struct Schema
                     utf8Bytes.CopyTo(bytes);
                     try
                     {
-                        int written = Encoding.UTF8.GetChars(bytes, 0, bytes.Length, chars, 0);
-                        return chars.SequenceEqual(this.stringBacking);
+                        int written = Encoding.UTF8.GetChars(bytes, 0, utf8Bytes.Length, chars, 0);
+                        return chars.AsSpan(0, written).SequenceEqual(this.stringBacking.AsSpan());
                     }
                     finally
                     {
@@ -403,25 +403,36 @@ public readonly partial struct Schema
 
         if ((this.backing & Backing.JsonElement) != 0)
         {
-            char[] buffer = ArrayPool<char>.Shared.Rent(destination.Length);
-            try
+            if (this.jsonElementBacking.ValueKind == JsonValueKind.String)
             {
-                bool result = this.jsonElementBacking.TryGetValue(FormatSpan, new Output(buffer, destination.Length), out charsWritten);
-                if (result)
+                char[] buffer = ArrayPool<char>.Shared.Rent(destination.Length);
+                try
                 {
-                    buffer.AsSpan(0, charsWritten).CopyTo(destination);
-                }
+                    bool result = this.jsonElementBacking.TryGetValue(FormatSpan, new Output(buffer, destination.Length), out charsWritten);
+                    if (result)
+                    {
+                        buffer.AsSpan(0, charsWritten).CopyTo(destination);
+                    }
 
-                return result;
+                    return result;
+                }
+                finally
+                {
+                    ArrayPool<char>.Shared.Return(buffer);
+                }
             }
-            finally
+            else
             {
-                ArrayPool<char>.Shared.Return(buffer);
+                string value = this.jsonElementBacking.GetRawText();
+                int length = Math.Min(destination.Length, this.stringBacking.Length);
+                this.stringBacking.AsSpan(0, length).CopyTo(destination);
+                charsWritten = length;
+                return true;
             }
         }
 
         charsWritten = 0;
-        return false;
+        return true;
 
         static bool FormatSpan(ReadOnlySpan<char> source, in Output output, out int charsWritten)
         {

@@ -49,5 +49,38 @@ public readonly partial struct OpenApiDocument
             result = (Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SpecificationExtensions)this;
             return result.IsValid();
         }
+
+        /// <summary>
+        /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Responses.RequiredDefault"/>.
+        /// </summary>
+        public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Responses.RequiredDefault AsRequiredDefault
+        {
+            get
+            {
+                return (Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Responses.RequiredDefault)this;
+            }
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether this is a valid <see cref = "Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Responses.RequiredDefault"/>.
+        /// </summary>
+        public bool IsRequiredDefault
+        {
+            get
+            {
+                return ((Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Responses.RequiredDefault)this).IsValid();
+            }
+        }
+
+        /// <summary>
+        /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Responses.RequiredDefault"/>.
+        /// </summary>
+        /// <param name = "result">The result of the conversion.</param>
+        /// <returns><c>True</c> if the conversion was valid.</returns>
+        public bool TryGetAsRequiredDefault(out Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Responses.RequiredDefault result)
+        {
+            result = (Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Responses.RequiredDefault)this;
+            return result.IsValid();
+        }
     }
 }

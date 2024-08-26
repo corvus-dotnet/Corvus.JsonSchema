@@ -34,15 +34,6 @@ public readonly partial struct OpenApiDocument
                     public static class JsonPropertyNames
                     {
                         /// <summary>
-                        /// JSON property name for <see cref = "Name"/>.
-                        /// </summary>
-                        public static ReadOnlySpan<byte> NameUtf8 => "name"u8;
-
-                        /// <summary>
-                        /// JSON property name for <see cref = "Name"/>.
-                        /// </summary>
-                        public const string Name = "name";
-                        /// <summary>
                         /// JSON property name for <see cref = "Required"/>.
                         /// </summary>
                         public static ReadOnlySpan<byte> RequiredUtf8 => "required"u8;
@@ -60,38 +51,6 @@ public readonly partial struct OpenApiDocument
                         /// JSON property name for <see cref = "Style"/>.
                         /// </summary>
                         public const string Style = "style";
-                    }
-
-                    /// <summary>
-                    /// Gets the (optional) <c>name</c> property.
-                    /// </summary>
-                    public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity.RequiredRequired.NameEntity Name
-                    {
-                        get
-                        {
-                            if ((this.backing & Backing.JsonElement) != 0)
-                            {
-                                if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
-                                {
-                                    return default;
-                                }
-
-                                if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.NameUtf8, out JsonElement result))
-                                {
-                                    return new Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity.RequiredRequired.NameEntity(result);
-                                }
-                            }
-
-                            if ((this.backing & Backing.Object) != 0)
-                            {
-                                if (this.objectBacking.TryGetValue(JsonPropertyNames.Name, out JsonAny result))
-                                {
-                                    return result.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity.RequiredRequired.NameEntity>();
-                                }
-                            }
-
-                            return default;
-                        }
                     }
 
                     /// <summary>
@@ -161,31 +120,16 @@ public readonly partial struct OpenApiDocument
                     /// <summary>
                     /// Creates an instance of a <see cref = "RequiredRequired"/>.
                     /// </summary>
-                    public static RequiredRequired Create(Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity.RequiredRequired.NameEntity? name = null, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity.RequiredRequired.StyleEntity? style = null)
+                    public static RequiredRequired Create(Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity.RequiredRequired.StyleEntity? style = null)
                     {
                         var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
                         builder.Add(JsonPropertyNames.Required, new Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity.RequiredRequired.RequiredEntity().AsAny);
-                        if (name is Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity.RequiredRequired.NameEntity name__)
-                        {
-                            builder.Add(JsonPropertyNames.Name, name__.AsAny);
-                        }
-
                         if (style is Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity.RequiredRequired.StyleEntity style__)
                         {
                             builder.Add(JsonPropertyNames.Style, style__.AsAny);
                         }
 
                         return new(builder.ToImmutable());
-                    }
-
-                    /// <summary>
-                    /// Sets name.
-                    /// </summary>
-                    /// <param name = "value">The value to set.</param>
-                    /// <returns>The entity with the updated property.</returns>
-                    public RequiredRequired WithName(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity.RequiredRequired.NameEntity value)
-                    {
-                        return this.SetProperty(JsonPropertyNames.Name, value);
                     }
 
                     /// <summary>
@@ -201,11 +145,6 @@ public readonly partial struct OpenApiDocument
                     private static ValidationContext __CorvusValidateRequired(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
                     {
                         return property.ValueAs<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity.RequiredRequired.RequiredEntity>().Validate(validationContext, level);
-                    }
-
-                    private static ValidationContext __CorvusValidateName(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
-                    {
-                        return property.ValueAs<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity.RequiredRequired.NameEntity>().Validate(validationContext, level);
                     }
 
                     private static ValidationContext __CorvusValidateStyle(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
@@ -229,11 +168,6 @@ public readonly partial struct OpenApiDocument
                                 propertyValidator = __CorvusValidateRequired;
                                 return true;
                             }
-                            else if (property.NameEquals(JsonPropertyNames.NameUtf8))
-                            {
-                                propertyValidator = __CorvusValidateName;
-                                return true;
-                            }
                             else if (property.NameEquals(JsonPropertyNames.StyleUtf8))
                             {
                                 propertyValidator = __CorvusValidateStyle;
@@ -245,11 +179,6 @@ public readonly partial struct OpenApiDocument
                             if (property.NameEquals(JsonPropertyNames.Required))
                             {
                                 propertyValidator = __CorvusValidateRequired;
-                                return true;
-                            }
-                            else if (property.NameEquals(JsonPropertyNames.Name))
-                            {
-                                propertyValidator = __CorvusValidateName;
                                 return true;
                             }
                             else if (property.NameEquals(JsonPropertyNames.Style))

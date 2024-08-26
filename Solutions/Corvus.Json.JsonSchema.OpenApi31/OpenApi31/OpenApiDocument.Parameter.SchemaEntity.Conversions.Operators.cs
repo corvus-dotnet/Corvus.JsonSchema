@@ -356,10 +356,10 @@ public readonly partial struct OpenApiDocument
             }
 
             /// <summary>
-            /// Conversion to <see cref = "Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForFormEntity"/>.
+            /// Conversion to <see cref = "Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm"/>.
             /// </summary>
             /// <param name = "value">The value from which to convert.</param>
-            public static implicit operator Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForFormEntity(SchemaEntity value)
+            public static implicit operator Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm(SchemaEntity value)
             {
                 if ((value.backing & Backing.JsonElement) != 0)
                 {
@@ -371,14 +371,14 @@ public readonly partial struct OpenApiDocument
                     return new(value.objectBacking);
                 }
 
-                return Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForFormEntity.Undefined;
+                return Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm.Undefined;
             }
 
             /// <summary>
-            /// Conversion from <see cref = "Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForFormEntity"/>.
+            /// Conversion from <see cref = "Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm"/>.
             /// </summary>
             /// <param name = "value">The value from which to convert.</param>
-            public static explicit operator SchemaEntity(Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForFormEntity value)
+            public static explicit operator SchemaEntity(Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm value)
             {
                 if (value.HasJsonElementBacking)
                 {
@@ -393,10 +393,10 @@ public readonly partial struct OpenApiDocument
             }
 
             /// <summary>
-            /// Conversion to <see cref = "Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForFormEntity.ThenEntity"/>.
+            /// Conversion to <see cref = "Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm.ThenEntity"/>.
             /// </summary>
             /// <param name = "value">The value from which to convert.</param>
-            public static explicit operator Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForFormEntity.ThenEntity(SchemaEntity value)
+            public static explicit operator Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm.ThenEntity(SchemaEntity value)
             {
                 if ((value.backing & Backing.JsonElement) != 0)
                 {
@@ -408,14 +408,14 @@ public readonly partial struct OpenApiDocument
                     return new(value.objectBacking);
                 }
 
-                return Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForFormEntity.ThenEntity.Undefined;
+                return Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm.ThenEntity.Undefined;
             }
 
             /// <summary>
-            /// Conversion from <see cref = "Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForFormEntity.ThenEntity"/>.
+            /// Conversion from <see cref = "Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm.ThenEntity"/>.
             /// </summary>
             /// <param name = "value">The value from which to convert.</param>
-            public static explicit operator SchemaEntity(Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForFormEntity.ThenEntity value)
+            public static explicit operator SchemaEntity(Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm.ThenEntity value)
             {
                 if (value.HasJsonElementBacking)
                 {
@@ -430,10 +430,10 @@ public readonly partial struct OpenApiDocument
             }
 
             /// <summary>
-            /// Conversion to <see cref = "Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForFormEntity.ElseEntity"/>.
+            /// Conversion to <see cref = "Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm.ElseEntity"/>.
             /// </summary>
             /// <param name = "value">The value from which to convert.</param>
-            public static explicit operator Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForFormEntity.ElseEntity(SchemaEntity value)
+            public static explicit operator Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm.ElseEntity(SchemaEntity value)
             {
                 if ((value.backing & Backing.JsonElement) != 0)
                 {
@@ -445,14 +445,14 @@ public readonly partial struct OpenApiDocument
                     return new(value.objectBacking);
                 }
 
-                return Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForFormEntity.ElseEntity.Undefined;
+                return Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm.ElseEntity.Undefined;
             }
 
             /// <summary>
-            /// Conversion from <see cref = "Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForFormEntity.ElseEntity"/>.
+            /// Conversion from <see cref = "Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm.ElseEntity"/>.
             /// </summary>
             /// <param name = "value">The value from which to convert.</param>
-            public static explicit operator SchemaEntity(Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForFormEntity.ElseEntity value)
+            public static explicit operator SchemaEntity(Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm.ElseEntity value)
             {
                 if (value.HasJsonElementBacking)
                 {

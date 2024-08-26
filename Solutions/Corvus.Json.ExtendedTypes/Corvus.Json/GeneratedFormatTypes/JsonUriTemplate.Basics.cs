@@ -98,7 +98,7 @@ public readonly partial struct JsonUriTemplate
     {
         if (value.HasDotnetBacking && value.ValueKind == JsonValueKind.String)
         {
-            return new((string)value);
+            return new(value.GetString()!);
         }
 
         return new(value.AsJsonElement);
@@ -425,8 +425,8 @@ public readonly partial struct JsonUriTemplate
 
             try
             {
-                int written = Encoding.UTF8.GetChars(bytes, 0, bytes.Length, chars, 0);
-                return chars.SequenceEqual(this.stringBacking);
+                int written = Encoding.UTF8.GetChars(bytes, 0, utf8Bytes.Length, chars, 0);
+                return chars.AsSpan(0, written).SequenceEqual(this.stringBacking.AsSpan());
             }
             finally
             {
