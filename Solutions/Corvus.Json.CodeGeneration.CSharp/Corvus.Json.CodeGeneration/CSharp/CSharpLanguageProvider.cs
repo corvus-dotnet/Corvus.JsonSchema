@@ -153,8 +153,6 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
                 namesSeen[typeDeclaration.FullyQualifiedDotnetTypeName()] = typeDeclaration;
             }
 #endif
-            typeDeclaration.SetCSharpOptions(this.options);
-
             if (generator.TryBeginTypeDeclaration(typeDeclaration))
             {
                 foreach (ICodeFileBuilder codeFileBuilder in this.codeFileBuilderRegistry.RegisteredBuilders)
@@ -204,6 +202,8 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
         {
             return;
         }
+
+        typeDeclaration.SetCSharpOptions(this.options);
 
         JsonReferenceBuilder reference = GetReferenceWithoutQuery(typeDeclaration);
 
@@ -592,6 +592,7 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
     /// <param name="optionalAsNullable">If true, then generate nullable types for optional parameters.</param>
     /// <param name="disabledNamingHeuristics">The list of well-known names of naming heuristics to disable.</param>
     /// <param name="fileExtension">Gets the file extension to use. Defaults to <c>.cs</c>.</param>
+    /// <param name="useImplicitOperatorString">If true, then the string conversion will be implicit.</param>
     public class Options(
         string defaultNamespace,
         NamedType[]? namedTypes = null,
@@ -600,7 +601,8 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
         bool alwaysAssertFormat = true,
         bool optionalAsNullable = false,
         string[]? disabledNamingHeuristics = null,
-        string fileExtension = ".cs")
+        string fileExtension = ".cs",
+        bool useImplicitOperatorString = false)
     {
         private readonly FrozenDictionary<string, NamedType> namedTypeMap = namedTypes?.ToFrozenDictionary(kvp => kvp.Reference, kvp => kvp) ?? FrozenDictionary<string, NamedType>.Empty;
         private readonly FrozenDictionary<string, string> namespaceMap = namespaces?.ToFrozenDictionary(kvp => kvp.BaseUri, kvp => kvp.DotnetNamespace) ?? FrozenDictionary<string, string>.Empty;
@@ -634,6 +636,11 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
         /// Gets the file extension (including the leading '.').
         /// </summary>
         internal string FileExtension { get; } = fileExtension;
+
+        /// <summary>
+        /// Gets a value indicating whether to generate an implict operator for conversion to <see langword="string"/>.
+        /// </summary>
+        internal bool UseImplicitOperatorString { get; } = useImplicitOperatorString;
 
         /// <summary>
         /// Gets the array of disabled naming heuristics.

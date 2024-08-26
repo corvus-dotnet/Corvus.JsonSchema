@@ -49,7 +49,11 @@
         },
         "namespaces": {
             "$ref": "#/$defs/namespaceMap",
-            "description":  "A map of schema base URIs to .NET namespaces.\r\nAny schema under the given base URI will be mapped into the target namespace."
+            "description": "A map of schema base URIs to .NET namespaces.\r\nAny schema under the given base URI will be mapped into the target namespace."
+        },
+        "useImplicitOperatorString": {
+            "type": "boolean",
+            "description":  "If true, then the conversion operator to string will be implicit, rather than explicit.\r\nWarning: if this is enabled, it is easy to accidentally allocate strings without being explicit about doing so."
         }
     },
     "$defs": {

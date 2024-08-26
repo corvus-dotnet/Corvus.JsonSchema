@@ -657,6 +657,65 @@ public readonly partial struct GeneratorConfig
     }
 
     /// <summary>
+    /// Gets the (optional) <c>useImplicitOperatorString</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// If this JSON property is <see cref="JsonValueKind.Undefined"/> then the value returned will be <see langword="null" />.
+    /// </para>
+    /// <para>
+    /// If true, then the conversion operator to string will be implicit, rather than explicit.
+    /// </para>
+    /// <para>
+    /// Warning: if this is enabled, it is easy to accidentally allocate strings without being explicit about doing so.
+    /// </para>
+    /// <para>
+    /// If true, then the conversion operator to string will be implicit, rather than explicit.
+    /// </para>
+    /// <para>
+    /// Warning: if this is enabled, it is easy to accidentally allocate strings without being explicit about doing so.
+    /// </para>
+    /// </remarks>
+    public Corvus.Json.JsonBoolean? UseImplicitOperatorString
+    {
+        get
+        {
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                {
+                    return default;
+                }
+
+                if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.UseImplicitOperatorStringUtf8, out JsonElement result))
+                {
+                    if (result.ValueKind == JsonValueKind.Null || result.ValueKind == JsonValueKind.Undefined)
+                    {
+                        return default;
+                    }
+
+                    return new(result);
+                }
+            }
+
+            if ((this.backing & Backing.Object) != 0)
+            {
+                if (this.objectBacking.TryGetValue(JsonPropertyNames.UseImplicitOperatorString, out JsonAny result))
+                {
+                    if (result.IsNullOrUndefined())
+                    {
+                        return default;
+                    }
+
+                    return result.As<Corvus.Json.JsonBoolean>();
+                }
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
     /// Gets the (optional) <c>useSchema</c> property.
     /// </summary>
     /// <remarks>
@@ -746,6 +805,7 @@ public readonly partial struct GeneratorConfig
         in Corvus.Json.CodeGenerator.GeneratorConfig.OptionalAsNullable? optionalAsNullableValue = null,
         in Corvus.Json.JsonString? outputMapFile = null,
         in Corvus.Json.JsonString? outputPath = null,
+        in Corvus.Json.JsonBoolean? useImplicitOperatorString = null,
         in Corvus.Json.CodeGenerator.GeneratorConfig.UseSchema? useSchemaValue = null)
     {
         var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
@@ -794,6 +854,11 @@ public readonly partial struct GeneratorConfig
         if (outputPath is not null)
         {
             builder.Add(JsonPropertyNames.OutputPath, outputPath.Value.AsAny);
+        }
+
+        if (useImplicitOperatorString is not null)
+        {
+            builder.Add(JsonPropertyNames.UseImplicitOperatorString, useImplicitOperatorString.Value.AsAny);
         }
 
         if (useSchemaValue is not null)
@@ -1356,6 +1421,11 @@ public readonly partial struct GeneratorConfig
         public const string TypesToGenerate = "typesToGenerate";
 
         /// <summary>
+        /// Gets the JSON property name for <see cref="UseImplicitOperatorString"/>.
+        /// </summary>
+        public const string UseImplicitOperatorString = "useImplicitOperatorString";
+
+        /// <summary>
         /// Gets the JSON property name for <see cref="UseSchemaValue"/>.
         /// </summary>
         public const string UseSchemaValue = "useSchema";
@@ -1414,6 +1484,11 @@ public readonly partial struct GeneratorConfig
         /// Gets the JSON property name for <see cref="TypesToGenerate"/>.
         /// </summary>
         public static ReadOnlySpan<byte> TypesToGenerateUtf8 => "typesToGenerate"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="UseImplicitOperatorString"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> UseImplicitOperatorStringUtf8 => "useImplicitOperatorString"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="UseSchemaValue"/>.

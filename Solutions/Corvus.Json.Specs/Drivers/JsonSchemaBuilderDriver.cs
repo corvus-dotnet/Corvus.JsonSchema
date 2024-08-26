@@ -299,8 +299,16 @@ public class JsonSchemaBuilderDriver : IDisposable
     /// <param name="scenarioName">The unique name of the scenario.</param>
     /// <param name="validateFormat">If true, the format keyword will be validated.</param>
     /// <param name="optionalAsNullable">If true, optional properties are generated as nullable.</param>
+    /// <param name="useImplicitOperatorString">If true, conversion operators to string are implicit rather than explicit.</param>
     /// <returns>A <see cref="ValueTask{Type}"/> which, when complete, returns the <see cref="Type"/> generated for the schema.</returns>
-    public async ValueTask<Type> GenerateTypeForVirtualFile(string schema, string virtualFileName, string featureName, string scenarioName, bool validateFormat, bool optionalAsNullable)
+    public async ValueTask<Type> GenerateTypeForVirtualFile(
+        string schema,
+        string virtualFileName,
+        string featureName,
+        string scenarioName,
+        bool validateFormat,
+        bool optionalAsNullable,
+        bool useImplicitOperatorString)
     {
         string baseDirectory = this.configuration[$"{this.settingsKey}:testBaseDirectory"]!;
         string path = Path.Combine(baseDirectory, virtualFileName);
@@ -317,7 +325,8 @@ public class JsonSchemaBuilderDriver : IDisposable
         var options = new CSharpLanguageProvider.Options(
             $"{featureName}Feature.{scenarioName}",
             alwaysAssertFormat: validateFormat,
-            optionalAsNullable: optionalAsNullable);
+            optionalAsNullable: optionalAsNullable,
+            useImplicitOperatorString: useImplicitOperatorString);
 
         var languageProvider = CSharpLanguageProvider.DefaultWithOptions(options);
         IReadOnlyCollection<GeneratedCodeFile> generatedCode =
@@ -342,8 +351,16 @@ public class JsonSchemaBuilderDriver : IDisposable
     /// <param name="scenarioName">The scenario name for the type.</param>
     /// <param name="validateFormat">If true, the format keyword will be validated.</param>
     /// <param name="optionalAsNullable">If true, optional properties are generated as nullable.</param>
+    /// <param name="useImplicitOperatorString">If true, conversion operators to string are implicit rather than explicit.</param>
     /// <returns>The fully qualified type name of the entity we have generated.</returns>
-    public async ValueTask<Type> GenerateTypeForJsonSchemaTestSuite(string filename, string schemaPath, string featureName, string scenarioName, bool validateFormat, bool optionalAsNullable)
+    public async ValueTask<Type> GenerateTypeForJsonSchemaTestSuite(
+        string filename,
+        string schemaPath,
+        string featureName,
+        string scenarioName,
+        bool validateFormat,
+        bool optionalAsNullable,
+        bool useImplicitOperatorString)
     {
         string baseDirectory = this.configuration[$"{this.settingsKey}:testBaseDirectory"]!;
         string path = Path.Combine(baseDirectory, filename) + schemaPath;
@@ -353,7 +370,8 @@ public class JsonSchemaBuilderDriver : IDisposable
         var options = new CSharpLanguageProvider.Options(
             $"{featureName}Feature.{scenarioName}",
             alwaysAssertFormat: validateFormat,
-            optionalAsNullable: optionalAsNullable);
+            optionalAsNullable: optionalAsNullable,
+            useImplicitOperatorString: useImplicitOperatorString);
 
         var languageProvider = CSharpLanguageProvider.DefaultWithOptions(options);
         IReadOnlyCollection<GeneratedCodeFile> generatedCode =

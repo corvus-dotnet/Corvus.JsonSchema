@@ -37,7 +37,7 @@ internal static partial class CodeGeneratorExtensions
                 /// <param name="value">The value from which to convert.</param>
                 /// <exception cref="InvalidOperationException">The value was not a string.</exception>
                 """)
-            .AppendIndent("public static explicit operator string(")
+            .AppendIndent("public static ", typeDeclaration.UseImplicitOperatorString() ? "implicit" : "explicit", " operator string(")
             .Append(typeDeclaration.DotnetTypeName())
             .AppendLine(" value)")
             .AppendBlockIndent(

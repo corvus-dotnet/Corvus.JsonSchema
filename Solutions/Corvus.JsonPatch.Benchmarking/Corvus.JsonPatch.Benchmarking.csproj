@@ -15,9 +15,9 @@
 
 	<ItemGroup>
     <PackageReference Include="System.Text.Json" Version="8.0.4" />
-    <PackageReference Include="BenchmarkDotNet" Version="0.13.12" />
-		<PackageReference Include="BenchmarkDotNet.Diagnostics.Windows" Version="0.13.12" />
-		<PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.12">
+    <PackageReference Include="BenchmarkDotNet" Version="0.14.0" />
+		<PackageReference Include="BenchmarkDotNet.Diagnostics.Windows" Version="0.14.0" />
+		<PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.13">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>

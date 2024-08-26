@@ -43,7 +43,7 @@ public sealed class DependentRequiredKeyword : IPropertyProviderKeyword, IObject
     {
         if (source.LocatedSchema.Schema.ValueKind == JsonValueKind.Object &&
             source.LocatedSchema.Schema.TryGetProperty(this.KeywordUtf8, out JsonElement value) &&
-            value.ValueKind == JsonValueKind.Array)
+            value.ValueKind == JsonValueKind.Object)
         {
             foreach (JsonProperty property in value.EnumerateObject())
             {
@@ -75,7 +75,7 @@ public sealed class DependentRequiredKeyword : IPropertyProviderKeyword, IObject
                         return;
                     }
 
-                    string propertyName = property.Value.GetString() ?? throw new InvalidOperationException("The dependentRequired properties must be strings.");
+                    string propertyName = requiredValue.GetString() ?? throw new InvalidOperationException("The dependentRequired properties must be strings.");
                     target.AddOrUpdatePropertyDeclaration(
                         new PropertyDeclaration(
                             target,

@@ -4,22 +4,22 @@
     "net8.0": {
       "Endjin.RecommendedPractices.GitHub": {
         "type": "Direct",
-        "requested": "[2.1.12, )",
-        "resolved": "2.1.12",
-        "contentHash": "JEOlUQymdvrI6OeVHPTpakLhOJvkLdvmH+wJNNdjqSq3FtZ2LnqKei+4AMFUzTdJcL6RF3KGD3x0AqUfhYgWcw==",
+        "requested": "[2.1.13, )",
+        "resolved": "2.1.13",
+        "contentHash": "ZefZtlE4NE4ajKMzUtdeb9+SSWv95gutAykQmTEuj2Ln13/1etgxha9QFhrALHr+ewvUH7M3X1qh9HBmWMLRFg==",
         "dependencies": {
-          "Endjin.RecommendedPractices": "2.1.12",
+          "Endjin.RecommendedPractices": "2.1.13",
           "Microsoft.SourceLink.GitHub": "1.1.1"
         }
       },
       "Microsoft.CodeAnalysis.CSharp": {
         "type": "Direct",
-        "requested": "[4.12.0-1.final, )",
-        "resolved": "4.12.0-1.final",
-        "contentHash": "QAx0RVmtb9MSLyPn4pWwgtw25i4cgoE70wlgW51neEVD9CHZCh8u/LLSkw7c74aPcD2pr8LL9SfcAvjPcs51aA==",
+        "requested": "[4.11.0, )",
+        "resolved": "4.11.0",
+        "contentHash": "6XYi2EusI8JT4y2l/F3VVVS+ISoIX9nqHsZRaG6W5aFeJ5BEuBosHfT/ABb73FN0RZ1Z3cj2j7cL28SToJPXOw==",
         "dependencies": {
           "Microsoft.CodeAnalysis.Analyzers": "3.3.4",
-          "Microsoft.CodeAnalysis.Common": "[4.12.0-1.final]",
+          "Microsoft.CodeAnalysis.Common": "[4.11.0]",
           "System.Collections.Immutable": "8.0.0",
           "System.Reflection.Metadata": "8.0.0"
         }
@@ -35,9 +35,9 @@
       },
       "Roslynator.Analyzers": {
         "type": "Direct",
-        "requested": "[4.12.3, )",
-        "resolved": "4.12.3",
-        "contentHash": "6+O9GwAxOxJr1rZ4aaLiBiSH3pxDkJuXLE8qjo/JXLvGkZhKRLbAz30WA32RmJb5Nn1TmjZ2T3kWt3GJmEDj1w=="
+        "requested": "[4.12.4, )",
+        "resolved": "4.12.4",
+        "contentHash": "isl8hAh7yFNjyBEC4YlTSi+xGBblqBUC/2MCMmnBPwuXPewb7XYnMRzT3vXbP/gOGwT8hZUOy1g/aRH3lAF/NQ=="
       },
       "StyleCop.Analyzers": {
         "type": "Direct",
@@ -66,8 +66,8 @@
       },
       "Endjin.RecommendedPractices": {
         "type": "Transitive",
-        "resolved": "2.1.12",
-        "contentHash": "OZObdtlvF6isizGzO0Vydwmj2IR8GxydcTMGCoA9lmejnlCRWYPuyJXr3ULknlJ23hHDkyLFnu/xNA4duMr2SQ==",
+        "resolved": "2.1.13",
+        "contentHash": "ZXMVKFaBJYaAfRKS/Uv8kUANDsEj2L9H5L4XVXyZULI0UANqZ/ROVTpOqulkukf3UFc/jnnVG2EfByynTiztDg==",
         "dependencies": {
           "Microsoft.Build.Tasks.Git": "1.1.1"
         }
@@ -84,8 +84,8 @@
       },
       "Microsoft.CodeAnalysis.Common": {
         "type": "Transitive",
-        "resolved": "4.12.0-1.final",
-        "contentHash": "dRq4TITxaycboU1bSv7RBLlniKSXXJ2OfSVdKTKOcNOsXez5O6Z3gqECU9feboN06qicoIGnb5SbS+wmbXHCfg==",
+        "resolved": "4.11.0",
+        "contentHash": "djf8ujmqYImFgB04UGtcsEhHrzVqzHowS+EEl/Yunc5LdrYrZhGBWUTXoCF0NzYXJxtfuD+UVQarWpvrNc94Qg==",
         "dependencies": {
           "Microsoft.CodeAnalysis.Analyzers": "3.3.4",
           "System.Collections.Immutable": "8.0.0",
@@ -183,8 +183,8 @@
       },
       "Microsoft.Extensions.ObjectPool": {
         "type": "Transitive",
-        "resolved": "8.0.7",
-        "contentHash": "2yLweyqmpuuFSRo+I3sLHMxmnAgNcI537kBJiyv49U2ZEqo00jZcG8lrnD8uCiOJp9IklYyTZULtbsXoFVzsjQ=="
+        "resolved": "8.0.8",
+        "contentHash": "wnjTFjEvvSbOs3iMfl6CeJcUgPHZMYUB9uAQbGQGxGwVRl4GydNpMSkVntTzoi7AqQeYumU9yDSNeVbpq+ebow=="
       },
       "Microsoft.Extensions.Options": {
         "type": "Transitive",
@@ -291,7 +291,7 @@
           "CommunityToolkit.HighPerformance": "[8.2.2, )",
           "Corvus.UriTemplates": "[2.0.0, )",
           "Microsoft.Extensions.Http": "[8.0.0, )",
-          "Microsoft.Extensions.ObjectPool": "[8.0.7, )",
+          "Microsoft.Extensions.ObjectPool": "[8.0.8, )",
           "NodaTime": "[3.1.11, )",
           "System.Text.Json": "[8.0.4, )"
         }
@@ -301,7 +301,7 @@
         "dependencies": {
           "Corvus.Json.ExtendedTypes": "[1.0.0, )",
           "Microsoft.Extensions.Http": "[8.0.0, )",
-          "Microsoft.Extensions.ObjectPool": "[8.0.7, )",
+          "Microsoft.Extensions.ObjectPool": "[8.0.8, )",
           "NodaTime": "[3.1.11, )"
         }
       }

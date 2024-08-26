@@ -30,7 +30,8 @@ public sealed class BuiltInStringTypeNameHeuristic : IBuiltInTypeNameHeuristic
         written = 0;
 
         if ((typeDeclaration.AllowedCoreTypes() & CoreTypes.String) != 0 &&
-            typeDeclaration.AllowedCoreTypes().CountTypes() == 1)
+            typeDeclaration.AllowedCoreTypes().CountTypes() == 1 &&
+            !typeDeclaration.UseImplicitOperatorString())
         {
             string? candidateFormat = null;
 
