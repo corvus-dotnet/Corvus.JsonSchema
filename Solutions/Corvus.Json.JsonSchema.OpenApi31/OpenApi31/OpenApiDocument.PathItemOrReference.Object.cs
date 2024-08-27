@@ -310,7 +310,7 @@ public readonly partial struct OpenApiDocument
         /// <summary>
         /// Gets the (optional) <c>parameters</c> property.
         /// </summary>
-        public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.PropertiesParametersArray Parameters
+        public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OpenApiDocumentParamArray Parameters
         {
             get
             {
@@ -331,7 +331,7 @@ public readonly partial struct OpenApiDocument
                 {
                     if (this.objectBacking.TryGetValue(JsonPropertyNames.Parameters, out JsonAny result))
                     {
-                        return result.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.PropertiesParametersArray>();
+                        return result.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OpenApiDocumentParamArray>();
                     }
                 }
 
@@ -563,7 +563,7 @@ public readonly partial struct OpenApiDocument
             in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Operation? get = null,
             in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Operation? head = null,
             in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Operation? options = null,
-            in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.PropertiesParametersArray? parameters = null,
+            in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OpenApiDocumentParamArray? parameters = null,
             in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Operation? patch = null,
             in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Operation? post = null,
             in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Operation? put = null,

@@ -35,8 +35,8 @@ public readonly partial struct OpenApiDocument
         /// <summary>
         /// Generated from JSON Schema.
         /// </summary>
-        [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<DefssRequiredScopesAndTokenUr>))]
-        public readonly partial struct DefssRequiredScopesAndTokenUr
+        [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<OauthFlowsRequiredScopesAndTokenUrl>))]
+        public readonly partial struct OauthFlowsRequiredScopesAndTokenUrl
 
         {
             private readonly Backing backing;
@@ -44,9 +44,9 @@ public readonly partial struct OpenApiDocument
             private readonly ImmutableList<JsonObjectProperty> objectBacking;
 
             /// <summary>
-            /// Initializes a new instance of the <see cref="DefssRequiredScopesAndTokenUr"/> struct.
+            /// Initializes a new instance of the <see cref="OauthFlowsRequiredScopesAndTokenUrl"/> struct.
             /// </summary>
-            public DefssRequiredScopesAndTokenUr()
+            public OauthFlowsRequiredScopesAndTokenUrl()
             {
                 this.jsonElementBacking = default;
                 this.backing = Backing.JsonElement;
@@ -54,10 +54,10 @@ public readonly partial struct OpenApiDocument
             }
 
             /// <summary>
-            /// Initializes a new instance of the <see cref="DefssRequiredScopesAndTokenUr"/> struct.
+            /// Initializes a new instance of the <see cref="OauthFlowsRequiredScopesAndTokenUrl"/> struct.
             /// </summary>
             /// <param name="value">The value from which to construct the instance.</param>
-            public DefssRequiredScopesAndTokenUr(in JsonElement value)
+            public OauthFlowsRequiredScopesAndTokenUrl(in JsonElement value)
             {
                 this.jsonElementBacking = value;
                 this.backing = Backing.JsonElement;
@@ -65,10 +65,10 @@ public readonly partial struct OpenApiDocument
             }
 
             /// <summary>
-            /// Initializes a new instance of the <see cref="DefssRequiredScopesAndTokenUr"/> struct.
+            /// Initializes a new instance of the <see cref="OauthFlowsRequiredScopesAndTokenUrl"/> struct.
             /// </summary>
             /// <param name="value">The value from which to construct the instance.</param>
-            public DefssRequiredScopesAndTokenUr(ImmutableList<JsonObjectProperty> value)
+            public OauthFlowsRequiredScopesAndTokenUrl(ImmutableList<JsonObjectProperty> value)
             {
                 this.backing = Backing.Object;
                 this.jsonElementBacking = default;
@@ -83,17 +83,17 @@ public readonly partial struct OpenApiDocument
             /// <summary>
             /// Gets a Null instance.
             /// </summary>
-            public static DefssRequiredScopesAndTokenUr Null { get; } = new(JsonValueHelpers.NullElement);
+            public static OauthFlowsRequiredScopesAndTokenUrl Null { get; } = new(JsonValueHelpers.NullElement);
 
             /// <summary>
             /// Gets an Undefined instance.
             /// </summary>
-            public static DefssRequiredScopesAndTokenUr Undefined { get; }
+            public static OauthFlowsRequiredScopesAndTokenUrl Undefined { get; }
 
             /// <summary>
             /// Gets the default instance.
             /// </summary>
-            public static DefssRequiredScopesAndTokenUr DefaultInstance { get; }
+            public static OauthFlowsRequiredScopesAndTokenUrl DefaultInstance { get; }
 
             /// <inheritdoc/>
             public JsonAny AsAny
@@ -281,16 +281,16 @@ public readonly partial struct OpenApiDocument
             /// Conversion from JsonAny.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
-            public static implicit operator DefssRequiredScopesAndTokenUr(JsonAny value)
+            public static implicit operator OauthFlowsRequiredScopesAndTokenUrl(JsonAny value)
             {
-                return value.As<DefssRequiredScopesAndTokenUr>();
+                return value.As<OauthFlowsRequiredScopesAndTokenUrl>();
             }
 
             /// <summary>
             /// Conversion to JsonAny.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
-            public static implicit operator JsonAny(DefssRequiredScopesAndTokenUr value)
+            public static implicit operator JsonAny(OauthFlowsRequiredScopesAndTokenUrl value)
             {
                 return value.AsAny;
             }
@@ -299,7 +299,7 @@ public readonly partial struct OpenApiDocument
             /// Conversion to <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SpecificationExtensions"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
-            public static implicit operator Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SpecificationExtensions(DefssRequiredScopesAndTokenUr value)
+            public static implicit operator Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SpecificationExtensions(OauthFlowsRequiredScopesAndTokenUrl value)
             {
                 return value.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SpecificationExtensions>();
             }
@@ -308,9 +308,9 @@ public readonly partial struct OpenApiDocument
             /// Conversion from <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SpecificationExtensions"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
-            public static explicit operator DefssRequiredScopesAndTokenUr(Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SpecificationExtensions value)
+            public static explicit operator OauthFlowsRequiredScopesAndTokenUrl(Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SpecificationExtensions value)
             {
-                return value.As<DefssRequiredScopesAndTokenUr>();
+                return value.As<OauthFlowsRequiredScopesAndTokenUrl>();
             }
 
             /// <summary>
@@ -321,7 +321,7 @@ public readonly partial struct OpenApiDocument
             /// <returns>
             /// <c>True</c> if the values are equal.
             /// </returns>
-            public static bool operator ==(in DefssRequiredScopesAndTokenUr left, in DefssRequiredScopesAndTokenUr right)
+            public static bool operator ==(in OauthFlowsRequiredScopesAndTokenUrl left, in OauthFlowsRequiredScopesAndTokenUrl right)
             {
                 return left.Equals(right);
             }
@@ -334,7 +334,7 @@ public readonly partial struct OpenApiDocument
             /// <returns>
             /// <c>True</c> if the values are not equal.
             /// </returns>
-            public static bool operator !=(in DefssRequiredScopesAndTokenUr left, in DefssRequiredScopesAndTokenUr right)
+            public static bool operator !=(in OauthFlowsRequiredScopesAndTokenUrl left, in OauthFlowsRequiredScopesAndTokenUrl right)
             {
                 return !left.Equals(right);
             }
@@ -348,7 +348,7 @@ public readonly partial struct OpenApiDocument
             /// value cannot be constructed from the given instance (e.g. because they have an incompatible .NET backing type).
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static DefssRequiredScopesAndTokenUr FromJson(in JsonElement value)
+            public static OauthFlowsRequiredScopesAndTokenUrl FromJson(in JsonElement value)
             {
                 return new(value);
             }
@@ -359,7 +359,7 @@ public readonly partial struct OpenApiDocument
             /// <param name="value">The <see cref="JsonAny"/> value from which to instantiate the instance.</param>
             /// <returns>An instance of this type, initialized from the <see cref="JsonAny"/> value.</returns>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static DefssRequiredScopesAndTokenUr FromAny(in JsonAny value)
+            public static OauthFlowsRequiredScopesAndTokenUrl FromAny(in JsonAny value)
             {
                 if (value.HasJsonElementBacking)
                 {
@@ -382,7 +382,7 @@ public readonly partial struct OpenApiDocument
             /// <param name="value">The value from which to instantiate the instance.</param>
             /// <returns>An instance of this type, initialized from the provided value.</returns>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            static DefssRequiredScopesAndTokenUr IJsonValue<DefssRequiredScopesAndTokenUr>.FromBoolean<TValue>(in TValue value)
+            static OauthFlowsRequiredScopesAndTokenUrl IJsonValue<OauthFlowsRequiredScopesAndTokenUrl>.FromBoolean<TValue>(in TValue value)
             {
                 if (value.HasJsonElementBacking)
                 {
@@ -401,7 +401,7 @@ public readonly partial struct OpenApiDocument
             /// <param name="value">The value from which to instantiate the instance.</param>
             /// <returns>An instance of this type, initialized from the provided value.</returns>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            static DefssRequiredScopesAndTokenUr IJsonValue<DefssRequiredScopesAndTokenUr>.FromString<TValue>(in TValue value)
+            static OauthFlowsRequiredScopesAndTokenUrl IJsonValue<OauthFlowsRequiredScopesAndTokenUrl>.FromString<TValue>(in TValue value)
             {
                 if (value.HasJsonElementBacking)
                 {
@@ -420,7 +420,7 @@ public readonly partial struct OpenApiDocument
             /// <param name="value">The value from which to instantiate the instance.</param>
             /// <returns>An instance of this type, initialized from the provided value.</returns>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            static DefssRequiredScopesAndTokenUr IJsonValue<DefssRequiredScopesAndTokenUr>.FromNumber<TValue>(in TValue value)
+            static OauthFlowsRequiredScopesAndTokenUrl IJsonValue<OauthFlowsRequiredScopesAndTokenUrl>.FromNumber<TValue>(in TValue value)
             {
                 if (value.HasJsonElementBacking)
                 {
@@ -438,7 +438,7 @@ public readonly partial struct OpenApiDocument
             /// <param name="value">The value from which to instantiate the instance.</param>
             /// <returns>An instance of this type, initialized from the provided value.</returns>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static DefssRequiredScopesAndTokenUr FromObject<TValue>(in TValue value)
+            public static OauthFlowsRequiredScopesAndTokenUrl FromObject<TValue>(in TValue value)
                 where TValue : struct, IJsonObject<TValue>
             {
                 if (value.HasJsonElementBacking)
@@ -462,7 +462,7 @@ public readonly partial struct OpenApiDocument
             /// <param name="value">The value from which to instantiate the instance.</param>
             /// <returns>An instance of this type, initialized from the provided value.</returns>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            static DefssRequiredScopesAndTokenUr IJsonValue<DefssRequiredScopesAndTokenUr>.FromArray<TValue>(in TValue value)
+            static OauthFlowsRequiredScopesAndTokenUrl IJsonValue<OauthFlowsRequiredScopesAndTokenUrl>.FromArray<TValue>(in TValue value)
             {
                 if (value.HasJsonElementBacking)
                 {
@@ -474,109 +474,109 @@ public readonly partial struct OpenApiDocument
 #endif
 
             /// <summary>
-            /// Parses the DefssRequiredScopesAndTokenUr.
+            /// Parses the OauthFlowsRequiredScopesAndTokenUrl.
             /// </summary>
             /// <param name="source">The source of the JSON string to parse.</param>
             /// <param name="options">The (optional) JsonDocumentOptions.</param>
-            public static DefssRequiredScopesAndTokenUr Parse(string source, JsonDocumentOptions options = default)
+            public static OauthFlowsRequiredScopesAndTokenUrl Parse(string source, JsonDocumentOptions options = default)
             {
                 using var jsonDocument = JsonDocument.Parse(source, options);
                 return new(jsonDocument.RootElement.Clone());
             }
 
             /// <summary>
-            /// Parses the DefssRequiredScopesAndTokenUr.
+            /// Parses the OauthFlowsRequiredScopesAndTokenUrl.
             /// </summary>
             /// <param name="source">The source of the JSON string to parse.</param>
             /// <param name="options">The (optional) JsonDocumentOptions.</param>
-            public static DefssRequiredScopesAndTokenUr Parse(Stream source, JsonDocumentOptions options = default)
+            public static OauthFlowsRequiredScopesAndTokenUrl Parse(Stream source, JsonDocumentOptions options = default)
             {
                 using var jsonDocument = JsonDocument.Parse(source, options);
                 return new(jsonDocument.RootElement.Clone());
             }
 
             /// <summary>
-            /// Parses the DefssRequiredScopesAndTokenUr.
+            /// Parses the OauthFlowsRequiredScopesAndTokenUrl.
             /// </summary>
             /// <param name="source">The source of the JSON string to parse.</param>
             /// <param name="options">The (optional) JsonDocumentOptions.</param>
-            public static DefssRequiredScopesAndTokenUr Parse(ReadOnlyMemory<byte> source, JsonDocumentOptions options = default)
+            public static OauthFlowsRequiredScopesAndTokenUrl Parse(ReadOnlyMemory<byte> source, JsonDocumentOptions options = default)
             {
                 using var jsonDocument = JsonDocument.Parse(source, options);
                 return new(jsonDocument.RootElement.Clone());
             }
 
             /// <summary>
-            /// Parses the DefssRequiredScopesAndTokenUr.
+            /// Parses the OauthFlowsRequiredScopesAndTokenUrl.
             /// </summary>
             /// <param name="source">The source of the JSON string to parse.</param>
             /// <param name="options">The (optional) JsonDocumentOptions.</param>
-            public static DefssRequiredScopesAndTokenUr Parse(ReadOnlyMemory<char> source, JsonDocumentOptions options = default)
+            public static OauthFlowsRequiredScopesAndTokenUrl Parse(ReadOnlyMemory<char> source, JsonDocumentOptions options = default)
             {
                 using var jsonDocument = JsonDocument.Parse(source, options);
                 return new(jsonDocument.RootElement.Clone());
             }
 
             /// <summary>
-            /// Parses the DefssRequiredScopesAndTokenUr.
+            /// Parses the OauthFlowsRequiredScopesAndTokenUrl.
             /// </summary>
             /// <param name="source">The source of the JSON string to parse.</param>
             /// <param name="options">The (optional) JsonDocumentOptions.</param>
-            public static DefssRequiredScopesAndTokenUr Parse(ReadOnlySequence<byte> source, JsonDocumentOptions options = default)
+            public static OauthFlowsRequiredScopesAndTokenUrl Parse(ReadOnlySequence<byte> source, JsonDocumentOptions options = default)
             {
                 using var jsonDocument = JsonDocument.Parse(source, options);
                 return new(jsonDocument.RootElement.Clone());
             }
 
             /// <summary>
-            /// Parses the DefssRequiredScopesAndTokenUr.
+            /// Parses the OauthFlowsRequiredScopesAndTokenUrl.
             /// </summary>
             /// <param name="source">The source of the JSON string to parse.</param>
-            public static DefssRequiredScopesAndTokenUr ParseValue(string source)
+            public static OauthFlowsRequiredScopesAndTokenUrl ParseValue(string source)
             {
 #if NET8_0_OR_GREATER
-                return IJsonValue<DefssRequiredScopesAndTokenUr>.ParseValue(source);
+                return IJsonValue<OauthFlowsRequiredScopesAndTokenUrl>.ParseValue(source);
 #else
-                return JsonValueHelpers.ParseValue<DefssRequiredScopesAndTokenUr>(source.AsSpan());
+                return JsonValueHelpers.ParseValue<OauthFlowsRequiredScopesAndTokenUrl>(source.AsSpan());
 #endif
             }
 
             /// <summary>
-            /// Parses the DefssRequiredScopesAndTokenUr.
+            /// Parses the OauthFlowsRequiredScopesAndTokenUrl.
             /// </summary>
             /// <param name="source">The source of the JSON string to parse.</param>
-            public static DefssRequiredScopesAndTokenUr ParseValue(ReadOnlySpan<char> source)
+            public static OauthFlowsRequiredScopesAndTokenUrl ParseValue(ReadOnlySpan<char> source)
             {
 #if NET8_0_OR_GREATER
-                return IJsonValue<DefssRequiredScopesAndTokenUr>.ParseValue(source);
+                return IJsonValue<OauthFlowsRequiredScopesAndTokenUrl>.ParseValue(source);
 #else
-                return JsonValueHelpers.ParseValue<DefssRequiredScopesAndTokenUr>(source);
+                return JsonValueHelpers.ParseValue<OauthFlowsRequiredScopesAndTokenUrl>(source);
 #endif
             }
 
             /// <summary>
-            /// Parses the DefssRequiredScopesAndTokenUr.
+            /// Parses the OauthFlowsRequiredScopesAndTokenUrl.
             /// </summary>
             /// <param name="source">The source of the JSON string to parse.</param>
-            public static DefssRequiredScopesAndTokenUr ParseValue(ReadOnlySpan<byte> source)
+            public static OauthFlowsRequiredScopesAndTokenUrl ParseValue(ReadOnlySpan<byte> source)
             {
 #if NET8_0_OR_GREATER
-                return IJsonValue<DefssRequiredScopesAndTokenUr>.ParseValue(source);
+                return IJsonValue<OauthFlowsRequiredScopesAndTokenUrl>.ParseValue(source);
 #else
-                return JsonValueHelpers.ParseValue<DefssRequiredScopesAndTokenUr>(source);
+                return JsonValueHelpers.ParseValue<OauthFlowsRequiredScopesAndTokenUrl>(source);
 #endif
             }
 
             /// <summary>
-            /// Parses the DefssRequiredScopesAndTokenUr.
+            /// Parses the OauthFlowsRequiredScopesAndTokenUrl.
             /// </summary>
             /// <param name="source">The source of the JSON string to parse.</param>
-            public static DefssRequiredScopesAndTokenUr ParseValue(ref Utf8JsonReader source)
+            public static OauthFlowsRequiredScopesAndTokenUrl ParseValue(ref Utf8JsonReader source)
             {
 #if NET8_0_OR_GREATER
-                return IJsonValue<DefssRequiredScopesAndTokenUr>.ParseValue(ref source);
+                return IJsonValue<OauthFlowsRequiredScopesAndTokenUrl>.ParseValue(ref source);
 #else
-                return JsonValueHelpers.ParseValue<DefssRequiredScopesAndTokenUr>(ref source);
+                return JsonValueHelpers.ParseValue<OauthFlowsRequiredScopesAndTokenUrl>(ref source);
 #endif
             }
 
@@ -607,7 +607,7 @@ public readonly partial struct OpenApiDocument
 
                 return TTarget.Undefined;
 #else
-                return this.As<DefssRequiredScopesAndTokenUr, TTarget>();
+                return this.As<OauthFlowsRequiredScopesAndTokenUrl, TTarget>();
 #endif
             }
 
@@ -615,7 +615,7 @@ public readonly partial struct OpenApiDocument
             public override bool Equals(object? obj)
             {
                 return
-                    (obj is IJsonValue jv && this.Equals(jv.As<DefssRequiredScopesAndTokenUr>())) ||
+                    (obj is IJsonValue jv && this.Equals(jv.As<OauthFlowsRequiredScopesAndTokenUrl>())) ||
                     (obj is null && this.IsNull());
             }
 
@@ -623,7 +623,7 @@ public readonly partial struct OpenApiDocument
             public bool Equals<T>(in T other)
                 where T : struct, IJsonValue<T>
             {
-                return this.Equals(other.As<DefssRequiredScopesAndTokenUr>());
+                return this.Equals(other.As<OauthFlowsRequiredScopesAndTokenUrl>());
             }
 
             /// <summary>
@@ -631,7 +631,7 @@ public readonly partial struct OpenApiDocument
             /// </summary>
             /// <param name="other">The other item with which to compare.</param>
             /// <returns><see langword="true"/> if the values were equal.</returns>
-            public bool Equals(in DefssRequiredScopesAndTokenUr other)
+            public bool Equals(in OauthFlowsRequiredScopesAndTokenUrl other)
             {
                 JsonValueKind thisKind = this.ValueKind;
                 JsonValueKind otherKind = other.ValueKind;

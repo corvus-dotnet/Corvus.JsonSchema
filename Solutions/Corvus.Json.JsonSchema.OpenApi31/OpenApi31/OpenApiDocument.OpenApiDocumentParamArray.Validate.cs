@@ -27,7 +27,7 @@ public readonly partial struct OpenApiDocument
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
-    public readonly partial struct PropertiesHeadersEntity
+    public readonly partial struct OpenApiDocumentParamArray
     {
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
@@ -41,18 +41,17 @@ public readonly partial struct OpenApiDocument
             if (level > ValidationLevel.Basic)
             {
                 result = result.UsingStack();
-                result = result.PushSchemaLocation("https://spec.openapis.org/oas/3.1/schema/2022-10-07?dynamicScope=https%3A%2F%2Fraw.githubusercontent.com%2FOAI%2FOpenAPI-Specification%2Fmain%2Fschemas%2Fv3.1%2Fschema.json#/$defs/response/properties/headers");
+                result = result.PushSchemaLocation("https://spec.openapis.org/oas/3.1/schema/2022-10-07?dynamicScope=https%3A%2F%2Fraw.githubusercontent.com%2FOAI%2FOpenAPI-Specification%2Fmain%2Fschemas%2Fv3.1%2Fschema.json#/$defs/path-item/properties/parameters");
             }
 
             JsonValueKind valueKind = this.ValueKind;
-            result = result.UsingEvaluatedProperties();
             result = CorvusValidation.TypeValidationHandler(valueKind, result, level);
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;
             }
 
-            result = CorvusValidation.ObjectValidationHandler(this, valueKind, result, level);
+            result = CorvusValidation.ArrayValidationHandler(this, valueKind, result, level);
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;
@@ -84,11 +83,11 @@ public readonly partial struct OpenApiDocument
                 in ValidationContext validationContext,
                 ValidationLevel level = ValidationLevel.Flag)
             {
-                return Corvus.Json.ValidateWithoutCoreType.TypeObject(valueKind, validationContext, level, "type");
+                return Corvus.Json.ValidateWithoutCoreType.TypeArray(valueKind, validationContext, level, "type");
             }
 
             /// <summary>
-            /// Object validation.
+            /// Array validation.
             /// </summary>
             /// <param name="value">The value to validate.</param>
             /// <param name="valueKind">The <see cref="JsonValueKind" /> of the value to validate.</param>
@@ -96,20 +95,20 @@ public readonly partial struct OpenApiDocument
             /// <param name="level">The current validation level.</param>
             /// <returns>The resulting validation context after validation.</returns>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            internal static ValidationContext ObjectValidationHandler(
-                in PropertiesHeadersEntity value,
+            internal static ValidationContext ArrayValidationHandler(
+                in OpenApiDocumentParamArray value,
                 JsonValueKind valueKind,
                 in ValidationContext validationContext,
-                ValidationLevel level = ValidationLevel.Flag)
+                ValidationLevel level)
             {
                 ValidationContext result = validationContext;
-                if (valueKind != JsonValueKind.Object)
+                if (valueKind != JsonValueKind.Array)
                 {
                     if (level == ValidationLevel.Verbose)
                     {
                         ValidationContext ignoredResult = validationContext;
-                        ignoredResult = ignoredResult.PushValidationLocationProperty("additionalProperties");
-                        ignoredResult = ignoredResult.WithResult(isValid: true, "Validation additionalProperties - ignored because the value is not an object");
+                        ignoredResult = ignoredResult.PushValidationLocationProperty("items");
+                        ignoredResult = ignoredResult.WithResult(isValid: true, "Validation items - ignored because the value is not an array");
                         ignoredResult = ignoredResult.PopLocation();
                         return ignoredResult;
                     }
@@ -117,33 +116,37 @@ public readonly partial struct OpenApiDocument
                     return validationContext;
                 }
 
-                int propertyCount = 0;
-                foreach (JsonObjectProperty<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.HeaderOrReference> property in value.EnumerateObject())
+                int length = 0;
+                using JsonArrayEnumerator<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference> arrayEnumerator = value.EnumerateArray();
+                while (arrayEnumerator.MoveNext())
                 {
-                    string? propertyNameAsString = null;
-                    if (!result.HasEvaluatedLocalProperty(propertyCount))
+                    if (level > ValidationLevel.Basic)
                     {
-                        if (level > ValidationLevel.Basic)
-                        {
-                            string localEvaluatedPropertyName = (propertyNameAsString ??= property.Name.GetString());
-                            result = result.PushValidationLocationReducedPathModifierAndProperty(new JsonReference("#/additionalProperties").AppendUnencodedPropertyNameToFragment(localEvaluatedPropertyName).AppendFragment(new("#/$ref")), localEvaluatedPropertyName);
-                        }
-
-                        result = property.Value.Validate(result, level);
-                        if (level == ValidationLevel.Flag && !result.IsValid)
-                        {
-                            return result;
-                        }
-
-                        if (level > ValidationLevel.Basic)
-                        {
-                            result = result.PopLocation();
-                        }
-
-                        result = result.WithLocalProperty(propertyCount);
+                        result = result.PushDocumentArrayIndex(length);
+                    }
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PushValidationLocationReducedPathModifier(new("#/items/$ref"));
                     }
 
-                    propertyCount++;
+                    result = arrayEnumerator.Current.Validate(result, level);
+                    if (level == ValidationLevel.Flag && !result.IsValid)
+                    {
+                        return result;
+                    }
+
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PopLocation();
+                    }
+
+                    result = result.WithLocalItemIndex(length);
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PopLocation();
+                    }
+
+                    length++;
                 }
 
                 return result;

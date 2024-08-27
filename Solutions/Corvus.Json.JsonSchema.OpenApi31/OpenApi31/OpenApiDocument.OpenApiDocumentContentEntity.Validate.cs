@@ -27,7 +27,7 @@ public readonly partial struct OpenApiDocument
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
-    public readonly partial struct PropertiesContentEntity
+    public readonly partial struct OpenApiDocumentContentEntity
     {
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
@@ -89,7 +89,7 @@ public readonly partial struct OpenApiDocument
             /// <returns>The resulting validation context after validation.</returns>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             internal static ValidationContext CompositionAllOfValidationHandler(
-                in PropertiesContentEntity value,
+                in OpenApiDocumentContentEntity value,
                 in ValidationContext validationContext,
                 ValidationLevel level = ValidationLevel.Flag)
             {
@@ -132,7 +132,7 @@ public readonly partial struct OpenApiDocument
             /// <returns>The resulting validation context after validation.</returns>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             internal static ValidationContext ObjectValidationHandler(
-                in PropertiesContentEntity value,
+                in OpenApiDocumentContentEntity value,
                 JsonValueKind valueKind,
                 in ValidationContext validationContext,
                 ValidationLevel level = ValidationLevel.Flag)

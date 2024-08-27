@@ -284,11 +284,11 @@ public static partial class ValidateWithoutCoreType
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been byte 'number' but was '{instance.ValueKind}' with value {value} and fractional part {value - Math.Floor(value)}.");
+                return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been 'byte' but was {value}", formatKeyword ?? "format");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been byte 'number'.");
+                return validationContext.WithResult(isValid: false, "Validation format - should have been 'byte'.", formatKeyword ?? "format");
             }
             else
             {
@@ -298,7 +298,7 @@ public static partial class ValidateWithoutCoreType
 
         if (level == ValidationLevel.Verbose)
         {
-            return validationContext.WithResult(isValid: true, "Validation type - was byte 'number'.");
+            return validationContext.WithResult(isValid: true, $"Validation {formatKeyword ?? "format"} - was 'byte'.", formatKeyword ?? "format");
         }
 
         return validationContext;
@@ -321,11 +321,11 @@ public static partial class ValidateWithoutCoreType
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been sbyte 'number' but was '{instance.ValueKind}' with value {value} and fractional part {value - Math.Floor(value)}.");
+                return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been 'sbyte' but was {value}.", formatKeyword ?? "format");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been sbyte 'number'.");
+                return validationContext.WithResult(isValid: false, "Validation format - should have been 'sbyte'.", formatKeyword ?? "format");
             }
             else
             {
@@ -335,7 +335,7 @@ public static partial class ValidateWithoutCoreType
 
         if (level == ValidationLevel.Verbose)
         {
-            return validationContext.WithResult(isValid: true, "Validation type - was sbyte 'number'.");
+            return validationContext.WithResult(isValid: true, $"Validation {formatKeyword ?? "format"} - was 'sbyte'.", formatKeyword ?? "format");
         }
 
         return validationContext;
@@ -358,11 +358,11 @@ public static partial class ValidateWithoutCoreType
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been int16 'number' but was '{instance.ValueKind}' with value {value} and fractional part {value - Math.Floor(value)}.");
+                return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been 'int16' but was {value}.", formatKeyword ?? "format");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been int16 'number'.");
+                return validationContext.WithResult(isValid: false, "Validation format - should have been 'int16'.", formatKeyword ?? "format");
             }
             else
             {
@@ -372,7 +372,7 @@ public static partial class ValidateWithoutCoreType
 
         if (level == ValidationLevel.Verbose)
         {
-            return validationContext.WithResult(isValid: true, "Validation type - was int16  'number'.");
+            return validationContext.WithResult(isValid: true, $"Validation {formatKeyword ?? "format"} - was 'int16 '.", formatKeyword ?? "format");
         }
 
         return validationContext;
@@ -395,11 +395,11 @@ public static partial class ValidateWithoutCoreType
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been uint16 'number' but was '{instance.ValueKind}' with value {value} and fractional part {value - Math.Floor(value)}.");
+                return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been 'uint16' but was {value}.", formatKeyword ?? "format");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been uint16 'number'.");
+                return validationContext.WithResult(isValid: false, "Validation format - should have been 'uint16'.", formatKeyword ?? "format");
             }
             else
             {
@@ -409,7 +409,7 @@ public static partial class ValidateWithoutCoreType
 
         if (level == ValidationLevel.Verbose)
         {
-            return validationContext.WithResult(isValid: true, "Validation type - was uint16 'number'.");
+            return validationContext.WithResult(isValid: true, $"Validation {formatKeyword ?? "format"} - was uint16 'number'.");
         }
 
         return validationContext;
@@ -432,11 +432,11 @@ public static partial class ValidateWithoutCoreType
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been int32 'number' but was '{instance.ValueKind}' with value {value} and fractional part {value - Math.Floor(value)}.");
+                return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been 'int32' but was {value}.", formatKeyword ?? "format");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been int32 'number'.");
+                return validationContext.WithResult(isValid: false, "Validation format - should have been 'int32'.", formatKeyword ?? "format");
             }
             else
             {
@@ -446,7 +446,7 @@ public static partial class ValidateWithoutCoreType
 
         if (level == ValidationLevel.Verbose)
         {
-            return validationContext.WithResult(isValid: true, "Validation type - was int32 'number'.");
+            return validationContext.WithResult(isValid: true, $"Validation {formatKeyword ?? "format"} - was 'int32'.", formatKeyword ?? "format");
         }
 
         return validationContext;
@@ -469,11 +469,11 @@ public static partial class ValidateWithoutCoreType
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been uint32 'number' but was '{instance.ValueKind}' with value {value} and fractional part {value - Math.Floor(value)}.");
+                return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been 'uint32' but was {value}.", formatKeyword ?? "format");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been uint32 'number'.");
+                return validationContext.WithResult(isValid: false, "Validation format - should have been uint32 'number'.", formatKeyword ?? "format");
             }
             else
             {
@@ -483,7 +483,7 @@ public static partial class ValidateWithoutCoreType
 
         if (level == ValidationLevel.Verbose)
         {
-            return validationContext.WithResult(isValid: true, "Validation type - was uint32 'number'.");
+            return validationContext.WithResult(isValid: true, $"Validation {formatKeyword ?? "format"} - was 'uint32'.", formatKeyword ?? "format");
         }
 
         return validationContext;
@@ -507,11 +507,11 @@ public static partial class ValidateWithoutCoreType
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been int64 'number' but was '{instance.ValueKind}' with value {value} and fractional part {value - Math.Floor(value)}.");
+                return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been 'int64' but was {value}.", formatKeyword ?? "format");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been int64 'number'.");
+                return validationContext.WithResult(isValid: false, "Validation format - should have been 'int64'.", formatKeyword ?? "format");
             }
             else
             {
@@ -521,7 +521,7 @@ public static partial class ValidateWithoutCoreType
 
         if (level == ValidationLevel.Verbose)
         {
-            return validationContext.WithResult(isValid: true, "Validation type - was int64 'number'.");
+            return validationContext.WithResult(isValid: true, $"Validation {formatKeyword ?? "format"} - was 'int64'.", formatKeyword ?? "format");
         }
 
         return validationContext;
@@ -545,11 +545,11 @@ public static partial class ValidateWithoutCoreType
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been uint64 'number' but was '{instance.ValueKind}' with value {value} and fractional part {value - Math.Floor(value)}.");
+                return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been 'uint64' but was {value}.", formatKeyword ?? "format");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been uint64 'number'.");
+                return validationContext.WithResult(isValid: false, "Validation format - should have been 'uint64'.", formatKeyword ?? "format");
             }
             else
             {
@@ -559,7 +559,7 @@ public static partial class ValidateWithoutCoreType
 
         if (level == ValidationLevel.Verbose)
         {
-            return validationContext.WithResult(isValid: true, "Validation type - was uint64 'number'.");
+            return validationContext.WithResult(isValid: true, $"Validation {formatKeyword ?? "format"} - was 'uint64'.", formatKeyword ?? "format");
         }
 
         return validationContext;
@@ -587,11 +587,11 @@ public static partial class ValidateWithoutCoreType
             if (level >= ValidationLevel.Detailed)
             {
                 double value = (double)instance.AsNumber;
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been int128 'number' but was '{instance.ValueKind}' with value {value} and fractional part {value - Math.Floor(value)}.");
+                return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been 'int128' but was {value}.", formatKeyword ?? "format");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been int128 'number'.");
+                return validationContext.WithResult(isValid: false, "Validation format - should have been 'int128'.", formatKeyword ?? "format");
             }
             else
             {
@@ -602,7 +602,7 @@ public static partial class ValidateWithoutCoreType
 
         if (level == ValidationLevel.Verbose)
         {
-            return validationContext.WithResult(isValid: true, "Validation type - was int128 'number'.");
+            return validationContext.WithResult(isValid: true, $"Validation {formatKeyword ?? "format"} - was 'int128'.", formatKeyword ?? "format");
         }
 
         return validationContext;
@@ -630,11 +630,11 @@ public static partial class ValidateWithoutCoreType
             if (level >= ValidationLevel.Detailed)
             {
                 double value = (double)instance.AsNumber;
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been uint128 'number' but was '{instance.ValueKind}' with value {value} and fractional part {value - Math.Floor(value)}.");
+                return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been 'uint128' but was {value}.", formatKeyword ?? "format");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been uint128 'number'.");
+                return validationContext.WithResult(isValid: false, "Validation format - should have been 'uint128'.", formatKeyword ?? "format");
             }
             else
             {
@@ -647,11 +647,11 @@ public static partial class ValidateWithoutCoreType
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been uint128 'number' but was '{instance.ValueKind}' with value {value} and fractional part {value - Math.Floor(value)}.");
+                return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been 'uint128' but was {value}.", formatKeyword ?? "format");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been uint128 'number'.");
+                return validationContext.WithResult(isValid: false, "Validation format - should have been 'uint128'.", formatKeyword ?? "format");
             }
             else
             {
@@ -662,7 +662,7 @@ public static partial class ValidateWithoutCoreType
 
         if (level == ValidationLevel.Verbose)
         {
-            return validationContext.WithResult(isValid: true, "Validation type - was uint128 'number'.");
+            return validationContext.WithResult(isValid: true, $"Validation {formatKeyword ?? "format"} - was 'uint128'.", formatKeyword ?? "format");
         }
 
         return validationContext;
@@ -690,11 +690,11 @@ public static partial class ValidateWithoutCoreType
             if (level >= ValidationLevel.Detailed)
             {
                 double value = (double)instance.AsNumber;
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been half 'number' but was '{instance.ValueKind}' with value {value} and fractional part {value - Math.Floor(value)}.");
+                return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been 'half' but was {value}.", formatKeyword ?? "format");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been half 'number'.");
+                return validationContext.WithResult(isValid: false, "Validation format - should have been 'half'.", formatKeyword ?? "format");
             }
             else
             {
@@ -705,7 +705,7 @@ public static partial class ValidateWithoutCoreType
 
         if (level == ValidationLevel.Verbose)
         {
-            return validationContext.WithResult(isValid: true, "Validation type - was half 'number'.");
+            return validationContext.WithResult(isValid: true, $"Validation {formatKeyword ?? "format"} - was 'half'.", formatKeyword ?? "format");
         }
 
         return validationContext;
@@ -732,11 +732,11 @@ public static partial class ValidateWithoutCoreType
             if (level >= ValidationLevel.Detailed)
             {
                 double value = (double)instance.AsNumber;
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been single 'number' but was '{instance.ValueKind}' with value {value} and fractional part {value - Math.Floor(value)}.");
+                return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been 'single' but was {value}.", formatKeyword ?? "format");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been single 'number'.");
+                return validationContext.WithResult(isValid: false, "Validation format - should have been 'single'.", formatKeyword ?? "format");
             }
             else
             {
@@ -746,7 +746,7 @@ public static partial class ValidateWithoutCoreType
 
         if (level == ValidationLevel.Verbose)
         {
-            return validationContext.WithResult(isValid: true, "Validation type - was uint16 'number'.");
+            return validationContext.WithResult(isValid: true, $"Validation {formatKeyword ?? "format"} - was 'single'.", formatKeyword ?? "format");
         }
 
         return validationContext;
@@ -770,9 +770,13 @@ public static partial class ValidateWithoutCoreType
         }
         catch (FormatException)
         {
-            if (level >= ValidationLevel.Basic)
+            if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been double 'number'.");
+                return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been 'double' but was {instance}.", formatKeyword ?? "format");
+            }
+            else if (level >= ValidationLevel.Basic)
+            {
+                return validationContext.WithResult(isValid: false, "Validation format - should have been 'double'.", formatKeyword ?? "format");
             }
             else
             {
@@ -782,7 +786,7 @@ public static partial class ValidateWithoutCoreType
 
         if (level == ValidationLevel.Verbose)
         {
-            return validationContext.WithResult(isValid: true, "Validation type - was double 'number'.");
+            return validationContext.WithResult(isValid: true, $"Validation {formatKeyword ?? "format"} - was 'double'.", formatKeyword ?? "format");
         }
 
         return validationContext;
@@ -806,9 +810,13 @@ public static partial class ValidateWithoutCoreType
         }
         catch (FormatException)
         {
-            if (level >= ValidationLevel.Basic)
+            if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been single 'number'.");
+                return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been 'double' but was {instance}.", formatKeyword ?? "format");
+            }
+            else if (level >= ValidationLevel.Basic)
+            {
+                return validationContext.WithResult(isValid: false, "Validation format - should have been 'decimal'.", formatKeyword ?? "format");
             }
             else
             {
@@ -818,7 +826,7 @@ public static partial class ValidateWithoutCoreType
 
         if (level == ValidationLevel.Verbose)
         {
-            return validationContext.WithResult(isValid: true, "Validation type - was decimal 'number'.");
+            return validationContext.WithResult(isValid: true, $"Validation {formatKeyword ?? "format"} - was decimal 'number'.", formatKeyword ?? "format");
         }
 
         return validationContext;
@@ -838,7 +846,7 @@ public static partial class ValidateWithoutCoreType
     {
         ValidationContext result = validationContext;
 
-        instance.AsString.TryGetValue(UriTemplateValidator, new Validate.ValidationContextWrapper(result, level), out result);
+        instance.AsString.TryGetValue(UriTemplateValidator, new Validate.ValidationContextWrapperWithFormatKeyword(result, level, formatKeyword), out result);
 
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
@@ -847,7 +855,7 @@ public static partial class ValidateWithoutCoreType
 
         return result;
 
-        static bool UriTemplateValidator(ReadOnlySpan<char> input, in Validate.ValidationContextWrapper context, out ValidationContext result)
+        static bool UriTemplateValidator(ReadOnlySpan<char> input, in Validate.ValidationContextWrapperWithFormatKeyword context, out ValidationContext result)
         {
             result = context.Context;
 
@@ -856,14 +864,14 @@ public static partial class ValidateWithoutCoreType
                 if (context.Level >= ValidationLevel.Detailed)
                 {
 #if NET8_0_OR_GREATER
-                    result = context.Context.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'uri-template', but was '{input}'.");
+                    result = context.Context.WithResult(isValid: false, $"Validation {context.FormatKeyword ?? "format"} - should have been 'uri-template', but was \"{input}\".", context.FormatKeyword ?? "format");
 #else
-                    result = context.Context.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'uri-template', but was '{input.ToString()}'.");
+                    result = context.Context.WithResult(isValid: false, $"Validation {context.FormatKeyword ?? "format"} - should have been 'uri-template', but was '{input.ToString()}'.", context.FormatKeyword ?? "format");
 #endif
                 }
                 else if (context.Level >= ValidationLevel.Basic)
                 {
-                    result = context.Context.WithResult(isValid: false, "Validation type - should have been a 'string' with format 'uri-template'.");
+                    result = context.Context.WithResult(isValid: false, "Validation format - should have been 'uri-template'.", context.FormatKeyword ?? "format");
                 }
                 else
                 {
@@ -875,7 +883,7 @@ public static partial class ValidateWithoutCoreType
 
             if (context.Level == ValidationLevel.Verbose)
             {
-                result = context.Context.WithResult(isValid: true, "Validation type - was a 'string' with format 'uri-template'.");
+                result = context.Context.WithResult(isValid: true, $"Validation {context.FormatKeyword ?? "format"} - was 'uri-template'.", context.FormatKeyword ?? "format");
             }
 
             return true;
@@ -926,11 +934,11 @@ public static partial class ValidateWithoutCoreType
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'idn-email', but was '{email}'.");
+                return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been 'idn-email', but was '{email}'.", formatKeyword ?? "format");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been a 'string' with format 'idn-email'.");
+                return validationContext.WithResult(isValid: false, "Validation format - should have been 'idn-email'.", formatKeyword ?? "format");
             }
             else
             {
@@ -941,7 +949,7 @@ public static partial class ValidateWithoutCoreType
         if (level == ValidationLevel.Verbose)
         {
             return validationContext
-                .WithResult(isValid: true, "Validation type - was a 'string' with format 'idn-email'.");
+                .WithResult(isValid: true, $"Validation {formatKeyword ?? "format"} - was 'idn-email'.", formatKeyword ?? "format");
         }
 
         return validationContext;
@@ -993,11 +1001,11 @@ public static partial class ValidateWithoutCoreType
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'idn-hostname', but was '{value}'.");
+                return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been 'idn-hostname', but was '{value}'.", formatKeyword ?? "format");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been a 'string' with format 'idn-hostname'.");
+                return validationContext.WithResult(isValid: false, "Validation format - should have been 'idn-hostname'.", formatKeyword ?? "format");
             }
             else
             {
@@ -1008,7 +1016,7 @@ public static partial class ValidateWithoutCoreType
         if (level == ValidationLevel.Verbose)
         {
             return validationContext
-                .WithResult(isValid: true, "Validation type - was a 'string' with format 'idn-hostname'.");
+                .WithResult(isValid: true, $"Validation {formatKeyword ?? "format"} - was 'idn-hostname'.", formatKeyword ?? "format");
         }
 
         return validationContext;
@@ -1028,7 +1036,7 @@ public static partial class ValidateWithoutCoreType
     {
         ValidationContext result = validationContext;
 
-        instance.AsString.TryGetValue(HostnameValidator, new Validate.ValidationContextWrapper(result, level), out result);
+        instance.AsString.TryGetValue(HostnameValidator, new Validate.ValidationContextWrapperWithFormatKeyword(result, level, formatKeyword), out result);
 
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
@@ -1037,7 +1045,7 @@ public static partial class ValidateWithoutCoreType
 
         return result;
 
-        static bool HostnameValidator(ReadOnlySpan<char> input, in Validate.ValidationContextWrapper context, out ValidationContext result)
+        static bool HostnameValidator(ReadOnlySpan<char> input, in Validate.ValidationContextWrapperWithFormatKeyword context, out ValidationContext result)
         {
             bool isMatch;
             result = context.Context;
@@ -1068,11 +1076,11 @@ public static partial class ValidateWithoutCoreType
             {
                 if (context.Level >= ValidationLevel.Detailed)
                 {
-                    result = context.Context.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'hostname', but was '{input.ToString()}'.");
+                    result = context.Context.WithResult(isValid: false, $"Validation {context.FormatKeyword ?? "format"} - should have been 'hostname', but was '{input.ToString()}'.", context.FormatKeyword ?? "format");
                 }
                 else if (context.Level >= ValidationLevel.Basic)
                 {
-                    result = context.Context.WithResult(isValid: false, "Validation type - should have been a 'string' with format 'hostname'.");
+                    result = context.Context.WithResult(isValid: false, "Validation format - should have been 'hostname'.", context.FormatKeyword ?? "format");
                 }
                 else
                 {
@@ -1084,7 +1092,7 @@ public static partial class ValidateWithoutCoreType
 
             if (context.Level == ValidationLevel.Verbose)
             {
-                result = context.Context.WithResult(isValid: true, "Validation type - was a 'string' with format 'hostname'.");
+                result = context.Context.WithResult(isValid: true, $"Validation {context.FormatKeyword ?? "format"} - was 'hostname'.", context.FormatKeyword ?? "format");
             }
 
             return true;
@@ -1105,7 +1113,7 @@ public static partial class ValidateWithoutCoreType
     {
         ValidationContext result = validationContext;
 
-        instance.AsString.TryGetValue(UuidValidator, new Validate.ValidationContextWrapper(result, level), out result);
+        instance.AsString.TryGetValue(UuidValidator, new Validate.ValidationContextWrapperWithFormatKeyword(result, level, formatKeyword), out result);
 
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
@@ -1114,7 +1122,7 @@ public static partial class ValidateWithoutCoreType
 
         return result;
 
-        static bool UuidValidator(ReadOnlySpan<char> input, in Validate.ValidationContextWrapper context, out ValidationContext result)
+        static bool UuidValidator(ReadOnlySpan<char> input, in Validate.ValidationContextWrapperWithFormatKeyword context, out ValidationContext result)
         {
             result = context.Context;
 
@@ -1122,11 +1130,11 @@ public static partial class ValidateWithoutCoreType
             {
                 if (context.Level >= ValidationLevel.Detailed)
                 {
-                    result = context.Context.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'uuid', but was '{input.ToString()}'.");
+                    result = context.Context.WithResult(isValid: false, $"Validation {context.FormatKeyword ?? "format"} - should have been 'uuid', but was '{input.ToString()}'.", context.FormatKeyword ?? "format");
                 }
                 else if (context.Level >= ValidationLevel.Basic)
                 {
-                    result = context.Context.WithResult(isValid: false, "Validation type - should have been a 'string' with format 'uuid'.");
+                    result = context.Context.WithResult(isValid: false, "Validation format - should have been 'uuid'.", context.FormatKeyword ?? "format");
                 }
                 else
                 {
@@ -1138,7 +1146,7 @@ public static partial class ValidateWithoutCoreType
 
             if (context.Level == ValidationLevel.Verbose)
             {
-                result = context.Context.WithResult(isValid: true, "Validation type - was a 'string' with format 'uuid'.");
+                result = context.Context.WithResult(isValid: true, $"Validation {context.FormatKeyword ?? "format"} - was 'uuid'.", context.FormatKeyword ?? "format");
             }
 
             return true;
@@ -1159,7 +1167,7 @@ public static partial class ValidateWithoutCoreType
     {
         ValidationContext result = validationContext;
 
-        instance.AsString.TryGetValue(DurationValidator, new Validate.ValidationContextWrapper(result, level), out result);
+        instance.AsString.TryGetValue(DurationValidator, new Validate.ValidationContextWrapperWithFormatKeyword(result, level, formatKeyword), out result);
 
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
@@ -1168,7 +1176,7 @@ public static partial class ValidateWithoutCoreType
 
         return result;
 
-        static bool DurationValidator(ReadOnlySpan<char> input, in Validate.ValidationContextWrapper context, out ValidationContext result)
+        static bool DurationValidator(ReadOnlySpan<char> input, in Validate.ValidationContextWrapperWithFormatKeyword context, out ValidationContext result)
         {
             result = context.Context;
 
@@ -1177,14 +1185,14 @@ public static partial class ValidateWithoutCoreType
                 if (context.Level >= ValidationLevel.Detailed)
                 {
 #if NET8_0_OR_GREATER
-                    result = context.Context.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'duration', but was '{input}'.");
+                    result = context.Context.WithResult(isValid: false, $"Validation {context.FormatKeyword ?? "format"} - should have been 'duration', but was \"{input}\".", context.FormatKeyword ?? "format");
 #else
-                    result = context.Context.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'duration', but was '{input.ToString()}'.");
+                    result = context.Context.WithResult(isValid: false, $"Validation {context.FormatKeyword ?? "format"} - should have been 'duration', but was '{input.ToString()}'.", context.FormatKeyword ?? "format");
 #endif
                 }
                 else if (context.Level >= ValidationLevel.Basic)
                 {
-                    result = context.Context.WithResult(isValid: false, "Validation type - should have been a 'string' with format 'duration'.");
+                    result = context.Context.WithResult(isValid: false, "Validation format - should have been 'duration'.", context.FormatKeyword ?? "format");
                 }
                 else
                 {
@@ -1196,7 +1204,7 @@ public static partial class ValidateWithoutCoreType
 
             if (context.Level == ValidationLevel.Verbose)
             {
-                result = context.Context.WithResult(isValid: true, "Validation type - was a 'string' with format 'duration'.");
+                result = context.Context.WithResult(isValid: true, $"Validation {context.FormatKeyword ?? "format"} - was 'duration'.", context.FormatKeyword ?? "format");
             }
 
             return true;
@@ -1217,7 +1225,7 @@ public static partial class ValidateWithoutCoreType
     {
         ValidationContext result = validationContext;
 
-        instance.AsString.TryGetValue(EmailValidator, new Validate.ValidationContextWrapper(result, level), out result);
+        instance.AsString.TryGetValue(EmailValidator, new Validate.ValidationContextWrapperWithFormatKeyword(result, level, formatKeyword), out result);
 
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
@@ -1226,7 +1234,7 @@ public static partial class ValidateWithoutCoreType
 
         return result;
 
-        static bool EmailValidator(ReadOnlySpan<char> input, in Validate.ValidationContextWrapper context, out ValidationContext result)
+        static bool EmailValidator(ReadOnlySpan<char> input, in Validate.ValidationContextWrapperWithFormatKeyword context, out ValidationContext result)
         {
             result = context.Context;
 
@@ -1235,14 +1243,14 @@ public static partial class ValidateWithoutCoreType
                 if (context.Level >= ValidationLevel.Detailed)
                 {
 #if NET8_0_OR_GREATER
-                    result = context.Context.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'email', but was '{input}'.");
+                    result = context.Context.WithResult(isValid: false, $"Validation {context.FormatKeyword ?? "format"} - should have been 'email', but was \"{input}\".", context.FormatKeyword ?? "format");
 #else
-                    result = context.Context.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'email', but was '{input.ToString()}'.");
+                    result = context.Context.WithResult(isValid: false, $"Validation {context.FormatKeyword ?? "format"} - should have been 'email', but was '{input.ToString()}'.", context.FormatKeyword ?? "format");
 #endif
                 }
                 else if (context.Level >= ValidationLevel.Basic)
                 {
-                    result = context.Context.WithResult(isValid: false, "Validation type - should have been a 'string' with format 'email'.");
+                    result = context.Context.WithResult(isValid: false, "Validation format - should have been 'email'.", context.FormatKeyword ?? "format");
                 }
                 else
                 {
@@ -1254,7 +1262,7 @@ public static partial class ValidateWithoutCoreType
 
             if (context.Level == ValidationLevel.Verbose)
             {
-                result = context.Context.WithResult(isValid: true, "Validation type - was a 'string' with format 'email'.");
+                result = context.Context.WithResult(isValid: true, $"Validation {context.FormatKeyword ?? "format"} - was 'email'.", context.FormatKeyword ?? "format");
             }
 
             return true;
@@ -1275,7 +1283,7 @@ public static partial class ValidateWithoutCoreType
     {
         ValidationContext result = validationContext;
 
-        instance.AsString.TryGetValue(RelativePointerValidator, new Validate.ValidationContextWrapper(result, level), out result);
+        instance.AsString.TryGetValue(RelativePointerValidator, new Validate.ValidationContextWrapperWithFormatKeyword(result, level, formatKeyword), out result);
 
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
@@ -1284,7 +1292,7 @@ public static partial class ValidateWithoutCoreType
 
         return result;
 
-        static bool RelativePointerValidator(ReadOnlySpan<char> input, in Validate.ValidationContextWrapper context, out ValidationContext result)
+        static bool RelativePointerValidator(ReadOnlySpan<char> input, in Validate.ValidationContextWrapperWithFormatKeyword context, out ValidationContext result)
         {
             result = context.Context;
 
@@ -1293,14 +1301,14 @@ public static partial class ValidateWithoutCoreType
                 if (context.Level >= ValidationLevel.Detailed)
                 {
 #if NET8_0_OR_GREATER
-                    result = context.Context.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'relative-json-pointer', but was '{input}'.");
+                    result = context.Context.WithResult(isValid: false, $"Validation {context.FormatKeyword ?? "format"} - should have been 'relative-json-pointer', but was \"{input}\".", context.FormatKeyword ?? "format");
 #else
-                    result = context.Context.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'relative-json-pointer', but was '{input.ToString()}'.");
+                    result = context.Context.WithResult(isValid: false, $"Validation {context.FormatKeyword ?? "format"} - should have been 'relative-json-pointer', but was '{input.ToString()}'.", context.FormatKeyword ?? "format");
 #endif
                 }
                 else if (context.Level >= ValidationLevel.Basic)
                 {
-                    result = context.Context.WithResult(isValid: false, "Validation type - should have been a 'string' with format 'relative-json-pointer'.");
+                    result = context.Context.WithResult(isValid: false, "Validation format - should have been 'relative-json-pointer'.", context.FormatKeyword ?? "format");
                 }
                 else
                 {
@@ -1312,7 +1320,7 @@ public static partial class ValidateWithoutCoreType
 
             if (context.Level == ValidationLevel.Verbose)
             {
-                result = context.Context.WithResult(isValid: true, "Validation type - was a 'string' with format 'relative-json-pointer'.");
+                result = context.Context.WithResult(isValid: true, $"Validation {context.FormatKeyword ?? "format"} - was 'relative-json-pointer'.", context.FormatKeyword ?? "format");
             }
 
             return true;
@@ -1333,7 +1341,7 @@ public static partial class ValidateWithoutCoreType
     {
         ValidationContext result = validationContext;
 
-        instance.AsString.TryGetValue(PointerValidator, new Validate.ValidationContextWrapper(result, level), out result);
+        instance.AsString.TryGetValue(PointerValidator, new Validate.ValidationContextWrapperWithFormatKeyword(result, level, formatKeyword), out result);
 
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
@@ -1342,7 +1350,7 @@ public static partial class ValidateWithoutCoreType
 
         return result;
 
-        static bool PointerValidator(ReadOnlySpan<char> input, in Validate.ValidationContextWrapper context, out ValidationContext result)
+        static bool PointerValidator(ReadOnlySpan<char> input, in Validate.ValidationContextWrapperWithFormatKeyword context, out ValidationContext result)
         {
             result = context.Context;
 
@@ -1351,14 +1359,14 @@ public static partial class ValidateWithoutCoreType
                 if (context.Level >= ValidationLevel.Detailed)
                 {
 #if NET8_0_OR_GREATER
-                    result = context.Context.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'json-pointer', but was '{input}'.");
+                    result = context.Context.WithResult(isValid: false, $"Validation {context.FormatKeyword ?? "format"} - should have been 'json-pointer', but was \"{input}\".", context.FormatKeyword ?? "format");
 #else
-                    result = context.Context.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'json-pointer', but was '{input.ToString()}'.");
+                    result = context.Context.WithResult(isValid: false, $"Validation {context.FormatKeyword ?? "format"} - should have been 'json-pointer', but was '{input.ToString()}'.", context.FormatKeyword ?? "format");
 #endif
                 }
                 else if (context.Level >= ValidationLevel.Basic)
                 {
-                    result = context.Context.WithResult(isValid: false, "Validation type - should have been a 'string' with format 'json-pointer'.");
+                    result = context.Context.WithResult(isValid: false, "Validation format - should have been 'json-pointer'.", context.FormatKeyword ?? "format");
                 }
                 else
                 {
@@ -1370,7 +1378,7 @@ public static partial class ValidateWithoutCoreType
 
             if (context.Level == ValidationLevel.Verbose)
             {
-                result = context.Context.WithResult(isValid: true, "Validation type - was a 'string' with format 'json-pointer'.");
+                result = context.Context.WithResult(isValid: true, $"Validation {context.FormatKeyword ?? "format"} - was 'json-pointer'.", context.FormatKeyword ?? "format");
             }
 
             return true;
@@ -1411,11 +1419,11 @@ public static partial class ValidateWithoutCoreType
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return result.WithResult(isValid: false, "Validation 8.3 contentEncoding - should have been a 'string' with contentMediaType 'application/json'.");
+                return result.WithResult(isValid: false, "Validation contentEncoding - should have been a 'string' with contentMediaType 'application/json'.");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return result.WithResult(isValid: false, "Validation 8.3 contentEncoding - should have been a 'string' with contentMediaType 'application/json'.");
+                return result.WithResult(isValid: false, "Validation contentEncoding - should have been a 'string' with contentMediaType 'application/json'.");
             }
             else
             {
@@ -1482,11 +1490,11 @@ public static partial class ValidateWithoutCoreType
             // Is valid, but we annotate
             if (level >= ValidationLevel.Detailed)
             {
-                return result.WithResult(isValid: alwaysPassAndAnnotateFailuresInContentDecodingChecks, "Validation 8.3 contentEncoding - should have been a base64 encoded 'string'.");
+                return result.WithResult(isValid: alwaysPassAndAnnotateFailuresInContentDecodingChecks, "Validation contentEncoding - should have been a base64 encoded 'string'.");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return result.WithResult(isValid: alwaysPassAndAnnotateFailuresInContentDecodingChecks, "Validation 8.3 contentEncoding - should have been a base64 encoded 'string'.");
+                return result.WithResult(isValid: alwaysPassAndAnnotateFailuresInContentDecodingChecks, "Validation contentEncoding - should have been a base64 encoded 'string'.");
             }
             else
             {
@@ -1512,7 +1520,7 @@ public static partial class ValidateWithoutCoreType
         else if (level == ValidationLevel.Verbose)
         {
             return result
-                .WithResult(isValid: true, "Validation 8.3 contentEncoding - was a base64 encoded 'string'.")
+                .WithResult(isValid: true, "Validation contentEncoding - was a base64 encoded 'string'.")
                 .WithResult(isValid: true, "Validation 8.4 contentMediaType - was a base64 encoded 'string' of type 'application/json'.");
         }
 
@@ -1554,11 +1562,11 @@ public static partial class ValidateWithoutCoreType
             // Valid, but we annotate
             if (level >= ValidationLevel.Detailed)
             {
-                return result.WithResult(isValid: alwaysPassAndAnnotateFailuresInContentDecodingChecks, "Validation 8.3 contentEncoding - should have been a base64 encoded 'string'.");
+                return result.WithResult(isValid: alwaysPassAndAnnotateFailuresInContentDecodingChecks, "Validation contentEncoding - should have been a base64 encoded 'string'.");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return result.WithResult(isValid: alwaysPassAndAnnotateFailuresInContentDecodingChecks, "Validation 8.3 contentEncoding - should have been a base64 encoded 'string'.");
+                return result.WithResult(isValid: alwaysPassAndAnnotateFailuresInContentDecodingChecks, "Validation contentEncoding - should have been a base64 encoded 'string'.");
             }
             else
             {
@@ -1568,7 +1576,7 @@ public static partial class ValidateWithoutCoreType
         else if (level == ValidationLevel.Verbose)
         {
             return result
-                .WithResult(isValid: true, "Validation 8.3 contentEncoding - was a base64 encoded 'string'.");
+                .WithResult(isValid: true, "Validation contentEncoding - was a base64 encoded 'string'.");
         }
 
         return result;
@@ -1592,11 +1600,11 @@ public static partial class ValidateWithoutCoreType
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'regex' but was '{regexInstance}'.");
+                return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been 'regex' but was '{regexInstance}'.", formatKeyword ?? "format");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been a 'string' with format 'regex'.");
+                return validationContext.WithResult(isValid: false, "Validation format - should have been 'regex'.", formatKeyword ?? "format");
             }
             else
             {
@@ -1607,7 +1615,7 @@ public static partial class ValidateWithoutCoreType
         if (level == ValidationLevel.Verbose)
         {
             return validationContext
-                .WithResult(isValid: true, "Validation type - was a 'string' with format 'regex'.");
+                .WithResult(isValid: true, $"Validation {formatKeyword ?? "format"} - was 'regex'.", formatKeyword ?? "format");
         }
 
         return validationContext;
@@ -1638,11 +1646,11 @@ public static partial class ValidateWithoutCoreType
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'iri-reference' but was '{iri}'.");
+                return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been 'iri-reference' but was '{iri}'.", formatKeyword ?? "format");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been a 'string' with format 'iri-reference'.");
+                return validationContext.WithResult(isValid: false, "Validation format - should have been a 'string' with format 'iri-reference'.", formatKeyword ?? "format");
             }
             else
             {
@@ -1653,7 +1661,7 @@ public static partial class ValidateWithoutCoreType
         if (level == ValidationLevel.Verbose)
         {
             return validationContext
-                .WithResult(isValid: true, "Validation type - was a 'string' with format 'iri-reference'.");
+                .WithResult(isValid: true, $"Validation {formatKeyword ?? "format"} - was 'iri-reference'.", formatKeyword ?? "format");
         }
 
         return validationContext;
@@ -1677,11 +1685,11 @@ public static partial class ValidateWithoutCoreType
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'iri' but was '{iri}'.");
+                return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been 'iri' but was '{iri}'.", formatKeyword ?? "format");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been a 'string' with format 'iri'.");
+                return validationContext.WithResult(isValid: false, "Validation format - should have been 'iri'.", formatKeyword ?? "format");
             }
             else
             {
@@ -1692,7 +1700,7 @@ public static partial class ValidateWithoutCoreType
         if (level == ValidationLevel.Verbose)
         {
             return validationContext
-                .WithResult(isValid: true, "Validation type - was a 'string' with format 'iri'.");
+                .WithResult(isValid: true, $"Validation {formatKeyword ?? "format"} - was 'iri'.", formatKeyword ?? "format");
         }
 
         return validationContext;
@@ -1716,11 +1724,11 @@ public static partial class ValidateWithoutCoreType
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'uri' but was '{uriInstance}'.");
+                return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been 'uri' but was '{uriInstance}'.", formatKeyword ?? "format");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been a 'string' with format 'uri'.");
+                return validationContext.WithResult(isValid: false, "Validation format - should have been 'uri'.", formatKeyword ?? "format");
             }
             else
             {
@@ -1731,7 +1739,7 @@ public static partial class ValidateWithoutCoreType
         if (level == ValidationLevel.Verbose)
         {
             return validationContext
-                .WithResult(isValid: true, "Validation type - was a 'string' with format 'uri'.");
+                .WithResult(isValid: true, $"Validation {formatKeyword ?? "format"} - was 'uri'.", formatKeyword ?? "format");
         }
 
         return validationContext;
@@ -1762,11 +1770,11 @@ public static partial class ValidateWithoutCoreType
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'uri-reference' but was '{uriReferenceInstance}'.");
+                return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been 'uri-reference' but was '{uriReferenceInstance}'.", formatKeyword ?? "format");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been a 'string' with format 'uri-reference'.");
+                return validationContext.WithResult(isValid: false, "Validation format - should have been 'uri-reference'.", formatKeyword ?? "format");
             }
             else
             {
@@ -1777,7 +1785,7 @@ public static partial class ValidateWithoutCoreType
         if (level == ValidationLevel.Verbose)
         {
             return validationContext
-                .WithResult(isValid: true, "Validation type - was a 'string' with format 'uri-reference'.");
+                .WithResult(isValid: true, $"Validation {formatKeyword ?? "format"} - was 'uri-reference'.", formatKeyword ?? "format");
         }
 
         return validationContext;
@@ -1801,11 +1809,11 @@ public static partial class ValidateWithoutCoreType
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'time' but was '{time}'.");
+                return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been 'time' but was '{time}'.", formatKeyword ?? "format");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been a 'string' with format 'time'.");
+                return validationContext.WithResult(isValid: false, "Validation format - should have been 'time'.", formatKeyword ?? "format");
             }
             else
             {
@@ -1816,7 +1824,7 @@ public static partial class ValidateWithoutCoreType
         if (level == ValidationLevel.Verbose)
         {
             return validationContext
-                .WithResult(isValid: true, "Validation type - was a 'string' with format 'time'.");
+                .WithResult(isValid: true, $"Validation {formatKeyword ?? "format"} - was 'time'.", formatKeyword ?? "format");
         }
 
         return validationContext;
@@ -1840,11 +1848,11 @@ public static partial class ValidateWithoutCoreType
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'date' but was '{date}'.");
+                return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been 'date' but was '{date}'.", formatKeyword ?? "format");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been a 'string' with format 'date'.");
+                return validationContext.WithResult(isValid: false, "Validation format - should have been 'date'.", formatKeyword ?? "format");
             }
             else
             {
@@ -1855,7 +1863,7 @@ public static partial class ValidateWithoutCoreType
         if (level == ValidationLevel.Verbose)
         {
             return validationContext
-                .WithResult(isValid: true, "Validation type - was a 'string' with format 'date'.");
+                .WithResult(isValid: true, $"Validation {formatKeyword ?? "format"} - was 'date'.", formatKeyword ?? "format");
         }
 
         return validationContext;
@@ -1876,9 +1884,9 @@ public static partial class ValidateWithoutCoreType
         ValidationContext result = validationContext;
 
 #if NET8_0_OR_GREATER
-        instance.AsString.TryGetValue(IpV6Validator, new Validate.ValidationContextWrapper(result, level), out result);
+        instance.AsString.TryGetValue(IpV6Validator, new Validate.ValidationContextWrapperWithFormatKeyword(result, level, formatKeyword), out result);
 #else
-        IpV6Validator(instance.AsString.GetString(), new Validate.ValidationContextWrapper(result, level), out result);
+        IpV6Validator(instance.AsString.GetString(), new Validate.ValidationContextWrapperWithFormatKeyword(result, level, formatKeyword), out result);
 #endif
 
         if (level == ValidationLevel.Flag && !result.IsValid)
@@ -1889,9 +1897,9 @@ public static partial class ValidateWithoutCoreType
         return result;
 
 #if NET8_0_OR_GREATER
-        static bool IpV6Validator(ReadOnlySpan<char> input, in Validate.ValidationContextWrapper context, out ValidationContext result)
+        static bool IpV6Validator(ReadOnlySpan<char> input, in Validate.ValidationContextWrapperWithFormatKeyword context, out ValidationContext result)
 #else
-        static bool IpV6Validator(string input, in Validate.ValidationContextWrapper context, out ValidationContext result)
+        static bool IpV6Validator(string input, in Validate.ValidationContextWrapperWithFormatKeyword context, out ValidationContext result)
 #endif
         {
             result = context.Context;
@@ -1902,7 +1910,7 @@ public static partial class ValidateWithoutCoreType
             {
                 if (context.Level == ValidationLevel.Verbose)
                 {
-                    result = context.Context.WithResult(isValid: true, "Validation type - was a 'string' with format 'ipv6'.");
+                    result = context.Context.WithResult(isValid: true, $"Validation {context.FormatKeyword ?? "format"} - was 'ipv6'.", context.FormatKeyword ?? "format");
                 }
 
                 return true;
@@ -1912,14 +1920,14 @@ public static partial class ValidateWithoutCoreType
                 if (context.Level >= ValidationLevel.Detailed)
                 {
 #if NET8_0_OR_GREATER
-                    result = context.Context.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'ipv6', but was '{input}'.");
+                    result = context.Context.WithResult(isValid: false, $"Validation {context.FormatKeyword ?? "format"} - should have been 'ipv6', but was \"{input}\".", context.FormatKeyword ?? "format");
 #else
-                    result = context.Context.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'ipv6', but was '{input}'.");
+                    result = context.Context.WithResult(isValid: false, $"Validation {context.FormatKeyword ?? "format"} - should have been 'ipv6', but was \"{input}\".", context.FormatKeyword ?? "format");
 #endif
                 }
                 else if (context.Level >= ValidationLevel.Basic)
                 {
-                    result = context.Context.WithResult(isValid: false, "Validation type - should have been a 'string' with format 'ipv6'.");
+                    result = context.Context.WithResult(isValid: false, "Validation format - should have been 'ipv6'.", context.FormatKeyword ?? "format");
                 }
                 else
                 {
@@ -1945,9 +1953,9 @@ public static partial class ValidateWithoutCoreType
     {
         ValidationContext result = validationContext;
 #if NET8_0_OR_GREATER
-        instance.AsString.TryGetValue(IpV4Validator, new Validate.ValidationContextWrapper(result, level), out result);
+        instance.AsString.TryGetValue(IpV4Validator, new Validate.ValidationContextWrapperWithFormatKeyword(result, level, formatKeyword), out result);
 #else
-        IpV4Validator(instance.AsString.GetString(), new Validate.ValidationContextWrapper(result, level), out result);
+        IpV4Validator(instance.AsString.GetString(), new Validate.ValidationContextWrapperWithFormatKeyword(result, level, formatKeyword), out result);
 #endif
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
@@ -1957,9 +1965,9 @@ public static partial class ValidateWithoutCoreType
         return result;
 
 #if NET8_0_OR_GREATER
-        static bool IpV4Validator(ReadOnlySpan<char> input, in Validate.ValidationContextWrapper context, out ValidationContext result)
+        static bool IpV4Validator(ReadOnlySpan<char> input, in Validate.ValidationContextWrapperWithFormatKeyword context, out ValidationContext result)
 #else
-        static bool IpV4Validator(string input, in Validate.ValidationContextWrapper context, out ValidationContext result)
+        static bool IpV4Validator(string input, in Validate.ValidationContextWrapperWithFormatKeyword context, out ValidationContext result)
 #endif
         {
             result = context.Context;
@@ -1970,7 +1978,7 @@ public static partial class ValidateWithoutCoreType
             {
                 if (context.Level == ValidationLevel.Verbose)
                 {
-                    result = context.Context.WithResult(isValid: true, "Validation type - was a 'string' with format 'ipv4'.");
+                    result = context.Context.WithResult(isValid: true, $"Validation {context.FormatKeyword ?? "format"} - was 'ipv4'.", context.FormatKeyword ?? "format");
                 }
 
                 return true;
@@ -1980,14 +1988,14 @@ public static partial class ValidateWithoutCoreType
                 if (context.Level >= ValidationLevel.Detailed)
                 {
 #if NET8_0_OR_GREATER
-                    result = context.Context.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'ipv4', but was '{input}'.");
+                    result = context.Context.WithResult(isValid: false, $"Validation {context.FormatKeyword ?? "format"} - should have been 'ipv4', but was \"{input}\".", context.FormatKeyword ?? "format");
 #else
-                    result = context.Context.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'ipv4', but was '{input}'.");
+                    result = context.Context.WithResult(isValid: false, $"Validation {context.FormatKeyword ?? "format"} - should have been 'ipv4', but was \"{input}\".", context.FormatKeyword ?? "format");
 #endif
                 }
                 else if (context.Level >= ValidationLevel.Basic)
                 {
-                    result = context.Context.WithResult(isValid: false, "Validation type - should have been a 'string' with format 'ipv4'.");
+                    result = context.Context.WithResult(isValid: false, "Validation format - should have been 'ipv4'.", context.FormatKeyword ?? "format");
                 }
                 else
                 {
@@ -2017,11 +2025,11 @@ public static partial class ValidateWithoutCoreType
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'datetime' but was '{date}'.");
+                return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been 'datetime' but was '{date}'.", formatKeyword ?? "format");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been a 'string' with format 'datetime'.");
+                return validationContext.WithResult(isValid: false, "Validation format - should have been 'datetime'.", formatKeyword ?? "format");
             }
             else
             {
@@ -2032,7 +2040,7 @@ public static partial class ValidateWithoutCoreType
         if (level == ValidationLevel.Verbose)
         {
             return validationContext
-                .WithResult(isValid: true, "Validation type - was a 'string' with format 'datetime'.");
+                .WithResult(isValid: true, $"Validation {formatKeyword ?? "format"} - was 'datetime'.", formatKeyword ?? "format");
         }
 
         return validationContext;

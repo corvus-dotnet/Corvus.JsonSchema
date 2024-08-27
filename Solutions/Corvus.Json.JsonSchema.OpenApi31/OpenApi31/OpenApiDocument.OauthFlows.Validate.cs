@@ -240,7 +240,7 @@ public readonly partial struct OpenApiDocument
                             result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/password/$ref"), JsonPropertyNames.Password);
                         }
 
-                        ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OauthFlows.DefssRequiredScopesAndTokenUr>().Validate(result.CreateChildContext(), level);
+                        ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OauthFlows.OauthFlowsRequiredScopesAndTokenUrl>().Validate(result.CreateChildContext(), level);
                         if (level == ValidationLevel.Flag && !propertyResult.IsValid)
                         {
                             return propertyResult;

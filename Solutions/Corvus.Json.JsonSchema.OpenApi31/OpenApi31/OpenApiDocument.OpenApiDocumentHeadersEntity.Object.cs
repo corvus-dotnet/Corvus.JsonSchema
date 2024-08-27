@@ -30,15 +30,15 @@ public readonly partial struct OpenApiDocument
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
-    public readonly partial struct PropertiesContentEntity
-        : IJsonObject<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.PropertiesContentEntity>,
-          IReadOnlyDictionary<JsonPropertyName, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.MediaType>
+    public readonly partial struct OpenApiDocumentHeadersEntity
+        : IJsonObject<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OpenApiDocumentHeadersEntity>,
+          IReadOnlyDictionary<JsonPropertyName, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.HeaderOrReference>
     {
         /// <summary>
         /// Conversion from <see cref="ImmutableList{JsonObjectProperty}"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
-        public static implicit operator PropertiesContentEntity(ImmutableList<JsonObjectProperty> value)
+        public static implicit operator OpenApiDocumentHeadersEntity(ImmutableList<JsonObjectProperty> value)
         {
             return new(value);
         }
@@ -47,7 +47,7 @@ public readonly partial struct OpenApiDocument
         /// Conversion to <see cref="ImmutableList{JsonObjectProperty}"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
-        public static implicit operator ImmutableList<JsonObjectProperty>(PropertiesContentEntity value)
+        public static implicit operator ImmutableList<JsonObjectProperty>(OpenApiDocumentHeadersEntity value)
         {
             return
                 __CorvusObjectHelpers.GetPropertyBacking(value);
@@ -57,7 +57,7 @@ public readonly partial struct OpenApiDocument
         /// Conversion from JsonObject.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
-        public static implicit operator PropertiesContentEntity(JsonObject value)
+        public static implicit operator OpenApiDocumentHeadersEntity(JsonObject value)
         {
             if (value.HasDotnetBacking && value.ValueKind == JsonValueKind.Object)
             {
@@ -72,18 +72,18 @@ public readonly partial struct OpenApiDocument
         /// Conversion to JsonObject.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
-        public static implicit operator JsonObject(PropertiesContentEntity value)
+        public static implicit operator JsonObject(OpenApiDocumentHeadersEntity value)
         {
             return
                 value.AsObject;
         }
 
         /// <inheritdoc/>
-        JsonAny IJsonObject<PropertiesContentEntity>.this[in JsonPropertyName name]
+        JsonAny IJsonObject<OpenApiDocumentHeadersEntity>.this[in JsonPropertyName name]
         {
             get
             {
-                if (this.TryGetProperty(name, out Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.MediaType result))
+                if (this.TryGetProperty(name, out Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.HeaderOrReference result))
                 {
                     return result;
                 }
@@ -99,11 +99,11 @@ public readonly partial struct OpenApiDocument
         /// <returns>The value of the property with the given name.</returns>
         /// <exception cref="IndexOutOfRangeException">The given property was not present on the object.</exception>
         /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-        public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.MediaType this[in JsonPropertyName name]
+        public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.HeaderOrReference this[in JsonPropertyName name]
         {
             get
             {
-                if (this.TryGetProperty(name, out Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.MediaType result))
+                if (this.TryGetProperty(name, out Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.HeaderOrReference result))
                 {
                     return result;
                 }
@@ -139,10 +139,10 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <inheritdoc/>
-        Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.MediaType IReadOnlyDictionary<JsonPropertyName, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.MediaType>.this[JsonPropertyName key] => this[key];
+        Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.HeaderOrReference IReadOnlyDictionary<JsonPropertyName, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.HeaderOrReference>.this[JsonPropertyName key] => this[key];
 
         /// <inheritdoc/>
-        IEnumerable<JsonPropertyName> IReadOnlyDictionary<JsonPropertyName, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.MediaType>.Keys
+        IEnumerable<JsonPropertyName> IReadOnlyDictionary<JsonPropertyName, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.HeaderOrReference>.Keys
         {
             get
             {
@@ -154,7 +154,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <inheritdoc/>
-        IEnumerable<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.MediaType> IReadOnlyDictionary<JsonPropertyName, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.MediaType>.Values
+        IEnumerable<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.HeaderOrReference> IReadOnlyDictionary<JsonPropertyName, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.HeaderOrReference>.Values
         {
             get
             {
@@ -166,17 +166,17 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <inheritdoc/>
-        int IReadOnlyCollection<KeyValuePair<JsonPropertyName, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.MediaType>>.Count => this.Count;
+        int IReadOnlyCollection<KeyValuePair<JsonPropertyName, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.HeaderOrReference>>.Count => this.Count;
 
 #if NET8_0_OR_GREATER
         /// <inheritdoc/>
-        static PropertiesContentEntity IJsonObject<PropertiesContentEntity>.FromProperties(IDictionary<JsonPropertyName, JsonAny> source)
+        static OpenApiDocumentHeadersEntity IJsonObject<OpenApiDocumentHeadersEntity>.FromProperties(IDictionary<JsonPropertyName, JsonAny> source)
         {
             return new(source.Select(kvp => new JsonObjectProperty(kvp.Key, kvp.Value)).ToImmutableList());
         }
 
         /// <inheritdoc/>
-        static PropertiesContentEntity IJsonObject<PropertiesContentEntity>.FromProperties(params (JsonPropertyName Name, JsonAny Value)[] source)
+        static OpenApiDocumentHeadersEntity IJsonObject<OpenApiDocumentHeadersEntity>.FromProperties(params (JsonPropertyName Name, JsonAny Value)[] source)
         {
             return new(source.Select(s => new JsonObjectProperty(s.Name, s.Value)).ToImmutableList());
         }
@@ -187,7 +187,7 @@ public readonly partial struct OpenApiDocument
         /// </summary>
         /// <param name="source">The dictionary of properties.</param>
         /// <returns>An instance of the type initialized from the dictionary of properties.</returns>
-        public static PropertiesContentEntity FromProperties(IDictionary<JsonPropertyName, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.MediaType> source)
+        public static OpenApiDocumentHeadersEntity FromProperties(IDictionary<JsonPropertyName, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.HeaderOrReference> source)
         {
             return new(source.Select(kvp => new JsonObjectProperty(kvp.Key, kvp.Value.AsAny)).ToImmutableList());
         }
@@ -197,7 +197,7 @@ public readonly partial struct OpenApiDocument
         /// </summary>
         /// <param name="source">The name value tuples.</param>
         /// <returns>An instance of the type initialized from the properties.</returns>
-        public static PropertiesContentEntity FromProperties(params (JsonPropertyName Name, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.MediaType Value)[] source)
+        public static OpenApiDocumentHeadersEntity FromProperties(params (JsonPropertyName Name, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.HeaderOrReference Value)[] source)
         {
             return new(source.Select(s => new JsonObjectProperty(s.Name, s.Value.AsAny)).ToImmutableList());
         }
@@ -207,7 +207,7 @@ public readonly partial struct OpenApiDocument
         /// </summary>
         /// <param name="source">The list of properties.</param>
         /// <returns>An instance of the type initialized from the list of properties.</returns>
-        public static PropertiesContentEntity FromProperties(ImmutableList<JsonObjectProperty> source)
+        public static OpenApiDocumentHeadersEntity FromProperties(ImmutableList<JsonObjectProperty> source)
         {
             return new(source);
         }
@@ -224,7 +224,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <inheritdoc/>
-        JsonObjectEnumerator IJsonObject<PropertiesContentEntity>.EnumerateObject()
+        JsonObjectEnumerator IJsonObject<OpenApiDocumentHeadersEntity>.EnumerateObject()
         {
             if ((this.backing & Backing.JsonElement) != 0)
             {
@@ -244,7 +244,7 @@ public readonly partial struct OpenApiDocument
         /// </summary>
         /// <returns>An enumerator for the object.</returns>
         /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-        public JsonObjectEnumerator<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.MediaType> EnumerateObject()
+        public JsonObjectEnumerator<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.HeaderOrReference> EnumerateObject()
         {
             if ((this.backing & Backing.JsonElement) != 0)
             {
@@ -260,16 +260,16 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <inheritdoc/>
-        IEnumerator<KeyValuePair<JsonPropertyName, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.MediaType>> IEnumerable<KeyValuePair<JsonPropertyName, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.MediaType>>.GetEnumerator()
+        IEnumerator<KeyValuePair<JsonPropertyName, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.HeaderOrReference>> IEnumerable<KeyValuePair<JsonPropertyName, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.HeaderOrReference>>.GetEnumerator()
         {
             if ((this.backing & Backing.JsonElement) != 0)
             {
-                return new ReadOnlyDictionaryJsonObjectEnumerator<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.MediaType>(this.jsonElementBacking);
+                return new ReadOnlyDictionaryJsonObjectEnumerator<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.HeaderOrReference>(this.jsonElementBacking);
             }
 
             if ((this.backing & Backing.Object) != 0)
             {
-                return new ReadOnlyDictionaryJsonObjectEnumerator<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.MediaType>(this.objectBacking);
+                return new ReadOnlyDictionaryJsonObjectEnumerator<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.HeaderOrReference>(this.objectBacking);
             }
 
             throw new InvalidOperationException();
@@ -278,9 +278,9 @@ public readonly partial struct OpenApiDocument
         /// <inheritdoc/>
         IEnumerator IEnumerable.GetEnumerator() => this.EnumerateObject();
 
-        bool IReadOnlyDictionary<JsonPropertyName, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.MediaType>.ContainsKey(JsonPropertyName key) => this.HasProperty(key);
+        bool IReadOnlyDictionary<JsonPropertyName, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.HeaderOrReference>.ContainsKey(JsonPropertyName key) => this.HasProperty(key);
 
-        bool IReadOnlyDictionary<JsonPropertyName, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.MediaType>.TryGetValue(JsonPropertyName key, out Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.MediaType result) => this.TryGetProperty(key, out result);
+        bool IReadOnlyDictionary<JsonPropertyName, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.HeaderOrReference>.TryGetValue(JsonPropertyName key, out Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.HeaderOrReference result) => this.TryGetProperty(key, out result);
 
         /// <inheritdoc/>
         public bool HasProperties()
@@ -364,7 +364,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <inheritdoc />
-        bool IJsonObject<PropertiesContentEntity>.TryGetProperty(in JsonPropertyName name, out JsonAny value)
+        bool IJsonObject<OpenApiDocumentHeadersEntity>.TryGetProperty(in JsonPropertyName name, out JsonAny value)
         {
             if ((this.backing & Backing.JsonElement) != 0)
             {
@@ -406,7 +406,7 @@ public readonly partial struct OpenApiDocument
         /// <param name="value">The value of the property.</param>
         /// <returns><c>True</c> if the property was present.</returns>
         /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-        public bool TryGetProperty(in JsonPropertyName name, out Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.MediaType value)
+        public bool TryGetProperty(in JsonPropertyName name, out Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.HeaderOrReference value)
         {
             if ((this.backing & Backing.JsonElement) != 0)
             {
@@ -430,7 +430,7 @@ public readonly partial struct OpenApiDocument
             {
                 if (this.objectBacking.TryGetValue(name, out JsonAny result))
                 {
-                    value = Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.MediaType.FromAny(result);
+                    value = Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.HeaderOrReference.FromAny(result);
                     return true;
                 }
 
@@ -442,7 +442,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <inheritdoc />
-        bool IJsonObject<PropertiesContentEntity>.TryGetProperty(string name, out JsonAny value)
+        bool IJsonObject<OpenApiDocumentHeadersEntity>.TryGetProperty(string name, out JsonAny value)
         {
             if ((this.backing & Backing.JsonElement) != 0)
             {
@@ -484,7 +484,7 @@ public readonly partial struct OpenApiDocument
         /// <param name="value">The value of the property.</param>
         /// <returns><c>True</c> if the property was present.</returns>
         /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-        public bool TryGetProperty(string name, out Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.MediaType value)
+        public bool TryGetProperty(string name, out Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.HeaderOrReference value)
         {
             if ((this.backing & Backing.JsonElement) != 0)
             {
@@ -508,7 +508,7 @@ public readonly partial struct OpenApiDocument
             {
                 if (this.objectBacking.TryGetValue(name, out JsonAny result))
                 {
-                    value = Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.MediaType.FromAny(result);
+                    value = Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.HeaderOrReference.FromAny(result);
                     return true;
                 }
 
@@ -520,7 +520,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <inheritdoc />
-        bool IJsonObject<PropertiesContentEntity>.TryGetProperty(ReadOnlySpan<char> name, out JsonAny value)
+        bool IJsonObject<OpenApiDocumentHeadersEntity>.TryGetProperty(ReadOnlySpan<char> name, out JsonAny value)
         {
             if ((this.backing & Backing.JsonElement) != 0)
             {
@@ -562,7 +562,7 @@ public readonly partial struct OpenApiDocument
         /// <param name="value">The value of the property.</param>
         /// <returns><c>True</c> if the property was present.</returns>
         /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-        public bool TryGetProperty(ReadOnlySpan<char> name, out Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.MediaType value)
+        public bool TryGetProperty(ReadOnlySpan<char> name, out Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.HeaderOrReference value)
         {
             if ((this.backing & Backing.JsonElement) != 0)
             {
@@ -586,7 +586,7 @@ public readonly partial struct OpenApiDocument
             {
                 if (this.objectBacking.TryGetValue(name, out JsonAny result))
                 {
-                    value = Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.MediaType.FromAny(result);
+                    value = Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.HeaderOrReference.FromAny(result);
                     return true;
                 }
 
@@ -598,7 +598,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <inheritdoc />
-        bool IJsonObject<PropertiesContentEntity>.TryGetProperty(ReadOnlySpan<byte> name, out JsonAny value)
+        bool IJsonObject<OpenApiDocumentHeadersEntity>.TryGetProperty(ReadOnlySpan<byte> name, out JsonAny value)
         {
             if ((this.backing & Backing.JsonElement) != 0)
             {
@@ -640,7 +640,7 @@ public readonly partial struct OpenApiDocument
         /// <param name="value">The value of the property.</param>
         /// <returns><c>True</c> if the property was present.</returns>
         /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-        public bool TryGetProperty(ReadOnlySpan<byte> name, out Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.MediaType value)
+        public bool TryGetProperty(ReadOnlySpan<byte> name, out Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.HeaderOrReference value)
         {
             if ((this.backing & Backing.JsonElement) != 0)
             {
@@ -664,7 +664,7 @@ public readonly partial struct OpenApiDocument
             {
                 if (this.objectBacking.TryGetValue(name, out JsonAny result))
                 {
-                    value = Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.MediaType.FromAny(result);
+                    value = Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.HeaderOrReference.FromAny(result);
                     return true;
                 }
 
@@ -676,7 +676,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <inheritdoc />
-        bool IJsonObject<PropertiesContentEntity>.TryGetProperty<TValue>(in JsonPropertyName name, out TValue value)
+        bool IJsonObject<OpenApiDocumentHeadersEntity>.TryGetProperty<TValue>(in JsonPropertyName name, out TValue value)
         {
             if ((this.backing & Backing.JsonElement) != 0)
             {
@@ -721,7 +721,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <inheritdoc />
-        bool IJsonObject<PropertiesContentEntity>.TryGetProperty<TValue>(string name, out TValue value)
+        bool IJsonObject<OpenApiDocumentHeadersEntity>.TryGetProperty<TValue>(string name, out TValue value)
         {
             if ((this.backing & Backing.JsonElement) != 0)
             {
@@ -766,7 +766,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <inheritdoc />
-        bool IJsonObject<PropertiesContentEntity>.TryGetProperty<TValue>(ReadOnlySpan<char> name, out TValue value)
+        bool IJsonObject<OpenApiDocumentHeadersEntity>.TryGetProperty<TValue>(ReadOnlySpan<char> name, out TValue value)
         {
             if ((this.backing & Backing.JsonElement) != 0)
             {
@@ -811,7 +811,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <inheritdoc />
-        bool IJsonObject<PropertiesContentEntity>.TryGetProperty<TValue>(ReadOnlySpan<byte> name, out TValue value)
+        bool IJsonObject<OpenApiDocumentHeadersEntity>.TryGetProperty<TValue>(ReadOnlySpan<byte> name, out TValue value)
         {
             if ((this.backing & Backing.JsonElement) != 0)
             {
@@ -856,7 +856,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <inheritdoc />
-PropertiesContentEntity IJsonObject<PropertiesContentEntity>.SetProperty<TValue>(in JsonPropertyName name, TValue value)
+OpenApiDocumentHeadersEntity IJsonObject<OpenApiDocumentHeadersEntity>.SetProperty<TValue>(in JsonPropertyName name, TValue value)
         {
             return new(__CorvusObjectHelpers.GetPropertyBackingWith(this, name, value.AsAny));
         }
@@ -867,31 +867,31 @@ PropertiesContentEntity IJsonObject<PropertiesContentEntity>.SetProperty<TValue>
         /// <param name="name">The name of the property.</param>
         /// <param name="value">The value of the property.</param>
         /// <returns>The instance with the property set.</returns>
-        public PropertiesContentEntity SetProperty(in JsonPropertyName name, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.MediaType value)
+        public OpenApiDocumentHeadersEntity SetProperty(in JsonPropertyName name, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.HeaderOrReference value)
         {
             return new(__CorvusObjectHelpers.GetPropertyBackingWith(this, name, value.AsAny));
         }
 
         /// <inheritdoc />
-        public PropertiesContentEntity RemoveProperty(in JsonPropertyName name)
+        public OpenApiDocumentHeadersEntity RemoveProperty(in JsonPropertyName name)
         {
             return new(__CorvusObjectHelpers.GetPropertyBackingWithout(this, name));
         }
 
         /// <inheritdoc />
-        public PropertiesContentEntity RemoveProperty(string name)
+        public OpenApiDocumentHeadersEntity RemoveProperty(string name)
         {
             return new(__CorvusObjectHelpers.GetPropertyBackingWithout(this, name));
         }
 
         /// <inheritdoc />
-        public PropertiesContentEntity RemoveProperty(ReadOnlySpan<char> name)
+        public OpenApiDocumentHeadersEntity RemoveProperty(ReadOnlySpan<char> name)
         {
             return new(__CorvusObjectHelpers.GetPropertyBackingWithout(this, name));
         }
 
         /// <inheritdoc />
-        public PropertiesContentEntity RemoveProperty(ReadOnlySpan<byte> name)
+        public OpenApiDocumentHeadersEntity RemoveProperty(ReadOnlySpan<byte> name)
         {
             return new(__CorvusObjectHelpers.GetPropertyBackingWithout(this, name));
         }
@@ -903,7 +903,7 @@ PropertiesContentEntity IJsonObject<PropertiesContentEntity>.SetProperty<TValue>
             /// </summary>
             /// <returns>An immutable list of <see cref="JsonAny"/> built from the object.</returns>
             /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-            public static ImmutableList<JsonObjectProperty> GetPropertyBacking(in PropertiesContentEntity that)
+            public static ImmutableList<JsonObjectProperty> GetPropertyBacking(in OpenApiDocumentHeadersEntity that)
             {
                 if ((that.backing & Backing.Object) != 0)
                 {
@@ -923,7 +923,7 @@ PropertiesContentEntity IJsonObject<PropertiesContentEntity>.SetProperty<TValue>
             /// </summary>
             /// <returns>An immutable list of <see cref="JsonObjectProperty"/>, built from the existing object, without the given property.</returns>
             /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-            public static ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(in PropertiesContentEntity that, in JsonPropertyName name)
+            public static ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(in OpenApiDocumentHeadersEntity that, in JsonPropertyName name)
             {
                 if ((that.backing & Backing.Object) != 0)
                 {
@@ -943,7 +943,7 @@ PropertiesContentEntity IJsonObject<PropertiesContentEntity>.SetProperty<TValue>
             /// </summary>
             /// <returns>An immutable list of <see cref="JsonObjectProperty"/>, built from the existing object, without the given property.</returns>
             /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-            public static ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(in PropertiesContentEntity that, ReadOnlySpan<char> name)
+            public static ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(in OpenApiDocumentHeadersEntity that, ReadOnlySpan<char> name)
             {
                 if ((that.backing & Backing.Object) != 0)
                 {
@@ -963,7 +963,7 @@ PropertiesContentEntity IJsonObject<PropertiesContentEntity>.SetProperty<TValue>
             /// </summary>
             /// <returns>An immutable list of <see cref="JsonObjectProperty"/>, built from the existing object, without the given property.</returns>
             /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-            public static ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(in PropertiesContentEntity that, ReadOnlySpan<byte> name)
+            public static ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(in OpenApiDocumentHeadersEntity that, ReadOnlySpan<byte> name)
             {
                 if ((that.backing & Backing.Object) != 0)
                 {
@@ -983,7 +983,7 @@ PropertiesContentEntity IJsonObject<PropertiesContentEntity>.SetProperty<TValue>
             /// </summary>
             /// <returns>An immutable list of <see cref="JsonObjectProperty"/>, built from the existing object, without the given property.</returns>
             /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-            public static ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(in PropertiesContentEntity that, string name)
+            public static ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(in OpenApiDocumentHeadersEntity that, string name)
             {
                 if ((that.backing & Backing.Object) != 0)
                 {
@@ -1003,7 +1003,7 @@ PropertiesContentEntity IJsonObject<PropertiesContentEntity>.SetProperty<TValue>
             /// </summary>
             /// <returns>An immutable list of <see cref="JsonObjectProperty"/>, built from the existing object, with the given property.</returns>
             /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-            public static ImmutableList<JsonObjectProperty> GetPropertyBackingWith(in PropertiesContentEntity that, in JsonPropertyName name, in JsonAny value)
+            public static ImmutableList<JsonObjectProperty> GetPropertyBackingWith(in OpenApiDocumentHeadersEntity that, in JsonPropertyName name, in JsonAny value)
             {
                 if ((that.backing & Backing.Object) != 0)
                 {

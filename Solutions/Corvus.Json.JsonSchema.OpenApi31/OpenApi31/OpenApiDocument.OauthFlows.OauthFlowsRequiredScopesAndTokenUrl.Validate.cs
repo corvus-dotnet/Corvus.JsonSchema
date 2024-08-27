@@ -32,7 +32,7 @@ public readonly partial struct OpenApiDocument
         /// <summary>
         /// Generated from JSON Schema.
         /// </summary>
-        public readonly partial struct DefssRequiredScopesAndTokenUr
+        public readonly partial struct OauthFlowsRequiredScopesAndTokenUrl
         {
             /// <inheritdoc/>
             public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
@@ -107,7 +107,7 @@ public readonly partial struct OpenApiDocument
                 /// <returns>The resulting validation context after validation.</returns>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 internal static ValidationContext CompositionAllOfValidationHandler(
-                    in DefssRequiredScopesAndTokenUr value,
+                    in OauthFlowsRequiredScopesAndTokenUrl value,
                     in ValidationContext validationContext,
                     ValidationLevel level = ValidationLevel.Flag)
                 {
@@ -150,7 +150,7 @@ public readonly partial struct OpenApiDocument
                 /// <returns>The resulting validation context after validation.</returns>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 internal static ValidationContext ObjectValidationHandler(
-                    in DefssRequiredScopesAndTokenUr value,
+                    in OauthFlowsRequiredScopesAndTokenUrl value,
                     JsonValueKind valueKind,
                     in ValidationContext validationContext,
                     ValidationLevel level = ValidationLevel.Flag)

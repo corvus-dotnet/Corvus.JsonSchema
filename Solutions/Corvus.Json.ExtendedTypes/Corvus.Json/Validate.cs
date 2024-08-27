@@ -4140,7 +4140,13 @@ public static partial class Validate
     /// <param name="Level">The validation level.</param>
     public readonly record struct ValidationContextWrapper(in ValidationContext Context, ValidationLevel Level);
 
-    private readonly record struct ValidationContextWrapperWithFormatKeyword(in ValidationContext Context, ValidationLevel Level, string? FormatKeyword);
+    /// <summary>
+    /// A wrapper for the <see cref="ValidationContext"/> and <see cref="ValidationLevel"/>.
+    /// </summary>
+    /// <param name="Context">The validation context.</param>
+    /// <param name="Level">The validation level.</param>
+    /// <param name="FormatKeyword">The format keyword.</param>
+    public readonly record struct ValidationContextWrapperWithFormatKeyword(in ValidationContext Context, ValidationLevel Level, string? FormatKeyword);
 
     private readonly record struct StringValidationContextWrapper(in ValidationContext Context, ValidationLevel Level, int? MinLength, int? MaxLength, Regex? Pattern);
 #else
@@ -4174,7 +4180,7 @@ public static partial class Validate
     /// <summary>
     /// A wrapper for the <see cref="ValidationContext"/> and <see cref="ValidationLevel"/>.
     /// </summary>
-    private readonly struct ValidationContextWrapperWithFormatKeyword
+    public readonly struct ValidationContextWrapperWithFormatKeyword
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="ValidationContextWrapper"/> struct.

@@ -199,7 +199,7 @@ public readonly partial struct DocumentExtensionsSchema
                 ValidationLevel level = ValidationLevel.Flag)
             {
                 bool isValid = false;
-                ValidationContext localResultString = Corvus.Json.ValidateWithoutCoreType.TypeString(valueKind, ValidationContext.ValidContext, level);
+                ValidationContext localResultString = Corvus.Json.ValidateWithoutCoreType.TypeString(valueKind, ValidationContext.ValidContext, level, "type");
                 if (level == ValidationLevel.Flag && localResultString.IsValid)
                 {
                     return validationContext;
@@ -210,7 +210,7 @@ public readonly partial struct DocumentExtensionsSchema
                     isValid = true;
                 }
 
-                ValidationContext localResultInteger = Corvus.Json.ValidateWithoutCoreType.TypeInteger(value, ValidationContext.ValidContext, level);
+                ValidationContext localResultInteger = Corvus.Json.ValidateWithoutCoreType.TypeInteger(value, ValidationContext.ValidContext, level, "type");
                 if (level == ValidationLevel.Flag && localResultInteger.IsValid)
                 {
                     return validationContext;
@@ -225,14 +225,14 @@ public readonly partial struct DocumentExtensionsSchema
                 {
                     if (level >= ValidationLevel.Verbose)
                     {
-                        return validationContext.WithResult(isValid: false, $"Validation type - should have been 'string', 'integer' but was {valueKind}");
+                        return validationContext.WithResult(isValid: false, $"Validation type - should have been 'string', 'integer' but was {valueKind}", "type");
                     }
                 }
                 else
                 {
                     if (level >= ValidationLevel.Detailed)
                     {
-                        return validationContext.WithResult(isValid: false, $"Validation type - should have been 'string', 'integer'.");
+                        return validationContext.WithResult(isValid: false, $"Validation type - should have been 'string', 'integer'.", "type");
                     }
                     else
                     {
@@ -242,7 +242,7 @@ public readonly partial struct DocumentExtensionsSchema
 
                 if (level >= ValidationLevel.Verbose)
                 {
-                    return validationContext.WithResult(isValid: true, $"Validation type - should be 'string', 'integer' but was {valueKind}");
+                    return validationContext.WithResult(isValid: true, $"Validation type - should be 'string', 'integer' but was {valueKind}", "type");
                 }
                 return validationContext;
             }
