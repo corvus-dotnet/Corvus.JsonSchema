@@ -48,6 +48,8 @@ public class DefaultNameCollisionResolver : INameCollisionResolver
 
         int slashIndex = 0;
 
+        bool first = true;
+
         for (int index = 1;
             parentName.Equals(typeNameBuffer[..length], StringComparison.Ordinal) ||
             parent.FindChildNameCollision(typeDeclaration, typeNameBuffer[..length]) is not null;
@@ -65,25 +67,30 @@ public class DefaultNameCollisionResolver : INameCollisionResolver
 
             ReadOnlySpan<char> trimmedString = trimmedStringBuffer[..trimmedStringLength];
 
-            while (updatedReference.HasFragment && IsPropertySubschemaKeywordFragment(typeDeclaration, updatedReference.Fragment))
+            if (first)
             {
-                updatedReference = updatedReference.MoveToParentFragment();
-            }
+                while (updatedReference.HasFragment && IsPropertySubschemaKeywordFragment(typeDeclaration, updatedReference.Fragment))
+                {
+                    updatedReference = updatedReference.MoveToParentFragment();
+                }
 
-            if (updatedReference.HasFragment && slashIndex > 0 && (slashIndex = updatedReference.Fragment[slashIndex..].LastIndexOf('/')) >= 0 && slashIndex < updatedReference.Fragment.Length - 1)
-            {
-                ReadOnlySpan<char> previousNode = updatedReference.Fragment[(slashIndex + 1)..];
-                previousNode.CopyTo(typeNameBuffer);
-                length = Formatting.ToPascalCase(typeNameBuffer[..previousNode.Length]);
-                trimmedString.CopyTo(typeNameBuffer[previousNode.Length..]);
-                length += trimmedString.Length;
-            }
-            else if (!trimmedString.Equals(parentName, StringComparison.Ordinal))
-            {
-                parentName.CopyTo(typeNameBuffer);
-                trimmedString.CopyTo(typeNameBuffer[parentName.Length..]);
-                length = parentName.Length + trimmedString.Length;
-                index--;
+                if (updatedReference.HasFragment && slashIndex > 0 && (slashIndex = updatedReference.Fragment[slashIndex..].LastIndexOf('/')) >= 0 && slashIndex < updatedReference.Fragment.Length - 1)
+                {
+                    ReadOnlySpan<char> previousNode = updatedReference.Fragment[(slashIndex + 1)..];
+                    previousNode.CopyTo(typeNameBuffer);
+                    length = Formatting.ToPascalCase(typeNameBuffer[..previousNode.Length]);
+                    trimmedString.CopyTo(typeNameBuffer[previousNode.Length..]);
+                    length += trimmedString.Length;
+                }
+                else if (!trimmedString.Equals(parentName, StringComparison.Ordinal))
+                {
+                    parentName.CopyTo(typeNameBuffer);
+                    trimmedString.CopyTo(typeNameBuffer[parentName.Length..]);
+                    length = parentName.Length + trimmedString.Length;
+                    index--;
+                }
+
+                first = false;
             }
             else
             {
