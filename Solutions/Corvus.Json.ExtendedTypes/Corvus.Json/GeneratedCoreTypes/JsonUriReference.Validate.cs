@@ -22,6 +22,6 @@ public readonly partial struct JsonUriReference
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
     {
-        return Corvus.Json.Validate.TypeUriReference(this, validationContext, level);
+        return Corvus.Json.Validate.TypeUriReference(this, validationContext, level, null, null);
     }
 }

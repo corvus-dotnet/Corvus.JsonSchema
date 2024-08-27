@@ -22,6 +22,6 @@ public readonly partial struct JsonRegex
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
     {
-        return Corvus.Json.Validate.TypeRegex(this, validationContext, level);
+        return Corvus.Json.Validate.TypeRegex(this, validationContext, level, null, null);
     }
 }

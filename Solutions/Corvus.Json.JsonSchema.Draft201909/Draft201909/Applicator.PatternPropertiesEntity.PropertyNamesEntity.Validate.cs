@@ -101,7 +101,7 @@ public readonly partial struct Applicator
                         return validationContext;
                     }
 
-                    return Corvus.Json.ValidateWithoutCoreType.TypeRegex(value, validationContext, level);
+                    return Corvus.Json.ValidateWithoutCoreType.TypeRegex(value, validationContext, level, "format");
                 }
             }
         }

@@ -22,6 +22,6 @@ public readonly partial struct JsonInt32
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
     {
-        return Corvus.Json.Validate.TypeInt32(this, validationContext, level);
+        return Corvus.Json.Validate.TypeInt32(this, validationContext, level, null, null);
     }
 }

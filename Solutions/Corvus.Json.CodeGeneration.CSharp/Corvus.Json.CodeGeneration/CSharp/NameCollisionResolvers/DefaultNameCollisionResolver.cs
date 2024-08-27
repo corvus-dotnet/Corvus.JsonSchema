@@ -40,9 +40,13 @@ public class DefaultNameCollisionResolver : INameCollisionResolver
         int length,
         out int written)
     {
+        string location = typeDeclaration.LocatedSchema.Location;
+
         // Capture the reference outside the loop so we can work through it.
         JsonReference updatedReference = typeDeclaration.LocatedSchema.Location.MoveToParentFragment();
         Span<char> trimmedStringBuffer = stackalloc char[typeNameBuffer.Length];
+
+        int slashIndex = 0;
 
         for (int index = 1;
             parentName.Equals(typeNameBuffer[..length], StringComparison.Ordinal) ||
@@ -66,9 +70,7 @@ public class DefaultNameCollisionResolver : INameCollisionResolver
                 updatedReference = updatedReference.MoveToParentFragment();
             }
 
-            int slashIndex = 0;
-
-            if (updatedReference.HasFragment && (slashIndex = updatedReference.Fragment.LastIndexOf('/')) >= 0 && slashIndex < updatedReference.Fragment.Length - 1)
+            if (updatedReference.HasFragment && slashIndex > 0 && (slashIndex = updatedReference.Fragment[slashIndex..].LastIndexOf('/')) >= 0 && slashIndex < updatedReference.Fragment.Length - 1)
             {
                 ReadOnlySpan<char> previousNode = updatedReference.Fragment[(slashIndex + 1)..];
                 previousNode.CopyTo(typeNameBuffer);

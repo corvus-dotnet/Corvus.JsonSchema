@@ -14,6 +14,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+    <PackageReference Include="System.Reflection.Metadata" Version="8.0.0" />
     <PackageReference Include="System.Text.Json" Version="8.0.4" />
     <PackageReference Include="BenchmarkDotNet" Version="0.14.0" />
 		<PackageReference Include="BenchmarkDotNet.Diagnostics.Windows" Version="0.14.0" />

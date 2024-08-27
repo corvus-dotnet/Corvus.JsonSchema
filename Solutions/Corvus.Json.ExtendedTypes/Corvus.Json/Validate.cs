@@ -88,18 +88,19 @@ public static partial class Validate
     /// <param name="valueKind">The actual value kind.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="typeKeyword">The type keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeString(JsonValueKind valueKind, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeString(JsonValueKind valueKind, in ValidationContext validationContext, ValidationLevel level, string? typeKeyword = null)
     {
         if (valueKind != JsonValueKind.String)
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been 'string' but was '{valueKind}'.");
+                return validationContext.WithResult(isValid: false, $"Validation {typeKeyword ?? "type"} - should have been 'string' but was '{valueKind}'.", typeKeyword ?? "type");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been 'string'.");
+                return validationContext.WithResult(isValid: false, "Validation type - should have been 'string'.", typeKeyword ?? "type");
             }
             else
             {
@@ -108,7 +109,7 @@ public static partial class Validate
         }
         else if (level == ValidationLevel.Verbose)
         {
-            return validationContext.WithResult(isValid: true, "Validation type - was 'string'.");
+            return validationContext.WithResult(isValid: true, "Validation type - was 'string'.", typeKeyword ?? "type");
         }
 
         return validationContext;
@@ -120,18 +121,19 @@ public static partial class Validate
     /// <param name="valueKind">The actual value kind.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="typeKeyword">The type keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeNumber(JsonValueKind valueKind, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeNumber(JsonValueKind valueKind, in ValidationContext validationContext, ValidationLevel level, string? typeKeyword = null)
     {
         if (valueKind != JsonValueKind.Number)
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been 'number' but was '{valueKind}'.");
+                return validationContext.WithResult(isValid: false, $"Validation {typeKeyword ?? "type"} - should have been 'number' but was '{valueKind}'.", typeKeyword ?? "type");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been 'number'.");
+                return validationContext.WithResult(isValid: false, "Validation type - should have been 'number'.", typeKeyword ?? "type");
             }
             else
             {
@@ -140,7 +142,7 @@ public static partial class Validate
         }
         else if (level == ValidationLevel.Verbose)
         {
-            return validationContext.WithResult(isValid: true, "Validation type - was 'number'.");
+            return validationContext.WithResult(isValid: true, "Validation type - was 'number'.", typeKeyword ?? "type");
         }
 
         return validationContext;
@@ -152,18 +154,19 @@ public static partial class Validate
     /// <param name="valueKind">The actual value kind.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="typeKeyword">The type keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeNull(JsonValueKind valueKind, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeNull(JsonValueKind valueKind, in ValidationContext validationContext, ValidationLevel level, string? typeKeyword = null)
     {
         if (valueKind != JsonValueKind.Null)
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been 'null' but was '{valueKind}'.");
+                return validationContext.WithResult(isValid: false, $"Validation {typeKeyword ?? "type"} - should have been 'null' but was '{valueKind}'.", typeKeyword ?? "type");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been 'null'.");
+                return validationContext.WithResult(isValid: false, "Validation type - should have been 'null'.", typeKeyword ?? "type");
             }
             else
             {
@@ -172,7 +175,7 @@ public static partial class Validate
         }
         else if (level == ValidationLevel.Verbose)
         {
-            return validationContext.WithResult(isValid: true, "Validation type - was 'null'.");
+            return validationContext.WithResult(isValid: true, "Validation type - was 'null'.", typeKeyword ?? "type");
         }
 
         return validationContext;
@@ -185,8 +188,9 @@ public static partial class Validate
     /// <param name="instance">The instance to validate.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="typeKeyword">The type keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeInteger<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeInteger<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? typeKeyword = null)
         where T : struct, IJsonValue<T>
     {
         JsonValueKind valueKind = instance.ValueKind;
@@ -194,11 +198,11 @@ public static partial class Validate
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been 'number' with zero fractional part but was '{valueKind}'.");
+                return validationContext.WithResult(isValid: false, $"Validation {typeKeyword ?? "type"} - should have been 'integer' but was '{valueKind}'.", typeKeyword ?? "type");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been 'number' with zero fractional part.");
+                return validationContext.WithResult(isValid: false, "Validation type - should have been 'integer'.", typeKeyword ?? "type");
             }
             else
             {
@@ -212,11 +216,11 @@ public static partial class Validate
             {
                 if (level >= ValidationLevel.Detailed)
                 {
-                    return validationContext.WithResult(isValid: false, $"Validation type - should have been 'number' with zero fractional part but was '{valueKind}' with fractional part {value - Math.Floor(value)}.");
+                    return validationContext.WithResult(isValid: false, $"Validation {typeKeyword ?? "type"} - should have been 'integer' but was '{value}'.", typeKeyword ?? "type");
                 }
                 else if (level >= ValidationLevel.Basic)
                 {
-                    return validationContext.WithResult(isValid: false, "Validation type - should have been 'number' with zero fractional part.");
+                    return validationContext.WithResult(isValid: false, "Validation type - should have been 'integer' with zero fractional part.", typeKeyword ?? "type");
                 }
                 else
                 {
@@ -227,7 +231,7 @@ public static partial class Validate
 
         if (level == ValidationLevel.Verbose)
         {
-            return validationContext.WithResult(isValid: true, "Validation type - was 'number' with zero fractional part.");
+            return validationContext.WithResult(isValid: true, "Validation type - was 'number' with zero fractional part.", typeKeyword ?? "type");
         }
 
         return validationContext;
@@ -240,8 +244,10 @@ public static partial class Validate
     /// <param name="instance">The instance to validate.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="typeKeyword">The type keyword.</param>
+    /// <param name="formatKeyword">The format keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeByte<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeByte<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? typeKeyword = null, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
     {
         JsonValueKind valueKind = instance.ValueKind;
@@ -249,11 +255,11 @@ public static partial class Validate
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been byte 'number' but was '{valueKind}'.");
+                return validationContext.WithResult(isValid: false, $"Validation {typeKeyword ?? "type"} - should have been 'number' but was '{valueKind}'.", typeKeyword ?? "type");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been byte 'number'.,");
+                return validationContext.WithResult(isValid: false, "Validation type - should have been 'number'.,", typeKeyword ?? "type");
             }
             else
             {
@@ -267,11 +273,11 @@ public static partial class Validate
             {
                 if (level >= ValidationLevel.Detailed)
                 {
-                    return validationContext.WithResult(isValid: false, $"Validation type - should have been byte 'number' but was '{valueKind}' with value {value} and fractional part {value - Math.Floor(value)}.");
+                    return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been 'byte' but was '{valueKind}' with value {value} and fractional part {value - Math.Floor(value)}.", formatKeyword ?? "format");
                 }
                 else if (level >= ValidationLevel.Basic)
                 {
-                    return validationContext.WithResult(isValid: false, "Validation type - should have been byte 'number'.");
+                    return validationContext.WithResult(isValid: false, "Validation format - should have been 'byte'.", formatKeyword ?? "format");
                 }
                 else
                 {
@@ -282,7 +288,9 @@ public static partial class Validate
 
         if (level == ValidationLevel.Verbose)
         {
-            return validationContext.WithResult(isValid: true, "Validation type - was byte 'number'.");
+            return validationContext
+                .WithResult(isValid: true, $"Validation {typeKeyword ?? "type"} - was 'number'.", typeKeyword ?? "type")
+                .WithResult(isValid: true, $"Validation {formatKeyword ?? "format"} - was 'byte'.", formatKeyword ?? "format");
         }
 
         return validationContext;
@@ -295,8 +303,10 @@ public static partial class Validate
     /// <param name="instance">The instance to validate.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="typeKeyword">The type keyword.</param>
+    /// <param name="formatKeyword">The format keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeSByte<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeSByte<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? typeKeyword = null, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
     {
         JsonValueKind valueKind = instance.ValueKind;
@@ -304,11 +314,11 @@ public static partial class Validate
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been an sbyte 'number' was '{valueKind}'.");
+                return validationContext.WithResult(isValid: false, $"Validation {typeKeyword ?? "type"} - should have been an sbyte 'number' was '{valueKind}'.", typeKeyword ?? "type");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been an sbyte 'number'.");
+                return validationContext.WithResult(isValid: false, "Validation type - should have been an sbyte 'number'.", typeKeyword ?? "type");
             }
             else
             {
@@ -322,11 +332,11 @@ public static partial class Validate
             {
                 if (level >= ValidationLevel.Detailed)
                 {
-                    return validationContext.WithResult(isValid: false, $"Validation type - should have been sbyte 'number' but was '{valueKind}' with value {value} and fractional part {value - Math.Floor(value)}.");
+                    return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been 'sbyte' but was '{valueKind}' with value {value} and fractional part {value - Math.Floor(value)}.", formatKeyword ?? "format");
                 }
                 else if (level >= ValidationLevel.Basic)
                 {
-                    return validationContext.WithResult(isValid: false, "Validation type - should have been sbyte 'number'.");
+                    return validationContext.WithResult(isValid: false, "Validation format - should have been sbyte 'number'.", formatKeyword ?? "format");
                 }
                 else
                 {
@@ -337,7 +347,9 @@ public static partial class Validate
 
         if (level == ValidationLevel.Verbose)
         {
-            return validationContext.WithResult(isValid: true, "Validation type - was sbyte 'number'.");
+            return validationContext
+                .WithResult(isValid: true, $"Validation {typeKeyword ?? "type"} - was 'number'.", typeKeyword ?? "type")
+                .WithResult(isValid: true, $"Validation {formatKeyword ?? "format"} - was 'sbyte'.", formatKeyword ?? "format");
         }
 
         return validationContext;
@@ -350,8 +362,10 @@ public static partial class Validate
     /// <param name="instance">The instance to validate.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="typeKeyword">The type keyword.</param>
+    /// <param name="formatKeyword">The format keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeInt16<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeInt16<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? typeKeyword = null, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
     {
         JsonValueKind valueKind = instance.ValueKind;
@@ -359,11 +373,11 @@ public static partial class Validate
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been an int16 'number' was '{valueKind}'.");
+                return validationContext.WithResult(isValid: false, $"Validation {typeKeyword ?? "type"} - should have been 'number' was '{valueKind}'.", typeKeyword ?? "type");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been an int16 'number'.");
+                return validationContext.WithResult(isValid: false, "Validation type - should have been an 'number'.", typeKeyword ?? "type");
             }
             else
             {
@@ -377,11 +391,11 @@ public static partial class Validate
             {
                 if (level >= ValidationLevel.Detailed)
                 {
-                    return validationContext.WithResult(isValid: false, $"Validation type - should have been int16 'number' but was '{valueKind}' with value {value} and fractional part {value - Math.Floor(value)}.");
+                    return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been 'int16' but '{value}'.", formatKeyword ?? "format");
                 }
                 else if (level >= ValidationLevel.Basic)
                 {
-                    return validationContext.WithResult(isValid: false, "Validation type - should have been int16 'number'.");
+                    return validationContext.WithResult(isValid: false, "Validation format - should have been 'int16'.", formatKeyword ?? "format");
                 }
                 else
                 {
@@ -392,7 +406,9 @@ public static partial class Validate
 
         if (level == ValidationLevel.Verbose)
         {
-            return validationContext.WithResult(isValid: true, "Validation type - was int16  'number'.");
+            return validationContext
+                .WithResult(isValid: true, $"Validation {typeKeyword ?? "type"} - was 'number'.", typeKeyword ?? "type")
+                .WithResult(isValid: true, $"Validation {formatKeyword ?? "format"} - was 'int16'.", formatKeyword ?? "format");
         }
 
         return validationContext;
@@ -405,8 +421,10 @@ public static partial class Validate
     /// <param name="instance">The instance to validate.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="typeKeyword">The type keyword.</param>
+    /// <param name="formatKeyword">The format keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeUInt16<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeUInt16<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? typeKeyword = null, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
     {
         JsonValueKind valueKind = instance.ValueKind;
@@ -414,11 +432,11 @@ public static partial class Validate
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been an uint16 'number' was '{valueKind}'.");
+                return validationContext.WithResult(isValid: false, $"Validation {typeKeyword ?? "type"} - should have been 'number' but was '{valueKind}'.", typeKeyword ?? "type");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been an uint16 'number'.");
+                return validationContext.WithResult(isValid: false, "Validation type - should have been 'number'.", typeKeyword ?? "type");
             }
             else
             {
@@ -432,11 +450,11 @@ public static partial class Validate
             {
                 if (level >= ValidationLevel.Detailed)
                 {
-                    return validationContext.WithResult(isValid: false, $"Validation type - should have been uint16 'number' but was '{valueKind}' with value {value} and fractional part {value - Math.Floor(value)}.");
+                    return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been 'uint16' but was '{value}.", formatKeyword ?? "format");
                 }
                 else if (level >= ValidationLevel.Basic)
                 {
-                    return validationContext.WithResult(isValid: false, "Validation type - should have been uint16 'number'.");
+                    return validationContext.WithResult(isValid: false, "Validation format - should have been 'uint16'.", formatKeyword ?? "format");
                 }
                 else
                 {
@@ -447,7 +465,9 @@ public static partial class Validate
 
         if (level == ValidationLevel.Verbose)
         {
-            return validationContext.WithResult(isValid: true, "Validation type - was uint16 'number'.");
+            return validationContext
+                .WithResult(isValid: true, $"Validation {typeKeyword ?? "type"} - was 'number'.", typeKeyword ?? "type")
+                .WithResult(isValid: true, $"Validation {formatKeyword ?? "format"} - was 'uint16'.", formatKeyword ?? "format");
         }
 
         return validationContext;
@@ -460,8 +480,10 @@ public static partial class Validate
     /// <param name="instance">The instance to validate.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="typeKeyword">The type keyword.</param>
+    /// <param name="formatKeyword">The format keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeInt32<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeInt32<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? typeKeyword = null, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
     {
         JsonValueKind valueKind = instance.ValueKind;
@@ -469,11 +491,11 @@ public static partial class Validate
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been an int32 'number' was '{valueKind}'.");
+                return validationContext.WithResult(isValid: false, $"Validation {typeKeyword ?? "type"} - should have been 'number' but was '{valueKind}'.", typeKeyword ?? "type");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been an int32 'number'.");
+                return validationContext.WithResult(isValid: false, "Validation type - should have been 'number'.", typeKeyword ?? "type");
             }
             else
             {
@@ -487,11 +509,11 @@ public static partial class Validate
             {
                 if (level >= ValidationLevel.Detailed)
                 {
-                    return validationContext.WithResult(isValid: false, $"Validation type - should have been int32 'number' but was '{valueKind}' with value {value} and fractional part {value - Math.Floor(value)}.");
+                    return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been 'int32 but was {value}.", formatKeyword ?? "format");
                 }
                 else if (level >= ValidationLevel.Basic)
                 {
-                    return validationContext.WithResult(isValid: false, "Validation type - should have been int32 'number'.");
+                    return validationContext.WithResult(isValid: false, "Validation format - should have been 'int32'.", formatKeyword ?? "format");
                 }
                 else
                 {
@@ -502,7 +524,9 @@ public static partial class Validate
 
         if (level == ValidationLevel.Verbose)
         {
-            return validationContext.WithResult(isValid: true, "Validation type - was int32 'number'.");
+            return validationContext
+                .WithResult(isValid: true, $"Validation {typeKeyword ?? "type"} - was 'number'.", typeKeyword ?? "type")
+                .WithResult(isValid: true, $"Validation {formatKeyword ?? "format"} - was 'int32'.", formatKeyword ?? "format");
         }
 
         return validationContext;
@@ -515,8 +539,10 @@ public static partial class Validate
     /// <param name="instance">The instance to validate.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="typeKeyword">The type keyword.</param>
+    /// <param name="formatKeyword">The format keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeUInt32<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeUInt32<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? typeKeyword = null, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
     {
         JsonValueKind valueKind = instance.ValueKind;
@@ -524,11 +550,11 @@ public static partial class Validate
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been an uint32 'number' was '{valueKind}'.");
+                return validationContext.WithResult(isValid: false, $"Validation {typeKeyword ?? "type"} - should have been 'number' but was '{valueKind}'.", typeKeyword ?? "type");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been an uint32 'number'.");
+                return validationContext.WithResult(isValid: false, "Validation type - should have been 'number'.", typeKeyword ?? "type");
             }
             else
             {
@@ -542,11 +568,11 @@ public static partial class Validate
             {
                 if (level >= ValidationLevel.Detailed)
                 {
-                    return validationContext.WithResult(isValid: false, $"Validation type - should have been uint32 'number' but was '{valueKind}' with value {value} and fractional part {value - Math.Floor(value)}.");
+                    return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been 'uint32' but was {value}.", formatKeyword ?? "format");
                 }
                 else if (level >= ValidationLevel.Basic)
                 {
-                    return validationContext.WithResult(isValid: false, "Validation type - should have been uint32 'number'.");
+                    return validationContext.WithResult(isValid: false, "Validation format - should have been 'uint32'.", formatKeyword ?? "format");
                 }
                 else
                 {
@@ -557,7 +583,9 @@ public static partial class Validate
 
         if (level == ValidationLevel.Verbose)
         {
-            return validationContext.WithResult(isValid: true, "Validation type - was uint32 'number'.");
+            return validationContext
+                .WithResult(isValid: true, $"Validation {typeKeyword ?? "type"} - was 'number'.", typeKeyword ?? "type")
+                .WithResult(isValid: true, $"Validation {formatKeyword ?? "format"} - was 'uint32.", formatKeyword ?? "format");
         }
 
         return validationContext;
@@ -570,8 +598,10 @@ public static partial class Validate
     /// <param name="instance">The instance to validate.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="typeKeyword">The type keyword.</param>
+    /// <param name="formatKeyword">The format keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeInt64<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeInt64<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? typeKeyword = null, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
     {
         JsonValueKind valueKind = instance.ValueKind;
@@ -579,11 +609,11 @@ public static partial class Validate
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been an uint16 'number' was '{valueKind}'.");
+                return validationContext.WithResult(isValid: false, $"Validation {typeKeyword ?? "type"} - should have been 'number' but was '{valueKind}'.", typeKeyword ?? "type");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been an uint16 'number'.");
+                return validationContext.WithResult(isValid: false, "Validation type - should have been 'number'.", typeKeyword ?? "type");
             }
             else
             {
@@ -598,11 +628,11 @@ public static partial class Validate
             {
                 if (level >= ValidationLevel.Detailed)
                 {
-                    return validationContext.WithResult(isValid: false, $"Validation type - should have been int64 'number' but was '{valueKind}' with value {value} and fractional part {value - Math.Floor(value)}.");
+                    return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been 'int64' but was {value}.", formatKeyword ?? "format");
                 }
                 else if (level >= ValidationLevel.Basic)
                 {
-                    return validationContext.WithResult(isValid: false, "Validation type - should have been int64 'number'.");
+                    return validationContext.WithResult(isValid: false, "Validation format - should have been 'int64'.", formatKeyword ?? "format");
                 }
                 else
                 {
@@ -613,7 +643,9 @@ public static partial class Validate
 
         if (level == ValidationLevel.Verbose)
         {
-            return validationContext.WithResult(isValid: true, "Validation type - was int64 'number'.");
+            return validationContext
+                .WithResult(isValid: true, $"Validation {typeKeyword ?? "type"} - was 'number'.", typeKeyword ?? "type")
+                .WithResult(isValid: true, $"Validation {formatKeyword ?? "format"} - was 'int64'.", formatKeyword ?? "format");
         }
 
         return validationContext;
@@ -626,8 +658,10 @@ public static partial class Validate
     /// <param name="instance">The instance to validate.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="typeKeyword">The type keyword.</param>
+    /// <param name="formatKeyword">The format keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeUInt64<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeUInt64<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? typeKeyword = null, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
     {
         JsonValueKind valueKind = instance.ValueKind;
@@ -635,11 +669,11 @@ public static partial class Validate
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been an uint64 'number' was '{valueKind}'.");
+                return validationContext.WithResult(isValid: false, $"Validation {typeKeyword ?? "type"} - should have been 'number' but was '{valueKind}'.", typeKeyword ?? "type");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been an uint64 'number'.");
+                return validationContext.WithResult(isValid: false, "Validation type - should have been 'number'.", typeKeyword ?? "type");
             }
             else
             {
@@ -654,11 +688,11 @@ public static partial class Validate
             {
                 if (level >= ValidationLevel.Detailed)
                 {
-                    return validationContext.WithResult(isValid: false, $"Validation type - should have been uint64 'number' but was '{valueKind}' with value {value} and fractional part {value - Math.Floor(value)}.");
+                    return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been '' but was {value}.", formatKeyword ?? "format");
                 }
                 else if (level >= ValidationLevel.Basic)
                 {
-                    return validationContext.WithResult(isValid: false, "Validation type - should have been uint64 'number'.");
+                    return validationContext.WithResult(isValid: false, "Validation format - should have been 'uint64'.", formatKeyword ?? "format");
                 }
                 else
                 {
@@ -669,7 +703,9 @@ public static partial class Validate
 
         if (level == ValidationLevel.Verbose)
         {
-            return validationContext.WithResult(isValid: true, "Validation type - was uint64 'number'.");
+            return validationContext
+                .WithResult(isValid: true, $"Validation {typeKeyword ?? "type"} - was 'number'.", typeKeyword ?? "type")
+                .WithResult(isValid: true, $"Validation {formatKeyword ?? "format"} - was 'uint64'.", formatKeyword ?? "format");
         }
 
         return validationContext;
@@ -682,8 +718,10 @@ public static partial class Validate
     /// <param name="instance">The instance to validate.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="typeKeyword">The type keyword.</param>
+    /// <param name="formatKeyword">The format keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeInt128<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeInt128<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? typeKeyword = null, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
     {
         JsonValueKind valueKind = instance.ValueKind;
@@ -691,11 +729,11 @@ public static partial class Validate
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been an int128 'number' was '{valueKind}'.");
+                return validationContext.WithResult(isValid: false, $"Validation {typeKeyword ?? "type"} - should have been 'number' but was '{valueKind}'.", typeKeyword ?? "type");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been an int128 'number'.");
+                return validationContext.WithResult(isValid: false, "Validation type - should have been 'number'.", typeKeyword ?? "type");
             }
             else
             {
@@ -714,11 +752,11 @@ public static partial class Validate
                 if (level >= ValidationLevel.Detailed)
                 {
                     double value = (double)instance.AsNumber;
-                    return validationContext.WithResult(isValid: false, $"Validation type - should have been int128 'number' but was '{valueKind}' with value {value} and fractional part {value - Math.Floor(value)}.");
+                    return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been 'int128' but was {value}.", formatKeyword ?? "format");
                 }
                 else if (level >= ValidationLevel.Basic)
                 {
-                    return validationContext.WithResult(isValid: false, "Validation type - should have been int128 'number'.");
+                    return validationContext.WithResult(isValid: false, "Validation format - should have been 'int128'.", formatKeyword ?? "format");
                 }
                 else
                 {
@@ -730,7 +768,9 @@ public static partial class Validate
 
         if (level == ValidationLevel.Verbose)
         {
-            return validationContext.WithResult(isValid: true, "Validation type - was int128 'number'.");
+            return validationContext
+                .WithResult(isValid: true, $"Validation {typeKeyword ?? "type"} - was 'number'.", typeKeyword ?? "type")
+                .WithResult(isValid: true, $"Validation {formatKeyword ?? "format"} - was 'int128'.", formatKeyword ?? "format");
         }
 
         return validationContext;
@@ -743,8 +783,10 @@ public static partial class Validate
     /// <param name="instance">The instance to validate.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="typeKeyword">The type keyword.</param>
+    /// <param name="formatKeyword">The format keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeUInt128<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeUInt128<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? typeKeyword = null, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
     {
         JsonValueKind valueKind = instance.ValueKind;
@@ -752,11 +794,11 @@ public static partial class Validate
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been an uint128 'number' was '{valueKind}'.");
+                return validationContext.WithResult(isValid: false, $"Validation {typeKeyword ?? "type"} - should have been 'number' but was '{valueKind}'.", typeKeyword ?? "type");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been an uint128 'number'.");
+                return validationContext.WithResult(isValid: false, "Validation type - should have been 'number'.", typeKeyword ?? "type");
             }
             else
             {
@@ -775,11 +817,11 @@ public static partial class Validate
                 if (level >= ValidationLevel.Detailed)
                 {
                     double value = (double)instance.AsNumber;
-                    return validationContext.WithResult(isValid: false, $"Validation type - should have been uint128 'number' but was '{valueKind}' with value {value} and fractional part {value - Math.Floor(value)}.");
+                    return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been 'uint128' but was {value}.", formatKeyword ?? "format");
                 }
                 else if (level >= ValidationLevel.Basic)
                 {
-                    return validationContext.WithResult(isValid: false, "Validation type - should have been uint128 'number'.");
+                    return validationContext.WithResult(isValid: false, "Validation format - should have been 'uint128'.", formatKeyword ?? "format");
                 }
                 else
                 {
@@ -793,11 +835,11 @@ public static partial class Validate
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been uint128 'number' but was '{valueKind}' with value {value} and fractional part {value - Math.Floor(value)}.");
+                return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been 'uint128' but was {value} .", formatKeyword ?? "format");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been uint128 'number'.");
+                return validationContext.WithResult(isValid: false, "Validation format - should have been 'uint128'.", formatKeyword ?? "format");
             }
             else
             {
@@ -808,7 +850,9 @@ public static partial class Validate
 
         if (level == ValidationLevel.Verbose)
         {
-            return validationContext.WithResult(isValid: true, "Validation type - was uint128 'number'.");
+            return validationContext
+                .WithResult(isValid: true, $"Validation {typeKeyword ?? "type"} - was 'number'.", typeKeyword ?? "type")
+                .WithResult(isValid: true, $"Validation {formatKeyword ?? "format"} - was 'uint128'.", formatKeyword ?? "format");
         }
 
         return validationContext;
@@ -821,8 +865,10 @@ public static partial class Validate
     /// <param name="instance">The instance to validate.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="typeKeyword">The type keyword.</param>
+    /// <param name="formatKeyword">The format keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeHalf<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeHalf<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? typeKeyword = null, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
     {
         JsonValueKind valueKind = instance.ValueKind;
@@ -830,11 +876,11 @@ public static partial class Validate
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been a half 'number' was '{valueKind}'.");
+                return validationContext.WithResult(isValid: false, $"Validation {typeKeyword ?? "type"} - should have been 'number' but was '{valueKind}'.", typeKeyword ?? "type");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been a half 'number'.");
+                return validationContext.WithResult(isValid: false, "Validation type - should have been 'number'.", typeKeyword ?? "type");
             }
             else
             {
@@ -853,11 +899,11 @@ public static partial class Validate
                 if (level >= ValidationLevel.Detailed)
                 {
                     double value = (double)instance.AsNumber;
-                    return validationContext.WithResult(isValid: false, $"Validation type - should have been half 'number' but was '{valueKind}' with value {value} and fractional part {value - Math.Floor(value)}.");
+                    return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been 'half' but was {value}.", formatKeyword ?? "format");
                 }
                 else if (level >= ValidationLevel.Basic)
                 {
-                    return validationContext.WithResult(isValid: false, "Validation type - should have been half 'number'.");
+                    return validationContext.WithResult(isValid: false, "Validation format - should have been 'half'.", formatKeyword ?? "format");
                 }
                 else
                 {
@@ -869,7 +915,9 @@ public static partial class Validate
 
         if (level == ValidationLevel.Verbose)
         {
-            return validationContext.WithResult(isValid: true, "Validation type - was half 'number'.");
+            return validationContext
+                .WithResult(isValid: true, $"Validation {typeKeyword ?? "type"} - was 'number'.", typeKeyword ?? "type")
+                .WithResult(isValid: true, $"Validation {formatKeyword ?? "format"} - was 'half'.", formatKeyword ?? "format");
         }
 
         return validationContext;
@@ -882,8 +930,10 @@ public static partial class Validate
     /// <param name="instance">The instance to validate.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="typeKeyword">The type keyword.</param>
+    /// <param name="formatKeyword">The format keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeSingle<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeSingle<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? typeKeyword = null, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
     {
         JsonValueKind valueKind = instance.ValueKind;
@@ -891,11 +941,11 @@ public static partial class Validate
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been a single 'number' was '{valueKind}'.");
+                return validationContext.WithResult(isValid: false, $"Validation {typeKeyword ?? "type"} - should have been 'number' but was '{valueKind}'.", typeKeyword ?? "type");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been a single 'number'.");
+                return validationContext.WithResult(isValid: false, "Validation type - should have been 'number'.", typeKeyword ?? "type");
             }
             else
             {
@@ -913,11 +963,11 @@ public static partial class Validate
                 if (level >= ValidationLevel.Detailed)
                 {
                     double value = (double)instance.AsNumber;
-                    return validationContext.WithResult(isValid: false, $"Validation type - should have been single 'number' but was '{valueKind}' with value {value} and fractional part {value - Math.Floor(value)}.");
+                    return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been 'single' but was {value}.", formatKeyword ?? "format");
                 }
                 else if (level >= ValidationLevel.Basic)
                 {
-                    return validationContext.WithResult(isValid: false, "Validation type - should have been single 'number'.");
+                    return validationContext.WithResult(isValid: false, "Validation format - should have been 'single.", formatKeyword ?? "format");
                 }
                 else
                 {
@@ -928,7 +978,9 @@ public static partial class Validate
 
         if (level == ValidationLevel.Verbose)
         {
-            return validationContext.WithResult(isValid: true, "Validation type - was uint16 'number'.");
+            return validationContext
+                .WithResult(isValid: true, $"Validation {typeKeyword ?? "type"} - was 'number'.", typeKeyword ?? "type")
+                .WithResult(isValid: true, $"Validation {formatKeyword ?? "format"} - was 'single'.", formatKeyword ?? "format");
         }
 
         return validationContext;
@@ -941,8 +993,10 @@ public static partial class Validate
     /// <param name="instance">The instance to validate.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="typeKeyword">The type keyword.</param>
+    /// <param name="formatKeyword">The format keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeDouble<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeDouble<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? typeKeyword = null, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
     {
         JsonValueKind valueKind = instance.ValueKind;
@@ -950,11 +1004,11 @@ public static partial class Validate
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been a single 'number' was '{valueKind}'.");
+                return validationContext.WithResult(isValid: false, $"Validation type - should have been 'number' but was '{valueKind}'.", typeKeyword ?? "type");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been a single 'number'.");
+                return validationContext.WithResult(isValid: false, "Validation type - should have been 'number'.", typeKeyword ?? "type");
             }
             else
             {
@@ -968,9 +1022,13 @@ public static partial class Validate
         }
         catch (FormatException)
         {
-            if (level >= ValidationLevel.Basic)
+            if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been double 'number'.");
+                return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been 'double' but was {instance}.", formatKeyword ?? "format");
+            }
+            else if (level >= ValidationLevel.Basic)
+            {
+                return validationContext.WithResult(isValid: false, "Validation format - should have been 'double'.", formatKeyword ?? "format");
             }
             else
             {
@@ -980,7 +1038,9 @@ public static partial class Validate
 
         if (level == ValidationLevel.Verbose)
         {
-            return validationContext.WithResult(isValid: true, "Validation type - was double 'number'.");
+            return validationContext
+                .WithResult(isValid: true, $"Validation {typeKeyword ?? "type"} - was 'number'.", typeKeyword ?? "type")
+                .WithResult(isValid: true, $"Validation {formatKeyword ?? "format"} - was 'double'.", formatKeyword ?? "format");
         }
 
         return validationContext;
@@ -993,8 +1053,10 @@ public static partial class Validate
     /// <param name="instance">The instance to validate.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="typeKeyword">The type keyword.</param>
+    /// <param name="formatKeyword">The format keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeDecimal<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeDecimal<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? typeKeyword = null, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
     {
         JsonValueKind valueKind = instance.ValueKind;
@@ -1002,11 +1064,11 @@ public static partial class Validate
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been a decimal 'number' was '{valueKind}'.");
+                return validationContext.WithResult(isValid: false, $"Validation {typeKeyword ?? "type"} - should have been 'number' was '{valueKind}'.", typeKeyword ?? "type");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been a decimal 'number'.");
+                return validationContext.WithResult(isValid: false, "Validation type - should have been 'number'.", typeKeyword ?? "type");
             }
             else
             {
@@ -1021,9 +1083,13 @@ public static partial class Validate
             }
             catch (FormatException)
             {
-                if (level >= ValidationLevel.Basic)
+                if (level >= ValidationLevel.Detailed)
                 {
-                    return validationContext.WithResult(isValid: false, "Validation type - should have been single 'number'.");
+                    return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been 'decimal' but was {instance}.", formatKeyword ?? "format");
+                }
+                else if (level >= ValidationLevel.Basic)
+                {
+                    return validationContext.WithResult(isValid: false, "Validation format - should have been 'decimal'.", formatKeyword ?? "format");
                 }
                 else
                 {
@@ -1034,7 +1100,9 @@ public static partial class Validate
 
         if (level == ValidationLevel.Verbose)
         {
-            return validationContext.WithResult(isValid: true, "Validation type - was decimal 'number'.");
+            return validationContext
+                .WithResult(isValid: true, $"Validation {typeKeyword ?? "type"}- was 'number'.", typeKeyword ?? "type")
+                .WithResult(isValid: true, $"Validation {formatKeyword ?? "format"} - was 'decimal'.", formatKeyword ?? "format");
         }
 
         return validationContext;
@@ -1047,8 +1115,10 @@ public static partial class Validate
     /// <param name="instance">The instance to validate.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="typeKeyword">The type keyword.</param>
+    /// <param name="formatKeyword">The format keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeUriTemplate<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeUriTemplate<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? typeKeyword = null, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
     {
         JsonValueKind valueKind = instance.ValueKind;
@@ -1056,11 +1126,11 @@ public static partial class Validate
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'uri-template' but was '{valueKind}'.");
+                return validationContext.WithResult(isValid: false, $"Validation {typeKeyword ?? "type"} - should have been 'string' but was '{valueKind}'.", typeKeyword ?? "type");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been 'string' with format 'uri-template'.");
+                return validationContext.WithResult(isValid: false, "Validation type - should have been 'string'.", typeKeyword ?? "type");
             }
             else
             {
@@ -1068,9 +1138,18 @@ public static partial class Validate
             }
         }
 
-        ValidationContext result = validationContext;
+        ValidationContext result;
+        if (level >= ValidationLevel.Verbose)
+        {
+            result = validationContext
+                .WithResult(isValid: true, $"Validation {typeKeyword ?? "type"} - was 'string'.", typeKeyword ?? "type");
+        }
+        else
+        {
+            result = validationContext;
+        }
 
-        instance.AsString.TryGetValue(UriTemplateValidator, new ValidationContextWrapper(result, level), out result);
+        instance.AsString.TryGetValue(UriTemplateValidator, new ValidationContextWrapperWithFormatKeyword(result, level, formatKeyword), out result);
 
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
@@ -1079,7 +1158,7 @@ public static partial class Validate
 
         return result;
 
-        static bool UriTemplateValidator(ReadOnlySpan<char> input, in ValidationContextWrapper context, out ValidationContext result)
+        static bool UriTemplateValidator(ReadOnlySpan<char> input, in ValidationContextWrapperWithFormatKeyword context, out ValidationContext result)
         {
             result = context.Context;
 
@@ -1088,14 +1167,14 @@ public static partial class Validate
                 if (context.Level >= ValidationLevel.Detailed)
                 {
 #if NET8_0_OR_GREATER
-                    result = context.Context.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'uri-template', but was '{input}'.");
+                    result = context.Context.WithResult(isValid: false, $"Validation {context.FormatKeyword ?? "format"} - should have been 'uri-template', but was '{input}'.", context.FormatKeyword ?? "format");
 #else
-                    result = context.Context.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'uri-template', but was '{input.ToString()}'.");
+                    result = context.Context.WithResult(isValid: false, $"Validation {context.FormatKeyword ?? "format"} - should have been 'uri-template', but was '{input.ToString()}'.", context.FormatKeyword ?? "format");
 #endif
                 }
                 else if (context.Level >= ValidationLevel.Basic)
                 {
-                    result = context.Context.WithResult(isValid: false, "Validation type - should have been a 'string' with format 'uri-template'.");
+                    result = context.Context.WithResult(isValid: false, "Validation format - should have been 'uri-template'.", context.FormatKeyword ?? "format");
                 }
                 else
                 {
@@ -1107,7 +1186,8 @@ public static partial class Validate
 
             if (context.Level == ValidationLevel.Verbose)
             {
-                result = context.Context.WithResult(isValid: true, "Validation type - was a 'string' with format 'uri-template'.");
+                result = context.Context
+                    .WithResult(isValid: true, $"Validation {context.FormatKeyword ?? "format"} - was 'uri-template'.", context.FormatKeyword);
             }
 
             return true;
@@ -1121,8 +1201,10 @@ public static partial class Validate
     /// <param name="instance">The instance to validate.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="typeKeyword">The type keyword.</param>
+    /// <param name="formatKeyword">The format keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeIdnEmail<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeIdnEmail<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? typeKeyword = null, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
     {
         JsonValueKind valueKind = instance.ValueKind;
@@ -1130,11 +1212,11 @@ public static partial class Validate
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'idn-email' but was '{valueKind}'.");
+                return validationContext.WithResult(isValid: false, $"Validation {typeKeyword ?? "type"} - should have been 'string' but was '{valueKind}'.", typeKeyword ?? "type");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been 'string' with format 'idn-email'.");
+                return validationContext.WithResult(isValid: false, "Validation type - should have been 'string'.", typeKeyword ?? "type");
             }
             else
             {
@@ -1174,11 +1256,11 @@ public static partial class Validate
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'idn-email', but was '{email}'.");
+                return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been 'idn-email', but was '{email}'.", formatKeyword ?? "format");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been a 'string' with format 'idn-email'.");
+                return validationContext.WithResult(isValid: false, "Validation format - should have been 'idn-email'.", formatKeyword ?? "format");
             }
             else
             {
@@ -1189,7 +1271,8 @@ public static partial class Validate
         if (level == ValidationLevel.Verbose)
         {
             return validationContext
-                .WithResult(isValid: true, "Validation type - was a 'string' with format 'idn-email'.");
+                .WithResult(isValid: true, $"Validation {typeKeyword ?? "type"} - was 'string'.", typeKeyword ?? "type")
+                .WithResult(isValid: true, $"Validation {formatKeyword ?? "format"} - was 'idn-email'.", formatKeyword ?? "format");
         }
 
         return validationContext;
@@ -1202,8 +1285,10 @@ public static partial class Validate
     /// <param name="instance">The instance to validate.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="typeKeyword">The type keyword.</param>
+    /// <param name="formatKeyword">The format keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeIdnHostName<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeIdnHostName<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? typeKeyword = null, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
     {
         JsonValueKind valueKind = instance.ValueKind;
@@ -1211,11 +1296,11 @@ public static partial class Validate
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'idn-hostname' but was '{valueKind}'.");
+                return validationContext.WithResult(isValid: false, $"Validation {typeKeyword ?? "type"} - should have been 'string' but was '{valueKind}'.", typeKeyword ?? "type");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been 'string' with format 'idn-hostname'.");
+                return validationContext.WithResult(isValid: false, "Validation type - should have been 'string'.", typeKeyword ?? "type");
             }
             else
             {
@@ -1257,11 +1342,11 @@ public static partial class Validate
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'idn-hostname', but was '{value}'.");
+                return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been 'idn-hostname', but was '{value}'.", formatKeyword ?? "format");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been a 'string' with format 'idn-hostname'.");
+                return validationContext.WithResult(isValid: false, "Validation format - should have been 'idn-hostname'.", formatKeyword ?? "format");
             }
             else
             {
@@ -1272,7 +1357,8 @@ public static partial class Validate
         if (level == ValidationLevel.Verbose)
         {
             return validationContext
-                .WithResult(isValid: true, "Validation type - was a 'string' with format 'idn-hostname'.");
+                .WithResult(isValid: true, $"Validation {typeKeyword ?? "type"} - was 'string'.", typeKeyword ?? "type")
+                .WithResult(isValid: true, $"Validation {formatKeyword ?? "format"} - was 'idn-hostname'.", formatKeyword ?? "format");
         }
 
         return validationContext;
@@ -1285,8 +1371,10 @@ public static partial class Validate
     /// <param name="instance">The instance to validate.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="typeKeyword">The type keyword.</param>
+    /// <param name="formatKeyword">The format keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeHostname<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeHostname<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? typeKeyword = null, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
     {
         JsonValueKind valueKind = instance.ValueKind;
@@ -1294,11 +1382,11 @@ public static partial class Validate
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'hostname' but was '{valueKind}'.");
+                return validationContext.WithResult(isValid: false, $"Validation {typeKeyword ?? "type"} - should have been 'string' but was '{valueKind}'.", typeKeyword ?? "type");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been 'string' with format 'hostname'.");
+                return validationContext.WithResult(isValid: false, "Validation type - should have been 'string'.", typeKeyword ?? "type");
             }
             else
             {
@@ -1306,9 +1394,18 @@ public static partial class Validate
             }
         }
 
-        ValidationContext result = validationContext;
+        ValidationContext result;
+        if (level >= ValidationLevel.Verbose)
+        {
+            result = validationContext
+                .WithResult(isValid: true, $"Validation {typeKeyword ?? "type"} - was 'string'.", typeKeyword ?? "type");
+        }
+        else
+        {
+            result = validationContext;
+        }
 
-        instance.AsString.TryGetValue(HostnameValidator, new ValidationContextWrapper(result, level), out result);
+        instance.AsString.TryGetValue(HostnameValidator, new ValidationContextWrapperWithFormatKeyword(result, level, formatKeyword), out result);
 
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
@@ -1317,7 +1414,7 @@ public static partial class Validate
 
         return result;
 
-        static bool HostnameValidator(ReadOnlySpan<char> input, in ValidationContextWrapper context, out ValidationContext result)
+        static bool HostnameValidator(ReadOnlySpan<char> input, in ValidationContextWrapperWithFormatKeyword context, out ValidationContext result)
         {
             bool isMatch;
             result = context.Context;
@@ -1348,11 +1445,11 @@ public static partial class Validate
             {
                 if (context.Level >= ValidationLevel.Detailed)
                 {
-                    result = context.Context.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'hostname', but was '{input.ToString()}'.");
+                    result = context.Context.WithResult(isValid: false, $"Validation {context.FormatKeyword ?? "format"} - should have been 'hostname', but was '{input.ToString()}'.", context.FormatKeyword ?? "format");
                 }
                 else if (context.Level >= ValidationLevel.Basic)
                 {
-                    result = context.Context.WithResult(isValid: false, "Validation type - should have been a 'string' with format 'hostname'.");
+                    result = context.Context.WithResult(isValid: false, "Validation format - should have been 'hostname'.", context.FormatKeyword ?? "format");
                 }
                 else
                 {
@@ -1364,7 +1461,8 @@ public static partial class Validate
 
             if (context.Level == ValidationLevel.Verbose)
             {
-                result = context.Context.WithResult(isValid: true, "Validation type - was a 'string' with format 'hostname'.");
+                result = context.Context
+                    .WithResult(isValid: true, $"Validation {context.FormatKeyword ?? "format"} - was 'hostname'.", context.FormatKeyword ?? "format");
             }
 
             return true;
@@ -1378,8 +1476,10 @@ public static partial class Validate
     /// <param name="instance">The instance to validate.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="typeKeyword">The type keyword.</param>
+    /// <param name="formatKeyword">The format keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeUuid<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeUuid<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? typeKeyword = null, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
     {
         JsonValueKind valueKind = instance.ValueKind;
@@ -1387,11 +1487,11 @@ public static partial class Validate
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'uuid' but was '{valueKind}'.");
+                return validationContext.WithResult(isValid: false, $"Validation {typeKeyword ?? "type"} - should have been 'string' but was '{valueKind}'.", typeKeyword ?? "type");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been 'string' with format 'uuid'.");
+                return validationContext.WithResult(isValid: false, "Validation type - should have been 'string'.", typeKeyword ?? "type");
             }
             else
             {
@@ -1399,9 +1499,18 @@ public static partial class Validate
             }
         }
 
-        ValidationContext result = validationContext;
+        ValidationContext result;
+        if (level >= ValidationLevel.Verbose)
+        {
+            result = validationContext
+                .WithResult(isValid: true, $"Validation {typeKeyword ?? "type"} - was 'string'.", typeKeyword ?? "type");
+        }
+        else
+        {
+            result = validationContext;
+        }
 
-        instance.AsString.TryGetValue(UuidValidator, new ValidationContextWrapper(result, level), out result);
+        instance.AsString.TryGetValue(UuidValidator, new ValidationContextWrapperWithFormatKeyword(result, level, formatKeyword), out result);
 
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
@@ -1410,7 +1519,7 @@ public static partial class Validate
 
         return result;
 
-        static bool UuidValidator(ReadOnlySpan<char> input, in ValidationContextWrapper context, out ValidationContext result)
+        static bool UuidValidator(ReadOnlySpan<char> input, in ValidationContextWrapperWithFormatKeyword context, out ValidationContext result)
         {
             result = context.Context;
 
@@ -1418,11 +1527,11 @@ public static partial class Validate
             {
                 if (context.Level >= ValidationLevel.Detailed)
                 {
-                    result = context.Context.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'uuid', but was '{input.ToString()}'.");
+                    result = context.Context.WithResult(isValid: false, $"Validation {context.FormatKeyword ?? "format"} - should have been 'uuid', but was '{input.ToString()}'.", context.FormatKeyword ?? "format");
                 }
                 else if (context.Level >= ValidationLevel.Basic)
                 {
-                    result = context.Context.WithResult(isValid: false, "Validation type - should have been a 'string' with format 'uuid'.");
+                    result = context.Context.WithResult(isValid: false, "Validation format - should have been 'uuid'.", context.FormatKeyword ?? "format");
                 }
                 else
                 {
@@ -1434,7 +1543,7 @@ public static partial class Validate
 
             if (context.Level == ValidationLevel.Verbose)
             {
-                result = context.Context.WithResult(isValid: true, "Validation type - was a 'string' with format 'uuid'.");
+                result = context.Context.WithResult(isValid: true, $"Validation {context.FormatKeyword ?? "format"} - was 'uuid'.", context.FormatKeyword ?? "format");
             }
 
             return true;
@@ -1448,8 +1557,10 @@ public static partial class Validate
     /// <param name="instance">The instance to validate.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="typeKeyword">The type keyword.</param>
+    /// <param name="formatKeyword">The format keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeDuration<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeDuration<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? typeKeyword = null, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
     {
         JsonValueKind valueKind = instance.ValueKind;
@@ -1457,11 +1568,11 @@ public static partial class Validate
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'duration' but was '{valueKind}'.");
+                return validationContext.WithResult(isValid: false, $"Validation {typeKeyword ?? "type"} - should have been 'string' but was '{valueKind}'.", typeKeyword ?? "type");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been 'string' with format 'duration'.");
+                return validationContext.WithResult(isValid: false, "Validation type - should have been 'string'.", typeKeyword ?? "type");
             }
             else
             {
@@ -1469,9 +1580,18 @@ public static partial class Validate
             }
         }
 
-        ValidationContext result = validationContext;
+        ValidationContext result;
+        if (level >= ValidationLevel.Verbose)
+        {
+            result = validationContext
+                .WithResult(isValid: true, $"Validation {typeKeyword ?? "type"} - was 'string'.", typeKeyword ?? "type");
+        }
+        else
+        {
+            result = validationContext;
+        }
 
-        instance.AsString.TryGetValue(DurationValidator, new ValidationContextWrapper(result, level), out result);
+        instance.AsString.TryGetValue(DurationValidator, new ValidationContextWrapperWithFormatKeyword(result, level, formatKeyword), out result);
 
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
@@ -1480,7 +1600,7 @@ public static partial class Validate
 
         return result;
 
-        static bool DurationValidator(ReadOnlySpan<char> input, in ValidationContextWrapper context, out ValidationContext result)
+        static bool DurationValidator(ReadOnlySpan<char> input, in ValidationContextWrapperWithFormatKeyword context, out ValidationContext result)
         {
             result = context.Context;
 
@@ -1489,14 +1609,14 @@ public static partial class Validate
                 if (context.Level >= ValidationLevel.Detailed)
                 {
 #if NET8_0_OR_GREATER
-                    result = context.Context.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'duration', but was '{input}'.");
+                    result = context.Context.WithResult(isValid: false, $"Validation {context.FormatKeyword ?? "format"} - should have been 'duration', but was '{input}'.", context.FormatKeyword ?? "format");
 #else
-                    result = context.Context.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'duration', but was '{input.ToString()}'.");
+                    result = context.Context.WithResult(isValid: false, $"Validation {context.FormatKeyword ?? "format"} - should have been 'duration', but was '{input.ToString()}'.", context.FormatKeyword ?? "format");
 #endif
                 }
                 else if (context.Level >= ValidationLevel.Basic)
                 {
-                    result = context.Context.WithResult(isValid: false, "Validation type - should have been a 'string' with format 'duration'.");
+                    result = context.Context.WithResult(isValid: false, "Validation format - should have been 'duration'.", context.FormatKeyword ?? "format");
                 }
                 else
                 {
@@ -1508,7 +1628,7 @@ public static partial class Validate
 
             if (context.Level == ValidationLevel.Verbose)
             {
-                result = context.Context.WithResult(isValid: true, "Validation type - was a 'string' with format 'duration'.");
+                result = context.Context.WithResult(isValid: true, $"Validation {context.FormatKeyword ?? "format"} - was a 'duration'.", context.FormatKeyword ?? "format");
             }
 
             return true;
@@ -1522,8 +1642,10 @@ public static partial class Validate
     /// <param name="instance">The instance to validate.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="typeKeyword">The type keyword.</param>
+    /// <param name="formatKeyword">The format keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeEmail<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeEmail<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? typeKeyword = null, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
     {
         JsonValueKind valueKind = instance.ValueKind;
@@ -1531,11 +1653,11 @@ public static partial class Validate
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'email' but was '{valueKind}'.");
+                return validationContext.WithResult(isValid: false, $"Validation {typeKeyword ?? "type"} - should have been 'string' but was '{valueKind}'.", typeKeyword ?? "type");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been 'string' with format 'email'.");
+                return validationContext.WithResult(isValid: false, "Validation type - should have been 'string'.", typeKeyword ?? "type");
             }
             else
             {
@@ -1543,9 +1665,18 @@ public static partial class Validate
             }
         }
 
-        ValidationContext result = validationContext;
+        ValidationContext result;
+        if (level >= ValidationLevel.Verbose)
+        {
+            result = validationContext
+                .WithResult(isValid: true, $"Validation {typeKeyword ?? "type"} - was 'string'.", typeKeyword ?? "type");
+        }
+        else
+        {
+            result = validationContext;
+        }
 
-        instance.AsString.TryGetValue(EmailValidator, new ValidationContextWrapper(result, level), out result);
+        instance.AsString.TryGetValue(EmailValidator, new ValidationContextWrapperWithFormatKeyword(result, level, formatKeyword), out result);
 
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
@@ -1554,7 +1685,7 @@ public static partial class Validate
 
         return result;
 
-        static bool EmailValidator(ReadOnlySpan<char> input, in ValidationContextWrapper context, out ValidationContext result)
+        static bool EmailValidator(ReadOnlySpan<char> input, in ValidationContextWrapperWithFormatKeyword context, out ValidationContext result)
         {
             result = context.Context;
 
@@ -1563,14 +1694,14 @@ public static partial class Validate
                 if (context.Level >= ValidationLevel.Detailed)
                 {
 #if NET8_0_OR_GREATER
-                    result = context.Context.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'email', but was '{input}'.");
+                    result = context.Context.WithResult(isValid: false, $"Validation {context.FormatKeyword ?? "format"} - should have been 'email', but was '{input}'.", context.FormatKeyword ?? "format");
 #else
-                    result = context.Context.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'email', but was '{input.ToString()}'.");
+                    result = context.Context.WithResult(isValid: false, $"Validation {context.FormatKeyword ?? "format"} - should have been 'email', but was '{input.ToString()}'.", context.FormatKeyword ?? "format");
 #endif
                 }
                 else if (context.Level >= ValidationLevel.Basic)
                 {
-                    result = context.Context.WithResult(isValid: false, "Validation type - should have been a 'string' with format 'email'.");
+                    result = context.Context.WithResult(isValid: false, "Validation format - should have been 'email'.", context.FormatKeyword ?? "format");
                 }
                 else
                 {
@@ -1582,7 +1713,7 @@ public static partial class Validate
 
             if (context.Level == ValidationLevel.Verbose)
             {
-                result = context.Context.WithResult(isValid: true, "Validation type - was a 'string' with format 'email'.");
+                result = context.Context.WithResult(isValid: true, $"Validation {context.FormatKeyword ?? "format"} - was 'email'.", context.FormatKeyword ?? "format");
             }
 
             return true;
@@ -1596,8 +1727,10 @@ public static partial class Validate
     /// <param name="instance">The instance to validate.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="typeKeyword">The type keyword.</param>
+    /// <param name="formatKeyword">The format keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeRelativePointer<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeRelativePointer<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? typeKeyword = null, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
     {
         JsonValueKind valueKind = instance.ValueKind;
@@ -1605,11 +1738,11 @@ public static partial class Validate
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'relative-json-pointer' but was '{valueKind}'.");
+                return validationContext.WithResult(isValid: false, $"Validation {typeKeyword ?? "type"} - should have been 'string' but was '{valueKind}'.", typeKeyword ?? "type");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been 'string' with format 'relative-json-pointer'.");
+                return validationContext.WithResult(isValid: false, "Validation type - should have been 'string'.", typeKeyword ?? "type");
             }
             else
             {
@@ -1617,9 +1750,18 @@ public static partial class Validate
             }
         }
 
-        ValidationContext result = validationContext;
+        ValidationContext result;
+        if (level >= ValidationLevel.Verbose)
+        {
+            result = validationContext
+                .WithResult(isValid: true, $"Validation {typeKeyword ?? "type"} - was 'string'.", typeKeyword ?? "type");
+        }
+        else
+        {
+            result = validationContext;
+        }
 
-        instance.AsString.TryGetValue(RelativePointerValidator, new ValidationContextWrapper(result, level), out result);
+        instance.AsString.TryGetValue(RelativePointerValidator, new ValidationContextWrapperWithFormatKeyword(result, level, formatKeyword), out result);
 
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
@@ -1628,7 +1770,7 @@ public static partial class Validate
 
         return result;
 
-        static bool RelativePointerValidator(ReadOnlySpan<char> input, in ValidationContextWrapper context, out ValidationContext result)
+        static bool RelativePointerValidator(ReadOnlySpan<char> input, in ValidationContextWrapperWithFormatKeyword context, out ValidationContext result)
         {
             result = context.Context;
 
@@ -1637,14 +1779,14 @@ public static partial class Validate
                 if (context.Level >= ValidationLevel.Detailed)
                 {
 #if NET8_0_OR_GREATER
-                    result = context.Context.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'relative-json-pointer', but was '{input}'.");
+                    result = context.Context.WithResult(isValid: false, $"Validation {context.FormatKeyword ?? "format"} - should have been 'relative-json-pointer', but was '{input}'.", context.FormatKeyword ?? "format");
 #else
-                    result = context.Context.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'relative-json-pointer', but was '{input.ToString()}'.");
+                    result = context.Context.WithResult(isValid: false, $"Validation {context.FormatKeyword ?? "format"} - should have been 'relative-json-pointer', but was '{input.ToString()}'.", context.FormatKeyword ?? "format");
 #endif
                 }
                 else if (context.Level >= ValidationLevel.Basic)
                 {
-                    result = context.Context.WithResult(isValid: false, "Validation type - should have been a 'string' with format 'relative-json-pointer'.");
+                    result = context.Context.WithResult(isValid: false, "Validation format - should have been 'relative-json-pointer'.", context.FormatKeyword ?? "format");
                 }
                 else
                 {
@@ -1656,7 +1798,7 @@ public static partial class Validate
 
             if (context.Level == ValidationLevel.Verbose)
             {
-                result = context.Context.WithResult(isValid: true, "Validation type - was a 'string' with format 'relative-json-pointer'.");
+                result = context.Context.WithResult(isValid: true, "Validation format - was 'relative-json-pointer'.", context.FormatKeyword ?? "format");
             }
 
             return true;
@@ -1670,8 +1812,10 @@ public static partial class Validate
     /// <param name="instance">The instance to validate.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="typeKeyword">The type keyword.</param>
+    /// <param name="formatKeyword">The format keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypePointer<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypePointer<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? typeKeyword = null, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
     {
         JsonValueKind valueKind = instance.ValueKind;
@@ -1679,11 +1823,11 @@ public static partial class Validate
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'json-pointer' but was '{valueKind}'.");
+                return validationContext.WithResult(isValid: false, $"Validation {typeKeyword ?? "type"} - should have been 'string' but was '{valueKind}'.", typeKeyword ?? "type");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been 'string' with format 'json-pointer'.");
+                return validationContext.WithResult(isValid: false, "Validation type - should have been 'string'.", typeKeyword ?? "type");
             }
             else
             {
@@ -1691,9 +1835,18 @@ public static partial class Validate
             }
         }
 
-        ValidationContext result = validationContext;
+        ValidationContext result;
+        if (level >= ValidationLevel.Verbose)
+        {
+            result = validationContext
+                .WithResult(isValid: true, $"Validation {typeKeyword ?? "type"} - was 'string'.", typeKeyword ?? "type");
+        }
+        else
+        {
+            result = validationContext;
+        }
 
-        instance.AsString.TryGetValue(PointerValidator, new ValidationContextWrapper(result, level), out result);
+        instance.AsString.TryGetValue(PointerValidator, new ValidationContextWrapperWithFormatKeyword(result, level, formatKeyword), out result);
 
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
@@ -1702,7 +1855,7 @@ public static partial class Validate
 
         return result;
 
-        static bool PointerValidator(ReadOnlySpan<char> input, in ValidationContextWrapper context, out ValidationContext result)
+        static bool PointerValidator(ReadOnlySpan<char> input, in ValidationContextWrapperWithFormatKeyword context, out ValidationContext result)
         {
             result = context.Context;
 
@@ -1711,14 +1864,14 @@ public static partial class Validate
                 if (context.Level >= ValidationLevel.Detailed)
                 {
 #if NET8_0_OR_GREATER
-                    result = context.Context.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'json-pointer', but was '{input}'.");
+                    result = context.Context.WithResult(isValid: false, $"Validation {context.FormatKeyword ?? "format"} - should have been 'json-pointer', but was '{input}'.", context.FormatKeyword ?? "format");
 #else
-                    result = context.Context.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'json-pointer', but was '{input.ToString()}'.");
+                    result = context.Context.WithResult(isValid: false, $"Validation {context.FormatKeyword ?? "format"} - should have been 'json-pointer', but was '{input.ToString()}'.", context.FormatKeyword ?? "format");
 #endif
                 }
                 else if (context.Level >= ValidationLevel.Basic)
                 {
-                    result = context.Context.WithResult(isValid: false, "Validation type - should have been a 'string' with format 'json-pointer'.");
+                    result = context.Context.WithResult(isValid: false, "Validation format - should have been 'json-pointer'.", context.FormatKeyword ?? "format");
                 }
                 else
                 {
@@ -1730,7 +1883,7 @@ public static partial class Validate
 
             if (context.Level == ValidationLevel.Verbose)
             {
-                result = context.Context.WithResult(isValid: true, "Validation type - was a 'string' with format 'json-pointer'.");
+                result = context.Context.WithResult(isValid: true, $"Validation {context.FormatKeyword ?? "format"} - was 'json-pointer'.", context.FormatKeyword ?? "format");
             }
 
             return true;
@@ -1743,18 +1896,19 @@ public static partial class Validate
     /// <param name="valueKind">The actual value kind.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="typeKeyword">The type keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeArray(JsonValueKind valueKind, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeArray(JsonValueKind valueKind, in ValidationContext validationContext, ValidationLevel level, string? typeKeyword = null)
     {
         if (valueKind != JsonValueKind.Array)
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been 'array' but was '{valueKind}'.");
+                return validationContext.WithResult(isValid: false, $"Validation {typeKeyword ?? "type"} - should have been 'array' but was '{valueKind}'.", typeKeyword ?? "type");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been 'array'.");
+                return validationContext.WithResult(isValid: false, "Validation type - should have been 'array'.", typeKeyword ?? "type");
             }
             else
             {
@@ -1763,7 +1917,7 @@ public static partial class Validate
         }
         else if (level == ValidationLevel.Verbose)
         {
-            return validationContext.WithResult(isValid: true, "Validation type - was 'array'.");
+            return validationContext.WithResult(isValid: true, $"Validation {typeKeyword ?? "type"} - was 'array'.", typeKeyword ?? "type");
         }
 
         return validationContext;
@@ -1775,18 +1929,19 @@ public static partial class Validate
     /// <param name="valueKind">The actual value kind.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="typeKeyword">The type keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeBoolean(JsonValueKind valueKind, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeBoolean(JsonValueKind valueKind, in ValidationContext validationContext, ValidationLevel level, string? typeKeyword = null)
     {
         if (valueKind != JsonValueKind.True && valueKind != JsonValueKind.False)
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been 'boolean' but was '{valueKind}'.");
+                return validationContext.WithResult(isValid: false, $"Validation {typeKeyword ?? "type"} - should have been 'boolean' but was '{valueKind}'.", typeKeyword ?? "type");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been 'boolean'.");
+                return validationContext.WithResult(isValid: false, "Validation type - should have been 'boolean'.", typeKeyword ?? "type");
             }
             else
             {
@@ -1795,7 +1950,7 @@ public static partial class Validate
         }
         else if (level == ValidationLevel.Verbose)
         {
-            return validationContext.WithResult(isValid: true, "Validation type - was 'boolean'.");
+            return validationContext.WithResult(isValid: true, $"Validation {typeKeyword ?? "type"} - was 'boolean'.", typeKeyword ?? "type");
         }
 
         return validationContext;
@@ -1807,18 +1962,19 @@ public static partial class Validate
     /// <param name="valueKind">The actual value kind.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="typeKeyword">The type keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeObject(JsonValueKind valueKind, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeObject(JsonValueKind valueKind, in ValidationContext validationContext, ValidationLevel level, string? typeKeyword = null)
     {
         if (valueKind != JsonValueKind.Object)
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been 'object' but was '{valueKind}'.");
+                return validationContext.WithResult(isValid: false, $"Validation {typeKeyword ?? "type"} - should have been 'object' but was '{valueKind}'.", typeKeyword ?? "type");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been 'object'.");
+                return validationContext.WithResult(isValid: false, "Validation type - should have been 'object'.", typeKeyword ?? "type");
             }
             else
             {
@@ -1827,7 +1983,7 @@ public static partial class Validate
         }
         else if (level == ValidationLevel.Verbose)
         {
-            return validationContext.WithResult(isValid: true, "Validation type - was 'object'.");
+            return validationContext.WithResult(isValid: true, $"Validation {typeKeyword ?? "type"} - was 'object'.", typeKeyword ?? "type");
         }
 
         return validationContext;
@@ -1856,7 +2012,7 @@ public static partial class Validate
         {
             if (level == ValidationLevel.Verbose)
             {
-                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum1}'.");
+                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum1}'.", "enum");
             }
 
             return validationContext;
@@ -1866,7 +2022,7 @@ public static partial class Validate
         {
             if (level == ValidationLevel.Verbose)
             {
-                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum2}'.");
+                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum2}'.", "enum");
             }
 
             return validationContext;
@@ -1876,7 +2032,7 @@ public static partial class Validate
         {
             if (level == ValidationLevel.Verbose)
             {
-                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum3}'.");
+                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum3}'.", "enum");
             }
 
             return validationContext;
@@ -1886,7 +2042,7 @@ public static partial class Validate
         {
             if (level == ValidationLevel.Verbose)
             {
-                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum4}'.");
+                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum4}'.", "enum");
             }
 
             return validationContext;
@@ -1896,7 +2052,7 @@ public static partial class Validate
         {
             if (level == ValidationLevel.Verbose)
             {
-                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum5}'.");
+                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum5}'.", "enum");
             }
 
             return validationContext;
@@ -1906,7 +2062,7 @@ public static partial class Validate
         {
             if (level == ValidationLevel.Verbose)
             {
-                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum6}'.");
+                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum6}'.", "enum");
             }
 
             return validationContext;
@@ -1916,7 +2072,7 @@ public static partial class Validate
         {
             if (level == ValidationLevel.Verbose)
             {
-                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum7}'.");
+                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum7}'.", "enum");
             }
 
             return validationContext;
@@ -1926,7 +2082,7 @@ public static partial class Validate
         {
             if (level == ValidationLevel.Verbose)
             {
-                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum8}'.");
+                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum8}'.", "enum");
             }
 
             return validationContext;
@@ -1934,11 +2090,11 @@ public static partial class Validate
 
         if (level >= ValidationLevel.Detailed)
         {
-            return validationContext.WithResult(isValid: false, $"Validation 6.1.2 enum - '{value}' did not match any of the required values: [{enum1}, {enum2}, {enum3}, {enum4}, {enum5}, {enum6}, {enum7}, {enum8}].");
+            return validationContext.WithResult(isValid: false, $"Validation 6.1.2 enum - '{value}' did not match any of the required values: [{enum1}, {enum2}, {enum3}, {enum4}, {enum5}, {enum6}, {enum7}, {enum8}].", "enum");
         }
         else if (level >= ValidationLevel.Basic)
         {
-            return validationContext.WithResult(isValid: false, "Validation 6.1.2 enum - did not match any of the required values.");
+            return validationContext.WithResult(isValid: false, "Validation 6.1.2 enum - did not match any of the required values.", "enum");
         }
         else
         {
@@ -1968,7 +2124,7 @@ public static partial class Validate
         {
             if (level == ValidationLevel.Verbose)
             {
-                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum1}'.");
+                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum1}'.", "enum");
             }
 
             return validationContext;
@@ -1978,7 +2134,7 @@ public static partial class Validate
         {
             if (level == ValidationLevel.Verbose)
             {
-                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum2}'.");
+                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum2}'.", "enum");
             }
 
             return validationContext;
@@ -1988,7 +2144,7 @@ public static partial class Validate
         {
             if (level == ValidationLevel.Verbose)
             {
-                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum3}'.");
+                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum3}'.", "enum");
             }
 
             return validationContext;
@@ -1998,7 +2154,7 @@ public static partial class Validate
         {
             if (level == ValidationLevel.Verbose)
             {
-                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum4}'.");
+                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum4}'.", "enum");
             }
 
             return validationContext;
@@ -2008,7 +2164,7 @@ public static partial class Validate
         {
             if (level == ValidationLevel.Verbose)
             {
-                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum5}'.");
+                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum5}'.", "enum");
             }
 
             return validationContext;
@@ -2018,7 +2174,7 @@ public static partial class Validate
         {
             if (level == ValidationLevel.Verbose)
             {
-                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum6}'.");
+                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum6}'.", "enum");
             }
 
             return validationContext;
@@ -2028,7 +2184,7 @@ public static partial class Validate
         {
             if (level == ValidationLevel.Verbose)
             {
-                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum7}'.");
+                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum7}'.", "enum");
             }
 
             return validationContext;
@@ -2036,11 +2192,11 @@ public static partial class Validate
 
         if (level >= ValidationLevel.Detailed)
         {
-            return validationContext.WithResult(isValid: false, $"Validation 6.1.2 enum - '{value}' did not match any of the required values: [{enum1}, {enum2}, {enum3}, {enum4}, {enum5}, {enum6}, {enum7}].");
+            return validationContext.WithResult(isValid: false, $"Validation 6.1.2 enum - '{value}' did not match any of the required values: [{enum1}, {enum2}, {enum3}, {enum4}, {enum5}, {enum6}, {enum7}].", "enum");
         }
         else if (level >= ValidationLevel.Basic)
         {
-            return validationContext.WithResult(isValid: false, "Validation 6.1.2 enum - did not match any of the required values.");
+            return validationContext.WithResult(isValid: false, "Validation 6.1.2 enum - did not match any of the required values.", "enum");
         }
         else
         {
@@ -2069,7 +2225,7 @@ public static partial class Validate
         {
             if (level == ValidationLevel.Verbose)
             {
-                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum1}'.");
+                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum1}'.", "enum");
             }
 
             return validationContext;
@@ -2079,7 +2235,7 @@ public static partial class Validate
         {
             if (level == ValidationLevel.Verbose)
             {
-                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum2}'.");
+                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum2}'.", "enum");
             }
 
             return validationContext;
@@ -2089,7 +2245,7 @@ public static partial class Validate
         {
             if (level == ValidationLevel.Verbose)
             {
-                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum3}'.");
+                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum3}'.", "enum");
             }
 
             return validationContext;
@@ -2099,7 +2255,7 @@ public static partial class Validate
         {
             if (level == ValidationLevel.Verbose)
             {
-                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum4}'.");
+                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum4}'.", "enum");
             }
 
             return validationContext;
@@ -2109,7 +2265,7 @@ public static partial class Validate
         {
             if (level == ValidationLevel.Verbose)
             {
-                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum5}'.");
+                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum5}'.", "enum");
             }
 
             return validationContext;
@@ -2119,7 +2275,7 @@ public static partial class Validate
         {
             if (level == ValidationLevel.Verbose)
             {
-                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum6}'.");
+                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum6}'.", "enum");
             }
 
             return validationContext;
@@ -2127,11 +2283,11 @@ public static partial class Validate
 
         if (level >= ValidationLevel.Detailed)
         {
-            return validationContext.WithResult(isValid: false, $"Validation 6.1.2 enum - '{value}' did not match any of the required values: [{enum1}, {enum2}, {enum3}, {enum4}, {enum5}, {enum6}].");
+            return validationContext.WithResult(isValid: false, $"Validation 6.1.2 enum - '{value}' did not match any of the required values: [{enum1}, {enum2}, {enum3}, {enum4}, {enum5}, {enum6}].", "enum");
         }
         else if (level >= ValidationLevel.Basic)
         {
-            return validationContext.WithResult(isValid: false, "Validation 6.1.2 enum - did not match any of the required values.");
+            return validationContext.WithResult(isValid: false, "Validation 6.1.2 enum - did not match any of the required values.", "enum");
         }
         else
         {
@@ -2159,7 +2315,7 @@ public static partial class Validate
         {
             if (level == ValidationLevel.Verbose)
             {
-                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum1}'.");
+                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum1}'.", "enum");
             }
 
             return validationContext;
@@ -2169,7 +2325,7 @@ public static partial class Validate
         {
             if (level == ValidationLevel.Verbose)
             {
-                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum2}'.");
+                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum2}'.", "enum");
             }
 
             return validationContext;
@@ -2179,7 +2335,7 @@ public static partial class Validate
         {
             if (level == ValidationLevel.Verbose)
             {
-                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum3}'.");
+                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum3}'.", "enum");
             }
 
             return validationContext;
@@ -2189,7 +2345,7 @@ public static partial class Validate
         {
             if (level == ValidationLevel.Verbose)
             {
-                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum4}'.");
+                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum4}'.", "enum");
             }
 
             return validationContext;
@@ -2199,7 +2355,7 @@ public static partial class Validate
         {
             if (level == ValidationLevel.Verbose)
             {
-                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum5}'.");
+                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum5}'.", "enum");
             }
 
             return validationContext;
@@ -2207,11 +2363,11 @@ public static partial class Validate
 
         if (level >= ValidationLevel.Detailed)
         {
-            return validationContext.WithResult(isValid: false, $"Validation 6.1.2 enum - '{value}' did not match any of the required values: [{enum1}, {enum2}, {enum3}, {enum4}, {enum5}].");
+            return validationContext.WithResult(isValid: false, $"Validation 6.1.2 enum - '{value}' did not match any of the required values: [{enum1}, {enum2}, {enum3}, {enum4}, {enum5}].", "enum");
         }
         else if (level >= ValidationLevel.Basic)
         {
-            return validationContext.WithResult(isValid: false, "Validation 6.1.2 enum - did not match any of the required values.");
+            return validationContext.WithResult(isValid: false, "Validation 6.1.2 enum - did not match any of the required values.", "enum");
         }
         else
         {
@@ -2238,7 +2394,7 @@ public static partial class Validate
         {
             if (level == ValidationLevel.Verbose)
             {
-                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum1}'.");
+                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum1}'.", "enum");
             }
 
             return validationContext;
@@ -2248,7 +2404,7 @@ public static partial class Validate
         {
             if (level == ValidationLevel.Verbose)
             {
-                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum2}'.");
+                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum2}'.", "enum");
             }
 
             return validationContext;
@@ -2258,7 +2414,7 @@ public static partial class Validate
         {
             if (level == ValidationLevel.Verbose)
             {
-                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum3}'.");
+                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum3}'.", "enum");
             }
 
             return validationContext;
@@ -2268,7 +2424,7 @@ public static partial class Validate
         {
             if (level == ValidationLevel.Verbose)
             {
-                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum4}'.");
+                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum4}'.", "enum");
             }
 
             return validationContext;
@@ -2276,11 +2432,11 @@ public static partial class Validate
 
         if (level >= ValidationLevel.Detailed)
         {
-            return validationContext.WithResult(isValid: false, $"Validation 6.1.2 enum - '{value}' did not match any of the required values: [{enum1}, {enum2}, {enum3}, {enum4}].");
+            return validationContext.WithResult(isValid: false, $"Validation 6.1.2 enum - '{value}' did not match any of the required values: [{enum1}, {enum2}, {enum3}, {enum4}].", "enum");
         }
         else if (level >= ValidationLevel.Basic)
         {
-            return validationContext.WithResult(isValid: false, "Validation 6.1.2 enum - did not match any of the required values.");
+            return validationContext.WithResult(isValid: false, "Validation 6.1.2 enum - did not match any of the required values.", "enum");
         }
         else
         {
@@ -2306,7 +2462,7 @@ public static partial class Validate
         {
             if (level == ValidationLevel.Verbose)
             {
-                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum1}'.");
+                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum1}'.", "enum");
             }
 
             return validationContext;
@@ -2316,7 +2472,7 @@ public static partial class Validate
         {
             if (level == ValidationLevel.Verbose)
             {
-                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum2}'.");
+                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum2}'.", "enum");
             }
 
             return validationContext;
@@ -2326,7 +2482,7 @@ public static partial class Validate
         {
             if (level == ValidationLevel.Verbose)
             {
-                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum3}'.");
+                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum3}'.", "enum");
             }
 
             return validationContext;
@@ -2334,11 +2490,11 @@ public static partial class Validate
 
         if (level >= ValidationLevel.Detailed)
         {
-            return validationContext.WithResult(isValid: false, $"Validation 6.1.2 enum - '{value}' did not match any of the required values: [{enum1}, {enum2}, {enum3}].");
+            return validationContext.WithResult(isValid: false, $"Validation 6.1.2 enum - '{value}' did not match any of the required values: [{enum1}, {enum2}, {enum3}].", "enum");
         }
         else if (level >= ValidationLevel.Basic)
         {
-            return validationContext.WithResult(isValid: false, "Validation 6.1.2 enum - did not match any of the required values.");
+            return validationContext.WithResult(isValid: false, "Validation 6.1.2 enum - did not match any of the required values.", "enum");
         }
         else
         {
@@ -2363,7 +2519,7 @@ public static partial class Validate
         {
             if (level == ValidationLevel.Verbose)
             {
-                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum1}'.");
+                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum1}'.", "enum");
             }
 
             return validationContext;
@@ -2373,7 +2529,7 @@ public static partial class Validate
         {
             if (level == ValidationLevel.Verbose)
             {
-                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum2}'.");
+                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum2}'.", "enum");
             }
 
             return validationContext;
@@ -2381,11 +2537,11 @@ public static partial class Validate
 
         if (level >= ValidationLevel.Detailed)
         {
-            return validationContext.WithResult(isValid: false, $"Validation 6.1.2 enum - '{value}' did not match any of the required values: [{enum1}, {enum2}].");
+            return validationContext.WithResult(isValid: false, $"Validation 6.1.2 enum - '{value}' did not match any of the required values: [{enum1}, {enum2}].", "enum");
         }
         else if (level >= ValidationLevel.Basic)
         {
-            return validationContext.WithResult(isValid: false, "Validation 6.1.2 enum - did not match any of the required values.");
+            return validationContext.WithResult(isValid: false, "Validation 6.1.2 enum - did not match any of the required values.", "enum");
         }
         else
         {
@@ -2409,7 +2565,7 @@ public static partial class Validate
         {
             if (level == ValidationLevel.Verbose)
             {
-                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum1}'.");
+                return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum - '{value}' matched '{enum1}'.", "enum");
             }
 
             return validationContext;
@@ -2417,11 +2573,11 @@ public static partial class Validate
 
         if (level >= ValidationLevel.Detailed)
         {
-            return validationContext.WithResult(isValid: false, $"Validation 6.1.2 enum - '{value}' did not match any of the required values: [{enum1}].");
+            return validationContext.WithResult(isValid: false, $"Validation 6.1.2 enum - '{value}' did not match any of the required values: [{enum1}].", "enum");
         }
         else if (level >= ValidationLevel.Basic)
         {
-            return validationContext.WithResult(isValid: false, "Validation 6.1.2 enum - did not match any of the required values.");
+            return validationContext.WithResult(isValid: false, "Validation 6.1.2 enum - did not match any of the required values.", "enum");
         }
         else
         {
@@ -2447,7 +2603,7 @@ public static partial class Validate
             {
                 if (level == ValidationLevel.Verbose)
                 {
-                    return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum -  '{value}' matched '{enumValue}'.");
+                    return validationContext.WithResult(isValid: true, $"Validation 6.1.2 enum -  '{value}' matched '{enumValue}'.", "enum");
                 }
 
                 return validationContext;
@@ -2456,11 +2612,11 @@ public static partial class Validate
 
         if (level >= ValidationLevel.Detailed)
         {
-            return validationContext.WithResult(isValid: false, $"Validation 6.1.2 enum -  '{value}' did not match any of the required values: [{string.Join(", ", enums)}].");
+            return validationContext.WithResult(isValid: false, $"Validation 6.1.2 enum -  '{value}' did not match any of the required values: [{string.Join(", ", enums)}].", "enum");
         }
         else if (level >= ValidationLevel.Basic)
         {
-            return validationContext.WithResult(isValid: false, "Validation 6.1.2 enum - did not match any of the required values.");
+            return validationContext.WithResult(isValid: false, "Validation 6.1.2 enum - did not match any of the required values.", "enum");
         }
         else
         {
@@ -2484,7 +2640,7 @@ public static partial class Validate
         {
             if (level == ValidationLevel.Verbose)
             {
-                return validationContext.WithResult(isValid: true, $"Validation 6.1.3 const - '{value}' matched '{constValue}'.");
+                return validationContext.WithResult(isValid: true, $"Validation 6.1.3 const - '{value}' matched '{constValue}'.", "const");
             }
 
             return validationContext;
@@ -2492,11 +2648,11 @@ public static partial class Validate
 
         if (level >= ValidationLevel.Detailed)
         {
-            return validationContext.WithResult(isValid: false, $"Validation 6.1.3 const - '{value}' did not match the required value: {constValue}.");
+            return validationContext.WithResult(isValid: false, $"Validation 6.1.3 const - '{value}' did not match the required value: {constValue}.", "const");
         }
         else if (level >= ValidationLevel.Basic)
         {
-            return validationContext.WithResult(isValid: false, "Validation 6.1.3 const - did not match the required value.");
+            return validationContext.WithResult(isValid: false, "Validation 6.1.3 const - did not match the required value.", "const");
         }
         else
         {
@@ -2527,27 +2683,27 @@ public static partial class Validate
                 ValidationContext ignoredResult = validationContext;
                 if (multipleOf.HasValue)
                 {
-                    ignoredResult = ignoredResult.WithResult(isValid: true, "Validation 6.2.1 multipleOf - ignored because the value is not a number");
+                    ignoredResult = ignoredResult.WithResult(isValid: true, "Validation 6.2.1 multipleOf - ignored because the value is not a number", "multipleOf");
                 }
 
                 if (maximum.HasValue)
                 {
-                    ignoredResult = ignoredResult.WithResult(isValid: true, "Validation 6.2.2 maximum- ignored because the value is not a number");
+                    ignoredResult = ignoredResult.WithResult(isValid: true, "Validation 6.2.2 maximum- ignored because the value is not a number", "maximum");
                 }
 
                 if (exclusiveMaximum.HasValue)
                 {
-                    ignoredResult = ignoredResult.WithResult(isValid: true, "Validation 6.2.3 exclusiveMaximum - ignored because the value is not a number");
+                    ignoredResult = ignoredResult.WithResult(isValid: true, "Validation 6.2.3 exclusiveMaximum - ignored because the value is not a number", "exclusiveMaximum");
                 }
 
                 if (minimum.HasValue)
                 {
-                    ignoredResult = ignoredResult.WithResult(isValid: true, "Validation 6.2.4 minimum - ignored because the value is not a number");
+                    ignoredResult = ignoredResult.WithResult(isValid: true, "Validation 6.2.4 minimum - ignored because the value is not a number", "minimum");
                 }
 
                 if (exclusiveMinimum.HasValue)
                 {
-                    ignoredResult = ignoredResult.WithResult(isValid: true, "Validation 6.2.5 exclusiveMinimum - ignored because the value is not a number");
+                    ignoredResult = ignoredResult.WithResult(isValid: true, "Validation 6.2.5 exclusiveMinimum - ignored because the value is not a number", "exclusiveMinimum");
                 }
 
                 return ignoredResult;
@@ -2567,18 +2723,18 @@ public static partial class Validate
                 {
                     if (level == ValidationLevel.Verbose)
                     {
-                        result = result.WithResult(isValid: true, $"Validation 6.2.1 multipleOf -  {value} was a multiple of {multipleOf}.");
+                        result = result.WithResult(isValid: true, $"Validation 6.2.1 multipleOf -  {value} was a multiple of {multipleOf}.", "multipleOf");
                     }
                 }
                 else
                 {
                     if (level >= ValidationLevel.Detailed)
                     {
-                        result = result.WithResult(isValid: false, $"Validation 6.2.1 multipleOf -  {value} was not a multiple of {multipleOf}.");
+                        result = result.WithResult(isValid: false, $"Validation 6.2.1 multipleOf -  {value} was not a multiple of {multipleOf}.", "multipleOf");
                     }
                     else if (level >= ValidationLevel.Basic)
                     {
-                        result = result.WithResult(isValid: false, "Validation 6.2.1 multipleOf - was not a multiple of the required value.");
+                        result = result.WithResult(isValid: false, "Validation 6.2.1 multipleOf - was not a multiple of the required value.", "multipleOf");
                     }
                     else
                     {
@@ -2593,18 +2749,18 @@ public static partial class Validate
                 {
                     if (level == ValidationLevel.Verbose)
                     {
-                        result = result.WithResult(isValid: true, $"Validation 6.2.2 maximum -  {value} was less than or equal to {maximum}.");
+                        result = result.WithResult(isValid: true, $"Validation 6.2.2 maximum -  {value} was less than or equal to {maximum}.", "maximum");
                     }
                 }
                 else
                 {
                     if (level >= ValidationLevel.Detailed)
                     {
-                        result = result.WithResult(isValid: false, $"Validation 6.2.2 maximum -  {value} was greater than {maximum}.");
+                        result = result.WithResult(isValid: false, $"Validation 6.2.2 maximum -  {value} was greater than {maximum}.", "maximum");
                     }
                     else if (level >= ValidationLevel.Basic)
                     {
-                        result = result.WithResult(isValid: false, "Validation 6.2.2 maximum - was greater than the required value.");
+                        result = result.WithResult(isValid: false, "Validation 6.2.2 maximum - was greater than the required value.", "maximum");
                     }
                     else
                     {
@@ -2619,18 +2775,18 @@ public static partial class Validate
                 {
                     if (level == ValidationLevel.Verbose)
                     {
-                        result = result.WithResult(isValid: true, $"Validation 6.2.3 exclusiveMaximum -  {value} was less than {exclusiveMaximum}.");
+                        result = result.WithResult(isValid: true, $"Validation 6.2.3 exclusiveMaximum -  {value} was less than {exclusiveMaximum}.", "exclusiveMaximum");
                     }
                 }
                 else
                 {
                     if (level >= ValidationLevel.Detailed)
                     {
-                        result = result.WithResult(isValid: false, $"Validation 6.2.3 exclusiveMaximum -  {value} was greater than or equal to {exclusiveMaximum}.");
+                        result = result.WithResult(isValid: false, $"Validation 6.2.3 exclusiveMaximum -  {value} was greater than or equal to {exclusiveMaximum}.", "exclusiveMaximum");
                     }
                     else if (level >= ValidationLevel.Basic)
                     {
-                        result = result.WithResult(isValid: false, "Validation 6.2.3 exclusiveMaximum - was greater than or equal to the required value.");
+                        result = result.WithResult(isValid: false, "Validation 6.2.3 exclusiveMaximum - was greater than or equal to the required value.", "exclusiveMaximum");
                     }
                     else
                     {
@@ -2645,18 +2801,18 @@ public static partial class Validate
                 {
                     if (level == ValidationLevel.Verbose)
                     {
-                        result = result.WithResult(isValid: true, $"Validation 6.2.4 minimum -  {value} was greater than or equal to {minimum}.");
+                        result = result.WithResult(isValid: true, $"Validation 6.2.4 minimum -  {value} was greater than or equal to {minimum}.", "minimum");
                     }
                 }
                 else
                 {
                     if (level >= ValidationLevel.Detailed)
                     {
-                        result = result.WithResult(isValid: false, $"Validation 6.2.4 minimum - {value} was less than {minimum}.");
+                        result = result.WithResult(isValid: false, $"Validation 6.2.4 minimum - {value} was less than {minimum}.", "minimum");
                     }
                     else if (level >= ValidationLevel.Basic)
                     {
-                        result = result.WithResult(isValid: false, "Validation 6.2.4 minimum - was less than the required value.");
+                        result = result.WithResult(isValid: false, "Validation 6.2.4 minimum - was less than the required value.", "minimum");
                     }
                     else
                     {
@@ -2671,18 +2827,18 @@ public static partial class Validate
                 {
                     if (level == ValidationLevel.Verbose)
                     {
-                        result = result.WithResult(isValid: true, $"Validation 6.2.5 exclusiveMinimum -  {value} was greater than {exclusiveMinimum}.");
+                        result = result.WithResult(isValid: true, $"Validation 6.2.5 exclusiveMinimum -  {value} was greater than {exclusiveMinimum}.", "exclusiveMinimum");
                     }
                 }
                 else
                 {
                     if (level >= ValidationLevel.Detailed)
                     {
-                        result = result.WithResult(isValid: false, $"Validation 6.2.5 exclusiveMinimum -  {value} was less than or equal to {exclusiveMinimum}.");
+                        result = result.WithResult(isValid: false, $"Validation 6.2.5 exclusiveMinimum -  {value} was less than or equal to {exclusiveMinimum}.", "exclusiveMinimum");
                     }
                     else if (level >= ValidationLevel.Basic)
                     {
-                        result = result.WithResult(isValid: false, "Validation 6.2.5 exclusiveMinimum - was less than or equal to the required value.");
+                        result = result.WithResult(isValid: false, "Validation 6.2.5 exclusiveMinimum - was less than or equal to the required value.", "exclusiveMinimum");
                     }
                     else
                     {
@@ -2700,18 +2856,18 @@ public static partial class Validate
                 {
                     if (level == ValidationLevel.Verbose)
                     {
-                        result = result.WithResult(isValid: true, $"Validation 6.2.1 multipleOf -  {currentValue} was a multiple of {multipleOf}.");
+                        result = result.WithResult(isValid: true, $"Validation 6.2.1 multipleOf -  {currentValue} was a multiple of {multipleOf}.", "multipleOf");
                     }
                 }
                 else
                 {
                     if (level >= ValidationLevel.Detailed)
                     {
-                        result = result.WithResult(isValid: false, $"Validation 6.2.1 multipleOf -  {currentValue} was not a multiple of {multipleOf}.");
+                        result = result.WithResult(isValid: false, $"Validation 6.2.1 multipleOf -  {currentValue} was not a multiple of {multipleOf}.", "multipleOf");
                     }
                     else if (level >= ValidationLevel.Basic)
                     {
-                        result = result.WithResult(isValid: false, "Validation 6.2.1 multipleOf - was not a multiple of the required value.");
+                        result = result.WithResult(isValid: false, "Validation 6.2.1 multipleOf - was not a multiple of the required value.", "multipleOf");
                     }
                     else
                     {
@@ -2726,18 +2882,18 @@ public static partial class Validate
                 {
                     if (level == ValidationLevel.Verbose)
                     {
-                        result = result.WithResult(isValid: true, $"Validation 6.2.2 maximum -  {currentValue} was less than or equal to {maximum}.");
+                        result = result.WithResult(isValid: true, $"Validation 6.2.2 maximum -  {currentValue} was less than or equal to {maximum}.", "maximum");
                     }
                 }
                 else
                 {
                     if (level >= ValidationLevel.Detailed)
                     {
-                        result = result.WithResult(isValid: false, $"Validation 6.2.2 maximum -  {currentValue} was greater than {maximum}.");
+                        result = result.WithResult(isValid: false, $"Validation 6.2.2 maximum -  {currentValue} was greater than {maximum}.", "maximum");
                     }
                     else if (level >= ValidationLevel.Basic)
                     {
-                        result = result.WithResult(isValid: false, "Validation 6.2.2 maximum - was greater than the required value.");
+                        result = result.WithResult(isValid: false, "Validation 6.2.2 maximum - was greater than the required value.", "maximum");
                     }
                     else
                     {
@@ -2752,18 +2908,18 @@ public static partial class Validate
                 {
                     if (level == ValidationLevel.Verbose)
                     {
-                        result = result.WithResult(isValid: true, $"Validation 6.2.3 exclusiveMaximum -  {currentValue} was less than {exclusiveMaximum}.");
+                        result = result.WithResult(isValid: true, $"Validation 6.2.3 exclusiveMaximum -  {currentValue} was less than {exclusiveMaximum}.", "exclusiveMaximum");
                     }
                 }
                 else
                 {
                     if (level >= ValidationLevel.Detailed)
                     {
-                        result = result.WithResult(isValid: false, $"Validation 6.2.3 exclusiveMaximum -  {currentValue} was greater than or equal to {exclusiveMaximum}.");
+                        result = result.WithResult(isValid: false, $"Validation 6.2.3 exclusiveMaximum -  {currentValue} was greater than or equal to {exclusiveMaximum}.", "exclusiveMaximum");
                     }
                     else if (level >= ValidationLevel.Basic)
                     {
-                        result = result.WithResult(isValid: false, "Validation 6.2.3 exclusiveMaximum - was greater than or equal to the required value.");
+                        result = result.WithResult(isValid: false, "Validation 6.2.3 exclusiveMaximum - was greater than or equal to the required value.", "exclusiveMaximum");
                     }
                     else
                     {
@@ -2778,18 +2934,18 @@ public static partial class Validate
                 {
                     if (level == ValidationLevel.Verbose)
                     {
-                        result = result.WithResult(isValid: true, $"Validation 6.2.4 minimum -  {currentValue} was greater than or equal to {minimum}.");
+                        result = result.WithResult(isValid: true, $"Validation 6.2.4 minimum -  {currentValue} was greater than or equal to {minimum}.", "minimum");
                     }
                 }
                 else
                 {
                     if (level >= ValidationLevel.Detailed)
                     {
-                        result = result.WithResult(isValid: false, $"Validation 6.2.4 minimum - {currentValue} was less than {minimum}.");
+                        result = result.WithResult(isValid: false, $"Validation 6.2.4 minimum - {currentValue} was less than {minimum}.", "minimum");
                     }
                     else if (level >= ValidationLevel.Basic)
                     {
-                        result = result.WithResult(isValid: false, "Validation 6.2.4 minimum - was less than the required value.");
+                        result = result.WithResult(isValid: false, "Validation 6.2.4 minimum - was less than the required value.", "minimum");
                     }
                     else
                     {
@@ -2804,18 +2960,18 @@ public static partial class Validate
                 {
                     if (level == ValidationLevel.Verbose)
                     {
-                        result = result.WithResult(isValid: true, $"Validation 6.2.5 exclusiveMinimum -  {currentValue} was greater than {exclusiveMinimum}.");
+                        result = result.WithResult(isValid: true, $"Validation 6.2.5 exclusiveMinimum -  {currentValue} was greater than {exclusiveMinimum}.", "exclusiveMinimum");
                     }
                 }
                 else
                 {
                     if (level >= ValidationLevel.Detailed)
                     {
-                        result = result.WithResult(isValid: false, $"Validation 6.2.5 exclusiveMinimum -  {currentValue} was less than or equal to {exclusiveMinimum}.");
+                        result = result.WithResult(isValid: false, $"Validation 6.2.5 exclusiveMinimum -  {currentValue} was less than or equal to {exclusiveMinimum}.", "exclusiveMinimum");
                     }
                     else if (level >= ValidationLevel.Basic)
                     {
-                        result = result.WithResult(isValid: false, "Validation 6.2.5 exclusiveMinimum - was less than or equal to the required value.");
+                        result = result.WithResult(isValid: false, "Validation 6.2.5 exclusiveMinimum - was less than or equal to the required value.", "exclusiveMinimum");
                     }
                     else
                     {
@@ -2849,17 +3005,17 @@ public static partial class Validate
                 ValidationContext ignoredResult = validationContext;
                 if (maxLength is not null)
                 {
-                    ignoredResult = ignoredResult.WithResult(isValid: true, "Validation 6.3.1 maxLength - ignored because the value is not a string");
+                    ignoredResult = ignoredResult.WithResult(isValid: true, "Validation 6.3.1 maxLength - ignored because the value is not a string", "maxLength");
                 }
 
                 if (minLength is not null)
                 {
-                    ignoredResult = ignoredResult.WithResult(isValid: true, "Validation 6.3.2 minLength - ignored because the value is not a string");
+                    ignoredResult = ignoredResult.WithResult(isValid: true, "Validation 6.3.2 minLength - ignored because the value is not a string", "minLength");
                 }
 
                 if (pattern is not null)
                 {
-                    ignoredResult = ignoredResult.WithResult(isValid: true, "Validation 6.3.3 pattern - ignored because the value is not a string");
+                    ignoredResult = ignoredResult.WithResult(isValid: true, "Validation 6.3.3 pattern - ignored because the value is not a string", "pattern");
                 }
 
                 return ignoredResult;
@@ -2893,18 +3049,18 @@ public static partial class Validate
                 {
                     if (context.Level == ValidationLevel.Verbose)
                     {
-                        result = result.WithResult(isValid: true, $"Validation 6.3.1 maxLength - {input.ToString()} of {length} was less than or equal to {maxl}.");
+                        result = result.WithResult(isValid: true, $"Validation 6.3.1 maxLength - {input.ToString()} of {length} was less than or equal to {maxl}.", "maxLength");
                     }
                 }
                 else
                 {
                     if (context.Level >= ValidationLevel.Detailed)
                     {
-                        result = result.WithResult(isValid: false, $"Validation 6.3.1 maxLength - {input.ToString()} of {length} was greater than {maxl}.");
+                        result = result.WithResult(isValid: false, $"Validation 6.3.1 maxLength - {input.ToString()} of {length} was greater than {maxl}.", "maxLength");
                     }
                     else if (context.Level >= ValidationLevel.Basic)
                     {
-                        result = result.WithResult(isValid: false, "Validation 6.3.1 maxLength - was greater than the required length.");
+                        result = result.WithResult(isValid: false, "Validation 6.3.1 maxLength - was greater than the required length.", "maxLength");
                     }
                     else
                     {
@@ -2921,18 +3077,18 @@ public static partial class Validate
                 {
                     if (context.Level == ValidationLevel.Verbose)
                     {
-                        result = result.WithResult(isValid: true, $"Validation 6.3.2 minLength - {input.ToString()} of {length} was greater than or equal to {minl}.");
+                        result = result.WithResult(isValid: true, $"Validation 6.3.2 minLength - {input.ToString()} of {length} was greater than or equal to {minl}.", "minLength");
                     }
                 }
                 else
                 {
                     if (context.Level >= ValidationLevel.Detailed)
                     {
-                        result = result.WithResult(isValid: false, $"Validation 6.3.2 minLength - {input.ToString()} of {length} was less than {minl}.");
+                        result = result.WithResult(isValid: false, $"Validation 6.3.2 minLength - {input.ToString()} of {length} was less than {minl}.", "minLength");
                     }
                     else if (context.Level >= ValidationLevel.Basic)
                     {
-                        result = result.WithResult(isValid: false, "Validation 6.3.2 minLength - was less than the required length.");
+                        result = result.WithResult(isValid: false, "Validation 6.3.2 minLength - was less than the required length.", "minLength");
                     }
                     else
                     {
@@ -2948,18 +3104,18 @@ public static partial class Validate
                 {
                     if (context.Level == ValidationLevel.Verbose)
                     {
-                        result = result.WithResult(isValid: true, $"Validation 6.3.3 pattern - {input.ToString()} matched {prex}.");
+                        result = result.WithResult(isValid: true, $"Validation 6.3.3 pattern - {input.ToString()} matched {prex}.", "pattern");
                     }
                 }
                 else
                 {
                     if (context.Level >= ValidationLevel.Detailed)
                     {
-                        result = result.WithResult(isValid: false, $"Validation 6.3.3 pattern - {input.ToString()} did not match {prex}.");
+                        result = result.WithResult(isValid: false, $"Validation 6.3.3 pattern - {input.ToString()} did not match {prex}.", "pattern");
                     }
                     else if (context.Level >= ValidationLevel.Basic)
                     {
-                        result = result.WithResult(isValid: false, "Validation 6.3.13 pattern - did not match the required pattern.");
+                        result = result.WithResult(isValid: false, "Validation 6.3.13 pattern - did not match the required pattern.", "pattern");
                     }
                     else
                     {
@@ -3001,11 +3157,12 @@ public static partial class Validate
     /// <param name="value">The instance to validate.</param>
     /// <param name="validationContext">The current validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="typeKeyword">The type keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeContentPre201909<TValue>(in TValue value, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeContentPre201909<TValue>(in TValue value, in ValidationContext validationContext, ValidationLevel level, string? typeKeyword = null)
         where TValue : struct, IJsonValue<TValue>
     {
-        return TypeContent(value, validationContext, level, false);
+        return TypeContent(value, validationContext, level, false, typeKeyword);
     }
 
     /// <summary>
@@ -3016,8 +3173,9 @@ public static partial class Validate
     /// <param name="validationContext">The current validation context.</param>
     /// <param name="level">The validation level.</param>
     /// <param name="alwaysPassAndAnnotateFailuresInContentDecodingChecks">Always pass failures in content decoding, but annotate.</param>
+    /// <param name="typeKeyword">The type keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeContent<TValue>(in TValue value, in ValidationContext validationContext, ValidationLevel level, bool alwaysPassAndAnnotateFailuresInContentDecodingChecks = true)
+    public static ValidationContext TypeContent<TValue>(in TValue value, in ValidationContext validationContext, ValidationLevel level, bool alwaysPassAndAnnotateFailuresInContentDecodingChecks = true, string? typeKeyword = null)
     where TValue : struct, IJsonValue<TValue>
     {
         ValidationContext result = validationContext;
@@ -3028,7 +3186,7 @@ public static partial class Validate
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return result.WithResult(isValid: false, $"Validation type - should have been 'string' withcontentMediaType 'application/json' but was '{valueKind}'.");
+                return result.WithResult(isValid: false, $"Validation type - should have been 'string' withcontentMediaType 'application/json' but was '{valueKind}'.", typeKeyword ?? "type");
             }
             else if (level >= ValidationLevel.Basic)
             {
@@ -3046,11 +3204,11 @@ public static partial class Validate
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return result.WithResult(isValid: false, "Validation 8.3 contentEncoding - should have been a 'string' with contentMediaType 'application/json'.");
+                return result.WithResult(isValid: false, "Validation contentEncoding - should have been a 'string' with contentMediaType 'application/json'.");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return result.WithResult(isValid: false, "Validation 8.3 contentEncoding - should have been a 'string' with contentMediaType 'application/json'.");
+                return result.WithResult(isValid: false, "Validation contentEncoding - should have been a 'string' with contentMediaType 'application/json'.");
             }
             else
             {
@@ -3062,11 +3220,11 @@ public static partial class Validate
             // Should be Valid, but we just annotate.
             if (level >= ValidationLevel.Detailed)
             {
-                return result.WithResult(isValid: alwaysPassAndAnnotateFailuresInContentDecodingChecks, "Validation 8.4 contentMediaType - should have been a 'string' with contentMediaType 'application/json'.");
+                return result.WithResult(isValid: alwaysPassAndAnnotateFailuresInContentDecodingChecks, "Validation contentMediaType - should have been a 'string' with contentMediaType 'application/json'.");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return result.WithResult(isValid: alwaysPassAndAnnotateFailuresInContentDecodingChecks, "Validation 8.4 contentMediaType - should have been a 'string' with contentMediaType 'application/json'.");
+                return result.WithResult(isValid: alwaysPassAndAnnotateFailuresInContentDecodingChecks, "Validation contentMediaType - should have been a 'string' with contentMediaType 'application/json'.");
             }
             else
             {
@@ -3076,7 +3234,7 @@ public static partial class Validate
         else if (level == ValidationLevel.Verbose)
         {
             return result
-                .WithResult(isValid: true, "Validation 8.4 contentMediaType - was a'string' with contentMediaType 'application/json'.");
+                .WithResult(isValid: true, "Validation contentMediaType - was a'string' with contentMediaType 'application/json'.");
         }
 
         return result;
@@ -3089,11 +3247,12 @@ public static partial class Validate
     /// <param name="value">The instance to validate.</param>
     /// <param name="validationContext">The current validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="typeKeyword">The type keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeBase64ContentPre201909<TValue>(in TValue value, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeBase64ContentPre201909<TValue>(in TValue value, in ValidationContext validationContext, ValidationLevel level, string? typeKeyword = null)
         where TValue : struct, IJsonValue<TValue>
     {
-        return TypeBase64Content(value, validationContext, level, false);
+        return TypeBase64Content(value, validationContext, level, false, typeKeyword);
     }
 
     /// <summary>
@@ -3104,8 +3263,9 @@ public static partial class Validate
     /// <param name="validationContext">The current validation context.</param>
     /// <param name="level">The validation level.</param>
     /// <param name="alwaysPassAndAnnotateFailuresInContentDecodingChecks">Always pass failures in content decoding, but annotate.</param>
+    /// <param name="typeKeyword">The type keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeBase64Content<TValue>(in TValue value, in ValidationContext validationContext, ValidationLevel level, bool alwaysPassAndAnnotateFailuresInContentDecodingChecks = true)
+    public static ValidationContext TypeBase64Content<TValue>(in TValue value, in ValidationContext validationContext, ValidationLevel level, bool alwaysPassAndAnnotateFailuresInContentDecodingChecks = true, string? typeKeyword = null)
     where TValue : struct, IJsonValue<TValue>
     {
         ValidationContext result = validationContext;
@@ -3116,11 +3276,11 @@ public static partial class Validate
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return result.WithResult(isValid: false, $"Validation type - should have been 'string' with contentEncoding 'base64' and contentMediaType 'application/json' but was '{valueKind}'.");
+                return result.WithResult(isValid: false, $"Validation type - should have been 'string' with contentEncoding 'base64' and contentMediaType 'application/json' but was '{valueKind}'.", typeKeyword ?? "type");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return result.WithResult(isValid: false, "Validation type - should have been 'string' with contentEncoding 'base64' and contentMediaType 'application/json'.");
+                return result.WithResult(isValid: false, "Validation type - should have been 'string' with contentEncoding 'base64' and contentMediaType 'application/json'.", typeKeyword ?? "type");
             }
             else
             {
@@ -3135,11 +3295,11 @@ public static partial class Validate
             // Is valid, but we annotate
             if (level >= ValidationLevel.Detailed)
             {
-                return result.WithResult(isValid: alwaysPassAndAnnotateFailuresInContentDecodingChecks, "Validation 8.3 contentEncoding - should have been a base64 encoded 'string'.");
+                return result.WithResult(isValid: alwaysPassAndAnnotateFailuresInContentDecodingChecks, "Validation contentEncoding - should have been a base64 encoded 'string'.");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return result.WithResult(isValid: alwaysPassAndAnnotateFailuresInContentDecodingChecks, "Validation 8.3 contentEncoding - should have been a base64 encoded 'string'.");
+                return result.WithResult(isValid: alwaysPassAndAnnotateFailuresInContentDecodingChecks, "Validation contentEncoding - should have been a base64 encoded 'string'.");
             }
             else
             {
@@ -3151,11 +3311,11 @@ public static partial class Validate
             // Validates true, but we will annotate ite
             if (level >= ValidationLevel.Detailed)
             {
-                return result.WithResult(isValid: alwaysPassAndAnnotateFailuresInContentDecodingChecks, "Validation 8.4 contentMediaType - valid, but should have been a base64 encoded 'string' of type 'application/json'.");
+                return result.WithResult(isValid: alwaysPassAndAnnotateFailuresInContentDecodingChecks, "Validation contentMediaType - valid, but should have been a base64 encoded 'string' of type 'application/json'.");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return result.WithResult(isValid: alwaysPassAndAnnotateFailuresInContentDecodingChecks, "Validation 8.4 contentMediaType - valid, but should have been a base64 encoded 'string' of type 'application/json'.");
+                return result.WithResult(isValid: alwaysPassAndAnnotateFailuresInContentDecodingChecks, "Validation contentMediaType - valid, but should have been a base64 encoded 'string' of type 'application/json'.");
             }
             else
             {
@@ -3165,8 +3325,8 @@ public static partial class Validate
         else if (level == ValidationLevel.Verbose)
         {
             return result
-                .WithResult(isValid: true, "Validation 8.3 contentEncoding - was a base64 encoded 'string'.")
-                .WithResult(isValid: true, "Validation 8.4 contentMediaType - was a base64 encoded 'string' of type 'application/json'.");
+                .WithResult(isValid: true, "Validation contentEncoding - was a base64 encoded 'string'.")
+                .WithResult(isValid: true, "Validation contentMediaType - was a base64 encoded 'string' of type 'application/json'.");
         }
 
         return result;
@@ -3179,11 +3339,12 @@ public static partial class Validate
     /// <param name="value">The instance to validate.</param>
     /// <param name="validationContext">The current validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="typeKeyword">The type keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeBase64StringPre201909<TValue>(in TValue value, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeBase64StringPre201909<TValue>(in TValue value, in ValidationContext validationContext, ValidationLevel level, string? typeKeyword = null)
         where TValue : struct, IJsonValue<TValue>
     {
-        return TypeBase64String(value, validationContext, level, false);
+        return TypeBase64String(value, validationContext, level, false, typeKeyword);
     }
 
     /// <summary>
@@ -3194,8 +3355,9 @@ public static partial class Validate
     /// <param name="validationContext">The current validation context.</param>
     /// <param name="level">The validation level.</param>
     /// <param name="alwaysPassAndAnnotateFailuresInContentDecodingChecks">Always pass but annotate the nodes on encoding failure.</param>
+    /// <param name="typeKeyword">The type keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeBase64String<TValue>(in TValue value, in ValidationContext validationContext, ValidationLevel level, bool alwaysPassAndAnnotateFailuresInContentDecodingChecks = true)
+    public static ValidationContext TypeBase64String<TValue>(in TValue value, in ValidationContext validationContext, ValidationLevel level, bool alwaysPassAndAnnotateFailuresInContentDecodingChecks = true, string? typeKeyword = null)
     where TValue : struct, IJsonValue<TValue>
     {
         ValidationContext result = validationContext;
@@ -3206,11 +3368,11 @@ public static partial class Validate
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return result.WithResult(isValid: false, $"Validation type - should have been 'string' with contentEncoding 'base64' but was '{valueKind}'.");
+                return result.WithResult(isValid: false, $"Validation type - should have been 'string' with contentEncoding 'base64' but was '{valueKind}'.", typeKeyword ?? "type");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return result.WithResult(isValid: false, "Validation type - should have been 'string' with contentEncoding 'base64'.");
+                return result.WithResult(isValid: false, "Validation type - should have been 'string' with contentEncoding 'base64'.", typeKeyword ?? "type");
             }
             else
             {
@@ -3225,11 +3387,11 @@ public static partial class Validate
             // Valid, but we annotate
             if (level >= ValidationLevel.Detailed)
             {
-                return result.WithResult(isValid: alwaysPassAndAnnotateFailuresInContentDecodingChecks, "Validation 8.3 contentEncoding - should have been a base64 encoded 'string'.");
+                return result.WithResult(isValid: alwaysPassAndAnnotateFailuresInContentDecodingChecks, "Validation contentEncoding - should have been a base64 encoded 'string'.");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return result.WithResult(isValid: alwaysPassAndAnnotateFailuresInContentDecodingChecks, "Validation 8.3 contentEncoding - should have been a base64 encoded 'string'.");
+                return result.WithResult(isValid: alwaysPassAndAnnotateFailuresInContentDecodingChecks, "Validation contentEncoding - should have been a base64 encoded 'string'.");
             }
             else
             {
@@ -3239,7 +3401,7 @@ public static partial class Validate
         else if (level == ValidationLevel.Verbose)
         {
             return result
-                .WithResult(isValid: true, "Validation 8.3 contentEncoding - was a base64 encoded 'string'.");
+                .WithResult(isValid: true, "Validation contentEncoding - was a base64 encoded 'string'.");
         }
 
         return result;
@@ -3252,8 +3414,10 @@ public static partial class Validate
     /// <param name="instance">The instance to validate.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="typeKeyword">The type keyword.</param>
+    /// <param name="formatKeyword">The format keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeRegex<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeRegex<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? typeKeyword = null, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
     {
         JsonValueKind valueKind = instance.ValueKind;
@@ -3261,11 +3425,11 @@ public static partial class Validate
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'regex' but was '{valueKind}'.");
+                return validationContext.WithResult(isValid: false, $"Validation {typeKeyword ?? "type"} - should have been 'string' but was '{valueKind}'.", typeKeyword ?? "type");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been 'string' with format 'regex'.");
+                return validationContext.WithResult(isValid: false, "Validation type - should have been 'string'.", typeKeyword ?? "type");
             }
             else
             {
@@ -3279,11 +3443,11 @@ public static partial class Validate
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'regex' but was '{regexInstance}'.");
+                return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been 'string' with format 'regex' but was '{regexInstance}'.", formatKeyword ?? "format");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been a 'string' with format 'regex'.");
+                return validationContext.WithResult(isValid: false, "Validation format - should have been a 'string' with format 'regex'.", formatKeyword ?? "format");
             }
             else
             {
@@ -3294,7 +3458,8 @@ public static partial class Validate
         if (level == ValidationLevel.Verbose)
         {
             return validationContext
-                .WithResult(isValid: true, "Validation type - was a 'string' with format 'regex'.");
+                .WithResult(isValid: true, $"Validation {typeKeyword ?? "type"} - was 'string'.", typeKeyword ?? "type")
+                .WithResult(isValid: true, $"Validation {formatKeyword ?? "format"} - was 'regex'.", formatKeyword ?? "format");
         }
 
         return validationContext;
@@ -3307,8 +3472,10 @@ public static partial class Validate
     /// <param name="instance">The instance to validate.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="typeKeyword">The type keyword.</param>
+    /// <param name="formatKeyword">The format keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeIriReference<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeIriReference<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? typeKeyword = null, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
     {
         JsonValueKind valueKind = instance.ValueKind;
@@ -3316,11 +3483,11 @@ public static partial class Validate
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'iri-reference' but was '{valueKind}'.");
+                return validationContext.WithResult(isValid: false, $"Validation {typeKeyword ?? "type"} - should have been 'string' but was '{valueKind}'.", typeKeyword ?? "type");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been 'string' with format 'iri-reference'.");
+                return validationContext.WithResult(isValid: false, "Validation type - should have been 'string'.", typeKeyword ?? "type");
             }
             else
             {
@@ -3341,11 +3508,11 @@ public static partial class Validate
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'iri-reference' but was '{iri}'.");
+                return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been 'iri-reference' but was '{iri}'.", typeKeyword ?? "type");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been a 'string' with format 'iri-reference'.");
+                return validationContext.WithResult(isValid: false, "Validation format - should have been 'iri-reference'.", formatKeyword ?? "format");
             }
             else
             {
@@ -3356,7 +3523,8 @@ public static partial class Validate
         if (level == ValidationLevel.Verbose)
         {
             return validationContext
-                .WithResult(isValid: true, "Validation type - was a 'string' with format 'iri-reference'.");
+                .WithResult(isValid: true, $"Validation {typeKeyword ?? "type"} - was 'string'.", typeKeyword ?? "type")
+                .WithResult(isValid: true, $"Validation {formatKeyword ?? "format"} - was 'iri-reference'.", formatKeyword ?? "format");
         }
 
         return validationContext;
@@ -3369,8 +3537,10 @@ public static partial class Validate
     /// <param name="instance">The instance to validate.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="typeKeyword">The type keyword.</param>
+    /// <param name="formatKeyword">The format keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeIri<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeIri<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? typeKeyword = null, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
     {
         JsonValueKind valueKind = instance.ValueKind;
@@ -3378,11 +3548,11 @@ public static partial class Validate
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'iri' but was '{valueKind}'.");
+                return validationContext.WithResult(isValid: false, $"Validation {typeKeyword ?? "type"} - should have been 'string' but was '{valueKind}'.", typeKeyword ?? "type");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been 'string' with format 'iri'.");
+                return validationContext.WithResult(isValid: false, "Validation type - should have been 'string'.", typeKeyword ?? "type");
             }
             else
             {
@@ -3396,11 +3566,11 @@ public static partial class Validate
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'iri' but was '{iri}'.");
+                return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been 'iri' but was '{iri}'.", formatKeyword ?? "format");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been a 'string' with format 'iri'.");
+                return validationContext.WithResult(isValid: false, "Validation format - should have been 'iri'.", formatKeyword ?? "format");
             }
             else
             {
@@ -3411,7 +3581,8 @@ public static partial class Validate
         if (level == ValidationLevel.Verbose)
         {
             return validationContext
-                .WithResult(isValid: true, "Validation type - was a 'string' with format 'iri'.");
+                .WithResult(isValid: true, $"Validation {typeKeyword ?? "type"} - was 'string'.", typeKeyword ?? "type")
+                .WithResult(isValid: true, $"Validation {formatKeyword ?? "format"} - was 'iri'.", formatKeyword ?? "format");
         }
 
         return validationContext;
@@ -3424,8 +3595,10 @@ public static partial class Validate
     /// <param name="instance">The instance to validate.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="typeKeyword">The type keyword.</param>
+    /// <param name="formatKeyword">The format keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeUri<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeUri<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? typeKeyword = null, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
     {
         JsonValueKind valueKind = instance.ValueKind;
@@ -3433,11 +3606,11 @@ public static partial class Validate
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'uri' but was '{valueKind}'.");
+                return validationContext.WithResult(isValid: false, $"Validation {typeKeyword ?? "type"} - should have been 'string' but was '{valueKind}'.", typeKeyword ?? "type");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been 'string' with format 'uri'.");
+                return validationContext.WithResult(isValid: false, "Validation type - should have been 'string'.", typeKeyword ?? "type");
             }
             else
             {
@@ -3451,11 +3624,11 @@ public static partial class Validate
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'uri' but was '{uriInstance}'.");
+                return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been 'uri' but was '{uriInstance}'.", formatKeyword ?? "format");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been a 'string' with format 'uri'.");
+                return validationContext.WithResult(isValid: false, "Validation format - should have been 'uri'.", formatKeyword ?? "format");
             }
             else
             {
@@ -3466,7 +3639,8 @@ public static partial class Validate
         if (level == ValidationLevel.Verbose)
         {
             return validationContext
-                .WithResult(isValid: true, "Validation type - was a 'string' with format 'uri'.");
+                .WithResult(isValid: true, $"Validation {typeKeyword ?? "type"} - was 'string'.", typeKeyword ?? "type")
+                .WithResult(isValid: true, $"Validation {formatKeyword ?? "format"} - was 'uri'.", formatKeyword ?? "format");
         }
 
         return validationContext;
@@ -3479,8 +3653,10 @@ public static partial class Validate
     /// <param name="instance">The instance to validate.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="typeKeyword">The type keyword.</param>
+    /// <param name="formatKeyword">The format keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeUriReference<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeUriReference<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? typeKeyword = null, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
     {
         JsonValueKind valueKind = instance.ValueKind;
@@ -3488,11 +3664,11 @@ public static partial class Validate
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'uri-reference' but was '{valueKind}'.");
+                return validationContext.WithResult(isValid: false, $"Validation {typeKeyword ?? "type"} - should have been 'string' but was '{valueKind}'.", typeKeyword ?? "type");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been 'string' with format 'uri-reference'.");
+                return validationContext.WithResult(isValid: false, "Validation type - should have been 'string'.", typeKeyword ?? "type");
             }
             else
             {
@@ -3513,11 +3689,11 @@ public static partial class Validate
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'uri-reference' but was '{uriReferenceInstance}'.");
+                return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been 'uri-reference' but was '{uriReferenceInstance}'.", formatKeyword ?? "format");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been a 'string' with format 'uri-reference'.");
+                return validationContext.WithResult(isValid: false, "Validation format - should have been 'uri-reference'.", formatKeyword ?? "format");
             }
             else
             {
@@ -3528,7 +3704,8 @@ public static partial class Validate
         if (level == ValidationLevel.Verbose)
         {
             return validationContext
-                .WithResult(isValid: true, "Validation type - was a 'string' with format 'uri-reference'.");
+                .WithResult(isValid: true, $"Validation {typeKeyword ?? "type"} - was 'string'.", typeKeyword ?? "type")
+                .WithResult(isValid: true, $"Validation {formatKeyword ?? "format"} - was 'uri-reference'.", formatKeyword ?? "format");
         }
 
         return validationContext;
@@ -3541,8 +3718,10 @@ public static partial class Validate
     /// <param name="instance">The instance to validate.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="typeKeyword">The type keyword.</param>
+    /// <param name="formatKeyword">The format keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeTime<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeTime<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? typeKeyword = null, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
     {
         JsonValueKind valueKind = instance.ValueKind;
@@ -3550,11 +3729,11 @@ public static partial class Validate
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'date' but was '{valueKind}'.");
+                return validationContext.WithResult(isValid: false, $"Validation {typeKeyword ?? "type"} - should have been 'string' but was '{valueKind}'.", typeKeyword ?? "type");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been 'string' with format 'date'.");
+                return validationContext.WithResult(isValid: false, "Validation type - should have been 'string'.", typeKeyword ?? "type");
             }
             else
             {
@@ -3568,11 +3747,11 @@ public static partial class Validate
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'time' but was '{time}'.");
+                return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been 'time' but was '{time}'.", formatKeyword ?? "format");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been a 'string' with format 'time'.");
+                return validationContext.WithResult(isValid: false, "Validation format - should have been a 'time'.", formatKeyword ?? "format");
             }
             else
             {
@@ -3583,7 +3762,8 @@ public static partial class Validate
         if (level == ValidationLevel.Verbose)
         {
             return validationContext
-                .WithResult(isValid: true, "Validation type - was a 'string' with format 'time'.");
+                .WithResult(isValid: true, $"Validation {typeKeyword ?? "type"} - was 'string'.", typeKeyword ?? "type")
+                .WithResult(isValid: true, $"Validation {formatKeyword ?? "format"} - was 'time'.", formatKeyword ?? "format");
         }
 
         return validationContext;
@@ -3596,8 +3776,10 @@ public static partial class Validate
     /// <param name="instance">The instance to validate.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="typeKeyword">The type keyword.</param>
+    /// <param name="formatKeyword">The format keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeDate<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeDate<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? typeKeyword = null, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
     {
         JsonValueKind valueKind = instance.ValueKind;
@@ -3605,11 +3787,11 @@ public static partial class Validate
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'date' but was '{valueKind}'.");
+                return validationContext.WithResult(isValid: false, $"Validation {typeKeyword ?? "type"} - should have been 'string' but was '{valueKind}'.", typeKeyword ?? "type");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been 'string' with format 'date'.");
+                return validationContext.WithResult(isValid: false, "Validation type - should have been 'string'.", typeKeyword ?? "type");
             }
             else
             {
@@ -3623,11 +3805,11 @@ public static partial class Validate
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'date' but was '{date}'.");
+                return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been'date' but was '{date}'.", formatKeyword ?? "format");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been a 'string' with format 'date'.");
+                return validationContext.WithResult(isValid: false, "Validation format - should have been 'date'.", formatKeyword ?? "format");
             }
             else
             {
@@ -3638,7 +3820,8 @@ public static partial class Validate
         if (level == ValidationLevel.Verbose)
         {
             return validationContext
-                .WithResult(isValid: true, "Validation type - was a 'string' with format 'date'.");
+                .WithResult(isValid: true, $"Validation {typeKeyword ?? "type"} - was 'string'.", typeKeyword ?? "type")
+                .WithResult(isValid: true, $"Validation {formatKeyword ?? "format"} - was 'date'.", formatKeyword ?? "format");
         }
 
         return validationContext;
@@ -3651,8 +3834,10 @@ public static partial class Validate
     /// <param name="instance">The instance to validate.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="typeKeyword">The type keyword.</param>
+    /// <param name="formatKeyword">The format keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeIpV6<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeIpV6<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? typeKeyword = null, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
     {
         JsonValueKind valueKind = instance.ValueKind;
@@ -3660,11 +3845,11 @@ public static partial class Validate
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'ipv6' but was '{valueKind}'.");
+                return validationContext.WithResult(isValid: false, $"Validation {typeKeyword ?? "type"} - should have been 'string' but was '{valueKind}'.", typeKeyword ?? "type");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been 'string' with format 'ipv6'.");
+                return validationContext.WithResult(isValid: false, "Validation type - should have been 'string'.", typeKeyword ?? "type");
             }
             else
             {
@@ -3672,12 +3857,21 @@ public static partial class Validate
             }
         }
 
-        ValidationContext result = validationContext;
+        ValidationContext result;
+        if (level >= ValidationLevel.Verbose)
+        {
+            result = validationContext
+                .WithResult(isValid: true, $"Validation {typeKeyword ?? "type"} - was 'string'.", typeKeyword ?? "type");
+        }
+        else
+        {
+            result = validationContext;
+        }
 
 #if NET8_0_OR_GREATER
-        instance.AsString.TryGetValue(IpV6Validator, new ValidationContextWrapper(result, level), out result);
+        instance.AsString.TryGetValue(IpV6Validator, new ValidationContextWrapperWithFormatKeyword(result, level, formatKeyword), out result);
 #else
-        IpV6Validator(instance.AsString.GetString(), new ValidationContextWrapper(result, level), out result);
+        IpV6Validator(instance.AsString.GetString(), new ValidationContextWrapperWithFormatKeyword(result, level, formatKeyword), out result);
 #endif
 
         if (level == ValidationLevel.Flag && !result.IsValid)
@@ -3688,9 +3882,9 @@ public static partial class Validate
         return result;
 
 #if NET8_0_OR_GREATER
-        static bool IpV6Validator(ReadOnlySpan<char> input, in ValidationContextWrapper context, out ValidationContext result)
+        static bool IpV6Validator(ReadOnlySpan<char> input, in ValidationContextWrapperWithFormatKeyword context, out ValidationContext result)
 #else
-        static bool IpV6Validator(string input, in ValidationContextWrapper context, out ValidationContext result)
+        static bool IpV6Validator(string input, in ValidationContextWrapperWithFormatKeyword context, out ValidationContext result)
 #endif
         {
             result = context.Context;
@@ -3701,7 +3895,7 @@ public static partial class Validate
             {
                 if (context.Level == ValidationLevel.Verbose)
                 {
-                    result = context.Context.WithResult(isValid: true, "Validation type - was a 'string' with format 'ipv6'.");
+                    result = context.Context.WithResult(isValid: true, $"Validation {context.FormatKeyword ?? "format"} - was 'ipv6'.", context.FormatKeyword ?? "format");
                 }
 
                 return true;
@@ -3710,15 +3904,11 @@ public static partial class Validate
             {
                 if (context.Level >= ValidationLevel.Detailed)
                 {
-#if NET8_0_OR_GREATER
-                    result = context.Context.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'ipv6', but was '{input}'.");
-#else
-                    result = context.Context.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'ipv6', but was '{input}'.");
-#endif
+                    result = context.Context.WithResult(isValid: false, $"Validation {context.FormatKeyword ?? "format"} - should have been 'ipv6', but was '{input}'.", context.FormatKeyword ?? "format");
                 }
                 else if (context.Level >= ValidationLevel.Basic)
                 {
-                    result = context.Context.WithResult(isValid: false, "Validation type - should have been a 'string' with format 'ipv6'.");
+                    result = context.Context.WithResult(isValid: false, "Validation format - should have been 'ipv6'.", context.FormatKeyword ?? "format");
                 }
                 else
                 {
@@ -3737,8 +3927,10 @@ public static partial class Validate
     /// <param name="instance">The instance to validate.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="typeKeyword">The type keyword.</param>
+    /// <param name="formatKeyword">The format keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeIpV4<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeIpV4<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? typeKeyword = null, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
     {
         JsonValueKind valueKind = instance.ValueKind;
@@ -3746,11 +3938,11 @@ public static partial class Validate
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'ipv4' but was '{valueKind}'.");
+                return validationContext.WithResult(isValid: false, $"Validation {typeKeyword ?? "type"} - should have been 'string' but was '{valueKind}'.", typeKeyword ?? "type");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been 'string' with format 'ipv4'.");
+                return validationContext.WithResult(isValid: false, "Validation type - should have been 'string'.", typeKeyword ?? "type");
             }
             else
             {
@@ -3758,11 +3950,21 @@ public static partial class Validate
             }
         }
 
-        ValidationContext result = validationContext;
+        ValidationContext result;
+        if (level >= ValidationLevel.Verbose)
+        {
+            result = validationContext
+                .WithResult(isValid: true, $"Validation {typeKeyword ?? "type"} - was 'string'.", typeKeyword ?? "type");
+        }
+        else
+        {
+            result = validationContext;
+        }
+
 #if NET8_0_OR_GREATER
-        instance.AsString.TryGetValue(IpV4Validator, new ValidationContextWrapper(result, level), out result);
+        instance.AsString.TryGetValue(IpV4Validator, new ValidationContextWrapperWithFormatKeyword(result, level, formatKeyword), out result);
 #else
-        IpV4Validator(instance.AsString.GetString(), new ValidationContextWrapper(result, level), out result);
+        IpV4Validator(instance.AsString.GetString(), new ValidationContextWrapperWithFormatKeyword(result, level, formatKeyword), out result);
 #endif
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
@@ -3772,9 +3974,9 @@ public static partial class Validate
         return result;
 
 #if NET8_0_OR_GREATER
-        static bool IpV4Validator(ReadOnlySpan<char> input, in ValidationContextWrapper context, out ValidationContext result)
+        static bool IpV4Validator(ReadOnlySpan<char> input, in ValidationContextWrapperWithFormatKeyword context, out ValidationContext result)
 #else
-        static bool IpV4Validator(string input, in ValidationContextWrapper context, out ValidationContext result)
+        static bool IpV4Validator(string input, in ValidationContextWrapperWithFormatKeyword context, out ValidationContext result)
 #endif
         {
             result = context.Context;
@@ -3785,7 +3987,7 @@ public static partial class Validate
             {
                 if (context.Level == ValidationLevel.Verbose)
                 {
-                    result = context.Context.WithResult(isValid: true, "Validation type - was a 'string' with format 'ipv4'.");
+                    result = context.Context.WithResult(isValid: true, $"Validation {context.FormatKeyword ?? "format"} - was 'ipv4'.", context.FormatKeyword ?? "format");
                 }
 
                 return true;
@@ -3794,15 +3996,11 @@ public static partial class Validate
             {
                 if (context.Level >= ValidationLevel.Detailed)
                 {
-#if NET8_0_OR_GREATER
-                    result = context.Context.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'ipv4', but was '{input}'.");
-#else
-                    result = context.Context.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'ipv4', but was '{input}'.");
-#endif
+                    result = context.Context.WithResult(isValid: false, $"Validation {context.FormatKeyword ?? "format"} - should have been 'ipv4', but was '{input}'.", context.FormatKeyword ?? "format");
                 }
                 else if (context.Level >= ValidationLevel.Basic)
                 {
-                    result = context.Context.WithResult(isValid: false, "Validation type - should have been a 'string' with format 'ipv4'.");
+                    result = context.Context.WithResult(isValid: false, "Validation format - should have been 'ipv4'.", context.FormatKeyword ?? "format");
                 }
                 else
                 {
@@ -3821,8 +4019,10 @@ public static partial class Validate
     /// <param name="instance">The instance to validate.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="typeKeyword">The type keyword.</param>
+    /// <param name="formatKeyword">The format keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeDateTime<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeDateTime<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? typeKeyword = null, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
     {
         JsonValueKind valueKind = instance.ValueKind;
@@ -3830,11 +4030,11 @@ public static partial class Validate
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'datetime' but was '{valueKind}'.");
+                return validationContext.WithResult(isValid: false, $"Validation {typeKeyword ?? "type"} - should have been 'string' but was '{valueKind}'.", typeKeyword ?? "type");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been 'string' with format 'datetime'.");
+                return validationContext.WithResult(isValid: false, "Validation type - should have been 'string'.", typeKeyword ?? "type");
             }
             else
             {
@@ -3848,11 +4048,11 @@ public static partial class Validate
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been 'string' with format 'datetime' but was '{date}'.");
+                return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been 'datetime' but was '{date}'.", formatKeyword ?? "format");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been a 'string' with format 'datetime'.");
+                return validationContext.WithResult(isValid: false, "Validation format - should have been 'datetime'.", formatKeyword ?? "format");
             }
             else
             {
@@ -3863,7 +4063,8 @@ public static partial class Validate
         if (level == ValidationLevel.Verbose)
         {
             return validationContext
-                .WithResult(isValid: true, "Validation type - was a 'string' with format 'datetime'.");
+                .WithResult(isValid: true, $"Validation {typeKeyword ?? "type"} - was 'string'.", typeKeyword ?? "type")
+                .WithResult(isValid: true, $"Validation {formatKeyword ?? "format"} - was 'datetime'.", formatKeyword ?? "format");
         }
 
         return validationContext;
@@ -3939,6 +4140,8 @@ public static partial class Validate
     /// <param name="Level">The validation level.</param>
     public readonly record struct ValidationContextWrapper(in ValidationContext Context, ValidationLevel Level);
 
+    private readonly record struct ValidationContextWrapperWithFormatKeyword(in ValidationContext Context, ValidationLevel Level, string? FormatKeyword);
+
     private readonly record struct StringValidationContextWrapper(in ValidationContext Context, ValidationLevel Level, int? MinLength, int? MaxLength, Regex? Pattern);
 #else
     /// <summary>
@@ -3966,6 +4169,40 @@ public static partial class Validate
         /// Gets the validation level.
         /// </summary>
         public ValidationLevel Level { get; }
+    }
+
+    /// <summary>
+    /// A wrapper for the <see cref="ValidationContext"/> and <see cref="ValidationLevel"/>.
+    /// </summary>
+    private readonly struct ValidationContextWrapperWithFormatKeyword
+    {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ValidationContextWrapper"/> struct.
+        /// </summary>
+        /// <param name="context">The validation context.</param>
+        /// <param name="level">The validation level.</param>
+        /// <param name="formatKeyword">The format keyword.</param>
+        public ValidationContextWrapperWithFormatKeyword(in ValidationContext context, ValidationLevel level, string? formatKeyword)
+        {
+            this.Context = context;
+            this.Level = level;
+            this.FormatKeyword = formatKeyword;
+        }
+
+        /// <summary>
+        /// Gets the validation context.
+        /// </summary>
+        public ValidationContext Context { get; }
+
+        /// <summary>
+        /// Gets the validation level.
+        /// </summary>
+        public ValidationLevel Level { get; }
+
+        /// <summary>
+        /// Gets the format keyword.
+        /// </summary>
+        public string? FormatKeyword { get; }
     }
 
     private readonly struct StringValidationContextWrapper

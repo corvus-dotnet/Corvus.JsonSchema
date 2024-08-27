@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Text.Json;
+using Microsoft.CodeAnalysis.CSharp;
 
 namespace Corvus.Json.CodeGeneration.CSharp;
 
@@ -20,9 +21,17 @@ public class WellKnownNumericFormatHandler : INumberFormatHandler
     public uint Priority => 100_000;
 
     /// <inheritdoc/>
-    public bool AppendFormatAssertion(CodeGenerator generator, string format, string valueIdentifier, string validationContextIdentifier, bool includeType)
+    public bool AppendFormatAssertion(CodeGenerator generator, string format, string valueIdentifier, string validationContextIdentifier, bool includeType, IKeyword? typeKeyword, IKeyword? formatKeyword)
     {
         string validator = includeType ? "Validate" : "ValidateWithoutCoreType";
+
+        string typeKeywordDisplay = typeKeyword is IKeyword t ? SymbolDisplay.FormatLiteral(t.Keyword, true) : "null";
+        string formatKeywordDisplay = formatKeyword is IKeyword f ? SymbolDisplay.FormatLiteral(f.Keyword, true) : "null";
+
+        string keywordParameters =
+            includeType
+                ? $"{typeKeywordDisplay}, {formatKeywordDisplay}"
+                : formatKeywordDisplay;
 
         switch (format)
         {
@@ -34,7 +43,9 @@ public class WellKnownNumericFormatHandler : INumberFormatHandler
                     valueIdentifier,
                     ", ",
                     validationContextIdentifier,
-                    ", level);");
+                    ", level, ",
+                    keywordParameters,
+                    ");");
                 return true;
 
             case "uint16":
@@ -45,7 +56,9 @@ public class WellKnownNumericFormatHandler : INumberFormatHandler
                     valueIdentifier,
                     ", ",
                     validationContextIdentifier,
-                    ", level);");
+                    ", level, ",
+                    keywordParameters,
+                    ");");
                 return true;
             case "uint32":
                 generator.AppendLineIndent(
@@ -55,7 +68,9 @@ public class WellKnownNumericFormatHandler : INumberFormatHandler
                     valueIdentifier,
                     ", ",
                     validationContextIdentifier,
-                    ", level);");
+                    ", level, ",
+                    keywordParameters,
+                    ");");
                 return true;
             case "uint64":
                 generator.AppendLineIndent(
@@ -65,7 +80,9 @@ public class WellKnownNumericFormatHandler : INumberFormatHandler
                     valueIdentifier,
                     ", ",
                     validationContextIdentifier,
-                    ", level);");
+                    ", level, ",
+                    keywordParameters,
+                    ");");
                 return true;
             case "uint128":
                 generator.AppendLineIndent(
@@ -75,7 +92,9 @@ public class WellKnownNumericFormatHandler : INumberFormatHandler
                     valueIdentifier,
                     ", ",
                     validationContextIdentifier,
-                    ", level);");
+                    ", level, ",
+                    keywordParameters,
+                    ");");
                 return true;
             case "sbyte":
                 generator.AppendLineIndent(
@@ -85,7 +104,9 @@ public class WellKnownNumericFormatHandler : INumberFormatHandler
                     valueIdentifier,
                     ", ",
                     validationContextIdentifier,
-                    ", level);");
+                    ", level, ",
+                    keywordParameters,
+                    ");");
                 return true;
             case "int16":
                 generator.AppendLineIndent(
@@ -95,7 +116,9 @@ public class WellKnownNumericFormatHandler : INumberFormatHandler
                     valueIdentifier,
                     ", ",
                     validationContextIdentifier,
-                    ", level);");
+                    ", level, ",
+                    keywordParameters,
+                    ");");
                 return true;
             case "int32":
                 generator.AppendLineIndent(
@@ -105,7 +128,9 @@ public class WellKnownNumericFormatHandler : INumberFormatHandler
                     valueIdentifier,
                     ", ",
                     validationContextIdentifier,
-                    ", level);");
+                    ", level, ",
+                    keywordParameters,
+                    ");");
                 return true;
             case "int64":
                 generator.AppendLineIndent(
@@ -115,7 +140,9 @@ public class WellKnownNumericFormatHandler : INumberFormatHandler
                     valueIdentifier,
                     ", ",
                     validationContextIdentifier,
-                    ", level);");
+                    ", level, ",
+                    keywordParameters,
+                    ");");
                 return true;
             case "int128":
                 generator.AppendLineIndent(
@@ -125,7 +152,9 @@ public class WellKnownNumericFormatHandler : INumberFormatHandler
                     valueIdentifier,
                     ", ",
                     validationContextIdentifier,
-                    ", level);");
+                    ", level, ",
+                    keywordParameters,
+                    ");");
                 return true;
             case "half":
                 generator.AppendLineIndent(
@@ -135,7 +164,9 @@ public class WellKnownNumericFormatHandler : INumberFormatHandler
                     valueIdentifier,
                     ", ",
                     validationContextIdentifier,
-                    ", level);");
+                    ", level, ",
+                    keywordParameters,
+                    ");");
                 return true;
             case "single":
                 generator.AppendLineIndent(
@@ -145,7 +176,9 @@ public class WellKnownNumericFormatHandler : INumberFormatHandler
                     valueIdentifier,
                     ", ",
                     validationContextIdentifier,
-                    ", level);");
+                    ", level, ",
+                    keywordParameters,
+                    ");");
                 return true;
             case "double":
                 generator.AppendLineIndent(
@@ -155,7 +188,9 @@ public class WellKnownNumericFormatHandler : INumberFormatHandler
                     valueIdentifier,
                     ", ",
                     validationContextIdentifier,
-                    ", level);");
+                    ", level, ",
+                    keywordParameters,
+                    ");");
                 return true;
             case "decimal":
                 generator.AppendLineIndent(
@@ -165,7 +200,9 @@ public class WellKnownNumericFormatHandler : INumberFormatHandler
                     valueIdentifier,
                     ", ",
                     validationContextIdentifier,
-                    ", level);");
+                    ", level, ",
+                    keywordParameters,
+                    ");");
                 return true;
             default:
                 return false;

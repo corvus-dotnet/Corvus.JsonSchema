@@ -116,7 +116,7 @@ public readonly partial struct OpenApiDocument
                     in ValidationContext validationContext,
                     ValidationLevel level = ValidationLevel.Flag)
                 {
-                    return Corvus.Json.ValidateWithoutCoreType.TypeString(valueKind, validationContext, level);
+                    return Corvus.Json.ValidateWithoutCoreType.TypeString(valueKind, validationContext, level, "type");
                 }
 
                 /// <summary>

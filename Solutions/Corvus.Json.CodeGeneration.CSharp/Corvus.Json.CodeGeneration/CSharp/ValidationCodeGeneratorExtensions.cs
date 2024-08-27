@@ -531,6 +531,12 @@ public static partial class ValidationCodeGeneratorExtensions
             return generator;
         }
 
+        IKeyword? typeKeyword = typeDeclaration.Keywords().OfType<IFormatValidationKeyword>().FirstOrDefault();
+        IKeyword? formatKeyword = typeDeclaration.Keywords().OfType<IFormatValidationKeyword>().FirstOrDefault();
+
+        string typeKeywordDisplay = typeKeyword is IKeyword t ? SymbolDisplay.FormatLiteral(t.Keyword, true) : "null";
+        string formatKeywordDisplay = formatKeyword is IKeyword f ? SymbolDisplay.FormatLiteral(f.Keyword, true) : "null";
+
         generator
             .AppendSeparatorLine()
             .AppendLineIndent("/// <inheritdoc/>");
@@ -550,31 +556,31 @@ public static partial class ValidationCodeGeneratorExtensions
             {
                 case "JsonObject":
                     generator
-                        .AppendLineIndent("return Json.Validate.TypeObject(this.ValueKind, validationContext, level);");
+                        .AppendLineIndent("return Json.Validate.TypeObject(this.ValueKind, validationContext, level, ", typeKeywordDisplay, ");");
                     break;
                 case "JsonArray":
                     generator
-                        .AppendLineIndent("return Json.Validate.TypeArray(this.ValueKind, validationContext, level);");
+                        .AppendLineIndent("return Json.Validate.TypeArray(this.ValueKind, validationContext, level, ", typeKeywordDisplay, ");");
                     break;
                 case "JsonString":
                     generator
-                        .AppendLineIndent("return Json.Validate.TypeString(this.ValueKind, validationContext, level);");
+                        .AppendLineIndent("return Json.Validate.TypeString(this.ValueKind, validationContext, level, ", typeKeywordDisplay, ");");
                     break;
                 case "JsonBoolean":
                     generator
-                        .AppendLineIndent("return Json.Validate.TypeBoolean(this.ValueKind, validationContext, level);");
+                        .AppendLineIndent("return Json.Validate.TypeBoolean(this.ValueKind, validationContext, level, ", typeKeywordDisplay, ");");
                     break;
                 case "JsonNumber":
                     generator
-                        .AppendLineIndent("return Json.Validate.TypeNumber(this.ValueKind, validationContext, level);");
+                        .AppendLineIndent("return Json.Validate.TypeNumber(this.ValueKind, validationContext, level, ", typeKeywordDisplay, ");");
                     break;
                 case "JsonInteger":
                     generator
-                        .AppendLineIndent("return Json.Validate.TypeInteger(this, validationContext, level);");
+                        .AppendLineIndent("return Json.Validate.TypeInteger(this, validationContext, level, ", typeKeywordDisplay, ");");
                     break;
                 case "JsonNull":
                     generator
-                        .AppendLineIndent("return Json.Validate.TypeNull(this.ValueKind, validationContext, level);");
+                        .AppendLineIndent("return Json.Validate.TypeNull(this.ValueKind, validationContext, level, ", typeKeywordDisplay, ");");
                     break;
                 case "JsonNotAny":
                     generator
@@ -590,6 +596,8 @@ public static partial class ValidationCodeGeneratorExtensions
                         typeDeclaration.ExplicitFormat() ?? throw new InvalidOperationException("There should be an explicit format for a JSON extended type that is not one of the Core types."),
                         "this",
                         "validationContext",
+                        typeKeyword,
+                        formatKeyword,
                         includeType: true);
                     break;
             }

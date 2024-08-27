@@ -52,8 +52,10 @@ public interface IFormatHandler
     /// <param name="valueIdentifier">The identifier for the value to test.</param>
     /// <param name="validationContextIdentifier">The identifier for the validation context to update.</param>
     /// <param name="includeType">If <see langword="true"/>, the type assertion is also included.</param>
+    /// <param name="typeKeyword">The type keyword, or <see langword="null"/> if no type keyword is applied.</param>
+    /// <param name="formatKeyword">The format keyword, or <see langword="null"/> if no format keyword is applied.</param>
     /// <returns><see langword="true"/> if the instance handled this format.</returns>
-    bool AppendFormatAssertion(CodeGenerator generator, string format, string valueIdentifier, string validationContextIdentifier, bool includeType);
+    bool AppendFormatAssertion(CodeGenerator generator, string format, string valueIdentifier, string validationContextIdentifier, bool includeType, IKeyword? typeKeyword, IKeyword? formatKeyword);
 
     /// <summary>
     /// Append format-specific constructors to the generator.

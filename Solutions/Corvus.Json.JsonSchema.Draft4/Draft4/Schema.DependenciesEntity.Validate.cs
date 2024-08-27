@@ -92,7 +92,7 @@ public readonly partial struct Schema
                 in ValidationContext validationContext,
                 ValidationLevel level = ValidationLevel.Flag)
             {
-                return Corvus.Json.ValidateWithoutCoreType.TypeObject(valueKind, validationContext, level);
+                return Corvus.Json.ValidateWithoutCoreType.TypeObject(valueKind, validationContext, level, "type");
             }
 
             /// <summary>

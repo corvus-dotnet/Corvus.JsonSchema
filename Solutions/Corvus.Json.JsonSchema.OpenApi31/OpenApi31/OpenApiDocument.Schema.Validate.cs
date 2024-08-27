@@ -78,7 +78,7 @@ public readonly partial struct OpenApiDocument
                 ValidationLevel level = ValidationLevel.Flag)
             {
                 bool isValid = false;
-                ValidationContext localResultObject = Corvus.Json.ValidateWithoutCoreType.TypeObject(valueKind, ValidationContext.ValidContext, level);
+                ValidationContext localResultObject = Corvus.Json.ValidateWithoutCoreType.TypeObject(valueKind, ValidationContext.ValidContext, level, "type");
                 if (level == ValidationLevel.Flag && localResultObject.IsValid)
                 {
                     return validationContext;
@@ -89,7 +89,7 @@ public readonly partial struct OpenApiDocument
                     isValid = true;
                 }
 
-                ValidationContext localResultBoolean = Corvus.Json.ValidateWithoutCoreType.TypeBoolean(valueKind, ValidationContext.ValidContext, level);
+                ValidationContext localResultBoolean = Corvus.Json.ValidateWithoutCoreType.TypeBoolean(valueKind, ValidationContext.ValidContext, level, "type");
                 if (level == ValidationLevel.Flag && localResultBoolean.IsValid)
                 {
                     return validationContext;
@@ -104,14 +104,14 @@ public readonly partial struct OpenApiDocument
                 {
                     if (level >= ValidationLevel.Verbose)
                     {
-                        return validationContext.WithResult(isValid: false, $"Validation type - should have been 'object', 'boolean' but was {valueKind}");
+                        return validationContext.WithResult(isValid: false, $"Validation type - should have been 'object', 'boolean' but was {valueKind}", "type");
                     }
                 }
                 else
                 {
                     if (level >= ValidationLevel.Detailed)
                     {
-                        return validationContext.WithResult(isValid: false, $"Validation type - should have been 'object', 'boolean'.");
+                        return validationContext.WithResult(isValid: false, $"Validation type - should have been 'object', 'boolean'.", "type");
                     }
                     else
                     {
@@ -121,7 +121,7 @@ public readonly partial struct OpenApiDocument
 
                 if (level >= ValidationLevel.Verbose)
                 {
-                    return validationContext.WithResult(isValid: true, $"Validation type - should be 'object', 'boolean' but was {valueKind}");
+                    return validationContext.WithResult(isValid: true, $"Validation type - should be 'object', 'boolean' but was {valueKind}", "type");
                 }
                 return validationContext;
             }

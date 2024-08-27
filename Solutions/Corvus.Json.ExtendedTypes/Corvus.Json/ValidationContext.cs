@@ -213,8 +213,9 @@ public readonly struct ValidationContext
     /// </summary>
     /// <param name="isValid">Whether the result is valid.</param>
     /// <param name="message">The validation message.</param>
+    /// <param name="keyword">The keyword that produced the result.</param>
     /// <returns>The updated validation context.</returns>
-    public ValidationContext WithResult(bool isValid, string? message = null)
+    public ValidationContext WithResult(bool isValid, string? message = null, string? keyword = null)
     {
         if ((this.usingFeatures & UsingFeatures.Results) == 0)
         {
@@ -224,6 +225,14 @@ public readonly struct ValidationContext
         if ((this.usingFeatures & UsingFeatures.Stack) == 0)
         {
             return new ValidationContext(this.localEvaluatedItemIndex, this.localEvaluatedProperties, this.appliedEvaluatedItemIndex, this.appliedEvaluatedProperties, this.locationStack, this.Results.Add(new ValidationResult(isValid, message ?? string.Empty, null)), isValid ? this.usingFeatures : this.usingFeatures & ~UsingFeatures.IsValid);
+        }
+
+        if (keyword is string k)
+        {
+            (JsonReference ValidationLocation, JsonReference SchemaLocation, JsonReference DocumentLocation) location = this.locationStack.Peek();
+            JsonReference reference = new(k);
+            (JsonReference, JsonReference, JsonReference DocumentLocation) newLocation = (location.ValidationLocation.AppendUnencodedPropertyNameToFragment(reference), location.SchemaLocation.AppendUnencodedPropertyNameToFragment(reference), location.DocumentLocation);
+            return new ValidationContext(this.localEvaluatedItemIndex, this.localEvaluatedProperties, this.appliedEvaluatedItemIndex, this.appliedEvaluatedProperties, this.locationStack, this.Results.Add(new ValidationResult(isValid, message ?? string.Empty, newLocation)), isValid ? this.usingFeatures : this.usingFeatures & ~UsingFeatures.IsValid);
         }
 
         return new ValidationContext(this.localEvaluatedItemIndex, this.localEvaluatedProperties, this.appliedEvaluatedItemIndex, this.appliedEvaluatedProperties, this.locationStack, this.Results.Add(new ValidationResult(isValid, message ?? string.Empty, this.locationStack.Peek())), isValid ? this.usingFeatures : this.usingFeatures & ~UsingFeatures.IsValid);
@@ -240,7 +249,7 @@ public readonly struct ValidationContext
     }
 
     /// <summary>
-    /// Adds an property name to the evaluated properties array.
+    /// Adds a property name to the evaluated properties array.
     /// </summary>
     /// <param name="propertyIndex">The property index to add.</param>
     /// <returns>The updated validation context.</returns>

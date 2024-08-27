@@ -22,6 +22,6 @@ public readonly partial struct JsonArray
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
     {
-        return Json.Validate.TypeArray(this.ValueKind, validationContext, level);
+        return Json.Validate.TypeArray(this.ValueKind, validationContext, level, null);
     }
 }

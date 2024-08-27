@@ -96,7 +96,7 @@ public readonly partial struct GeneratorConfig
                         return validationContext;
                     }
 
-                    return Corvus.Json.ValidateWithoutCoreType.TypeIri(value, validationContext, level);
+                    return Corvus.Json.ValidateWithoutCoreType.TypeIri(value, validationContext, level, "format");
                 }
             }
         }

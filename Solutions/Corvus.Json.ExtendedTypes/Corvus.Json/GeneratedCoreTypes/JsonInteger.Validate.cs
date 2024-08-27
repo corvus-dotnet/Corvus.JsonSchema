@@ -22,6 +22,6 @@ public readonly partial struct JsonInteger
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
     {
-        return Json.Validate.TypeInteger(this, validationContext, level);
+        return Json.Validate.TypeInteger(this, validationContext, level, null);
     }
 }

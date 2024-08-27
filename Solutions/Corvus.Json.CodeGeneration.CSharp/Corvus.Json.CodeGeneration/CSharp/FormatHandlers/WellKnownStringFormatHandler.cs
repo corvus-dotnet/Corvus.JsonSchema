@@ -141,9 +141,17 @@ public class WellKnownStringFormatHandler : IStringFormatHandler
     }
 
     /// <inheritdoc/>
-    public bool AppendFormatAssertion(CodeGenerator generator, string format, string valueIdentifier, string validationContextIdentifier, bool includeType)
+    public bool AppendFormatAssertion(CodeGenerator generator, string format, string valueIdentifier, string validationContextIdentifier, bool includeType, IKeyword? typeKeyword, IKeyword? formatKeyword)
     {
         string validator = includeType ? "Validate" : "ValidateWithoutCoreType";
+
+        string typeKeywordDisplay = typeKeyword is IKeyword t ? SymbolDisplay.FormatLiteral(t.Keyword, true) : "null";
+        string formatKeywordDisplay = formatKeyword is IKeyword f ? SymbolDisplay.FormatLiteral(f.Keyword, true) : "null";
+
+        string keywordParameters =
+            includeType
+                ? $"{typeKeywordDisplay}, {formatKeywordDisplay}"
+                : formatKeywordDisplay;
 
         switch (format)
         {
@@ -155,7 +163,9 @@ public class WellKnownStringFormatHandler : IStringFormatHandler
                     valueIdentifier,
                     ", ",
                     validationContextIdentifier,
-                    ", level);");
+                    ", level, ",
+                    keywordParameters,
+                    ");");
                 return true;
             case "date-time":
                 generator.AppendLineIndent(
@@ -165,7 +175,9 @@ public class WellKnownStringFormatHandler : IStringFormatHandler
                     valueIdentifier,
                     ", ",
                     validationContextIdentifier,
-                    ", level);");
+                    ", level, ",
+                    keywordParameters,
+                    ");");
                 return true;
             case "time":
                 generator.AppendLineIndent(
@@ -175,7 +187,9 @@ public class WellKnownStringFormatHandler : IStringFormatHandler
                     valueIdentifier,
                     ", ",
                     validationContextIdentifier,
-                    ", level);");
+                    ", level, ",
+                    keywordParameters,
+                    ");");
                 return true;
             case "duration":
                 generator.AppendLineIndent(
@@ -185,7 +199,9 @@ public class WellKnownStringFormatHandler : IStringFormatHandler
                     valueIdentifier,
                     ", ",
                     validationContextIdentifier,
-                    ", level);");
+                    ", level, ",
+                    keywordParameters,
+                    ");");
                 return true;
             case "email":
                 generator.AppendLineIndent(
@@ -195,7 +211,9 @@ public class WellKnownStringFormatHandler : IStringFormatHandler
                     valueIdentifier,
                     ", ",
                     validationContextIdentifier,
-                    ", level);");
+                    ", level, ",
+                    keywordParameters,
+                    ");");
                 return true;
             case "idn-email":
                 generator.AppendLineIndent(
@@ -205,7 +223,9 @@ public class WellKnownStringFormatHandler : IStringFormatHandler
                     valueIdentifier,
                     ", ",
                     validationContextIdentifier,
-                    ", level);");
+                    ", level, ",
+                    keywordParameters,
+                    ");");
                 return true;
             case "hostname":
                 generator.AppendLineIndent(
@@ -215,7 +235,9 @@ public class WellKnownStringFormatHandler : IStringFormatHandler
                     valueIdentifier,
                     ", ",
                     validationContextIdentifier,
-                    ", level);");
+                    ", level, ",
+                    keywordParameters,
+                    ");");
                 return true;
             case "idn-hostname":
                 generator.AppendLineIndent(
@@ -225,7 +247,9 @@ public class WellKnownStringFormatHandler : IStringFormatHandler
                     valueIdentifier,
                     ", ",
                     validationContextIdentifier,
-                    ", level);");
+                    ", level, ",
+                    keywordParameters,
+                    ");");
                 return true;
             case "ipv4":
                 generator.AppendLineIndent(
@@ -235,7 +259,9 @@ public class WellKnownStringFormatHandler : IStringFormatHandler
                     valueIdentifier,
                     ", ",
                     validationContextIdentifier,
-                    ", level);");
+                    ", level, ",
+                    keywordParameters,
+                    ");");
                 return true;
             case "ipv6":
                 generator.AppendLineIndent(
@@ -245,7 +271,9 @@ public class WellKnownStringFormatHandler : IStringFormatHandler
                     valueIdentifier,
                     ", ",
                     validationContextIdentifier,
-                    ", level);");
+                    ", level, ",
+                    keywordParameters,
+                    ");");
                 return true;
             case "uuid":
                 generator.AppendLineIndent(
@@ -255,7 +283,9 @@ public class WellKnownStringFormatHandler : IStringFormatHandler
                     valueIdentifier,
                     ", ",
                     validationContextIdentifier,
-                    ", level);");
+                    ", level, ",
+                    keywordParameters,
+                    ");");
                 return true;
             case "uri":
                 generator.AppendLineIndent(
@@ -265,7 +295,9 @@ public class WellKnownStringFormatHandler : IStringFormatHandler
                     valueIdentifier,
                     ", ",
                     validationContextIdentifier,
-                    ", level);");
+                    ", level, ",
+                    keywordParameters,
+                    ");");
                 return true;
             case "uri-template":
                 generator.AppendLineIndent(
@@ -275,7 +307,9 @@ public class WellKnownStringFormatHandler : IStringFormatHandler
                     valueIdentifier,
                     ", ",
                     validationContextIdentifier,
-                    ", level);");
+                    ", level, ",
+                    keywordParameters,
+                    ");");
                 return true;
             case "uri-reference":
                 generator.AppendLineIndent(
@@ -285,7 +319,9 @@ public class WellKnownStringFormatHandler : IStringFormatHandler
                     valueIdentifier,
                     ", ",
                     validationContextIdentifier,
-                    ", level);");
+                    ", level, ",
+                    keywordParameters,
+                    ");");
                 return true;
             case "iri":
                 generator.AppendLineIndent(
@@ -295,7 +331,9 @@ public class WellKnownStringFormatHandler : IStringFormatHandler
                     valueIdentifier,
                     ", ",
                     validationContextIdentifier,
-                    ", level);");
+                    ", level, ",
+                    keywordParameters,
+                    ");");
                 return true;
             case "iri-reference":
                 generator.AppendLineIndent(
@@ -305,7 +343,9 @@ public class WellKnownStringFormatHandler : IStringFormatHandler
                     valueIdentifier,
                     ", ",
                     validationContextIdentifier,
-                    ", level);");
+                    ", level, ",
+                    keywordParameters,
+                    ");");
                 return true;
             case "json-pointer":
                 generator.AppendLineIndent(
@@ -315,7 +355,9 @@ public class WellKnownStringFormatHandler : IStringFormatHandler
                     valueIdentifier,
                     ", ",
                     validationContextIdentifier,
-                    ", level);");
+                    ", level, ",
+                    keywordParameters,
+                    ");");
                 return true;
             case "relative-json-pointer":
                 generator.AppendLineIndent(
@@ -325,7 +367,9 @@ public class WellKnownStringFormatHandler : IStringFormatHandler
                     valueIdentifier,
                     ", ",
                     validationContextIdentifier,
-                    ", level);");
+                    ", level, ",
+                    keywordParameters,
+                    ");");
                 return true;
             case "regex":
                 generator.AppendLineIndent(
@@ -335,7 +379,9 @@ public class WellKnownStringFormatHandler : IStringFormatHandler
                     valueIdentifier,
                     ", ",
                     validationContextIdentifier,
-                    ", level);");
+                    ", level, ",
+                    keywordParameters,
+                    ");");
                 return true;
             case "corvus-base64-content":
                 generator.AppendLineIndent(

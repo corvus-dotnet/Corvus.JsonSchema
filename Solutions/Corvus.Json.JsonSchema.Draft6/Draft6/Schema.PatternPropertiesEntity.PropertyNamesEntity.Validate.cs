@@ -111,7 +111,7 @@ public readonly partial struct Schema
                         return validationContext;
                     }
 
-                    return Corvus.Json.ValidateWithoutCoreType.TypeRegex(value, validationContext, level);
+                    return Corvus.Json.ValidateWithoutCoreType.TypeRegex(value, validationContext, level, "format");
                 }
             }
         }

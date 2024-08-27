@@ -79,7 +79,7 @@ public readonly partial struct Person
                 ValidationLevel level = ValidationLevel.Flag)
             {
                 bool isValid = false;
-                ValidationContext localResultString = Corvus.Json.ValidateWithoutCoreType.TypeString(valueKind, ValidationContext.ValidContext, level);
+                ValidationContext localResultString = Corvus.Json.ValidateWithoutCoreType.TypeString(valueKind, ValidationContext.ValidContext, level, "type");
                 if (level == ValidationLevel.Flag && localResultString.IsValid)
                 {
                     return validationContext;
@@ -90,7 +90,7 @@ public readonly partial struct Person
                     isValid = true;
                 }
 
-                ValidationContext localResultNull = Corvus.Json.ValidateWithoutCoreType.TypeNull(valueKind, ValidationContext.ValidContext, level);
+                ValidationContext localResultNull = Corvus.Json.ValidateWithoutCoreType.TypeNull(valueKind, ValidationContext.ValidContext, level, "type");
                 if (level == ValidationLevel.Flag && localResultNull.IsValid)
                 {
                     return validationContext;
@@ -105,14 +105,14 @@ public readonly partial struct Person
                 {
                     if (level >= ValidationLevel.Verbose)
                     {
-                        return validationContext.WithResult(isValid: false, $"Validation type - should have been 'string', 'null' but was {valueKind}");
+                        return validationContext.WithResult(isValid: false, $"Validation type - should have been 'string', 'null' but was {valueKind}", "type");
                     }
                 }
                 else
                 {
                     if (level >= ValidationLevel.Detailed)
                     {
-                        return validationContext.WithResult(isValid: false, $"Validation type - should have been 'string', 'null'.");
+                        return validationContext.WithResult(isValid: false, $"Validation type - should have been 'string', 'null'.", "type");
                     }
                     else
                     {
@@ -122,7 +122,7 @@ public readonly partial struct Person
 
                 if (level >= ValidationLevel.Verbose)
                 {
-                    return validationContext.WithResult(isValid: true, $"Validation type - should be 'string', 'null' but was {valueKind}");
+                    return validationContext.WithResult(isValid: true, $"Validation type - should be 'string', 'null' but was {valueKind}", "type");
                 }
                 return validationContext;
             }
@@ -154,7 +154,7 @@ public readonly partial struct Person
                     return validationContext;
                 }
 
-                return Corvus.Json.ValidateWithoutCoreType.TypeDate(value, validationContext, level);
+                return Corvus.Json.ValidateWithoutCoreType.TypeDate(value, validationContext, level, "format");
             }
         }
     }

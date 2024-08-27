@@ -22,6 +22,6 @@ public readonly partial struct JsonNumber
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
     {
-        return Json.Validate.TypeNumber(this.ValueKind, validationContext, level);
+        return Json.Validate.TypeNumber(this.ValueKind, validationContext, level, null);
     }
 }

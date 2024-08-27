@@ -89,7 +89,7 @@ public static partial class ValidationCodeGeneratorExtensions
         generator
             .AppendSeparatorLine();
 
-        // Let the children have their go, then work through he standard
+        // Let the children have their go, then work through the standard
         foreach (IChildValidationHandler child in children)
         {
             if (generator.IsCancellationRequested)
@@ -102,7 +102,7 @@ public static partial class ValidationCodeGeneratorExtensions
 
         if (typeDeclaration.IsFormatAssertion() || typeDeclaration.AlwaysAssertFormat())
         {
-            FormatHandlerRegistry.Instance.FormatHandlers.AppendFormatAssertion(generator, explicitFormat, "value", "validationContext");
+            FormatHandlerRegistry.Instance.FormatHandlers.AppendFormatAssertion(generator, explicitFormat, "value", "validationContext", null, keywords.FirstOrDefault());
         }
         else
         {

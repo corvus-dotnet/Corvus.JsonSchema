@@ -22,6 +22,6 @@ public readonly partial struct JsonIpV6
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
     {
-        return Corvus.Json.Validate.TypeIpV6(this, validationContext, level);
+        return Corvus.Json.Validate.TypeIpV6(this, validationContext, level, null, null);
     }
 }

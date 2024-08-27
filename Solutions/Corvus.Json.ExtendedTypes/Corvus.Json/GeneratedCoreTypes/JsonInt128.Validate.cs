@@ -22,6 +22,6 @@ public readonly partial struct JsonInt128
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
     {
-        return Corvus.Json.Validate.TypeInt128(this, validationContext, level);
+        return Corvus.Json.Validate.TypeInt128(this, validationContext, level, null, null);
     }
 }

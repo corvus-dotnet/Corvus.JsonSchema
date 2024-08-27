@@ -22,6 +22,6 @@ public readonly partial struct JsonUuid
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
     {
-        return Corvus.Json.Validate.TypeUuid(this, validationContext, level);
+        return Corvus.Json.Validate.TypeUuid(this, validationContext, level, null, null);
     }
 }

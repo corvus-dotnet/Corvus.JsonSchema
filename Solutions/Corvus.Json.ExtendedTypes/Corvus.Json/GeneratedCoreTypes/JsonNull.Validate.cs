@@ -22,6 +22,6 @@ public readonly partial struct JsonNull
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
     {
-        return Json.Validate.TypeNull(this.ValueKind, validationContext, level);
+        return Json.Validate.TypeNull(this.ValueKind, validationContext, level, null);
     }
 }

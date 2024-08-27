@@ -20,18 +20,19 @@ public static partial class ValidateWithoutCoreType
     /// <param name="valueKind">The actual value kind.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="typeKeyword">The type keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeString(JsonValueKind valueKind, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeString(JsonValueKind valueKind, in ValidationContext validationContext, ValidationLevel level, string? typeKeyword = null)
     {
         if (valueKind != JsonValueKind.String)
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been 'string' but was '{valueKind}'.");
+                return validationContext.WithResult(isValid: false, $"Validation {typeKeyword ?? "type"} - should have been 'string' but was '{valueKind}'.", typeKeyword ?? "type");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been 'string'.");
+                return validationContext.WithResult(isValid: false, "Validation type - should have been 'string'.", typeKeyword ?? "type");
             }
             else
             {
@@ -40,7 +41,7 @@ public static partial class ValidateWithoutCoreType
         }
         else if (level == ValidationLevel.Verbose)
         {
-            return validationContext.WithResult(isValid: true, "Validation type - was 'string'.");
+            return validationContext.WithResult(isValid: true, $"Validation {typeKeyword ?? "type"} - was 'string'.", typeKeyword ?? "type");
         }
 
         return validationContext;
@@ -52,18 +53,19 @@ public static partial class ValidateWithoutCoreType
     /// <param name="valueKind">The actual value kind.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="typeKeyword">The type keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeNumber(JsonValueKind valueKind, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeNumber(JsonValueKind valueKind, in ValidationContext validationContext, ValidationLevel level, string? typeKeyword = null)
     {
         if (valueKind != JsonValueKind.Number)
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been 'number' but was '{valueKind}'.");
+                return validationContext.WithResult(isValid: false, $"Validation {typeKeyword ?? "type"} - should have been 'number' but was '{valueKind}'.", typeKeyword ?? "type");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been 'number'.");
+                return validationContext.WithResult(isValid: false, "Validation type - should have been 'number'.", typeKeyword ?? "type");
             }
             else
             {
@@ -72,7 +74,7 @@ public static partial class ValidateWithoutCoreType
         }
         else if (level == ValidationLevel.Verbose)
         {
-            return validationContext.WithResult(isValid: true, "Validation type - was 'number'.");
+            return validationContext.WithResult(isValid: true, $"Validation {typeKeyword ?? "type"} - was 'number'.", typeKeyword ?? "type");
         }
 
         return validationContext;
@@ -84,18 +86,19 @@ public static partial class ValidateWithoutCoreType
     /// <param name="valueKind">The actual value kind.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="typeKeyword">The type keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeNull(JsonValueKind valueKind, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeNull(JsonValueKind valueKind, in ValidationContext validationContext, ValidationLevel level, string? typeKeyword = null)
     {
         if (valueKind != JsonValueKind.Null)
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been 'null' but was '{valueKind}'.");
+                return validationContext.WithResult(isValid: false, $"Validation {typeKeyword ?? "type"} - should have been 'null' but was '{valueKind}'.", typeKeyword ?? "type");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been 'null'.");
+                return validationContext.WithResult(isValid: false, "Validation type - should have been 'null'.", typeKeyword ?? "type");
             }
             else
             {
@@ -104,7 +107,7 @@ public static partial class ValidateWithoutCoreType
         }
         else if (level == ValidationLevel.Verbose)
         {
-            return validationContext.WithResult(isValid: true, "Validation type - was 'null'.");
+            return validationContext.WithResult(isValid: true, $"Validation {typeKeyword ?? "type"} - was 'null'.", typeKeyword ?? "type");
         }
 
         return validationContext;
@@ -117,8 +120,9 @@ public static partial class ValidateWithoutCoreType
     /// <param name="instance">The instance to validate.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="typeKeyword">The type keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeInteger<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeInteger<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? typeKeyword = null)
         where T : struct, IJsonValue<T>
     {
         JsonValueKind valueKind = instance.ValueKind;
@@ -127,11 +131,11 @@ public static partial class ValidateWithoutCoreType
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been 'integer' but was '{valueKind}'.");
+                return validationContext.WithResult(isValid: false, $"Validation {typeKeyword ?? "type"} - should have been 'integer' but was '{valueKind}'.", typeKeyword ?? "type");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been 'integer'.");
+                return validationContext.WithResult(isValid: false, "Validation type - should have been 'integer'.", typeKeyword ?? "type");
             }
             else
             {
@@ -144,11 +148,11 @@ public static partial class ValidateWithoutCoreType
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been 'integer' with zero fractional part but was '{instance.ValueKind}' with fractional part {value - Math.Floor(value)}.");
+                return validationContext.WithResult(isValid: false, $"Validation type - should have been 'integer' ' but was {value}.", typeKeyword ?? "type");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been 'integer' with zero fractional part.");
+                return validationContext.WithResult(isValid: false, "Validation type - should have been 'integer'.", typeKeyword ?? "type");
             }
             else
             {
@@ -158,7 +162,106 @@ public static partial class ValidateWithoutCoreType
 
         if (level == ValidationLevel.Verbose)
         {
-            return validationContext.WithResult(isValid: true, "Validation type - was 'number' with zero fractional part.");
+            return validationContext.WithResult(isValid: true, $"Validation {typeKeyword ?? "type"} - was 'integer'", typeKeyword ?? "type");
+        }
+
+        return validationContext;
+    }
+
+    /// <summary>
+    /// Validate an array type value.
+    /// </summary>
+    /// <param name="valueKind">The actual value kind.</param>
+    /// <param name="validationContext">The validation context.</param>
+    /// <param name="level">The validation level.</param>
+    /// <param name="typeKeyword">The type keyword.</param>
+    /// <returns>The updated validation context.</returns>
+    public static ValidationContext TypeArray(JsonValueKind valueKind, in ValidationContext validationContext, ValidationLevel level, string? typeKeyword = null)
+    {
+        if (valueKind != JsonValueKind.Array)
+        {
+            if (level >= ValidationLevel.Detailed)
+            {
+                return validationContext.WithResult(isValid: false, $"Validation {typeKeyword ?? "type"} - should have been 'array' but was '{valueKind}'.", typeKeyword ?? "type");
+            }
+            else if (level >= ValidationLevel.Basic)
+            {
+                return validationContext.WithResult(isValid: false, "Validation type - should have been 'array'.", typeKeyword ?? "type");
+            }
+            else
+            {
+                return ValidationContext.InvalidContext;
+            }
+        }
+        else if (level == ValidationLevel.Verbose)
+        {
+            return validationContext.WithResult(isValid: true, $"Validation {typeKeyword ?? "type"} - was 'array'.", typeKeyword ?? "type");
+        }
+
+        return validationContext;
+    }
+
+    /// <summary>
+    /// Validate a boolean type value.
+    /// </summary>
+    /// <param name="valueKind">The actual value kind.</param>
+    /// <param name="validationContext">The validation context.</param>
+    /// <param name="level">The validation level.</param>
+    /// <param name="typeKeyword">The type keyword.</param>
+    /// <returns>The updated validation context.</returns>
+    public static ValidationContext TypeBoolean(JsonValueKind valueKind, in ValidationContext validationContext, ValidationLevel level, string? typeKeyword = null)
+    {
+        if (valueKind != JsonValueKind.True && valueKind != JsonValueKind.False)
+        {
+            if (level >= ValidationLevel.Detailed)
+            {
+                return validationContext.WithResult(isValid: false, $"Validation {typeKeyword ?? "type"} - should have been 'boolean' but was '{valueKind}'.", typeKeyword ?? "type");
+            }
+            else if (level >= ValidationLevel.Basic)
+            {
+                return validationContext.WithResult(isValid: false, "Validation type - should have been 'boolean'.", typeKeyword ?? "type");
+            }
+            else
+            {
+                return ValidationContext.InvalidContext;
+            }
+        }
+        else if (level == ValidationLevel.Verbose)
+        {
+            return validationContext.WithResult(isValid: true, $"Validation {typeKeyword ?? "type"} - was 'boolean'.", typeKeyword ?? "type");
+        }
+
+        return validationContext;
+    }
+
+    /// <summary>
+    /// Validate an object type value.
+    /// </summary>
+    /// <param name="valueKind">The actual value kind.</param>
+    /// <param name="validationContext">The validation context.</param>
+    /// <param name="level">The validation level.</param>
+    /// <param name="typeKeyword">The type keyword.</param>
+    /// <returns>The updated validation context.</returns>
+    public static ValidationContext TypeObject(JsonValueKind valueKind, in ValidationContext validationContext, ValidationLevel level, string? typeKeyword = null)
+    {
+        if (valueKind != JsonValueKind.Object)
+        {
+            if (level >= ValidationLevel.Detailed)
+            {
+                return validationContext.WithResult(isValid: false, $"Validation {typeKeyword ?? "type"} - should have been 'object' but was '{valueKind}'.", typeKeyword ?? "type");
+            }
+            else if (level >= ValidationLevel.Basic)
+            {
+                return validationContext.WithResult(isValid: false, "Validation type - should have been 'object'.", typeKeyword ?? "type");
+            }
+            else
+            {
+                return ValidationContext.InvalidContext;
+            }
+        }
+        else if (level == ValidationLevel.Verbose)
+        {
+            return validationContext.WithResult(isValid: true, $"Validation {typeKeyword ?? "type"} - was 'object'.", typeKeyword ?? "type");
         }
 
         return validationContext;
@@ -171,8 +274,9 @@ public static partial class ValidateWithoutCoreType
     /// <param name="instance">The instance to validate.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="formatKeyword">The format keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeByte<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeByte<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
     {
         double value = (double)instance.AsNumber;
@@ -207,8 +311,9 @@ public static partial class ValidateWithoutCoreType
     /// <param name="instance">The instance to validate.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="formatKeyword">The type keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeSByte<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeSByte<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
     {
         double value = (double)instance.AsNumber;
@@ -243,8 +348,9 @@ public static partial class ValidateWithoutCoreType
     /// <param name="instance">The instance to validate.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="formatKeyword">The format keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeInt16<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeInt16<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
     {
         double value = (double)instance.AsNumber;
@@ -279,8 +385,9 @@ public static partial class ValidateWithoutCoreType
     /// <param name="instance">The instance to validate.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="formatKeyword">The format keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeUInt16<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeUInt16<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
     {
         double value = (double)instance.AsNumber;
@@ -315,8 +422,9 @@ public static partial class ValidateWithoutCoreType
     /// <param name="instance">The instance to validate.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="formatKeyword">The format keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeInt32<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeInt32<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
     {
         double value = (double)instance.AsNumber;
@@ -351,8 +459,9 @@ public static partial class ValidateWithoutCoreType
     /// <param name="instance">The instance to validate.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="formatKeyword">The format keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeUInt32<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeUInt32<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
     {
         double value = (double)instance.AsNumber;
@@ -387,8 +496,9 @@ public static partial class ValidateWithoutCoreType
     /// <param name="instance">The instance to validate.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="formatKeyword">The format keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeInt64<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeInt64<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
     {
         JsonNumber number = instance.AsNumber;
@@ -424,8 +534,9 @@ public static partial class ValidateWithoutCoreType
     /// <param name="instance">The instance to validate.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="formatKeyword">The format keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeUInt64<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeUInt64<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
     {
         JsonNumber number = instance.AsNumber;
@@ -461,8 +572,9 @@ public static partial class ValidateWithoutCoreType
     /// <param name="instance">The instance to validate.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="formatKeyword">The format keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeInt128<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeInt128<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
     {
 #if NET8_0_OR_GREATER
@@ -503,8 +615,9 @@ public static partial class ValidateWithoutCoreType
     /// <param name="instance">The instance to validate.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="formatKeyword">The format keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeUInt128<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeUInt128<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
     {
 #if NET8_0_OR_GREATER
@@ -562,8 +675,9 @@ public static partial class ValidateWithoutCoreType
     /// <param name="instance">The instance to validate.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="formatKeyword">The format keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeHalf<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeHalf<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
     {
 #if NET8_0_OR_GREATER
@@ -604,8 +718,9 @@ public static partial class ValidateWithoutCoreType
     /// <param name="instance">The instance to validate.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="formatKeyword">The format keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeSingle<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeSingle<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
     {
         try
@@ -644,8 +759,9 @@ public static partial class ValidateWithoutCoreType
     /// <param name="instance">The instance to validate.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="formatKeyword">The format keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeDouble<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeDouble<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
     {
         try
@@ -679,8 +795,9 @@ public static partial class ValidateWithoutCoreType
     /// <param name="instance">The instance to validate.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="formatKeyword">The format keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeDecimal<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeDecimal<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
     {
         try
@@ -714,8 +831,9 @@ public static partial class ValidateWithoutCoreType
     /// <param name="instance">The instance to validate.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="formatKeyword">The format keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeUriTemplate<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeUriTemplate<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
     {
         ValidationContext result = validationContext;
@@ -771,8 +889,9 @@ public static partial class ValidateWithoutCoreType
     /// <param name="instance">The instance to validate.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="formatKeyword">The format keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeIdnEmail<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeIdnEmail<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
     {
         string email = (string)instance.AsString;
@@ -835,8 +954,9 @@ public static partial class ValidateWithoutCoreType
     /// <param name="instance">The instance to validate.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="formatKeyword">The format keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeIdnHostName<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeIdnHostName<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
     {
         string value = (string)instance.AsString;
@@ -901,8 +1021,9 @@ public static partial class ValidateWithoutCoreType
     /// <param name="instance">The instance to validate.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="formatKeyword">The format keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeHostname<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeHostname<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
     {
         ValidationContext result = validationContext;
@@ -977,8 +1098,9 @@ public static partial class ValidateWithoutCoreType
     /// <param name="instance">The instance to validate.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="formatKeyword">The format keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeUuid<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeUuid<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
     {
         ValidationContext result = validationContext;
@@ -1030,8 +1152,9 @@ public static partial class ValidateWithoutCoreType
     /// <param name="instance">The instance to validate.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="formatKeyword">The format keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeDuration<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeDuration<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
     {
         ValidationContext result = validationContext;
@@ -1087,8 +1210,9 @@ public static partial class ValidateWithoutCoreType
     /// <param name="instance">The instance to validate.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="formatKeyword">The format keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeEmail<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeEmail<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
     {
         ValidationContext result = validationContext;
@@ -1144,8 +1268,9 @@ public static partial class ValidateWithoutCoreType
     /// <param name="instance">The instance to validate.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="formatKeyword">The format keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeRelativePointer<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeRelativePointer<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
     {
         ValidationContext result = validationContext;
@@ -1201,8 +1326,9 @@ public static partial class ValidateWithoutCoreType
     /// <param name="instance">The instance to validate.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="formatKeyword">The format keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypePointer<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypePointer<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
     {
         ValidationContext result = validationContext;
@@ -1249,102 +1375,6 @@ public static partial class ValidateWithoutCoreType
 
             return true;
         }
-    }
-
-    /// <summary>
-    /// Validate an array type value.
-    /// </summary>
-    /// <param name="valueKind">The actual value kind.</param>
-    /// <param name="validationContext">The validation context.</param>
-    /// <param name="level">The validation level.</param>
-    /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeArray(JsonValueKind valueKind, in ValidationContext validationContext, ValidationLevel level)
-    {
-        if (valueKind != JsonValueKind.Array)
-        {
-            if (level >= ValidationLevel.Detailed)
-            {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been 'array' but was '{valueKind}'.");
-            }
-            else if (level >= ValidationLevel.Basic)
-            {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been 'array'.");
-            }
-            else
-            {
-                return ValidationContext.InvalidContext;
-            }
-        }
-        else if (level == ValidationLevel.Verbose)
-        {
-            return validationContext.WithResult(isValid: true, "Validation type - was 'array'.");
-        }
-
-        return validationContext;
-    }
-
-    /// <summary>
-    /// Validate a boolean type value.
-    /// </summary>
-    /// <param name="valueKind">The actual value kind.</param>
-    /// <param name="validationContext">The validation context.</param>
-    /// <param name="level">The validation level.</param>
-    /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeBoolean(JsonValueKind valueKind, in ValidationContext validationContext, ValidationLevel level)
-    {
-        if (valueKind != JsonValueKind.True && valueKind != JsonValueKind.False)
-        {
-            if (level >= ValidationLevel.Detailed)
-            {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been 'boolean' but was '{valueKind}'.");
-            }
-            else if (level >= ValidationLevel.Basic)
-            {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been 'boolean'.");
-            }
-            else
-            {
-                return ValidationContext.InvalidContext;
-            }
-        }
-        else if (level == ValidationLevel.Verbose)
-        {
-            return validationContext.WithResult(isValid: true, "Validation type - was 'boolean'.");
-        }
-
-        return validationContext;
-    }
-
-    /// <summary>
-    /// Validate an object type value.
-    /// </summary>
-    /// <param name="valueKind">The actual value kind.</param>
-    /// <param name="validationContext">The validation context.</param>
-    /// <param name="level">The validation level.</param>
-    /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeObject(JsonValueKind valueKind, in ValidationContext validationContext, ValidationLevel level)
-    {
-        if (valueKind != JsonValueKind.Object)
-        {
-            if (level >= ValidationLevel.Detailed)
-            {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been 'object' but was '{valueKind}'.");
-            }
-            else if (level >= ValidationLevel.Basic)
-            {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been 'object'.");
-            }
-            else
-            {
-                return ValidationContext.InvalidContext;
-            }
-        }
-        else if (level == ValidationLevel.Verbose)
-        {
-            return validationContext.WithResult(isValid: true, "Validation type - was 'object'.");
-        }
-
-        return validationContext;
     }
 
     /// <summary>
@@ -1551,8 +1581,9 @@ public static partial class ValidateWithoutCoreType
     /// <param name="instance">The instance to validate.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="formatKeyword">The format keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeRegex<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeRegex<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
     {
         JsonRegex regexInstance = instance.As<JsonRegex>();
@@ -1589,8 +1620,9 @@ public static partial class ValidateWithoutCoreType
     /// <param name="instance">The instance to validate.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="formatKeyword">The format keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeIriReference<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeIriReference<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
     {
         JsonIriReference iri = instance.As<JsonIriReference>();
@@ -1634,8 +1666,9 @@ public static partial class ValidateWithoutCoreType
     /// <param name="instance">The instance to validate.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="formatKeyword">The format keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeIri<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeIri<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
     {
         JsonIri iri = instance.As<JsonIri>();
@@ -1672,8 +1705,9 @@ public static partial class ValidateWithoutCoreType
     /// <param name="instance">The instance to validate.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="formatKeyword">The format keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeUri<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeUri<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
     {
         JsonUri uriInstance = instance.As<JsonUri>();
@@ -1710,8 +1744,9 @@ public static partial class ValidateWithoutCoreType
     /// <param name="instance">The instance to validate.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="formatKeyword">The format keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeUriReference<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeUriReference<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
     {
         JsonUriReference uriReferenceInstance = instance.As<JsonUriReference>();
@@ -1755,8 +1790,9 @@ public static partial class ValidateWithoutCoreType
     /// <param name="instance">The instance to validate.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="formatKeyword">The format keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeTime<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeTime<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
     {
         JsonTime time = instance.As<JsonTime>();
@@ -1793,8 +1829,9 @@ public static partial class ValidateWithoutCoreType
     /// <param name="instance">The instance to validate.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="formatKeyword">The format keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeDate<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeDate<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
     {
         JsonDate date = instance.As<JsonDate>();
@@ -1831,8 +1868,9 @@ public static partial class ValidateWithoutCoreType
     /// <param name="instance">The instance to validate.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="formatKeyword">The format keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeIpV6<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeIpV6<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
     {
         ValidationContext result = validationContext;
@@ -1900,8 +1938,9 @@ public static partial class ValidateWithoutCoreType
     /// <param name="instance">The instance to validate.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="formatKeyword">The format keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeIpV4<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeIpV4<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
     {
         ValidationContext result = validationContext;
@@ -1967,8 +2006,9 @@ public static partial class ValidateWithoutCoreType
     /// <param name="instance">The instance to validate.</param>
     /// <param name="validationContext">The validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="formatKeyword">The format keyword.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeDateTime<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeDateTime<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
     {
         JsonDateTime date = instance.As<JsonDateTime>();
