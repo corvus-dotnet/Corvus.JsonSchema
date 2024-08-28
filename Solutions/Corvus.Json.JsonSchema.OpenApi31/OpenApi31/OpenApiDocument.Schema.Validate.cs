@@ -106,12 +106,9 @@ public readonly partial struct OpenApiDocument
                     {
                         return validationContext.WithResult(isValid: false, $"Validation type - should have been 'object', 'boolean' but was {valueKind}", "type");
                     }
-                }
-                else
-                {
-                    if (level >= ValidationLevel.Detailed)
+                    else if (level >= ValidationLevel.Detailed)
                     {
-                        return validationContext.WithResult(isValid: false, $"Validation type - should have been 'object', 'boolean'.", "type");
+                        return validationContext.WithResult(isValid: false, "Validation type - should have been 'object', 'boolean'.", "type");
                     }
                     else
                     {
@@ -121,7 +118,7 @@ public readonly partial struct OpenApiDocument
 
                 if (level >= ValidationLevel.Verbose)
                 {
-                    return validationContext.WithResult(isValid: true, $"Validation type - should be 'object', 'boolean' but was {valueKind}", "type");
+                    return validationContext.WithResult(isValid: true, $"Validation type - was 'object', 'boolean'.", "type");
                 }
                 return validationContext;
             }

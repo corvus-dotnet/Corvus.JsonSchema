@@ -91,9 +91,7 @@ public readonly partial struct Core
                     if (level == ValidationLevel.Verbose)
                     {
                         ValidationContext ignoredResult = validationContext;
-                        ignoredResult = ignoredResult.PushValidationLocationProperty("pattern");
-                        ignoredResult = ignoredResult.WithResult(isValid: true, "Validation pattern - ignored because the value is not a string");
-                        ignoredResult = ignoredResult.PopLocation();
+                        ignoredResult = ignoredResult.WithResult(isValid: true, "Validation pattern - ignored because the value is not a string", "pattern");
                         return ignoredResult;
                     }
 

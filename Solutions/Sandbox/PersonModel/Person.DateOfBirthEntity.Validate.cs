@@ -107,12 +107,9 @@ public readonly partial struct Person
                     {
                         return validationContext.WithResult(isValid: false, $"Validation type - should have been 'string', 'null' but was {valueKind}", "type");
                     }
-                }
-                else
-                {
-                    if (level >= ValidationLevel.Detailed)
+                    else if (level >= ValidationLevel.Detailed)
                     {
-                        return validationContext.WithResult(isValid: false, $"Validation type - should have been 'string', 'null'.", "type");
+                        return validationContext.WithResult(isValid: false, "Validation type - should have been 'string', 'null'.", "type");
                     }
                     else
                     {
@@ -122,7 +119,7 @@ public readonly partial struct Person
 
                 if (level >= ValidationLevel.Verbose)
                 {
-                    return validationContext.WithResult(isValid: true, $"Validation type - should be 'string', 'null' but was {valueKind}", "type");
+                    return validationContext.WithResult(isValid: true, $"Validation type - was 'string', 'null'.", "type");
                 }
                 return validationContext;
             }

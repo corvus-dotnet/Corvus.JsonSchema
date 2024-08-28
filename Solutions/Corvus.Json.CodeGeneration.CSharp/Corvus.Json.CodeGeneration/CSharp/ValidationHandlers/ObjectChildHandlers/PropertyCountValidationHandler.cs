@@ -51,16 +51,6 @@ public class PropertyCountValidationHandler : IChildArrayItemValidationHandler
 
             generator
                 .AppendSeparatorLine()
-                .AppendLineIndent("if (level > ValidationLevel.Basic)")
-                .AppendLineIndent("{")
-                .PushIndent()
-                    .AppendLineIndent(
-                        "result = result.PushValidationLocationProperty(",
-                        SymbolDisplay.FormatLiteral(keyword.Keyword, true),
-                        ");")
-                .PopIndent()
-                .AppendLineIndent("}")
-                .AppendSeparatorLine()
                 .AppendIndent("if (propertyCount ")
                 .AppendOperator(op)
                 .Append(' ')
@@ -71,7 +61,7 @@ public class PropertyCountValidationHandler : IChildArrayItemValidationHandler
                     .AppendLineIndent("if (level == ValidationLevel.Verbose)")
                     .AppendLineIndent("{")
                     .PushIndent()
-                        .AppendKeywordValidationResult(isValid: true, keyword, "result", g => GetValidMessage(g, op, memberName), useInterpolatedString: true)
+                        .AppendKeywordValidationResult(isValid: true, keyword, "result", g => GetValidMessage(g, op, memberName), useInterpolatedString: true, withKeyword: true)
                     .PopIndent()
                     .AppendLineIndent("}")
                 .PopIndent()
@@ -82,13 +72,13 @@ public class PropertyCountValidationHandler : IChildArrayItemValidationHandler
                     .AppendLineIndent("if (level >= ValidationLevel.Detailed)")
                     .AppendLineIndent("{")
                     .PushIndent()
-                        .AppendKeywordValidationResult(isValid: false, keyword, "result", g => GetInvalidMessage(g, op, memberName), useInterpolatedString: true)
+                        .AppendKeywordValidationResult(isValid: false, keyword, "result", g => GetInvalidMessage(g, op, memberName), useInterpolatedString: true, withKeyword: true)
                     .PopIndent()
                     .AppendLineIndent("}")
                     .AppendLineIndent("else if (level >= ValidationLevel.Basic)")
                     .AppendLineIndent("{")
                     .PushIndent()
-                        .AppendKeywordValidationResult(isValid: false, keyword, "result", g => GetSimplifiedInvalidMessage(g, op), useInterpolatedString: false)
+                        .AppendKeywordValidationResult(isValid: false, keyword, "result", g => GetSimplifiedInvalidMessage(g, op), useInterpolatedString: false, withKeyword: true)
                     .PopIndent()
                     .AppendLineIndent("}")
                     .AppendLineIndent("else")
@@ -97,13 +87,6 @@ public class PropertyCountValidationHandler : IChildArrayItemValidationHandler
                         .AppendLineIndent("return ValidationContext.InvalidContext;")
                     .PopIndent()
                     .AppendLineIndent("}")
-                .PopIndent()
-                .AppendLineIndent("}")
-                .AppendSeparatorLine()
-                .AppendLineIndent("if (level > ValidationLevel.Basic)")
-                .AppendLineIndent("{")
-                .PushIndent()
-                    .AppendLineIndent("result = result.PopLocation();")
                 .PopIndent()
                 .AppendLineIndent("}");
         }

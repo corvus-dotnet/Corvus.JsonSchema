@@ -219,33 +219,23 @@ public readonly partial struct OpenApiDocument
                             enumFoundValid = value.Equals(CorvusValidation.Enum5);
                         }
 
-                        if (level >= ValidationLevel.Basic)
-                        {
-                            result.PushValidationLocationProperty("enum");
-                        }
-
                         if (enumFoundValid)
                         {
                             if (level >= ValidationLevel.Verbose)
                             {
-                                result = result.WithResult(isValid: true, "Validation enum - validated against the enumeration.");
+                                result = result.WithResult(isValid: true, "Validation enum - validated against the enumeration.", "enum");
                             }
                         }
                         else
                         {
                             if (level >= ValidationLevel.Basic)
                             {
-                                result = result.WithResult(isValid: false, "Validation enum - did not validate against the enumeration.");
+                                result = result.WithResult(isValid: false, "Validation enum - did not validate against the enumeration.", "enum");
                             }
                             else
                             {
                                 result = result.WithResult(isValid: false);
                             }
-                        }
-
-                        if (level >= ValidationLevel.Basic)
-                        {
-                            result.PopLocation();
                         }
 
                         return result;

@@ -258,18 +258,10 @@ public readonly partial struct OpenApiDocument
                     if (level == ValidationLevel.Verbose)
                     {
                         ValidationContext ignoredResult = validationContext;
-                        ignoredResult = ignoredResult.PushValidationLocationProperty("properties");
-                        ignoredResult = ignoredResult.WithResult(isValid: true, "Validation properties - ignored because the value is not an object");
-                        ignoredResult = ignoredResult.PopLocation();
-                        ignoredResult = ignoredResult.PushValidationLocationProperty("patternProperties");
-                        ignoredResult = ignoredResult.WithResult(isValid: true, "Validation patternProperties - ignored because the value is not an object");
-                        ignoredResult = ignoredResult.PopLocation();
-                        ignoredResult = ignoredResult.PushValidationLocationProperty("unevaluatedProperties");
-                        ignoredResult = ignoredResult.WithResult(isValid: true, "Validation unevaluatedProperties - ignored because the value is not an object");
-                        ignoredResult = ignoredResult.PopLocation();
-                        ignoredResult = ignoredResult.PushValidationLocationProperty("minProperties");
-                        ignoredResult = ignoredResult.WithResult(isValid: true, "Validation minProperties - ignored because the value is not an object");
-                        ignoredResult = ignoredResult.PopLocation();
+                        ignoredResult = ignoredResult.WithResult(isValid: true, "Validation properties - ignored because the value is not an object", "properties");
+                        ignoredResult = ignoredResult.WithResult(isValid: true, "Validation patternProperties - ignored because the value is not an object", "patternProperties");
+                        ignoredResult = ignoredResult.WithResult(isValid: true, "Validation unevaluatedProperties - ignored because the value is not an object", "unevaluatedProperties");
+                        ignoredResult = ignoredResult.WithResult(isValid: true, "Validation minProperties - ignored because the value is not an object", "minProperties");
                         return ignoredResult;
                     }
 
@@ -346,37 +338,27 @@ public readonly partial struct OpenApiDocument
                     propertyCount++;
                 }
 
-                if (level > ValidationLevel.Basic)
-                {
-                    result = result.PushValidationLocationProperty("minProperties");
-                }
-
                 if (propertyCount >= MinProperties)
                 {
                     if (level == ValidationLevel.Verbose)
                     {
-                        result = result.WithResult(isValid: true, $"Validation minProperties - property count {propertyCount} is greater than or equal to {MinProperties}");
+                        result = result.WithResult(isValid: true, $"Validation minProperties - property count {propertyCount} is greater than or equal to {MinProperties}", "minProperties");
                     }
                 }
                 else
                 {
                     if (level >= ValidationLevel.Detailed)
                     {
-                        result = result.WithResult(isValid: false, $"Validation minProperties - array of length {propertyCount} is less than {MinProperties}");
+                        result = result.WithResult(isValid: false, $"Validation minProperties - array of length {propertyCount} is less than {MinProperties}", "minProperties");
                     }
                     else if (level >= ValidationLevel.Basic)
                     {
-                        result = result.WithResult(isValid: false, "Validation minProperties - is less than the required count.");
+                        result = result.WithResult(isValid: false, "Validation minProperties - is less than the required count.", "minProperties");
                     }
                     else
                     {
                         return ValidationContext.InvalidContext;
                     }
-                }
-
-                if (level > ValidationLevel.Basic)
-                {
-                    result = result.PopLocation();
                 }
 
                 return result;

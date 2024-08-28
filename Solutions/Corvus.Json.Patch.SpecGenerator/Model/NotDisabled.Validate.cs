@@ -75,9 +75,7 @@ public readonly partial struct NotDisabled
                 if (level == ValidationLevel.Verbose)
                 {
                     ValidationContext ignoredResult = validationContext;
-                    ignoredResult = ignoredResult.PushValidationLocationProperty("properties");
-                    ignoredResult = ignoredResult.WithResult(isValid: true, "Validation properties - ignored because the value is not an object");
-                    ignoredResult = ignoredResult.PopLocation();
+                    ignoredResult = ignoredResult.WithResult(isValid: true, "Validation properties - ignored because the value is not an object", "properties");
                     return ignoredResult;
                 }
 

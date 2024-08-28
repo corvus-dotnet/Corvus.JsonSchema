@@ -117,15 +117,9 @@ public readonly partial struct OpenApiDocument
                         if (level == ValidationLevel.Verbose)
                         {
                             ValidationContext ignoredResult = validationContext;
-                            ignoredResult = ignoredResult.PushValidationLocationProperty("items");
-                            ignoredResult = ignoredResult.WithResult(isValid: true, "Validation items - ignored because the value is not an array");
-                            ignoredResult = ignoredResult.PopLocation();
-                            ignoredResult = ignoredResult.PushValidationLocationProperty("minItems");
-                            ignoredResult = ignoredResult.WithResult(isValid: true, "Validation minItems - ignored because the value is not an array");
-                            ignoredResult = ignoredResult.PopLocation();
-                            ignoredResult = ignoredResult.PushValidationLocationProperty("uniqueItems");
-                            ignoredResult = ignoredResult.WithResult(isValid: true, "Validation uniqueItems - ignored because the value is not an array");
-                            ignoredResult = ignoredResult.PopLocation();
+                            ignoredResult = ignoredResult.WithResult(isValid: true, "Validation items - ignored because the value is not an array", "items");
+                            ignoredResult = ignoredResult.WithResult(isValid: true, "Validation minItems - ignored because the value is not an array", "minItems");
+                            ignoredResult = ignoredResult.WithResult(isValid: true, "Validation uniqueItems - ignored because the value is not an array", "uniqueItems");
                             return ignoredResult;
                         }
 
@@ -164,36 +158,27 @@ public readonly partial struct OpenApiDocument
                         length++;
                     }
 
-                    if (level > ValidationLevel.Basic)
-                    {
-                        result = result.PushValidationLocationProperty("minItems");
-                    }
-
                     if (length >= MinItems)
                     {
                         if (level == ValidationLevel.Verbose)
                         {
-                            result = result.WithResult(isValid: true, $"Validation minItems - array of length {length} is greater than or equal to {MinItems}");
+                            result = result.WithResult(isValid: true, $"Validation minItems - array of length {length} is greater than or equal to {MinItems}", "minItems");
                         }
                     }
                     else
                     {
                         if (level >= ValidationLevel.Detailed)
                         {
-                            result = result.WithResult(isValid: false, $"Validation minItems - array of length {length} is less than {MinItems}");
+                            result = result.WithResult(isValid: false, $"Validation minItems - array of length {length} is less than {MinItems}", "minItems");
                         }
                         else if (level >= ValidationLevel.Basic)
                         {
-                            result = result.WithResult(isValid: false, "Validation minItems - is less than the required length.");
+                            result = result.WithResult(isValid: false, "Validation minItems - is less than the required length.", "minItems");
                         }
                         else
                         {
                             return ValidationContext.InvalidContext;
                         }
-                    }
-                    if (level > ValidationLevel.Basic)
-                    {
-                        result = result.PopLocation();
                     }
 
                     return result;

@@ -251,12 +251,7 @@ public static partial class ValidationCodeGeneratorExtensions
             }
 
             generator
-                .AppendLineIndent(
-                    "ignoredResult = ignoredResult.PushValidationLocationProperty(",
-                    SymbolDisplay.FormatLiteral(keyword.Keyword, true),
-                    ");")
-                .AppendKeywordValidationResult(isValid: true, keyword, "ignoredResult", "ignored because the value is not an array")
-                .AppendLineIndent("ignoredResult = ignoredResult.PopLocation();");
+                .AppendKeywordValidationResult(isValid: true, keyword, "ignoredResult", "ignored because the value is not an array", withKeyword: true);
         }
 
         generator

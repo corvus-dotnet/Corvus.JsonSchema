@@ -118,9 +118,7 @@ public readonly partial struct OpenApiDocument
                         if (level == ValidationLevel.Verbose)
                         {
                             ValidationContext ignoredResult = validationContext;
-                            ignoredResult = ignoredResult.PushValidationLocationProperty("patternProperties");
-                            ignoredResult = ignoredResult.WithResult(isValid: true, "Validation patternProperties - ignored because the value is not an object");
-                            ignoredResult = ignoredResult.PopLocation();
+                            ignoredResult = ignoredResult.WithResult(isValid: true, "Validation patternProperties - ignored because the value is not an object", "patternProperties");
                             return ignoredResult;
                         }
 

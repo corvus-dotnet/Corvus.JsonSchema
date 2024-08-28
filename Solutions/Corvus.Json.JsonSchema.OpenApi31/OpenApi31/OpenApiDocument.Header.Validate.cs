@@ -196,23 +196,18 @@ public readonly partial struct OpenApiDocument
                     }
                 }
 
-                if (level >= ValidationLevel.Basic)
-                {
-                    result.PushValidationLocationProperty("oneOf");
-                }
-
                 if (oneOfFoundValid == 1)
                 {
                     if (level >= ValidationLevel.Verbose)
                     {
-                        result = result.WithResult(isValid: true, "Validation oneOf - validated against the schema.");
+                        result = result.WithResult(isValid: true, "Validation oneOf - validated against the schema.", "oneOf");
                     }
                 }
                 else if (oneOfFoundValid > 1)
                 {
                     if (level >= ValidationLevel.Basic)
                     {
-                        result = result.WithResult(isValid: false, "Validation oneOf - validated against more than 1 of the schema.");
+                        result = result.WithResult(isValid: false, "Validation oneOf - validated against more than 1 of the schema.", "oneOf");
                     }
                     else
                     {
@@ -223,17 +218,12 @@ public readonly partial struct OpenApiDocument
                 {
                     if (level >= ValidationLevel.Basic)
                     {
-                        result = result.WithResult(isValid: false, "Validation oneOf - did not validate against any of the schema.");
+                        result = result.WithResult(isValid: false, "Validation oneOf - did not validate against any of the schema.", "oneOf");
                     }
                     else
                     {
                         result = result.WithResult(isValid: false);
                     }
-                }
-
-                if (level >= ValidationLevel.Basic)
-                {
-                    result.PopLocation();
                 }
 
                 return result;
@@ -260,15 +250,9 @@ public readonly partial struct OpenApiDocument
                     if (level == ValidationLevel.Verbose)
                     {
                         ValidationContext ignoredResult = validationContext;
-                        ignoredResult = ignoredResult.PushValidationLocationProperty("properties");
-                        ignoredResult = ignoredResult.WithResult(isValid: true, "Validation properties - ignored because the value is not an object");
-                        ignoredResult = ignoredResult.PopLocation();
-                        ignoredResult = ignoredResult.PushValidationLocationProperty("dependentSchemas");
-                        ignoredResult = ignoredResult.WithResult(isValid: true, "Validation dependentSchemas - ignored because the value is not an object");
-                        ignoredResult = ignoredResult.PopLocation();
-                        ignoredResult = ignoredResult.PushValidationLocationProperty("unevaluatedProperties");
-                        ignoredResult = ignoredResult.WithResult(isValid: true, "Validation unevaluatedProperties - ignored because the value is not an object");
-                        ignoredResult = ignoredResult.PopLocation();
+                        ignoredResult = ignoredResult.WithResult(isValid: true, "Validation properties - ignored because the value is not an object", "properties");
+                        ignoredResult = ignoredResult.WithResult(isValid: true, "Validation dependentSchemas - ignored because the value is not an object", "dependentSchemas");
+                        ignoredResult = ignoredResult.WithResult(isValid: true, "Validation unevaluatedProperties - ignored because the value is not an object", "unevaluatedProperties");
                         return ignoredResult;
                     }
 

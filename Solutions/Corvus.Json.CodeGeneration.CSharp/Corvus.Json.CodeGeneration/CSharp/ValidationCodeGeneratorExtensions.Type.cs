@@ -290,15 +290,10 @@ public static partial class ValidationCodeGeneratorExtensions
                         .AppendLine(" but was {valueKind}\", ", SymbolDisplay.FormatLiteral(keyword.Keyword, true), ");")
                     .PopIndent()
                     .AppendLineIndent("}")
-                .PopIndent()
-                .AppendLineIndent("}")
-                .AppendLineIndent("else")
-                .AppendLineIndent("{")
-                .PushIndent()
-                    .AppendLineIndent("if (level >= ValidationLevel.Detailed)")
+                    .AppendLineIndent("else if (level >= ValidationLevel.Detailed)")
                     .AppendLineIndent("{")
                     .PushIndent()
-                        .AppendIndent("return validationContext.WithResult(isValid: false, $\"Validation ", keyword.Keyword, " - should have been ");
+                        .AppendIndent("return validationContext.WithResult(isValid: false, \"Validation type - should have been ");
 
             AppendCommaSeparateCoreTypes(generator, allowedCoreTypes);
 
@@ -318,12 +313,12 @@ public static partial class ValidationCodeGeneratorExtensions
                 .AppendLineIndent("if (level >= ValidationLevel.Verbose)")
                 .AppendLineIndent("{")
                 .PushIndent()
-                    .AppendIndent("return validationContext.WithResult(isValid: true, $\"Validation ", keyword.Keyword, " - should be ");
+                    .AppendIndent("return validationContext.WithResult(isValid: true, $\"Validation ", keyword.Keyword, " - was ");
 
             AppendCommaSeparateCoreTypes(generator, allowedCoreTypes);
 
             generator
-                    .AppendLine(" but was {valueKind}\", ", SymbolDisplay.FormatLiteral(keyword.Keyword, true), ");")
+                    .AppendLine(".\", ", SymbolDisplay.FormatLiteral(keyword.Keyword, true), ");")
                 .PopIndent()
                 .AppendLineIndent("}")
 

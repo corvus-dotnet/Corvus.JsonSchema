@@ -108,12 +108,9 @@ public readonly partial struct Schema
                 {
                     return validationContext.WithResult(isValid: false, $"Validation type - should have been 'object', 'boolean' but was {valueKind}", "type");
                 }
-            }
-            else
-            {
-                if (level >= ValidationLevel.Detailed)
+                else if (level >= ValidationLevel.Detailed)
                 {
-                    return validationContext.WithResult(isValid: false, $"Validation type - should have been 'object', 'boolean'.", "type");
+                    return validationContext.WithResult(isValid: false, "Validation type - should have been 'object', 'boolean'.", "type");
                 }
                 else
                 {
@@ -123,7 +120,7 @@ public readonly partial struct Schema
 
             if (level >= ValidationLevel.Verbose)
             {
-                return validationContext.WithResult(isValid: true, $"Validation type - should be 'object', 'boolean' but was {valueKind}", "type");
+                return validationContext.WithResult(isValid: true, $"Validation type - was 'object', 'boolean'.", "type");
             }
             return validationContext;
         }
@@ -311,9 +308,7 @@ public readonly partial struct Schema
                 if (level == ValidationLevel.Verbose)
                 {
                     ValidationContext ignoredResult = validationContext;
-                    ignoredResult = ignoredResult.PushValidationLocationProperty("properties");
-                    ignoredResult = ignoredResult.WithResult(isValid: true, "Validation properties - ignored because the value is not an object");
-                    ignoredResult = ignoredResult.PopLocation();
+                    ignoredResult = ignoredResult.WithResult(isValid: true, "Validation properties - ignored because the value is not an object", "properties");
                     return ignoredResult;
                 }
 

@@ -106,9 +106,7 @@ public readonly partial struct Validation
                     if (level == ValidationLevel.Verbose)
                     {
                         ValidationContext ignoredResult = validationContext;
-                        ignoredResult = ignoredResult.PushValidationLocationProperty("exclusiveMinimum");
-                        ignoredResult = ignoredResult.WithResult(isValid: true, "Validation exclusiveMinimum - ignored because the value is not a number");
-                        ignoredResult = ignoredResult.PopLocation();
+                        ignoredResult = ignoredResult.WithResult(isValid: true, "Validation exclusiveMinimum - ignored because the value is not a number", "exclusiveMinimum");
                         return ignoredResult;
                     }
 
@@ -122,34 +120,22 @@ public readonly partial struct Validation
                 {
                     if (level == ValidationLevel.Verbose)
                     {
-                        result = result.PushValidationLocationProperty("exclusiveMinimum");
-                        result = result.WithResult(isValid: true, $"Validation exclusiveMinimum - {value} is greater than {ExclusiveMinimum}");
-                        result = result.PopLocation();
+                        result = result.WithResult(isValid: true, $"Validation exclusiveMinimum - {value} is greater than {ExclusiveMinimum}", "exclusiveMinimum");
                     }
                 }
                 else
                 {
-                    if (level >= ValidationLevel.Basic)
-                    {
-                        result = result.PushValidationLocationProperty("exclusiveMinimum");
-                    }
-
                     if (level >= ValidationLevel.Detailed)
                     {
-                        result = result.WithResult(isValid: false, $"Validation exclusiveMinimum - {value} is less than or equal to {ExclusiveMinimum}");
+                        result = result.WithResult(isValid: false, $"Validation exclusiveMinimum - {value} is less than or equal to {ExclusiveMinimum}", "exclusiveMinimum");
                     }
                     else if (level >= ValidationLevel.Basic)
                     {
-                        result = result.WithResult(isValid: false, "Validation exclusiveMinimum - is less than or equal to the required value.");
+                        result = result.WithResult(isValid: false, "Validation exclusiveMinimum - is less than or equal to the required value.", "exclusiveMinimum");
                     }
                     else
                     {
                         return ValidationContext.InvalidContext;
-                    }
-
-                    if (level >= ValidationLevel.Basic)
-                    {
-                        result = result.PopLocation();
                     }
                 }
                 return result;

@@ -166,23 +166,13 @@ public class AnyOfSubschemaValidationHandler : IChildValidationHandler
 
                 generator
                         .AppendSeparatorLine()
-                        .AppendLineIndent("if (level >= ValidationLevel.Basic)")
-                        .AppendLineIndent("{")
-                        .PushIndent()
-                            .AppendLineIndent(
-                                "result.PushValidationLocationProperty(",
-                                SymbolDisplay.FormatLiteral(keyword.Keyword, true),
-                                ");")
-                        .PopIndent()
-                        .AppendLineIndent("}")
-                        .AppendSeparatorLine()
                         .AppendLineIndent("if (", foundValidName, ")")
                         .AppendLineIndent("{")
                         .PushIndent()
                             .AppendLineIndent("if (level >= ValidationLevel.Verbose)")
                             .AppendLineIndent("{")
                             .PushIndent()
-                                .AppendKeywordValidationResult(isValid: true, keyword, "result", "validated against the schema.")
+                                .AppendKeywordValidationResult(isValid: true, keyword, "result", "validated against the schema.", withKeyword: true)
                             .PopIndent()
                             .AppendLineIndent("}")
                         .PopIndent()
@@ -193,7 +183,7 @@ public class AnyOfSubschemaValidationHandler : IChildValidationHandler
                             .AppendLineIndent("if (level >= ValidationLevel.Basic)")
                             .AppendLineIndent("{")
                             .PushIndent()
-                                .AppendKeywordValidationResult(isValid: false, keyword, "result", "did not validate against the schema.")
+                                .AppendKeywordValidationResult(isValid: false, keyword, "result", "did not validate against the schema.", withKeyword: true)
                             .PopIndent()
                             .AppendLineIndent("}")
                             .AppendLineIndent("else")
@@ -202,13 +192,6 @@ public class AnyOfSubschemaValidationHandler : IChildValidationHandler
                                 .AppendLineIndent("result = result.WithResult(isValid: false);")
                             .PopIndent()
                             .AppendLineIndent("}")
-                        .PopIndent()
-                        .AppendLineIndent("}")
-                        .AppendSeparatorLine()
-                        .AppendLineIndent("if (level >= ValidationLevel.Basic)")
-                        .AppendLineIndent("{")
-                        .PushIndent()
-                            .AppendLineIndent("result.PopLocation();")
                         .PopIndent()
                         .AppendLineIndent("}")
                         .AppendSeparatorLine();
