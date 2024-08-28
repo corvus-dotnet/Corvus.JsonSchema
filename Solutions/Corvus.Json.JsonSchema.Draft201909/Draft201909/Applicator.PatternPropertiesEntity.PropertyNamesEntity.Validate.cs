@@ -94,7 +94,7 @@ public readonly partial struct Applicator
                         if (level == ValidationLevel.Verbose)
                         {
                             ValidationContext ignoredResult = validationContext;
-                            ignoredResult = ignoredResult.WithResult(isValid: true, $"Validation format - ignored 'regex' because the value '{{valueKind}}' is not 'String'.");
+                            ignoredResult = ignoredResult.WithResult(isValid: true, $"Validation format - ignored 'regex' because the value is of kind '{valueKind}' not 'String'.");
                             return ignoredResult;
                         }
 

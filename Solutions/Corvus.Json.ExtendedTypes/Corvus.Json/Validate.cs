@@ -314,11 +314,11 @@ public static partial class Validate
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation {typeKeyword ?? "type"} - should have been an sbyte 'number' was '{valueKind}'.", typeKeyword ?? "type");
+                return validationContext.WithResult(isValid: false, $"Validation {typeKeyword ?? "type"} - should have been 'number' but was '{valueKind}'.", typeKeyword ?? "type");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been an sbyte 'number'.", typeKeyword ?? "type");
+                return validationContext.WithResult(isValid: false, "Validation type - should have been 'number'.", typeKeyword ?? "type");
             }
             else
             {
@@ -373,11 +373,11 @@ public static partial class Validate
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation {typeKeyword ?? "type"} - should have been 'number' was '{valueKind}'.", typeKeyword ?? "type");
+                return validationContext.WithResult(isValid: false, $"Validation {typeKeyword ?? "type"} - should have been 'number' but was '{valueKind}'.", typeKeyword ?? "type");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation type - should have been an 'number'.", typeKeyword ?? "type");
+                return validationContext.WithResult(isValid: false, "Validation type - should have been 'number'.", typeKeyword ?? "type");
             }
             else
             {
@@ -391,7 +391,7 @@ public static partial class Validate
             {
                 if (level >= ValidationLevel.Detailed)
                 {
-                    return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been 'int16' but '{value}'.", formatKeyword ?? "format");
+                    return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been 'int16' but was '{value}'.", formatKeyword ?? "format");
                 }
                 else if (level >= ValidationLevel.Basic)
                 {
@@ -745,13 +745,53 @@ public static partial class Validate
         {
             try
             {
-                _ = (Int128)instance.AsNumber;
+                JsonNumber number = instance.AsNumber;
+                _ = (Int128)number;
+
+                if (number.HasDotnetBacking && !BinaryJsonNumber.IsInteger(number.AsBinaryJsonNumber))
+                {
+                    if (level >= ValidationLevel.Detailed)
+                    {
+                        double value = (double)instance.AsNumber;
+                        return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been 'int128' but was {value}.", formatKeyword ?? "format");
+                    }
+                    else if (level >= ValidationLevel.Basic)
+                    {
+                        return validationContext.WithResult(isValid: false, "Validation format - should have been 'int128'.", formatKeyword ?? "format");
+                    }
+                    else
+                    {
+                        return ValidationContext.InvalidContext;
+                    }
+                }
             }
             catch (FormatException)
             {
                 if (level >= ValidationLevel.Detailed)
                 {
                     double value = (double)instance.AsNumber;
+                    return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been 'int128' but was {value}.", formatKeyword ?? "format");
+                }
+                else if (level >= ValidationLevel.Basic)
+                {
+                    return validationContext.WithResult(isValid: false, "Validation format - should have been 'int128'.", formatKeyword ?? "format");
+                }
+                else
+                {
+                    return ValidationContext.InvalidContext;
+                }
+            }
+        }
+#else
+        else
+        {
+            // In net4.8 we only support 64 bits of precision.
+            JsonNumber number = instance.AsNumber;
+            double value = (double)number;
+            if (value != Math.Floor(value))
+            {
+                if (level >= ValidationLevel.Detailed)
+                {
                     return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been 'int128' but was {value}.", formatKeyword ?? "format");
                 }
                 else if (level >= ValidationLevel.Basic)
@@ -810,7 +850,24 @@ public static partial class Validate
         {
             try
             {
-                _ = (UInt128)instance.AsNumber;
+                JsonNumber number = instance.AsNumber;
+                _ = (UInt128)number;
+                if (number.HasDotnetBacking && !BinaryJsonNumber.IsInteger(number.AsBinaryJsonNumber))
+                {
+                    if (level >= ValidationLevel.Detailed)
+                    {
+                        double value = (double)instance.AsNumber;
+                        return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been 'uint128' but was {value}.", formatKeyword ?? "format");
+                    }
+                    else if (level >= ValidationLevel.Basic)
+                    {
+                        return validationContext.WithResult(isValid: false, "Validation format - should have been 'uint128'.", formatKeyword ?? "format");
+                    }
+                    else
+                    {
+                        return ValidationContext.InvalidContext;
+                    }
+                }
             }
             catch
             {
@@ -899,6 +956,26 @@ public static partial class Validate
                 if (level >= ValidationLevel.Detailed)
                 {
                     double value = (double)instance.AsNumber;
+                    return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been 'half' but was {value}.", formatKeyword ?? "format");
+                }
+                else if (level >= ValidationLevel.Basic)
+                {
+                    return validationContext.WithResult(isValid: false, "Validation format - should have been 'half'.", formatKeyword ?? "format");
+                }
+                else
+                {
+                    return ValidationContext.InvalidContext;
+                }
+            }
+        }
+#else
+        else
+        {
+            double value = (double)instance.AsNumber;
+            if (value < -65504 || value > 65504)
+            {
+                if (level >= ValidationLevel.Detailed)
+                {
                     return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been 'half' but was {value}.", formatKeyword ?? "format");
                 }
                 else if (level >= ValidationLevel.Basic)
@@ -1064,7 +1141,7 @@ public static partial class Validate
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation {typeKeyword ?? "type"} - should have been 'number' was '{valueKind}'.", typeKeyword ?? "type");
+                return validationContext.WithResult(isValid: false, $"Validation {typeKeyword ?? "type"} - should have been 'number' but was '{valueKind}'.", typeKeyword ?? "type");
             }
             else if (level >= ValidationLevel.Basic)
             {
@@ -3186,11 +3263,11 @@ public static partial class Validate
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return result.WithResult(isValid: false, $"Validation type - should have been 'string' withcontentMediaType 'application/json' but was '{valueKind}'.", typeKeyword ?? "type");
+                return result.WithResult(isValid: false, $"Validation {typeKeyword ?? "type"} - should have been 'string' but was '{valueKind}'.", typeKeyword ?? "type");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return result.WithResult(isValid: false, "Validation type - should have been 'string' with contentMediaType 'application/json'.");
+                return result.WithResult(isValid: false, "Validation type - should have been 'string'.", typeKeyword ?? "type");
             }
             else
             {
@@ -3204,11 +3281,11 @@ public static partial class Validate
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return result.WithResult(isValid: false, "Validation contentEncoding - should have been a 'string' with contentMediaType 'application/json'.");
+                return result.WithResult(isValid: false, "Validation contentMediaType - should have been 'application/json'.", "contentMediaType");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return result.WithResult(isValid: false, "Validation contentEncoding - should have been a 'string' with contentMediaType 'application/json'.");
+                return result.WithResult(isValid: false, "Validation contentMediaType - should have been 'application/json'.", "contentMediaType");
             }
             else
             {
@@ -3220,11 +3297,11 @@ public static partial class Validate
             // Should be Valid, but we just annotate.
             if (level >= ValidationLevel.Detailed)
             {
-                return result.WithResult(isValid: alwaysPassAndAnnotateFailuresInContentDecodingChecks, "Validation contentMediaType - should have been a 'string' with contentMediaType 'application/json'.");
+                return result.WithResult(isValid: alwaysPassAndAnnotateFailuresInContentDecodingChecks, "Validation contentMediaType - should have been 'application/json'.", "contentMediaType");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return result.WithResult(isValid: alwaysPassAndAnnotateFailuresInContentDecodingChecks, "Validation contentMediaType - should have been a 'string' with contentMediaType 'application/json'.");
+                return result.WithResult(isValid: alwaysPassAndAnnotateFailuresInContentDecodingChecks, "Validation contentMediaType - should have been 'application/json'.", "contentMediaType");
             }
             else
             {
@@ -3234,7 +3311,8 @@ public static partial class Validate
         else if (level == ValidationLevel.Verbose)
         {
             return result
-                .WithResult(isValid: true, "Validation contentMediaType - was a'string' with contentMediaType 'application/json'.");
+                .WithResult(isValid: true, $"Validation {typeKeyword ?? "type"} - was 'application/json'.", typeKeyword ?? "type")
+                .WithResult(isValid: true, "Validation contentMediaType - was'application/json'.", "contentMediaType");
         }
 
         return result;
@@ -3276,11 +3354,11 @@ public static partial class Validate
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return result.WithResult(isValid: false, $"Validation type - should have been 'string' with contentEncoding 'base64' and contentMediaType 'application/json' but was '{valueKind}'.", typeKeyword ?? "type");
+                return result.WithResult(isValid: false, $"Validation {typeKeyword ?? "type"} - should have been 'string' but was '{valueKind}'.", typeKeyword ?? "type");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return result.WithResult(isValid: false, "Validation type - should have been 'string' with contentEncoding 'base64' and contentMediaType 'application/json'.", typeKeyword ?? "type");
+                return result.WithResult(isValid: false, "Validation type - should have been 'string'.", typeKeyword ?? "type");
             }
             else
             {
@@ -3295,11 +3373,11 @@ public static partial class Validate
             // Is valid, but we annotate
             if (level >= ValidationLevel.Detailed)
             {
-                return result.WithResult(isValid: alwaysPassAndAnnotateFailuresInContentDecodingChecks, "Validation contentEncoding - should have been a base64 encoded 'string'.");
+                return result.WithResult(isValid: alwaysPassAndAnnotateFailuresInContentDecodingChecks, "Validation contentEncoding - should have been a 'base64'.", "contentEncoding");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return result.WithResult(isValid: alwaysPassAndAnnotateFailuresInContentDecodingChecks, "Validation contentEncoding - should have been a base64 encoded 'string'.");
+                return result.WithResult(isValid: alwaysPassAndAnnotateFailuresInContentDecodingChecks, "Validation contentEncoding - should have been 'base64'.", "contentEncoding");
             }
             else
             {
@@ -3311,11 +3389,11 @@ public static partial class Validate
             // Validates true, but we will annotate ite
             if (level >= ValidationLevel.Detailed)
             {
-                return result.WithResult(isValid: alwaysPassAndAnnotateFailuresInContentDecodingChecks, "Validation contentMediaType - valid, but should have been a base64 encoded 'string' of type 'application/json'.");
+                return result.WithResult(isValid: alwaysPassAndAnnotateFailuresInContentDecodingChecks, "Validation contentMediaType - valid, but should have been 'application/json'.");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return result.WithResult(isValid: alwaysPassAndAnnotateFailuresInContentDecodingChecks, "Validation contentMediaType - valid, but should have been a base64 encoded 'string' of type 'application/json'.");
+                return result.WithResult(isValid: alwaysPassAndAnnotateFailuresInContentDecodingChecks, "Validation contentMediaType - valid, but should have been 'application/json'.");
             }
             else
             {
@@ -3325,8 +3403,9 @@ public static partial class Validate
         else if (level == ValidationLevel.Verbose)
         {
             return result
-                .WithResult(isValid: true, "Validation contentEncoding - was a base64 encoded 'string'.")
-                .WithResult(isValid: true, "Validation contentMediaType - was a base64 encoded 'string' of type 'application/json'.");
+                .WithResult(isValid: true, $"Validation {typeKeyword ?? "type"} - was 'string'.", typeKeyword ?? "type")
+                .WithResult(isValid: true, "Validation contentEncoding - was 'base64'.")
+                .WithResult(isValid: true, "Validation contentMediaType - was 'application/json'.");
         }
 
         return result;
@@ -3368,11 +3447,11 @@ public static partial class Validate
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return result.WithResult(isValid: false, $"Validation type - should have been 'string' with contentEncoding 'base64' but was '{valueKind}'.", typeKeyword ?? "type");
+                return result.WithResult(isValid: false, $"Validation {typeKeyword ?? "type"} - should have been 'string' but was '{valueKind}'.", typeKeyword ?? "type");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return result.WithResult(isValid: false, "Validation type - should have been 'string' with contentEncoding 'base64'.", typeKeyword ?? "type");
+                return result.WithResult(isValid: false, "Validation type - should have been 'string'.", typeKeyword ?? "type");
             }
             else
             {
@@ -3387,11 +3466,11 @@ public static partial class Validate
             // Valid, but we annotate
             if (level >= ValidationLevel.Detailed)
             {
-                return result.WithResult(isValid: alwaysPassAndAnnotateFailuresInContentDecodingChecks, "Validation contentEncoding - should have been a base64 encoded 'string'.");
+                return result.WithResult(isValid: alwaysPassAndAnnotateFailuresInContentDecodingChecks, "Validation contentEncoding - should have been 'base64'.", "contentEncoding");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return result.WithResult(isValid: alwaysPassAndAnnotateFailuresInContentDecodingChecks, "Validation contentEncoding - should have been a base64 encoded 'string'.");
+                return result.WithResult(isValid: alwaysPassAndAnnotateFailuresInContentDecodingChecks, "Validation contentEncoding - should have been 'base64'.", "contentEncoding");
             }
             else
             {
@@ -3401,7 +3480,8 @@ public static partial class Validate
         else if (level == ValidationLevel.Verbose)
         {
             return result
-                .WithResult(isValid: true, "Validation contentEncoding - was a base64 encoded 'string'.");
+                .WithResult(isValid: true, $"Validation contentEncoding - was 'base64'.", "contentEncoding")
+                .WithResult(isValid: true, $"Validation {typeKeyword ?? "type"} - was 'string'.", typeKeyword ?? "type");
         }
 
         return result;
@@ -3443,11 +3523,11 @@ public static partial class Validate
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been 'string' with format 'regex' but was '{regexInstance}'.", formatKeyword ?? "format");
+                return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been 'regex' but was '{regexInstance}'.", formatKeyword ?? "format");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return validationContext.WithResult(isValid: false, "Validation format - should have been a 'string' with format 'regex'.", formatKeyword ?? "format");
+                return validationContext.WithResult(isValid: false, "Validation format - should have been 'regex'.", formatKeyword ?? "format");
             }
             else
             {

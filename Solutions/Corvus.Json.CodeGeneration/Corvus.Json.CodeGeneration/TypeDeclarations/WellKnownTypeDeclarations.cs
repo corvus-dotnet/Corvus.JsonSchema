@@ -64,7 +64,7 @@ public static class WellKnownTypeDeclarations
     {
         using var doc = JsonDocument.Parse("false");
         return new TypeDeclaration(new(
-            new("corvus:/jsonNotAny"),
+            new("corvus:/JsonNotAny"),
             doc.RootElement.Clone(),
             NullVocabulary.Instance))
         { BuildComplete = true };
@@ -74,7 +74,7 @@ public static class WellKnownTypeDeclarations
     {
         using var doc = JsonDocument.Parse("true");
         return new TypeDeclaration(new(
-            new("corvus:/jsonAny"),
+            new("corvus:/JsonAny"),
             doc.RootElement.Clone(),
             NullVocabulary.Instance))
         { BuildComplete = true };

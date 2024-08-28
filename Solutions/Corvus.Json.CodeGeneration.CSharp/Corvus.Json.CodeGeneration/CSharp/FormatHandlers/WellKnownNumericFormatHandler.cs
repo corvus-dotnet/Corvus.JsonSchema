@@ -21,7 +21,7 @@ public class WellKnownNumericFormatHandler : INumberFormatHandler
     public uint Priority => 100_000;
 
     /// <inheritdoc/>
-    public bool AppendFormatAssertion(CodeGenerator generator, string format, string valueIdentifier, string validationContextIdentifier, bool includeType, IKeyword? typeKeyword, IKeyword? formatKeyword)
+    public bool AppendFormatAssertion(CodeGenerator generator, string format, string valueIdentifier, string validationContextIdentifier, bool includeType, IKeyword? typeKeyword, IKeyword? formatKeyword, bool returnFromMethod)
     {
         string validator = includeType ? "Validate" : "ValidateWithoutCoreType";
 
@@ -37,7 +37,9 @@ public class WellKnownNumericFormatHandler : INumberFormatHandler
         {
             case "byte":
                 generator.AppendLineIndent(
-                    "return Corvus.Json.",
+                    returnFromMethod ? "return" : validationContextIdentifier,
+                    returnFromMethod ? string.Empty : " = ",
+                    " Corvus.Json.",
                     validator,
                     ".TypeByte(",
                     valueIdentifier,
@@ -50,7 +52,9 @@ public class WellKnownNumericFormatHandler : INumberFormatHandler
 
             case "uint16":
                 generator.AppendLineIndent(
-                    "return Corvus.Json.",
+                    returnFromMethod ? "return" : validationContextIdentifier,
+                    returnFromMethod ? string.Empty : " = ",
+                    " Corvus.Json.",
                     validator,
                     ".TypeUInt16(",
                     valueIdentifier,
@@ -62,7 +66,9 @@ public class WellKnownNumericFormatHandler : INumberFormatHandler
                 return true;
             case "uint32":
                 generator.AppendLineIndent(
-                    "return Corvus.Json.",
+                    returnFromMethod ? "return" : validationContextIdentifier,
+                    returnFromMethod ? string.Empty : " = ",
+                    " Corvus.Json.",
                     validator,
                     ".TypeUInt32(",
                     valueIdentifier,
@@ -74,7 +80,9 @@ public class WellKnownNumericFormatHandler : INumberFormatHandler
                 return true;
             case "uint64":
                 generator.AppendLineIndent(
-                    "return Corvus.Json.",
+                    returnFromMethod ? "return" : validationContextIdentifier,
+                    returnFromMethod ? string.Empty : " = ",
+                    " Corvus.Json.",
                     validator,
                     ".TypeUInt64(",
                     valueIdentifier,
@@ -86,7 +94,9 @@ public class WellKnownNumericFormatHandler : INumberFormatHandler
                 return true;
             case "uint128":
                 generator.AppendLineIndent(
-                    "return Corvus.Json.",
+                    returnFromMethod ? "return" : validationContextIdentifier,
+                    returnFromMethod ? string.Empty : " = ",
+                    " Corvus.Json.",
                     validator,
                     ".TypeUInt128(",
                     valueIdentifier,
@@ -98,7 +108,9 @@ public class WellKnownNumericFormatHandler : INumberFormatHandler
                 return true;
             case "sbyte":
                 generator.AppendLineIndent(
-                    "return Corvus.Json.",
+                    returnFromMethod ? "return" : validationContextIdentifier,
+                    returnFromMethod ? string.Empty : " = ",
+                    " Corvus.Json.",
                     validator,
                     ".TypeSByte(",
                     valueIdentifier,
@@ -110,7 +122,9 @@ public class WellKnownNumericFormatHandler : INumberFormatHandler
                 return true;
             case "int16":
                 generator.AppendLineIndent(
-                    "return Corvus.Json.",
+                    returnFromMethod ? "return" : validationContextIdentifier,
+                    returnFromMethod ? string.Empty : " = ",
+                    " Corvus.Json.",
                     validator,
                     ".TypeInt16(",
                     valueIdentifier,
@@ -122,7 +136,9 @@ public class WellKnownNumericFormatHandler : INumberFormatHandler
                 return true;
             case "int32":
                 generator.AppendLineIndent(
-                    "return Corvus.Json.",
+                    returnFromMethod ? "return" : validationContextIdentifier,
+                    returnFromMethod ? string.Empty : " = ",
+                    " Corvus.Json.",
                     validator,
                     ".TypeInt32(",
                     valueIdentifier,
@@ -134,7 +150,9 @@ public class WellKnownNumericFormatHandler : INumberFormatHandler
                 return true;
             case "int64":
                 generator.AppendLineIndent(
-                    "return Corvus.Json.",
+                    returnFromMethod ? "return" : validationContextIdentifier,
+                    returnFromMethod ? string.Empty : " = ",
+                    " Corvus.Json.",
                     validator,
                     ".TypeInt64(",
                     valueIdentifier,
@@ -146,7 +164,9 @@ public class WellKnownNumericFormatHandler : INumberFormatHandler
                 return true;
             case "int128":
                 generator.AppendLineIndent(
-                    "return Corvus.Json.",
+                    returnFromMethod ? "return" : validationContextIdentifier,
+                    returnFromMethod ? string.Empty : " = ",
+                    " Corvus.Json.",
                     validator,
                     ".TypeInt128(",
                     valueIdentifier,
@@ -158,7 +178,9 @@ public class WellKnownNumericFormatHandler : INumberFormatHandler
                 return true;
             case "half":
                 generator.AppendLineIndent(
-                    "return Corvus.Json.",
+                    returnFromMethod ? "return" : validationContextIdentifier,
+                    returnFromMethod ? string.Empty : " = ",
+                    " Corvus.Json.",
                     validator,
                     ".TypeHalf(",
                     valueIdentifier,
@@ -170,7 +192,9 @@ public class WellKnownNumericFormatHandler : INumberFormatHandler
                 return true;
             case "single":
                 generator.AppendLineIndent(
-                    "return Corvus.Json.",
+                    returnFromMethod ? "return" : validationContextIdentifier,
+                    returnFromMethod ? string.Empty : " = ",
+                    " Corvus.Json.",
                     validator,
                     ".TypeSingle(",
                     valueIdentifier,
@@ -182,7 +206,9 @@ public class WellKnownNumericFormatHandler : INumberFormatHandler
                 return true;
             case "double":
                 generator.AppendLineIndent(
-                    "return Corvus.Json.",
+                    returnFromMethod ? "return" : validationContextIdentifier,
+                    returnFromMethod ? string.Empty : " = ",
+                    " Corvus.Json.",
                     validator,
                     ".TypeDouble(",
                     valueIdentifier,
@@ -194,7 +220,9 @@ public class WellKnownNumericFormatHandler : INumberFormatHandler
                 return true;
             case "decimal":
                 generator.AppendLineIndent(
-                    "return Corvus.Json.",
+                    returnFromMethod ? "return" : validationContextIdentifier,
+                    returnFromMethod ? string.Empty : " = ",
+                    " Corvus.Json.",
                     validator,
                     ".TypeDecimal(",
                     valueIdentifier,

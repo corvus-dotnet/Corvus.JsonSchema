@@ -22,6 +22,23 @@ public readonly partial struct JsonInteger
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
     {
-        return Json.Validate.TypeInteger(this, validationContext, level, null);
+        ValidationContext result = validationContext;
+        if (level > ValidationLevel.Flag)
+        {
+            result = result.UsingResults();
+        }
+
+        if (level > ValidationLevel.Basic)
+        {
+            result = result.UsingStack();
+            result = result.PushSchemaLocation("corvus:/JsonInteger");
+        }
+        result = Json.Validate.TypeInteger(this, validationContext, level, null);
+        if (level > ValidationLevel.Basic)
+        {
+            result = result.PopLocation();
+        }
+
+        return result;
     }
 }

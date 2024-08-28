@@ -541,7 +541,7 @@ Examples:
 	| ""               | false | Flag     | 0     |
 	| ""               | false | Basic    | 1     |
 	| ""               | false | Detailed | 1     |
-	| ""               | false | Verbose  | 159   |
+	| ""               | false | Verbose  | 160   |
 	| "foo"            | false | Flag     | 0     |
 	| "foo"            | false | Basic    | 1     |
 	| "foo"            | false | Detailed | 1     |
@@ -619,26 +619,25 @@ Examples:
 	| true             | false | Detailed | 1     |
 	| [1,2,3]          | false | Detailed | 1     |
 	| { "foo": "bar" } | false | Detailed | 1     |
-	| -1               | false | Verbose  | 159   |
-	| 0                | false | Verbose  | 159   |
-	| 1                | false | Verbose  | 159   |
+	| -1               | false | Verbose  | 156   |
+	| 0                | false | Verbose  | 161   |
+	| 1                | false | Verbose  | 161   |
 	| 256              | false | Verbose  | 159   |
-	| -256             | false | Verbose  | 159   |
-	| 256.1            | false | Verbose  | 159   |
-	| -256.1           | false | Verbose  | 159   |
-	| 256              | false | Verbose  | 147   |
-	| -32769           | false | Verbose  | 159   |
-	| 32769            | false | Verbose  | 159   |
+	| -256             | false | Verbose  | 155   |
+	| 256.1            | false | Verbose  | 151   |
+	| -256.1           | false | Verbose  | 151   |
+	| -32769           | false | Verbose  | 154   |
+	| 32769            | false | Verbose  | 158   |
 	| -32769.1         | false | Verbose  | 151   |
 	| 32769.1          | false | Verbose  | 151   |
 	| -65536           | false | Verbose  | 153   |
 	| 65536            | false | Verbose  | 156   |
 	| -65536.1         | false | Verbose  | 150   |
 	| 65536.1          | false | Verbose  | 150   |
-	| -2159483648      | false | Verbose  | 159   |
-	| 2159483648       | false | Verbose  | 159   |
-	| -2159483648.1    | false | Verbose  | 159   |
-	| 2159483648.1     | false | Verbose  | 159   |
+	| -2159483648      | false | Verbose  | 152   |
+	| 2159483648       | false | Verbose  | 155   |
+	| -2159483648.1    | false | Verbose  | 150   |
+	| 2159483648.1     | false | Verbose  | 150   |
 	| true             | false | Verbose  | 147   |
 	| [1,2,3]          | false | Verbose  | 147   |
 	| { "foo": "bar" } | false | Verbose  | 146   |

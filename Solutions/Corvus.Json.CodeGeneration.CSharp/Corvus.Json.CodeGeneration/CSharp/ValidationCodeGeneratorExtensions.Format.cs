@@ -102,7 +102,7 @@ public static partial class ValidationCodeGeneratorExtensions
 
         if (typeDeclaration.IsFormatAssertion() || typeDeclaration.AlwaysAssertFormat())
         {
-            FormatHandlerRegistry.Instance.FormatHandlers.AppendFormatAssertion(generator, explicitFormat, "value", "validationContext", null, keywords.FirstOrDefault());
+            FormatHandlerRegistry.Instance.FormatHandlers.AppendFormatAssertion(generator, explicitFormat, "value", "validationContext", null, keywords.FirstOrDefault(), returnFromMethod: true);
         }
         else
         {
@@ -169,7 +169,7 @@ public static partial class ValidationCodeGeneratorExtensions
             generator
                 .Append("ignored '")
                 .Append(format)
-                .Append("' because the value '{{valueKind}}' is not '")
+                .Append("' because the value is of kind '{valueKind}' not '")
                 .Append(expectedValueKind)
                 .Append("'.");
         }

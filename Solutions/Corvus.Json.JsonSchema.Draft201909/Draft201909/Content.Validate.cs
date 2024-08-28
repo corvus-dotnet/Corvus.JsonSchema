@@ -100,7 +100,7 @@ public readonly partial struct Content
             {
                 if (level >= ValidationLevel.Verbose)
                 {
-                    return validationContext.WithResult(isValid: false, $"Validation type - should have been 'object', 'boolean' but was {valueKind}", "type");
+                    return validationContext.WithResult(isValid: false, $"Validation type - should have been 'object', 'boolean' but was '{valueKind}'", "type");
                 }
                 else if (level >= ValidationLevel.Detailed)
                 {

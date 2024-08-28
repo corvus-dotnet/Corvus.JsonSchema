@@ -105,7 +105,7 @@ public readonly partial struct Person
                 {
                     if (level >= ValidationLevel.Verbose)
                     {
-                        return validationContext.WithResult(isValid: false, $"Validation type - should have been 'string', 'null' but was {valueKind}", "type");
+                        return validationContext.WithResult(isValid: false, $"Validation type - should have been 'string', 'null' but was '{valueKind}'", "type");
                     }
                     else if (level >= ValidationLevel.Detailed)
                     {
@@ -144,7 +144,7 @@ public readonly partial struct Person
                     if (level == ValidationLevel.Verbose)
                     {
                         ValidationContext ignoredResult = validationContext;
-                        ignoredResult = ignoredResult.WithResult(isValid: true, $"Validation format - ignored 'date' because the value '{{valueKind}}' is not 'String'.");
+                        ignoredResult = ignoredResult.WithResult(isValid: true, $"Validation format - ignored 'date' because the value is of kind '{valueKind}' not 'String'.");
                         return ignoredResult;
                     }
 

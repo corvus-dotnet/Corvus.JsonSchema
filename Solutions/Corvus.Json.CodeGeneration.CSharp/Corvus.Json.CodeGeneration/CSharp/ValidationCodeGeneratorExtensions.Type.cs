@@ -287,7 +287,7 @@ public static partial class ValidationCodeGeneratorExtensions
             AppendCommaSeparateCoreTypes(generator, allowedCoreTypes);
 
             generator
-                        .AppendLine(" but was {valueKind}\", ", SymbolDisplay.FormatLiteral(keyword.Keyword, true), ");")
+                        .AppendLine(" but was '{valueKind}'\", ", SymbolDisplay.FormatLiteral(keyword.Keyword, true), ");")
                     .PopIndent()
                     .AppendLineIndent("}")
                     .AppendLineIndent("else if (level >= ValidationLevel.Detailed)")
@@ -334,6 +334,7 @@ public static partial class ValidationCodeGeneratorExtensions
             if ((allowedCoreTypes & CoreTypes.Array) != 0)
             {
                 generator.Append("'array'");
+                first = false;
             }
 
             if ((allowedCoreTypes & CoreTypes.Object) != 0)

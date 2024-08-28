@@ -541,11 +541,11 @@ Examples:
 	| ""               | false | Flag     | 0     |
 	| ""               | false | Basic    | 1     |
 	| ""               | false | Detailed | 1     |
-	| ""               | false | Verbose  | 128   |
+	| ""               | false | Verbose  | 140   |
 	| "foo"            | false | Flag     | 0     |
 	| "foo"            | false | Basic    | 1     |
 	| "foo"            | false | Detailed | 1     |
-	| "foo"            | false | Verbose  | 128   |
+	| "foo"            | false | Verbose  | 140   |
 	| null             | false | Flag     | 0     |
 	| null             | false | Basic    | 1     |
 	| null             | false | Detailed | 1     |
@@ -619,26 +619,25 @@ Examples:
 	| true             | false | Detailed | 1     |
 	| [1,2,3]          | false | Detailed | 1     |
 	| { "foo": "bar" } | false | Detailed | 1     |
-	| -1               | false | Verbose  | 128   |
-	| 0                | false | Verbose  | 128   |
-	| 1                | false | Verbose  | 128   |
-	| 256              | false | Verbose  | 128   |
-	| -256             | false | Verbose  | 128   |
-	| 256.1            | false | Verbose  | 128   |
-	| -256.1           | false | Verbose  | 128   |
-	| 256              | false | Verbose  | 128   |
-	| -32769           | false | Verbose  | 128   |
-	| 32769            | false | Verbose  | 128   |
-	| -32769.1         | false | Verbose  | 128   |
-	| 32769.1          | false | Verbose  | 128   |
-	| -65536           | false | Verbose  | 128   |
-	| 65536            | false | Verbose  | 128   |
-	| -65536.1         | false | Verbose  | 128   |
-	| 65536.1          | false | Verbose  | 128   |
-	| -2147483648      | false | Verbose  | 128   |
-	| 2147483648       | false | Verbose  | 128   |
-	| -2147483648.1    | false | Verbose  | 128   |
-	| 2147483648.1     | false | Verbose  | 128   |
+	| -1               | false | Verbose  | 137   |
+	| 0                | false | Verbose  | 142   |
+	| 1                | false | Verbose  | 142   |
+	| 256              | false | Verbose  | 140   |
+	| -256             | false | Verbose  | 136   |
+	| 256.1            | false | Verbose  | 132   |
+	| -256.1           | false | Verbose  | 132   |
+	| -32769           | false | Verbose  | 135   |
+	| 32769            | false | Verbose  | 139   |
+	| -32769.1         | false | Verbose  | 132   |
+	| 32769.1          | false | Verbose  | 132   |
+	| -65536           | false | Verbose  | 134   |
+	| 65536            | false | Verbose  | 137   |
+	| -65536.1         | false | Verbose  | 131   |
+	| 65536.1          | false | Verbose  | 131   |
+	| -2147483648      | false | Verbose  | 134   |
+	| 2147483648       | false | Verbose  | 136   |
+	| -2147483648.1    | false | Verbose  | 131   |
+	| 2147483648.1     | false | Verbose  | 131   |
 	| true             | false | Verbose  | 128   |
 	| [1,2,3]          | false | Verbose  | 128   |
 	| { "foo": "bar" } | false | Verbose  | 127   |

@@ -22,6 +22,23 @@ public readonly partial struct JsonIdnEmail
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
     {
-        return Corvus.Json.Validate.TypeIdnEmail(this, validationContext, level, null, null);
+        ValidationContext result = validationContext;
+        if (level > ValidationLevel.Flag)
+        {
+            result = result.UsingResults();
+        }
+
+        if (level > ValidationLevel.Basic)
+        {
+            result = result.UsingStack();
+            result = result.PushSchemaLocation("corvus:/JsonIdnEmail");
+        }
+        result =  Corvus.Json.Validate.TypeIdnEmail(this, result, level, null, null);
+        if (level > ValidationLevel.Basic)
+        {
+            result = result.PopLocation();
+        }
+
+        return result;
     }
 }

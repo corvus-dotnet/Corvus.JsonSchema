@@ -419,6 +419,7 @@ public static class FormatHandlerExtensions
     /// <param name="validationContextIdentifier">The identifier for the validation context to update.</param>
     /// <param name="typeKeyword">The type keyword.</param>
     /// <param name="formatKeyword">The format keyword.</param>
+    /// <param name="returnFromMethod"><see langword="true"/> if you should return from the method, otherwise it updates the <paramref name="validationContextIdentifier"/>.</param>
     /// <param name="includeType"><see langword="true"/> if you should also include type assertion.</param>
     /// <returns><see langword="true"/> if the assertion was appended successfully.</returns>
     public static bool AppendFormatAssertion<T>(
@@ -429,6 +430,7 @@ public static class FormatHandlerExtensions
         string validationContextIdentifier,
         IKeyword? typeKeyword,
         IKeyword? formatKeyword,
+        bool returnFromMethod,
         bool includeType = false)
         where T : notnull, IFormatHandler
     {
@@ -439,7 +441,7 @@ public static class FormatHandlerExtensions
                 return false;
             }
 
-            if (handler.AppendFormatAssertion(generator, format, valueIdentifier, validationContextIdentifier, includeType, typeKeyword, formatKeyword))
+            if (handler.AppendFormatAssertion(generator, format, valueIdentifier, validationContextIdentifier, includeType, typeKeyword, formatKeyword, returnFromMethod))
             {
                 return true;
             }

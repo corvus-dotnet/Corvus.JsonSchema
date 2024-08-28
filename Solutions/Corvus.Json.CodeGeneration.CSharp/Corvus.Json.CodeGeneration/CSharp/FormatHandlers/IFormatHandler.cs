@@ -54,8 +54,9 @@ public interface IFormatHandler
     /// <param name="includeType">If <see langword="true"/>, the type assertion is also included.</param>
     /// <param name="typeKeyword">The type keyword, or <see langword="null"/> if no type keyword is applied.</param>
     /// <param name="formatKeyword">The format keyword, or <see langword="null"/> if no format keyword is applied.</param>
+    /// <param name="returnFromMethod">If <see langword="true"/>, then the method will return. Otherwise it will set the <paramref name="validationContextIdentifier"/>.</param>
     /// <returns><see langword="true"/> if the instance handled this format.</returns>
-    bool AppendFormatAssertion(CodeGenerator generator, string format, string valueIdentifier, string validationContextIdentifier, bool includeType, IKeyword? typeKeyword, IKeyword? formatKeyword);
+    bool AppendFormatAssertion(CodeGenerator generator, string format, string valueIdentifier, string validationContextIdentifier, bool includeType, IKeyword? typeKeyword, IKeyword? formatKeyword, bool returnFromMethod);
 
     /// <summary>
     /// Append format-specific constructors to the generator.

@@ -113,7 +113,7 @@ public readonly partial struct Core
                     if (level == ValidationLevel.Verbose)
                     {
                         ValidationContext ignoredResult = validationContext;
-                        ignoredResult = ignoredResult.WithResult(isValid: true, $"Validation format - ignored 'uri-reference' because the value '{{valueKind}}' is not 'String'.");
+                        ignoredResult = ignoredResult.WithResult(isValid: true, $"Validation format - ignored 'uri-reference' because the value is of kind '{valueKind}' not 'String'.");
                         return ignoredResult;
                     }
 

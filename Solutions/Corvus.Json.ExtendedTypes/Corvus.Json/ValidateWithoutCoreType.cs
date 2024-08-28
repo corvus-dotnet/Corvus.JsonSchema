@@ -148,7 +148,7 @@ public static partial class ValidateWithoutCoreType
         {
             if (level >= ValidationLevel.Detailed)
             {
-                return validationContext.WithResult(isValid: false, $"Validation type - should have been 'integer' ' but was {value}.", typeKeyword ?? "type");
+                return validationContext.WithResult(isValid: false, $"Validation type - should have been 'integer' but was {value}.", typeKeyword ?? "type");
             }
             else if (level >= ValidationLevel.Basic)
             {
@@ -580,13 +580,50 @@ public static partial class ValidateWithoutCoreType
 #if NET8_0_OR_GREATER
         try
         {
-            _ = (Int128)instance.AsNumber;
+            JsonNumber number = instance.AsNumber;
+            _ = (Int128)number;
+
+            if (number.HasDotnetBacking && !BinaryJsonNumber.IsInteger(number.AsBinaryJsonNumber))
+            {
+                if (level >= ValidationLevel.Detailed)
+                {
+                    double value = (double)instance.AsNumber;
+                    return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been 'int128' but was {value}.", formatKeyword ?? "format");
+                }
+                else if (level >= ValidationLevel.Basic)
+                {
+                    return validationContext.WithResult(isValid: false, "Validation format - should have been 'int128'.", formatKeyword ?? "format");
+                }
+                else
+                {
+                    return ValidationContext.InvalidContext;
+                }
+            }
         }
         catch (FormatException)
         {
             if (level >= ValidationLevel.Detailed)
             {
                 double value = (double)instance.AsNumber;
+                return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been 'int128' but was {value}.", formatKeyword ?? "format");
+            }
+            else if (level >= ValidationLevel.Basic)
+            {
+                return validationContext.WithResult(isValid: false, "Validation format - should have been 'int128'.", formatKeyword ?? "format");
+            }
+            else
+            {
+                return ValidationContext.InvalidContext;
+            }
+        }
+#else
+        // In net4.8 we only support 64 bits of precision.
+        JsonNumber number = instance.AsNumber;
+        double value = (double)number;
+        if (value != Math.Floor(value))
+        {
+            if (level >= ValidationLevel.Detailed)
+            {
                 return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been 'int128' but was {value}.", formatKeyword ?? "format");
             }
             else if (level >= ValidationLevel.Basic)
@@ -623,7 +660,24 @@ public static partial class ValidateWithoutCoreType
 #if NET8_0_OR_GREATER
         try
         {
-            _ = (UInt128)instance.AsNumber;
+            JsonNumber number = instance.AsNumber;
+            _ = (UInt128)number;
+            if (number.HasDotnetBacking && !BinaryJsonNumber.IsInteger(number.AsBinaryJsonNumber))
+            {
+                if (level >= ValidationLevel.Detailed)
+                {
+                    double value = (double)instance.AsNumber;
+                    return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been 'uint128' but was {value}.", formatKeyword ?? "format");
+                }
+                else if (level >= ValidationLevel.Basic)
+                {
+                    return validationContext.WithResult(isValid: false, "Validation format - should have been 'uint128'.", formatKeyword ?? "format");
+                }
+                else
+                {
+                    return ValidationContext.InvalidContext;
+                }
+            }
         }
         catch
         {
@@ -690,6 +744,23 @@ public static partial class ValidateWithoutCoreType
             if (level >= ValidationLevel.Detailed)
             {
                 double value = (double)instance.AsNumber;
+                return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been 'half' but was {value}.", formatKeyword ?? "format");
+            }
+            else if (level >= ValidationLevel.Basic)
+            {
+                return validationContext.WithResult(isValid: false, "Validation format - should have been 'half'.", formatKeyword ?? "format");
+            }
+            else
+            {
+                return ValidationContext.InvalidContext;
+            }
+        }
+#else
+        double value = (double)instance.AsNumber;
+        if (value < -65504 || value > 65504)
+        {
+            if (level >= ValidationLevel.Detailed)
+            {
                 return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been 'half' but was {value}.", formatKeyword ?? "format");
             }
             else if (level >= ValidationLevel.Basic)
