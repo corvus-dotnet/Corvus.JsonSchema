@@ -84,7 +84,7 @@ public readonly partial struct OpenApiDocument
                 in ValidationContext validationContext,
                 ValidationLevel level = ValidationLevel.Flag)
             {
-                return Corvus.Json.ValidateWithoutCoreType.TypeObject(valueKind, validationContext, level);
+                return Corvus.Json.ValidateWithoutCoreType.TypeObject(valueKind, validationContext, level, "type");
             }
 
             /// <summary>
@@ -108,9 +108,7 @@ public readonly partial struct OpenApiDocument
                     if (level == ValidationLevel.Verbose)
                     {
                         ValidationContext ignoredResult = validationContext;
-                        ignoredResult = ignoredResult.PushValidationLocationProperty("additionalProperties");
-                        ignoredResult = ignoredResult.WithResult(isValid: true, "Validation additionalProperties - ignored because the value is not an object");
-                        ignoredResult = ignoredResult.PopLocation();
+                        ignoredResult = ignoredResult.WithResult(isValid: true, "Validation additionalProperties - ignored because the value is not an object", "additionalProperties");
                         return ignoredResult;
                     }
 

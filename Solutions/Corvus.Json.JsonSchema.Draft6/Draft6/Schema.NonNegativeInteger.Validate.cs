@@ -95,7 +95,7 @@ public readonly partial struct Schema
                 in ValidationContext validationContext,
                 ValidationLevel level = ValidationLevel.Flag)
             {
-                return Corvus.Json.ValidateWithoutCoreType.TypeInteger(value, validationContext, level);
+                return Corvus.Json.ValidateWithoutCoreType.TypeInteger(value, validationContext, level, "type");
             }
 
             /// <summary>
@@ -118,9 +118,7 @@ public readonly partial struct Schema
                     if (level == ValidationLevel.Verbose)
                     {
                         ValidationContext ignoredResult = validationContext;
-                        ignoredResult = ignoredResult.PushValidationLocationProperty("minimum");
-                        ignoredResult = ignoredResult.WithResult(isValid: true, "Validation minimum - ignored because the value is not a number");
-                        ignoredResult = ignoredResult.PopLocation();
+                        ignoredResult = ignoredResult.WithResult(isValid: true, "Validation minimum - ignored because the value is not a number", "minimum");
                         return ignoredResult;
                     }
 
@@ -134,34 +132,22 @@ public readonly partial struct Schema
                 {
                     if (level == ValidationLevel.Verbose)
                     {
-                        result = result.PushValidationLocationProperty("minimum");
-                        result = result.WithResult(isValid: true, $"Validation minimum - {value} is greater than or equal to {Minimum}");
-                        result = result.PopLocation();
+                        result = result.WithResult(isValid: true, $"Validation minimum - {value} is greater than or equal to {Minimum}", "minimum");
                     }
                 }
                 else
                 {
-                    if (level >= ValidationLevel.Basic)
-                    {
-                        result = result.PushValidationLocationProperty("minimum");
-                    }
-
                     if (level >= ValidationLevel.Detailed)
                     {
-                        result = result.WithResult(isValid: false, $"Validation minimum - {value} is less than {Minimum}");
+                        result = result.WithResult(isValid: false, $"Validation minimum - {value} is less than {Minimum}", "minimum");
                     }
                     else if (level >= ValidationLevel.Basic)
                     {
-                        result = result.WithResult(isValid: false, "Validation minimum - is less than the required value.");
+                        result = result.WithResult(isValid: false, "Validation minimum - is less than the required value.", "minimum");
                     }
                     else
                     {
                         return ValidationContext.InvalidContext;
-                    }
-
-                    if (level >= ValidationLevel.Basic)
-                    {
-                        result = result.PopLocation();
                     }
                 }
                 return result;

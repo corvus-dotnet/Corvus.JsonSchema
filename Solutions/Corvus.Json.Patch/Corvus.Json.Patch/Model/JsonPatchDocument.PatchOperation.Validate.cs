@@ -95,7 +95,7 @@ public readonly partial struct JsonPatchDocument
                 {
                     if (level >= ValidationLevel.Basic)
                     {
-                        result = result.MergeChildContext(refResult, true).WithResult(isValid: false, "Validation - $ref failed to validate against the schema.");
+                        result = result.MergeChildContext(refResult, true).PushValidationLocationProperty("$ref").WithResult(isValid: false, "Validation - $ref failed to validate against the schema.").PopLocation();
                     }
                     else
                     {
@@ -246,23 +246,18 @@ public readonly partial struct JsonPatchDocument
                     }
                 }
 
-                if (level >= ValidationLevel.Basic)
-                {
-                    result.PushValidationLocationProperty("oneOf");
-                }
-
                 if (oneOfFoundValid == 1)
                 {
                     if (level >= ValidationLevel.Verbose)
                     {
-                        result = result.WithResult(isValid: true, "Validation oneOf - validated against the schema.");
+                        result = result.WithResult(isValid: true, "Validation oneOf - validated against the schema.", "oneOf");
                     }
                 }
                 else if (oneOfFoundValid > 1)
                 {
                     if (level >= ValidationLevel.Basic)
                     {
-                        result = result.WithResult(isValid: false, "Validation oneOf - validated against more than 1 of the schema.");
+                        result = result.WithResult(isValid: false, "Validation oneOf - validated against more than 1 of the schema.", "oneOf");
                     }
                     else
                     {
@@ -273,17 +268,12 @@ public readonly partial struct JsonPatchDocument
                 {
                     if (level >= ValidationLevel.Basic)
                     {
-                        result = result.WithResult(isValid: false, "Validation oneOf - did not validate against any of the schema.");
+                        result = result.WithResult(isValid: false, "Validation oneOf - did not validate against any of the schema.", "oneOf");
                     }
                     else
                     {
                         result = result.WithResult(isValid: false);
                     }
-                }
-
-                if (level >= ValidationLevel.Basic)
-                {
-                    result.PopLocation();
                 }
 
                 return result;

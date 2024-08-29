@@ -88,7 +88,7 @@ public readonly partial struct Validation
                 in ValidationContext validationContext,
                 ValidationLevel level = ValidationLevel.Flag)
             {
-                return Corvus.Json.ValidateWithoutCoreType.TypeArray(valueKind, validationContext, level);
+                return Corvus.Json.ValidateWithoutCoreType.TypeArray(valueKind, validationContext, level, "type");
             }
 
             /// <summary>
@@ -112,12 +112,8 @@ public readonly partial struct Validation
                     if (level == ValidationLevel.Verbose)
                     {
                         ValidationContext ignoredResult = validationContext;
-                        ignoredResult = ignoredResult.PushValidationLocationProperty("items");
-                        ignoredResult = ignoredResult.WithResult(isValid: true, "Validation items - ignored because the value is not an array");
-                        ignoredResult = ignoredResult.PopLocation();
-                        ignoredResult = ignoredResult.PushValidationLocationProperty("uniqueItems");
-                        ignoredResult = ignoredResult.WithResult(isValid: true, "Validation uniqueItems - ignored because the value is not an array");
-                        ignoredResult = ignoredResult.PopLocation();
+                        ignoredResult = ignoredResult.WithResult(isValid: true, "Validation items - ignored because the value is not an array", "items");
+                        ignoredResult = ignoredResult.WithResult(isValid: true, "Validation uniqueItems - ignored because the value is not an array", "uniqueItems");
                         return ignoredResult;
                     }
 
@@ -145,36 +141,24 @@ innerEnumerator.MoveNext())
                     {
                         if (innerEnumerator.Current.Equals(arrayEnumerator.Current))                        {
                             foundDuplicate = true;
-                            if (level >= ValidationLevel.Basic)
-                            {
-                                result = result.PushValidationLocationProperty("uniqueItems");
-                            }
-
                             if (level >= ValidationLevel.Detailed)
                             {
-                                result = result.WithResult(isValid: false, $"Validation uniqueItems - duplicate items were found at indices innerIndex and {length}.");
+                                result = result.WithResult(isValid: false, $"Validation uniqueItems - duplicate items were found at indices innerIndex and {length}.", "uniqueItems");
                             }
                             else if (level >= ValidationLevel.Basic)
                             {
-                                result = result.WithResult(isValid: false, "Validation uniqueItems - duplicate items were found.");
+                                result = result.WithResult(isValid: false, "Validation uniqueItems - duplicate items were found.", "uniqueItems");
                             }
                             else
                             {
                                 return ValidationContext.InvalidContext;
-                            }
-
-                            if (level >= ValidationLevel.Basic)
-                            {
-                                result = result.PopLocation();
                             }
                         }
                     }
 
                     if (!foundDuplicate && level == ValidationLevel.Verbose)
                     {
-                        result = result.PushValidationLocationProperty("uniqueItems");
-                        result = result.WithResult(isValid: true, "Validation uniqueItems - no duplicate items found.");
-                        result = result.PopLocation();
+                        result = result.WithResult(isValid: true, "Validation uniqueItems - no duplicate items found.", "uniqueItems");
                     }
                     if (level > ValidationLevel.Basic)
                     {

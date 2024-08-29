@@ -1,0 +1,11 @@
+{
+    "$schema": "https://json-schema.org/draft/2019-09/schema",
+    "title": "Document extensions",
+    "type": "object",
+    "properties": {
+        "extendedSize": {
+            "type": [ "integer", "string" ],
+            "enum": [ "", 1, 2, 3, "1", "2", "3" ]
+        }
+    }
+}

@@ -89,14 +89,14 @@ public readonly partial struct GeneratorConfig
                         if (level == ValidationLevel.Verbose)
                         {
                             ValidationContext ignoredResult = validationContext;
-                            ignoredResult = ignoredResult.WithResult(isValid: true, $"Validation format - ignored 'iri' because the value '{{valueKind}}' is not 'String'.");
+                            ignoredResult = ignoredResult.WithResult(isValid: true, $"Validation format - ignored 'iri' because the value is of kind '{valueKind}' not 'String'.");
                             return ignoredResult;
                         }
 
                         return validationContext;
                     }
 
-                    return Corvus.Json.ValidateWithoutCoreType.TypeIri(value, validationContext, level);
+                    return Corvus.Json.ValidateWithoutCoreType.TypeIri(value, validationContext, level, "format");
                 }
             }
         }

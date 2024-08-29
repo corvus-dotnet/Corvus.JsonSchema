@@ -87,9 +87,11 @@ public class AllOfSubschemaValidationHandler : IChildValidationHandler
                                 .AppendLineIndent(
                                     "result = result.MergeChildContext(",
                                     resultName,
-                                    ", true).WithResult(isValid: false, \"Validation - ",
+                                    ", true).PushValidationLocationProperty(",
+                                    SymbolDisplay.FormatLiteral(keyword.Keyword, true),
+                                    ").WithResult(isValid: false, \"Validation - ",
                                     keyword.Keyword,
-                                    " failed to validate against the schema.\");")
+                                    " failed to validate against the schema.\").PopLocation();")
                             .PopIndent()
                             .AppendLineIndent("}")
                             .AppendLineIndent("else")

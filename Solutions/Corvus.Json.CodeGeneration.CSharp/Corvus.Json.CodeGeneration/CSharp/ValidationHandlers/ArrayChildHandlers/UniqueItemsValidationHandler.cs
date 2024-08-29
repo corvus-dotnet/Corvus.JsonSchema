@@ -76,39 +76,23 @@ public class UniqueItemsValidationHandler : IChildArrayItemValidationHandler
                         .AppendLineIndent("{")
                         .PushIndent()
                             .AppendLineIndent("foundDuplicate = true;")
-                            .AppendLineIndent("if (level >= ValidationLevel.Basic)")
-                            .AppendLineIndent("{")
-                            .PushIndent()
-                                .AppendLineIndent(
-                                    "result = result.PushValidationLocationProperty(",
-                                    SymbolDisplay.FormatLiteral(keyword.Keyword, true),
-                                    ");")
-                            .PopIndent()
-                            .AppendLineIndent("}")
                             .AppendSeparatorLine()
                             .AppendLineIndent("if (level >= ValidationLevel.Detailed)")
                             .AppendLineIndent("{")
                             .PushIndent()
-                                .AppendKeywordValidationResult(isValid: false, keyword, "result", g => DetailedMessage(g, innerIndexName), useInterpolatedString: true)
+                                .AppendKeywordValidationResult(isValid: false, keyword, "result", g => DetailedMessage(g, innerIndexName), useInterpolatedString: true, withKeyword: true)
                             .PopIndent()
                             .AppendLineIndent("}")
                             .AppendLineIndent("else if (level >= ValidationLevel.Basic)")
                             .AppendLineIndent("{")
                             .PushIndent()
-                                .AppendKeywordValidationResult(isValid: false, keyword, "result", "duplicate items were found.")
+                                .AppendKeywordValidationResult(isValid: false, keyword, "result", "duplicate items were found.", withKeyword: true)
                             .PopIndent()
                             .AppendLineIndent("}")
                             .AppendLineIndent("else")
                             .AppendLineIndent("{")
                             .PushIndent()
                                 .AppendLineIndent("return ValidationContext.InvalidContext;")
-                            .PopIndent()
-                            .AppendLineIndent("}")
-                            .AppendSeparatorLine()
-                            .AppendLineIndent("if (level >= ValidationLevel.Basic)")
-                            .AppendLineIndent("{")
-                            .PushIndent()
-                                .AppendLineIndent("result = result.PopLocation();")
                             .PopIndent()
                             .AppendLineIndent("}")
                         .PopIndent()
@@ -119,24 +103,14 @@ public class UniqueItemsValidationHandler : IChildArrayItemValidationHandler
                     .AppendLineIndent("if (!foundDuplicate && level == ValidationLevel.Verbose)")
                     .AppendLineIndent("{")
                     .PushIndent()
-                        .AppendLineIndent(
-                            "result = result.PushValidationLocationProperty(",
-                            SymbolDisplay.FormatLiteral(keyword.Keyword, true),
-                            ");")
-                            .AppendKeywordValidationResult(isValid: true, keyword, "result", "no duplicate items found.")
-                        .AppendLineIndent("result = result.PopLocation();")
+                            .AppendKeywordValidationResult(isValid: true, keyword, "result", "no duplicate items found.", withKeyword: true)
                     .PopIndent()
                     .AppendLineIndent("}");
             }
             else
             {
                 generator
-                    .AppendLineIndent(
-                        "result = result.PushValidationLocationProperty(",
-                        SymbolDisplay.FormatLiteral(keyword.Keyword, true),
-                        ");")
-                    .AppendKeywordValidationResult(isValid: true, keyword, "result", "ignored because unique items were not required.")
-                    .AppendLineIndent("result = result.PopLocation();");
+                    .AppendKeywordValidationResult(isValid: true, keyword, "result", "ignored because unique items were not required.", withKeyword: true);
             }
         }
 

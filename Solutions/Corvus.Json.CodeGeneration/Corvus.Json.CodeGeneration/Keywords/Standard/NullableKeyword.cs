@@ -21,7 +21,7 @@ public sealed class NullableKeyword : ICoreTypeValidationKeyword
     public static NullableKeyword Instance { get; } = new NullableKeyword();
 
     /// <inheritdoc />
-    public string Keyword => "nuillable";
+    public string Keyword => "nullable";
 
     /// <inheritdoc />
     public ReadOnlySpan<byte> KeywordUtf8 => "nullable"u8;

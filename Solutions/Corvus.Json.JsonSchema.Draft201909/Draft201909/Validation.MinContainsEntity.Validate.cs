@@ -94,7 +94,7 @@ public readonly partial struct Validation
                 {
                     if (level >= ValidationLevel.Basic)
                     {
-                        result = result.MergeChildContext(refResult, true).WithResult(isValid: false, "Validation - $ref failed to validate against the schema.");
+                        result = result.MergeChildContext(refResult, true).PushValidationLocationProperty("$ref").WithResult(isValid: false, "Validation - $ref failed to validate against the schema.").PopLocation();
                     }
                     else
                     {

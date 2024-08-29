@@ -597,15 +597,15 @@ Examples:
 	| ""               | false | Flag     | 0     |
 	| ""               | false | Basic    | 1     |
 	| ""               | false | Detailed | 1     |
-	| ""               | false | Verbose  | 103   |
+	| ""               | false | Verbose  | 161   |
 	| "foo"            | false | Flag     | 0     |
 	| "foo"            | false | Basic    | 1     |
 	| "foo"            | false | Detailed | 1     |
-	| "foo"            | false | Verbose  | 103   |
+	| "foo"            | false | Verbose  | 160   |
 	| null             | false | Flag     | 0     |
 	| null             | false | Basic    | 1     |
 	| null             | false | Detailed | 1     |
-	| null             | false | Verbose  | 121   |
+	| null             | false | Verbose  | 166   |
 	| -1               | false | Flag     | 0     |
 	| 0                | false | Flag     | 0     |
 	| 1                | false | Flag     | 0     |
@@ -675,26 +675,25 @@ Examples:
 	| true             | false | Detailed | 1     |
 	| [1,2,3]          | false | Detailed | 1     |
 	| { "foo": "bar" } | false | Detailed | 1     |
-	| -1               | false | Verbose  | 107   |
-	| 0                | false | Verbose  | 107   |
-	| 1                | false | Verbose  | 107   |
-	| 256              | false | Verbose  | 107   |
-	| -256             | false | Verbose  | 107   |
-	| 256.1            | false | Verbose  | 107   |
-	| -256.1           | false | Verbose  | 107   |
-	| 256              | false | Verbose  | 107   |
-	| -32769           | false | Verbose  | 107   |
-	| 32769            | false | Verbose  | 107   |
-	| -32769.1         | false | Verbose  | 107   |
-	| 32769.1          | false | Verbose  | 107   |
-	| -65536           | false | Verbose  | 107   |
-	| 65536            | false | Verbose  | 107   |
-	| -65536.1         | false | Verbose  | 107   |
-	| 65536.1          | false | Verbose  | 107   |
-	| -2147483648      | false | Verbose  | 107   |
-	| 2147483648       | false | Verbose  | 107   |
-	| -2147483648.1    | false | Verbose  | 107   |
-	| 2147483648.1     | false | Verbose  | 107   |
-	| true             | false | Verbose  | 121   |
-	| [1,2,3]          | false | Verbose  | 121   |
-	| { "foo": "bar" } | false | Verbose  | 120   |
+	| -1               | false | Verbose  | 161   |
+	| 0                | false | Verbose  | 166   |
+	| 1                | false | Verbose  | 166   |
+	| 256              | false | Verbose  | 164   |
+	| -256             | false | Verbose  | 160   |
+	| 256.1            | false | Verbose  | 156   |
+	| -256.1           | false | Verbose  | 156   |
+	| 32769            | false | Verbose  | 163   |
+	| -32769           | false | Verbose  | 159   |
+	| 32769.1          | false | Verbose  | 156   |
+	| -32769.1         | false | Verbose  | 156   |
+	| 65536            | false | Verbose  | 161   |
+	| -65536           | false | Verbose  | 158   |
+	| 65536.1          | false | Verbose  | 155   |
+	| -65536.1         | false | Verbose  | 155   |
+	| -2147483648      | false | Verbose  | 158   |
+	| 2147483648       | false | Verbose  | 160   |
+	| -2147483648.1    | false | Verbose  | 155   |
+	| 2147483648.1     | false | Verbose  | 155   |
+	| true             | false | Verbose  | 166   |
+	| [1,2,3]          | false | Verbose  | 166   |
+	| { "foo": "bar" } | false | Verbose  | 165   |

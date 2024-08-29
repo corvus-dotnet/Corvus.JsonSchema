@@ -22,6 +22,23 @@ public readonly partial struct JsonDouble
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
     {
-        return Corvus.Json.Validate.TypeDouble(this, validationContext, level);
+        ValidationContext result = validationContext;
+        if (level > ValidationLevel.Flag)
+        {
+            result = result.UsingResults();
+        }
+
+        if (level > ValidationLevel.Basic)
+        {
+            result = result.UsingStack();
+            result = result.PushSchemaLocation("corvus:/JsonDouble");
+        }
+        result =  Corvus.Json.Validate.TypeDouble(this, result, level, null, null);
+        if (level > ValidationLevel.Basic)
+        {
+            result = result.PopLocation();
+        }
+
+        return result;
     }
 }

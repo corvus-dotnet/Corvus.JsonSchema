@@ -62,16 +62,6 @@ public class ContainsValidationHandler : IChildArrayItemValidationHandler
 
                 generator
                     .AppendSeparatorLine()
-                    .AppendLineIndent("if (level > ValidationLevel.Basic)")
-                    .AppendLineIndent("{")
-                    .PushIndent()
-                        .AppendLineIndent(
-                            "result = result.PushValidationLocationProperty(",
-                            SymbolDisplay.FormatLiteral(keyword.Keyword, true),
-                            ");")
-                    .PopIndent()
-                    .AppendLineIndent("}")
-                    .AppendSeparatorLine()
                     .AppendIndent("if (")
                     .Append(containsCountName)
                     .Append(' ')
@@ -84,7 +74,7 @@ public class ContainsValidationHandler : IChildArrayItemValidationHandler
                         .AppendLineIndent("if (level == ValidationLevel.Verbose)")
                         .AppendLineIndent("{")
                         .PushIndent()
-                            .AppendKeywordValidationResult(isValid: true, keyword, "result", g => GetValidMessage(g, op, containsCountName, memberName), useInterpolatedString: true)
+                            .AppendKeywordValidationResult(isValid: true, keyword, "result", g => GetValidMessage(g, op, containsCountName, memberName), useInterpolatedString: true, withKeyword: true)
                         .PopIndent()
                         .AppendLineIndent("}")
                     .PopIndent()
@@ -95,13 +85,13 @@ public class ContainsValidationHandler : IChildArrayItemValidationHandler
                         .AppendLineIndent("if (level >= ValidationLevel.Detailed)")
                         .AppendLineIndent("{")
                         .PushIndent()
-                            .AppendKeywordValidationResult(isValid: false, keyword, "result", g => GetInvalidMessage(g, op, containsCountName, memberName), useInterpolatedString: true)
+                            .AppendKeywordValidationResult(isValid: false, keyword, "result", g => GetInvalidMessage(g, op, containsCountName, memberName), useInterpolatedString: true, withKeyword: true)
                         .PopIndent()
                         .AppendLineIndent("}")
                         .AppendLineIndent("else if (level >= ValidationLevel.Basic)")
                         .AppendLineIndent("{")
                         .PushIndent()
-                            .AppendKeywordValidationResult(isValid: false, keyword, "result", g => GetSimplifiedInvalidMessage(g, op), useInterpolatedString: false)
+                            .AppendKeywordValidationResult(isValid: false, keyword, "result", g => GetSimplifiedInvalidMessage(g, op), useInterpolatedString: false, withKeyword: true)
                         .PopIndent()
                         .AppendLineIndent("}")
                         .AppendLineIndent("else")
@@ -111,28 +101,12 @@ public class ContainsValidationHandler : IChildArrayItemValidationHandler
                         .PopIndent()
                         .AppendLineIndent("}")
                     .PopIndent()
-                    .AppendLineIndent("}")
-                    .AppendSeparatorLine()
-                    .AppendLineIndent("if (level > ValidationLevel.Basic)")
-                    .AppendLineIndent("{")
-                    .PushIndent()
-                        .AppendLineIndent("result = result.PopLocation();")
-                    .PopIndent()
                     .AppendLineIndent("}");
             }
 
             if (!foundMinimumRangeValidation)
             {
                 generator
-                    .AppendLineIndent("if (level > ValidationLevel.Basic)")
-                    .AppendLineIndent("{")
-                    .PushIndent()
-                        .AppendLineIndent(
-                            "result = result.PushValidationLocationProperty(",
-                            SymbolDisplay.FormatLiteral(containsKeyword.Keyword, true),
-                            ");")
-                    .PopIndent()
-                    .AppendLineIndent("}")
                     .AppendSeparatorLine()
                     .AppendIndent("if (")
                     .Append(containsCountName)
@@ -146,7 +120,8 @@ public class ContainsValidationHandler : IChildArrayItemValidationHandler
                                 isValid: false,
                                 containsKeyword,
                                 "result",
-                                "no items found matching the required schema.")
+                                "no items found matching the required schema.",
+                                withKeyword: true)
                         .PopIndent()
                         .AppendLineIndent("}")
                         .AppendLineIndent("else")
@@ -160,14 +135,7 @@ public class ContainsValidationHandler : IChildArrayItemValidationHandler
                     .AppendLineIndent("else if (level == ValidationLevel.Verbose)")
                     .AppendLineIndent("{")
                     .PushIndent()
-                            .AppendKeywordValidationResult(isValid: true, containsKeyword, "result", "contained at least one item.")
-                    .PopIndent()
-                    .AppendLineIndent("}")
-                    .AppendSeparatorLine()
-                    .AppendLineIndent("if (level > ValidationLevel.Basic)")
-                    .AppendLineIndent("{")
-                    .PushIndent()
-                        .AppendLineIndent("result = result.PopLocation();")
+                            .AppendKeywordValidationResult(isValid: true, containsKeyword, "result", "contained at least one item.", withKeyword: true)
                     .PopIndent()
                     .AppendLineIndent("}");
             }

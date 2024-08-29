@@ -163,23 +163,18 @@ public readonly partial struct OpenApiDocument
                     }
                 }
 
-                if (level >= ValidationLevel.Basic)
-                {
-                    result.PushValidationLocationProperty("oneOf");
-                }
-
                 if (oneOfFoundValid == 1)
                 {
                     if (level >= ValidationLevel.Verbose)
                     {
-                        result = result.WithResult(isValid: true, "Validation oneOf - validated against the schema.");
+                        result = result.WithResult(isValid: true, "Validation oneOf - validated against the schema.", "oneOf");
                     }
                 }
                 else if (oneOfFoundValid > 1)
                 {
                     if (level >= ValidationLevel.Basic)
                     {
-                        result = result.WithResult(isValid: false, "Validation oneOf - validated against more than 1 of the schema.");
+                        result = result.WithResult(isValid: false, "Validation oneOf - validated against more than 1 of the schema.", "oneOf");
                     }
                     else
                     {
@@ -190,17 +185,12 @@ public readonly partial struct OpenApiDocument
                 {
                     if (level >= ValidationLevel.Basic)
                     {
-                        result = result.WithResult(isValid: false, "Validation oneOf - did not validate against any of the schema.");
+                        result = result.WithResult(isValid: false, "Validation oneOf - did not validate against any of the schema.", "oneOf");
                     }
                     else
                     {
                         result = result.WithResult(isValid: false);
                     }
-                }
-
-                if (level >= ValidationLevel.Basic)
-                {
-                    result.PopLocation();
                 }
 
                 return result;

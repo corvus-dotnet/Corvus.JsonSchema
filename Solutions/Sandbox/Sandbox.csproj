@@ -11,7 +11,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <AdditionalFiles Include="test.json" />
+    <None Include="ConsoleApp1.csproj" />
   </ItemGroup>
 
   <ItemGroup>

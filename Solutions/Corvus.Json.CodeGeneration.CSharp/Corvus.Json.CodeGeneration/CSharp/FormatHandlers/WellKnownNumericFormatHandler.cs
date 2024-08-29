@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Text.Json;
+using Microsoft.CodeAnalysis.CSharp;
 
 namespace Corvus.Json.CodeGeneration.CSharp;
 
@@ -20,152 +21,216 @@ public class WellKnownNumericFormatHandler : INumberFormatHandler
     public uint Priority => 100_000;
 
     /// <inheritdoc/>
-    public bool AppendFormatAssertion(CodeGenerator generator, string format, string valueIdentifier, string validationContextIdentifier, bool includeType)
+    public bool AppendFormatAssertion(CodeGenerator generator, string format, string valueIdentifier, string validationContextIdentifier, bool includeType, IKeyword? typeKeyword, IKeyword? formatKeyword, bool returnFromMethod)
     {
         string validator = includeType ? "Validate" : "ValidateWithoutCoreType";
+
+        string typeKeywordDisplay = typeKeyword is IKeyword t ? SymbolDisplay.FormatLiteral(t.Keyword, true) : "null";
+        string formatKeywordDisplay = formatKeyword is IKeyword f ? SymbolDisplay.FormatLiteral(f.Keyword, true) : "null";
+
+        string keywordParameters =
+            includeType
+                ? $"{typeKeywordDisplay}, {formatKeywordDisplay}"
+                : formatKeywordDisplay;
 
         switch (format)
         {
             case "byte":
                 generator.AppendLineIndent(
-                    "return Corvus.Json.",
+                    returnFromMethod ? "return" : validationContextIdentifier,
+                    returnFromMethod ? string.Empty : " = ",
+                    " Corvus.Json.",
                     validator,
                     ".TypeByte(",
                     valueIdentifier,
                     ", ",
                     validationContextIdentifier,
-                    ", level);");
+                    ", level, ",
+                    keywordParameters,
+                    ");");
                 return true;
 
             case "uint16":
                 generator.AppendLineIndent(
-                    "return Corvus.Json.",
+                    returnFromMethod ? "return" : validationContextIdentifier,
+                    returnFromMethod ? string.Empty : " = ",
+                    " Corvus.Json.",
                     validator,
                     ".TypeUInt16(",
                     valueIdentifier,
                     ", ",
                     validationContextIdentifier,
-                    ", level);");
+                    ", level, ",
+                    keywordParameters,
+                    ");");
                 return true;
             case "uint32":
                 generator.AppendLineIndent(
-                    "return Corvus.Json.",
+                    returnFromMethod ? "return" : validationContextIdentifier,
+                    returnFromMethod ? string.Empty : " = ",
+                    " Corvus.Json.",
                     validator,
                     ".TypeUInt32(",
                     valueIdentifier,
                     ", ",
                     validationContextIdentifier,
-                    ", level);");
+                    ", level, ",
+                    keywordParameters,
+                    ");");
                 return true;
             case "uint64":
                 generator.AppendLineIndent(
-                    "return Corvus.Json.",
+                    returnFromMethod ? "return" : validationContextIdentifier,
+                    returnFromMethod ? string.Empty : " = ",
+                    " Corvus.Json.",
                     validator,
                     ".TypeUInt64(",
                     valueIdentifier,
                     ", ",
                     validationContextIdentifier,
-                    ", level);");
+                    ", level, ",
+                    keywordParameters,
+                    ");");
                 return true;
             case "uint128":
                 generator.AppendLineIndent(
-                    "return Corvus.Json.",
+                    returnFromMethod ? "return" : validationContextIdentifier,
+                    returnFromMethod ? string.Empty : " = ",
+                    " Corvus.Json.",
                     validator,
                     ".TypeUInt128(",
                     valueIdentifier,
                     ", ",
                     validationContextIdentifier,
-                    ", level);");
+                    ", level, ",
+                    keywordParameters,
+                    ");");
                 return true;
             case "sbyte":
                 generator.AppendLineIndent(
-                    "return Corvus.Json.",
+                    returnFromMethod ? "return" : validationContextIdentifier,
+                    returnFromMethod ? string.Empty : " = ",
+                    " Corvus.Json.",
                     validator,
                     ".TypeSByte(",
                     valueIdentifier,
                     ", ",
                     validationContextIdentifier,
-                    ", level);");
+                    ", level, ",
+                    keywordParameters,
+                    ");");
                 return true;
             case "int16":
                 generator.AppendLineIndent(
-                    "return Corvus.Json.",
+                    returnFromMethod ? "return" : validationContextIdentifier,
+                    returnFromMethod ? string.Empty : " = ",
+                    " Corvus.Json.",
                     validator,
                     ".TypeInt16(",
                     valueIdentifier,
                     ", ",
                     validationContextIdentifier,
-                    ", level);");
+                    ", level, ",
+                    keywordParameters,
+                    ");");
                 return true;
             case "int32":
                 generator.AppendLineIndent(
-                    "return Corvus.Json.",
+                    returnFromMethod ? "return" : validationContextIdentifier,
+                    returnFromMethod ? string.Empty : " = ",
+                    " Corvus.Json.",
                     validator,
                     ".TypeInt32(",
                     valueIdentifier,
                     ", ",
                     validationContextIdentifier,
-                    ", level);");
+                    ", level, ",
+                    keywordParameters,
+                    ");");
                 return true;
             case "int64":
                 generator.AppendLineIndent(
-                    "return Corvus.Json.",
+                    returnFromMethod ? "return" : validationContextIdentifier,
+                    returnFromMethod ? string.Empty : " = ",
+                    " Corvus.Json.",
                     validator,
                     ".TypeInt64(",
                     valueIdentifier,
                     ", ",
                     validationContextIdentifier,
-                    ", level);");
+                    ", level, ",
+                    keywordParameters,
+                    ");");
                 return true;
             case "int128":
                 generator.AppendLineIndent(
-                    "return Corvus.Json.",
+                    returnFromMethod ? "return" : validationContextIdentifier,
+                    returnFromMethod ? string.Empty : " = ",
+                    " Corvus.Json.",
                     validator,
                     ".TypeInt128(",
                     valueIdentifier,
                     ", ",
                     validationContextIdentifier,
-                    ", level);");
+                    ", level, ",
+                    keywordParameters,
+                    ");");
                 return true;
             case "half":
                 generator.AppendLineIndent(
-                    "return Corvus.Json.",
+                    returnFromMethod ? "return" : validationContextIdentifier,
+                    returnFromMethod ? string.Empty : " = ",
+                    " Corvus.Json.",
                     validator,
                     ".TypeHalf(",
                     valueIdentifier,
                     ", ",
                     validationContextIdentifier,
-                    ", level);");
+                    ", level, ",
+                    keywordParameters,
+                    ");");
                 return true;
             case "single":
                 generator.AppendLineIndent(
-                    "return Corvus.Json.",
+                    returnFromMethod ? "return" : validationContextIdentifier,
+                    returnFromMethod ? string.Empty : " = ",
+                    " Corvus.Json.",
                     validator,
                     ".TypeSingle(",
                     valueIdentifier,
                     ", ",
                     validationContextIdentifier,
-                    ", level);");
+                    ", level, ",
+                    keywordParameters,
+                    ");");
                 return true;
             case "double":
                 generator.AppendLineIndent(
-                    "return Corvus.Json.",
+                    returnFromMethod ? "return" : validationContextIdentifier,
+                    returnFromMethod ? string.Empty : " = ",
+                    " Corvus.Json.",
                     validator,
                     ".TypeDouble(",
                     valueIdentifier,
                     ", ",
                     validationContextIdentifier,
-                    ", level);");
+                    ", level, ",
+                    keywordParameters,
+                    ");");
                 return true;
             case "decimal":
                 generator.AppendLineIndent(
-                    "return Corvus.Json.",
+                    returnFromMethod ? "return" : validationContextIdentifier,
+                    returnFromMethod ? string.Empty : " = ",
+                    " Corvus.Json.",
                     validator,
                     ".TypeDecimal(",
                     valueIdentifier,
                     ", ",
                     validationContextIdentifier,
-                    ", level);");
+                    ", level, ",
+                    keywordParameters,
+                    ");");
                 return true;
             default:
                 return false;

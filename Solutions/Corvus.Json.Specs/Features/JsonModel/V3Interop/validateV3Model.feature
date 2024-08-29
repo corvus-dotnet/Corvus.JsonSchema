@@ -12,19 +12,19 @@ Examples:
 	| ""                                                   | false | Flag     | 0     | JsonElement  |
 	| ""                                                   | false | Basic    | 1     | JsonElement  |
 	| ""                                                   | false | Detailed | 1     | JsonElement  |
-	| ""                                                   | false | Verbose  | 198   | JsonElement  |
+	| ""                                                   | false | Verbose  | 210   | JsonElement  |
 	| "foo"                                                | false | Flag     | 0     | JsonElement  |
 	| "foo"                                                | false | Basic    | 1     | JsonElement  |
 	| "foo"                                                | false | Detailed | 1     | JsonElement  |
-	| "foo"                                                | false | Verbose  | 198   | JsonElement  |
+	| "foo"                                                | false | Verbose  | 211   | JsonElement  |
 	| "#\\foor\\bar"                                       | false | Flag     | 0     | JsonElement  |
 	| "#\\foor\\bar"                                       | false | Basic    | 1     | JsonElement  |
 	| "#\\foor\\bar"                                       | false | Detailed | 1     | JsonElement  |
-	| "#\\foor\\bar"                                       | false | Verbose  | 198   | JsonElement  |
+	| "#\\foor\\bar"                                       | false | Verbose  | 210   | JsonElement  |
 	| "01234567890123456789012345678901234567890123456789" | false | Flag     | 0     | JsonElement  |
 	| "01234567890123456789012345678901234567890123456789" | false | Basic    | 1     | JsonElement  |
 	| "01234567890123456789012345678901234567890123456789" | false | Detailed | 1     | JsonElement  |
-	| "01234567890123456789012345678901234567890123456789" | false | Verbose  | 198   | JsonElement  |
+	| "01234567890123456789012345678901234567890123456789" | false | Verbose  | 211   | JsonElement  |
 	| "1"                                                  | false | Flag     | 0     | JsonElement  |
 	| "2"                                                  | false | Flag     | 0     | JsonElement  |
 	| "3"                                                  | false | Flag     | 0     | JsonElement  |
@@ -49,14 +49,14 @@ Examples:
 	| "6"                                                  | false | Detailed | 1     | JsonElement  |
 	| "7"                                                  | false | Detailed | 1     | JsonElement  |
 	| "8"                                                  | false | Detailed | 1     | JsonElement  |
-	| "1"                                                  | false | Verbose  | 198   | JsonElement  |
-	| "2"                                                  | false | Verbose  | 198   | JsonElement  |
-	| "3"                                                  | false | Verbose  | 198   | JsonElement  |
-	| "4"                                                  | false | Verbose  | 198   | JsonElement  |
-	| "5"                                                  | false | Verbose  | 198   | JsonElement  |
-	| "6"                                                  | false | Verbose  | 198   | JsonElement  |
-	| "7"                                                  | false | Verbose  | 198   | JsonElement  |
-	| "8"                                                  | false | Verbose  | 198   | JsonElement  |
+	| "1"                                                  | false | Verbose  | 211   | JsonElement  |
+	| "2"                                                  | false | Verbose  | 211   | JsonElement  |
+	| "3"                                                  | false | Verbose  | 211   | JsonElement  |
+	| "4"                                                  | false | Verbose  | 211   | JsonElement  |
+	| "5"                                                  | false | Verbose  | 211   | JsonElement  |
+	| "6"                                                  | false | Verbose  | 211   | JsonElement  |
+	| "7"                                                  | false | Verbose  | 211   | JsonElement  |
+	| "8"                                                  | false | Verbose  | 211   | JsonElement  |
 	| null                                                 | false | Flag     | 0     | JsonElement  |
 	| null                                                 | false | Basic    | 1     | JsonElement  |
 	| null                                                 | false | Detailed | 1     | JsonElement  |
@@ -130,45 +130,44 @@ Examples:
 	| true                                                 | false | Detailed | 1     | JsonElement  |
 	| [1,2,3]                                              | false | Detailed | 1     | JsonElement  |
 	| { "foo": "bar" }                                     | true  | Detailed | 0     | JsonElement  |
-	| -1                                                   | false | Verbose  | 194   | JsonElement  |
-	| 0                                                    | false | Verbose  | 194   | JsonElement  |
-	| 1                                                    | false | Verbose  | 194   | JsonElement  |
-	| 256                                                  | false | Verbose  | 194   | JsonElement  |
-	| -256                                                 | false | Verbose  | 194   | JsonElement  |
-	| 256.1                                                | false | Verbose  | 194   | JsonElement  |
-	| -256.1                                               | false | Verbose  | 194   | JsonElement  |
-	| 256                                                  | false | Verbose  | 194   | JsonElement  |
-	| -32769                                               | false | Verbose  | 194   | JsonElement  |
-	| 32769                                                | false | Verbose  | 194   | JsonElement  |
-	| -32769.1                                             | false | Verbose  | 194   | JsonElement  |
-	| 32769.1                                              | false | Verbose  | 194   | JsonElement  |
-	| -65536                                               | false | Verbose  | 194   | JsonElement  |
-	| 65536                                                | false | Verbose  | 194   | JsonElement  |
-	| -65536.1                                             | false | Verbose  | 194   | JsonElement  |
-	| 65536.1                                              | false | Verbose  | 194   | JsonElement  |
-	| -2147483648                                          | false | Verbose  | 194   | JsonElement  |
-	| 2147483648                                           | false | Verbose  | 194   | JsonElement  |
-	| -2147483648.1                                        | false | Verbose  | 194   | JsonElement  |
-	| 2147483648.1                                         | false | Verbose  | 194   | JsonElement  |
+	| -1                                                   | false | Verbose  | 203   | JsonElement  |
+	| 0                                                    | false | Verbose  | 209   | JsonElement  |
+	| 1                                                    | false | Verbose  | 209   | JsonElement  |
+	| 256                                                  | false | Verbose  | 207   | JsonElement  |
+	| -256                                                 | false | Verbose  | 202   | JsonElement  |
+	| 256.1                                                | false | Verbose  | 198   | JsonElement  |
+	| -256.1                                               | false | Verbose  | 198   | JsonElement  |
+	| -32769                                               | false | Verbose  | 201   | JsonElement  |
+	| 32769                                                | false | Verbose  | 206   | JsonElement  |
+	| -32769.1                                             | false | Verbose  | 198   | JsonElement  |
+	| 32769.1                                              | false | Verbose  | 198   | JsonElement  |
+	| -65536                                               | false | Verbose  | 200   | JsonElement  |
+	| 65536                                                | false | Verbose  | 203   | JsonElement  |
+	| -65536.1                                             | false | Verbose  | 197   | JsonElement  |
+	| 65536.1                                              | false | Verbose  | 197   | JsonElement  |
+	| -2147483648                                          | false | Verbose  | 200   | JsonElement  |
+	| 2147483648                                           | false | Verbose  | 202   | JsonElement  |
+	| -2147483648.1                                        | false | Verbose  | 197   | JsonElement  |
+	| 2147483648.1                                         | false | Verbose  | 197   | JsonElement  |
 	| true                                                 | false | Verbose  | 179   | JsonElement  |
 	| [1,2,3]                                              | false | Verbose  | 180   | JsonElement  |
 	| { "foo": "bar" }                                     | true  | Verbose  | 179   | JsonElement  |
 	| ""                                                   | false | Flag     | 0     | dotnet       |
 	| ""                                                   | false | Basic    | 1     | dotnet       |
 	| ""                                                   | false | Detailed | 1     | dotnet       |
-	| ""                                                   | false | Verbose  | 198   | dotnet       |
+	| ""                                                   | false | Verbose  | 210   | dotnet       |
 	| "foo"                                                | false | Flag     | 0     | dotnet       |
 	| "foo"                                                | false | Basic    | 1     | dotnet       |
 	| "foo"                                                | false | Detailed | 1     | dotnet       |
-	| "foo"                                                | false | Verbose  | 198   | dotnet       |
+	| "foo"                                                | false | Verbose  | 211   | dotnet       |
 	| "01234567890123456789012345678901234567890123456789" | false | Flag     | 0     | dotnet       |
 	| "01234567890123456789012345678901234567890123456789" | false | Basic    | 1     | dotnet       |
 	| "01234567890123456789012345678901234567890123456789" | false | Detailed | 1     | dotnet       |
-	| "01234567890123456789012345678901234567890123456789" | false | Verbose  | 198   | dotnet       |
+	| "01234567890123456789012345678901234567890123456789" | false | Verbose  | 211   | dotnet       |
 	| "#\\foo\\bar"                                        | false | Flag     | 0     | dotnet       |
 	| "#\\foo\\bar"                                        | false | Basic    | 1     | dotnet       |
 	| "#\\foo\\bar"                                        | false | Detailed | 1     | dotnet       |
-	| "#\\foo\\bar"                                        | false | Verbose  | 198   | dotnet       |
+	| "#\\foo\\bar"                                        | false | Verbose  | 210   | dotnet       |
 	| "1"                                                  | false | Flag     | 0     | dotnet       |
 	| "2"                                                  | false | Flag     | 0     | dotnet       |
 	| "3"                                                  | false | Flag     | 0     | dotnet       |
@@ -193,14 +192,14 @@ Examples:
 	| "6"                                                  | false | Detailed | 1     | dotnet       |
 	| "7"                                                  | false | Detailed | 1     | dotnet       |
 	| "8"                                                  | false | Detailed | 1     | dotnet       |
-	| "1"                                                  | false | Verbose  | 198   | dotnet       |
-	| "2"                                                  | false | Verbose  | 198   | dotnet       |
-	| "3"                                                  | false | Verbose  | 198   | dotnet       |
-	| "4"                                                  | false | Verbose  | 198   | dotnet       |
-	| "5"                                                  | false | Verbose  | 198   | dotnet       |
-	| "6"                                                  | false | Verbose  | 198   | dotnet       |
-	| "7"                                                  | false | Verbose  | 198   | dotnet       |
-	| "8"                                                  | false | Verbose  | 198   | dotnet       |
+	| "1"                                                  | false | Verbose  | 211   | dotnet       |
+	| "2"                                                  | false | Verbose  | 211   | dotnet       |
+	| "3"                                                  | false | Verbose  | 211   | dotnet       |
+	| "4"                                                  | false | Verbose  | 211   | dotnet       |
+	| "5"                                                  | false | Verbose  | 211   | dotnet       |
+	| "6"                                                  | false | Verbose  | 211   | dotnet       |
+	| "7"                                                  | false | Verbose  | 211   | dotnet       |
+	| "8"                                                  | false | Verbose  | 211   | dotnet       |
 	| null                                                 | false | Flag     | 0     | dotnet       |
 	| null                                                 | false | Basic    | 1     | dotnet       |
 	| null                                                 | false | Detailed | 1     | dotnet       |
@@ -274,26 +273,25 @@ Examples:
 	| true                                                 | false | Detailed | 1     | dotnet       |
 	| [1,2,3]                                              | false | Detailed | 1     | dotnet       |
 	| { "foo": "bar" }                                     | true  | Detailed | 0     | dotnet       |
-	| -1                                                   | false | Verbose  | 194   | dotnet       |
-	| 0                                                    | false | Verbose  | 194   | dotnet       |
-	| 1                                                    | false | Verbose  | 194   | dotnet       |
-	| 256                                                  | false | Verbose  | 194   | dotnet       |
-	| -256                                                 | false | Verbose  | 194   | dotnet       |
-	| 256.1                                                | false | Verbose  | 194   | dotnet       |
-	| -256.1                                               | false | Verbose  | 194   | dotnet       |
-	| 256                                                  | false | Verbose  | 194   | dotnet       |
-	| -32769                                               | false | Verbose  | 194   | dotnet       |
-	| 32769                                                | false | Verbose  | 194   | dotnet       |
-	| -32769.1                                             | false | Verbose  | 194   | dotnet       |
-	| 32769.1                                              | false | Verbose  | 194   | dotnet       |
-	| -65536                                               | false | Verbose  | 194   | dotnet       |
-	| 65536                                                | false | Verbose  | 194   | dotnet       |
-	| -65536.1                                             | false | Verbose  | 194   | dotnet       |
-	| 65536.1                                              | false | Verbose  | 194   | dotnet       |
-	| -2147483648                                          | false | Verbose  | 194   | dotnet       |
-	| 2147483648                                           | false | Verbose  | 194   | dotnet       |
-	| -2147483648.1                                        | false | Verbose  | 194   | dotnet       |
-	| 2147483648.1                                         | false | Verbose  | 194   | dotnet       |
+	| -1                                                   | false | Verbose  | 203   | dotnet       |
+	| 0                                                    | false | Verbose  | 209   | dotnet       |
+	| 1                                                    | false | Verbose  | 209   | dotnet       |
+	| 256                                                  | false | Verbose  | 207   | dotnet       |
+	| -256                                                 | false | Verbose  | 202   | dotnet       |
+	| 256.1                                                | false | Verbose  | 198   | dotnet       |
+	| -256.1                                               | false | Verbose  | 198   | dotnet       |
+	| -32769                                               | false | Verbose  | 201   | dotnet       |
+	| 32769                                                | false | Verbose  | 206   | dotnet       |
+	| -32769.1                                             | false | Verbose  | 198   | dotnet       |
+	| 32769.1                                              | false | Verbose  | 198   | dotnet       |
+	| -65536                                               | false | Verbose  | 200   | dotnet       |
+	| 65536                                                | false | Verbose  | 203   | dotnet       |
+	| -65536.1                                             | false | Verbose  | 197   | dotnet       |
+	| 65536.1                                              | false | Verbose  | 197   | dotnet       |
+	| -2147483648                                          | false | Verbose  | 200   | dotnet       |
+	| 2147483648                                           | false | Verbose  | 202   | dotnet       |
+	| -2147483648.1                                        | false | Verbose  | 197   | dotnet       |
+	| 2147483648.1                                         | false | Verbose  | 197   | dotnet       |
 	| true                                                 | false | Verbose  | 179   | dotnet       |
 	| [1,2,3]                                              | false | Verbose  | 180   | dotnet       |
 	| { "foo": "bar" }                                     | true  | Verbose  | 179   | dotnet       |

@@ -78,7 +78,7 @@ public readonly partial struct OpenApiDocument
                 ValidationLevel level = ValidationLevel.Flag)
             {
                 bool isValid = false;
-                ValidationContext localResultObject = Corvus.Json.ValidateWithoutCoreType.TypeObject(valueKind, ValidationContext.ValidContext, level);
+                ValidationContext localResultObject = Corvus.Json.ValidateWithoutCoreType.TypeObject(valueKind, ValidationContext.ValidContext, level, "type");
                 if (level == ValidationLevel.Flag && localResultObject.IsValid)
                 {
                     return validationContext;
@@ -89,7 +89,7 @@ public readonly partial struct OpenApiDocument
                     isValid = true;
                 }
 
-                ValidationContext localResultBoolean = Corvus.Json.ValidateWithoutCoreType.TypeBoolean(valueKind, ValidationContext.ValidContext, level);
+                ValidationContext localResultBoolean = Corvus.Json.ValidateWithoutCoreType.TypeBoolean(valueKind, ValidationContext.ValidContext, level, "type");
                 if (level == ValidationLevel.Flag && localResultBoolean.IsValid)
                 {
                     return validationContext;
@@ -100,11 +100,27 @@ public readonly partial struct OpenApiDocument
                     isValid = true;
                 }
 
-                return validationContext.MergeResults(
-                    isValid,
-                    level,
-                    localResultObject,
-                    localResultBoolean);
+                if (!isValid)
+                {
+                    if (level >= ValidationLevel.Verbose)
+                    {
+                        return validationContext.WithResult(isValid: false, $"Validation type - should have been 'object', 'boolean' but was '{valueKind}'", "type");
+                    }
+                    else if (level >= ValidationLevel.Detailed)
+                    {
+                        return validationContext.WithResult(isValid: false, "Validation type - should have been 'object', 'boolean'.", "type");
+                    }
+                    else
+                    {
+                        return validationContext.WithResult(isValid: false);
+                    }
+                }
+
+                if (level >= ValidationLevel.Verbose)
+                {
+                    return validationContext.WithResult(isValid: true, $"Validation type - was 'object', 'boolean'.", "type");
+                }
+                return validationContext;
             }
         }
     }

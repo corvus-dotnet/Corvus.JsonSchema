@@ -96,7 +96,7 @@ public readonly partial struct OpenApiDocument
                 in ValidationContext validationContext,
                 ValidationLevel level = ValidationLevel.Flag)
             {
-                return Corvus.Json.ValidateWithoutCoreType.TypeObject(valueKind, validationContext, level);
+                return Corvus.Json.ValidateWithoutCoreType.TypeObject(valueKind, validationContext, level, "type");
             }
 
             /// <summary>
@@ -125,7 +125,7 @@ public readonly partial struct OpenApiDocument
                 {
                     if (level >= ValidationLevel.Basic)
                     {
-                        result = result.MergeChildContext(allOfResult0, true).WithResult(isValid: false, "Validation - allOf failed to validate against the schema.");
+                        result = result.MergeChildContext(allOfResult0, true).PushValidationLocationProperty("allOf").WithResult(isValid: false, "Validation - allOf failed to validate against the schema.").PopLocation();
                     }
                     else
                     {
@@ -162,15 +162,9 @@ public readonly partial struct OpenApiDocument
                     if (level == ValidationLevel.Verbose)
                     {
                         ValidationContext ignoredResult = validationContext;
-                        ignoredResult = ignoredResult.PushValidationLocationProperty("additionalProperties");
-                        ignoredResult = ignoredResult.WithResult(isValid: true, "Validation additionalProperties - ignored because the value is not an object");
-                        ignoredResult = ignoredResult.PopLocation();
-                        ignoredResult = ignoredResult.PushValidationLocationProperty("properties");
-                        ignoredResult = ignoredResult.WithResult(isValid: true, "Validation properties - ignored because the value is not an object");
-                        ignoredResult = ignoredResult.PopLocation();
-                        ignoredResult = ignoredResult.PushValidationLocationProperty("patternProperties");
-                        ignoredResult = ignoredResult.WithResult(isValid: true, "Validation patternProperties - ignored because the value is not an object");
-                        ignoredResult = ignoredResult.PopLocation();
+                        ignoredResult = ignoredResult.WithResult(isValid: true, "Validation additionalProperties - ignored because the value is not an object", "additionalProperties");
+                        ignoredResult = ignoredResult.WithResult(isValid: true, "Validation properties - ignored because the value is not an object", "properties");
+                        ignoredResult = ignoredResult.WithResult(isValid: true, "Validation patternProperties - ignored because the value is not an object", "patternProperties");
                         return ignoredResult;
                     }
 

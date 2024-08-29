@@ -214,7 +214,7 @@ public readonly partial struct OpenApiDocument
         /// <summary>
         /// Gets the (optional) <c>password</c> property.
         /// </summary>
-        public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OauthFlows.DefssRequiredScopesAndTokenUr Password
+        public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OauthFlows.OauthFlowsRequiredScopesAndTokenUrl Password
         {
             get
             {
@@ -235,7 +235,7 @@ public readonly partial struct OpenApiDocument
                 {
                     if (this.objectBacking.TryGetValue(JsonPropertyNames.Password, out JsonAny result))
                     {
-                        return result.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OauthFlows.DefssRequiredScopesAndTokenUr>();
+                        return result.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OauthFlows.OauthFlowsRequiredScopesAndTokenUrl>();
                     }
                 }
 
@@ -272,7 +272,7 @@ public readonly partial struct OpenApiDocument
             in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OauthFlows.RequiredAuthorizationUrlAndScopesAndTokenUrl? authorizationCode = null,
             in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OauthFlows.RequiredScopesAndTokenUrl? clientCredentials = null,
             in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OauthFlows.RequiredAuthorizationUrlAndScopes? implicitEntity = null,
-            in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OauthFlows.DefssRequiredScopesAndTokenUr? password = null)
+            in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OauthFlows.OauthFlowsRequiredScopesAndTokenUrl? password = null)
         {
             var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
             if (authorizationCode is not null)

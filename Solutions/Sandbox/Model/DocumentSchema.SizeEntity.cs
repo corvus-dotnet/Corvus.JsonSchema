@@ -10,85 +10,95 @@
 #nullable enable
 
 using System.Buffers;
-using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
 using Corvus.Json.Internal;
 
-namespace Corvus.Json.JsonSchema.OpenApi31;
+namespace Feature408;
 /// <summary>
-/// Generated from JSON Schema.
+/// Document
 /// </summary>
-/// <remarks>
-/// <para>
-/// The description of OpenAPI v3.1.x documents without schema validation, as defined by https://spec.openapis.org/oas/v3.1.0
-/// </para>
-/// </remarks>
-public readonly partial struct OpenApiDocument
+public readonly partial struct DocumentSchema
 {
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
-    [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<PropertiesContentEntity>))]
-    public readonly partial struct PropertiesContentEntity
+    [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<SizeEntity>))]
+    public readonly partial struct SizeEntity
 
     {
         private readonly Backing backing;
         private readonly JsonElement jsonElementBacking;
-        private readonly ImmutableList<JsonObjectProperty> objectBacking;
+        private readonly string stringBacking;
+        private readonly BinaryJsonNumber numberBacking;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="PropertiesContentEntity"/> struct.
+        /// Initializes a new instance of the <see cref="SizeEntity"/> struct.
         /// </summary>
-        public PropertiesContentEntity()
+        public SizeEntity()
         {
             this.jsonElementBacking = default;
             this.backing = Backing.JsonElement;
-            this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
+            this.stringBacking = string.Empty;
+            this.numberBacking = default;
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="PropertiesContentEntity"/> struct.
+        /// Initializes a new instance of the <see cref="SizeEntity"/> struct.
         /// </summary>
         /// <param name="value">The value from which to construct the instance.</param>
-        public PropertiesContentEntity(in JsonElement value)
+        public SizeEntity(in JsonElement value)
         {
             this.jsonElementBacking = value;
             this.backing = Backing.JsonElement;
-            this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
+            this.stringBacking = string.Empty;
+            this.numberBacking = default;
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="PropertiesContentEntity"/> struct.
+        /// Initializes a new instance of the <see cref="SizeEntity"/> struct.
         /// </summary>
         /// <param name="value">The value from which to construct the instance.</param>
-        public PropertiesContentEntity(ImmutableList<JsonObjectProperty> value)
+        public SizeEntity(BinaryJsonNumber value)
         {
-            this.backing = Backing.Object;
+            this.backing = Backing.Number;
             this.jsonElementBacking = default;
-            this.objectBacking = value;
+            this.stringBacking = string.Empty;
+            this.numberBacking = value;
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SizeEntity"/> struct.
+        /// </summary>
+        /// <param name="value">The value from which to construct the instance.</param>
+        public SizeEntity(string value)
+        {
+            this.backing = Backing.String;
+            this.jsonElementBacking = default;
+            this.stringBacking = value;
+            this.numberBacking = default;
         }
 
         /// <summary>
         /// Gets the schema location from which this type was generated.
         /// </summary>
-        public static string SchemaLocation { get; } = "https://spec.openapis.org/oas/3.1/schema/2022-10-07?dynamicScope=https%3A%2F%2Fraw.githubusercontent.com%2FOAI%2FOpenAPI-Specification%2Fmain%2Fschemas%2Fv3.1%2Fschema.json#/$defs/header/properties/content";
+        public static string SchemaLocation { get; } = "DocumentSchema.json#/properties/size";
 
         /// <summary>
         /// Gets a Null instance.
         /// </summary>
-        public static PropertiesContentEntity Null { get; } = new(JsonValueHelpers.NullElement);
+        public static SizeEntity Null { get; } = new(JsonValueHelpers.NullElement);
 
         /// <summary>
         /// Gets an Undefined instance.
         /// </summary>
-        public static PropertiesContentEntity Undefined { get; }
+        public static SizeEntity Undefined { get; }
 
         /// <summary>
         /// Gets the default instance.
         /// </summary>
-        public static PropertiesContentEntity DefaultInstance { get; }
+        public static SizeEntity DefaultInstance { get; }
 
         /// <inheritdoc/>
         public JsonAny AsAny
@@ -100,9 +110,14 @@ public readonly partial struct OpenApiDocument
                     return new(this.jsonElementBacking);
                 }
 
-                if ((this.backing & Backing.Object) != 0)
+                if ((this.backing & Backing.String) != 0)
                 {
-                    return new(this.objectBacking);
+                    return new(this.stringBacking);
+                }
+
+                if ((this.backing & Backing.Number) != 0)
+                {
+                    return new(this.numberBacking);
                 }
 
                 if ((this.backing & Backing.Null) != 0)
@@ -124,9 +139,14 @@ public readonly partial struct OpenApiDocument
                     return this.jsonElementBacking;
                 }
 
-                if ((this.backing & Backing.Object) != 0)
+                if ((this.backing & Backing.String) != 0)
                 {
-                    return JsonValueHelpers.ObjectToJsonElement(this.objectBacking);
+                    return JsonValueHelpers.StringToJsonElement(this.stringBacking);
+                }
+
+                if ((this.backing & Backing.Number) != 0)
+                {
+                    return JsonValueHelpers.NumberToJsonElement(this.numberBacking);
                 }
 
                 if ((this.backing & Backing.Null) != 0)
@@ -139,13 +159,18 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <inheritdoc/>
-        JsonString IJsonValue.AsString
+        public JsonString AsString
         {
             get
             {
                 if ((this.backing & Backing.JsonElement) != 0)
                 {
                     return new(this.jsonElementBacking);
+                }
+
+                if ((this.backing & Backing.String) != 0)
+                {
+                    return new(this.stringBacking);
                 }
 
                 throw new InvalidOperationException();
@@ -167,13 +192,18 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <inheritdoc/>
-        JsonNumber IJsonValue.AsNumber
+        public JsonNumber AsNumber
         {
             get
             {
                 if ((this.backing & Backing.JsonElement) != 0)
                 {
                     return new(this.jsonElementBacking);
+                }
+
+                if ((this.backing & Backing.Number) != 0)
+                {
+                    return new(this.numberBacking);
                 }
 
                 throw new InvalidOperationException();
@@ -181,18 +211,13 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <inheritdoc/>
-        public JsonObject AsObject
+        JsonObject IJsonValue.AsObject
         {
             get
             {
                 if ((this.backing & Backing.JsonElement) != 0)
                 {
                     return new(this.jsonElementBacking);
-                }
-
-                if ((this.backing & Backing.Object) != 0)
-                {
-                    return new(this.objectBacking);
                 }
 
                 throw new InvalidOperationException();
@@ -210,28 +235,6 @@ public readonly partial struct OpenApiDocument
                 }
 
                 throw new InvalidOperationException();
-            }
-        }
-
-        /// <summary>
-        /// Gets the instance as a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Content" />.
-        /// </summary>
-        public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Content AsContent
-        {
-            get
-            {
-                return this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Content>();
-            }
-        }
-
-        /// <summary>
-        /// Gets a value indicating whether the instance is a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Content" />.
-        /// </summary>
-        public bool IsContent
-        {
-            get
-            {
-                return this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Content>().IsValid();
             }
         }
 
@@ -263,9 +266,14 @@ public readonly partial struct OpenApiDocument
                     return this.jsonElementBacking.ValueKind;
                 }
 
-                if ((this.backing & Backing.Object) != 0)
+                if ((this.backing & Backing.String) != 0)
                 {
-                    return JsonValueKind.Object;
+                    return JsonValueKind.String;
+                }
+
+                if ((this.backing & Backing.Number) != 0)
+                {
+                    return JsonValueKind.Number;
                 }
 
                 return JsonValueKind.Undefined;
@@ -276,16 +284,16 @@ public readonly partial struct OpenApiDocument
         /// Conversion from JsonAny.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
-        public static implicit operator PropertiesContentEntity(JsonAny value)
+        public static implicit operator SizeEntity(JsonAny value)
         {
-            return value.As<PropertiesContentEntity>();
+            return value.As<SizeEntity>();
         }
 
         /// <summary>
         /// Conversion to JsonAny.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
-        public static implicit operator JsonAny(PropertiesContentEntity value)
+        public static implicit operator JsonAny(SizeEntity value)
         {
             return value.AsAny;
         }
@@ -298,7 +306,7 @@ public readonly partial struct OpenApiDocument
         /// <returns>
         /// <c>True</c> if the values are equal.
         /// </returns>
-        public static bool operator ==(in PropertiesContentEntity left, in PropertiesContentEntity right)
+        public static bool operator ==(in SizeEntity left, in SizeEntity right)
         {
             return left.Equals(right);
         }
@@ -311,7 +319,7 @@ public readonly partial struct OpenApiDocument
         /// <returns>
         /// <c>True</c> if the values are not equal.
         /// </returns>
-        public static bool operator !=(in PropertiesContentEntity left, in PropertiesContentEntity right)
+        public static bool operator !=(in SizeEntity left, in SizeEntity right)
         {
             return !left.Equals(right);
         }
@@ -325,7 +333,7 @@ public readonly partial struct OpenApiDocument
         /// value cannot be constructed from the given instance (e.g. because they have an incompatible .NET backing type).
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static PropertiesContentEntity FromJson(in JsonElement value)
+        public static SizeEntity FromJson(in JsonElement value)
         {
             return new(value);
         }
@@ -336,7 +344,7 @@ public readonly partial struct OpenApiDocument
         /// <param name="value">The <see cref="JsonAny"/> value from which to instantiate the instance.</param>
         /// <returns>An instance of this type, initialized from the <see cref="JsonAny"/> value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static PropertiesContentEntity FromAny(in JsonAny value)
+        public static SizeEntity FromAny(in JsonAny value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -345,7 +353,8 @@ public readonly partial struct OpenApiDocument
 
             return value.ValueKind switch
             {
-                JsonValueKind.Object => new(value.AsObject.AsPropertyBacking()),
+                JsonValueKind.String => new(value.AsString.GetString()!),
+                JsonValueKind.Number => new(value.AsNumber.AsBinaryJsonNumber),
                 JsonValueKind.Null => Null,
                 _ => Undefined,
             };
@@ -359,45 +368,7 @@ public readonly partial struct OpenApiDocument
         /// <param name="value">The value from which to instantiate the instance.</param>
         /// <returns>An instance of this type, initialized from the provided value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static PropertiesContentEntity IJsonValue<PropertiesContentEntity>.FromBoolean<TValue>(in TValue value)
-        {
-            if (value.HasJsonElementBacking)
-            {
-                return new(value.AsJsonElement);
-            }
-
-            return Undefined;
-        }
-#endif
-
-#if NET8_0_OR_GREATER
-        /// <summary>
-        /// Gets an instance of the JSON value from the provided value.
-        /// </summary>
-        /// <typeparam name="TValue">The type of the value.</typeparam>
-        /// <param name="value">The value from which to instantiate the instance.</param>
-        /// <returns>An instance of this type, initialized from the provided value.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static PropertiesContentEntity IJsonValue<PropertiesContentEntity>.FromString<TValue>(in TValue value)
-        {
-            if (value.HasJsonElementBacking)
-            {
-                return new(value.AsJsonElement);
-            }
-
-            return Undefined;
-        }
-#endif
-
-#if NET8_0_OR_GREATER
-        /// <summary>
-        /// Gets an instance of the JSON value from the provided value.
-        /// </summary>
-        /// <typeparam name="TValue">The type of the value.</typeparam>
-        /// <param name="value">The value from which to instantiate the instance.</param>
-        /// <returns>An instance of this type, initialized from the provided value.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static PropertiesContentEntity IJsonValue<PropertiesContentEntity>.FromNumber<TValue>(in TValue value)
+        static SizeEntity IJsonValue<SizeEntity>.FromBoolean<TValue>(in TValue value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -415,8 +386,8 @@ public readonly partial struct OpenApiDocument
         /// <param name="value">The value from which to instantiate the instance.</param>
         /// <returns>An instance of this type, initialized from the provided value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static PropertiesContentEntity FromObject<TValue>(in TValue value)
-            where TValue : struct, IJsonObject<TValue>
+        public static SizeEntity FromString<TValue>(in TValue value)
+            where TValue : struct, IJsonString<TValue>
         {
             if (value.HasJsonElementBacking)
             {
@@ -425,7 +396,30 @@ public readonly partial struct OpenApiDocument
 
             return value.ValueKind switch
             {
-                JsonValueKind.Object => new(value.AsPropertyBacking()),
+                JsonValueKind.String => new(value.GetString()!),
+                JsonValueKind.Null => Null,
+                _ => Undefined,
+            };
+        }
+
+        /// <summary>
+        /// Gets an instance of the JSON value from the provided value.
+        /// </summary>
+        /// <typeparam name="TValue">The type of the value.</typeparam>
+        /// <param name="value">The value from which to instantiate the instance.</param>
+        /// <returns>An instance of this type, initialized from the provided value.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static SizeEntity FromNumber<TValue>(in TValue value)
+            where TValue : struct, IJsonNumber<TValue>
+        {
+            if (value.HasJsonElementBacking)
+            {
+                return new(value.AsJsonElement);
+            }
+
+            return value.ValueKind switch
+            {
+                JsonValueKind.Number => new(value.AsBinaryJsonNumber),
                 JsonValueKind.Null => Null,
                 _ => Undefined,
             };
@@ -439,7 +433,26 @@ public readonly partial struct OpenApiDocument
         /// <param name="value">The value from which to instantiate the instance.</param>
         /// <returns>An instance of this type, initialized from the provided value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static PropertiesContentEntity IJsonValue<PropertiesContentEntity>.FromArray<TValue>(in TValue value)
+        static SizeEntity IJsonValue<SizeEntity>.FromObject<TValue>(in TValue value)
+        {
+            if (value.HasJsonElementBacking)
+            {
+                return new(value.AsJsonElement);
+            }
+
+            return Undefined;
+        }
+#endif
+
+#if NET8_0_OR_GREATER
+        /// <summary>
+        /// Gets an instance of the JSON value from the provided value.
+        /// </summary>
+        /// <typeparam name="TValue">The type of the value.</typeparam>
+        /// <param name="value">The value from which to instantiate the instance.</param>
+        /// <returns>An instance of this type, initialized from the provided value.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static SizeEntity IJsonValue<SizeEntity>.FromArray<TValue>(in TValue value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -451,109 +464,109 @@ public readonly partial struct OpenApiDocument
 #endif
 
         /// <summary>
-        /// Parses the PropertiesContentEntity.
+        /// Parses the SizeEntity.
         /// </summary>
         /// <param name="source">The source of the JSON string to parse.</param>
         /// <param name="options">The (optional) JsonDocumentOptions.</param>
-        public static PropertiesContentEntity Parse(string source, JsonDocumentOptions options = default)
+        public static SizeEntity Parse(string source, JsonDocumentOptions options = default)
         {
             using var jsonDocument = JsonDocument.Parse(source, options);
             return new(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses the PropertiesContentEntity.
+        /// Parses the SizeEntity.
         /// </summary>
         /// <param name="source">The source of the JSON string to parse.</param>
         /// <param name="options">The (optional) JsonDocumentOptions.</param>
-        public static PropertiesContentEntity Parse(Stream source, JsonDocumentOptions options = default)
+        public static SizeEntity Parse(Stream source, JsonDocumentOptions options = default)
         {
             using var jsonDocument = JsonDocument.Parse(source, options);
             return new(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses the PropertiesContentEntity.
+        /// Parses the SizeEntity.
         /// </summary>
         /// <param name="source">The source of the JSON string to parse.</param>
         /// <param name="options">The (optional) JsonDocumentOptions.</param>
-        public static PropertiesContentEntity Parse(ReadOnlyMemory<byte> source, JsonDocumentOptions options = default)
+        public static SizeEntity Parse(ReadOnlyMemory<byte> source, JsonDocumentOptions options = default)
         {
             using var jsonDocument = JsonDocument.Parse(source, options);
             return new(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses the PropertiesContentEntity.
+        /// Parses the SizeEntity.
         /// </summary>
         /// <param name="source">The source of the JSON string to parse.</param>
         /// <param name="options">The (optional) JsonDocumentOptions.</param>
-        public static PropertiesContentEntity Parse(ReadOnlyMemory<char> source, JsonDocumentOptions options = default)
+        public static SizeEntity Parse(ReadOnlyMemory<char> source, JsonDocumentOptions options = default)
         {
             using var jsonDocument = JsonDocument.Parse(source, options);
             return new(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses the PropertiesContentEntity.
+        /// Parses the SizeEntity.
         /// </summary>
         /// <param name="source">The source of the JSON string to parse.</param>
         /// <param name="options">The (optional) JsonDocumentOptions.</param>
-        public static PropertiesContentEntity Parse(ReadOnlySequence<byte> source, JsonDocumentOptions options = default)
+        public static SizeEntity Parse(ReadOnlySequence<byte> source, JsonDocumentOptions options = default)
         {
             using var jsonDocument = JsonDocument.Parse(source, options);
             return new(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses the PropertiesContentEntity.
+        /// Parses the SizeEntity.
         /// </summary>
         /// <param name="source">The source of the JSON string to parse.</param>
-        public static PropertiesContentEntity ParseValue(string source)
+        public static SizeEntity ParseValue(string source)
         {
 #if NET8_0_OR_GREATER
-            return IJsonValue<PropertiesContentEntity>.ParseValue(source);
+            return IJsonValue<SizeEntity>.ParseValue(source);
 #else
-            return JsonValueHelpers.ParseValue<PropertiesContentEntity>(source.AsSpan());
+            return JsonValueHelpers.ParseValue<SizeEntity>(source.AsSpan());
 #endif
         }
 
         /// <summary>
-        /// Parses the PropertiesContentEntity.
+        /// Parses the SizeEntity.
         /// </summary>
         /// <param name="source">The source of the JSON string to parse.</param>
-        public static PropertiesContentEntity ParseValue(ReadOnlySpan<char> source)
+        public static SizeEntity ParseValue(ReadOnlySpan<char> source)
         {
 #if NET8_0_OR_GREATER
-            return IJsonValue<PropertiesContentEntity>.ParseValue(source);
+            return IJsonValue<SizeEntity>.ParseValue(source);
 #else
-            return JsonValueHelpers.ParseValue<PropertiesContentEntity>(source);
+            return JsonValueHelpers.ParseValue<SizeEntity>(source);
 #endif
         }
 
         /// <summary>
-        /// Parses the PropertiesContentEntity.
+        /// Parses the SizeEntity.
         /// </summary>
         /// <param name="source">The source of the JSON string to parse.</param>
-        public static PropertiesContentEntity ParseValue(ReadOnlySpan<byte> source)
+        public static SizeEntity ParseValue(ReadOnlySpan<byte> source)
         {
 #if NET8_0_OR_GREATER
-            return IJsonValue<PropertiesContentEntity>.ParseValue(source);
+            return IJsonValue<SizeEntity>.ParseValue(source);
 #else
-            return JsonValueHelpers.ParseValue<PropertiesContentEntity>(source);
+            return JsonValueHelpers.ParseValue<SizeEntity>(source);
 #endif
         }
 
         /// <summary>
-        /// Parses the PropertiesContentEntity.
+        /// Parses the SizeEntity.
         /// </summary>
         /// <param name="source">The source of the JSON string to parse.</param>
-        public static PropertiesContentEntity ParseValue(ref Utf8JsonReader source)
+        public static SizeEntity ParseValue(ref Utf8JsonReader source)
         {
 #if NET8_0_OR_GREATER
-            return IJsonValue<PropertiesContentEntity>.ParseValue(ref source);
+            return IJsonValue<SizeEntity>.ParseValue(ref source);
 #else
-            return JsonValueHelpers.ParseValue<PropertiesContentEntity>(ref source);
+            return JsonValueHelpers.ParseValue<SizeEntity>(ref source);
 #endif
         }
 
@@ -572,9 +585,14 @@ public readonly partial struct OpenApiDocument
                 return TTarget.FromJson(this.jsonElementBacking);
             }
 
-            if ((this.backing & Backing.Object) != 0)
+            if ((this.backing & Backing.String) != 0)
             {
-                return TTarget.FromObject(this);
+                return TTarget.FromString(this);
+            }
+
+            if ((this.backing & Backing.Number) != 0)
+            {
+                return TTarget.FromNumber(this);
             }
 
             if ((this.backing & Backing.Null) != 0)
@@ -584,7 +602,7 @@ public readonly partial struct OpenApiDocument
 
             return TTarget.Undefined;
 #else
-            return this.As<PropertiesContentEntity, TTarget>();
+            return this.As<SizeEntity, TTarget>();
 #endif
         }
 
@@ -592,7 +610,7 @@ public readonly partial struct OpenApiDocument
         public override bool Equals(object? obj)
         {
             return
-                (obj is IJsonValue jv && this.Equals(jv.As<PropertiesContentEntity>())) ||
+                (obj is IJsonValue jv && this.Equals(jv.As<SizeEntity>())) ||
                 (obj is null && this.IsNull());
         }
 
@@ -600,7 +618,7 @@ public readonly partial struct OpenApiDocument
         public bool Equals<T>(in T other)
             where T : struct, IJsonValue<T>
         {
-            return this.Equals(other.As<PropertiesContentEntity>());
+            return this.Equals(other.As<SizeEntity>());
         }
 
         /// <summary>
@@ -608,7 +626,7 @@ public readonly partial struct OpenApiDocument
         /// </summary>
         /// <param name="other">The other item with which to compare.</param>
         /// <returns><see langword="true"/> if the values were equal.</returns>
-        public bool Equals(in PropertiesContentEntity other)
+        public bool Equals(in SizeEntity other)
         {
             JsonValueKind thisKind = this.ValueKind;
             JsonValueKind otherKind = other.ValueKind;
@@ -622,32 +640,68 @@ public readonly partial struct OpenApiDocument
                 return true;
             }
 
-            if (thisKind == JsonValueKind.Object)
+            if (thisKind == JsonValueKind.Number)
             {
-                JsonObject thisObject = this.AsObject;
-                JsonObject otherObject = other.AsObject;
-                int count = 0;
-                foreach (JsonObjectProperty property in thisObject.EnumerateObject())
+                if (this.backing == Backing.Number && other.backing == Backing.Number)
                 {
-                    if (!otherObject.TryGetProperty(property.Name, out JsonAny value) || !property.Value.Equals(value))
-                    {
-                        return false;
-                    }
-
-                    count++;
+                    return BinaryJsonNumber.Equals(this.numberBacking, other.numberBacking);
                 }
 
-                int otherCount = 0;
-                foreach (JsonObjectProperty otherProperty in otherObject.EnumerateObject())
+                if (this.backing == Backing.Number && other.backing == Backing.JsonElement)
                 {
-                    otherCount++;
-                    if (otherCount > count)
+                    return BinaryJsonNumber.Equals(this.numberBacking, other.jsonElementBacking);
+                }
+
+                if (this.backing == Backing.JsonElement && other.backing == Backing.Number)
+                {
+                    return BinaryJsonNumber.Equals(this.jsonElementBacking, other.numberBacking);
+                }
+
+                if (this.jsonElementBacking.TryGetDouble(out double lDouble))
+                {
+                    if (other.jsonElementBacking.TryGetDouble(out double rDouble))
                     {
-                        return false;
+                        return lDouble.Equals(rDouble);
                     }
                 }
 
-                return count == otherCount;
+                if (this.jsonElementBacking.TryGetDecimal(out decimal lDecimal))
+                {
+                    if (other.jsonElementBacking.TryGetDecimal(out decimal rDecimal))
+                    {
+                        return lDecimal.Equals(rDecimal);
+                    }
+                }
+            }
+
+            if (thisKind == JsonValueKind.String)
+            {
+                if (this.backing == Backing.JsonElement)
+                {
+                    if (other.backing == Backing.String)
+                    {
+                        return this.jsonElementBacking.ValueEquals(other.stringBacking);
+                    }
+                    else
+                    {
+                        other.jsonElementBacking.TryGetValue(CompareValues, this.jsonElementBacking, out bool areEqual);
+                        return areEqual;
+                    }
+
+                }
+
+                if (other.backing == Backing.JsonElement)
+                {
+                    return other.jsonElementBacking.ValueEquals(this.stringBacking);
+                }
+
+                return this.stringBacking.Equals(other.stringBacking);
+
+                static bool CompareValues(ReadOnlySpan<byte> span, in JsonElement firstItem, out bool value)
+                {
+                    value = firstItem.ValueEquals(span);
+                    return true;
+                }
             }
 
             return false;
@@ -666,9 +720,16 @@ public readonly partial struct OpenApiDocument
                 return;
             }
 
-            if ((this.backing & Backing.Object) != 0)
+            if ((this.backing & Backing.Number) != 0)
             {
-                JsonValueHelpers.WriteProperties(this.objectBacking, writer);
+                this.numberBacking.WriteTo(writer);
+
+                return;
+            }
+
+            if ((this.backing & Backing.String) != 0)
+            {
+                writer.WriteStringValue(this.stringBacking);
 
                 return;
             }
@@ -687,9 +748,9 @@ public readonly partial struct OpenApiDocument
             return this.ValueKind switch
             {
                 JsonValueKind.Array => JsonValueHelpers.GetArrayHashCode(((IJsonValue)this).AsArray),
-                JsonValueKind.Object => JsonValueHelpers.GetObjectHashCode(this),
-                JsonValueKind.Number => JsonValueHelpers.GetHashCodeForNumber(((IJsonValue)this).AsNumber),
-                JsonValueKind.String => JsonValueHelpers.GetHashCodeForString(((IJsonValue)this).AsString),
+                JsonValueKind.Object => JsonValueHelpers.GetObjectHashCode(((IJsonValue)this).AsObject),
+                JsonValueKind.Number => JsonValueHelpers.GetHashCodeForNumber(this),
+                JsonValueKind.String => JsonValueHelpers.GetHashCodeForString(this),
                 JsonValueKind.True => true.GetHashCode(),
                 JsonValueKind.False => false.GetHashCode(),
                 JsonValueKind.Null => JsonValueHelpers.NullHashCode,
@@ -701,17 +762,6 @@ public readonly partial struct OpenApiDocument
         public override string ToString()
         {
             return this.Serialize();
-        }
-
-        /// <summary>
-        /// Gets the value as a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Content" />.
-        /// </summary>
-        /// <param name="result">The result of the conversions.</param>
-        /// <returns><see langword="true" /> if the conversion was valid.</returns>
-        public bool TryGetAsContent(out Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Content result)
-        {
-            result = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Content>();
-            return result.IsValid();
         }
     }
 }

@@ -17,33 +17,33 @@ using System.Text.Json;
 using Corvus.Json;
 using Corvus.Json.Internal;
 
-namespace JsonSchemaSample.Api;
+namespace Feature408;
 /// <summary>
-/// Generated from JSON Schema.
+/// Document extensions
 /// </summary>
-public readonly partial struct FlimFlam
+public readonly partial struct DocumentExtensionsSchema
 {
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
-    public readonly partial struct PositiveInt32
+    public readonly partial struct ExtendedSizeEntity
 #if NET8_0_OR_GREATER
-        : IJsonNumber<JsonSchemaSample.Api.FlimFlam.PositiveInt32>,
-          IAdditionOperators<JsonSchemaSample.Api.FlimFlam.PositiveInt32, JsonSchemaSample.Api.FlimFlam.PositiveInt32, JsonSchemaSample.Api.FlimFlam.PositiveInt32>,
-          ISubtractionOperators<JsonSchemaSample.Api.FlimFlam.PositiveInt32, JsonSchemaSample.Api.FlimFlam.PositiveInt32, JsonSchemaSample.Api.FlimFlam.PositiveInt32>,
-          IMultiplyOperators<JsonSchemaSample.Api.FlimFlam.PositiveInt32, JsonSchemaSample.Api.FlimFlam.PositiveInt32, JsonSchemaSample.Api.FlimFlam.PositiveInt32>,
-          IDivisionOperators<JsonSchemaSample.Api.FlimFlam.PositiveInt32, JsonSchemaSample.Api.FlimFlam.PositiveInt32, JsonSchemaSample.Api.FlimFlam.PositiveInt32>,
-          IIncrementOperators<JsonSchemaSample.Api.FlimFlam.PositiveInt32>,
-          IDecrementOperators<JsonSchemaSample.Api.FlimFlam.PositiveInt32>
+        : IJsonNumber<Feature408.DocumentExtensionsSchema.ExtendedSizeEntity>,
+          IAdditionOperators<Feature408.DocumentExtensionsSchema.ExtendedSizeEntity, Feature408.DocumentExtensionsSchema.ExtendedSizeEntity, Feature408.DocumentExtensionsSchema.ExtendedSizeEntity>,
+          ISubtractionOperators<Feature408.DocumentExtensionsSchema.ExtendedSizeEntity, Feature408.DocumentExtensionsSchema.ExtendedSizeEntity, Feature408.DocumentExtensionsSchema.ExtendedSizeEntity>,
+          IMultiplyOperators<Feature408.DocumentExtensionsSchema.ExtendedSizeEntity, Feature408.DocumentExtensionsSchema.ExtendedSizeEntity, Feature408.DocumentExtensionsSchema.ExtendedSizeEntity>,
+          IDivisionOperators<Feature408.DocumentExtensionsSchema.ExtendedSizeEntity, Feature408.DocumentExtensionsSchema.ExtendedSizeEntity, Feature408.DocumentExtensionsSchema.ExtendedSizeEntity>,
+          IIncrementOperators<Feature408.DocumentExtensionsSchema.ExtendedSizeEntity>,
+          IDecrementOperators<Feature408.DocumentExtensionsSchema.ExtendedSizeEntity>
 #else
-        : IJsonNumber<JsonSchemaSample.Api.FlimFlam.PositiveInt32>
+        : IJsonNumber<Feature408.DocumentExtensionsSchema.ExtendedSizeEntity>
 #endif
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref = "PositiveInt32"/> struct.
+        /// Initializes a new instance of the <see cref = "ExtendedSizeEntity"/> struct.
         /// </summary>
         /// <param name="value">The value from which to construct the instance.</param>
-        public PositiveInt32(int value)
+        public ExtendedSizeEntity(long value)
             : this(new BinaryJsonNumber(value))
         {
         }
@@ -52,7 +52,7 @@ public readonly partial struct FlimFlam
         /// Conversion from JsonNumber.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
-        public static implicit operator PositiveInt32(JsonNumber value)
+        public static implicit operator ExtendedSizeEntity(JsonNumber value)
         {
             if (value.HasDotnetBacking && value.ValueKind == JsonValueKind.Number)
             {
@@ -67,7 +67,7 @@ public readonly partial struct FlimFlam
         /// Conversion to JsonNumber.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
-        public static implicit operator JsonNumber(PositiveInt32 value)
+        public static implicit operator JsonNumber(ExtendedSizeEntity value)
         {
             return
                 value.AsNumber;
@@ -77,7 +77,7 @@ public readonly partial struct FlimFlam
         /// Conversion to JsonInteger.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
-        public static implicit operator JsonInteger(PositiveInt32 value)
+        public static implicit operator JsonInteger(ExtendedSizeEntity value)
         {
             return
                 value.As<JsonInteger>();
@@ -88,7 +88,7 @@ public readonly partial struct FlimFlam
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         /// <returns>An instance of the byte.</returns>
-        public static explicit operator byte(PositiveInt32 value)
+        public static explicit operator byte(ExtendedSizeEntity value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
@@ -107,8 +107,8 @@ public readonly partial struct FlimFlam
         /// Conversion from byte.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
-        /// <returns>An instance of the <see cref="PositiveInt32"/>.</returns>
-        public static explicit operator PositiveInt32(byte value)
+        /// <returns>An instance of the <see cref="ExtendedSizeEntity"/>.</returns>
+        public static explicit operator ExtendedSizeEntity(byte value)
         {
             return new(new BinaryJsonNumber(value));
         }
@@ -118,7 +118,7 @@ public readonly partial struct FlimFlam
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         /// <returns>An instance of the decimal.</returns>
-        public static explicit operator decimal(PositiveInt32 value)
+        public static explicit operator decimal(ExtendedSizeEntity value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
@@ -137,8 +137,8 @@ public readonly partial struct FlimFlam
         /// Conversion from decimal.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
-        /// <returns>An instance of the <see cref="PositiveInt32"/>.</returns>
-        public static explicit operator PositiveInt32(decimal value)
+        /// <returns>An instance of the <see cref="ExtendedSizeEntity"/>.</returns>
+        public static explicit operator ExtendedSizeEntity(decimal value)
         {
             return new(new BinaryJsonNumber(value));
         }
@@ -148,7 +148,7 @@ public readonly partial struct FlimFlam
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         /// <returns>An instance of the double.</returns>
-        public static explicit operator double(PositiveInt32 value)
+        public static explicit operator double(ExtendedSizeEntity value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
@@ -167,8 +167,8 @@ public readonly partial struct FlimFlam
         /// Conversion from double.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
-        /// <returns>An instance of the <see cref="PositiveInt32"/>.</returns>
-        public static explicit operator PositiveInt32(double value)
+        /// <returns>An instance of the <see cref="ExtendedSizeEntity"/>.</returns>
+        public static explicit operator ExtendedSizeEntity(double value)
         {
             return new(new BinaryJsonNumber(value));
         }
@@ -178,7 +178,7 @@ public readonly partial struct FlimFlam
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         /// <returns>An instance of the short.</returns>
-        public static explicit operator short(PositiveInt32 value)
+        public static explicit operator short(ExtendedSizeEntity value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
@@ -197,8 +197,8 @@ public readonly partial struct FlimFlam
         /// Conversion from short.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
-        /// <returns>An instance of the <see cref="PositiveInt32"/>.</returns>
-        public static explicit operator PositiveInt32(short value)
+        /// <returns>An instance of the <see cref="ExtendedSizeEntity"/>.</returns>
+        public static explicit operator ExtendedSizeEntity(short value)
         {
             return new(new BinaryJsonNumber(value));
         }
@@ -208,7 +208,7 @@ public readonly partial struct FlimFlam
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         /// <returns>An instance of the int.</returns>
-        public static implicit operator int(PositiveInt32 value)
+        public static explicit operator int(ExtendedSizeEntity value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
@@ -227,8 +227,8 @@ public readonly partial struct FlimFlam
         /// Conversion from int.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
-        /// <returns>An instance of the <see cref="PositiveInt32"/>.</returns>
-        public static implicit operator PositiveInt32(int value)
+        /// <returns>An instance of the <see cref="ExtendedSizeEntity"/>.</returns>
+        public static explicit operator ExtendedSizeEntity(int value)
         {
             return new(new BinaryJsonNumber(value));
         }
@@ -238,7 +238,7 @@ public readonly partial struct FlimFlam
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         /// <returns>An instance of the long.</returns>
-        public static explicit operator long(PositiveInt32 value)
+        public static implicit operator long(ExtendedSizeEntity value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
@@ -257,8 +257,8 @@ public readonly partial struct FlimFlam
         /// Conversion from long.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
-        /// <returns>An instance of the <see cref="PositiveInt32"/>.</returns>
-        public static explicit operator PositiveInt32(long value)
+        /// <returns>An instance of the <see cref="ExtendedSizeEntity"/>.</returns>
+        public static implicit operator ExtendedSizeEntity(long value)
         {
             return new(new BinaryJsonNumber(value));
         }
@@ -269,7 +269,7 @@ public readonly partial struct FlimFlam
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         /// <returns>An instance of the Int128.</returns>
-        public static explicit operator Int128(PositiveInt32 value)
+        public static explicit operator Int128(ExtendedSizeEntity value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
@@ -288,8 +288,8 @@ public readonly partial struct FlimFlam
         /// Conversion from Int128.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
-        /// <returns>An instance of the <see cref="PositiveInt32"/>.</returns>
-        public static explicit operator PositiveInt32(Int128 value)
+        /// <returns>An instance of the <see cref="ExtendedSizeEntity"/>.</returns>
+        public static explicit operator ExtendedSizeEntity(Int128 value)
         {
             return new(new BinaryJsonNumber(value));
         }
@@ -300,7 +300,7 @@ public readonly partial struct FlimFlam
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         /// <returns>An instance of the sbyte.</returns>
-        public static explicit operator sbyte(PositiveInt32 value)
+        public static explicit operator sbyte(ExtendedSizeEntity value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
@@ -319,8 +319,8 @@ public readonly partial struct FlimFlam
         /// Conversion from sbyte.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
-        /// <returns>An instance of the <see cref="PositiveInt32"/>.</returns>
-        public static explicit operator PositiveInt32(sbyte value)
+        /// <returns>An instance of the <see cref="ExtendedSizeEntity"/>.</returns>
+        public static explicit operator ExtendedSizeEntity(sbyte value)
         {
             return new(new BinaryJsonNumber(value));
         }
@@ -331,7 +331,7 @@ public readonly partial struct FlimFlam
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         /// <returns>An instance of the Half.</returns>
-        public static explicit operator Half(PositiveInt32 value)
+        public static explicit operator Half(ExtendedSizeEntity value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
@@ -350,8 +350,8 @@ public readonly partial struct FlimFlam
         /// Conversion from Half.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
-        /// <returns>An instance of the <see cref="PositiveInt32"/>.</returns>
-        public static explicit operator PositiveInt32(Half value)
+        /// <returns>An instance of the <see cref="ExtendedSizeEntity"/>.</returns>
+        public static explicit operator ExtendedSizeEntity(Half value)
         {
             return new(new BinaryJsonNumber(value));
         }
@@ -362,7 +362,7 @@ public readonly partial struct FlimFlam
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         /// <returns>An instance of the float.</returns>
-        public static explicit operator float(PositiveInt32 value)
+        public static explicit operator float(ExtendedSizeEntity value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
@@ -381,8 +381,8 @@ public readonly partial struct FlimFlam
         /// Conversion from float.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
-        /// <returns>An instance of the <see cref="PositiveInt32"/>.</returns>
-        public static explicit operator PositiveInt32(float value)
+        /// <returns>An instance of the <see cref="ExtendedSizeEntity"/>.</returns>
+        public static explicit operator ExtendedSizeEntity(float value)
         {
             return new(new BinaryJsonNumber(value));
         }
@@ -392,7 +392,7 @@ public readonly partial struct FlimFlam
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         /// <returns>An instance of the ushort.</returns>
-        public static explicit operator ushort(PositiveInt32 value)
+        public static explicit operator ushort(ExtendedSizeEntity value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
@@ -411,8 +411,8 @@ public readonly partial struct FlimFlam
         /// Conversion from ushort.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
-        /// <returns>An instance of the <see cref="PositiveInt32"/>.</returns>
-        public static explicit operator PositiveInt32(ushort value)
+        /// <returns>An instance of the <see cref="ExtendedSizeEntity"/>.</returns>
+        public static explicit operator ExtendedSizeEntity(ushort value)
         {
             return new(new BinaryJsonNumber(value));
         }
@@ -422,7 +422,7 @@ public readonly partial struct FlimFlam
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         /// <returns>An instance of the uint.</returns>
-        public static explicit operator uint(PositiveInt32 value)
+        public static explicit operator uint(ExtendedSizeEntity value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
@@ -441,8 +441,8 @@ public readonly partial struct FlimFlam
         /// Conversion from uint.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
-        /// <returns>An instance of the <see cref="PositiveInt32"/>.</returns>
-        public static explicit operator PositiveInt32(uint value)
+        /// <returns>An instance of the <see cref="ExtendedSizeEntity"/>.</returns>
+        public static explicit operator ExtendedSizeEntity(uint value)
         {
             return new(new BinaryJsonNumber(value));
         }
@@ -452,7 +452,7 @@ public readonly partial struct FlimFlam
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         /// <returns>An instance of the ulong.</returns>
-        public static explicit operator ulong(PositiveInt32 value)
+        public static explicit operator ulong(ExtendedSizeEntity value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
@@ -471,8 +471,8 @@ public readonly partial struct FlimFlam
         /// Conversion from ulong.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
-        /// <returns>An instance of the <see cref="PositiveInt32"/>.</returns>
-        public static explicit operator PositiveInt32(ulong value)
+        /// <returns>An instance of the <see cref="ExtendedSizeEntity"/>.</returns>
+        public static explicit operator ExtendedSizeEntity(ulong value)
         {
             return new(new BinaryJsonNumber(value));
         }
@@ -483,7 +483,7 @@ public readonly partial struct FlimFlam
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         /// <returns>An instance of the UInt128.</returns>
-        public static explicit operator UInt128(PositiveInt32 value)
+        public static explicit operator UInt128(ExtendedSizeEntity value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
@@ -502,8 +502,8 @@ public readonly partial struct FlimFlam
         /// Conversion from UInt128.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
-        /// <returns>An instance of the <see cref="PositiveInt32"/>.</returns>
-        public static explicit operator PositiveInt32(UInt128 value)
+        /// <returns>An instance of the <see cref="ExtendedSizeEntity"/>.</returns>
+        public static explicit operator ExtendedSizeEntity(UInt128 value)
         {
             return new(new BinaryJsonNumber(value));
         }
@@ -517,7 +517,7 @@ public readonly partial struct FlimFlam
         /// <returns>
         /// <see langword="true"/> if the left is less than the right, otherwise <see langword="false"/>.
         /// </returns>
-        public static bool operator <(PositiveInt32 left, PositiveInt32 right)
+        public static bool operator <(ExtendedSizeEntity left, ExtendedSizeEntity right)
         {
             return left.IsNotNullOrUndefined() && right.IsNotNullOrUndefined() && Compare(left, right) < 0;
         }
@@ -530,7 +530,7 @@ public readonly partial struct FlimFlam
         /// <returns>
         /// <see langword="true"/> if the left is less than or equal to the right, otherwise <see langword="false"/>.
         /// </returns>
-        public static bool operator <=(PositiveInt32 left, PositiveInt32 right)
+        public static bool operator <=(ExtendedSizeEntity left, ExtendedSizeEntity right)
         {
             return left.IsNotNullOrUndefined() && right.IsNotNullOrUndefined() && Compare(left, right) <= 0;
         }
@@ -543,7 +543,7 @@ public readonly partial struct FlimFlam
         /// <returns>
         /// <see langword="true"/> if the left is greater than the right, otherwise <see langword="false"/>.
         /// </returns>
-        public static bool operator >(PositiveInt32 left, PositiveInt32 right)
+        public static bool operator >(ExtendedSizeEntity left, ExtendedSizeEntity right)
         {
             return left.IsNotNullOrUndefined() && right.IsNotNullOrUndefined() && Compare(left, right) > 0;
         }
@@ -556,7 +556,7 @@ public readonly partial struct FlimFlam
         /// <returns>
         /// <see langword="true"/> if the left is greater than or equal to the right, otherwise <see langword="false"/>.
         /// </returns>
-        public static bool operator >=(PositiveInt32 left, PositiveInt32 right)
+        public static bool operator >=(ExtendedSizeEntity left, ExtendedSizeEntity right)
         {
             return left.IsNotNullOrUndefined() && right.IsNotNullOrUndefined() && Compare(left, right) >= 0;
         }
@@ -567,7 +567,7 @@ public readonly partial struct FlimFlam
         /// <param name="left">The left hand side of the binary operator.</param>
         /// <param name="right">The right hand side of the binary operator.</param>
         /// <returns>The result of the operation.</returns>
-        public static PositiveInt32 operator +(PositiveInt32 left, PositiveInt32 right)
+        public static ExtendedSizeEntity operator +(ExtendedSizeEntity left, ExtendedSizeEntity right)
         {
             return new(left.AsBinaryJsonNumber + right.AsBinaryJsonNumber);
         }
@@ -578,7 +578,7 @@ public readonly partial struct FlimFlam
         /// <param name="left">The left hand side of the binary operator.</param>
         /// <param name="right">The right hand side of the binary operator.</param>
         /// <returns>The result of the operation.</returns>
-        public static PositiveInt32 operator -(PositiveInt32 left, PositiveInt32 right)
+        public static ExtendedSizeEntity operator -(ExtendedSizeEntity left, ExtendedSizeEntity right)
         {
             return new(left.AsBinaryJsonNumber - right.AsBinaryJsonNumber);
         }
@@ -589,7 +589,7 @@ public readonly partial struct FlimFlam
         /// <param name="left">The left hand side of the binary operator.</param>
         /// <param name="right">The right hand side of the binary operator.</param>
         /// <returns>The result of the operation.</returns>
-        public static PositiveInt32 operator *(PositiveInt32 left, PositiveInt32 right)
+        public static ExtendedSizeEntity operator *(ExtendedSizeEntity left, ExtendedSizeEntity right)
         {
             return new(left.AsBinaryJsonNumber * right.AsBinaryJsonNumber);
         }
@@ -600,7 +600,7 @@ public readonly partial struct FlimFlam
         /// <param name="left">The left hand side of the binary operator.</param>
         /// <param name="right">The right hand side of the binary operator.</param>
         /// <returns>The result of the operation.</returns>
-        public static PositiveInt32 operator /(PositiveInt32 left, PositiveInt32 right)
+        public static ExtendedSizeEntity operator /(ExtendedSizeEntity left, ExtendedSizeEntity right)
         {
             return new(left.AsBinaryJsonNumber / right.AsBinaryJsonNumber);
         }
@@ -610,7 +610,7 @@ public readonly partial struct FlimFlam
         /// </summary>
         /// <param name="value">The value on which to operate.</param>
         /// <returns>The result of the operation.</returns>
-        public static PositiveInt32 operator ++(PositiveInt32 value)
+        public static ExtendedSizeEntity operator ++(ExtendedSizeEntity value)
         {
             BinaryJsonNumber num = value.AsBinaryJsonNumber;            return new(num++);
         }
@@ -620,7 +620,7 @@ public readonly partial struct FlimFlam
         /// </summary>
         /// <param name="value">The value on which to operate.</param>
         /// <returns>The result of the operation.</returns>
-        public static PositiveInt32 operator --(PositiveInt32 value)
+        public static ExtendedSizeEntity operator --(ExtendedSizeEntity value)
         {
             BinaryJsonNumber num = value.AsBinaryJsonNumber;            return new(num--);
         }
@@ -634,7 +634,7 @@ public readonly partial struct FlimFlam
         /// 0 if the numbers are equal, -1 if <paramref name="lhs"/> is less than <paramref name="rhs"/>,
         /// and 1 if <paramref name="lhs"/> is greater than <paramref name="rhs"/>.
         /// </returns>
-        public static int Compare(in PositiveInt32 lhs, in PositiveInt32 rhs)
+        public static int Compare(in ExtendedSizeEntity lhs, in ExtendedSizeEntity rhs)
         {
             if (lhs.ValueKind != rhs.ValueKind)
             {
@@ -685,7 +685,7 @@ public readonly partial struct FlimFlam
 
                 if ((this.backing & Backing.JsonElement) != 0)
                 {
-                    return BinaryJsonNumber.FromJson(this.jsonElementBacking, BinaryJsonNumber.Kind.Int32);
+                    return BinaryJsonNumber.FromJson(this.jsonElementBacking, BinaryJsonNumber.Kind.Int64);
                 }
 
                 throw new InvalidOperationException();
@@ -693,16 +693,16 @@ public readonly partial struct FlimFlam
         }
 
         /// <summary>
-        /// Gets the value as a int.
+        /// Gets the value as a long.
         /// </summary>
-        public int AsInt32() => (int)this;
+        public long AsInt64() => (long)this;
 
         /// <summary>
         /// Equality comparison.
         /// </summary>
-        /// <param name="other">The <c>int</c> with which to compare.</param>
+        /// <param name="other">The <c>long</c> with which to compare.</param>
         /// <returns><see langword="true"/> if the values were equal.</returns>
-        public bool Equals(int other)
+        public bool Equals(long other)
         {
             if ((this.backing & Backing.JsonElement) != 0)
             {
