@@ -284,14 +284,14 @@ Examples:
 	| 32769                                                | false | Verbose  | 206   | dotnet       |
 	| -32769.1                                             | false | Verbose  | 198   | dotnet       |
 	| 32769.1                                              | false | Verbose  | 198   | dotnet       |
-	| -65536                                               | false | Verbose  | 201   | dotnet       |
-	| 65536                                                | false | Verbose  | 204   | dotnet       |
-	| -65536.1                                             | false | Verbose  | 198   | dotnet       |
-	| 65536.1                                              | false | Verbose  | 198   | dotnet       |
-	| -2147483648                                          | false | Verbose  | 201   | dotnet       |
-	| 2147483648                                           | false | Verbose  | 203   | dotnet       |
-	| -2147483648.1                                        | false | Verbose  | 198   | dotnet       |
-	| 2147483648.1                                         | false | Verbose  | 198   | dotnet       |
+	| -65536                                               | false | Verbose  | 200   | dotnet       |
+	| 65536                                                | false | Verbose  | 203   | dotnet       |
+	| -65536.1                                             | false | Verbose  | 197   | dotnet       |
+	| 65536.1                                              | false | Verbose  | 197   | dotnet       |
+	| -2147483648                                          | false | Verbose  | 200   | dotnet       |
+	| 2147483648                                           | false | Verbose  | 202   | dotnet       |
+	| -2147483648.1                                        | false | Verbose  | 197   | dotnet       |
+	| 2147483648.1                                         | false | Verbose  | 197   | dotnet       |
 	| true                                                 | false | Verbose  | 179   | dotnet       |
 	| [1,2,3]                                              | false | Verbose  | 180   | dotnet       |
 	| { "foo": "bar" }                                     | true  | Verbose  | 179   | dotnet       |

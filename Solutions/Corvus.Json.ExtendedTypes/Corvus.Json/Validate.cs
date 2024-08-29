@@ -944,31 +944,6 @@ public static partial class Validate
                 return ValidationContext.InvalidContext;
             }
         }
-#if NET8_0_OR_GREATER
-        else
-        {
-            try
-            {
-                _ = (Half)instance.AsNumber;
-            }
-            catch (FormatException)
-            {
-                if (level >= ValidationLevel.Detailed)
-                {
-                    double value = (double)instance.AsNumber;
-                    return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been 'half' but was {value}.", formatKeyword ?? "format");
-                }
-                else if (level >= ValidationLevel.Basic)
-                {
-                    return validationContext.WithResult(isValid: false, "Validation format - should have been 'half'.", formatKeyword ?? "format");
-                }
-                else
-                {
-                    return ValidationContext.InvalidContext;
-                }
-            }
-        }
-#else
         else
         {
             double value = (double)instance.AsNumber;
@@ -988,7 +963,6 @@ public static partial class Validate
                 }
             }
         }
-#endif
 
         if (level == ValidationLevel.Verbose)
         {

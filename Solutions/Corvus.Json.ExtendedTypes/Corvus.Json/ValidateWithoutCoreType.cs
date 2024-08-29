@@ -582,7 +582,6 @@ public static partial class ValidateWithoutCoreType
         {
             JsonNumber number = instance.AsNumber;
             _ = (Int128)number;
-
             if (number.HasDotnetBacking && !BinaryJsonNumber.IsInteger(number.AsBinaryJsonNumber))
             {
                 if (level >= ValidationLevel.Detailed)
@@ -734,28 +733,6 @@ public static partial class ValidateWithoutCoreType
     public static ValidationContext TypeHalf<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
     {
-#if NET8_0_OR_GREATER
-        try
-        {
-            _ = (Half)instance.AsNumber;
-        }
-        catch (FormatException)
-        {
-            if (level >= ValidationLevel.Detailed)
-            {
-                double value = (double)instance.AsNumber;
-                return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been 'half' but was {value}.", formatKeyword ?? "format");
-            }
-            else if (level >= ValidationLevel.Basic)
-            {
-                return validationContext.WithResult(isValid: false, "Validation format - should have been 'half'.", formatKeyword ?? "format");
-            }
-            else
-            {
-                return ValidationContext.InvalidContext;
-            }
-        }
-#else
         double value = (double)instance.AsNumber;
         if (value < -65504 || value > 65504)
         {
@@ -772,7 +749,6 @@ public static partial class ValidateWithoutCoreType
                 return ValidationContext.InvalidContext;
             }
         }
-#endif
 
         if (level == ValidationLevel.Verbose)
         {
