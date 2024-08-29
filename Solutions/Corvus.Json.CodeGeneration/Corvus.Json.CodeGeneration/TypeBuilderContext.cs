@@ -426,6 +426,11 @@ public class TypeBuilderContext
     {
         if (target.IsImplicitFile)
         {
+            if (target == this.baseLocation)
+            {
+                return new JsonReference(Path.GetFileName(target));
+            }
+
             return this.baseLocation.MakeRelative(target);
         }
 

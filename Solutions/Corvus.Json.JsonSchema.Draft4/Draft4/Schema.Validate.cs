@@ -86,7 +86,7 @@ public readonly partial struct Schema
             in ValidationContext validationContext,
             ValidationLevel level = ValidationLevel.Flag)
         {
-            return Corvus.Json.ValidateWithoutCoreType.TypeObject(valueKind, validationContext, level);
+            return Corvus.Json.ValidateWithoutCoreType.TypeObject(valueKind, validationContext, level, "type");
         }
 
         /// <summary>
@@ -110,12 +110,8 @@ public readonly partial struct Schema
                 if (level == ValidationLevel.Verbose)
                 {
                     ValidationContext ignoredResult = validationContext;
-                    ignoredResult = ignoredResult.PushValidationLocationProperty("properties");
-                    ignoredResult = ignoredResult.WithResult(isValid: true, "Validation properties - ignored because the value is not an object");
-                    ignoredResult = ignoredResult.PopLocation();
-                    ignoredResult = ignoredResult.PushValidationLocationProperty("dependencies");
-                    ignoredResult = ignoredResult.WithResult(isValid: true, "Validation dependencies - ignored because the value is not an object");
-                    ignoredResult = ignoredResult.PopLocation();
+                    ignoredResult = ignoredResult.WithResult(isValid: true, "Validation properties - ignored because the value is not an object", "properties");
+                    ignoredResult = ignoredResult.WithResult(isValid: true, "Validation dependencies - ignored because the value is not an object", "dependencies");
                     return ignoredResult;
                 }
 

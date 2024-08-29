@@ -143,6 +143,7 @@ public static class PublicCodeGeneratorExtensions
     /// <param name="validationContextIdentifier">The identifier for the validation context to update.</param>
     /// <param name="reasonText">The reason for ignoring the keyword.</param>
     /// <param name="useInterpolatedString">If <see langword="true"/>, then the message string will be an interpolated string.</param>
+    /// <param name="withKeyword">If <see langword="true"/>, then the keyword will be passed to the call to <c>WithResult()</c>.</param>
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendKeywordValidationResult(
         this CodeGenerator generator,
@@ -150,7 +151,8 @@ public static class PublicCodeGeneratorExtensions
         IKeyword keyword,
         string validationContextIdentifier,
         string reasonText,
-        bool useInterpolatedString = false)
+        bool useInterpolatedString = false,
+        bool withKeyword = false)
     {
         if (generator.IsCancellationRequested)
         {
@@ -176,7 +178,7 @@ public static class PublicCodeGeneratorExtensions
             .Append(keyword.Keyword)
             .Append(" - ")
             .Append(SymbolDisplay.FormatLiteral(reasonText, false))
-            .AppendLine("\");");
+            .AppendLine("\"", withKeyword ? ", " : string.Empty, withKeyword ? SymbolDisplay.FormatLiteral(keyword.Keyword, true) : string.Empty, ");");
     }
 
     /// <summary>
@@ -188,6 +190,7 @@ public static class PublicCodeGeneratorExtensions
     /// <param name="validationContextIdentifier">The identifier for the validation context to update.</param>
     /// <param name="appendReasonText">An function which will append the validation reason to the (optionally interpolated) string for the keyword.</param>
     /// <param name="useInterpolatedString">If <see langword="true"/>, then the message string will be an interpolated string.</param>
+    /// <param name="withKeyword">If <see langword="true"/>, then the keyword will be passed to the call to <c>WithResult()</c>.</param>
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendKeywordValidationResult(
         this CodeGenerator generator,
@@ -195,7 +198,8 @@ public static class PublicCodeGeneratorExtensions
         IKeyword keyword,
         string validationContextIdentifier,
         Action<CodeGenerator> appendReasonText,
-        bool useInterpolatedString = false)
+        bool useInterpolatedString = false,
+        bool withKeyword = false)
     {
         if (generator.IsCancellationRequested)
         {
@@ -224,7 +228,7 @@ public static class PublicCodeGeneratorExtensions
         appendReasonText(generator);
 
         return generator
-            .AppendLine("\");");
+            .AppendLine("\"", withKeyword ? ", " : string.Empty, withKeyword ? SymbolDisplay.FormatLiteral(keyword.Keyword, true) : string.Empty, ");");
     }
 
     /// <summary>

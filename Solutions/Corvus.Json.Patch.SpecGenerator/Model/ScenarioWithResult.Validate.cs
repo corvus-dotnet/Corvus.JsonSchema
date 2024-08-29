@@ -86,7 +86,7 @@ public readonly partial struct ScenarioWithResult
             {
                 if (level >= ValidationLevel.Basic)
                 {
-                    result = result.MergeChildContext(allOfResult0, true).WithResult(isValid: false, "Validation - allOf failed to validate against the schema.");
+                    result = result.MergeChildContext(allOfResult0, true).PushValidationLocationProperty("allOf").WithResult(isValid: false, "Validation - allOf failed to validate against the schema.").PopLocation();
                 }
                 else
                 {
@@ -110,7 +110,7 @@ public readonly partial struct ScenarioWithResult
             {
                 if (level >= ValidationLevel.Basic)
                 {
-                    result = result.MergeChildContext(allOfResult1, true).WithResult(isValid: false, "Validation - allOf failed to validate against the schema.");
+                    result = result.MergeChildContext(allOfResult1, true).PushValidationLocationProperty("allOf").WithResult(isValid: false, "Validation - allOf failed to validate against the schema.").PopLocation();
                 }
                 else
                 {
@@ -147,9 +147,7 @@ public readonly partial struct ScenarioWithResult
                 if (level == ValidationLevel.Verbose)
                 {
                     ValidationContext ignoredResult = validationContext;
-                    ignoredResult = ignoredResult.PushValidationLocationProperty("required");
-                    ignoredResult = ignoredResult.WithResult(isValid: true, "Validation required - ignored because the value is not an object");
-                    ignoredResult = ignoredResult.PopLocation();
+                    ignoredResult = ignoredResult.WithResult(isValid: true, "Validation required - ignored because the value is not an object", "required");
                     return ignoredResult;
                 }
 

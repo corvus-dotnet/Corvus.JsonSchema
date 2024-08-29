@@ -10,79 +10,85 @@
 #nullable enable
 
 using System.Buffers;
+using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
 using Corvus.Json.Internal;
 
-namespace JsonSchemaSample.Api;
+namespace Corvus.Json.JsonSchema.OpenApi31;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
-public readonly partial struct FlimFlam
+/// <remarks>
+/// <para>
+/// The description of OpenAPI v3.1.x documents without schema validation, as defined by https://spec.openapis.org/oas/v3.1.0
+/// </para>
+/// </remarks>
+public readonly partial struct OpenApiDocument
 {
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
-    [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<PositiveInt32>))]
-    public readonly partial struct PositiveInt32
+    [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<OpenApiDocumentContentEntity>))]
+    public readonly partial struct OpenApiDocumentContentEntity
 
     {
         private readonly Backing backing;
         private readonly JsonElement jsonElementBacking;
-        private readonly BinaryJsonNumber numberBacking;
+        private readonly ImmutableList<JsonObjectProperty> objectBacking;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="PositiveInt32"/> struct.
+        /// Initializes a new instance of the <see cref="OpenApiDocumentContentEntity"/> struct.
         /// </summary>
-        public PositiveInt32()
+        public OpenApiDocumentContentEntity()
         {
             this.jsonElementBacking = default;
             this.backing = Backing.JsonElement;
-            this.numberBacking = default;
+            this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="PositiveInt32"/> struct.
+        /// Initializes a new instance of the <see cref="OpenApiDocumentContentEntity"/> struct.
         /// </summary>
         /// <param name="value">The value from which to construct the instance.</param>
-        public PositiveInt32(in JsonElement value)
+        public OpenApiDocumentContentEntity(in JsonElement value)
         {
             this.jsonElementBacking = value;
             this.backing = Backing.JsonElement;
-            this.numberBacking = default;
+            this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="PositiveInt32"/> struct.
+        /// Initializes a new instance of the <see cref="OpenApiDocumentContentEntity"/> struct.
         /// </summary>
         /// <param name="value">The value from which to construct the instance.</param>
-        public PositiveInt32(BinaryJsonNumber value)
+        public OpenApiDocumentContentEntity(ImmutableList<JsonObjectProperty> value)
         {
-            this.backing = Backing.Number;
+            this.backing = Backing.Object;
             this.jsonElementBacking = default;
-            this.numberBacking = value;
+            this.objectBacking = value;
         }
 
         /// <summary>
         /// Gets the schema location from which this type was generated.
         /// </summary>
-        public static string SchemaLocation { get; } = "#/prefixItems/0";
+        public static string SchemaLocation { get; } = "https://spec.openapis.org/oas/3.1/schema/2022-10-07?dynamicScope=https%3A%2F%2Fraw.githubusercontent.com%2FOAI%2FOpenAPI-Specification%2Fmain%2Fschemas%2Fv3.1%2Fschema.json#/$defs/header/properties/content";
 
         /// <summary>
         /// Gets a Null instance.
         /// </summary>
-        public static PositiveInt32 Null { get; } = new(JsonValueHelpers.NullElement);
+        public static OpenApiDocumentContentEntity Null { get; } = new(JsonValueHelpers.NullElement);
 
         /// <summary>
         /// Gets an Undefined instance.
         /// </summary>
-        public static PositiveInt32 Undefined { get; }
+        public static OpenApiDocumentContentEntity Undefined { get; }
 
         /// <summary>
         /// Gets the default instance.
         /// </summary>
-        public static PositiveInt32 DefaultInstance { get; }
+        public static OpenApiDocumentContentEntity DefaultInstance { get; }
 
         /// <inheritdoc/>
         public JsonAny AsAny
@@ -94,9 +100,9 @@ public readonly partial struct FlimFlam
                     return new(this.jsonElementBacking);
                 }
 
-                if ((this.backing & Backing.Number) != 0)
+                if ((this.backing & Backing.Object) != 0)
                 {
-                    return new(this.numberBacking);
+                    return new(this.objectBacking);
                 }
 
                 if ((this.backing & Backing.Null) != 0)
@@ -118,9 +124,9 @@ public readonly partial struct FlimFlam
                     return this.jsonElementBacking;
                 }
 
-                if ((this.backing & Backing.Number) != 0)
+                if ((this.backing & Backing.Object) != 0)
                 {
-                    return JsonValueHelpers.NumberToJsonElement(this.numberBacking);
+                    return JsonValueHelpers.ObjectToJsonElement(this.objectBacking);
                 }
 
                 if ((this.backing & Backing.Null) != 0)
@@ -161,18 +167,13 @@ public readonly partial struct FlimFlam
         }
 
         /// <inheritdoc/>
-        public JsonNumber AsNumber
+        JsonNumber IJsonValue.AsNumber
         {
             get
             {
                 if ((this.backing & Backing.JsonElement) != 0)
                 {
                     return new(this.jsonElementBacking);
-                }
-
-                if ((this.backing & Backing.Number) != 0)
-                {
-                    return new(this.numberBacking);
                 }
 
                 throw new InvalidOperationException();
@@ -180,13 +181,18 @@ public readonly partial struct FlimFlam
         }
 
         /// <inheritdoc/>
-        JsonObject IJsonValue.AsObject
+        public JsonObject AsObject
         {
             get
             {
                 if ((this.backing & Backing.JsonElement) != 0)
                 {
                     return new(this.jsonElementBacking);
+                }
+
+                if ((this.backing & Backing.Object) != 0)
+                {
+                    return new(this.objectBacking);
                 }
 
                 throw new InvalidOperationException();
@@ -204,6 +210,28 @@ public readonly partial struct FlimFlam
                 }
 
                 throw new InvalidOperationException();
+            }
+        }
+
+        /// <summary>
+        /// Gets the instance as a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Content" />.
+        /// </summary>
+        public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Content AsContent
+        {
+            get
+            {
+                return this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Content>();
+            }
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether the instance is a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Content" />.
+        /// </summary>
+        public bool IsContent
+        {
+            get
+            {
+                return this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Content>().IsValid();
             }
         }
 
@@ -235,9 +263,9 @@ public readonly partial struct FlimFlam
                     return this.jsonElementBacking.ValueKind;
                 }
 
-                if ((this.backing & Backing.Number) != 0)
+                if ((this.backing & Backing.Object) != 0)
                 {
-                    return JsonValueKind.Number;
+                    return JsonValueKind.Object;
                 }
 
                 return JsonValueKind.Undefined;
@@ -248,16 +276,16 @@ public readonly partial struct FlimFlam
         /// Conversion from JsonAny.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
-        public static implicit operator PositiveInt32(JsonAny value)
+        public static implicit operator OpenApiDocumentContentEntity(JsonAny value)
         {
-            return value.As<PositiveInt32>();
+            return value.As<OpenApiDocumentContentEntity>();
         }
 
         /// <summary>
         /// Conversion to JsonAny.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
-        public static implicit operator JsonAny(PositiveInt32 value)
+        public static implicit operator JsonAny(OpenApiDocumentContentEntity value)
         {
             return value.AsAny;
         }
@@ -270,7 +298,7 @@ public readonly partial struct FlimFlam
         /// <returns>
         /// <c>True</c> if the values are equal.
         /// </returns>
-        public static bool operator ==(in PositiveInt32 left, in PositiveInt32 right)
+        public static bool operator ==(in OpenApiDocumentContentEntity left, in OpenApiDocumentContentEntity right)
         {
             return left.Equals(right);
         }
@@ -283,7 +311,7 @@ public readonly partial struct FlimFlam
         /// <returns>
         /// <c>True</c> if the values are not equal.
         /// </returns>
-        public static bool operator !=(in PositiveInt32 left, in PositiveInt32 right)
+        public static bool operator !=(in OpenApiDocumentContentEntity left, in OpenApiDocumentContentEntity right)
         {
             return !left.Equals(right);
         }
@@ -297,7 +325,7 @@ public readonly partial struct FlimFlam
         /// value cannot be constructed from the given instance (e.g. because they have an incompatible .NET backing type).
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static PositiveInt32 FromJson(in JsonElement value)
+        public static OpenApiDocumentContentEntity FromJson(in JsonElement value)
         {
             return new(value);
         }
@@ -308,7 +336,7 @@ public readonly partial struct FlimFlam
         /// <param name="value">The <see cref="JsonAny"/> value from which to instantiate the instance.</param>
         /// <returns>An instance of this type, initialized from the <see cref="JsonAny"/> value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static PositiveInt32 FromAny(in JsonAny value)
+        public static OpenApiDocumentContentEntity FromAny(in JsonAny value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -317,7 +345,7 @@ public readonly partial struct FlimFlam
 
             return value.ValueKind switch
             {
-                JsonValueKind.Number => new(value.AsNumber.AsBinaryJsonNumber),
+                JsonValueKind.Object => new(value.AsObject.AsPropertyBacking()),
                 JsonValueKind.Null => Null,
                 _ => Undefined,
             };
@@ -331,7 +359,7 @@ public readonly partial struct FlimFlam
         /// <param name="value">The value from which to instantiate the instance.</param>
         /// <returns>An instance of this type, initialized from the provided value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static PositiveInt32 IJsonValue<PositiveInt32>.FromBoolean<TValue>(in TValue value)
+        static OpenApiDocumentContentEntity IJsonValue<OpenApiDocumentContentEntity>.FromBoolean<TValue>(in TValue value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -350,7 +378,26 @@ public readonly partial struct FlimFlam
         /// <param name="value">The value from which to instantiate the instance.</param>
         /// <returns>An instance of this type, initialized from the provided value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static PositiveInt32 IJsonValue<PositiveInt32>.FromString<TValue>(in TValue value)
+        static OpenApiDocumentContentEntity IJsonValue<OpenApiDocumentContentEntity>.FromString<TValue>(in TValue value)
+        {
+            if (value.HasJsonElementBacking)
+            {
+                return new(value.AsJsonElement);
+            }
+
+            return Undefined;
+        }
+#endif
+
+#if NET8_0_OR_GREATER
+        /// <summary>
+        /// Gets an instance of the JSON value from the provided value.
+        /// </summary>
+        /// <typeparam name="TValue">The type of the value.</typeparam>
+        /// <param name="value">The value from which to instantiate the instance.</param>
+        /// <returns>An instance of this type, initialized from the provided value.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static OpenApiDocumentContentEntity IJsonValue<OpenApiDocumentContentEntity>.FromNumber<TValue>(in TValue value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -368,8 +415,8 @@ public readonly partial struct FlimFlam
         /// <param name="value">The value from which to instantiate the instance.</param>
         /// <returns>An instance of this type, initialized from the provided value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static PositiveInt32 FromNumber<TValue>(in TValue value)
-            where TValue : struct, IJsonNumber<TValue>
+        public static OpenApiDocumentContentEntity FromObject<TValue>(in TValue value)
+            where TValue : struct, IJsonObject<TValue>
         {
             if (value.HasJsonElementBacking)
             {
@@ -378,7 +425,7 @@ public readonly partial struct FlimFlam
 
             return value.ValueKind switch
             {
-                JsonValueKind.Number => new(value.AsBinaryJsonNumber),
+                JsonValueKind.Object => new(value.AsPropertyBacking()),
                 JsonValueKind.Null => Null,
                 _ => Undefined,
             };
@@ -392,26 +439,7 @@ public readonly partial struct FlimFlam
         /// <param name="value">The value from which to instantiate the instance.</param>
         /// <returns>An instance of this type, initialized from the provided value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static PositiveInt32 IJsonValue<PositiveInt32>.FromObject<TValue>(in TValue value)
-        {
-            if (value.HasJsonElementBacking)
-            {
-                return new(value.AsJsonElement);
-            }
-
-            return Undefined;
-        }
-#endif
-
-#if NET8_0_OR_GREATER
-        /// <summary>
-        /// Gets an instance of the JSON value from the provided value.
-        /// </summary>
-        /// <typeparam name="TValue">The type of the value.</typeparam>
-        /// <param name="value">The value from which to instantiate the instance.</param>
-        /// <returns>An instance of this type, initialized from the provided value.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static PositiveInt32 IJsonValue<PositiveInt32>.FromArray<TValue>(in TValue value)
+        static OpenApiDocumentContentEntity IJsonValue<OpenApiDocumentContentEntity>.FromArray<TValue>(in TValue value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -423,109 +451,109 @@ public readonly partial struct FlimFlam
 #endif
 
         /// <summary>
-        /// Parses the PositiveInt32.
+        /// Parses the OpenApiDocumentContentEntity.
         /// </summary>
         /// <param name="source">The source of the JSON string to parse.</param>
         /// <param name="options">The (optional) JsonDocumentOptions.</param>
-        public static PositiveInt32 Parse(string source, JsonDocumentOptions options = default)
+        public static OpenApiDocumentContentEntity Parse(string source, JsonDocumentOptions options = default)
         {
             using var jsonDocument = JsonDocument.Parse(source, options);
             return new(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses the PositiveInt32.
+        /// Parses the OpenApiDocumentContentEntity.
         /// </summary>
         /// <param name="source">The source of the JSON string to parse.</param>
         /// <param name="options">The (optional) JsonDocumentOptions.</param>
-        public static PositiveInt32 Parse(Stream source, JsonDocumentOptions options = default)
+        public static OpenApiDocumentContentEntity Parse(Stream source, JsonDocumentOptions options = default)
         {
             using var jsonDocument = JsonDocument.Parse(source, options);
             return new(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses the PositiveInt32.
+        /// Parses the OpenApiDocumentContentEntity.
         /// </summary>
         /// <param name="source">The source of the JSON string to parse.</param>
         /// <param name="options">The (optional) JsonDocumentOptions.</param>
-        public static PositiveInt32 Parse(ReadOnlyMemory<byte> source, JsonDocumentOptions options = default)
+        public static OpenApiDocumentContentEntity Parse(ReadOnlyMemory<byte> source, JsonDocumentOptions options = default)
         {
             using var jsonDocument = JsonDocument.Parse(source, options);
             return new(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses the PositiveInt32.
+        /// Parses the OpenApiDocumentContentEntity.
         /// </summary>
         /// <param name="source">The source of the JSON string to parse.</param>
         /// <param name="options">The (optional) JsonDocumentOptions.</param>
-        public static PositiveInt32 Parse(ReadOnlyMemory<char> source, JsonDocumentOptions options = default)
+        public static OpenApiDocumentContentEntity Parse(ReadOnlyMemory<char> source, JsonDocumentOptions options = default)
         {
             using var jsonDocument = JsonDocument.Parse(source, options);
             return new(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses the PositiveInt32.
+        /// Parses the OpenApiDocumentContentEntity.
         /// </summary>
         /// <param name="source">The source of the JSON string to parse.</param>
         /// <param name="options">The (optional) JsonDocumentOptions.</param>
-        public static PositiveInt32 Parse(ReadOnlySequence<byte> source, JsonDocumentOptions options = default)
+        public static OpenApiDocumentContentEntity Parse(ReadOnlySequence<byte> source, JsonDocumentOptions options = default)
         {
             using var jsonDocument = JsonDocument.Parse(source, options);
             return new(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses the PositiveInt32.
+        /// Parses the OpenApiDocumentContentEntity.
         /// </summary>
         /// <param name="source">The source of the JSON string to parse.</param>
-        public static PositiveInt32 ParseValue(string source)
+        public static OpenApiDocumentContentEntity ParseValue(string source)
         {
 #if NET8_0_OR_GREATER
-            return IJsonValue<PositiveInt32>.ParseValue(source);
+            return IJsonValue<OpenApiDocumentContentEntity>.ParseValue(source);
 #else
-            return JsonValueHelpers.ParseValue<PositiveInt32>(source.AsSpan());
+            return JsonValueHelpers.ParseValue<OpenApiDocumentContentEntity>(source.AsSpan());
 #endif
         }
 
         /// <summary>
-        /// Parses the PositiveInt32.
+        /// Parses the OpenApiDocumentContentEntity.
         /// </summary>
         /// <param name="source">The source of the JSON string to parse.</param>
-        public static PositiveInt32 ParseValue(ReadOnlySpan<char> source)
+        public static OpenApiDocumentContentEntity ParseValue(ReadOnlySpan<char> source)
         {
 #if NET8_0_OR_GREATER
-            return IJsonValue<PositiveInt32>.ParseValue(source);
+            return IJsonValue<OpenApiDocumentContentEntity>.ParseValue(source);
 #else
-            return JsonValueHelpers.ParseValue<PositiveInt32>(source);
+            return JsonValueHelpers.ParseValue<OpenApiDocumentContentEntity>(source);
 #endif
         }
 
         /// <summary>
-        /// Parses the PositiveInt32.
+        /// Parses the OpenApiDocumentContentEntity.
         /// </summary>
         /// <param name="source">The source of the JSON string to parse.</param>
-        public static PositiveInt32 ParseValue(ReadOnlySpan<byte> source)
+        public static OpenApiDocumentContentEntity ParseValue(ReadOnlySpan<byte> source)
         {
 #if NET8_0_OR_GREATER
-            return IJsonValue<PositiveInt32>.ParseValue(source);
+            return IJsonValue<OpenApiDocumentContentEntity>.ParseValue(source);
 #else
-            return JsonValueHelpers.ParseValue<PositiveInt32>(source);
+            return JsonValueHelpers.ParseValue<OpenApiDocumentContentEntity>(source);
 #endif
         }
 
         /// <summary>
-        /// Parses the PositiveInt32.
+        /// Parses the OpenApiDocumentContentEntity.
         /// </summary>
         /// <param name="source">The source of the JSON string to parse.</param>
-        public static PositiveInt32 ParseValue(ref Utf8JsonReader source)
+        public static OpenApiDocumentContentEntity ParseValue(ref Utf8JsonReader source)
         {
 #if NET8_0_OR_GREATER
-            return IJsonValue<PositiveInt32>.ParseValue(ref source);
+            return IJsonValue<OpenApiDocumentContentEntity>.ParseValue(ref source);
 #else
-            return JsonValueHelpers.ParseValue<PositiveInt32>(ref source);
+            return JsonValueHelpers.ParseValue<OpenApiDocumentContentEntity>(ref source);
 #endif
         }
 
@@ -544,9 +572,9 @@ public readonly partial struct FlimFlam
                 return TTarget.FromJson(this.jsonElementBacking);
             }
 
-            if ((this.backing & Backing.Number) != 0)
+            if ((this.backing & Backing.Object) != 0)
             {
-                return TTarget.FromNumber(this);
+                return TTarget.FromObject(this);
             }
 
             if ((this.backing & Backing.Null) != 0)
@@ -556,7 +584,7 @@ public readonly partial struct FlimFlam
 
             return TTarget.Undefined;
 #else
-            return this.As<PositiveInt32, TTarget>();
+            return this.As<OpenApiDocumentContentEntity, TTarget>();
 #endif
         }
 
@@ -564,7 +592,7 @@ public readonly partial struct FlimFlam
         public override bool Equals(object? obj)
         {
             return
-                (obj is IJsonValue jv && this.Equals(jv.As<PositiveInt32>())) ||
+                (obj is IJsonValue jv && this.Equals(jv.As<OpenApiDocumentContentEntity>())) ||
                 (obj is null && this.IsNull());
         }
 
@@ -572,7 +600,7 @@ public readonly partial struct FlimFlam
         public bool Equals<T>(in T other)
             where T : struct, IJsonValue<T>
         {
-            return this.Equals(other.As<PositiveInt32>());
+            return this.Equals(other.As<OpenApiDocumentContentEntity>());
         }
 
         /// <summary>
@@ -580,7 +608,7 @@ public readonly partial struct FlimFlam
         /// </summary>
         /// <param name="other">The other item with which to compare.</param>
         /// <returns><see langword="true"/> if the values were equal.</returns>
-        public bool Equals(in PositiveInt32 other)
+        public bool Equals(in OpenApiDocumentContentEntity other)
         {
             JsonValueKind thisKind = this.ValueKind;
             JsonValueKind otherKind = other.ValueKind;
@@ -594,38 +622,32 @@ public readonly partial struct FlimFlam
                 return true;
             }
 
-            if (thisKind == JsonValueKind.Number)
+            if (thisKind == JsonValueKind.Object)
             {
-                if (this.backing == Backing.Number && other.backing == Backing.Number)
+                JsonObject thisObject = this.AsObject;
+                JsonObject otherObject = other.AsObject;
+                int count = 0;
+                foreach (JsonObjectProperty property in thisObject.EnumerateObject())
                 {
-                    return BinaryJsonNumber.Equals(this.numberBacking, other.numberBacking);
-                }
-
-                if (this.backing == Backing.Number && other.backing == Backing.JsonElement)
-                {
-                    return BinaryJsonNumber.Equals(this.numberBacking, other.jsonElementBacking);
-                }
-
-                if (this.backing == Backing.JsonElement && other.backing == Backing.Number)
-                {
-                    return BinaryJsonNumber.Equals(this.jsonElementBacking, other.numberBacking);
-                }
-
-                if (this.jsonElementBacking.TryGetDouble(out double lDouble))
-                {
-                    if (other.jsonElementBacking.TryGetDouble(out double rDouble))
+                    if (!otherObject.TryGetProperty(property.Name, out JsonAny value) || !property.Value.Equals(value))
                     {
-                        return lDouble.Equals(rDouble);
+                        return false;
+                    }
+
+                    count++;
+                }
+
+                int otherCount = 0;
+                foreach (JsonObjectProperty otherProperty in otherObject.EnumerateObject())
+                {
+                    otherCount++;
+                    if (otherCount > count)
+                    {
+                        return false;
                     }
                 }
 
-                if (this.jsonElementBacking.TryGetDecimal(out decimal lDecimal))
-                {
-                    if (other.jsonElementBacking.TryGetDecimal(out decimal rDecimal))
-                    {
-                        return lDecimal.Equals(rDecimal);
-                    }
-                }
+                return count == otherCount;
             }
 
             return false;
@@ -644,9 +666,9 @@ public readonly partial struct FlimFlam
                 return;
             }
 
-            if ((this.backing & Backing.Number) != 0)
+            if ((this.backing & Backing.Object) != 0)
             {
-                this.numberBacking.WriteTo(writer);
+                JsonValueHelpers.WriteProperties(this.objectBacking, writer);
 
                 return;
             }
@@ -665,8 +687,8 @@ public readonly partial struct FlimFlam
             return this.ValueKind switch
             {
                 JsonValueKind.Array => JsonValueHelpers.GetArrayHashCode(((IJsonValue)this).AsArray),
-                JsonValueKind.Object => JsonValueHelpers.GetObjectHashCode(((IJsonValue)this).AsObject),
-                JsonValueKind.Number => JsonValueHelpers.GetHashCodeForNumber(this),
+                JsonValueKind.Object => JsonValueHelpers.GetObjectHashCode(this),
+                JsonValueKind.Number => JsonValueHelpers.GetHashCodeForNumber(((IJsonValue)this).AsNumber),
                 JsonValueKind.String => JsonValueHelpers.GetHashCodeForString(((IJsonValue)this).AsString),
                 JsonValueKind.True => true.GetHashCode(),
                 JsonValueKind.False => false.GetHashCode(),
@@ -679,6 +701,17 @@ public readonly partial struct FlimFlam
         public override string ToString()
         {
             return this.Serialize();
+        }
+
+        /// <summary>
+        /// Gets the value as a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Content" />.
+        /// </summary>
+        /// <param name="result">The result of the conversions.</param>
+        /// <returns><see langword="true" /> if the conversion was valid.</returns>
+        public bool TryGetAsContent(out Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Content result)
+        {
+            result = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Content>();
+            return result.IsValid();
         }
     }
 }

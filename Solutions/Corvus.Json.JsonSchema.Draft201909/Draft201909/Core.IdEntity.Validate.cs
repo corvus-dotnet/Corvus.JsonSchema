@@ -90,7 +90,7 @@ public readonly partial struct Core
                 in ValidationContext validationContext,
                 ValidationLevel level = ValidationLevel.Flag)
             {
-                return Corvus.Json.ValidateWithoutCoreType.TypeString(valueKind, validationContext, level);
+                return Corvus.Json.ValidateWithoutCoreType.TypeString(valueKind, validationContext, level, "type");
             }
 
             /// <summary>
@@ -113,14 +113,14 @@ public readonly partial struct Core
                     if (level == ValidationLevel.Verbose)
                     {
                         ValidationContext ignoredResult = validationContext;
-                        ignoredResult = ignoredResult.WithResult(isValid: true, $"Validation format - ignored 'uri-reference' because the value '{{valueKind}}' is not 'String'.");
+                        ignoredResult = ignoredResult.WithResult(isValid: true, $"Validation format - ignored 'uri-reference' because the value is of kind '{valueKind}' not 'String'.");
                         return ignoredResult;
                     }
 
                     return validationContext;
                 }
 
-                return Corvus.Json.ValidateWithoutCoreType.TypeUriReference(value, validationContext, level);
+                return Corvus.Json.ValidateWithoutCoreType.TypeUriReference(value, validationContext, level, "format");
             }
 
             /// <summary>
@@ -143,9 +143,7 @@ public readonly partial struct Core
                     if (level == ValidationLevel.Verbose)
                     {
                         ValidationContext ignoredResult = validationContext;
-                        ignoredResult = ignoredResult.PushValidationLocationProperty("pattern");
-                        ignoredResult = ignoredResult.WithResult(isValid: true, "Validation pattern - ignored because the value is not a string");
-                        ignoredResult = ignoredResult.PopLocation();
+                        ignoredResult = ignoredResult.WithResult(isValid: true, "Validation pattern - ignored because the value is not a string", "pattern");
                         return ignoredResult;
                     }
 

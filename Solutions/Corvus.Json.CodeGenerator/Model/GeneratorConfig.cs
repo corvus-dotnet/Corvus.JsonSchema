@@ -63,7 +63,7 @@ public readonly partial struct GeneratorConfig
     /// <summary>
     /// Gets the schema location from which this type was generated.
     /// </summary>
-    public static string SchemaLocation { get; } = "";
+    public static string SchemaLocation { get; } = "generator-config.json";
 
     /// <summary>
     /// Gets a Null instance.

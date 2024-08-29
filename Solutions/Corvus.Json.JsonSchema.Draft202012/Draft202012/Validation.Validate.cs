@@ -74,7 +74,7 @@ public readonly partial struct Validation
             ValidationLevel level = ValidationLevel.Flag)
         {
             bool isValid = false;
-            ValidationContext localResultObject = Corvus.Json.ValidateWithoutCoreType.TypeObject(valueKind, ValidationContext.ValidContext, level);
+            ValidationContext localResultObject = Corvus.Json.ValidateWithoutCoreType.TypeObject(valueKind, ValidationContext.ValidContext, level, "type");
             if (level == ValidationLevel.Flag && localResultObject.IsValid)
             {
                 return validationContext;
@@ -85,7 +85,7 @@ public readonly partial struct Validation
                 isValid = true;
             }
 
-            ValidationContext localResultBoolean = Corvus.Json.ValidateWithoutCoreType.TypeBoolean(valueKind, ValidationContext.ValidContext, level);
+            ValidationContext localResultBoolean = Corvus.Json.ValidateWithoutCoreType.TypeBoolean(valueKind, ValidationContext.ValidContext, level, "type");
             if (level == ValidationLevel.Flag && localResultBoolean.IsValid)
             {
                 return validationContext;
@@ -96,11 +96,27 @@ public readonly partial struct Validation
                 isValid = true;
             }
 
-            return validationContext.MergeResults(
-                isValid,
-                level,
-                localResultObject,
-                localResultBoolean);
+            if (!isValid)
+            {
+                if (level >= ValidationLevel.Verbose)
+                {
+                    return validationContext.WithResult(isValid: false, $"Validation type - should have been 'object', 'boolean' but was '{valueKind}'", "type");
+                }
+                else if (level >= ValidationLevel.Detailed)
+                {
+                    return validationContext.WithResult(isValid: false, "Validation type - should have been 'object', 'boolean'.", "type");
+                }
+                else
+                {
+                    return validationContext.WithResult(isValid: false);
+                }
+            }
+
+            if (level >= ValidationLevel.Verbose)
+            {
+                return validationContext.WithResult(isValid: true, $"Validation type - was 'object', 'boolean'.", "type");
+            }
+            return validationContext;
         }
 
         /// <summary>
@@ -124,9 +140,7 @@ public readonly partial struct Validation
                 if (level == ValidationLevel.Verbose)
                 {
                     ValidationContext ignoredResult = validationContext;
-                    ignoredResult = ignoredResult.PushValidationLocationProperty("properties");
-                    ignoredResult = ignoredResult.WithResult(isValid: true, "Validation properties - ignored because the value is not an object");
-                    ignoredResult = ignoredResult.PopLocation();
+                    ignoredResult = ignoredResult.WithResult(isValid: true, "Validation properties - ignored because the value is not an object", "properties");
                     return ignoredResult;
                 }
 

@@ -127,33 +127,23 @@ public readonly partial struct Validation
                     }
                 }
 
-                if (level >= ValidationLevel.Basic)
-                {
-                    result.PushValidationLocationProperty("anyOf");
-                }
-
                 if (anyOfFoundValid)
                 {
                     if (level >= ValidationLevel.Verbose)
                     {
-                        result = result.WithResult(isValid: true, "Validation anyOf - validated against the schema.");
+                        result = result.WithResult(isValid: true, "Validation anyOf - validated against the schema.", "anyOf");
                     }
                 }
                 else
                 {
                     if (level >= ValidationLevel.Basic)
                     {
-                        result = result.WithResult(isValid: false, "Validation anyOf - did not validate against the schema.");
+                        result = result.WithResult(isValid: false, "Validation anyOf - did not validate against the schema.", "anyOf");
                     }
                     else
                     {
                         result = result.WithResult(isValid: false);
                     }
-                }
-
-                if (level >= ValidationLevel.Basic)
-                {
-                    result.PopLocation();
                 }
 
                 return result;

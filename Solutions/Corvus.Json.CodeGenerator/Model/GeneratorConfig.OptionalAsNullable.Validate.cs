@@ -136,7 +136,7 @@ public readonly partial struct GeneratorConfig
                 in ValidationContext validationContext,
                 ValidationLevel level = ValidationLevel.Flag)
             {
-                return Corvus.Json.ValidateWithoutCoreType.TypeString(valueKind, validationContext, level);
+                return Corvus.Json.ValidateWithoutCoreType.TypeString(valueKind, validationContext, level, "type");
             }
 
             /// <summary>
@@ -170,33 +170,23 @@ public readonly partial struct GeneratorConfig
                         enumFoundValid = value.Equals(CorvusValidation.Enum2);
                     }
 
-                    if (level >= ValidationLevel.Basic)
-                    {
-                        result.PushValidationLocationProperty("enum");
-                    }
-
                     if (enumFoundValid)
                     {
                         if (level >= ValidationLevel.Verbose)
                         {
-                            result = result.WithResult(isValid: true, "Validation enum - validated against the enumeration.");
+                            result = result.WithResult(isValid: true, "Validation enum - validated against the enumeration.", "enum");
                         }
                     }
                     else
                     {
                         if (level >= ValidationLevel.Basic)
                         {
-                            result = result.WithResult(isValid: false, "Validation enum - did not validate against the enumeration.");
+                            result = result.WithResult(isValid: false, "Validation enum - did not validate against the enumeration.", "enum");
                         }
                         else
                         {
                             result = result.WithResult(isValid: false);
                         }
-                    }
-
-                    if (level >= ValidationLevel.Basic)
-                    {
-                        result.PopLocation();
                     }
 
                     return result;

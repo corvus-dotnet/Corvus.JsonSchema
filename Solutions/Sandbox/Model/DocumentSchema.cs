@@ -16,69 +16,69 @@ using System.Text.Json;
 using Corvus.Json;
 using Corvus.Json.Internal;
 
-namespace JsonSchemaSample.Api;
+namespace Feature408;
 /// <summary>
-/// Generated from JSON Schema.
+/// Document
 /// </summary>
-[System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<FlimFlam>))]
-public readonly partial struct FlimFlam
+[System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<DocumentSchema>))]
+public readonly partial struct DocumentSchema
 
 {
     private readonly Backing backing;
     private readonly JsonElement jsonElementBacking;
-    private readonly ImmutableList<JsonAny> arrayBacking;
+    private readonly ImmutableList<JsonObjectProperty> objectBacking;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="FlimFlam"/> struct.
+    /// Initializes a new instance of the <see cref="DocumentSchema"/> struct.
     /// </summary>
-    public FlimFlam()
+    public DocumentSchema()
     {
         this.jsonElementBacking = default;
         this.backing = Backing.JsonElement;
-        this.arrayBacking = ImmutableList<JsonAny>.Empty;
+        this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="FlimFlam"/> struct.
+    /// Initializes a new instance of the <see cref="DocumentSchema"/> struct.
     /// </summary>
     /// <param name="value">The value from which to construct the instance.</param>
-    public FlimFlam(in JsonElement value)
+    public DocumentSchema(in JsonElement value)
     {
         this.jsonElementBacking = value;
         this.backing = Backing.JsonElement;
-        this.arrayBacking = ImmutableList<JsonAny>.Empty;
+        this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="FlimFlam"/> struct.
+    /// Initializes a new instance of the <see cref="DocumentSchema"/> struct.
     /// </summary>
     /// <param name="value">The value from which to construct the instance.</param>
-    public FlimFlam(ImmutableList<JsonAny> value)
+    public DocumentSchema(ImmutableList<JsonObjectProperty> value)
     {
-        this.backing = Backing.Array;
+        this.backing = Backing.Object;
         this.jsonElementBacking = default;
-        this.arrayBacking = value;
+        this.objectBacking = value;
     }
 
     /// <summary>
     /// Gets the schema location from which this type was generated.
     /// </summary>
-    public static string SchemaLocation { get; } = "";
+    public static string SchemaLocation { get; } = "DocumentSchema.json";
 
     /// <summary>
     /// Gets a Null instance.
     /// </summary>
-    public static FlimFlam Null { get; } = new(JsonValueHelpers.NullElement);
+    public static DocumentSchema Null { get; } = new(JsonValueHelpers.NullElement);
 
     /// <summary>
     /// Gets an Undefined instance.
     /// </summary>
-    public static FlimFlam Undefined { get; }
+    public static DocumentSchema Undefined { get; }
 
     /// <summary>
     /// Gets the default instance.
     /// </summary>
-    public static FlimFlam DefaultInstance { get; }
+    public static DocumentSchema DefaultInstance { get; }
 
     /// <inheritdoc/>
     public JsonAny AsAny
@@ -90,9 +90,9 @@ public readonly partial struct FlimFlam
                 return new(this.jsonElementBacking);
             }
 
-            if ((this.backing & Backing.Array) != 0)
+            if ((this.backing & Backing.Object) != 0)
             {
-                return new(this.arrayBacking);
+                return new(this.objectBacking);
             }
 
             if ((this.backing & Backing.Null) != 0)
@@ -114,9 +114,9 @@ public readonly partial struct FlimFlam
                 return this.jsonElementBacking;
             }
 
-            if ((this.backing & Backing.Array) != 0)
+            if ((this.backing & Backing.Object) != 0)
             {
-                return JsonValueHelpers.ArrayToJsonElement(this.arrayBacking);
+                return JsonValueHelpers.ObjectToJsonElement(this.objectBacking);
             }
 
             if ((this.backing & Backing.Null) != 0)
@@ -171,13 +171,18 @@ public readonly partial struct FlimFlam
     }
 
     /// <inheritdoc/>
-    JsonObject IJsonValue.AsObject
+    public JsonObject AsObject
     {
         get
         {
             if ((this.backing & Backing.JsonElement) != 0)
             {
                 return new(this.jsonElementBacking);
+            }
+
+            if ((this.backing & Backing.Object) != 0)
+            {
+                return new(this.objectBacking);
             }
 
             throw new InvalidOperationException();
@@ -185,18 +190,13 @@ public readonly partial struct FlimFlam
     }
 
     /// <inheritdoc/>
-    public JsonArray AsArray
+    JsonArray IJsonValue.AsArray
     {
         get
         {
             if ((this.backing & Backing.JsonElement) != 0)
             {
                 return new(this.jsonElementBacking);
-            }
-
-            if ((this.backing & Backing.Array) != 0)
-            {
-                return new(this.arrayBacking);
             }
 
             throw new InvalidOperationException();
@@ -231,9 +231,9 @@ public readonly partial struct FlimFlam
                 return this.jsonElementBacking.ValueKind;
             }
 
-            if ((this.backing & Backing.Array) != 0)
+            if ((this.backing & Backing.Object) != 0)
             {
-                return JsonValueKind.Array;
+                return JsonValueKind.Object;
             }
 
             return JsonValueKind.Undefined;
@@ -244,16 +244,16 @@ public readonly partial struct FlimFlam
     /// Conversion from JsonAny.
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
-    public static implicit operator FlimFlam(JsonAny value)
+    public static implicit operator DocumentSchema(JsonAny value)
     {
-        return value.As<FlimFlam>();
+        return value.As<DocumentSchema>();
     }
 
     /// <summary>
     /// Conversion to JsonAny.
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
-    public static implicit operator JsonAny(FlimFlam value)
+    public static implicit operator JsonAny(DocumentSchema value)
     {
         return value.AsAny;
     }
@@ -266,7 +266,7 @@ public readonly partial struct FlimFlam
     /// <returns>
     /// <c>True</c> if the values are equal.
     /// </returns>
-    public static bool operator ==(in FlimFlam left, in FlimFlam right)
+    public static bool operator ==(in DocumentSchema left, in DocumentSchema right)
     {
         return left.Equals(right);
     }
@@ -279,7 +279,7 @@ public readonly partial struct FlimFlam
     /// <returns>
     /// <c>True</c> if the values are not equal.
     /// </returns>
-    public static bool operator !=(in FlimFlam left, in FlimFlam right)
+    public static bool operator !=(in DocumentSchema left, in DocumentSchema right)
     {
         return !left.Equals(right);
     }
@@ -293,7 +293,7 @@ public readonly partial struct FlimFlam
     /// value cannot be constructed from the given instance (e.g. because they have an incompatible .NET backing type).
     /// </remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static FlimFlam FromJson(in JsonElement value)
+    public static DocumentSchema FromJson(in JsonElement value)
     {
         return new(value);
     }
@@ -304,7 +304,7 @@ public readonly partial struct FlimFlam
     /// <param name="value">The <see cref="JsonAny"/> value from which to instantiate the instance.</param>
     /// <returns>An instance of this type, initialized from the <see cref="JsonAny"/> value.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static FlimFlam FromAny(in JsonAny value)
+    public static DocumentSchema FromAny(in JsonAny value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -313,7 +313,7 @@ public readonly partial struct FlimFlam
 
         return value.ValueKind switch
         {
-            JsonValueKind.Array => new(value.AsArray.AsImmutableList()),
+            JsonValueKind.Object => new(value.AsObject.AsPropertyBacking()),
             JsonValueKind.Null => Null,
             _ => Undefined,
         };
@@ -327,7 +327,7 @@ public readonly partial struct FlimFlam
     /// <param name="value">The value from which to instantiate the instance.</param>
     /// <returns>An instance of this type, initialized from the provided value.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    static FlimFlam IJsonValue<FlimFlam>.FromBoolean<TValue>(in TValue value)
+    static DocumentSchema IJsonValue<DocumentSchema>.FromBoolean<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -346,7 +346,7 @@ public readonly partial struct FlimFlam
     /// <param name="value">The value from which to instantiate the instance.</param>
     /// <returns>An instance of this type, initialized from the provided value.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    static FlimFlam IJsonValue<FlimFlam>.FromString<TValue>(in TValue value)
+    static DocumentSchema IJsonValue<DocumentSchema>.FromString<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -365,26 +365,7 @@ public readonly partial struct FlimFlam
     /// <param name="value">The value from which to instantiate the instance.</param>
     /// <returns>An instance of this type, initialized from the provided value.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    static FlimFlam IJsonValue<FlimFlam>.FromNumber<TValue>(in TValue value)
-    {
-        if (value.HasJsonElementBacking)
-        {
-            return new(value.AsJsonElement);
-        }
-
-        return Undefined;
-    }
-#endif
-
-#if NET8_0_OR_GREATER
-    /// <summary>
-    /// Gets an instance of the JSON value from the provided value.
-    /// </summary>
-    /// <typeparam name="TValue">The type of the value.</typeparam>
-    /// <param name="value">The value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the provided value.</returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    static FlimFlam IJsonValue<FlimFlam>.FromObject<TValue>(in TValue value)
+    static DocumentSchema IJsonValue<DocumentSchema>.FromNumber<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -402,8 +383,8 @@ public readonly partial struct FlimFlam
     /// <param name="value">The value from which to instantiate the instance.</param>
     /// <returns>An instance of this type, initialized from the provided value.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static FlimFlam FromArray<TValue>(in TValue value)
-        where TValue : struct, IJsonArray<TValue>
+    public static DocumentSchema FromObject<TValue>(in TValue value)
+        where TValue : struct, IJsonObject<TValue>
     {
         if (value.HasJsonElementBacking)
         {
@@ -412,116 +393,135 @@ public readonly partial struct FlimFlam
 
         return value.ValueKind switch
         {
-            JsonValueKind.Array => new(value.AsImmutableList()),
+            JsonValueKind.Object => new(value.AsPropertyBacking()),
             JsonValueKind.Null => Null,
             _ => Undefined,
         };
     }
 
+#if NET8_0_OR_GREATER
     /// <summary>
-    /// Parses the FlimFlam.
+    /// Gets an instance of the JSON value from the provided value.
+    /// </summary>
+    /// <typeparam name="TValue">The type of the value.</typeparam>
+    /// <param name="value">The value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the provided value.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    static DocumentSchema IJsonValue<DocumentSchema>.FromArray<TValue>(in TValue value)
+    {
+        if (value.HasJsonElementBacking)
+        {
+            return new(value.AsJsonElement);
+        }
+
+        return Undefined;
+    }
+#endif
+
+    /// <summary>
+    /// Parses the DocumentSchema.
     /// </summary>
     /// <param name="source">The source of the JSON string to parse.</param>
     /// <param name="options">The (optional) JsonDocumentOptions.</param>
-    public static FlimFlam Parse(string source, JsonDocumentOptions options = default)
+    public static DocumentSchema Parse(string source, JsonDocumentOptions options = default)
     {
         using var jsonDocument = JsonDocument.Parse(source, options);
         return new(jsonDocument.RootElement.Clone());
     }
 
     /// <summary>
-    /// Parses the FlimFlam.
+    /// Parses the DocumentSchema.
     /// </summary>
     /// <param name="source">The source of the JSON string to parse.</param>
     /// <param name="options">The (optional) JsonDocumentOptions.</param>
-    public static FlimFlam Parse(Stream source, JsonDocumentOptions options = default)
+    public static DocumentSchema Parse(Stream source, JsonDocumentOptions options = default)
     {
         using var jsonDocument = JsonDocument.Parse(source, options);
         return new(jsonDocument.RootElement.Clone());
     }
 
     /// <summary>
-    /// Parses the FlimFlam.
+    /// Parses the DocumentSchema.
     /// </summary>
     /// <param name="source">The source of the JSON string to parse.</param>
     /// <param name="options">The (optional) JsonDocumentOptions.</param>
-    public static FlimFlam Parse(ReadOnlyMemory<byte> source, JsonDocumentOptions options = default)
+    public static DocumentSchema Parse(ReadOnlyMemory<byte> source, JsonDocumentOptions options = default)
     {
         using var jsonDocument = JsonDocument.Parse(source, options);
         return new(jsonDocument.RootElement.Clone());
     }
 
     /// <summary>
-    /// Parses the FlimFlam.
+    /// Parses the DocumentSchema.
     /// </summary>
     /// <param name="source">The source of the JSON string to parse.</param>
     /// <param name="options">The (optional) JsonDocumentOptions.</param>
-    public static FlimFlam Parse(ReadOnlyMemory<char> source, JsonDocumentOptions options = default)
+    public static DocumentSchema Parse(ReadOnlyMemory<char> source, JsonDocumentOptions options = default)
     {
         using var jsonDocument = JsonDocument.Parse(source, options);
         return new(jsonDocument.RootElement.Clone());
     }
 
     /// <summary>
-    /// Parses the FlimFlam.
+    /// Parses the DocumentSchema.
     /// </summary>
     /// <param name="source">The source of the JSON string to parse.</param>
     /// <param name="options">The (optional) JsonDocumentOptions.</param>
-    public static FlimFlam Parse(ReadOnlySequence<byte> source, JsonDocumentOptions options = default)
+    public static DocumentSchema Parse(ReadOnlySequence<byte> source, JsonDocumentOptions options = default)
     {
         using var jsonDocument = JsonDocument.Parse(source, options);
         return new(jsonDocument.RootElement.Clone());
     }
 
     /// <summary>
-    /// Parses the FlimFlam.
+    /// Parses the DocumentSchema.
     /// </summary>
     /// <param name="source">The source of the JSON string to parse.</param>
-    public static FlimFlam ParseValue(string source)
+    public static DocumentSchema ParseValue(string source)
     {
 #if NET8_0_OR_GREATER
-        return IJsonValue<FlimFlam>.ParseValue(source);
+        return IJsonValue<DocumentSchema>.ParseValue(source);
 #else
-        return JsonValueHelpers.ParseValue<FlimFlam>(source.AsSpan());
+        return JsonValueHelpers.ParseValue<DocumentSchema>(source.AsSpan());
 #endif
     }
 
     /// <summary>
-    /// Parses the FlimFlam.
+    /// Parses the DocumentSchema.
     /// </summary>
     /// <param name="source">The source of the JSON string to parse.</param>
-    public static FlimFlam ParseValue(ReadOnlySpan<char> source)
+    public static DocumentSchema ParseValue(ReadOnlySpan<char> source)
     {
 #if NET8_0_OR_GREATER
-        return IJsonValue<FlimFlam>.ParseValue(source);
+        return IJsonValue<DocumentSchema>.ParseValue(source);
 #else
-        return JsonValueHelpers.ParseValue<FlimFlam>(source);
+        return JsonValueHelpers.ParseValue<DocumentSchema>(source);
 #endif
     }
 
     /// <summary>
-    /// Parses the FlimFlam.
+    /// Parses the DocumentSchema.
     /// </summary>
     /// <param name="source">The source of the JSON string to parse.</param>
-    public static FlimFlam ParseValue(ReadOnlySpan<byte> source)
+    public static DocumentSchema ParseValue(ReadOnlySpan<byte> source)
     {
 #if NET8_0_OR_GREATER
-        return IJsonValue<FlimFlam>.ParseValue(source);
+        return IJsonValue<DocumentSchema>.ParseValue(source);
 #else
-        return JsonValueHelpers.ParseValue<FlimFlam>(source);
+        return JsonValueHelpers.ParseValue<DocumentSchema>(source);
 #endif
     }
 
     /// <summary>
-    /// Parses the FlimFlam.
+    /// Parses the DocumentSchema.
     /// </summary>
     /// <param name="source">The source of the JSON string to parse.</param>
-    public static FlimFlam ParseValue(ref Utf8JsonReader source)
+    public static DocumentSchema ParseValue(ref Utf8JsonReader source)
     {
 #if NET8_0_OR_GREATER
-        return IJsonValue<FlimFlam>.ParseValue(ref source);
+        return IJsonValue<DocumentSchema>.ParseValue(ref source);
 #else
-        return JsonValueHelpers.ParseValue<FlimFlam>(ref source);
+        return JsonValueHelpers.ParseValue<DocumentSchema>(ref source);
 #endif
     }
 
@@ -540,9 +540,9 @@ public readonly partial struct FlimFlam
             return TTarget.FromJson(this.jsonElementBacking);
         }
 
-        if ((this.backing & Backing.Array) != 0)
+        if ((this.backing & Backing.Object) != 0)
         {
-            return TTarget.FromArray(this);
+            return TTarget.FromObject(this);
         }
 
         if ((this.backing & Backing.Null) != 0)
@@ -552,7 +552,7 @@ public readonly partial struct FlimFlam
 
         return TTarget.Undefined;
 #else
-        return this.As<FlimFlam, TTarget>();
+        return this.As<DocumentSchema, TTarget>();
 #endif
     }
 
@@ -560,7 +560,7 @@ public readonly partial struct FlimFlam
     public override bool Equals(object? obj)
     {
         return
-            (obj is IJsonValue jv && this.Equals(jv.As<FlimFlam>())) ||
+            (obj is IJsonValue jv && this.Equals(jv.As<DocumentSchema>())) ||
             (obj is null && this.IsNull());
     }
 
@@ -568,7 +568,7 @@ public readonly partial struct FlimFlam
     public bool Equals<T>(in T other)
         where T : struct, IJsonValue<T>
     {
-        return this.Equals(other.As<FlimFlam>());
+        return this.Equals(other.As<DocumentSchema>());
     }
 
     /// <summary>
@@ -576,7 +576,7 @@ public readonly partial struct FlimFlam
     /// </summary>
     /// <param name="other">The other item with which to compare.</param>
     /// <returns><see langword="true"/> if the values were equal.</returns>
-    public bool Equals(in FlimFlam other)
+    public bool Equals(in DocumentSchema other)
     {
         JsonValueKind thisKind = this.ValueKind;
         JsonValueKind otherKind = other.ValueKind;
@@ -590,24 +590,30 @@ public readonly partial struct FlimFlam
             return true;
         }
 
-        if (thisKind == JsonValueKind.Array)
+        if (thisKind == JsonValueKind.Object)
         {
-            JsonArrayEnumerator<Corvus.Json.JsonNotAny> lhs = this.EnumerateArray();
-            JsonArrayEnumerator<Corvus.Json.JsonNotAny> rhs = other.EnumerateArray();
-            while (lhs.MoveNext())
+            int count = 0;
+            foreach (JsonObjectProperty property in this.EnumerateObject())
             {
-                if (!rhs.MoveNext())
+                if (!other.TryGetProperty(property.Name, out JsonAny value) || !property.Value.Equals(value))
                 {
                     return false;
                 }
 
-                if (!lhs.Current.Equals(rhs.Current))
+                count++;
+            }
+
+            int otherCount = 0;
+            foreach (JsonObjectProperty otherProperty in other.EnumerateObject())
+            {
+                otherCount++;
+                if (otherCount > count)
                 {
                     return false;
                 }
             }
 
-            return !rhs.MoveNext();
+            return count == otherCount;
         }
 
         return false;
@@ -626,9 +632,9 @@ public readonly partial struct FlimFlam
             return;
         }
 
-        if ((this.backing & Backing.Array) != 0)
+        if ((this.backing & Backing.Object) != 0)
         {
-            JsonValueHelpers.WriteItems(this.arrayBacking, writer);
+            JsonValueHelpers.WriteProperties(this.objectBacking, writer);
 
             return;
         }
@@ -646,8 +652,8 @@ public readonly partial struct FlimFlam
     {
         return this.ValueKind switch
         {
-            JsonValueKind.Array => JsonValueHelpers.GetArrayHashCode(this),
-            JsonValueKind.Object => JsonValueHelpers.GetObjectHashCode(((IJsonValue)this).AsObject),
+            JsonValueKind.Array => JsonValueHelpers.GetArrayHashCode(((IJsonValue)this).AsArray),
+            JsonValueKind.Object => JsonValueHelpers.GetObjectHashCode(this),
             JsonValueKind.Number => JsonValueHelpers.GetHashCodeForNumber(((IJsonValue)this).AsNumber),
             JsonValueKind.String => JsonValueHelpers.GetHashCodeForString(((IJsonValue)this).AsString),
             JsonValueKind.True => true.GetHashCode(),

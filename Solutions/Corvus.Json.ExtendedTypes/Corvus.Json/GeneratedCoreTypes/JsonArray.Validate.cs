@@ -22,6 +22,23 @@ public readonly partial struct JsonArray
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
     {
-        return Json.Validate.TypeArray(this.ValueKind, validationContext, level);
+        ValidationContext result = validationContext;
+        if (level > ValidationLevel.Flag)
+        {
+            result = result.UsingResults();
+        }
+
+        if (level > ValidationLevel.Basic)
+        {
+            result = result.UsingStack();
+            result = result.PushSchemaLocation("corvus:/JsonArray");
+        }
+        result = Json.Validate.TypeArray(this.ValueKind, validationContext, level, null);
+        if (level > ValidationLevel.Basic)
+        {
+            result = result.PopLocation();
+        }
+
+        return result;
     }
 }

@@ -18,6 +18,7 @@ public static partial class ValidationCodeGeneratorExtensions
     private const string ResultIdentifierNameKey = "CSharp_Validation_Result_IdentifierName";
     private const string LevelIdentifierNameKey = "CSharp_Validation_Level_IdentifierName";
     private const string ValueKindIdentifierNameKey = "CSharp_Validation_ValueKind_IdentifierName";
+    private static readonly int HashSlashDollarDefsSlashLength = "#/$defs/".Length;
 
     /// <summary>
     /// Gets the result identifier name.
@@ -531,6 +532,12 @@ public static partial class ValidationCodeGeneratorExtensions
             return generator;
         }
 
+        IKeyword? typeKeyword = typeDeclaration.Keywords().OfType<IFormatValidationKeyword>().FirstOrDefault();
+        IKeyword? formatKeyword = typeDeclaration.Keywords().OfType<IFormatValidationKeyword>().FirstOrDefault();
+
+        string typeKeywordDisplay = typeKeyword is IKeyword t ? SymbolDisplay.FormatLiteral(t.Keyword, true) : "null";
+        string formatKeywordDisplay = formatKeyword is IKeyword f ? SymbolDisplay.FormatLiteral(f.Keyword, true) : "null";
+
         generator
             .AppendSeparatorLine()
             .AppendLineIndent("/// <inheritdoc/>");
@@ -544,55 +551,85 @@ public static partial class ValidationCodeGeneratorExtensions
                     "ValidationContext",
                     "Validate",
                     ("in ValidationContext", "validationContext"),
-                    ("ValidationLevel", "level", "ValidationLevel.Flag"));
+                    ("ValidationLevel", "level", "ValidationLevel.Flag"))
+                .AppendBlockIndent(
+                    """
+                    ValidationContext result = validationContext;
+                    if (level > ValidationLevel.Flag)
+                    {
+                        result = result.UsingResults();
+                    }
+                            
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.UsingStack();
+                    """)
+                .PushIndent()
+                    .AppendLineIndent("result = result.PushSchemaLocation(\"corvus:/", SymbolDisplay.FormatLiteral(typeDeclaration.RelativeSchemaLocation, false)[HashSlashDollarDefsSlashLength..], "\");")
+                .PopIndent()
+                .AppendLineIndent("}");
 
             switch (corvusType)
             {
                 case "JsonObject":
                     generator
-                        .AppendLineIndent("return Json.Validate.TypeObject(this.ValueKind, validationContext, level);");
+                        .AppendLineIndent("result = Json.Validate.TypeObject(this.ValueKind, validationContext, level, ", typeKeywordDisplay, ");");
                     break;
                 case "JsonArray":
                     generator
-                        .AppendLineIndent("return Json.Validate.TypeArray(this.ValueKind, validationContext, level);");
+                        .AppendLineIndent("result = Json.Validate.TypeArray(this.ValueKind, validationContext, level, ", typeKeywordDisplay, ");");
                     break;
                 case "JsonString":
                     generator
-                        .AppendLineIndent("return Json.Validate.TypeString(this.ValueKind, validationContext, level);");
+                        .AppendLineIndent("result = Json.Validate.TypeString(this.ValueKind, validationContext, level, ", typeKeywordDisplay, ");");
                     break;
                 case "JsonBoolean":
                     generator
-                        .AppendLineIndent("return Json.Validate.TypeBoolean(this.ValueKind, validationContext, level);");
+                        .AppendLineIndent("result = Json.Validate.TypeBoolean(this.ValueKind, validationContext, level, ", typeKeywordDisplay, ");");
                     break;
                 case "JsonNumber":
                     generator
-                        .AppendLineIndent("return Json.Validate.TypeNumber(this.ValueKind, validationContext, level);");
+                        .AppendLineIndent("result = Json.Validate.TypeNumber(this.ValueKind, validationContext, level, ", typeKeywordDisplay, ");");
                     break;
                 case "JsonInteger":
                     generator
-                        .AppendLineIndent("return Json.Validate.TypeInteger(this, validationContext, level);");
+                        .AppendLineIndent("result = Json.Validate.TypeInteger(this, validationContext, level, ", typeKeywordDisplay, ");");
                     break;
                 case "JsonNull":
                     generator
-                        .AppendLineIndent("return Json.Validate.TypeNull(this.ValueKind, validationContext, level);");
+                        .AppendLineIndent("result = Json.Validate.TypeNull(this.ValueKind, validationContext, level, ", typeKeywordDisplay, ");");
                     break;
                 case "JsonNotAny":
                     generator
-                        .AppendLineIndent("return validationContext.WithResult(false);");
+                        .AppendLineIndent("result = validationContext.WithResult(false);");
                     break;
                 case "JsonAny":
                     generator
-                        .AppendLineIndent("return validationContext;");
+                        .AppendLineIndent("result = validationContext;");
                     break;
                 default:
                     FormatHandlerRegistry.Instance.FormatHandlers.AppendFormatAssertion(
                         generator,
                         typeDeclaration.ExplicitFormat() ?? throw new InvalidOperationException("There should be an explicit format for a JSON extended type that is not one of the Core types."),
                         "this",
-                        "validationContext",
+                        "result",
+                        typeKeyword,
+                        formatKeyword,
+                        returnFromMethod: false,
                         includeType: true);
                     break;
             }
+
+            generator
+                .AppendBlockIndent(
+                    """
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PopLocation();
+                    }
+
+                    return result;
+                    """);
         }
         else
         {

@@ -83,7 +83,7 @@ public readonly partial struct PersonNameElement
             in ValidationContext validationContext,
             ValidationLevel level = ValidationLevel.Flag)
         {
-            return Corvus.Json.ValidateWithoutCoreType.TypeString(valueKind, validationContext, level);
+            return Corvus.Json.ValidateWithoutCoreType.TypeString(valueKind, validationContext, level, "type");
         }
 
         /// <summary>
@@ -106,12 +106,8 @@ public readonly partial struct PersonNameElement
                 if (level == ValidationLevel.Verbose)
                 {
                     ValidationContext ignoredResult = validationContext;
-                    ignoredResult = ignoredResult.PushValidationLocationProperty("maxLength");
-                    ignoredResult = ignoredResult.WithResult(isValid: true, "Validation maxLength - ignored because the value is not a string");
-                    ignoredResult = ignoredResult.PopLocation();
-                    ignoredResult = ignoredResult.PushValidationLocationProperty("minLength");
-                    ignoredResult = ignoredResult.WithResult(isValid: true, "Validation minLength - ignored because the value is not a string");
-                    ignoredResult = ignoredResult.PopLocation();
+                    ignoredResult = ignoredResult.WithResult(isValid: true, "Validation maxLength - ignored because the value is not a string", "maxLength");
+                    ignoredResult = ignoredResult.WithResult(isValid: true, "Validation minLength - ignored because the value is not a string", "minLength");
                     return ignoredResult;
                 }
 

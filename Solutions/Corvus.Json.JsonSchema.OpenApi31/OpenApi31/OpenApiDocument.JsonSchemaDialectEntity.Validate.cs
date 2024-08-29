@@ -93,7 +93,7 @@ public readonly partial struct OpenApiDocument
                 in ValidationContext validationContext,
                 ValidationLevel level = ValidationLevel.Flag)
             {
-                return Corvus.Json.ValidateWithoutCoreType.TypeString(valueKind, validationContext, level);
+                return Corvus.Json.ValidateWithoutCoreType.TypeString(valueKind, validationContext, level, "type");
             }
 
             /// <summary>
@@ -116,14 +116,14 @@ public readonly partial struct OpenApiDocument
                     if (level == ValidationLevel.Verbose)
                     {
                         ValidationContext ignoredResult = validationContext;
-                        ignoredResult = ignoredResult.WithResult(isValid: true, $"Validation format - ignored 'uri' because the value '{{valueKind}}' is not 'String'.");
+                        ignoredResult = ignoredResult.WithResult(isValid: true, $"Validation format - ignored 'uri' because the value is of kind '{valueKind}' not 'String'.");
                         return ignoredResult;
                     }
 
                     return validationContext;
                 }
 
-                return Corvus.Json.ValidateWithoutCoreType.TypeUri(value, validationContext, level);
+                return Corvus.Json.ValidateWithoutCoreType.TypeUri(value, validationContext, level, "format");
             }
         }
     }

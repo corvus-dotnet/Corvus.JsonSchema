@@ -27,7 +27,7 @@ public readonly partial struct OpenApiDocument
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
-    public readonly partial struct PropertiesContentEntity
+    public readonly partial struct OpenApiDocumentContentEntity
     {
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
@@ -89,7 +89,7 @@ public readonly partial struct OpenApiDocument
             /// <returns>The resulting validation context after validation.</returns>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             internal static ValidationContext CompositionAllOfValidationHandler(
-                in PropertiesContentEntity value,
+                in OpenApiDocumentContentEntity value,
                 in ValidationContext validationContext,
                 ValidationLevel level = ValidationLevel.Flag)
             {
@@ -106,7 +106,7 @@ public readonly partial struct OpenApiDocument
                 {
                     if (level >= ValidationLevel.Basic)
                     {
-                        result = result.MergeChildContext(refResult, true).WithResult(isValid: false, "Validation - $ref failed to validate against the schema.");
+                        result = result.MergeChildContext(refResult, true).PushValidationLocationProperty("$ref").WithResult(isValid: false, "Validation - $ref failed to validate against the schema.").PopLocation();
                     }
                     else
                     {
@@ -132,7 +132,7 @@ public readonly partial struct OpenApiDocument
             /// <returns>The resulting validation context after validation.</returns>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             internal static ValidationContext ObjectValidationHandler(
-                in PropertiesContentEntity value,
+                in OpenApiDocumentContentEntity value,
                 JsonValueKind valueKind,
                 in ValidationContext validationContext,
                 ValidationLevel level = ValidationLevel.Flag)
@@ -143,12 +143,8 @@ public readonly partial struct OpenApiDocument
                     if (level == ValidationLevel.Verbose)
                     {
                         ValidationContext ignoredResult = validationContext;
-                        ignoredResult = ignoredResult.PushValidationLocationProperty("maxProperties");
-                        ignoredResult = ignoredResult.WithResult(isValid: true, "Validation maxProperties - ignored because the value is not an object");
-                        ignoredResult = ignoredResult.PopLocation();
-                        ignoredResult = ignoredResult.PushValidationLocationProperty("minProperties");
-                        ignoredResult = ignoredResult.WithResult(isValid: true, "Validation minProperties - ignored because the value is not an object");
-                        ignoredResult = ignoredResult.PopLocation();
+                        ignoredResult = ignoredResult.WithResult(isValid: true, "Validation maxProperties - ignored because the value is not an object", "maxProperties");
+                        ignoredResult = ignoredResult.WithResult(isValid: true, "Validation minProperties - ignored because the value is not an object", "minProperties");
                         return ignoredResult;
                     }
 
@@ -156,70 +152,50 @@ public readonly partial struct OpenApiDocument
                 }
 
                 int propertyCount = value.Count;
-                if (level > ValidationLevel.Basic)
-                {
-                    result = result.PushValidationLocationProperty("maxProperties");
-                }
-
                 if (propertyCount <= MaxProperties)
                 {
                     if (level == ValidationLevel.Verbose)
                     {
-                        result = result.WithResult(isValid: true, $"Validation maxProperties - property count {propertyCount} is less than or equal to {MaxProperties}");
+                        result = result.WithResult(isValid: true, $"Validation maxProperties - property count {propertyCount} is less than or equal to {MaxProperties}", "maxProperties");
                     }
                 }
                 else
                 {
                     if (level >= ValidationLevel.Detailed)
                     {
-                        result = result.WithResult(isValid: false, $"Validation maxProperties - array of length {propertyCount} is greater than {MaxProperties}");
+                        result = result.WithResult(isValid: false, $"Validation maxProperties - array of length {propertyCount} is greater than {MaxProperties}", "maxProperties");
                     }
                     else if (level >= ValidationLevel.Basic)
                     {
-                        result = result.WithResult(isValid: false, "Validation maxProperties - is greater than the required count.");
+                        result = result.WithResult(isValid: false, "Validation maxProperties - is greater than the required count.", "maxProperties");
                     }
                     else
                     {
                         return ValidationContext.InvalidContext;
                     }
-                }
-
-                if (level > ValidationLevel.Basic)
-                {
-                    result = result.PopLocation();
-                }
-
-                if (level > ValidationLevel.Basic)
-                {
-                    result = result.PushValidationLocationProperty("minProperties");
                 }
 
                 if (propertyCount >= MinProperties)
                 {
                     if (level == ValidationLevel.Verbose)
                     {
-                        result = result.WithResult(isValid: true, $"Validation minProperties - property count {propertyCount} is greater than or equal to {MinProperties}");
+                        result = result.WithResult(isValid: true, $"Validation minProperties - property count {propertyCount} is greater than or equal to {MinProperties}", "minProperties");
                     }
                 }
                 else
                 {
                     if (level >= ValidationLevel.Detailed)
                     {
-                        result = result.WithResult(isValid: false, $"Validation minProperties - array of length {propertyCount} is less than {MinProperties}");
+                        result = result.WithResult(isValid: false, $"Validation minProperties - array of length {propertyCount} is less than {MinProperties}", "minProperties");
                     }
                     else if (level >= ValidationLevel.Basic)
                     {
-                        result = result.WithResult(isValid: false, "Validation minProperties - is less than the required count.");
+                        result = result.WithResult(isValid: false, "Validation minProperties - is less than the required count.", "minProperties");
                     }
                     else
                     {
                         return ValidationContext.InvalidContext;
                     }
-                }
-
-                if (level > ValidationLevel.Basic)
-                {
-                    result = result.PopLocation();
                 }
 
                 return result;

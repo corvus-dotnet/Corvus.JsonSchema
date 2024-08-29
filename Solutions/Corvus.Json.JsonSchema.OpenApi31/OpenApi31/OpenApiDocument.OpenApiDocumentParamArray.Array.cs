@@ -34,16 +34,16 @@ public readonly partial struct OpenApiDocument
     /// Generated from JSON Schema.
     /// </summary>
 #if NET8_0_OR_GREATER
-    [CollectionBuilder(typeof(PropertiesParametersArray), "Create")]
+    [CollectionBuilder(typeof(OpenApiDocumentParamArray), "Create")]
 #endif
-    public readonly partial struct PropertiesParametersArray
-        : IJsonArray<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.PropertiesParametersArray>,
+    public readonly partial struct OpenApiDocumentParamArray
+        : IJsonArray<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OpenApiDocumentParamArray>,
           IReadOnlyCollection<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference>
     {
         /// <summary>
         /// Gets an empty array.
         /// </summary>
-        public static PropertiesParametersArray EmptyArray { get; } = From(ImmutableList<JsonAny>.Empty);
+        public static OpenApiDocumentParamArray EmptyArray { get; } = From(ImmutableList<JsonAny>.Empty);
 
         /// <summary>
         /// Gets the rank of the array.
@@ -51,7 +51,7 @@ public readonly partial struct OpenApiDocument
         public static int Rank => 1;
 
         /// <inheritdoc/>
-        Corvus.Json.JsonAny IJsonArray<PropertiesParametersArray>.this[int index]
+        Corvus.Json.JsonAny IJsonArray<OpenApiDocumentParamArray>.this[int index]
         {
             get
             {
@@ -142,7 +142,7 @@ public readonly partial struct OpenApiDocument
         /// Conversion from <see cref="ImmutableList{JsonAny}"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
-        public static implicit operator PropertiesParametersArray(ImmutableList<JsonAny> value)
+        public static implicit operator OpenApiDocumentParamArray(ImmutableList<JsonAny> value)
         {
             return new(value);
         }
@@ -151,7 +151,7 @@ public readonly partial struct OpenApiDocument
         /// Conversion to <see cref="ImmutableList{JsonAny}"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
-        public static implicit operator ImmutableList<JsonAny>(PropertiesParametersArray value)
+        public static implicit operator ImmutableList<JsonAny>(OpenApiDocumentParamArray value)
         {
             return
                 __CorvusArrayHelpers.GetImmutableList(value);
@@ -161,7 +161,7 @@ public readonly partial struct OpenApiDocument
         /// Conversion from JsonArray.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
-        public static implicit operator PropertiesParametersArray(JsonArray value)
+        public static implicit operator OpenApiDocumentParamArray(JsonArray value)
         {
             if (value.HasDotnetBacking && value.ValueKind == JsonValueKind.Array)
             {
@@ -176,91 +176,91 @@ public readonly partial struct OpenApiDocument
         /// Conversion to JsonArray.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
-        public static implicit operator JsonArray(PropertiesParametersArray value)
+        public static implicit operator JsonArray(OpenApiDocumentParamArray value)
         {
             return
                 value.AsArray;
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="PropertiesParametersArray"/> struct.
+        /// Initializes a new instance of the <see cref="OpenApiDocumentParamArray"/> struct.
         /// </summary>
         /// <param name="items">The list of items from which to construct the array.</param>
         /// <returns>An instance of the array constructed from the list.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static PropertiesParametersArray From(ImmutableList<JsonAny> items)
+        public static OpenApiDocumentParamArray From(ImmutableList<JsonAny> items)
         {
             return new(items);
         }
 
         /// <summary>
-        /// Create an new instance of the <see cref="PropertiesParametersArray"/>" struct from a span of items.
+        /// Create an new instance of the <see cref="OpenApiDocumentParamArray"/>" struct from a span of items.
         /// </summary>
         /// <param name="items">The span of items from which to construct the array.</param>
         /// <returns>An instance of the array constructed from the span.</returns>
-        public static PropertiesParametersArray Create(ReadOnlySpan<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference> items)
+        public static OpenApiDocumentParamArray Create(ReadOnlySpan<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference> items)
         {
             return new([..items]);
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="PropertiesParametersArray"/> struct.
+        /// Initializes a new instance of the <see cref="OpenApiDocumentParamArray"/> struct.
         /// </summary>
         /// <param name="items">The value from which to construct the instance.</param>
         /// <returns>An instance of the array constructed from the value.</returns>
-        public static PropertiesParametersArray FromItems(params Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference[] items)
+        public static OpenApiDocumentParamArray FromItems(params Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference[] items)
         {
             return new([..items]);
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="PropertiesParametersArray"/> struct.
+        /// Initializes a new instance of the <see cref="OpenApiDocumentParamArray"/> struct.
         /// </summary>
         /// <param name="item1">The 1st item in the array.</param>
         /// <returns>An instance of the array constructed from the values.</returns>
-        public static PropertiesParametersArray FromItems(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference item1)
+        public static OpenApiDocumentParamArray FromItems(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference item1)
         {
             return new([item1.AsAny]);
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="PropertiesParametersArray"/> struct.
+        /// Initializes a new instance of the <see cref="OpenApiDocumentParamArray"/> struct.
         /// </summary>
         /// <param name="item1">The 1st item in the array.</param>
         /// <param name="item2">The 2nd item in the array.</param>
         /// <returns>An instance of the array constructed from the values.</returns>
-        public static PropertiesParametersArray FromItems(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference item1, in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference item2)
+        public static OpenApiDocumentParamArray FromItems(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference item1, in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference item2)
         {
             return new([item1.AsAny, item2.AsAny]);
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="PropertiesParametersArray"/> struct.
+        /// Initializes a new instance of the <see cref="OpenApiDocumentParamArray"/> struct.
         /// </summary>
         /// <param name="item1">The 1st item in the array.</param>
         /// <param name="item2">The 2nd item in the array.</param>
         /// <param name="item3">The 3rd item in the array.</param>
         /// <returns>An instance of the array constructed from the values.</returns>
-        public static PropertiesParametersArray FromItems(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference item1, in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference item2, in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference item3)
+        public static OpenApiDocumentParamArray FromItems(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference item1, in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference item2, in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference item3)
         {
             return new([item1.AsAny, item2.AsAny, item3.AsAny]);
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="PropertiesParametersArray"/> struct.
+        /// Initializes a new instance of the <see cref="OpenApiDocumentParamArray"/> struct.
         /// </summary>
         /// <param name="item1">The 1st item in the array.</param>
         /// <param name="item2">The 2nd item in the array.</param>
         /// <param name="item3">The 3rd item in the array.</param>
         /// <param name="item4">The 4th item in the array.</param>
         /// <returns>An instance of the array constructed from the values.</returns>
-        public static PropertiesParametersArray FromItems(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference item1, in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference item2, in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference item3, in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference item4)
+        public static OpenApiDocumentParamArray FromItems(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference item1, in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference item2, in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference item3, in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference item4)
         {
             return new([item1.AsAny, item2.AsAny, item3.AsAny, item4.AsAny]);
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="PropertiesParametersArray"/> struct.
+        /// Initializes a new instance of the <see cref="OpenApiDocumentParamArray"/> struct.
         /// </summary>
         /// <param name="item1">The 1st item in the array.</param>
         /// <param name="item2">The 2nd item in the array.</param>
@@ -268,13 +268,13 @@ public readonly partial struct OpenApiDocument
         /// <param name="item4">The 4th item in the array.</param>
         /// <param name="item5">The 5th item in the array.</param>
         /// <returns>An instance of the array constructed from the values.</returns>
-        public static PropertiesParametersArray FromItems(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference item1, in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference item2, in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference item3, in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference item4, in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference item5)
+        public static OpenApiDocumentParamArray FromItems(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference item1, in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference item2, in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference item3, in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference item4, in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference item5)
         {
             return new([item1.AsAny, item2.AsAny, item3.AsAny, item4.AsAny, item5.AsAny]);
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="PropertiesParametersArray"/> struct.
+        /// Initializes a new instance of the <see cref="OpenApiDocumentParamArray"/> struct.
         /// </summary>
         /// <param name="item1">The 1st item in the array.</param>
         /// <param name="item2">The 2nd item in the array.</param>
@@ -283,13 +283,13 @@ public readonly partial struct OpenApiDocument
         /// <param name="item5">The 5th item in the array.</param>
         /// <param name="item6">The 6th item in the array.</param>
         /// <returns>An instance of the array constructed from the values.</returns>
-        public static PropertiesParametersArray FromItems(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference item1, in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference item2, in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference item3, in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference item4, in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference item5, in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference item6)
+        public static OpenApiDocumentParamArray FromItems(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference item1, in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference item2, in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference item3, in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference item4, in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference item5, in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference item6)
         {
             return new([item1.AsAny, item2.AsAny, item3.AsAny, item4.AsAny, item5.AsAny, item6.AsAny]);
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="PropertiesParametersArray"/> struct.
+        /// Initializes a new instance of the <see cref="OpenApiDocumentParamArray"/> struct.
         /// </summary>
         /// <param name="item1">The 1st item in the array.</param>
         /// <param name="item2">The 2nd item in the array.</param>
@@ -299,39 +299,39 @@ public readonly partial struct OpenApiDocument
         /// <param name="item6">The 6th item in the array.</param>
         /// <param name="item7">The 7th item in the array.</param>
         /// <returns>An instance of the array constructed from the values.</returns>
-        public static PropertiesParametersArray FromItems(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference item1, in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference item2, in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference item3, in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference item4, in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference item5, in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference item6, in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference item7)
+        public static OpenApiDocumentParamArray FromItems(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference item1, in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference item2, in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference item3, in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference item4, in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference item5, in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference item6, in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference item7)
         {
             return new([item1.AsAny, item2.AsAny, item3.AsAny, item4.AsAny, item5.AsAny, item6.AsAny, item7.AsAny]);
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="PropertiesParametersArray"/> struct.
+        /// Initializes a new instance of the <see cref="OpenApiDocumentParamArray"/> struct.
         /// </summary>
         /// <param name="items">The items from which to construct the instance.</param>
         /// <returns>An instance of the array constructed from the items.</returns>
-        public static PropertiesParametersArray FromRange(IEnumerable<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference> items)
+        public static OpenApiDocumentParamArray FromRange(IEnumerable<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference> items)
         {
             return new([..items]);
         }
 
 #if NET8_0_OR_GREATER
         /// <summary>
-        /// Initializes a new instance of the <see cref="PropertiesParametersArray"/> struct.
+        /// Initializes a new instance of the <see cref="OpenApiDocumentParamArray"/> struct.
         /// </summary>
         /// <param name="items">The items from which to construct the instance.</param>
         /// <returns>An instance of the array constructed from the items .</returns>
-        static PropertiesParametersArray IJsonArray<PropertiesParametersArray>.FromRange(IEnumerable<JsonAny> items)
+        static OpenApiDocumentParamArray IJsonArray<OpenApiDocumentParamArray>.FromRange(IEnumerable<JsonAny> items)
         {
             return new([..items]);
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="PropertiesParametersArray"/> struct.
+        /// Initializes a new instance of the <see cref="OpenApiDocumentParamArray"/> struct.
         /// </summary>
         /// <typeparam name="T">The type of the items to add.</typeparam>
         /// <param name="items">The items from which to construct the instance.</param>
         /// <returns>An instance of the array constructed from the items.</returns>
-        static PropertiesParametersArray IJsonArray<PropertiesParametersArray>.FromRange<T>(IEnumerable<T> items)
+        static OpenApiDocumentParamArray IJsonArray<OpenApiDocumentParamArray>.FromRange<T>(IEnumerable<T> items)
         {
             return new([..items.Select(item => item.AsAny)]);
         }
@@ -391,7 +391,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <inheritdoc/>
-        JsonArrayEnumerator IJsonArray<PropertiesParametersArray>.EnumerateArray()
+        JsonArrayEnumerator IJsonArray<OpenApiDocumentParamArray>.EnumerateArray()
         {
             if ((this.backing & Backing.JsonElement) != 0)
             {
@@ -407,7 +407,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <inheritdoc/>
-        JsonArrayEnumerator<TItem> IJsonArray<PropertiesParametersArray>.EnumerateArray<TItem>()
+        JsonArrayEnumerator<TItem> IJsonArray<OpenApiDocumentParamArray>.EnumerateArray<TItem>()
         {
             if ((this.backing & Backing.JsonElement) != 0)
             {
@@ -423,7 +423,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <inheritdoc/>
-        PropertiesParametersArray IJsonArray<PropertiesParametersArray>.Add(in JsonAny item1)
+        OpenApiDocumentParamArray IJsonArray<OpenApiDocumentParamArray>.Add(in JsonAny item1)
         {
             ImmutableList<JsonAny>.Builder builder = __CorvusArrayHelpers.GetImmutableListBuilder(this);
             builder.Add(item1);
@@ -431,7 +431,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <inheritdoc/>
-        PropertiesParametersArray IJsonArray<PropertiesParametersArray>.Add(params JsonAny[] items)
+        OpenApiDocumentParamArray IJsonArray<OpenApiDocumentParamArray>.Add(params JsonAny[] items)
         {
             ImmutableList<JsonAny>.Builder builder = __CorvusArrayHelpers.GetImmutableListBuilder(this);
             foreach (JsonAny item in items)
@@ -443,7 +443,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <inheritdoc/>
-        PropertiesParametersArray IJsonArray<PropertiesParametersArray>.AddRange<TArray>(in TArray items)
+        OpenApiDocumentParamArray IJsonArray<OpenApiDocumentParamArray>.AddRange<TArray>(in TArray items)
         {
             ImmutableList<JsonAny>.Builder builder = __CorvusArrayHelpers.GetImmutableListBuilder(this);
             foreach (JsonAny item in items.EnumerateArray())
@@ -455,7 +455,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <inheritdoc/>
-        PropertiesParametersArray IJsonArray<PropertiesParametersArray>.AddRange<TItem>(IEnumerable<TItem> items)
+        OpenApiDocumentParamArray IJsonArray<OpenApiDocumentParamArray>.AddRange<TItem>(IEnumerable<TItem> items)
         {
             ImmutableList<JsonAny>.Builder builder = __CorvusArrayHelpers.GetImmutableListBuilder(this);
             foreach (TItem item in items)
@@ -467,7 +467,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <inheritdoc/>
-        PropertiesParametersArray IJsonArray<PropertiesParametersArray>.AddRange(IEnumerable<JsonAny> items)
+        OpenApiDocumentParamArray IJsonArray<OpenApiDocumentParamArray>.AddRange(IEnumerable<JsonAny> items)
         {
             ImmutableList<JsonAny>.Builder builder = __CorvusArrayHelpers.GetImmutableListBuilder(this);
             builder.AddRange(items);
@@ -475,43 +475,43 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <inheritdoc/>
-        PropertiesParametersArray IJsonArray<PropertiesParametersArray>.Insert(int index, in JsonAny item1)
+        OpenApiDocumentParamArray IJsonArray<OpenApiDocumentParamArray>.Insert(int index, in JsonAny item1)
         {
             return new(__CorvusArrayHelpers.GetImmutableListWith(this, index, item1));
         }
 
         /// <inheritdoc/>
-        PropertiesParametersArray IJsonArray<PropertiesParametersArray>.InsertRange<TArray>(int index, in TArray items)
+        OpenApiDocumentParamArray IJsonArray<OpenApiDocumentParamArray>.InsertRange<TArray>(int index, in TArray items)
         {
             return new(__CorvusArrayHelpers.GetImmutableListWith(this, index, items.EnumerateArray()));
         }
 
         /// <inheritdoc/>
-        PropertiesParametersArray IJsonArray<PropertiesParametersArray>.InsertRange<TItem>(int index, IEnumerable<TItem> items)
+        OpenApiDocumentParamArray IJsonArray<OpenApiDocumentParamArray>.InsertRange<TItem>(int index, IEnumerable<TItem> items)
         {
             return new(__CorvusArrayHelpers.GetImmutableListWith(this, index, items.Select(item => item.AsAny)));
         }
 
         /// <inheritdoc/>
-        PropertiesParametersArray IJsonArray<PropertiesParametersArray>.InsertRange(int index, IEnumerable<JsonAny> items)
+        OpenApiDocumentParamArray IJsonArray<OpenApiDocumentParamArray>.InsertRange(int index, IEnumerable<JsonAny> items)
         {
             return new(__CorvusArrayHelpers.GetImmutableListWith(this, index, items));
         }
 
         /// <inheritdoc/>
-        PropertiesParametersArray IJsonArray<PropertiesParametersArray>.Replace(in JsonAny oldValue, in JsonAny newValue)
+        OpenApiDocumentParamArray IJsonArray<OpenApiDocumentParamArray>.Replace(in JsonAny oldValue, in JsonAny newValue)
         {
             return new(__CorvusArrayHelpers.GetImmutableListReplacing(this, oldValue, newValue));
         }
 
         /// <inheritdoc/>
-        PropertiesParametersArray IJsonArray<PropertiesParametersArray>.SetItem(int index, in JsonAny value)
+        OpenApiDocumentParamArray IJsonArray<OpenApiDocumentParamArray>.SetItem(int index, in JsonAny value)
         {
             return new(__CorvusArrayHelpers.GetImmutableListSetting(this, index, value));
         }
 
         /// <inheritdoc/>
-        public PropertiesParametersArray Add(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference item1)
+        public OpenApiDocumentParamArray Add(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference item1)
         {
             ImmutableList<JsonAny>.Builder builder = __CorvusArrayHelpers.GetImmutableListBuilder(this);
             builder.Add(item1.AsAny);
@@ -519,7 +519,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <inheritdoc/>
-        public PropertiesParametersArray Add(params Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference[] items)
+        public OpenApiDocumentParamArray Add(params Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference[] items)
         {
             ImmutableList<JsonAny>.Builder builder = __CorvusArrayHelpers.GetImmutableListBuilder(this);
             foreach (Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference item in items)
@@ -531,7 +531,7 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <inheritdoc/>
-        public PropertiesParametersArray AddRange(IEnumerable<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference> items)
+        public OpenApiDocumentParamArray AddRange(IEnumerable<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference> items)
         {
             ImmutableList<JsonAny>.Builder builder = __CorvusArrayHelpers.GetImmutableListBuilder(this);
             foreach (Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference item in items)
@@ -543,49 +543,49 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <inheritdoc/>
-        public PropertiesParametersArray Insert(int index, in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference item1)
+        public OpenApiDocumentParamArray Insert(int index, in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference item1)
         {
             return new(__CorvusArrayHelpers.GetImmutableListWith(this, index, item1));
         }
 
         /// <inheritdoc/>
-        public PropertiesParametersArray InsertRange(int index, IEnumerable<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference> items)
+        public OpenApiDocumentParamArray InsertRange(int index, IEnumerable<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference> items)
         {
             return new(__CorvusArrayHelpers.GetImmutableListWith(this, index, items.Select(item => item.AsAny)));
         }
 
         /// <inheritdoc/>
-        public PropertiesParametersArray Replace(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference oldValue, in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference newValue)
+        public OpenApiDocumentParamArray Replace(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference oldValue, in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference newValue)
         {
             return new(__CorvusArrayHelpers.GetImmutableListReplacing(this, oldValue, newValue));
         }
 
         /// <inheritdoc/>
-        public PropertiesParametersArray SetItem(int index, in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference value)
+        public OpenApiDocumentParamArray SetItem(int index, in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference value)
         {
             return new(__CorvusArrayHelpers.GetImmutableListSetting(this, index, value));
         }
 
         /// <inheritdoc/>
-        PropertiesParametersArray IJsonArray<PropertiesParametersArray>.Remove(in JsonAny oldValue)
+        OpenApiDocumentParamArray IJsonArray<OpenApiDocumentParamArray>.Remove(in JsonAny oldValue)
         {
             return new(__CorvusArrayHelpers.GetImmutableListWithout(this, oldValue));
         }
 
         /// <inheritdoc/>
-        PropertiesParametersArray IJsonArray<PropertiesParametersArray>.RemoveAt(int index)
+        OpenApiDocumentParamArray IJsonArray<OpenApiDocumentParamArray>.RemoveAt(int index)
         {
             return new(__CorvusArrayHelpers.GetImmutableListWithoutRange(this, index, 1));
         }
 
         /// <inheritdoc/>
-        PropertiesParametersArray IJsonArray<PropertiesParametersArray>.RemoveRange(int index, int count)
+        OpenApiDocumentParamArray IJsonArray<OpenApiDocumentParamArray>.RemoveRange(int index, int count)
         {
             return new(__CorvusArrayHelpers.GetImmutableListWithoutRange(this, index, count));
         }
 
         /// <inheritdoc/>
-        public PropertiesParametersArray Remove(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference oldValue)
+        public OpenApiDocumentParamArray Remove(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReference oldValue)
         {
             return new(__CorvusArrayHelpers.GetImmutableListWithout(this, oldValue));
         }
@@ -598,7 +598,7 @@ public readonly partial struct OpenApiDocument
             /// <param name="arrayInstance">The array instance.</param>
             /// <returns>An immutable list of <see cref = "JsonAny"/> built from the array.</returns>
             /// <exception cref = "InvalidOperationException">The value is not an array.</exception>
-            public static ImmutableList<JsonAny> GetImmutableList(in PropertiesParametersArray arrayInstance)
+            public static ImmutableList<JsonAny> GetImmutableList(in OpenApiDocumentParamArray arrayInstance)
             {
                 if ((arrayInstance.backing & Backing.Array) != 0)
                 {
@@ -614,7 +614,7 @@ public readonly partial struct OpenApiDocument
             /// <param name="arrayInstance">The array instance.</param>
             /// <returns>An immutable list builder of <see cref = "JsonAny"/>, built from the existing array.</returns>
             /// <exception cref = "InvalidOperationException">The value is not an array.</exception>
-            public static ImmutableList<JsonAny>.Builder GetImmutableListBuilder(in PropertiesParametersArray arrayInstance)
+            public static ImmutableList<JsonAny>.Builder GetImmutableListBuilder(in OpenApiDocumentParamArray arrayInstance)
             {
                 if ((arrayInstance.backing & Backing.JsonElement) != 0)
                 {
@@ -647,7 +647,7 @@ public readonly partial struct OpenApiDocument
             /// <returns>An immutable list containing the contents of the list, with the specified item at the index.</returns>
             /// <exception cref = "InvalidOperationException">The value is not an array.</exception>
             /// <exception cref = "IndexOutOfRangeException">Thrown if the range is beyond the bounds of the array.</exception>
-            public static ImmutableList<JsonAny> GetImmutableListSetting(in PropertiesParametersArray arrayInstance, int index, in JsonAny value)
+            public static ImmutableList<JsonAny> GetImmutableListSetting(in OpenApiDocumentParamArray arrayInstance, int index, in JsonAny value)
             {
                 if ((arrayInstance.backing & Backing.JsonElement) != 0)
                 {
@@ -680,7 +680,7 @@ public readonly partial struct OpenApiDocument
             /// <param name="newItem">The item to insert.</param>
             /// <returns>An immutable list containing the contents of the list, without the first instance that matches the old item, replacing it with the new item.</returns>
             /// <exception cref = "InvalidOperationException">The value is not an array.</exception>
-            public static ImmutableList<JsonAny> GetImmutableListReplacing(in PropertiesParametersArray arrayInstance, in JsonAny oldItem, in JsonAny newItem)
+            public static ImmutableList<JsonAny> GetImmutableListReplacing(in OpenApiDocumentParamArray arrayInstance, in JsonAny oldItem, in JsonAny newItem)
             {
                 if ((arrayInstance.backing & Backing.JsonElement) != 0)
                 {
@@ -705,7 +705,7 @@ public readonly partial struct OpenApiDocument
             /// <param name="item">The item to remove.</param>
             /// <returns>An immutable list containing the contents of the list, without the first instance arrayInstance matches the given item.</returns>
             /// <exception cref = "InvalidOperationException">The value is not an array.</exception>
-            public static ImmutableList<JsonAny> GetImmutableListWithout(in PropertiesParametersArray arrayInstance, in JsonAny item)
+            public static ImmutableList<JsonAny> GetImmutableListWithout(in OpenApiDocumentParamArray arrayInstance, in JsonAny item)
             {
                 if ((arrayInstance.backing & Backing.JsonElement) != 0)
                 {
@@ -732,7 +732,7 @@ public readonly partial struct OpenApiDocument
             /// <returns>An immutable list containing the contents of the list, without the given range of items.</returns>
             /// <exception cref = "InvalidOperationException">The value is not an array.</exception>
             /// <exception cref = "IndexOutOfRangeException">Thrown if the range is beyond the bounds of the array.</exception>
-            public static ImmutableList<JsonAny> GetImmutableListWithoutRange(in PropertiesParametersArray arrayInstance, int index, int count)
+            public static ImmutableList<JsonAny> GetImmutableListWithoutRange(in OpenApiDocumentParamArray arrayInstance, int index, int count)
             {
                 if ((arrayInstance.backing & Backing.JsonElement) != 0)
                 {
@@ -766,7 +766,7 @@ public readonly partial struct OpenApiDocument
             // <returns>An immutable list containing the contents of the list, without the array.</returns>
             // <exception cref = "InvalidOperationException">The value is not an array.</exception>
             // <exception cref = "IndexOutOfRangeException">Thrown if the range is beyond the bounds of the array.</exception>
-            public static ImmutableList<JsonAny> GetImmutableListWith(in PropertiesParametersArray arrayInstance, int index, in JsonAny value)
+            public static ImmutableList<JsonAny> GetImmutableListWith(in OpenApiDocumentParamArray arrayInstance, int index, in JsonAny value)
             {
                 if ((arrayInstance.backing & Backing.JsonElement) != 0)
                 {
@@ -801,7 +801,7 @@ public readonly partial struct OpenApiDocument
             /// <returns>An immutable list containing the contents of the list, without the array.</returns>
             /// <exception cref = "InvalidOperationException">The value is not an array.</exception>
             /// <exception cref = "IndexOutOfRangeException">Thrown if the range is beyond the bounds of the array.</exception>
-            public static ImmutableList<JsonAny> GetImmutableListWith<TEnumerable>(in PropertiesParametersArray arrayInstance, int index, TEnumerable values)
+            public static ImmutableList<JsonAny> GetImmutableListWith<TEnumerable>(in OpenApiDocumentParamArray arrayInstance, int index, TEnumerable values)
                 where TEnumerable : IEnumerable<JsonAny>
             {
                 if ((arrayInstance.backing & Backing.JsonElement) != 0)

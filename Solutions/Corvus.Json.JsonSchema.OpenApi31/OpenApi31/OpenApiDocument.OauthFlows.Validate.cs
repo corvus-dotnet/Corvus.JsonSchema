@@ -90,7 +90,7 @@ public readonly partial struct OpenApiDocument
                 in ValidationContext validationContext,
                 ValidationLevel level = ValidationLevel.Flag)
             {
-                return Corvus.Json.ValidateWithoutCoreType.TypeObject(valueKind, validationContext, level);
+                return Corvus.Json.ValidateWithoutCoreType.TypeObject(valueKind, validationContext, level, "type");
             }
 
             /// <summary>
@@ -119,7 +119,7 @@ public readonly partial struct OpenApiDocument
                 {
                     if (level >= ValidationLevel.Basic)
                     {
-                        result = result.MergeChildContext(refResult, true).WithResult(isValid: false, "Validation - $ref failed to validate against the schema.");
+                        result = result.MergeChildContext(refResult, true).PushValidationLocationProperty("$ref").WithResult(isValid: false, "Validation - $ref failed to validate against the schema.").PopLocation();
                     }
                     else
                     {
@@ -156,12 +156,8 @@ public readonly partial struct OpenApiDocument
                     if (level == ValidationLevel.Verbose)
                     {
                         ValidationContext ignoredResult = validationContext;
-                        ignoredResult = ignoredResult.PushValidationLocationProperty("properties");
-                        ignoredResult = ignoredResult.WithResult(isValid: true, "Validation properties - ignored because the value is not an object");
-                        ignoredResult = ignoredResult.PopLocation();
-                        ignoredResult = ignoredResult.PushValidationLocationProperty("unevaluatedProperties");
-                        ignoredResult = ignoredResult.WithResult(isValid: true, "Validation unevaluatedProperties - ignored because the value is not an object");
-                        ignoredResult = ignoredResult.PopLocation();
+                        ignoredResult = ignoredResult.WithResult(isValid: true, "Validation properties - ignored because the value is not an object", "properties");
+                        ignoredResult = ignoredResult.WithResult(isValid: true, "Validation unevaluatedProperties - ignored because the value is not an object", "unevaluatedProperties");
                         return ignoredResult;
                     }
 
@@ -240,7 +236,7 @@ public readonly partial struct OpenApiDocument
                             result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/password/$ref"), JsonPropertyNames.Password);
                         }
 
-                        ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OauthFlows.DefssRequiredScopesAndTokenUr>().Validate(result.CreateChildContext(), level);
+                        ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OauthFlows.OauthFlowsRequiredScopesAndTokenUrl>().Validate(result.CreateChildContext(), level);
                         if (level == ValidationLevel.Flag && !propertyResult.IsValid)
                         {
                             return propertyResult;

@@ -78,7 +78,7 @@ public readonly partial struct GeneratorConfig
                 in ValidationContext validationContext,
                 ValidationLevel level = ValidationLevel.Flag)
             {
-                return Corvus.Json.ValidateWithoutCoreType.TypeArray(valueKind, validationContext, level);
+                return Corvus.Json.ValidateWithoutCoreType.TypeArray(valueKind, validationContext, level, "type");
             }
 
             /// <summary>
@@ -102,9 +102,7 @@ public readonly partial struct GeneratorConfig
                     if (level == ValidationLevel.Verbose)
                     {
                         ValidationContext ignoredResult = validationContext;
-                        ignoredResult = ignoredResult.PushValidationLocationProperty("items");
-                        ignoredResult = ignoredResult.WithResult(isValid: true, "Validation items - ignored because the value is not an array");
-                        ignoredResult = ignoredResult.PopLocation();
+                        ignoredResult = ignoredResult.WithResult(isValid: true, "Validation items - ignored because the value is not an array", "items");
                         return ignoredResult;
                     }
 

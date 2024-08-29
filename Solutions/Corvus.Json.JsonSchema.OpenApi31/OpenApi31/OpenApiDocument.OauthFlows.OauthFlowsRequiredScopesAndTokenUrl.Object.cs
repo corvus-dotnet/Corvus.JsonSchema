@@ -33,14 +33,14 @@ public readonly partial struct OpenApiDocument
         /// <summary>
         /// Generated from JSON Schema.
         /// </summary>
-        public readonly partial struct DefssRequiredScopesAndTokenUr
-            : IJsonObject<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OauthFlows.DefssRequiredScopesAndTokenUr>
+        public readonly partial struct OauthFlowsRequiredScopesAndTokenUrl
+            : IJsonObject<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OauthFlows.OauthFlowsRequiredScopesAndTokenUrl>
         {
             /// <summary>
             /// Conversion from <see cref="ImmutableList{JsonObjectProperty}"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
-            public static implicit operator DefssRequiredScopesAndTokenUr(ImmutableList<JsonObjectProperty> value)
+            public static implicit operator OauthFlowsRequiredScopesAndTokenUrl(ImmutableList<JsonObjectProperty> value)
             {
                 return new(value);
             }
@@ -49,7 +49,7 @@ public readonly partial struct OpenApiDocument
             /// Conversion to <see cref="ImmutableList{JsonObjectProperty}"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
-            public static implicit operator ImmutableList<JsonObjectProperty>(DefssRequiredScopesAndTokenUr value)
+            public static implicit operator ImmutableList<JsonObjectProperty>(OauthFlowsRequiredScopesAndTokenUrl value)
             {
                 return
                     __CorvusObjectHelpers.GetPropertyBacking(value);
@@ -59,7 +59,7 @@ public readonly partial struct OpenApiDocument
             /// Conversion from JsonObject.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
-            public static implicit operator DefssRequiredScopesAndTokenUr(JsonObject value)
+            public static implicit operator OauthFlowsRequiredScopesAndTokenUrl(JsonObject value)
             {
                 if (value.HasDotnetBacking && value.ValueKind == JsonValueKind.Object)
                 {
@@ -74,7 +74,7 @@ public readonly partial struct OpenApiDocument
             /// Conversion to JsonObject.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
-            public static implicit operator JsonObject(DefssRequiredScopesAndTokenUr value)
+            public static implicit operator JsonObject(OauthFlowsRequiredScopesAndTokenUrl value)
             {
                 return
                     value.AsObject;
@@ -227,13 +227,13 @@ public readonly partial struct OpenApiDocument
             }
 
             /// <inheritdoc/>
-            public static DefssRequiredScopesAndTokenUr FromProperties(IDictionary<JsonPropertyName, JsonAny> source)
+            public static OauthFlowsRequiredScopesAndTokenUrl FromProperties(IDictionary<JsonPropertyName, JsonAny> source)
             {
                 return new(source.Select(kvp => new JsonObjectProperty(kvp.Key, kvp.Value)).ToImmutableList());
             }
 
             /// <inheritdoc/>
-            public static DefssRequiredScopesAndTokenUr FromProperties(params (JsonPropertyName Name, JsonAny Value)[] source)
+            public static OauthFlowsRequiredScopesAndTokenUrl FromProperties(params (JsonPropertyName Name, JsonAny Value)[] source)
             {
                 return new(source.Select(s => new JsonObjectProperty(s.Name, s.Value.AsAny)).ToImmutableList());
             }
@@ -243,15 +243,15 @@ public readonly partial struct OpenApiDocument
             /// </summary>
             /// <param name="source">The list of properties.</param>
             /// <returns>An instance of the type initialized from the list of properties.</returns>
-            public static DefssRequiredScopesAndTokenUr FromProperties(ImmutableList<JsonObjectProperty> source)
+            public static OauthFlowsRequiredScopesAndTokenUrl FromProperties(ImmutableList<JsonObjectProperty> source)
             {
                 return new(source);
             }
 
             /// <summary>
-            /// Creates an instance of a <see cref="DefssRequiredScopesAndTokenUr"/>.
+            /// Creates an instance of a <see cref="OauthFlowsRequiredScopesAndTokenUrl"/>.
             /// </summary>
-            public static DefssRequiredScopesAndTokenUr Create(
+            public static OauthFlowsRequiredScopesAndTokenUrl Create(
                 in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.MapOfStrings scopes,
                 in Corvus.Json.JsonUri tokenUrl,
                 in Corvus.Json.JsonUri? refreshUrl = null)
@@ -728,32 +728,32 @@ public readonly partial struct OpenApiDocument
             }
 
             /// <inheritdoc />
-            public DefssRequiredScopesAndTokenUr SetProperty<TValue>(in JsonPropertyName name, TValue value)
+            public OauthFlowsRequiredScopesAndTokenUrl SetProperty<TValue>(in JsonPropertyName name, TValue value)
                 where TValue : struct, IJsonValue
             {
                 return new(__CorvusObjectHelpers.GetPropertyBackingWith(this, name, value.AsAny));
             }
 
             /// <inheritdoc />
-            public DefssRequiredScopesAndTokenUr RemoveProperty(in JsonPropertyName name)
+            public OauthFlowsRequiredScopesAndTokenUrl RemoveProperty(in JsonPropertyName name)
             {
                 return new(__CorvusObjectHelpers.GetPropertyBackingWithout(this, name));
             }
 
             /// <inheritdoc />
-            public DefssRequiredScopesAndTokenUr RemoveProperty(string name)
+            public OauthFlowsRequiredScopesAndTokenUrl RemoveProperty(string name)
             {
                 return new(__CorvusObjectHelpers.GetPropertyBackingWithout(this, name));
             }
 
             /// <inheritdoc />
-            public DefssRequiredScopesAndTokenUr RemoveProperty(ReadOnlySpan<char> name)
+            public OauthFlowsRequiredScopesAndTokenUrl RemoveProperty(ReadOnlySpan<char> name)
             {
                 return new(__CorvusObjectHelpers.GetPropertyBackingWithout(this, name));
             }
 
             /// <inheritdoc />
-            public DefssRequiredScopesAndTokenUr RemoveProperty(ReadOnlySpan<byte> name)
+            public OauthFlowsRequiredScopesAndTokenUrl RemoveProperty(ReadOnlySpan<byte> name)
             {
                 return new(__CorvusObjectHelpers.GetPropertyBackingWithout(this, name));
             }
@@ -801,7 +801,7 @@ public readonly partial struct OpenApiDocument
                 /// </summary>
                 /// <returns>An immutable list of <see cref="JsonAny"/> built from the object.</returns>
                 /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-                public static ImmutableList<JsonObjectProperty> GetPropertyBacking(in DefssRequiredScopesAndTokenUr that)
+                public static ImmutableList<JsonObjectProperty> GetPropertyBacking(in OauthFlowsRequiredScopesAndTokenUrl that)
                 {
                     if ((that.backing & Backing.Object) != 0)
                     {
@@ -821,7 +821,7 @@ public readonly partial struct OpenApiDocument
                 /// </summary>
                 /// <returns>An immutable list of <see cref="JsonObjectProperty"/>, built from the existing object, without the given property.</returns>
                 /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-                public static ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(in DefssRequiredScopesAndTokenUr that, in JsonPropertyName name)
+                public static ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(in OauthFlowsRequiredScopesAndTokenUrl that, in JsonPropertyName name)
                 {
                     if ((that.backing & Backing.Object) != 0)
                     {
@@ -841,7 +841,7 @@ public readonly partial struct OpenApiDocument
                 /// </summary>
                 /// <returns>An immutable list of <see cref="JsonObjectProperty"/>, built from the existing object, without the given property.</returns>
                 /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-                public static ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(in DefssRequiredScopesAndTokenUr that, ReadOnlySpan<char> name)
+                public static ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(in OauthFlowsRequiredScopesAndTokenUrl that, ReadOnlySpan<char> name)
                 {
                     if ((that.backing & Backing.Object) != 0)
                     {
@@ -861,7 +861,7 @@ public readonly partial struct OpenApiDocument
                 /// </summary>
                 /// <returns>An immutable list of <see cref="JsonObjectProperty"/>, built from the existing object, without the given property.</returns>
                 /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-                public static ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(in DefssRequiredScopesAndTokenUr that, ReadOnlySpan<byte> name)
+                public static ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(in OauthFlowsRequiredScopesAndTokenUrl that, ReadOnlySpan<byte> name)
                 {
                     if ((that.backing & Backing.Object) != 0)
                     {
@@ -881,7 +881,7 @@ public readonly partial struct OpenApiDocument
                 /// </summary>
                 /// <returns>An immutable list of <see cref="JsonObjectProperty"/>, built from the existing object, without the given property.</returns>
                 /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-                public static ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(in DefssRequiredScopesAndTokenUr that, string name)
+                public static ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(in OauthFlowsRequiredScopesAndTokenUrl that, string name)
                 {
                     if ((that.backing & Backing.Object) != 0)
                     {
@@ -901,7 +901,7 @@ public readonly partial struct OpenApiDocument
                 /// </summary>
                 /// <returns>An immutable list of <see cref="JsonObjectProperty"/>, built from the existing object, with the given property.</returns>
                 /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-                public static ImmutableList<JsonObjectProperty> GetPropertyBackingWith(in DefssRequiredScopesAndTokenUr that, in JsonPropertyName name, in JsonAny value)
+                public static ImmutableList<JsonObjectProperty> GetPropertyBackingWith(in OauthFlowsRequiredScopesAndTokenUrl that, in JsonPropertyName name, in JsonAny value)
                 {
                     if ((that.backing & Backing.Object) != 0)
                     {
