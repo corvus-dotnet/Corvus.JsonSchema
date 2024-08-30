@@ -36,6 +36,7 @@ internal static partial class CodeGeneratorExtensions
                 return __CorvusObjectHelpers.GetPropertyBacking(this);
             }
             """)
+            .AppendSeparatorLine()
             .AppendBlockIndent(
             """
             /// <inheritdoc/>
