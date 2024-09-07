@@ -139,6 +139,11 @@ public readonly struct JsonReference
     }
 
     /// <summary>
+    /// Gets the length of the reference.
+    /// </summary>
+    public int Length => this.reference.Length;
+
+    /// <summary>
     /// Implicit conversion from a string.
     /// </summary>
     /// <param name="reference">The reference as a string.</param>
@@ -310,6 +315,16 @@ public readonly struct JsonReference
     public JsonReference AppendArrayIndexToFragment(int index)
     {
         return this.AppendUnencodedPropertyNameToFragment(index.ToString());
+    }
+
+    /// <summary>
+    /// Copy the reference to a buffer. The length of the
+    /// buffer is provided by <see cref="Length"/>.
+    /// </summary>
+    /// <param name="buffer">The target buffer.</param>
+    public void CopyTo(Span<char> buffer)
+    {
+        this.reference.Span.CopyTo(buffer);
     }
 
     /// <summary>

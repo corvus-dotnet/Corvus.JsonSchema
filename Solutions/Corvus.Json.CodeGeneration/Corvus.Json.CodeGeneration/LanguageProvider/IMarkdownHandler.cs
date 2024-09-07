@@ -7,7 +7,7 @@ namespace Corvus.Json.CodeGeneration;
 /// <summary>
 /// Defines a heuristic for generating names.
 /// </summary>
-public interface INameHeuristic
+public interface IMarkdownHandler
 {
     /// <summary>
     /// Gets a value indicating whether this is an optional heuristic.

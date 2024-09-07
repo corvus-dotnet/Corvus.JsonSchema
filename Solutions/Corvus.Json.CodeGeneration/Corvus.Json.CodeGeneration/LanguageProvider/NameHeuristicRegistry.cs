@@ -10,21 +10,21 @@ namespace Corvus.Json.CodeGeneration;
 /// </summary>
 public sealed class NameHeuristicRegistry
 {
-    private readonly HashSet<INameHeuristic> registeredBuilders = [];
-    private readonly Dictionary<IKeyword, IReadOnlyCollection<INameHeuristic>> buildersByKeyword = [];
+    private readonly HashSet<IMarkdownHandler> registeredBuilders = [];
+    private readonly Dictionary<IKeyword, IReadOnlyCollection<IMarkdownHandler>> buildersByKeyword = [];
 
     /// <summary>
     /// Gets the registered name heuristics.
     /// </summary>
-    public IReadOnlyCollection<INameHeuristic> RegisteredHeuristics => this.registeredBuilders;
+    public IReadOnlyCollection<IMarkdownHandler> RegisteredHeuristics => this.registeredBuilders;
 
     /// <summary>
     /// Registers name heuristics with the language provider.
     /// </summary>
     /// <param name="builders">The heuristics to register.</param>
-    public void RegisterNameHeuristics(params INameHeuristic[] builders)
+    public void RegisterNameHeuristics(params IMarkdownHandler[] builders)
     {
-        foreach (INameHeuristic handler in builders)
+        foreach (IMarkdownHandler handler in builders)
         {
             this.registeredBuilders.Add(handler);
         }
