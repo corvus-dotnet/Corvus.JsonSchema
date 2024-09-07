@@ -23,3 +23,5 @@ $toolPath = './Corvus.Json.CodeGenerator/bin/Debug/net8.0/Corvus.Json.JsonSchema
 & $toolPath config ./coretypesgeneratorconfig.json
 
 & $toolPath --optionalAsNullable NullOrUndefined --disableNamingHeuristic DocumentationNameHeuristic --rootNamespace Corvus.Json.CodeGenerator --outputPath .\Corvus.Json.CodeGenerator\Model\ .\Corvus.Json.CodeGenerator\generator-config.json
+
+& $toolPath --optionalAsNullable NullOrUndefined --disableNamingHeuristic DocumentationNameHeuristic --rootNamespace Corvus.Json.CodeGeneration.Markdown --outputPath .\Corvus.Json.CodeGeneration.Markdown\Corvus.Json.CodeGeneration\Markdown\AdditionalSchemaModel .\Corvus.Json.CodeGeneration.Markdown\Corvus.Json.CodeGeneration\Markdown\additional-schema-documentation.json

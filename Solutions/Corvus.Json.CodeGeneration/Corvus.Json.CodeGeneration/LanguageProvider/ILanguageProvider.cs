@@ -2,8 +2,6 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Diagnostics.CodeAnalysis;
-
 namespace Corvus.Json.CodeGeneration;
 
 /// <summary>
@@ -17,29 +15,6 @@ public interface ILanguageProvider
     /// <param name="builders">The code file builders to register.</param>
     /// <returns>A reference to the <see cref="ILanguageProvider"/> instance after the operation has been completed.</returns>
     ILanguageProvider RegisterCodeFileBuilders(params ICodeFileBuilder[] builders);
-
-    /// <summary>
-    /// Registers keyword validation handlers with the language provider.
-    /// </summary>
-    /// <param name="handlers">The handlers to register.</param>
-    /// <returns>A reference to the <see cref="ILanguageProvider"/> instance after the operation has been completed.</returns>
-    ILanguageProvider RegisterValidationHandlers(params IKeywordValidationHandler[] handlers);
-
-    /// <summary>
-    /// Register name heuristics for the language provider.
-    /// </summary>
-    /// <param name="heuristics">the naming heuristics to register.</param>
-    /// <returns>A reference to the <see cref="ILanguageProvider"/> instance after the operation has been completed.</returns>
-    ILanguageProvider RegisterNameHeuristics(params INameHeuristic[] heuristics);
-
-    /// <summary>
-    /// Gets the registered validation handlers for the given keyword.
-    /// </summary>
-    /// <param name="keyword">The given keyword.</param>
-    /// <param name="validationHandlers">The collection of <see cref="IValidationHandler"/> instances for the handler type, or
-    /// <see langword="null"/> if no handler was registered.</param>
-    /// <returns><see langword="true"/> if any handlers were found for the handler type.</returns>
-    bool TryGetValidationHandlersFor(IKeyword keyword, [NotNullWhen(true)] out IReadOnlyCollection<IKeywordValidationHandler>? validationHandlers);
 
     /// <summary>
     /// Generates code for one or more type declarations.
@@ -70,19 +45,4 @@ public interface ILanguageProvider
     /// <param name="typeDeclaration">The type declaration to test.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     void IdentifyNonGeneratedType(TypeDeclaration typeDeclaration, CancellationToken cancellationToken);
-
-    /// <summary>
-    /// Set the name for the type declaration, and any outstanding properties, after its subschema names have been set.
-    /// </summary>
-    /// <param name="typeDeclaration">The type declaration for which to set the name.</param>
-    /// <param name="fallbackName">The name to use as a fallback for the type declaration.</param>
-    /// <param name="cancellationToken">The cancellation token.</param>
-    void SetNamesBeforeSubschema(TypeDeclaration typeDeclaration, string fallbackName, CancellationToken cancellationToken);
-
-    /// <summary>
-    /// Set the name for the type declaration, and any outstanding properties, after its subschema names have been set.
-    /// </summary>
-    /// <param name="typeDeclaration">The type declaration for which to set the name.</param>
-    /// <param name="cancellationToken">The cancellation token.</param>
-    void SetNamesAfterSubschema(TypeDeclaration typeDeclaration, CancellationToken cancellationToken);
 }

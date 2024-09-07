@@ -7,4 +7,4 @@ namespace Corvus.Json.CodeGeneration;
 /// <summary>
 /// Defines a heuristic for generating names before <see cref="TypeDeclaration"/> subschema have been processed.
 /// </summary>
-public interface INameHeuristicBeforeSubschema : INameHeuristic;
+public interface INameHeuristicBeforeSubschema : IMarkdownHandler;

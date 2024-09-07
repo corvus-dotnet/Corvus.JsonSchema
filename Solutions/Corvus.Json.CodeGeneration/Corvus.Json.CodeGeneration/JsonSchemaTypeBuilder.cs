@@ -145,14 +145,19 @@ public class JsonSchemaTypeBuilder(
 
         MarkNonGeneratedTypes(languageProvider, rootTypeDeclarations, cancellationToken);
 
-        // A language provider can opt out of being hierarchical by not implementing
-        // the IHierarchicalLanguageProvider interface. In that case, we don't need to set parents.
+        // A language provider can opt in to being hierarchical by implementing
+        // the IHierarchicalLanguageProvider interface.
         if (languageProvider is IHierarchicalLanguageProvider hierarchicalProvider)
         {
             this.SetParents(hierarchicalProvider, rootTypeDeclarations, cancellationToken);
         }
 
-        SetNames(languageProvider, rootTypeDeclarations, cancellationToken);
+        // A language provider can opt in to naming its types by implementing
+        // the INamedTypeLanguageProvider interface.
+        if (languageProvider is INamedTypeLanguageProvider namedTypeLanguageProvider)
+        {
+            SetNames(namedTypeLanguageProvider, rootTypeDeclarations, cancellationToken);
+        }
 
         IEnumerable<TypeDeclaration> typeDeclarations = candidateTypesToGenerate.Where(languageProvider.ShouldGenerate);
 
@@ -274,7 +279,7 @@ public class JsonSchemaTypeBuilder(
         }
     }
 
-    private static void SetNames(ILanguageProvider languageProvider, TypeDeclaration[] rootTypeDeclarations, CancellationToken cancellationToken)
+    private static void SetNames(INamedTypeLanguageProvider languageProvider, TypeDeclaration[] rootTypeDeclarations, CancellationToken cancellationToken)
     {
         HashSet<TypeDeclaration> visitedTypes = [];
 

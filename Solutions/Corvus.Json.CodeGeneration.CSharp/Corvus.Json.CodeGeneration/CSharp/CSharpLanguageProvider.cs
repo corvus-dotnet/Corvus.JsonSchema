@@ -14,7 +14,7 @@ namespace Corvus.Json.CodeGeneration.CSharp;
 /// <remarks>
 /// Initializes a new instance of the <see cref="CSharpLanguageProvider"/> class.
 /// </remarks>
-public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = null) : IHierarchicalLanguageProvider
+public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = null) : IHierarchicalLanguageProvider, IValidatingLanguageProvider, INamedTypeLanguageProvider
 {
     private readonly KeywordValidationHandlerRegistry validationHandlerRegistry = new();
     private readonly CodeFileBuilderRegistry codeFileBuilderRegistry = new();
@@ -90,8 +90,12 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
             .ThenBy(n => n.Name);
     }
 
-    /// <inheritdoc/>
-    public ILanguageProvider RegisterNameHeuristics(params INameHeuristic[] heuristics)
+    /// <summary>
+    /// Register name heuristics for the language provider.
+    /// </summary>
+    /// <param name="heuristics">the naming heuristics to register.</param>
+    /// <returns>A reference to the <see cref="ILanguageProvider"/> instance after the operation has been completed.</returns>
+    public ILanguageProvider RegisterNameHeuristics(params IMarkdownHandler[] heuristics)
     {
         this.nameHeuristicRegistry.RegisterNameHeuristics(heuristics);
         return this;
@@ -104,7 +108,11 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
         return this;
     }
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// Registers keyword validation handlers with the language provider.
+    /// </summary>
+    /// <param name="handlers">The handlers to register.</param>
+    /// <returns>A reference to the <see cref="ILanguageProvider"/> instance after the operation has been completed.</returns>
     public ILanguageProvider RegisterValidationHandlers(params IKeywordValidationHandler[] handlers)
     {
         this.validationHandlerRegistry.RegisterValidationHandlers(handlers);
@@ -372,13 +380,13 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
         TypeDeclaration typeDeclaration,
         JsonReferenceBuilder reference,
         Span<char> typeNameBuffer,
-        IEnumerable<INameHeuristic> nameHeuristics,
+        IEnumerable<IMarkdownHandler> nameHeuristics,
         CancellationToken cancellationToken)
     {
         if (!this.options.TryGetTypeName(reference.ToString(), out _))
         {
             // We only apply the heuristics if we do not have an explicit type name
-            foreach (INameHeuristic heuristic in nameHeuristics)
+            foreach (IMarkdownHandler heuristic in nameHeuristics)
             {
                 if (cancellationToken.IsCancellationRequested)
                 {
@@ -418,10 +426,10 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
         Span<char> typeNameBuffer,
         string ns,
         string fallbackName,
-        IEnumerable<INameHeuristic> nameHeuristics,
+        IEnumerable<IMarkdownHandler> nameHeuristics,
         CancellationToken cancellationToken)
     {
-        foreach (INameHeuristic heuristic in nameHeuristics)
+        foreach (IMarkdownHandler heuristic in nameHeuristics)
         {
             if (cancellationToken.IsCancellationRequested)
             {
@@ -499,7 +507,7 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
                     .ThenBy(h => h.GetType().Name);
     }
 
-    private IEnumerable<INameHeuristic> GetOrderedNameBeforeSubschemaHeuristics()
+    private IEnumerable<IMarkdownHandler> GetOrderedNameBeforeSubschemaHeuristics()
     {
         return
             this.options.UseOptionalNameHeuristics
@@ -517,7 +525,7 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
                     .ThenBy(h => h.GetType().Name);
     }
 
-    private IEnumerable<INameHeuristic> GetOrderedNameAfterSubschemaHeuristics()
+    private IEnumerable<IMarkdownHandler> GetOrderedNameAfterSubschemaHeuristics()
     {
         return
             this.options.UseOptionalNameHeuristics
