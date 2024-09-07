@@ -1,0 +1,40 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "JSON Schema for the configuration options for the Corvus Markdown Language Provider.",
+    "description": "This is a map of schema location IRIs to the documentation targeting particular properties within that schema.\r\nIt allows you to manage documentation external to the schema itself.",
+    "type": "object",
+    "propertyName": {
+        "title": "The location of the schema",
+        "type": "string",
+        "format": "iri"
+    },
+    "unevaluatedProperties": { "$ref": "#/$defs/Documentation" },
+    "$defs": {
+        "Documentation": {
+            "title": "A map of the path within the schema to the documentation targeted at that path.",
+            "type": "object",
+            "propertyNames": {
+                "title": "The path within the schema at which the documentation is targeted.",
+                "type": "string",
+                "format": "iri-reference"
+            },
+            "unevaluatedProperties": {
+                "title": "The documentation targeted at that path.",
+                "$ref": "#/$defs/Details"
+            }
+        },
+        "Details": {
+            "title": "The details of the documentation targeted at a particular path within the schema.",
+            "type": "object",
+            "minProperties": 1,
+            "properties": {
+                "title": { "type": "string" },
+                "description": { "type": "string" },
+                "examples": {
+                    "type": "array",
+                    "items": true
+                }
+            }
+        }
+    }
+}

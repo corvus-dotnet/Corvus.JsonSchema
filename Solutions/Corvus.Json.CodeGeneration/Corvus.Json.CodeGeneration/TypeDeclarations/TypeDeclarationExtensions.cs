@@ -1601,7 +1601,7 @@ public static class TypeDeclarationExtensions
     /// <param name="that">The type declaration.</param>
     /// <param name="languageProvider">The language provider.</param>
     /// <returns>The ordered collection of validation handlers.</returns>
-    public static IReadOnlyCollection<IKeywordValidationHandler> OrderedValidationHandlers(this TypeDeclaration that, ILanguageProvider languageProvider)
+    public static IReadOnlyCollection<IKeywordValidationHandler> OrderedValidationHandlers(this TypeDeclaration that, IValidatingLanguageProvider languageProvider)
     {
         if (!that.BuildComplete)
         {
@@ -1625,7 +1625,7 @@ public static class TypeDeclarationExtensions
 
         static bool TryGetOrderedValidationHandlers(
             TypeDeclaration typeDeclaration,
-            ILanguageProvider languageProvider,
+            IValidatingLanguageProvider languageProvider,
             [NotNullWhen(true)] out IReadOnlyCollection<IKeywordValidationHandler>? orderedValidationHandlers)
         {
             List<IKeywordValidationHandler> handlers =

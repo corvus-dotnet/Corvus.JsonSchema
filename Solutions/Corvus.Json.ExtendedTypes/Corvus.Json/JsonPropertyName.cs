@@ -18,7 +18,7 @@ public readonly struct JsonPropertyName
 {
     private readonly Backing backing;
     private readonly JsonElement jsonElementBacking;
-    private readonly string stringBacking;
+    private readonly ReadOnlyMemory<char> stringBacking;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="JsonPropertyName"/> struct.
@@ -28,7 +28,7 @@ public readonly struct JsonPropertyName
     {
         this.backing = Backing.JsonElement;
         this.jsonElementBacking = value;
-        this.stringBacking = string.Empty;
+        this.stringBacking = ReadOnlyMemory<char>.Empty;
     }
 
     /// <summary>
@@ -36,6 +36,17 @@ public readonly struct JsonPropertyName
     /// </summary>
     /// <param name="value">The value from which to construct the property name.</param>
     public JsonPropertyName(string value)
+    {
+        this.backing = Backing.String;
+        this.jsonElementBacking = default;
+        this.stringBacking = value.AsMemory();
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JsonPropertyName"/> struct.
+    /// </summary>
+    /// <param name="value">The value from which to construct the property name.</param>
+    public JsonPropertyName(ReadOnlyMemory<char> value)
     {
         this.backing = Backing.String;
         this.jsonElementBacking = default;
@@ -270,7 +281,7 @@ public readonly struct JsonPropertyName
     {
         if (this.HasStringBacking)
         {
-            ProcessComparison(this.stringBacking.AsMemory(), other, out int result);
+            ProcessComparison(this.stringBacking, other, out int result);
             return result;
         }
         else if (this.HasJsonElementBacking)
@@ -305,7 +316,7 @@ public readonly struct JsonPropertyName
         {
             if (rhs.HasStringBacking)
             {
-                return CompareTo(lhs, rhs.stringBacking.AsSpan(), out result);
+                return CompareTo(lhs, rhs.stringBacking.Span, out result);
             }
 
             if (rhs.HasJsonElementBacking)
@@ -341,11 +352,7 @@ public readonly struct JsonPropertyName
     {
         if (other.HasStringBacking)
         {
-#if NET8_0_OR_GREATER
-            return this.EqualsString(other.stringBacking);
-#else
-            return this.EqualsString(other.stringBacking.AsSpan());
-#endif
+            return this.EqualsString(other.stringBacking.Span);
         }
 
         if (other.HasJsonElementBacking)
@@ -372,7 +379,7 @@ public readonly struct JsonPropertyName
 
         if (this.HasStringBacking)
         {
-            return jsonElement.ValueEquals(this.stringBacking);
+            return jsonElement.ValueEquals(this.stringBacking.Span);
         }
 
         if (this.HasJsonElementBacking)
@@ -413,7 +420,7 @@ public readonly struct JsonPropertyName
 
         if (this.HasStringBacking)
         {
-            return jp.NameEquals(this.stringBacking);
+            return jp.NameEquals(this.stringBacking.Span);
         }
 
         throw new InvalidOperationException("Unsupported JSON property name");
@@ -441,11 +448,7 @@ public readonly struct JsonPropertyName
 
         if (this.HasStringBacking)
         {
-#if NET8_0_OR_GREATER
-            return name.Equals(this.stringBacking, StringComparison.Ordinal);
-#else
-            return name.Equals(this.stringBacking.AsSpan(), StringComparison.Ordinal);
-#endif
+            return name.Equals(this.stringBacking.Span, StringComparison.Ordinal);
         }
 
         throw new InvalidOperationException("Unsupported JSON property name");
@@ -511,7 +514,7 @@ public readonly struct JsonPropertyName
         if (this.HasStringBacking)
         {
 #if NET8_0_OR_GREATER
-            ReadOnlySpan<char> value = this.stringBacking.AsSpan();
+            ReadOnlySpan<char> value = this.stringBacking.Span;
             byte[]? bytes = null;
             try
             {
@@ -534,7 +537,8 @@ public readonly struct JsonPropertyName
             byte[] bytes = ArrayPool<byte>.Shared.Rent(length);
             try
             {
-                int written = Encoding.UTF8.GetBytes(this.stringBacking, 0, this.stringBacking.Length, bytes, 0);
+                string text = this.stringBacking.ToString();
+                int written = Encoding.UTF8.GetBytes(text, 0, this.stringBacking.Length, bytes, 0);
                 return name.SequenceEqual(bytes.AsSpan(0, written));
             }
             finally
@@ -617,7 +621,7 @@ public readonly struct JsonPropertyName
     {
         if (this.HasStringBacking)
         {
-            return jsonElement.TryGetProperty(this.stringBacking, out value);
+            return jsonElement.TryGetProperty(this.stringBacking.Span, out value);
         }
 
         if (this.HasJsonElementBacking)
@@ -642,7 +646,7 @@ public readonly struct JsonPropertyName
     {
         if (this.HasStringBacking)
         {
-            value = this.stringBacking;
+            value = this.stringBacking.ToString();
             return true;
         }
 
@@ -674,7 +678,7 @@ public readonly struct JsonPropertyName
 
         if (this.HasStringBacking)
         {
-            return parser(this.stringBacking.AsSpan(), state, out result);
+            return parser(this.stringBacking.Span, state, out result);
         }
 
         result = default;
@@ -730,7 +734,7 @@ public readonly struct JsonPropertyName
 
         if (this.HasStringBacking)
         {
-            writer.WritePropertyName(this.stringBacking);
+            writer.WritePropertyName(this.stringBacking.Span);
             return;
         }
 
@@ -759,14 +763,14 @@ public readonly struct JsonPropertyName
             return T.FromJson(this.jsonElementBacking);
         }
 
-        return T.FromString(new JsonString(this.stringBacking));
+        return T.FromString(new JsonString(this.stringBacking.ToString()));
 #else
         if (this.HasJsonElementBacking)
         {
             return JsonValueNetStandard20Extensions.FromJsonElement<T>(this.jsonElementBacking);
         }
 
-        return new JsonString(this.stringBacking).As<T>();
+        return new JsonString(this.stringBacking.ToString()).As<T>();
 
 #endif
     }
@@ -793,7 +797,7 @@ public readonly struct JsonPropertyName
 
         if (this.HasStringBacking)
         {
-            return regex.IsMatch(this.stringBacking);
+            return regex.IsMatch(this.stringBacking.Span);
         }
 
         throw new InvalidOperationException();
@@ -844,9 +848,9 @@ public readonly struct JsonPropertyName
             }
 
 #if NET8_0_OR_GREATER
-            this.stringBacking.CopyTo(memory.Span);
+            this.stringBacking.CopyTo(memory);
 #else
-            this.stringBacking.AsSpan().CopyTo(memory.Span);
+            this.stringBacking.CopyTo(memory);
 #endif
             return true;
         }

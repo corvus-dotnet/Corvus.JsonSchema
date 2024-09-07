@@ -453,16 +453,19 @@ public static partial class ValidationCodeGeneratorExtensions
             return generator;
         }
 
-        foreach (IKeywordValidationHandler handler in typeDeclaration.OrderedValidationHandlers(generator.LanguageProvider))
+        if (generator.LanguageProvider is IValidatingLanguageProvider languageProvider)
         {
-            if (generator.IsCancellationRequested)
+            foreach (IKeywordValidationHandler handler in typeDeclaration.OrderedValidationHandlers(languageProvider))
             {
-                return generator;
-            }
+                if (generator.IsCancellationRequested)
+                {
+                    return generator;
+                }
 
-            string validateMethodName = generator.GetMethodNameInScope(handler.GetType().Name, rootScope: generator.ValidationClassScope());
-            generator
-                .PushMetadata(handler.GetType().FullName!, validateMethodName);
+                string validateMethodName = generator.GetMethodNameInScope(handler.GetType().Name, rootScope: generator.ValidationClassScope());
+                generator
+                    .PushMetadata(handler.GetType().FullName!, validateMethodName);
+            }
         }
 
         return generator;
@@ -481,15 +484,18 @@ public static partial class ValidationCodeGeneratorExtensions
             return generator;
         }
 
-        foreach (IKeywordValidationHandler handler in typeDeclaration.OrderedValidationHandlers(generator.LanguageProvider))
+        if (generator.LanguageProvider is IValidatingLanguageProvider languageProvider)
         {
-            if (generator.IsCancellationRequested)
+            foreach (IKeywordValidationHandler handler in typeDeclaration.OrderedValidationHandlers(languageProvider))
             {
-                return generator;
-            }
+                if (generator.IsCancellationRequested)
+                {
+                    return generator;
+                }
 
-            generator
-                .PopMetadata(handler.GetType().FullName!);
+                generator
+                    .PopMetadata(handler.GetType().FullName!);
+            }
         }
 
         return generator;
@@ -821,9 +827,12 @@ public static partial class ValidationCodeGeneratorExtensions
         generator.AppendUsingEvaluatedItems(typeDeclaration);
         generator.AppendUsingEvaluatedProperties(typeDeclaration);
 
-        foreach (IKeywordValidationHandler handler in typeDeclaration.OrderedValidationHandlers(generator.LanguageProvider))
+        if (generator.LanguageProvider is IValidatingLanguageProvider languageProvider)
         {
-            handler.AppendValidationSetup(generator, typeDeclaration);
+            foreach (IKeywordValidationHandler handler in typeDeclaration.OrderedValidationHandlers(languageProvider))
+            {
+                handler.AppendValidationSetup(generator, typeDeclaration);
+            }
         }
 
         return generator;
@@ -838,14 +847,17 @@ public static partial class ValidationCodeGeneratorExtensions
             return generator;
         }
 
-        foreach (IKeywordValidationHandler handler in typeDeclaration.OrderedValidationHandlers(generator.LanguageProvider))
+        if (generator.LanguageProvider is IValidatingLanguageProvider languageProvider)
         {
-            if (generator.IsCancellationRequested)
+            foreach (IKeywordValidationHandler handler in typeDeclaration.OrderedValidationHandlers(languageProvider))
             {
-                return generator;
-            }
+                if (generator.IsCancellationRequested)
+                {
+                    return generator;
+                }
 
-            handler.AppendValidationMethodCall(generator, typeDeclaration);
+                handler.AppendValidationMethodCall(generator, typeDeclaration);
+            }
         }
 
         return generator;
@@ -858,14 +870,17 @@ public static partial class ValidationCodeGeneratorExtensions
             return generator;
         }
 
-        foreach (IKeywordValidationHandler handler in typeDeclaration.OrderedValidationHandlers(generator.LanguageProvider))
+        if (generator.LanguageProvider is IValidatingLanguageProvider languageProvider)
         {
-            if (generator.IsCancellationRequested)
+            foreach (IKeywordValidationHandler handler in typeDeclaration.OrderedValidationHandlers(languageProvider))
             {
-                return generator;
-            }
+                if (generator.IsCancellationRequested)
+                {
+                    return generator;
+                }
 
-            handler.AppendValidationMethod(generator, typeDeclaration);
+                handler.AppendValidationMethod(generator, typeDeclaration);
+            }
         }
 
         return generator;
