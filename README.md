@@ -532,7 +532,7 @@ Validation type - should have been 'string' with format 'datetime' but was 'Good
 - All formatted types (e.g. string or number formats) are now convertible to the equivalent core types (e.g. your custom `"format": "date"` type is freely convertible to and from `JsonDate`) and offer the same accessors and conversions as the core types.
 
 ### Upgrading to V4
-- Code generated using V3.0 of the generator can still be built against V4 of Corvus.Json.ExtendedTypes, and used interoperably.
+- Code generated using V3.1 of the generator can still be built against V4 of Corvus.Json.ExtendedTypes, and used interoperably.
   
   This allows you to upgrade your code piecemeal to the new version of the generator. You do not need to update everything all at once.
 
