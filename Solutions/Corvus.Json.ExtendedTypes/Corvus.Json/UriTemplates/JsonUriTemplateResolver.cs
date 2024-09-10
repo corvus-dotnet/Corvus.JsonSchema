@@ -3,8 +3,8 @@
 // </copyright>
 
 using System.Runtime.CompilerServices;
+using Corvus.HighPerformance;
 using Corvus.UriTemplates;
-using Corvus.UriTemplates.Internal;
 
 namespace Corvus.Json.UriTemplates;
 

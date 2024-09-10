@@ -26,11 +26,11 @@
       },
       "Mono.TextTemplating": {
         "type": "Direct",
-        "requested": "[2.3.1, )",
-        "resolved": "2.3.1",
-        "contentHash": "pqYwzNqDL0QK1JFpAjpI/NPqyqLGpHLvVmA5Ec0LaSnbIDtEXxu0td16uunegb7c8xAnlcm4qkbIYUP5FfrFpA==",
+        "requested": "[3.0.0, )",
+        "resolved": "3.0.0",
+        "contentHash": "YqueG52R/Xej4VVbKuRIodjiAhV0HR/XVbLbNrJhCZnzjnSjgMJ/dCdV0akQQxavX6hp/LC6rqLGLcXeQYU7XA==",
         "dependencies": {
-          "System.CodeDom": "5.0.0"
+          "System.CodeDom": "6.0.0"
         }
       },
       "Roslynator.Analyzers": {
@@ -50,15 +50,25 @@
       },
       "CommunityToolkit.HighPerformance": {
         "type": "Transitive",
-        "resolved": "8.2.2",
-        "contentHash": "+zIp8d3sbtYaRbM6hqDs4Ui/z34j7DcUmleruZlYLE4CVxXq+MO8XJyIs42vzeTYFX+k0Iq1dEbBUnQ4z/Gnrw=="
+        "resolved": "8.3.0",
+        "contentHash": "2zc0Wfr9OtEbLqm6J1Jycim/nKmYv+v12CytJ3tZGNzw7n3yjh1vNCMX0kIBaFBk3sw8g0pMR86QJGXGlArC+A=="
+      },
+      "Corvus.HighPerformance": {
+        "type": "Transitive",
+        "resolved": "0.2.0",
+        "contentHash": "ZYYx9P1cCMBazWkUqr5YDfZZPJ89ZBqeNEkQBxOjRZjRA5YGK2IVbEEXhC+go+5ffjl2zrT5C+B+BLaL5IYkrQ==",
+        "dependencies": {
+          "System.Buffers": "4.5.1",
+          "System.Memory": "4.5.5"
+        }
       },
       "Corvus.UriTemplates": {
         "type": "Transitive",
-        "resolved": "2.0.0",
-        "contentHash": "9QB60M+DnWzlWFURvJI68qTA772+KRc4Ff5v7OeKJVpwCtb2Nrkj0ye28CNzlVvNCXpayZM1X7W9Y3H1GT5xkg==",
+        "resolved": "2.0.2",
+        "contentHash": "hdMplbK6roXXfNiGRs0Ej+oFykIZ/kBhBC/UKiSKlO/03ShsS+Uy1o0nyIC0Sa2lWwuz1E8qAwNAsoSIcxSOhA==",
         "dependencies": {
           "CommunityToolkit.HighPerformance": "8.2.2",
+          "Corvus.HighPerformance": "0.2.0",
           "Microsoft.Extensions.ObjectPool": "8.0.0",
           "System.Buffers": "4.5.1",
           "System.Collections.Immutable": "8.0.0"
@@ -228,8 +238,8 @@
       },
       "NodaTime": {
         "type": "Transitive",
-        "resolved": "3.1.11",
-        "contentHash": "AYSiCHp1PLzWKVf7hEL3MJ0q9kzOWMNIaTVysXk4XKrDBzK5PF2wpd4LsAl+EIQ2Hbvu+vw4oFaexcXzCuY1lQ==",
+        "resolved": "3.1.12",
+        "contentHash": "nDcUbG0jiEXmV8cOz7V8GnUKlmPJjqZm/R+E2JNnUSdlMoaQ19xSU8GXFLReGs/Nt8xdBfA8XfO77xVboWO1Vg==",
         "dependencies": {
           "System.Runtime.CompilerServices.Unsafe": "4.7.1"
         }
@@ -246,8 +256,8 @@
       },
       "System.CodeDom": {
         "type": "Transitive",
-        "resolved": "5.0.0",
-        "contentHash": "JPJArwA1kdj8qDAkY2XGjSWoYnqiM7q/3yRNkt6n28Mnn95MuEGkZXUbPBf7qc3IjwrGY5ttQon7yqHZyQJmOQ=="
+        "resolved": "6.0.0",
+        "contentHash": "CPc6tWO1LAer3IzfZufDBRL+UZQcj5uS207NHALQzP84Vp/z6wF0Aa0YZImOQY8iStY0A2zI/e3ihKNPfUm8XA=="
       },
       "System.Collections.Immutable": {
         "type": "Transitive",
@@ -258,6 +268,11 @@
         "type": "Transitive",
         "resolved": "8.0.0",
         "contentHash": "c9xLpVz6PL9lp/djOWtk5KPDZq3cSYpmXoJQY524EOtuFl5z9ZtsotpsyrDW40U1DRnQSYvcPKEUV0X//u6gkQ=="
+      },
+      "System.Memory": {
+        "type": "Transitive",
+        "resolved": "4.5.5",
+        "contentHash": "XIWiDvKPXaTveaB7HVganDlOCRoj03l+jrwNvcge/t8vhGYKvqV+dMv6G4SAX2NoNmN0wZfVPTAlFwZcZvVOUw=="
       },
       "System.Reflection.Metadata": {
         "type": "Transitive",
@@ -288,11 +303,11 @@
       "corvus.json.extendedtypes": {
         "type": "Project",
         "dependencies": {
-          "CommunityToolkit.HighPerformance": "[8.2.2, )",
-          "Corvus.UriTemplates": "[2.0.0, )",
+          "CommunityToolkit.HighPerformance": "[8.3.0, )",
+          "Corvus.UriTemplates": "[2.0.2, )",
           "Microsoft.Extensions.Http": "[8.0.0, )",
           "Microsoft.Extensions.ObjectPool": "[8.0.8, )",
-          "NodaTime": "[3.1.11, )",
+          "NodaTime": "[3.1.12, )",
           "System.Text.Json": "[8.0.4, )"
         }
       },
@@ -302,7 +317,7 @@
           "Corvus.Json.ExtendedTypes": "[1.0.0, )",
           "Microsoft.Extensions.Http": "[8.0.0, )",
           "Microsoft.Extensions.ObjectPool": "[8.0.8, )",
-          "NodaTime": "[3.1.11, )"
+          "NodaTime": "[3.1.12, )"
         }
       }
     }

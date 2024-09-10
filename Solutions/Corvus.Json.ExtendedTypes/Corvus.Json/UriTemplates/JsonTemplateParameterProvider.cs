@@ -3,7 +3,7 @@
 // </copyright>
 
 using System.Text.Json;
-using Corvus.UriTemplates.Internal;
+using Corvus.HighPerformance;
 using Corvus.UriTemplates.TemplateParameterProviders;
 
 namespace Corvus.Json.UriTemplates;
@@ -97,19 +97,6 @@ internal class JsonTemplateParameterProvider<TPayload> : ITemplateParameterProvi
         }
 
         return VariableProcessingState.Success;
-    }
-
-    private static bool IsNullOrUndefined(JsonElement value)
-    {
-        return
-            value.ValueKind == JsonValueKind.Undefined ||
-            value.ValueKind == JsonValueKind.Null;
-    }
-
-    private static bool HasProperties(JsonElement value)
-    {
-        using JsonElement.ObjectEnumerator enumerator = value.EnumerateObject();
-        return enumerator.MoveNext();
     }
 
     /// <summary>
@@ -272,7 +259,8 @@ internal class JsonTemplateParameterProvider<TPayload> : ITemplateParameterProvi
     {
         ValueStringBuilder output = new(span.Length * 2);
         WriteStringValue(ref output, span, state.PrefixLength, state.AllowReserved);
-        result = new(output.RentedChars, output.Length);
+        int length = output.Length;
+        result = new(output.GetRentedBuffer(), length);
 
         // Do not dispose the value string builder, we have borrowed its innards
         return true;
@@ -296,7 +284,8 @@ internal class JsonTemplateParameterProvider<TPayload> : ITemplateParameterProvi
 
         WriteStringValue(ref output, span, state.PrefixLength, state.AllowReserved);
 
-        result = new(output.RentedChars, output.Length);
+        int length = output.Length;
+        result = new(output.GetRentedBuffer(), length);
         return true;
     }
 
