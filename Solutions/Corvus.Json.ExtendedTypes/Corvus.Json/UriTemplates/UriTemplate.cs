@@ -6,8 +6,8 @@
 using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
+using Corvus.HighPerformance;
 using Corvus.UriTemplates;
-using Corvus.UriTemplates.Internal;
 
 namespace Corvus.Json.UriTemplates;
 
@@ -342,7 +342,12 @@ public readonly struct UriTemplate
     /// <returns>The resolved template.</returns>
     public string Resolve()
     {
-        ValueStringBuilder output = default;
+        // Use a fixed 4k, stack allocated buffer as our initial guess at a buffer size
+        // ValueStringBuilder will grow it with a rented buffer if necessary, but this is
+        // super-fast for the "general" case. It is also not a recursive operation, so we
+        // are not going to overflow the buffer.
+        Span<char> buffer = stackalloc char[4096];
+        ValueStringBuilder output = new(buffer);
         var properties = this.parameters.ToImmutableDictionary(k => new JsonPropertyName(k.Key), v => v.Value);
         if (!JsonUriTemplateResolver.TryResolveResult(this.template.AsSpan(), ref output, this.resolvePartially, JsonObject.FromProperties(properties)))
         {
