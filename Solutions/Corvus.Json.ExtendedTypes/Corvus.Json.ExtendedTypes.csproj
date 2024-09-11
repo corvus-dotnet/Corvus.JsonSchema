@@ -17,24 +17,10 @@
 		<NoWarn>$(NoWarn);nullable</NoWarn>
 	</PropertyGroup>
 
-	<ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
-		<Compile Remove="Corvus.Json\Internal\RuneNetStandard20.cs" />
-		<Compile Remove="Corvus.Json\Internal\JsonValueNetStandard20Extensions.cs" />
-		<Compile Remove="Corvus.Json\Internal\JsonValueHelpers.NetStandard20.cs" />
-		<Compile Remove="Corvus.Json\Internal\ArrayBufferWriterNetStandard20.cs" />
-	</ItemGroup>
-
 	<ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
 		<PackageReference Include="System.Collections.Immutable" Version="8.0.0" />
 		<PackageReference Include="System.Reflection.Emit.Lightweight" Version="4.7.0" />
 		<PackageReference Include="IndexRange" Version="1.0.3" />
-		<Compile Remove="Corvus.Json\Internal\FromNodaTime\ValueCursor.cs" />
-		<Compile Remove="Corvus.Json\GeneratedFormatTypes\JsonInt128.Basics.cs" />
-		<Compile Remove="Corvus.Json\GeneratedFormatTypes\JsonInt128.Core.cs" />
-		<Compile Remove="Corvus.Json\GeneratedFormatTypes\JsonUInt128.Basics.cs" />
-		<Compile Remove="Corvus.Json\GeneratedFormatTypes\JsonUInt128.Core.cs" />
-		<Compile Remove="Corvus.Json\GeneratedFormatTypes\JsonHalf.Basics.cs" />
-		<Compile Remove="Corvus.Json\GeneratedFormatTypes\JsonHalf.Core.cs" />
 	</ItemGroup>
 
 	<ItemGroup>
