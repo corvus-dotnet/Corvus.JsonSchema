@@ -2,8 +2,11 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+<<<<<<< HEAD
 using System.Collections.Immutable;
 
+=======
+>>>>>>> ae8f75a5024a41962b6ac63aceabbb0388e32f52
 namespace Corvus.Json.CodeGeneration.Markdown;
 
 /// <summary>
@@ -33,5 +36,9 @@ public interface IMarkdownHandler
     /// maintains a collection of all keywords that have been documented so far, and the outstanding keywords are documented at the end.
     /// </para>
     /// </remarks>
+<<<<<<< HEAD
     CodeGenerator AppendMarkdown(CodeGenerator generator, TypeDeclaration typeDeclaration, out ImmutableHashSet<IKeyword> visitedKeywords);
+=======
+    CodeGenerator AppendMarkdown(CodeGenerator generator, TypeDeclaration typeDeclaration, out IReadOnlyCollection<IKeyword> visitedKeywords);
+>>>>>>> ae8f75a5024a41962b6ac63aceabbb0388e32f52
 }

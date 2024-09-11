@@ -100,7 +100,11 @@ public sealed class MarkdownLanguageProvider(MarkdownLanguageProvider.Options? o
         MarkdownLanguageProvider languageProvider = new(options);
 
         languageProvider.RegisterCodeFileBuilders(
+<<<<<<< HEAD
             MarkdownFileBuilder.Instance);
+=======
+            TypePartial.Instance);
+>>>>>>> ae8f75a5024a41962b6ac63aceabbb0388e32f52
 
         return languageProvider;
     }
