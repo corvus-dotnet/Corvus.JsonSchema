@@ -354,6 +354,6 @@ public readonly struct UriTemplate
             throw new ArgumentException("Malformed template.");
         }
 
-        return output.ToString();
+        return output.CreateStringAndDispose();
     }
 }

@@ -259,10 +259,8 @@ internal class JsonTemplateParameterProvider<TPayload> : ITemplateParameterProvi
     {
         ValueStringBuilder output = new(span.Length * 2);
         WriteStringValue(ref output, span, state.PrefixLength, state.AllowReserved);
-        int length = output.Length;
-        result = new(output.GetRentedBuffer(), length);
-
-        // Do not dispose the value string builder, we have borrowed its innards
+        (char[]? Buffer, int Length) vsbOutput = output.GetRentedBufferAndLengthAndDispose();
+        result = new(vsbOutput.Buffer, vsbOutput.Length);
         return true;
     }
 
@@ -284,8 +282,8 @@ internal class JsonTemplateParameterProvider<TPayload> : ITemplateParameterProvi
 
         WriteStringValue(ref output, span, state.PrefixLength, state.AllowReserved);
 
-        int length = output.Length;
-        result = new(output.GetRentedBuffer(), length);
+        (char[]? Buffer, int Length) vsbOutput = output.GetRentedBufferAndLengthAndDispose();
+        result = new(vsbOutput.Buffer, vsbOutput.Length);
         return true;
     }
 
