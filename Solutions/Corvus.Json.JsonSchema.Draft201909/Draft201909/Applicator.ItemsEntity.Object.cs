@@ -93,12 +93,7 @@ public readonly partial struct Applicator
             {
                 if ((this.backing & Backing.JsonElement) != 0)
                 {
-                    int count = 0;
-                    foreach (var _ in this.jsonElementBacking.EnumerateObject())
-                    {
-                        count++;
-                    }
-                    return count;
+                    return this.jsonElementBacking.GetPropertyCount();
                 }
 
                 if ((this.backing & Backing.Object) != 0)

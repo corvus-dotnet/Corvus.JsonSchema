@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.InteropServices;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using CommunityToolkit.HighPerformance.Buffers;
@@ -22,6 +23,11 @@ public static class LowAllocJsonUtils
     private static readonly ObjectPool<PooledWriter> WriterPool = new DefaultObjectPoolProvider().Create<PooledWriter>(new Utf8JsonWriterPooledObjectPolicy());
 
     /// <summary>
+    /// Gets or sets a value indicating whether we will use the fast path. For benchmarking only.
+    /// </summary>
+    public static bool UseFastPath { get; set; } = true;
+
+    /// <summary>
     /// Process raw JSON text.
     /// </summary>
     /// <typeparam name="TState">The type of the state for the processor.</typeparam>
@@ -37,20 +43,28 @@ public static class LowAllocJsonUtils
         in Utf8Parser<TState, TResult> callback,
         [NotNullWhen(true)] out TResult? result)
     {
-        PooledWriter? writerPair = null;
-        try
+        if (UseFastPath)
         {
-            writerPair = WriterPool.Get();
-            (Utf8JsonWriter w, ArrayPoolBufferWriter<byte> writer) = writerPair.Get();
-            element.WriteTo(w);
-            w.Flush();
-            return callback(writer.WrittenSpan[1..^1], state, out result);
+            ReadOnlySpan<byte> rawValue = JsonMarshal.GetRawUtf8Value(element);
+            return callback(rawValue[1..^1], state, out result);
         }
-        finally
+        else
         {
-            if (writerPair is not null)
+            PooledWriter? writerPair = null;
+            try
             {
-                WriterPool.Return(writerPair);
+                writerPair = WriterPool.Get();
+                (Utf8JsonWriter w, ArrayPoolBufferWriter<byte> writer) = writerPair.Get();
+                element.WriteTo(w);
+                w.Flush();
+                return callback(writer.WrittenSpan[1..^1], state, out result);
+            }
+            finally
+            {
+                if (writerPair is not null)
+                {
+                    WriterPool.Return(writerPair);
+                }
             }
         }
     }
@@ -71,20 +85,28 @@ public static class LowAllocJsonUtils
         in Utf8Parser<TState, TResult> callback,
         [NotNullWhen(true)] out TResult? result)
     {
-        PooledWriter? writerPair = null;
-        try
+        if (UseFastPath)
         {
-            writerPair = WriterPool.Get();
-            (Utf8JsonWriter w, ArrayPoolBufferWriter<byte> writer) = writerPair.Get();
-            element.WriteTo(w);
-            w.Flush();
-            return callback(writer.WrittenSpan, state, out result);
+            ReadOnlySpan<byte> rawValue = JsonMarshal.GetRawUtf8Value(element);
+            return callback(rawValue[1..^1], state, out result);
         }
-        finally
+        else
         {
-            if (writerPair is not null)
+            PooledWriter? writerPair = null;
+            try
             {
-                WriterPool.Return(writerPair);
+                writerPair = WriterPool.Get();
+                (Utf8JsonWriter w, ArrayPoolBufferWriter<byte> writer) = writerPair.Get();
+                element.WriteTo(w);
+                w.Flush();
+                return callback(writer.WrittenSpan, state, out result);
+            }
+            finally
+            {
+                if (writerPair is not null)
+                {
+                    WriterPool.Return(writerPair);
+                }
             }
         }
     }

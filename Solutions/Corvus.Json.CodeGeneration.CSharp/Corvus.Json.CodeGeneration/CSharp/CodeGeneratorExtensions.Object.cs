@@ -106,7 +106,7 @@ internal static partial class CodeGeneratorExtensions
                 .AppendLineIndent("get")
                 .AppendLineIndent("{")
                 .PushIndent()
-                    .AppendConditionalBackingValueCallbackIndent("Backing.JsonElement", "jsonElementBacking", CountProperties)
+                    .AppendConditionalWrappedBackingValueLineIndent("Backing.JsonElement", "return ", "jsonElementBacking", ".GetPropertyCount();")
                     .AppendConditionalWrappedBackingValueLineIndent("Backing.Object", "return ", "objectBacking", ".Count;")
                     .AppendSeparatorLine()
                     .AppendLineIndent("throw new InvalidOperationException();")
@@ -114,26 +114,6 @@ internal static partial class CodeGeneratorExtensions
                 .AppendLineIndent("}")
             .PopIndent()
             .AppendLineIndent("}");
-
-        static void CountProperties(CodeGenerator generator, string fieldName)
-        {
-            if (generator.IsCancellationRequested)
-            {
-                return;
-            }
-
-            generator
-                .AppendLineIndent("int count = 0;")
-                .AppendIndent("foreach (var _ in this.")
-                .Append(fieldName)
-                .AppendLine(".EnumerateObject())")
-                .AppendLineIndent("{")
-                .PushIndent()
-                    .AppendLineIndent("count++;")
-                .PopIndent()
-                .AppendLineIndent("}")
-                .AppendLineIndent("return count;");
-        }
     }
 
     /// <summary>
