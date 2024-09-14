@@ -1,21 +1,13 @@
 ﻿using Corvus.Json;
-using Feature408;
+using Corvus.Json.CodeGeneration;
+using Corvus.Json.CodeGeneration.CSharp;
+using Corvus.Json.CodeGeneration.CSharp.QuickStart;
 
-var documentContent = @"{
-    ""size"": null,
-    ""extendedSize"": """"
-}";
-var document = CombinedDocument.Parse(documentContent);
+var options = new CSharpLanguageProvider.Options("Test");
 
-var validationContext = document.Validate(ValidationContext.ValidContext, ValidationLevel.Detailed);
-if (!validationContext.IsValid)
-{
-    Console.WriteLine("Validation failed");
-    foreach (var result in validationContext.Results.OrderBy(r => r.Location?.DocumentLocation).ThenBy(r => r.Location?.ValidationLocation))
-    {
-        if (!result.Valid)
-        {
-            Console.WriteLine($"{result.Location}: {result.Message}");
-        }
-    }
-}
+var generator = CSharpGenerator.Create(options: options);
+
+IReadOnlyCollection<GeneratedCodeFile> generatedFiles =
+    await generator.GenerateFilesAsync(new JsonReference("./CombinedDocumentSchema.json"));
+
+Console.ReadLine();
