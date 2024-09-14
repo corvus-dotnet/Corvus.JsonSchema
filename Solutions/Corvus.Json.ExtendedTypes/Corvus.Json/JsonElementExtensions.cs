@@ -63,6 +63,26 @@ public static class JsonElementExtensions
     }
 
     /// <summary>
+    /// An extension method for GetPropertyCount().
+    /// </summary>
+    /// <param name="element">The JSON element to extend.</param>
+    /// <returns>The property count.</returns>
+    /// <remarks>
+    /// This will be deleted once RC2 of System.Text.Json is shipped.
+    /// </remarks>
+    public static int GetPropertyCount(this JsonElement element)
+    {
+        int count = 0;
+        JsonElement.ObjectEnumerator enumerator = element.EnumerateObject();
+        while (enumerator.MoveNext())
+        {
+            count++;
+        }
+
+        return count;
+    }
+
+    /// <summary>
     ///   Attempts to represent the current JSON string as the given type.
     /// </summary>
     /// <typeparam name="TState">The type of the parser state.</typeparam>
