@@ -384,8 +384,8 @@
       },
       "Microsoft.Extensions.ObjectPool": {
         "type": "Transitive",
-        "resolved": "10.0.0-alpha.1.24416.8",
-        "contentHash": "VVkFjwERFKW3G2W0/HNNNY0bdxBiCoLiofGc7pnN852OVvx7Q+kk4O3ojmPeBE5gRho1fxQTyZg30J63ZKoGqA=="
+        "resolved": "9.0.0-rc.1.24452.1",
+        "contentHash": "T1ESuI5nWWpyTrCdkUPL9BTACanbcylKX5gHREG+GqmLw/qYjhX4NuwR+tSfXB+p4eSLT2N8cOITslI1S1auZA=="
       },
       "Microsoft.Extensions.Options": {
         "type": "Transitive",
@@ -710,7 +710,7 @@
           "Corvus.UriTemplates": "[2.1.0, )",
           "IndexRange": "[1.0.3, )",
           "Microsoft.Extensions.Http": "[9.0.0-rc.2.24461.16, )",
-          "Microsoft.Extensions.ObjectPool": "[10.0.0-alpha.1.24416.8, )",
+          "Microsoft.Extensions.ObjectPool": "[9.0.0-rc.1.24452.1, )",
           "NodaTime": "[3.1.12, )",
           "System.Collections.Immutable": "[9.0.0-rc.2.24461.16, )",
           "System.Reflection.Emit.Lightweight": "[4.7.0, )",
@@ -722,7 +722,7 @@
         "dependencies": {
           "Corvus.Json.ExtendedTypes": "[1.0.0, )",
           "Microsoft.Extensions.Http": "[9.0.0-rc.2.24461.16, )",
-          "Microsoft.Extensions.ObjectPool": "[10.0.0-alpha.1.24416.8, )",
+          "Microsoft.Extensions.ObjectPool": "[9.0.0-rc.1.24452.1, )",
           "NodaTime": "[3.1.12, )"
         }
       }
@@ -1114,8 +1114,8 @@
       },
       "Microsoft.Extensions.ObjectPool": {
         "type": "Transitive",
-        "resolved": "10.0.0-alpha.1.24416.8",
-        "contentHash": "VVkFjwERFKW3G2W0/HNNNY0bdxBiCoLiofGc7pnN852OVvx7Q+kk4O3ojmPeBE5gRho1fxQTyZg30J63ZKoGqA=="
+        "resolved": "9.0.0-rc.1.24452.1",
+        "contentHash": "T1ESuI5nWWpyTrCdkUPL9BTACanbcylKX5gHREG+GqmLw/qYjhX4NuwR+tSfXB+p4eSLT2N8cOITslI1S1auZA=="
       },
       "Microsoft.Extensions.Options": {
         "type": "Transitive",
@@ -2145,7 +2145,7 @@
           "CommunityToolkit.HighPerformance": "[8.3.0, )",
           "Corvus.UriTemplates": "[2.1.0, )",
           "Microsoft.Extensions.Http": "[9.0.0-rc.2.24461.16, )",
-          "Microsoft.Extensions.ObjectPool": "[10.0.0-alpha.1.24416.8, )",
+          "Microsoft.Extensions.ObjectPool": "[9.0.0-rc.1.24452.1, )",
           "NodaTime": "[3.1.12, )",
           "System.Text.Json": "[9.0.0-rc.2.24461.16, )"
         }
@@ -2155,7 +2155,7 @@
         "dependencies": {
           "Corvus.Json.ExtendedTypes": "[1.0.0, )",
           "Microsoft.Extensions.Http": "[9.0.0-rc.2.24461.16, )",
-          "Microsoft.Extensions.ObjectPool": "[10.0.0-alpha.1.24416.8, )",
+          "Microsoft.Extensions.ObjectPool": "[9.0.0-rc.1.24452.1, )",
           "NodaTime": "[3.1.12, )"
         }
       }

@@ -18,7 +18,7 @@
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
 		<PackageReference Include="Microsoft.Extensions.Http" Version="9.0.0-rc.2.24461.16" />
-		<PackageReference Include="Microsoft.Extensions.ObjectPool" Version="10.0.0-alpha.1.24416.8" />
+		<PackageReference Include="Microsoft.Extensions.ObjectPool" Version="9.0.0-rc.1.24452.1" />
 		<PackageReference Include="NodaTime" Version="3.1.12" />
 	</ItemGroup>
 
