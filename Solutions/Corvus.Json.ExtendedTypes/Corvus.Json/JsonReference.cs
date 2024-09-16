@@ -14,14 +14,24 @@ namespace Corvus.Json;
 /// A JSON $ref as a URI or JsonPointer.
 /// </summary>
 [DebuggerDisplay("{reference}")]
-public readonly struct JsonReference : IEquatable<JsonReference>
+public readonly struct JsonReference
+#if NET8_0_OR_GREATER
+    : IEquatable<JsonReference>,
+    ISpanFormattable
+#else
+    : IEquatable<JsonReference>
+#endif
 {
     /// <summary>
     /// Gets a reference to the root fragment.
     /// </summary>
     public static readonly JsonReference RootFragment = new("#");
 
+#if NET8_0_OR_GREATER
     private static readonly SearchValues<char> SegmentSeparatorChars = SearchValues.Create(@":\/?#");
+#else
+    private static readonly ReadOnlyMemory<char> SegmentSeparatorChars = @":\/?#".AsMemory();
+#endif
 
     private readonly ReadOnlyMemory<char> reference;
 
@@ -117,7 +127,11 @@ public readonly struct JsonReference : IEquatable<JsonReference>
             return
                 this.HasUri &&
                 this.Uri.Length > 2 &&
+#if NET8_0_OR_GREATER
                 char.IsAsciiLetter(this.Uri[0]) &&
+#else
+                ((uint)((this.Uri[0] | 0x20) - 'a') <= 'z' - 'a') &&
+#endif
                 this.Uri[1] is ':' &&
                 this.Uri[2] is '/' or '\\';
         }
@@ -186,7 +200,11 @@ public readonly struct JsonReference : IEquatable<JsonReference>
         if (referenceOrNull is string reference)
         {
             Span<char> decodedReference = stackalloc char[reference.Length];
+#if NET8_0_OR_GREATER
             int writtenBytes = JsonPointerUtilities.DecodeHexPointer(reference, decodedReference);
+#else
+            int writtenBytes = JsonPointerUtilities.DecodeHexPointer(reference.AsSpan(), decodedReference);
+#endif
             var output = new Memory<char>(new char[writtenBytes]);
             decodedReference[..writtenBytes].CopyTo(output.Span);
             return new JsonReference(output);
@@ -204,7 +222,7 @@ public readonly struct JsonReference : IEquatable<JsonReference>
         Span<char> decodedReference = stackalloc char[this.reference.Length];
         int writtenBytes = JsonPointerUtilities.DecodePointer(this.reference.Span, decodedReference);
         writtenBytes = JsonPointerUtilities.DecodeHexPointer(decodedReference[..writtenBytes], decodedReference);
-        return new string(decodedReference[..writtenBytes]);
+        return decodedReference[..writtenBytes].ToString();
     }
 
     /// <summary>
@@ -214,7 +232,11 @@ public readonly struct JsonReference : IEquatable<JsonReference>
     /// <returns>A JSON reference with the same uri up to and including path and query, but with a different fragment.</returns>
     public JsonReference WithFragment(string fragment)
     {
+#if NET8_0_OR_GREATER
         return new JsonReference(this.Uri, fragment);
+#else
+        return new JsonReference(this.Uri, fragment.AsSpan());
+#endif
     }
 
     /// <summary>
@@ -477,25 +499,46 @@ public readonly struct JsonReference : IEquatable<JsonReference>
             ReadOnlySpan<char> thisPath = this.IsImplicitFile ? this.Uri : uriBuilder.Path;
             ReadOnlySpan<char> otherPath = other.IsImplicitFile ? other.Uri : otherBuilder.Path;
             string relativeUriString = PathDifference(thisPath, otherPath, false);
+            ReadOnlySpan<char> relativeUriStringSpan = relativeUriString.AsSpan();
 
             // Relative Uri's cannot have a colon ':' in the first path segment (RFC 3986, Section 4.2)
-            if (CheckForColonInFirstPathSegment(relativeUriString) &&
-                !otherPath.Equals(relativeUriString.AsSpan(), StringComparison.Ordinal))
+            if (CheckForColonInFirstPathSegment(relativeUriStringSpan) &&
+                !otherPath.Equals(relativeUriStringSpan, StringComparison.Ordinal))
             {
                 relativeUriString = "./" + relativeUriString;
             }
 
-            return new(relativeUriString, other.Fragment);
+            return new(relativeUriString.AsSpan(), other.Fragment);
         }
 
         return other;
     }
 
+#if NET8_0_OR_GREATER
+    /// <inheritdoc/>
+    public bool TryFormat(Span<char> destination, out int charsWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
+    {
+        bool result = this.reference.Span.TryCopyTo(destination);
+        charsWritten = result ? this.reference.Length : 0;
+        return result;
+    }
+
+    /// <inheritdoc/>
+    public string ToString(string? format, IFormatProvider? formatProvider)
+    {
+        return this.reference.ToString();
+    }
+#endif
+
     private static bool CheckForColonInFirstPathSegment(ReadOnlySpan<char> uriString)
     {
         // Check for anything that may terminate the first regular path segment
         // or an illegal colon
+#if NET8_0_OR_GREATER
         int index = uriString.IndexOfAny(SegmentSeparatorChars);
+#else
+        int index = uriString.IndexOfAny(SegmentSeparatorChars.Span);
+#endif
         return (uint)index < (uint)uriString.Length && uriString[index] == ':';
     }
 
@@ -546,7 +589,11 @@ public readonly struct JsonReference : IEquatable<JsonReference>
             return new("./"); // Truncate the file name
         }
 
+#if NET8_0_OR_GREATER
         return new(relPath.Append(path2[(si + 1)..]).ToString());
+#else
+        return new(relPath.Append(path2[(si + 1)..].ToArray()).ToString());
+#endif
     }
 
     private static int Merge(ReadOnlySpan<char> basePath, ReadOnlySpan<char> path, bool baseHasAuthority, in Memory<char> pathMemory)

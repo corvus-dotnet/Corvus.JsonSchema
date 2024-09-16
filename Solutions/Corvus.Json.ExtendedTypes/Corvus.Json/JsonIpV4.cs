@@ -88,7 +88,11 @@ public readonly partial struct JsonIpV4
     /// <returns><see langword="true"/> if the address was parsed successfully.</returns>
     internal static bool IPAddressParser(ReadOnlySpan<char> span, in object? state, out IPAddress value)
     {
+#if NET8_0_OR_GREATER
         if (IPAddress.TryParse(span, out IPAddress? address))
+#else
+        if (IPAddress.TryParse(span.ToString(), out IPAddress? address))
+#endif
         {
             value = address;
             return true;

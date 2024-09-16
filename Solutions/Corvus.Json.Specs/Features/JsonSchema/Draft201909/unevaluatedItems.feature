@@ -15,6 +15,7 @@ Scenario Outline: unevaluatedItems true
     Given the input JSON file "unevaluatedItems.json"
     And the schema at "#/0/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -22,7 +23,9 @@ Scenario Outline: unevaluatedItems true
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # []
         | #/000/tests/000/data | true  | with no unevaluated items                                                        |
+        # ["foo"]
         | #/000/tests/001/data | true  | with unevaluated items                                                           |
 
 Scenario Outline: unevaluatedItems false
@@ -35,6 +38,7 @@ Scenario Outline: unevaluatedItems false
     Given the input JSON file "unevaluatedItems.json"
     And the schema at "#/1/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -42,7 +46,9 @@ Scenario Outline: unevaluatedItems false
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # []
         | #/001/tests/000/data | true  | with no unevaluated items                                                        |
+        # ["foo"]
         | #/001/tests/001/data | false | with unevaluated items                                                           |
 
 Scenario Outline: unevaluatedItems as schema
@@ -55,6 +61,7 @@ Scenario Outline: unevaluatedItems as schema
     Given the input JSON file "unevaluatedItems.json"
     And the schema at "#/2/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -62,8 +69,11 @@ Scenario Outline: unevaluatedItems as schema
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # []
         | #/002/tests/000/data | true  | with no unevaluated items                                                        |
+        # ["foo"]
         | #/002/tests/001/data | true  | with valid unevaluated items                                                     |
+        # [42]
         | #/002/tests/002/data | false | with invalid unevaluated items                                                   |
 
 Scenario Outline: unevaluatedItems with uniform items
@@ -77,6 +87,7 @@ Scenario Outline: unevaluatedItems with uniform items
     Given the input JSON file "unevaluatedItems.json"
     And the schema at "#/3/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -84,6 +95,7 @@ Scenario Outline: unevaluatedItems with uniform items
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # ["foo", "bar"]
         | #/003/tests/000/data | true  | unevaluatedItems doesn't apply                                                   |
 
 Scenario Outline: unevaluatedItems with tuple
@@ -99,6 +111,7 @@ Scenario Outline: unevaluatedItems with tuple
     Given the input JSON file "unevaluatedItems.json"
     And the schema at "#/4/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -106,7 +119,9 @@ Scenario Outline: unevaluatedItems with tuple
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # ["foo"]
         | #/004/tests/000/data | true  | with no unevaluated items                                                        |
+        # ["foo", "bar"]
         | #/004/tests/001/data | false | with unevaluated items                                                           |
 
 Scenario Outline: unevaluatedItems with items and additionalItems
@@ -123,6 +138,7 @@ Scenario Outline: unevaluatedItems with items and additionalItems
     Given the input JSON file "unevaluatedItems.json"
     And the schema at "#/5/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -130,6 +146,7 @@ Scenario Outline: unevaluatedItems with items and additionalItems
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # ["foo", 42]
         | #/005/tests/000/data | true  | unevaluatedItems doesn't apply                                                   |
 
 Scenario Outline: unevaluatedItems with ignored additionalItems
@@ -143,6 +160,7 @@ Scenario Outline: unevaluatedItems with ignored additionalItems
     Given the input JSON file "unevaluatedItems.json"
     And the schema at "#/6/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -150,7 +168,9 @@ Scenario Outline: unevaluatedItems with ignored additionalItems
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # ["foo", 1]
         | #/006/tests/000/data | false | invalid under unevaluatedItems                                                   |
+        # ["foo", "bar", "baz"]
         | #/006/tests/001/data | true  | all valid under unevaluatedItems                                                 |
 
 Scenario Outline: unevaluatedItems with ignored applicator additionalItems
@@ -164,6 +184,7 @@ Scenario Outline: unevaluatedItems with ignored applicator additionalItems
     Given the input JSON file "unevaluatedItems.json"
     And the schema at "#/7/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -171,7 +192,9 @@ Scenario Outline: unevaluatedItems with ignored applicator additionalItems
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # ["foo", 1]
         | #/007/tests/000/data | false | invalid under unevaluatedItems                                                   |
+        # ["foo", "bar", "baz"]
         | #/007/tests/001/data | true  | all valid under unevaluatedItems                                                 |
 
 Scenario Outline: unevaluatedItems with nested tuple
@@ -195,6 +218,7 @@ Scenario Outline: unevaluatedItems with nested tuple
     Given the input JSON file "unevaluatedItems.json"
     And the schema at "#/8/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -202,7 +226,9 @@ Scenario Outline: unevaluatedItems with nested tuple
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # ["foo", 42]
         | #/008/tests/000/data | true  | with no unevaluated items                                                        |
+        # ["foo", 42, true]
         | #/008/tests/001/data | false | with unevaluated items                                                           |
 
 Scenario Outline: unevaluatedItems with nested items
@@ -219,6 +245,7 @@ Scenario Outline: unevaluatedItems with nested items
     Given the input JSON file "unevaluatedItems.json"
     And the schema at "#/9/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -226,8 +253,11 @@ Scenario Outline: unevaluatedItems with nested items
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # [true, false]
         | #/009/tests/000/data | true  | with only (valid) additional items                                               |
+        # ["yes", "no"]
         | #/009/tests/001/data | true  | with no additional items                                                         |
+        # ["yes", false]
         | #/009/tests/002/data | false | with invalid additional item                                                     |
 
 Scenario Outline: unevaluatedItems with nested items and additionalItems
@@ -248,6 +278,7 @@ Scenario Outline: unevaluatedItems with nested items and additionalItems
     Given the input JSON file "unevaluatedItems.json"
     And the schema at "#/10/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -255,7 +286,9 @@ Scenario Outline: unevaluatedItems with nested items and additionalItems
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # ["foo"]
         | #/010/tests/000/data | true  | with no additional items                                                         |
+        # ["foo", 42, true]
         | #/010/tests/001/data | true  | with additional items                                                            |
 
 Scenario Outline: unevaluatedItems with nested unevaluatedItems
@@ -276,6 +309,7 @@ Scenario Outline: unevaluatedItems with nested unevaluatedItems
     Given the input JSON file "unevaluatedItems.json"
     And the schema at "#/11/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -283,7 +317,9 @@ Scenario Outline: unevaluatedItems with nested unevaluatedItems
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # ["foo"]
         | #/011/tests/000/data | true  | with no additional items                                                         |
+        # ["foo", 42, true]
         | #/011/tests/001/data | true  | with additional items                                                            |
 
 Scenario Outline: unevaluatedItems with anyOf
@@ -314,6 +350,7 @@ Scenario Outline: unevaluatedItems with anyOf
     Given the input JSON file "unevaluatedItems.json"
     And the schema at "#/12/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -321,9 +358,13 @@ Scenario Outline: unevaluatedItems with anyOf
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # ["foo", "bar"]
         | #/012/tests/000/data | true  | when one schema matches and has no unevaluated items                             |
+        # ["foo", "bar", 42]
         | #/012/tests/001/data | false | when one schema matches and has unevaluated items                                |
+        # ["foo", "bar", "baz"]
         | #/012/tests/002/data | true  | when two schemas match and has no unevaluated items                              |
+        # ["foo", "bar", "baz", 42]
         | #/012/tests/003/data | false | when two schemas match and has unevaluated items                                 |
 
 Scenario Outline: unevaluatedItems with oneOf
@@ -353,6 +394,7 @@ Scenario Outline: unevaluatedItems with oneOf
     Given the input JSON file "unevaluatedItems.json"
     And the schema at "#/13/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -360,7 +402,9 @@ Scenario Outline: unevaluatedItems with oneOf
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # ["foo", "bar"]
         | #/013/tests/000/data | true  | with no unevaluated items                                                        |
+        # ["foo", "bar", 42]
         | #/013/tests/001/data | false | with unevaluated items                                                           |
 
 Scenario Outline: unevaluatedItems with not
@@ -384,6 +428,7 @@ Scenario Outline: unevaluatedItems with not
     Given the input JSON file "unevaluatedItems.json"
     And the schema at "#/14/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -391,6 +436,7 @@ Scenario Outline: unevaluatedItems with not
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # ["foo", "bar"]
         | #/014/tests/000/data | false | with unevaluated items                                                           |
 
 Scenario Outline: unevaluatedItems with if/then/else
@@ -425,6 +471,7 @@ Scenario Outline: unevaluatedItems with if/then/else
     Given the input JSON file "unevaluatedItems.json"
     And the schema at "#/15/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -432,9 +479,13 @@ Scenario Outline: unevaluatedItems with if/then/else
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # ["foo", "bar", "then"]
         | #/015/tests/000/data | true  | when if matches and it has no unevaluated items                                  |
+        # ["foo", "bar", "then", "else"]
         | #/015/tests/001/data | false | when if matches and it has unevaluated items                                     |
+        # ["foo", 42, 42, "else"]
         | #/015/tests/002/data | true  | when if doesn't match and it has no unevaluated items                            |
+        # ["foo", 42, 42, "else", 42]
         | #/015/tests/003/data | false | when if doesn't match and it has unevaluated items                               |
 
 Scenario Outline: unevaluatedItems with boolean schemas
@@ -448,6 +499,7 @@ Scenario Outline: unevaluatedItems with boolean schemas
     Given the input JSON file "unevaluatedItems.json"
     And the schema at "#/16/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -455,7 +507,9 @@ Scenario Outline: unevaluatedItems with boolean schemas
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # []
         | #/016/tests/000/data | true  | with no unevaluated items                                                        |
+        # ["foo"]
         | #/016/tests/001/data | false | with unevaluated items                                                           |
 
 Scenario Outline: unevaluatedItems with $ref
@@ -480,6 +534,7 @@ Scenario Outline: unevaluatedItems with $ref
     Given the input JSON file "unevaluatedItems.json"
     And the schema at "#/17/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -487,8 +542,94 @@ Scenario Outline: unevaluatedItems with $ref
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # ["foo", "bar"]
         | #/017/tests/000/data | true  | with no unevaluated items                                                        |
+        # ["foo", "bar", "baz"]
         | #/017/tests/001/data | false | with unevaluated items                                                           |
+
+Scenario Outline: unevaluatedItems before $ref
+/* Schema: 
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "unevaluatedItems": false,
+            "items": [
+                { "type": "string" }
+            ],
+            "$ref": "#/$defs/bar",
+            "$defs": {
+              "bar": {
+                  "items": [
+                      true,
+                      { "type": "string" }
+                  ]
+              }
+            }
+        }
+*/
+    Given the input JSON file "unevaluatedItems.json"
+    And the schema at "#/18/schema"
+    And the input data at "<inputDataReference>"
+    And I assert format
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        # ["foo", "bar"]
+        | #/018/tests/000/data | true  | with no unevaluated items                                                        |
+        # ["foo", "bar", "baz"]
+        | #/018/tests/001/data | false | with unevaluated items                                                           |
+
+Scenario Outline: unevaluatedItems with $recursiveRef
+/* Schema: 
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "$id": "https://example.com/unevaluated-items-with-recursive-ref/extended-tree",
+
+            "$recursiveAnchor": true,
+
+            "$ref": "./tree",
+            "items": [
+                true,
+                true,
+                { "type": "string" }
+            ],
+
+            "$defs": {
+                "tree": {
+                    "$id": "./tree",
+                    "$recursiveAnchor": true,
+
+                    "type": "array",
+                    "items": [
+                        { "type": "number" },
+                        {
+                            "$comment": "unevaluatedItems comes first so it's more likely to catch bugs with implementations that are sensitive to keyword ordering",
+                            "unevaluatedItems": false,
+                            "$recursiveRef": "#"
+                        }
+                    ]
+                }
+            }
+        }
+*/
+    Given the input JSON file "unevaluatedItems.json"
+    And the schema at "#/19/schema"
+    And the input data at "<inputDataReference>"
+    And I assert format
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        # [1, [2, [], "b"], "a"]
+        | #/019/tests/000/data | true  | with no unevaluated items                                                        |
+        # [1, [2, [], "b", "too many"], "a"]
+        | #/019/tests/001/data | false | with unevaluated items                                                           |
 
 Scenario Outline: unevaluatedItems can't see inside cousins
 /* Schema: 
@@ -503,8 +644,9 @@ Scenario Outline: unevaluatedItems can't see inside cousins
         }
 */
     Given the input JSON file "unevaluatedItems.json"
-    And the schema at "#/18/schema"
+    And the schema at "#/20/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -512,7 +654,8 @@ Scenario Outline: unevaluatedItems can't see inside cousins
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
-        | #/018/tests/000/data | false | always fails                                                                     |
+        # [ 1 ]
+        | #/020/tests/000/data | false | always fails                                                                     |
 
 Scenario Outline: item is evaluated in an uncle schema to unevaluatedItems
 /* Schema: 
@@ -541,8 +684,9 @@ Scenario Outline: item is evaluated in an uncle schema to unevaluatedItems
         }
 */
     Given the input JSON file "unevaluatedItems.json"
-    And the schema at "#/19/schema"
+    And the schema at "#/21/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -550,8 +694,10 @@ Scenario Outline: item is evaluated in an uncle schema to unevaluatedItems
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
-        | #/019/tests/000/data | true  | no extra items                                                                   |
-        | #/019/tests/001/data | false | uncle keyword evaluation is not significant                                      |
+        # { "foo": [ "test" ] }
+        | #/021/tests/000/data | true  | no extra items                                                                   |
+        # { "foo": [ "test", "test" ] }
+        | #/021/tests/001/data | false | uncle keyword evaluation is not significant                                      |
 
 Scenario Outline: non-array instances are valid
 /* Schema: 
@@ -561,8 +707,9 @@ Scenario Outline: non-array instances are valid
         }
 */
     Given the input JSON file "unevaluatedItems.json"
-    And the schema at "#/20/schema"
+    And the schema at "#/22/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -570,12 +717,18 @@ Scenario Outline: non-array instances are valid
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
-        | #/020/tests/000/data | true  | ignores booleans                                                                 |
-        | #/020/tests/001/data | true  | ignores integers                                                                 |
-        | #/020/tests/002/data | true  | ignores floats                                                                   |
-        | #/020/tests/003/data | true  | ignores objects                                                                  |
-        | #/020/tests/004/data | true  | ignores strings                                                                  |
-        | #/020/tests/005/data | true  | ignores null                                                                     |
+        # True
+        | #/022/tests/000/data | true  | ignores booleans                                                                 |
+        # 123
+        | #/022/tests/001/data | true  | ignores integers                                                                 |
+        # 1.0
+        | #/022/tests/002/data | true  | ignores floats                                                                   |
+        # {}
+        | #/022/tests/003/data | true  | ignores objects                                                                  |
+        # foo
+        | #/022/tests/004/data | true  | ignores strings                                                                  |
+        # 
+        | #/022/tests/005/data | true  | ignores null                                                                     |
 
 Scenario Outline: unevaluatedItems with null instance elements
 /* Schema: 
@@ -587,8 +740,9 @@ Scenario Outline: unevaluatedItems with null instance elements
         }
 */
     Given the input JSON file "unevaluatedItems.json"
-    And the schema at "#/21/schema"
+    And the schema at "#/23/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -596,7 +750,8 @@ Scenario Outline: unevaluatedItems with null instance elements
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
-        | #/021/tests/000/data | true  | allows null elements                                                             |
+        # [ null ]
+        | #/023/tests/000/data | true  | allows null elements                                                             |
 
 Scenario Outline: unevaluatedItems can see annotations from if without then and else
 /* Schema: 
@@ -609,8 +764,9 @@ Scenario Outline: unevaluatedItems can see annotations from if without then and 
         }
 */
     Given the input JSON file "unevaluatedItems.json"
-    And the schema at "#/22/schema"
+    And the schema at "#/24/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -618,5 +774,7 @@ Scenario Outline: unevaluatedItems can see annotations from if without then and 
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
-        | #/022/tests/000/data | true  | valid in case if is evaluated                                                    |
-        | #/022/tests/001/data | false | invalid in case if is evaluated                                                  |
+        # [ "a" ]
+        | #/024/tests/000/data | true  | valid in case if is evaluated                                                    |
+        # [ "b" ]
+        | #/024/tests/001/data | false | invalid in case if is evaluated                                                  |

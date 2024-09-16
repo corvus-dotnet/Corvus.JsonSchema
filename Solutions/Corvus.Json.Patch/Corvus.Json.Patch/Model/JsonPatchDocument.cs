@@ -306,11 +306,12 @@ public readonly partial struct JsonPatchDocument
         return new(value);
     }
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Gets an instance of the JSON value from a boolean value.
     /// </summary>
     /// <typeparam name = "TValue">The type of the value.</typeparam>
-    /// <param name = "value">The value from which to instantiate the instance.</param>
+    /// <param name="value">The value from which to instantiate the instance.</param>
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>This will be JsonPatchDocument.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -323,12 +324,13 @@ public readonly partial struct JsonPatchDocument
 
         return Undefined;
     }
-
+#endif
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Gets an instance of the JSON value from a string value.
     /// </summary>
-    /// <typeparam name = "TValue">The type of the value.</typeparam>
-    /// <param name = "value">The value from which to instantiate the instance.</param>
+    /// <typeparam name="TValue">The type of the value.</typeparam>
+    /// <param name="value">The value from which to instantiate the instance.</param>
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>This will be JsonPatchDocument.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -341,12 +343,13 @@ public readonly partial struct JsonPatchDocument
 
         return Undefined;
     }
-
+#endif
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Gets an instance of the JSON value from a number value.
     /// </summary>
-    /// <typeparam name = "TValue">The type of the value.</typeparam>
-    /// <param name = "value">The value from which to instantiate the instance.</param>
+    /// <typeparam name="TValue">The type of the value.</typeparam>
+    /// <param name="value">The value from which to instantiate the instance.</param>
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>This will be JsonPatchDocument.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -359,7 +362,7 @@ public readonly partial struct JsonPatchDocument
 
         return Undefined;
     }
-
+#endif
     /// <summary>
     /// Gets an instance of the JSON value from an array value.
     /// </summary>
@@ -384,11 +387,12 @@ public readonly partial struct JsonPatchDocument
         return Undefined;
     }
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Gets an instance of the JSON value from an object value.
     /// </summary>
-    /// <typeparam name = "TValue">The type of the value.</typeparam>
-    /// <param name = "value">The value from which to instantiate the instance.</param>
+    /// <typeparam name="TValue">The type of the value.</typeparam>
+    /// <param name="value">The value from which to instantiate the instance.</param>
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>This will be JsonPatchDocument.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -401,7 +405,7 @@ public readonly partial struct JsonPatchDocument
 
         return Undefined;
     }
-
+#endif
     /// <summary>
     /// Parses a JSON string into a JsonPatchDocument.
     /// </summary>
@@ -469,7 +473,11 @@ public readonly partial struct JsonPatchDocument
     /// <returns>The parsed value.</returns>
     static JsonPatchDocument ParseValue(ReadOnlySpan<char> buffer)
     {
+#if NET8_0_OR_GREATER
         return IJsonValue<JsonPatchDocument>.ParseValue(buffer);
+#else
+        return JsonValueHelpers.ParseValue<JsonPatchDocument>(buffer);
+#endif
     }
 
     /// <summary>
@@ -479,7 +487,11 @@ public readonly partial struct JsonPatchDocument
     /// <returns>The parsed value.</returns>
     static JsonPatchDocument ParseValue(ReadOnlySpan<byte> buffer)
     {
+#if NET8_0_OR_GREATER
         return IJsonValue<JsonPatchDocument>.ParseValue(buffer);
+#else
+        return JsonValueHelpers.ParseValue<JsonPatchDocument>(buffer);
+#endif
     }
 
     /// <summary>
@@ -489,7 +501,11 @@ public readonly partial struct JsonPatchDocument
     /// <returns>The parsed value.</returns>
     static JsonPatchDocument ParseValue(ref Utf8JsonReader reader)
     {
+#if NET8_0_OR_GREATER
         return IJsonValue<JsonPatchDocument>.ParseValue(ref reader);
+#else
+        return JsonValueHelpers.ParseValue<JsonPatchDocument>(ref reader);
+#endif
     }
 
     /// <summary>
@@ -501,6 +517,7 @@ public readonly partial struct JsonPatchDocument
     public TTarget As<TTarget>()
         where TTarget : struct, IJsonValue<TTarget>
     {
+#if NET8_0_OR_GREATER
         if ((this.backing & Backing.JsonElement) != 0)
         {
             return TTarget.FromJson(this.jsonElementBacking);
@@ -517,6 +534,9 @@ public readonly partial struct JsonPatchDocument
         }
 
         return TTarget.Undefined;
+#else
+        return this.As<JsonPatchDocument, TTarget>();
+#endif
     }
 
     /// <inheritdoc/>

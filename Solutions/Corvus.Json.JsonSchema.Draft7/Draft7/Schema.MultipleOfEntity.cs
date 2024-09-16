@@ -308,42 +308,44 @@ public readonly partial struct Schema
             return new(value);
         }
 
-        /// <summary>
-        /// Gets an instance of the JSON value from a boolean value.
-        /// </summary>
-        /// <typeparam name = "TValue">The type of the value.</typeparam>
-        /// <param name = "value">The value from which to instantiate the instance.</param>
-        /// <returns>An instance of this type, initialized from the value.</returns>
-        /// <remarks>This will be MultipleOfEntity.Undefined if the type is not compatible.</remarks>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static MultipleOfEntity IJsonValue<MultipleOfEntity>.FromBoolean<TValue>(in TValue value)
+#if NET8_0_OR_GREATER
+    /// <summary>
+    /// Gets an instance of the JSON value from a boolean value.
+    /// </summary>
+    /// <typeparam name = "TValue">The type of the value.</typeparam>
+    /// <param name="value">The value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the value.</returns>
+    /// <remarks>This will be MultipleOfEntity.Undefined if the type is not compatible.</remarks>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    static MultipleOfEntity IJsonValue<MultipleOfEntity>.FromBoolean<TValue>(in TValue value)
+    {
+        if (value.HasJsonElementBacking)
         {
-            if (value.HasJsonElementBacking)
-            {
-                return new(value.AsJsonElement);
-            }
-
-            return Undefined;
+            return new(value.AsJsonElement);
         }
 
-        /// <summary>
-        /// Gets an instance of the JSON value from a string value.
-        /// </summary>
-        /// <typeparam name = "TValue">The type of the value.</typeparam>
-        /// <param name = "value">The value from which to instantiate the instance.</param>
-        /// <returns>An instance of this type, initialized from the value.</returns>
-        /// <remarks>This will be MultipleOfEntity.Undefined if the type is not compatible.</remarks>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static MultipleOfEntity IJsonValue<MultipleOfEntity>.FromString<TValue>(in TValue value)
+        return Undefined;
+    }
+#endif
+#if NET8_0_OR_GREATER
+    /// <summary>
+    /// Gets an instance of the JSON value from a string value.
+    /// </summary>
+    /// <typeparam name="TValue">The type of the value.</typeparam>
+    /// <param name="value">The value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the value.</returns>
+    /// <remarks>This will be MultipleOfEntity.Undefined if the type is not compatible.</remarks>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    static MultipleOfEntity IJsonValue<MultipleOfEntity>.FromString<TValue>(in TValue value)
+    {
+        if (value.HasJsonElementBacking)
         {
-            if (value.HasJsonElementBacking)
-            {
-                return new(value.AsJsonElement);
-            }
-
-            return Undefined;
+            return new(value.AsJsonElement);
         }
 
+        return Undefined;
+    }
+#endif
         /// <summary>
         /// Gets an instance of the JSON value from a number value.
         /// </summary>
@@ -368,42 +370,44 @@ public readonly partial struct Schema
             return Undefined;
         }
 
-        /// <summary>
-        /// Gets an instance of the JSON value from an array value.
-        /// </summary>
-        /// <typeparam name = "TValue">The type of the value.</typeparam>
-        /// <param name = "value">The value from which to instantiate the instance.</param>
-        /// <returns>An instance of this type, initialized from the value.</returns>
-        /// <remarks>This will be MultipleOfEntity.Undefined if the type is not compatible.</remarks>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static MultipleOfEntity IJsonValue<MultipleOfEntity>.FromArray<TValue>(in TValue value)
+#if NET8_0_OR_GREATER
+    /// <summary>
+    /// Gets an instance of the JSON value from an array value.
+    /// </summary>
+    /// <typeparam name="TValue">The type of the value.</typeparam>
+    /// <param name="value">The value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the value.</returns>
+    /// <remarks>This will be MultipleOfEntity.Undefined if the type is not compatible.</remarks>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    static MultipleOfEntity IJsonValue<MultipleOfEntity>.FromArray<TValue>(in TValue value)
+    {
+        if (value.HasJsonElementBacking)
         {
-            if (value.HasJsonElementBacking)
-            {
-                return new(value.AsJsonElement);
-            }
-
-            return Undefined;
+            return new(value.AsJsonElement);
         }
 
-        /// <summary>
-        /// Gets an instance of the JSON value from an object value.
-        /// </summary>
-        /// <typeparam name = "TValue">The type of the value.</typeparam>
-        /// <param name = "value">The value from which to instantiate the instance.</param>
-        /// <returns>An instance of this type, initialized from the value.</returns>
-        /// <remarks>This will be MultipleOfEntity.Undefined if the type is not compatible.</remarks>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static MultipleOfEntity IJsonValue<MultipleOfEntity>.FromObject<TValue>(in TValue value)
+        return Undefined;
+    }
+#endif
+#if NET8_0_OR_GREATER
+    /// <summary>
+    /// Gets an instance of the JSON value from an object value.
+    /// </summary>
+    /// <typeparam name="TValue">The type of the value.</typeparam>
+    /// <param name="value">The value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the value.</returns>
+    /// <remarks>This will be MultipleOfEntity.Undefined if the type is not compatible.</remarks>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    static MultipleOfEntity IJsonValue<MultipleOfEntity>.FromObject<TValue>(in TValue value)
+    {
+        if (value.HasJsonElementBacking)
         {
-            if (value.HasJsonElementBacking)
-            {
-                return new(value.AsJsonElement);
-            }
-
-            return Undefined;
+            return new(value.AsJsonElement);
         }
 
+        return Undefined;
+    }
+#endif
         /// <summary>
         /// Parses a JSON string into a MultipleOfEntity.
         /// </summary>
@@ -471,7 +475,11 @@ public readonly partial struct Schema
         /// <returns>The parsed value.</returns>
         static MultipleOfEntity ParseValue(ReadOnlySpan<char> buffer)
         {
-            return IJsonValue<MultipleOfEntity>.ParseValue(buffer);
+#if NET8_0_OR_GREATER
+        return IJsonValue<MultipleOfEntity>.ParseValue(buffer);
+#else
+            return JsonValueHelpers.ParseValue<MultipleOfEntity>(buffer);
+#endif
         }
 
         /// <summary>
@@ -481,7 +489,11 @@ public readonly partial struct Schema
         /// <returns>The parsed value.</returns>
         static MultipleOfEntity ParseValue(ReadOnlySpan<byte> buffer)
         {
-            return IJsonValue<MultipleOfEntity>.ParseValue(buffer);
+#if NET8_0_OR_GREATER
+        return IJsonValue<MultipleOfEntity>.ParseValue(buffer);
+#else
+            return JsonValueHelpers.ParseValue<MultipleOfEntity>(buffer);
+#endif
         }
 
         /// <summary>
@@ -491,7 +503,11 @@ public readonly partial struct Schema
         /// <returns>The parsed value.</returns>
         static MultipleOfEntity ParseValue(ref Utf8JsonReader reader)
         {
-            return IJsonValue<MultipleOfEntity>.ParseValue(ref reader);
+#if NET8_0_OR_GREATER
+        return IJsonValue<MultipleOfEntity>.ParseValue(ref reader);
+#else
+            return JsonValueHelpers.ParseValue<MultipleOfEntity>(ref reader);
+#endif
         }
 
         /// <summary>
@@ -503,22 +519,26 @@ public readonly partial struct Schema
         public TTarget As<TTarget>()
             where TTarget : struct, IJsonValue<TTarget>
         {
-            if ((this.backing & Backing.JsonElement) != 0)
-            {
-                return TTarget.FromJson(this.jsonElementBacking);
-            }
+#if NET8_0_OR_GREATER
+        if ((this.backing & Backing.JsonElement) != 0)
+        {
+            return TTarget.FromJson(this.jsonElementBacking);
+        }
 
-            if ((this.backing & Backing.Number) != 0)
-            {
-                return TTarget.FromNumber(this);
-            }
+        if ((this.backing & Backing.Number) != 0)
+        {
+            return TTarget.FromNumber(this);
+        }
 
-            if ((this.backing & Backing.Null) != 0)
-            {
-                return TTarget.Null;
-            }
+        if ((this.backing & Backing.Null) != 0)
+        {
+            return TTarget.Null;
+        }
 
-            return TTarget.Undefined;
+        return TTarget.Undefined;
+#else
+            return this.As<MultipleOfEntity, TTarget>();
+#endif
         }
 
         /// <inheritdoc/>

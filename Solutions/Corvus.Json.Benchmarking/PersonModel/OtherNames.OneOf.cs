@@ -34,7 +34,7 @@ public readonly partial struct OtherNames
     /// <param name = "match0">The function to call if the value matches the <see cref = "Corvus.Json.Benchmarking.Models.PersonNameElement"/> type.</param>
     /// <param name = "match1">The function to call if the value matches the <see cref = "Corvus.Json.Benchmarking.Models.PersonNameElementArray"/> type.</param>
     /// <param name = "defaultMatch">The fallback match.</param>
-    public TOut Match<TIn, TOut>(in TIn context, Func<Corvus.Json.Benchmarking.Models.PersonNameElement, TIn, TOut> match0, Func<Corvus.Json.Benchmarking.Models.PersonNameElementArray, TIn, TOut> match1, Func<OtherNames, TIn, TOut> defaultMatch)
+    public TOut Match<TIn, TOut>(in TIn context, Matcher<Corvus.Json.Benchmarking.Models.PersonNameElement, TIn, TOut> match0, Matcher<Corvus.Json.Benchmarking.Models.PersonNameElementArray, TIn, TOut> match1, Matcher<OtherNames, TIn, TOut> defaultMatch)
     {
         var oneOf0 = this.As<Corvus.Json.Benchmarking.Models.PersonNameElement>();
         if (oneOf0.IsValid())
@@ -57,7 +57,7 @@ public readonly partial struct OtherNames
     /// <param name = "match0">The function to call if the value matches the <see cref = "Corvus.Json.Benchmarking.Models.PersonNameElement"/> type.</param>
     /// <param name = "match1">The function to call if the value matches the <see cref = "Corvus.Json.Benchmarking.Models.PersonNameElementArray"/> type.</param>
     /// <param name = "defaultMatch">The fallback match.</param>
-    public TOut Match<TOut>(Func<Corvus.Json.Benchmarking.Models.PersonNameElement, TOut> match0, Func<Corvus.Json.Benchmarking.Models.PersonNameElementArray, TOut> match1, Func<OtherNames, TOut> defaultMatch)
+    public TOut Match<TOut>(Matcher<Corvus.Json.Benchmarking.Models.PersonNameElement, TOut> match0, Matcher<Corvus.Json.Benchmarking.Models.PersonNameElementArray, TOut> match1, Matcher<OtherNames, TOut> defaultMatch)
     {
         var oneOf0 = this.As<Corvus.Json.Benchmarking.Models.PersonNameElement>();
         if (oneOf0.IsValid())

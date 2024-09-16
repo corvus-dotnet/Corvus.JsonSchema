@@ -106,7 +106,11 @@ public class ValidationContextSteps
     {
         ValidationContext context = this.scenarioContext.Get<ValidationContext>(ValidationContextKey);
 
+#if NET8_0_OR_GREATER
         foreach (string propertyIndex in propertyIndexArray.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
+#else
+        foreach (string propertyIndex in propertyIndexArray.Split(','))
+#endif
         {
             context = context.WithLocalProperty(int.Parse(propertyIndex));
         }
@@ -129,7 +133,11 @@ public class ValidationContextSteps
 
         ValidationContext context = this.scenarioContext.Get<ValidationContext>(ValidationContextKey);
 
+#if NET8_0_OR_GREATER
         foreach (string propertyIndex in propertyIndexArray.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
+#else
+        foreach (string propertyIndex in propertyIndexArray.Split(','))
+#endif
         {
             Assert.IsFalse(context.HasEvaluatedLocalProperty(int.Parse(propertyIndex)));
         }
@@ -150,7 +158,11 @@ public class ValidationContextSteps
 
         ValidationContext context = this.scenarioContext.Get<ValidationContext>(ValidationContextKey);
 
+#if NET8_0_OR_GREATER
         foreach (string propertyIndex in propertyIndexArray.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
+#else
+        foreach (string propertyIndex in propertyIndexArray.Split(','))
+#endif
         {
             Assert.IsTrue(context.HasEvaluatedLocalProperty(int.Parse(propertyIndex)));
         }
@@ -170,7 +182,11 @@ public class ValidationContextSteps
 
         ValidationContext context = this.scenarioContext.Get<ValidationContext>(ValidationContextKey);
 
+#if NET8_0_OR_GREATER
         foreach (string propertyIndex in propertyIndexArray.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
+#else
+        foreach (string propertyIndex in propertyIndexArray.Split(','))
+#endif
         {
             Assert.IsFalse(context.HasEvaluatedLocalOrAppliedProperty(int.Parse(propertyIndex)));
         }
@@ -190,7 +206,11 @@ public class ValidationContextSteps
 
         ValidationContext context = this.scenarioContext.Get<ValidationContext>(ValidationContextKey);
 
+#if NET8_0_OR_GREATER
         foreach (string propertyIndex in propertyIndexArray.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
+#else
+        foreach (string propertyIndex in propertyIndexArray.Split(','))
+#endif
         {
             Assert.IsTrue(context.HasEvaluatedLocalOrAppliedProperty(int.Parse(propertyIndex)));
         }
@@ -207,7 +227,11 @@ public class ValidationContextSteps
     {
         ValidationContext context = this.scenarioContext.Get<ValidationContext>(ValidationContextKey);
 
+#if NET8_0_OR_GREATER
         foreach (string itemIndex in itemIndexArray.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
+#else
+        foreach (string itemIndex in itemIndexArray.Split(','))
+#endif
         {
             context = context.WithLocalItemIndex(int.Parse(itemIndex));
         }
@@ -230,7 +254,11 @@ public class ValidationContextSteps
 
         ValidationContext context = this.scenarioContext.Get<ValidationContext>(ValidationContextKey);
 
+#if NET8_0_OR_GREATER
         foreach (string itemIndex in itemIndexArray.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
+#else
+        foreach (string itemIndex in itemIndexArray.Split(','))
+#endif
         {
             Assert.IsFalse(context.HasEvaluatedLocalItemIndex(int.Parse(itemIndex)));
         }
@@ -251,7 +279,11 @@ public class ValidationContextSteps
 
         ValidationContext context = this.scenarioContext.Get<ValidationContext>(ValidationContextKey);
 
+#if NET8_0_OR_GREATER
         foreach (string itemIndex in itemIndexArray.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
+#else
+        foreach (string itemIndex in itemIndexArray.Split(','))
+#endif
         {
             Assert.IsTrue(context.HasEvaluatedLocalItemIndex(int.Parse(itemIndex)));
         }
@@ -271,7 +303,11 @@ public class ValidationContextSteps
 
         ValidationContext context = this.scenarioContext.Get<ValidationContext>(ValidationContextKey);
 
+#if NET8_0_OR_GREATER
         foreach (string itemIndex in itemIndexArray.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
+#else
+        foreach (string itemIndex in itemIndexArray.Split(','))
+#endif
         {
             Assert.IsFalse(context.HasEvaluatedLocalOrAppliedItemIndex(int.Parse(itemIndex)));
         }
@@ -291,7 +327,11 @@ public class ValidationContextSteps
 
         ValidationContext context = this.scenarioContext.Get<ValidationContext>(ValidationContextKey);
 
+#if NET8_0_OR_GREATER
         foreach (string itemIndex in itemIndexArray.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
+#else
+        foreach (string itemIndex in itemIndexArray.Split(','))
+#endif
         {
             Assert.IsTrue(context.HasEvaluatedLocalOrAppliedItemIndex(int.Parse(itemIndex)));
         }

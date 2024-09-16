@@ -12,6 +12,7 @@ Scenario Outline: validate definition against metaschema
     Given the input JSON file "definitions.json"
     And the schema at "#/0/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -19,5 +20,7 @@ Scenario Outline: validate definition against metaschema
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # { "definitions": { "foo": {"type": "integer"} } }
         | #/000/tests/000/data | true  | valid definition schema                                                          |
+        # { "definitions": { "foo": {"type": 1} } }
         | #/000/tests/001/data | false | invalid definition schema                                                        |

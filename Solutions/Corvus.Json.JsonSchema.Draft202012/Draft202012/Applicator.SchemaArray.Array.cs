@@ -8,6 +8,7 @@
 //------------------------------------------------------------------------------
 #nullable enable
 using System.Buffers;
+using System.Collections;
 using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
@@ -20,7 +21,13 @@ public readonly partial struct Applicator
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
-    public readonly partial struct SchemaArray : IJsonArray<SchemaArray>
+    
+#if NET8_0_OR_GREATER
+[CollectionBuilder(typeof(SchemaArray), "Create")]
+public readonly partial struct SchemaArray : IJsonArray<SchemaArray>, IReadOnlyCollection<Corvus.Json.JsonSchema.Draft202012.Schema>
+#else
+    public readonly partial struct SchemaArray : IJsonArray<SchemaArray>, IReadOnlyCollection<Corvus.Json.JsonSchema.Draft202012.Schema>
+#endif
     {
         /// <summary>
         /// Gets an empty array.
@@ -150,6 +157,16 @@ public readonly partial struct Applicator
         }
 
         /// <summary>
+        /// Create an array from the span of items.
+        /// </summary>
+        /// <param name = "items">The items from which to create the array.</param>
+        /// <returns>The array containing the items.</returns>
+        public static SchemaArray Create(ReadOnlySpan<Corvus.Json.JsonSchema.Draft202012.Schema> items)
+        {
+            return new([..items]);
+        }
+
+        /// <summary>
         /// Initializes a new instance of the <see cref = "SchemaArray"/> struct.
         /// </summary>
         /// <param name = "value1">The first value from which to construct the instance.</param>
@@ -253,10 +270,6 @@ public readonly partial struct Applicator
         /// </summary>
         /// <param name = "items">The items from which to create the array.</param>
         /// <returns>The new array created from the items.</returns>
-        /// <remarks>
-        /// This will serialize the items to create the underlying JsonArray. Note the
-        /// other overloads which avoid this serialization step.
-        /// </remarks>
         public static SchemaArray FromRange(IEnumerable<JsonAny> items)
         {
             ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
@@ -273,10 +286,6 @@ public readonly partial struct Applicator
         /// </summary>
         /// <param name = "items">The items from which to create the array.</param>
         /// <returns>The new array created from the items.</returns>
-        /// <remarks>
-        /// This will serialize the items to create the underlying JsonArray. Note the
-        /// other overloads which avoid this serialization step.
-        /// </remarks>
         public static SchemaArray FromRange<T>(IEnumerable<T> items)
             where T : struct, IJsonValue<T>
         {
@@ -288,6 +297,21 @@ public readonly partial struct Applicator
 
             return new SchemaArray(builder.ToImmutable());
         }
+
+        /// <inheritdoc/>
+        IEnumerator<Corvus.Json.JsonSchema.Draft202012.Schema> IEnumerable<Corvus.Json.JsonSchema.Draft202012.Schema>.GetEnumerator()
+        {
+            return EnumerateArray();
+        }
+
+        /// <inheritdoc/>
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return EnumerateArray();
+        }
+
+        /// <inheritdoc/>
+        int IReadOnlyCollection<Corvus.Json.JsonSchema.Draft202012.Schema>.Count => this.GetArrayLength();
 
         /// <inheritdoc/>
         public ImmutableList<JsonAny> AsImmutableList()

@@ -80,9 +80,15 @@ internal ref struct ValueCursor
     ///   A <see cref="string" /> that represents this instance.
     /// </returns>
     public override readonly string ToString() =>
+#if NET8_0_OR_GREATER
         this.Index <= 0 ? $"^{this.Value}"
             : this.Index >= this.Length ? $"{this.Value}^"
             : this.Value.ToString().Insert(this.Index, "^");
+#else
+        this.Index <= 0 ? $"^{this.Value.ToString()}"
+            : this.Index >= this.Length ? $"{this.Value.ToString()}^"
+            : this.Value.ToString().Insert(this.Index, "^");
+#endif
 
     /// <summary>
     /// Peek the next character.

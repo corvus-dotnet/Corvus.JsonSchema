@@ -53,7 +53,11 @@ public static class SchemaExtensionsDraft6
             if (schema.Description.IsNotNullOrUndefined())
             {
                 // Unescaped new lines in the string value.
+#if NET8_0_OR_GREATER
                 string[]? lines = schema.Description.GetString()?.Split("\n");
+#else
+                string[]? lines = schema.Description.GetString()?.Split('\n');
+#endif
                 if (lines is string[] l)
                 {
                     foreach (string line in l)
@@ -74,7 +78,11 @@ public static class SchemaExtensionsDraft6
                 {
                     documentation.AppendLine("/// <example>");
                     documentation.AppendLine("/// <code>");
+#if NET8_0_OR_GREATER
                     string[] lines = example.ToString().Split("\\n");
+#else
+                    string[] lines = example.ToString().Split(["\\n"], StringSplitOptions.None);
+#endif
                     foreach (string line in lines)
                     {
                         documentation.Append("/// ");
@@ -512,6 +520,54 @@ public static class SchemaExtensionsDraft6
             draft6Schema.MultipleOf.IsUndefined() &&
             draft6Schema.Not.IsUndefined() &&
             draft6Schema.OneOf.IsUndefined() &&
+            draft6Schema.Pattern.IsUndefined() &&
+            draft6Schema.PatternProperties.IsUndefined() &&
+            draft6Schema.Properties.IsUndefined() &&
+            draft6Schema.PropertyNames.IsUndefined() &&
+            draft6Schema.Ref.IsUndefined() &&
+            draft6Schema.Required.IsUndefined() &&
+            draft6Schema.Title.IsUndefined() &&
+            draft6Schema.Type.IsUndefined() &&
+            draft6Schema.UniqueItems.IsUndefined();
+    }
+
+    /// <summary>
+    /// Determines if this schema is a naked oneOf.
+    /// </summary>
+    /// <param name="draft6Schema">The schema to test.</param>
+    /// <returns><c>True</c> if the schema has a oneOf and no other substantive properties.</returns>
+    public static bool IsNakedOneOf(this Schema draft6Schema)
+    {
+        return
+            draft6Schema.OneOf.IsNotUndefined() &&
+            draft6Schema.AdditionalItems.IsUndefined() &&
+            draft6Schema.AdditionalProperties.IsUndefined() &&
+            draft6Schema.AllOf.IsUndefined() &&
+            draft6Schema.AnyOf.IsUndefined() &&
+            draft6Schema.Const.IsUndefined() &&
+            draft6Schema.Contains.IsUndefined() &&
+            draft6Schema.GetContentEncoding().IsUndefined() &&
+            draft6Schema.GetContentMediaType().IsUndefined() &&
+            draft6Schema.Default.IsUndefined() &&
+            draft6Schema.Definitions.IsUndefined() &&
+            draft6Schema.Dependencies.IsUndefined() &&
+            draft6Schema.Description.IsUndefined() &&
+            draft6Schema.Examples.IsUndefined() &&
+            draft6Schema.Enum.IsUndefined() &&
+            draft6Schema.ExclusiveMaximum.IsUndefined() &&
+            draft6Schema.ExclusiveMinimum.IsUndefined() &&
+            draft6Schema.Format.IsUndefined() &&
+            draft6Schema.Items.IsUndefined() &&
+            draft6Schema.Maximum.IsUndefined() &&
+            draft6Schema.MaxItems.IsUndefined() &&
+            draft6Schema.MaxLength.IsUndefined() &&
+            draft6Schema.MaxProperties.IsUndefined() &&
+            draft6Schema.Minimum.IsUndefined() &&
+            draft6Schema.MinItems.IsUndefined() &&
+            draft6Schema.MinLength.IsUndefined() &&
+            draft6Schema.MinProperties.IsUndefined() &&
+            draft6Schema.MultipleOf.IsUndefined() &&
+            draft6Schema.Not.IsUndefined() &&
             draft6Schema.Pattern.IsUndefined() &&
             draft6Schema.PatternProperties.IsUndefined() &&
             draft6Schema.Properties.IsUndefined() &&

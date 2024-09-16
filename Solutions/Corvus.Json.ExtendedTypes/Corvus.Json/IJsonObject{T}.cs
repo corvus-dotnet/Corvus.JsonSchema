@@ -23,7 +23,7 @@ public interface IJsonObject<T> : IJsonValue<T>
     JsonAny this[in JsonPropertyName name] { get; }
 
     /// <summary>
-    /// Enumerate the array.
+    /// Enumerate the object.
     /// </summary>
     /// <returns>An enumerator for the object.</returns>
     /// <exception cref="InvalidOperationException">The value is not an object.</exception>
@@ -162,30 +162,31 @@ public interface IJsonObject<T> : IJsonValue<T>
     /// Removes the given property value.
     /// </summary>
     /// <param name="name">The name of the property.</param>
-    /// <returns>The isntance with the property removed.</returns>
+    /// <returns>The instance with the property removed.</returns>
     T RemoveProperty(in JsonPropertyName name);
 
     /// <summary>
     /// Removes the given property value.
     /// </summary>
     /// <param name="name">The name of the property.</param>
-    /// <returns>The isntance with the property removed.</returns>
+    /// <returns>The instance with the property removed.</returns>
     T RemoveProperty(string name);
 
     /// <summary>
     /// Removes the given property value.
     /// </summary>
     /// <param name="name">The name of the property.</param>
-    /// <returns>The isntance with the property removed.</returns>
+    /// <returns>The instance with the property removed.</returns>
     T RemoveProperty(ReadOnlySpan<char> name);
 
     /// <summary>
     /// Removes the given property value.
     /// </summary>
     /// <param name="utf8Name">The utf8-encoded name of the property.</param>
-    /// <returns>The isntance with the property removed.</returns>
+    /// <returns>The instance with the property removed.</returns>
     T RemoveProperty(ReadOnlySpan<byte> utf8Name);
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Creates an instance of the type from the given dictionary of properties.
     /// </summary>
@@ -206,6 +207,7 @@ public interface IJsonObject<T> : IJsonValue<T>
     /// <param name="source">The dictionary of properties.</param>
     /// <returns>An instance of the type initialized from the dictionary of properties.</returns>
     static abstract T FromProperties(params (JsonPropertyName Name, JsonAny Value)[] source);
+#endif
 
     /// <summary>
     /// Gets the object as an immutable dictionary of properties.

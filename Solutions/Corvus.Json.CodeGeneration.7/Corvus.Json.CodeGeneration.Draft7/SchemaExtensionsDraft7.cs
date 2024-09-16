@@ -53,7 +53,11 @@ public static class SchemaExtensionsDraft7
             if (schema.Description.IsNotNullOrUndefined())
             {
                 // Unescaped new lines in the string value.
+#if NET8_0_OR_GREATER
                 string[]? lines = schema.Description.GetString()?.Split("\n");
+#else
+                string[]? lines = schema.Description.GetString()?.Split('\n');
+#endif
                 if (lines is string[] l)
                 {
                     foreach (string line in l)
@@ -74,7 +78,11 @@ public static class SchemaExtensionsDraft7
                 {
                     documentation.AppendLine("/// <example>");
                     documentation.AppendLine("/// <code>");
+#if NET8_0_OR_GREATER
                     string[] lines = example.ToString().Split("\\n");
+#else
+                    string[] lines = example.ToString().Split(["\\n"], StringSplitOptions.None);
+#endif
                     foreach (string line in lines)
                     {
                         documentation.Append("/// ");
@@ -484,6 +492,60 @@ public static class SchemaExtensionsDraft7
             draft7Schema.MultipleOf.IsUndefined() &&
             draft7Schema.Not.IsUndefined() &&
             draft7Schema.OneOf.IsUndefined() &&
+            draft7Schema.Pattern.IsUndefined() &&
+            draft7Schema.PatternProperties.IsUndefined() &&
+            draft7Schema.Properties.IsUndefined() &&
+            draft7Schema.PropertyNames.IsUndefined() &&
+            draft7Schema.ReadOnly.IsUndefined() &&
+            draft7Schema.Ref.IsUndefined() &&
+            draft7Schema.Required.IsUndefined() &&
+            draft7Schema.Then.IsUndefined() &&
+            draft7Schema.Title.IsUndefined() &&
+            draft7Schema.Type.IsUndefined() &&
+            draft7Schema.UniqueItems.IsUndefined() &&
+            draft7Schema.WriteOnly.IsUndefined();
+    }
+
+    /// <summary>
+    /// Determines if this schema is a naked oneOf.
+    /// </summary>
+    /// <param name="draft7Schema">The schema to test.</param>
+    /// <returns><c>True</c> if the schema has a oneOf and no other substantive properties.</returns>
+    public static bool IsNakedOneOf(this Schema draft7Schema)
+    {
+        return
+            draft7Schema.OneOf.IsNotUndefined() &&
+            draft7Schema.Comment.IsUndefined() &&
+            draft7Schema.AdditionalItems.IsUndefined() &&
+            draft7Schema.AdditionalProperties.IsUndefined() &&
+            draft7Schema.AllOf.IsUndefined() &&
+            draft7Schema.AnyOf.IsUndefined() &&
+            draft7Schema.Const.IsUndefined() &&
+            draft7Schema.Contains.IsUndefined() &&
+            draft7Schema.ContentEncoding.IsUndefined() &&
+            draft7Schema.ContentMediaType.IsUndefined() &&
+            draft7Schema.Default.IsUndefined() &&
+            draft7Schema.Definitions.IsUndefined() &&
+            draft7Schema.Dependencies.IsUndefined() &&
+            draft7Schema.Description.IsUndefined() &&
+            draft7Schema.Examples.IsUndefined() &&
+            draft7Schema.Else.IsUndefined() &&
+            draft7Schema.Enum.IsUndefined() &&
+            draft7Schema.ExclusiveMaximum.IsUndefined() &&
+            draft7Schema.ExclusiveMinimum.IsUndefined() &&
+            draft7Schema.Format.IsUndefined() &&
+            draft7Schema.If.IsUndefined() &&
+            draft7Schema.Items.IsUndefined() &&
+            draft7Schema.Maximum.IsUndefined() &&
+            draft7Schema.MaxItems.IsUndefined() &&
+            draft7Schema.MaxLength.IsUndefined() &&
+            draft7Schema.MaxProperties.IsUndefined() &&
+            draft7Schema.Minimum.IsUndefined() &&
+            draft7Schema.MinItems.IsUndefined() &&
+            draft7Schema.MinLength.IsUndefined() &&
+            draft7Schema.MinProperties.IsUndefined() &&
+            draft7Schema.MultipleOf.IsUndefined() &&
+            draft7Schema.Not.IsUndefined() &&
             draft7Schema.Pattern.IsUndefined() &&
             draft7Schema.PatternProperties.IsUndefined() &&
             draft7Schema.Properties.IsUndefined() &&

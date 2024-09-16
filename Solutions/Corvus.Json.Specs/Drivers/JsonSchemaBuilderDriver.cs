@@ -3,8 +3,11 @@
 // </copyright>
 
 using System.Collections.Immutable;
+using System.Linq.Expressions;
 using System.Reflection;
+#if NET8_0_OR_GREATER
 using System.Runtime.Loader;
+#endif
 using System.Text;
 using System.Text.Json;
 using Corvus.Json;
@@ -33,11 +36,17 @@ global using global::System.Net.Http;
 global using global::System.Threading;
 global using global::System.Threading.Tasks;";
 
+    private static readonly MethodInfo AsSpanMethod = GetAsSpanMethod();
+
+    private static readonly MethodInfo SequenceEqualMethod = GetSequenceEqualMethod();
+
     private readonly IConfiguration configuration;
     private readonly IJsonSchemaBuilder builder;
     private readonly string settingsKey;
     private readonly FileSystemDocumentResolver documentResolver = new();
-    private TestAssemblyLoadContext? assemblyLoadContext = new();
+#if NET8_0_OR_GREATER
+    private readonly TestAssemblyLoadContext? assemblyLoadContext = new();
+#endif
 
     /// <summary>
     /// Initializes a new instance of the <see cref="JsonSchemaBuilderDriver"/> class.
@@ -52,17 +61,166 @@ global using global::System.Threading.Tasks;";
         this.settingsKey = settingsKey;
     }
 
+    /// <summary>
+    /// Create an instance of the given <see cref="IJsonValue"/> type from
+    /// the json data provided.
+    /// </summary>
+    /// <param name="type">The type (which must be a <see cref="IJsonValue"/> and have a constructor with a single <see cref="JsonElement"/> parameter.</param>
+    /// <param name="data">The JSON data from which to initialize the value.</param>
+    /// <returns>An instance of a <see cref="IJsonValue"/> initialized from the data.</returns>
+    public static IJsonValue CreateInstance(Type type, JsonElement data)
+    {
+        ConstructorInfo? constructor =
+            type
+                .GetConstructors()
+                .SingleOrDefault(c => c.GetParameters().Length == 1 && c.GetParameters()[0].ParameterType.Name.StartsWith("JsonElement"))
+            ?? throw new InvalidOperationException($"Unable to find the public JsonElement constructor on type '{type.FullName}'");
+
+        return (IJsonValue)constructor.Invoke([data]);
+    }
+
+    /// <summary>
+    /// Create an instance of the given <see cref="IJsonValue"/> type from
+    /// the numeric data provided, by casting the instance from a value of the given type.
+    /// </summary>
+    /// <param name="instanceType">The type (which must be a <see cref="IJsonValue"/> and have a constructor with a single <see cref="JsonElement"/> parameter.</param>
+    /// <param name="numericType">The numeric type for which to parse the data.</param>
+    /// <param name="data">The numeric data from which to parse the value.</param>
+    /// <returns>An instance of a <see cref="IJsonValue"/> initialized from the data.</returns>
+    public static IJsonValue CastToInstance(Type instanceType, string numericType, string data)
+    {
+        return numericType switch
+        {
+            "sbyte" => Cast(sbyte.Parse(data), instanceType),
+            "int16" => Cast(short.Parse(data), instanceType),
+            "int32" => Cast(int.Parse(data), instanceType),
+            "int64" => Cast(long.Parse(data), instanceType),
+#if NET8_0_OR_GREATER
+            "int128" => Cast(Int128.Parse(data), instanceType),
+#endif
+            "byte" => Cast(byte.Parse(data), instanceType),
+            "uint16" => Cast(ushort.Parse(data), instanceType),
+            "uint32" => Cast(uint.Parse(data), instanceType),
+            "uint64" => Cast(ulong.Parse(data), instanceType),
+#if NET8_0_OR_GREATER
+            "uint128" => Cast(UInt128.Parse(data), instanceType),
+#endif
+            "decimal" => Cast(decimal.Parse(data), instanceType),
+            "double" => Cast(double.Parse(data), instanceType),
+            "single" => Cast(float.Parse(data), instanceType),
+#if NET8_0_OR_GREATER
+            "half" => Cast(Half.Parse(data), instanceType),
+#endif
+            _ => throw new InvalidOperationException($"Unexpected type: {numericType}."),
+        };
+    }
+
+    /// <summary>
+    /// Create an instance of a numeric array type from an array of values.
+    /// </summary>
+    /// <typeparam name="TItems">The type of the items in the array.</typeparam>
+    /// <param name="instanceType">The numeric array instance type.</param>
+    /// <param name="values">The values from which to create the numeric array.</param>
+    /// <returns>An instance of the requested type, as an <see cref="IJsonValue"/>.</returns>
+    /// <exception cref="InvalidOperationException">The Create(ReadOnlySpan{TItems}) method was not found on the instance type..</exception>
+    public static IJsonValue CreateInstanceOfNumericArrayFromValues<TItems>(Type instanceType, TItems[] values)
+    {
+        ParameterExpression p = Expression.Parameter(typeof(TItems[]));
+        MethodInfo? createMethod = instanceType.GetMethod("FromValues", BindingFlags.Static | BindingFlags.Public, null, [typeof(ReadOnlySpan<TItems>)], null);
+        MethodInfo asSpanMethod = AsSpanMethod.MakeGenericMethod(typeof(TItems));
+
+        if (createMethod is MethodInfo mInfo)
+        {
+            UnaryExpression arrayToReadOnlySpan =
+                Expression.ConvertChecked(
+                    Expression.Call(null, asSpanMethod, p), typeof(ReadOnlySpan<TItems>));
+
+            MethodCallExpression callTargetTypeCreateWithTheReadOnlySpanOfValues = Expression.Call(null, mInfo, arrayToReadOnlySpan);
+            UnaryExpression convertResultToIJsonValue = Expression.ConvertChecked(callTargetTypeCreateWithTheReadOnlySpanOfValues, typeof(IJsonValue));
+            Func<TItems[], IJsonValue> func = Expression.Lambda<Func<TItems[], IJsonValue>>(convertResultToIJsonValue, p).Compile();
+            return func(values);
+        }
+
+        throw new InvalidOperationException($"Unable to find FromValues(ReadOnlySpan<{typeof(TItems)}>) on {instanceType.Name}");
+    }
+
+    /// <summary>
+    /// Compare an instance of a numeric array type with an array of values.
+    /// </summary>
+    /// <typeparam name="TItems">The type of the items in the array.</typeparam>
+    /// <param name="instanceType">The numeric array instance type.</param>
+    /// <param name="instance">The actual instance of the given type.</param>
+    /// <param name="values">The values with which to compare the numeric array.</param>
+    /// <returns><see langword="true"/> if the values are equals.</returns>
+    /// <exception cref="InvalidOperationException">The Create(ReadOnlySpan{TItems}) method was not found on the instance type..</exception>
+    public static bool CompareInstanceOfNumericArrayWithValues<TItems>(Type instanceType, IJsonValue instance, TItems[] values)
+    {
+        ParameterExpression p1 = Expression.Parameter(typeof(IJsonValue));
+        ParameterExpression p2 = Expression.Parameter(typeof((TItems[], TItems[], int)));
+        MethodInfo? tryGetNumericValuesMethod = instanceType.GetMethod("TryGetNumericValues", BindingFlags.Instance | BindingFlags.Public, null, [typeof(Span<TItems>), typeof(int).MakeByRefType()], null);
+        MethodInfo asSpanMethod = AsSpanMethod.MakeGenericMethod(typeof(TItems));
+        MethodInfo sequenceEqualMethod = SequenceEqualMethod.MakeGenericMethod(typeof(TItems));
+
+        if (tryGetNumericValuesMethod is MethodInfo mInfo)
+        {
+            UnaryExpression castInstanceToInstanceType =
+                Expression.ConvertChecked(Expression.Constant(instance), instanceType);
+
+            NewArrayExpression constructTargetArray = Expression.NewArrayBounds(typeof(TItems), Expression.Property(null, instanceType, "ValueBufferSize"));
+
+            BinaryExpression assignTargetArray = Expression.Assign(Expression.PropertyOrField(p2, "Item2"), constructTargetArray);
+
+            MethodCallExpression outputSpan = Expression.Call(null, asSpanMethod, Expression.PropertyOrField(p2, "Item2"));
+
+            MethodCallExpression expectedSpan = Expression.Call(null, asSpanMethod, Expression.PropertyOrField(p2, "Item1"));
+
+            MethodCallExpression callTryGetNumericValues =
+                Expression.Call(castInstanceToInstanceType, mInfo, outputSpan, Expression.PropertyOrField(p2, "Item3"));
+
+            MethodCallExpression sequenceEqualExpression =
+                Expression.Call(
+                    null,
+                    sequenceEqualMethod,
+                    Expression.ConvertChecked(expectedSpan, typeof(ReadOnlySpan<TItems>)),
+                    Expression.ConvertChecked(outputSpan, typeof(ReadOnlySpan<TItems>)));
+
+            BlockExpression block =
+                Expression.Block(
+                    assignTargetArray,
+                    callTryGetNumericValues,
+                    sequenceEqualExpression);
+
+            Func<IJsonValue, (TItems[], TItems[], int), bool> func = Expression.Lambda<Func<IJsonValue, (TItems[], TItems[], int), bool>>(block, p1, p2).Compile();
+            return func(instance, (values, Array.Empty<TItems>(), 0));
+        }
+
+        throw new InvalidOperationException($"Unable to find TryGetNumericValues(ReadOnlySpan<{typeof(TItems)}>) on {instanceType.Name}");
+    }
+
+    /// <summary>
+    /// Create an instance of the given <see cref="IJsonValue"/> type from
+    /// the json data provided.
+    /// </summary>
+    /// <param name="type">The type (which must be a <see cref="IJsonValue"/> and have a constructor with a single <see cref="JsonElement"/> parameter.</param>
+    /// <param name="data">The JSON data from which to initialize the value.</param>
+    /// <returns>An instance of a <see cref="IJsonValue"/> initialized from the data.</returns>
+    public static IJsonValue CreateInstance(Type type, string data)
+    {
+        using var document = JsonDocument.Parse(data);
+
+/* Unmerged change from project 'Corvus.Json.Specs (net481)'
+Before:
+        return this.CreateInstance(type, document.RootElement.Clone());
+After:
+        return JsonSchemaBuilderDriver.CreateInstance(type, document.RootElement.Clone());
+*/
+        return CreateInstance(type, document.RootElement.Clone());
+    }
+
     public void Dispose()
     {
-        if (this.assemblyLoadContext is not null)
-        {
-            this.documentResolver.Dispose();
-            this.assemblyLoadContext!.Unload();
-            this.assemblyLoadContext = null;
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
-            GC.SuppressFinalize(this);
-        }
+        this.documentResolver.Dispose();
+        GC.SuppressFinalize(this);
     }
 
     /// <summary>
@@ -71,7 +229,7 @@ global using global::System.Threading.Tasks;";
     /// <param name="filename">The name of the file containing the element.</param>
     /// <param name="referenceFragment">The local reference to the element in the file.</param>
     /// <returns>The element, found in the specified document.</returns>
-    public Task<JsonElement?> GetElementFromLocalFile(string filename, string referenceFragment)
+    public ValueTask<JsonElement?> GetElementFromLocalFile(string filename, string referenceFragment)
     {
         string baseDirectory = this.configuration[$"{this.settingsKey}:testBaseDirectory"]!;
         string path = Path.Combine(baseDirectory, filename);
@@ -85,8 +243,9 @@ global using global::System.Threading.Tasks;";
     /// <param name="virtualFileName">The virtual file name for the schema.</param>
     /// <param name="featureName">The unique name of the feature.</param>
     /// <param name="scenarioName">The unique name of the scenario.</param>
-    /// <returns>A <see cref="Task{Type}"/> which, when complete, returns the <see cref="Type"/> generated for the schema.</returns>
-    public async Task<Type> GenerateTypeFor(string schema, string virtualFileName, string featureName, string scenarioName)
+    /// <param name="validateFormat">If true, the format keyword will be validated.</param>
+    /// <returns>A <see cref="ValueTask{Type}"/> which, when complete, returns the <see cref="Type"/> generated for the schema.</returns>
+    public async ValueTask<Type> GenerateTypeForVirtualFile(string schema, string virtualFileName, string featureName, string scenarioName, bool validateFormat)
     {
         string baseDirectory = this.configuration[$"{this.settingsKey}:testBaseDirectory"]!;
         string path = Path.Combine(baseDirectory, virtualFileName);
@@ -98,76 +257,100 @@ global using global::System.Threading.Tasks;";
 
         this.builder.AddDocument(path, JsonDocument.Parse(schema));
 
-        (string rootType, ImmutableDictionary<JsonReference, TypeAndCode> generatedTypes) = await this.builder.BuildTypesFor(new JsonReference(path), $"{featureName}Feature.{scenarioName}", rebase: true).ConfigureAwait(false);
+        (string rootType, ImmutableDictionary<JsonReference, TypeAndCode> generatedTypes) = await this.builder.BuildTypesFor(new JsonReference(path), $"{featureName}Feature.{scenarioName}", rebase: true, validateFormat: validateFormat).ConfigureAwait(false);
+#if NET8_0_OR_GREATER
         return CompileGeneratedType(this.assemblyLoadContext!, rootType, generatedTypes);
+#else
+        return CompileGeneratedType(rootType, generatedTypes);
+#endif
     }
 
     /// <summary>
     /// Generates a type for the given root Schema element.
     /// </summary>
-    /// <param name="writeBenchmarks">If <c>true</c>, write benchmark files.</param>
-    /// <param name="index">The index of the scenario example.</param>
     /// <param name="filename">The filename containing the Schema.</param>
     /// <param name="schemaPath">The path to the Schema in the file.</param>
-    /// <param name="dataPath">The path to the data in the file.</param>
     /// <param name="featureName">The feature name for the type.</param>
     /// <param name="scenarioName">The scenario name for the type.</param>
-    /// <param name="valid">Whether the scenario is expected to be valid.</param>
+    /// <param name="validateFormat">If true, the format keyword will be validated.</param>
     /// <returns>The fully qualified type name of the entity we have generated.</returns>
-#pragma warning disable IDE0060 // Remove unused parameter
-#pragma warning disable RCS1163 // Unused parameter.
-    public async Task<Type> GenerateTypeFor(bool writeBenchmarks, int index, string filename, string schemaPath, string dataPath, string featureName, string scenarioName, bool valid)
-#pragma warning restore RCS1163 // Unused parameter.
-#pragma warning restore IDE0060 // Remove unused parameter
+    public async ValueTask<Type> GenerateTypeForJsonSchemaTestSuite(string filename, string schemaPath, string featureName, string scenarioName, bool validateFormat)
     {
         string baseDirectory = this.configuration[$"{this.settingsKey}:testBaseDirectory"]!;
         string path = Path.Combine(baseDirectory, filename) + schemaPath;
 
-        (string rootType, ImmutableDictionary<JsonReference, TypeAndCode> generatedTypes) = await this.builder.BuildTypesFor(new JsonReference(path), $"{featureName}Feature.{scenarioName}", rebase: true).ConfigureAwait(false);
+        (string rootType, ImmutableDictionary<JsonReference, TypeAndCode> generatedTypes) = await this.builder.BuildTypesFor(new JsonReference(path), $"{featureName}Feature.{scenarioName}", rebase: true, validateFormat: validateFormat).ConfigureAwait(false);
 
+#if NET8_0_OR_GREATER
         return CompileGeneratedType(this.assemblyLoadContext!, rootType, generatedTypes);
+#else
+        return CompileGeneratedType(rootType, generatedTypes);
+#endif
     }
 
     /// <summary>
-    /// Create an instance of the given <see cref="IJsonValue"/> type from
-    /// the json data provided.
+    /// Generate the schema for the given type.
     /// </summary>
-    /// <param name="type">The type (which must be a <see cref="IJsonValue"/> and have a constructor with a single <see cref="JsonElement"/> parameter.</param>
-    /// <param name="data">The JSON data from which to initialize the value.</param>
-    /// <returns>An instance of a <see cref="IJsonValue"/> initialized from the data.</returns>
-    public IJsonValue CreateInstance(Type type, JsonElement data)
+    /// <param name="schema">The schema.</param>
+    /// <param name="virtualFileName">The virtual file name for the schema.</param>
+    /// <param name="featureName">The unique name of the feature.</param>
+    /// <param name="scenarioName">The unique name of the scenario.</param>
+    /// <param name="validateFormat">If true, the format keyword will be validated.</param>
+    /// <returns>A <see cref="ValueTask{Type}"/> which, when complete, returns the <see cref="Type"/> generated for the schema.</returns>
+    public Type SynchronouslyGenerateTypeForVirtualFile(string schema, string virtualFileName, string featureName, string scenarioName, bool validateFormat)
     {
-        ConstructorInfo? constructor =
-            type
-                .GetConstructors()
-                .SingleOrDefault(c => c.GetParameters().Length == 1 && c.GetParameters()[0].ParameterType.Name.StartsWith("JsonElement"))
-            ?? throw new InvalidOperationException($"Unable to find the public JsonElement constructor on type '{type.FullName}'");
+        string baseDirectory = this.configuration[$"{this.settingsKey}:testBaseDirectory"]!;
+        string path = Path.Combine(baseDirectory, virtualFileName);
 
-        return (IJsonValue)constructor.Invoke([data]);
+        if (SchemaReferenceNormalization.TryNormalizeSchemaReference(path, out string? result))
+        {
+            path = result;
+        }
+
+        this.builder.AddDocument(path, JsonDocument.Parse(schema));
+
+        (string rootType, ImmutableDictionary<JsonReference, TypeAndCode> generatedTypes) = this.builder.SafeBuildTypesFor(new JsonReference(path), $"{featureName}Feature.{scenarioName}", rebase: true, validateFormat: true);
+#if NET8_0_OR_GREATER
+        return CompileGeneratedType(this.assemblyLoadContext!, rootType, generatedTypes);
+#else
+        return CompileGeneratedType(rootType, generatedTypes);
+#endif
     }
 
     /// <summary>
-    /// Create an instance of the given <see cref="IJsonValue"/> type from
-    /// the json data provided.
+    /// Generates a type for the given root Schema element.
     /// </summary>
-    /// <param name="type">The type (which must be a <see cref="IJsonValue"/> and have a constructor with a single <see cref="JsonElement"/> parameter.</param>
-    /// <param name="data">The JSON data from which to initialize the value.</param>
-    /// <returns>An instance of a <see cref="IJsonValue"/> initialized from the data.</returns>
-    public IJsonValue CreateInstance(Type type, string data)
+    /// <param name="filename">The filename containing the Schema.</param>
+    /// <param name="schemaPath">The path to the Schema in the file.</param>
+    /// <param name="featureName">The feature name for the type.</param>
+    /// <param name="scenarioName">The scenario name for the type.</param>
+    /// <param name="validateFormat">If true, the format keyword will be validated.</param>
+    /// <returns>The fully qualified type name of the entity we have generated.</returns>
+    public Type SynchronouslyGenerateTypeForJsonSchemaTestSuite(string filename, string schemaPath, string featureName, string scenarioName, bool validateFormat)
     {
-        using var document = JsonDocument.Parse(data);
-        return this.CreateInstance(type, document.RootElement.Clone());
+        string baseDirectory = this.configuration[$"{this.settingsKey}:testBaseDirectory"]!;
+        string path = Path.Combine(baseDirectory, filename) + schemaPath;
+
+        (string rootType, ImmutableDictionary<JsonReference, TypeAndCode> generatedTypes) = this.builder.SafeBuildTypesFor(new JsonReference(path), $"{featureName}Feature.{scenarioName}", rebase: true, validateFormat: validateFormat);
+
+#if NET8_0_OR_GREATER
+        return CompileGeneratedType(this.assemblyLoadContext!, rootType, generatedTypes);
+#else
+        return CompileGeneratedType(rootType, generatedTypes);
+#endif
     }
 
+#if NET8_0_OR_GREATER
     private static Type CompileGeneratedType(AssemblyLoadContext assemblyLoadContext, string rootType, ImmutableDictionary<JsonReference, TypeAndCode> generatedTypes)
     {
         bool isCorvusType = rootType.StartsWith("Corvus.");
 
-        IEnumerable<SyntaxTree> syntaxTrees = ParseSyntaxTrees(generatedTypes);
+        (IEnumerable<MetadataReference> references, IEnumerable<string?> defines) = BuildMetadataReferencesAndDefines();
+
+        IEnumerable<SyntaxTree> syntaxTrees = ParseSyntaxTrees(generatedTypes, defines);
 
         // We are happy with the defaults (debug etc.)
         var options = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary);
-        IEnumerable<MetadataReference> references = BuildMetadataReferences();
         var compilation = CSharpCompilation.Create($"Driver.GeneratedTypes_{Guid.NewGuid()}", syntaxTrees, references, options);
         using MemoryStream outputStream = new();
         EmitResult result = compilation.Emit(outputStream);
@@ -189,6 +372,39 @@ global using global::System.Threading.Tasks;";
 
         return generatedAssembly.ExportedTypes.Single(t => t.FullName == rootType);
     }
+#else
+    private static Type CompileGeneratedType(string rootType, ImmutableDictionary<JsonReference, TypeAndCode> generatedTypes)
+    {
+        bool isCorvusType = rootType.StartsWith("Corvus.");
+
+        (IEnumerable<MetadataReference> references, IEnumerable<string?> defines) = BuildMetadataReferencesAndDefines();
+
+        IEnumerable<SyntaxTree> syntaxTrees = ParseSyntaxTrees(generatedTypes, defines);
+
+        // We are happy with the defaults (debug etc.)
+        var options = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary);
+        var compilation = CSharpCompilation.Create($"Driver.GeneratedTypes_{Guid.NewGuid()}", syntaxTrees, references, options);
+        using MemoryStream outputStream = new();
+        EmitResult result = compilation.Emit(outputStream);
+
+        if (!result.Success)
+        {
+            throw new Exception("Unable to compile generated code\r\n" + BuildCompilationErrors(result));
+        }
+
+        outputStream.Flush();
+        outputStream.Position = 0;
+
+        var generatedAssembly = Assembly.Load(outputStream.ToArray());
+
+        if (isCorvusType)
+        {
+            return typeof(JsonAny).Assembly.ExportedTypes.Single(t => t.FullName == rootType);
+        }
+
+        return generatedAssembly.ExportedTypes.Single(t => t.FullName == rootType);
+    }
+#endif
 
     private static string BuildCompilationErrors(EmitResult result)
     {
@@ -201,16 +417,22 @@ global using global::System.Threading.Tasks;";
         return builder.ToString();
     }
 
-    private static IEnumerable<MetadataReference> BuildMetadataReferences()
+    private static (IEnumerable<MetadataReference> MetadataReferences, IEnumerable<string?> Defines) BuildMetadataReferencesAndDefines()
     {
-        return from l in DependencyContext.Default.CompileLibraries
-               from r in l.ResolveReferencePaths()
-               select MetadataReference.CreateFromFile(r);
+        DependencyContext? ctx = DependencyContext.Default ?? DependencyContext.Load(Assembly.GetExecutingAssembly());
+        return ctx is null
+            ? throw new InvalidOperationException("Unable to find compilation context.")
+            : ((IEnumerable<MetadataReference> MetadataReferences, IEnumerable<string?> Defines))(from l in ctx.CompileLibraries
+                from r in l.ResolveReferencePaths()
+                select MetadataReference.CreateFromFile(r),
+               ctx.CompilationOptions.Defines.AsEnumerable());
     }
 
-    private static IEnumerable<SyntaxTree> ParseSyntaxTrees(ImmutableDictionary<JsonReference, TypeAndCode> generatedTypes)
+    private static IEnumerable<SyntaxTree> ParseSyntaxTrees(ImmutableDictionary<JsonReference, TypeAndCode> generatedTypes, IEnumerable<string?> defines)
     {
-        CSharpParseOptions parseOptions = CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.Preview);
+        CSharpParseOptions parseOptions = CSharpParseOptions.Default
+            .WithLanguageVersion(LanguageVersion.Preview)
+            .WithPreprocessorSymbols(defines.Where(s => s is not null).Cast<string>());
         yield return CSharpSyntaxTree.ParseText(GlobalUsingStatements, options: parseOptions, path: "GlobalUsingStatements.cs");
 
         foreach (KeyValuePair<JsonReference, TypeAndCode> type in generatedTypes)
@@ -222,6 +444,61 @@ global using global::System.Threading.Tasks;";
         }
     }
 
+    private static IJsonValue Cast<TSource>(TSource s, Type targetType)
+    {
+        return CastFrom<TSource>(targetType)(s);
+    }
+
+    // Not efficient - it doesn't cache the from/to values, but fine for test.
+    private static Func<TSource, IJsonValue> CastFrom<TSource>(Type targetType)
+    {
+        ParameterExpression p = Expression.Parameter(typeof(TSource));
+        UnaryExpression c = Expression.ConvertChecked(p, targetType);
+        UnaryExpression toIJsonValue = Expression.ConvertChecked(c, typeof(IJsonValue));
+        return Expression.Lambda<Func<TSource, IJsonValue>>(toIJsonValue, p).Compile();
+    }
+
+    private static MethodInfo GetAsSpanMethod()
+    {
+        var items = typeof(MemoryExtensions)
+                    .GetMethods(BindingFlags.Static | BindingFlags.Public)
+                    .Where(m => m.Name == "AsSpan")
+                    .Select(
+                        m => new
+                        {
+                            Method = m,
+                            Params = m.GetParameters(),
+                            Args = m.GetGenericArguments(),
+                        })
+                    .Where(x => x.Params.Length == 1 && x.Args.Length == 1 && x.Params[0].ParameterType == x.Args[0].MakeArrayType());
+
+        return items
+                    .Select(x => x.Method)
+                    .First();
+    }
+
+    private static MethodInfo GetSequenceEqualMethod()
+    {
+        var items = typeof(MemoryExtensions)
+                    .GetMethods(BindingFlags.Static | BindingFlags.Public)
+                    .Where(m => m.Name == "SequenceEqual")
+                    .Select(
+                        m => new
+                        {
+                            Method = m,
+                            Params = m.GetParameters(),
+                            Args = m.GetGenericArguments(),
+                        })
+                    .Where(x => x.Params.Length == 2 && x.Args.Length == 1);
+
+        return items
+            .Where(x => x.Params[0].ParameterType == typeof(ReadOnlySpan<>).MakeGenericType(x.Args[0])
+                                && x.Params[1].ParameterType == typeof(ReadOnlySpan<>).MakeGenericType(x.Args[0]))
+            .Select(x => x.Method)
+            .First();
+    }
+
+#if NET8_0_OR_GREATER
     private class TestAssemblyLoadContext : AssemblyLoadContext
     {
         public TestAssemblyLoadContext()
@@ -229,4 +506,5 @@ global using global::System.Threading.Tasks;";
         {
         }
     }
+#endif
 }

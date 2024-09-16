@@ -1,0 +1,391 @@
+on:
+  workflow_call:
+    inputs:
+      netSdkVersion:
+        description: The primary .NET SDK version required for the build process, as per the syntax required by the 'setup-dotnet' action.
+        required: true
+        type: string
+        default: '6.0.x'
+      additionalNetSdkVersion:
+        description: An additional .NET SDK version required for the build process, as per the syntax required by the 'setup-dotnet' action.
+        required: false
+        type: string
+      pythonVersion:
+        description: Specify an additional Python version required for the build process
+        required: false
+        type: string
+      additionalCachePaths:
+        description: Custom paths that need to be included in the multi-stage pipeline caching.
+        required: false
+        default: ''
+        type: string
+      configuration:
+        description: The target build configuration.  
+        required: false
+        default: 'Release'
+        type: string
+      compilePhaseEnv:
+        description: A JSON object representing the environment variables required when running the 'compile' stage of this workflow.
+        required: false
+        type: string
+      testPhaseEnv:
+        description: A JSON object representing the environment variables required when running the 'test' stage of this workflow.
+        required: false
+        type: string
+      testArtifactName:
+        description: If set, during the test phase, uploads a GitHub artifact with the provided name (path must be specified in `artifactPath`)
+        required: false
+        type: string  
+      testArtifactPath:
+        description: If set, during the test phase, uploads a GitHub artifact with the provided path (name must be specified in `artifactName`). The path can be a file, directory or wildcard pattern; multiple paths can be specified using newline demiliter.
+        required: false
+        type: string  
+      packagePhaseEnv:
+        description: A JSON object representing the environment variables required when running the 'package' stage of this workflow.
+        required: false
+        type: string
+      publishPhaseEnv:
+        description: A JSON object representing the environment variables required when running the 'publish' stage of this workflow.
+        required: false
+        type: string
+      publishArtifactName:
+        description: If set, during the publish phase, uploads a GitHub artifact with the provided name (path must be specified in `artifactPath`)
+        required: false
+        type: string  
+      publishArtifactPath:
+        description: If set, during the publish phase, uploads a GitHub artifact with the provided path (name must be specified in `artifactName`). The path can be a file, directory or wildcard pattern; multiple paths can be specified using newline demiliter.
+        required: false
+        type: string    
+      forcePublish:
+        description: When true, the Publish stage will be run regardless of the current branch or tag.
+        required: false
+        default: false
+        type: boolean
+      skipCleanup:
+        description: When true the pipeline clean-up stage will not be run. For example, the cache used between pipeline stages will be retained.
+        required: false
+        default: false
+        type: boolean
+      buildScriptPath:
+        description: The path to the build script to run.
+        required: false
+        default: ./build.ps1
+        type: string
+      enableCrossOsCaching:
+        description: "When true the enables the 'enableCrossOsArchive' property on the GitHub Actions cache task. ref: https://github.com/actions/cache/blob/main/tips-and-workarounds.md#cross-os-cache"
+        required: false
+        default: false
+        type: boolean
+
+    secrets:
+      compilePhaseAzureCredentials:
+        required: false
+      compilePhaseSecrets:
+        description: A YAML string representing a dictionary of secrets required when running the 'compile' stage of this workflow.
+        required: false
+      testPhaseAzureCredentials:
+        required: false
+      testPhaseSecrets:
+        description: A YAML string representing a dictionary of secrets required when running the 'test' stage of this workflow.
+        required: false
+      packagePhaseAzureCredentials:
+        required: false
+      packagePhaseSecrets:
+        description: A YAML string representing a dictionary of secrets required when running the 'package' stage of this workflow.
+        required: false
+      publishPhaseAzureCredentials:
+        required: false
+      publishPhaseSecrets:
+        description: A YAML string representing a dictionary of secrets required when running the 'publish' stage of this workflow.
+        required: false
+
+env:
+  CODE_COVERAGE_RESULTS_DIR: ${{ vars.BUILD_CODE_COVERAGE_RESULTS_DIR || '_codeCoverage' }}
+  CODE_COVERAGE_RESULTS_FILE: ${{ vars.BUILD_CODE_COVERAGE_RESULTS_FILE || 'Cobertura.xml' }}
+  CODE_COVERAGE_SUMMARY_DIR: ${{ vars.CODE_COVERAGE_SUMMARY_DIR || '.' }}
+  CODE_COVERAGE_SUMMARY_FILE: ${{ vars.CODE_COVERAGE_SUMMARY_FILE || 'code-coverage-results.md' }}
+  CODE_COVERAGE_LOWER_THRESHOLD: ${{ vars.BUILD_CODE_COVERAGE_LOWER_THRESHOLD || 60 }}
+  CODE_COVERAGE_UPPER_THRESHOLD: ${{ vars.BUILD_CODE_COVERAGE_UPPER_THRESHOLD || 80 }}
+
+jobs:
+  compile:
+    name: Compile & Analyse
+    runs-on: windows-latest
+    outputs:
+      semver: ${{ steps.run_compile.outputs.semver }}
+      major: ${{ steps.run_compile.outputs.major }}
+      majorMinor: ${{ steps.run_compile.outputs.majorMinor }}
+      preReleaseTag: ${{ steps.run_compile.outputs.preReleaseTag }}
+
+    steps:
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 #v4.1.1
+      with:
+        fetch-depth: 0
+        submodules: true
+    - uses: endjin/Endjin.RecommendedPractices.GitHubActions/actions/set-env-vars-and-secrets@main
+      with: 
+        environmentVariablesYamlBase64: ${{ inputs.compilePhaseEnv}}
+        secretsYamlBase64: ${{ secrets.compilePhaseSecrets}}
+    - name: Debug Variables
+      if: env.ACTIONS_RUNNER_DEBUG == 'true'
+      run: |
+        gci env:/ | fl | out-string | Write-Host
+      shell: pwsh
+    - name: Check if compilePhaseAzureCredentials secret is set
+      id: compilePhaseAzureCredentials_secret_check
+      shell: bash
+      run: |
+        if [ "${{ secrets.compilePhaseAzureCredentials }}" != '' ]; then
+          echo "available=true" >> $GITHUB_OUTPUT;
+        else
+          echo "available=false" >> $GITHUB_OUTPUT;
+        fi
+    - name: Azure CLI login
+      if: ${{ steps.compilePhaseAzureCredentials_secret_check.outputs.available == 'true' }}
+      uses: azure/login@8c334a195cbb38e46038007b304988d888bf676a    # v2.0.0
+      with:
+        creds: ${{ secrets.compilePhaseAzureCredentials }}
+        enable-AzPSSession: true
+    - uses: endjin/Endjin.RecommendedPractices.GitHubActions/actions/run-scripted-build@feature/multi-os-cache
+      id: run_compile
+      with:
+        displayName: Compile & Analyse
+        buildScriptPath: ${{ inputs.buildScriptPath }}
+        netSdkVersion: ${{ inputs.netSdkVersion }}
+        additionalNetSdkVersion: ${{ inputs.additionalNetSdkVersion }}
+        pythonVersion: ${{ inputs.pythonVersion }}
+        tasks: 'Build,Analysis'
+        configuration: ${{ inputs.configuration }}
+        outputCachePaths: |
+          .nuget-packages
+          Solutions
+          solutions
+          ${{ inputs.additionalCachePaths }}
+        enableCrossOsCaching: ${{ inputs.enableCrossOsCaching}}
+      env:
+        BUILDVAR_AnalysisOutputStorageAccountName: ${{ vars.SBOM_OUTPUT_STORAGE_ACCOUNT_NAME}}
+        BUILDVAR_AnalysisOutputContainerName: ${{ vars.SBOM_OUTPUT_STORAGE_CONTAINER_NAME}}
+        BUILDVAR_AnalysisOutputBlobPath: ${{ vars.SBOM_OUTPUT_STORAGE_BLOB_BASE_PATH }}/src_platform=github/org=${{ github.repository_owner }}/repo=${{ github.event.repository.name }}
+        BUILDVAR_PublishCovenantOutputToStorage: true
+        BUILDVAR_CovenantMetadata: >
+          {
+            "git_provider": "github",
+            "git_org": "${{ github.repository_owner }}",
+            "git_repo": "${{ github.event.repository.name }}",
+            "git_branch": "${{ github.ref_name }}", 
+            "git_sha": "${{ github.sha }}"
+          }
+
+  test:
+    needs:
+    - compile
+    name: Test
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        framework: [net8.0, net481]
+        exclude:
+          - os: ubuntu-latest
+            framework: net481
+
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 #v4.1.1
+      with:
+        fetch-depth: 0
+    - uses: endjin/Endjin.RecommendedPractices.GitHubActions/actions/set-env-vars-and-secrets@main
+      with: 
+        environmentVariablesYamlBase64: ${{ inputs.testPhaseEnv}}
+        secretsYamlBase64: ${{ secrets.testPhaseSecrets}}
+    - name: Debug Variables
+      if: env.ACTIONS_RUNNER_DEBUG == 'true'
+      run: |
+        gci env:/ | fl | out-string | Write-Host
+      shell: pwsh
+    - name: Check if testPhaseAzureCredentials secret is set
+      id: testPhaseAzureCredentials_secret_check
+      shell: bash
+      run: |
+        if [ "${{ secrets.testPhaseAzureCredentials }}" != '' ]; then
+          echo "available=true" >> $GITHUB_OUTPUT;
+        else
+          echo "available=false" >> $GITHUB_OUTPUT;
+        fi
+    - name: Azure CLI login
+      if: ${{ steps.testPhaseAzureCredentials_secret_check.outputs.available == 'true' }}
+      uses: azure/login@8c334a195cbb38e46038007b304988d888bf676a    # v2.0.0
+      with:
+        creds: ${{ secrets.testPhaseAzureCredentials }}
+        enable-AzPSSession: true
+    - uses: endjin/Endjin.RecommendedPractices.GitHubActions/actions/run-scripted-build@feature/multi-os-cache
+      with:
+        displayName: Run Tests
+        buildScriptPath: ${{ inputs.buildScriptPath }}
+        netSdkVersion: ${{ inputs.netSdkVersion }}
+        additionalNetSdkVersion: ${{ inputs.additionalNetSdkVersion }}
+        tasks: 'Test,TestReport'
+        configuration: ${{ inputs.configuration }}
+        inputCachePaths: |
+          .nuget-packages
+          Solutions
+          solutions
+          ${{ inputs.additionalCachePaths }}
+        enableCrossOsCaching: ${{ inputs.enableCrossOsCaching}}
+        artifactName: ${{ inputs.testArtifactName }}
+        artifactPath: ${{ inputs.testArtifactPath }}
+      env:
+        BUILDVAR_TestReportTypes: HtmlInline;Cobertura
+        # testing new multiple test logger support - will only affect repos using latest version of build module
+        BUILDVAR_DotNetTestLoggers: >
+          [
+            "trx;LogFilePrefix=test-results_"
+          ]
+        BUILDVAR_TargetFrameworkMoniker: ${{ matrix.framework }}
+    - id: check_coverage_summary
+      name: Check Code Coverage Summary Output
+      if: always()
+      run: |
+        # check if the code coverage summary file exists, but ensure the build doesn't fail if it can't be found
+        try {
+          $coverageFile = Join-Path $env:CODE_COVERAGE_SUMMARY_DIR $env:CODE_COVERAGE_SUMMARY_FILE
+          Write-Host "Checking for code coverage file: $coverageFile"
+          if (Test-Path $coverageFile) {
+            Write-Host "Code coverage summary file exists"
+            echo "EXISTS=true" >> $env:GITHUB_OUTPUT
+          }
+        }
+        catch {}
+      shell: pwsh
+    - name: Add Code Coverage PR comment
+      # TODO: Test whether this works when running from a fork?
+      if: always() && steps.check_coverage_summary.outputs.EXISTS == 'true' && github.event_name == 'pull_request'
+      uses: marocchino/sticky-pull-request-comment@331f8f5b4215f0445d3c07b4967662a32a2d3e31    # v2.9.0
+      with:
+        recreate: true
+        path: ${{ env.CODE_COVERAGE_SUMMARY_DIR }}/${{ env.CODE_COVERAGE_SUMMARY_FILE }}
+        header: ${{ matrix.os }}-${{ matrix.framework }}
+        message: |
+          Code coverage report for ${{ matrix.os }}-${{ matrix.framework }}:
+    # Conditional test result publishing as we can't use the docker version of the action on Windows
+    - name: Publish Test Results (Linux)
+      uses: EnricoMi/publish-unit-test-result-action/linux@30eadd5010312f995f0d3b3cff7fe2984f69409e   # v2.16.1
+      if: always() && matrix.os == 'ubuntu-latest'
+      with:
+        nunit_files: "*TestResults.xml"    # produced by Pester
+        trx_files: "**/test-results_*.trx" # produced by dotnet test
+        junit_files: "**/*-test-results.xml" # produced by PyTest & Behave
+    - name: Publish Test Results (Windows)
+      uses: EnricoMi/publish-unit-test-result-action/windows@30eadd5010312f995f0d3b3cff7fe2984f69409e   # v2.16.1
+      if: always() && matrix.os == 'windows-latest'
+      with:
+        nunit_files: "*TestResults.xml"    # produced by Pester
+        trx_files: "**/test-results_*.trx" # produced by dotnet test
+        junit_files: "**/*-test-results.xml" # produced by PyTest & Behave
+
+  package:
+    needs:
+    - compile
+    name: Package
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 #v4.1.1
+      with:
+        fetch-depth: 0
+    - uses: endjin/Endjin.RecommendedPractices.GitHubActions/actions/set-env-vars-and-secrets@main
+      with: 
+        environmentVariablesYamlBase64: ${{ inputs.packagePhaseEnv}}
+        secretsYamlBase64: ${{ secrets.packagePhaseSecrets}}
+    - name: Debug Variables
+      if: env.ACTIONS_RUNNER_DEBUG == 'true'
+      run: |
+        gci env:/ | fl | out-string | Write-Host
+      shell: pwsh   
+    - name: Check if packagePhaseAzureCredentials secret is set
+      id: packagePhaseAzureCredentials_secret_check
+      shell: bash
+      run: |
+        if [ "${{ secrets.packagePhaseAzureCredentials }}" != '' ]; then
+          echo "available=true" >> $GITHUB_OUTPUT;
+        else
+          echo "available=false" >> $GITHUB_OUTPUT;
+        fi
+    - name: Azure CLI login
+      if: ${{ steps.packagePhaseAzureCredentials_secret_check.outputs.available == 'true' }}
+      uses: azure/login@8c334a195cbb38e46038007b304988d888bf676a    # v2.0.0
+      with:
+        creds: ${{ secrets.packagePhaseAzureCredentials }}
+        enable-AzPSSession: true     
+    - uses: endjin/Endjin.RecommendedPractices.GitHubActions/actions/run-scripted-build@feature/multi-os-cache
+      with:
+        displayName: Build Packages
+        buildScriptPath: ${{ inputs.buildScriptPath }}
+        netSdkVersion: ${{ inputs.netSdkVersion }}
+        additionalNetSdkVersion: ${{ inputs.additionalNetSdkVersion }}
+        tasks: 'Package'
+        configuration: ${{ inputs.configuration }}
+        inputCachePaths: |
+          .nuget-packages
+          Solutions
+          solutions
+          ${{ inputs.additionalCachePaths }}
+        enableCrossOsCaching: ${{ inputs.enableCrossOsCaching}}
+        outputCachePaths: |
+          _packages
+          ${{ inputs.additionalCachePaths }}
+
+  publish:
+    needs:
+    - compile
+    - test
+    - package
+    name: Publish
+    if: inputs.forcePublish || startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    steps:
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11   #v4.1.1
+      with:
+        fetch-depth: 0
+    - uses: endjin/Endjin.RecommendedPractices.GitHubActions/actions/set-env-vars-and-secrets@main
+      with: 
+        environmentVariablesYamlBase64: ${{ inputs.publishPhaseEnv}}
+        secretsYamlBase64: ${{ secrets.publishPhaseSecrets}}
+    - name: Debug Variables
+      if: env.ACTIONS_RUNNER_DEBUG == 'true'
+      run: |
+        gci env:/ | fl | out-string | Write-Host
+      shell: pwsh    
+    - name: Check if publishPhaseAzureCredentials secret is set
+      id: publishPhaseAzureCredentials_secret_check
+      shell: bash
+      run: |
+        if [ "${{ secrets.publishPhaseAzureCredentials }}" != '' ]; then
+          echo "available=true" >> $GITHUB_OUTPUT;
+        else
+          echo "available=false" >> $GITHUB_OUTPUT;
+        fi
+    - name: Azure CLI login
+      if: ${{ steps.publishPhaseAzureCredentials_secret_check.outputs.available == 'true' }}
+      uses: azure/login@8c334a195cbb38e46038007b304988d888bf676a    # v2.0.0
+      with:
+        creds: ${{ secrets.publishPhaseAzureCredentials }}
+        enable-AzPSSession: true    
+    - uses: endjin/Endjin.RecommendedPractices.GitHubActions/actions/run-scripted-build@feature/multi-os-cache
+      with:
+        displayName: Publish Packages
+        buildScriptPath: ${{ inputs.buildScriptPath }}
+        netSdkVersion: ${{ inputs.netSdkVersion }}
+        additionalNetSdkVersion: ${{ inputs.additionalNetSdkVersion }}
+        tasks: 'Publish'
+        inputCachePaths: |
+          _packages
+          ${{ inputs.additionalCachePaths }}
+        enableCrossOsCaching: ${{ inputs.enableCrossOsCaching}}
+        artifactName: ${{ inputs.publishArtifactName }}
+        artifactPath: ${{ inputs.publishArtifactPath }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        NUGET_API_KEY: ${{ env.NUGET_API_KEY }}

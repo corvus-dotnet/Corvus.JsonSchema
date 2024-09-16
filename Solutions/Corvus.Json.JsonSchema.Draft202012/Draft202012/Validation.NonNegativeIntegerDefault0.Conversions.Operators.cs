@@ -24,7 +24,7 @@ public readonly partial struct Validation
         /// Conversion to <see cref = "Corvus.Json.JsonSchema.Draft202012.Validation.NonNegativeInteger"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static explicit operator Corvus.Json.JsonSchema.Draft202012.Validation.NonNegativeInteger(NonNegativeIntegerDefault0 value)
+        public static implicit operator Corvus.Json.JsonSchema.Draft202012.Validation.NonNegativeInteger(NonNegativeIntegerDefault0 value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
@@ -43,7 +43,7 @@ public readonly partial struct Validation
         /// Conversion from <see cref = "Corvus.Json.JsonSchema.Draft202012.Validation.NonNegativeInteger"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator NonNegativeIntegerDefault0(Corvus.Json.JsonSchema.Draft202012.Validation.NonNegativeInteger value)
+        public static explicit operator NonNegativeIntegerDefault0(Corvus.Json.JsonSchema.Draft202012.Validation.NonNegativeInteger value)
         {
             if (value.HasJsonElementBacking)
             {

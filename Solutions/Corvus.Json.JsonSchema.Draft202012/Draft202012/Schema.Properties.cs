@@ -931,6 +931,7 @@ public readonly partial struct Schema
     /// <summary>
     /// Gets the (optional) <c>definitions</c> property.
     /// </summary>
+    [Obsolete("This property is defined as deprecated in the JSON schema")]
     public Corvus.Json.JsonSchema.Draft202012.Schema.DefinitionsEntity Definitions
     {
         get
@@ -995,6 +996,7 @@ public readonly partial struct Schema
     /// <summary>
     /// Gets the (optional) <c>dependencies</c> property.
     /// </summary>
+    [Obsolete("This property is defined as deprecated in the JSON schema")]
     public Corvus.Json.JsonSchema.Draft202012.Schema.DependenciesEntity Dependencies
     {
         get

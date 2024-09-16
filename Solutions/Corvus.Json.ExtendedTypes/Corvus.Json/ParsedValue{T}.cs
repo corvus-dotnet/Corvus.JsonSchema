@@ -17,9 +17,9 @@ namespace Corvus.Json;
 public readonly struct ParsedValue<T> : IDisposable
     where T : struct, IJsonValue<T>
 {
-    private readonly JsonDocument jsonDocument;
+    private readonly JsonDocument? jsonDocument;
 
-    private ParsedValue(JsonDocument jsonDocument, T value)
+    private ParsedValue(JsonDocument? jsonDocument, T value)
     {
         this.jsonDocument = jsonDocument;
         this.Instance = value;
@@ -31,6 +31,15 @@ public readonly struct ParsedValue<T> : IDisposable
     public T Instance { get; }
 
     /// <summary>
+    /// Converts an instance of a value to a parsed value.
+    /// </summary>
+    /// <param name="value">The value to convert to a parsed value.</param>
+    public static implicit operator ParsedValue<T>(T value)
+    {
+        return new(null, value);
+    }
+
+    /// <summary>
     /// Parse a JSON document into a value.
     /// </summary>
     /// <param name="utf8Json">The UTF8 JSON stream to parse.</param>
@@ -38,7 +47,11 @@ public readonly struct ParsedValue<T> : IDisposable
     public static ParsedValue<T> Parse(Stream utf8Json)
     {
         var document = JsonDocument.Parse(utf8Json);
+#if NET8_0_OR_GREATER
         return new(document, T.FromJson(document.RootElement));
+#else
+        return new(document, JsonValueNetStandard20Extensions.FromJsonElement<T>(document.RootElement));
+#endif
     }
 
     /// <summary>
@@ -49,7 +62,11 @@ public readonly struct ParsedValue<T> : IDisposable
     public static ParsedValue<T> Parse(string json)
     {
         var document = JsonDocument.Parse(json);
+#if NET8_0_OR_GREATER
         return new(document, T.FromJson(document.RootElement));
+#else
+        return new(document, JsonValueNetStandard20Extensions.FromJsonElement<T>(document.RootElement));
+#endif
     }
 
     /// <summary>
@@ -60,7 +77,11 @@ public readonly struct ParsedValue<T> : IDisposable
     public static ParsedValue<T> Parse(ReadOnlyMemory<byte> utf8Json)
     {
         var document = JsonDocument.Parse(utf8Json);
+#if NET8_0_OR_GREATER
         return new(document, T.FromJson(document.RootElement));
+#else
+        return new(document, JsonValueNetStandard20Extensions.FromJsonElement<T>(document.RootElement));
+#endif
     }
 
     /// <summary>
@@ -71,7 +92,11 @@ public readonly struct ParsedValue<T> : IDisposable
     public static ParsedValue<T> Parse(ReadOnlyMemory<char> json)
     {
         var document = JsonDocument.Parse(json);
+#if NET8_0_OR_GREATER
         return new(document, T.FromJson(document.RootElement));
+#else
+        return new(document, JsonValueNetStandard20Extensions.FromJsonElement<T>(document.RootElement));
+#endif
     }
 
     /// <inheritdoc/>

@@ -8,6 +8,7 @@
 //------------------------------------------------------------------------------
 #nullable enable
 using System.Buffers;
+using System.Collections;
 using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
@@ -20,7 +21,13 @@ public readonly partial struct Schema
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
-    public readonly partial struct TypeEntity : IJsonArray<TypeEntity>
+    
+#if NET8_0_OR_GREATER
+[CollectionBuilder(typeof(TypeEntity), "Create")]
+public readonly partial struct TypeEntity : IJsonArray<TypeEntity>, IReadOnlyCollection<JsonAny>
+#else
+    public readonly partial struct TypeEntity : IJsonArray<TypeEntity>, IReadOnlyCollection<JsonAny>
+#endif
     {
         /// <summary>
         /// Gets an empty array.
@@ -117,6 +124,16 @@ public readonly partial struct Schema
         public static TypeEntity From(ImmutableList<JsonAny> items)
         {
             return new(items);
+        }
+
+        /// <summary>
+        /// Create an array from the span of items.
+        /// </summary>
+        /// <param name = "items">The items from which to create the array.</param>
+        /// <returns>The array containing the items.</returns>
+        public static TypeEntity Create(ReadOnlySpan<JsonAny> items)
+        {
+            return new([..items]);
         }
 
         /// <summary>
@@ -401,6 +418,21 @@ public readonly partial struct Schema
             builder.Add(value3);
             return new(builder.ToImmutable());
         }
+
+        /// <inheritdoc/>
+        IEnumerator<JsonAny> IEnumerable<JsonAny>.GetEnumerator()
+        {
+            return EnumerateArray();
+        }
+
+        /// <inheritdoc/>
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return EnumerateArray();
+        }
+
+        /// <inheritdoc/>
+        int IReadOnlyCollection<JsonAny>.Count => this.GetArrayLength();
 
         /// <inheritdoc/>
         public ImmutableList<JsonAny> AsImmutableList()

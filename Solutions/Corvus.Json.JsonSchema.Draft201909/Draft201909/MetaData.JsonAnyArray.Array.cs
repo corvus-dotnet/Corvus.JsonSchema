@@ -8,6 +8,7 @@
 //------------------------------------------------------------------------------
 #nullable enable
 using System.Buffers;
+using System.Collections;
 using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
@@ -20,7 +21,13 @@ public readonly partial struct MetaData
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
-    public readonly partial struct JsonAnyArray : IJsonArray<JsonAnyArray>
+    
+#if NET8_0_OR_GREATER
+[CollectionBuilder(typeof(JsonAnyArray), "Create")]
+public readonly partial struct JsonAnyArray : IJsonArray<JsonAnyArray>, IReadOnlyCollection<JsonAny>
+#else
+    public readonly partial struct JsonAnyArray : IJsonArray<JsonAnyArray>, IReadOnlyCollection<JsonAny>
+#endif
     {
         /// <summary>
         /// Gets an empty array.
@@ -115,6 +122,16 @@ public readonly partial struct MetaData
         public static JsonAnyArray From(ImmutableList<JsonAny> items)
         {
             return new(items);
+        }
+
+        /// <summary>
+        /// Create an array from the span of items.
+        /// </summary>
+        /// <param name = "items">The items from which to create the array.</param>
+        /// <returns>The array containing the items.</returns>
+        public static JsonAnyArray Create(ReadOnlySpan<JsonAny> items)
+        {
+            return new([..items]);
         }
 
         /// <summary>
@@ -399,6 +416,21 @@ public readonly partial struct MetaData
             builder.Add(value3);
             return new(builder.ToImmutable());
         }
+
+        /// <inheritdoc/>
+        IEnumerator<JsonAny> IEnumerable<JsonAny>.GetEnumerator()
+        {
+            return EnumerateArray();
+        }
+
+        /// <inheritdoc/>
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return EnumerateArray();
+        }
+
+        /// <inheritdoc/>
+        int IReadOnlyCollection<JsonAny>.Count => this.GetArrayLength();
 
         /// <inheritdoc/>
         public ImmutableList<JsonAny> AsImmutableList()

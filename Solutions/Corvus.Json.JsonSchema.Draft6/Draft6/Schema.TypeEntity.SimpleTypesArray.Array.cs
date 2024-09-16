@@ -8,6 +8,7 @@
 //------------------------------------------------------------------------------
 #nullable enable
 using System.Buffers;
+using System.Collections;
 using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
@@ -22,7 +23,13 @@ public readonly partial struct Schema
         /// <summary>
         /// Generated from JSON Schema.
         /// </summary>
-        public readonly partial struct SimpleTypesArray : IJsonArray<SimpleTypesArray>
+        
+#if NET8_0_OR_GREATER
+[CollectionBuilder(typeof(SimpleTypesArray), "Create")]
+public readonly partial struct SimpleTypesArray : IJsonArray<SimpleTypesArray>, IReadOnlyCollection<Corvus.Json.JsonSchema.Draft6.Schema.SimpleTypes>
+#else
+        public readonly partial struct SimpleTypesArray : IJsonArray<SimpleTypesArray>, IReadOnlyCollection<Corvus.Json.JsonSchema.Draft6.Schema.SimpleTypes>
+#endif
         {
             /// <summary>
             /// Gets an empty array.
@@ -152,6 +159,16 @@ public readonly partial struct Schema
             }
 
             /// <summary>
+            /// Create an array from the span of items.
+            /// </summary>
+            /// <param name = "items">The items from which to create the array.</param>
+            /// <returns>The array containing the items.</returns>
+            public static SimpleTypesArray Create(ReadOnlySpan<Corvus.Json.JsonSchema.Draft6.Schema.SimpleTypes> items)
+            {
+                return new([..items]);
+            }
+
+            /// <summary>
             /// Initializes a new instance of the <see cref = "SimpleTypesArray"/> struct.
             /// </summary>
             /// <param name = "value1">The first value from which to construct the instance.</param>
@@ -255,10 +272,6 @@ public readonly partial struct Schema
             /// </summary>
             /// <param name = "items">The items from which to create the array.</param>
             /// <returns>The new array created from the items.</returns>
-            /// <remarks>
-            /// This will serialize the items to create the underlying JsonArray. Note the
-            /// other overloads which avoid this serialization step.
-            /// </remarks>
             public static SimpleTypesArray FromRange(IEnumerable<JsonAny> items)
             {
                 ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
@@ -275,10 +288,6 @@ public readonly partial struct Schema
             /// </summary>
             /// <param name = "items">The items from which to create the array.</param>
             /// <returns>The new array created from the items.</returns>
-            /// <remarks>
-            /// This will serialize the items to create the underlying JsonArray. Note the
-            /// other overloads which avoid this serialization step.
-            /// </remarks>
             public static SimpleTypesArray FromRange<T>(IEnumerable<T> items)
                 where T : struct, IJsonValue<T>
             {
@@ -290,6 +299,21 @@ public readonly partial struct Schema
 
                 return new SimpleTypesArray(builder.ToImmutable());
             }
+
+            /// <inheritdoc/>
+            IEnumerator<Corvus.Json.JsonSchema.Draft6.Schema.SimpleTypes> IEnumerable<Corvus.Json.JsonSchema.Draft6.Schema.SimpleTypes>.GetEnumerator()
+            {
+                return EnumerateArray();
+            }
+
+            /// <inheritdoc/>
+            IEnumerator IEnumerable.GetEnumerator()
+            {
+                return EnumerateArray();
+            }
+
+            /// <inheritdoc/>
+            int IReadOnlyCollection<Corvus.Json.JsonSchema.Draft6.Schema.SimpleTypes>.Count => this.GetArrayLength();
 
             /// <inheritdoc/>
             public ImmutableList<JsonAny> AsImmutableList()

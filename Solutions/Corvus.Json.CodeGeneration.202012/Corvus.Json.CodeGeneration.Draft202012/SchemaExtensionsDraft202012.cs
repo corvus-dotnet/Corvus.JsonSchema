@@ -53,7 +53,11 @@ public static class SchemaExtensionsDraft202012
             if (schema.Description.IsNotNullOrUndefined())
             {
                 // Unescaped new lines in the string value.
+#if NET8_0_OR_GREATER
                 string[]? lines = schema.Description.GetString()?.Split("\n");
+#else
+                string[]? lines = schema.Description.GetString()?.Split('\n');
+#endif
                 if (lines is string[] l)
                 {
                     foreach (string line in l)
@@ -76,7 +80,11 @@ public static class SchemaExtensionsDraft202012
                     documentation.AppendLine("/// <code>");
 
                     // Escaped new lines in the formatted JSON
+#if NET8_0_OR_GREATER
                     string[] lines = example.ToString().Split("\\n");
+#else
+                    string[] lines = example.ToString().Split(["\\n"], StringSplitOptions.None);
+#endif
                     foreach (string line in lines)
                     {
                         documentation.Append("/// ");
@@ -115,6 +123,17 @@ public static class SchemaExtensionsDraft202012
     {
         return
             draft202012Schema.Type.IsSimpleTypes && draft202012Schema.Type.Equals(Validation.SimpleTypes.EnumValues.Array);
+    }
+
+    /// <summary>
+    /// Determines if this is an explicit map type.
+    /// </summary>
+    /// <param name="draft201909Schema">The schema to test.</param>
+    /// <returns><c>True</c> if the schema has a single type value of type object, and an additionalItems schema object.</returns>
+    public static bool IsExplicitMapType(this Schema draft201909Schema)
+    {
+        return
+            draft201909Schema.IsExplicitObjectType() && draft201909Schema.AdditionalProperties.ValueKind == JsonValueKind.Object && draft201909Schema.Properties.IsUndefined();
     }
 
     /// <summary>
@@ -485,6 +504,67 @@ public static class SchemaExtensionsDraft202012
             draft202012Schema.Required.IsUndefined() &&
             draft202012Schema.Then.IsUndefined() &&
             draft202012Schema.Title.IsUndefined() &&
+            draft202012Schema.Type.IsUndefined() &&
+            draft202012Schema.UnevaluatedItems.IsUndefined() &&
+            draft202012Schema.UnevaluatedProperties.IsUndefined() &&
+            draft202012Schema.UniqueItems.IsUndefined() &&
+            draft202012Schema.WriteOnly.IsUndefined();
+    }
+
+    /// <summary>
+    /// Determines if this schema is a naked oneOf.
+    /// </summary>
+    /// <param name="draft202012Schema">The schema to test.</param>
+    /// <returns><c>True</c> if the schema has a oneOf and no other substantive properties.</returns>
+    public static bool IsNakedOneOf(this Schema draft202012Schema)
+    {
+        return
+            draft202012Schema.OneOf.IsNotUndefined() &&
+            draft202012Schema.Ref.IsUndefined() &&
+            draft202012Schema.PrefixItems.IsUndefined() &&
+            draft202012Schema.AdditionalProperties.IsUndefined() &&
+            draft202012Schema.AllOf.IsUndefined() &&
+            draft202012Schema.DynamicAnchor.IsUndefined() &&
+            draft202012Schema.Anchor.IsUndefined() &&
+            draft202012Schema.AnyOf.IsUndefined() &&
+            draft202012Schema.Const.IsUndefined() &&
+            draft202012Schema.Contains.IsUndefined() &&
+            draft202012Schema.ContentEncoding.IsUndefined() &&
+            draft202012Schema.ContentMediaType.IsUndefined() &&
+            draft202012Schema.ContentSchema.IsUndefined() &&
+            draft202012Schema.Default.IsUndefined() &&
+            draft202012Schema.Dependencies.IsUndefined() &&
+            draft202012Schema.DependentRequired.IsUndefined() &&
+            draft202012Schema.DependentSchemas.IsUndefined() &&
+            draft202012Schema.Else.IsUndefined() &&
+            draft202012Schema.Enum.IsUndefined() &&
+            draft202012Schema.ExclusiveMaximum.IsUndefined() &&
+            draft202012Schema.ExclusiveMinimum.IsUndefined() &&
+            draft202012Schema.Format.IsUndefined() &&
+            draft202012Schema.Id.IsUndefined() &&
+            draft202012Schema.If.IsUndefined() &&
+            draft202012Schema.Items.IsUndefined() &&
+            draft202012Schema.MaxContains.IsUndefined() &&
+            draft202012Schema.Maximum.IsUndefined() &&
+            draft202012Schema.MaxItems.IsUndefined() &&
+            draft202012Schema.MaxLength.IsUndefined() &&
+            draft202012Schema.MaxProperties.IsUndefined() &&
+            draft202012Schema.MinContains.IsUndefined() &&
+            draft202012Schema.Minimum.IsUndefined() &&
+            draft202012Schema.MinItems.IsUndefined() &&
+            draft202012Schema.MinLength.IsUndefined() &&
+            draft202012Schema.MinProperties.IsUndefined() &&
+            draft202012Schema.MultipleOf.IsUndefined() &&
+            draft202012Schema.Not.IsUndefined() &&
+            draft202012Schema.Pattern.IsUndefined() &&
+            draft202012Schema.PatternProperties.IsUndefined() &&
+            draft202012Schema.Properties.IsUndefined() &&
+            draft202012Schema.PropertyNames.IsUndefined() &&
+            draft202012Schema.ReadOnly.IsUndefined() &&
+            draft202012Schema.DynamicRef.IsUndefined() &&
+            draft202012Schema.RecursiveRef.IsUndefined() &&
+            draft202012Schema.Required.IsUndefined() &&
+            draft202012Schema.Then.IsUndefined() &&
             draft202012Schema.Type.IsUndefined() &&
             draft202012Schema.UnevaluatedItems.IsUndefined() &&
             draft202012Schema.UnevaluatedProperties.IsUndefined() &&

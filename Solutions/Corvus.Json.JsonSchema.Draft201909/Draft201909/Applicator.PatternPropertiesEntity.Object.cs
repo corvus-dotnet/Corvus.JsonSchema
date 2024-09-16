@@ -7,7 +7,10 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 #nullable enable
+using System.Collections;
+using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
@@ -19,7 +22,7 @@ public readonly partial struct Applicator
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
-    public readonly partial struct PatternPropertiesEntity : IJsonObject<PatternPropertiesEntity>
+    public readonly partial struct PatternPropertiesEntity : IJsonObject<PatternPropertiesEntity>, IReadOnlyDictionary<JsonPropertyName, Corvus.Json.JsonSchema.Draft201909.Schema>
     {
         /// <summary>
         /// Initializes a new instance of the <see cref = "PatternPropertiesEntity"/> struct.
@@ -53,11 +56,27 @@ public readonly partial struct Applicator
         }
 
         /// <inheritdoc/>
-        public JsonAny this[in JsonPropertyName name]
+        JsonAny IJsonObject<PatternPropertiesEntity>.this[in JsonPropertyName name]
         {
             get
             {
-                if (this.TryGetProperty(name, out JsonAny result))
+                if (this.TryGetProperty(name, out Corvus.Json.JsonSchema.Draft201909.Schema result))
+                {
+                    return result.AsAny;
+                }
+
+                throw new IndexOutOfRangeException();
+            }
+        }
+
+        /// <summary>
+        /// Get the property with the given name.
+        /// </summary>
+        public Corvus.Json.JsonSchema.Draft201909.Schema this[in JsonPropertyName name]
+        {
+            get
+            {
+                if (this.TryGetProperty(name, out Corvus.Json.JsonSchema.Draft201909.Schema result))
                 {
                     return result;
                 }
@@ -66,16 +85,68 @@ public readonly partial struct Applicator
             }
         }
 
-        /// <summary>
-        /// Creates an instance of the type from the given dictionary of properties.
-        /// </summary>
-        /// <param name = "source">The dictionary of properties.</param>
-        /// <returns>An instance of the type initialized from the dictionary of properties.</returns>
-        public static PatternPropertiesEntity FromProperties(IDictionary<JsonPropertyName, JsonAny> source)
+        /// <inheritdoc/>
+        Corvus.Json.JsonSchema.Draft201909.Schema IReadOnlyDictionary<JsonPropertyName, Corvus.Json.JsonSchema.Draft201909.Schema>.this[JsonPropertyName key] => this[key];
+        /// <inheritdoc/>
+        IEnumerable<JsonPropertyName> IReadOnlyDictionary<JsonPropertyName, Corvus.Json.JsonSchema.Draft201909.Schema>.Keys
         {
-            return new(source.Select(kvp => new JsonObjectProperty(kvp.Key, kvp.Value)).ToImmutableList());
+            get
+            {
+                foreach (var property in this.EnumerateObject())
+                {
+                    yield return property.Name;
+                }
+            }
         }
 
+        /// <inheritdoc/>
+        IEnumerable<Corvus.Json.JsonSchema.Draft201909.Schema> IReadOnlyDictionary<JsonPropertyName, Corvus.Json.JsonSchema.Draft201909.Schema>.Values
+        {
+            get
+            {
+                foreach (var property in this.EnumerateObject())
+                {
+                    yield return property.Value;
+                }
+            }
+        }
+
+        /// <inheritdoc/>
+        int IReadOnlyCollection<KeyValuePair<JsonPropertyName, Corvus.Json.JsonSchema.Draft201909.Schema>>.Count
+        {
+            get
+            {
+                if (this.HasJsonElementBacking)
+                {
+                    int count = 0;
+                    foreach (var _ in this.jsonElementBacking.EnumerateObject())
+                    {
+                        count++;
+                    }
+
+                    return count;
+                }
+
+                if (this.HasDotnetBacking)
+                {
+                    return this.objectBacking.Count;
+                }
+
+                throw new InvalidOperationException();
+            }
+        }
+
+#if NET8_0_OR_GREATER
+    /// <summary>
+    /// Creates an instance of the type from the given dictionary of properties.
+    /// </summary>
+    /// <param name="source">The dictionary of properties.</param>
+    /// <returns>An instance of the type initialized from the dictionary of properties.</returns>
+    static PatternPropertiesEntity IJsonObject<PatternPropertiesEntity>.FromProperties(IDictionary<JsonPropertyName, JsonAny> source)
+    {
+        return new(source.Select(kvp => new JsonObjectProperty(kvp.Key, kvp.Value)).ToImmutableList());
+    }
+#endif
         /// <summary>
         /// Creates an instance of the type from the given dictionary of properties.
         /// </summary>
@@ -86,18 +157,59 @@ public readonly partial struct Applicator
             return new(source);
         }
 
+#if NET8_0_OR_GREATER
+    /// <summary>
+    /// Creates an instance of the type from the given dictionary of properties.
+    /// </summary>
+    /// <param name="source">The dictionary of properties.</param>
+    /// <returns>An instance of the type initialized from the dictionary of properties.</returns>
+    static PatternPropertiesEntity IJsonObject<PatternPropertiesEntity>.FromProperties(params (JsonPropertyName Name, JsonAny Value)[] source)
+    {
+        return new(source.Select(s => new JsonObjectProperty(s.Name, s.Value)).ToImmutableList());
+    }
+#endif
         /// <summary>
         /// Creates an instance of the type from the given dictionary of properties.
         /// </summary>
         /// <param name = "source">The dictionary of properties.</param>
         /// <returns>An instance of the type initialized from the dictionary of properties.</returns>
-        public static PatternPropertiesEntity FromProperties(params (JsonPropertyName Name, JsonAny Value)[] source)
+        public static PatternPropertiesEntity FromProperties(IDictionary<JsonPropertyName, Corvus.Json.JsonSchema.Draft201909.Schema> source)
         {
-            return new(source.Select(s => new JsonObjectProperty(s.Name, s.Value)).ToImmutableList());
+            return new(source.Select(kvp => new JsonObjectProperty(kvp.Key, kvp.Value)).ToImmutableList());
+        }
+
+        /// <summary>
+        /// Creates an instance of the type from the given dictionary of properties.
+        /// </summary>
+        /// <param name = "source">The dictionary of properties.</param>
+        /// <returns>An instance of the type initialized from the dictionary of properties.</returns>
+        public static PatternPropertiesEntity FromProperties(params (JsonPropertyName Name, Corvus.Json.JsonSchema.Draft201909.Schema Value)[] source)
+        {
+            return new(source.Select(s => new JsonObjectProperty(s.Name, s.Value.AsAny)).ToImmutableList());
         }
 
         /// <inheritdoc/>
-        public JsonObjectEnumerator EnumerateObject()
+        JsonObjectEnumerator IJsonObject<PatternPropertiesEntity>.EnumerateObject()
+        {
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                return new(this.jsonElementBacking);
+            }
+
+            if ((this.backing & Backing.Object) != 0)
+            {
+                return new(this.objectBacking);
+            }
+
+            throw new InvalidOperationException();
+        }
+
+        /// <summary>
+        /// Enumerate the object.
+        /// </summary>
+        /// <returns>An enumerator for the object.</returns>
+        /// <exception cref = "InvalidOperationException">The value is not an object.</exception>
+        public JsonObjectEnumerator<Corvus.Json.JsonSchema.Draft201909.Schema> EnumerateObject()
         {
             if ((this.backing & Backing.JsonElement) != 0)
             {
@@ -194,7 +306,7 @@ public readonly partial struct Applicator
         }
 
         /// <inheritdoc/>
-        public bool TryGetProperty(in JsonPropertyName name, out JsonAny value)
+        bool IJsonObject<PatternPropertiesEntity>.TryGetProperty(in JsonPropertyName name, out JsonAny value)
         {
             if ((this.backing & Backing.JsonElement) != 0)
             {
@@ -217,7 +329,7 @@ public readonly partial struct Applicator
         }
 
         /// <inheritdoc/>
-        public bool TryGetProperty(string name, out JsonAny value)
+        bool IJsonObject<PatternPropertiesEntity>.TryGetProperty(string name, out JsonAny value)
         {
             if ((this.backing & Backing.JsonElement) != 0)
             {
@@ -240,7 +352,7 @@ public readonly partial struct Applicator
         }
 
         /// <inheritdoc/>
-        public bool TryGetProperty(ReadOnlySpan<char> name, out JsonAny value)
+        bool IJsonObject<PatternPropertiesEntity>.TryGetProperty(ReadOnlySpan<char> name, out JsonAny value)
         {
             if ((this.backing & Backing.JsonElement) != 0)
             {
@@ -263,7 +375,7 @@ public readonly partial struct Applicator
         }
 
         /// <inheritdoc/>
-        public bool TryGetProperty(ReadOnlySpan<byte> utf8Name, out JsonAny value)
+        bool IJsonObject<PatternPropertiesEntity>.TryGetProperty(ReadOnlySpan<byte> utf8Name, out JsonAny value)
         {
             if ((this.backing & Backing.JsonElement) != 0)
             {
@@ -286,14 +398,17 @@ public readonly partial struct Applicator
         }
 
         /// <inheritdoc/>
-        public bool TryGetProperty<TValue>(in JsonPropertyName name, out TValue value)
-            where TValue : struct, IJsonValue<TValue>
+        bool IJsonObject<PatternPropertiesEntity>.TryGetProperty<TValue>(in JsonPropertyName name, out TValue value)
         {
             if ((this.backing & Backing.JsonElement) != 0)
             {
                 if (name.TryGetProperty(this.jsonElementBacking, out JsonElement result))
                 {
-                    value = TValue.FromJson(result);
+#if NET8_0_OR_GREATER
+                value = TValue.FromJson(result);
+#else
+                    value = JsonValueNetStandard20Extensions.FromJsonElement<TValue>(result);
+#endif
                     return true;
                 }
 
@@ -305,7 +420,11 @@ public readonly partial struct Applicator
             {
                 if (this.objectBacking.TryGetValue(name, out JsonAny result))
                 {
-                    value = TValue.FromAny(result);
+#if NET8_0_OR_GREATER
+                value = TValue.FromAny(result);
+#else
+                    value = result.As<TValue>();
+#endif
                     return true;
                 }
 
@@ -317,14 +436,17 @@ public readonly partial struct Applicator
         }
 
         /// <inheritdoc/>
-        public bool TryGetProperty<TValue>(string name, out TValue value)
-            where TValue : struct, IJsonValue<TValue>
+        bool IJsonObject<PatternPropertiesEntity>.TryGetProperty<TValue>(string name, out TValue value)
         {
             if ((this.backing & Backing.JsonElement) != 0)
             {
                 if (this.jsonElementBacking.TryGetProperty(name, out JsonElement result))
                 {
-                    value = TValue.FromJson(result);
+#if NET8_0_OR_GREATER
+                value = TValue.FromJson(result);
+#else
+                    value = JsonValueNetStandard20Extensions.FromJsonElement<TValue>(result);
+#endif
                     return true;
                 }
 
@@ -336,7 +458,11 @@ public readonly partial struct Applicator
             {
                 if (this.objectBacking.TryGetValue(name, out JsonAny result))
                 {
-                    value = TValue.FromAny(result);
+#if NET8_0_OR_GREATER
+                value = TValue.FromAny(result);
+#else
+                    value = result.As<TValue>();
+#endif
                     return true;
                 }
 
@@ -348,14 +474,17 @@ public readonly partial struct Applicator
         }
 
         /// <inheritdoc/>
-        public bool TryGetProperty<TValue>(ReadOnlySpan<char> name, out TValue value)
-            where TValue : struct, IJsonValue<TValue>
+        bool IJsonObject<PatternPropertiesEntity>.TryGetProperty<TValue>(ReadOnlySpan<char> name, out TValue value)
         {
             if ((this.backing & Backing.JsonElement) != 0)
             {
                 if (this.jsonElementBacking.TryGetProperty(name, out JsonElement result))
                 {
-                    value = TValue.FromJson(result);
+#if NET8_0_OR_GREATER
+                value = TValue.FromJson(result);
+#else
+                    value = JsonValueNetStandard20Extensions.FromJsonElement<TValue>(result);
+#endif
                     return true;
                 }
 
@@ -367,7 +496,11 @@ public readonly partial struct Applicator
             {
                 if (this.objectBacking.TryGetValue(name, out JsonAny result))
                 {
-                    value = TValue.FromAny(result);
+#if NET8_0_OR_GREATER
+                value = TValue.FromAny(result);
+#else
+                    value = result.As<TValue>();
+#endif
                     return true;
                 }
 
@@ -379,14 +512,17 @@ public readonly partial struct Applicator
         }
 
         /// <inheritdoc/>
-        public bool TryGetProperty<TValue>(ReadOnlySpan<byte> utf8Name, out TValue value)
-            where TValue : struct, IJsonValue<TValue>
+        bool IJsonObject<PatternPropertiesEntity>.TryGetProperty<TValue>(ReadOnlySpan<byte> utf8Name, out TValue value)
         {
             if ((this.backing & Backing.JsonElement) != 0)
             {
                 if (this.jsonElementBacking.TryGetProperty(utf8Name, out JsonElement result))
                 {
-                    value = TValue.FromJson(result);
+#if NET8_0_OR_GREATER
+                value = TValue.FromJson(result);
+#else
+                    value = JsonValueNetStandard20Extensions.FromJsonElement<TValue>(result);
+#endif
                     return true;
                 }
 
@@ -398,7 +534,11 @@ public readonly partial struct Applicator
             {
                 if (this.objectBacking.TryGetValue(utf8Name, out JsonAny result))
                 {
-                    value = TValue.FromAny(result);
+#if NET8_0_OR_GREATER
+                value = TValue.FromAny(result);
+#else
+                    value = result.As<TValue>();
+#endif
                     return true;
                 }
 
@@ -410,8 +550,194 @@ public readonly partial struct Applicator
         }
 
         /// <inheritdoc/>
-        public PatternPropertiesEntity SetProperty<TValue>(in JsonPropertyName name, TValue value)
-            where TValue : struct, IJsonValue
+        PatternPropertiesEntity IJsonObject<PatternPropertiesEntity>.SetProperty<TValue>(in JsonPropertyName name, TValue value)
+        {
+            return new(this.GetPropertyBackingWith(name, value.AsAny));
+        }
+
+        /// <summary>
+        /// Get a property.
+        /// </summary>
+        /// <param name = "name">The name of the property.</param>
+        /// <param name = "value">The value of the property.</param>
+        /// <returns><c>True</c> if the property was present.</returns>
+        /// <exception cref = "InvalidOperationException">The value is not an object.</exception>
+        public bool TryGetProperty(in JsonPropertyName name, out Corvus.Json.JsonSchema.Draft201909.Schema value)
+        {
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                if (name.TryGetProperty(this.jsonElementBacking, out JsonElement result))
+                {
+#if NET8_0_OR_GREATER
+                value = Corvus.Json.JsonSchema.Draft201909.Schema.FromJson(result);
+#else
+                    value = JsonValueNetStandard20Extensions.FromJsonElement<Corvus.Json.JsonSchema.Draft201909.Schema>(result);
+#endif
+                    return true;
+                }
+
+                value = default;
+                return false;
+            }
+
+            if ((this.backing & Backing.Object) != 0)
+            {
+                if (this.objectBacking.TryGetValue(name, out JsonAny result))
+                {
+#if NET8_0_OR_GREATER
+                value = Corvus.Json.JsonSchema.Draft201909.Schema.FromAny(result);
+#else
+                    value = result.As<Corvus.Json.JsonSchema.Draft201909.Schema>();
+#endif
+                    return true;
+                }
+
+                value = default;
+                return false;
+            }
+
+            throw new InvalidOperationException();
+        }
+
+        /// <summary>
+        /// Get a property.
+        /// </summary>
+        /// <param name = "name">The name of the property.</param>
+        /// <param name = "value">The value of the property.</param>
+        /// <returns><c>True</c> if the property was present.</returns>
+        /// <exception cref = "InvalidOperationException">The value is not an object.</exception>
+        public bool TryGetProperty(string name, out Corvus.Json.JsonSchema.Draft201909.Schema value)
+        {
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                if (this.jsonElementBacking.TryGetProperty(name, out JsonElement result))
+                {
+#if NET8_0_OR_GREATER
+                value = Corvus.Json.JsonSchema.Draft201909.Schema.FromJson(result);
+#else
+                    value = JsonValueNetStandard20Extensions.FromJsonElement<Corvus.Json.JsonSchema.Draft201909.Schema>(result);
+#endif
+                    return true;
+                }
+
+                value = default;
+                return false;
+            }
+
+            if ((this.backing & Backing.Object) != 0)
+            {
+                if (this.objectBacking.TryGetValue(name, out JsonAny result))
+                {
+#if NET8_0_OR_GREATER
+                value = Corvus.Json.JsonSchema.Draft201909.Schema.FromAny(result);
+#else
+                    value = result.As<Corvus.Json.JsonSchema.Draft201909.Schema>();
+#endif
+                    return true;
+                }
+
+                value = default;
+                return false;
+            }
+
+            throw new InvalidOperationException();
+        }
+
+        /// <summary>
+        /// Get a property.
+        /// </summary>
+        /// <param name = "name">The name of the property.</param>
+        /// <param name = "value">The value of the property.</param>
+        /// <returns><c>True</c> if the property was present.</returns>
+        /// <exception cref = "InvalidOperationException">The value is not an object.</exception>
+        public bool TryGetProperty(ReadOnlySpan<char> name, out Corvus.Json.JsonSchema.Draft201909.Schema value)
+        {
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                if (this.jsonElementBacking.TryGetProperty(name, out JsonElement result))
+                {
+#if NET8_0_OR_GREATER
+                value = Corvus.Json.JsonSchema.Draft201909.Schema.FromJson(result);
+#else
+                    value = JsonValueNetStandard20Extensions.FromJsonElement<Corvus.Json.JsonSchema.Draft201909.Schema>(result);
+#endif
+                    return true;
+                }
+
+                value = default;
+                return false;
+            }
+
+            if ((this.backing & Backing.Object) != 0)
+            {
+                if (this.objectBacking.TryGetValue(name, out JsonAny result))
+                {
+#if NET8_0_OR_GREATER
+                value = Corvus.Json.JsonSchema.Draft201909.Schema.FromAny(result);
+#else
+                    value = result.As<Corvus.Json.JsonSchema.Draft201909.Schema>();
+#endif
+                    return true;
+                }
+
+                value = default;
+                return false;
+            }
+
+            throw new InvalidOperationException();
+        }
+
+        /// <summary>
+        /// Get a property.
+        /// </summary>
+        /// <param name = "utf8Name">The name of the property as a UTF8 string.</param>
+        /// <param name = "value">The value of the property.</param>
+        /// <returns><c>True</c> if the property was present.</returns>
+        /// <exception cref = "InvalidOperationException">The value is not an object.</exception>
+        public bool TryGetProperty(ReadOnlySpan<byte> utf8Name, out Corvus.Json.JsonSchema.Draft201909.Schema value)
+        {
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                if (this.jsonElementBacking.TryGetProperty(utf8Name, out JsonElement result))
+                {
+#if NET8_0_OR_GREATER
+                value = Corvus.Json.JsonSchema.Draft201909.Schema.FromJson(result);
+#else
+                    value = JsonValueNetStandard20Extensions.FromJsonElement<Corvus.Json.JsonSchema.Draft201909.Schema>(result);
+#endif
+                    return true;
+                }
+
+                value = default;
+                return false;
+            }
+
+            if ((this.backing & Backing.Object) != 0)
+            {
+                if (this.objectBacking.TryGetValue(utf8Name, out JsonAny result))
+                {
+#if NET8_0_OR_GREATER
+                value = Corvus.Json.JsonSchema.Draft201909.Schema.FromAny(result);
+#else
+                    value = result.As<Corvus.Json.JsonSchema.Draft201909.Schema>();
+#endif
+                    return true;
+                }
+
+                value = default;
+                return false;
+            }
+
+            throw new InvalidOperationException();
+        }
+
+        /// <summary>
+        /// Sets the given property value.
+        /// </summary>
+        /// <param name = "name">The name of the property.</param>
+        /// <param name = "value">The value of the property.</param>
+        /// <returns>The instance with the property set.</returns>
+        public PatternPropertiesEntity SetProperty(in JsonPropertyName name, in Corvus.Json.JsonSchema.Draft201909.Schema value)
         {
             return new(this.GetPropertyBackingWith(name, value.AsAny));
         }
@@ -438,6 +764,40 @@ public readonly partial struct Applicator
         public PatternPropertiesEntity RemoveProperty(ReadOnlySpan<byte> utf8Name)
         {
             return new(this.GetPropertyBackingWithout(utf8Name));
+        }
+
+        /// <inheritdoc/>
+        bool IReadOnlyDictionary<JsonPropertyName, Corvus.Json.JsonSchema.Draft201909.Schema>.ContainsKey(JsonPropertyName key)
+        {
+            return this.HasProperty(key);
+        }
+
+        /// <inheritdoc/>
+        bool IReadOnlyDictionary<JsonPropertyName, Corvus.Json.JsonSchema.Draft201909.Schema>.TryGetValue(JsonPropertyName key, [MaybeNullWhen(false)] out Corvus.Json.JsonSchema.Draft201909.Schema value)
+        {
+            return this.TryGetProperty(key, out value);
+        }
+
+        /// <inheritdoc/>
+        IEnumerator<KeyValuePair<JsonPropertyName, Corvus.Json.JsonSchema.Draft201909.Schema>> IEnumerable<KeyValuePair<JsonPropertyName, Corvus.Json.JsonSchema.Draft201909.Schema>>.GetEnumerator()
+        {
+            if (this.HasJsonElementBacking)
+            {
+                return new ReadOnlyDictionaryJsonObjectEnumerator<Corvus.Json.JsonSchema.Draft201909.Schema>(this.jsonElementBacking);
+            }
+
+            if (this.HasDotnetBacking)
+            {
+                return new ReadOnlyDictionaryJsonObjectEnumerator<Corvus.Json.JsonSchema.Draft201909.Schema>(this.objectBacking);
+            }
+
+            throw new InvalidOperationException();
+        }
+
+        /// <inheritdoc/>
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return this.EnumerateObject();
         }
 
         /// <summary>

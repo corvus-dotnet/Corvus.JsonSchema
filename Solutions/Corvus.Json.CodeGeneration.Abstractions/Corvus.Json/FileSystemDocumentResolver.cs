@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Text.Json;
+using Corvus.Json.CodeGeneration;
 
 namespace Corvus.Json;
 
@@ -47,11 +48,11 @@ public class FileSystemDocumentResolver : IDocumentResolver
     }
 
     /// <inheritdoc/>
-    public async Task<JsonElement?> TryResolve(JsonReference reference)
+    public async ValueTask<JsonElement?> TryResolve(JsonReference reference)
     {
         this.CheckDisposed();
 
-        string path = Path.Combine(this.baseDirectory, new string(reference.Uri));
+        string path = Path.Combine(this.baseDirectory, reference.Uri.ToString());
 
         if (this.documents.TryGetValue(path, out JsonDocument? result))
         {
@@ -65,7 +66,11 @@ public class FileSystemDocumentResolver : IDocumentResolver
 
         try
         {
+#if NET8_0_OR_GREATER
+            await using Stream stream = File.OpenRead(path);
+#else
             using Stream stream = File.OpenRead(path);
+#endif
             result = await JsonDocument.ParseAsync(stream).ConfigureAwait(false);
             this.documents.Add(path, result);
             return JsonPointerUtilities.ResolvePointer(result, reference.Fragment);
@@ -86,7 +91,7 @@ public class FileSystemDocumentResolver : IDocumentResolver
     /// <inheritdoc/>
     public void Dispose()
     {
-        // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+        // Do not change this code. Put clean-up code in 'Dispose(bool disposing)' method
         this.Dispose(disposing: true);
         System.GC.SuppressFinalize(this);
     }
@@ -120,9 +125,13 @@ public class FileSystemDocumentResolver : IDocumentResolver
 
     private void CheckDisposed()
     {
+#if NET8_0_OR_GREATER
+        ObjectDisposedException.ThrowIf(this.disposedValue, this);
+#else
         if (this.disposedValue)
         {
             throw new ObjectDisposedException(nameof(CompoundDocumentResolver));
         }
+#endif
     }
 }

@@ -2,7 +2,7 @@
 	<Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
 
 	<PropertyGroup>
-		<TargetFramework>net8.0</TargetFramework>
+		<TargetFrameworks>netstandard2.0;net8.0</TargetFrameworks>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
@@ -13,15 +13,48 @@
 		<Description>Defines .NET types representing data types found in JSON, including numerous types for specialized string forms such as JsonUuid and JsonDateTime.</Description>
 	</PropertyGroup>
 
+	<PropertyGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+		<NoWarn>$(NoWarn);nullable</NoWarn>
+	</PropertyGroup>
+
+	<ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
+		<PackageReference Include="Corvus.UriTemplates" Version="1.2.4" />
+		<Compile Remove="Corvus.Json\Internal\RuneNetStandard20.cs" />
+		<Compile Remove="Corvus.Json\Internal\JsonValueNetStandard20Extensions.cs" />
+		<Compile Remove="Corvus.Json\Internal\JsonValueHelpers.NetStandard20.cs" />
+		<Compile Remove="Corvus.Json\Internal\ArrayBufferWriterNetStandard20.cs" />
+	</ItemGroup>
+
+	<ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+		<PackageReference Include="System.Text.Json" Version="8.0.3" />
+		<PackageReference Include="System.Collections.Immutable" Version="8.0.0" />
+		<PackageReference Include="System.Reflection.Emit.Lightweight" Version="4.7.0" />
+		<PackageReference Include="IndexRange" Version="1.0.3" />
+		<Compile Remove="Corvus.Json\Internal\FromNodaTime\PeriodBuilder.cs" />
+		<Compile Remove="Corvus.Json\Internal\FromNodaTime\ValueCursor.cs" />
+		<Compile Remove="Corvus.Json\GeneratedFormatTypes\JsonInt128.Basics.cs" />
+		<Compile Remove="Corvus.Json\GeneratedFormatTypes\JsonInt128.Core.cs" />
+		<Compile Remove="Corvus.Json\GeneratedFormatTypes\JsonUInt128.Basics.cs" />
+		<Compile Remove="Corvus.Json\GeneratedFormatTypes\JsonUInt128.Core.cs" />
+		<Compile Remove="Corvus.Json\GeneratedFormatTypes\JsonHalf.Basics.cs" />
+		<Compile Remove="Corvus.Json\GeneratedFormatTypes\JsonHalf.Core.cs" />
+		<Compile Remove="Corvus.Json\JsonInt128.cs" />
+		<Compile Remove="Corvus.Json\JsonUInt128.cs" />
+		<Compile Remove="Corvus.Json\JsonHalf.cs" />
+		<Compile Remove="Corvus.Json\UriTemplates\JsonTemplateParameterProvider.cs" />
+		<Compile Remove="Corvus.Json\UriTemplates\JsonUriTemplateResolver.cs" />
+		<Compile Remove="Corvus.Json\UriTemplates\UriExtensions.cs" />
+		<Compile Remove="Corvus.Json\UriTemplates\UriTemplate.cs" />
+	</ItemGroup>
+
 	<ItemGroup>
 		<PackageReference Include="CommunityToolkit.HighPerformance" Version="8.2.2" />
-		<PackageReference Include="Corvus.UriTemplates" Version="1.2.3" />
-		<PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.9">
+		<PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.12">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
 		<PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" />
-		<PackageReference Include="Microsoft.Extensions.ObjectPool" Version="8.0.2" />
+		<PackageReference Include="Microsoft.Extensions.ObjectPool" Version="8.0.3" />
 		<PackageReference Include="NodaTime" Version="3.1.11" />
 	</ItemGroup>
 

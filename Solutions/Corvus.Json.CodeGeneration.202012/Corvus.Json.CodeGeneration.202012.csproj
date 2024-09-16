@@ -2,13 +2,13 @@
 	<Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
 
 	<PropertyGroup>
-		<TargetFramework>net8.0</TargetFramework>
+		<TargetFrameworks>netstandard2.0;net8.0</TargetFrameworks>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 	</PropertyGroup>
 
 	<PropertyGroup>
-		<NoWarn>CS1591</NoWarn>
+		<NoWarn>CS1591;CS0618</NoWarn>
 	</PropertyGroup>
 
 	<PropertyGroup>
@@ -17,11 +17,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <None Remove="Corvus.Json.CodeGeneration.Draft202012\Generators\CodeGenerator.Validate.AllOf.Partial.cs~RF1264d695.TMP" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.9">
+		<PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.12">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
@@ -42,3 +38,4 @@
 	</ItemGroup>
 
 </Project>
+

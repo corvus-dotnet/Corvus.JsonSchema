@@ -23,7 +23,7 @@ public class MutatingVisitorSteps
     private readonly ScenarioContext scenarioContext;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="UriTemplateSteps"/> class.
+    /// Initializes a new instance of the <see cref="MutatingVisitorSteps"/> class.
     /// </summary>
     /// <param name="scenarioContext">The scenario context.</param>
     public MutatingVisitorSteps(ScenarioContext scenarioContext)
@@ -97,7 +97,7 @@ public class MutatingVisitorSteps
 
     private void VisitRemoveThereProperty(ReadOnlySpan<char> path, in JsonAny nodeToVisit, ref VisitResult result)
     {
-        if (path.EndsWith("/there"))
+        if (path.EndsWith("/there".AsSpan()))
         {
             result.Walk = Walk.RemoveAndContinue;
             result.Transformed = Transformed.Yes;

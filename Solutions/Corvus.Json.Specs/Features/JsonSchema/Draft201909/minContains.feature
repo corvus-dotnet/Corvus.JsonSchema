@@ -15,6 +15,7 @@ Scenario Outline: minContains without contains is ignored
     Given the input JSON file "minContains.json"
     And the schema at "#/0/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -22,7 +23,9 @@ Scenario Outline: minContains without contains is ignored
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # [ 1 ]
         | #/000/tests/000/data | true  | one item valid against lone minContains                                          |
+        # []
         | #/000/tests/001/data | true  | zero items still valid against lone minContains                                  |
 
 Scenario Outline: minContains equals 1 with contains
@@ -36,6 +39,7 @@ Scenario Outline: minContains equals 1 with contains
     Given the input JSON file "minContains.json"
     And the schema at "#/1/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -43,10 +47,15 @@ Scenario Outline: minContains equals 1 with contains
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # [ ]
         | #/001/tests/000/data | false | empty data                                                                       |
+        # [ 2 ]
         | #/001/tests/001/data | false | no elements match                                                                |
+        # [ 1 ]
         | #/001/tests/002/data | true  | single element matches, valid minContains                                        |
+        # [ 1, 2 ]
         | #/001/tests/003/data | true  | some elements match, valid minContains                                           |
+        # [ 1, 1 ]
         | #/001/tests/004/data | true  | all elements match, valid minContains                                            |
 
 Scenario Outline: minContains equals 2 with contains
@@ -60,6 +69,7 @@ Scenario Outline: minContains equals 2 with contains
     Given the input JSON file "minContains.json"
     And the schema at "#/2/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -67,11 +77,17 @@ Scenario Outline: minContains equals 2 with contains
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # [ ]
         | #/002/tests/000/data | false | empty data                                                                       |
+        # [ 1 ]
         | #/002/tests/001/data | false | all elements match, invalid minContains                                          |
+        # [ 1, 2 ]
         | #/002/tests/002/data | false | some elements match, invalid minContains                                         |
+        # [ 1, 1 ]
         | #/002/tests/003/data | true  | all elements match, valid minContains (exactly as needed)                        |
+        # [ 1, 1, 1 ]
         | #/002/tests/004/data | true  | all elements match, valid minContains (more than needed)                         |
+        # [ 1, 2, 1 ]
         | #/002/tests/005/data | true  | some elements match, valid minContains                                           |
 
 Scenario Outline: minContains equals 2 with contains with a decimal value
@@ -85,6 +101,7 @@ Scenario Outline: minContains equals 2 with contains with a decimal value
     Given the input JSON file "minContains.json"
     And the schema at "#/3/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -92,7 +109,9 @@ Scenario Outline: minContains equals 2 with contains with a decimal value
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # [ 1 ]
         | #/003/tests/000/data | false | one element matches, invalid minContains                                         |
+        # [ 1, 1 ]
         | #/003/tests/001/data | true  | both elements match, valid minContains                                           |
 
 Scenario Outline: maxContains  equals  minContains
@@ -107,6 +126,7 @@ Scenario Outline: maxContains  equals  minContains
     Given the input JSON file "minContains.json"
     And the schema at "#/4/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -114,9 +134,13 @@ Scenario Outline: maxContains  equals  minContains
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # [ ]
         | #/004/tests/000/data | false | empty data                                                                       |
+        # [ 1 ]
         | #/004/tests/001/data | false | all elements match, invalid minContains                                          |
+        # [ 1, 1, 1 ]
         | #/004/tests/002/data | false | all elements match, invalid maxContains                                          |
+        # [ 1, 1 ]
         | #/004/tests/003/data | true  | all elements match, valid maxContains and minContains                            |
 
 Scenario Outline: maxContains  less than  minContains
@@ -131,6 +155,7 @@ Scenario Outline: maxContains  less than  minContains
     Given the input JSON file "minContains.json"
     And the schema at "#/5/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -138,9 +163,13 @@ Scenario Outline: maxContains  less than  minContains
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # [ ]
         | #/005/tests/000/data | false | empty data                                                                       |
+        # [ 1 ]
         | #/005/tests/001/data | false | invalid minContains                                                              |
+        # [ 1, 1, 1 ]
         | #/005/tests/002/data | false | invalid maxContains                                                              |
+        # [ 1, 1 ]
         | #/005/tests/003/data | false | invalid maxContains and minContains                                              |
 
 Scenario Outline: minContains  equals  0 with no maxContains
@@ -154,6 +183,7 @@ Scenario Outline: minContains  equals  0 with no maxContains
     Given the input JSON file "minContains.json"
     And the schema at "#/6/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -161,7 +191,9 @@ Scenario Outline: minContains  equals  0 with no maxContains
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # [ ]
         | #/006/tests/000/data | true  | empty data                                                                       |
+        # [ 2 ]
         | #/006/tests/001/data | true  | minContains = 0 makes contains always pass                                       |
 
 Scenario Outline: minContains  equals  0 with maxContains
@@ -176,6 +208,7 @@ Scenario Outline: minContains  equals  0 with maxContains
     Given the input JSON file "minContains.json"
     And the schema at "#/7/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -183,6 +216,9 @@ Scenario Outline: minContains  equals  0 with maxContains
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # [ ]
         | #/007/tests/000/data | true  | empty data                                                                       |
+        # [ 1 ]
         | #/007/tests/001/data | true  | not more than maxContains                                                        |
+        # [ 1, 1 ]
         | #/007/tests/002/data | false | too many                                                                         |

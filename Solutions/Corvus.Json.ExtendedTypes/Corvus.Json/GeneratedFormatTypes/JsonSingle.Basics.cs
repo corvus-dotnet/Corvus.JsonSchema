@@ -13,12 +13,14 @@ namespace Corvus.Json;
 /// Represents a JSON single.
 /// </summary>
 public readonly partial struct JsonSingle
+#if NET8_0_OR_GREATER
  : IAdditionOperators<JsonSingle, JsonSingle, JsonSingle>,
    ISubtractionOperators<JsonSingle, JsonSingle, JsonSingle>,
    IMultiplyOperators<JsonSingle, JsonSingle, JsonSingle>,
    IDivisionOperators<JsonSingle, JsonSingle, JsonSingle>,
    IIncrementOperators<JsonSingle>,
    IDecrementOperators<JsonSingle>
+#endif
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="JsonSingle"/> struct.
@@ -198,6 +200,7 @@ public readonly partial struct JsonSingle
         throw new InvalidOperationException();
     }
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Conversion to Int128.
     /// </summary>
@@ -218,6 +221,7 @@ public readonly partial struct JsonSingle
 
         throw new InvalidOperationException();
     }
+#endif
 
     /// <summary>
     /// Conversion to SByte.
@@ -240,6 +244,7 @@ public readonly partial struct JsonSingle
         throw new InvalidOperationException();
     }
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Conversion to Half.
     /// </summary>
@@ -260,6 +265,7 @@ public readonly partial struct JsonSingle
 
         throw new InvalidOperationException();
     }
+#endif
 
     /// <summary>
     /// Conversion to Single.
@@ -345,6 +351,7 @@ public readonly partial struct JsonSingle
         throw new InvalidOperationException();
     }
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Conversion to UInt64.
     /// </summary>
@@ -365,6 +372,7 @@ public readonly partial struct JsonSingle
 
         throw new InvalidOperationException();
     }
+#endif
 
     /// <summary>
     /// Conversion from single.

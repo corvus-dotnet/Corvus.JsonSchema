@@ -9,12 +9,12 @@
 
 Feature: <#= FeatureName #>
 <# foreach (var scenario in Feature.EnumerateArray()) {
-	if(scenario.IsDisabledScenario) { continue; }#>
+    if(scenario.IsDisabledScenario) { continue; }#>
 
 Scenario: <#= (string)scenario.Comment.AsOptional() ?? $"Undescribed scenario"#> [<#= System.Guid.NewGuid() #>]
-	Given the document <#= scenario.Doc #>
-	And the patch <#= scenario.Patch #>
-	When I apply the patch to the document
-	Then<# if(scenario.IsScenarioWithError) {#> the document should not be transformed.<# } else { #> the transformed document should equal <#= GetExpected(scenario) #><# } #>
+    Given the document <#= scenario.Doc #>
+    And the patch <#= scenario.Patch #>
+    When I apply the patch to the document
+    Then<# if(scenario.IsScenarioWithError) {#> the document should not be transformed.<# } else { #> the transformed document should equal <#= GetExpected(scenario) #><# } #>
 
 <# } #>

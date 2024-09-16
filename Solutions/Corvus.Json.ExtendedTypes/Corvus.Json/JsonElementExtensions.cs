@@ -127,7 +127,6 @@ public static class JsonElementExtensions
             (sourceArray = ArrayPool<byte>.Shared.Rent(length));
             JsonReaderHelper.Unescape(rawInput, sourceUnescaped, idx, out int written);
             sourceUnescaped = sourceUnescaped[..written];
-
             try
             {
                 return state.Parser(sourceUnescaped, state.State, out value);
@@ -159,7 +158,6 @@ public static class JsonElementExtensions
 
             JsonReaderHelper.Unescape(rawInput, utf8Unescaped, idx, out int written);
             utf8Unescaped = utf8Unescaped[..written];
-
             try
             {
                 return ProcessDecodedText(utf8Unescaped, state, out result);
@@ -187,7 +185,6 @@ public static class JsonElementExtensions
         (sourceTranscodedArray = ArrayPool<char>.Shared.Rent(length));
         int writtenTranscoded = JsonReaderHelper.TranscodeHelper(decodedUtf8String, sourceTranscoded);
         sourceTranscoded = sourceTranscoded[..writtenTranscoded];
-
         bool success = false;
         if (state.Parser(sourceTranscoded, state.State, out TResult? tmp))
         {
@@ -207,6 +204,7 @@ public static class JsonElementExtensions
         return success;
     }
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Wraps up the state for the UTF8 parser and the parser's native state into a compound state entity.
     /// </summary>
@@ -215,4 +213,40 @@ public static class JsonElementExtensions
     /// Wraps up the state for the parser and the parser's native state into a compound state entity.
     /// </summary>
     private readonly record struct ParserStateWrapper<TState, TResult>(Parser<TState, TResult> Parser, in TState State);
+#else
+    /// <summary>
+    /// Wraps up the state for the UTF8 parser and the parser's native state into a compound state entity.
+    /// </summary>
+    private readonly struct Utf8ParserStateWrapper<TState, TResult>
+    {
+        public Utf8ParserStateWrapper(Utf8Parser<TState, TResult> parser, in TState state, bool decode)
+        {
+            this.Parser = parser;
+            this.State = state;
+            this.Decode = decode;
+        }
+
+        public Utf8Parser<TState, TResult> Parser { get; }
+
+        public TState State { get; }
+
+        public bool Decode { get; }
+    }
+
+    /// <summary>
+    /// Wraps up the state for the parser and the parser's native state into a compound state entity.
+    /// </summary>
+    private readonly struct ParserStateWrapper<TState, TResult>
+    {
+        public ParserStateWrapper(Parser<TState, TResult> parser, in TState state)
+        {
+            this.Parser = parser;
+            this.State = state;
+        }
+
+        public Parser<TState, TResult> Parser { get; }
+
+        public TState State { get; }
+    }
+#endif
 }

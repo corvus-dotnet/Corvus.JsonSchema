@@ -603,69 +603,6 @@ public readonly partial struct <#= TypeName #> : IJsonValue<<#= TypeName #>>
     }
 
     /// <summary>
-    /// Parses a naked value from a URI string.
-    /// </summary>
-    /// <param name="value">The value to parse.</param>
-    /// <returns>A <see cref="JsonAny"/> instance representing the value.</returns>
-    /// <remarks>Note that this only applies to <c>null</c>, <c>bool</c>, <c>number</c> and <c>string</c> types.</remarks>
-    public static <#= TypeName #> ParseUriValue(string value)
-    {
-        if (value == "null")
-        {
-            return <#= TypeName #>.Null;
-        }
-
-        if (bool.TryParse(value, out bool boolResult))
-        {
-            return new(boolResult);
-        }
-
-        if (double.TryParse(value, out double doubleResult))
-        {
-            return new(new BinaryJsonNumber(doubleResult));
-        }
-
-        if (decimal.TryParse(value, out decimal decimalResult))
-        {
-            return new(new BinaryJsonNumber(decimalResult));
-        }
-
-        return new(value);
-    }
-
-    /// <summary>
-    /// Parses a naked value from a URI string.
-    /// </summary>
-    /// <param name="value">The value to parse.</param>
-    /// <returns>A <see cref="JsonAny"/> instance representing the value.</returns>
-    /// <remarks>Note that this only applies to <c>null</c>, <c>bool</c>, <c>number</c> and <c>string</c> types.</remarks>
-    public static <#= TypeName #> ParseUriValue(ReadOnlyMemory<char> value)
-    {
-        ReadOnlySpan<char> valueSpan = value.Span;
-        if (valueSpan.SequenceEqual("null"))
-        {
-            return <#= TypeName #>.Null;
-        }
-
-        if (bool.TryParse(valueSpan, out bool boolResult))
-        {
-            return new(boolResult);
-        }
-
-        if (double.TryParse(valueSpan, out double doubleResult))
-        {
-            return new(new BinaryJsonNumber(doubleResult));
-        }
-
-        if (decimal.TryParse(valueSpan, out decimal decimalResult))
-        {
-            return new(new BinaryJsonNumber(decimalResult));
-        }
-
-        return new(valueSpan.ToString());
-    }
-
-    /// <summary>
     /// Parses a JSON string into a <#= TypeName #>.
     /// </summary>
     /// <param name="json">The json string to parse.</param>
@@ -730,9 +667,27 @@ public readonly partial struct <#= TypeName #> : IJsonValue<<#= TypeName #>>
     /// </summary>
     /// <param name="buffer">The buffer from which to parse the value.</param>
     /// <returns>The parsed value.</returns>
+    public static <#= TypeName #> ParseValue(string buffer)
+    {
+#if NET8_0_OR_GREATER
+        return IJsonValue<<#= TypeName #>>.ParseValue(buffer);
+#else
+        return JsonValueHelpers.ParseValue<<#= TypeName #>>(buffer.AsSpan());
+#endif
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
     public static <#= TypeName #> ParseValue(ReadOnlySpan<char> buffer)
     {
+#if NET8_0_OR_GREATER
         return IJsonValue<<#= TypeName #>>.ParseValue(buffer);
+#else
+        return JsonValueHelpers.ParseValue<<#= TypeName #>>(buffer);
+#endif
     }
 
     /// <summary>
@@ -742,7 +697,11 @@ public readonly partial struct <#= TypeName #> : IJsonValue<<#= TypeName #>>
     /// <returns>The parsed value.</returns>
     public static <#= TypeName #> ParseValue(ReadOnlySpan<byte> buffer)
     {
+#if NET8_0_OR_GREATER
         return IJsonValue<<#= TypeName #>>.ParseValue(buffer);
+#else
+        return JsonValueHelpers.ParseValue<<#= TypeName #>>(buffer);
+#endif
     }
 
     /// <summary>
@@ -752,7 +711,11 @@ public readonly partial struct <#= TypeName #> : IJsonValue<<#= TypeName #>>
     /// <returns>The parsed value.</returns>
     public static <#= TypeName #> ParseValue(ref Utf8JsonReader reader)
     {
+#if NET8_0_OR_GREATER
         return IJsonValue<<#= TypeName #>>.ParseValue(ref reader);
+#else
+        return JsonValueHelpers.ParseValue<<#= TypeName #>>(ref reader);
+#endif
     }
 
     /// <summary>
@@ -764,6 +727,7 @@ public readonly partial struct <#= TypeName #> : IJsonValue<<#= TypeName #>>
     public TTarget As<TTarget>()
         where TTarget : struct, IJsonValue<TTarget>
     {
+#if NET8_0_OR_GREATER
         if (this.HasJsonElementBacking)
         {
             return TTarget.FromJson(this.AsJsonElement);
@@ -775,6 +739,9 @@ public readonly partial struct <#= TypeName #> : IJsonValue<<#= TypeName #>>
         }
 
         return TTarget.Undefined;
+#else
+        return this.As<<#= TypeName #>, TTarget>();
+#endif
     }
 
     /// <inheritdoc/>

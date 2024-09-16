@@ -18,7 +18,7 @@ namespace Corvus.Json.Patch.SpecGenerator;
 public readonly partial struct Feature
 {
     /// <inheritdoc/>
-    public Feature Add(in JsonAny item1)
+    Feature IJsonArray<Feature>.Add(in JsonAny item1)
     {
         ImmutableList<JsonAny>.Builder builder = this.GetImmutableListBuilder();
         builder.Add(item1);
@@ -26,7 +26,7 @@ public readonly partial struct Feature
     }
 
     /// <inheritdoc/>
-    public Feature Add(params JsonAny[] items)
+    Feature IJsonArray<Feature>.Add(params JsonAny[] items)
     {
         ImmutableList<JsonAny>.Builder builder = this.GetImmutableListBuilder();
         builder.AddRange(items);
@@ -47,8 +47,7 @@ public readonly partial struct Feature
     }
 
     /// <inheritdoc/>
-    public Feature AddRange<TItem>(IEnumerable<TItem> items)
-        where TItem : struct, IJsonValue<TItem>
+    Feature IJsonArray<Feature>.AddRange<TItem>(IEnumerable<TItem> items)
     {
         ImmutableList<JsonAny>.Builder builder = this.GetImmutableListBuilder();
         foreach (TItem item in items)
@@ -60,7 +59,7 @@ public readonly partial struct Feature
     }
 
     /// <inheritdoc/>
-    public Feature AddRange(IEnumerable<JsonAny> items)
+    Feature IJsonArray<Feature>.AddRange(IEnumerable<JsonAny> items)
     {
         ImmutableList<JsonAny>.Builder builder = this.GetImmutableListBuilder();
         builder.AddRange(items);
@@ -68,7 +67,7 @@ public readonly partial struct Feature
     }
 
     /// <inheritdoc/>
-    public Feature Insert(int index, in JsonAny item1)
+    Feature IJsonArray<Feature>.Insert(int index, in JsonAny item1)
     {
         return new(this.GetImmutableListWith(index, item1));
     }
@@ -81,26 +80,120 @@ public readonly partial struct Feature
     }
 
     /// <inheritdoc/>
-    public Feature InsertRange<TItem>(int index, IEnumerable<TItem> items)
-        where TItem : struct, IJsonValue<TItem>
+    Feature IJsonArray<Feature>.InsertRange<TItem>(int index, IEnumerable<TItem> items)
     {
         return new(this.GetImmutableListWith(index, items.Select(item => item.AsAny)));
     }
 
     /// <inheritdoc/>
-    public Feature InsertRange(int index, IEnumerable<JsonAny> items)
+    Feature IJsonArray<Feature>.InsertRange(int index, IEnumerable<JsonAny> items)
     {
         return new(this.GetImmutableListWith(index, items));
     }
 
     /// <inheritdoc/>
-    public Feature Replace(in JsonAny oldValue, in JsonAny newValue)
+    Feature IJsonArray<Feature>.Replace(in JsonAny oldValue, in JsonAny newValue)
     {
         return new(this.GetImmutableListReplacing(oldValue.AsAny, newValue.AsAny));
     }
 
     /// <inheritdoc/>
-    public Feature SetItem(int index, in JsonAny value)
+    Feature IJsonArray<Feature>.SetItem(int index, in JsonAny value)
+    {
+        return new(this.GetImmutableListSetting(index, value.AsAny));
+    }
+
+    /// <summary>
+    /// Add an item to the array.
+    /// </summary>
+    /// <param name = "item1">The item to add.</param>
+    /// <returns>An instance of the array with the item added.</returns>
+    /// <exception cref = "InvalidOperationException">The value was not an array.</exception>
+    public Feature Add(in Corvus.Json.Patch.SpecGenerator.Scenario item1)
+    {
+        ImmutableList<JsonAny>.Builder builder = this.GetImmutableListBuilder();
+        builder.Add(item1);
+        return new(builder.ToImmutable());
+    }
+
+    /// <summary>
+    /// Add a set of items to the array.
+    /// </summary>
+    /// <param name = "items">The items to add.</param>
+    /// <returns>An instance of the array with the items added.</returns>
+    /// <exception cref = "InvalidOperationException">The value was not an array.</exception>
+    public Feature Add(params Corvus.Json.Patch.SpecGenerator.Scenario[] items)
+    {
+        ImmutableList<JsonAny>.Builder builder = this.GetImmutableListBuilder();
+        foreach (Corvus.Json.Patch.SpecGenerator.Scenario item in items)
+        {
+            builder.Add(item.AsAny);
+        }
+
+        return new(builder.ToImmutable());
+    }
+
+    /// <summary>
+    /// Add a set of items to the array.
+    /// </summary>
+    /// <param name = "items">The items to add.</param>
+    /// <returns>An instance of the array with the items added.</returns>
+    /// <exception cref = "InvalidOperationException">The value was not an array.</exception>
+    public Feature AddRange(IEnumerable<Corvus.Json.Patch.SpecGenerator.Scenario> items)
+    {
+        ImmutableList<JsonAny>.Builder builder = this.GetImmutableListBuilder();
+        foreach (Corvus.Json.Patch.SpecGenerator.Scenario item in items)
+        {
+            builder.Add(item.AsAny);
+        }
+
+        return new(builder.ToImmutable());
+    }
+
+    /// <summary>
+    /// Insert an item into the array at the given index.
+    /// </summary>
+    /// <param name = "index">The index at which to add the item.</param>
+    /// <param name = "item1">The item to add.</param>
+    /// <returns>An instance of the array with the item added.</returns>
+    /// <exception cref = "InvalidOperationException">The value was not an array.</exception>
+    public Feature Insert(int index, in Corvus.Json.Patch.SpecGenerator.Scenario item1)
+    {
+        return new(this.GetImmutableListWith(index, item1));
+    }
+
+    /// <summary>
+    /// Insert items into the array at the given index.
+    /// </summary>
+    /// <param name = "index">The index at which to add the items.</param>
+    /// <param name = "items">The items to add.</param>
+    /// <returns>An instance of the array with the items added.</returns>
+    /// <exception cref = "InvalidOperationException">The value was not an array.</exception>
+    /// <exception cref = "IndexOutOfRangeException">The index was outside the bounds of the array.</exception>
+    public Feature InsertRange(int index, IEnumerable<Corvus.Json.Patch.SpecGenerator.Scenario> items)
+    {
+        return new(this.GetImmutableListWith(index, items.Select(item => item.AsAny)));
+    }
+
+    /// <summary>
+    /// Replace the first instance of the given value with the new value, even if the items are identical.
+    /// </summary>
+    /// <param name = "oldValue">The item to remove.</param>
+    /// <param name = "newValue">The item to insert.</param>
+    /// <returns>An instance of the array with the item replaced.</returns>
+    /// <exception cref = "InvalidOperationException">The value was not an array.</exception>
+    public Feature Replace(in Corvus.Json.Patch.SpecGenerator.Scenario oldValue, in Corvus.Json.Patch.SpecGenerator.Scenario newValue)
+    {
+        return new(this.GetImmutableListReplacing(oldValue.AsAny, newValue.AsAny));
+    }
+
+    /// <summary>
+    /// Set the item at the given index.
+    /// </summary>
+    /// <param name = "index">The index at which to set the item.</param>
+    /// <param name = "value">The value to set.</param>
+    /// <returns>An instance of the array with the item set to the given value.</returns>
+    public Feature SetItem(int index, in Corvus.Json.Patch.SpecGenerator.Scenario value)
     {
         return new(this.GetImmutableListSetting(index, value.AsAny));
     }

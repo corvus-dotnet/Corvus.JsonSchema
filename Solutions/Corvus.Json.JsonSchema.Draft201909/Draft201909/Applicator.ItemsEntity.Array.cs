@@ -8,6 +8,7 @@
 //------------------------------------------------------------------------------
 #nullable enable
 using System.Buffers;
+using System.Collections;
 using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
@@ -20,7 +21,13 @@ public readonly partial struct Applicator
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
-    public readonly partial struct ItemsEntity : IJsonArray<ItemsEntity>
+    
+#if NET8_0_OR_GREATER
+[CollectionBuilder(typeof(ItemsEntity), "Create")]
+public readonly partial struct ItemsEntity : IJsonArray<ItemsEntity>, IReadOnlyCollection<JsonAny>
+#else
+    public readonly partial struct ItemsEntity : IJsonArray<ItemsEntity>, IReadOnlyCollection<JsonAny>
+#endif
     {
         /// <summary>
         /// Gets an empty array.
@@ -119,6 +126,16 @@ public readonly partial struct Applicator
         public static ItemsEntity From(ImmutableList<JsonAny> items)
         {
             return new(items);
+        }
+
+        /// <summary>
+        /// Create an array from the span of items.
+        /// </summary>
+        /// <param name = "items">The items from which to create the array.</param>
+        /// <returns>The array containing the items.</returns>
+        public static ItemsEntity Create(ReadOnlySpan<JsonAny> items)
+        {
+            return new([..items]);
         }
 
         /// <summary>
@@ -403,6 +420,21 @@ public readonly partial struct Applicator
             builder.Add(value3);
             return new(builder.ToImmutable());
         }
+
+        /// <inheritdoc/>
+        IEnumerator<JsonAny> IEnumerable<JsonAny>.GetEnumerator()
+        {
+            return EnumerateArray();
+        }
+
+        /// <inheritdoc/>
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return EnumerateArray();
+        }
+
+        /// <inheritdoc/>
+        int IReadOnlyCollection<JsonAny>.Count => this.GetArrayLength();
 
         /// <inheritdoc/>
         public ImmutableList<JsonAny> AsImmutableList()

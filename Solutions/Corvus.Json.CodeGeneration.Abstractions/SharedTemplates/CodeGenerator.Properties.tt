@@ -56,9 +56,15 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     /// Gets the <#= property.IsRequired ? "" : "(optional) " #><c><#= Formatting.FormatLiteralOrNull(property.JsonPropertyName, false) #></c> property.<#= property.IsRequired ? " If the instance is valid, this property will be not be <c>undefined</c>." : "" #>
     /// </summary>
 <#      if (property.HasXmlDocumentationRemarks)
-		{ #>
+        { #>
     /// <remarks>
     <#= property.XmlDocumentationRemarks #>/// </remarks>
+<#      }
+
+        if (property.IsDeprecated)
+        { #>
+    [Obsolete("This property is defined as deprecated in the JSON schema")]
+
 <#      } #>
     public <#= property.Type.FullyQualifiedDotnetTypeName #> <#= property.DotnetPropertyName #>
     {

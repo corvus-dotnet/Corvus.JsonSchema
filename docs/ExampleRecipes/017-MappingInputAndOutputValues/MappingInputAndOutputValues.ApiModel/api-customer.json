@@ -1,0 +1,12 @@
+{
+    "type": "object",
+    "required": [ "familyName", "givenName", "customerId" ],
+    "properties": {
+        "familyName": { "type": "string" },
+        "givenName": { "type": "string" },
+        "customerId": {
+            "type": "string",
+            "format": "uuid"
+        }
+    }
+}

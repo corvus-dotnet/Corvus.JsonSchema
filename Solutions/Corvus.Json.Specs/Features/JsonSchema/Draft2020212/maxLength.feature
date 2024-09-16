@@ -22,11 +22,16 @@ Scenario Outline: maxLength validation
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # f
         | #/000/tests/000/data | true  | shorter is valid                                                                 |
+        # fo
         | #/000/tests/001/data | true  | exact length is valid                                                            |
+        # foo
         | #/000/tests/002/data | false | too long is invalid                                                              |
+        # 100
         | #/000/tests/003/data | true  | ignores non-strings                                                              |
-        | #/000/tests/004/data | true  | two supplementary Unicode code points is long enough                             |
+        # 💩💩
+        | #/000/tests/004/data | true  | two graphemes is long enough                                                     |
 
 Scenario Outline: maxLength validation with a decimal
 /* Schema: 
@@ -45,5 +50,7 @@ Scenario Outline: maxLength validation with a decimal
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # f
         | #/001/tests/000/data | true  | shorter is valid                                                                 |
+        # foo
         | #/001/tests/001/data | false | too long is invalid                                                              |

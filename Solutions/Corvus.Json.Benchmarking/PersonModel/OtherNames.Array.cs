@@ -8,6 +8,7 @@
 //------------------------------------------------------------------------------
 #nullable enable
 using System.Buffers;
+using System.Collections;
 using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
@@ -26,7 +27,13 @@ namespace Corvus.Json.Benchmarking.Models;
 /// This may be either a single name represented as a string, or an array of strings, representing one or more other names.
 /// </para>
 /// </remarks>
-public readonly partial struct OtherNames : IJsonArray<OtherNames>
+
+#if NET8_0_OR_GREATER
+[CollectionBuilder(typeof(OtherNames), "Create")]
+public readonly partial struct OtherNames : IJsonArray<OtherNames>, IReadOnlyCollection<JsonAny>
+#else
+public readonly partial struct OtherNames : IJsonArray<OtherNames>, IReadOnlyCollection<JsonAny>
+#endif
 {
     /// <summary>
     /// Gets an empty array.
@@ -123,6 +130,16 @@ public readonly partial struct OtherNames : IJsonArray<OtherNames>
     public static OtherNames From(ImmutableList<JsonAny> items)
     {
         return new(items);
+    }
+
+    /// <summary>
+    /// Create an array from the span of items.
+    /// </summary>
+    /// <param name = "items">The items from which to create the array.</param>
+    /// <returns>The array containing the items.</returns>
+    public static OtherNames Create(ReadOnlySpan<JsonAny> items)
+    {
+        return new([..items]);
     }
 
     /// <summary>
@@ -407,6 +424,21 @@ public readonly partial struct OtherNames : IJsonArray<OtherNames>
         builder.Add(value3);
         return new(builder.ToImmutable());
     }
+
+    /// <inheritdoc/>
+    IEnumerator<JsonAny> IEnumerable<JsonAny>.GetEnumerator()
+    {
+        return EnumerateArray();
+    }
+
+    /// <inheritdoc/>
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+        return EnumerateArray();
+    }
+
+    /// <inheritdoc/>
+    int IReadOnlyCollection<JsonAny>.Count => this.GetArrayLength();
 
     /// <inheritdoc/>
     public ImmutableList<JsonAny> AsImmutableList()

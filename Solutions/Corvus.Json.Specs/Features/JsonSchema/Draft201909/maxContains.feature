@@ -15,6 +15,7 @@ Scenario Outline: maxContains without contains is ignored
     Given the input JSON file "maxContains.json"
     And the schema at "#/0/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -22,7 +23,9 @@ Scenario Outline: maxContains without contains is ignored
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # [ 1 ]
         | #/000/tests/000/data | true  | one item valid against lone maxContains                                          |
+        # [ 1, 2 ]
         | #/000/tests/001/data | true  | two items still valid against lone maxContains                                   |
 
 Scenario Outline: maxContains with contains
@@ -36,6 +39,7 @@ Scenario Outline: maxContains with contains
     Given the input JSON file "maxContains.json"
     And the schema at "#/1/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -43,10 +47,15 @@ Scenario Outline: maxContains with contains
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # [ ]
         | #/001/tests/000/data | false | empty data                                                                       |
+        # [ 1 ]
         | #/001/tests/001/data | true  | all elements match, valid maxContains                                            |
+        # [ 1, 1 ]
         | #/001/tests/002/data | false | all elements match, invalid maxContains                                          |
+        # [ 1, 2 ]
         | #/001/tests/003/data | true  | some elements match, valid maxContains                                           |
+        # [ 1, 2, 1 ]
         | #/001/tests/004/data | false | some elements match, invalid maxContains                                         |
 
 Scenario Outline: maxContains with contains, value with a decimal
@@ -60,6 +69,7 @@ Scenario Outline: maxContains with contains, value with a decimal
     Given the input JSON file "maxContains.json"
     And the schema at "#/2/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -67,7 +77,9 @@ Scenario Outline: maxContains with contains, value with a decimal
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # [ 1 ]
         | #/002/tests/000/data | true  | one element matches, valid maxContains                                           |
+        # [ 1, 1 ]
         | #/002/tests/001/data | false | too many elements match, invalid maxContains                                     |
 
 Scenario Outline: minContains  less than  maxContains
@@ -82,6 +94,7 @@ Scenario Outline: minContains  less than  maxContains
     Given the input JSON file "maxContains.json"
     And the schema at "#/3/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -89,6 +102,9 @@ Scenario Outline: minContains  less than  maxContains
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # [ ]
         | #/003/tests/000/data | false | actual < minContains < maxContains                                               |
+        # [ 1, 1 ]
         | #/003/tests/001/data | true  | minContains < actual < maxContains                                               |
+        # [ 1, 1, 1, 1 ]
         | #/003/tests/002/data | false | minContains < maxContains < actual                                               |

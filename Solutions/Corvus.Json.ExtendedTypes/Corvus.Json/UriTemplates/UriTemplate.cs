@@ -139,7 +139,7 @@ public readonly struct UriTemplate
             else
             {
                 // Note we are making no attempt to make this low-allocation
-                builder.Add(name.ToString(), JsonAny.ParseUriValue(Uri.UnescapeDataString(value.ToString())));
+                builder.Add(name.ToString(), UriExtensions.ParseUriValue(Uri.UnescapeDataString(value.ToString())));
             }
         }
 

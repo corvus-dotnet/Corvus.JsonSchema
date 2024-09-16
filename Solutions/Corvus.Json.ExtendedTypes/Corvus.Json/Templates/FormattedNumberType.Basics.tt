@@ -30,12 +30,14 @@ namespace Corvus.Json;
 /// Represents a JSON <#= JsonTypeName #>.
 /// </summary>
 public readonly partial struct <#= TypeName #>
+#if NET8_0_OR_GREATER
  : IAdditionOperators<<#= TypeName #>, <#= TypeName #>, <#= TypeName #>>,
    ISubtractionOperators<<#= TypeName #>, <#= TypeName #>, <#= TypeName #>>,
    IMultiplyOperators<<#= TypeName #>, <#= TypeName #>, <#= TypeName #>>,
    IDivisionOperators<<#= TypeName #>, <#= TypeName #>, <#= TypeName #>>,
    IIncrementOperators<<#= TypeName #>>,
    IDecrementOperators<<#= TypeName #>>
+#endif
 {
 <# if (JsonTypeName == "number" || JsonTypeName == "decimal")
     {#>
@@ -69,6 +71,7 @@ public readonly partial struct <#= TypeName #>
     
     if (JsonTypeName == "number" || JsonTypeName == "half")
     {#>
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Initializes a new instance of the <see cref="<#= TypeName #>"/> struct.
     /// </summary>
@@ -79,6 +82,7 @@ public readonly partial struct <#= TypeName #>
         this.backing = Backing.Number;
         this.numberBacking = new(value);
     }
+ #endif
 
 <#  }
 
@@ -144,6 +148,7 @@ public readonly partial struct <#= TypeName #>
     
     if (JsonTypeName == "integer" || JsonTypeName == "int128")
     {#>
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Initializes a new instance of the <see cref="<#= TypeName #>"/> struct.
     /// </summary>
@@ -154,6 +159,7 @@ public readonly partial struct <#= TypeName #>
         this.backing = Backing.Number;
         this.numberBacking = new(value);
     }
+#endif
 
 <#  }
     
@@ -234,6 +240,7 @@ public readonly partial struct <#= TypeName #>
     
     if (JsonTypeName == "integer" || JsonTypeName == "uint128")
     {#>
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Initializes a new instance of the <see cref="<#= TypeName #>"/> struct.
     /// </summary>
@@ -244,6 +251,7 @@ public readonly partial struct <#= TypeName #>
         this.backing = Backing.Number;
         this.numberBacking = new(value);
     }
+#endif
 
 <#  }#>
     /// <summary>
@@ -413,6 +421,7 @@ public readonly partial struct <#= TypeName #>
         throw new InvalidOperationException();
     }
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Conversion to Int128.
     /// </summary>
@@ -433,6 +442,7 @@ public readonly partial struct <#= TypeName #>
 
         throw new InvalidOperationException();
     }
+#endif
 
     /// <summary>
     /// Conversion to SByte.
@@ -455,6 +465,7 @@ public readonly partial struct <#= TypeName #>
         throw new InvalidOperationException();
     }
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Conversion to Half.
     /// </summary>
@@ -475,6 +486,7 @@ public readonly partial struct <#= TypeName #>
 
         throw new InvalidOperationException();
     }
+#endif
 
     /// <summary>
     /// Conversion to Single.
@@ -560,6 +572,7 @@ public readonly partial struct <#= TypeName #>
         throw new InvalidOperationException();
     }
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Conversion to UInt64.
     /// </summary>
@@ -580,6 +593,7 @@ public readonly partial struct <#= TypeName #>
 
         throw new InvalidOperationException();
     }
+#endif
 
 <#  if (JsonTypeName == "number" || JsonTypeName == "integer" || JsonTypeName == "decimal")
     {#>
@@ -622,6 +636,7 @@ public readonly partial struct <#= TypeName #>
 
     if (JsonTypeName == "number" || JsonTypeName == "integer" || JsonTypeName == "half")
     {#>
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Conversion from Half.
     /// </summary>
@@ -630,6 +645,8 @@ public readonly partial struct <#= TypeName #>
     {
         return new(new BinaryJsonNumber(value));
     }
+
+#endif
 
 <#  }
 
@@ -739,6 +756,7 @@ public readonly partial struct <#= TypeName #>
 
     if (JsonTypeName == "number" || JsonTypeName == "integer" || JsonTypeName == "int128")
     {#>
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Conversion from int128.
     /// </summary>
@@ -747,11 +765,13 @@ public readonly partial struct <#= TypeName #>
     {
         return new(new BinaryJsonNumber(value));
     }
+#endif
 
 <#  }
 
     if (JsonTypeName == "number" || JsonTypeName == "integer" || JsonTypeName == "uint128")
     {#>
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Conversion from uint128.
     /// </summary>
@@ -760,6 +780,7 @@ public readonly partial struct <#= TypeName #>
     {
         return new(new BinaryJsonNumber(value));
     }
+#endif
 
 <#  }#>
     /// <summary>

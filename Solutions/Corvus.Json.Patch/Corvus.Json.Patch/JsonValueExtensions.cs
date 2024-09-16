@@ -36,7 +36,7 @@ public static class JsonValueExtensions
             }
             else
             {
-                result = T.Undefined;
+                result = default;
                 return false;
             }
         }
@@ -53,7 +53,11 @@ public static class JsonValueExtensions
         // Ignore a trailing slash
         ReadOnlySpan<char> currentPath = (path[^1] == '/') ? path[..^1] : path;
 
+#if NET8_0_OR_GREATER
         while ((nextSlash = currentPath.IndexOf("/", StringComparison.Ordinal)) >= 0)
+#else
+        while ((nextSlash = currentPath.IndexOf('/')) >= 0)
+#endif
         {
             currentIndex += nextSlash;
 
@@ -70,7 +74,7 @@ public static class JsonValueExtensions
                     EmptyObject,
                     out currentResult))
                 {
-                    result = T.Undefined;
+                    result = default;
                     return false;
                 }
 
@@ -92,7 +96,7 @@ public static class JsonValueExtensions
             }
             else
             {
-                result = T.Undefined;
+                result = default;
                 return false;
             }
         }
@@ -105,7 +109,7 @@ public static class JsonValueExtensions
             }
             else
             {
-                result = T.Undefined;
+                result = default;
                 return false;
             }
         }

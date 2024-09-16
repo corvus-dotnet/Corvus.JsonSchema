@@ -13,6 +13,7 @@ namespace Corvus.Json;
 public interface IJsonString<T> : IJsonValue<T>
     where T : struct, IJsonString<T>
 {
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Conversion from string.
     /// </summary>
@@ -25,6 +26,7 @@ public interface IJsonString<T> : IJsonValue<T>
     /// <param name="value">The value from which to convert.</param>
     /// <exception cref="InvalidOperationException">The value was not a string.</exception>
     static abstract explicit operator string(T value);
+#endif
 
     /// <summary>
     /// Try to get the string value.
@@ -39,6 +41,7 @@ public interface IJsonString<T> : IJsonValue<T>
     /// <returns>If the value is a string, the value as a string. Otherwise <c>null</c>.</returns>
     string? GetString();
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Concatenate two JSON values, producing an instance of the string type <typeparamref name="T"/>.
     /// </summary>
@@ -220,4 +223,5 @@ public interface IJsonString<T> : IJsonValue<T>
         int written = LowAllocJsonUtils.ConcatenateAsUtf8JsonString(buffer, firstValue, secondValue, thirdValue, fourthValue, fifthValue, sixthValue, seventhValue, eighthValue);
         return ParseValue(buffer[..written]);
     }
+#endif
 }

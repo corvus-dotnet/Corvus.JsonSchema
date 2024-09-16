@@ -273,7 +273,11 @@ public static partial class JsonValueHelpers
         {
             if (item2.HasDotnetBacking)
             {
+#if NET8_0_OR_GREATER
                 return item1.AsJsonElement.ValueEquals((string)item2);
+#else
+                return item1.AsJsonElement.ValueEquals((string)item2.AsString);
+#endif
             }
             else
             {
@@ -286,7 +290,12 @@ public static partial class JsonValueHelpers
         {
             if (item1.HasDotnetBacking)
             {
+#if NET8_0_OR_GREATER
                 return item2.AsJsonElement.ValueEquals((string)item1);
+#else
+                return item2.AsJsonElement.ValueEquals((string)item1.AsString);
+#endif
+
             }
             else
             {
@@ -295,7 +304,11 @@ public static partial class JsonValueHelpers
             }
         }
 
+#if NET8_0_OR_GREATER
         return ((string)item1).Equals((string)item2, StringComparison.Ordinal);
+#else
+        return ((string)item1.AsString).Equals((string)item2.AsString, StringComparison.Ordinal);
+#endif
 
         static bool CompareValues(ReadOnlySpan<byte> span, in JsonElement firstItem, out bool value)
         {

@@ -1,83 +1,30 @@
-﻿using System.Text.Json;
-using Corvus.Json;
+﻿using Corvus.Json;
 using Corvus.Json.Benchmarking.Models;
-using Corvus.Json.JsonSchema.Draft202012;
+using JsonSchemaSample.Api;
+using NodaTime;
 
-using var parsedPerson = ParsedValue<Person>.Parse(
-    """
-    {
-        "name": {
-            "familyName": "Oldroyd",
-            "givenName": "Michael",
-            "otherNames": [],
-            "email": "michael.oldryoyd@contoso.com"
-        },
-        "dateOfBirth": "1944-07-14",
-        "netWorth": 1234567890.1234567891,
-        "height": 1.8
-    }
-    """);
+var test = Test.Create(
+    32,
+    "Hello",
+    new OffsetDateTime(
+        new LocalDateTime(1973, 02, 14, 14, 32),
+        Offset.Zero));
 
+(Test.PositiveInt32, JsonString, JsonDateTime) foo = test;
+(int, JsonString, OffsetDateTime) foo2 = test;
+(int, string, OffsetDateTime) foo3 = (test.Item1, (string)test.Item2, test.Item3);
 
-Person person = parsedPerson.Instance;
-PersonName personName = person.Name;
+Test.PositiveInt32 item1 = test.Item1;
+JsonString item2 = test.Item2;
+JsonDateTime item3 = test.Item3;
 
+Test t = foo; 
+Test t2 = foo2;
 
-using var schema = ParsedValue<Schema>.Parse(File.ReadAllText("D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\Solutions\\Sandbox\\PersonModel\\person-schema.json"));
+PersonArray people =
+    [
+        Person.Create(PersonName.Create("Lovelace", "Ada")),
+        Person.Create(PersonName.Create("Gates", "Bill")),
+    ];
 
-if (schema.Instance.Type.TryGetAsSimpleTypes(out Validation.SimpleTypes simpleTypes))
-{
-    MatchSimpleType(simpleTypes);
-}
-else if (schema.Instance.Type.TryGetAsSimpleTypesArray(out Validation.TypeEntity.SimpleTypesArray simpleTypesArray))
-{
-    foreach (Validation.SimpleTypes simpleTypesFromArray in simpleTypesArray.EnumerateArray())
-    {
-        MatchSimpleType(simpleTypesFromArray);
-    }
-}
-
-static void MatchSimpleType(Validation.SimpleTypes simpleTypes)
-{
-    simpleTypes.Match(
-        matchArray: static () =>
-        {
-            Console.WriteLine($"It's an array!");
-            return JsonValueKind.Array;
-        },
-        matchObject: static () =>
-        {
-            Console.WriteLine($"It's an object!");
-            return JsonValueKind.Object;
-        },
-        matchString: static () =>
-        {
-            Console.WriteLine($"It's a string!");
-            return JsonValueKind.String;
-        },
-        matchNumber: static () =>
-        {
-            Console.WriteLine($"It's a number!");
-            return JsonValueKind.Number;
-        },
-        matchBoolean: static () =>
-        {
-            Console.WriteLine($"It's a boolean!");
-            return JsonValueKind.True;
-        },
-        matchInteger: static () =>
-        {
-            Console.WriteLine($"It's an integer!");
-            return JsonValueKind.Number;
-        },
-        matchNull: static () =>
-        {
-            Console.WriteLine($"It's a null!");
-            return JsonValueKind.Null;
-        },
-        defaultMatch: static () =>
-        {
-            Console.WriteLine($"Doesn't seem to be anything");
-            return JsonValueKind.Null;
-        });
-}
+JsonArray arrayTest = [1, "hello", (JsonDateTime)OffsetDateTime.FromDateTimeOffset(DateTimeOffset.Now)];

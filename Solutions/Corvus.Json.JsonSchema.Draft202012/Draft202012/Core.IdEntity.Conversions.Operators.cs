@@ -24,7 +24,7 @@ public readonly partial struct Core
         /// Conversion to <see cref = "Corvus.Json.JsonUriReference"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static explicit operator Corvus.Json.JsonUriReference(IdEntity value)
+        public static implicit operator Corvus.Json.JsonUriReference(IdEntity value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
@@ -43,7 +43,7 @@ public readonly partial struct Core
         /// Conversion from <see cref = "Corvus.Json.JsonUriReference"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator IdEntity(Corvus.Json.JsonUriReference value)
+        public static explicit operator IdEntity(Corvus.Json.JsonUriReference value)
         {
             if (value.HasJsonElementBacking)
             {

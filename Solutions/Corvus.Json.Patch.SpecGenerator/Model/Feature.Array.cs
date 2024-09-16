@@ -8,6 +8,7 @@
 //------------------------------------------------------------------------------
 #nullable enable
 using System.Buffers;
+using System.Collections;
 using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
@@ -18,7 +19,13 @@ namespace Corvus.Json.Patch.SpecGenerator;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
-public readonly partial struct Feature : IJsonArray<Feature>
+
+#if NET8_0_OR_GREATER
+[CollectionBuilder(typeof(Feature), "Create")]
+public readonly partial struct Feature : IJsonArray<Feature>, IReadOnlyCollection<Corvus.Json.Patch.SpecGenerator.Scenario>
+#else
+public readonly partial struct Feature : IJsonArray<Feature>, IReadOnlyCollection<Corvus.Json.Patch.SpecGenerator.Scenario>
+#endif
 {
     /// <summary>
     /// Gets an empty array.
@@ -148,6 +155,16 @@ public readonly partial struct Feature : IJsonArray<Feature>
     }
 
     /// <summary>
+    /// Create an array from the span of items.
+    /// </summary>
+    /// <param name = "items">The items from which to create the array.</param>
+    /// <returns>The array containing the items.</returns>
+    public static Feature Create(ReadOnlySpan<Corvus.Json.Patch.SpecGenerator.Scenario> items)
+    {
+        return new([..items]);
+    }
+
+    /// <summary>
     /// Initializes a new instance of the <see cref = "Feature"/> struct.
     /// </summary>
     /// <param name = "value1">The first value from which to construct the instance.</param>
@@ -251,10 +268,6 @@ public readonly partial struct Feature : IJsonArray<Feature>
     /// </summary>
     /// <param name = "items">The items from which to create the array.</param>
     /// <returns>The new array created from the items.</returns>
-    /// <remarks>
-    /// This will serialize the items to create the underlying JsonArray. Note the
-    /// other overloads which avoid this serialization step.
-    /// </remarks>
     public static Feature FromRange(IEnumerable<JsonAny> items)
     {
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
@@ -271,10 +284,6 @@ public readonly partial struct Feature : IJsonArray<Feature>
     /// </summary>
     /// <param name = "items">The items from which to create the array.</param>
     /// <returns>The new array created from the items.</returns>
-    /// <remarks>
-    /// This will serialize the items to create the underlying JsonArray. Note the
-    /// other overloads which avoid this serialization step.
-    /// </remarks>
     public static Feature FromRange<T>(IEnumerable<T> items)
         where T : struct, IJsonValue<T>
     {
@@ -286,6 +295,21 @@ public readonly partial struct Feature : IJsonArray<Feature>
 
         return new Feature(builder.ToImmutable());
     }
+
+    /// <inheritdoc/>
+    IEnumerator<Corvus.Json.Patch.SpecGenerator.Scenario> IEnumerable<Corvus.Json.Patch.SpecGenerator.Scenario>.GetEnumerator()
+    {
+        return EnumerateArray();
+    }
+
+    /// <inheritdoc/>
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+        return EnumerateArray();
+    }
+
+    /// <inheritdoc/>
+    int IReadOnlyCollection<Corvus.Json.Patch.SpecGenerator.Scenario>.Count => this.GetArrayLength();
 
     /// <inheritdoc/>
     public ImmutableList<JsonAny> AsImmutableList()

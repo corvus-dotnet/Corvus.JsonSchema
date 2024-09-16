@@ -18,6 +18,7 @@ Scenario Outline: required validation
     Given the input JSON file "required.json"
     And the schema at "#/0/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -25,10 +26,15 @@ Scenario Outline: required validation
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # {"foo": 1}
         | #/000/tests/000/data | true  | present required property is valid                                               |
+        # {"bar": 1}
         | #/000/tests/001/data | false | non-present required property is invalid                                         |
+        # []
         | #/000/tests/002/data | true  | ignores arrays                                                                   |
+        # 
         | #/000/tests/003/data | true  | ignores strings                                                                  |
+        # 12
         | #/000/tests/004/data | true  | ignores other non-objects                                                        |
 
 Scenario Outline: required default validation
@@ -42,6 +48,7 @@ Scenario Outline: required default validation
     Given the input JSON file "required.json"
     And the schema at "#/1/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -49,6 +56,7 @@ Scenario Outline: required default validation
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # {}
         | #/001/tests/000/data | true  | not required by default                                                          |
 
 Scenario Outline: required with empty array
@@ -63,6 +71,7 @@ Scenario Outline: required with empty array
     Given the input JSON file "required.json"
     And the schema at "#/2/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -70,6 +79,7 @@ Scenario Outline: required with empty array
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # {}
         | #/002/tests/000/data | true  | property not required                                                            |
 
 Scenario Outline: required with escaped characters
@@ -88,6 +98,7 @@ Scenario Outline: required with escaped characters
     Given the input JSON file "required.json"
     And the schema at "#/3/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -95,7 +106,9 @@ Scenario Outline: required with escaped characters
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # { "foo\nbar": 1, "foo\"bar": 1, "foo\\bar": 1, "foo\rbar": 1, "foo\tbar": 1, "foo\fbar": 1 }
         | #/003/tests/000/data | true  | object with all properties present is valid                                      |
+        # { "foo\nbar": "1", "foo\"bar": "1" }
         | #/003/tests/001/data | false | object with some properties missing is invalid                                   |
 
 Scenario Outline: required properties whose names are Javascript object property names
@@ -105,6 +118,7 @@ Scenario Outline: required properties whose names are Javascript object property
     Given the input JSON file "required.json"
     And the schema at "#/4/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -112,10 +126,17 @@ Scenario Outline: required properties whose names are Javascript object property
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # []
         | #/004/tests/000/data | true  | ignores arrays                                                                   |
+        # 12
         | #/004/tests/001/data | true  | ignores other non-objects                                                        |
+        # {}
         | #/004/tests/002/data | false | none of the properties mentioned                                                 |
+        # { "__proto__": "foo" }
         | #/004/tests/003/data | false | __proto__ present                                                                |
+        # { "toString": { "length": 37 } }
         | #/004/tests/004/data | false | toString present                                                                 |
+        # { "constructor": { "length": 37 } }
         | #/004/tests/005/data | false | constructor present                                                              |
+        # { "__proto__": 12, "toString": { "length": "foo" }, "constructor": 37 }
         | #/004/tests/006/data | true  | all present                                                                      |

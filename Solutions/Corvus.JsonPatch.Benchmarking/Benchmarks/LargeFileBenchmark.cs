@@ -178,7 +178,7 @@ public class LargeFileBenchmark : BenchmarkBase
     }
 
     /// <summary>
-    /// Validates using the Newtonsoft types.
+    /// Validates using the JsonEverything types.
     /// </summary>
     [Benchmark(Baseline = true)]
     public void PatchJsonEverything()

@@ -23,39 +23,6 @@ public readonly partial struct JsonPatchDocument
     public readonly partial struct PatchOperation
     {
         /// <summary>
-        /// Gets the value as a <see cref = "Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommon"/>.
-        /// </summary>
-        public Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommon AsPatchOperationCommon
-        {
-            get
-            {
-                return (Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommon)this;
-            }
-        }
-
-        /// <summary>
-        /// Gets a value indicating whether this is a valid <see cref = "Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommon"/>.
-        /// </summary>
-        public bool IsPatchOperationCommon
-        {
-            get
-            {
-                return ((Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommon)this).IsValid();
-            }
-        }
-
-        /// <summary>
-        /// Gets the value as a <see cref = "Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommon"/>.
-        /// </summary>
-        /// <param name = "result">The result of the conversion.</param>
-        /// <returns><c>True</c> if the conversion was valid.</returns>
-        public bool TryGetAsPatchOperationCommon(out Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommon result)
-        {
-            result = (Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommon)this;
-            return result.IsValid();
-        }
-
-        /// <summary>
         /// Gets the value as a <see cref = "Corvus.Json.Patch.Model.JsonPatchDocument.AddEntity"/>.
         /// </summary>
         public Corvus.Json.Patch.Model.JsonPatchDocument.AddEntity AsAddEntity

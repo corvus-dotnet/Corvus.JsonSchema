@@ -53,7 +53,11 @@ public static class SchemaExtensionsDraft201909
             if (schema.Description.IsNotNullOrUndefined())
             {
                 // Unescaped new lines in the string value.
+#if NET8_0_OR_GREATER
                 string[]? lines = schema.Description.GetString()?.Split("\n");
+#else
+                string[]? lines = schema.Description.GetString()?.Split('\n');
+#endif
                 if (lines is string[] l)
                 {
                     foreach (string line in l)
@@ -74,7 +78,11 @@ public static class SchemaExtensionsDraft201909
                 {
                     documentation.AppendLine("/// <example>");
                     documentation.AppendLine("/// <code>");
+#if NET8_0_OR_GREATER
                     string[] lines = example.ToString().Split("\\n");
+#else
+                    string[] lines = example.ToString().Split(["\\n"], StringSplitOptions.None);
+#endif
                     foreach (string line in lines)
                     {
                         documentation.Append("/// ");
@@ -113,6 +121,17 @@ public static class SchemaExtensionsDraft201909
     {
         return
             draft201909Schema.Type.IsSimpleTypes && draft201909Schema.Type.Equals(Validation.SimpleTypes.EnumValues.Array);
+    }
+
+    /// <summary>
+    /// Determines if this is an explicit map type.
+    /// </summary>
+    /// <param name="draft201909Schema">The schema to test.</param>
+    /// <returns><c>True</c> if the schema has a single type value of type object, and an additionalItems schema object.</returns>
+    public static bool IsExplicitMapType(this Schema draft201909Schema)
+    {
+        return
+            draft201909Schema.IsExplicitObjectType() && draft201909Schema.AdditionalProperties.ValueKind == JsonValueKind.Object && draft201909Schema.Properties.IsUndefined();
     }
 
     /// <summary>
@@ -513,6 +532,65 @@ public static class SchemaExtensionsDraft201909
             draft201909Schema.Required.IsUndefined() &&
             draft201909Schema.Then.IsUndefined() &&
             draft201909Schema.Title.IsUndefined() &&
+            draft201909Schema.Type.IsUndefined() &&
+            draft201909Schema.UnevaluatedItems.IsUndefined() &&
+            draft201909Schema.UnevaluatedProperties.IsUndefined() &&
+            draft201909Schema.UniqueItems.IsUndefined() &&
+            draft201909Schema.WriteOnly.IsUndefined();
+    }
+
+    /// <summary>
+    /// Determines if this schema is a naked oneOf.
+    /// </summary>
+    /// <param name="draft201909Schema">The schema to test.</param>
+    /// <returns><c>True</c> if the schema has an oneOf keyword and no other substantive properties.</returns>
+    public static bool IsNakedOneOf(this Schema draft201909Schema)
+    {
+        return
+            draft201909Schema.OneOf.IsNotUndefined() &&
+            draft201909Schema.Ref.IsUndefined() &&
+            draft201909Schema.AdditionalItems.IsUndefined() &&
+            draft201909Schema.AdditionalProperties.IsUndefined() &&
+            draft201909Schema.AllOf.IsUndefined() &&
+            draft201909Schema.Anchor.IsUndefined() &&
+            draft201909Schema.AnyOf.IsUndefined() &&
+            draft201909Schema.Const.IsUndefined() &&
+            draft201909Schema.Contains.IsUndefined() &&
+            draft201909Schema.ContentEncoding.IsUndefined() &&
+            draft201909Schema.ContentMediaType.IsUndefined() &&
+            draft201909Schema.ContentSchema.IsUndefined() &&
+            draft201909Schema.Default.IsUndefined() &&
+            draft201909Schema.Dependencies.IsUndefined() &&
+            draft201909Schema.DependentRequired.IsUndefined() &&
+            draft201909Schema.DependentSchemas.IsUndefined() &&
+            draft201909Schema.Else.IsUndefined() &&
+            draft201909Schema.Enum.IsUndefined() &&
+            draft201909Schema.ExclusiveMaximum.IsUndefined() &&
+            draft201909Schema.ExclusiveMinimum.IsUndefined() &&
+            draft201909Schema.Format.IsUndefined() &&
+            draft201909Schema.Id.IsUndefined() &&
+            draft201909Schema.If.IsUndefined() &&
+            draft201909Schema.Items.IsUndefined() &&
+            draft201909Schema.MaxContains.IsUndefined() &&
+            draft201909Schema.Maximum.IsUndefined() &&
+            draft201909Schema.MaxItems.IsUndefined() &&
+            draft201909Schema.MaxLength.IsUndefined() &&
+            draft201909Schema.MaxProperties.IsUndefined() &&
+            draft201909Schema.MinContains.IsUndefined() &&
+            draft201909Schema.Minimum.IsUndefined() &&
+            draft201909Schema.MinItems.IsUndefined() &&
+            draft201909Schema.MinLength.IsUndefined() &&
+            draft201909Schema.MinProperties.IsUndefined() &&
+            draft201909Schema.MultipleOf.IsUndefined() &&
+            draft201909Schema.Not.IsUndefined() &&
+            draft201909Schema.Pattern.IsUndefined() &&
+            draft201909Schema.PatternProperties.IsUndefined() &&
+            draft201909Schema.Properties.IsUndefined() &&
+            draft201909Schema.PropertyNames.IsUndefined() &&
+            draft201909Schema.ReadOnly.IsUndefined() &&
+            draft201909Schema.RecursiveRef.IsUndefined() &&
+            draft201909Schema.Required.IsUndefined() &&
+            draft201909Schema.Then.IsUndefined() &&
             draft201909Schema.Type.IsUndefined() &&
             draft201909Schema.UnevaluatedItems.IsUndefined() &&
             draft201909Schema.UnevaluatedProperties.IsUndefined() &&

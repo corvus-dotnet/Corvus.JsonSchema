@@ -61,7 +61,7 @@ param (
     [string] $PackagesDir = "_packages",
 
     [Parameter()]
-    [ValidateSet("minimal","normal","detailed")]
+    [ValidateSet("quiet","minimal","normal","detailed")]
     [string] $LogLevel = "minimal",
 
     [Parameter()]
@@ -71,7 +71,7 @@ param (
     [string] $BuildModulePath,
 
     [Parameter()]
-    [version] $BuildModuleVersion = "1.5.5",
+    [version] $BuildModuleVersion = "1.5.6",
 
     [Parameter()]
     [version] $InvokeBuildModuleVersion = "5.10.3"
@@ -127,7 +127,7 @@ $SkipVersion = $false
 $SkipBuild = $false
 $CleanBuild = $Clean
 $SkipTest = $false
-$SkipTestReport = $true     # Temporarily skip the test report due .NET 7 MSBuild issue
+$SkipTestReport = $false
 $SkipPackage = $false
 $SkipAnalysis = $false
 
@@ -149,12 +149,18 @@ $NuSpecFilesToPackage = @(
 # - Use file path or directory path with globbing (e.g dir1/*.cs)
 # - Use single or multiple paths (separated by comma) (e.g. **/dir1/class1.cs,**/dir2/*.cs,**/dir3/**/*.cs)
 #
-$ExcludeFilesFromCodeCoverage = ""
+# NOTE: These exclusions suppress errors from the test report tool caused by a mismatch of relative paths
+#       between the code generation and the test report tooling.
+# $ExcludeFilesFromCodeCoverage = ""
 
 #
 # Update to the latest report generator versions
 #
 $ReportGeneratorToolVersion = "5.1.10"
+$CovenantVersion = "0.19.0"
+
+$CreateGitHubRelease = $true
+$PublishNuGetPackagesAsGitHubReleaseArtefacts = $true
 
 
 # Synopsis: Build, Test and Package
@@ -167,10 +173,25 @@ task PreInit {}
 task PostInit {}
 task PreVersion {}
 task PostVersion {}
-task PreBuild {}
+task PreBuild {
+    Write-Host "Initialising submodule"
+    exec { & git submodule init }
+    exec { & git submodule update }
+}
 task PostBuild {}
-task PreTest {}
-task PostTest {}
+task PreTest {
+    # Turn down logging when running Specs, otherwise it overloads the GitHub Actions web interface
+    if ($IsRunningOnBuildServer) {
+        $script:LogLevelBackup = $LogLevel
+        $script:LogLevel = "quiet"
+    }
+}
+task PostTest {
+    # Revert back to original logging level
+    if ($IsRunningOnBuildServer) {
+        $script:LogLevel = $LogLevelBackup
+    }
+}
 task PreTestReport {}
 task PostTestReport {}
 task PreAnalysis {}
@@ -181,3 +202,109 @@ task PrePublish {}
 task PostPublish {}
 task RunLast {}
 
+# Override the default testing task so we can optionally override the target framework
+$AdditionalTestArgs = @()
+$TargetFrameworkMoniker = ""
+task RunTests -If {!$SkipTest -and $SolutionToBuild} {
+    # Only setup the default CI/CD platform test loggers if they haven't already been customised
+    if ($DotNetTestLoggers.Count -eq 0 -and $DotNetTestLogger -eq $_defaultDotNetTestLogger) {
+        if ($script:IsAzureDevOps) {
+            Write-Build Green "Configuring Azure Pipelines test logger"
+            $DotNetTestLogger = "AzurePipelines"
+        }
+        elseif ($script:IsGitHubActions) {
+            Write-Build Green "Configuring GitHub Actions test logger"
+            $DotNetTestLogger = "GitHubActions"
+        }    
+    }
+
+    # Workaround $PSScriptRoot not resolving to the module location, when overridden here
+    $moduleDir = Split-Path -Parent (Get-Module Endjin.RecommendedPractices.Build | Select-Object -ExpandProperty Path)
+
+    # Setup the arguments we need to pass to 'dotnet test'
+    $dotnetTestArgs = @(
+        "--configuration", $Configuration
+        "--no-build"
+        "--no-restore"
+        "--verbosity", $LogLevel
+        "--test-adapter-path", "$moduleDir/bin"
+        ($DotNetTestFileLoggerProps ? $DotNetTestFileLoggerProps : "/fl")
+    )
+
+    # If multiple test loggers have been specified then use that newer config property
+    if ($DotNetTestLoggers.Count -gt 0) {
+        $DotNetTestLoggers | ForEach-Object {
+            $dotnetTestArgs += @("--logger", $_)
+        }
+    }
+    # Otherwise fallback to the original behaviour so we are backwards-compatible
+    else {
+        $dotnetTestArgs += @("--logger", $DotNetTestLogger)
+    }
+
+    if ($TargetFrameworkMoniker) {
+        $dotnetTestArgs += @("--framework", $TargetFrameworkMoniker)
+    }
+
+    if ($AdditionalTestArgs) {
+        $dotnetTestArgs += $AdditionalTestArgs
+    }
+
+    # Install the dotnet-coverage global tool
+    Install-DotNetTool -Name "dotnet-coverage" -Global
+
+    $coverageOutput = "coverage{0}.cobertura.xml" -f ($TargetFrameworkMoniker ? ".$TargetFrameworkMoniker" : "")
+    Write-Build Magenta "CmdLine: dotnet-coverage collect -o $coverageOutput -f cobertura dotnet test $SolutionToBuild $dotnetTestArgs"
+
+    try {
+        exec { 
+            dotnet-coverage collect -o $coverageOutput -f cobertura dotnet test $SolutionToBuild @dotnetTestArgs
+        }
+    }
+    finally {
+        if ((Test-Path $DotNetTestLogFile) -and $IsAzureDevOps) {
+            Write-Host "##vso[artifact.upload artifactname=logs]$((Resolve-Path $DotNetTestLogFile).Path)"
+        }
+
+        # Generate test report file
+        if (!$SkipTestReport) {
+            _GenerateCodeCoverageMarkdownReport
+        }
+    }
+}
+
+# Generate a markdown report from the code coverage files
+$CodeCoverageLowerThreshold = 60
+$CodeCoverageUpperThreshold = 80
+function _GenerateCodeCoverageMarkdownReport {
+    
+    Install-DotNetTool -Name Endjin.CodeCoverageSummary -Global
+    $coverageOutputFileWildcard = "coverage*cobertura.xml"
+    $coverageOutputFileGlob = "**/$coverageOutputFileWildcard"
+    $coverageFiles = Get-ChildItem -Path $SourcesDir -Filter $coverageOutputFileWildcard -Recurse
+    if (!$coverageFiles) {
+        Write-Warning "No code coverage reports found for the file pattern '$coverageOutputFileWildcard' - skipping code coverage summary"
+    }
+    else {
+        exec {
+            endjinccs --files $coverageOutputFileGlob `
+                        --badge true `
+                        --fail false `
+                        --format markdown `
+                        --hidebranch false `
+                        --hidecomplexity false `
+                        --indicators true `
+                        --output both `
+                        --thresholds ("{0} {1}" -f $CodeCoverageLowerThreshold, $CodeCoverageUpperThreshold)
+        }
+
+        # Inject a title so we can distinguish between reports across multiple test runs,
+        # when they are published to GitHub as PR comments.
+        $generatedReportPath = Join-Path -Resolve $SourcesDir "code-coverage-results.md"
+        $generatedContent = Get-Content -Raw -Path $generatedReportPath
+        $testRunOs = if ($IsLinux) { "Linux" } elseif ($IsMacOS) { "MacOS" } else { "Windows" }
+        $reportTitle = "# Code Coverage Summary Report - $testRunOs ($TargetFrameworkMoniker)"
+        Write-Build White "Updating generated code coverage report with title: $reportTitle"
+        Set-Content -Path $generatedReportPath -Value ($reportTitle + "`n" + $generatedContent)
+    }
+}

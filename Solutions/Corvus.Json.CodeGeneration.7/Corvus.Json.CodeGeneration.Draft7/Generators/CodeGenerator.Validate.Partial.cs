@@ -15,15 +15,28 @@ namespace Corvus.Json.CodeGeneration.Generators.Draft7;
 /// </summary>
 public partial class CodeGeneratorValidate
 {
+    private Dictionary<TypeDeclaration, Conversion>? conversions;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="CodeGeneratorValidate"/> class.
     /// </summary>
     /// <param name="jsonSchemaBuilder">The current <see cref="JsonSchemaBuilder"/>.</param>
     /// <param name="declarationToGenerate">The <see cref="TypeDeclaration"/> to generate in this file.</param>
-    public CodeGeneratorValidate(JsonSchemaBuilder jsonSchemaBuilder, TypeDeclaration declarationToGenerate)
+    /// <param name="validateFormat">If true, the format keyword will be validated.</param>
+    public CodeGeneratorValidate(JsonSchemaBuilder jsonSchemaBuilder, TypeDeclaration declarationToGenerate, bool validateFormat = true)
     {
         this.Builder = jsonSchemaBuilder;
         this.TypeDeclaration = declarationToGenerate;
+        this.ValidateFormat = validateFormat;
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether or not to validate the format keyword.
+    /// </summary>
+    public bool ValidateFormat
+    {
+        get;
+        private set;
     }
 
     /// <summary>
@@ -652,7 +665,7 @@ public partial class CodeGeneratorValidate
             {
                 foreach (JsonAny value in this.TypeDeclaration.Schema().Enum.EnumerateArray())
                 {
-                    builder.Add(new EnumValue(value));
+                    builder.Add(new EnumValue(value, builder));
                 }
             }
 
@@ -796,7 +809,7 @@ public partial class CodeGeneratorValidate
                 }
 
                 // Fall back to a decimal
-                return $"{this.TypeDeclaration.Schema().MultipleOf.AsJsonElement.GetRawText()}M";
+                return $"{this.TypeDeclaration.Schema().ExclusiveMaximum.AsJsonElement.GetRawText()}M";
             }
 
             return string.Empty;
@@ -1303,6 +1316,17 @@ public partial class CodeGeneratorValidate
     }
 
     /// <summary>
+    /// Gets a value indicating whether the type has a single property type constraint.
+    /// </summary>
+    public bool HasSinglePropertyType
+    {
+        get
+        {
+            return !this.HasProperties && this.HasAdditionalProperties;
+        }
+    }
+
+    /// <summary>
     /// Gets a value indicating whether the type has multiple items type constraints.
     /// </summary>
     public bool HasMultipleItemsType
@@ -1312,6 +1336,11 @@ public partial class CodeGeneratorValidate
             return this.TypeDeclaration.Schema().Items.IsSchemaArray;
         }
     }
+
+    /// <summary>
+    /// Gets the array of dotnet type names when the items constraint is an array.
+    /// </summary>
+    public ImmutableArray<string> PrefixItems => this.Items;
 
     /// <summary>
     /// Gets the array of dotnet type names when the items constraint is an array.
@@ -1346,6 +1375,28 @@ public partial class CodeGeneratorValidate
     }
 
     /// <summary>
+    /// Gets a value indicating whether we can enumerate this object as a single items type.
+    /// </summary>
+    public bool CanEnumerateObjectAsSpecificType
+    {
+        get
+        {
+            return this.HasSinglePropertyType && this.SinglePropertyDotnetTypeName != $"{BuiltInTypes.AnyTypeDeclaration.Ns}.{BuiltInTypes.AnyTypeDeclaration.Type}";
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether this array represents a tuple.
+    /// </summary>
+    public bool IsTuple
+    {
+        get
+        {
+            return this.TypeDeclaration.Schema().Items.IsSchemaArray && this.TypeDeclaration.Schema().AdditionalItems.ValueKind == JsonValueKind.False;
+        }
+    }
+
+    /// <summary>
     /// Gets the dotnet type name for the items constraint when it is a single schema.
     /// </summary>
     public string SingleItemsDotnetTypeName
@@ -1372,6 +1423,94 @@ public partial class CodeGeneratorValidate
             }
 
             return $"{BuiltInTypes.AnyTypeDeclaration.Ns}.{BuiltInTypes.AnyTypeDeclaration.Type}";
+        }
+    }
+
+    /// <summary>
+    /// Gets the dotnet type name for the additional properties dotnet type name.
+    /// </summary>
+    public string SinglePropertyDotnetTypeName
+    {
+        get
+        {
+            if (this.TypeDeclaration.Schema().Properties.IsUndefined())
+            {
+                if (this.TypeDeclaration.Schema().AdditionalProperties.ValueKind == JsonValueKind.Object)
+                {
+                    TypeDeclaration itemsType = this.Builder.GetTypeDeclarationForProperty(this.TypeDeclaration, "additionalProperties");
+                    return itemsType.FullyQualifiedDotnetTypeName ?? string.Empty;
+                }
+
+                if (this.TypeDeclaration.Schema().AdditionalProperties.ValueKind == JsonValueKind.True)
+                {
+                    return $"{BuiltInTypes.AnyTypeDeclaration.Ns}.{BuiltInTypes.AnyTypeDeclaration.Type}";
+                }
+
+                if (this.TypeDeclaration.Schema().AdditionalProperties.ValueKind == JsonValueKind.False)
+                {
+                    return $"{BuiltInTypes.NotAnyTypeDeclaration.Ns}.{BuiltInTypes.NotAnyTypeDeclaration.Type}";
+                }
+            }
+
+            return $"{BuiltInTypes.AnyTypeDeclaration.Ns}.{BuiltInTypes.AnyTypeDeclaration.Type}";
+        }
+    }
+
+    /// <summary>
+    /// Gets the rank of the array. This will be zero if the type is not an array.
+    /// </summary>
+    public int ArrayRank
+    {
+        get
+        {
+            return this.GetArrayRank(this.TypeDeclaration);
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether the array is a fixed size array.
+    /// </summary>
+    public bool IsFixedSizeArray => this.GetIsFixedSizeArray(this.TypeDeclaration);
+
+    /// <summary>
+    /// Gets the dimension of the array, or -1 if the array does not have a fixed dimension.
+    /// </summary>
+    public int ArrayDimension => this.GetArrayDimension(this.TypeDeclaration);
+
+    /// <summary>
+    /// Gets the total buffer size of the array in all dimensions.
+    /// </summary>
+    public int ArrayValueBufferSize => this.GetArrayValueBufferSize(this.TypeDeclaration, 0);
+
+    /// <summary>
+    /// Gets the buffer size required by the child rank.
+    /// </summary>
+    public int ChildArrayValueBufferSize => this.GetChildArrayValueBufferSize(this.TypeDeclaration);
+
+    /// <summary>
+    /// Gets a value indicating whether the array is a numeric array.
+    /// </summary>
+    public bool IsNumericArray => this.GetIsNumericArray(this.TypeDeclaration);
+
+    /// <summary>
+    /// Gets the item type of the ultimate type of the item in a multi-dimensional array.
+    /// </summary>
+    public string LeafArrayItemType
+    {
+        get
+        {
+            return this.GetLeafArrayItemType(this.TypeDeclaration);
+        }
+    }
+
+    /// <summary>
+    /// Gets the preferred CLR numeric type for the ultimate type of the item in a multi-dimensional array.
+    /// </summary>
+    public string PreferredNumericType
+    {
+        get
+        {
+            return this.GetPreferredNumericType(this.TypeDeclaration);
         }
     }
 
@@ -1489,12 +1628,14 @@ public partial class CodeGeneratorValidate
     {
         get
         {
-            var conversions = new Dictionary<TypeDeclaration, Conversion>();
-
-            this.AddConversionsFor(this.TypeDeclaration, conversions, null);
+            if (this.conversions is null)
+            {
+                this.conversions = new Dictionary<TypeDeclaration, Conversion>();
+                this.AddConversionsFor(this.TypeDeclaration, this.conversions, null);
+            }
 
             // Get the conversions that require a constructor
-            return conversions.Where(t => t.Value.IsDirect).Select(t => t.Value).ToImmutableArray();
+            return this.conversions.Where(t => t.Value.IsDirect).Select(t => t.Value).ToImmutableArray();
         }
     }
 
@@ -1505,12 +1646,14 @@ public partial class CodeGeneratorValidate
     {
         get
         {
-            var conversions = new Dictionary<TypeDeclaration, Conversion>();
-
-            this.AddConversionsFor(this.TypeDeclaration, conversions, null);
+            if (this.conversions is null)
+            {
+                this.conversions = new Dictionary<TypeDeclaration, Conversion>();
+                this.AddConversionsFor(this.TypeDeclaration, this.conversions, null);
+            }
 
             // Select the conversions that require a cast through another type
-            return conversions.Select(t => t.Value).ToImmutableArray();
+            return this.conversions.Select(t => t.Value).ToImmutableArray();
         }
     }
 
@@ -1801,74 +1944,303 @@ public partial class CodeGeneratorValidate
     }
 
     /// <summary>
+    /// Gets a value indicating whether this is a byte.
+    /// </summary>
+    public bool IsJsonByte
+    {
+        get
+        {
+            if (this.TypeDeclaration.Schema().Format.IsNotUndefined())
+            {
+                return BuiltInTypes.ImplicitConversionToByte(this.TypeDeclaration.Schema().Format.GetString());
+            }
+
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether this is an int16.
+    /// </summary>
+    public bool IsJsonInt16
+    {
+        get
+        {
+            if (this.TypeDeclaration.Schema().Format.IsNotUndefined())
+            {
+                return BuiltInTypes.ImplicitConversionToInt16(this.TypeDeclaration.Schema().Format.GetString());
+            }
+
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether this is an int32.
+    /// </summary>
+    public bool IsJsonInt32
+    {
+        get
+        {
+            if (this.TypeDeclaration.Schema().Format.IsNotUndefined())
+            {
+                return BuiltInTypes.ImplicitConversionToInt32(this.TypeDeclaration.Schema().Format.GetString());
+            }
+
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether this is an int64.
+    /// </summary>
+    public bool IsJsonInt64
+    {
+        get
+        {
+            if (this.TypeDeclaration.Schema().Format.IsNotUndefined())
+            {
+                return BuiltInTypes.ImplicitConversionToInt64(this.TypeDeclaration.Schema().Format.GetString());
+            }
+
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether this is an int128.
+    /// </summary>
+    public bool IsJsonInt128
+    {
+        get
+        {
+            if (this.TypeDeclaration.Schema().Format.IsNotUndefined())
+            {
+                return BuiltInTypes.ImplicitConversionToInt128(this.TypeDeclaration.Schema().Format.GetString());
+            }
+
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether this is an sbyte.
+    /// </summary>
+    public bool IsJsonSByte
+    {
+        get
+        {
+            if (this.TypeDeclaration.Schema().Format.IsNotUndefined())
+            {
+                return BuiltInTypes.ImplicitConversionToSByte(this.TypeDeclaration.Schema().Format.GetString());
+            }
+
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether this is a uint16.
+    /// </summary>
+    public bool IsJsonUInt16
+    {
+        get
+        {
+            if (this.TypeDeclaration.Schema().Format.IsNotUndefined())
+            {
+                return BuiltInTypes.ImplicitConversionToUInt16(this.TypeDeclaration.Schema().Format.GetString());
+            }
+
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether this is a uint32.
+    /// </summary>
+    public bool IsJsonUInt32
+    {
+        get
+        {
+            if (this.TypeDeclaration.Schema().Format.IsNotUndefined())
+            {
+                return BuiltInTypes.ImplicitConversionToUInt32(this.TypeDeclaration.Schema().Format.GetString());
+            }
+
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether this is a uint64.
+    /// </summary>
+    public bool IsJsonUInt64
+    {
+        get
+        {
+            if (this.TypeDeclaration.Schema().Format.IsNotUndefined())
+            {
+                return BuiltInTypes.ImplicitConversionToUInt64(this.TypeDeclaration.Schema().Format.GetString());
+            }
+
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether this is a uint128.
+    /// </summary>
+    public bool IsJsonUInt128
+    {
+        get
+        {
+            if (this.TypeDeclaration.Schema().Format.IsNotUndefined())
+            {
+                return BuiltInTypes.ImplicitConversionToUInt128(this.TypeDeclaration.Schema().Format.GetString());
+            }
+
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether this is a double.
+    /// </summary>
+    public bool IsJsonDouble
+    {
+        get
+        {
+            if (this.TypeDeclaration.Schema().Format.IsNotUndefined())
+            {
+                return BuiltInTypes.ImplicitConversionToDouble(this.TypeDeclaration.Schema().Format.GetString());
+            }
+
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether this is a decimal.
+    /// </summary>
+    public bool IsJsonDecimal
+    {
+        get
+        {
+            if (this.TypeDeclaration.Schema().Format.IsNotUndefined())
+            {
+                return BuiltInTypes.ImplicitConversionToDecimal(this.TypeDeclaration.Schema().Format.GetString());
+            }
+
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether this is a half.
+    /// </summary>
+    public bool IsJsonHalf
+    {
+        get
+        {
+            if (this.TypeDeclaration.Schema().Format.IsNotUndefined())
+            {
+                return BuiltInTypes.ImplicitConversionToHalf(this.TypeDeclaration.Schema().Format.GetString());
+            }
+
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether this is a single.
+    /// </summary>
+    public bool IsJsonSingle
+    {
+        get
+        {
+            if (this.TypeDeclaration.Schema().Format.IsNotUndefined())
+            {
+                return BuiltInTypes.ImplicitConversionToSingle(this.TypeDeclaration.Schema().Format.GetString());
+            }
+
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Gets the implied format for this type, following the reference hierarchy.
+    /// </summary>
+    public string[] ImpliedFormats => this.GetImpliedFormats(this.TypeDeclaration);
+
+    /// <summary>
     /// Gets a value indicating whether this can implicitly convert to a byte format.
     /// </summary>
-    public string ConversionOperatorToByte => BuiltInTypes.ImplicitConversionToByte(this.TypeDeclaration.Schema().Format.GetString()) ? "implicit" : "explicit";
+    public string ConversionOperatorToByte => BuiltInTypes.ImplicitConversionToByte(this.ImpliedFormats) ? "implicit" : "explicit";
 
     /// <summary>
     /// Gets a value indicating whether this can implicitly convert to an int16 format.
     /// </summary>
-    public string ConversionOperatorToInt16 => BuiltInTypes.ImplicitConversionToInt16(this.TypeDeclaration.Schema().Format.GetString()) ? "implicit" : "explicit";
+    public string ConversionOperatorToInt16 => BuiltInTypes.ImplicitConversionToInt16(this.ImpliedFormats) ? "implicit" : "explicit";
 
     /// <summary>
     /// Gets a value indicating whether this can implicitly convert to an int32 format.
     /// </summary>
-    public string ConversionOperatorToInt32 => BuiltInTypes.ImplicitConversionToInt32(this.TypeDeclaration.Schema().Format.GetString()) ? "implicit" : "explicit";
+    public string ConversionOperatorToInt32 => BuiltInTypes.ImplicitConversionToInt32(this.ImpliedFormats) ? "implicit" : "explicit";
 
     /// <summary>
     /// Gets a value indicating whether this can implicitly convert to an int64 format.
     /// </summary>
-    public string ConversionOperatorToInt64 => BuiltInTypes.ImplicitConversionToInt64(this.TypeDeclaration.Schema().Format.GetString()) ? "implicit" : "explicit";
+    public string ConversionOperatorToInt64 => BuiltInTypes.ImplicitConversionToInt64(this.ImpliedFormats) ? "implicit" : "explicit";
 
     /// <summary>
     /// Gets a value indicating whether this can implicitly convert to an int128 format.
     /// </summary>
-    public string ConversionOperatorToInt128 => BuiltInTypes.ImplicitConversionToInt128(this.TypeDeclaration.Schema().Format.GetString()) ? "implicit" : "explicit";
+    public string ConversionOperatorToInt128 => BuiltInTypes.ImplicitConversionToInt128(this.ImpliedFormats) ? "implicit" : "explicit";
 
     /// <summary>
     /// Gets a value indicating whether this can implicitly convert to an sbyte format.
     /// </summary>
-    public string ConversionOperatorToSByte => BuiltInTypes.ImplicitConversionToSByte(this.TypeDeclaration.Schema().Format.GetString()) ? "implicit" : "explicit";
+    public string ConversionOperatorToSByte => BuiltInTypes.ImplicitConversionToSByte(this.ImpliedFormats) ? "implicit" : "explicit";
 
     /// <summary>
     /// Gets a value indicating whether this can implicitly convert to an uint16 format.
     /// </summary>
-    public string ConversionOperatorToUInt16 => BuiltInTypes.ImplicitConversionToUInt16(this.TypeDeclaration.Schema().Format.GetString()) ? "implicit" : "explicit";
+    public string ConversionOperatorToUInt16 => BuiltInTypes.ImplicitConversionToUInt16(this.ImpliedFormats) ? "implicit" : "explicit";
 
     /// <summary>
     /// Gets a value indicating whether this can implicitly convert to an uint32 format.
     /// </summary>
-    public string ConversionOperatorToUInt32 => BuiltInTypes.ImplicitConversionToUInt32(this.TypeDeclaration.Schema().Format.GetString()) ? "implicit" : "explicit";
+    public string ConversionOperatorToUInt32 => BuiltInTypes.ImplicitConversionToUInt32(this.ImpliedFormats) ? "implicit" : "explicit";
 
     /// <summary>
     /// Gets a value indicating whether this can implicitly convert to an uint64 format.
     /// </summary>
-    public string ConversionOperatorToUInt64 => BuiltInTypes.ImplicitConversionToUInt64(this.TypeDeclaration.Schema().Format.GetString()) ? "implicit" : "explicit";
+    public string ConversionOperatorToUInt64 => BuiltInTypes.ImplicitConversionToUInt64(this.ImpliedFormats) ? "implicit" : "explicit";
 
     /// <summary>
     /// Gets a value indicating whether this can implicitly convert to an uint128 format.
     /// </summary>
-    public string ConversionOperatorToUInt128 => BuiltInTypes.ImplicitConversionToUInt128(this.TypeDeclaration.Schema().Format.GetString()) ? "implicit" : "explicit";
+    public string ConversionOperatorToUInt128 => BuiltInTypes.ImplicitConversionToUInt128(this.ImpliedFormats) ? "implicit" : "explicit";
 
     /// <summary>
     /// Gets a value indicating whether this can implicitly convert to an double format.
     /// </summary>
-    public string ConversionOperatorToDouble => BuiltInTypes.ImplicitConversionToDouble(this.TypeDeclaration.Schema().Format.GetString()) ? "implicit" : "explicit";
+    public string ConversionOperatorToDouble => BuiltInTypes.ImplicitConversionToDouble(this.ImpliedFormats) ? "implicit" : "explicit";
 
     /// <summary>
     /// Gets a value indicating whether this can implicitly convert to an decimal format.
     /// </summary>
-    public string ConversionOperatorToDecimal => BuiltInTypes.ImplicitConversionToDecimal(this.TypeDeclaration.Schema().Format.GetString()) ? "implicit" : "explicit";
+    public string ConversionOperatorToDecimal => BuiltInTypes.ImplicitConversionToDecimal(this.ImpliedFormats) ? "implicit" : "explicit";
 
     /// <summary>
     /// Gets a value indicating whether this can implicitly convert to a half format.
     /// </summary>
-    public string ConversionOperatorToHalf => BuiltInTypes.ImplicitConversionToHalf(this.TypeDeclaration.Schema().Format.GetString()) ? "implicit" : "explicit";
+    public string ConversionOperatorToHalf => BuiltInTypes.ImplicitConversionToHalf(this.ImpliedFormats) ? "implicit" : "explicit";
 
     /// <summary>
     /// Gets a value indicating whether this can implicitly convert to a single format.
     /// </summary>
-    public string ConversionOperatorToSingle => BuiltInTypes.ImplicitConversionToSingle(this.TypeDeclaration.Schema().Format.GetString()) ? "implicit" : "explicit";
+    public string ConversionOperatorToSingle => BuiltInTypes.ImplicitConversionToSingle(this.ImpliedFormats) ? "implicit" : "explicit";
 
     /// <summary>
     /// Gets a value indicating whether this is an IPV4 address.
@@ -2212,6 +2584,51 @@ public partial class CodeGeneratorValidate
         return (this.PatternProperties.IndexOf(patternProperty) + 1).ToString();
     }
 
+    /// <summary>
+    /// Gets the implied format for this type, following the reference hierarchy.
+    /// </summary>
+    /// <param name="typeDeclaration">The type declaration for which to get the implied format.</param>
+    /// <returns>The implied format, if any.</returns>
+    public string[] GetImpliedFormats(TypeDeclaration typeDeclaration)
+    {
+        if (typeDeclaration.Schema().Format.IsNotUndefined())
+        {
+            string? format = typeDeclaration.Schema().Format.GetString();
+            return format is string f ? [f] : [];
+        }
+
+        if (typeDeclaration.Schema().Ref.IsNotUndefined() && !typeDeclaration.Schema().IsNakedReference())
+        {
+            TypeDeclaration td = this.Builder.GetTypeDeclarationForProperty(typeDeclaration, "$ref");
+            return this.GetImpliedFormats(td);
+        }
+
+        if (typeDeclaration.Schema().AllOf.IsNotUndefined() && typeDeclaration.Schema().AllOf.GetArrayLength() == 1)
+        {
+            TypeDeclaration td = this.Builder.GetTypeDeclarationForPropertyArrayIndex(typeDeclaration, "allOf", 0);
+            return this.GetImpliedFormats(td);
+        }
+
+        if (typeDeclaration.Schema().OneOf.IsNotUndefined() && typeDeclaration.Schema().IsNakedOneOf())
+        {
+            HashSet<string> result = new();
+            int i = 0;
+            foreach (Schema item in typeDeclaration.Schema().OneOf.EnumerateArray())
+            {
+                TypeDeclaration td = this.Builder.GetTypeDeclarationForPropertyArrayIndex(typeDeclaration, "oneOf", i++);
+
+                foreach (string format in this.GetImpliedFormats(td))
+                {
+                    result.Add(format);
+                }
+            }
+
+            return result.ToArray();
+        }
+
+        return [];
+    }
+
     private static string GetRawTextAsQuotedString(JsonAny? value)
     {
         if (value is JsonAny actualValue)
@@ -2230,6 +2647,151 @@ public partial class CodeGeneratorValidate
         }
 
         throw new ArgumentNullException(nameof(value));
+    }
+
+    private int GetArrayRank(TypeDeclaration typeDeclaration)
+    {
+        if (!typeDeclaration.Schema().IsArrayType())
+        {
+            return 0;
+        }
+
+        if (typeDeclaration.Schema().Items.IsNotUndefined())
+        {
+            if (typeDeclaration.Schema().Items.ValueKind == JsonValueKind.Object)
+            {
+                // This could be an array, so we will recurse
+                TypeDeclaration itemsType = this.Builder.GetTypeDeclarationForProperty(typeDeclaration, "items");
+                return 1 + this.GetArrayRank(itemsType);
+            }
+        }
+
+        return 1;
+    }
+
+    private int GetArrayDimension(TypeDeclaration typeDeclaration)
+    {
+        return this.GetIsFixedSizeArray(typeDeclaration) ? (int)typeDeclaration.Schema().MinItems : -1;
+    }
+
+    private string GetPreferredNumericType(TypeDeclaration typeDeclaration)
+    {
+        if (!typeDeclaration.Schema().IsArrayType())
+        {
+            if (typeDeclaration.Schema().IsNumberType())
+            {
+                return BuiltInTypes.GetCSharpPrimitiveForNumeric(this.GetImpliedFormats(typeDeclaration));
+            }
+
+            throw new InvalidOperationException("The leaf type was not numeric.");
+        }
+
+        if (typeDeclaration.Schema().Items.IsNotUndefined())
+        {
+            TypeDeclaration itemsType = this.Builder.GetTypeDeclarationForProperty(typeDeclaration, "items");
+            return this.GetPreferredNumericType(itemsType);
+        }
+
+        throw new InvalidOperationException("The deepest array type did not specify its items type.");
+    }
+
+    private string GetLeafArrayItemType(TypeDeclaration typeDeclaration)
+    {
+        if (!typeDeclaration.Schema().IsArrayType())
+        {
+            return typeDeclaration.FullyQualifiedDotnetTypeName!;
+        }
+
+        if (typeDeclaration.Schema().Items.IsNotUndefined())
+        {
+            TypeDeclaration itemsType = this.Builder.GetTypeDeclarationForProperty(typeDeclaration, "items");
+            return this.GetLeafArrayItemType(itemsType);
+        }
+
+        return $"{BuiltInTypes.AnyTypeDeclaration.Ns}.{BuiltInTypes.AnyTypeDeclaration.Type}";
+    }
+
+    private bool GetIsFixedSizeArray(TypeDeclaration typeDeclaration)
+    {
+        if (!typeDeclaration.Schema().IsArrayType())
+        {
+            return false;
+        }
+
+        if (typeDeclaration.Schema().MinItems.IsUndefined() ||
+            typeDeclaration.Schema().MaxItems.IsUndefined() ||
+            typeDeclaration.Schema().MinItems != typeDeclaration.Schema().MaxItems)
+        {
+            return false;
+        }
+
+        if (typeDeclaration.Schema().Items.IsNotUndefined())
+        {
+            TypeDeclaration itemsType = this.Builder.GetTypeDeclarationForProperty(typeDeclaration, "items");
+            if (itemsType.Schema().IsArrayType())
+            {
+                return this.GetIsFixedSizeArray(itemsType);
+            }
+        }
+
+        return true;
+    }
+
+    private bool GetIsNumericArray(TypeDeclaration typeDeclaration)
+    {
+        if (!typeDeclaration.Schema().IsArrayType())
+        {
+            return typeDeclaration.Schema().IsExplicitNumberType();
+        }
+
+        if (typeDeclaration.Schema().Items.IsNotUndefined())
+        {
+            TypeDeclaration itemsType = this.Builder.GetTypeDeclarationForProperty(typeDeclaration, "items");
+            return this.GetIsNumericArray(itemsType);
+        }
+
+        return false;
+    }
+
+    private int GetArrayValueBufferSize(TypeDeclaration typeDeclaration, int accumulatedValue)
+    {
+        if (!typeDeclaration.Schema().IsArrayType())
+        {
+            return accumulatedValue;
+        }
+
+        if (accumulatedValue == 0)
+        {
+            accumulatedValue = this.GetArrayDimension(typeDeclaration);
+        }
+        else
+        {
+            accumulatedValue *= this.GetArrayDimension(typeDeclaration);
+        }
+
+        if (typeDeclaration.Schema().Items.IsNotUndefined())
+        {
+            TypeDeclaration itemsType = this.Builder.GetTypeDeclarationForProperty(typeDeclaration, "items");
+            accumulatedValue = this.GetArrayValueBufferSize(itemsType, accumulatedValue);
+        }
+
+        return accumulatedValue;
+    }
+
+    private int GetChildArrayValueBufferSize(TypeDeclaration typeDeclaration)
+    {
+        if (!typeDeclaration.Schema().IsArrayType())
+        {
+            return 0;
+        }
+
+        if (typeDeclaration.Schema().Items.IsNotUndefined())
+        {
+            TypeDeclaration itemsType = this.Builder.GetTypeDeclarationForProperty(typeDeclaration, "items");
+            return this.GetArrayValueBufferSize(itemsType, 0);
+        }
+
+        return 0;
     }
 
     private bool MatchType(string typeToMatch)
@@ -2260,7 +2822,7 @@ public partial class CodeGeneratorValidate
 
                 if (!conversions.ContainsKey(td))
                 {
-                    conversions.Add(td, new Conversion(td, parent is null));
+                    conversions.Add(td, new Conversion(td, parent is null, true));
                     this.AddConversionsFor(td, conversions, typeDeclaration);
                 }
             }
@@ -2282,13 +2844,15 @@ public partial class CodeGeneratorValidate
 
         if (typeDeclaration.Schema().OneOf.IsNotUndefined())
         {
+            bool allowsImplicitDowncast = typeDeclaration.Schema().IsNakedOneOf();
+
             for (int i = 0; i < typeDeclaration.Schema().OneOf.GetArrayLength(); ++i)
             {
                 TypeDeclaration td = this.Builder.GetTypeDeclarationForPropertyArrayIndex(typeDeclaration, "oneOf", i);
 
                 if (!conversions.ContainsKey(td))
                 {
-                    conversions.Add(td, new Conversion(td, parent is null));
+                    conversions.Add(td, new Conversion(td, parent is null, isImplicitDowncast: allowsImplicitDowncast));
                     this.AddConversionsFor(td, conversions, typeDeclaration);
                 }
             }
@@ -2300,7 +2864,7 @@ public partial class CodeGeneratorValidate
 
             if (!conversions.ContainsKey(td))
             {
-                conversions.Add(td, new Conversion(td, parent is null));
+                conversions.Add(td, new Conversion(td, parent is null, true));
                 this.AddConversionsFor(td, conversions, typeDeclaration);
             }
         }
@@ -2462,10 +3026,14 @@ public partial class CodeGeneratorValidate
         /// </summary>
         /// <param name="typeDeclaration">The type declaration for the conversion.</param>
         /// <param name="isDirect">If this is a direct conversion, not via a type hierarchy.</param>
-        public Conversion(TypeDeclaration typeDeclaration, bool isDirect)
+        /// <param name="isImplicit">If this is an implicit conversion.</param>
+        /// <param name="isImplicitDowncast">If this is an implicit downcast.</param>
+        public Conversion(TypeDeclaration typeDeclaration, bool isDirect, bool isImplicit = false, bool isImplicitDowncast = false)
         {
             this.typeDeclaration = typeDeclaration;
             this.IsDirect = isDirect;
+            this.IsImplicit = isImplicit;
+            this.IsImplicitDowncast = isImplicitDowncast;
         }
 
         /// <summary>
@@ -2517,6 +3085,16 @@ public partial class CodeGeneratorValidate
         /// Gets a value indicating whether this is a direct conversion, rather than coming through a type hierarchy.
         /// </summary>
         public bool IsDirect { get; }
+
+        /// <summary>
+        /// Gets a value indicating whether this is an implicit conversion.
+        /// </summary>
+        public bool IsImplicit { get; }
+
+        /// <summary>
+        /// Gets a value indicating whether this is an implicit downcast.
+        /// </summary>
+        public bool IsImplicitDowncast { get; }
     }
 
     /// <summary>
@@ -2528,7 +3106,8 @@ public partial class CodeGeneratorValidate
         /// Initializes a new instance of the <see cref="EnumValue"/> struct.
         /// </summary>
         /// <param name="value">The instance of the enum value.</param>
-        public EnumValue(JsonAny value)
+        /// <param name="existingItems">Existing enum values.</param>
+        public EnumValue(JsonAny value, IEnumerable<EnumValue> existingItems)
         {
             this.IsString = value.ValueKind == JsonValueKind.String;
             this.IsBoolean = value.ValueKind == JsonValueKind.True || value.ValueKind == JsonValueKind.False;
@@ -2538,7 +3117,23 @@ public partial class CodeGeneratorValidate
             this.IsNull = value.IsNull();
             this.SerializedValue = GetRawTextAsQuotedString(value);
             this.RawStringValue = value.ValueKind == JsonValueKind.String ? GetRawStringValueAsQuotedString(value) : null;
-            this.AsPropertyName = Formatting.ToPascalCaseWithReservedWords(this.SerializedValue.Trim('"')).ToString();
+            string baseName = Formatting.ToPascalCaseWithReservedWords(this.SerializedValue.Trim('"')).ToString();
+
+            if (string.IsNullOrEmpty(baseName))
+            {
+                baseName = "EmptyString";
+            }
+
+            string name = baseName;
+
+            int index = 0;
+            while (existingItems.Any(e => e.AsPropertyName == name))
+            {
+                index++;
+                name = $"{baseName}{index}";
+            }
+
+            this.AsPropertyName = name;
         }
 
         /// <summary>
@@ -2584,6 +3179,6 @@ public partial class CodeGeneratorValidate
         /// <summary>
         /// Gets the serialized value as a property name.
         /// </summary>
-        public object AsPropertyName { get; }
+        public string AsPropertyName { get; }
     }
 }

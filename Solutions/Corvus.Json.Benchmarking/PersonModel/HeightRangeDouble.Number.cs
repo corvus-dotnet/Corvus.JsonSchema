@@ -18,7 +18,18 @@ namespace Corvus.Json.Benchmarking.Models;
 /// <summary>
 /// A numeric representation of a person's height in meters.
 /// </summary>
-public readonly partial struct HeightRangeDouble : IJsonNumber<HeightRangeDouble>, IAdditionOperators<HeightRangeDouble, HeightRangeDouble, HeightRangeDouble>, ISubtractionOperators<HeightRangeDouble, HeightRangeDouble, HeightRangeDouble>, IMultiplyOperators<HeightRangeDouble, HeightRangeDouble, HeightRangeDouble>, IDivisionOperators<HeightRangeDouble, HeightRangeDouble, HeightRangeDouble>, IIncrementOperators<HeightRangeDouble>, IDecrementOperators<HeightRangeDouble>
+public readonly partial struct HeightRangeDouble 
+#if NET8_0_OR_GREATER
+: IJsonNumber<HeightRangeDouble>,
+  IAdditionOperators<HeightRangeDouble, HeightRangeDouble, HeightRangeDouble>,
+  ISubtractionOperators<HeightRangeDouble, HeightRangeDouble, HeightRangeDouble>,
+  IMultiplyOperators<HeightRangeDouble, HeightRangeDouble, HeightRangeDouble>,
+  IDivisionOperators<HeightRangeDouble, HeightRangeDouble, HeightRangeDouble>,
+  IIncrementOperators<HeightRangeDouble>,
+  IDecrementOperators<HeightRangeDouble>
+#else
+: IJsonNumber<HeightRangeDouble>
+#endif
 {
     /// <summary>
     /// Initializes a new instance of the <see cref = "HeightRangeDouble"/> struct.
@@ -179,12 +190,13 @@ public readonly partial struct HeightRangeDouble : IJsonNumber<HeightRangeDouble
         throw new InvalidOperationException();
     }
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Conversion to Int128.
     /// </summary>
-    /// <param name = "value">The value to convert.</param>
-    /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
-    /// <exception cref = "FormatException">The value was not formatted as an Int64.</exception>
+    /// <param name="value">The value to convert.</param>
+    /// <exception cref="InvalidOperationException">The value was not a number.</exception>
+    /// <exception cref="FormatException">The value was not formatted as an Int64.</exception>
     public static explicit operator Int128(HeightRangeDouble value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
@@ -199,7 +211,7 @@ public readonly partial struct HeightRangeDouble : IJsonNumber<HeightRangeDouble
 
         throw new InvalidOperationException();
     }
-
+#endif
     /// <summary>
     /// Conversion to SByte.
     /// </summary>
@@ -221,12 +233,13 @@ public readonly partial struct HeightRangeDouble : IJsonNumber<HeightRangeDouble
         throw new InvalidOperationException();
     }
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Conversion to Half.
     /// </summary>
-    /// <param name = "value">The value to convert.</param>
-    /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
-    /// <exception cref = "FormatException">The value was not formatted as a Single.</exception>
+    /// <param name="value">The value to convert.</param>
+    /// <exception cref="InvalidOperationException">The value was not a number.</exception>
+    /// <exception cref="FormatException">The value was not formatted as a Single.</exception>
     public static explicit operator Half(HeightRangeDouble value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
@@ -241,7 +254,7 @@ public readonly partial struct HeightRangeDouble : IJsonNumber<HeightRangeDouble
 
         throw new InvalidOperationException();
     }
-
+#endif
     /// <summary>
     /// Conversion to Single.
     /// </summary>
@@ -326,12 +339,13 @@ public readonly partial struct HeightRangeDouble : IJsonNumber<HeightRangeDouble
         throw new InvalidOperationException();
     }
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Conversion to UInt128.
     /// </summary>
-    /// <param name = "value">The value to convert.</param>
-    /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
-    /// <exception cref = "FormatException">The value was not formatted as an UInt64.</exception>
+    /// <param name="value">The value to convert.</param>
+    /// <exception cref="InvalidOperationException">The value was not a number.</exception>
+    /// <exception cref="FormatException">The value was not formatted as an UInt64.</exception>
     public static explicit operator UInt128(HeightRangeDouble value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
@@ -346,7 +360,7 @@ public readonly partial struct HeightRangeDouble : IJsonNumber<HeightRangeDouble
 
         throw new InvalidOperationException();
     }
-
+#endif
     /// <summary>
     /// Conversion from decimal.
     /// </summary>
@@ -365,15 +379,16 @@ public readonly partial struct HeightRangeDouble : IJsonNumber<HeightRangeDouble
         return new(new BinaryJsonNumber(value));
     }
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Conversion from Half.
     /// </summary>
-    /// <param name = "value">The value to convert.</param>
+    /// <param name="value">The value to convert.</param>
     public static explicit operator HeightRangeDouble(Half value)
     {
         return new(new BinaryJsonNumber(value));
     }
-
+#endif
     /// <summary>
     /// Conversion from float.
     /// </summary>
@@ -455,6 +470,25 @@ public readonly partial struct HeightRangeDouble : IJsonNumber<HeightRangeDouble
         return new(new BinaryJsonNumber(value));
     }
 
+#if NET8_0_OR_GREATER
+    /// <summary>
+    /// Conversion from Int128.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    public static explicit operator HeightRangeDouble(Int128 value)
+    {
+        return new(new BinaryJsonNumber(value));
+    }
+
+    /// <summary>
+    /// Conversion from UInt128.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    public static explicit operator HeightRangeDouble(UInt128 value)
+    {
+        return new(new BinaryJsonNumber(value));
+    }
+#endif
     /// <summary>
     /// Less than operator.
     /// </summary>

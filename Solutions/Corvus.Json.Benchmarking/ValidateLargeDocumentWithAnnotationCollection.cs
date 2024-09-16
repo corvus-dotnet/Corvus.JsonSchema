@@ -42,7 +42,7 @@ public class ValidateLargeDocumentWithAnnotationCollection
     /// <summary>
     /// Global setup.
     /// </summary>
-    /// <returns>A <see cref="Task"/> which completes once cleanup is complete.</returns>
+    /// <returns>A <see cref="Task"/> which completes once clean-up is complete.</returns>
     [GlobalSetup]
     public Task GlobalSetup()
     {

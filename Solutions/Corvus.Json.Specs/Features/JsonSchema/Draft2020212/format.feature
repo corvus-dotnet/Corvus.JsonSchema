@@ -22,13 +22,20 @@ Scenario Outline: email format
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # 12
         | #/000/tests/000/data | true  | all string formats ignore integers                                               |
+        # 13.7
         | #/000/tests/001/data | true  | all string formats ignore floats                                                 |
+        # {}
         | #/000/tests/002/data | true  | all string formats ignore objects                                                |
+        # []
         | #/000/tests/003/data | true  | all string formats ignore arrays                                                 |
+        # False
         | #/000/tests/004/data | true  | all string formats ignore booleans                                               |
+        # 
         | #/000/tests/005/data | true  | all string formats ignore nulls                                                  |
-        # #/000/tests/006/data | true  | invalid email string is only an annotation by default                            |
+        # 2962
+        | #/000/tests/006/data | true  | invalid email string is only an annotation by default                            |
 
 Scenario Outline: idn-email format
 /* Schema: 
@@ -47,13 +54,20 @@ Scenario Outline: idn-email format
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # 12
         | #/001/tests/000/data | true  | all string formats ignore integers                                               |
+        # 13.7
         | #/001/tests/001/data | true  | all string formats ignore floats                                                 |
+        # {}
         | #/001/tests/002/data | true  | all string formats ignore objects                                                |
+        # []
         | #/001/tests/003/data | true  | all string formats ignore arrays                                                 |
+        # False
         | #/001/tests/004/data | true  | all string formats ignore booleans                                               |
+        # 
         | #/001/tests/005/data | true  | all string formats ignore nulls                                                  |
-        # #/001/tests/006/data | true  | invalid idn-email string is only an annotation by default                        |
+        # 2962
+        | #/001/tests/006/data | true  | invalid idn-email string is only an annotation by default                        |
 
 Scenario Outline: regex format
 /* Schema: 
@@ -72,13 +86,20 @@ Scenario Outline: regex format
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # 12
         | #/002/tests/000/data | true  | all string formats ignore integers                                               |
+        # 13.7
         | #/002/tests/001/data | true  | all string formats ignore floats                                                 |
+        # {}
         | #/002/tests/002/data | true  | all string formats ignore objects                                                |
+        # []
         | #/002/tests/003/data | true  | all string formats ignore arrays                                                 |
+        # False
         | #/002/tests/004/data | true  | all string formats ignore booleans                                               |
+        # 
         | #/002/tests/005/data | true  | all string formats ignore nulls                                                  |
-        # #/002/tests/006/data | true  | invalid regex string is only an annotation by default                            |
+        # ^(abc]
+        | #/002/tests/006/data | true  | invalid regex string is only an annotation by default                            |
 
 Scenario Outline: ipv4 format
 /* Schema: 
@@ -97,13 +118,20 @@ Scenario Outline: ipv4 format
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # 12
         | #/003/tests/000/data | true  | all string formats ignore integers                                               |
+        # 13.7
         | #/003/tests/001/data | true  | all string formats ignore floats                                                 |
+        # {}
         | #/003/tests/002/data | true  | all string formats ignore objects                                                |
+        # []
         | #/003/tests/003/data | true  | all string formats ignore arrays                                                 |
+        # False
         | #/003/tests/004/data | true  | all string formats ignore booleans                                               |
+        # 
         | #/003/tests/005/data | true  | all string formats ignore nulls                                                  |
-        # #/003/tests/006/data | true  | invalid ipv4 string is only an annotation by default                             |
+        # 127.0.0.0.1
+        | #/003/tests/006/data | true  | invalid ipv4 string is only an annotation by default                             |
 
 Scenario Outline: ipv6 format
 /* Schema: 
@@ -122,13 +150,20 @@ Scenario Outline: ipv6 format
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # 12
         | #/004/tests/000/data | true  | all string formats ignore integers                                               |
+        # 13.7
         | #/004/tests/001/data | true  | all string formats ignore floats                                                 |
+        # {}
         | #/004/tests/002/data | true  | all string formats ignore objects                                                |
+        # []
         | #/004/tests/003/data | true  | all string formats ignore arrays                                                 |
+        # False
         | #/004/tests/004/data | true  | all string formats ignore booleans                                               |
+        # 
         | #/004/tests/005/data | true  | all string formats ignore nulls                                                  |
-        # #/004/tests/006/data | true  | invalid ipv6 string is only an annotation by default                             |
+        # 12345::
+        | #/004/tests/006/data | true  | invalid ipv6 string is only an annotation by default                             |
 
 Scenario Outline: idn-hostname format
 /* Schema: 
@@ -147,13 +182,20 @@ Scenario Outline: idn-hostname format
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # 12
         | #/005/tests/000/data | true  | all string formats ignore integers                                               |
+        # 13.7
         | #/005/tests/001/data | true  | all string formats ignore floats                                                 |
+        # {}
         | #/005/tests/002/data | true  | all string formats ignore objects                                                |
+        # []
         | #/005/tests/003/data | true  | all string formats ignore arrays                                                 |
+        # False
         | #/005/tests/004/data | true  | all string formats ignore booleans                                               |
+        # 
         | #/005/tests/005/data | true  | all string formats ignore nulls                                                  |
-        # #/005/tests/006/data | true  | invalid idn-hostname string is only an annotation by default                     |
+        # 〮실례.테스트
+        | #/005/tests/006/data | true  | invalid idn-hostname string is only an annotation by default                     |
 
 Scenario Outline: hostname format
 /* Schema: 
@@ -172,13 +214,20 @@ Scenario Outline: hostname format
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # 12
         | #/006/tests/000/data | true  | all string formats ignore integers                                               |
+        # 13.7
         | #/006/tests/001/data | true  | all string formats ignore floats                                                 |
+        # {}
         | #/006/tests/002/data | true  | all string formats ignore objects                                                |
+        # []
         | #/006/tests/003/data | true  | all string formats ignore arrays                                                 |
+        # False
         | #/006/tests/004/data | true  | all string formats ignore booleans                                               |
+        # 
         | #/006/tests/005/data | true  | all string formats ignore nulls                                                  |
-        # #/006/tests/006/data | true  | invalid hostname string is only an annotation by default                         |
+        # -a-host-name-that-starts-with--
+        | #/006/tests/006/data | true  | invalid hostname string is only an annotation by default                         |
 
 Scenario Outline: date format
 /* Schema: 
@@ -197,13 +246,20 @@ Scenario Outline: date format
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # 12
         | #/007/tests/000/data | true  | all string formats ignore integers                                               |
+        # 13.7
         | #/007/tests/001/data | true  | all string formats ignore floats                                                 |
+        # {}
         | #/007/tests/002/data | true  | all string formats ignore objects                                                |
+        # []
         | #/007/tests/003/data | true  | all string formats ignore arrays                                                 |
+        # False
         | #/007/tests/004/data | true  | all string formats ignore booleans                                               |
+        # 
         | #/007/tests/005/data | true  | all string formats ignore nulls                                                  |
-        # #/007/tests/006/data | true  | invalid date string is only an annotation by default                             |
+        # 06/19/1963
+        | #/007/tests/006/data | true  | invalid date string is only an annotation by default                             |
 
 Scenario Outline: date-time format
 /* Schema: 
@@ -222,13 +278,20 @@ Scenario Outline: date-time format
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # 12
         | #/008/tests/000/data | true  | all string formats ignore integers                                               |
+        # 13.7
         | #/008/tests/001/data | true  | all string formats ignore floats                                                 |
+        # {}
         | #/008/tests/002/data | true  | all string formats ignore objects                                                |
+        # []
         | #/008/tests/003/data | true  | all string formats ignore arrays                                                 |
+        # False
         | #/008/tests/004/data | true  | all string formats ignore booleans                                               |
+        # 
         | #/008/tests/005/data | true  | all string formats ignore nulls                                                  |
-        # #/008/tests/006/data | true  | invalid date-time string is only an annotation by default                        |
+        # 1990-02-31T15:59:60.123-08:00
+        | #/008/tests/006/data | true  | invalid date-time string is only an annotation by default                        |
 
 Scenario Outline: time format
 /* Schema: 
@@ -247,13 +310,20 @@ Scenario Outline: time format
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # 12
         | #/009/tests/000/data | true  | all string formats ignore integers                                               |
+        # 13.7
         | #/009/tests/001/data | true  | all string formats ignore floats                                                 |
+        # {}
         | #/009/tests/002/data | true  | all string formats ignore objects                                                |
+        # []
         | #/009/tests/003/data | true  | all string formats ignore arrays                                                 |
+        # False
         | #/009/tests/004/data | true  | all string formats ignore booleans                                               |
+        # 
         | #/009/tests/005/data | true  | all string formats ignore nulls                                                  |
-        # #/009/tests/006/data | true  | invalid time string is only an annotation by default                             |
+        # 08:30:06 PST
+        | #/009/tests/006/data | true  | invalid time string is only an annotation by default                             |
 
 Scenario Outline: json-pointer format
 /* Schema: 
@@ -272,13 +342,20 @@ Scenario Outline: json-pointer format
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # 12
         | #/010/tests/000/data | true  | all string formats ignore integers                                               |
+        # 13.7
         | #/010/tests/001/data | true  | all string formats ignore floats                                                 |
+        # {}
         | #/010/tests/002/data | true  | all string formats ignore objects                                                |
+        # []
         | #/010/tests/003/data | true  | all string formats ignore arrays                                                 |
+        # False
         | #/010/tests/004/data | true  | all string formats ignore booleans                                               |
+        # 
         | #/010/tests/005/data | true  | all string formats ignore nulls                                                  |
-        # #/010/tests/006/data | true  | invalid json-pointer string is only an annotation by default                     |
+        # /foo/bar~
+        | #/010/tests/006/data | true  | invalid json-pointer string is only an annotation by default                     |
 
 Scenario Outline: relative-json-pointer format
 /* Schema: 
@@ -297,13 +374,20 @@ Scenario Outline: relative-json-pointer format
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # 12
         | #/011/tests/000/data | true  | all string formats ignore integers                                               |
+        # 13.7
         | #/011/tests/001/data | true  | all string formats ignore floats                                                 |
+        # {}
         | #/011/tests/002/data | true  | all string formats ignore objects                                                |
+        # []
         | #/011/tests/003/data | true  | all string formats ignore arrays                                                 |
+        # False
         | #/011/tests/004/data | true  | all string formats ignore booleans                                               |
+        # 
         | #/011/tests/005/data | true  | all string formats ignore nulls                                                  |
-        # #/011/tests/006/data | true  | invalid relative-json-pointer string is only an annotation by default            |
+        # /foo/bar
+        | #/011/tests/006/data | true  | invalid relative-json-pointer string is only an annotation by default            |
 
 Scenario Outline: iri format
 /* Schema: 
@@ -322,13 +406,20 @@ Scenario Outline: iri format
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # 12
         | #/012/tests/000/data | true  | all string formats ignore integers                                               |
+        # 13.7
         | #/012/tests/001/data | true  | all string formats ignore floats                                                 |
+        # {}
         | #/012/tests/002/data | true  | all string formats ignore objects                                                |
+        # []
         | #/012/tests/003/data | true  | all string formats ignore arrays                                                 |
+        # False
         | #/012/tests/004/data | true  | all string formats ignore booleans                                               |
+        # 
         | #/012/tests/005/data | true  | all string formats ignore nulls                                                  |
-        # #/012/tests/006/data | true  | invalid iri string is only an annotation by default                              |
+        # http://2001:0db8:85a3:0000:0000:8a2e:0370:7334
+        | #/012/tests/006/data | true  | invalid iri string is only an annotation by default                              |
 
 Scenario Outline: iri-reference format
 /* Schema: 
@@ -347,13 +438,20 @@ Scenario Outline: iri-reference format
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # 12
         | #/013/tests/000/data | true  | all string formats ignore integers                                               |
+        # 13.7
         | #/013/tests/001/data | true  | all string formats ignore floats                                                 |
+        # {}
         | #/013/tests/002/data | true  | all string formats ignore objects                                                |
+        # []
         | #/013/tests/003/data | true  | all string formats ignore arrays                                                 |
+        # False
         | #/013/tests/004/data | true  | all string formats ignore booleans                                               |
+        # 
         | #/013/tests/005/data | true  | all string formats ignore nulls                                                  |
-        # #/013/tests/006/data | true  | invalid iri-reference string is only an annotation by default                    |
+        # \\WINDOWS\filëßåré
+        | #/013/tests/006/data | true  | invalid iri-reference string is only an annotation by default                    |
 
 Scenario Outline: uri format
 /* Schema: 
@@ -372,13 +470,20 @@ Scenario Outline: uri format
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # 12
         | #/014/tests/000/data | true  | all string formats ignore integers                                               |
+        # 13.7
         | #/014/tests/001/data | true  | all string formats ignore floats                                                 |
+        # {}
         | #/014/tests/002/data | true  | all string formats ignore objects                                                |
+        # []
         | #/014/tests/003/data | true  | all string formats ignore arrays                                                 |
+        # False
         | #/014/tests/004/data | true  | all string formats ignore booleans                                               |
+        # 
         | #/014/tests/005/data | true  | all string formats ignore nulls                                                  |
-        # #/014/tests/006/data | true  | invalid uri string is only an annotation by default                              |
+        # //foo.bar/?baz=qux#quux
+        | #/014/tests/006/data | true  | invalid uri string is only an annotation by default                              |
 
 Scenario Outline: uri-reference format
 /* Schema: 
@@ -397,13 +502,20 @@ Scenario Outline: uri-reference format
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # 12
         | #/015/tests/000/data | true  | all string formats ignore integers                                               |
+        # 13.7
         | #/015/tests/001/data | true  | all string formats ignore floats                                                 |
+        # {}
         | #/015/tests/002/data | true  | all string formats ignore objects                                                |
+        # []
         | #/015/tests/003/data | true  | all string formats ignore arrays                                                 |
+        # False
         | #/015/tests/004/data | true  | all string formats ignore booleans                                               |
+        # 
         | #/015/tests/005/data | true  | all string formats ignore nulls                                                  |
-        # #/015/tests/006/data | true  | invalid uri-reference string is only an annotation by default                    |
+        # \\WINDOWS\fileshare
+        | #/015/tests/006/data | true  | invalid uri-reference string is only an annotation by default                    |
 
 Scenario Outline: uri-template format
 /* Schema: 
@@ -422,13 +534,20 @@ Scenario Outline: uri-template format
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # 12
         | #/016/tests/000/data | true  | all string formats ignore integers                                               |
+        # 13.7
         | #/016/tests/001/data | true  | all string formats ignore floats                                                 |
+        # {}
         | #/016/tests/002/data | true  | all string formats ignore objects                                                |
+        # []
         | #/016/tests/003/data | true  | all string formats ignore arrays                                                 |
+        # False
         | #/016/tests/004/data | true  | all string formats ignore booleans                                               |
+        # 
         | #/016/tests/005/data | true  | all string formats ignore nulls                                                  |
-        # #/016/tests/006/data | true  | invalid uri-template string is only an annotation by default                     |
+        # http://example.com/dictionary/{term:1}/{term
+        | #/016/tests/006/data | true  | invalid uri-template string is only an annotation by default                     |
 
 Scenario Outline: uuid format
 /* Schema: 
@@ -447,13 +566,20 @@ Scenario Outline: uuid format
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # 12
         | #/017/tests/000/data | true  | all string formats ignore integers                                               |
+        # 13.7
         | #/017/tests/001/data | true  | all string formats ignore floats                                                 |
+        # {}
         | #/017/tests/002/data | true  | all string formats ignore objects                                                |
+        # []
         | #/017/tests/003/data | true  | all string formats ignore arrays                                                 |
+        # False
         | #/017/tests/004/data | true  | all string formats ignore booleans                                               |
+        # 
         | #/017/tests/005/data | true  | all string formats ignore nulls                                                  |
-        # #/017/tests/006/data | true  | invalid uuid string is only an annotation by default                             |
+        # 2eb8aa08-aa98-11ea-b4aa-73b441d1638
+        | #/017/tests/006/data | true  | invalid uuid string is only an annotation by default                             |
 
 Scenario Outline: duration format
 /* Schema: 
@@ -472,10 +598,17 @@ Scenario Outline: duration format
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # 12
         | #/018/tests/000/data | true  | all string formats ignore integers                                               |
+        # 13.7
         | #/018/tests/001/data | true  | all string formats ignore floats                                                 |
+        # {}
         | #/018/tests/002/data | true  | all string formats ignore objects                                                |
+        # []
         | #/018/tests/003/data | true  | all string formats ignore arrays                                                 |
+        # False
         | #/018/tests/004/data | true  | all string formats ignore booleans                                               |
+        # 
         | #/018/tests/005/data | true  | all string formats ignore nulls                                                  |
-        # #/018/tests/006/data | true  | invalid duration string is only an annotation by default                         |
+        # PT1D
+        | #/018/tests/006/data | true  | invalid duration string is only an annotation by default                         |

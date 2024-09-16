@@ -30,7 +30,11 @@ public readonly partial struct JsonDate
     /// Initializes a new instance of the <see cref="JsonDate"/> struct.
     /// </summary>
     /// <param name="value">The date time from which to construct the date.</param>
+#if NET8_0_OR_GREATER
     public JsonDate(in DateTime value)
+#else
+    public JsonDate(DateTime value)
+#endif
     {
         this.jsonElementBacking = default;
         this.stringBacking = FormatDate(LocalDate.FromDateTime(value));
@@ -42,7 +46,11 @@ public readonly partial struct JsonDate
     /// </summary>
     /// <param name="value">The date time from which to construct the date.</param>
     /// <param name="calendar">The calendar system with which to interpret the date.</param>
+#if NET8_0_OR_GREATER
     public JsonDate(in DateTime value, CalendarSystem calendar)
+#else
+    public JsonDate(DateTime value, CalendarSystem calendar)
+#endif
     {
         this.jsonElementBacking = default;
         this.stringBacking = FormatDate(LocalDate.FromDateTime(value, calendar));
@@ -91,7 +99,7 @@ public readonly partial struct JsonDate
     {
         if ((this.backing & Backing.String) != 0)
         {
-            return DateParser(this.stringBacking, default, out result);
+            return DateParser(this.stringBacking.AsSpan(), default, out result);
         }
 
         if (this.jsonElementBacking.ValueKind == JsonValueKind.String)

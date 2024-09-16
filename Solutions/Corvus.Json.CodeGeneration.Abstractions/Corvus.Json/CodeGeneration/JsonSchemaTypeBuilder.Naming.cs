@@ -17,11 +17,35 @@ public partial class JsonSchemaTypeBuilder
     {
         if (type.Parent is TypeDeclaration parent)
         {
+            // Capture the reference outside the loop so we can work through it.
+            JsonReference reference = type.LocatedSchema.Location.MoveToParentFragment();
+
             for (int index = 1; parent.DotnetTypeName == type.DotnetTypeName || parent.Children.Any(c => c != type && c.DotnetTypeName == type.DotnetTypeName); index++)
             {
                 string trimmedString = type.DotnetTypeName!.Trim('0', '1', '2', '3', '4', '5', '6', '7', '8', '9');
-                string newName = $"{trimmedString}{index}";
-                type.SetDotnetTypeName(newName);
+
+                while (reference.HasFragment && reference.Fragment.EndsWith("properties".AsSpan()))
+                {
+                    reference = reference.MoveToParentFragment();
+                }
+
+                int slashIndex = 0;
+
+                if (reference.HasFragment && (slashIndex = reference.Fragment.LastIndexOf('/')) >= 0 && slashIndex < reference.Fragment.Length - 1)
+                {
+                    string previousNode = reference.Fragment[(slashIndex + 1)..].ToString();
+                    type.SetDotnetTypeName($"{Formatting.ToPascalCaseWithReservedWords(previousNode).ToString()}{trimmedString}");
+                }
+                else if (parent.DotnetTypeName != trimmedString)
+                {
+                    type.SetDotnetTypeName($"{parent.DotnetTypeName}{trimmedString}");
+                    index--;
+                }
+                else
+                {
+                    string newName = $"{trimmedString}{index}";
+                    type.SetDotnetTypeName(newName);
+                }
             }
         }
     }
@@ -214,7 +238,7 @@ public partial class JsonSchemaTypeBuilder
         {
             typeDeclaration.SetDotnetTypeName(rtn);
         }
-        else
+        else if (!this.IsDirectlyInDefinitions(typeDeclaration.LocatedSchema.Location))
         {
             FixNameForCollisionsWithParent(typeDeclaration);
         }
@@ -232,7 +256,7 @@ public partial class JsonSchemaTypeBuilder
     /// </summary>
     /// <param name="typeDeclaration">The type declaration for which to set the type and namespace.</param>
     /// <param name="rootNamespace">The namespace to use for this type if it has no parent.</param>
-    /// <param name="fallbackBaseName">The base type name to fall back on if we can't derive one from our location and type infomration.</param>
+    /// <param name="fallbackBaseName">The base type name to fall back on if we can't derive one from our location and type information.</param>
     private void SetDotnetTypeNameAndNamespace(TypeDeclaration typeDeclaration, string rootNamespace, string fallbackBaseName)
     {
         var reference = JsonReferenceBuilder.From(typeDeclaration.LocatedSchema.Location);
@@ -245,7 +269,18 @@ public partial class JsonSchemaTypeBuilder
 
         ReadOnlySpan<char> typename;
 
-        if (typeDeclaration.Parent is null || this.IsDirectlyInDefinitions(reference))
+        if (typeDeclaration.TryGetCorvusTypeName(out string? title))
+        {
+            typename = Formatting.ToPascalCaseWithReservedWords(title);
+
+            if (!this.CollidesWithGeneratedName(typeDeclaration, typename))
+            {
+                typeDeclaration.SetDotnetTypeName(typename.ToString());
+                typeDeclaration.SetNamespace(rootNamespace);
+                return;
+            }
+        }
+        else if (typeDeclaration.Parent is null || this.IsDirectlyInDefinitions(reference))
         {
             if (reference.HasFragment)
             {
@@ -258,14 +293,18 @@ public partial class JsonSchemaTypeBuilder
             }
             else
             {
-                typename = fallbackBaseName;
+                typename = fallbackBaseName.AsSpan();
             }
 
             if (!this.CollidesWithGeneratedName(typeDeclaration, typename) && this.MatchesExistingType(typename, rootNamespace))
             {
                 if (reference.HasPath && reference.HasFragment)
                 {
+#if NET8_0_OR_GREATER
                     typename = $"{GetNameFromPath(fallbackBaseName, reference)}{typename}";
+#else
+                    typename = $"{GetNameFromPath(fallbackBaseName, reference).ToString()}{typename.ToString()}".AsSpan();
+#endif
                 }
 
                 while (this.MatchesExistingType(typename, rootNamespace))
@@ -287,10 +326,18 @@ public partial class JsonSchemaTypeBuilder
 
                     if (found)
                     {
+#if NET8_0_OR_GREATER
                         suffix = int.Parse(typename[startOfSuffix..]);
+#else
+                        suffix = int.Parse(typename[startOfSuffix..].ToString());
+#endif
                     }
 
+#if NET8_0_OR_GREATER
                     typename = $"{typename[..startOfSuffix]}{suffix}";
+#else
+                    typename = $"{typename[..startOfSuffix].ToString()}{suffix}".AsSpan();
+#endif
                 }
             }
 
@@ -307,7 +354,17 @@ public partial class JsonSchemaTypeBuilder
         }
         else
         {
-            if (reference.HasFragment)
+            if (this.JsonSchemaConfiguration.ProposeName(typeDeclaration, reference, out string? proposedName))
+            {
+                typename = Formatting.ToPascalCaseWithReservedWords(proposedName);
+                if (!this.CollidesWithGeneratedName(typeDeclaration, typename))
+                {
+                    typeDeclaration.SetDotnetTypeName(typename.ToString());
+                    typeDeclaration.SetNamespace(rootNamespace);
+                    return;
+                }
+            }
+            else if (reference.HasFragment)
             {
                 int lastSlash = reference.Fragment.LastIndexOf('/');
                 if (char.IsDigit(reference.Fragment[lastSlash + 1]) && lastSlash > 0)
@@ -320,10 +377,10 @@ public partial class JsonSchemaTypeBuilder
 
                     typename = Formatting.ToPascalCaseWithReservedWords(reference.Fragment[(lastSlash + 1)..].ToString());
                 }
-                else if (reference.Fragment[(lastSlash + 1)..].SequenceEqual("items") && lastSlash > 0)
+                else if (reference.Fragment[(lastSlash + 1)..].SequenceEqual("items".AsSpan()) && lastSlash > 0)
                 {
                     int previousSlash = reference.Fragment[..(lastSlash - 1)].LastIndexOf('/');
-                    if (reference.Fragment[(previousSlash + 1)..lastSlash].SequenceEqual("properties"))
+                    if (reference.Fragment[(previousSlash + 1)..lastSlash].SequenceEqual("properties".AsSpan()))
                     {
                         // If it is a property called "Items" then use the property name.
                         typename = Formatting.ToPascalCaseWithReservedWords(reference.Fragment[(lastSlash + 1)..].ToString());
@@ -360,7 +417,7 @@ public partial class JsonSchemaTypeBuilder
             }
             else
             {
-                typename = fallbackBaseName;
+                typename = fallbackBaseName.AsSpan();
             }
         }
 
@@ -369,6 +426,14 @@ public partial class JsonSchemaTypeBuilder
             Span<char> dnt = stackalloc char[typename.Length + 5];
             typename.CopyTo(dnt);
             "Array".AsSpan().CopyTo(dnt[typename.Length..]);
+            typeDeclaration.SetDotnetTypeName(dnt.ToString());
+        }
+        else if (this.JsonSchemaConfiguration.IsExplicitMapType(typeDeclaration.LocatedSchema.Schema) &&
+            !typename.EndsWith("Map".AsSpan()))
+        {
+            Span<char> dnt = stackalloc char[typename.Length + 6];
+            typename.CopyTo(dnt);
+            "Entity".AsSpan().CopyTo(dnt[typename.Length..]);
             typeDeclaration.SetDotnetTypeName(dnt.ToString());
         }
         else if (!typename.EndsWith("Entity".AsSpan()))
@@ -396,12 +461,12 @@ public partial class JsonSchemaTypeBuilder
             }
             else if (lastSlash == reference.Path.Length - 1)
             {
-                typename = fallbackBaseName;
+                typename = fallbackBaseName.AsSpan();
             }
             else
             {
                 int lastDot = reference.Path.LastIndexOf('.');
-                if (lastDot > 0)
+                if (lastDot > 0 && lastSlash < lastDot)
                 {
                     typename = Formatting.ToPascalCaseWithReservedWords(reference.Path[(lastSlash + 1)..lastDot].ToString());
                 }
@@ -425,13 +490,18 @@ public partial class JsonSchemaTypeBuilder
     {
         foreach (string keyword in this.JsonSchemaConfiguration.DefinitionKeywords)
         {
-            if (reference.HasFragment && reference.Fragment.Length > 1 && reference.Fragment.LastIndexOf('/') == keyword.Length + 1 && reference.Fragment[1..].StartsWith(keyword))
+            if (reference.HasFragment && reference.Fragment.Length > 1 && reference.Fragment.LastIndexOf('/') == keyword.Length + 1 && reference.Fragment[1..].StartsWith(keyword.AsSpan()))
             {
                 return true;
             }
         }
 
         return false;
+    }
+
+    private bool IsDirectlyInDefinitions(JsonReference reference)
+    {
+        return this.IsDirectlyInDefinitions(JsonReferenceBuilder.From(reference));
     }
 
     private bool CollidesWithGeneratedName(TypeDeclaration typeDeclaration, ReadOnlySpan<char> dotnetTypeName)

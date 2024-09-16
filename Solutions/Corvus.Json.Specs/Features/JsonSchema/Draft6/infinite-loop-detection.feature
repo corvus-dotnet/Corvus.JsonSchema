@@ -30,6 +30,7 @@ Scenario Outline: evaluating the same schema location against the same data loca
     Given the input JSON file "infinite-loop-detection.json"
     And the schema at "#/0/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -37,5 +38,7 @@ Scenario Outline: evaluating the same schema location against the same data loca
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # { "foo": 1 }
         | #/000/tests/000/data | true  | passing case                                                                     |
+        # { "foo": "a string" }
         | #/000/tests/001/data | false | failing case                                                                     |

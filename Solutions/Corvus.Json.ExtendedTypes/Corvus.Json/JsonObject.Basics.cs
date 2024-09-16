@@ -324,7 +324,11 @@ public readonly partial struct JsonObject
             // its internal implementation, we should switch this out.
             if (name.TryGetProperty(this.jsonElementBacking, out JsonElement result))
             {
+#if NET8_0_OR_GREATER
                 value = TValue.FromJson(result);
+#else
+                value = JsonValueNetStandard20Extensions.FromJsonElement<TValue>(result);
+#endif
                 return true;
             }
 
@@ -336,7 +340,11 @@ public readonly partial struct JsonObject
         {
             if (this.objectBacking.TryGetValue(name, out JsonAny result))
             {
+#if NET8_0_OR_GREATER
                 value = TValue.FromAny(result);
+#else
+                value = result.As<TValue>();
+#endif
                 return true;
             }
 
@@ -363,7 +371,12 @@ public readonly partial struct JsonObject
             // its internal implementation, we should switch this out.
             if (this.jsonElementBacking.TryGetProperty(name, out JsonElement result))
             {
+#if NET8_0_OR_GREATER
                 value = TValue.FromJson(result);
+#else
+                value = JsonValueNetStandard20Extensions.FromJsonElement<TValue>(result);
+#endif
+
                 return true;
             }
 
@@ -375,7 +388,11 @@ public readonly partial struct JsonObject
         {
             if (this.objectBacking.TryGetValue(name, out JsonAny result))
             {
+#if NET8_0_OR_GREATER
                 value = TValue.FromAny(result);
+#else
+                value = result.As<TValue>();
+#endif
                 return true;
             }
 
@@ -400,7 +417,11 @@ public readonly partial struct JsonObject
 
             if (this.jsonElementBacking.TryGetProperty(name, out JsonElement result))
             {
+#if NET8_0_OR_GREATER
                 value = TValue.FromJson(result);
+#else
+                value = JsonValueNetStandard20Extensions.FromJsonElement<TValue>(result);
+#endif
                 return true;
             }
 
@@ -412,7 +433,11 @@ public readonly partial struct JsonObject
         {
             if (this.objectBacking.TryGetValue(name, out JsonAny result))
             {
+#if NET8_0_OR_GREATER
                 value = TValue.FromAny(result);
+#else
+                value = result.As<TValue>();
+#endif
                 return true;
             }
 
@@ -437,7 +462,11 @@ public readonly partial struct JsonObject
 
             if (this.jsonElementBacking.TryGetProperty(utf8Name, out JsonElement result))
             {
+#if NET8_0_OR_GREATER
                 value = TValue.FromJson(result);
+#else
+                value = JsonValueNetStandard20Extensions.FromJsonElement<TValue>(result);
+#endif
                 return true;
             }
 
@@ -449,7 +478,11 @@ public readonly partial struct JsonObject
         {
             if (this.objectBacking.TryGetValue(utf8Name, out JsonAny result))
             {
+#if NET8_0_OR_GREATER
                 value = TValue.FromAny(result);
+#else
+                value = result.As<TValue>();
+#endif
                 return true;
             }
 

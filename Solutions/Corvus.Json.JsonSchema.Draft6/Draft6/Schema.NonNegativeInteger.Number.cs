@@ -20,7 +20,18 @@ public readonly partial struct Schema
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
-    public readonly partial struct NonNegativeInteger : IJsonNumber<NonNegativeInteger>, IAdditionOperators<NonNegativeInteger, NonNegativeInteger, NonNegativeInteger>, ISubtractionOperators<NonNegativeInteger, NonNegativeInteger, NonNegativeInteger>, IMultiplyOperators<NonNegativeInteger, NonNegativeInteger, NonNegativeInteger>, IDivisionOperators<NonNegativeInteger, NonNegativeInteger, NonNegativeInteger>, IIncrementOperators<NonNegativeInteger>, IDecrementOperators<NonNegativeInteger>
+    public readonly partial struct NonNegativeInteger 
+#if NET8_0_OR_GREATER
+: IJsonNumber<NonNegativeInteger>,
+  IAdditionOperators<NonNegativeInteger, NonNegativeInteger, NonNegativeInteger>,
+  ISubtractionOperators<NonNegativeInteger, NonNegativeInteger, NonNegativeInteger>,
+  IMultiplyOperators<NonNegativeInteger, NonNegativeInteger, NonNegativeInteger>,
+  IDivisionOperators<NonNegativeInteger, NonNegativeInteger, NonNegativeInteger>,
+  IIncrementOperators<NonNegativeInteger>,
+  IDecrementOperators<NonNegativeInteger>
+#else
+    : IJsonNumber<NonNegativeInteger>
+#endif
     {
         /// <summary>
         /// Initializes a new instance of the <see cref = "NonNegativeInteger"/> struct.
@@ -181,27 +192,28 @@ public readonly partial struct Schema
             throw new InvalidOperationException();
         }
 
-        /// <summary>
-        /// Conversion to Int128.
-        /// </summary>
-        /// <param name = "value">The value to convert.</param>
-        /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
-        /// <exception cref = "FormatException">The value was not formatted as an Int64.</exception>
-        public static explicit operator Int128(NonNegativeInteger value)
+#if NET8_0_OR_GREATER
+    /// <summary>
+    /// Conversion to Int128.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    /// <exception cref="InvalidOperationException">The value was not a number.</exception>
+    /// <exception cref="FormatException">The value was not formatted as an Int64.</exception>
+    public static explicit operator Int128(NonNegativeInteger value)
+    {
+        if ((value.backing & Backing.JsonElement) != 0)
         {
-            if ((value.backing & Backing.JsonElement) != 0)
-            {
-                return value.jsonElementBacking.SafeGetInt128();
-            }
-
-            if ((value.backing & Backing.Number) != 0)
-            {
-                return value.numberBacking.CreateChecked<Int128>();
-            }
-
-            throw new InvalidOperationException();
+            return value.jsonElementBacking.SafeGetInt128();
         }
 
+        if ((value.backing & Backing.Number) != 0)
+        {
+            return value.numberBacking.CreateChecked<Int128>();
+        }
+
+        throw new InvalidOperationException();
+    }
+#endif
         /// <summary>
         /// Conversion to SByte.
         /// </summary>
@@ -223,27 +235,28 @@ public readonly partial struct Schema
             throw new InvalidOperationException();
         }
 
-        /// <summary>
-        /// Conversion to Half.
-        /// </summary>
-        /// <param name = "value">The value to convert.</param>
-        /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
-        /// <exception cref = "FormatException">The value was not formatted as a Single.</exception>
-        public static explicit operator Half(NonNegativeInteger value)
+#if NET8_0_OR_GREATER
+    /// <summary>
+    /// Conversion to Half.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    /// <exception cref="InvalidOperationException">The value was not a number.</exception>
+    /// <exception cref="FormatException">The value was not formatted as a Single.</exception>
+    public static explicit operator Half(NonNegativeInteger value)
+    {
+        if ((value.backing & Backing.JsonElement) != 0)
         {
-            if ((value.backing & Backing.JsonElement) != 0)
-            {
-                return value.jsonElementBacking.SafeGetHalf();
-            }
-
-            if ((value.backing & Backing.Number) != 0)
-            {
-                return value.numberBacking.CreateChecked<Half>();
-            }
-
-            throw new InvalidOperationException();
+            return value.jsonElementBacking.SafeGetHalf();
         }
 
+        if ((value.backing & Backing.Number) != 0)
+        {
+            return value.numberBacking.CreateChecked<Half>();
+        }
+
+        throw new InvalidOperationException();
+    }
+#endif
         /// <summary>
         /// Conversion to Single.
         /// </summary>
@@ -328,27 +341,28 @@ public readonly partial struct Schema
             throw new InvalidOperationException();
         }
 
-        /// <summary>
-        /// Conversion to UInt128.
-        /// </summary>
-        /// <param name = "value">The value to convert.</param>
-        /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
-        /// <exception cref = "FormatException">The value was not formatted as an UInt64.</exception>
-        public static explicit operator UInt128(NonNegativeInteger value)
+#if NET8_0_OR_GREATER
+    /// <summary>
+    /// Conversion to UInt128.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    /// <exception cref="InvalidOperationException">The value was not a number.</exception>
+    /// <exception cref="FormatException">The value was not formatted as an UInt64.</exception>
+    public static explicit operator UInt128(NonNegativeInteger value)
+    {
+        if ((value.backing & Backing.JsonElement) != 0)
         {
-            if ((value.backing & Backing.JsonElement) != 0)
-            {
-                return value.jsonElementBacking.SafeGetUInt128();
-            }
-
-            if ((value.backing & Backing.Number) != 0)
-            {
-                return value.numberBacking.CreateChecked<UInt128>();
-            }
-
-            throw new InvalidOperationException();
+            return value.jsonElementBacking.SafeGetUInt128();
         }
 
+        if ((value.backing & Backing.Number) != 0)
+        {
+            return value.numberBacking.CreateChecked<UInt128>();
+        }
+
+        throw new InvalidOperationException();
+    }
+#endif
         /// <summary>
         /// Conversion from decimal.
         /// </summary>
@@ -367,15 +381,16 @@ public readonly partial struct Schema
             return new(new BinaryJsonNumber(value));
         }
 
-        /// <summary>
-        /// Conversion from Half.
-        /// </summary>
-        /// <param name = "value">The value to convert.</param>
-        public static explicit operator NonNegativeInteger(Half value)
-        {
-            return new(new BinaryJsonNumber(value));
-        }
-
+#if NET8_0_OR_GREATER
+    /// <summary>
+    /// Conversion from Half.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    public static explicit operator NonNegativeInteger(Half value)
+    {
+        return new(new BinaryJsonNumber(value));
+    }
+#endif
         /// <summary>
         /// Conversion from float.
         /// </summary>
@@ -457,6 +472,25 @@ public readonly partial struct Schema
             return new(new BinaryJsonNumber(value));
         }
 
+#if NET8_0_OR_GREATER
+    /// <summary>
+    /// Conversion from Int128.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    public static explicit operator NonNegativeInteger(Int128 value)
+    {
+        return new(new BinaryJsonNumber(value));
+    }
+
+    /// <summary>
+    /// Conversion from UInt128.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    public static explicit operator NonNegativeInteger(UInt128 value)
+    {
+        return new(new BinaryJsonNumber(value));
+    }
+#endif
         /// <summary>
         /// Less than operator.
         /// </summary>

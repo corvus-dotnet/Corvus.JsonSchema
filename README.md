@@ -1,10 +1,109 @@
 # Corvus.JsonSchema
-Support for [Json Schema](https://json-schema.org/) validation and entity generation
+Build-time code generation for [Json Schema](https://json-schema.org/) validation, and serialization.
 
-For an introduction to the concepts here, take a look at [this blog post](https://endjin.com/blog/2021/05/csharp-serialization-with-system-text-json-schema).
+It supports serialization of *every feature of JSON schema* from draft4 to draft2020-12, including the OpenApi3.0 variant of draft4. (i.e. it doesn't give up on complex structure and lapse back to 'anonymous JSON objects' like most dotnet tooling.)
 
-There's also [a talk by @idg10](https://endjin.com/what-we-think/talks/high-performance-json-serialization-with-code-generation-on-csharp-11-and-dotnet-7-0) on the techniques used in this library.
+## Supported platforms
 
+It now works with **every supported .NET version** by providing netstandard2.0 packages, with optimized packages that take advantage of features in NET8.0 and later.
+
+## Project Sponsor
+
+This project is sponsored by [endjin](https://endjin.com), a UK based Microsoft Gold Partner for Cloud Platform, Data Platform, Data Analytics, DevOps, and a Power BI Partner.
+
+For more information about our products and services, or for commercial support of this project, please [contact us](https://endjin.com/contact-us). 
+
+We produce two free weekly newsletters; [Azure Weekly](https://azureweekly.info) for all things about the Microsoft Azure Platform, and [Power BI Weekly](https://powerbiweekly.info).
+
+Keep up with everything that's going on at endjin via our [blog](https://endjin.com/blog), follow us on [Twitter](https://twitter.com/endjin), or [LinkedIn](https://www.linkedin.com/company/1671851/).
+
+Our other Open Source projects can be found at [https://endjin.com/open-source](https://endjin.com/open-source)
+
+## Code of conduct
+
+This project has adopted a code of conduct adapted from the [Contributor Covenant](http://contributor-covenant.org/) to clarify expected behavior in our community. This code of conduct has been [adopted by many other projects](http://contributor-covenant.org/adopters/). For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [&#104;&#101;&#108;&#108;&#111;&#064;&#101;&#110;&#100;&#106;&#105;&#110;&#046;&#099;&#111;&#109;](&#109;&#097;&#105;&#108;&#116;&#111;:&#104;&#101;&#108;&#108;&#111;&#064;&#101;&#110;&#100;&#106;&#105;&#110;&#046;&#099;&#111;&#109;) with any additional questions or comments.
+
+## Concepts
+
+### Introduction
+
+For a quick introduction, you could read [this blog post by Ian Griffiths (@idg10)](https://endjin.com/blog/2024/04/dotnet-jsonelement-schema), a C# MVP and Technical Fellow at [endjin](https://endjin.com).
+
+There's also [a talk by Ian](https://endjin.com/what-we-think/talks/high-performance-json-serialization-with-code-generation-on-csharp-11-and-dotnet-7-0) on the techniques used in this library.
+
+If you want to see some well-worn patterns with JSON Schema, and how they translate into common .NET idioms, then [this series](https://endjin.com/blog/2024/05/json-schema-patterns-dotnet-data-object) is very useful. The corresponding sample code is found [here](./docs/ExampleRecipes). 
+
+### History
+
+For a more detailed introduction to the concepts, take a look at [this blog post](https://endjin.com/blog/2021/05/csharp-serialization-with-system-text-json-schema).
+
+### What kind of things is Corvus.JsonSchema good for?
+
+There are 2 key features: 
+
+### Serialization
+
+You use our `generatejsonschematypes` tool to generate code (on Windows, Linux or MacOS) from an existing JSON Schema document, and compile it in a standard dotnet assembly.
+
+The generated code provides object models for JSON Schema documents that give you rich, idiomatic C# types with strongly typed properties, pattern matching and efficient cast operations.
+
+You can operate directly over the JSON data, or mix-and-match building new JSON models from dotnet primitive types.
+
+```csharp
+string jsonText = 
+    """
+    {
+        "name": {
+            "familyName": "Oldroyd",
+            "givenName": "Michael",
+            "otherNames": ["Francis", "James"]
+        },
+        "dateOfBirth": "1944-07-14"
+    }
+    """;
+
+var person = Person.Parse(jsonText);
+
+Console.WriteLine($"{person.Name.FamilyName}"});
+```
+
+### Validation
+
+The same object-model provides ultra-fast, zero/low validation of JSON data against a JSON Schema.
+
+Having "deserialized" (really 'mapped') the JSON into the object model you can make use of the validation:
+
+```csharp
+string jsonText = 
+    """
+    {
+        "name": {
+            "familyName": "Oldroyd",
+            "givenName": "Michael",
+            "otherNames": ["Francis", "James"]
+        },
+        "dateOfBirth": "1944-07-14"
+    }
+    """;
+
+var person = Person.Parse(jsonText);
+
+Console.WriteLine($"The person {person.IsValid() ? "is" : "is not"} valid JSON");
+```
+
+Or you can retrieve detailed validation results including JSON Schema output format location information:
+
+```csharp
+var result = person.Validate(ValidationContext.ValidContext, ValidationLevel.Detailed);
+
+if (!result.IsValid)
+{
+    foreach (ValidationResult error in result.Results)
+    {
+        Console.WriteLine(error);
+    }
+}
+```
 ## Getting started
 
 To get started, install the dotnet global tool.
@@ -36,7 +135,7 @@ Arguments:
 Options:
   --rootNamespace <rootNamespace>            The default root namespace for generated types
   --rootPath <rootPath>                      The path in the document for the root type.
-  --useSchema <Draft201909|Draft202012>      The schema variant to use. [default: Draft201909]
+  --useSchema <Draft201909|Draft202012|Draft4|Draft6|Draft7|OpenApi30>      The schema variant to use. [default: Draft201909]
   --outputMapFile <outputMapFile>            The name to use for a map file which includes details of the files that
                                              were written.
   --outputPath <outputPath>                  The output directory. It defaults to the same folder as the schema file.
@@ -159,20 +258,21 @@ e.g. Create a JSON schema file called `person-from-api.json`
 Then run the tool to generate C# files for that schema in the JsonSchemaSample.Api namespace, adjacent to that document.
 
 ```
-generatejsonschematypes --rootNamespace JsonSchemaSample.Api --rootPath '#/$defs/Person' person-from-api.json
+generatejsonschematypes --rootNamespace JsonSchemaSample.Api --rootPath #/$defs/Person person-from-api.json
 ```
 
 Compile this code in a project with a reference to the `Corvus.Json.ExtendedTypes` nuget package, and you can then work with the Dotnet type model, and JSON Schema validation e.g.
 
 ```csharp
-string jsonText = @"{
-    ""name"": {
-      ""familyName"": ""Oldroyd"",
-      ""givenName"": ""Michael"",
-      ""otherNames"": [""Francis"", ""James""]
-    },
-    ""dateOfBirth"": ""1944-07-14""
-}";
+string jsonText =
+    """{
+           "name": {
+               "familyName": "Oldroyd",
+               "givenName": "Michael",
+               "otherNames": ["Francis", "James"]
+           },
+           "dateOfBirth": "1944-07-14"
+       }""";
 
 var person = Person.Parse(jsonText);
 Console.WriteLine(person.Name.FamilyName);
@@ -187,10 +287,6 @@ We also provide  a [full hands-on-lab](docs/GettingStartedWithJsonSchemaCodeGene
 
 This project uses [dotnet-t4](https://www.nuget.org/packages/dotnet-t4) to generate the code-behind for the t4 templates that actually emit the code for a particular template. If you add or update templates, you will need to run the relevant `BuildTemplates.cmd` batch file to regenerate them. (There is one that will
 regenerate all templates in the `/Solutions` folder; you can find others in the individual generator projects - more details on this can be found in the section on the Organization of the repository, below).
-
-Unfortunately, there have been breaking changes in the 2.3.x series of this tool that mean it no longer generates relative line annotations by default.
-
-You should install this specific version until [this issue](https://github.com/mono/t4/issues/152) is resolved satisfactorily.
 
 ```
 dotnet tool install --global dotnet-t4 --version 2.2.1
@@ -241,7 +337,7 @@ Object models for working with JSON Schema documents. *This does not provide val
 
 ### Corvus.Json.CodeGeneration.Abstractions
 
-Common code to assist with building code generators for various flavours of JSON schema. It includes a common data model for asbtracting schema into C# types in the form of a `TypeDeclaration.cs`, a set of T4 templates in `/SharedTemplates/*.tt` for common JSON schema features, and useful `Formatting.cs` utilities.
+Common code to assist with building code generators for various flavours of JSON schema. It includes a common data model for abstracting schema into C# types in the form of a `TypeDeclaration.cs`, a set of T4 templates in `/SharedTemplates/*.tt` for common JSON schema features, and useful `Formatting.cs` utilities.
 
 ### Corvus.CodeGeneration.202012
 ### Corvus.CodeGeneration.201909
@@ -283,6 +379,19 @@ Generates Feature Files in `Corvus.Json.Specs` for the JSON Patch tests.
 
 Benchmark suites for various components.
 
+## V3.0 Updates
+
+The big change with v3.0 is support for older (supported) versions of .NET, including the .NET Framework, through netstandard2.0.
+
+As of v3.0.23 we also support draft4 and OpenAPI3.0 schema.
+
+Additional changes include:
+
+    - Pattern matching methods for anyOf, oneOf and enum types.
+    - Implicit cast to bool for boolean types
+    - Specify an explicit type name hint for a schema with the $corvusTypeName keyword
+    - Improved heuristic for type naming based on `title` and `documentation` as fallbacks if no better name can be dervied.
+    
 ## V2.0 Updates
 
 There have been considerable breaking changes with V2.0 of the generator. This section will help you understand what has changed, and how to update your code.
@@ -308,7 +417,7 @@ The implicit/explicit conversions and operators have been rationalised. More exp
 
 However, most implicit conversions from/to intrinsic types are still supported.
 
-One significant change is that there is *no* implicit conversion to `string` - this must be done explicity, or directly through one of the comparison functions like `EqualsString()` or `EqualsUtf8String()`. This is to prevent a common source of accidental allocations and the corresponding performance hit.
+One significant change is that there is *no* implicit conversion to `string` - this must be done explicitly, or directly through one of the comparison functions like `EqualsString()` or `EqualsUtf8String()`. This is to prevent a common source of accidental allocations and the corresponding performance hit.
 
 ## System.Text.Json support by other projects
 
@@ -319,9 +428,9 @@ In particular I would point you at
 [JsonEverything](https://github.com/gregsdennis/json-everything) by [@gregsdennis](https://github.com/gregsdennis)
 
 - JSON Schema, drafts 6 and higher ([Specification](https://json-schema.org))
-- JSON Path ([RFC in progress](https://github.com/ietf-wg-jsonpath/draft-ietf-jsonpath-jsonpath)) (.Net Standard 2.1)
+- JSON Path ([RFC in progress](https://github.com/ietf-wg-jsonpath/draft-ietf-jsonpath-jsonpath)) (.NET Standard 2.1)
 - JSON Patch ([RFC 6902](https://tools.ietf.org/html/rfc6902))
-- JsonLogic ([Website](https://jsonlogic.com)) (.Net Standard 2.1)
+- JsonLogic ([Website](https://jsonlogic.com)) (.NET Standard 2.1)
 - JSON Pointer ([RFC 6901](https://tools.ietf.org/html/rfc6901))
 - Relative JSON Pointer ([Specification](https://tools.ietf.org/id/draft-handrews-relative-json-pointer-00.html))
 - Json.More.Net (Useful System.Text.Json extensions)

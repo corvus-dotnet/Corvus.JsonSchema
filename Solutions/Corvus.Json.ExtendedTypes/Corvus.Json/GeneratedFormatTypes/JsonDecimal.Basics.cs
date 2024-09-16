@@ -13,12 +13,14 @@ namespace Corvus.Json;
 /// Represents a JSON decimal.
 /// </summary>
 public readonly partial struct JsonDecimal
+#if NET8_0_OR_GREATER
  : IAdditionOperators<JsonDecimal, JsonDecimal, JsonDecimal>,
    ISubtractionOperators<JsonDecimal, JsonDecimal, JsonDecimal>,
    IMultiplyOperators<JsonDecimal, JsonDecimal, JsonDecimal>,
    IDivisionOperators<JsonDecimal, JsonDecimal, JsonDecimal>,
    IIncrementOperators<JsonDecimal>,
    IDecrementOperators<JsonDecimal>
+#endif
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="JsonDecimal"/> struct.
@@ -198,6 +200,7 @@ public readonly partial struct JsonDecimal
         throw new InvalidOperationException();
     }
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Conversion to Int128.
     /// </summary>
@@ -218,6 +221,7 @@ public readonly partial struct JsonDecimal
 
         throw new InvalidOperationException();
     }
+#endif
 
     /// <summary>
     /// Conversion to SByte.
@@ -240,6 +244,7 @@ public readonly partial struct JsonDecimal
         throw new InvalidOperationException();
     }
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Conversion to Half.
     /// </summary>
@@ -260,6 +265,7 @@ public readonly partial struct JsonDecimal
 
         throw new InvalidOperationException();
     }
+#endif
 
     /// <summary>
     /// Conversion to Single.
@@ -345,6 +351,7 @@ public readonly partial struct JsonDecimal
         throw new InvalidOperationException();
     }
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Conversion to UInt64.
     /// </summary>
@@ -365,6 +372,7 @@ public readonly partial struct JsonDecimal
 
         throw new InvalidOperationException();
     }
+#endif
 
     /// <summary>
     /// Conversion from decimal.

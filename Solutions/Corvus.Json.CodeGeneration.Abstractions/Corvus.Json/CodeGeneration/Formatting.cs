@@ -14,8 +14,8 @@ public static class Formatting
 {
     private static readonly ReadOnlyMemory<char> TypePrefix = "Type".AsMemory();
 
-    private static readonly ReadOnlyMemory<char>[] Keywords = new ReadOnlyMemory<char>[]
-    {
+    private static readonly ReadOnlyMemory<char>[] Keywords =
+    [
         "abstract".AsMemory(), "as".AsMemory(), "base".AsMemory(), "bool".AsMemory(),
         "break".AsMemory(), "byte".AsMemory(), "case".AsMemory(), "catch".AsMemory(),
         "char".AsMemory(), "checked".AsMemory(), "class".AsMemory(), "const".AsMemory(),
@@ -36,15 +36,15 @@ public static class Formatting
         "ulong".AsMemory(), "unchecked".AsMemory(), "unsafe".AsMemory(), "ushort".AsMemory(),
         "using".AsMemory(), "virtual".AsMemory(), "void".AsMemory(), "volatile".AsMemory(),
         "while".AsMemory(),
-    };
+    ];
 
     /// <summary>
-    /// Escapes a value for embeddeding into a quoted C# string.
+    /// Escapes a value for embedding into a quoted C# string.
     /// </summary>
     /// <param name="value">The value to escape.</param>
     /// <param name="quote">Whether to quote the string.</param>
     /// <returns>The escaped value. This can be inserted into a regular quoted C# string.</returns>
-    [return: NotNullIfNotNull("value")]
+    [return: NotNullIfNotNull(nameof(value))]
     public static string? FormatLiteralOrNull(string? value, bool quote)
     {
         return value is null ? null : SymbolDisplay.FormatLiteral(value, quote);
@@ -59,7 +59,7 @@ public static class Formatting
     {
         if (string.IsNullOrEmpty(name))
         {
-            return name;
+            return name.AsSpan();
         }
 
         // We could possibly do a better job here by using the "in place" access to the underlying
@@ -78,7 +78,7 @@ public static class Formatting
     {
         if (name.Length == 0)
         {
-            return name;
+            return name.AsSpan();
         }
 
         // We could possibly do a better job here by using the "in place" access to the underlying
@@ -138,8 +138,7 @@ public static class Formatting
         int setIndex = 0;
         bool capitalizeNext = capitalizeFirst;
         bool lowercaseNext = lowerCaseFirst;
-        int uppercasedCount = 0;
-
+        bool lastUppercase = false;
         for (int readIndex = 0; readIndex < chars.Length; readIndex++)
         {
             if (char.IsLetter(chars[readIndex]))
@@ -147,29 +146,34 @@ public static class Formatting
                 if (capitalizeNext)
                 {
                     chars[setIndex] = char.ToUpperInvariant(chars[readIndex]);
-                    uppercasedCount++;
+                    lastUppercase = true;
                 }
                 else if (lowercaseNext)
                 {
                     chars[setIndex] = char.ToLowerInvariant(chars[readIndex]);
-                    uppercasedCount = 0;
                     lowercaseNext = false;
+                    lastUppercase = false;
                 }
                 else
                 {
                     if (char.ToUpperInvariant(chars[readIndex]) == chars[readIndex])
                     {
-                        uppercasedCount++;
-                        if (uppercasedCount > 2)
+                        if (lastUppercase &&
+                            (readIndex == chars.Length - 1 || // We are at the end of the string
+                            !char.IsLetter(chars[readIndex + 1]) || // The next character *isn't* a letter or the next character is also uppercase
+                            chars[readIndex + 1] == char.ToUpperInvariant(chars[readIndex + 1])))
                         {
+                            lastUppercase = true;
                             chars[setIndex] = char.ToLowerInvariant(chars[readIndex]);
-                            uppercasedCount = 0;
+                            setIndex++;
                             continue;
                         }
+
+                        lastUppercase = true;
                     }
                     else
                     {
-                        uppercasedCount = 0;
+                        lastUppercase = false;
                     }
 
                     chars[setIndex] = chars[readIndex];
@@ -182,8 +186,8 @@ public static class Formatting
             {
                 chars[setIndex] = chars[readIndex];
 
-                // We capitalize the next character we find after a run of digits
-                capitalizeNext = true;
+                // We do not capitalize the next character we find after a run of digits
+                capitalizeNext = false;
                 setIndex++;
             }
             else

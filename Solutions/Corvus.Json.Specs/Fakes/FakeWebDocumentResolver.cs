@@ -44,7 +44,13 @@ public class FakeWebDocumentResolver : IDocumentResolver
     {
         this.CheckDisposed();
 
-        return this.documents.TryAdd(uri, document);
+        if (!this.documents.ContainsKey(uri))
+        {
+            this.documents.Add(uri, document);
+            return true;
+        }
+
+        return false;
     }
 
     /// <inheritdoc/>
@@ -57,13 +63,13 @@ public class FakeWebDocumentResolver : IDocumentResolver
     /// <inheritdoc/>
     public void Dispose()
     {
-        // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+        // Do not change this code. Put clean-up code in 'Dispose(bool disposing)' method
         this.Dispose(disposing: true);
         System.GC.SuppressFinalize(this);
     }
 
     /// <inheritdoc/>
-    public async Task<JsonElement?> TryResolve(JsonReference reference)
+    public async ValueTask<JsonElement?> TryResolve(JsonReference reference)
     {
         this.CheckDisposed();
 
@@ -99,12 +105,7 @@ public class FakeWebDocumentResolver : IDocumentResolver
         {
             JsonReferenceBuilder builder = reference.AsBuilder();
 
-            if (!builder.Host.SequenceEqual("localhost".AsSpan()) || !builder.Port.SequenceEqual("1234".AsSpan()))
-            {
-                return false;
-            }
-
-            return true;
+            return builder.Host.SequenceEqual("localhost".AsSpan()) && builder.Port.SequenceEqual("1234".AsSpan());
         }
 
         string GetPath(JsonReference reference)

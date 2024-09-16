@@ -66,7 +66,7 @@ public readonly partial struct Applicator
             /// </summary>
             /// <param name = "value">The value from which to convert.</param>
             /// <exception cref = "InvalidOperationException">The value was not a string.</exception>
-            public static explicit operator bool (PropertyNamesEntity value)
+            public static implicit operator bool (PropertyNamesEntity value)
             {
                 return value.GetBoolean() ?? throw new InvalidOperationException();
             }

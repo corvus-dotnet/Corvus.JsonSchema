@@ -2,11 +2,12 @@
 	<Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
 
 	<PropertyGroup>
-		<TargetFramework>net8.0</TargetFramework>
+		<TargetFrameworks>net481;net8.0</TargetFrameworks>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<IsPackable>false</IsPackable>
 		<PreserveCompilationContext>true</PreserveCompilationContext>
+		<IsTestProject>true</IsTestProject>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
@@ -17,13 +18,31 @@
 		<NoWarn>RCS1029;CS1591</NoWarn>
 	</PropertyGroup>
 
+	<ItemGroup Condition="'$(TargetFramework)' == 'net481'">
+		<PackageReference Include="Microsoft.Extensions.DependencyModel" Version="8.0.0" />
+		<PackageReference Include="System.Runtime.Loader" Version="4.3.0" />
+		<PackageReference Include="System.Net.Http" Version="4.3.4" />
+		<SpecFlowFeatureFiles Remove="Features/UriTemplates/*.feature" />
+		<SpecFlowFeatureFiles Remove="Features/**/numeric-format.feature" />
+		<Compile Remove="Features/UriTemplates/*.cs" />
+		<Compile Remove="Features/**/numeric-format.feature.cs" />
+		<Compile Remove="Steps\UriTemplateSteps.cs" />
+    <SpecFlowFeatureFiles Remove="Features/**/*-net80.feature" />
+    <Compile Remove="Features/**/*-net80.feature.cs" />
+  </ItemGroup>
+
+	<ItemGroup Condition="'$(TargetFramework)' == 'net80'">
+		<SpecFlowFeatureFiles Remove="Features/**/numeric-format-netstandard20.feature" />
+		<Compile Remove="Features/**/numeric-format-netstandard20.feature.cs" />
+	</ItemGroup>
+
 	<ItemGroup>
 		<PackageReference Include="Corvus.Testing.SpecFlow.NUnit" Version="3.0.2" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.0" />
 		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.9.0" />
 		<PackageReference Include="SolidToken.SpecFlow.DependencyInjection" Version="3.9.3" />
 
-		<PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.9">
+		<PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.12">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
@@ -42,9 +61,13 @@
 
 		<ProjectReference Include="..\Corvus.Json.CodeGeneration.202012\Corvus.Json.CodeGeneration.202012.csproj" />
 
+		<ProjectReference Include="..\Corvus.Json.CodeGeneration.4\Corvus.Json.CodeGeneration.4.csproj" />
+
 		<ProjectReference Include="..\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.6.csproj" />
 
 		<ProjectReference Include="..\Corvus.Json.CodeGeneration.7\Corvus.Json.CodeGeneration.7.csproj" />
+
+		<ProjectReference Include="..\Corvus.Json.CodeGeneration.OpenApi30\Corvus.Json.CodeGeneration.OpenApi30.csproj" />
 
 		<ProjectReference Include="..\Corvus.Json.Patch\Corvus.Json.Patch.csproj" />
 
@@ -62,7 +85,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <PackageReference Update="Roslynator.Analyzers" Version="4.6.2" />
+		<PackageReference Update="Roslynator.Analyzers" Version="4.6.2" />
 	</ItemGroup>
 
 </Project>

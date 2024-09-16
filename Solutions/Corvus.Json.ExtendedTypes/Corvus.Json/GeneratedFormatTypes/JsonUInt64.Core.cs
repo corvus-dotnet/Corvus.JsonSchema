@@ -377,6 +377,7 @@ public readonly partial struct JsonUInt64 : IJsonNumber<JsonUInt64>
     {
         return new(value);
     }
+#if NET8_0_OR_GREATER
 
     /// <summary>
     /// Gets an instance of the JSON value from a string value.
@@ -395,6 +396,8 @@ public readonly partial struct JsonUInt64 : IJsonNumber<JsonUInt64>
 
         return Undefined;
     }
+#endif
+#if NET8_0_OR_GREATER
 
     /// <summary>
     /// Gets an instance of the JSON value from a boolean value.
@@ -413,6 +416,7 @@ public readonly partial struct JsonUInt64 : IJsonNumber<JsonUInt64>
 
         return Undefined;
     }
+#endif
 
     /// <summary>
     /// Gets an instance of the JSON value from a double value.
@@ -437,6 +441,7 @@ public readonly partial struct JsonUInt64 : IJsonNumber<JsonUInt64>
 
         return Undefined;
     }
+#if NET8_0_OR_GREATER
 
     /// <summary>
     /// Gets an instance of the JSON value from an array value.
@@ -455,6 +460,8 @@ public readonly partial struct JsonUInt64 : IJsonNumber<JsonUInt64>
 
         return Undefined;
     }
+#endif
+#if NET8_0_OR_GREATER
 
     /// <summary>
     /// Gets an instance of the JSON value from an object value.
@@ -473,6 +480,7 @@ public readonly partial struct JsonUInt64 : IJsonNumber<JsonUInt64>
 
         return Undefined;
     }
+#endif
 
     /// <summary>
     /// Parses a JSON string into a JsonUInt64.
@@ -539,9 +547,27 @@ public readonly partial struct JsonUInt64 : IJsonNumber<JsonUInt64>
     /// </summary>
     /// <param name="buffer">The buffer from which to parse the value.</param>
     /// <returns>The parsed value.</returns>
+    public static JsonUInt64 ParseValue(string buffer)
+    {
+#if NET8_0_OR_GREATER
+        return IJsonValue<JsonUInt64>.ParseValue(buffer);
+#else
+        return JsonValueHelpers.ParseValue<JsonUInt64>(buffer.AsSpan());
+#endif
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
     public static JsonUInt64 ParseValue(ReadOnlySpan<char> buffer)
     {
+#if NET8_0_OR_GREATER
         return IJsonValue<JsonUInt64>.ParseValue(buffer);
+#else
+        return JsonValueHelpers.ParseValue<JsonUInt64>(buffer);
+#endif
     }
 
     /// <summary>
@@ -551,7 +577,11 @@ public readonly partial struct JsonUInt64 : IJsonNumber<JsonUInt64>
     /// <returns>The parsed value.</returns>
     public static JsonUInt64 ParseValue(ReadOnlySpan<byte> buffer)
     {
+#if NET8_0_OR_GREATER
         return IJsonValue<JsonUInt64>.ParseValue(buffer);
+#else
+        return JsonValueHelpers.ParseValue<JsonUInt64>(buffer);
+#endif
     }
 
     /// <summary>
@@ -561,7 +591,11 @@ public readonly partial struct JsonUInt64 : IJsonNumber<JsonUInt64>
     /// <returns>The parsed value.</returns>
     public static JsonUInt64 ParseValue(ref Utf8JsonReader reader)
     {
+#if NET8_0_OR_GREATER
         return IJsonValue<JsonUInt64>.ParseValue(ref reader);
+#else
+        return JsonValueHelpers.ParseValue<JsonUInt64>(ref reader);
+#endif
     }
 
     /// <summary>
@@ -573,6 +607,7 @@ public readonly partial struct JsonUInt64 : IJsonNumber<JsonUInt64>
     public TTarget As<TTarget>()
         where TTarget : struct, IJsonValue<TTarget>
     {
+#if NET8_0_OR_GREATER
         if ((this.backing & Backing.JsonElement) != 0)
         {
             return TTarget.FromJson(this.jsonElementBacking);
@@ -589,6 +624,9 @@ public readonly partial struct JsonUInt64 : IJsonNumber<JsonUInt64>
         }
 
         return TTarget.Undefined;
+#else
+        return this.As<JsonUInt64, TTarget>();
+#endif
     }
 
     /// <inheritdoc/>

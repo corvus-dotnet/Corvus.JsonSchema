@@ -38,5 +38,7 @@ Scenario Outline: evaluating the same schema location against the same data loca
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # { "foo": 1 }
         | #/000/tests/000/data | true  | passing case                                                                     |
+        # { "foo": "a string" }
         | #/000/tests/001/data | false | failing case                                                                     |

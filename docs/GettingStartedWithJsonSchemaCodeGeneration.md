@@ -8,7 +8,7 @@ TL;DR - this is a getting started Hands-On-Lab that walks you through our new JS
 - Understand how to navigate a JSON document using the generated code
 - Understand how to explore an unknown JSON document (or undocumented extensions) using the `Corvus.Json.ExtendedTypes`
 - Understand how to create new JSON documents using the generated code and `Corvus.Json.ExtendedTypes`.
-- Understand how to transform and compose JSON from various sources, without unncessary allocations or copying.
+- Understand how to transform and compose JSON from various sources, without unnecessary allocations or copying.
 
 ## Context
 
@@ -214,7 +214,7 @@ Here's the whole thing, and we'll break it down in more detail in a second.
 }
 ```
 
-Let's get that into the project. As before, these steps are using Powershell and VS Code, but you can use whatever IDE and/or tools you like. We'll create an `api` folder and drop a document called `person-from-api.json` in there.
+Let's get that into the project. As before, these steps are using PowerShell and VS Code, but you can use whatever IDE and/or tools you like. We'll create an `api` folder and drop a document called `person-from-api.json` in there.
 
 ```
 mkdir api
@@ -234,7 +234,7 @@ First, you can see that it is a draft2020-12 schema.
 
 We support [draft 2020-12](http://json-schema.org/draft/2020-12/json-schema-core.html) and [draft 2019-09](http://json-schema.org/draft/2019-09/json-schema-core.html) with the tooling.
 
-> If people wanted to extend the tools and libraries to support backlevel schema versions, it would not be too difficult; the older revisions are largely subsets of the later ones. It's well outside the scope of this introductory tutorial, but [PRs are gratefully received](https://github.com/corvus-dotnet/Corvus.JsonSchema)!
+> If people wanted to extend the tools and libraries to support back-level schema versions, it would not be too difficult; the older revisions are largely subsets of the later ones. It's well outside the scope of this introductory tutorial, but [PRs are gratefully received](https://github.com/corvus-dotnet/Corvus.JsonSchema)!
 
 You'll then notice that the root schema is basically empty, The interesting elements are all in the `$defs` section.
 
@@ -345,7 +345,7 @@ You can see how this gives the API flexibility. Maybe a previous version only su
 
 > I won't go on about schema-first or code-first, but this is a really good reason to use a schema-first design approach.
 >
-> C# developers may not have thought of this pattern when extending their API with a code-first approach. *Either-this-or-that* (a form of [union](https://en.wikipedia.org/wiki/Union_type)) is not a language-supported idiom, but it is frequently useful in the rest of the universe! Esepcially in JSON schema, where it is *everywhere*. You'll see more of this later.
+> C# developers may not have thought of this pattern when extending their API with a code-first approach. *Either-this-or-that* (a form of [union](https://en.wikipedia.org/wiki/Union_type)) is not a language-supported idiom, but it is frequently useful in the rest of the universe! Especially in JSON schema, where it is *everywhere*. You'll see more of this later.
 
 You'll also notice that there is a `Link` schema fragment at `#/$defs/Link`, which isn't referenced elsewhere (for now!). If you take a quick look, you'll see that it is a schematisation of a web link. More on this later...
 
@@ -397,7 +397,7 @@ We will use `JsonSchemaSample.Api` as the namespace. This matches our project na
 
 Second, we can provide a --rootPath to locate the schema in the document for which we are going to generate code.
 
-We want to generate the code for the schema at '#/$defs/Person'.
+We want to generate the code for the schema at #/$defs/Person.
 
 > You'll probably recognize this as the syntax you use for specifying a $ref within a JSON schema document. It is part of the JSON Pointer specification.
 >
@@ -413,14 +413,14 @@ Finally, we need to provide the path to the json schema document containing the 
 
 The other defaults mean that we will generate our output files in the same folder as the input schema file.
 
-> Notice that this is *not* the current working directory. You can supply deep paths to the source file from wherevere you happen to be, and the output files will be generated next to it. There's no need to specify an `--outputPath` for this common scenario.
+> Notice that this is *not* the current working directory. You can supply deep paths to the source file from wherever you happen to be, and the output files will be generated next to it. There's no need to specify an `--outputPath` for this common scenario.
 >
 > We've found that this minimizes the complexity of integrating the tool into a build process.
 
 So we end up with the command.
 
 ```
-generatejsonschematypes --rootNamespace JsonSchemaSample.Api --rootPath '#/$defs/Person' person-from-api.json
+generatejsonschematypes --rootNamespace JsonSchemaSample.Api --rootPath #/$defs/Person person-from-api.json
 ```
 
 Let's run that now. When it has completed, list the C# files in the directory, using whatever command is appropriate for your shell.
@@ -429,7 +429,7 @@ Let's run that now. When it has completed, list the C# files in the directory, u
 ls *.cs
 ```
 
-> Remember that I'm using Powershell, so, as with Linux distros, I have access to `ls`. Windows Command Prompt users might want `dir`.
+> Remember that I'm using PowerShell, so, as with Linux distros, I have access to `ls`. Windows Command Prompt users might want `dir`.
 
 You should see the following file names listed (plus whatever other detail your particular shell adds to its output):
 ```
@@ -547,7 +547,7 @@ Console.WriteLine("Hello, World!");
 
 Instead, let's add a `using` statement for our generated code. Recall that we put it in the `JsonSchemaSample.Api` namespace. We'll also need `System.Text.Json`, `Corvus.Json`, and, for our date work, [`NodaTime`](https://nodatime.org/).
 
-> You can use the internal dotnet date and time types, but NodaTime is a lot better in general, and specfically a better fit for the JSON schema date/time specifications. We hope this changes in dotnet vFuture!
+> You can use the internal dotnet date and time types, but NodaTime is a lot better in general, and specifically a better fit for the JSON schema date/time specifications. We hope this changes in dotnet vFuture!
 
 ```csharp
 using System.Text.Json;
@@ -625,7 +625,7 @@ So far, so "just like serialization". But - and here's the rather nifty thing ab
 
 It's true that we then went on to allocate a bunch of strings when we accessed the bits we were interested in, and passed them to `Console.WriteLine()`, but that's just the cost of interoperating with a world where we don't yet have `ReadOnlySpan<char>`-like strings!
 
-> There are optimizations that could still be done, at the expense of ease-of-use. In particular, we're expecting to see a vFuture version of `System.Text.Json` where it is better able to expose the underlying data without unecessary string allocation, and we intend to invest in that area. Note also that the string allocations are why we required you to explicitly cast to string rather than allow an implicit conversion, as for the `LocalDate`.
+> There are optimizations that could still be done, at the expense of ease-of-use. In particular, we're expecting to see a vFuture version of `System.Text.Json` where it is better able to expose the underlying data without unnecessary string allocation, and we intend to invest in that area. Note also that the string allocations are why we required you to explicitly cast to string rather than allow an implicit conversion, as for the `LocalDate`.
 
 But, by and large, we didn't allocate anything - we continued to work over the underlying UTF8 bytes. This, as we will see, is very powerful.
 
@@ -792,7 +792,7 @@ Similarly for `PersonName.DateOfBirth`
 public Corvus.Json.JsonDate DateOfBirth
 ```
 
-`JsonDate` is part of our extended JSON type model and it is implicitly covertible to-and-from `NodaTime.LocalDate` for the same reason.
+`JsonDate` is part of our extended JSON type model and it is implicitly convertible to-and-from `NodaTime.LocalDate` for the same reason.
 
 So conversions are really useful in that they let us write idiomatic dotnet code, while maintaining the benefits of our JSON data model.
 
@@ -998,7 +998,7 @@ Unhandled exception. System.InvalidOperationException: Operation is not valid du
    at Program.<Main>$(String[] args) in C:\Users\matth\source\repos\JsonSchemaSample\Program.cs:line 17
 ```
 
-What that tells us is that we cannot implictly convert the missing `PersonName` element into a non-nullable string.
+What that tells us is that we cannot implicitly convert the missing `PersonName` element into a non-nullable string.
 
 What can we do about that?
 
@@ -1197,13 +1197,13 @@ The JSON `JsonObjectProperty` type has a `Name` property which gives us the unde
 
 > Note: the name is actually a `JsonPropertyName` which is convertible to a string, either explicitly (via a cast or a call to `(Try)GetString()`. This allows us to optimize the underlying storage mechanism for property names.
 
-It also exposes a `ValueAs<T>()` method to get the value as a specific type of `IJsonValue`, plus `ValueKind` if you want to explore its underlying type. These are analagous to the methods on `JsonAny` but you avoid converting to `JsonAny` explicitly, just to examine property information.
+It also exposes a `ValueAs<T>()` method to get the value as a specific type of `IJsonValue`, plus `ValueKind` if you want to explore its underlying type. These are analogous to the methods on `JsonAny` but you avoid converting to `JsonAny` explicitly, just to examine property information.
 
 The result of all this is that we have emitted our additional properties to the Console; but we've also got the "well-known" properties in this list. Is there a way to filter those out?
 
 You'll not be surprised to learn that there is.
 
-If we go and look at any of our code generated types, you'll see that the generator has emitted `const` fields for the well-known properties of thos `object` types that have them, They are in a nested class `JsonPropertyNames`.
+If we go and look at any of our code generated types, you'll see that the generator has emitted `const` fields for the well-known properties of those `object` types that have them, They are in a nested class `JsonPropertyNames`.
 
 ```csharp
 /// <summary>
@@ -1662,7 +1662,7 @@ if (michaelOldroyd.Name.OtherNames.ValueKind == JsonValueKind.Array)
 }
 ```
 
-Both of those techniques depend on us knowing that "being an array type" is enough to tell us how to treat the value. That means having an intimiate knowledge of the existing schema.
+Both of those techniques depend on us knowing that "being an array type" is enough to tell us how to treat the value. That means having an intimate knowledge of the existing schema.
 
 A more general approach might be to cast to the desired target type (`PersonNameElementArray`) and check whether it is valid
 

@@ -67,7 +67,11 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
                         {
                             if (level >= ValidationLevel.Detailed)
                             {
+#if NET8_0_OR_GREATER
                                 result = result.WithResult(isValid: false, $"6.5.4. dependentRequired - dependent property \"{Encoding.UTF8.GetString(dSpan)}\" not found.");
+#else
+                                result = result.WithResult(isValid: false, $"6.5.4. dependentRequired - dependent property \"{Encoding.UTF8.GetString(dSpan.ToArray())}\" not found.");
+#endif
                             }
                             else if (level >= ValidationLevel.Basic)
                             {
@@ -152,13 +156,14 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     if (HasDependentSchemas)
     { #>
             if (__TryGetCorvusDependentSchemaValidator(property, this.HasJsonElementBacking, out PropertyValidator<<#= TypeDeclaration.DotnetTypeName #>>? dependentSchemaValidator))
-            {
-                result = result.WithLocalProperty(propertyCount);
-                result = dependentSchemaValidator(this, result, level);
-                if (level == ValidationLevel.Flag && !result.IsValid)
+            {                
+                var dependentSchemaResult = dependentSchemaValidator(this, result.CreateChildContext(), level);
+                if (level == ValidationLevel.Flag && !dependentSchemaResult.IsValid)
                 {
-                    return result;
+                    return result.WithResult(isValid: false);
                 }
+
+                result = result.MergeChildContext(dependentSchemaResult, true);
             }
 <#  }
     if (HasPropertyNames || HasPatternProperties)

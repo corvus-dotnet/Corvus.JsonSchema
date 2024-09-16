@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System;
 using System.Buffers;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
@@ -46,7 +47,21 @@ public readonly partial struct JsonString
     {
         this.jsonElementBacking = default;
         this.backing = Backing.String;
+#if NET8_0_OR_GREATER
         this.stringBacking = Encoding.UTF8.GetString(utf8Value);
+#else
+        byte[] bytes = ArrayPool<byte>.Shared.Rent(utf8Value.Length);
+
+        try
+        {
+            utf8Value.CopyTo(bytes);
+            this.stringBacking = Encoding.UTF8.GetString(bytes);
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(bytes);
+        }
+#endif
     }
 
     /// <summary>
@@ -152,14 +167,41 @@ public readonly partial struct JsonString
         if ((this.backing & Backing.String) != 0)
         {
             int maxCharCount = Encoding.UTF8.GetMaxCharCount(utf8Bytes.Length);
+#if NET8_0_OR_GREATER
             char[]? pooledChars = null;
 
             Span<char> chars = maxCharCount <= JsonConstants.StackallocThreshold ?
                 stackalloc char[maxCharCount] :
                 (pooledChars = ArrayPool<char>.Shared.Rent(maxCharCount));
 
-            int written = Encoding.UTF8.GetChars(utf8Bytes, chars);
-            return chars[..written].SequenceEqual(this.stringBacking);
+            try
+            {
+                int written = Encoding.UTF8.GetChars(utf8Bytes, chars);
+                return chars[..written].SequenceEqual(this.stringBacking);
+            }
+            finally
+            {
+                if (pooledChars is char[] pc)
+                {
+                    ArrayPool<char>.Shared.Return(pc);
+                }
+            }
+#else
+            char[] chars = ArrayPool<char>.Shared.Rent(maxCharCount);
+            byte[] bytes = ArrayPool<byte>.Shared.Rent(utf8Bytes.Length);
+            utf8Bytes.CopyTo(bytes);
+
+            try
+            {
+                int written = Encoding.UTF8.GetChars(bytes, 0, bytes.Length, chars, 0);
+                return chars.SequenceEqual(this.stringBacking);
+            }
+            finally
+            {
+                ArrayPool<char>.Shared.Return(chars);
+                ArrayPool<byte>.Shared.Return(bytes);
+            }
+#endif
         }
 
         return false;
@@ -209,7 +251,11 @@ public readonly partial struct JsonString
 
         if ((this.backing & Backing.String) != 0)
         {
+#if NET8_0_OR_GREATER
             return chars.SequenceEqual(this.stringBacking);
+#else
+            return chars.SequenceEqual(this.stringBacking.AsSpan());
+#endif
         }
 
         return false;

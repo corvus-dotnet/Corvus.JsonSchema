@@ -20,7 +20,7 @@ public readonly partial struct Schema
     public readonly partial struct StringArray
     {
         /// <inheritdoc/>
-        public StringArray Add(in JsonAny item1)
+        StringArray IJsonArray<StringArray>.Add(in JsonAny item1)
         {
             ImmutableList<JsonAny>.Builder builder = this.GetImmutableListBuilder();
             builder.Add(item1);
@@ -28,7 +28,7 @@ public readonly partial struct Schema
         }
 
         /// <inheritdoc/>
-        public StringArray Add(params JsonAny[] items)
+        StringArray IJsonArray<StringArray>.Add(params JsonAny[] items)
         {
             ImmutableList<JsonAny>.Builder builder = this.GetImmutableListBuilder();
             builder.AddRange(items);
@@ -49,8 +49,7 @@ public readonly partial struct Schema
         }
 
         /// <inheritdoc/>
-        public StringArray AddRange<TItem>(IEnumerable<TItem> items)
-            where TItem : struct, IJsonValue<TItem>
+        StringArray IJsonArray<StringArray>.AddRange<TItem>(IEnumerable<TItem> items)
         {
             ImmutableList<JsonAny>.Builder builder = this.GetImmutableListBuilder();
             foreach (TItem item in items)
@@ -62,7 +61,7 @@ public readonly partial struct Schema
         }
 
         /// <inheritdoc/>
-        public StringArray AddRange(IEnumerable<JsonAny> items)
+        StringArray IJsonArray<StringArray>.AddRange(IEnumerable<JsonAny> items)
         {
             ImmutableList<JsonAny>.Builder builder = this.GetImmutableListBuilder();
             builder.AddRange(items);
@@ -70,7 +69,7 @@ public readonly partial struct Schema
         }
 
         /// <inheritdoc/>
-        public StringArray Insert(int index, in JsonAny item1)
+        StringArray IJsonArray<StringArray>.Insert(int index, in JsonAny item1)
         {
             return new(this.GetImmutableListWith(index, item1));
         }
@@ -83,26 +82,120 @@ public readonly partial struct Schema
         }
 
         /// <inheritdoc/>
-        public StringArray InsertRange<TItem>(int index, IEnumerable<TItem> items)
-            where TItem : struct, IJsonValue<TItem>
+        StringArray IJsonArray<StringArray>.InsertRange<TItem>(int index, IEnumerable<TItem> items)
         {
             return new(this.GetImmutableListWith(index, items.Select(item => item.AsAny)));
         }
 
         /// <inheritdoc/>
-        public StringArray InsertRange(int index, IEnumerable<JsonAny> items)
+        StringArray IJsonArray<StringArray>.InsertRange(int index, IEnumerable<JsonAny> items)
         {
             return new(this.GetImmutableListWith(index, items));
         }
 
         /// <inheritdoc/>
-        public StringArray Replace(in JsonAny oldValue, in JsonAny newValue)
+        StringArray IJsonArray<StringArray>.Replace(in JsonAny oldValue, in JsonAny newValue)
         {
             return new(this.GetImmutableListReplacing(oldValue.AsAny, newValue.AsAny));
         }
 
         /// <inheritdoc/>
-        public StringArray SetItem(int index, in JsonAny value)
+        StringArray IJsonArray<StringArray>.SetItem(int index, in JsonAny value)
+        {
+            return new(this.GetImmutableListSetting(index, value.AsAny));
+        }
+
+        /// <summary>
+        /// Add an item to the array.
+        /// </summary>
+        /// <param name = "item1">The item to add.</param>
+        /// <returns>An instance of the array with the item added.</returns>
+        /// <exception cref = "InvalidOperationException">The value was not an array.</exception>
+        public StringArray Add(in Corvus.Json.JsonString item1)
+        {
+            ImmutableList<JsonAny>.Builder builder = this.GetImmutableListBuilder();
+            builder.Add(item1);
+            return new(builder.ToImmutable());
+        }
+
+        /// <summary>
+        /// Add a set of items to the array.
+        /// </summary>
+        /// <param name = "items">The items to add.</param>
+        /// <returns>An instance of the array with the items added.</returns>
+        /// <exception cref = "InvalidOperationException">The value was not an array.</exception>
+        public StringArray Add(params Corvus.Json.JsonString[] items)
+        {
+            ImmutableList<JsonAny>.Builder builder = this.GetImmutableListBuilder();
+            foreach (Corvus.Json.JsonString item in items)
+            {
+                builder.Add(item.AsAny);
+            }
+
+            return new(builder.ToImmutable());
+        }
+
+        /// <summary>
+        /// Add a set of items to the array.
+        /// </summary>
+        /// <param name = "items">The items to add.</param>
+        /// <returns>An instance of the array with the items added.</returns>
+        /// <exception cref = "InvalidOperationException">The value was not an array.</exception>
+        public StringArray AddRange(IEnumerable<Corvus.Json.JsonString> items)
+        {
+            ImmutableList<JsonAny>.Builder builder = this.GetImmutableListBuilder();
+            foreach (Corvus.Json.JsonString item in items)
+            {
+                builder.Add(item.AsAny);
+            }
+
+            return new(builder.ToImmutable());
+        }
+
+        /// <summary>
+        /// Insert an item into the array at the given index.
+        /// </summary>
+        /// <param name = "index">The index at which to add the item.</param>
+        /// <param name = "item1">The item to add.</param>
+        /// <returns>An instance of the array with the item added.</returns>
+        /// <exception cref = "InvalidOperationException">The value was not an array.</exception>
+        public StringArray Insert(int index, in Corvus.Json.JsonString item1)
+        {
+            return new(this.GetImmutableListWith(index, item1));
+        }
+
+        /// <summary>
+        /// Insert items into the array at the given index.
+        /// </summary>
+        /// <param name = "index">The index at which to add the items.</param>
+        /// <param name = "items">The items to add.</param>
+        /// <returns>An instance of the array with the items added.</returns>
+        /// <exception cref = "InvalidOperationException">The value was not an array.</exception>
+        /// <exception cref = "IndexOutOfRangeException">The index was outside the bounds of the array.</exception>
+        public StringArray InsertRange(int index, IEnumerable<Corvus.Json.JsonString> items)
+        {
+            return new(this.GetImmutableListWith(index, items.Select(item => item.AsAny)));
+        }
+
+        /// <summary>
+        /// Replace the first instance of the given value with the new value, even if the items are identical.
+        /// </summary>
+        /// <param name = "oldValue">The item to remove.</param>
+        /// <param name = "newValue">The item to insert.</param>
+        /// <returns>An instance of the array with the item replaced.</returns>
+        /// <exception cref = "InvalidOperationException">The value was not an array.</exception>
+        public StringArray Replace(in Corvus.Json.JsonString oldValue, in Corvus.Json.JsonString newValue)
+        {
+            return new(this.GetImmutableListReplacing(oldValue.AsAny, newValue.AsAny));
+        }
+
+        /// <summary>
+        /// Set the item at the given index.
+        /// </summary>
+        /// <param name = "index">The index at which to set the item.</param>
+        /// <param name = "value">The value to set.</param>
+        /// <returns>An instance of the array with the item set to the given value.</returns>
+        public StringArray SetItem(int index, in Corvus.Json.JsonString value)
         {
             return new(this.GetImmutableListSetting(index, value.AsAny));
         }

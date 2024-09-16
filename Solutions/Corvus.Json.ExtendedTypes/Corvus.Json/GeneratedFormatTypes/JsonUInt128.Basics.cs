@@ -13,13 +13,16 @@ namespace Corvus.Json;
 /// Represents a JSON uint128.
 /// </summary>
 public readonly partial struct JsonUInt128
+#if NET8_0_OR_GREATER
  : IAdditionOperators<JsonUInt128, JsonUInt128, JsonUInt128>,
    ISubtractionOperators<JsonUInt128, JsonUInt128, JsonUInt128>,
    IMultiplyOperators<JsonUInt128, JsonUInt128, JsonUInt128>,
    IDivisionOperators<JsonUInt128, JsonUInt128, JsonUInt128>,
    IIncrementOperators<JsonUInt128>,
    IDecrementOperators<JsonUInt128>
+#endif
 {
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Initializes a new instance of the <see cref="JsonUInt128"/> struct.
     /// </summary>
@@ -30,6 +33,7 @@ public readonly partial struct JsonUInt128
         this.backing = Backing.Number;
         this.numberBacking = new(value);
     }
+#endif
 
     /// <summary>
     /// Conversion from JsonNumber.
@@ -198,6 +202,7 @@ public readonly partial struct JsonUInt128
         throw new InvalidOperationException();
     }
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Conversion to Int128.
     /// </summary>
@@ -218,6 +223,7 @@ public readonly partial struct JsonUInt128
 
         throw new InvalidOperationException();
     }
+#endif
 
     /// <summary>
     /// Conversion to SByte.
@@ -240,6 +246,7 @@ public readonly partial struct JsonUInt128
         throw new InvalidOperationException();
     }
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Conversion to Half.
     /// </summary>
@@ -260,6 +267,7 @@ public readonly partial struct JsonUInt128
 
         throw new InvalidOperationException();
     }
+#endif
 
     /// <summary>
     /// Conversion to Single.
@@ -345,6 +353,7 @@ public readonly partial struct JsonUInt128
         throw new InvalidOperationException();
     }
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Conversion to UInt64.
     /// </summary>
@@ -365,7 +374,9 @@ public readonly partial struct JsonUInt128
 
         throw new InvalidOperationException();
     }
+#endif
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Conversion from uint128.
     /// </summary>
@@ -374,6 +385,7 @@ public readonly partial struct JsonUInt128
     {
         return new(new BinaryJsonNumber(value));
     }
+#endif
 
     /// <summary>
     /// Adds two values together to compute their sum.

@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System;
 using System.Buffers;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
@@ -12,7 +13,12 @@ namespace Corvus.Json;
 /// <summary>
 /// Represents a JSON string.
 /// </summary>
-public readonly partial struct JsonString : IJsonString<JsonString>
+public readonly partial struct JsonString
+#if NET8_0_OR_GREATER
+    : IJsonString<JsonString>, ISpanFormattable
+#else
+    : IJsonString<JsonString>
+#endif
 {
     private readonly Backing backing;
     private readonly JsonElement jsonElementBacking;
@@ -273,12 +279,17 @@ public readonly partial struct JsonString : IJsonString<JsonString>
 
         if (value.ValueKind == JsonValueKind.String)
         {
+#if NET8_0_OR_GREATER
             return new((string)value);
+#else
+            return new((string)value.AsString);
+#endif
         }
 
         return Undefined;
     }
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Gets an instance of the JSON value from a boolean value.
     /// </summary>
@@ -350,6 +361,7 @@ public readonly partial struct JsonString : IJsonString<JsonString>
 
         return Undefined;
     }
+#endif
 
     /// <summary>
     /// Parses a JSON string into a JsonString.
@@ -416,9 +428,27 @@ public readonly partial struct JsonString : IJsonString<JsonString>
     /// </summary>
     /// <param name="buffer">The buffer from which to parse the value.</param>
     /// <returns>The parsed value.</returns>
+    public static JsonString ParseValue(string buffer)
+    {
+#if NET8_0_OR_GREATER
+        return IJsonValue<JsonString>.ParseValue(buffer);
+#else
+        return JsonValueHelpers.ParseValue<JsonString>(buffer.AsSpan());
+#endif
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
     public static JsonString ParseValue(ReadOnlySpan<char> buffer)
     {
+#if NET8_0_OR_GREATER
         return IJsonValue<JsonString>.ParseValue(buffer);
+#else
+        return JsonValueHelpers.ParseValue<JsonString>(buffer);
+#endif
     }
 
     /// <summary>
@@ -428,7 +458,11 @@ public readonly partial struct JsonString : IJsonString<JsonString>
     /// <returns>The parsed value.</returns>
     public static JsonString ParseValue(ReadOnlySpan<byte> buffer)
     {
+#if NET8_0_OR_GREATER
         return IJsonValue<JsonString>.ParseValue(buffer);
+#else
+        return JsonValueHelpers.ParseValue<JsonString>(buffer);
+#endif
     }
 
     /// <summary>
@@ -438,7 +472,11 @@ public readonly partial struct JsonString : IJsonString<JsonString>
     /// <returns>The parsed value.</returns>
     public static JsonString ParseValue(ref Utf8JsonReader reader)
     {
+#if NET8_0_OR_GREATER
         return IJsonValue<JsonString>.ParseValue(ref reader);
+#else
+        return JsonValueHelpers.ParseValue<JsonString>(ref reader);
+#endif
     }
 
     /// <summary>
@@ -455,7 +493,12 @@ public readonly partial struct JsonString : IJsonString<JsonString>
         where T2 : struct, IJsonValue<T2>
     {
         int written = LowAllocJsonUtils.ConcatenateAsUtf8JsonString(buffer, firstValue, secondValue);
+#if NET8_0_OR_GREATER
         return IJsonValue<JsonString>.ParseValue(buffer[..written]);
+#else
+        return JsonValueHelpers.ParseValue<JsonString>(buffer.Slice(0, written));
+
+#endif
     }
 
     /// <summary>
@@ -475,7 +518,12 @@ public readonly partial struct JsonString : IJsonString<JsonString>
             where T3 : struct, IJsonValue<T3>
     {
         int written = LowAllocJsonUtils.ConcatenateAsUtf8JsonString(buffer, firstValue, secondValue, thirdValue);
+#if NET8_0_OR_GREATER
         return IJsonValue<JsonString>.ParseValue(buffer[..written]);
+#else
+        return JsonValueHelpers.ParseValue<JsonString>(buffer.Slice(0, written));
+
+#endif
     }
 
     /// <summary>
@@ -498,7 +546,12 @@ public readonly partial struct JsonString : IJsonString<JsonString>
         where T4 : struct, IJsonValue<T4>
     {
         int written = LowAllocJsonUtils.ConcatenateAsUtf8JsonString(buffer, firstValue, secondValue, thirdValue, fourthValue);
+#if NET8_0_OR_GREATER
         return IJsonValue<JsonString>.ParseValue(buffer[..written]);
+#else
+        return JsonValueHelpers.ParseValue<JsonString>(buffer.Slice(0, written));
+
+#endif
     }
 
     /// <summary>
@@ -524,7 +577,12 @@ public readonly partial struct JsonString : IJsonString<JsonString>
             where T5 : struct, IJsonValue<T5>
     {
         int written = LowAllocJsonUtils.ConcatenateAsUtf8JsonString(buffer, firstValue, secondValue, thirdValue, fourthValue, fifthValue);
+#if NET8_0_OR_GREATER
         return IJsonValue<JsonString>.ParseValue(buffer[..written]);
+#else
+        return JsonValueHelpers.ParseValue<JsonString>(buffer.Slice(0, written));
+
+#endif
     }
 
     /// <summary>
@@ -553,7 +611,12 @@ public readonly partial struct JsonString : IJsonString<JsonString>
             where T6 : struct, IJsonValue<T6>
     {
         int written = LowAllocJsonUtils.ConcatenateAsUtf8JsonString(buffer, firstValue, secondValue, thirdValue, fourthValue, fifthValue, sixthValue);
+#if NET8_0_OR_GREATER
         return IJsonValue<JsonString>.ParseValue(buffer[..written]);
+#else
+        return JsonValueHelpers.ParseValue<JsonString>(buffer.Slice(0, written));
+
+#endif
     }
 
     /// <summary>
@@ -585,7 +648,12 @@ public readonly partial struct JsonString : IJsonString<JsonString>
             where T7 : struct, IJsonValue<T7>
     {
         int written = LowAllocJsonUtils.ConcatenateAsUtf8JsonString(buffer, firstValue, secondValue, thirdValue, fourthValue, fifthValue, sixthValue, seventhValue);
+#if NET8_0_OR_GREATER
         return IJsonValue<JsonString>.ParseValue(buffer[..written]);
+#else
+        return JsonValueHelpers.ParseValue<JsonString>(buffer.Slice(0, written));
+
+#endif
     }
 
     /// <summary>
@@ -620,7 +688,12 @@ public readonly partial struct JsonString : IJsonString<JsonString>
             where T8 : struct, IJsonValue<T8>
     {
         int written = LowAllocJsonUtils.ConcatenateAsUtf8JsonString(buffer, firstValue, secondValue, thirdValue, fourthValue, fifthValue, sixthValue, seventhValue, eighthValue);
+#if NET8_0_OR_GREATER
         return IJsonValue<JsonString>.ParseValue(buffer[..written]);
+#else
+        return JsonValueHelpers.ParseValue<JsonString>(buffer.Slice(0, written));
+
+#endif
     }
 
     /// <summary>
@@ -632,6 +705,7 @@ public readonly partial struct JsonString : IJsonString<JsonString>
     public TTarget As<TTarget>()
             where TTarget : struct, IJsonValue<TTarget>
     {
+#if NET8_0_OR_GREATER
         if ((this.backing & Backing.JsonElement) != 0)
         {
             return TTarget.FromJson(this.jsonElementBacking);
@@ -648,6 +722,9 @@ public readonly partial struct JsonString : IJsonString<JsonString>
         }
 
         return TTarget.Undefined;
+#else
+        return this.As<JsonString, TTarget>();
+#endif
     }
 
     /// <inheritdoc/>
@@ -738,4 +815,57 @@ public readonly partial struct JsonString : IJsonString<JsonString>
     {
         return Json.Validate.TypeString(this.ValueKind, validationContext, level);
     }
+
+#if NET8_0_OR_GREATER
+    /// <inheritdoc/>
+    public bool TryFormat(Span<char> destination, out int charsWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
+    {
+        if ((this.backing & Backing.String) != 0)
+        {
+            int length = Math.Min(destination.Length, this.stringBacking.Length);
+            this.stringBacking.AsSpan(0, length).CopyTo(destination);
+            charsWritten = length;
+            return true;
+        }
+
+        if ((this.backing & Backing.JsonElement) != 0)
+        {
+            char[] buffer = ArrayPool<char>.Shared.Rent(destination.Length);
+            try
+            {
+                bool result = this.jsonElementBacking.TryGetValue(FormatSpan, new Output(buffer, destination.Length), out charsWritten);
+                if (result)
+                {
+                    buffer.AsSpan(0, charsWritten).CopyTo(destination);
+                }
+
+                return result;
+            }
+            finally
+            {
+                ArrayPool<char>.Shared.Return(buffer);
+            }
+        }
+
+        charsWritten = 0;
+        return false;
+
+        static bool FormatSpan(ReadOnlySpan<char> source, in Output output, out int charsWritten)
+        {
+            int length = Math.Min(output.Length, source.Length);
+            source[..length].CopyTo(output.Destination);
+            charsWritten = length;
+            return true;
+        }
+    }
+
+    /// <inheritdoc/>
+    public string ToString(string? format, IFormatProvider? formatProvider)
+    {
+        // There is no formatting for the string
+        return this.ToString();
+    }
+
+    private readonly record struct Output(char[] Destination, int Length);
+#endif
 }

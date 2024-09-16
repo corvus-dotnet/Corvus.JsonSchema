@@ -13,7 +13,12 @@ namespace Corvus.Json;
 /// <summary>
 /// Represents a JSON iri.
 /// </summary>
-public readonly partial struct JsonIri : IJsonString<JsonIri>
+public readonly partial struct JsonIri
+#if NET8_0_OR_GREATER
+    : IJsonString<JsonIri>, ISpanFormattable
+#else
+    : IJsonString<JsonIri>
+#endif
 {
     private readonly Backing backing;
     private readonly JsonElement jsonElementBacking;
@@ -284,11 +289,16 @@ public readonly partial struct JsonIri : IJsonString<JsonIri>
 
         if (value.ValueKind == JsonValueKind.String)
         {
+#if NET8_0_OR_GREATER
             return new((string)value);
+#else
+            return new((string)value.AsString);
+#endif
         }
 
         return Undefined;
     }
+#if NET8_0_OR_GREATER
 
     /// <summary>
     /// Gets an instance of the JSON value from a boolean value.
@@ -307,6 +317,8 @@ public readonly partial struct JsonIri : IJsonString<JsonIri>
 
         return Undefined;
     }
+#endif
+#if NET8_0_OR_GREATER
 
     /// <summary>
     /// Gets an instance of the JSON value from a double value.
@@ -325,6 +337,8 @@ public readonly partial struct JsonIri : IJsonString<JsonIri>
 
         return Undefined;
     }
+#endif
+#if NET8_0_OR_GREATER
 
     /// <summary>
     /// Gets an instance of the JSON value from an array value.
@@ -343,6 +357,8 @@ public readonly partial struct JsonIri : IJsonString<JsonIri>
 
         return Undefined;
     }
+#endif
+#if NET8_0_OR_GREATER
 
     /// <summary>
     /// Gets an instance of the JSON value from an object value.
@@ -361,6 +377,7 @@ public readonly partial struct JsonIri : IJsonString<JsonIri>
 
         return Undefined;
     }
+#endif
 
     /// <summary>
     /// Parses a JSON string into a JsonIri.
@@ -423,6 +440,62 @@ public readonly partial struct JsonIri : IJsonString<JsonIri>
     }
 
     /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    public static JsonIri ParseValue(string buffer)
+    {
+#if NET8_0_OR_GREATER
+        return IJsonValue<JsonIri>.ParseValue(buffer);
+#else
+        return JsonValueHelpers.ParseValue<JsonIri>(buffer.AsSpan());
+#endif
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    public static JsonIri ParseValue(ReadOnlySpan<char> buffer)
+    {
+#if NET8_0_OR_GREATER
+        return IJsonValue<JsonIri>.ParseValue(buffer);
+#else
+        return JsonValueHelpers.ParseValue<JsonIri>(buffer);
+#endif
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    public static JsonIri ParseValue(ReadOnlySpan<byte> buffer)
+    {
+#if NET8_0_OR_GREATER
+        return IJsonValue<JsonIri>.ParseValue(buffer);
+#else
+        return JsonValueHelpers.ParseValue<JsonIri>(buffer);
+#endif
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="reader">The reader from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    public static JsonIri ParseValue(ref Utf8JsonReader reader)
+    {
+#if NET8_0_OR_GREATER
+        return IJsonValue<JsonIri>.ParseValue(ref reader);
+#else
+        return JsonValueHelpers.ParseValue<JsonIri>(ref reader);
+#endif
+    }
+
+    /// <summary>
     /// Gets the value as an instance of the target value.
     /// </summary>
     /// <typeparam name="TTarget">The type of the target.</typeparam>
@@ -431,6 +504,7 @@ public readonly partial struct JsonIri : IJsonString<JsonIri>
     public TTarget As<TTarget>()
         where TTarget : struct, IJsonValue<TTarget>
     {
+#if NET8_0_OR_GREATER
         if ((this.backing & Backing.JsonElement) != 0)
         {
             return TTarget.FromJson(this.jsonElementBacking);
@@ -447,6 +521,9 @@ public readonly partial struct JsonIri : IJsonString<JsonIri>
         }
 
         return TTarget.Undefined;
+#else
+        return this.As<JsonIri, TTarget>();
+#endif
     }
 
     /// <inheritdoc/>
@@ -517,4 +594,57 @@ public readonly partial struct JsonIri : IJsonString<JsonIri>
     {
         return Json.Validate.TypeIri(this, validationContext, level);
     }
+
+#if NET8_0_OR_GREATER
+    /// <inheritdoc/>
+    public bool TryFormat(Span<char> destination, out int charsWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
+    {
+        if ((this.backing & Backing.String) != 0)
+        {
+            int length = Math.Min(destination.Length, this.stringBacking.Length);
+            this.stringBacking.AsSpan(0, length).CopyTo(destination);
+            charsWritten = length;
+            return true;
+        }
+
+        if ((this.backing & Backing.JsonElement) != 0)
+        {
+            char[] buffer = ArrayPool<char>.Shared.Rent(destination.Length);
+            try
+            {
+                bool result = this.jsonElementBacking.TryGetValue(FormatSpan, new Output(buffer, destination.Length), out charsWritten);
+                if (result)
+                {
+                    buffer.AsSpan(0, charsWritten).CopyTo(destination);
+                }
+
+                return result;
+            }
+            finally
+            {
+                ArrayPool<char>.Shared.Return(buffer);
+            }
+        }
+
+        charsWritten = 0;
+        return false;
+
+        static bool FormatSpan(ReadOnlySpan<char> source, in Output output, out int charsWritten)
+        {
+            int length = Math.Min(output.Length, source.Length);
+            source[..length].CopyTo(output.Destination);
+            charsWritten = length;
+            return true;
+        }
+    }
+
+    /// <inheritdoc/>
+    public string ToString(string? format, IFormatProvider? formatProvider)
+    {
+        // There is no formatting for the string
+        return this.ToString();
+    }
+
+    private readonly record struct Output(char[] Destination, int Length);
+#endif
 }
