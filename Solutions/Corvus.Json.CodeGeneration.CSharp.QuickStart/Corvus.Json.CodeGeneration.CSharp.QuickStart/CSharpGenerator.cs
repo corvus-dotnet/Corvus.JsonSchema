@@ -18,7 +18,7 @@ public sealed class CSharpGenerator
     private readonly IVocabulary fallbackVocabulary;
     private readonly CSharpLanguageProvider languageProvider;
 
-    private CSharpGenerator(IDocumentResolver? documentResolver, IVocabulary fallbackVocabulary, CSharpLanguageProvider languageProvider)
+    private CSharpGenerator(IDocumentResolver documentResolver, IVocabulary fallbackVocabulary, CSharpLanguageProvider languageProvider)
     {
         this.metaschemaDocumentResolver = CreateMetaschemaDocumentResolver();
         this.vocabularyRegistry = RegisterVocabularies(this.metaschemaDocumentResolver);
@@ -32,11 +32,13 @@ public sealed class CSharpGenerator
     /// </summary>
     /// <param name="fallbackVocabulary">The (optional) fallback vocabulary. This will be 2020-12 if null.</param>
     /// <param name="options">The language provider options.</param>
-    /// <returns>An instance of the <see cref="CSharpGenerator"/> to use with the document resolver.</returns>
+    /// <returns>An instance of the <see cref="CSharpGenerator"/> to use with the <see cref="FileSystemDocumentResolver"/> and <see cref="HttpClientDocumentResolver"/>.</returns>
     public static CSharpGenerator Create(IVocabulary? fallbackVocabulary = null, CSharpLanguageProvider.Options? options = null)
     {
         return new(
-            null,
+            new CompoundDocumentResolver(
+                new FileSystemDocumentResolver(),
+                new HttpClientDocumentResolver(new HttpClient())),
             fallbackVocabulary ?? Draft202012.VocabularyAnalyser.DefaultVocabulary,
             CSharpLanguageProvider.DefaultWithOptions(options ?? CSharpLanguageProvider.Options.Default));
     }
@@ -132,20 +134,10 @@ public sealed class CSharpGenerator
         return vocabularyRegistry;
     }
 
-    private static CompoundDocumentResolver CompoundWithMetaschemaResolver(IDocumentResolver metaschemaDocumentResolver, IDocumentResolver? additionalResolver)
+    private static CompoundDocumentResolver CompoundWithMetaschemaResolver(IDocumentResolver metaschemaDocumentResolver, IDocumentResolver additionalResolver)
     {
-        if (additionalResolver is not null)
-        {
-            return new(
-                additionalResolver,
-                new FileSystemDocumentResolver(),
-                new HttpClientDocumentResolver(new HttpClient()),
-                metaschemaDocumentResolver);
-        }
-
         return new(
-            new FileSystemDocumentResolver(),
-            new HttpClientDocumentResolver(new HttpClient()),
+            additionalResolver,
             metaschemaDocumentResolver);
     }
 }
