@@ -13,6 +13,7 @@ using System.Text.Json;
 using Corvus.Json;
 using Corvus.Json.CodeGeneration;
 using Corvus.Json.CodeGeneration.CSharp;
+using Corvus.Json.CodeGeneration.DocumentResolvers;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Emit;

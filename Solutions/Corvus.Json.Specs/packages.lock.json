@@ -610,8 +610,9 @@
         "type": "Project",
         "dependencies": {
           "CommunityToolkit.HighPerformance": "[8.3.0, )",
-          "Corvus.Json.ExtendedTypes": "[1.0.0, )",
+          "Corvus.JsonReference": "[1.0.0, )",
           "IndexRange": "[1.0.3, )",
+          "Microsoft.Extensions.Http": "[9.0.0-rc.1.24431.7, )",
           "System.CodeDom": "[9.0.0-rc.1.24431.7, )",
           "System.Collections.Immutable": "[9.0.0-rc.1.24431.7, )",
           "System.Reflection.Emit.Lightweight": "[4.7.0, )",
@@ -707,6 +708,7 @@
         "type": "Project",
         "dependencies": {
           "CommunityToolkit.HighPerformance": "[8.3.0, )",
+          "Corvus.JsonReference": "[1.0.0, )",
           "Corvus.UriTemplates": "[2.1.0, )",
           "IndexRange": "[1.0.3, )",
           "Microsoft.Extensions.Http": "[9.0.0-rc.1.24431.7, )",
@@ -724,6 +726,13 @@
           "Microsoft.Extensions.Http": "[9.0.0-rc.1.24431.7, )",
           "Microsoft.Extensions.ObjectPool": "[9.0.0-rc.1.24452.1, )",
           "NodaTime": "[3.1.12, )"
+        }
+      },
+      "corvus.jsonreference": {
+        "type": "Project",
+        "dependencies": {
+          "IndexRange": "[1.0.3, )",
+          "System.Text.Json": "[9.0.0-rc.1.24431.7, )"
         }
       }
     },
@@ -2078,7 +2087,8 @@
         "type": "Project",
         "dependencies": {
           "CommunityToolkit.HighPerformance": "[8.3.0, )",
-          "Corvus.Json.ExtendedTypes": "[1.0.0, )",
+          "Corvus.JsonReference": "[1.0.0, )",
+          "Microsoft.Extensions.Http": "[9.0.0-rc.1.24431.7, )",
           "System.CodeDom": "[9.0.0-rc.1.24431.7, )"
         }
       },
@@ -2143,6 +2153,7 @@
         "type": "Project",
         "dependencies": {
           "CommunityToolkit.HighPerformance": "[8.3.0, )",
+          "Corvus.JsonReference": "[1.0.0, )",
           "Corvus.UriTemplates": "[2.1.0, )",
           "Microsoft.Extensions.Http": "[9.0.0-rc.1.24431.7, )",
           "Microsoft.Extensions.ObjectPool": "[9.0.0-rc.1.24452.1, )",
@@ -2157,6 +2168,12 @@
           "Microsoft.Extensions.Http": "[9.0.0-rc.1.24431.7, )",
           "Microsoft.Extensions.ObjectPool": "[9.0.0-rc.1.24452.1, )",
           "NodaTime": "[3.1.12, )"
+        }
+      },
+      "corvus.jsonreference": {
+        "type": "Project",
+        "dependencies": {
+          "System.Text.Json": "[9.0.0-rc.1.24431.7, )"
         }
       }
     }

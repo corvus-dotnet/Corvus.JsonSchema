@@ -37,6 +37,10 @@
   </ItemGroup>
 
 	<ItemGroup>
+	  <ProjectReference Include="..\Corvus.JsonReference\Corvus.JsonReference.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<PackageReference Update="StyleCop.Analyzers" Version="1.2.0-beta.435" />
 	</ItemGroup>
 

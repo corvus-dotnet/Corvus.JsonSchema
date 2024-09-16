@@ -72,37 +72,37 @@ public static class TypeDeclarationExtensions
     /// </summary>
     /// <param name="typeDeclaration">The type declaration to test.</param>
     /// <returns><see langword="true"/> if the type prefers 128 bit integers.</returns>
-    public static BinaryJsonNumber.Kind PreferredBinaryJsonNumberKind(this TypeDeclaration typeDeclaration)
+    public static string PreferredBinaryJsonNumberKind(this TypeDeclaration typeDeclaration)
     {
-        if (!typeDeclaration.TryGetMetadata(PreferredBinaryJsonNumberKindKey, out BinaryJsonNumber.Kind? numericType))
+        if (!typeDeclaration.TryGetMetadata(PreferredBinaryJsonNumberKindKey, out string? numericType))
         {
             numericType = GetPreferredBinaryJsonNumberKind(typeDeclaration);
             typeDeclaration.SetMetadata(PreferredBinaryJsonNumberKindKey, numericType);
         }
 
-        return numericType ?? BinaryJsonNumber.Kind.Double;
+        return numericType ?? "Double";
 
-        static BinaryJsonNumber.Kind GetPreferredBinaryJsonNumberKind(TypeDeclaration typeDeclaration)
+        static string GetPreferredBinaryJsonNumberKind(TypeDeclaration typeDeclaration)
         {
             string? candidateName = typeDeclaration.PreferredDotnetNumericTypeName();
 
             return candidateName switch
             {
-                "double" => BinaryJsonNumber.Kind.Double,
-                "decimal" => BinaryJsonNumber.Kind.Decimal,
-                "Half" => BinaryJsonNumber.Kind.Half,
-                "float" => BinaryJsonNumber.Kind.Single,
-                "byte" => BinaryJsonNumber.Kind.Byte,
-                "short" => BinaryJsonNumber.Kind.Int16,
-                "int" => BinaryJsonNumber.Kind.Int32,
-                "long" => BinaryJsonNumber.Kind.Int64,
-                "Int128" => BinaryJsonNumber.Kind.Int128,
-                "sbyte" => BinaryJsonNumber.Kind.SByte,
-                "ushort" => BinaryJsonNumber.Kind.UInt16,
-                "uint" => BinaryJsonNumber.Kind.UInt32,
-                "ulong" => BinaryJsonNumber.Kind.UInt64,
-                "UInt128" => BinaryJsonNumber.Kind.UInt128,
-                _ => BinaryJsonNumber.Kind.Double,
+                "double" => "Double",
+                "decimal" => "Decimal",
+                "Half" => "Half",
+                "float" => "Single",
+                "byte" => "Byte",
+                "short" => "Int16",
+                "int" => "Int32",
+                "long" => "Int64",
+                "Int128" => "Int128",
+                "sbyte" => "SByte",
+                "ushort" => "UInt16",
+                "uint" => "UInt32",
+                "ulong" => "UInt64",
+                "UInt128" => "UInt128",
+                _ => "Double",
             };
         }
     }

@@ -371,7 +371,7 @@ public static class FormatHandlerExtensions
     /// <param name="handlers">The handlers to test.</param>
     /// <param name="format">The format for which to get the type.</param>
     /// <returns>The <c>Corvus.Json</c> type name corresponding to the format,
-    /// or <see cref="JsonNumber"/> if the format is not recognized.</returns>
+    /// or <c>JsonNumber</c> if the format is not recognized.</returns>
     public static string? GetIntegerCorvusJsonTypeNameFor<T>(this IEnumerable<T> handlers, string format)
         where T : notnull, INumberFormatHandler
     {
@@ -393,7 +393,7 @@ public static class FormatHandlerExtensions
     /// <param name="handlers">The handlers to test.</param>
     /// <param name="format">The format for which to get the type.</param>
     /// <returns>The <c>Corvus.Json</c> type name corresponding to the format,
-    /// or <see cref="JsonNumber"/> if the format is not recognized.</returns>
+    /// or <c>JsonNumber</c> if the format is not recognized.</returns>
     public static string? GetFloatCorvusJsonTypeNameFor<T>(this IEnumerable<T> handlers, string format)
         where T : notnull, INumberFormatHandler
     {

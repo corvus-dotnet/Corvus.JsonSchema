@@ -2072,7 +2072,7 @@ public static class TypeDeclarationExtensions
                     // We don't have an existing constant value,
                     foundElement = value;
                 }
-                else if (JsonAny.FromJson(foundElement).Equals(JsonAny.FromJson(value)))
+                else if (JsonElement.DeepEquals(foundElement, value))
                 {
                     // The new constant is the same as the old value
                     // (typically because a composing type explicitly restates the
@@ -2105,7 +2105,7 @@ public static class TypeDeclarationExtensions
                         // an explicit declaration
                         foundElement = constantValue;
                     }
-                    else if (JsonAny.FromJson(foundElement).Equals(JsonAny.FromJson(constantValue)))
+                    else if (JsonElement.DeepEquals(foundElement, constantValue))
                     {
                         // The new type is the same as the old type
                         // (typically because a composing type explicitly restates the

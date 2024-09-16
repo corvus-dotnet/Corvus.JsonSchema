@@ -27,6 +27,7 @@
     </PackageReference>
     <PackageReference Include="System.CodeDom" Version="9.0.0-rc.1.24431.7" />
     <PackageReference Include="CommunityToolkit.HighPerformance" Version="8.3.0" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.0-rc.1.24431.7" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
@@ -37,9 +38,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Corvus.Json.ExtendedTypes\Corvus.Json.ExtendedTypes.csproj" />
+    <ProjectReference Include="..\Corvus.JsonReference\Corvus.JsonReference.csproj" />
   </ItemGroup>
-  
+
   <ItemGroup>
     <PackageReference Update="StyleCop.Analyzers" Version="1.2.0-beta.435" />
   </ItemGroup>
