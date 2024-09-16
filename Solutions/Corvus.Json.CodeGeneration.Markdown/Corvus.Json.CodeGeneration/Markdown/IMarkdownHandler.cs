@@ -6,7 +6,11 @@
 using System.Collections.Immutable;
 
 =======
+<<<<<<< HEAD
 >>>>>>> WIP - markdown language provider.
+=======
+>>>>>>> ae8f75a5024a41962b6ac63aceabbb0388e32f52
+>>>>>>> eb842f89abae70b011af126c03a78a3f2b305d05
 namespace Corvus.Json.CodeGeneration.Markdown;
 
 /// <summary>
@@ -40,5 +44,9 @@ public interface IMarkdownHandler
     CodeGenerator AppendMarkdown(CodeGenerator generator, TypeDeclaration typeDeclaration, out ImmutableHashSet<IKeyword> visitedKeywords);
 =======
     CodeGenerator AppendMarkdown(CodeGenerator generator, TypeDeclaration typeDeclaration, out IReadOnlyCollection<IKeyword> visitedKeywords);
+<<<<<<< HEAD
 >>>>>>> WIP - markdown language provider.
+=======
+>>>>>>> ae8f75a5024a41962b6ac63aceabbb0388e32f52
+>>>>>>> eb842f89abae70b011af126c03a78a3f2b305d05
 }

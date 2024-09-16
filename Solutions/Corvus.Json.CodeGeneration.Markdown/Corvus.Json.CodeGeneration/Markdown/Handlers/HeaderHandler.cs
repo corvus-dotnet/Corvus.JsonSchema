@@ -6,7 +6,11 @@
 using System.Collections.Immutable;
 
 =======
+<<<<<<< HEAD
 >>>>>>> WIP - markdown language provider.
+=======
+>>>>>>> ae8f75a5024a41962b6ac63aceabbb0388e32f52
+>>>>>>> eb842f89abae70b011af126c03a78a3f2b305d05
 namespace Corvus.Json.CodeGeneration.Markdown.Handlers;
 
 /// <summary>
@@ -24,7 +28,11 @@ public sealed class HeaderHandler : IMarkdownHandler
     {
     }
 
+<<<<<<< HEAD
 >>>>>>> WIP - markdown language provider.
+=======
+>>>>>>> ae8f75a5024a41962b6ac63aceabbb0388e32f52
+>>>>>>> eb842f89abae70b011af126c03a78a3f2b305d05
     /// <summary>
     /// Gets the singleton instance of the <see cref="HeaderHandler"/>.
     /// </summary>
@@ -63,7 +71,11 @@ public sealed class HeaderHandler : IMarkdownHandler
 
         visitedKeywords = keywords;
 
+<<<<<<< HEAD
 >>>>>>> WIP - markdown language provider.
+=======
+>>>>>>> ae8f75a5024a41962b6ac63aceabbb0388e32f52
+>>>>>>> eb842f89abae70b011af126c03a78a3f2b305d05
         return generator;
     }
 }

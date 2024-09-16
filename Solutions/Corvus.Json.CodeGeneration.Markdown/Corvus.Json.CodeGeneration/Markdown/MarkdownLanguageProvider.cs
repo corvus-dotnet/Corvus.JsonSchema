@@ -104,7 +104,11 @@ public sealed class MarkdownLanguageProvider(MarkdownLanguageProvider.Options? o
             MarkdownFileBuilder.Instance);
 =======
             TypePartial.Instance);
+<<<<<<< HEAD
 >>>>>>> WIP - markdown language provider.
+=======
+>>>>>>> ae8f75a5024a41962b6ac63aceabbb0388e32f52
+>>>>>>> eb842f89abae70b011af126c03a78a3f2b305d05
 
         return languageProvider;
     }
