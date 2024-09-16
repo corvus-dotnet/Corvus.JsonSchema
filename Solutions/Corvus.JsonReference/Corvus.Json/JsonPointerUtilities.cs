@@ -317,7 +317,7 @@ public static class JsonPointerUtilities
         {
             while (true)
             {
-                int index = utf8Input[accumulatedOffset..].IndexOf(JsonConstants.LineFeed);
+                int index = utf8Input[accumulatedOffset..].IndexOf((byte)'\n');
                 if (index == -1)
                 {
                     line = lineCount;

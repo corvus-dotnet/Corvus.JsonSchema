@@ -21,7 +21,7 @@ public interface INumberFormatHandler : IFormatHandler
     /// </summary>
     /// <param name="format">The format for which to get the type.</param>
     /// <returns>The <c>Corvus.Json</c> type name corresponding to the format,
-    /// or <see cref="JsonNumber"/> if the format is not recognized.</returns>
+    /// or <c>JsonNumber</c> if the format is not recognized.</returns>
     string? GetIntegerCorvusJsonTypeNameFor(string format);
 
     /// <summary>
@@ -29,6 +29,6 @@ public interface INumberFormatHandler : IFormatHandler
     /// </summary>
     /// <param name="format">The format for which to get the type.</param>
     /// <returns>The <c>Corvus.Json</c> type name corresponding to the format,
-    /// or <see cref="JsonNumber"/> if the format is not recognized.</returns>
+    /// or <c>JsonNumber</c> if the format is not recognized.</returns>
     string? GetFloatCorvusJsonTypeNameFor(string format);
 }

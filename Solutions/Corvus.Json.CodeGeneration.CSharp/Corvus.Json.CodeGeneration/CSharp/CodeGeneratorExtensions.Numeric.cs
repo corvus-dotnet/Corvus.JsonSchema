@@ -12,7 +12,7 @@ namespace Corvus.Json.CodeGeneration.CSharp;
 internal static partial class CodeGeneratorExtensions
 {
     /// <summary>
-    /// Append the Equals() method overload for a <see cref="BinaryJsonNumber"/>.
+    /// Append the Equals() method overload for a <c>BinaryJsonNumber</c>.
     /// </summary>
     /// <param name="generator">The code generator.</param>
     /// <returns>A reference to the generator having completed the operation.</returns>

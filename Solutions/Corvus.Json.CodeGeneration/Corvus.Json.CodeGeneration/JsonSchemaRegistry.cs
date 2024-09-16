@@ -4,6 +4,7 @@
 
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
+using Corvus.Json.CodeGeneration.DocumentResolvers;
 
 namespace Corvus.Json.CodeGeneration;
 
