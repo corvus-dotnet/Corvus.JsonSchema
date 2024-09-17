@@ -2,6 +2,8 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System;
+
 namespace Corvus.Json.CodeGeneration.CSharp;
 
 /// <summary>
@@ -40,6 +42,92 @@ public static class Formatting
         "MemberwiseClone", "ReferenceEquals", "ToString"
     ];
 
+    private static readonly string[] ReservedNames =
+    [
+        "Add",
+            "AddRange",
+            "As",
+            "AsAny",
+            "AsArray",
+            "AsBoolean",
+            "AsImmutableList",
+            "AsImmutableListBuilder",
+            "AsJsonElement",
+            "AsObject",
+            "AsString",
+            "Concatenate",
+            "ConstInstance",
+            "Count",
+            "Create",
+            "CreateFromSerializedInstance",
+            "DefaultInstance",
+            "Dimension",
+            "EnumerateArray",
+            "Equals",
+            "EqualsString",
+            "EqualsUtf8Bytes",
+            "FromAny",
+            "FromItems",
+            "FromProperties",
+            "FromRange",
+            "FromValues",
+            "GetArrayLength",
+            "GetBoolean",
+            "GetDate",
+            "GetDateTime",
+            "GetDecodedBase64Bytes",
+            "GetDecodedBufferSize",
+            "GetEnumerator",
+            "GetGuid",
+            "GetHashCode",
+            "GetIPAddress",
+            "GetJsonDocument",
+            "GetRegex",
+            "GetString",
+            "GetTime",
+            "HasBase64Bytes",
+            "HasDotnetBacking",
+            "HasJsonElementBacking",
+            "HasProperties",
+            "HasProperty",
+            "Insert",
+            "InsertRange",
+            "Items",
+            "Match",
+            "Null",
+            "Parse",
+            "Rank",
+            "Remove",
+            "RemoveAt",
+            "RemoveProperty",
+            "RemoveRange",
+            "SchemaLocation",
+            "SetProperty",
+            "ToString",
+            "TryCreateUriTemplateParser",
+            "TryGetBoolean",
+            "TryGetDate",
+            "TryGetDateTime",
+            "TryGetDecodedBase64Bytes",
+            "TryGetGuid",
+            "TryGetIPAddress",
+            "TryGetJsonDocument",
+            "TryGetNumericValues",
+            "TryGetProperty",
+            "TryGetString",
+            "TryGetTime",
+            "TryGetUnescapedString",
+            "TryGetUri",
+            "TryGetUriTemplate",
+            "Undefined",
+            "Validate",
+            "ValueBufferSize",
+            "ValueKind",
+            "WriteTo",
+            "__CorvusArrayHelpers",
+            "__CorvusObjectHelpers"
+    ];
+
     private static ReadOnlySpan<char> EntitySuffix => "Entity".AsSpan();
 
     private static ReadOnlySpan<char> TypePrefix => "Type".AsSpan();
@@ -49,12 +137,25 @@ public static class Formatting
     private static ReadOnlySpan<char> PropertySuffix => "Property".AsSpan();
 
     /// <summary>
+    /// Format a name for a property declaration.
+    /// </summary>
+    /// <param name="propertyNameBuffer">The buffer containing the property name to format.</param>
+    /// <param name="writtenLength">The length of the property name in the buffer.</param>
+    /// <returns>The length of the formatted name in the <paramref name="propertyNameBuffer"/>.</returns>
+    public static int FormatPropertyNameComponent(Span<char> propertyNameBuffer, int writtenLength)
+    {
+        writtenLength = Formatting.ToPascalCase(propertyNameBuffer[..writtenLength]);
+        writtenLength = Formatting.FixReservedWords(propertyNameBuffer, writtenLength, "V".AsSpan(), "Value".AsSpan());
+        return Formatting.FixReservedWords(ReservedNames, propertyNameBuffer, writtenLength, "V".AsSpan(), "Value".AsSpan());
+    }
+
+    /// <summary>
     /// Format a name for a type declaration.
     /// </summary>
     /// <param name="typeDeclaration">The type declaration for which to format the name.</param>
     /// <param name="corvusTypeName">The type name to format. This will be copied into the <paramref name="typeNameBuffer"/>.</param>
     /// <param name="typeNameBuffer">The buffer into which to format that name.</param>
-    /// <returns>The span of the <paramref name="typeNameBuffer"/> containing the formatted name.</returns>
+    /// <returns>The length of the formatted name in the <paramref name="typeNameBuffer"/>.</returns>
     public static int FormatTypeNameComponent(TypeDeclaration typeDeclaration, ReadOnlySpan<char> corvusTypeName, Span<char> typeNameBuffer)
     {
         if (!corvusTypeName.TryCopyTo(typeNameBuffer))
@@ -64,7 +165,8 @@ public static class Formatting
 
         Span<char> corvusTypeNameBuffer = typeNameBuffer[..corvusTypeName.Length];
         int writtenLength = Formatting.ToPascalCase(corvusTypeNameBuffer);
-        return Formatting.FixReservedWords(typeNameBuffer, writtenLength, TypePrefix, Formatting.EntitySuffix);
+        writtenLength = Formatting.FixReservedWords(typeNameBuffer, writtenLength, TypePrefix, Formatting.EntitySuffix);
+        return Formatting.FixReservedWords(ReservedNames, typeNameBuffer, writtenLength, TypePrefix, Formatting.EntitySuffix);
     }
 
     /// <summary>
@@ -219,6 +321,24 @@ public static class Formatting
     /// </remarks>
     public static int FixReservedWords(Span<char> buffer, int length, ReadOnlySpan<char> leadingDigitPrefix, ReadOnlySpan<char> collisionSuffix)
     {
+        return FixReservedWords(Keywords, buffer, length, leadingDigitPrefix, collisionSuffix);
+    }
+
+    /// <summary>
+    /// Fix any reserved words issues in place.
+    /// </summary>
+    /// <param name="keywords">The keywords to fix.</param>
+    /// <param name="buffer">The buffer containing the chars to fix.</param>
+    /// <param name="length">The length of the string in the buffer.</param>
+    /// <param name="leadingDigitPrefix">The prefix to prepend in the leading character was a digit.</param>
+    /// <param name="collisionSuffix">The suffix to append if there was a collision.</param>
+    /// <returns>The number of characters in the resulting string.</returns>
+    /// <remarks>
+    /// Call <see cref="GetBufferLength(int, ReadOnlySpan{char}, ReadOnlySpan{char})"/> to get the
+    /// required buffer length for the string.
+    /// </remarks>
+    public static int FixReservedWords(string[] keywords, Span<char> buffer, int length, ReadOnlySpan<char> leadingDigitPrefix, ReadOnlySpan<char> collisionSuffix)
+    {
         if (length == 0)
         {
             return 0;
@@ -226,7 +346,7 @@ public static class Formatting
 
         ReadOnlySpan<char> v = buffer[..length];
 
-        foreach (string k in Keywords)
+        foreach (string k in keywords)
         {
             if (k.AsSpan().SequenceEqual(v))
             {
