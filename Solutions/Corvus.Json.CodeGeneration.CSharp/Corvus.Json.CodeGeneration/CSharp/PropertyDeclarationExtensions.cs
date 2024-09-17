@@ -2,7 +2,6 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Corvus.Json.CodeGeneration.CSharp;
@@ -58,17 +57,12 @@ public static class PropertyDeclarationExtensions
         string? name;
         Span<char> buffer = stackalloc char[Formatting.MaxIdentifierLength];
         that.JsonPropertyName.AsSpan().CopyTo(buffer);
-        int written = Formatting.ToPascalCase(buffer[..that.JsonPropertyName.Length]);
-        written = Formatting.FixReservedWords(buffer, written, "V".AsSpan(), "Property".AsSpan());
+        int written = Formatting.FormatPropertyNameComponent(buffer, that.JsonPropertyName.Length);
 
         Span<char> appendBuffer = buffer[written..];
         ReadOnlySpan<char> currentName = buffer[..written];
 
         ReadOnlySpan<char> writtenBuffer = currentName;
-        if (that.Owner.DotnetTypeName() == "Format")
-        {
-            Debugger.Break();
-        }
 
         if (writtenBuffer.Equals(that.Owner.DotnetTypeName().AsSpan(), StringComparison.Ordinal) || OwnerHasMatchingChild(that.Owner.Children(), writtenBuffer))
         {
