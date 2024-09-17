@@ -38,7 +38,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Corvus.JsonReference\Corvus.JsonReference.csproj" />
+    <ProjectReference Include="..\Corvus.Json.JsonReference\Corvus.Json.JsonReference.csproj" />
   </ItemGroup>
 
   <ItemGroup>
