@@ -98,7 +98,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Corvus.Json.Validator", "Co
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Corvus.Json.CodeGeneration.CSharp.QuickStart", "Corvus.Json.CodeGeneration.CSharp.QuickStart\Corvus.Json.CodeGeneration.CSharp.QuickStart.csproj", "{6C13CDA3-46B4-4624-8170-8DD74C18B215}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Corvus.JsonReference", "Corvus.JsonReference\Corvus.JsonReference.csproj", "{2C9BC284-F481-4C94-A40E-F818055DB352}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Corvus.Json.JsonReference", "Corvus.Json.JsonReference\Corvus.Json.JsonReference.csproj", "{2C9BC284-F481-4C94-A40E-F818055DB352}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
