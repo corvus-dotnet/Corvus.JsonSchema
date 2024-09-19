@@ -7,6 +7,11 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <Description>Provides an IDocumentResolver for Corvus code generation that uses an HttpClient.</Description>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.13">
       <PrivateAssets>all</PrivateAssets>
