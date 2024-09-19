@@ -1,0 +1,145 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>12.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <AnalyzerLanguage>cs</AnalyzerLanguage>
+    <IsRoslynComponent>true</IsRoslynComponent>
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+    <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+    <DisableImplicitNuGetFallbackFolder>true</DisableImplicitNuGetFallbackFolder>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+
+  <PropertyGroup Label="NuGet">
+    <DevelopmentDependency>true</DevelopmentDependency>
+    <NoWarn>$(NoWarn);nullable;NU5128;RS2008;SA0001</NoWarn>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Using Include="System" />
+    <Using Include="System.IO" />
+    <Using Include="System.Linq" />
+    <Using Include="System.Text.Json" />
+    <Using Include="System.Threading" />
+    <Using Include="System.Threading.Tasks" />
+    <Using Include="System.Collections.Generic" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <Compile Include="..\Corvus.Json.JsonReference\Corvus.Json\**\*.cs">
+      <Link>Corvus.Json.JsonReference\%(RecursiveDir)\%(Filename)%(Extension)</Link>
+    </Compile>
+    <Compile Include="..\Corvus.Json.CodeGeneration\Corvus.Json.CodeGeneration\**\*.cs">
+      <Link>Corvus.Json.CodeGeneration\%(RecursiveDir)\%(Filename)%(Extension)</Link>
+    </Compile>
+    <Compile Include="..\Corvus.Json.CodeGeneration.CSharp\Corvus.Json.CodeGeneration\CSharp\**\*.cs">
+      <Link>Corvus.Json.CodeGeneration.CSharp\%(RecursiveDir)\%(Filename)%(Extension)</Link>
+    </Compile>
+    <Compile Include="..\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration\Draft201909\**\*.cs">
+      <Link>Corvus.Json.CodeGeneration.201909\%(RecursiveDir)\%(Filename)%(Extension)</Link>
+    </Compile>
+    <Compile Include="..\Corvus.Json.CodeGeneration.202012\Corvus.Json.CodeGeneration\Draft202012\**\*.cs">
+      <Link>Corvus.Json.CodeGeneration.202012\%(RecursiveDir)\%(Filename)%(Extension)</Link>
+    </Compile>
+    <Compile Include="..\Corvus.Json.CodeGeneration.4\Corvus.Json.CodeGeneration\Draft4\**\*.cs">
+      <Link>Corvus.Json.CodeGeneration.4\%(RecursiveDir)\%(Filename)%(Extension)</Link>
+    </Compile>
+    <Compile Include="..\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration\Draft6\**\*.cs">
+      <Link>Corvus.Json.CodeGeneration.6\%(RecursiveDir)\%(Filename)%(Extension)</Link>
+    </Compile>
+    <Compile Include="..\Corvus.Json.CodeGeneration.7\Corvus.Json.CodeGeneration\Draft7\**\*.cs">
+      <Link>Corvus.Json.CodeGeneration.7\%(RecursiveDir)\%(Filename)%(Extension)</Link>
+    </Compile>
+    <Compile Include="..\Corvus.Json.CodeGeneration.CorvusVocabulary\Corvus.Json.CodeGeneration\CorvusVocabulary\**\*.cs">
+      <Link>Corvus.Json.CodeGeneration.CorvusVocabulary\%(RecursiveDir)\%(Filename)%(Extension)</Link>
+    </Compile>
+    <Compile Include="..\Corvus.Json.CodeGeneration.OpenApi30\Corvus.Json.CodeGeneration\OpenApi30\**\*.cs">
+      <Link>Corvus.Json.CodeGeneration.OpenApi30\%(RecursiveDir)\%(Filename)%(Extension)</Link>
+    </Compile>
+
+    <Compile Remove="..\Corvus.Json.CodeGeneration\Corvus.Json.CodeGeneration\**\FileSystemDocumentResolver.cs" />
+    <Compile Remove="..\Corvus.Json.CodeGeneration.CSharp\Corvus.Json.CodeGeneration\CSharp\**\NullableAttributes.cs" />
+    <Compile Remove="..\Corvus.Json.JsonReference\Corvus.Json\**\NullableAttributes.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.13">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.11.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Text.Json" Version="9.0.0-rc.1.24431.7" PrivateAssets="all" GeneratePathProperty="true" />
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="9.0.0-rc.1.24431.7" PrivateAssets="all" GeneratePathProperty="true" />
+    <PackageReference Include="Microsoft.Bcl.HashCode" Version="1.1.1" PrivateAssets="all" GeneratePathProperty="true" />
+    <PackageReference Include="System.Buffers" Version="4.5.1" PrivateAssets="all" GeneratePathProperty="true" />
+    <PackageReference Include="System.Collections.Immutable" Version="8.0.0" PrivateAssets="all" GeneratePathProperty="true" />
+    <PackageReference Include="System.IO.Pipelines" Version="9.0.0-rc.1.24431.7" PrivateAssets="all" GeneratePathProperty="true" />
+    <PackageReference Include="System.Memory" Version="4.5.5" PrivateAssets="all" GeneratePathProperty="true" />
+    <PackageReference Include="System.Numerics.Vectors" Version="4.5.0" PrivateAssets="all" GeneratePathProperty="true" />
+    <PackageReference Include="System.Reflection.Metadata" Version="8.0.0" PrivateAssets="all" GeneratePathProperty="true" />
+    <PackageReference Include="System.Text.Encoding.CodePages" Version="7.0.0" PrivateAssets="all" GeneratePathProperty="true" />
+    <PackageReference Include="System.Text.Encodings.Web" Version="9.0.0-rc.1.24431.7" PrivateAssets="all" GeneratePathProperty="true" />
+    <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.4" PrivateAssets="all" GeneratePathProperty="true" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <GetTargetPathDependsOn>$(GetTargetPathDependsOn);GetDependencyTargetPaths</GetTargetPathDependsOn>
+  </PropertyGroup>
+
+  <Target Name="GetDependencyTargetPaths">
+    <ItemGroup>
+      <TargetPathWithTargetPlatformMoniker Include="$(PKGSystem_Text_Json)\lib\netstandard2.0\System.Text.Json.dll" IncludeRuntimeDependency="false" />
+      <TargetPathWithTargetPlatformMoniker Include="$(PKGMicrosoft_Bcl_AsyncInterfaces)\lib\netstandard2.0\Microsoft.Bcl.AsyncInterfaces.dll" IncludeRuntimeDependency="false" />
+      <TargetPathWithTargetPlatformMoniker Include="$(PKGMicrosoft_Bcl_HashCode)\lib\netstandard2.0\Microsoft.Bcl.HashCode.dll" IncludeRuntimeDependency="false" />
+      <TargetPathWithTargetPlatformMoniker Include="$(PKGSystem_Buffers)\lib\netstandard2.0\System.Buffers.dll" IncludeRuntimeDependency="false" />
+      <TargetPathWithTargetPlatformMoniker Include="$(PKGSystem_Collections_Immutable)\lib\netstandard2.0\System.Collections.Immutable.dll" IncludeRuntimeDependency="false" />
+      <TargetPathWithTargetPlatformMoniker Include="$(PKGSystem_IO_Pipelines)\lib\netstandard2.0\System.IO.Pipelines.dll" IncludeRuntimeDependency="false" />
+      <TargetPathWithTargetPlatformMoniker Include="$(PKGSystem_Memory)\lib\netstandard2.0\System.Memory.dll" IncludeRuntimeDependency="false" />
+      <TargetPathWithTargetPlatformMoniker Include="$(PKGSystem_Numerics_Vectors)\lib\netstandard2.0\System.Numerics.Vectors.dll" IncludeRuntimeDependency="false" />
+      <TargetPathWithTargetPlatformMoniker Include="$(PKGSystem_Reflection_Metadata)\lib\netstandard2.0\System.Reflection.Metadata.dll" IncludeRuntimeDependency="false" />
+      <TargetPathWithTargetPlatformMoniker Include="$(PKGSystem_Text_Encoding_CodePages)\lib\netstandard2.0\System.Text.Encoding.CodePages.dll" IncludeRuntimeDependency="false" />
+      <TargetPathWithTargetPlatformMoniker Include="$(PKGSystem_Text_Encodings_Web)\lib\netstandard2.0\System.Text.Encodings.Web.dll" IncludeRuntimeDependency="false" />
+      <TargetPathWithTargetPlatformMoniker Include="$(PKGSystem_Threading_Tasks_Extensions)\lib\netstandard2.0\System.Threading.Tasks.Extensions.dll" IncludeRuntimeDependency="false" />
+    </ItemGroup>
+  </Target>
+
+  <ItemGroup>
+    <EmbeddedResource Include="metaschema\corvus\meta\corvus-extensions.json" />
+    <EmbeddedResource Include="metaschema\corvus\schema.json" />
+    <EmbeddedResource Include="metaschema\draft2019-09\meta\applicator.json" />
+    <EmbeddedResource Include="metaschema\draft2019-09\meta\content.json" />
+    <EmbeddedResource Include="metaschema\draft2019-09\meta\core.json" />
+    <EmbeddedResource Include="metaschema\draft2019-09\meta\format.json" />
+    <EmbeddedResource Include="metaschema\draft2019-09\meta\hyper-schema.json" />
+    <EmbeddedResource Include="metaschema\draft2019-09\meta\meta-data.json" />
+    <EmbeddedResource Include="metaschema\draft2019-09\meta\validation.json" />
+    <EmbeddedResource Include="metaschema\draft2019-09\schema.json" />
+    <EmbeddedResource Include="metaschema\draft2020-12\meta\applicator.json" />
+    <EmbeddedResource Include="metaschema\draft2020-12\meta\content.json" />
+    <EmbeddedResource Include="metaschema\draft2020-12\meta\core.json" />
+    <EmbeddedResource Include="metaschema\draft2020-12\meta\format-annotation.json" />
+    <EmbeddedResource Include="metaschema\draft2020-12\meta\format-assertion.json" />
+    <EmbeddedResource Include="metaschema\draft2020-12\meta\hyper-schema.json" />
+    <EmbeddedResource Include="metaschema\draft2020-12\meta\meta-data.json" />
+    <EmbeddedResource Include="metaschema\draft2020-12\meta\unevaluated.json" />
+    <EmbeddedResource Include="metaschema\draft2020-12\meta\validation.json" />
+    <EmbeddedResource Include="metaschema\draft2020-12\schema.json" />
+    <EmbeddedResource Include="metaschema\draft4\schema.json" />
+    <EmbeddedResource Include="metaschema\draft6\schema.json" />
+    <EmbeddedResource Include="metaschema\draft7\schema.json" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <Description>A source generator that will emit dotnet types based on JSON Schema.</Description>
+  </PropertyGroup>
+
+</Project>
