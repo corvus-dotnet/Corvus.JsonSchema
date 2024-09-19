@@ -11,10 +11,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="ConsoleApp1.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\Corvus.Json.Benchmarking\Corvus.Json.Benchmarking.csproj" />
     <ProjectReference Include="..\Corvus.Json.CodeGeneration.CSharp.QuickStart\Corvus.Json.CodeGeneration.CSharp.QuickStart.csproj" />
     <ProjectReference Include="..\Corvus.Json.ExtendedTypes\Corvus.Json.ExtendedTypes.csproj" />
