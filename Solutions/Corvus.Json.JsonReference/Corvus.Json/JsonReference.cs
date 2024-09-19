@@ -6,6 +6,7 @@ using System.Buffers;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
+using Corvus.HighPerformance;
 
 namespace Corvus.Json;
 
@@ -635,7 +636,7 @@ public readonly struct JsonReference
             return default;
         }
 
-        var relPath = new StringBuilder();
+        var relPath = new ValueStringBuilder(stackalloc char[4096]);
 
         // Walk down several dirs
         for (; i < path1.Length; ++i)
@@ -652,11 +653,8 @@ public readonly struct JsonReference
             return new("./"); // Truncate the file name
         }
 
-#if NET8_0_OR_GREATER
-        return new(relPath.Append(path2[(si + 1)..]).ToString());
-#else
-        return new(relPath.Append(path2[(si + 1)..].ToArray()).ToString());
-#endif
+        relPath.Append(path2[(si + 1)..]);
+        return new(relPath.CreateStringAndDispose());
     }
 
     private static int Merge(ReadOnlySpan<char> basePath, ReadOnlySpan<char> path, bool baseHasAuthority, in Memory<char> pathMemory)

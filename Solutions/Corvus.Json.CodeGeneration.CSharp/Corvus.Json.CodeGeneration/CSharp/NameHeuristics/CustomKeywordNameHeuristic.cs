@@ -3,7 +3,6 @@
 // </copyright>
 
 using System.Text.Json;
-using CommunityToolkit.HighPerformance;
 
 namespace Corvus.Json.CodeGeneration.CSharp;
 

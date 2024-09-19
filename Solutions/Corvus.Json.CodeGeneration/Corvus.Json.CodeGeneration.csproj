@@ -25,16 +25,12 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="System.CodeDom" Version="9.0.0-rc.1.24431.7" />
-    <PackageReference Include="CommunityToolkit.HighPerformance" Version="8.3.0" />
-    <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.0-rc.1.24431.7" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+    <PackageReference Include="Microsoft.Bcl.HashCode" Version="1.1.1" />
     <PackageReference Include="System.Text.Json" Version="9.0.0-rc.1.24431.7" />
     <PackageReference Include="System.Collections.Immutable" Version="9.0.0-rc.1.24431.7" />
-    <PackageReference Include="System.Reflection.Emit.Lightweight" Version="4.7.0" />
-    <PackageReference Include="IndexRange" Version="1.0.3" />
   </ItemGroup>
 
   <ItemGroup>
