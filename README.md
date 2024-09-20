@@ -400,6 +400,10 @@ Generates Feature Files in `Corvus.Json.Specs` for the JSON Patch tests.
 
 Benchmark suites for various components.
 
+### Corvus.Json.SourceGenerator
+
+The Source Generator which generates types from Json Schema.
+
 ## V4.0 Updates
 
 There are a number of significant changes in this release
@@ -426,6 +430,72 @@ However, sometimes you just want the convenience of being able to behave as if y
 If so, you can now use the `--useImplicitOperatorString` command line switch to emit an implicit conversion operator to `string` for JSON `string` types.
 
 Note: this means you will never use the built-in `Corvus.Json` types for your string-like types. This could increase the amount of code generated for your schema.
+
+### New Source Generator
+
+We now have a source generator that can generate types at compile time, rather than using the `generatejsonschematypes` tool.
+
+### Using the source generator
+
+Add a reference to the `Corvus.Json.SourceGenerator` nuget package in addition to `Corvus.Json.ExtendedTypes`. [Note, you may need to restart Visual Studio once you have done this.]
+Add your JSON schema file(s) as _AdditionalFiles_.C
+
+```xml
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Corvus.Json.ExtendedTypes\Corvus.Json.ExtendedTypes.csproj" />
+    <ProjectReference 
+        Include="..\Corvus.Json.SourceGenerator\Corvus.Json.SourceGenerator.csproj"
+        OutputItemType="Analyzer"
+        ReferenceOutputAssembly="false"
+        SetTargetFramework="TargetFramework=netstandard2.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AdditionalFiles Include="test.json" />
+  </ItemGroup>
+  
+</Project>
+```
+
+Now, create a `readonly partial struct` as a placeholder for your root generated type, and attribute it with
+`[JsonSchemaTypeGenerator]`. The path to the schema file is relative to the file containing the attribute. You can
+provide a pointer fragment in the usual way, if you need to e.g. `"./somefile.json#/components/schema/mySchema"`
+
+```csharp
+namespace SourceGenTest2.Model;
+
+using Corvus.Json;
+
+[JsonSchemaTypeGenerator("../test.json")]
+public readonly partial struct FlimFlam
+{
+}
+```
+
+The source generator will now automatically emit code for your schema, and you can use the generated types in your code.
+
+```
+using Corvus.Json;
+using SourceGenTest2.Model;
+
+FlimFlam flimFlam = JsonAny.ParseValue("[1,2,3]"u8);
+Console.WriteLine(flimFlam);
+JsonArray array = flimFlam.As<JsonArray>();
+Console.WriteLine(array);
+```
+
+You can find an example project here: [Sandbox.SourceGenerator](./Solutions/Sandbox.SourceGenerator)
+
+We'd like to credit our Google Summer of Code 2024 contributor, [Pranay Joshi](https://github.com/pranayjoshi) and mentor [Greg Dennis](https://github.com/gregsdennis) for their work on this tool.
 
 ### New dynamic schema validation
 
