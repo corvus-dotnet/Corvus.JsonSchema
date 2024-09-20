@@ -14,7 +14,6 @@
     <NoWarn>$(NoWarn);nullable;NU5128;RS2008;SA0001</NoWarn>
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <IncludeBuildOutput>false</IncludeBuildOutput>
   </PropertyGroup>
 
