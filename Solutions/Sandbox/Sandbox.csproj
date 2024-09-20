@@ -14,6 +14,7 @@
     <ProjectReference Include="..\Corvus.Json.Benchmarking\Corvus.Json.Benchmarking.csproj" />
     <ProjectReference Include="..\Corvus.Json.CodeGeneration.CSharp.QuickStart\Corvus.Json.CodeGeneration.CSharp.QuickStart.csproj" />
     <ProjectReference Include="..\Corvus.Json.ExtendedTypes\Corvus.Json.ExtendedTypes.csproj" />
+    <ProjectReference Include="..\Sandbox.SourceGenerator\Sandbox.SourceGenerator.csproj" />
   </ItemGroup>
 
   <ItemGroup>

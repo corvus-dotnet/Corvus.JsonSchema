@@ -9,10 +9,6 @@
             "minimum": 0
         },
         { "type": "string" },
-        {
-            "type": "string",
-            "format": "date-time"
-        },
         { "type":  "number", "minimum": 3.5 }
     ],
     "unevaluatedItems": false
