@@ -2226,7 +2226,7 @@ public static class TypeDeclarationExtensions
                     k.TryGetUnevaluatedArrayItemsType(t, out v),
                 static t => t.ExplicitUnevaluatedItemsType());
 
-        bool isTuple = tupleType is not null && DeniesNonTupleItems(nonTupleItems);
+        bool isTuple = tupleType is not null && DeniesNonTupleItems(nonTupleItems, unevaluatedItems);
 
         if (isTuple)
         {
@@ -2583,9 +2583,11 @@ public static class TypeDeclarationExtensions
         }
     }
 
-    private static bool DeniesNonTupleItems(ArrayItemsTypeDeclaration? nonTupleItems)
+    private static bool DeniesNonTupleItems(ArrayItemsTypeDeclaration? nonTupleItems, ArrayItemsTypeDeclaration? unevaluatedItems)
     {
         // We could provide a more sophisticated approach in future.
-        return nonTupleItems?.ReducedType.LocatedSchema.Schema.ValueKind == JsonValueKind.False;
+        return
+            nonTupleItems?.ReducedType.LocatedSchema.Schema.ValueKind == JsonValueKind.False ||
+            (nonTupleItems is null && unevaluatedItems?.ReducedType.LocatedSchema.Schema.ValueKind == JsonValueKind.False);
     }
 }
