@@ -121,6 +121,24 @@ public class JsonValueSteps
     }
 
     /// <summary>
+    /// Serializes an <see cref="IJsonValue"/> from the context variable <see cref="SubjectUnderTest"/>, stores the resulting value in the context variable <see cref="SerializationResult"/>.
+    /// </summary>
+    [When("the json value is serialized to a string using pretty formatting")]
+    public void WhenTheJsonValueIsSerializedToAStringUsingPrettyFormatting()
+    {
+        try
+        {
+            IJsonValue sut = this.scenarioContext.Get<IJsonValue>(SubjectUnderTest);
+            string json = sut.AsAny.Serialize(new JsonSerializerOptions { WriteIndented = true });
+            this.scenarioContext.Set(json, SerializationResult);
+        }
+        catch (Exception ex)
+        {
+            this.scenarioContext.Set(ex, SerializationException);
+        }
+    }
+
+    /// <summary>
     /// Serializes an <see cref="IJsonValue"/> from the context variable <see cref="SubjectUnderTest"/>, deserializes and stores the resulting <see cref="JsonAny"/> in the context variable <see cref="SerializationResult"/>.
     /// </summary>
     [When("the json value is round-tripped via Serialization without enabling inefficient serialization")]
@@ -180,6 +198,16 @@ public class JsonValueSteps
     public void ThenTheRound_TrippedResultShouldBeEqualToTheJsonAny(string expected)
     {
         Assert.AreEqual(JsonAny.Parse(expected), this.scenarioContext.Get<JsonAny>(SerializationResult));
+    }
+
+    /// <summary>
+    /// Compares the string from the context variable <see cref="SerializationResult"/> with the expected value.
+    /// </summary>
+    /// <param name="expected">The expected value.</param>
+    [Then("the serialized string should equal (.*)")]
+    public void ThenTheSerializedStringShouldEqual(string expected)
+    {
+        Assert.AreEqual(expected.Replace("\\r", "\r").Replace("\\n", "\n"), this.scenarioContext.Get<string>(SerializationResult));
     }
 
     /* notAny */
