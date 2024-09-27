@@ -207,7 +207,7 @@ public class JsonValueSteps
     [Then("the serialized string should equal (.*)")]
     public void ThenTheSerializedStringShouldEqual(string expected)
     {
-        Assert.AreEqual(expected.Replace("\\r", "\r").Replace("\\n", "\n"), this.scenarioContext.Get<string>(SerializationResult));
+        Assert.AreEqual(expected.Replace("\\r\\n", Environment.NewLine), this.scenarioContext.Get<string>(SerializationResult));
     }
 
     /* notAny */
