@@ -80,6 +80,16 @@ Scenario: Write a dotnet-backed JsonObject to a string
 	Then the round-tripped result should be an Object
 	And the round-tripped result should be equal to the JsonAny {"foo": 3, "bar": "hello", "baz": null}
 
+Scenario: Write a jsonelement-backed JsonObject to a string with pretty formatting
+	Given the JsonElement backed JsonObject {"foo": 3, "bar": "hello", "baz": null}
+	When the json value is serialized to a string using pretty formatting
+	Then the serialized string should equal {\r\n  "foo": 3,\r\n  "bar": "hello",\r\n  "baz": null\r\n}
+
+Scenario: Write a dotnet-backed JsonObject to a string with pretty formatting
+	Given the dotnet backed JsonObject {"foo": 3, "bar": "hello", "baz": null}
+	When the json value is serialized to a string using pretty formatting
+	Then the serialized string should equal {\r\n  "foo": 3,\r\n  "bar": "hello",\r\n  "baz": null\r\n}
+
 Scenario: Write a jsonelement-backed JsonArray to a string
 	Given the JsonElement backed JsonArray [1,2,"3",4.0]
 	When the json value is round-tripped via a string

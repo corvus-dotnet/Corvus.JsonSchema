@@ -110,6 +110,19 @@ public static class JsonValueExtensions
     }
 
     /// <summary>
+    /// Serialize the entity to a string.
+    /// </summary>
+    /// <typeparam name="TValue">The type of <see cref="IJsonValue"/>.</typeparam>
+    /// <param name="value">The value to serialize.</param>
+    /// <param name="options">The JSON serializer options.</param>
+    /// <returns>A string representation fo the value.</returns>
+    public static string Serialize<TValue>(this TValue value, JsonSerializerOptions options)
+        where TValue : struct, IJsonValue
+    {
+        return JsonSerializer.Serialize(value, options);
+    }
+
+    /// <summary>
     /// Gets a value indicating whether this value is null.
     /// </summary>
     /// <typeparam name="T">The type of the value to check.</typeparam>
@@ -117,7 +130,7 @@ public static class JsonValueExtensions
     /// <returns><c>True</c> if the value is null.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsNull<T>(this T value)
-        where T : struct, IJsonValue
+    where T : struct, IJsonValue
     {
         return value.ValueKind == JsonValueKind.Null;
     }
