@@ -104,7 +104,6 @@ public readonly struct ValidationContext
     /// <returns>The validation context enabled with evaluated properties.</returns>
     public ValidationContext UsingEvaluatedProperties()
     {
-        bool usingEvaluatedProperties = (this.usingFeatures & UsingFeatures.EvaluatedProperties) != 0;
         return new ValidationContext(this.localEvaluatedItemIndex, this.localEvaluatedProperties, this.appliedEvaluatedItemIndex, this.appliedEvaluatedProperties, this.evaluatedExtensions, this.locationStack, this.Results, this.usingFeatures | UsingFeatures.EvaluatedProperties);
     }
 
@@ -114,8 +113,6 @@ public readonly struct ValidationContext
     /// <returns>The validation context enabled with evaluated properties.</returns>
     public ValidationContext UsingEvaluatedItems()
     {
-        bool usingEvaluatedItems = (this.usingFeatures & UsingFeatures.EvaluatedItems) != 0;
-
         return new ValidationContext(this.localEvaluatedItemIndex, this.localEvaluatedProperties, this.appliedEvaluatedItemIndex, this.appliedEvaluatedProperties, this.evaluatedExtensions, this.locationStack, this.Results, this.usingFeatures | UsingFeatures.EvaluatedItems);
     }
 
