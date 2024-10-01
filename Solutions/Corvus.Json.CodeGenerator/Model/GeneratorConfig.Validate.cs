@@ -390,6 +390,27 @@ public readonly partial struct GeneratorConfig
                         result = result.PopLocation();
                     }
                 }
+                else if (property.NameEquals(JsonPropertyNames.UseUnixLineEndingsUtf8, JsonPropertyNames.UseUnixLineEndings))
+                {
+                    result = result.WithLocalProperty(propertyCount);
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/useUnixLineEndings"), JsonPropertyNames.UseUnixLineEndings);
+                    }
+
+                    ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonBoolean>().Validate(result.CreateChildContext(), level);
+                    if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                    {
+                        return propertyResult;
+                    }
+
+                    result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PopLocation();
+                    }
+                }
 
                 propertyCount++;
             }

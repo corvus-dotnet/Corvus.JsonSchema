@@ -116,9 +116,6 @@ public readonly partial struct GeneratorConfig
         /// <para>
         /// The name of the .NET namespace into which to emit the root type
         /// </para>
-        /// <para>
-        /// The name of the .NET namespace into which to emit the root type
-        /// </para>
         /// </remarks>
         public Corvus.Json.JsonString? OutputRootNamespace
         {
@@ -165,9 +162,6 @@ public readonly partial struct GeneratorConfig
         /// <remarks>
         /// <para>
         /// If this JSON property is <see cref="JsonValueKind.Undefined"/> then the value returned will be <see langword="null" />.
-        /// </para>
-        /// <para>
-        /// The .NET name of the root type to generate.
         /// </para>
         /// <para>
         /// The .NET name of the root type to generate.
@@ -269,9 +263,6 @@ public readonly partial struct GeneratorConfig
         /// <para>
         /// The path in the document for the root type.
         /// </para>
-        /// <para>
-        /// The path in the document for the root type.
-        /// </para>
         /// </remarks>
         public Corvus.Json.JsonUriReference? RootPath
         {
@@ -318,9 +309,6 @@ public readonly partial struct GeneratorConfig
         /// <remarks>
         /// <para>
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
-        /// </para>
-        /// <para>
-        /// The path to the schema file to process.
         /// </para>
         /// <para>
         /// The path to the schema file to process.

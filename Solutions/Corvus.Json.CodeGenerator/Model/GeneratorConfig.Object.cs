@@ -160,9 +160,6 @@ public readonly partial struct GeneratorConfig
     /// <para>
     /// If true, assert format specifications.
     /// </para>
-    /// <para>
-    /// If true, assert format specifications.
-    /// </para>
     /// </remarks>
     public Corvus.Json.JsonBoolean? AssertFormat
     {
@@ -213,9 +210,6 @@ public readonly partial struct GeneratorConfig
     /// <para>
     /// A list of naming heuristics to disable.
     /// </para>
-    /// <para>
-    /// A list of naming heuristics to disable.
-    /// </para>
     /// </remarks>
     public Corvus.Json.CodeGenerator.GeneratorConfig.JsonStringArray? DisabledNamingHeuristics
     {
@@ -262,9 +256,6 @@ public readonly partial struct GeneratorConfig
     /// <remarks>
     /// <para>
     /// If this JSON property is <see cref="JsonValueKind.Undefined"/> then the value returned will be <see langword="null" />.
-    /// </para>
-    /// <para>
-    /// If true, do not use optional name heuristics.
     /// </para>
     /// <para>
     /// If true, do not use optional name heuristics.
@@ -472,9 +463,6 @@ public readonly partial struct GeneratorConfig
     /// <para>
     /// The name to use for a map file which includes details of the files that were written.
     /// </para>
-    /// <para>
-    /// The name to use for a map file which includes details of the files that were written.
-    /// </para>
     /// </remarks>
     public Corvus.Json.JsonString? OutputMapFile
     {
@@ -525,9 +513,6 @@ public readonly partial struct GeneratorConfig
     /// <para>
     /// The path to which to write the generated code.
     /// </para>
-    /// <para>
-    /// The path to which to write the generated code.
-    /// </para>
     /// </remarks>
     public Corvus.Json.JsonString? OutputPath
     {
@@ -574,9 +559,6 @@ public readonly partial struct GeneratorConfig
     /// <remarks>
     /// <para>
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
-    /// </para>
-    /// <para>
-    /// The default root namespace for generated types.
     /// </para>
     /// <para>
     /// The default root namespace for generated types.
@@ -657,12 +639,6 @@ public readonly partial struct GeneratorConfig
     /// <remarks>
     /// <para>
     /// If this JSON property is <see cref="JsonValueKind.Undefined"/> then the value returned will be <see langword="null" />.
-    /// </para>
-    /// <para>
-    /// If true, then the conversion operator to string will be implicit, rather than explicit.
-    /// </para>
-    /// <para>
-    /// Warning: if this is enabled, it is easy to accidentally allocate strings without being explicit about doing so.
     /// </para>
     /// <para>
     /// If true, then the conversion operator to string will be implicit, rather than explicit.
@@ -763,6 +739,56 @@ public readonly partial struct GeneratorConfig
         }
     }
 
+    /// <summary>
+    /// Gets the (optional) <c>useUnixLineEndings</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// If this JSON property is <see cref="JsonValueKind.Undefined"/> then the value returned will be <see langword="null" />.
+    /// </para>
+    /// <para>
+    /// If true, then the generated files will use Unix line endings (\\n). Otherwise it will use Windows line endings (\\r\\n).
+    /// </para>
+    /// </remarks>
+    public Corvus.Json.JsonBoolean? UseUnixLineEndings
+    {
+        get
+        {
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                {
+                    return default;
+                }
+
+                if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.UseUnixLineEndingsUtf8, out JsonElement result))
+                {
+                    if (result.ValueKind == JsonValueKind.Null || result.ValueKind == JsonValueKind.Undefined)
+                    {
+                        return default;
+                    }
+
+                    return new(result);
+                }
+            }
+
+            if ((this.backing & Backing.Object) != 0)
+            {
+                if (this.objectBacking.TryGetValue(JsonPropertyNames.UseUnixLineEndings, out JsonAny result))
+                {
+                    if (result.IsNullOrUndefined())
+                    {
+                        return default;
+                    }
+
+                    return result.As<Corvus.Json.JsonBoolean>();
+                }
+            }
+
+            return default;
+        }
+    }
+
     /// <inheritdoc/>
     public static GeneratorConfig FromProperties(IDictionary<JsonPropertyName, JsonAny> source)
     {
@@ -801,7 +827,8 @@ public readonly partial struct GeneratorConfig
         in Corvus.Json.JsonString? outputMapFile = null,
         in Corvus.Json.JsonString? outputPath = null,
         in Corvus.Json.JsonBoolean? useImplicitOperatorString = null,
-        in Corvus.Json.CodeGenerator.GeneratorConfig.UseSchema? useSchemaValue = null)
+        in Corvus.Json.CodeGenerator.GeneratorConfig.UseSchema? useSchemaValue = null,
+        in Corvus.Json.JsonBoolean? useUnixLineEndings = null)
     {
         var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
         builder.Add(JsonPropertyNames.RootNamespace, rootNamespace.AsAny);
@@ -860,6 +887,11 @@ public readonly partial struct GeneratorConfig
         if (useSchemaValue is not null)
         {
             builder.Add(JsonPropertyNames.UseSchemaValue, useSchemaValue.Value.AsAny);
+        }
+
+        if (useUnixLineEndings is not null)
+        {
+            builder.Add(JsonPropertyNames.UseUnixLineEndings, useUnixLineEndings.Value.AsAny);
         }
 
         return new(builder.ToImmutable());
@@ -1427,6 +1459,11 @@ public readonly partial struct GeneratorConfig
         public const string UseSchemaValue = "useSchema";
 
         /// <summary>
+        /// Gets the JSON property name for <see cref="UseUnixLineEndings"/>.
+        /// </summary>
+        public const string UseUnixLineEndings = "useUnixLineEndings";
+
+        /// <summary>
         /// Gets the JSON property name for <see cref="AdditionalFiles"/>.
         /// </summary>
         public static ReadOnlySpan<byte> AdditionalFilesUtf8 => "additionalFiles"u8;
@@ -1490,6 +1527,11 @@ public readonly partial struct GeneratorConfig
         /// Gets the JSON property name for <see cref="UseSchemaValue"/>.
         /// </summary>
         public static ReadOnlySpan<byte> UseSchemaValueUtf8 => "useSchema"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="UseUnixLineEndings"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> UseUnixLineEndingsUtf8 => "useUnixLineEndings"u8;
     }
 
     private static class __CorvusObjectHelpers

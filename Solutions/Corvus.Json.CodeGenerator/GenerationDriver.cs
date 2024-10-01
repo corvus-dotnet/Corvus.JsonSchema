@@ -168,7 +168,8 @@ public static class GenerationDriver
             useOptionalNameHeuristics: !(generatorConfig.DisableOptionalNameHeuristics ?? false),
             optionalAsNullable: (generatorConfig.OptionalAsNullableValue ?? GeneratorConfig.OptionalAsNullable.DefaultInstance).Equals(GeneratorConfig.OptionalAsNullable.EnumValues.NullOrUndefined),
             disabledNamingHeuristics: generatorConfig.DisabledNamingHeuristics?.Select(n => (string)n).ToArray(),
-            useImplicitOperatorString: generatorConfig.UseImplicitOperatorString ?? false);
+            useImplicitOperatorString: generatorConfig.UseImplicitOperatorString ?? false,
+            lineEndSequence: (generatorConfig.UseUnixLineEndings ?? false) ? "\n" : "\r\n");
     }
 
     private static async Task<string?> BeginMapFile(GeneratorConfig generatorConfig, string outputPath)
