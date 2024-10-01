@@ -14,6 +14,7 @@ using System.Text.Json;
 using Corvus.Json;
 
 namespace Corvus.Json.JsonSchema.Draft6;
+
 /// <summary>
 /// Core schema meta-schema
 /// </summary>
@@ -50,13 +51,16 @@ public readonly partial struct Schema
             }
 
             JsonValueKind valueKind = this.ValueKind;
+
             result = CorvusValidation.TypeValidationHandler(valueKind, result, level);
+
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;
             }
 
             result = CorvusValidation.NumberValidationHandler(this, valueKind, result, level);
+
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;
@@ -117,6 +121,7 @@ public readonly partial struct Schema
                     {
                         ValidationContext ignoredResult = validationContext;
                         ignoredResult = ignoredResult.WithResult(isValid: true, "Validation exclusiveMinimum - ignored because the value is not a number", "exclusiveMinimum");
+
                         return ignoredResult;
                     }
 
@@ -124,6 +129,7 @@ public readonly partial struct Schema
                 }
 
                 ValidationContext result = validationContext;
+
                 if ((value.HasJsonElementBacking
                     ? BinaryJsonNumber.Compare(value.AsJsonElement, ExclusiveMinimum)
                     : BinaryJsonNumber.Compare(value.AsBinaryJsonNumber, ExclusiveMinimum))> 0)

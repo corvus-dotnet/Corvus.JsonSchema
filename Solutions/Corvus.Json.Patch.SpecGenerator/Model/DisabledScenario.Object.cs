@@ -278,6 +278,7 @@ public readonly partial struct DisabledScenario
         builder.Add(JsonPropertyNames.Disabled, disabled.AsAny);
         builder.Add(JsonPropertyNames.Doc, doc.AsAny);
         builder.Add(JsonPropertyNames.Patch, patch.AsAny);
+
         if (comment is not null)
         {
             builder.Add(JsonPropertyNames.Comment, comment.Value.AsAny);

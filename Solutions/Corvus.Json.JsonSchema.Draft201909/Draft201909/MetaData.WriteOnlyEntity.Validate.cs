@@ -14,6 +14,7 @@ using System.Text.Json;
 using Corvus.Json;
 
 namespace Corvus.Json.JsonSchema.Draft201909;
+
 /// <summary>
 /// Meta-data vocabulary meta-schema
 /// </summary>
@@ -50,7 +51,9 @@ public readonly partial struct MetaData
             }
 
             JsonValueKind valueKind = this.ValueKind;
+
             result = CorvusValidation.TypeValidationHandler(valueKind, result, level);
+
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;

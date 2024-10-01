@@ -14,24 +14,25 @@
       "type": "object",
 
       "required": [ "name" ],
-      "properties": {
-        "name": { "$ref": "#/$defs/PersonName" },
-        "dateOfBirth": {
-          "type": "string",
-          "format": "date"
+        "properties": {
+            "name": { "$ref": "#/$defs/PersonName" },
+            "dateOfBirth": {
+                "type": "string",
+                "format": "date"
+            },
+            "email": {
+                "type": "string",
+                "format": "email"
+            },
+            "netWorth": {
+                "type": "number",
+                "format": "decimal"
+            },
+            "height": {
+                "$ref": "#/%24defs/HeightRangeDouble"
+            }
         },
-        "email": {
-          "type": "string",
-          "format": "email"
-        },
-        "netWorth": {
-          "type": "number",
-          "format": "decimal"
-        },
-        "height": {
-          "$ref": "#/%24defs/HeightRangeDouble"
-        }
-      }
+        "unevaluatedProperties": false
     },
     "HeightRangeDouble": {
       "type": "number",

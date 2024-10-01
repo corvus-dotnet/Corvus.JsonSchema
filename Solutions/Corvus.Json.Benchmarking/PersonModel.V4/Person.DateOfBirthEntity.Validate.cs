@@ -14,6 +14,7 @@ using System.Text.Json;
 using Corvus.Json;
 
 namespace Corvus.Json.Benchmarking.Models.V4;
+
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -40,13 +41,16 @@ public readonly partial struct Person
             }
 
             JsonValueKind valueKind = this.ValueKind;
+
             result = CorvusValidation.TypeValidationHandler(valueKind, result, level);
+
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;
             }
 
             result = CorvusValidation.FormatValidationHandler(this, valueKind, result, level);
+
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;
@@ -79,6 +83,7 @@ public readonly partial struct Person
                 ValidationLevel level = ValidationLevel.Flag)
             {
                 bool isValid = false;
+
                 ValidationContext localResultString = Corvus.Json.ValidateWithoutCoreType.TypeString(valueKind, ValidationContext.ValidContext, level, "type");
                 if (level == ValidationLevel.Flag && localResultString.IsValid)
                 {
@@ -145,6 +150,7 @@ public readonly partial struct Person
                     {
                         ValidationContext ignoredResult = validationContext;
                         ignoredResult = ignoredResult.WithResult(isValid: true, $"Validation format - ignored 'date' because the value is of kind '{valueKind}' not 'String'.");
+
                         return ignoredResult;
                     }
 

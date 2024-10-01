@@ -15,6 +15,7 @@ using Corvus.Json;
 using Corvus.Json.Internal;
 
 namespace Corvus.Json.JsonSchema.OpenApi31;
+
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -175,6 +176,7 @@ public readonly partial struct OpenApiDocument
             public static TypeOauth2Entity Create(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OauthFlows? flows = null)
             {
                 var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
+
                 if (flows is not null)
                 {
                     builder.Add(JsonPropertyNames.Flows, flows.Value.AsAny);

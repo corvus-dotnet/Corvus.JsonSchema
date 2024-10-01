@@ -35,13 +35,16 @@ public readonly partial struct HeightRangeDouble
         }
 
         JsonValueKind valueKind = this.ValueKind;
+
         result = CorvusValidation.TypeValidationHandler(valueKind, result, level);
+
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
             return result;
         }
 
         result = CorvusValidation.NumberValidationHandler(this, valueKind, result, level);
+
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
             return result;
@@ -108,6 +111,7 @@ public readonly partial struct HeightRangeDouble
                     ValidationContext ignoredResult = validationContext;
                     ignoredResult = ignoredResult.WithResult(isValid: true, "Validation maximum - ignored because the value is not a number", "maximum");
                     ignoredResult = ignoredResult.WithResult(isValid: true, "Validation minimum - ignored because the value is not a number", "minimum");
+
                     return ignoredResult;
                 }
 
@@ -115,6 +119,7 @@ public readonly partial struct HeightRangeDouble
             }
 
             ValidationContext result = validationContext;
+
             if ((value.HasJsonElementBacking
                 ? BinaryJsonNumber.Compare(value.AsJsonElement, Maximum)
                 : BinaryJsonNumber.Compare(value.AsBinaryJsonNumber, Maximum))<= 0)

@@ -10,6 +10,7 @@
 #nullable enable
 
 using System.Diagnostics.CodeAnalysis;
+
 #if NET8_0_OR_GREATER
 using System.Numerics;
 #endif

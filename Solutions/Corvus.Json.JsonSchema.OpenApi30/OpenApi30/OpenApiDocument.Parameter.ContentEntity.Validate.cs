@@ -14,6 +14,7 @@ using System.Text.Json;
 using Corvus.Json;
 
 namespace Corvus.Json.JsonSchema.OpenApi30;
+
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -51,13 +52,16 @@ public readonly partial struct OpenApiDocument
 
                 JsonValueKind valueKind = this.ValueKind;
                 result = result.UsingEvaluatedProperties();
+
                 result = CorvusValidation.TypeValidationHandler(valueKind, result, level);
+
                 if (level == ValidationLevel.Flag && !result.IsValid)
                 {
                     return result;
                 }
 
                 result = CorvusValidation.ObjectValidationHandler(this, valueKind, result, level);
+
                 if (level == ValidationLevel.Flag && !result.IsValid)
                 {
                     return result;
@@ -126,6 +130,7 @@ public readonly partial struct OpenApiDocument
                             ignoredResult = ignoredResult.WithResult(isValid: true, "Validation maxProperties - ignored because the value is not an object", "maxProperties");
                             ignoredResult = ignoredResult.WithResult(isValid: true, "Validation minProperties - ignored because the value is not an object", "minProperties");
                             ignoredResult = ignoredResult.WithResult(isValid: true, "Validation additionalProperties - ignored because the value is not an object", "additionalProperties");
+
                             return ignoredResult;
                         }
 
@@ -136,6 +141,7 @@ public readonly partial struct OpenApiDocument
                     foreach (JsonObjectProperty<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.MediaType> property in value.EnumerateObject())
                     {
                         string? propertyNameAsString = null;
+
                         if (!result.HasEvaluatedLocalProperty(propertyCount))
                         {
                             if (level > ValidationLevel.Basic)

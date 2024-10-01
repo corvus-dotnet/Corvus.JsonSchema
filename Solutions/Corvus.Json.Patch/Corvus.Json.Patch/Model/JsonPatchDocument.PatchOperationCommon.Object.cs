@@ -15,6 +15,7 @@ using Corvus.Json;
 using Corvus.Json.Internal;
 
 namespace Corvus.Json.Patch.Model;
+
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -209,6 +210,7 @@ public readonly partial struct JsonPatchDocument
             var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
             builder.Add(JsonPropertyNames.Op, op.AsAny);
             builder.Add(JsonPropertyNames.Path, path.AsAny);
+
             return new(builder.ToImmutable());
         }
 

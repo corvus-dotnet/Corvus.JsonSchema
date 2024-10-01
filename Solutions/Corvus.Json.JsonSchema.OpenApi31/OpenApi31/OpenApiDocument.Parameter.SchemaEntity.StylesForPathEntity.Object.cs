@@ -15,6 +15,7 @@ using Corvus.Json;
 using Corvus.Json.Internal;
 
 namespace Corvus.Json.JsonSchema.OpenApi31;
+
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -212,6 +213,7 @@ public readonly partial struct OpenApiDocument
                 public static StylesForPathEntity Create(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity.RequiredRequired.RequiredEntity? required = null, in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity.RequiredRequired.StyleEntity? style = null)
                 {
                     var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
+
                     if (required is not null)
                     {
                         builder.Add(JsonPropertyNames.Required, required.Value.AsAny);

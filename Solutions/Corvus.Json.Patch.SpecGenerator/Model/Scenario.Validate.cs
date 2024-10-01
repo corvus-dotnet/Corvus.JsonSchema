@@ -35,12 +35,14 @@ public readonly partial struct Scenario
         }
 
         result = CorvusValidation.CompositionAllOfValidationHandler(this, result, level);
+
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
             return result;
         }
 
         result = CorvusValidation.CompositionOneOfValidationHandler(this, result, level);
+
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
             return result;
@@ -74,6 +76,7 @@ public readonly partial struct Scenario
         {
             ValidationContext result = validationContext;
             ValidationContext childContextBase = result;
+
             ValidationContext allOfResult0 = childContextBase.CreateChildContext();
             if (level > ValidationLevel.Basic)
             {
@@ -81,6 +84,7 @@ public readonly partial struct Scenario
             }
 
             allOfResult0 = value.As<Corvus.Json.Patch.SpecGenerator.ScenarioCommon>().Validate(allOfResult0, level);
+
             if (!allOfResult0.IsValid)
             {
                 if (level >= ValidationLevel.Basic)
@@ -115,7 +119,9 @@ public readonly partial struct Scenario
             ValidationLevel level = ValidationLevel.Flag)
         {
             ValidationContext result = validationContext;
+
             int oneOfFoundValid = 0;
+
             ValidationContext oneOfChildContext0 = validationContext.CreateChildContext();
             if (level > ValidationLevel.Basic)
             {
@@ -123,6 +129,7 @@ public readonly partial struct Scenario
             }
 
             ValidationContext oneOfResult0 = value.As<Corvus.Json.Patch.SpecGenerator.ScenarioWithResult>().Validate(oneOfChildContext0, level);
+
             if (oneOfResult0.IsValid)
             {
                 result = result.MergeChildContext(oneOfResult0, level >= ValidationLevel.Verbose);
@@ -143,6 +150,7 @@ public readonly partial struct Scenario
             }
 
             ValidationContext oneOfResult1 = value.As<Corvus.Json.Patch.SpecGenerator.ScenarioWithError>().Validate(oneOfChildContext1, level);
+
             if (oneOfResult1.IsValid)
             {
                 result = result.MergeChildContext(oneOfResult1, level >= ValidationLevel.Verbose);
@@ -163,6 +171,7 @@ public readonly partial struct Scenario
             }
 
             ValidationContext oneOfResult2 = value.As<Corvus.Json.Patch.SpecGenerator.DisabledScenario>().Validate(oneOfChildContext2, level);
+
             if (oneOfResult2.IsValid)
             {
                 result = result.MergeChildContext(oneOfResult2, level >= ValidationLevel.Verbose);

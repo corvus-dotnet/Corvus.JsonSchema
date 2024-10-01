@@ -20,6 +20,7 @@ using Corvus.Json;
 using Corvus.Json.Internal;
 
 namespace Corvus.Json.CodeGenerator;
+
 /// <summary>
 /// JSON Schema for a configuration driver file for the corvus codegenerator.
 /// </summary>

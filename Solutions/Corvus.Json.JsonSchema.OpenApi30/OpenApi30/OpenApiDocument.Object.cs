@@ -423,6 +423,7 @@ public readonly partial struct OpenApiDocument
         builder.Add(JsonPropertyNames.InfoValue, infoValue.AsAny);
         builder.Add(JsonPropertyNames.Openapi, openapi.AsAny);
         builder.Add(JsonPropertyNames.PathsValue, pathsValue.AsAny);
+
         if (componentsValue is not null)
         {
             builder.Add(JsonPropertyNames.ComponentsValue, componentsValue.Value.AsAny);

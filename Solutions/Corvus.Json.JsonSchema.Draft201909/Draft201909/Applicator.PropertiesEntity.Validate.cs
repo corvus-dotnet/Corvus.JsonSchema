@@ -14,6 +14,7 @@ using System.Text.Json;
 using Corvus.Json;
 
 namespace Corvus.Json.JsonSchema.Draft201909;
+
 /// <summary>
 /// Applicator vocabulary meta-schema
 /// </summary>
@@ -51,13 +52,16 @@ public readonly partial struct Applicator
 
             JsonValueKind valueKind = this.ValueKind;
             result = result.UsingEvaluatedProperties();
+
             result = CorvusValidation.TypeValidationHandler(valueKind, result, level);
+
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;
             }
 
             result = CorvusValidation.ObjectValidationHandler(this, valueKind, result, level);
+
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;
@@ -114,6 +118,7 @@ public readonly partial struct Applicator
                     {
                         ValidationContext ignoredResult = validationContext;
                         ignoredResult = ignoredResult.WithResult(isValid: true, "Validation additionalProperties - ignored because the value is not an object", "additionalProperties");
+
                         return ignoredResult;
                     }
 
@@ -124,6 +129,7 @@ public readonly partial struct Applicator
                 foreach (JsonObjectProperty<Corvus.Json.JsonSchema.Draft201909.Schema> property in value.EnumerateObject())
                 {
                     string? propertyNameAsString = null;
+
                     if (!result.HasEvaluatedLocalProperty(propertyCount))
                     {
                         if (level > ValidationLevel.Basic)

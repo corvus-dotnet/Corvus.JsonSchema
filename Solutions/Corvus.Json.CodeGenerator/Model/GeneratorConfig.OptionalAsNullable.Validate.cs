@@ -14,6 +14,7 @@ using System.Text.Json;
 using Corvus.Json;
 
 namespace Corvus.Json.CodeGenerator;
+
 /// <summary>
 /// JSON Schema for a configuration driver file for the corvus codegenerator.
 /// </summary>
@@ -50,13 +51,16 @@ public readonly partial struct GeneratorConfig
             }
 
             JsonValueKind valueKind = this.ValueKind;
+
             result = CorvusValidation.TypeValidationHandler(valueKind, result, level);
+
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;
             }
 
             result = CorvusValidation.CompositionAnyOfValidationHandler(this, result, level);
+
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;
@@ -153,6 +157,7 @@ public readonly partial struct GeneratorConfig
                 ValidationLevel level = ValidationLevel.Flag)
             {
                 ValidationContext result = validationContext;
+
                 result = ValidateEnum(value, result, level);
                 if (!result.IsValid && level == ValidationLevel.Flag)
                 {
@@ -164,6 +169,7 @@ public readonly partial struct GeneratorConfig
                 {
                     ValidationContext result = validationContext;
                     bool enumFoundValid = false;
+
                     enumFoundValid = value.Equals(CorvusValidation.Enum1);
                     if (!enumFoundValid)
                     {

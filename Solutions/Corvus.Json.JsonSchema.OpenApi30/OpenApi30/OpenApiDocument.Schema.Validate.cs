@@ -15,6 +15,7 @@ using System.Text.RegularExpressions;
 using Corvus.Json;
 
 namespace Corvus.Json.JsonSchema.OpenApi30;
+
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -47,13 +48,16 @@ public readonly partial struct OpenApiDocument
 
             JsonValueKind valueKind = this.ValueKind;
             result = result.UsingEvaluatedProperties();
+
             result = CorvusValidation.TypeValidationHandler(valueKind, result, level);
+
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;
             }
 
             result = CorvusValidation.ObjectValidationHandler(this, valueKind, result, level);
+
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;
@@ -117,6 +121,7 @@ public readonly partial struct OpenApiDocument
                         ignoredResult = ignoredResult.WithResult(isValid: true, "Validation additionalProperties - ignored because the value is not an object", "additionalProperties");
                         ignoredResult = ignoredResult.WithResult(isValid: true, "Validation properties - ignored because the value is not an object", "properties");
                         ignoredResult = ignoredResult.WithResult(isValid: true, "Validation patternProperties - ignored because the value is not an object", "patternProperties");
+
                         return ignoredResult;
                     }
 
@@ -127,7 +132,9 @@ public readonly partial struct OpenApiDocument
                 foreach (JsonObjectProperty property in value.EnumerateObject())
                 {
                     string? propertyNameAsString = null;
+
                     propertyNameAsString ??= property.Name.GetString();
+
                     if (PatternProperties.IsMatch(propertyNameAsString))
                     {
                         result = result.WithLocalProperty(propertyCount);
@@ -137,6 +144,7 @@ public readonly partial struct OpenApiDocument
                         }
 
                         result = property.Value.As<Corvus.Json.JsonAny>().Validate(result, level);
+
                         if (level > ValidationLevel.Basic)
                         {
                             result = result.PopLocation();
@@ -163,6 +171,7 @@ public readonly partial struct OpenApiDocument
                         }
 
                         result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                         if (level > ValidationLevel.Basic)
                         {
                             result = result.PopLocation();
@@ -183,6 +192,7 @@ public readonly partial struct OpenApiDocument
                         }
 
                         result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                         if (level > ValidationLevel.Basic)
                         {
                             result = result.PopLocation();
@@ -203,6 +213,7 @@ public readonly partial struct OpenApiDocument
                         }
 
                         result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                         if (level > ValidationLevel.Basic)
                         {
                             result = result.PopLocation();
@@ -223,6 +234,7 @@ public readonly partial struct OpenApiDocument
                         }
 
                         result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                         if (level > ValidationLevel.Basic)
                         {
                             result = result.PopLocation();
@@ -243,6 +255,7 @@ public readonly partial struct OpenApiDocument
                         }
 
                         result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                         if (level > ValidationLevel.Basic)
                         {
                             result = result.PopLocation();
@@ -263,6 +276,7 @@ public readonly partial struct OpenApiDocument
                         }
 
                         result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                         if (level > ValidationLevel.Basic)
                         {
                             result = result.PopLocation();
@@ -283,6 +297,7 @@ public readonly partial struct OpenApiDocument
                         }
 
                         result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                         if (level > ValidationLevel.Basic)
                         {
                             result = result.PopLocation();
@@ -303,6 +318,7 @@ public readonly partial struct OpenApiDocument
                         }
 
                         result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                         if (level > ValidationLevel.Basic)
                         {
                             result = result.PopLocation();
@@ -323,6 +339,7 @@ public readonly partial struct OpenApiDocument
                         }
 
                         result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                         if (level > ValidationLevel.Basic)
                         {
                             result = result.PopLocation();
@@ -343,6 +360,7 @@ public readonly partial struct OpenApiDocument
                         }
 
                         result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                         if (level > ValidationLevel.Basic)
                         {
                             result = result.PopLocation();
@@ -363,6 +381,7 @@ public readonly partial struct OpenApiDocument
                         }
 
                         result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                         if (level > ValidationLevel.Basic)
                         {
                             result = result.PopLocation();
@@ -383,6 +402,7 @@ public readonly partial struct OpenApiDocument
                         }
 
                         result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                         if (level > ValidationLevel.Basic)
                         {
                             result = result.PopLocation();
@@ -403,17 +423,18 @@ public readonly partial struct OpenApiDocument
                         }
 
                         result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                         if (level > ValidationLevel.Basic)
                         {
                             result = result.PopLocation();
                         }
                     }
-                    else if (property.NameEquals(JsonPropertyNames.ItemsUtf8, JsonPropertyNames.Items))
+                    else if (property.NameEquals(JsonPropertyNames.ItemsValueUtf8, JsonPropertyNames.ItemsValue))
                     {
                         result = result.WithLocalProperty(propertyCount);
                         if (level > ValidationLevel.Basic)
                         {
-                            result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/items"), JsonPropertyNames.Items);
+                            result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/items"), JsonPropertyNames.ItemsValue);
                         }
 
                         ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.ItemsEntity>().Validate(result.CreateChildContext(), level);
@@ -423,6 +444,7 @@ public readonly partial struct OpenApiDocument
                         }
 
                         result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                         if (level > ValidationLevel.Basic)
                         {
                             result = result.PopLocation();
@@ -443,6 +465,7 @@ public readonly partial struct OpenApiDocument
                         }
 
                         result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                         if (level > ValidationLevel.Basic)
                         {
                             result = result.PopLocation();
@@ -463,6 +486,7 @@ public readonly partial struct OpenApiDocument
                         }
 
                         result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                         if (level > ValidationLevel.Basic)
                         {
                             result = result.PopLocation();
@@ -483,6 +507,7 @@ public readonly partial struct OpenApiDocument
                         }
 
                         result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                         if (level > ValidationLevel.Basic)
                         {
                             result = result.PopLocation();
@@ -503,6 +528,7 @@ public readonly partial struct OpenApiDocument
                         }
 
                         result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                         if (level > ValidationLevel.Basic)
                         {
                             result = result.PopLocation();
@@ -523,6 +549,7 @@ public readonly partial struct OpenApiDocument
                         }
 
                         result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                         if (level > ValidationLevel.Basic)
                         {
                             result = result.PopLocation();
@@ -543,6 +570,7 @@ public readonly partial struct OpenApiDocument
                         }
 
                         result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                         if (level > ValidationLevel.Basic)
                         {
                             result = result.PopLocation();
@@ -563,6 +591,7 @@ public readonly partial struct OpenApiDocument
                         }
 
                         result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                         if (level > ValidationLevel.Basic)
                         {
                             result = result.PopLocation();
@@ -583,6 +612,7 @@ public readonly partial struct OpenApiDocument
                         }
 
                         result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                         if (level > ValidationLevel.Basic)
                         {
                             result = result.PopLocation();
@@ -603,6 +633,7 @@ public readonly partial struct OpenApiDocument
                         }
 
                         result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                         if (level > ValidationLevel.Basic)
                         {
                             result = result.PopLocation();
@@ -623,6 +654,7 @@ public readonly partial struct OpenApiDocument
                         }
 
                         result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                         if (level > ValidationLevel.Basic)
                         {
                             result = result.PopLocation();
@@ -643,6 +675,7 @@ public readonly partial struct OpenApiDocument
                         }
 
                         result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                         if (level > ValidationLevel.Basic)
                         {
                             result = result.PopLocation();
@@ -663,6 +696,7 @@ public readonly partial struct OpenApiDocument
                         }
 
                         result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                         if (level > ValidationLevel.Basic)
                         {
                             result = result.PopLocation();
@@ -683,6 +717,7 @@ public readonly partial struct OpenApiDocument
                         }
 
                         result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                         if (level > ValidationLevel.Basic)
                         {
                             result = result.PopLocation();
@@ -703,6 +738,7 @@ public readonly partial struct OpenApiDocument
                         }
 
                         result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                         if (level > ValidationLevel.Basic)
                         {
                             result = result.PopLocation();
@@ -723,6 +759,7 @@ public readonly partial struct OpenApiDocument
                         }
 
                         result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                         if (level > ValidationLevel.Basic)
                         {
                             result = result.PopLocation();
@@ -743,6 +780,7 @@ public readonly partial struct OpenApiDocument
                         }
 
                         result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                         if (level > ValidationLevel.Basic)
                         {
                             result = result.PopLocation();
@@ -763,6 +801,7 @@ public readonly partial struct OpenApiDocument
                         }
 
                         result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                         if (level > ValidationLevel.Basic)
                         {
                             result = result.PopLocation();
@@ -783,6 +822,7 @@ public readonly partial struct OpenApiDocument
                         }
 
                         result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                         if (level > ValidationLevel.Basic)
                         {
                             result = result.PopLocation();
@@ -803,6 +843,7 @@ public readonly partial struct OpenApiDocument
                         }
 
                         result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                         if (level > ValidationLevel.Basic)
                         {
                             result = result.PopLocation();
@@ -823,6 +864,7 @@ public readonly partial struct OpenApiDocument
                         }
 
                         result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                         if (level > ValidationLevel.Basic)
                         {
                             result = result.PopLocation();
@@ -843,6 +885,7 @@ public readonly partial struct OpenApiDocument
                         }
 
                         result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                         if (level > ValidationLevel.Basic)
                         {
                             result = result.PopLocation();

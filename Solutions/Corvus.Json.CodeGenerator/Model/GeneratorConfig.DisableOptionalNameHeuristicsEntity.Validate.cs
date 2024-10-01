@@ -14,6 +14,7 @@ using System.Text.Json;
 using Corvus.Json;
 
 namespace Corvus.Json.CodeGenerator;
+
 /// <summary>
 /// JSON Schema for a configuration driver file for the corvus codegenerator.
 /// </summary>
@@ -53,7 +54,9 @@ public readonly partial struct GeneratorConfig
             }
 
             JsonValueKind valueKind = this.ValueKind;
+
             result = CorvusValidation.TypeValidationHandler(valueKind, result, level);
+
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;

@@ -14,6 +14,7 @@ using System.Text.Json;
 using Corvus.Json;
 
 namespace Corvus.Json.JsonSchema.Draft6;
+
 /// <summary>
 /// Core schema meta-schema
 /// </summary>
@@ -55,6 +56,7 @@ public readonly partial struct Schema
                 }
 
                 result = CorvusValidation.CompositionAnyOfValidationHandler(this, result, level);
+
                 if (level == ValidationLevel.Flag && !result.IsValid)
                 {
                     return result;
@@ -87,7 +89,9 @@ public readonly partial struct Schema
                     ValidationLevel level = ValidationLevel.Flag)
                 {
                     ValidationContext result = validationContext;
+
                     bool anyOfFoundValid = false;
+
                     ValidationContext anyOfChildContext0 = validationContext.CreateChildContext();
                     if (level > ValidationLevel.Basic)
                     {
@@ -95,6 +99,7 @@ public readonly partial struct Schema
                     }
 
                     ValidationContext anyOfResult0 = value.As<Corvus.Json.JsonSchema.Draft6.Schema>().Validate(anyOfChildContext0, level);
+
                     if (anyOfResult0.IsValid)
                     {
                         if (level == ValidationLevel.Flag)
@@ -122,6 +127,7 @@ public readonly partial struct Schema
                     }
 
                     ValidationContext anyOfResult1 = value.As<Corvus.Json.JsonSchema.Draft6.Schema.StringArray>().Validate(anyOfChildContext1, level);
+
                     if (anyOfResult1.IsValid)
                     {
                         if (level == ValidationLevel.Flag)

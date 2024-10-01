@@ -35,19 +35,23 @@ public readonly partial struct Schema
         }
 
         JsonValueKind valueKind = this.ValueKind;
+
         result = CorvusValidation.TypeValidationHandler(valueKind, result, level);
+
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
             return result;
         }
 
         result = CorvusValidation.CompositionAllOfValidationHandler(this, result, level);
+
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
             return result;
         }
 
         result = CorvusValidation.ObjectValidationHandler(this, valueKind, result, level);
+
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
             return result;
@@ -80,6 +84,7 @@ public readonly partial struct Schema
             ValidationLevel level = ValidationLevel.Flag)
         {
             bool isValid = false;
+
             ValidationContext localResultObject = Corvus.Json.ValidateWithoutCoreType.TypeObject(valueKind, ValidationContext.ValidContext, level, "type");
             if (level == ValidationLevel.Flag && localResultObject.IsValid)
             {
@@ -140,6 +145,7 @@ public readonly partial struct Schema
         {
             ValidationContext result = validationContext;
             ValidationContext childContextBase = result;
+
             ValidationContext allOfResult0 = childContextBase.CreateChildContext();
             if (level > ValidationLevel.Basic)
             {
@@ -147,6 +153,7 @@ public readonly partial struct Schema
             }
 
             allOfResult0 = value.As<Corvus.Json.JsonSchema.Draft201909.Core>().Validate(allOfResult0, level);
+
             if (!allOfResult0.IsValid)
             {
                 if (level >= ValidationLevel.Basic)
@@ -171,6 +178,7 @@ public readonly partial struct Schema
             }
 
             allOfResult1 = value.As<Corvus.Json.JsonSchema.Draft201909.Applicator>().Validate(allOfResult1, level);
+
             if (!allOfResult1.IsValid)
             {
                 if (level >= ValidationLevel.Basic)
@@ -195,6 +203,7 @@ public readonly partial struct Schema
             }
 
             allOfResult2 = value.As<Corvus.Json.JsonSchema.Draft201909.Validation>().Validate(allOfResult2, level);
+
             if (!allOfResult2.IsValid)
             {
                 if (level >= ValidationLevel.Basic)
@@ -219,6 +228,7 @@ public readonly partial struct Schema
             }
 
             allOfResult3 = value.As<Corvus.Json.JsonSchema.Draft201909.MetaData>().Validate(allOfResult3, level);
+
             if (!allOfResult3.IsValid)
             {
                 if (level >= ValidationLevel.Basic)
@@ -243,6 +253,7 @@ public readonly partial struct Schema
             }
 
             allOfResult4 = value.As<Corvus.Json.JsonSchema.Draft201909.Format>().Validate(allOfResult4, level);
+
             if (!allOfResult4.IsValid)
             {
                 if (level >= ValidationLevel.Basic)
@@ -267,6 +278,7 @@ public readonly partial struct Schema
             }
 
             allOfResult5 = value.As<Corvus.Json.JsonSchema.Draft201909.Content>().Validate(allOfResult5, level);
+
             if (!allOfResult5.IsValid)
             {
                 if (level >= ValidationLevel.Basic)
@@ -309,6 +321,7 @@ public readonly partial struct Schema
                 {
                     ValidationContext ignoredResult = validationContext;
                     ignoredResult = ignoredResult.WithResult(isValid: true, "Validation properties - ignored because the value is not an object", "properties");
+
                     return ignoredResult;
                 }
 
@@ -333,6 +346,7 @@ public readonly partial struct Schema
                     }
 
                     result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                     if (level > ValidationLevel.Basic)
                     {
                         result = result.PopLocation();
@@ -353,6 +367,7 @@ public readonly partial struct Schema
                     }
 
                     result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                     if (level > ValidationLevel.Basic)
                     {
                         result = result.PopLocation();

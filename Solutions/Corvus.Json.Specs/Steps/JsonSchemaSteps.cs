@@ -4,9 +4,11 @@
 
 using System.Text.Json;
 using Corvus.Json;
+using Corvus.Json.CodeGeneration;
 using Corvus.Json.CodeGeneration.CSharp;
 using Drivers;
-
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.Extensions.Configuration;
 
 using NUnit.Framework;
@@ -25,6 +27,7 @@ public class JsonSchemaSteps
     private const string InputData = "InputData";
     private const string InputDataPath = "InputDataPath";
     private const string SchemaType = "SchemaType";
+    private const string SchemaCode = "SchemaCode";
     private const string SchemaInstance = "SchemaInstance";
     private const string SchemaValidationResult = "SchemaValidationResult";
     private const string ValidateFormatKey = "ValidateFormat";
@@ -241,12 +244,12 @@ public class JsonSchemaSteps
         {
             uint[] itemArray = BuildUInt32Array(inputDataString);
 
-/* Unmerged change from project 'Corvus.Json.Specs (net481)'
-Before:
-            return this.driver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
-After:
-            return JsonSchemaBuilderDriver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
-*/
+            /* Unmerged change from project 'Corvus.Json.Specs (net481)'
+            Before:
+                        return this.driver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
+            After:
+                        return JsonSchemaBuilderDriver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
+            */
             return JsonSchemaBuilderDriver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
         }
 
@@ -254,12 +257,12 @@ After:
         {
             ushort[] itemArray = BuildUInt16Array(inputDataString);
 
-/* Unmerged change from project 'Corvus.Json.Specs (net481)'
-Before:
-            return this.driver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
-After:
-            return JsonSchemaBuilderDriver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
-*/
+            /* Unmerged change from project 'Corvus.Json.Specs (net481)'
+            Before:
+                        return this.driver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
+            After:
+                        return JsonSchemaBuilderDriver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
+            */
             return JsonSchemaBuilderDriver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
         }
 
@@ -283,12 +286,12 @@ After:
         {
             long[] itemArray = BuildInt64Array(inputDataString);
 
-/* Unmerged change from project 'Corvus.Json.Specs (net481)'
-Before:
-            return this.driver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
-After:
-            return JsonSchemaBuilderDriver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
-*/
+            /* Unmerged change from project 'Corvus.Json.Specs (net481)'
+            Before:
+                        return this.driver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
+            After:
+                        return JsonSchemaBuilderDriver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
+            */
             return JsonSchemaBuilderDriver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
         }
 
@@ -296,12 +299,12 @@ After:
         {
             int[] itemArray = BuildInt32Array(inputDataString);
 
-/* Unmerged change from project 'Corvus.Json.Specs (net481)'
-Before:
-            return this.driver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
-After:
-            return JsonSchemaBuilderDriver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
-*/
+            /* Unmerged change from project 'Corvus.Json.Specs (net481)'
+            Before:
+                        return this.driver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
+            After:
+                        return JsonSchemaBuilderDriver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
+            */
             return JsonSchemaBuilderDriver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
         }
 
@@ -309,12 +312,12 @@ After:
         {
             short[] itemArray = BuildInt16Array(inputDataString);
 
-/* Unmerged change from project 'Corvus.Json.Specs (net481)'
-Before:
-            return this.driver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
-After:
-            return JsonSchemaBuilderDriver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
-*/
+            /* Unmerged change from project 'Corvus.Json.Specs (net481)'
+            Before:
+                        return this.driver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
+            After:
+                        return JsonSchemaBuilderDriver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
+            */
             return JsonSchemaBuilderDriver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
         }
 
@@ -322,12 +325,12 @@ After:
         {
             sbyte[] itemArray = BuildSByteArray(inputDataString);
 
-/* Unmerged change from project 'Corvus.Json.Specs (net481)'
-Before:
-            return this.driver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
-After:
-            return JsonSchemaBuilderDriver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
-*/
+            /* Unmerged change from project 'Corvus.Json.Specs (net481)'
+            Before:
+                        return this.driver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
+            After:
+                        return JsonSchemaBuilderDriver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
+            */
             return JsonSchemaBuilderDriver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
         }
 
@@ -431,12 +434,12 @@ After:
         {
             uint[] itemArray = BuildUInt32Array(inputDataString);
 
-/* Unmerged change from project 'Corvus.Json.Specs (net481)'
-Before:
-            return this.driver.CompareInstanceOfNumericArrayWithValues(
-After:
-            return JsonSchemaBuilderDriver.CompareInstanceOfNumericArrayWithValues(
-*/
+            /* Unmerged change from project 'Corvus.Json.Specs (net481)'
+            Before:
+                        return this.driver.CompareInstanceOfNumericArrayWithValues(
+            After:
+                        return JsonSchemaBuilderDriver.CompareInstanceOfNumericArrayWithValues(
+            */
             return JsonSchemaBuilderDriver.CompareInstanceOfNumericArrayWithValues(
                 this.scenarioContext.Get<Type>(SchemaType),
                 this.scenarioContext.Get<IJsonValue>(SchemaInstance),
@@ -447,12 +450,12 @@ After:
         {
             ushort[] itemArray = BuildUInt16Array(inputDataString);
 
-/* Unmerged change from project 'Corvus.Json.Specs (net481)'
-Before:
-            return this.driver.CompareInstanceOfNumericArrayWithValues(
-After:
-            return JsonSchemaBuilderDriver.CompareInstanceOfNumericArrayWithValues(
-*/
+            /* Unmerged change from project 'Corvus.Json.Specs (net481)'
+            Before:
+                        return this.driver.CompareInstanceOfNumericArrayWithValues(
+            After:
+                        return JsonSchemaBuilderDriver.CompareInstanceOfNumericArrayWithValues(
+            */
             return JsonSchemaBuilderDriver.CompareInstanceOfNumericArrayWithValues(
                 this.scenarioContext.Get<Type>(SchemaType),
                 this.scenarioContext.Get<IJsonValue>(SchemaInstance),
@@ -485,12 +488,12 @@ After:
         {
             long[] itemArray = BuildInt64Array(inputDataString);
 
-/* Unmerged change from project 'Corvus.Json.Specs (net481)'
-Before:
-            return this.driver.CompareInstanceOfNumericArrayWithValues(
-After:
-            return JsonSchemaBuilderDriver.CompareInstanceOfNumericArrayWithValues(
-*/
+            /* Unmerged change from project 'Corvus.Json.Specs (net481)'
+            Before:
+                        return this.driver.CompareInstanceOfNumericArrayWithValues(
+            After:
+                        return JsonSchemaBuilderDriver.CompareInstanceOfNumericArrayWithValues(
+            */
             return JsonSchemaBuilderDriver.CompareInstanceOfNumericArrayWithValues(
                 this.scenarioContext.Get<Type>(SchemaType),
                 this.scenarioContext.Get<IJsonValue>(SchemaInstance),
@@ -501,12 +504,12 @@ After:
         {
             int[] itemArray = BuildInt32Array(inputDataString);
 
-/* Unmerged change from project 'Corvus.Json.Specs (net481)'
-Before:
-            return this.driver.CompareInstanceOfNumericArrayWithValues(
-After:
-            return JsonSchemaBuilderDriver.CompareInstanceOfNumericArrayWithValues(
-*/
+            /* Unmerged change from project 'Corvus.Json.Specs (net481)'
+            Before:
+                        return this.driver.CompareInstanceOfNumericArrayWithValues(
+            After:
+                        return JsonSchemaBuilderDriver.CompareInstanceOfNumericArrayWithValues(
+            */
             return JsonSchemaBuilderDriver.CompareInstanceOfNumericArrayWithValues(
                 this.scenarioContext.Get<Type>(SchemaType),
                 this.scenarioContext.Get<IJsonValue>(SchemaInstance),
@@ -517,12 +520,12 @@ After:
         {
             short[] itemArray = BuildInt16Array(inputDataString);
 
-/* Unmerged change from project 'Corvus.Json.Specs (net481)'
-Before:
-            return this.driver.CompareInstanceOfNumericArrayWithValues(
-After:
-            return JsonSchemaBuilderDriver.CompareInstanceOfNumericArrayWithValues(
-*/
+            /* Unmerged change from project 'Corvus.Json.Specs (net481)'
+            Before:
+                        return this.driver.CompareInstanceOfNumericArrayWithValues(
+            After:
+                        return JsonSchemaBuilderDriver.CompareInstanceOfNumericArrayWithValues(
+            */
             return JsonSchemaBuilderDriver.CompareInstanceOfNumericArrayWithValues(
                 this.scenarioContext.Get<Type>(SchemaType),
                 this.scenarioContext.Get<IJsonValue>(SchemaInstance),
@@ -533,12 +536,12 @@ After:
         {
             sbyte[] itemArray = BuildSByteArray(inputDataString);
 
-/* Unmerged change from project 'Corvus.Json.Specs (net481)'
-Before:
-            return this.driver.CompareInstanceOfNumericArrayWithValues(
-After:
-            return JsonSchemaBuilderDriver.CompareInstanceOfNumericArrayWithValues(
-*/
+            /* Unmerged change from project 'Corvus.Json.Specs (net481)'
+            Before:
+                        return this.driver.CompareInstanceOfNumericArrayWithValues(
+            After:
+                        return JsonSchemaBuilderDriver.CompareInstanceOfNumericArrayWithValues(
+            */
             return JsonSchemaBuilderDriver.CompareInstanceOfNumericArrayWithValues(
                 this.scenarioContext.Get<Type>(SchemaType),
                 this.scenarioContext.Get<IJsonValue>(SchemaInstance),
@@ -607,6 +610,80 @@ After:
     {
         this.scenarioContext.Set(false, NullablePropertiesKey);
         return this.GivenIGenerateATypeForTheSchema();
+    }
+
+    [Given("I generate the code for the schema")]
+    [When("I generate the code for the schema")]
+    public async Task GivenIGenerateTheCodeForTheSchema()
+    {
+        string featureName = ToPascalCaseWithReservedWords(this.featureContext.FeatureInfo.Title);
+        string scenarioName = ToPascalCaseWithReservedWords(this.scenarioContext.ScenarioInfo.Title);
+        string filename = this.scenarioContext.Get<string>(InputJsonFileName);
+        string schemaPath = this.scenarioContext.Get<string>(SchemaPath);
+
+        IReadOnlyCollection<GeneratedCodeFile> code;
+
+        this.scenarioContext.TryGetValue(ValidateFormatKey, out bool validateFormat);
+
+        if (this.scenarioContext.ContainsKey(InputDataPath))
+        {
+            code = await this.driver.GenerateCodeForJsonSchemaTestSuite(
+                filename,
+                schemaPath,
+                featureName,
+                scenarioName,
+                validateFormat,
+                this.scenarioContext.TryGetValue(NullablePropertiesKey, out bool optionalAsNullable) && optionalAsNullable,
+                this.scenarioContext.TryGetValue(UseImplicitOperatorStringKey, out bool useImplicitOperatorString) && useImplicitOperatorString);
+        }
+        else
+        {
+            string schema = this.scenarioContext.Get<string>(SchemaInstance);
+            code = await this.driver.GenerateCodeForVirtualFile(
+                schema,
+                filename,
+                featureName,
+                scenarioName,
+                validateFormat,
+                this.scenarioContext.TryGetValue(NullablePropertiesKey, out bool optionalAsNullable) && optionalAsNullable,
+                this.scenarioContext.TryGetValue(UseImplicitOperatorStringKey, out bool useImplicitOperatorString) && useImplicitOperatorString);
+        }
+
+        this.scenarioContext.Set(code, SchemaCode);
+    }
+
+    [Then(@"the remarks for the file '([^']*)' parent struct '([^']*)' child struct '([^']*)' property '([^']*)' will be")]
+    public void ThenTheRemarksForTheFileStructPropertyWillBe(string fileName, string parentStructName, string structName, string propertyName, string remarksText)
+    {
+        IReadOnlyCollection<GeneratedCodeFile> code = this.scenarioContext.Get<IReadOnlyCollection<GeneratedCodeFile>>(SchemaCode);
+        GeneratedCodeFile? file = code.SingleOrDefault(f => f.FileName == fileName);
+        Assert.NotNull(file);
+        Microsoft.CodeAnalysis.SyntaxTree syntaxTree = CSharpSyntaxTree.ParseText(file!.FileContent);
+        CompilationUnitSyntax root = syntaxTree.GetCompilationUnitRoot();
+        PropertyDeclarationSyntax? property = root.Members
+            .OfType<FileScopedNamespaceDeclarationSyntax>()
+            .SingleOrDefault()
+            ?.Members
+            .OfType<StructDeclarationSyntax>()
+            .SingleOrDefault(s => s.Identifier.Text == parentStructName)
+            ?.Members
+            .OfType<StructDeclarationSyntax>()
+            .SingleOrDefault(s => s.Identifier.Text == structName)
+            ?.Members
+            .OfType<PropertyDeclarationSyntax>()
+            .SingleOrDefault(s => s.Identifier.Text == propertyName);
+        Assert.NotNull(property);
+        string trivia = property!.GetLeadingTrivia().ToString();
+        int remarksStart = trivia.IndexOf("<remarks>");
+        Assert.GreaterOrEqual(remarksStart, 0);
+        remarksStart += "<remarks>".Length;
+        int remarksEnd = trivia.IndexOf("/// </remarks>");
+        Assert.GreaterOrEqual(remarksEnd, remarksStart);
+
+        // Normalize the line endings
+        string actual = trivia[remarksStart..remarksEnd].Replace("\r\n", "\n").Trim();
+        string expected = remarksText.Replace("\r\n", "\n").Trim();
+        Assert.AreEqual(expected, actual);
     }
 
     /// <summary>

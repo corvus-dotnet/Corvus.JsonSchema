@@ -1210,15 +1210,12 @@ internal static partial class CodeGeneratorExtensions
             "</c> ",
             "property.");
 
-        if (property.UnreducedPropertyType.CanReduce())
+        // We include documentation attached to the local (unreduced) type; this is usually the means by
+        // which property-specific documentation is attached to a particular instance of a common reference type.
+        if (property.UnreducedPropertyType.ShortDocumentation() is string shortDocumentation)
         {
-            // We include documentation attached to a reducible reference type; this is usually the means by
-            // which property-specific documentation is attached to a particular instance of a common reference type.
-            if (property.UnreducedPropertyType.ShortDocumentation() is string shortDocumentation)
-            {
-                generator
-                    .AppendBlockIndentWithPrefix(shortDocumentation, "/// ");
-            }
+            generator
+                .AppendBlockIndentWithPrefix(shortDocumentation, "/// ");
         }
 
         generator
@@ -1275,7 +1272,7 @@ internal static partial class CodeGeneratorExtensions
                 .AppendParagraphs(longDocumentation);
         }
 
-        if (property.ReducedPropertyType.LongDocumentation() is string longDocumentationReduced)
+        if (property.ReducedPropertyType != property.UnreducedPropertyType && property.ReducedPropertyType.LongDocumentation() is string longDocumentationReduced)
         {
             if (!usingRemarks)
             {

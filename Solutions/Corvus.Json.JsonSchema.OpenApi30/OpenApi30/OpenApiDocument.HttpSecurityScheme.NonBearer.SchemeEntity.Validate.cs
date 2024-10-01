@@ -14,6 +14,7 @@ using System.Text.Json;
 using Corvus.Json;
 
 namespace Corvus.Json.JsonSchema.OpenApi30;
+
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -60,6 +61,7 @@ public readonly partial struct OpenApiDocument
                     }
 
                     result = CorvusValidation.CompositionNotValidationHandler(this, result, level);
+
                     if (level == ValidationLevel.Flag && !result.IsValid)
                     {
                         return result;
@@ -99,6 +101,7 @@ public readonly partial struct OpenApiDocument
                             ValidationLevel level = ValidationLevel.Flag)
                         {
                             ValidationContext result = validationContext;
+
                             if (level > ValidationLevel.Basic)
                             {
                                 result = result.PushValidationLocationReducedPathModifier(new("#/not"));
