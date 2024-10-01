@@ -1127,7 +1127,7 @@ public readonly partial struct Schema
     /// <summary>
     /// Gets the (optional) <c>items</c> property.
     /// </summary>
-    public Corvus.Json.JsonSchema.Draft201909.Applicator.ItemsEntity Items
+    public Corvus.Json.JsonSchema.Draft201909.Applicator.ItemsEntity ItemsValue
     {
         get
         {
@@ -1138,7 +1138,7 @@ public readonly partial struct Schema
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.ItemsUtf8, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.ItemsValueUtf8, out JsonElement result))
                 {
                     return new(result);
                 }
@@ -1146,7 +1146,7 @@ public readonly partial struct Schema
 
             if ((this.backing & Backing.Object) != 0)
             {
-                if (this.objectBacking.TryGetValue(JsonPropertyNames.Items, out JsonAny result))
+                if (this.objectBacking.TryGetValue(JsonPropertyNames.ItemsValue, out JsonAny result))
                 {
                     return result.As<Corvus.Json.JsonSchema.Draft201909.Applicator.ItemsEntity>();
                 }
@@ -2046,7 +2046,7 @@ public readonly partial struct Schema
         in Corvus.Json.JsonNumber? exclusiveMinimum = null,
         in Corvus.Json.JsonString? format = null,
         in Corvus.Json.JsonSchema.Draft201909.Schema? ifEntity = null,
-        in Corvus.Json.JsonSchema.Draft201909.Applicator.ItemsEntity? items = null,
+        in Corvus.Json.JsonSchema.Draft201909.Applicator.ItemsEntity? itemsValue = null,
         in Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeInteger? maxContains = null,
         in Corvus.Json.JsonNumber? maximum = null,
         in Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeInteger? maxItems = null,
@@ -2075,6 +2075,7 @@ public readonly partial struct Schema
         in Corvus.Json.JsonSchema.Draft201909.MetaData.WriteOnlyEntity? writeOnly = null)
     {
         var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
+
         if (anchor is not null)
         {
             builder.Add(JsonPropertyNames.Anchor, anchor.Value.AsAny);
@@ -2235,9 +2236,9 @@ public readonly partial struct Schema
             builder.Add(JsonPropertyNames.If, ifEntity.Value.AsAny);
         }
 
-        if (items is not null)
+        if (itemsValue is not null)
         {
-            builder.Add(JsonPropertyNames.Items, items.Value.AsAny);
+            builder.Add(JsonPropertyNames.ItemsValue, itemsValue.Value.AsAny);
         }
 
         if (maxContains is not null)
@@ -3030,9 +3031,9 @@ public readonly partial struct Schema
         public const string If = "if";
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="Items"/>.
+        /// Gets the JSON property name for <see cref="ItemsValue"/>.
         /// </summary>
-        public const string Items = "items";
+        public const string ItemsValue = "items";
 
         /// <summary>
         /// Gets the JSON property name for <see cref="MaxContains"/>.
@@ -3325,9 +3326,9 @@ public readonly partial struct Schema
         public static ReadOnlySpan<byte> IfUtf8 => "if"u8;
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="Items"/>.
+        /// Gets the JSON property name for <see cref="ItemsValue"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> ItemsUtf8 => "items"u8;
+        public static ReadOnlySpan<byte> ItemsValueUtf8 => "items"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="MaxContains"/>.

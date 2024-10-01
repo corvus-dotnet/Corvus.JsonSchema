@@ -327,7 +327,7 @@ public readonly partial struct Applicator
     /// <summary>
     /// Gets the (optional) <c>items</c> property.
     /// </summary>
-    public Corvus.Json.JsonSchema.Draft202012.Schema Items
+    public Corvus.Json.JsonSchema.Draft202012.Schema ItemsValue
     {
         get
         {
@@ -338,7 +338,7 @@ public readonly partial struct Applicator
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.ItemsUtf8, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.ItemsValueUtf8, out JsonElement result))
                 {
                     return new(result);
                 }
@@ -346,7 +346,7 @@ public readonly partial struct Applicator
 
             if ((this.backing & Backing.Object) != 0)
             {
-                if (this.objectBacking.TryGetValue(JsonPropertyNames.Items, out JsonAny result))
+                if (this.objectBacking.TryGetValue(JsonPropertyNames.ItemsValue, out JsonAny result))
                 {
                     return result.As<Corvus.Json.JsonSchema.Draft202012.Schema>();
                 }
@@ -613,7 +613,7 @@ public readonly partial struct Applicator
         in Corvus.Json.JsonSchema.Draft202012.Applicator.DependentSchemasEntity? dependentSchemas = null,
         in Corvus.Json.JsonSchema.Draft202012.Schema? elseEntity = null,
         in Corvus.Json.JsonSchema.Draft202012.Schema? ifEntity = null,
-        in Corvus.Json.JsonSchema.Draft202012.Schema? items = null,
+        in Corvus.Json.JsonSchema.Draft202012.Schema? itemsValue = null,
         in Corvus.Json.JsonSchema.Draft202012.Schema? not = null,
         in Corvus.Json.JsonSchema.Draft202012.Applicator.SchemaArray? oneOf = null,
         in Corvus.Json.JsonSchema.Draft202012.Applicator.PatternPropertiesEntity? patternProperties = null,
@@ -623,6 +623,7 @@ public readonly partial struct Applicator
         in Corvus.Json.JsonSchema.Draft202012.Schema? then = null)
     {
         var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
+
         if (additionalProperties is not null)
         {
             builder.Add(JsonPropertyNames.AdditionalProperties, additionalProperties.Value.AsAny);
@@ -658,9 +659,9 @@ public readonly partial struct Applicator
             builder.Add(JsonPropertyNames.If, ifEntity.Value.AsAny);
         }
 
-        if (items is not null)
+        if (itemsValue is not null)
         {
-            builder.Add(JsonPropertyNames.Items, items.Value.AsAny);
+            builder.Add(JsonPropertyNames.ItemsValue, itemsValue.Value.AsAny);
         }
 
         if (not is not null)
@@ -1233,9 +1234,9 @@ public readonly partial struct Applicator
         public const string If = "if";
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="Items"/>.
+        /// Gets the JSON property name for <see cref="ItemsValue"/>.
         /// </summary>
-        public const string Items = "items";
+        public const string ItemsValue = "items";
 
         /// <summary>
         /// Gets the JSON property name for <see cref="Not"/>.
@@ -1308,9 +1309,9 @@ public readonly partial struct Applicator
         public static ReadOnlySpan<byte> IfUtf8 => "if"u8;
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="Items"/>.
+        /// Gets the JSON property name for <see cref="ItemsValue"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> ItemsUtf8 => "items"u8;
+        public static ReadOnlySpan<byte> ItemsValueUtf8 => "items"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="Not"/>.

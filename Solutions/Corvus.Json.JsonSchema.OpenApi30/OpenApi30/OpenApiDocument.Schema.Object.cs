@@ -16,6 +16,7 @@ using Corvus.Json;
 using Corvus.Json.Internal;
 
 namespace Corvus.Json.JsonSchema.OpenApi30;
+
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -537,7 +538,7 @@ public readonly partial struct OpenApiDocument
         /// <summary>
         /// Gets the (optional) <c>items</c> property.
         /// </summary>
-        public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.ItemsEntity Items
+        public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.ItemsEntity ItemsValue
         {
             get
             {
@@ -548,7 +549,7 @@ public readonly partial struct OpenApiDocument
                         return default;
                     }
 
-                    if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.ItemsUtf8, out JsonElement result))
+                    if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.ItemsValueUtf8, out JsonElement result))
                     {
                         return new(result);
                     }
@@ -556,7 +557,7 @@ public readonly partial struct OpenApiDocument
 
                 if ((this.backing & Backing.Object) != 0)
                 {
-                    if (this.objectBacking.TryGetValue(JsonPropertyNames.Items, out JsonAny result))
+                    if (this.objectBacking.TryGetValue(JsonPropertyNames.ItemsValue, out JsonAny result))
                     {
                         return result.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.ItemsEntity>();
                     }
@@ -1277,7 +1278,7 @@ public readonly partial struct OpenApiDocument
             in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.ExclusiveMinimumEntity? exclusiveMinimum = null,
             in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExternalDocumentation? externalDocs = null,
             in Corvus.Json.JsonString? format = null,
-            in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.ItemsEntity? items = null,
+            in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.ItemsEntity? itemsValue = null,
             in Corvus.Json.JsonNumber? maximum = null,
             in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MaxItemsEntity? maxItems = null,
             in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MaxLengthEntity? maxLength = null,
@@ -1301,6 +1302,7 @@ public readonly partial struct OpenApiDocument
             in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Xml? xmlValue = null)
         {
             var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
+
             if (additionalProperties is not null)
             {
                 builder.Add(JsonPropertyNames.AdditionalProperties, additionalProperties.Value.AsAny);
@@ -1366,9 +1368,9 @@ public readonly partial struct OpenApiDocument
                 builder.Add(JsonPropertyNames.Format, format.Value.AsAny);
             }
 
-            if (items is not null)
+            if (itemsValue is not null)
             {
-                builder.Add(JsonPropertyNames.Items, items.Value.AsAny);
+                builder.Add(JsonPropertyNames.ItemsValue, itemsValue.Value.AsAny);
             }
 
             if (maximum is not null)
@@ -2065,9 +2067,9 @@ public readonly partial struct OpenApiDocument
             public const string Format = "format";
 
             /// <summary>
-            /// Gets the JSON property name for <see cref="Items"/>.
+            /// Gets the JSON property name for <see cref="ItemsValue"/>.
             /// </summary>
-            public const string Items = "items";
+            public const string ItemsValue = "items";
 
             /// <summary>
             /// Gets the JSON property name for <see cref="Maximum"/>.
@@ -2240,9 +2242,9 @@ public readonly partial struct OpenApiDocument
             public static ReadOnlySpan<byte> FormatUtf8 => "format"u8;
 
             /// <summary>
-            /// Gets the JSON property name for <see cref="Items"/>.
+            /// Gets the JSON property name for <see cref="ItemsValue"/>.
             /// </summary>
-            public static ReadOnlySpan<byte> ItemsUtf8 => "items"u8;
+            public static ReadOnlySpan<byte> ItemsValueUtf8 => "items"u8;
 
             /// <summary>
             /// Gets the JSON property name for <see cref="Maximum"/>.

@@ -14,6 +14,7 @@ using System.Text.Json;
 using Corvus.Json;
 
 namespace Corvus.Json.JsonSchema.OpenApi31;
+
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -50,13 +51,16 @@ public readonly partial struct OpenApiDocument
                 }
 
                 JsonValueKind valueKind = this.ValueKind;
+
                 result = CorvusValidation.CompositionAllOfValidationHandler(this, result, level);
+
                 if (level == ValidationLevel.Flag && !result.IsValid)
                 {
                     return result;
                 }
 
                 result = CorvusValidation.ObjectValidationHandler(this, valueKind, result, level);
+
                 if (level == ValidationLevel.Flag && !result.IsValid)
                 {
                     return result;
@@ -100,6 +104,7 @@ public readonly partial struct OpenApiDocument
                 {
                     ValidationContext result = validationContext;
                     ValidationContext childContextBase = result;
+
                     ValidationContext refResult = childContextBase.CreateChildContext();
                     if (level > ValidationLevel.Basic)
                     {
@@ -107,6 +112,7 @@ public readonly partial struct OpenApiDocument
                     }
 
                     refResult = value.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Content>().Validate(refResult, level);
+
                     if (!refResult.IsValid)
                     {
                         if (level >= ValidationLevel.Basic)
@@ -150,6 +156,7 @@ public readonly partial struct OpenApiDocument
                             ValidationContext ignoredResult = validationContext;
                             ignoredResult = ignoredResult.WithResult(isValid: true, "Validation maxProperties - ignored because the value is not an object", "maxProperties");
                             ignoredResult = ignoredResult.WithResult(isValid: true, "Validation minProperties - ignored because the value is not an object", "minProperties");
+
                             return ignoredResult;
                         }
 
@@ -157,6 +164,7 @@ public readonly partial struct OpenApiDocument
                     }
 
                     int propertyCount = value.Count;
+
                     if (propertyCount <= MaxProperties)
                     {
                         if (level == ValidationLevel.Verbose)

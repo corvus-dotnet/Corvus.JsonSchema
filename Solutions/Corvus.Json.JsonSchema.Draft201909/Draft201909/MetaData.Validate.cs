@@ -35,13 +35,16 @@ public readonly partial struct MetaData
         }
 
         JsonValueKind valueKind = this.ValueKind;
+
         result = CorvusValidation.TypeValidationHandler(valueKind, result, level);
+
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
             return result;
         }
 
         result = CorvusValidation.ObjectValidationHandler(this, valueKind, result, level);
+
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
             return result;
@@ -74,6 +77,7 @@ public readonly partial struct MetaData
             ValidationLevel level = ValidationLevel.Flag)
         {
             bool isValid = false;
+
             ValidationContext localResultObject = Corvus.Json.ValidateWithoutCoreType.TypeObject(valueKind, ValidationContext.ValidContext, level, "type");
             if (level == ValidationLevel.Flag && localResultObject.IsValid)
             {
@@ -141,6 +145,7 @@ public readonly partial struct MetaData
                 {
                     ValidationContext ignoredResult = validationContext;
                     ignoredResult = ignoredResult.WithResult(isValid: true, "Validation properties - ignored because the value is not an object", "properties");
+
                     return ignoredResult;
                 }
 
@@ -165,6 +170,7 @@ public readonly partial struct MetaData
                     }
 
                     result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                     if (level > ValidationLevel.Basic)
                     {
                         result = result.PopLocation();
@@ -185,6 +191,7 @@ public readonly partial struct MetaData
                     }
 
                     result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                     if (level > ValidationLevel.Basic)
                     {
                         result = result.PopLocation();
@@ -205,6 +212,7 @@ public readonly partial struct MetaData
                     }
 
                     result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                     if (level > ValidationLevel.Basic)
                     {
                         result = result.PopLocation();
@@ -225,6 +233,7 @@ public readonly partial struct MetaData
                     }
 
                     result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                     if (level > ValidationLevel.Basic)
                     {
                         result = result.PopLocation();
@@ -245,6 +254,7 @@ public readonly partial struct MetaData
                     }
 
                     result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                     if (level > ValidationLevel.Basic)
                     {
                         result = result.PopLocation();
@@ -265,6 +275,7 @@ public readonly partial struct MetaData
                     }
 
                     result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                     if (level > ValidationLevel.Basic)
                     {
                         result = result.PopLocation();
@@ -285,6 +296,7 @@ public readonly partial struct MetaData
                     }
 
                     result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                     if (level > ValidationLevel.Basic)
                     {
                         result = result.PopLocation();

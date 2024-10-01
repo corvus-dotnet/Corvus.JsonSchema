@@ -35,6 +35,7 @@ public readonly partial struct OtherNames
         }
 
         result = CorvusValidation.CompositionOneOfValidationHandler(this, result, level);
+
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
             return result;
@@ -67,7 +68,9 @@ public readonly partial struct OtherNames
             ValidationLevel level = ValidationLevel.Flag)
         {
             ValidationContext result = validationContext;
+
             int oneOfFoundValid = 0;
+
             ValidationContext oneOfChildContext0 = validationContext.CreateChildContext();
             if (level > ValidationLevel.Basic)
             {
@@ -75,6 +78,7 @@ public readonly partial struct OtherNames
             }
 
             ValidationContext oneOfResult0 = value.As<Sandbox.Models.PersonNameElement>().Validate(oneOfChildContext0, level);
+
             if (oneOfResult0.IsValid)
             {
                 result = result.MergeChildContext(oneOfResult0, level >= ValidationLevel.Verbose);
@@ -95,6 +99,7 @@ public readonly partial struct OtherNames
             }
 
             ValidationContext oneOfResult1 = value.As<Sandbox.Models.PersonNameElementArray>().Validate(oneOfChildContext1, level);
+
             if (oneOfResult1.IsValid)
             {
                 result = result.MergeChildContext(oneOfResult1, level >= ValidationLevel.Verbose);

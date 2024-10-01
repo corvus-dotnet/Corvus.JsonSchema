@@ -14,6 +14,7 @@ using System.Text.Json;
 using Corvus.Json;
 
 namespace Corvus.Json.JsonSchema.OpenApi30;
+
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -60,13 +61,16 @@ public readonly partial struct OpenApiDocument
                 }
 
                 JsonValueKind valueKind = this.ValueKind;
+
                 result = CorvusValidation.CompositionAllOfValidationHandler(this, result, level);
+
                 if (level == ValidationLevel.Flag && !result.IsValid)
                 {
                     return result;
                 }
 
                 result = CorvusValidation.ObjectValidationHandler(this, valueKind, result, level);
+
                 if (level == ValidationLevel.Flag && !result.IsValid)
                 {
                     return result;
@@ -100,6 +104,7 @@ public readonly partial struct OpenApiDocument
                 {
                     ValidationContext result = validationContext;
                     ValidationContext childContextBase = result;
+
                     ValidationContext allOfResult0 = childContextBase.CreateChildContext();
                     if (level > ValidationLevel.Basic)
                     {
@@ -107,6 +112,7 @@ public readonly partial struct OpenApiDocument
                     }
 
                     allOfResult0 = value.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf0Entity>().Validate(allOfResult0, level);
+
                     if (!allOfResult0.IsValid)
                     {
                         if (level >= ValidationLevel.Basic)
@@ -131,6 +137,7 @@ public readonly partial struct OpenApiDocument
                     }
 
                     allOfResult1 = value.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf1Entity>().Validate(allOfResult1, level);
+
                     if (!allOfResult1.IsValid)
                     {
                         if (level >= ValidationLevel.Basic)
@@ -155,6 +162,7 @@ public readonly partial struct OpenApiDocument
                     }
 
                     allOfResult2 = value.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf2Entity>().Validate(allOfResult2, level);
+
                     if (!allOfResult2.IsValid)
                     {
                         if (level >= ValidationLevel.Basic)
@@ -179,6 +187,7 @@ public readonly partial struct OpenApiDocument
                     }
 
                     allOfResult3 = value.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf3Entity>().Validate(allOfResult3, level);
+
                     if (!allOfResult3.IsValid)
                     {
                         if (level >= ValidationLevel.Basic)
@@ -203,6 +212,7 @@ public readonly partial struct OpenApiDocument
                     }
 
                     allOfResult4 = value.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf4Entity>().Validate(allOfResult4, level);
+
                     if (!allOfResult4.IsValid)
                     {
                         if (level >= ValidationLevel.Basic)
@@ -245,6 +255,7 @@ public readonly partial struct OpenApiDocument
                         {
                             ValidationContext ignoredResult = validationContext;
                             ignoredResult = ignoredResult.WithResult(isValid: true, "Validation required - ignored because the value is not an object", "required");
+
                             return ignoredResult;
                         }
 
@@ -252,6 +263,7 @@ public readonly partial struct OpenApiDocument
                     }
 
                     bool hasSeenContent = false;
+
                     int propertyCount = 0;
                     foreach (JsonObjectProperty property in value.EnumerateObject())
                     {
@@ -271,6 +283,7 @@ public readonly partial struct OpenApiDocument
                             }
 
                             result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                             if (level > ValidationLevel.Basic)
                             {
                                 result = result.PopLocation();

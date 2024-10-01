@@ -564,7 +564,7 @@ public readonly partial struct Schema
     /// <summary>
     /// Gets the (optional) <c>items</c> property.
     /// </summary>
-    public Corvus.Json.JsonSchema.Draft4.Schema.ItemsEntity Items
+    public Corvus.Json.JsonSchema.Draft4.Schema.ItemsEntity ItemsValue
     {
         get
         {
@@ -575,7 +575,7 @@ public readonly partial struct Schema
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.ItemsUtf8, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.ItemsValueUtf8, out JsonElement result))
                 {
                     return new(result);
                 }
@@ -583,7 +583,7 @@ public readonly partial struct Schema
 
             if ((this.backing & Backing.Object) != 0)
             {
-                if (this.objectBacking.TryGetValue(JsonPropertyNames.Items, out JsonAny result))
+                if (this.objectBacking.TryGetValue(JsonPropertyNames.ItemsValue, out JsonAny result))
                 {
                     return result.As<Corvus.Json.JsonSchema.Draft4.Schema.ItemsEntity>();
                 }
@@ -1214,7 +1214,7 @@ public readonly partial struct Schema
         in Corvus.Json.JsonSchema.Draft4.Schema.ExclusiveMinimumEntity? exclusiveMinimum = null,
         in Corvus.Json.JsonString? format = null,
         in Corvus.Json.JsonString? id = null,
-        in Corvus.Json.JsonSchema.Draft4.Schema.ItemsEntity? items = null,
+        in Corvus.Json.JsonSchema.Draft4.Schema.ItemsEntity? itemsValue = null,
         in Corvus.Json.JsonNumber? maximum = null,
         in Corvus.Json.JsonSchema.Draft4.Schema.PositiveInteger? maxItems = null,
         in Corvus.Json.JsonSchema.Draft4.Schema.PositiveInteger? maxLength = null,
@@ -1235,6 +1235,7 @@ public readonly partial struct Schema
         in Corvus.Json.JsonSchema.Draft4.Schema.UniqueItemsEntity? uniqueItems = null)
     {
         var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
+
         if (schemaValue is not null)
         {
             builder.Add(JsonPropertyNames.SchemaValue, schemaValue.Value.AsAny);
@@ -1305,9 +1306,9 @@ public readonly partial struct Schema
             builder.Add(JsonPropertyNames.Id, id.Value.AsAny);
         }
 
-        if (items is not null)
+        if (itemsValue is not null)
         {
-            builder.Add(JsonPropertyNames.Items, items.Value.AsAny);
+            builder.Add(JsonPropertyNames.ItemsValue, itemsValue.Value.AsAny);
         }
 
         if (maximum is not null)
@@ -1970,9 +1971,9 @@ public readonly partial struct Schema
         public const string Id = "id";
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="Items"/>.
+        /// Gets the JSON property name for <see cref="ItemsValue"/>.
         /// </summary>
-        public const string Items = "items";
+        public const string ItemsValue = "items";
 
         /// <summary>
         /// Gets the JSON property name for <see cref="Maximum"/>.
@@ -2135,9 +2136,9 @@ public readonly partial struct Schema
         public static ReadOnlySpan<byte> IdUtf8 => "id"u8;
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="Items"/>.
+        /// Gets the JSON property name for <see cref="ItemsValue"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> ItemsUtf8 => "items"u8;
+        public static ReadOnlySpan<byte> ItemsValueUtf8 => "items"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="Maximum"/>.

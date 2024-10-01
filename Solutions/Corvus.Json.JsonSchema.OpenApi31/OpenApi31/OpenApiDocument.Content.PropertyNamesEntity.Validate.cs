@@ -14,6 +14,7 @@ using System.Text.Json;
 using Corvus.Json;
 
 namespace Corvus.Json.JsonSchema.OpenApi31;
+
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -50,7 +51,9 @@ public readonly partial struct OpenApiDocument
                 }
 
                 JsonValueKind valueKind = this.ValueKind;
+
                 result = CorvusValidation.FormatValidationHandler(this, valueKind, result, level);
+
                 if (level == ValidationLevel.Flag && !result.IsValid)
                 {
                     return result;
@@ -88,6 +91,7 @@ public readonly partial struct OpenApiDocument
                     {
                         ValidationContext unknownResult = validationContext;
                         unknownResult = unknownResult.WithResult(isValid: true, "Validation format - ignored 'media-range' because the format is not recognized.");
+
                         return unknownResult;
                     }
 

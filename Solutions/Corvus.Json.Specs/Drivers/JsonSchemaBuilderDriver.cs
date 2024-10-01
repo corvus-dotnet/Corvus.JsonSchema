@@ -344,6 +344,91 @@ public class JsonSchemaBuilderDriver : IDisposable
     }
 
     /// <summary>
+    /// Generate the code for the given type.
+    /// </summary>
+    /// <param name="schema">The schema.</param>
+    /// <param name="virtualFileName">The virtual file name for the schema.</param>
+    /// <param name="featureName">The unique name of the feature.</param>
+    /// <param name="scenarioName">The unique name of the scenario.</param>
+    /// <param name="validateFormat">If true, the format keyword will be validated.</param>
+    /// <param name="optionalAsNullable">If true, optional properties are generated as nullable.</param>
+    /// <param name="useImplicitOperatorString">If true, conversion operators to string are implicit rather than explicit.</param>
+    /// <returns>A <see cref="ValueTask{Type}"/> which, when complete, returns the <see cref="Type"/> generated for the schema.</returns>
+    public async ValueTask<IReadOnlyCollection<GeneratedCodeFile>> GenerateCodeForVirtualFile(
+        string schema,
+        string virtualFileName,
+        string featureName,
+        string scenarioName,
+        bool validateFormat,
+        bool optionalAsNullable,
+        bool useImplicitOperatorString)
+    {
+        string baseDirectory = this.configuration[$"{this.settingsKey}:testBaseDirectory"]!;
+        string path = Path.Combine(baseDirectory, virtualFileName);
+
+        if (SchemaReferenceNormalization.TryNormalizeSchemaReference(path, out string? result))
+        {
+            path = result;
+        }
+
+        this.builder.AddDocument(path, JsonDocument.Parse(schema));
+
+        TypeDeclaration rootType = await this.builder.AddTypeDeclarationsAsync(new(path), this.defaultVocabulary, true);
+
+        var options = new CSharpLanguageProvider.Options(
+            $"{featureName}Feature.{scenarioName}",
+            alwaysAssertFormat: validateFormat,
+            optionalAsNullable: optionalAsNullable,
+            useImplicitOperatorString: useImplicitOperatorString);
+
+        var languageProvider = CSharpLanguageProvider.DefaultWithOptions(options);
+        return
+            this.builder.GenerateCodeUsing(
+            languageProvider,
+            CancellationToken.None,
+            rootType);
+    }
+
+    /// <summary>
+    /// Generates the code for the given root Schema element.
+    /// </summary>
+    /// <param name="filename">The filename containing the Schema.</param>
+    /// <param name="schemaPath">The path to the Schema in the file.</param>
+    /// <param name="featureName">The feature name for the type.</param>
+    /// <param name="scenarioName">The scenario name for the type.</param>
+    /// <param name="validateFormat">If true, the format keyword will be validated.</param>
+    /// <param name="optionalAsNullable">If true, optional properties are generated as nullable.</param>
+    /// <param name="useImplicitOperatorString">If true, conversion operators to string are implicit rather than explicit.</param>
+    /// <returns>The generated code.</returns>
+    public async ValueTask<IReadOnlyCollection<GeneratedCodeFile>> GenerateCodeForJsonSchemaTestSuite(
+        string filename,
+        string schemaPath,
+        string featureName,
+        string scenarioName,
+        bool validateFormat,
+        bool optionalAsNullable,
+        bool useImplicitOperatorString)
+    {
+        string baseDirectory = this.configuration[$"{this.settingsKey}:testBaseDirectory"]!;
+        string path = Path.Combine(baseDirectory, filename) + schemaPath;
+
+        TypeDeclaration rootType = await this.builder.AddTypeDeclarationsAsync(new(path), this.defaultVocabulary, true);
+
+        var options = new CSharpLanguageProvider.Options(
+            $"{featureName}Feature.{scenarioName}",
+            alwaysAssertFormat: validateFormat,
+            optionalAsNullable: optionalAsNullable,
+            useImplicitOperatorString: useImplicitOperatorString);
+
+        var languageProvider = CSharpLanguageProvider.DefaultWithOptions(options);
+        return
+            this.builder.GenerateCodeUsing(
+            languageProvider,
+            CancellationToken.None,
+            rootType);
+    }
+
+    /// <summary>
     /// Generates a type for the given root Schema element.
     /// </summary>
     /// <param name="filename">The filename containing the Schema.</param>

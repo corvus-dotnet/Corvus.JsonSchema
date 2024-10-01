@@ -14,6 +14,7 @@ using System.Text.Json;
 using Corvus.Json;
 
 namespace Corvus.Json.JsonSchema.OpenApi31;
+
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -45,6 +46,7 @@ public readonly partial struct OpenApiDocument
             }
 
             result = CorvusValidation.TernaryIfValidationHandler(this, result, level);
+
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;
@@ -77,12 +79,14 @@ public readonly partial struct OpenApiDocument
                 ValidationLevel level = ValidationLevel.Flag)
             {
                 ValidationContext result = validationContext;
+
                 if (level > ValidationLevel.Basic)
                 {
                     result = result.PushValidationLocationReducedPathModifier(new("#/if"));
                 }
 
                 ValidationContext ifResult = value.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.PathItemOrReference.RequiredRef>().Validate(validationContext.CreateChildContext(), level);
+
                 if (!ifResult.IsValid)
                 {
                     if (level >= ValidationLevel.Verbose)
@@ -115,6 +119,7 @@ public readonly partial struct OpenApiDocument
                     }
 
                     ValidationContext thenResult = value.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Reference>().Validate(validationContext.CreateChildContext(), level);
+
                     if (!thenResult.IsValid)
                     {
                         if (level >= ValidationLevel.Basic)
@@ -153,6 +158,7 @@ public readonly partial struct OpenApiDocument
                     }
 
                     ValidationContext elseResult = value.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.PathItem>().Validate(validationContext.CreateChildContext(), level);
+
                     if (!elseResult.IsValid)
                     {
                         if (level >= ValidationLevel.Basic)

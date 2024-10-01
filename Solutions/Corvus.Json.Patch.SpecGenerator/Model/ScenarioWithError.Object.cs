@@ -311,6 +311,7 @@ public readonly partial struct ScenarioWithError
         builder.Add(JsonPropertyNames.Doc, doc.AsAny);
         builder.Add(JsonPropertyNames.Error, error.AsAny);
         builder.Add(JsonPropertyNames.Patch, patch.AsAny);
+
         if (comment is not null)
         {
             builder.Add(JsonPropertyNames.Comment, comment.Value.AsAny);

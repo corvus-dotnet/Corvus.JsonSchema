@@ -227,6 +227,7 @@ public readonly partial struct Content
         in Corvus.Json.JsonSchema.Draft202012.Schema? contentSchema = null)
     {
         var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
+
         if (contentEncoding is not null)
         {
             builder.Add(JsonPropertyNames.ContentEncoding, contentEncoding.Value.AsAny);

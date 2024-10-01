@@ -425,6 +425,7 @@ public readonly partial struct Core
         in Corvus.Json.JsonSchema.Draft202012.Core.VocabularyEntity? vocabulary = null)
     {
         var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
+
         if (anchor is not null)
         {
             builder.Add(JsonPropertyNames.Anchor, anchor.Value.AsAny);

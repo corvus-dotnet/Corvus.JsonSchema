@@ -68,18 +68,6 @@ public class ValidateLargeDocumentUsingJsonMarshal
     [Benchmark(Baseline = true)]
     public bool ValidateLargeArrayCorvusV4()
     {
-        LowAllocJsonUtils.UseFastPath = false;
-        ValidationContext result = this.personArrayV4.Validate(ValidationContext.ValidContext);
-        return result.IsValid;
-    }
-
-    /// <summary>
-    /// Validates using the Corvus V4 types.
-    /// </summary>
-    [Benchmark]
-    public bool ValidateLargeArrayCorvusV4Fast()
-    {
-        LowAllocJsonUtils.UseFastPath = true;
         ValidationContext result = this.personArrayV4.Validate(ValidationContext.ValidContext);
         return result.IsValid;
     }

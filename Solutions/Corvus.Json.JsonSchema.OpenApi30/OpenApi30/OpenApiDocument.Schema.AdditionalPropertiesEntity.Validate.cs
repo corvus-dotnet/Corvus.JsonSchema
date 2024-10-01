@@ -14,6 +14,7 @@ using System.Text.Json;
 using Corvus.Json;
 
 namespace Corvus.Json.JsonSchema.OpenApi30;
+
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -60,6 +61,7 @@ public readonly partial struct OpenApiDocument
                 }
 
                 result = CorvusValidation.CompositionOneOfValidationHandler(this, result, level);
+
                 if (level == ValidationLevel.Flag && !result.IsValid)
                 {
                     return result;
@@ -92,7 +94,9 @@ public readonly partial struct OpenApiDocument
                     ValidationLevel level = ValidationLevel.Flag)
                 {
                     ValidationContext result = validationContext;
+
                     int oneOfFoundValid = 0;
+
                     ValidationContext oneOfChildContext0 = validationContext.CreateChildContext();
                     if (level > ValidationLevel.Basic)
                     {
@@ -100,6 +104,7 @@ public readonly partial struct OpenApiDocument
                     }
 
                     ValidationContext oneOfResult0 = value.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema>().Validate(oneOfChildContext0, level);
+
                     if (oneOfResult0.IsValid)
                     {
                         result = result.MergeChildContext(oneOfResult0, level >= ValidationLevel.Verbose);
@@ -120,6 +125,7 @@ public readonly partial struct OpenApiDocument
                     }
 
                     ValidationContext oneOfResult1 = value.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Reference>().Validate(oneOfChildContext1, level);
+
                     if (oneOfResult1.IsValid)
                     {
                         result = result.MergeChildContext(oneOfResult1, level >= ValidationLevel.Verbose);
@@ -140,6 +146,7 @@ public readonly partial struct OpenApiDocument
                     }
 
                     ValidationContext oneOfResult2 = value.As<Corvus.Json.JsonBoolean>().Validate(oneOfChildContext2, level);
+
                     if (oneOfResult2.IsValid)
                     {
                         result = result.MergeChildContext(oneOfResult2, level >= ValidationLevel.Verbose);

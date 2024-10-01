@@ -806,6 +806,7 @@ public readonly partial struct GeneratorConfig
         var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
         builder.Add(JsonPropertyNames.RootNamespace, rootNamespace.AsAny);
         builder.Add(JsonPropertyNames.TypesToGenerate, typesToGenerate.AsAny);
+
         if (additionalFiles is not null)
         {
             builder.Add(JsonPropertyNames.AdditionalFiles, additionalFiles.Value.AsAny);

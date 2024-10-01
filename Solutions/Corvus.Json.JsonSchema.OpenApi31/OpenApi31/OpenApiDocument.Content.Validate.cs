@@ -14,6 +14,7 @@ using System.Text.Json;
 using Corvus.Json;
 
 namespace Corvus.Json.JsonSchema.OpenApi31;
+
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -46,13 +47,16 @@ public readonly partial struct OpenApiDocument
 
             JsonValueKind valueKind = this.ValueKind;
             result = result.UsingEvaluatedProperties();
+
             result = CorvusValidation.TypeValidationHandler(valueKind, result, level);
+
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;
             }
 
             result = CorvusValidation.ObjectValidationHandler(this, valueKind, result, level);
+
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;
@@ -110,6 +114,7 @@ public readonly partial struct OpenApiDocument
                         ValidationContext ignoredResult = validationContext;
                         ignoredResult = ignoredResult.WithResult(isValid: true, "Validation additionalProperties - ignored because the value is not an object", "additionalProperties");
                         ignoredResult = ignoredResult.WithResult(isValid: true, "Validation propertyNames - ignored because the value is not an object", "propertyNames");
+
                         return ignoredResult;
                     }
 
@@ -120,6 +125,7 @@ public readonly partial struct OpenApiDocument
                 foreach (JsonObjectProperty<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.MediaType> property in value.EnumerateObject())
                 {
                     string? propertyNameAsString = null;
+
                     if (level > ValidationLevel.Basic)
                     {
                         result = result.PushValidationLocationReducedPathModifier(new("#/propertyNames"));

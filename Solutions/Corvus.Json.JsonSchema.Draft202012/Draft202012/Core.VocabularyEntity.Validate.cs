@@ -14,6 +14,7 @@ using System.Text.Json;
 using Corvus.Json;
 
 namespace Corvus.Json.JsonSchema.Draft202012;
+
 /// <summary>
 /// Core vocabulary meta-schema
 /// </summary>
@@ -41,13 +42,16 @@ public readonly partial struct Core
 
             JsonValueKind valueKind = this.ValueKind;
             result = result.UsingEvaluatedProperties();
+
             result = CorvusValidation.TypeValidationHandler(valueKind, result, level);
+
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;
             }
 
             result = CorvusValidation.ObjectValidationHandler(this, valueKind, result, level);
+
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;
@@ -105,6 +109,7 @@ public readonly partial struct Core
                         ValidationContext ignoredResult = validationContext;
                         ignoredResult = ignoredResult.WithResult(isValid: true, "Validation additionalProperties - ignored because the value is not an object", "additionalProperties");
                         ignoredResult = ignoredResult.WithResult(isValid: true, "Validation propertyNames - ignored because the value is not an object", "propertyNames");
+
                         return ignoredResult;
                     }
 
@@ -115,6 +120,7 @@ public readonly partial struct Core
                 foreach (JsonObjectProperty<Corvus.Json.JsonBoolean> property in value.EnumerateObject())
                 {
                     string? propertyNameAsString = null;
+
                     if (level > ValidationLevel.Basic)
                     {
                         result = result.PushValidationLocationReducedPathModifier(new("#/propertyNames/$ref"));

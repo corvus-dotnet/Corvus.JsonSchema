@@ -239,6 +239,7 @@ public readonly partial struct ScenarioCommon
         var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
         builder.Add(JsonPropertyNames.Doc, doc.AsAny);
         builder.Add(JsonPropertyNames.Patch, patch.AsAny);
+
         if (comment is not null)
         {
             builder.Add(JsonPropertyNames.Comment, comment.Value.AsAny);

@@ -788,6 +788,7 @@ public readonly partial struct Validation
         in Corvus.Json.JsonSchema.Draft201909.Validation.UniqueItemsEntity? uniqueItems = null)
     {
         var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
+
         if (constEntity is not null)
         {
             builder.Add(JsonPropertyNames.Const, constEntity.Value.AsAny);

@@ -475,6 +475,7 @@ public readonly partial struct OpenApiDocument
         var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
         builder.Add(JsonPropertyNames.InfoValue, infoValue.AsAny);
         builder.Add(JsonPropertyNames.Openapi, openapi.AsAny);
+
         if (componentsValue is not null)
         {
             builder.Add(JsonPropertyNames.ComponentsValue, componentsValue.Value.AsAny);

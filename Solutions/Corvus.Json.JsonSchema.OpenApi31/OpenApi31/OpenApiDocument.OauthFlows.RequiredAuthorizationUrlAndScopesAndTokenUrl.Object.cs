@@ -15,6 +15,7 @@ using Corvus.Json;
 using Corvus.Json.Internal;
 
 namespace Corvus.Json.JsonSchema.OpenApi31;
+
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -293,6 +294,7 @@ public readonly partial struct OpenApiDocument
                 builder.Add(JsonPropertyNames.AuthorizationUrl, authorizationUrl.AsAny);
                 builder.Add(JsonPropertyNames.Scopes, scopes.AsAny);
                 builder.Add(JsonPropertyNames.TokenUrl, tokenUrl.AsAny);
+
                 if (refreshUrl is not null)
                 {
                     builder.Add(JsonPropertyNames.RefreshUrl, refreshUrl.Value.AsAny);
