@@ -74,6 +74,11 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
         [Description("If true, conversion operators to string are implicit, rather than explicit.")]
         [DefaultValue(false)]
         public bool UseImplicitOperatorString { get; init; }
+
+        [CommandOption("--useUnixLineEndings")]
+        [Description("If true, line endings emitted using the Unix style ('\\n'). Otherwise, it uses the Windows style ('\\r\\n').")]
+        [DefaultValue(false)]
+        public bool UseUnixLineEndings { get; init; }
     }
 
     /// <inheritdoc/>
@@ -97,7 +102,8 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
             outputMapFile: settings.OutputMapFile.AsNullableJsonString(),
             outputPath: settings.OutputPath.AsNullableJsonString(),
             useSchemaValue: settings.UseSchema != SchemaVariant.NotSpecified ? (GeneratorConfig.UseSchema)settings.UseSchema.ToString() : default(GeneratorConfig.UseSchema?),
-            useImplicitOperatorString: settings.UseImplicitOperatorString);
+            useImplicitOperatorString: settings.UseImplicitOperatorString,
+            useUnixLineEndings: settings.UseUnixLineEndings);
 
         return GenerationDriver.GenerateTypes(config);
     }

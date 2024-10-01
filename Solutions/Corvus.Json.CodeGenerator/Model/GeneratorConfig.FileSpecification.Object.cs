@@ -121,9 +121,6 @@ public readonly partial struct GeneratorConfig
         /// <para>
         /// The canonical uri of the file.
         /// </para>
-        /// <para>
-        /// The canonical uri of the file.
-        /// </para>
         /// </remarks>
         public Corvus.Json.JsonIri CanonicalUri
         {
@@ -160,9 +157,6 @@ public readonly partial struct GeneratorConfig
         /// <remarks>
         /// <para>
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
-        /// </para>
-        /// <para>
-        /// The path to the file to add to the generation context.
         /// </para>
         /// <para>
         /// The path to the file to add to the generation context.

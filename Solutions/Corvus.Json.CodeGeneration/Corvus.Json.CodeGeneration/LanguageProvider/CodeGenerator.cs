@@ -19,7 +19,8 @@ namespace Corvus.Json.CodeGeneration;
 /// <param name="cancellationToken">The cancellation token.</param>
 /// <param name="instancesPerIndent">The instances of the indent character sequence, per indent (defaults to 4).</param>
 /// <param name="indentSequence">The indent character sequence (defaults to ' ' (space).</param>
-public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken cancellationToken, int instancesPerIndent = 4, string indentSequence = " ")
+/// <param name="lineEndSequence">The line end sequence.</param>
+public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken cancellationToken, int instancesPerIndent = 4, string indentSequence = " ", string lineEndSequence = "\r\n")
 {
     private readonly string indentSequence = string.Concat(Enumerable.Repeat(indentSequence, instancesPerIndent));
     private readonly StringBuilder stringBuilder = new();
@@ -45,6 +46,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
         get => this.stringBuilder.Capacity;
         set => this.stringBuilder.Capacity = value;
     }
+
+    /// <summary>
+    /// Gets or sets the line end sequence.
+    /// </summary>
+    public string LineEndSequence { get; set; } = lineEndSequence;
 
     /// <summary>
     /// Gets the maximum capacity this builder is allowed to have.
@@ -773,7 +779,7 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
             return this;
         }
 
-        this.stringBuilder.AppendLine();
+        this.stringBuilder.Append(this.LineEndSequence);
         return this;
     }
 
@@ -789,7 +795,7 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
             return this;
         }
 
-        this.stringBuilder.AppendLine(value);
+        this.stringBuilder.Append(value).Append(this.LineEndSequence);
         return this;
     }
 
@@ -808,12 +814,12 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
 
         if (trimWhitespaceOnlyLines && string.IsNullOrWhiteSpace(value))
         {
-            this.AppendLine();
+            this.Append(this.LineEndSequence);
             return this;
         }
 
         this.WriteIndent();
-        this.stringBuilder.AppendLine(value);
+        this.stringBuilder.Append(value).Append(this.LineEndSequence);
         return this;
     }
 

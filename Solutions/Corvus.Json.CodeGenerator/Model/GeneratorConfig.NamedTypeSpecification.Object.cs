@@ -119,12 +119,6 @@ public readonly partial struct GeneratorConfig
         /// <para>
         /// This will generate the type directly in the namespace, rather than as a child of its containing type.
         /// </para>
-        /// <para>
-        /// The (optional) .NET namespace to use for the schema.
-        /// </para>
-        /// <para>
-        /// This will generate the type directly in the namespace, rather than as a child of its containing type.
-        /// </para>
         /// </remarks>
         public Corvus.Json.JsonString? DotnetNamespace
         {
@@ -175,9 +169,6 @@ public readonly partial struct GeneratorConfig
         /// <para>
         /// The .NET name to use for the schema.
         /// </para>
-        /// <para>
-        /// The .NET name to use for the schema.
-        /// </para>
         /// </remarks>
         public Corvus.Json.JsonString DotnetTypeName
         {
@@ -214,9 +205,6 @@ public readonly partial struct GeneratorConfig
         /// <remarks>
         /// <para>
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
-        /// </para>
-        /// <para>
-        /// The fully-qualified reference to the schema to name, include the base URI and the pointer fragment.
         /// </para>
         /// <para>
         /// The fully-qualified reference to the schema to name, include the base URI and the pointer fragment.

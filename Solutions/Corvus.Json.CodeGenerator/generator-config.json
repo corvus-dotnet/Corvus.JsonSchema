@@ -53,7 +53,11 @@
         },
         "useImplicitOperatorString": {
             "type": "boolean",
-            "description":  "If true, then the conversion operator to string will be implicit, rather than explicit.\r\nWarning: if this is enabled, it is easy to accidentally allocate strings without being explicit about doing so."
+            "description": "If true, then the conversion operator to string will be implicit, rather than explicit.\r\nWarning: if this is enabled, it is easy to accidentally allocate strings without being explicit about doing so."
+        },
+        "useUnixLineEndings": {
+            "type": "boolean",
+            "description":  "If true, then the generated files will use Unix line endings (\\n). Otherwise it will use Windows line endings (\\r\\n)."
         }
     },
     "$defs": {
