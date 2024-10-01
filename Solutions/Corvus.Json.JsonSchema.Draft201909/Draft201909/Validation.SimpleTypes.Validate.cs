@@ -14,6 +14,7 @@ using System.Text.Json;
 using Corvus.Json;
 
 namespace Corvus.Json.JsonSchema.Draft201909;
+
 /// <summary>
 /// Validation vocabulary meta-schema
 /// </summary>
@@ -40,6 +41,7 @@ public readonly partial struct Validation
             }
 
             result = CorvusValidation.CompositionAnyOfValidationHandler(this, result, level);
+
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;
@@ -220,6 +222,7 @@ public readonly partial struct Validation
                 ValidationLevel level = ValidationLevel.Flag)
             {
                 ValidationContext result = validationContext;
+
                 result = ValidateEnum(value, result, level);
                 if (!result.IsValid && level == ValidationLevel.Flag)
                 {
@@ -231,6 +234,7 @@ public readonly partial struct Validation
                 {
                     ValidationContext result = validationContext;
                     bool enumFoundValid = false;
+
                     enumFoundValid = value.Equals(CorvusValidation.Enum1);
                     if (!enumFoundValid)
                     {

@@ -14,6 +14,7 @@ using System.Text.Json;
 using Corvus.Json;
 
 namespace Corvus.Json.JsonSchema.Draft6;
+
 /// <summary>
 /// Core schema meta-schema
 /// </summary>
@@ -65,7 +66,9 @@ public readonly partial struct Schema
                 }
 
                 JsonValueKind valueKind = this.ValueKind;
+
                 result = CorvusValidation.FormatValidationHandler(this, valueKind, result, level);
+
                 if (level == ValidationLevel.Flag && !result.IsValid)
                 {
                     return result;
@@ -105,6 +108,7 @@ public readonly partial struct Schema
                         {
                             ValidationContext ignoredResult = validationContext;
                             ignoredResult = ignoredResult.WithResult(isValid: true, $"Validation format - ignored 'regex' because the value is of kind '{valueKind}' not 'String'.");
+
                             return ignoredResult;
                         }
 

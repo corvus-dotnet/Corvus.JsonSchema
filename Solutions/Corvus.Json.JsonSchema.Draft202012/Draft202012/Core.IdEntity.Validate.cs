@@ -15,6 +15,7 @@ using System.Text.RegularExpressions;
 using Corvus.Json;
 
 namespace Corvus.Json.JsonSchema.Draft202012;
+
 /// <summary>
 /// Core vocabulary meta-schema
 /// </summary>
@@ -41,13 +42,16 @@ public readonly partial struct Core
             }
 
             JsonValueKind valueKind = this.ValueKind;
+
             result = CorvusValidation.StringValidationHandler(this, valueKind, result, level);
+
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;
             }
 
             result = CorvusValidation.CompositionAllOfValidationHandler(this, result, level);
+
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;
@@ -92,6 +96,7 @@ public readonly partial struct Core
                     {
                         ValidationContext ignoredResult = validationContext;
                         ignoredResult = ignoredResult.WithResult(isValid: true, "Validation pattern - ignored because the value is not a string", "pattern");
+
                         return ignoredResult;
                     }
 
@@ -100,11 +105,13 @@ public readonly partial struct Core
 
                 ValidationContext result = validationContext;
                 value.AsString.TryGetValue(StringValidator, new Corvus.Json.Validate.ValidationContextWrapper(result, level), out result);
+
                 return result;
 
                 static bool StringValidator(ReadOnlySpan<char> input, in Corvus.Json.Validate.ValidationContextWrapper context, out ValidationContext result)
                 {
                     result = context.Context;
+
                     if (context.Level > ValidationLevel.Basic)
                     {
                         result = result.PushValidationLocationReducedPathModifier(new("#/pattern"));
@@ -158,6 +165,7 @@ public readonly partial struct Core
             {
                 ValidationContext result = validationContext;
                 ValidationContext childContextBase = result;
+
                 ValidationContext refResult = childContextBase.CreateChildContext();
                 if (level > ValidationLevel.Basic)
                 {
@@ -165,6 +173,7 @@ public readonly partial struct Core
                 }
 
                 refResult = value.As<Corvus.Json.JsonUriReference>().Validate(refResult, level);
+
                 if (!refResult.IsValid)
                 {
                     if (level >= ValidationLevel.Basic)

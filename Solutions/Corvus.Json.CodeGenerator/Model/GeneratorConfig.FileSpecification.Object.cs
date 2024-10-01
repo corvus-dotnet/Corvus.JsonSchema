@@ -15,6 +15,7 @@ using Corvus.Json;
 using Corvus.Json.Internal;
 
 namespace Corvus.Json.CodeGenerator;
+
 /// <summary>
 /// JSON Schema for a configuration driver file for the corvus codegenerator.
 /// </summary>
@@ -226,6 +227,7 @@ public readonly partial struct GeneratorConfig
             var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
             builder.Add(JsonPropertyNames.CanonicalUri, canonicalUri.AsAny);
             builder.Add(JsonPropertyNames.ContentPath, contentPath.AsAny);
+
             return new(builder.ToImmutable());
         }
 

@@ -14,6 +14,7 @@ using System.Text.Json;
 using Corvus.Json;
 
 namespace Corvus.Json.JsonSchema.Draft202012;
+
 /// <summary>
 /// Validation vocabulary meta-schema
 /// </summary>
@@ -50,6 +51,7 @@ public readonly partial struct Validation
             }
 
             result = CorvusValidation.CompositionAllOfValidationHandler(this, result, level);
+
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;
@@ -83,6 +85,7 @@ public readonly partial struct Validation
             {
                 ValidationContext result = validationContext;
                 ValidationContext childContextBase = result;
+
                 ValidationContext refResult = childContextBase.CreateChildContext();
                 if (level > ValidationLevel.Basic)
                 {
@@ -90,6 +93,7 @@ public readonly partial struct Validation
                 }
 
                 refResult = value.As<Corvus.Json.JsonSchema.Draft202012.Validation.NonNegativeInteger>().Validate(refResult, level);
+
                 if (!refResult.IsValid)
                 {
                     if (level >= ValidationLevel.Basic)

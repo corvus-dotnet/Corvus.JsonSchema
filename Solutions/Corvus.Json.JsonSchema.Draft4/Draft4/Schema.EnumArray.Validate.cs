@@ -14,6 +14,7 @@ using System.Text.Json;
 using Corvus.Json;
 
 namespace Corvus.Json.JsonSchema.Draft4;
+
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -53,13 +54,16 @@ public readonly partial struct Schema
             }
 
             JsonValueKind valueKind = this.ValueKind;
+
             result = CorvusValidation.TypeValidationHandler(valueKind, result, level);
+
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;
             }
 
             result = CorvusValidation.ArrayValidationHandler(this, valueKind, result, level);
+
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;
@@ -122,6 +126,7 @@ public readonly partial struct Schema
                         ValidationContext ignoredResult = validationContext;
                         ignoredResult = ignoredResult.WithResult(isValid: true, "Validation minItems - ignored because the value is not an array", "minItems");
                         ignoredResult = ignoredResult.WithResult(isValid: true, "Validation uniqueItems - ignored because the value is not an array", "uniqueItems");
+
                         return ignoredResult;
                     }
 
@@ -149,6 +154,7 @@ innerEnumerator.MoveNext())
                     {
                         if (innerEnumerator.Current.Equals(arrayEnumerator.Current))                        {
                             foundDuplicate = true;
+
                             if (level >= ValidationLevel.Detailed)
                             {
                                 result = result.WithResult(isValid: false, $"Validation uniqueItems - duplicate items were found at indices innerIndex and {length}.", "uniqueItems");

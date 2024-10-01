@@ -359,6 +359,7 @@ public readonly partial struct MetaData
         in Corvus.Json.JsonSchema.Draft202012.MetaData.WriteOnlyEntity? writeOnly = null)
     {
         var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
+
         if (defaultEntity is not null)
         {
             builder.Add(JsonPropertyNames.Default, defaultEntity.Value.AsAny);

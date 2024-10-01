@@ -14,6 +14,7 @@ using System.Text.Json;
 using Corvus.Json;
 
 namespace Corvus.Json.CodeGenerator;
+
 /// <summary>
 /// JSON Schema for a configuration driver file for the corvus codegenerator.
 /// </summary>
@@ -41,13 +42,16 @@ public readonly partial struct GeneratorConfig
 
             JsonValueKind valueKind = this.ValueKind;
             result = result.UsingEvaluatedProperties();
+
             result = CorvusValidation.TypeValidationHandler(valueKind, result, level);
+
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;
             }
 
             result = CorvusValidation.ObjectValidationHandler(this, valueKind, result, level);
+
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;
@@ -105,6 +109,7 @@ public readonly partial struct GeneratorConfig
                         ValidationContext ignoredResult = validationContext;
                         ignoredResult = ignoredResult.WithResult(isValid: true, "Validation propertyNames - ignored because the value is not an object", "propertyNames");
                         ignoredResult = ignoredResult.WithResult(isValid: true, "Validation unevaluatedProperties - ignored because the value is not an object", "unevaluatedProperties");
+
                         return ignoredResult;
                     }
 
@@ -115,6 +120,7 @@ public readonly partial struct GeneratorConfig
                 foreach (JsonObjectProperty<Corvus.Json.JsonString> property in value.EnumerateObject())
                 {
                     string? propertyNameAsString = null;
+
                     if (level > ValidationLevel.Basic)
                     {
                         result = result.PushValidationLocationReducedPathModifier(new("#/propertyNames"));

@@ -15,6 +15,7 @@ using Corvus.Json;
 using Corvus.Json.Internal;
 
 namespace Corvus.Json.JsonSchema.OpenApi31;
+
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -270,6 +271,7 @@ public readonly partial struct OpenApiDocument
             in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Schema? schemaValue = null)
         {
             var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
+
             if (encoding is not null)
             {
                 builder.Add(JsonPropertyNames.Encoding, encoding.Value.AsAny);

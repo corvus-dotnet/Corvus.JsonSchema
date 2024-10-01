@@ -243,9 +243,13 @@ public static class PublicCodeGeneratorExtensions
             return generator;
         }
 
-        if ((generator.ScopeType == ScopeType.Type && generator.EndsWith($";\n")) ||
-            generator.EndsWith($"}}\n") ||
-            generator.EndsWith($"#endif\n"))
+        if ((generator.ScopeType == ScopeType.Type &&
+                generator.EndsWith($";\n")) ||
+                generator.EndsWith("}\n") ||
+                generator.EndsWith("#endif\n") ||
+                generator.EndsWith(";\r\n") ||
+                generator.EndsWith("}\r\n") ||
+                generator.EndsWith("#endif\r\n"))
         {
             // Append a blank line
             generator.AppendLine();

@@ -15,6 +15,7 @@ using Corvus.Json;
 using Corvus.Json.Internal;
 
 namespace Corvus.Json.JsonSchema.OpenApi31;
+
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -175,6 +176,7 @@ public readonly partial struct OpenApiDocument
             public static TypeOidcEntity Create(in Corvus.Json.JsonUri? openIdConnectUrl = null)
             {
                 var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
+
                 if (openIdConnectUrl is not null)
                 {
                     builder.Add(JsonPropertyNames.OpenIdConnectUrl, openIdConnectUrl.Value.AsAny);

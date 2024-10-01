@@ -35,13 +35,16 @@ public readonly partial struct DisabledScenario
         }
 
         JsonValueKind valueKind = this.ValueKind;
+
         result = CorvusValidation.CompositionAllOfValidationHandler(this, result, level);
+
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
             return result;
         }
 
         result = CorvusValidation.ObjectValidationHandler(this, valueKind, result, level);
+
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
             return result;
@@ -75,6 +78,7 @@ public readonly partial struct DisabledScenario
         {
             ValidationContext result = validationContext;
             ValidationContext childContextBase = result;
+
             ValidationContext allOfResult0 = childContextBase.CreateChildContext();
             if (level > ValidationLevel.Basic)
             {
@@ -82,6 +86,7 @@ public readonly partial struct DisabledScenario
             }
 
             allOfResult0 = value.As<Corvus.Json.Patch.SpecGenerator.ScenarioCommon>().Validate(allOfResult0, level);
+
             if (!allOfResult0.IsValid)
             {
                 if (level >= ValidationLevel.Basic)
@@ -124,6 +129,7 @@ public readonly partial struct DisabledScenario
                 {
                     ValidationContext ignoredResult = validationContext;
                     ignoredResult = ignoredResult.WithResult(isValid: true, "Validation required - ignored because the value is not an object", "required");
+
                     return ignoredResult;
                 }
 
@@ -131,6 +137,7 @@ public readonly partial struct DisabledScenario
             }
 
             bool hasSeenDisabled = false;
+
             int propertyCount = 0;
             foreach (JsonObjectProperty property in value.EnumerateObject())
             {
@@ -150,6 +157,7 @@ public readonly partial struct DisabledScenario
                     }
 
                     result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                     if (level > ValidationLevel.Basic)
                     {
                         result = result.PopLocation();

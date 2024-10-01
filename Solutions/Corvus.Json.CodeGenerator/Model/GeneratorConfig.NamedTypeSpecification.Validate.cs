@@ -14,6 +14,7 @@ using System.Text.Json;
 using Corvus.Json;
 
 namespace Corvus.Json.CodeGenerator;
+
 /// <summary>
 /// JSON Schema for a configuration driver file for the corvus codegenerator.
 /// </summary>
@@ -40,13 +41,16 @@ public readonly partial struct GeneratorConfig
             }
 
             JsonValueKind valueKind = this.ValueKind;
+
             result = CorvusValidation.TypeValidationHandler(valueKind, result, level);
+
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;
             }
 
             result = CorvusValidation.ObjectValidationHandler(this, valueKind, result, level);
+
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;
@@ -104,6 +108,7 @@ public readonly partial struct GeneratorConfig
                         ValidationContext ignoredResult = validationContext;
                         ignoredResult = ignoredResult.WithResult(isValid: true, "Validation properties - ignored because the value is not an object", "properties");
                         ignoredResult = ignoredResult.WithResult(isValid: true, "Validation required - ignored because the value is not an object", "required");
+
                         return ignoredResult;
                     }
 
@@ -112,6 +117,7 @@ public readonly partial struct GeneratorConfig
 
                 bool hasSeenDotnetTypeName = false;
                 bool hasSeenReference = false;
+
                 int propertyCount = 0;
                 foreach (JsonObjectProperty property in value.EnumerateObject())
                 {
@@ -130,6 +136,7 @@ public readonly partial struct GeneratorConfig
                         }
 
                         result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                         if (level > ValidationLevel.Basic)
                         {
                             result = result.PopLocation();
@@ -151,6 +158,7 @@ public readonly partial struct GeneratorConfig
                         }
 
                         result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                         if (level > ValidationLevel.Basic)
                         {
                             result = result.PopLocation();
@@ -172,6 +180,7 @@ public readonly partial struct GeneratorConfig
                         }
 
                         result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                         if (level > ValidationLevel.Basic)
                         {
                             result = result.PopLocation();

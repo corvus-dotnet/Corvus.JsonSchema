@@ -14,6 +14,7 @@ using System.Text.Json;
 using Corvus.Json;
 
 namespace Corvus.Json.JsonSchema.Draft201909;
+
 /// <summary>
 /// Applicator vocabulary meta-schema
 /// </summary>
@@ -40,6 +41,7 @@ public readonly partial struct Applicator
             }
 
             result = CorvusValidation.CompositionAnyOfValidationHandler(this, result, level);
+
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;
@@ -72,7 +74,9 @@ public readonly partial struct Applicator
                 ValidationLevel level = ValidationLevel.Flag)
             {
                 ValidationContext result = validationContext;
+
                 bool anyOfFoundValid = false;
+
                 ValidationContext anyOfChildContext0 = validationContext.CreateChildContext();
                 if (level > ValidationLevel.Basic)
                 {
@@ -80,6 +84,7 @@ public readonly partial struct Applicator
                 }
 
                 ValidationContext anyOfResult0 = value.As<Corvus.Json.JsonSchema.Draft201909.Schema>().Validate(anyOfChildContext0, level);
+
                 if (anyOfResult0.IsValid)
                 {
                     if (level == ValidationLevel.Flag)
@@ -107,6 +112,7 @@ public readonly partial struct Applicator
                 }
 
                 ValidationContext anyOfResult1 = value.As<Corvus.Json.JsonSchema.Draft201909.Applicator.SchemaArray>().Validate(anyOfChildContext1, level);
+
                 if (anyOfResult1.IsValid)
                 {
                     if (level == ValidationLevel.Flag)

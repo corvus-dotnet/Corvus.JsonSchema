@@ -10,6 +10,7 @@
 #nullable enable
 
 using System.Diagnostics.CodeAnalysis;
+
 #if NET8_0_OR_GREATER
 using System.Numerics;
 #endif
@@ -18,6 +19,7 @@ using Corvus.Json;
 using Corvus.Json.Internal;
 
 namespace Corvus.Json.JsonSchema.Draft7;
+
 /// <summary>
 /// Core schema meta-schema
 /// </summary>

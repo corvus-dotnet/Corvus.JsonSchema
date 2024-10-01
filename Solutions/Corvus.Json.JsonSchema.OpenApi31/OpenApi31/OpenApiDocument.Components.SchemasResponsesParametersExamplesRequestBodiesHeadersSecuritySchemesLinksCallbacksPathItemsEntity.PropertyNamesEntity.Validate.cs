@@ -15,6 +15,7 @@ using System.Text.RegularExpressions;
 using Corvus.Json;
 
 namespace Corvus.Json.JsonSchema.OpenApi31;
+
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -56,7 +57,9 @@ public readonly partial struct OpenApiDocument
                     }
 
                     JsonValueKind valueKind = this.ValueKind;
+
                     result = CorvusValidation.StringValidationHandler(this, valueKind, result, level);
+
                     if (level == ValidationLevel.Flag && !result.IsValid)
                     {
                         return result;
@@ -101,6 +104,7 @@ public readonly partial struct OpenApiDocument
                             {
                                 ValidationContext ignoredResult = validationContext;
                                 ignoredResult = ignoredResult.WithResult(isValid: true, "Validation pattern - ignored because the value is not a string", "pattern");
+
                                 return ignoredResult;
                             }
 
@@ -109,11 +113,13 @@ public readonly partial struct OpenApiDocument
 
                         ValidationContext result = validationContext;
                         value.AsString.TryGetValue(StringValidator, new Corvus.Json.Validate.ValidationContextWrapper(result, level), out result);
+
                         return result;
 
                         static bool StringValidator(ReadOnlySpan<char> input, in Corvus.Json.Validate.ValidationContextWrapper context, out ValidationContext result)
                         {
                             result = context.Context;
+
                             if (context.Level > ValidationLevel.Basic)
                             {
                                 result = result.PushValidationLocationReducedPathModifier(new("#/pattern"));

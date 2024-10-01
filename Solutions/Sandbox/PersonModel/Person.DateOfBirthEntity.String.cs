@@ -16,6 +16,7 @@ using Corvus.Json;
 using Corvus.Json.Internal;
 
 namespace Sandbox.Models;
+
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>

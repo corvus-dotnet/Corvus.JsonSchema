@@ -311,6 +311,7 @@ public readonly partial struct ScenarioWithResult
         builder.Add(JsonPropertyNames.Doc, doc.AsAny);
         builder.Add(JsonPropertyNames.Expected, expected.AsAny);
         builder.Add(JsonPropertyNames.Patch, patch.AsAny);
+
         if (comment is not null)
         {
             builder.Add(JsonPropertyNames.Comment, comment.Value.AsAny);

@@ -48,13 +48,16 @@ public readonly partial struct Schema
         }
 
         JsonValueKind valueKind = this.ValueKind;
+
         result = CorvusValidation.TypeValidationHandler(valueKind, result, level);
+
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
             return result;
         }
 
         result = CorvusValidation.ObjectValidationHandler(this, valueKind, result, level);
+
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
             return result;
@@ -112,6 +115,7 @@ public readonly partial struct Schema
                     ValidationContext ignoredResult = validationContext;
                     ignoredResult = ignoredResult.WithResult(isValid: true, "Validation properties - ignored because the value is not an object", "properties");
                     ignoredResult = ignoredResult.WithResult(isValid: true, "Validation dependencies - ignored because the value is not an object", "dependencies");
+
                     return ignoredResult;
                 }
 
@@ -136,6 +140,7 @@ public readonly partial struct Schema
                     }
 
                     result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                     if (level > ValidationLevel.Basic)
                     {
                         result = result.PopLocation();
@@ -156,6 +161,7 @@ public readonly partial struct Schema
                     }
 
                     result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                     if (level > ValidationLevel.Basic)
                     {
                         result = result.PopLocation();
@@ -176,6 +182,7 @@ public readonly partial struct Schema
                     }
 
                     result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                     if (level > ValidationLevel.Basic)
                     {
                         result = result.PopLocation();
@@ -196,6 +203,7 @@ public readonly partial struct Schema
                     }
 
                     result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                     if (level > ValidationLevel.Basic)
                     {
                         result = result.PopLocation();
@@ -216,6 +224,7 @@ public readonly partial struct Schema
                     }
 
                     result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                     if (level > ValidationLevel.Basic)
                     {
                         result = result.PopLocation();
@@ -236,6 +245,7 @@ public readonly partial struct Schema
                     }
 
                     result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                     if (level > ValidationLevel.Basic)
                     {
                         result = result.PopLocation();
@@ -256,6 +266,7 @@ public readonly partial struct Schema
                     }
 
                     result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                     if (level > ValidationLevel.Basic)
                     {
                         result = result.PopLocation();
@@ -276,6 +287,7 @@ public readonly partial struct Schema
                     }
 
                     result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                     if (level > ValidationLevel.Basic)
                     {
                         result = result.PopLocation();
@@ -296,6 +308,7 @@ public readonly partial struct Schema
                     }
 
                     result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                     if (level > ValidationLevel.Basic)
                     {
                         result = result.PopLocation();
@@ -316,6 +329,7 @@ public readonly partial struct Schema
                     }
 
                     result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                     if (level > ValidationLevel.Basic)
                     {
                         result = result.PopLocation();
@@ -336,6 +350,7 @@ public readonly partial struct Schema
                     }
 
                     result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                     if (level > ValidationLevel.Basic)
                     {
                         result = result.PopLocation();
@@ -356,6 +371,7 @@ public readonly partial struct Schema
                     }
 
                     result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                     if (level > ValidationLevel.Basic)
                     {
                         result = result.PopLocation();
@@ -376,6 +392,7 @@ public readonly partial struct Schema
                     }
 
                     result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                     if (level > ValidationLevel.Basic)
                     {
                         result = result.PopLocation();
@@ -396,17 +413,18 @@ public readonly partial struct Schema
                     }
 
                     result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                     if (level > ValidationLevel.Basic)
                     {
                         result = result.PopLocation();
                     }
                 }
-                else if (property.NameEquals(JsonPropertyNames.ItemsUtf8, JsonPropertyNames.Items))
+                else if (property.NameEquals(JsonPropertyNames.ItemsValueUtf8, JsonPropertyNames.ItemsValue))
                 {
                     result = result.WithLocalProperty(propertyCount);
                     if (level > ValidationLevel.Basic)
                     {
-                        result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/items"), JsonPropertyNames.Items);
+                        result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/items"), JsonPropertyNames.ItemsValue);
                     }
 
                     ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonSchema.Draft4.Schema.ItemsEntity>().Validate(result.CreateChildContext(), level);
@@ -416,6 +434,7 @@ public readonly partial struct Schema
                     }
 
                     result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                     if (level > ValidationLevel.Basic)
                     {
                         result = result.PopLocation();
@@ -436,6 +455,7 @@ public readonly partial struct Schema
                     }
 
                     result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                     if (level > ValidationLevel.Basic)
                     {
                         result = result.PopLocation();
@@ -456,6 +476,7 @@ public readonly partial struct Schema
                     }
 
                     result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                     if (level > ValidationLevel.Basic)
                     {
                         result = result.PopLocation();
@@ -476,6 +497,7 @@ public readonly partial struct Schema
                     }
 
                     result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                     if (level > ValidationLevel.Basic)
                     {
                         result = result.PopLocation();
@@ -496,6 +518,7 @@ public readonly partial struct Schema
                     }
 
                     result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                     if (level > ValidationLevel.Basic)
                     {
                         result = result.PopLocation();
@@ -516,6 +539,7 @@ public readonly partial struct Schema
                     }
 
                     result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                     if (level > ValidationLevel.Basic)
                     {
                         result = result.PopLocation();
@@ -536,6 +560,7 @@ public readonly partial struct Schema
                     }
 
                     result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                     if (level > ValidationLevel.Basic)
                     {
                         result = result.PopLocation();
@@ -556,6 +581,7 @@ public readonly partial struct Schema
                     }
 
                     result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                     if (level > ValidationLevel.Basic)
                     {
                         result = result.PopLocation();
@@ -576,6 +602,7 @@ public readonly partial struct Schema
                     }
 
                     result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                     if (level > ValidationLevel.Basic)
                     {
                         result = result.PopLocation();
@@ -596,6 +623,7 @@ public readonly partial struct Schema
                     }
 
                     result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                     if (level > ValidationLevel.Basic)
                     {
                         result = result.PopLocation();
@@ -616,6 +644,7 @@ public readonly partial struct Schema
                     }
 
                     result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                     if (level > ValidationLevel.Basic)
                     {
                         result = result.PopLocation();
@@ -636,6 +665,7 @@ public readonly partial struct Schema
                     }
 
                     result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                     if (level > ValidationLevel.Basic)
                     {
                         result = result.PopLocation();
@@ -656,6 +686,7 @@ public readonly partial struct Schema
                     }
 
                     result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                     if (level > ValidationLevel.Basic)
                     {
                         result = result.PopLocation();
@@ -676,6 +707,7 @@ public readonly partial struct Schema
                     }
 
                     result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                     if (level > ValidationLevel.Basic)
                     {
                         result = result.PopLocation();
@@ -696,6 +728,7 @@ public readonly partial struct Schema
                     }
 
                     result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                     if (level > ValidationLevel.Basic)
                     {
                         result = result.PopLocation();
@@ -716,6 +749,7 @@ public readonly partial struct Schema
                     }
 
                     result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                     if (level > ValidationLevel.Basic)
                     {
                         result = result.PopLocation();
@@ -736,6 +770,7 @@ public readonly partial struct Schema
                     }
 
                     result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                     if (level > ValidationLevel.Basic)
                     {
                         result = result.PopLocation();
@@ -756,6 +791,7 @@ public readonly partial struct Schema
                     }
 
                     result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                     if (level > ValidationLevel.Basic)
                     {
                         result = result.PopLocation();
@@ -776,6 +812,7 @@ public readonly partial struct Schema
                     }
 
                     result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                     if (level > ValidationLevel.Basic)
                     {
                         result = result.PopLocation();

@@ -14,6 +14,7 @@ using System.Text.Json;
 using Corvus.Json;
 
 namespace Corvus.Json.Patch.Model;
+
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -45,13 +46,16 @@ public readonly partial struct JsonPatchDocument
             }
 
             JsonValueKind valueKind = this.ValueKind;
+
             result = CorvusValidation.CompositionAllOfValidationHandler(this, result, level);
+
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;
             }
 
             result = CorvusValidation.ObjectValidationHandler(this, valueKind, result, level);
+
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;
@@ -85,6 +89,7 @@ public readonly partial struct JsonPatchDocument
             {
                 ValidationContext result = validationContext;
                 ValidationContext childContextBase = result;
+
                 ValidationContext allOfResult0 = childContextBase.CreateChildContext();
                 if (level > ValidationLevel.Basic)
                 {
@@ -92,6 +97,7 @@ public readonly partial struct JsonPatchDocument
                 }
 
                 allOfResult0 = value.As<Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommon>().Validate(allOfResult0, level);
+
                 if (!allOfResult0.IsValid)
                 {
                     if (level >= ValidationLevel.Basic)
@@ -135,6 +141,7 @@ public readonly partial struct JsonPatchDocument
                         ValidationContext ignoredResult = validationContext;
                         ignoredResult = ignoredResult.WithResult(isValid: true, "Validation properties - ignored because the value is not an object", "properties");
                         ignoredResult = ignoredResult.WithResult(isValid: true, "Validation required - ignored because the value is not an object", "required");
+
                         return ignoredResult;
                     }
 
@@ -143,6 +150,7 @@ public readonly partial struct JsonPatchDocument
 
                 bool hasSeenOp = false;
                 bool hasSeenValue = false;
+
                 int propertyCount = 0;
                 foreach (JsonObjectProperty property in value.EnumerateObject())
                 {
@@ -162,6 +170,7 @@ public readonly partial struct JsonPatchDocument
                         }
 
                         result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                         if (level > ValidationLevel.Basic)
                         {
                             result = result.PopLocation();
@@ -183,6 +192,7 @@ public readonly partial struct JsonPatchDocument
                         }
 
                         result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
                         if (level > ValidationLevel.Basic)
                         {
                             result = result.PopLocation();

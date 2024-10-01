@@ -14,6 +14,7 @@ using System.Text.Json;
 using Corvus.Json;
 
 namespace Corvus.Json.Patch.Model;
+
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -45,12 +46,14 @@ public readonly partial struct JsonPatchDocument
             }
 
             result = CorvusValidation.CompositionAllOfValidationHandler(this, result, level);
+
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;
             }
 
             result = CorvusValidation.CompositionOneOfValidationHandler(this, result, level);
+
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;
@@ -84,6 +87,7 @@ public readonly partial struct JsonPatchDocument
             {
                 ValidationContext result = validationContext;
                 ValidationContext childContextBase = result;
+
                 ValidationContext refResult = childContextBase.CreateChildContext();
                 if (level > ValidationLevel.Basic)
                 {
@@ -91,6 +95,7 @@ public readonly partial struct JsonPatchDocument
                 }
 
                 refResult = value.As<Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommon>().Validate(refResult, level);
+
                 if (!refResult.IsValid)
                 {
                     if (level >= ValidationLevel.Basic)
@@ -125,7 +130,9 @@ public readonly partial struct JsonPatchDocument
                 ValidationLevel level = ValidationLevel.Flag)
             {
                 ValidationContext result = validationContext;
+
                 int oneOfFoundValid = 0;
+
                 ValidationContext oneOfChildContext0 = validationContext.CreateChildContext();
                 if (level > ValidationLevel.Basic)
                 {
@@ -133,6 +140,7 @@ public readonly partial struct JsonPatchDocument
                 }
 
                 ValidationContext oneOfResult0 = value.As<Corvus.Json.Patch.Model.JsonPatchDocument.AddOperation>().Validate(oneOfChildContext0, level);
+
                 if (oneOfResult0.IsValid)
                 {
                     result = result.MergeChildContext(oneOfResult0, level >= ValidationLevel.Verbose);
@@ -153,6 +161,7 @@ public readonly partial struct JsonPatchDocument
                 }
 
                 ValidationContext oneOfResult1 = value.As<Corvus.Json.Patch.Model.JsonPatchDocument.RemoveOperation>().Validate(oneOfChildContext1, level);
+
                 if (oneOfResult1.IsValid)
                 {
                     result = result.MergeChildContext(oneOfResult1, level >= ValidationLevel.Verbose);
@@ -173,6 +182,7 @@ public readonly partial struct JsonPatchDocument
                 }
 
                 ValidationContext oneOfResult2 = value.As<Corvus.Json.Patch.Model.JsonPatchDocument.ReplaceOperation>().Validate(oneOfChildContext2, level);
+
                 if (oneOfResult2.IsValid)
                 {
                     result = result.MergeChildContext(oneOfResult2, level >= ValidationLevel.Verbose);
@@ -193,6 +203,7 @@ public readonly partial struct JsonPatchDocument
                 }
 
                 ValidationContext oneOfResult3 = value.As<Corvus.Json.Patch.Model.JsonPatchDocument.MoveOperation>().Validate(oneOfChildContext3, level);
+
                 if (oneOfResult3.IsValid)
                 {
                     result = result.MergeChildContext(oneOfResult3, level >= ValidationLevel.Verbose);
@@ -213,6 +224,7 @@ public readonly partial struct JsonPatchDocument
                 }
 
                 ValidationContext oneOfResult4 = value.As<Corvus.Json.Patch.Model.JsonPatchDocument.CopyOperation>().Validate(oneOfChildContext4, level);
+
                 if (oneOfResult4.IsValid)
                 {
                     result = result.MergeChildContext(oneOfResult4, level >= ValidationLevel.Verbose);
@@ -233,6 +245,7 @@ public readonly partial struct JsonPatchDocument
                 }
 
                 ValidationContext oneOfResult5 = value.As<Corvus.Json.Patch.Model.JsonPatchDocument.TestOperation>().Validate(oneOfChildContext5, level);
+
                 if (oneOfResult5.IsValid)
                 {
                     result = result.MergeChildContext(oneOfResult5, level >= ValidationLevel.Verbose);

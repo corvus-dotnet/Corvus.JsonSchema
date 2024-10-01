@@ -35,13 +35,16 @@ public readonly partial struct PersonNameElement
         }
 
         JsonValueKind valueKind = this.ValueKind;
+
         result = CorvusValidation.TypeValidationHandler(valueKind, result, level);
+
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
             return result;
         }
 
         result = CorvusValidation.StringValidationHandler(this, valueKind, result, level);
+
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
             return result;
@@ -108,6 +111,7 @@ public readonly partial struct PersonNameElement
                     ValidationContext ignoredResult = validationContext;
                     ignoredResult = ignoredResult.WithResult(isValid: true, "Validation maxLength - ignored because the value is not a string", "maxLength");
                     ignoredResult = ignoredResult.WithResult(isValid: true, "Validation minLength - ignored because the value is not a string", "minLength");
+
                     return ignoredResult;
                 }
 
@@ -116,12 +120,14 @@ public readonly partial struct PersonNameElement
 
             ValidationContext result = validationContext;
             value.TryGetValue(StringValidator, new Corvus.Json.Validate.ValidationContextWrapper(result, level), out result);
+
             return result;
 
             static bool StringValidator(ReadOnlySpan<char> input, in Corvus.Json.Validate.ValidationContextWrapper context, out ValidationContext result)
             {
                 int length = Corvus.Json.Validate.CountRunes(input);
                 result = context.Context;
+
                 if (context.Level > ValidationLevel.Basic)
                 {
                     result = result.PushValidationLocationReducedPathModifier(new("#/maxLength"));

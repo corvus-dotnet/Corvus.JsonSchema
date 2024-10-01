@@ -160,6 +160,7 @@ public readonly partial struct NotDisabled
     public static NotDisabled Create(in Corvus.Json.JsonNotAny? disabled = null)
     {
         var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
+
         if (disabled is not null)
         {
             builder.Add(JsonPropertyNames.Disabled, disabled.Value.AsAny);

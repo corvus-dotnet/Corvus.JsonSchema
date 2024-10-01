@@ -362,6 +362,7 @@ public readonly partial struct Person
     {
         var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
         builder.Add(JsonPropertyNames.Name, name.AsAny);
+
         if (dateOfBirth is not null)
         {
             builder.Add(JsonPropertyNames.DateOfBirth, dateOfBirth.Value.AsAny);
