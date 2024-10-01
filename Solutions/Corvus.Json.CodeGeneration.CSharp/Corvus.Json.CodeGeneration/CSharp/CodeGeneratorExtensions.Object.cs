@@ -1275,7 +1275,7 @@ internal static partial class CodeGeneratorExtensions
                 .AppendParagraphs(longDocumentation);
         }
 
-        if (property.ReducedPropertyType.LongDocumentation() is string longDocumentationReduced)
+        if (property.ReducedPropertyType != property.UnreducedPropertyType && property.ReducedPropertyType.LongDocumentation() is string longDocumentationReduced)
         {
             if (!usingRemarks)
             {
