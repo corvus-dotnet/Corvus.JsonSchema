@@ -10,7 +10,7 @@ namespace Corvus.Json.CodeGeneration.Keywords;
 /// The properties keyword.
 /// </summary>
 public sealed class PropertiesKeyword
-    :   ISubschemaTypeBuilderKeyword,
+    : ISubschemaTypeBuilderKeyword,
         ILocalSubschemaRegistrationKeyword,
         IPropertySubchemaProviderKeyword,
         IObjectPropertyValidationKeyword
@@ -78,6 +78,9 @@ public sealed class PropertiesKeyword
                 JsonReference propertyPath = KeywordPathReference.AppendUnencodedPropertyNameToFragment(propertyName);
                 if (source.SubschemaTypeDeclarations.TryGetValue(propertyPath, out TypeDeclaration? propertyTypeDeclaration))
                 {
+                    // If there was no keyword because it was hidden by sibling-hiding keyword
+                    // we will not have been ab le to get the subschema type declaration, so we will
+                    // not come in here, and just skip the property.
                     target.AddOrUpdatePropertyDeclaration(
                         new(
                             target,
@@ -87,10 +90,6 @@ public sealed class PropertiesKeyword
                             source == target ? LocalOrComposed.Local : LocalOrComposed.Composed,
                             this,
                             null));
-                }
-                else
-                {
-                    throw new InvalidOperationException($"The subschema definition for the schema at '{source.LocatedSchema.Location}' with path '{propertyPath}' was not found.");
                 }
             }
         }
