@@ -438,7 +438,7 @@ We now have a source generator that can generate types at compile time, rather t
 ### Using the source generator
 
 Add a reference to the `Corvus.Json.SourceGenerator` nuget package in addition to `Corvus.Json.ExtendedTypes`. [Note, you may need to restart Visual Studio once you have done this.]
-Add your JSON schema file(s) as _AdditionalFiles_.C
+Add your JSON schema file(s), and set the Build Action to _C# analyzer additional file_.
 
 ```xml
 <Project Sdk="Microsoft.NET.Sdk">
