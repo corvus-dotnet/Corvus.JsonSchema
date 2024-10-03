@@ -50,8 +50,6 @@ internal sealed class SchemaVocabulary : IVocabulary
         [
             DefinitionsKeyword.Instance,
             DependenciesKeyword.Instance,
-            DollarRecursiveRefKeyword.Instance,
-            DollarRecursiveRefKeyword.Instance,
         ]);
 
     /// <inheritdoc/>
