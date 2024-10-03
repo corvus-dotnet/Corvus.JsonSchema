@@ -71,7 +71,8 @@ public static partial class ValidationCodeGeneratorExtensions
 
         if (typeDeclaration.ExplicitFormat() is not string explicitFormat)
         {
-            return generator;
+            return generator
+                .AppendLineIndent("return validationContext;");
         }
 
         if (FormatHandlerRegistry.Instance.FormatHandlers.GetExpectedValueKind(explicitFormat) is not JsonValueKind expectedValueKind)
