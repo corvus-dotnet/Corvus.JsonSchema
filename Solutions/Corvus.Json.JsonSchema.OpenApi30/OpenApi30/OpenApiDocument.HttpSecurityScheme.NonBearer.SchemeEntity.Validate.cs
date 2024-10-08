@@ -6,15 +6,38 @@
 //     the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
+
 #nullable enable
+
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
 
 namespace Corvus.Json.JsonSchema.OpenApi30;
+
+/// <summary>
+/// Generated from JSON Schema.
+/// </summary>
+/// <remarks>
+/// <para>
+/// The description of OpenAPI v3.0.x documents, as defined by https://spec.openapis.org/oas/v3.0.3
+/// </para>
+/// </remarks>
 public readonly partial struct OpenApiDocument
 {
+    /// <summary>
+    /// Generated from JSON Schema.
+    /// </summary>
     public readonly partial struct HttpSecurityScheme
     {
+        /// <summary>
+        /// Generated from JSON Schema.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Non Bearer
+        /// </para>
+        /// </remarks>
         public readonly partial struct NonBearer
         {
             /// <summary>
@@ -37,18 +60,79 @@ public readonly partial struct OpenApiDocument
                         result = result.PushSchemaLocation("https://spec.openapis.org/oas/3.0/schema/2021-09-28#/definitions/HTTPSecurityScheme/oneOf/1/properties/scheme");
                     }
 
-                    result = this.ValidateNot(result, level);
+                    result = CorvusValidation.CompositionNotValidationHandler(this, result, level);
+
                     if (level == ValidationLevel.Flag && !result.IsValid)
                     {
                         return result;
                     }
 
-                    if (level != ValidationLevel.Flag)
+                    if (level > ValidationLevel.Basic)
                     {
                         result = result.PopLocation();
                     }
 
                     return result;
+                }
+
+                /// <summary>
+                /// Validation constants for the type.
+                /// </summary>
+                public static partial class CorvusValidation
+                {
+                    /// <summary>
+                    /// Not validation.
+                    /// </summary>
+                    /// <param name="value">The value to validate.</param>
+                    /// <param name="validationContext">The current validation context.</param>
+                    /// <param name="level">The current validation level.</param>
+                    /// <returns>The resulting validation context after validation.</returns>
+                    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                    internal static ValidationContext CompositionNotValidationHandler(
+                        in SchemeEntity value,
+                        in ValidationContext validationContext,
+                        ValidationLevel level = ValidationLevel.Flag)
+                    {
+                        return ValidateNot(value, validationContext, level);
+
+                        static ValidationContext ValidateNot(
+                            in SchemeEntity value,
+                            in ValidationContext validationContext,
+                            ValidationLevel level = ValidationLevel.Flag)
+                        {
+                            ValidationContext result = validationContext;
+
+                            if (level > ValidationLevel.Basic)
+                            {
+                                result = result.PushValidationLocationReducedPathModifier(new("#/not"));
+                            }
+
+                            ValidationContext compositionResult = value.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme.NonBearer.SchemeEntity.NotEntity>().Validate(result.CreateChildContext(), level);
+                            if (compositionResult.IsValid)
+                            {
+                                if (level >= ValidationLevel.Basic)
+                                {
+                                    result = validationContext.MergeResults(false, level, compositionResult);
+                                    result = result.WithResult(isValid: false, "Validation not - incorrectly validated successfully against the schema");
+                                }
+                                else
+                                {
+                                    result = validationContext.WithResult(isValid: false);
+                                }
+                            }
+                            else if (level >= ValidationLevel.Basic)
+                            {
+                                result = result.MergeResults(result.IsValid, level, compositionResult);
+                            }
+
+                            if (level > ValidationLevel.Basic)
+                            {
+                                result = result.PopLocation();
+                            }
+
+                            return result;
+                        }
+                    }
                 }
             }
         }

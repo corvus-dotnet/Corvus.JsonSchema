@@ -28,7 +28,7 @@ namespace Benchmarks
                 
             this.corvusPatch = Corvus.Json.Patch.Model.JsonPatchDocument.Parse("[{\"op\":\"test\",\"path\":\"/foo\",\"value\":[\"bar\",\"baz\"]},{\"op\":\"test\",\"path\":\"/foo/0\",\"value\":\"bar\"},{\"op\":\"test\",\"path\":\"/\",\"value\":0},{\"op\":\"test\",\"path\":\"/a~1b\",\"value\":1},{\"op\":\"test\",\"path\":\"/c%d\",\"value\":2},{\"op\":\"test\",\"path\":\"/e^f\",\"value\":3},{\"op\":\"test\",\"path\":\"/g|h\",\"value\":4},{\"op\":\"test\",\"path\":\"/i\\\\j\",\"value\":5},{\"op\":\"test\",\"path\":\"/k\\u0022l\",\"value\":6},{\"op\":\"test\",\"path\":\"/ \",\"value\":7},{\"op\":\"test\",\"path\":\"/m~0n\",\"value\":8}]");
 
-            await this.GlobalSetupJson("{\"foo\":[\"bar\",\"baz\"],\"\":0,\"a/b\":1,\"c%d\":2,\"e^f\":3,\"g|h\":4,\"i\\\\j\":5,\"k\\u0022l\":6,\" \":7,\"m~n\":8}").ConfigureAwait(false);
+            await this.GlobalSetupJson("{\"foo\":[\"bar\",\"baz\"],\"\":0,\"a/b\":1,\"c%d\":2,\"e^f\":3,\"g|h\":4,\"i\\\\j\":5,\"k\\u0022l\":6,\" \":7,\"m~n\":8}");
         }
 
         /// <summary>

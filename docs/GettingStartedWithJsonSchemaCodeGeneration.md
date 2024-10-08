@@ -12,11 +12,11 @@ TL;DR - this is a getting started Hands-On-Lab that walks you through our new JS
 
 ## Context
 
-In my [previous post](https://endjin.com/blog/2021/05/csharp-serialization-with-system-text-json-schema), I introduced the concepts behind our JSON object model extensions, built over [System.Text.Json](https://docs.microsoft.com/en-us/dotnet/api/system.text.json?view=net-8.0).
+In my [previous post](https://endjin.com/blog/2021/05/csharp-serialization-with-system-text-json-schema), I introduced the concepts behind our JSON object model extensions, built over [System.Text.Json](https://docs.microsoft.com/en-us/.NET/api/system.text.json?view=net-8.0).
 
 > You don't need to read that post to work with this lab.
 
-In summary, we looked at how a code generation tool could take JSON Schema and emit a full-fidelity dotnet type model for that schema, including well-optimised schema validation, with great allocation and compute performance for common scenarios where traditional JSON serialization would be the norm.
+In summary, we looked at how a code generation tool could take JSON Schema and emit a full-fidelity .NET type model for that schema, including well-optimised schema validation, with great allocation and compute performance for common scenarios where traditional JSON serialization would be the norm.
 
 It also demonstrated how this model could support interoperability between types generated from different schema, and even compiled into different libraries, without any shared user code.
 
@@ -35,10 +35,10 @@ Also, you don't have to use exactly the tools we recommend. If you are proficien
 But this is intended to be a step-by-step guide. Please let us know in the comments if we've glossed over anything, and we'll add some more detail or explanatory notes.
 
 
-> ### A note for non-C# dotnet developers
-> If you aren't a C# dotnet developer... I guess you're used to translating from C# examples to F# or VB. Sorry, this is another one of those articles.
+> ### A note for non-C# .NET developers
+> If you aren't a C# .NET developer... I guess you're used to translating from C# examples to F# or VB. Sorry, this is another one of those articles.
 >
-> While it's also true that the code generator emits C# code, you can compile it into a dotnet library for use with your preferred language. The actual generation is templated and extensible, so if you were tempted, you could emit code in the language of your choice. The translation would not be trivial, but *PRs are Love*.
+> While it's also true that the code generator emits C# code, you can compile it into a .NET library for use with your preferred language. The actual generation is templated and extensible, so if you were tempted, you could emit code in the language of your choice. The translation would not be trivial, but *PRs are Love*.
 >
 > F# would be particularly well suited to an idiomatic implementation!
 
@@ -52,7 +52,7 @@ But this is intended to be a step-by-step guide. Please let us know in the comme
 
 ### Things that would help
 
-- Some familiarity with building C# code with dotnet8.0
+- Some familiarity with building C# code with .NET 8.0
 - Some familiarity with [json-schema](https://json-schema.org/understanding-json-schema/)
 - Some familiarity with JSON reading, writing, and serialization, preferably with `System.Text.Json`
 
@@ -64,7 +64,7 @@ First, you need to install the code generator. I choose to do so globally. From 
 dotnet tool install --global Corvus.Json.JsonSchema.TypeGeneratorTool --prerelease
 ```
 
-We'll also create a console app to host our sample, using dotnet8.0s
+We'll also create a console app to host our sample, using .NET 8.0.
 
 ```
 dotnet new console -o JsonSchemaSample -f net8.0
@@ -98,7 +98,7 @@ When the editor loads up the project file, it should look something like this. N
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Corvus.Json.ExtendedTypes" Version="2.0.15" />
+    <PackageReference Include="Corvus.Json.ExtendedTypes" Version="4.0.0" />
   </ItemGroup>
 
 </Project>
@@ -364,27 +364,31 @@ generatejsonschematypes -h
 You should see the help text - something like this at the time of writing.
 
 ```
-Description:
-  Generate C# types from a JSON schema.
+USAGE:
+    generatejsonschematypes <schemaFile> [OPTIONS]
 
-Usage:
-  generatejsonschematypes <schemaFile> [options]
+ARGUMENTS:
+    <schemaFile>    The path to the schema file to process
 
-Arguments:
-  <schemaFile>  The path to the schema file to process
-
-Options:
-  --rootNamespace <rootNamespace>            The default root namespace for generated types
-  --rootPath <rootPath>                      The path in the document for the root type.
-  --useSchema <Draft201909|Draft202012>      The schema variant to use. [default: Draft201909]
-  --outputMapFile <outputMapFile>            The name to use for a map file which includes details of the files that
-                                             were written.
-  --outputPath <outputPath>                  The output directory. It defaults to the same folder as the schema file.
-  --outputRootTypeName <outputRootTypeName>  The Dotnet TypeName for the root type. []
-  --rebaseToRootPath                         If a --rootPath is specified, rebase the document as if it was rooted on
-                                             the specified element.
-  --version                                  Show version information
-  -?, -h, --help                             Show help and usage information
+OPTIONS:
+                                             DEFAULT
+    -h, --help                                               Prints help information
+        --rootNamespace                                      The default root namespace for generated types
+        --rootPath                                           The path in the document for the root type
+        --useSchema                          NotSpecified    Override the fallback schema variant to use. If
+                                                             NotSpecified, and it cannot be inferred from the schema
+                                                             itself, it will use Draft2020-12
+        --outputMapFile                                      The name to use for a map file which includes details of
+                                                             the files that were written
+        --outputPath                                         The path to which to write the generated code
+        --outputRootTypeName                                 The .NET type name for the root type
+        --rebaseToRootPath                                   If a --rootPath is specified, rebase the document as if it
+                                                             was rooted on the specified element
+        --assertFormat                       True            If --assertFormat is specified, assert format
+                                                             specifications
+        --disableOptionalNamingHeuristics                    Disables optional naming heuristics
+        --optionalAsNullable                 None            If NullOrUndefined, optional properties are emitted as .NET
+                                                             nullable values
   ```
 
 So - how to generate some code from our schema?
@@ -408,6 +412,7 @@ Note also that in most terminals, you will have to wrap the pointer in single qu
 Finally, we need to provide the path to the json schema document containing the schema for which to generate types. We happen to be in the same directory as the file concerned, so that is just `person-from-api.json`.
 
 > Note that any references to documents either in this parameter on the command line, or in `$ref`s in the documents themselves don't *have* to be in the local file system. You can happily use `http[s]` references to external documents, and it'll work just fine!
+> You might want to consider whether that is appropriate given your security constraints, however.
 >
 > We'll see this in action as we develop our example further.
 
@@ -435,38 +440,22 @@ You should see the following file names listed (plus whatever other detail your 
 ```
 Name
 ----
-OtherNames.Array.Add.cs
-OtherNames.Array.cs
-OtherNames.Array.Remove.cs
-OtherNames.Conversions.Accessors.cs
-OtherNames.Conversions.Operators.cs
-OtherNames.cs
-OtherNames.String.cs
-OtherNames.Validate.cs
-OtherNames.Validate.OneOf.cs
-Person.cs
-Person.Object.cs
-Person.Properties.cs
-Person.Validate.cs
-Person.Validate.Object.cs
-Person.Validate.Type.cs
-PersonName.cs
-PersonName.Object.cs
-PersonName.Properties.cs
-PersonName.Validate.cs
-PersonName.Validate.Object.cs
-PersonName.Validate.Type.cs
-PersonNameElement.cs
-PersonNameElement.String.cs
-PersonNameElement.Validate.cs
-PersonNameElement.Validate.Type.cs
-PersonNameElementArray.Array.Add.cs
-PersonNameElementArray.Array.cs
-PersonNameElementArray.Array.Remove.cs
-PersonNameElementArray.cs
-PersonNameElementArray.Validate.Array.cs
-PersonNameElementArray.Validate.cs
-PersonNameElementArray.Validate.Type.cs
+OtherNames.cs (#/$defs/OtherNames)
+OtherNames.Array.cs (#/$defs/OtherNames)
+OtherNames.String.cs (#/$defs/OtherNames)
+OtherNames.Validate.cs (#/$defs/OtherNames)
+Person.cs (#/$defs/Person)
+Person.Object.cs (#/$defs/Person)
+Person.Validate.cs (#/$defs/Person)
+PersonName.cs (#/$defs/PersonName)
+PersonName.Object.cs (#/$defs/PersonName)
+PersonName.Validate.cs (#/$defs/PersonName)
+PersonNameElement.cs (#/$defs/PersonNameElement)
+PersonNameElement.String.cs (#/$defs/PersonNameElement)
+PersonNameElement.Validate.cs (#/$defs/PersonNameElement)
+PersonNameElementArray.cs (#/$defs/PersonNameElementArray)
+PersonNameElementArray.Array.cs (#/$defs/PersonNameElementArray)
+PersonNameElementArray.Validate.cs (#/$defs/PersonNameElementArray)
 ```
 
 So far so good. Let's have a look at the generated types in more detail.
@@ -477,11 +466,11 @@ The first thing that you'll probably notice is that it has generated files for e
 
 | Schema location | Files |
 | --- | --- |
-| `#/$defs/Person` | `Person.cs`, `Person.Object.cs`, `Person.Properties.cs`, `Person.Validate.cs`, `Person.ValidateObject.cs`, `Person.ValidateType.cs` |
-| `#/$defs/PersonName` | `PersonName.cs`, `PersonName.Object.cs`, `PersonName.Validate.cs`, `PersonName.Validate.Object.cs`, `PersonName.Validate.Type.cs` |
-| `#/$defs/PersonNameElement` | `PersonNameElement.cs`, `PersonNameElement.String.cs`, `PersonNameLElement.Validate.cs`, `PersonNameElement.Validate.Type.cs` |
-| `#/$defs/OtherNames` | `OtherNames.cs`, `OtherNames.Array.cs`, `OtherNames.Array.Add.cs`, `OtherNames.Array.Remove.cs`, `OtherNames.Conversions.Accessors.cs`, `OtherNames.Conversions.Operators.cs`, `OtherNames.String.cs`, `OtherNames.Validate.cs`, `OtherNames.Validate.OneOf.cs` |
-| `#/$defs/PersonNameElementArray` | `PersonNameElementArray.cs`, `PersonNameElementArray.Array.Add.cs`. `PersonNameElementArray.Array.cs`, `PersonNameElementArray.Array.Remove.cs`, `PersonNameElementArray.cs`, `PersonNameElementArray.Validate.Array.cs`, `PersonNameElementArray.Validate.cs`, `PersonNameElementArray.Validate.Type.cs` |
+| `#/$defs/Person` | `Person.cs`, `Person.Object.cs`, `Person.Validate.cs` |
+| `#/$defs/PersonName` | `PersonName.cs`, `PersonName.Object.cs`, `PersonName.Validate.cs` |
+| `#/$defs/PersonNameElement` | `PersonNameElement.cs`, `PersonNameElement.String.cs`, `PersonNameElement.Validate.cs` |
+| `#/$defs/OtherNames` | `OtherNames.cs`, `OtherNames.Array.cs`,`OtherNames.String.cs`, `OtherNames.Validate.cs` |
+| `#/$defs/PersonNameElementArray` | `PersonNameElementArray.cs`, `PersonNameElementArray.Validate.cs` |
 
 Remember the `Link` schema we saw earlier that was *not* referenced by the `Person` schema? It has *not* been generated. The code generator only generates types for schema elements that it sees as it walks the tree from the element it finds at the `rootPath`.
 
@@ -516,17 +505,17 @@ Let's put the types we've generated to work.
 
 ## Consuming JSON - "Deserialization"
 
-A very common scenario is consuming and working over a JSON payload provided by some service, using dotnet types.
+A very common scenario is consuming and working over a JSON payload provided by some service, using .NET types.
 
-This is often called "deserialization", and consists of taking some UTF8-encoded JSON text payload and turning it into a representation in the dotnet type system.
+This is often called "deserialization", and consists of taking some UTF8-encoded JSON text payload and turning it into a representation in the .NET type system.
 
 Generally, this requires us to bring all or part of a data stream into memory, and then construct C# objects from it.
 
-`System.Text.Json` has a very efficient way of doing this using its [`JsonElement`](https://docs.microsoft.com/en-us/dotnet/api/system.text.json.jsonelement?view=net-6.0) and related entities. These are immutable [value types](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/value-types) that provide thin wrappers over the underlying UTF8 bytes, converting into dotnet primitives like `string`, `long`, or `bool` at the point of use.
+`System.Text.Json` has a very efficient way of doing this using its [`JsonElement`](https://docs.microsoft.com/en-us/dotnet/api/system.text.json.jsonelement?view=net-6.0) and related entities. These are immutable [value types](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/value-types) that provide thin wrappers over the underlying UTF8 bytes, converting into .NET primitives like `string`, `long`, or `bool` at the point of use.
 
 Our [Corvus.Json.ExtendedTypes library](https://www.nuget.org/packages/Corvus.Json.ExtendedTypes) extends this model to include types which represent all of the JSON-schema primitives and common extensions, including arrays, objects, numbers, and an assortment of formatted string types like dates, times and URIs.
 
-The code generator builds on these to give us an easy way of manipulating the JSON data in the same just-in-time fashion, without creating a copy of the underlying UTF8 bytes, but with all the idiomatic dotnet features like named properties, and conversion to-and-from dotnet primitives.
+The code generator builds on these to give us an easy way of manipulating the JSON data in the same just-in-time fashion, without creating a copy of the underlying UTF8 bytes, but with all the idiomatic .NET features like named properties, and conversion to-and-from .NET primitives.
 
 So, let's ingest a JSON payload using the types we've just generated.
 
@@ -580,7 +569,7 @@ using JsonDocument document = JsonDocument.Parse(jsonText);
 
 You'll see in a moment that we don't *have* to work through `JsonDocument` to create instances of our types; there are tools in the library which can abstract this away for you. But I think it is useful to start out by seeing a little bit behind the curtain, so it doesn't look *too* much like magic.
 
-> One nice thing about building over `JsonDocument`, `JsonElement`, `Utf8JsonReader` etc. is that we benefit immediately from all of the performance work being put into these types by the dotnet team.
+> One nice thing about building over `JsonDocument`, `JsonElement`, `Utf8JsonReader` etc. is that we benefit immediately from all of the performance work being put into these types by the .NET team.
 
 Hopefully, you should recognize that JSON text as something that we expect to be valid according to our `Person` schema.
 
@@ -592,7 +581,7 @@ Add the following line of code:
 Person michaelOldroyd = new(document.RootElement);
 ```
 
-Now we can access the elements of that JSON payload via our dotnet `Person` and related types.
+Now we can access the elements of that JSON payload via our .NET `Person` and related types.
 
 > Unless otherwise indicated, I'm now going to assume that you are adding any code blocks that appear in this Lab at the bottom of the `program.cs` file.
 
@@ -604,7 +593,7 @@ LocalDate dateOfBirth = michaelOldroyd.DateOfBirth;
 Console.WriteLine($"{familyName}, {givenName}: {dateOfBirth}");
 ```
 
-Notice how we're using normal property accessors, and regular dotnet types like `string`, or NodaTime's `LocalDate`.
+Notice how we're using normal property accessors, and regular .NET types like `string`, or NodaTime's `LocalDate`.
 
 Let's build and run that again.
 
@@ -635,7 +624,7 @@ Reading JSON data is very important. But we also need to write our JSON back to 
 
 There are two ways to do this.
 
-All our dotnet JSON types - both our extensions, and any generated code, implement the `IJsonValue` interface. We'll look at that in more detail later. But one feature of `IJsonValue` is that it has a `WriteTo()` method that takes a `Utf8JsonWriter`.
+All our .NET JSON types - both our extensions, and any generated code, implement the `IJsonValue` interface. We'll look at that in more detail later. But one feature of `IJsonValue` is that it has a `WriteTo()` method that takes a `Utf8JsonWriter`.
 
 You'd use it something like this (but don't add this code):
 
@@ -784,7 +773,7 @@ If you look at the code in `Person.Properties.cs` you can find the declaration f
 
 So that's a `PersonNameElement`. And yet, we can clearly convert it implicitly to a C# `string`.
 
-What happened was that the code generator examined the schema for `PersonNameElement`. It recognized that a `string` primitive is a valid representation for the `PersonNameElement`, so it generated an assortment of conversions for us, making it very simple to use in regular dotnet code.
+What happened was that the code generator examined the schema for `PersonNameElement`. It recognized that a `string` primitive is a valid representation for the `PersonNameElement`, so it generated an assortment of conversions for us, making it very simple to use in regular .NET code.
 
 Similarly for `PersonName.DateOfBirth`
 
@@ -794,7 +783,7 @@ public Corvus.Json.JsonDate DateOfBirth
 
 `JsonDate` is part of our extended JSON type model and it is implicitly convertible to-and-from `NodaTime.LocalDate` for the same reason.
 
-So conversions are really useful in that they let us write idiomatic dotnet code, while maintaining the benefits of our JSON data model.
+So conversions are really useful in that they let us write idiomatic .NET code, while maintaining the benefits of our JSON data model.
 
 But there's another important consequence of this feature.
 
@@ -1006,7 +995,7 @@ What can we do about that?
 
 Let's remind ourselves about the characteristics of JSON data.
 
-Remember that JSON values can be present (that's the value), present but *null* (if the schema allows `null` values), or not present at all (which we call *undefined*). This is a little different from dotnet properties which are typically only present or (if the type is nullable) `null`.
+Remember that JSON values can be present (that's the value), present but *null* (if the schema allows `null` values), or not present at all (which we call *undefined*). This is a little different from .NET properties which are typically only present or (if the type is nullable) `null`.
 
 ```json
 { "foo": 3.14 } # Present with a non-null value
@@ -1047,9 +1036,13 @@ michaelOldroyd is valid.
 
 There is a family of other similar extensions like `IsNull()`, and `IsNullOrUndefined()` for you to explore.
 
-> Sometimes, you want to be able to map the JSON concept of *null or undefined* directly to the dotnet concept of *nullable*.
+> Sometimes, you want to be able to map the JSON concept of *null or undefined* directly to the .NET concept of *nullable*.
 >
 > We provide an extension method `AsOptional<T>()`, which converts the `IJsonValue` from a `T` to a `Nullable<T>`. The value will be `null` if the JSON element was `JsonValueKind.Null` or `JsonValueKind.Undefined`.
+>
+> #### Version 4 and later
+> However, we can go one better than that with version 4.0 and later! You can specify `--optionalAsNullable` when you generate the types, and your optional properties will be
+> generated as `Nullable<T>` directly. This is a much more idiomatic way of representing optional properties in .NET.
 
 One case when these can come in handy is when you are dealing with the possibility of additional properties on your object.
 
@@ -1112,7 +1105,7 @@ if (michaelOldroyd.TryGetProperty("occupation", out JsonAny occupation) &&
 bool isValid = michaelOldroyd.IsValid();
 ```
 
-`TryGetProperty` uses the familiar `TryXXX` pattern used throughout the dotnet framework. We pass in the name of the property we wish to receive (as it appears in the JSON document). If it finds such a property, it returns `true` and sets the output value.
+`TryGetProperty` uses the familiar `TryXXX` pattern used throughout the .NET framework. We pass in the name of the property we wish to receive (as it appears in the JSON document). If it finds such a property, it returns `true` and sets the output value.
 
 Notice how we are also checking that the value provided is a JSON `string`, using the `ValueKind` property. If it is, we know that we can use the `JsonAny.AsString` property to convert to a string.
 
@@ -1279,7 +1272,7 @@ We're now only looking at the additional properties, and can use our tools to in
 
 One challenge with JSON serialization and deserialization is a loss of fidelity as you roundtrip your information.
 
-Using standard code-first serializers, if you are faced with additional properties, or schema extensions, or you are dealing with malformed data and trying to figure out what to do with it for diagnostic or self-healing scenarios, you may lose information as you transform to-and-from the dotnet world.
+Using standard code-first serializers, if you are faced with additional properties, or schema extensions, or you are dealing with malformed data and trying to figure out what to do with it for diagnostic or self-healing scenarios, you may lose information as you transform to-and-from the .NET world.
 
 With most code-first C#-to-JSON (de-)serialization, you lose this characteristic unless it has been explicitly designed-in to your C# classes.
 
@@ -1417,14 +1410,14 @@ var jsonAnon = new {
 That can be passed to an overload of `JsonAny.From<T>()` which will use the built in `System.Text.Json.Serializer` to round trip the value into our model.
 
 ```csharp
-var michaelOldroyd = JsonAny.From(jsonAnon);
+var michaelOldroyd = JsonAny.CreateFromSerializedInstance(jsonAnon);
 ```
 
 ### Building a JSON document
 
 That's all very well if you are creating a whole document in one go, but what if you want to build or compose a document from constituent parts?
 
-In dotnet7, `System.Text.Json` added the `Nodes` namespace with [`JsonObject`](https://docs.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject?view=net-6.0) and [`JsonArray`](https://docs.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonarray?view=net-6.0) types to help you build JSON documents.
+In .NET 7.0, `System.Text.Json` added the `Nodes` namespace with [`JsonObject`](https://docs.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject?view=net-6.0) and [`JsonArray`](https://docs.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonarray?view=net-6.0) types to help you build JSON documents.
 
 Our extended and generated types *do not* use `JsonObject` under the covers to create new JSON documents, but they *do* build on similar factory patterns. We use our knowledge of the JSON schema from which the types were generated to help us create semantically valid data structures.
 
@@ -1486,8 +1479,8 @@ var otherNames = PersonNameElementArray.FromItems(new PersonNameElement("Margare
 We can also create arrays from existing collections of items. There's a general-purpose type called `JsonArray` which has static factory methods to create arrays from a variety of different primitives. For example, let's take an existing list of strings, and create a `PersonNameElementArray` from them, using `JsonArray.From(IEnumerable<string>)`
 
 ```csharp
-var someNameStrings = new List<string> { "Margaret", "Nancy" };
-PersonNameElementArray array = PersonNameElementArray.From(someNameStrings);
+var someNameStrings = new List<PersonNameElement> { "Margaret", "Nancy" };
+PersonNameElementArray array = JsonArray.FromRange(someNameStrings);
 ```
 
 Or here's a version that uses an enumerable of the appropriate JSON value type.
@@ -1497,7 +1490,7 @@ var someNameValues = new List<PersonNameElement> { "Margaret", "Nancy" };
 PersonNameElementArray valueArray = PersonNameElementArray.FromRange(someNameValues);
 ```
 
-> There are various overloads of `From()` (Which may cause serialization) and `FromRange()` (which always operates on `IJsonValue` types) to create arrays of all sorts of primitive types. Take some time to explore the overloads in the `PersonNameElementArray.Array*.cs` files to find out what is available, and what their different characteristics might be.
+> There are various overloads of `From()` and `FromRange()` to create arrays of all sorts of primitive types. Take some time to explore the overloads in the `PersonNameElementArray.Array*.cs` files to find out what is available, and what their different characteristics might be.
 
 ### Using `Create()` to create objects
 
@@ -1510,7 +1503,7 @@ Because our code generator understands the structure of `object` schema, includi
 Let's look at the definition of the `Create()` method emitted for `Person`.
 
 ```csharp
-public static Person Create(JsonSchemaSample.Api.PersonName name, Corvus.Json.JsonDate? dateOfBirth = null)
+public static Person Create(in JsonSchemaSample.Api.PersonName name, in Corvus.Json.JsonDate? dateOfBirth = null)
 ```
 
 `Name` is a required property, so we have to pass an instance as the first parameter. `DateOfBirth` is optional, so it is passed as a nullable value, with a default value of `null`.
@@ -1565,7 +1558,7 @@ Person.Create(
 
 If you look again at the definition of the `Create()` methods we have been using, you may spot another point of friction. Once again, it centres on the distinction between a value, a value which is `null`, and an undefined value.
 
-When we pass (dotnet) `null` as the value for an optional parameter to one of our `Create()` methods, we are saying *do not set a value for the property*.
+When we pass (.NET) `null` as the value for an optional parameter to one of our `Create()` methods, we are saying *do not set a value for the property*.
 
 For example
 
@@ -1601,15 +1594,11 @@ This represents
 }
 ```
 
-## Modifying JSON
-
-TODO: Immutability, With() and walking the tree.
-
 ## JSON Schema and Union types
 
-We now know how to use our generated dotnet types in standard "serialization" scenarios. We have seen property accessors that, thanks to the implicit conversions, let us treat our JSON primitives as their dotnet equivalents: `string`, `bool`, and `null`, or even more sophisticated entities like `LocalDate`.
+We now know how to use our generated .NET types in standard "serialization" scenarios. We have seen property accessors that, thanks to the implicit conversions, let us treat our JSON primitives as their .NET equivalents: `string`, `bool`, and `null`, or even more sophisticated entities like `LocalDate`.
 
-We've seen that object hierarchies are supported just as we'd expect for any dotnet types, but that we automatically get extensions which allow us to enumerate `array` items and `object` properties, examine the type of the values we discover, and determine whether properties are present or not.
+We've seen that object hierarchies are supported just as we'd expect for any .NET types, but that we automatically get extensions which allow us to enumerate `array` items and `object` properties, examine the type of the values we discover, and determine whether properties are present or not.
 
 Now, we're going to have a look at how we represent some more sophisticated JSON schema constraints. To do that we are going to examine the `otherNames` property on a `PersonName`.
 
@@ -1719,3 +1708,20 @@ if (michaelOldroyd.Name.OtherNames.TryGetAsPersonNameElementArray(out PersonName
     otherNamesArray.EnumerateArray();
 }
 ```
+
+## Union types and pattern matching
+
+Any type that is a union of other types (e.g. anyOf, oneOf, allOf, if/then/else) will also emit a `Match()` method.
+
+This method takes a series of delegates, each of which is a function that takes a single parameter of the type of the union, and returns a value of the desired type.
+
+```csharp
+string result = audreyJones.Name.OtherNames.Match(
+    static (in PersonNameElement otherNames) => $"Other names: {otherNames}",
+    static (in PersonNameElementArray otherNames) => $"Other names: {string.Join(", ", otherNames)}",
+    static (in OtherNames value) => throw new InvalidOperationException($"Unexpected type: {value}"));
+```
+
+This is a very powerful way to work with union types. Because the match is exhaustive, you avoid common errors with "missing cases".
+
+> There are similar match methods for if/then/else and enum.

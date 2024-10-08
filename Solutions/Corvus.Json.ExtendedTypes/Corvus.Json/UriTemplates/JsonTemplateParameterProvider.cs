@@ -2,9 +2,8 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Buffers;
 using System.Text.Json;
-using CommunityToolkit.HighPerformance;
+using Corvus.HighPerformance;
 using Corvus.UriTemplates.TemplateParameterProviders;
 
 namespace Corvus.Json.UriTemplates;
@@ -31,7 +30,7 @@ internal class JsonTemplateParameterProvider<TPayload> : ITemplateParameterProvi
     ///     <see cref="VariableProcessingState.Success"/> if the variable was successfully processed,
     ///     <see cref="VariableProcessingState.NotProcessed"/> if the parameter was not present, or
     ///     <see cref="VariableProcessingState.Failure"/> if the parameter could not be processed because it was incompatible with the variable specification in the template.</returns>
-    public VariableProcessingState ProcessVariable(ref VariableSpecification variableSpecification, in TPayload parameters, IBufferWriter<char> output)
+    public VariableProcessingState ProcessVariable(ref VariableSpecification variableSpecification, in TPayload parameters, ref ValueStringBuilder output)
     {
         if (!parameters.TryGetProperty(variableSpecification.VarName, out JsonAny value)
                 || value.IsNullOrUndefined()
@@ -45,23 +44,22 @@ internal class JsonTemplateParameterProvider<TPayload> : ITemplateParameterProvi
         {
             if (variableSpecification.OperatorInfo.First != '\0')
             {
-                output.Write(variableSpecification.OperatorInfo.First);
+                output.Append(variableSpecification.OperatorInfo.First);
             }
         }
         else
         {
-            output.Write(variableSpecification.OperatorInfo.Separator);
+            output.Append(variableSpecification.OperatorInfo.Separator);
         }
 
         if (value.ValueKind == JsonValueKind.Array)
         {
-            JsonArray valueArray = value.AsArray;
             if (variableSpecification.OperatorInfo.Named && !variableSpecification.Explode) //// exploding will prefix with list name
             {
-                AppendName(output, variableSpecification.VarName, variableSpecification.OperatorInfo.IfEmpty, valueArray.GetArrayLength() == 0);
+                AppendName(ref output, variableSpecification.VarName, variableSpecification.OperatorInfo.IfEmpty, false);
             }
 
-            AppendArray(output, variableSpecification.OperatorInfo, variableSpecification.Explode, variableSpecification.VarName, valueArray);
+            AppendArray(ref output, variableSpecification.OperatorInfo, variableSpecification.Explode, variableSpecification.VarName, value.AsArray);
         }
         else if (value.ValueKind == JsonValueKind.Object)
         {
@@ -70,34 +68,32 @@ internal class JsonTemplateParameterProvider<TPayload> : ITemplateParameterProvi
                 return VariableProcessingState.Failure;
             }
 
-            JsonObject valueObject = value.AsObject;
-
             if (variableSpecification.OperatorInfo.Named && !variableSpecification.Explode) //// exploding will prefix with list name
             {
-                AppendName(output, variableSpecification.VarName, variableSpecification.OperatorInfo.IfEmpty, !valueObject.HasProperties());
+                AppendName(ref output, variableSpecification.VarName, variableSpecification.OperatorInfo.IfEmpty, false);
             }
 
-            AppendObject(output, variableSpecification.OperatorInfo, variableSpecification.Explode, valueObject);
+            AppendObject(ref output, variableSpecification.OperatorInfo, variableSpecification.Explode, value.AsObject);
         }
         else if (value.ValueKind == JsonValueKind.String)
         {
             if (variableSpecification.OperatorInfo.Named)
             {
-                AppendNameAndStringValue(output, variableSpecification.VarName, variableSpecification.OperatorInfo.IfEmpty, value.AsString, variableSpecification.PrefixLength, variableSpecification.OperatorInfo.AllowReserved);
+                AppendNameAndStringValue(ref output, variableSpecification.VarName, variableSpecification.OperatorInfo.IfEmpty, value.AsString, variableSpecification.PrefixLength, variableSpecification.OperatorInfo.AllowReserved);
             }
             else
             {
-                AppendValue(output, value, variableSpecification.PrefixLength, variableSpecification.OperatorInfo.AllowReserved);
+                AppendValue(ref output, value, variableSpecification.PrefixLength, variableSpecification.OperatorInfo.AllowReserved);
             }
         }
         else
         {
             if (variableSpecification.OperatorInfo.Named)
             {
-                AppendName(output, variableSpecification.VarName, variableSpecification.OperatorInfo.IfEmpty, value.IsNullOrUndefined());
+                AppendName(ref output, variableSpecification.VarName, variableSpecification.OperatorInfo.IfEmpty, false);
             }
 
-            AppendValue(output, value, variableSpecification.PrefixLength, variableSpecification.OperatorInfo.AllowReserved);
+            AppendValue(ref output, value, variableSpecification.PrefixLength, variableSpecification.OperatorInfo.AllowReserved);
         }
 
         return VariableProcessingState.Success;
@@ -111,15 +107,14 @@ internal class JsonTemplateParameterProvider<TPayload> : ITemplateParameterProvi
     /// <param name="explode">Whether to explode the array.</param>
     /// <param name="variable">The variable name.</param>
     /// <param name="array">The array to add.</param>
-    private static void AppendArray<T>(IBufferWriter<char> output, in OperatorInfo op, bool explode, ReadOnlySpan<char> variable, in T array)
-        where T : struct, IJsonArray<T>
+    private static void AppendArray(ref ValueStringBuilder output, in OperatorInfo op, bool explode, ReadOnlySpan<char> variable, in JsonArray array)
     {
         bool isFirst = true;
         foreach (JsonAny item in array.EnumerateArray())
         {
             if (!isFirst)
             {
-                output.Write(explode ? op.Separator : ',');
+                output.Append(explode ? op.Separator : ',');
             }
             else
             {
@@ -128,11 +123,11 @@ internal class JsonTemplateParameterProvider<TPayload> : ITemplateParameterProvi
 
             if (op.Named && explode)
             {
-                output.Write(variable);
-                output.Write('=');
+                output.Append(variable);
+                output.Append('=');
             }
 
-            AppendValue(output, item, 0, op.AllowReserved);
+            AppendValue(ref output, item, 0, op.AllowReserved);
         }
     }
 
@@ -143,8 +138,7 @@ internal class JsonTemplateParameterProvider<TPayload> : ITemplateParameterProvi
     /// <param name="op">The operator info.</param>
     /// <param name="explode">Whether to explode the object.</param>
     /// <param name="instance">The object instance to append.</param>
-    private static void AppendObject<T>(IBufferWriter<char> output, in OperatorInfo op, bool explode, in T instance)
-        where T : struct, IJsonObject<T>
+    private static void AppendObject(ref ValueStringBuilder output, in OperatorInfo op, bool explode, in JsonObject instance)
     {
         bool isFirst = true;
         foreach (JsonObjectProperty value in instance.EnumerateObject())
@@ -153,11 +147,11 @@ internal class JsonTemplateParameterProvider<TPayload> : ITemplateParameterProvi
             {
                 if (explode)
                 {
-                    output.Write(op.Separator);
+                    output.Append(op.Separator);
                 }
                 else
                 {
-                    output.Write(',');
+                    output.Append(',');
                 }
             }
             else
@@ -165,33 +159,21 @@ internal class JsonTemplateParameterProvider<TPayload> : ITemplateParameterProvi
                 isFirst = false;
             }
 
-            value.TryGetName(WriteEncodedPropertyName, new WriteEncodedPropertyNameState(output, op.AllowReserved), out bool decoded);
+            value.TryGetName(ProcessString, new AppendValueState(0, op.AllowReserved), out ProcessingResult result);
+            output.Append(result.Span);
+            result.Dispose();
 
             if (explode)
             {
-                output.Write('=');
+                output.Append('=');
             }
             else
             {
-                output.Write(',');
+                output.Append(',');
             }
 
-            AppendValue(output, value.Value, 0, op.AllowReserved);
+            AppendValue(ref output, value.Value, 0, op.AllowReserved);
         }
-    }
-
-    /// <summary>
-    /// Encoded and write the property name to the output.
-    /// </summary>
-    /// <param name="name">The name to write.</param>
-    /// <param name="state">The state for the writer.</param>
-    /// <param name="result">Whether the value was written successfully.</param>
-    /// <returns><see langword="true"/> if the value was written successfully.</returns>
-    private static bool WriteEncodedPropertyName(ReadOnlySpan<char> name, in WriteEncodedPropertyNameState state, out bool result)
-    {
-        TemplateParameterProvider.Encode(state.Output, name, state.AllowReserved);
-        result = true;
-        return true;
     }
 
     /// <summary>
@@ -201,17 +183,16 @@ internal class JsonTemplateParameterProvider<TPayload> : ITemplateParameterProvi
     /// <param name="variable">The variable name.</param>
     /// <param name="ifEmpty">The string to apply if the value is empty.</param>
     /// <param name="valueIsEmpty">True if the value is empty.</param>
-    private static void AppendName(IBufferWriter<char> output, ReadOnlySpan<char> variable, string ifEmpty, bool valueIsEmpty)
+    private static void AppendName(ref ValueStringBuilder output, ReadOnlySpan<char> variable, string ifEmpty, bool valueIsEmpty)
     {
-        output.Write(variable);
-
+        output.Append(variable);
         if (valueIsEmpty)
         {
-            output.Write(ifEmpty);
+            output.Append(ifEmpty);
         }
         else
         {
-            output.Write('=');
+            output.Append('=');
         }
     }
 
@@ -224,11 +205,12 @@ internal class JsonTemplateParameterProvider<TPayload> : ITemplateParameterProvi
     /// <param name="value">The value to append.</param>
     /// <param name="prefixLength">The prefix length.</param>
     /// <param name="allowReserved">Whether to allow reserved characters.</param>
-    private static void AppendNameAndStringValue<T>(IBufferWriter<char> output, ReadOnlySpan<char> variable, string ifEmpty, T value, int prefixLength, bool allowReserved)
-        where T : struct, IJsonString<T>
+    private static void AppendNameAndStringValue(ref ValueStringBuilder output, ReadOnlySpan<char> variable, string ifEmpty, JsonString value, int prefixLength, bool allowReserved)
     {
-        output.Write(variable);
-        value.AsString.TryGetValue(ProcessString, new AppendNameAndValueState(output, ifEmpty, prefixLength, allowReserved), out bool _);
+        output.Append(variable);
+        value.TryGetValue(ProcessString, new AppendNameAndValueState(ifEmpty, prefixLength, allowReserved), out ProcessingResult result);
+        output.Append(result.Span);
+        result.Dispose();
     }
 
     /// <summary>
@@ -238,58 +220,74 @@ internal class JsonTemplateParameterProvider<TPayload> : ITemplateParameterProvi
     /// <param name="value">The value to append.</param>
     /// <param name="prefixLength">The prefix length.</param>
     /// <param name="allowReserved">Whether to allow reserved characters.</param>
-    private static void AppendValue(IBufferWriter<char> output, JsonAny value, int prefixLength, bool allowReserved)
+    private static void AppendValue(ref ValueStringBuilder output, JsonAny value, int prefixLength, bool allowReserved)
     {
-        if (value.ValueKind == JsonValueKind.String)
+        switch (value.ValueKind)
         {
-            value.AsString.TryGetValue(ProcessString, new AppendValueState(output, prefixLength, allowReserved), out bool _);
-        }
-        else if (value.ValueKind == JsonValueKind.True)
-        {
-            output.Write("true");
-        }
-        else if (value.ValueKind == JsonValueKind.False)
-        {
-            output.Write("false");
-        }
-        else if (value.ValueKind == JsonValueKind.Null)
-        {
-            output.Write("null");
-        }
-        else if (value.ValueKind == JsonValueKind.Number)
-        {
-            JsonNumber number = value.AsNumber;
-            Span<char> buffer = stackalloc char[number.GetMaxCharLength()];
-            number.TryFormat(buffer, out int written, "G", null);
-            output.Write(buffer[..written]);
+            case JsonValueKind.String:
+                value.AsString.TryGetValue(ProcessString, new AppendValueState(prefixLength, allowReserved), out ProcessingResult result);
+                output.Append(result.Span);
+                result.Dispose();
+                break;
+            case JsonValueKind.True:
+                output.Append("true");
+                break;
+            case JsonValueKind.False:
+                output.Append("false");
+                break;
+            case JsonValueKind.Null:
+                output.Append("null");
+                break;
+            case JsonValueKind.Number:
+                {
+                    double valueNumber = (double)value.AsNumber;
+
+#if NET8_0_OR_GREATER
+                    // The maximum number of digits in a double precision number is 1074; we allocate a little above this
+                    Span<char> buffer = stackalloc char[1100];
+                    valueNumber.TryFormat(buffer, out int written);
+                    output.Append(buffer[..written]);
+#else
+                    output.Append(valueNumber.ToString());
+#endif
+                    break;
+                }
         }
     }
 
-    private static bool ProcessString(ReadOnlySpan<char> span, in AppendValueState state, out bool encoded)
+    private static bool ProcessString(ReadOnlySpan<char> span, in AppendValueState state, out ProcessingResult result)
     {
-        WriteStringValue(state.Output, span, state.PrefixLength, state.AllowReserved);
-        encoded = true;
+        ValueStringBuilder output = new(span.Length * 2);
+        WriteStringValue(ref output, span, state.PrefixLength, state.AllowReserved);
+        (char[]? Buffer, int Length) vsbOutput = output.GetRentedBufferAndLengthAndDispose();
+        result = new(vsbOutput.Buffer, vsbOutput.Length);
         return true;
     }
 
-    private static bool ProcessString(ReadOnlySpan<char> span, in AppendNameAndValueState state, out bool encoded)
+    private static bool ProcessString(ReadOnlySpan<char> span, in AppendNameAndValueState state, out ProcessingResult result)
     {
+        ValueStringBuilder output;
+
         // Write the name separator
         if (span.Length == 0)
         {
-            state.Output.Write(state.IfEmpty);
+            output = new(state.IfEmpty.Length * 4);
+            output.Append(state.IfEmpty);
         }
         else
         {
-            state.Output.Write('=');
+            output = new(span.Length * 4);
+            output.Append('=');
         }
 
-        WriteStringValue(state.Output, span, state.PrefixLength, state.AllowReserved);
-        encoded = true;
+        WriteStringValue(ref output, span, state.PrefixLength, state.AllowReserved);
+
+        (char[]? Buffer, int Length) vsbOutput = output.GetRentedBufferAndLengthAndDispose();
+        result = new(vsbOutput.Buffer, vsbOutput.Length);
         return true;
     }
 
-    private static void WriteStringValue(IBufferWriter<char> output, ReadOnlySpan<char> span, int prefixLength, bool allowReserved)
+    private static void WriteStringValue(ref ValueStringBuilder output, ReadOnlySpan<char> span, int prefixLength, bool allowReserved)
     {
         // Write the value
         ReadOnlySpan<char> valueString = span;
@@ -302,45 +300,64 @@ internal class JsonTemplateParameterProvider<TPayload> : ITemplateParameterProvi
             }
         }
 
-        TemplateParameterProvider.Encode(output, valueString, allowReserved);
+        TemplateParameterProvider.Encode(ref output, valueString, allowReserved);
     }
 
-    private readonly record struct AppendValueState(IBufferWriter<char> Output, int PrefixLength, bool AllowReserved)
+    private readonly struct AppendValueState
     {
-        public static implicit operator (IBufferWriter<char> Output, int PrefixLength, bool AllowReserved)(AppendValueState value)
+        public AppendValueState(int prefixLength, bool allowReserved)
         {
-            return (value.Output, value.PrefixLength, value.AllowReserved);
+            this.PrefixLength = prefixLength;
+            this.AllowReserved = allowReserved;
         }
 
-        public static implicit operator AppendValueState((IBufferWriter<char> Output, int PrefixLength, bool AllowReserved) value)
-        {
-            return new AppendValueState(value.Output, value.PrefixLength, value.AllowReserved);
-        }
+        public int PrefixLength { get; }
+
+        public bool AllowReserved { get; }
     }
 
-    private readonly record struct AppendNameAndValueState(IBufferWriter<char> Output, string IfEmpty, int PrefixLength, bool AllowReserved)
+    private readonly struct AppendNameAndValueState
     {
-        public static implicit operator (IBufferWriter<char> Output, string IfEmpty, int PrefixLength, bool AllowReserved)(AppendNameAndValueState value)
+        public AppendNameAndValueState(string ifEmpty, int prefixLength, bool allowReserved)
         {
-            return (value.Output, value.IfEmpty, value.PrefixLength, value.AllowReserved);
+            this.IfEmpty = ifEmpty;
+            this.PrefixLength = prefixLength;
+            this.AllowReserved = allowReserved;
         }
 
-        public static implicit operator AppendNameAndValueState((IBufferWriter<char> Output, string IfEmpty, int PrefixLength, bool AllowReserved) value)
-        {
-            return new AppendNameAndValueState(value.Output, value.IfEmpty, value.PrefixLength, value.AllowReserved);
-        }
+        public string IfEmpty { get; }
+
+        public int PrefixLength { get; }
+
+        public bool AllowReserved { get; }
     }
 
-    private readonly record struct WriteEncodedPropertyNameState(IBufferWriter<char> Output, bool AllowReserved)
+    private readonly struct WriteEncodedPropertyNameState
     {
-        public static implicit operator (IBufferWriter<char> Output, bool AllowReserved)(WriteEncodedPropertyNameState value)
+        public WriteEncodedPropertyNameState(bool allowReserved)
         {
-            return (value.Output, value.AllowReserved);
+            this.AllowReserved = allowReserved;
         }
 
-        public static implicit operator WriteEncodedPropertyNameState((IBufferWriter<char> Output, bool AllowReserved) value)
+        public bool AllowReserved { get; }
+    }
+
+    private readonly struct ProcessingResult
+    {
+        private readonly char[]? rentedResult;
+        private readonly int written;
+
+        public ProcessingResult(char[]? rentedResult, int written)
         {
-            return new WriteEncodedPropertyNameState(value.Output, value.AllowReserved);
+            this.rentedResult = rentedResult;
+            this.written = written;
+        }
+
+        public ReadOnlySpan<char> Span => this.rentedResult.AsSpan(0, this.written);
+
+        public void Dispose()
+        {
+            ValueStringBuilder.ReturnRentedBuffer(this.rentedResult);
         }
     }
 }

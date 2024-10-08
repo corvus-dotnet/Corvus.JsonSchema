@@ -8,7 +8,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
-using Corvus.Json.Internal;
 
 namespace Corvus.Json;
 
@@ -17,6 +16,16 @@ namespace Corvus.Json;
 /// </summary>
 public static class JsonValueExtensions
 {
+    /// <summary>
+    /// Gets a nullable <see langword="string"/> as a nullable <see cref="JsonString"/>.
+    /// </summary>
+    /// <param name="input">The nullable string.</param>
+    /// <returns>The nullable <see cref="JsonString"/>.</returns>
+    public static JsonString? AsNullableJsonString(this string? input)
+    {
+        return input is string i ? new JsonString(i) : default(JsonString?);
+    }
+
     /// <summary>
     /// Gets a property.
     /// </summary>
@@ -36,11 +45,7 @@ public static class JsonValueExtensions
 
         if (name.HasDotnetBacking)
         {
-#if NET8_0_OR_GREATER
-            return jsonObject.TryGetProperty((string)name, out property);
-#else
-            return jsonObject.TryGetProperty((string)name.AsString, out property);
-#endif
+            return jsonObject.TryGetProperty(name.GetString()!, out property);
         }
         else
         {
@@ -96,42 +101,25 @@ public static class JsonValueExtensions
     public static string Serialize<TValue>(this TValue value)
         where TValue : struct, IJsonValue
     {
-        var abw = new ArrayBufferWriter<byte>();
-        using var writer = new Utf8JsonWriter(abw);
-        value.WriteTo(writer);
-        writer.Flush();
-
-#if NET8_0_OR_GREATER
-        int length = Encoding.UTF8.GetMaxCharCount(abw.WrittenCount);
-        char[]? pooledChars = null;
-
-        Span<char> chars = length <= JsonValueHelpers.MaxStackAlloc ?
-            stackalloc char[length] :
-            (pooledChars = ArrayPool<char>.Shared.Rent(length));
-
-        int count = Encoding.UTF8.GetChars(abw.WrittenSpan, chars);
-
-        Span<char> writtenChars = chars[..count];
-        string result = new(writtenChars);
-
-        if (pooledChars != null)
+        if (value.HasJsonElementBacking)
         {
-            ArrayPool<char>.Shared.Return(pooledChars, true);
+            return value.AsJsonElement.GetRawText();
         }
 
-        return result;
-#else
-        int length = Encoding.UTF8.GetMaxCharCount(abw.WrittenCount);
-        char[] chars = ArrayPool<char>.Shared.Rent(length);
+        return JsonSerializer.Serialize(value);
+    }
 
-        int count = Encoding.UTF8.GetChars(abw.WrittenArray, 0, abw.WrittenCount, chars, 0);
-
-        string result = new(chars, 0, count);
-
-        ArrayPool<char>.Shared.Return(chars, true);
-
-        return result;
-#endif
+    /// <summary>
+    /// Serialize the entity to a string.
+    /// </summary>
+    /// <typeparam name="TValue">The type of <see cref="IJsonValue"/>.</typeparam>
+    /// <param name="value">The value to serialize.</param>
+    /// <param name="options">The JSON serializer options.</param>
+    /// <returns>A string representation fo the value.</returns>
+    public static string Serialize<TValue>(this TValue value, JsonSerializerOptions options)
+        where TValue : struct, IJsonValue
+    {
+        return JsonSerializer.Serialize(value, options);
     }
 
     /// <summary>
@@ -142,7 +130,7 @@ public static class JsonValueExtensions
     /// <returns><c>True</c> if the value is null.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsNull<T>(this T value)
-        where T : struct, IJsonValue
+    where T : struct, IJsonValue
     {
         return value.ValueKind == JsonValueKind.Null;
     }
@@ -251,6 +239,63 @@ public static class JsonValueExtensions
         {
             JsonValueKind valueKind = value.ValueKind;
 
+            if (value is JsonHalf halfValue)
+            {
+                return (T)(object)new JsonHalf(halfValue.AsBinaryJsonNumber);
+            }
+            else if (value is JsonSingle singleValue)
+            {
+                return (T)(object)new JsonSingle(singleValue.AsBinaryJsonNumber);
+            }
+            else if (value is JsonDouble doubleValue)
+            {
+                return (T)(object)new JsonDouble(doubleValue.AsBinaryJsonNumber);
+            }
+            else if (value is JsonDecimal decimalValue)
+            {
+                return (T)(object)new JsonDecimal(decimalValue.AsBinaryJsonNumber);
+            }
+            else if (value is JsonInt128 int128Value)
+            {
+                return (T)(object)new JsonInt128(int128Value.AsBinaryJsonNumber);
+            }
+            else if (value is JsonUInt128 uint128Value)
+            {
+                return (T)(object)new JsonUInt128(uint128Value.AsBinaryJsonNumber);
+            }
+            else if (value is JsonInt64 int64Value)
+            {
+                return (T)(object)new JsonInt64(int64Value.AsBinaryJsonNumber);
+            }
+            else if (value is JsonUInt64 uint64Value)
+            {
+                return (T)(object)new JsonUInt64(uint64Value.AsBinaryJsonNumber);
+            }
+            else if (value is JsonInt32 int32Value)
+            {
+                return (T)(object)new JsonInt32(int32Value.AsBinaryJsonNumber);
+            }
+            else if (value is JsonUInt32 uint32Value)
+            {
+                return (T)(object)new JsonUInt32(uint32Value.AsBinaryJsonNumber);
+            }
+            else if (value is JsonInt16 int16Value)
+            {
+                return (T)(object)new JsonInt16(int16Value.AsBinaryJsonNumber);
+            }
+            else if (value is JsonUInt16 uint16Value)
+            {
+                return (T)(object)new JsonUInt16(uint16Value.AsBinaryJsonNumber);
+            }
+            else if (value is JsonSByte sbyteValue)
+            {
+                return (T)(object)new JsonSByte(sbyteValue.AsBinaryJsonNumber);
+            }
+            else if (value is JsonByte byteValue)
+            {
+                return (T)(object)new JsonByte(byteValue.AsBinaryJsonNumber);
+            }
+
             return valueKind switch
             {
 #if NET8_0_OR_GREATER
@@ -317,11 +362,7 @@ public static class JsonValueExtensions
             return jsonValue.AsJsonElement.TryGetValue(parser, state, out result);
         }
 
-#if NET8_0_OR_GREATER
-        return parser(((string)jsonValue).AsSpan(), state, out result);
-#else
-        return parser(((string)jsonValue.AsString).AsSpan(), state, out result);
-#endif
+        return parser(jsonValue.GetString()!.AsSpan(), state, out result);
     }
 
     /// <summary>

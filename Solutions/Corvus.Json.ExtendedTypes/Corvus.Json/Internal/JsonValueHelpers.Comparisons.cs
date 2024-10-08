@@ -87,7 +87,7 @@ public static partial class JsonValueHelpers
             JsonValueKind.False or JsonValueKind.True => true,
             JsonValueKind.Null => true,
             JsonValueKind.Undefined => false,
-            JsonValueKind.Number => item1.AsNumber.Equals(item2.AsNumber),
+            JsonValueKind.Number => CompareNumbers(item1.AsNumber, item2.AsNumber),
             JsonValueKind.Object => CompareObjects(item1.AsObject, item2.AsObject),
             JsonValueKind.String => CompareStrings(item1.AsString, item2.AsString),
             _ => false,
@@ -257,6 +257,61 @@ public static partial class JsonValueHelpers
     }
 
     /// <summary>
+    /// Compares two number values.
+    /// </summary>
+    /// <typeparam name="TItem1">The type of the first number value.</typeparam>
+    /// <typeparam name="TItem2">The type of the second number value.</typeparam>
+    /// <param name="item1">The first value.</param>
+    /// <param name="item2">The second value.</param>
+    /// <returns><c>True</c> if they are equal.</returns>
+    /// <exception cref="InvalidOperationException">The values were not numbers.</exception>
+    public static bool CompareNumbers<TItem1, TItem2>(in TItem1 item1, in TItem2 item2)
+        where TItem1 : struct, IJsonNumber<TItem1>
+        where TItem2 : struct, IJsonNumber<TItem2>
+    {
+        JsonValueKind item1ValueKind = item1.ValueKind;
+        JsonValueKind item2ValueKind = item2.ValueKind;
+
+        if (item1ValueKind != item2ValueKind)
+        {
+            // We can't be equal if we are not the same underlying type
+            return false;
+        }
+
+        if (item1.IsNull())
+        {
+            // Nulls are always equal
+            return true;
+        }
+
+        if (item1ValueKind != JsonValueKind.Number)
+        {
+            // Not a number is invalid
+            throw new InvalidOperationException();
+        }
+
+        if (item1.HasDotnetBacking && item2.HasDotnetBacking)
+        {
+            return BinaryJsonNumber.Equals(item1.AsBinaryJsonNumber, item2.AsBinaryJsonNumber);
+        }
+
+        // After item1 point there is no need to check both value kinds because our first quick test verified that they were the same.
+        // If either one is a Backing.Number or a JsonValueKind.Number then we know the item2 is compatible.
+        if (item1.HasDotnetBacking && !item2.HasDotnetBacking)
+        {
+            return BinaryJsonNumber.Equals(item1.AsBinaryJsonNumber, item2.AsJsonElement);
+        }
+
+        if (item1.HasJsonElementBacking &&
+            item2.HasDotnetBacking)
+        {
+            return BinaryJsonNumber.Equals(item2.AsBinaryJsonNumber, item1.AsJsonElement);
+        }
+
+        return JsonValueHelpers.NumericEquals(item1.AsJsonElement, item2.AsJsonElement);
+    }
+
+    /// <summary>
     /// Compares two string values.
     /// </summary>
     /// <typeparam name="TItem1">The type of the first string value.</typeparam>
@@ -274,7 +329,7 @@ public static partial class JsonValueHelpers
             if (item2.HasDotnetBacking)
             {
 #if NET8_0_OR_GREATER
-                return item1.AsJsonElement.ValueEquals((string)item2);
+                return item1.AsJsonElement.ValueEquals(item2.GetString());
 #else
                 return item1.AsJsonElement.ValueEquals((string)item2.AsString);
 #endif
@@ -291,7 +346,7 @@ public static partial class JsonValueHelpers
             if (item1.HasDotnetBacking)
             {
 #if NET8_0_OR_GREATER
-                return item2.AsJsonElement.ValueEquals((string)item1);
+                return item2.AsJsonElement.ValueEquals(item1.GetString());
 #else
                 return item2.AsJsonElement.ValueEquals((string)item1.AsString);
 #endif
@@ -305,7 +360,7 @@ public static partial class JsonValueHelpers
         }
 
 #if NET8_0_OR_GREATER
-        return ((string)item1).Equals((string)item2, StringComparison.Ordinal);
+        return string.Equals(item1.GetString(), item2.GetString(), StringComparison.Ordinal);
 #else
         return ((string)item1.AsString).Equals((string)item2.AsString, StringComparison.Ordinal);
 #endif

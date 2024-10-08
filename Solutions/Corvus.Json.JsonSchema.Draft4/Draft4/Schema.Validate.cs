@@ -6,7 +6,10 @@
 //     the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
+
 #nullable enable
+
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
 
@@ -17,6 +20,14 @@ namespace Corvus.Json.JsonSchema.Draft4;
 /// <remarks>
 /// <para>
 /// Core schema meta-schema
+/// </para>
+/// <para>
+/// Examples:
+/// <example>
+/// <code>
+/// {}
+/// </code>
+/// </example>
 /// </para>
 /// </remarks>
 public readonly partial struct Schema
@@ -37,23 +48,893 @@ public readonly partial struct Schema
         }
 
         JsonValueKind valueKind = this.ValueKind;
-        result = this.ValidateType(valueKind, result, level);
+
+        result = CorvusValidation.TypeValidationHandler(valueKind, result, level);
+
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
             return result;
         }
 
-        result = this.ValidateObject(valueKind, result, level);
+        result = CorvusValidation.ObjectValidationHandler(this, valueKind, result, level);
+
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
             return result;
         }
 
-        if (level != ValidationLevel.Flag)
+        if (level > ValidationLevel.Basic)
         {
             result = result.PopLocation();
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// Validation constants for the type.
+    /// </summary>
+    public static partial class CorvusValidation
+    {
+        /// <summary>
+        /// Core type validation.
+        /// </summary>
+        /// <param name="valueKind">The <see cref="JsonValueKind" /> of the value to validate.</param>
+        /// <param name="validationContext">The current validation context.</param>
+        /// <param name="level">The current validation level.</param>
+        /// <returns>The resulting validation context after validation.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static ValidationContext TypeValidationHandler(
+            JsonValueKind valueKind,
+            in ValidationContext validationContext,
+            ValidationLevel level = ValidationLevel.Flag)
+        {
+            return Corvus.Json.ValidateWithoutCoreType.TypeObject(valueKind, validationContext, level, "type");
+        }
+
+        /// <summary>
+        /// Object validation.
+        /// </summary>
+        /// <param name="value">The value to validate.</param>
+        /// <param name="valueKind">The <see cref="JsonValueKind" /> of the value to validate.</param>
+        /// <param name="validationContext">The current validation context.</param>
+        /// <param name="level">The current validation level.</param>
+        /// <returns>The resulting validation context after validation.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static ValidationContext ObjectValidationHandler(
+            in Schema value,
+            JsonValueKind valueKind,
+            in ValidationContext validationContext,
+            ValidationLevel level = ValidationLevel.Flag)
+        {
+            ValidationContext result = validationContext;
+            if (valueKind != JsonValueKind.Object)
+            {
+                if (level == ValidationLevel.Verbose)
+                {
+                    ValidationContext ignoredResult = validationContext;
+                    ignoredResult = ignoredResult.WithResult(isValid: true, "Validation properties - ignored because the value is not an object", "properties");
+                    ignoredResult = ignoredResult.WithResult(isValid: true, "Validation dependencies - ignored because the value is not an object", "dependencies");
+
+                    return ignoredResult;
+                }
+
+                return validationContext;
+            }
+
+            int propertyCount = 0;
+            foreach (JsonObjectProperty property in value.EnumerateObject())
+            {
+                if (property.NameEquals(JsonPropertyNames.SchemaValueUtf8, JsonPropertyNames.SchemaValue))
+                {
+                    result = result.WithLocalProperty(propertyCount);
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/$schema"), JsonPropertyNames.SchemaValue);
+                    }
+
+                    ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonString>().Validate(result.CreateChildContext(), level);
+                    if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                    {
+                        return propertyResult;
+                    }
+
+                    result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PopLocation();
+                    }
+                }
+                else if (property.NameEquals(JsonPropertyNames.AdditionalItemsUtf8, JsonPropertyNames.AdditionalItems))
+                {
+                    result = result.WithLocalProperty(propertyCount);
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/additionalItems"), JsonPropertyNames.AdditionalItems);
+                    }
+
+                    ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonSchema.Draft4.Schema.AdditionalItemsEntity>().Validate(result.CreateChildContext(), level);
+                    if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                    {
+                        return propertyResult;
+                    }
+
+                    result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PopLocation();
+                    }
+                }
+                else if (property.NameEquals(JsonPropertyNames.AdditionalPropertiesUtf8, JsonPropertyNames.AdditionalProperties))
+                {
+                    result = result.WithLocalProperty(propertyCount);
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/additionalProperties"), JsonPropertyNames.AdditionalProperties);
+                    }
+
+                    ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonSchema.Draft4.Schema.AdditionalPropertiesEntity>().Validate(result.CreateChildContext(), level);
+                    if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                    {
+                        return propertyResult;
+                    }
+
+                    result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PopLocation();
+                    }
+                }
+                else if (property.NameEquals(JsonPropertyNames.AllOfUtf8, JsonPropertyNames.AllOf))
+                {
+                    result = result.WithLocalProperty(propertyCount);
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/allOf/$ref"), JsonPropertyNames.AllOf);
+                    }
+
+                    ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonSchema.Draft4.Schema.SchemaArray>().Validate(result.CreateChildContext(), level);
+                    if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                    {
+                        return propertyResult;
+                    }
+
+                    result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PopLocation();
+                    }
+                }
+                else if (property.NameEquals(JsonPropertyNames.AnyOfUtf8, JsonPropertyNames.AnyOf))
+                {
+                    result = result.WithLocalProperty(propertyCount);
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/anyOf/$ref"), JsonPropertyNames.AnyOf);
+                    }
+
+                    ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonSchema.Draft4.Schema.SchemaArray>().Validate(result.CreateChildContext(), level);
+                    if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                    {
+                        return propertyResult;
+                    }
+
+                    result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PopLocation();
+                    }
+                }
+                else if (property.NameEquals(JsonPropertyNames.DefaultUtf8, JsonPropertyNames.Default))
+                {
+                    result = result.WithLocalProperty(propertyCount);
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/default"), JsonPropertyNames.Default);
+                    }
+
+                    ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonAny>().Validate(result.CreateChildContext(), level);
+                    if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                    {
+                        return propertyResult;
+                    }
+
+                    result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PopLocation();
+                    }
+                }
+                else if (property.NameEquals(JsonPropertyNames.DefinitionsUtf8, JsonPropertyNames.Definitions))
+                {
+                    result = result.WithLocalProperty(propertyCount);
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/definitions"), JsonPropertyNames.Definitions);
+                    }
+
+                    ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonSchema.Draft4.Schema.DefinitionsEntity>().Validate(result.CreateChildContext(), level);
+                    if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                    {
+                        return propertyResult;
+                    }
+
+                    result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PopLocation();
+                    }
+                }
+                else if (property.NameEquals(JsonPropertyNames.DependenciesUtf8, JsonPropertyNames.Dependencies))
+                {
+                    result = result.WithLocalProperty(propertyCount);
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/dependencies"), JsonPropertyNames.Dependencies);
+                    }
+
+                    ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonSchema.Draft4.Schema.DependenciesEntity>().Validate(result.CreateChildContext(), level);
+                    if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                    {
+                        return propertyResult;
+                    }
+
+                    result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PopLocation();
+                    }
+                }
+                else if (property.NameEquals(JsonPropertyNames.DescriptionUtf8, JsonPropertyNames.Description))
+                {
+                    result = result.WithLocalProperty(propertyCount);
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/description"), JsonPropertyNames.Description);
+                    }
+
+                    ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonString>().Validate(result.CreateChildContext(), level);
+                    if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                    {
+                        return propertyResult;
+                    }
+
+                    result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PopLocation();
+                    }
+                }
+                else if (property.NameEquals(JsonPropertyNames.EnumUtf8, JsonPropertyNames.Enum))
+                {
+                    result = result.WithLocalProperty(propertyCount);
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/enum"), JsonPropertyNames.Enum);
+                    }
+
+                    ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonSchema.Draft4.Schema.EnumArray>().Validate(result.CreateChildContext(), level);
+                    if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                    {
+                        return propertyResult;
+                    }
+
+                    result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PopLocation();
+                    }
+                }
+                else if (property.NameEquals(JsonPropertyNames.ExclusiveMaximumUtf8, JsonPropertyNames.ExclusiveMaximum))
+                {
+                    result = result.WithLocalProperty(propertyCount);
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/exclusiveMaximum"), JsonPropertyNames.ExclusiveMaximum);
+                    }
+
+                    ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonSchema.Draft4.Schema.ExclusiveMaximumEntity>().Validate(result.CreateChildContext(), level);
+                    if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                    {
+                        return propertyResult;
+                    }
+
+                    result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PopLocation();
+                    }
+                }
+                else if (property.NameEquals(JsonPropertyNames.ExclusiveMinimumUtf8, JsonPropertyNames.ExclusiveMinimum))
+                {
+                    result = result.WithLocalProperty(propertyCount);
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/exclusiveMinimum"), JsonPropertyNames.ExclusiveMinimum);
+                    }
+
+                    ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonSchema.Draft4.Schema.ExclusiveMinimumEntity>().Validate(result.CreateChildContext(), level);
+                    if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                    {
+                        return propertyResult;
+                    }
+
+                    result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PopLocation();
+                    }
+                }
+                else if (property.NameEquals(JsonPropertyNames.FormatUtf8, JsonPropertyNames.Format))
+                {
+                    result = result.WithLocalProperty(propertyCount);
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/format"), JsonPropertyNames.Format);
+                    }
+
+                    ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonString>().Validate(result.CreateChildContext(), level);
+                    if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                    {
+                        return propertyResult;
+                    }
+
+                    result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PopLocation();
+                    }
+                }
+                else if (property.NameEquals(JsonPropertyNames.IdUtf8, JsonPropertyNames.Id))
+                {
+                    result = result.WithLocalProperty(propertyCount);
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/id"), JsonPropertyNames.Id);
+                    }
+
+                    ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonString>().Validate(result.CreateChildContext(), level);
+                    if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                    {
+                        return propertyResult;
+                    }
+
+                    result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PopLocation();
+                    }
+                }
+                else if (property.NameEquals(JsonPropertyNames.ItemsValueUtf8, JsonPropertyNames.ItemsValue))
+                {
+                    result = result.WithLocalProperty(propertyCount);
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/items"), JsonPropertyNames.ItemsValue);
+                    }
+
+                    ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonSchema.Draft4.Schema.ItemsEntity>().Validate(result.CreateChildContext(), level);
+                    if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                    {
+                        return propertyResult;
+                    }
+
+                    result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PopLocation();
+                    }
+                }
+                else if (property.NameEquals(JsonPropertyNames.MaximumUtf8, JsonPropertyNames.Maximum))
+                {
+                    result = result.WithLocalProperty(propertyCount);
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/maximum"), JsonPropertyNames.Maximum);
+                    }
+
+                    ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonNumber>().Validate(result.CreateChildContext(), level);
+                    if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                    {
+                        return propertyResult;
+                    }
+
+                    result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PopLocation();
+                    }
+                }
+                else if (property.NameEquals(JsonPropertyNames.MaxItemsUtf8, JsonPropertyNames.MaxItems))
+                {
+                    result = result.WithLocalProperty(propertyCount);
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/maxItems/$ref"), JsonPropertyNames.MaxItems);
+                    }
+
+                    ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonSchema.Draft4.Schema.PositiveInteger>().Validate(result.CreateChildContext(), level);
+                    if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                    {
+                        return propertyResult;
+                    }
+
+                    result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PopLocation();
+                    }
+                }
+                else if (property.NameEquals(JsonPropertyNames.MaxLengthUtf8, JsonPropertyNames.MaxLength))
+                {
+                    result = result.WithLocalProperty(propertyCount);
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/maxLength/$ref"), JsonPropertyNames.MaxLength);
+                    }
+
+                    ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonSchema.Draft4.Schema.PositiveInteger>().Validate(result.CreateChildContext(), level);
+                    if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                    {
+                        return propertyResult;
+                    }
+
+                    result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PopLocation();
+                    }
+                }
+                else if (property.NameEquals(JsonPropertyNames.MaxPropertiesUtf8, JsonPropertyNames.MaxProperties))
+                {
+                    result = result.WithLocalProperty(propertyCount);
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/maxProperties/$ref"), JsonPropertyNames.MaxProperties);
+                    }
+
+                    ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonSchema.Draft4.Schema.PositiveInteger>().Validate(result.CreateChildContext(), level);
+                    if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                    {
+                        return propertyResult;
+                    }
+
+                    result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PopLocation();
+                    }
+                }
+                else if (property.NameEquals(JsonPropertyNames.MinimumUtf8, JsonPropertyNames.Minimum))
+                {
+                    result = result.WithLocalProperty(propertyCount);
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/minimum"), JsonPropertyNames.Minimum);
+                    }
+
+                    ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonNumber>().Validate(result.CreateChildContext(), level);
+                    if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                    {
+                        return propertyResult;
+                    }
+
+                    result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PopLocation();
+                    }
+                }
+                else if (property.NameEquals(JsonPropertyNames.MinItemsUtf8, JsonPropertyNames.MinItems))
+                {
+                    result = result.WithLocalProperty(propertyCount);
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/minItems/$ref"), JsonPropertyNames.MinItems);
+                    }
+
+                    ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0>().Validate(result.CreateChildContext(), level);
+                    if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                    {
+                        return propertyResult;
+                    }
+
+                    result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PopLocation();
+                    }
+                }
+                else if (property.NameEquals(JsonPropertyNames.MinLengthUtf8, JsonPropertyNames.MinLength))
+                {
+                    result = result.WithLocalProperty(propertyCount);
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/minLength/$ref"), JsonPropertyNames.MinLength);
+                    }
+
+                    ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0>().Validate(result.CreateChildContext(), level);
+                    if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                    {
+                        return propertyResult;
+                    }
+
+                    result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PopLocation();
+                    }
+                }
+                else if (property.NameEquals(JsonPropertyNames.MinPropertiesUtf8, JsonPropertyNames.MinProperties))
+                {
+                    result = result.WithLocalProperty(propertyCount);
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/minProperties/$ref"), JsonPropertyNames.MinProperties);
+                    }
+
+                    ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0>().Validate(result.CreateChildContext(), level);
+                    if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                    {
+                        return propertyResult;
+                    }
+
+                    result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PopLocation();
+                    }
+                }
+                else if (property.NameEquals(JsonPropertyNames.MultipleOfUtf8, JsonPropertyNames.MultipleOf))
+                {
+                    result = result.WithLocalProperty(propertyCount);
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/multipleOf"), JsonPropertyNames.MultipleOf);
+                    }
+
+                    ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonSchema.Draft4.Schema.MultipleOfEntity>().Validate(result.CreateChildContext(), level);
+                    if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                    {
+                        return propertyResult;
+                    }
+
+                    result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PopLocation();
+                    }
+                }
+                else if (property.NameEquals(JsonPropertyNames.NotUtf8, JsonPropertyNames.Not))
+                {
+                    result = result.WithLocalProperty(propertyCount);
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/not/$ref"), JsonPropertyNames.Not);
+                    }
+
+                    ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonSchema.Draft4.Schema>().Validate(result.CreateChildContext(), level);
+                    if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                    {
+                        return propertyResult;
+                    }
+
+                    result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PopLocation();
+                    }
+                }
+                else if (property.NameEquals(JsonPropertyNames.OneOfUtf8, JsonPropertyNames.OneOf))
+                {
+                    result = result.WithLocalProperty(propertyCount);
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/oneOf/$ref"), JsonPropertyNames.OneOf);
+                    }
+
+                    ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonSchema.Draft4.Schema.SchemaArray>().Validate(result.CreateChildContext(), level);
+                    if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                    {
+                        return propertyResult;
+                    }
+
+                    result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PopLocation();
+                    }
+                }
+                else if (property.NameEquals(JsonPropertyNames.PatternUtf8, JsonPropertyNames.Pattern))
+                {
+                    result = result.WithLocalProperty(propertyCount);
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/pattern"), JsonPropertyNames.Pattern);
+                    }
+
+                    ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonRegex>().Validate(result.CreateChildContext(), level);
+                    if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                    {
+                        return propertyResult;
+                    }
+
+                    result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PopLocation();
+                    }
+                }
+                else if (property.NameEquals(JsonPropertyNames.PatternPropertiesUtf8, JsonPropertyNames.PatternProperties))
+                {
+                    result = result.WithLocalProperty(propertyCount);
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/patternProperties"), JsonPropertyNames.PatternProperties);
+                    }
+
+                    ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonSchema.Draft4.Schema.PatternPropertiesEntity>().Validate(result.CreateChildContext(), level);
+                    if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                    {
+                        return propertyResult;
+                    }
+
+                    result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PopLocation();
+                    }
+                }
+                else if (property.NameEquals(JsonPropertyNames.PropertiesUtf8, JsonPropertyNames.Properties))
+                {
+                    result = result.WithLocalProperty(propertyCount);
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/properties"), JsonPropertyNames.Properties);
+                    }
+
+                    ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonSchema.Draft4.Schema.PropertiesEntity>().Validate(result.CreateChildContext(), level);
+                    if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                    {
+                        return propertyResult;
+                    }
+
+                    result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PopLocation();
+                    }
+                }
+                else if (property.NameEquals(JsonPropertyNames.RequiredUtf8, JsonPropertyNames.Required))
+                {
+                    result = result.WithLocalProperty(propertyCount);
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/required/$ref"), JsonPropertyNames.Required);
+                    }
+
+                    ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonSchema.Draft4.Schema.StringArray>().Validate(result.CreateChildContext(), level);
+                    if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                    {
+                        return propertyResult;
+                    }
+
+                    result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PopLocation();
+                    }
+                }
+                else if (property.NameEquals(JsonPropertyNames.TitleUtf8, JsonPropertyNames.Title))
+                {
+                    result = result.WithLocalProperty(propertyCount);
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/title"), JsonPropertyNames.Title);
+                    }
+
+                    ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonString>().Validate(result.CreateChildContext(), level);
+                    if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                    {
+                        return propertyResult;
+                    }
+
+                    result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PopLocation();
+                    }
+                }
+                else if (property.NameEquals(JsonPropertyNames.TypeUtf8, JsonPropertyNames.Type))
+                {
+                    result = result.WithLocalProperty(propertyCount);
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/type"), JsonPropertyNames.Type);
+                    }
+
+                    ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonSchema.Draft4.Schema.TypeEntity>().Validate(result.CreateChildContext(), level);
+                    if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                    {
+                        return propertyResult;
+                    }
+
+                    result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PopLocation();
+                    }
+                }
+                else if (property.NameEquals(JsonPropertyNames.UniqueItemsUtf8, JsonPropertyNames.UniqueItems))
+                {
+                    result = result.WithLocalProperty(propertyCount);
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/uniqueItems"), JsonPropertyNames.UniqueItems);
+                    }
+
+                    ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonSchema.Draft4.Schema.UniqueItemsEntity>().Validate(result.CreateChildContext(), level);
+                    if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                    {
+                        return propertyResult;
+                    }
+
+                    result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PopLocation();
+                    }
+                }
+
+                propertyCount++;
+            }
+            if (value.HasJsonElementBacking)
+            {
+                if (value.HasProperty("exclusiveMaximum"u8))
+                {
+                    if (!value.HasProperty("maximum"u8))
+                    {
+                        if (level >= ValidationLevel.Basic)
+                        {
+                            result = result.PushValidationLocationReducedPathModifier(new("#/dependencies/0"));
+                            result = result.WithResult(isValid: false, "Validation dependencies - the property 'exclusiveMaximum' required the dependent property 'maximum' which was not present.");
+                            result = result.PopLocation();
+                        }
+                        else
+                        {
+                            return ValidationContext.InvalidContext;
+                        }
+                    }
+                    else
+                    {
+                        if (level == ValidationLevel.Verbose)
+                        {
+                            result = result.PushValidationLocationReducedPathModifier(new("#/dependencies/0"));
+                            result = result.WithResult(isValid: true, "Validation dependencies - the property 'exclusiveMaximum' required the dependent property 'maximum' which was present.");
+                            result = result.PopLocation();
+                        }
+                    }
+                }
+            }
+            else
+            {
+                if (value.HasProperty("exclusiveMaximum"))
+                {
+                    if (!value.HasProperty("maximum"))
+                    {
+                        if (level >= ValidationLevel.Basic)
+                        {
+                            result = result.PushValidationLocationReducedPathModifier(new("#/dependencies/0"));
+                            result = result.WithResult(isValid: false, "Validation dependencies - the property 'exclusiveMaximum' required the dependent property 'maximum' which was not present.");
+                            result = result.PopLocation();
+                        }
+                        else
+                        {
+                            return ValidationContext.InvalidContext;
+                        }
+                    }
+                    else
+                    {
+                        if (level == ValidationLevel.Verbose)
+                        {
+                            result = result.PushValidationLocationReducedPathModifier(new("#/dependencies/0"));
+                            result = result.WithResult(isValid: true, "Validation dependencies - the property 'exclusiveMaximum' required the dependent property 'maximum' which was present.");
+                            result = result.PopLocation();
+                        }
+                    }
+                }
+            }
+            if (value.HasJsonElementBacking)
+            {
+                if (value.HasProperty("exclusiveMinimum"u8))
+                {
+                    if (!value.HasProperty("minimum"u8))
+                    {
+                        if (level >= ValidationLevel.Basic)
+                        {
+                            result = result.PushValidationLocationReducedPathModifier(new("#/dependencies/0"));
+                            result = result.WithResult(isValid: false, "Validation dependencies - the property 'exclusiveMinimum' required the dependent property 'minimum' which was not present.");
+                            result = result.PopLocation();
+                        }
+                        else
+                        {
+                            return ValidationContext.InvalidContext;
+                        }
+                    }
+                    else
+                    {
+                        if (level == ValidationLevel.Verbose)
+                        {
+                            result = result.PushValidationLocationReducedPathModifier(new("#/dependencies/0"));
+                            result = result.WithResult(isValid: true, "Validation dependencies - the property 'exclusiveMinimum' required the dependent property 'minimum' which was present.");
+                            result = result.PopLocation();
+                        }
+                    }
+                }
+            }
+            else
+            {
+                if (value.HasProperty("exclusiveMinimum"))
+                {
+                    if (!value.HasProperty("minimum"))
+                    {
+                        if (level >= ValidationLevel.Basic)
+                        {
+                            result = result.PushValidationLocationReducedPathModifier(new("#/dependencies/0"));
+                            result = result.WithResult(isValid: false, "Validation dependencies - the property 'exclusiveMinimum' required the dependent property 'minimum' which was not present.");
+                            result = result.PopLocation();
+                        }
+                        else
+                        {
+                            return ValidationContext.InvalidContext;
+                        }
+                    }
+                    else
+                    {
+                        if (level == ValidationLevel.Verbose)
+                        {
+                            result = result.PushValidationLocationReducedPathModifier(new("#/dependencies/0"));
+                            result = result.WithResult(isValid: true, "Validation dependencies - the property 'exclusiveMinimum' required the dependent property 'minimum' which was present.");
+                            result = result.PopLocation();
+                        }
+                    }
+                }
+            }
+
+            return result;
+        }
     }
 }

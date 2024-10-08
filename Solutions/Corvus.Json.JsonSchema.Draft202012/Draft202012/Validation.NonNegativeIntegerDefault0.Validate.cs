@@ -6,16 +6,33 @@
 //     the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
+
 #nullable enable
+
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
 
 namespace Corvus.Json.JsonSchema.Draft202012;
+
+/// <summary>
+/// Validation vocabulary meta-schema
+/// </summary>
 public readonly partial struct Validation
 {
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Examples:
+    /// <example>
+    /// <code>
+    /// 0
+    /// </code>
+    /// </example>
+    /// </para>
+    /// </remarks>
     public readonly partial struct NonNegativeIntegerDefault0
     {
         /// <inheritdoc/>
@@ -33,18 +50,69 @@ public readonly partial struct Validation
                 result = result.PushSchemaLocation("https://json-schema.org/draft/2020-12/meta/validation#/$defs/nonNegativeIntegerDefault0");
             }
 
-            result = this.ValidateRef(result, level);
+            result = CorvusValidation.CompositionAllOfValidationHandler(this, result, level);
+
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;
             }
 
-            if (level != ValidationLevel.Flag)
+            if (level > ValidationLevel.Basic)
             {
                 result = result.PopLocation();
             }
 
             return result;
+        }
+
+        /// <summary>
+        /// Validation constants for the type.
+        /// </summary>
+        public static partial class CorvusValidation
+        {
+            /// <summary>
+            /// Composition validation (all-of).
+            /// </summary>
+            /// <param name="value">The value to validate.</param>
+            /// <param name="validationContext">The current validation context.</param>
+            /// <param name="level">The current validation level.</param>
+            /// <returns>The resulting validation context after validation.</returns>
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            internal static ValidationContext CompositionAllOfValidationHandler(
+                in NonNegativeIntegerDefault0 value,
+                in ValidationContext validationContext,
+                ValidationLevel level = ValidationLevel.Flag)
+            {
+                ValidationContext result = validationContext;
+                ValidationContext childContextBase = result;
+
+                ValidationContext refResult = childContextBase.CreateChildContext();
+                if (level > ValidationLevel.Basic)
+                {
+                    refResult = refResult.PushValidationLocationReducedPathModifier(new("#/$ref"));
+                }
+
+                refResult = value.As<Corvus.Json.JsonSchema.Draft202012.Validation.NonNegativeInteger>().Validate(refResult, level);
+
+                if (!refResult.IsValid)
+                {
+                    if (level >= ValidationLevel.Basic)
+                    {
+                        result = result.MergeChildContext(refResult, true).PushValidationLocationProperty("$ref").WithResult(isValid: false, "Validation - $ref failed to validate against the schema.").PopLocation();
+                    }
+                    else
+                    {
+                        result = result.MergeChildContext(refResult, false).WithResult(isValid: false);
+                        return result;
+                    }
+                }
+                else
+                {
+                    result = result.MergeChildContext(refResult, level >= ValidationLevel.Detailed);
+                }
+
+                return result;
+            }
         }
     }
 }

@@ -6,7 +6,8 @@ using System.Collections.Immutable;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using BenchmarkDotNet.Attributes;
-using Corvus.Json.Benchmarking.Models;
+using Microsoft.VSDiagnostics;
+using CorvusValidator = global::Corvus.Json.Validator;
 using JsonEverything = global::Json.Schema;
 
 namespace Corvus.Json.Benchmarking;
@@ -15,6 +16,7 @@ namespace Corvus.Json.Benchmarking;
 /// Construct elements from a JSON element.
 /// </summary>
 [MemoryDiagnoser]
+[CPUUsageDiagnoser]
 public class ValidateLargeDocument
 {
     private const string JsonText =
@@ -35,73 +37,84 @@ public class ValidateLargeDocument
     private static readonly JsonEverything.EvaluationOptions Options = new() { OutputFormat = JsonEverything.OutputFormat.Flag };
 
     private JsonDocument? objectDocument;
-    private PersonArray personArray;
+    private Models.V3.PersonArray personArrayV3;
+    private Models.V4.PersonArray personArrayV4;
     private JsonNode? node;
+    private JsonElement element;
     private JsonEverything.JsonSchema? schema;
+    private CorvusValidator.JsonSchema corvusSchema;
 
     /// <summary>
     /// Global setup.
     /// </summary>
-    /// <returns>A <see cref="Task"/> which completes once clean-up is complete.</returns>
     [GlobalSetup]
-    public Task GlobalSetup()
+    public void GlobalSetup()
     {
         this.objectDocument = JsonDocument.Parse(JsonText);
 
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
         for (int i = 0; i < 10000; ++i)
         {
-            builder.Add(Person.FromJson(this.objectDocument.RootElement));
+            builder.Add(Models.V3.Person.FromJson(this.objectDocument.RootElement));
         }
 
-        this.personArray = PersonArray.From(builder.ToImmutable()).AsJsonElementBackedValue();
+        this.personArrayV3 = Models.V3.PersonArray.From(builder.ToImmutable()).AsJsonElementBackedValue();
+        this.personArrayV4 = Models.V4.PersonArray.From(builder.ToImmutable()).AsJsonElementBackedValue();
 
-        this.schema = JsonEverything.JsonSchema.FromFile("./PersonModel/person-array-schema.json");
-        this.node = System.Text.Json.Nodes.JsonArray.Create(this.personArray.AsJsonElement.Clone());
-        return Task.CompletedTask;
+        this.node = System.Text.Json.Nodes.JsonArray.Create(this.personArrayV3.AsJsonElement.Clone());
+        this.element = this.personArrayV3.AsJsonElement.Clone();
     }
 
     /// <summary>
     /// Global clean-up.
     /// </summary>
-    /// <returns>A <see cref="Task"/> which completes once clean-up is complete.</returns>
     [GlobalCleanup]
-    public Task GlobalCleanup()
+    public void GlobalCleanup()
     {
         if (this.objectDocument is JsonDocument doc)
         {
             doc.Dispose();
         }
-
-        return Task.CompletedTask;
     }
 
     /// <summary>
-    /// Validates using the Corvus types.
+    /// Validates using the Corvus V3 types.
     /// </summary>
     [Benchmark(Baseline = true)]
-    public void ValidateLargeArrayCorvus()
+    public bool ValidateLargeArrayCorvusV3()
     {
-        ValidationContext result = this.personArray.Validate(ValidationContext.ValidContext);
-        if (!result.IsValid)
-        {
-            throw new InvalidOperationException();
-        }
+        ValidationContext result = this.personArrayV3.Validate(ValidationContext.ValidContext);
+        return result.IsValid;
     }
 
     /// <summary>
-    /// Validates using the Corvus types.
+    /// Validates using the Corvus V4 types.
     /// </summary>
     [Benchmark]
-    public void ValidateLargeArrayJsonEverything()
+    public bool ValidateLargeArrayCorvusV4()
     {
-        JsonEverything.EvaluationResults result = this.schema!.Evaluate(this.node, Options);
-        if (!result.IsValid && result.Errors is IReadOnlyDictionary<string, string> errors)
-        {
-            foreach (KeyValuePair<string, string> r in errors)
-            {
-                Console.WriteLine(r.Value);
-            }
-        }
+        ValidationContext result = this.personArrayV4.Validate(ValidationContext.ValidContext);
+        return result.IsValid;
+    }
+
+    /// <summary>
+    /// Validates using the Corvus V4 types.
+    /// </summary>
+    [Benchmark]
+    public bool ValidateLargeArrayCorvusValidator()
+    {
+        this.corvusSchema = CorvusValidator.JsonSchema.FromFile("./person-array-schema.json");
+        ValidationContext result = this.corvusSchema.Validate(this.element, ValidationLevel.Flag);
+        return result.IsValid;
+    }
+
+    /// <summary>
+    /// Validates using the JsonEverything types.
+    /// </summary>
+    [Benchmark]
+    public JsonEverything.EvaluationResults ValidateLargeArrayJsonEverything()
+    {
+        this.schema = JsonEverything.JsonSchema.FromFile("./person-array-schema.json");
+        return this.schema!.Evaluate(this.node, Options);
     }
 }

@@ -28,7 +28,7 @@ namespace Benchmarks
                 
             this.corvusPatch = Corvus.Json.Patch.Model.JsonPatchDocument.Parse("[{\"op\":\"add\",\"path\":\"/foo/\",\"value\":1}]");
 
-            await this.GlobalSetupJson("{\"foo\":{}}").ConfigureAwait(false);
+            await this.GlobalSetupJson("{\"foo\":{}}");
         }
 
         /// <summary>

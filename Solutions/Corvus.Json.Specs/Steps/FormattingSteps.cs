@@ -2,7 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using Corvus.Json.CodeGeneration;
+using Corvus.Json.CodeGeneration.CSharp;
 using NUnit.Framework;
 using TechTalk.SpecFlow;
 
@@ -19,7 +19,11 @@ public class FormattingSteps
     [When(@"I format the input string ""([^""]*)"" with Pascal casing")]
     public void WhenIFormatTheInputStringWithPascalCasing(string input)
     {
-        this.formatted = Formatting.ToPascalCaseWithReservedWords(input).ToString();
+        Span<char> value = stackalloc char[Formatting.GetBufferLength(input.Length, "Entity".AsSpan(), ReadOnlySpan<char>.Empty)];
+        input.AsSpan().CopyTo(value);
+        int written = Formatting.ToPascalCase(value[..input.Length]);
+        written = Formatting.FixReservedWords(value, written, "Entity".AsSpan(), ReadOnlySpan<char>.Empty);
+        this.formatted = value[..written].ToString();
     }
 
     [Then(@"The output will be ""([^""]*)""")]

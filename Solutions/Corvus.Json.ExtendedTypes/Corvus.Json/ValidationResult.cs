@@ -2,8 +2,6 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Diagnostics;
-
 namespace Corvus.Json;
 
 /// <summary>

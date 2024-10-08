@@ -4,7 +4,34 @@ Feature: JsonStringConcatenate
 Scenario Outline: Concatenate multiple JSON values to a JSON string value
 	Given the JsonElement backed JsonArray <jsonValue>
 	When the values are concatenated to a JsonString
-	And the result should be equal to the JsonString <result>
+	And the values are concatenated to a JsonDate
+	And the values are concatenated to a JsonDateTime
+	And the values are concatenated to a JsonDuration
+	And the values are concatenated to a JsonEmail
+	And the values are concatenated to a JsonHostname
+	And the values are concatenated to a JsonIdnEmail
+	And the values are concatenated to a JsonIdnHostname
+	And the values are concatenated to a JsonIpV4
+	And the values are concatenated to a JsonIpV6
+	And the values are concatenated to a JsonIri
+	And the values are concatenated to a JsonIriReference
+	And the values are concatenated to a JsonPointer
+	And the values are concatenated to a JsonRegex
+	And the values are concatenated to a JsonRelativePointer
+	And the values are concatenated to a JsonTime
+	And the values are concatenated to a JsonUri
+	And the values are concatenated to a JsonUriReference
+	And the values are concatenated to a JsonUriTemplate
+	And the values are concatenated to a JsonUuid
+	And the values are concatenated to a JsonContent
+	And the values are concatenated to a JsonContentPre201909
+	And the values are concatenated to a JsonBase64Content
+	And the values are concatenated to a JsonBase64ContentPre201909
+	And the values are concatenated to a JsonBase64String
+	And the values are concatenated to a JsonBase64StringPre201909
+
+
+	Then the results should be equal to the JsonString <result>
 
 Examples:
 	| jsonValue                                                                                        | result                                                            |
@@ -89,4 +116,4 @@ Examples:
 	| ["there", 3.0, "world"]                                                                          | there3.0world                                                     |
 	| ["there", null, "world"]                                                                         | therenullworld                                                    |
 	| ["there", [1,2,3], "world"]                                                                      | there[1,2,3]world                                                 |
-	| ["there", {"foo": 3}, "world"]                                                                   | there{"foo":3}world                                               |	
+	| ["there", {"foo": 3}, "world"]                                                                   | there{"foo":3}world                                               |

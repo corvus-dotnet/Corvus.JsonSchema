@@ -6,9 +6,10 @@
 //     the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
+
 #nullable enable
+
 using System.Buffers;
-using System.ComponentModel;
 using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
@@ -16,6 +17,10 @@ using Corvus.Json;
 using Corvus.Json.Internal;
 
 namespace Corvus.Json.Patch.Model;
+
+/// <summary>
+/// Generated from JSON Schema.
+/// </summary>
 public readonly partial struct JsonPatchDocument
 {
     /// <summary>
@@ -28,12 +33,14 @@ public readonly partial struct JsonPatchDocument
     /// </remarks>
     [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<PatchOperation>))]
     public readonly partial struct PatchOperation
+        : IJsonValue<Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperation>
     {
         private readonly Backing backing;
         private readonly JsonElement jsonElementBacking;
         private readonly ImmutableList<JsonObjectProperty> objectBacking;
+
         /// <summary>
-        /// Initializes a new instance of the <see cref = "PatchOperation"/> struct.
+        /// Initializes a new instance of the <see cref="PatchOperation"/> struct.
         /// </summary>
         public PatchOperation()
         {
@@ -43,9 +50,9 @@ public readonly partial struct JsonPatchDocument
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref = "PatchOperation"/> struct.
+        /// Initializes a new instance of the <see cref="PatchOperation"/> struct.
         /// </summary>
-        /// <param name = "value">The value from which to construct the instance.</param>
+        /// <param name="value">The value from which to construct the instance.</param>
         public PatchOperation(in JsonElement value)
         {
             this.jsonElementBacking = value;
@@ -54,19 +61,33 @@ public readonly partial struct JsonPatchDocument
         }
 
         /// <summary>
+        /// Initializes a new instance of the <see cref="PatchOperation"/> struct.
+        /// </summary>
+        /// <param name="value">The value from which to construct the instance.</param>
+        public PatchOperation(ImmutableList<JsonObjectProperty> value)
+        {
+            this.backing = Backing.Object;
+            this.jsonElementBacking = default;
+            this.objectBacking = value;
+        }
+
+        /// <summary>
         /// Gets the schema location from which this type was generated.
         /// </summary>
-        public static string SchemaLocation { get; } = "json-patch.json#/$defs/PatchOperation";
+        public static string SchemaLocation { get; } = "#/$defs/PatchOperation";
+
         /// <summary>
         /// Gets a Null instance.
         /// </summary>
         public static PatchOperation Null { get; } = new(JsonValueHelpers.NullElement);
+
         /// <summary>
         /// Gets an Undefined instance.
         /// </summary>
         public static PatchOperation Undefined { get; }
+
         /// <summary>
-        /// Gets the default instance of the type.
+        /// Gets the default instance.
         /// </summary>
         public static PatchOperation DefaultInstance { get; }
 
@@ -193,6 +214,160 @@ public readonly partial struct JsonPatchDocument
             }
         }
 
+        /// <summary>
+        /// Gets the instance as a <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.AddOperation" />.
+        /// </summary>
+        public Corvus.Json.Patch.Model.JsonPatchDocument.AddOperation AsAddOperation
+        {
+            get
+            {
+                return this.As<Corvus.Json.Patch.Model.JsonPatchDocument.AddOperation>();
+            }
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether the instance is a <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.AddOperation" />.
+        /// </summary>
+        public bool IsAddOperation
+        {
+            get
+            {
+                return this.As<Corvus.Json.Patch.Model.JsonPatchDocument.AddOperation>().IsValid();
+            }
+        }
+
+        /// <summary>
+        /// Gets the instance as a <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.CopyOperation" />.
+        /// </summary>
+        public Corvus.Json.Patch.Model.JsonPatchDocument.CopyOperation AsCopyOperation
+        {
+            get
+            {
+                return this.As<Corvus.Json.Patch.Model.JsonPatchDocument.CopyOperation>();
+            }
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether the instance is a <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.CopyOperation" />.
+        /// </summary>
+        public bool IsCopyOperation
+        {
+            get
+            {
+                return this.As<Corvus.Json.Patch.Model.JsonPatchDocument.CopyOperation>().IsValid();
+            }
+        }
+
+        /// <summary>
+        /// Gets the instance as a <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.MoveOperation" />.
+        /// </summary>
+        public Corvus.Json.Patch.Model.JsonPatchDocument.MoveOperation AsMoveOperation
+        {
+            get
+            {
+                return this.As<Corvus.Json.Patch.Model.JsonPatchDocument.MoveOperation>();
+            }
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether the instance is a <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.MoveOperation" />.
+        /// </summary>
+        public bool IsMoveOperation
+        {
+            get
+            {
+                return this.As<Corvus.Json.Patch.Model.JsonPatchDocument.MoveOperation>().IsValid();
+            }
+        }
+
+        /// <summary>
+        /// Gets the instance as a <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommon" />.
+        /// </summary>
+        public Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommon AsPatchOperationCommon
+        {
+            get
+            {
+                return this.As<Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommon>();
+            }
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether the instance is a <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommon" />.
+        /// </summary>
+        public bool IsPatchOperationCommon
+        {
+            get
+            {
+                return this.As<Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommon>().IsValid();
+            }
+        }
+
+        /// <summary>
+        /// Gets the instance as a <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.RemoveOperation" />.
+        /// </summary>
+        public Corvus.Json.Patch.Model.JsonPatchDocument.RemoveOperation AsRemoveOperation
+        {
+            get
+            {
+                return this.As<Corvus.Json.Patch.Model.JsonPatchDocument.RemoveOperation>();
+            }
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether the instance is a <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.RemoveOperation" />.
+        /// </summary>
+        public bool IsRemoveOperation
+        {
+            get
+            {
+                return this.As<Corvus.Json.Patch.Model.JsonPatchDocument.RemoveOperation>().IsValid();
+            }
+        }
+
+        /// <summary>
+        /// Gets the instance as a <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.ReplaceOperation" />.
+        /// </summary>
+        public Corvus.Json.Patch.Model.JsonPatchDocument.ReplaceOperation AsReplaceOperation
+        {
+            get
+            {
+                return this.As<Corvus.Json.Patch.Model.JsonPatchDocument.ReplaceOperation>();
+            }
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether the instance is a <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.ReplaceOperation" />.
+        /// </summary>
+        public bool IsReplaceOperation
+        {
+            get
+            {
+                return this.As<Corvus.Json.Patch.Model.JsonPatchDocument.ReplaceOperation>().IsValid();
+            }
+        }
+
+        /// <summary>
+        /// Gets the instance as a <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.TestOperation" />.
+        /// </summary>
+        public Corvus.Json.Patch.Model.JsonPatchDocument.TestOperation AsTestOperation
+        {
+            get
+            {
+                return this.As<Corvus.Json.Patch.Model.JsonPatchDocument.TestOperation>();
+            }
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether the instance is a <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.TestOperation" />.
+        /// </summary>
+        public bool IsTestOperation
+        {
+            get
+            {
+                return this.As<Corvus.Json.Patch.Model.JsonPatchDocument.TestOperation>().IsValid();
+            }
+        }
+
         /// <inheritdoc/>
         public bool HasJsonElementBacking
         {
@@ -226,11 +401,6 @@ public readonly partial struct JsonPatchDocument
                     return JsonValueKind.Object;
                 }
 
-                if ((this.backing & Backing.Null) != 0)
-                {
-                    return JsonValueKind.Null;
-                }
-
                 return JsonValueKind.Undefined;
             }
         }
@@ -238,9 +408,8 @@ public readonly partial struct JsonPatchDocument
         /// <summary>
         /// Conversion from JsonAny.
         /// </summary>
-        /// <param name = "value">The value from which to convert.</param>
-        /// <exception cref = "InvalidOperationException">The value was not compatible with this type.</exception>
-        public static implicit operator PatchOperation(in JsonAny value)
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator PatchOperation(JsonAny value)
         {
             return value.As<PatchOperation>();
         }
@@ -248,43 +417,183 @@ public readonly partial struct JsonPatchDocument
         /// <summary>
         /// Conversion to JsonAny.
         /// </summary>
-        /// <param name = "value">The value from which to convert.</param>
-        /// <exception cref = "InvalidOperationException">The value was not compatible with this type.</exception>
-        public static implicit operator JsonAny(in PatchOperation value)
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator JsonAny(PatchOperation value)
         {
             return value.AsAny;
         }
 
         /// <summary>
-        /// Equality operator.
+        /// Conversion to <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommon"/>.
         /// </summary>
-        /// <param name = "left">The lhs.</param>
-        /// <param name = "right">The rhs.</param>
-        /// <returns><c>True</c> if the values are equal.</returns>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommon(PatchOperation value)
+        {
+            return value.As<Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommon>();
+        }
+
+        /// <summary>
+        /// Conversion from <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommon"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static explicit operator PatchOperation(Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommon value)
+        {
+            return value.As<PatchOperation>();
+        }
+
+        /// <summary>
+        /// Conversion to <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.AddOperation"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static explicit operator Corvus.Json.Patch.Model.JsonPatchDocument.AddOperation(PatchOperation value)
+        {
+            return value.As<Corvus.Json.Patch.Model.JsonPatchDocument.AddOperation>();
+        }
+
+        /// <summary>
+        /// Conversion from <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.AddOperation"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator PatchOperation(Corvus.Json.Patch.Model.JsonPatchDocument.AddOperation value)
+        {
+            return value.As<PatchOperation>();
+        }
+
+        /// <summary>
+        /// Conversion to <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.RemoveOperation"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static explicit operator Corvus.Json.Patch.Model.JsonPatchDocument.RemoveOperation(PatchOperation value)
+        {
+            return value.As<Corvus.Json.Patch.Model.JsonPatchDocument.RemoveOperation>();
+        }
+
+        /// <summary>
+        /// Conversion from <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.RemoveOperation"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator PatchOperation(Corvus.Json.Patch.Model.JsonPatchDocument.RemoveOperation value)
+        {
+            return value.As<PatchOperation>();
+        }
+
+        /// <summary>
+        /// Conversion to <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.ReplaceOperation"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static explicit operator Corvus.Json.Patch.Model.JsonPatchDocument.ReplaceOperation(PatchOperation value)
+        {
+            return value.As<Corvus.Json.Patch.Model.JsonPatchDocument.ReplaceOperation>();
+        }
+
+        /// <summary>
+        /// Conversion from <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.ReplaceOperation"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator PatchOperation(Corvus.Json.Patch.Model.JsonPatchDocument.ReplaceOperation value)
+        {
+            return value.As<PatchOperation>();
+        }
+
+        /// <summary>
+        /// Conversion to <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.MoveOperation"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static explicit operator Corvus.Json.Patch.Model.JsonPatchDocument.MoveOperation(PatchOperation value)
+        {
+            return value.As<Corvus.Json.Patch.Model.JsonPatchDocument.MoveOperation>();
+        }
+
+        /// <summary>
+        /// Conversion from <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.MoveOperation"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator PatchOperation(Corvus.Json.Patch.Model.JsonPatchDocument.MoveOperation value)
+        {
+            return value.As<PatchOperation>();
+        }
+
+        /// <summary>
+        /// Conversion to <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.CopyOperation"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static explicit operator Corvus.Json.Patch.Model.JsonPatchDocument.CopyOperation(PatchOperation value)
+        {
+            return value.As<Corvus.Json.Patch.Model.JsonPatchDocument.CopyOperation>();
+        }
+
+        /// <summary>
+        /// Conversion from <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.CopyOperation"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator PatchOperation(Corvus.Json.Patch.Model.JsonPatchDocument.CopyOperation value)
+        {
+            return value.As<PatchOperation>();
+        }
+
+        /// <summary>
+        /// Conversion to <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.TestOperation"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static explicit operator Corvus.Json.Patch.Model.JsonPatchDocument.TestOperation(PatchOperation value)
+        {
+            return value.As<Corvus.Json.Patch.Model.JsonPatchDocument.TestOperation>();
+        }
+
+        /// <summary>
+        /// Conversion from <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.TestOperation"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator PatchOperation(Corvus.Json.Patch.Model.JsonPatchDocument.TestOperation value)
+        {
+            return value.As<PatchOperation>();
+        }
+
+        /// <summary>
+        /// Operator ==.
+        /// </summary>
+        /// <param name="left">The lhs of the operator.</param>
+        /// <param name="right">The rhs of the operator.</param>
+        /// <returns>
+        /// <c>True</c> if the values are equal.
+        /// </returns>
         public static bool operator ==(in PatchOperation left, in PatchOperation right)
         {
             return left.Equals(right);
         }
 
         /// <summary>
-        /// Inequality operator.
+        /// Operator !=.
         /// </summary>
-        /// <param name = "left">The lhs.</param>
-        /// <param name = "right">The rhs.</param>
-        /// <returns><c>True</c> if the values are equal.</returns>
+        /// <param name="left">The lhs of the operator.</param>
+        /// <param name="right">The rhs of the operator.</param>
+        /// <returns>
+        /// <c>True</c> if the values are not equal.
+        /// </returns>
         public static bool operator !=(in PatchOperation left, in PatchOperation right)
         {
             return !left.Equals(right);
         }
 
         /// <summary>
-        /// Gets an instance of the JSON value from a JsonAny value.
+        /// Gets an instance of the JSON value from a <see cref="JsonElement"/> value.
         /// </summary>
-        /// <param name = "value">The <see cref = "JsonAny"/> value from which to instantiate the instance.</param>
-        /// <returns>An instance of this type, initialized from the <see cref = "JsonAny"/>.</returns>
+        /// <param name="value">The <see cref="JsonElement"/> value from which to instantiate the instance.</param>
+        /// <returns>An instance of this type, initialized from the <see cref="JsonElement"/>.</returns>
         /// <remarks>The returned value will have a <see cref = "IJsonValue.ValueKind"/> of <see cref = "JsonValueKind.Undefined"/> if the
-        /// value cannot be constructed from the given instance (e.g. because they have an incompatible dotnet backing type.
+        /// value cannot be constructed from the given instance (e.g. because they have an incompatible .NET backing type).
         /// </remarks>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static PatchOperation FromJson(in JsonElement value)
+        {
+            return new(value);
+        }
+
+        /// <summary>
+        /// Gets an instance of the JSON value from a <see cref="JsonAny"/> value.
+        /// </summary>
+        /// <param name="value">The <see cref="JsonAny"/> value from which to instantiate the instance.</param>
+        /// <returns>An instance of this type, initialized from the <see cref="JsonAny"/> value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static PatchOperation FromAny(in JsonAny value)
         {
@@ -293,8 +602,7 @@ public readonly partial struct JsonPatchDocument
                 return new(value.AsJsonElement);
             }
 
-            JsonValueKind valueKind = value.ValueKind;
-            return valueKind switch
+            return value.ValueKind switch
             {
                 JsonValueKind.Object => new(value.AsObject.AsPropertyBacking()),
                 JsonValueKind.Null => Null,
@@ -302,100 +610,69 @@ public readonly partial struct JsonPatchDocument
             };
         }
 
+#if NET8_0_OR_GREATER
         /// <summary>
-        /// Gets an instance of the JSON value from a <see cref = "JsonElement"/> value.
+        /// Gets an instance of the JSON value from the provided value.
         /// </summary>
-        /// <param name = "value">The <see cref = "JsonElement"/> value from which to instantiate the instance.</param>
-        /// <returns>An instance of this type, initialized from the <see cref = "JsonElement"/>.</returns>
+        /// <typeparam name="TValue">The type of the value.</typeparam>
+        /// <param name="value">The value from which to instantiate the instance.</param>
+        /// <returns>An instance of this type, initialized from the provided value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static PatchOperation FromJson(in JsonElement value)
+        static PatchOperation IJsonValue<PatchOperation>.FromBoolean<TValue>(in TValue value)
         {
-            return new(value);
+            if (value.HasJsonElementBacking)
+            {
+                return new(value.AsJsonElement);
+            }
+
+            return Undefined;
         }
+#endif
 
 #if NET8_0_OR_GREATER
-    /// <summary>
-    /// Gets an instance of the JSON value from a boolean value.
-    /// </summary>
-    /// <typeparam name = "TValue">The type of the value.</typeparam>
-    /// <param name="value">The value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the value.</returns>
-    /// <remarks>This will be PatchOperation.Undefined if the type is not compatible.</remarks>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    static PatchOperation IJsonValue<PatchOperation>.FromBoolean<TValue>(in TValue value)
-    {
-        if (value.HasJsonElementBacking)
-        {
-            return new(value.AsJsonElement);
-        }
-
-        return Undefined;
-    }
-#endif
-#if NET8_0_OR_GREATER
-    /// <summary>
-    /// Gets an instance of the JSON value from a string value.
-    /// </summary>
-    /// <typeparam name="TValue">The type of the value.</typeparam>
-    /// <param name="value">The value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the value.</returns>
-    /// <remarks>This will be PatchOperation.Undefined if the type is not compatible.</remarks>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    static PatchOperation IJsonValue<PatchOperation>.FromString<TValue>(in TValue value)
-    {
-        if (value.HasJsonElementBacking)
-        {
-            return new(value.AsJsonElement);
-        }
-
-        return Undefined;
-    }
-#endif
-#if NET8_0_OR_GREATER
-    /// <summary>
-    /// Gets an instance of the JSON value from a number value.
-    /// </summary>
-    /// <typeparam name="TValue">The type of the value.</typeparam>
-    /// <param name="value">The value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the value.</returns>
-    /// <remarks>This will be PatchOperation.Undefined if the type is not compatible.</remarks>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    static PatchOperation IJsonValue<PatchOperation>.FromNumber<TValue>(in TValue value)
-    {
-        if (value.HasJsonElementBacking)
-        {
-            return new(value.AsJsonElement);
-        }
-
-        return Undefined;
-    }
-#endif
-#if NET8_0_OR_GREATER
-    /// <summary>
-    /// Gets an instance of the JSON value from an array value.
-    /// </summary>
-    /// <typeparam name="TValue">The type of the value.</typeparam>
-    /// <param name="value">The value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the value.</returns>
-    /// <remarks>This will be PatchOperation.Undefined if the type is not compatible.</remarks>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    static PatchOperation IJsonValue<PatchOperation>.FromArray<TValue>(in TValue value)
-    {
-        if (value.HasJsonElementBacking)
-        {
-            return new(value.AsJsonElement);
-        }
-
-        return Undefined;
-    }
-#endif
         /// <summary>
-        /// Gets an instance of the JSON value from an object value.
+        /// Gets an instance of the JSON value from the provided value.
         /// </summary>
-        /// <typeparam name = "TValue">The type of the value.</typeparam>
-        /// <param name = "value">The value from which to instantiate the instance.</param>
-        /// <returns>An instance of this type, initialized from the value.</returns>
-        /// <remarks>This will be PatchOperation.Undefined if the type is not compatible.</remarks>
+        /// <typeparam name="TValue">The type of the value.</typeparam>
+        /// <param name="value">The value from which to instantiate the instance.</param>
+        /// <returns>An instance of this type, initialized from the provided value.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static PatchOperation IJsonValue<PatchOperation>.FromString<TValue>(in TValue value)
+        {
+            if (value.HasJsonElementBacking)
+            {
+                return new(value.AsJsonElement);
+            }
+
+            return Undefined;
+        }
+#endif
+
+#if NET8_0_OR_GREATER
+        /// <summary>
+        /// Gets an instance of the JSON value from the provided value.
+        /// </summary>
+        /// <typeparam name="TValue">The type of the value.</typeparam>
+        /// <param name="value">The value from which to instantiate the instance.</param>
+        /// <returns>An instance of this type, initialized from the provided value.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static PatchOperation IJsonValue<PatchOperation>.FromNumber<TValue>(in TValue value)
+        {
+            if (value.HasJsonElementBacking)
+            {
+                return new(value.AsJsonElement);
+            }
+
+            return Undefined;
+        }
+#endif
+
+        /// <summary>
+        /// Gets an instance of the JSON value from the provided value.
+        /// </summary>
+        /// <typeparam name="TValue">The type of the value.</typeparam>
+        /// <param name="value">The value from which to instantiate the instance.</param>
+        /// <returns>An instance of this type, initialized from the provided value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static PatchOperation FromObject<TValue>(in TValue value)
             where TValue : struct, IJsonObject<TValue>
@@ -405,142 +682,166 @@ public readonly partial struct JsonPatchDocument
                 return new(value.AsJsonElement);
             }
 
-            if (value.ValueKind == JsonValueKind.Object)
+            return value.ValueKind switch
             {
-                return new(value.AsPropertyBacking());
+                JsonValueKind.Object => new(value.AsPropertyBacking()),
+                JsonValueKind.Null => Null,
+                _ => Undefined,
+            };
+        }
+
+#if NET8_0_OR_GREATER
+        /// <summary>
+        /// Gets an instance of the JSON value from the provided value.
+        /// </summary>
+        /// <typeparam name="TValue">The type of the value.</typeparam>
+        /// <param name="value">The value from which to instantiate the instance.</param>
+        /// <returns>An instance of this type, initialized from the provided value.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static PatchOperation IJsonValue<PatchOperation>.FromArray<TValue>(in TValue value)
+        {
+            if (value.HasJsonElementBacking)
+            {
+                return new(value.AsJsonElement);
             }
 
             return Undefined;
         }
+#endif
 
         /// <summary>
-        /// Parses a JSON string into a PatchOperation.
+        /// Parses the PatchOperation.
         /// </summary>
-        /// <param name = "json">The json string to parse.</param>
-        /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-        /// <returns>A <see cref = "PatchOperation"/> instance built from the JSON string.</returns>
-        public static PatchOperation Parse(string json, JsonDocumentOptions options = default)
+        /// <param name="source">The source of the JSON string to parse.</param>
+        /// <param name="options">The (optional) JsonDocumentOptions.</param>
+        public static PatchOperation Parse(string source, JsonDocumentOptions options = default)
         {
-            using var jsonDocument = JsonDocument.Parse(json, options);
-            return new PatchOperation(jsonDocument.RootElement.Clone());
+            using var jsonDocument = JsonDocument.Parse(source, options);
+            return new(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses a JSON string into a PatchOperation.
+        /// Parses the PatchOperation.
         /// </summary>
-        /// <param name = "utf8Json">The json string to parse.</param>
-        /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-        /// <returns>A <see cref = "PatchOperation"/> instance built from the JSON string.</returns>
-        public static PatchOperation Parse(Stream utf8Json, JsonDocumentOptions options = default)
+        /// <param name="source">The source of the JSON string to parse.</param>
+        /// <param name="options">The (optional) JsonDocumentOptions.</param>
+        public static PatchOperation Parse(Stream source, JsonDocumentOptions options = default)
         {
-            using var jsonDocument = JsonDocument.Parse(utf8Json, options);
-            return new PatchOperation(jsonDocument.RootElement.Clone());
+            using var jsonDocument = JsonDocument.Parse(source, options);
+            return new(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses a JSON string into a PatchOperation.
+        /// Parses the PatchOperation.
         /// </summary>
-        /// <param name = "utf8Json">The json string to parse.</param>
-        /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-        /// <returns>A <see cref = "PatchOperation"/> instance built from the JSON string.</returns>
-        public static PatchOperation Parse(ReadOnlyMemory<byte> utf8Json, JsonDocumentOptions options = default)
+        /// <param name="source">The source of the JSON string to parse.</param>
+        /// <param name="options">The (optional) JsonDocumentOptions.</param>
+        public static PatchOperation Parse(ReadOnlyMemory<byte> source, JsonDocumentOptions options = default)
         {
-            using var jsonDocument = JsonDocument.Parse(utf8Json, options);
-            return new PatchOperation(jsonDocument.RootElement.Clone());
+            using var jsonDocument = JsonDocument.Parse(source, options);
+            return new(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses a JSON string into a PatchOperation.
+        /// Parses the PatchOperation.
         /// </summary>
-        /// <param name = "json">The json string to parse.</param>
-        /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-        /// <returns>A <see cref = "PatchOperation"/> instance built from the JSON string.</returns>
-        public static PatchOperation Parse(ReadOnlyMemory<char> json, JsonDocumentOptions options = default)
+        /// <param name="source">The source of the JSON string to parse.</param>
+        /// <param name="options">The (optional) JsonDocumentOptions.</param>
+        public static PatchOperation Parse(ReadOnlyMemory<char> source, JsonDocumentOptions options = default)
         {
-            using var jsonDocument = JsonDocument.Parse(json, options);
-            return new PatchOperation(jsonDocument.RootElement.Clone());
+            using var jsonDocument = JsonDocument.Parse(source, options);
+            return new(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses a JSON string into a PatchOperation.
+        /// Parses the PatchOperation.
         /// </summary>
-        /// <param name = "utf8Json">The json string to parse.</param>
-        /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-        /// <returns>A <see cref = "PatchOperation"/> instance built from the JSON string.</returns>
-        public static PatchOperation Parse(ReadOnlySequence<byte> utf8Json, JsonDocumentOptions options = default)
+        /// <param name="source">The source of the JSON string to parse.</param>
+        /// <param name="options">The (optional) JsonDocumentOptions.</param>
+        public static PatchOperation Parse(ReadOnlySequence<byte> source, JsonDocumentOptions options = default)
         {
-            using var jsonDocument = JsonDocument.Parse(utf8Json, options);
-            return new PatchOperation(jsonDocument.RootElement.Clone());
+            using var jsonDocument = JsonDocument.Parse(source, options);
+            return new(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses a JSON value from a buffer.
+        /// Parses the PatchOperation.
         /// </summary>
-        /// <param name = "buffer">The buffer from which to parse the value.</param>
-        /// <returns>The parsed value.</returns>
-        static PatchOperation ParseValue(ReadOnlySpan<char> buffer)
+        /// <param name="source">The source of the JSON string to parse.</param>
+        public static PatchOperation ParseValue(string source)
         {
 #if NET8_0_OR_GREATER
-        return IJsonValue<PatchOperation>.ParseValue(buffer);
+            return IJsonValue<PatchOperation>.ParseValue(source);
 #else
-            return JsonValueHelpers.ParseValue<PatchOperation>(buffer);
+            return JsonValueHelpers.ParseValue<PatchOperation>(source.AsSpan());
 #endif
         }
 
         /// <summary>
-        /// Parses a JSON value from a buffer.
+        /// Parses the PatchOperation.
         /// </summary>
-        /// <param name = "buffer">The buffer from which to parse the value.</param>
-        /// <returns>The parsed value.</returns>
-        static PatchOperation ParseValue(ReadOnlySpan<byte> buffer)
+        /// <param name="source">The source of the JSON string to parse.</param>
+        public static PatchOperation ParseValue(ReadOnlySpan<char> source)
         {
 #if NET8_0_OR_GREATER
-        return IJsonValue<PatchOperation>.ParseValue(buffer);
+            return IJsonValue<PatchOperation>.ParseValue(source);
 #else
-            return JsonValueHelpers.ParseValue<PatchOperation>(buffer);
+            return JsonValueHelpers.ParseValue<PatchOperation>(source);
 #endif
         }
 
         /// <summary>
-        /// Parses a JSON value from a buffer.
+        /// Parses the PatchOperation.
         /// </summary>
-        /// <param name = "reader">The reader from which to parse the value.</param>
-        /// <returns>The parsed value.</returns>
-        static PatchOperation ParseValue(ref Utf8JsonReader reader)
+        /// <param name="source">The source of the JSON string to parse.</param>
+        public static PatchOperation ParseValue(ReadOnlySpan<byte> source)
         {
 #if NET8_0_OR_GREATER
-        return IJsonValue<PatchOperation>.ParseValue(ref reader);
+            return IJsonValue<PatchOperation>.ParseValue(source);
 #else
-            return JsonValueHelpers.ParseValue<PatchOperation>(ref reader);
+            return JsonValueHelpers.ParseValue<PatchOperation>(source);
+#endif
+        }
+
+        /// <summary>
+        /// Parses the PatchOperation.
+        /// </summary>
+        /// <param name="source">The source of the JSON string to parse.</param>
+        public static PatchOperation ParseValue(ref Utf8JsonReader source)
+        {
+#if NET8_0_OR_GREATER
+            return IJsonValue<PatchOperation>.ParseValue(ref source);
+#else
+            return JsonValueHelpers.ParseValue<PatchOperation>(ref source);
 #endif
         }
 
         /// <summary>
         /// Gets the value as an instance of the target value.
         /// </summary>
-        /// <typeparam name = "TTarget">The type of the target.</typeparam>
+        /// <typeparam name="TTarget">The type of the target.</typeparam>
         /// <returns>An instance of the target type.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public TTarget As<TTarget>()
             where TTarget : struct, IJsonValue<TTarget>
         {
 #if NET8_0_OR_GREATER
-        if ((this.backing & Backing.JsonElement) != 0)
-        {
-            return TTarget.FromJson(this.jsonElementBacking);
-        }
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                return TTarget.FromJson(this.jsonElementBacking);
+            }
 
-        if ((this.backing & Backing.Object) != 0)
-        {
-            return TTarget.FromObject(this);
-        }
+            if ((this.backing & Backing.Object) != 0)
+            {
+                return TTarget.FromObject(this.AsObject);
+            }
 
-        if ((this.backing & Backing.Null) != 0)
-        {
-            return TTarget.Null;
-        }
+            if ((this.backing & Backing.Null) != 0)
+            {
+                return TTarget.Null;
+            }
 
-        return TTarget.Undefined;
+            return TTarget.Undefined;
 #else
             return this.As<PatchOperation, TTarget>();
 #endif
@@ -549,24 +850,66 @@ public readonly partial struct JsonPatchDocument
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            return (obj is IJsonValue jv && this.Equals(jv.AsAny)) || (obj is null && this.IsNull());
+            return
+                (obj is IJsonValue jv && this.Equals(jv.As<PatchOperation>())) ||
+                (obj is null && this.IsNull());
         }
 
         /// <inheritdoc/>
         public bool Equals<T>(in T other)
             where T : struct, IJsonValue<T>
         {
-            return JsonValueHelpers.CompareValues(this, other);
+            return this.Equals(other.As<PatchOperation>());
         }
 
         /// <summary>
         /// Equality comparison.
         /// </summary>
-        /// <param name = "other">The other item with which to compare.</param>
+        /// <param name="other">The other item with which to compare.</param>
         /// <returns><see langword="true"/> if the values were equal.</returns>
         public bool Equals(in PatchOperation other)
         {
-            return JsonValueHelpers.CompareValues(this, other);
+            JsonValueKind thisKind = this.ValueKind;
+            JsonValueKind otherKind = other.ValueKind;
+            if (thisKind != otherKind)
+            {
+                return false;
+            }
+
+            if (thisKind == JsonValueKind.Null || thisKind == JsonValueKind.Undefined)
+            {
+                return true;
+            }
+
+            if (thisKind == JsonValueKind.Object)
+            {
+                JsonObject thisObject = this.AsObject;
+                JsonObject otherObject = other.AsObject;
+                int count = 0;
+                foreach (JsonObjectProperty property in thisObject.EnumerateObject())
+                {
+                    if (!otherObject.TryGetProperty(property.Name, out JsonAny value) || !property.Value.Equals(value))
+                    {
+                        return false;
+                    }
+
+                    count++;
+                }
+
+                int otherCount = 0;
+                foreach (JsonObjectProperty otherProperty in otherObject.EnumerateObject())
+                {
+                    otherCount++;
+                    if (otherCount > count)
+                    {
+                        return false;
+                    }
+                }
+
+                return count == otherCount;
+            }
+
+            return false;
         }
 
         /// <inheritdoc/>
@@ -585,12 +928,14 @@ public readonly partial struct JsonPatchDocument
             if ((this.backing & Backing.Object) != 0)
             {
                 JsonValueHelpers.WriteProperties(this.objectBacking, writer);
+
                 return;
             }
 
             if ((this.backing & Backing.Null) != 0)
             {
                 writer.WriteNullValue();
+
                 return;
             }
         }
@@ -598,13 +943,223 @@ public readonly partial struct JsonPatchDocument
         /// <inheritdoc/>
         public override int GetHashCode()
         {
-            return JsonValueHelpers.GetHashCode(this);
+            return this.ValueKind switch
+            {
+                JsonValueKind.Array => JsonValueHelpers.GetArrayHashCode(((IJsonValue)this).AsArray),
+                JsonValueKind.Object => JsonValueHelpers.GetObjectHashCode(this),
+                JsonValueKind.Number => JsonValueHelpers.GetHashCodeForNumber(((IJsonValue)this).AsNumber),
+                JsonValueKind.String => JsonValueHelpers.GetHashCodeForString(((IJsonValue)this).AsString),
+                JsonValueKind.True => true.GetHashCode(),
+                JsonValueKind.False => false.GetHashCode(),
+                JsonValueKind.Null => JsonValueHelpers.NullHashCode,
+                _ => JsonValueHelpers.UndefinedHashCode,
+            };
         }
 
         /// <inheritdoc/>
         public override string ToString()
         {
             return this.Serialize();
+        }
+
+        /// <summary>
+        /// Matches the value against the composed values, and returns the result of calling the provided match function for the first match found.
+        /// </summary>
+        /// <typeparam name="TIn">The immutable context to pass in to the match function.</typeparam>
+        /// <typeparam name="TOut">The result of calling the match function.</typeparam>
+        /// <param name="context">The context to pass to the match function.</param>
+        /// <param name="matchAddOperation">Match a <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.AddOperation"/>.</param>
+        /// <param name="matchRemoveOperation">Match a <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.RemoveOperation"/>.</param>
+        /// <param name="matchReplaceOperation">Match a <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.ReplaceOperation"/>.</param>
+        /// <param name="matchMoveOperation">Match a <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.MoveOperation"/>.</param>
+        /// <param name="matchCopyOperation">Match a <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.CopyOperation"/>.</param>
+        /// <param name="matchTestOperation">Match a <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.TestOperation"/>.</param>
+        /// <param name="defaultMatch">Match any other value.</param>
+        /// <returns>An instance of the value returned by the match function.</returns>
+        public TOut Match<TIn, TOut>(
+            in TIn context,
+            Matcher<Corvus.Json.Patch.Model.JsonPatchDocument.AddOperation, TIn, TOut> matchAddOperation,
+            Matcher<Corvus.Json.Patch.Model.JsonPatchDocument.RemoveOperation, TIn, TOut> matchRemoveOperation,
+            Matcher<Corvus.Json.Patch.Model.JsonPatchDocument.ReplaceOperation, TIn, TOut> matchReplaceOperation,
+            Matcher<Corvus.Json.Patch.Model.JsonPatchDocument.MoveOperation, TIn, TOut> matchMoveOperation,
+            Matcher<Corvus.Json.Patch.Model.JsonPatchDocument.CopyOperation, TIn, TOut> matchCopyOperation,
+            Matcher<Corvus.Json.Patch.Model.JsonPatchDocument.TestOperation, TIn, TOut> matchTestOperation,
+            Matcher<Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperation, TIn, TOut> defaultMatch)
+        {
+            Corvus.Json.Patch.Model.JsonPatchDocument.AddOperation matchAddOperationValue = this.As<Corvus.Json.Patch.Model.JsonPatchDocument.AddOperation>();
+            if (matchAddOperationValue.IsValid())
+            {
+                return matchAddOperation(matchAddOperationValue, context);
+            }
+
+            Corvus.Json.Patch.Model.JsonPatchDocument.RemoveOperation matchRemoveOperationValue = this.As<Corvus.Json.Patch.Model.JsonPatchDocument.RemoveOperation>();
+            if (matchRemoveOperationValue.IsValid())
+            {
+                return matchRemoveOperation(matchRemoveOperationValue, context);
+            }
+
+            Corvus.Json.Patch.Model.JsonPatchDocument.ReplaceOperation matchReplaceOperationValue = this.As<Corvus.Json.Patch.Model.JsonPatchDocument.ReplaceOperation>();
+            if (matchReplaceOperationValue.IsValid())
+            {
+                return matchReplaceOperation(matchReplaceOperationValue, context);
+            }
+
+            Corvus.Json.Patch.Model.JsonPatchDocument.MoveOperation matchMoveOperationValue = this.As<Corvus.Json.Patch.Model.JsonPatchDocument.MoveOperation>();
+            if (matchMoveOperationValue.IsValid())
+            {
+                return matchMoveOperation(matchMoveOperationValue, context);
+            }
+
+            Corvus.Json.Patch.Model.JsonPatchDocument.CopyOperation matchCopyOperationValue = this.As<Corvus.Json.Patch.Model.JsonPatchDocument.CopyOperation>();
+            if (matchCopyOperationValue.IsValid())
+            {
+                return matchCopyOperation(matchCopyOperationValue, context);
+            }
+
+            Corvus.Json.Patch.Model.JsonPatchDocument.TestOperation matchTestOperationValue = this.As<Corvus.Json.Patch.Model.JsonPatchDocument.TestOperation>();
+            if (matchTestOperationValue.IsValid())
+            {
+                return matchTestOperation(matchTestOperationValue, context);
+            }
+
+            return defaultMatch(this, context);
+        }
+
+        /// <summary>
+        /// Matches the value against the composed values, and returns the result of calling the provided match function for the first match found.
+        /// </summary>
+        /// <typeparam name="TOut">The result of calling the match function.</typeparam>
+        /// <param name="matchAddOperation">Match a <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.AddOperation"/>.</param>
+        /// <param name="matchRemoveOperation">Match a <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.RemoveOperation"/>.</param>
+        /// <param name="matchReplaceOperation">Match a <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.ReplaceOperation"/>.</param>
+        /// <param name="matchMoveOperation">Match a <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.MoveOperation"/>.</param>
+        /// <param name="matchCopyOperation">Match a <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.CopyOperation"/>.</param>
+        /// <param name="matchTestOperation">Match a <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.TestOperation"/>.</param>
+        /// <param name="defaultMatch">Match any other value.</param>
+        /// <returns>An instance of the value returned by the match function.</returns>
+        public TOut Match<TOut>(
+            Matcher<Corvus.Json.Patch.Model.JsonPatchDocument.AddOperation, TOut> matchAddOperation,
+            Matcher<Corvus.Json.Patch.Model.JsonPatchDocument.RemoveOperation, TOut> matchRemoveOperation,
+            Matcher<Corvus.Json.Patch.Model.JsonPatchDocument.ReplaceOperation, TOut> matchReplaceOperation,
+            Matcher<Corvus.Json.Patch.Model.JsonPatchDocument.MoveOperation, TOut> matchMoveOperation,
+            Matcher<Corvus.Json.Patch.Model.JsonPatchDocument.CopyOperation, TOut> matchCopyOperation,
+            Matcher<Corvus.Json.Patch.Model.JsonPatchDocument.TestOperation, TOut> matchTestOperation,
+            Matcher<Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperation, TOut> defaultMatch)
+        {
+            Corvus.Json.Patch.Model.JsonPatchDocument.AddOperation matchAddOperationValue = this.As<Corvus.Json.Patch.Model.JsonPatchDocument.AddOperation>();
+            if (matchAddOperationValue.IsValid())
+            {
+                return matchAddOperation(matchAddOperationValue);
+            }
+
+            Corvus.Json.Patch.Model.JsonPatchDocument.RemoveOperation matchRemoveOperationValue = this.As<Corvus.Json.Patch.Model.JsonPatchDocument.RemoveOperation>();
+            if (matchRemoveOperationValue.IsValid())
+            {
+                return matchRemoveOperation(matchRemoveOperationValue);
+            }
+
+            Corvus.Json.Patch.Model.JsonPatchDocument.ReplaceOperation matchReplaceOperationValue = this.As<Corvus.Json.Patch.Model.JsonPatchDocument.ReplaceOperation>();
+            if (matchReplaceOperationValue.IsValid())
+            {
+                return matchReplaceOperation(matchReplaceOperationValue);
+            }
+
+            Corvus.Json.Patch.Model.JsonPatchDocument.MoveOperation matchMoveOperationValue = this.As<Corvus.Json.Patch.Model.JsonPatchDocument.MoveOperation>();
+            if (matchMoveOperationValue.IsValid())
+            {
+                return matchMoveOperation(matchMoveOperationValue);
+            }
+
+            Corvus.Json.Patch.Model.JsonPatchDocument.CopyOperation matchCopyOperationValue = this.As<Corvus.Json.Patch.Model.JsonPatchDocument.CopyOperation>();
+            if (matchCopyOperationValue.IsValid())
+            {
+                return matchCopyOperation(matchCopyOperationValue);
+            }
+
+            Corvus.Json.Patch.Model.JsonPatchDocument.TestOperation matchTestOperationValue = this.As<Corvus.Json.Patch.Model.JsonPatchDocument.TestOperation>();
+            if (matchTestOperationValue.IsValid())
+            {
+                return matchTestOperation(matchTestOperationValue);
+            }
+
+            return defaultMatch(this);
+        }
+
+        /// <summary>
+        /// Gets the value as a <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.AddOperation" />.
+        /// </summary>
+        /// <param name="result">The result of the conversions.</param>
+        /// <returns><see langword="true" /> if the conversion was valid.</returns>
+        public bool TryGetAsAddOperation(out Corvus.Json.Patch.Model.JsonPatchDocument.AddOperation result)
+        {
+            result = this.As<Corvus.Json.Patch.Model.JsonPatchDocument.AddOperation>();
+            return result.IsValid();
+        }
+
+        /// <summary>
+        /// Gets the value as a <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.CopyOperation" />.
+        /// </summary>
+        /// <param name="result">The result of the conversions.</param>
+        /// <returns><see langword="true" /> if the conversion was valid.</returns>
+        public bool TryGetAsCopyOperation(out Corvus.Json.Patch.Model.JsonPatchDocument.CopyOperation result)
+        {
+            result = this.As<Corvus.Json.Patch.Model.JsonPatchDocument.CopyOperation>();
+            return result.IsValid();
+        }
+
+        /// <summary>
+        /// Gets the value as a <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.MoveOperation" />.
+        /// </summary>
+        /// <param name="result">The result of the conversions.</param>
+        /// <returns><see langword="true" /> if the conversion was valid.</returns>
+        public bool TryGetAsMoveOperation(out Corvus.Json.Patch.Model.JsonPatchDocument.MoveOperation result)
+        {
+            result = this.As<Corvus.Json.Patch.Model.JsonPatchDocument.MoveOperation>();
+            return result.IsValid();
+        }
+
+        /// <summary>
+        /// Gets the value as a <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommon" />.
+        /// </summary>
+        /// <param name="result">The result of the conversions.</param>
+        /// <returns><see langword="true" /> if the conversion was valid.</returns>
+        public bool TryGetAsPatchOperationCommon(out Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommon result)
+        {
+            result = this.As<Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommon>();
+            return result.IsValid();
+        }
+
+        /// <summary>
+        /// Gets the value as a <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.RemoveOperation" />.
+        /// </summary>
+        /// <param name="result">The result of the conversions.</param>
+        /// <returns><see langword="true" /> if the conversion was valid.</returns>
+        public bool TryGetAsRemoveOperation(out Corvus.Json.Patch.Model.JsonPatchDocument.RemoveOperation result)
+        {
+            result = this.As<Corvus.Json.Patch.Model.JsonPatchDocument.RemoveOperation>();
+            return result.IsValid();
+        }
+
+        /// <summary>
+        /// Gets the value as a <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.ReplaceOperation" />.
+        /// </summary>
+        /// <param name="result">The result of the conversions.</param>
+        /// <returns><see langword="true" /> if the conversion was valid.</returns>
+        public bool TryGetAsReplaceOperation(out Corvus.Json.Patch.Model.JsonPatchDocument.ReplaceOperation result)
+        {
+            result = this.As<Corvus.Json.Patch.Model.JsonPatchDocument.ReplaceOperation>();
+            return result.IsValid();
+        }
+
+        /// <summary>
+        /// Gets the value as a <see cref="Corvus.Json.Patch.Model.JsonPatchDocument.TestOperation" />.
+        /// </summary>
+        /// <param name="result">The result of the conversions.</param>
+        /// <returns><see langword="true" /> if the conversion was valid.</returns>
+        public bool TryGetAsTestOperation(out Corvus.Json.Patch.Model.JsonPatchDocument.TestOperation result)
+        {
+            result = this.As<Corvus.Json.Patch.Model.JsonPatchDocument.TestOperation>();
+            return result.IsValid();
         }
     }
 }

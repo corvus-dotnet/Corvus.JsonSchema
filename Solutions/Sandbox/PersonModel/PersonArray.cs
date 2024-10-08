@@ -6,27 +6,30 @@
 //     the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
+
 #nullable enable
+
 using System.Buffers;
-using System.ComponentModel;
 using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
 using Corvus.Json.Internal;
 
-namespace Corvus.Json.Benchmarking.Models;
+namespace Sandbox.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
 [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<PersonArray>))]
 public readonly partial struct PersonArray
+
 {
     private readonly Backing backing;
     private readonly JsonElement jsonElementBacking;
     private readonly ImmutableList<JsonAny> arrayBacking;
+
     /// <summary>
-    /// Initializes a new instance of the <see cref = "PersonArray"/> struct.
+    /// Initializes a new instance of the <see cref="PersonArray"/> struct.
     /// </summary>
     public PersonArray()
     {
@@ -36,9 +39,9 @@ public readonly partial struct PersonArray
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref = "PersonArray"/> struct.
+    /// Initializes a new instance of the <see cref="PersonArray"/> struct.
     /// </summary>
-    /// <param name = "value">The value from which to construct the instance.</param>
+    /// <param name="value">The value from which to construct the instance.</param>
     public PersonArray(in JsonElement value)
     {
         this.jsonElementBacking = value;
@@ -47,19 +50,33 @@ public readonly partial struct PersonArray
     }
 
     /// <summary>
+    /// Initializes a new instance of the <see cref="PersonArray"/> struct.
+    /// </summary>
+    /// <param name="value">The value from which to construct the instance.</param>
+    public PersonArray(ImmutableList<JsonAny> value)
+    {
+        this.backing = Backing.Array;
+        this.jsonElementBacking = default;
+        this.arrayBacking = value;
+    }
+
+    /// <summary>
     /// Gets the schema location from which this type was generated.
     /// </summary>
-    public static string SchemaLocation { get; } = "person-schema.json#/$defs/PersonArray";
+    public static string SchemaLocation { get; } = "#/$defs/PersonArray";
+
     /// <summary>
     /// Gets a Null instance.
     /// </summary>
     public static PersonArray Null { get; } = new(JsonValueHelpers.NullElement);
+
     /// <summary>
     /// Gets an Undefined instance.
     /// </summary>
     public static PersonArray Undefined { get; }
+
     /// <summary>
-    /// Gets the default instance of the type.
+    /// Gets the default instance.
     /// </summary>
     public static PersonArray DefaultInstance { get; }
 
@@ -219,11 +236,6 @@ public readonly partial struct PersonArray
                 return JsonValueKind.Array;
             }
 
-            if ((this.backing & Backing.Null) != 0)
-            {
-                return JsonValueKind.Null;
-            }
-
             return JsonValueKind.Undefined;
         }
     }
@@ -231,9 +243,8 @@ public readonly partial struct PersonArray
     /// <summary>
     /// Conversion from JsonAny.
     /// </summary>
-    /// <param name = "value">The value from which to convert.</param>
-    /// <exception cref = "InvalidOperationException">The value was not compatible with this type.</exception>
-    public static implicit operator PersonArray(in JsonAny value)
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator PersonArray(JsonAny value)
     {
         return value.As<PersonArray>();
     }
@@ -241,43 +252,57 @@ public readonly partial struct PersonArray
     /// <summary>
     /// Conversion to JsonAny.
     /// </summary>
-    /// <param name = "value">The value from which to convert.</param>
-    /// <exception cref = "InvalidOperationException">The value was not compatible with this type.</exception>
-    public static implicit operator JsonAny(in PersonArray value)
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator JsonAny(PersonArray value)
     {
         return value.AsAny;
     }
 
     /// <summary>
-    /// Equality operator.
+    /// Operator ==.
     /// </summary>
-    /// <param name = "left">The lhs.</param>
-    /// <param name = "right">The rhs.</param>
-    /// <returns><c>True</c> if the values are equal.</returns>
+    /// <param name="left">The lhs of the operator.</param>
+    /// <param name="right">The rhs of the operator.</param>
+    /// <returns>
+    /// <c>True</c> if the values are equal.
+    /// </returns>
     public static bool operator ==(in PersonArray left, in PersonArray right)
     {
         return left.Equals(right);
     }
 
     /// <summary>
-    /// Inequality operator.
+    /// Operator !=.
     /// </summary>
-    /// <param name = "left">The lhs.</param>
-    /// <param name = "right">The rhs.</param>
-    /// <returns><c>True</c> if the values are equal.</returns>
+    /// <param name="left">The lhs of the operator.</param>
+    /// <param name="right">The rhs of the operator.</param>
+    /// <returns>
+    /// <c>True</c> if the values are not equal.
+    /// </returns>
     public static bool operator !=(in PersonArray left, in PersonArray right)
     {
         return !left.Equals(right);
     }
 
     /// <summary>
-    /// Gets an instance of the JSON value from a JsonAny value.
+    /// Gets an instance of the JSON value from a <see cref="JsonElement"/> value.
     /// </summary>
-    /// <param name = "value">The <see cref = "JsonAny"/> value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the <see cref = "JsonAny"/>.</returns>
+    /// <param name="value">The <see cref="JsonElement"/> value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the <see cref="JsonElement"/>.</returns>
     /// <remarks>The returned value will have a <see cref = "IJsonValue.ValueKind"/> of <see cref = "JsonValueKind.Undefined"/> if the
-    /// value cannot be constructed from the given instance (e.g. because they have an incompatible dotnet backing type.
+    /// value cannot be constructed from the given instance (e.g. because they have an incompatible .NET backing type).
     /// </remarks>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static PersonArray FromJson(in JsonElement value)
+    {
+        return new(value);
+    }
+
+    /// <summary>
+    /// Gets an instance of the JSON value from a <see cref="JsonAny"/> value.
+    /// </summary>
+    /// <param name="value">The <see cref="JsonAny"/> value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the <see cref="JsonAny"/> value.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static PersonArray FromAny(in JsonAny value)
     {
@@ -286,8 +311,7 @@ public readonly partial struct PersonArray
             return new(value.AsJsonElement);
         }
 
-        JsonValueKind valueKind = value.ValueKind;
-        return valueKind switch
+        return value.ValueKind switch
         {
             JsonValueKind.Array => new(value.AsArray.AsImmutableList()),
             JsonValueKind.Null => Null,
@@ -295,25 +319,13 @@ public readonly partial struct PersonArray
         };
     }
 
-    /// <summary>
-    /// Gets an instance of the JSON value from a <see cref = "JsonElement"/> value.
-    /// </summary>
-    /// <param name = "value">The <see cref = "JsonElement"/> value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the <see cref = "JsonElement"/>.</returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static PersonArray FromJson(in JsonElement value)
-    {
-        return new(value);
-    }
-
 #if NET8_0_OR_GREATER
     /// <summary>
-    /// Gets an instance of the JSON value from a boolean value.
+    /// Gets an instance of the JSON value from the provided value.
     /// </summary>
-    /// <typeparam name = "TValue">The type of the value.</typeparam>
+    /// <typeparam name="TValue">The type of the value.</typeparam>
     /// <param name="value">The value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the value.</returns>
-    /// <remarks>This will be PersonArray.Undefined if the type is not compatible.</remarks>
+    /// <returns>An instance of this type, initialized from the provided value.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     static PersonArray IJsonValue<PersonArray>.FromBoolean<TValue>(in TValue value)
     {
@@ -325,14 +337,14 @@ public readonly partial struct PersonArray
         return Undefined;
     }
 #endif
+
 #if NET8_0_OR_GREATER
     /// <summary>
-    /// Gets an instance of the JSON value from a string value.
+    /// Gets an instance of the JSON value from the provided value.
     /// </summary>
     /// <typeparam name="TValue">The type of the value.</typeparam>
     /// <param name="value">The value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the value.</returns>
-    /// <remarks>This will be PersonArray.Undefined if the type is not compatible.</remarks>
+    /// <returns>An instance of this type, initialized from the provided value.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     static PersonArray IJsonValue<PersonArray>.FromString<TValue>(in TValue value)
     {
@@ -344,14 +356,14 @@ public readonly partial struct PersonArray
         return Undefined;
     }
 #endif
+
 #if NET8_0_OR_GREATER
     /// <summary>
-    /// Gets an instance of the JSON value from a number value.
+    /// Gets an instance of the JSON value from the provided value.
     /// </summary>
     /// <typeparam name="TValue">The type of the value.</typeparam>
     /// <param name="value">The value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the value.</returns>
-    /// <remarks>This will be PersonArray.Undefined if the type is not compatible.</remarks>
+    /// <returns>An instance of this type, initialized from the provided value.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     static PersonArray IJsonValue<PersonArray>.FromNumber<TValue>(in TValue value)
     {
@@ -363,38 +375,14 @@ public readonly partial struct PersonArray
         return Undefined;
     }
 #endif
-    /// <summary>
-    /// Gets an instance of the JSON value from an array value.
-    /// </summary>
-    /// <typeparam name = "TValue">The type of the value.</typeparam>
-    /// <param name = "value">The value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the value.</returns>
-    /// <remarks>This will be PersonArray.Undefined if the type is not compatible.</remarks>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static PersonArray FromArray<TValue>(in TValue value)
-        where TValue : struct, IJsonArray<TValue>
-    {
-        if (value.HasJsonElementBacking)
-        {
-            return new(value.AsJsonElement);
-        }
-
-        if (value.ValueKind == JsonValueKind.Array)
-        {
-            return new(value.AsImmutableList());
-        }
-
-        return Undefined;
-    }
 
 #if NET8_0_OR_GREATER
     /// <summary>
-    /// Gets an instance of the JSON value from an object value.
+    /// Gets an instance of the JSON value from the provided value.
     /// </summary>
     /// <typeparam name="TValue">The type of the value.</typeparam>
     /// <param name="value">The value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the value.</returns>
-    /// <remarks>This will be PersonArray.Undefined if the type is not compatible.</remarks>
+    /// <returns>An instance of this type, initialized from the provided value.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     static PersonArray IJsonValue<PersonArray>.FromObject<TValue>(in TValue value)
     {
@@ -406,112 +394,141 @@ public readonly partial struct PersonArray
         return Undefined;
     }
 #endif
+
     /// <summary>
-    /// Parses a JSON string into a PersonArray.
+    /// Gets an instance of the JSON value from the provided value.
     /// </summary>
-    /// <param name = "json">The json string to parse.</param>
-    /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-    /// <returns>A <see cref = "PersonArray"/> instance built from the JSON string.</returns>
-    public static PersonArray Parse(string json, JsonDocumentOptions options = default)
+    /// <typeparam name="TValue">The type of the value.</typeparam>
+    /// <param name="value">The value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the provided value.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static PersonArray FromArray<TValue>(in TValue value)
+        where TValue : struct, IJsonArray<TValue>
     {
-        using var jsonDocument = JsonDocument.Parse(json, options);
-        return new PersonArray(jsonDocument.RootElement.Clone());
+        if (value.HasJsonElementBacking)
+        {
+            return new(value.AsJsonElement);
+        }
+
+        return value.ValueKind switch
+        {
+            JsonValueKind.Array => new(value.AsImmutableList()),
+            JsonValueKind.Null => Null,
+            _ => Undefined,
+        };
     }
 
     /// <summary>
-    /// Parses a JSON string into a PersonArray.
+    /// Parses the PersonArray.
     /// </summary>
-    /// <param name = "utf8Json">The json string to parse.</param>
-    /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-    /// <returns>A <see cref = "PersonArray"/> instance built from the JSON string.</returns>
-    public static PersonArray Parse(Stream utf8Json, JsonDocumentOptions options = default)
+    /// <param name="source">The source of the JSON string to parse.</param>
+    /// <param name="options">The (optional) JsonDocumentOptions.</param>
+    public static PersonArray Parse(string source, JsonDocumentOptions options = default)
     {
-        using var jsonDocument = JsonDocument.Parse(utf8Json, options);
-        return new PersonArray(jsonDocument.RootElement.Clone());
+        using var jsonDocument = JsonDocument.Parse(source, options);
+        return new(jsonDocument.RootElement.Clone());
     }
 
     /// <summary>
-    /// Parses a JSON string into a PersonArray.
+    /// Parses the PersonArray.
     /// </summary>
-    /// <param name = "utf8Json">The json string to parse.</param>
-    /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-    /// <returns>A <see cref = "PersonArray"/> instance built from the JSON string.</returns>
-    public static PersonArray Parse(ReadOnlyMemory<byte> utf8Json, JsonDocumentOptions options = default)
+    /// <param name="source">The source of the JSON string to parse.</param>
+    /// <param name="options">The (optional) JsonDocumentOptions.</param>
+    public static PersonArray Parse(Stream source, JsonDocumentOptions options = default)
     {
-        using var jsonDocument = JsonDocument.Parse(utf8Json, options);
-        return new PersonArray(jsonDocument.RootElement.Clone());
+        using var jsonDocument = JsonDocument.Parse(source, options);
+        return new(jsonDocument.RootElement.Clone());
     }
 
     /// <summary>
-    /// Parses a JSON string into a PersonArray.
+    /// Parses the PersonArray.
     /// </summary>
-    /// <param name = "json">The json string to parse.</param>
-    /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-    /// <returns>A <see cref = "PersonArray"/> instance built from the JSON string.</returns>
-    public static PersonArray Parse(ReadOnlyMemory<char> json, JsonDocumentOptions options = default)
+    /// <param name="source">The source of the JSON string to parse.</param>
+    /// <param name="options">The (optional) JsonDocumentOptions.</param>
+    public static PersonArray Parse(ReadOnlyMemory<byte> source, JsonDocumentOptions options = default)
     {
-        using var jsonDocument = JsonDocument.Parse(json, options);
-        return new PersonArray(jsonDocument.RootElement.Clone());
+        using var jsonDocument = JsonDocument.Parse(source, options);
+        return new(jsonDocument.RootElement.Clone());
     }
 
     /// <summary>
-    /// Parses a JSON string into a PersonArray.
+    /// Parses the PersonArray.
     /// </summary>
-    /// <param name = "utf8Json">The json string to parse.</param>
-    /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-    /// <returns>A <see cref = "PersonArray"/> instance built from the JSON string.</returns>
-    public static PersonArray Parse(ReadOnlySequence<byte> utf8Json, JsonDocumentOptions options = default)
+    /// <param name="source">The source of the JSON string to parse.</param>
+    /// <param name="options">The (optional) JsonDocumentOptions.</param>
+    public static PersonArray Parse(ReadOnlyMemory<char> source, JsonDocumentOptions options = default)
     {
-        using var jsonDocument = JsonDocument.Parse(utf8Json, options);
-        return new PersonArray(jsonDocument.RootElement.Clone());
+        using var jsonDocument = JsonDocument.Parse(source, options);
+        return new(jsonDocument.RootElement.Clone());
     }
 
     /// <summary>
-    /// Parses a JSON value from a buffer.
+    /// Parses the PersonArray.
     /// </summary>
-    /// <param name = "buffer">The buffer from which to parse the value.</param>
-    /// <returns>The parsed value.</returns>
-    static PersonArray ParseValue(ReadOnlySpan<char> buffer)
+    /// <param name="source">The source of the JSON string to parse.</param>
+    /// <param name="options">The (optional) JsonDocumentOptions.</param>
+    public static PersonArray Parse(ReadOnlySequence<byte> source, JsonDocumentOptions options = default)
+    {
+        using var jsonDocument = JsonDocument.Parse(source, options);
+        return new(jsonDocument.RootElement.Clone());
+    }
+
+    /// <summary>
+    /// Parses the PersonArray.
+    /// </summary>
+    /// <param name="source">The source of the JSON string to parse.</param>
+    public static PersonArray ParseValue(string source)
     {
 #if NET8_0_OR_GREATER
-        return IJsonValue<PersonArray>.ParseValue(buffer);
+        return IJsonValue<PersonArray>.ParseValue(source);
 #else
-        return JsonValueHelpers.ParseValue<PersonArray>(buffer);
+        return JsonValueHelpers.ParseValue<PersonArray>(source.AsSpan());
 #endif
     }
 
     /// <summary>
-    /// Parses a JSON value from a buffer.
+    /// Parses the PersonArray.
     /// </summary>
-    /// <param name = "buffer">The buffer from which to parse the value.</param>
-    /// <returns>The parsed value.</returns>
-    static PersonArray ParseValue(ReadOnlySpan<byte> buffer)
+    /// <param name="source">The source of the JSON string to parse.</param>
+    public static PersonArray ParseValue(ReadOnlySpan<char> source)
     {
 #if NET8_0_OR_GREATER
-        return IJsonValue<PersonArray>.ParseValue(buffer);
+        return IJsonValue<PersonArray>.ParseValue(source);
 #else
-        return JsonValueHelpers.ParseValue<PersonArray>(buffer);
+        return JsonValueHelpers.ParseValue<PersonArray>(source);
 #endif
     }
 
     /// <summary>
-    /// Parses a JSON value from a buffer.
+    /// Parses the PersonArray.
     /// </summary>
-    /// <param name = "reader">The reader from which to parse the value.</param>
-    /// <returns>The parsed value.</returns>
-    static PersonArray ParseValue(ref Utf8JsonReader reader)
+    /// <param name="source">The source of the JSON string to parse.</param>
+    public static PersonArray ParseValue(ReadOnlySpan<byte> source)
     {
 #if NET8_0_OR_GREATER
-        return IJsonValue<PersonArray>.ParseValue(ref reader);
+        return IJsonValue<PersonArray>.ParseValue(source);
 #else
-        return JsonValueHelpers.ParseValue<PersonArray>(ref reader);
+        return JsonValueHelpers.ParseValue<PersonArray>(source);
+#endif
+    }
+
+    /// <summary>
+    /// Parses the PersonArray.
+    /// </summary>
+    /// <param name="source">The source of the JSON string to parse.</param>
+    public static PersonArray ParseValue(ref Utf8JsonReader source)
+    {
+#if NET8_0_OR_GREATER
+        return IJsonValue<PersonArray>.ParseValue(ref source);
+#else
+        return JsonValueHelpers.ParseValue<PersonArray>(ref source);
 #endif
     }
 
     /// <summary>
     /// Gets the value as an instance of the target value.
     /// </summary>
-    /// <typeparam name = "TTarget">The type of the target.</typeparam>
+    /// <typeparam name="TTarget">The type of the target.</typeparam>
     /// <returns>An instance of the target type.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public TTarget As<TTarget>()
@@ -542,24 +559,58 @@ public readonly partial struct PersonArray
     /// <inheritdoc/>
     public override bool Equals(object? obj)
     {
-        return (obj is IJsonValue jv && this.Equals(jv.AsAny)) || (obj is null && this.IsNull());
+        return
+            (obj is IJsonValue jv && this.Equals(jv.As<PersonArray>())) ||
+            (obj is null && this.IsNull());
     }
 
     /// <inheritdoc/>
     public bool Equals<T>(in T other)
         where T : struct, IJsonValue<T>
     {
-        return JsonValueHelpers.CompareValues(this, other);
+        return this.Equals(other.As<PersonArray>());
     }
 
     /// <summary>
     /// Equality comparison.
     /// </summary>
-    /// <param name = "other">The other item with which to compare.</param>
+    /// <param name="other">The other item with which to compare.</param>
     /// <returns><see langword="true"/> if the values were equal.</returns>
     public bool Equals(in PersonArray other)
     {
-        return JsonValueHelpers.CompareValues(this, other);
+        JsonValueKind thisKind = this.ValueKind;
+        JsonValueKind otherKind = other.ValueKind;
+        if (thisKind != otherKind)
+        {
+            return false;
+        }
+
+        if (thisKind == JsonValueKind.Null || thisKind == JsonValueKind.Undefined)
+        {
+            return true;
+        }
+
+        if (thisKind == JsonValueKind.Array)
+        {
+            JsonArrayEnumerator<Sandbox.Models.Person> lhs = this.EnumerateArray();
+            JsonArrayEnumerator<Sandbox.Models.Person> rhs = other.EnumerateArray();
+            while (lhs.MoveNext())
+            {
+                if (!rhs.MoveNext())
+                {
+                    return false;
+                }
+
+                if (!lhs.Current.Equals(rhs.Current))
+                {
+                    return false;
+                }
+            }
+
+            return !rhs.MoveNext();
+        }
+
+        return false;
     }
 
     /// <inheritdoc/>
@@ -578,12 +629,14 @@ public readonly partial struct PersonArray
         if ((this.backing & Backing.Array) != 0)
         {
             JsonValueHelpers.WriteItems(this.arrayBacking, writer);
+
             return;
         }
 
         if ((this.backing & Backing.Null) != 0)
         {
             writer.WriteNullValue();
+
             return;
         }
     }
@@ -591,7 +644,17 @@ public readonly partial struct PersonArray
     /// <inheritdoc/>
     public override int GetHashCode()
     {
-        return JsonValueHelpers.GetHashCode(this);
+        return this.ValueKind switch
+        {
+            JsonValueKind.Array => JsonValueHelpers.GetArrayHashCode(this),
+            JsonValueKind.Object => JsonValueHelpers.GetObjectHashCode(((IJsonValue)this).AsObject),
+            JsonValueKind.Number => JsonValueHelpers.GetHashCodeForNumber(((IJsonValue)this).AsNumber),
+            JsonValueKind.String => JsonValueHelpers.GetHashCodeForString(((IJsonValue)this).AsString),
+            JsonValueKind.True => true.GetHashCode(),
+            JsonValueKind.False => false.GetHashCode(),
+            JsonValueKind.Null => JsonValueHelpers.NullHashCode,
+            _ => JsonValueHelpers.UndefinedHashCode,
+        };
     }
 
     /// <inheritdoc/>

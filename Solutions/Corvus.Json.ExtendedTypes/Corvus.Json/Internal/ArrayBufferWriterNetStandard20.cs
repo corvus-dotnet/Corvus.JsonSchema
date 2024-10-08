@@ -6,6 +6,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // </licensing>
 
+#if !NET8_0_OR_GREATER
+
 #define MAKE_ABW_PUBLIC
 
 #pragma warning disable
@@ -264,3 +266,5 @@ namespace Corvus.Json
         }
     }
 }
+
+#endif

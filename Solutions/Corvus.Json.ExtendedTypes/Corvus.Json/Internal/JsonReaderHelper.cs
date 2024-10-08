@@ -13,7 +13,9 @@ using System.Buffers.Text;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.InteropServices;
 using System.Text;
+using CommunityToolkit.HighPerformance.Buffers;
 
 namespace Corvus.Json
 {
@@ -50,59 +52,140 @@ namespace Corvus.Json
             return true;
         }
 
-        public static ReadOnlySpan<byte> GetUnescapedSpan(ReadOnlySpan<byte> utf8Source, int idx)
+        public static void Unescape(ReadOnlySpan<char> source, Span<byte> destination, int idx, out int written)
         {
-            // The escaped name is always >= than the unescaped, so it is safe to use escaped name for the buffer length.
-            int length = utf8Source.Length;
-            byte[]? pooledName = null;
+            Debug.Assert(idx >= 0 && idx < source.Length);
+            Debug.Assert(source[idx] == JsonConstants.BackSlash);
+            Debug.Assert(destination.Length >= source.Length);
 
-            Span<byte> utf8Unescaped = length <= JsonConstants.StackallocThreshold ?
-                stackalloc byte[length] :
-                (pooledName = ArrayPool<byte>.Shared.Rent(length));
+            TranscodeHelper(source.Slice(0, idx), destination);
+            written = idx;
+            int lastWritten = -1;
 
-            Unescape(utf8Source, utf8Unescaped, idx, out int written);
-            Debug.Assert(written > 0);
-
-            ReadOnlySpan<byte> propertyName = utf8Unescaped.Slice(0, written).ToArray();
-            Debug.Assert(!propertyName.IsEmpty);
-
-            if (pooledName != null)
+            for (; idx < source.Length; idx++)
             {
-                ArrayPool<byte>.Shared.Return(pooledName, true);
-            }
-
-            return propertyName;
-        }
-
-#if !NET8_0_OR_GREATER
-        public static int GetUnescapedArrayInPlace(byte[] utf8Source, int length, int idx)
-        {
-            // The escaped name is always >= than the unescaped, so it is safe to use escaped name for the buffer length.
-            byte[]? pooledName = null;
-
-            Span<byte> utf8Unescaped = length <= JsonConstants.StackallocThreshold ?
-                stackalloc byte[length] :
-                (pooledName = ArrayPool<byte>.Shared.Rent(length));
-
-
-            try
-            {
-                Unescape(utf8Source.AsSpan(0,length), utf8Unescaped, idx, out int written);
-                utf8Unescaped[..written].CopyTo(utf8Source);
-
-                Debug.Assert(written > 0);
-               return written;
-            }
-            finally
-            {
-                if (pooledName is byte[] p)
+                char currentChar = source[idx];
+                if (currentChar == '\\')
                 {
-                    ArrayPool<byte>.Shared.Return(p);
+                    if (lastWritten != -1)
+                    {
+                        written += TranscodeHelper(source[lastWritten..idx], destination[written..]);
+                        lastWritten = -1;
+                    }
+
+                    idx++;
+                    currentChar = source[idx];
+
+                    if (currentChar == '"')
+                    {
+                        destination[written++] = JsonConstants.Quote;
+                    }
+                    else if (currentChar == 'n')
+                    {
+                        destination[written++] = JsonConstants.LineFeed;
+                    }
+                    else if (currentChar == 'r')
+                    {
+                        destination[written++] = JsonConstants.CarriageReturn;
+                    }
+                    else if (currentChar == '\\')
+                    {
+                        destination[written++] = JsonConstants.BackSlash;
+                    }
+                    else if (currentChar == '/')
+                    {
+                        destination[written++] = JsonConstants.Slash;
+                    }
+                    else if (currentChar == 't')
+                    {
+                        destination[written++] = JsonConstants.Tab;
+                    }
+                    else if (currentChar == 'b')
+                    {
+                        destination[written++] = JsonConstants.BackSpace;
+                    }
+                    else if (currentChar == 'f')
+                    {
+                        destination[written++] = JsonConstants.FormFeed;
+                    }
+                    else if (currentChar == 'u')
+                    {
+                        // The source is known to be valid JSON, and hence if we see a \u, it is guaranteed to have 4 hex digits following it
+                        // Otherwise, the Utf8JsonReader would have already thrown an exception.
+                        Debug.Assert(source.Length >= idx + 5);
+
+                        bool result = TryParse4DigitHex(source.Slice(idx + 1, 4), out int scalar, out int bytesConsumed);
+                        Debug.Assert(result);
+                        Debug.Assert(bytesConsumed == 4);
+                        idx += bytesConsumed;     // The loop iteration will increment idx past the last hex digit
+
+                        if (JsonHelpers.IsInRangeInclusive((uint)scalar, JsonConstants.HighSurrogateStartValue, JsonConstants.LowSurrogateEndValue))
+                        {
+                            // The first hex value cannot be a low surrogate.
+                            if (scalar >= JsonConstants.LowSurrogateStartValue)
+                            {
+                                throw new InvalidOperationException($"Read Invalid UTF16: {scalar}");
+                            }
+
+                            Debug.Assert(JsonHelpers.IsInRangeInclusive((uint)scalar, JsonConstants.HighSurrogateStartValue, JsonConstants.HighSurrogateEndValue));
+
+                            idx += 3;   // Skip the last hex digit and the next \u
+
+                            // We must have a low surrogate following a high surrogate.
+                            if (source.Length < idx + 4 || source[idx - 2] != '\\' || source[idx - 1] != 'u')
+                            {
+                                throw new InvalidOperationException("Read Invalid UTF16");
+                            }
+
+                            // The source is known to be valid JSON, and hence if we see a \u, it is guaranteed to have 4 hex digits following it
+                            // Otherwise, the Utf8JsonReader would have already thrown an exception.
+                            result = TryParse4DigitHex(source.Slice(idx, 4), out int lowSurrogate, out bytesConsumed);
+                            Debug.Assert(result);
+                            Debug.Assert(bytesConsumed == 4);
+
+                            // If the first hex value is a high surrogate, the next one must be a low surrogate.
+                            if (!JsonHelpers.IsInRangeInclusive((uint)lowSurrogate, JsonConstants.LowSurrogateStartValue, JsonConstants.LowSurrogateEndValue))
+                            {
+                                throw new InvalidOperationException($"Read Invalid UTF16: {lowSurrogate}");
+                            }
+
+                            idx += bytesConsumed - 1;  // The loop iteration will increment idx past the last hex digit
+
+                            // To find the unicode scalar:
+                            // (0x400 * (High surrogate - 0xD800)) + Low surrogate - 0xDC00 + 0x10000
+                            scalar = (JsonConstants.BitShiftBy10 * (scalar - JsonConstants.HighSurrogateStartValue))
+                                + (lowSurrogate - JsonConstants.LowSurrogateStartValue)
+                                + JsonConstants.UnicodePlane01StartValue;
+                        }
+
+                        var rune = new Rune(scalar);
+                        int bytesWritten = rune.EncodeToUtf8(destination.Slice(written));
+                        Debug.Assert(bytesWritten <= 4);
+                        written += bytesWritten;
+                    }
+                }
+                else
+                {
+                    if (lastWritten == -1)
+                    {
+                        lastWritten = idx;
+                    }
+
+                    //// Instead of writing these in character by character, accumulate
+                    /// a contiguous range and write them together
+                    ////Span<char> buffer = stackalloc char[1];
+                    ////buffer[0] = currentChar;
+                    ////written += TranscodeHelper(buffer, destination[written..]);
                 }
             }
+
+            if (lastWritten != -1)
+            {
+                written += TranscodeHelper(source[lastWritten..], destination[written..]);
+            }
         }
-#endif
-        internal static void Unescape(ReadOnlySpan<byte> source, Span<byte> destination, int idx, out int written)
+
+        public static void Unescape(ReadOnlySpan<byte> source, Span<byte> destination, int idx, out int written)
         {
             Debug.Assert(idx >= 0 && idx < source.Length);
             Debug.Assert(source[idx] == JsonConstants.BackSlash);
@@ -214,6 +297,48 @@ namespace Corvus.Json
             }
         }
 
+        public static int TranscodeHelper(ReadOnlySpan<char> unescaped, Span<byte> destination)
+        {
+            try
+            {
+#if NET8_0_OR_GREATER
+                return s_utf8Encoding.GetBytes(unescaped, destination);
+#else
+                char[] chars = ArrayPool<char>.Shared.Rent(destination.Length);
+                byte[] bytes = ArrayPool<byte>.Shared.Rent(unescaped.Length);
+
+                unescaped.CopyTo(chars);
+
+                try
+                {
+                    int written = s_utf8Encoding.GetBytes(chars, 0, unescaped.Length, bytes, 0);
+                    bytes.AsSpan(0, written).CopyTo(destination);
+                    return written;
+                }
+                finally
+                {
+                    ArrayPool<char>.Shared.Return(chars);
+                    ArrayPool<byte>.Shared.Return(bytes);
+                }
+#endif
+            }
+            catch (DecoderFallbackException dfe)
+            {
+                // We want to be consistent with the exception being thrown
+                // so the user only has to catch a single exception.
+                // Since we already throw InvalidOperationException for mismatch token type,
+                // and while unescaping, using that exception for failure to decode invalid UTF-8 bytes as well.
+                // Therefore, wrapping the DecoderFallbackException around an InvalidOperationException.
+                throw new InvalidOperationException("Cannot transcode invalid UTF8 bytes.", dfe);
+            }
+            catch (ArgumentException)
+            {
+                // Destination buffer was too small; clear it up since the encoder might have not.
+                destination.Clear();
+                throw;
+            }
+        }
+
         public static int TranscodeHelper(ReadOnlySpan<byte> utf8Unescaped, Span<char> destination)
         {
             try
@@ -223,7 +348,7 @@ namespace Corvus.Json
 #else
                 char[] chars = ArrayPool<char>.Shared.Rent(destination.Length);
                 byte[] bytes = ArrayPool<byte>.Shared.Rent(utf8Unescaped.Length);
-                
+
                 utf8Unescaped.CopyTo(bytes);
 
                 try
@@ -254,6 +379,45 @@ namespace Corvus.Json
                 destination.Clear();
                 throw;
             }
+        }
+
+        public static bool TryParse4DigitHex(ReadOnlySpan<char> hexSpan, out int result, out int charsRead)
+        {
+            result = 0;
+            charsRead = 0;
+
+            if (hexSpan.Length != 4)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < hexSpan.Length; i++)
+            {
+                result <<= 4; // Shift result left by 4 bits to make room for the next hex digit
+                char c = hexSpan[i];
+                if (c >= '0' && c <= '9')
+                {
+                    result += c - '0';
+                }
+                else if (c >= 'A' && c <= 'F')
+                {
+                    result += c - 'A' + 10;
+                }
+                else if (c >= 'a' && c <= 'f')
+                {
+                    result += c - 'a' + 10;
+                }
+                else
+                {
+                    result = 0;
+                    charsRead = i;
+                    return false;
+                }
+
+                charsRead++;
+            }
+
+            return true;
         }
     }
 }

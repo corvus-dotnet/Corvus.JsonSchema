@@ -1,4 +1,4 @@
-﻿namespace Corvus.Json.SchemaGenerator;
+﻿namespace Corvus.Json.CodeGenerator;
 
 /// <summary>
 /// The various schema types that are available.

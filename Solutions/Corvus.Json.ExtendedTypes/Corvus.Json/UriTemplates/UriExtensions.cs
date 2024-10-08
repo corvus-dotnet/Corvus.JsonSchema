@@ -6,6 +6,7 @@
 using System.Collections.Immutable;
 using System.Text;
 using System.Text.RegularExpressions;
+using Corvus.HighPerformance;
 using Corvus.Json.Internal;
 
 namespace Corvus.Json.UriTemplates;
@@ -55,37 +56,28 @@ public static class UriExtensions
             & ~UriComponents.Fragment,
             UriFormat.Unescaped);
 
-        StringBuilder sb = StringBuilderPool.Shared.Get();
-        try
+        ValueStringBuilder sb = new(stackalloc char[4096]);
+        sb.Append(target);
+        sb.Append("{?");
+        bool first = true;
+
+        foreach (string name in parameters.Keys)
         {
-            sb.Append(target);
-            sb.Append("{?");
-            bool first = true;
-
-            foreach (string name in parameters.Keys)
+            if (first)
             {
-                if (first)
-                {
-                    first = false;
-                }
-                else
-                {
-                    sb.Append(',');
-                }
-
-                sb.Append(name);
+                first = false;
+            }
+            else
+            {
+                sb.Append(',');
             }
 
-            sb.Append('}');
-
-            var template = new UriTemplate(sb.ToString(), false, parameters, null);
-
-            return template;
+            sb.Append(name);
         }
-        finally
-        {
-            StringBuilderPool.Shared.Return(sb);
-        }
+
+        sb.Append('}');
+
+        return new UriTemplate(sb.CreateStringAndDispose(), false, parameters, null);
     }
 
     /// <summary>

@@ -751,9 +751,9 @@ internal class BinaryJsonNumberEquals
         new object[] { 0.3F, 0.3F, Expectation.True },
         new object[] { 0.3F, 0.3M, Expectation.True },
         new object[] { 0.3F, 0.3D, Expectation.False },
-        new object[] { 0.3F, GetJsonElement(0.3F), Expectation.False }, // These are false because JsonElement behaves as a double even if it was created via a float; it can't tell.
-        new object[] { 0.3F, GetJsonElement(0.3M), Expectation.False },
-        new object[] { 0.3F, GetJsonElement(0.3D), Expectation.False },
+        new object[] { 0.3F, GetJsonElement(0.3F), Expectation.True },
+        new object[] { 0.3F, GetJsonElement(0.3M), Expectation.True },
+        new object[] { 0.3F, GetJsonElement(0.3D), Expectation.True },
     ];
 
     /// <summary>
@@ -767,7 +767,7 @@ internal class BinaryJsonNumberEquals
         new object[] { 0.3D, 0.3F, Expectation.False },
         new object[] { 0.3D, 0.3M, Expectation.True },
         new object[] { 0.3D, 0.3D, Expectation.True },
-        new object[] { 0.3D, GetJsonElement(0.3F), Expectation.True }, // These are true because JsonElement behaves as a double even if it was created via a float; it can't tell.
+        new object[] { 0.3D, GetJsonElement(0.3F), Expectation.True },
         new object[] { 0.3D, GetJsonElement(0.3M), Expectation.True },
         new object[] { 0.3D, GetJsonElement(0.3D), Expectation.True },
     ];

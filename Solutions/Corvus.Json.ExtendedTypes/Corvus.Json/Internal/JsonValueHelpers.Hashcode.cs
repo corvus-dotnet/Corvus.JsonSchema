@@ -13,8 +13,15 @@ namespace Corvus.Json.Internal;
 /// </summary>
 public static partial class JsonValueHelpers
 {
-    private static readonly int NullHashCode = CreateNullHashCode();
-    private static readonly int UndefinedHashCode = CreateUndefinedHashCode();
+    /// <summary>
+    /// Gets the null hash code.
+    /// </summary>
+    public static readonly int NullHashCode = CreateNullHashCode();
+
+    /// <summary>
+    /// Gets the undefined hash code.
+    /// </summary>
+    public static readonly int UndefinedHashCode = CreateUndefinedHashCode();
 
     /// <summary>
     /// Gets the hash code for a JSON value.
@@ -107,25 +114,15 @@ public static partial class JsonValueHelpers
         return hash.ToHashCode();
     }
 
-    private static int CreateNullHashCode()
-    {
-        HashCode code = default;
-        code.Add((object?)null);
-        return code.ToHashCode();
-    }
-
-    private static int CreateUndefinedHashCode()
-    {
-        HashCode code = default;
-
-        // We'll pick a random value and use it as our undefined hashcode.
-        code.Add(Guid.NewGuid());
-        return code.ToHashCode();
-    }
-
+    /// <summary>
+    /// Get the hash code for a string.
+    /// </summary>
+    /// <typeparam name="T">The type of string for which to get the hash code.</typeparam>
+    /// <param name="value">The string for which to get the hash code.</param>
+    /// <returns>The hash code.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static int GetHashCodeForString<T>(in T value)
-    where T : struct, IJsonString<T>
+    public static int GetHashCodeForString<T>(in T value)
+        where T : struct, IJsonString<T>
     {
 #if NET8_0_OR_GREATER
         if (value.TryGetValue(ProcessHashCode, (object?)null, out int hashCode))
@@ -146,25 +143,32 @@ public static partial class JsonValueHelpers
 #endif
     }
 
+    /// <summary>
+    /// Get the hash code for a number.
+    /// </summary>
+    /// <typeparam name="T">The type of number for which to get the hash code.</typeparam>
+    /// <param name="value">The number for which to get the hash code.</param>
+    /// <returns>The hash code.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static int GetHashCodeForNumber<T>(in T value)
+    public static int GetHashCodeForNumber<T>(in T value)
         where T : struct, IJsonNumber<T>
     {
-        if (value.HasJsonElementBacking)
-        {
-            // We get a double if we can, otherwise we fall back to a decimal.
-            if (value.AsJsonElement.TryGetDouble(out double result1))
-            {
-                return result1.GetHashCode();
-            }
-
-            if (value.AsJsonElement.TryGetDecimal(out decimal result2))
-            {
-                return result2.GetHashCode();
-            }
-        }
-
-        // This has the same double if possible, then decimal semantics.
         return value.AsBinaryJsonNumber.GetHashCode();
+    }
+
+    private static int CreateNullHashCode()
+    {
+        HashCode code = default;
+        code.Add((object?)null);
+        return code.ToHashCode();
+    }
+
+    private static int CreateUndefinedHashCode()
+    {
+        HashCode code = default;
+
+        // We'll pick a random value and use it as our undefined hashcode.
+        code.Add(Guid.NewGuid());
+        return code.ToHashCode();
     }
 }
