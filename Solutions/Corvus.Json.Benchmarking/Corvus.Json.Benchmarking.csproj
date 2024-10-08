@@ -3,7 +3,7 @@
 
 	<PropertyGroup>
 		<OutputType>Exe</OutputType>
-    <TargetFrameworks>net8.0</TargetFrameworks>
+    <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<IsPackable>false</IsPackable>
@@ -24,11 +24,11 @@
     </PackageReference>
     <PackageReference Include="BenchmarkDotNet" Version="0.14.0" />
     <PackageReference Include="Microsoft.VisualStudio.DiagnosticsHub.BenchmarkDotNetDiagnosers" Version="17.12.35209.2" />
-    <PackageReference Include="System.Text.Json" Version="9.0.0-rc.1.24431.7" />
+    <PackageReference Include="System.Text.Json" Version="9.0.0-rc.2.24473.5" />
 		<PackageReference Include="BenchmarkDotNet.Diagnostics.Windows" Version="0.14.0" />
-		<PackageReference Include="JsonSchema.Net" Version="7.2.2" />
+		<PackageReference Include="JsonSchema.Net" Version="7.2.3" />
 		<PackageReference Include="JsonPatch.Net" Version="3.1.1" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.0-rc.1.24431.7" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.0-rc.2.24473.5" />
   </ItemGroup>
 
 	<ItemGroup>
