@@ -4236,7 +4236,7 @@ internal static partial class CodeGeneratorExtensions
             generator
                 .AppendLineIndent("/// <para>")
                 .AppendIndent("/// ")
-                .AppendLine(SymbolDisplay.FormatLiteral(line, false))
+                .AppendLine(SymbolDisplay.FormatLiteral(HttpUtility.HtmlEncode(line), false))
                 .AppendLineIndent("/// </para>");
         }
 

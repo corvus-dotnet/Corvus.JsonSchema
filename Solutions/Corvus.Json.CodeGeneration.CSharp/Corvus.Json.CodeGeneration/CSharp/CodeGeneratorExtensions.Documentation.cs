@@ -2,6 +2,8 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Web;
+
 namespace Corvus.Json.CodeGeneration.CSharp;
 
 /// <summary>
@@ -50,7 +52,7 @@ internal static partial class CodeGeneratorExtensions
 
         return generator
             .AppendLineIndent("/// <summary>")
-            .AppendBlockIndentWithPrefix(summaryText, "/// ")
+            .AppendBlockIndentWithPrefix(HttpUtility.HtmlEncode(summaryText), "/// ")
             .AppendLineIndent("/// </summary>");
     }
 
@@ -139,7 +141,7 @@ internal static partial class CodeGeneratorExtensions
         return generator
             .AppendLineIndent("/// <example>")
             .AppendLineIndent("/// <code>")
-            .AppendBlockIndentWithPrefix(example, "/// ")
+            .AppendBlockIndentWithPrefix(HttpUtility.HtmlEncode(example), "/// ")
             .AppendLineIndent("/// </code>")
             .AppendLineIndent("/// </example>");
     }
