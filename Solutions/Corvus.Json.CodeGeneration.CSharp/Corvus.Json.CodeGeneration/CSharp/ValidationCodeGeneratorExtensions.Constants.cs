@@ -381,23 +381,29 @@ public static partial class ValidationCodeGeneratorExtensions
 
         string memberName = generator.GetMethodNameInScope(keyword.Keyword, prefix: "Create", suffix: index?.ToString());
 
-        // TODO: Figure out how to get the SourceGenerator to run when generating code
-        // in the specs.
         return generator
-                    .AppendLine("#if NET8_0_OR_GREATER && !DYNAMIC_BUILD && !SOURCE_GENERATOR_BUILD")
-                    .AppendIndent("[GeneratedRegex(")
-                    .Append(SymbolDisplay.FormatLiteral(value, true))
-                    .AppendLine(")]")
-                    .AppendIndent("private static partial Regex ")
-                    .Append(memberName)
-                    .AppendLine("();")
-                .AppendLine("#else")
+#if BUILDING_SOURCE_GENERATOR
                 .AppendIndent("private static Regex ")
                 .Append(memberName)
                 .Append("() => new(")
                 .AppendQuotedStringLiteral(value)
-                .AppendLine(", RegexOptions.Compiled);")
-                .AppendLine("#endif");
+                .AppendLine(", RegexOptions.Compiled);");
+#else
+                .AppendLine("#if NET8_0_OR_GREATER && !DYNAMIC_BUILD")
+                .AppendIndent("[GeneratedRegex(")
+                .Append(SymbolDisplay.FormatLiteral(value, true))
+                .AppendLine(")]")
+                .AppendIndent("private static partial Regex ")
+                .Append(memberName)
+                .AppendLine("();")
+            .AppendLine("#else")
+            .AppendIndent("private static Regex ")
+            .Append(memberName)
+            .Append("() => new(")
+            .AppendQuotedStringLiteral(value)
+            .AppendLine(", RegexOptions.Compiled);")
+            .AppendLine("#endif");
+#endif
     }
 
     private static CodeGenerator AppendValidationConstantFields(CodeGenerator generator, IReadOnlyDictionary<IValidationConstantProviderKeyword, JsonElement[]> constants)

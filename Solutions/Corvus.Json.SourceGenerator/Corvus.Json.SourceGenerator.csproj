@@ -8,6 +8,7 @@
     <IsRoslynComponent>true</IsRoslynComponent>
     <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
     <IncludeSymbols>false</IncludeSymbols>
+    <DefineConstants>$(DefineConstants);BUILDING_SOURCE_GENERATOR</DefineConstants>
   </PropertyGroup>
 
   <PropertyGroup Label="NuGet">
