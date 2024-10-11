@@ -233,10 +233,17 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
             string? json = additionalText.GetText(token)?.ToString();
             if (json is string j)
             {
-                var doc = JsonDocument.Parse(j);
-                if (SchemaReferenceNormalization.TryNormalizeSchemaReference(additionalText.Path, string.Empty, out string? normalizedReference))
+                try
                 {
-                    newResolver.AddDocument(normalizedReference, doc);
+                    var doc = JsonDocument.Parse(j);
+                    if (SchemaReferenceNormalization.TryNormalizeSchemaReference(additionalText.Path, string.Empty, out string? normalizedReference))
+                    {
+                        newResolver.AddDocument(normalizedReference, doc);
+                    }
+                }
+                catch (JsonException)
+                {
+                    // We ignore bad JSON files.
                 }
             }
         }
@@ -248,6 +255,7 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
     {
         PrepopulatedDocumentResolver metaSchemaResolver = new();
         metaSchemaResolver.AddMetaschema();
+
         return metaSchemaResolver;
     }
 
