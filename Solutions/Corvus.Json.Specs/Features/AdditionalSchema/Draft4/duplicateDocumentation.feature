@@ -1129,6 +1129,6 @@ Scenario: A schema that produces duplicate documentation
 	Then the remarks for the file 'DuplicationDocumentation440ASchemaThatProducesDuplicateDocumentation.FilesDefinition.Object.cs' parent struct 'DuplicationDocumentation440ASchemaThatProducesDuplicateDocumentation' child struct 'FilesDefinition' property 'Files' will be
 """
         /// <para>
-        /// If no 'files' or 'include' property is present in a tsconfig.json, the compiler defaults to including all files in the containing directory and subdirectories except those specified by 'exclude'. When a 'files' property is specified, only those files and those specified by 'include' are included.
+        /// If no &#39;files&#39; or &#39;include&#39; property is present in a tsconfig.json, the compiler defaults to including all files in the containing directory and subdirectories except those specified by &#39;exclude&#39;. When a &#39;files&#39; property is specified, only those files and those specified by &#39;include&#39; are included.
         /// </para>
 """
