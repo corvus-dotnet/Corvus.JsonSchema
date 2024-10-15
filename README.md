@@ -613,7 +613,7 @@ Validation type - should have been 'string' with format 'datetime' but was 'Good
 - We now generate fewer files for each type. You should delete your previous generated files before running the new version of the generator, to avoid leaving duplicate partial definitions.
 
 ### Breaking changes
-- .NET 6 and .NET 7 are now out-of-support. We no longer support these verrsions. The `netstandard2.0` builds will fail at runtime.
+- .NET 6 and .NET 7 are now out-of-support. We no longer support these versions. The `netstandard2.0` builds will fail at runtime.
 
 - - We no longer generate the property 'default' accessors.
 
