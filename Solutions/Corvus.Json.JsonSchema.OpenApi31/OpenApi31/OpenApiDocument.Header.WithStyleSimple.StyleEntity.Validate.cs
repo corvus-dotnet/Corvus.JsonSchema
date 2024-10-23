@@ -43,7 +43,7 @@ public readonly partial struct OpenApiDocument
             /// Examples:
             /// <example>
             /// <code>
-            /// "simple"
+            /// &quot;simple&quot;
             /// </code>
             /// </example>
             /// </para>

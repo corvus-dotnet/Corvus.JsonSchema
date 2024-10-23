@@ -435,6 +435,61 @@ public readonly partial struct Person
     }
 
     /// <summary>
+    /// Sets the (optional) <c>dateOfBirth</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    public Person WithDateOfBirth(in Corvus.Json.Benchmarking.Models.V4.Person.DateOfBirthEntity value)
+    {
+        return this.SetProperty(JsonPropertyNames.DateOfBirth, value);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>email</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    public Person WithEmail(in Corvus.Json.JsonEmail value)
+    {
+        return this.SetProperty(JsonPropertyNames.Email, value);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>height</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    public Person WithHeight(in Corvus.Json.Benchmarking.Models.V4.HeightRangeDouble value)
+    {
+        return this.SetProperty(JsonPropertyNames.Height, value);
+    }
+
+    /// <summary>
+    /// Sets the <c>name</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    /// <remarks>
+    /// <para>
+    /// A name of a person.
+    /// </para>
+    /// </remarks>
+    public Person WithName(in Corvus.Json.Benchmarking.Models.V4.PersonName value)
+    {
+        return this.SetProperty(JsonPropertyNames.Name, value);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>netWorth</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    public Person WithNetWorth(in Corvus.Json.JsonDecimal value)
+    {
+        return this.SetProperty(JsonPropertyNames.NetWorth, value);
+    }
+
+    /// <summary>
     /// Get a property.
     /// </summary>
     /// <param name="name">The name of the property.</param>

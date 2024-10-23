@@ -11,7 +11,6 @@
 
 using System.Collections.Immutable;
 using System.Text.Json;
-using System.Text.RegularExpressions;
 using Corvus.Json;
 using Corvus.Json.Internal;
 
@@ -33,13 +32,6 @@ public readonly partial struct OpenApiDocument
     public readonly partial struct Encoding
         : IJsonObject<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Encoding>
     {
-        /// <summary>
-        /// The pattern matching '^x-'
-        /// for the pattern property producing the type
-        /// <see cref="Corvus.Json.JsonAny"/>.
-        /// </summary>
-        public static Regex PatternPropertyJsonAny => CorvusValidation.PatternProperties;
-
         /// <summary>
         /// Conversion from <see cref="ImmutableList{JsonObjectProperty}"/>.
         /// </summary>
@@ -450,6 +442,56 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
+        /// Sets the (optional) <c>allowReserved</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Encoding WithAllowReserved(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Encoding.AllowReservedEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.AllowReserved, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>contentType</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Encoding WithContentType(in Corvus.Json.JsonString value)
+        {
+            return this.SetProperty(JsonPropertyNames.ContentType, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>explode</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Encoding WithExplode(in Corvus.Json.JsonBoolean value)
+        {
+            return this.SetProperty(JsonPropertyNames.Explode, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>headers</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Encoding WithHeaders(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Encoding.HeadersEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.Headers, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>style</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Encoding WithStyle(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Encoding.StyleEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.Style, value);
+        }
+
+        /// <summary>
         /// Get a property.
         /// </summary>
         /// <param name="name">The name of the property.</param>
@@ -830,30 +872,6 @@ public readonly partial struct OpenApiDocument
         public Encoding RemoveProperty(ReadOnlySpan<byte> name)
         {
             return new(__CorvusObjectHelpers.GetPropertyBackingWithout(this, name));
-        }
-
-        /// <summary>
-        /// Determines if a property name matches '^x-'
-        /// for the pattern property producing the type
-        /// <see cref="Corvus.Json.JsonAny"/>.
-        /// </summary>
-        public static bool MatchesPatternJsonAny(in JsonObjectProperty property) => property.Name.IsMatch(CorvusValidation.PatternProperties);
-
-        /// <summary>
-        /// Gets an instance of the type
-        /// <see cref="Corvus.Json.JsonAny"/>
-        /// if the property name matches '^x-'.
-        /// </summary>
-        public static bool TryAsPatternJsonAny(in JsonObjectProperty property, out Corvus.Json.JsonAny result)
-        {
-            if (property.Name.IsMatch(CorvusValidation.PatternProperties))
-            {
-                result = property.Value.As<Corvus.Json.JsonAny>();
-                return result.IsValid();
-            }
-
-            result = Corvus.Json.JsonAny.Undefined;
-            return false;
         }
 
         /// <summary>

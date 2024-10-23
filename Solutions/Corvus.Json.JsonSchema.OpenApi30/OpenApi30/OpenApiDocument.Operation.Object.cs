@@ -717,6 +717,126 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
+        /// Sets the (optional) <c>callbacks</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Operation WithCallbacks(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Operation.CallbacksEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.Callbacks, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>deprecated</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Operation WithDeprecated(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Operation.DeprecatedEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.Deprecated, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>description</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Operation WithDescription(in Corvus.Json.JsonString value)
+        {
+            return this.SetProperty(JsonPropertyNames.Description, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>externalDocs</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Operation WithExternalDocs(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExternalDocumentation value)
+        {
+            return this.SetProperty(JsonPropertyNames.ExternalDocs, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>operationId</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Operation WithOperationId(in Corvus.Json.JsonString value)
+        {
+            return this.SetProperty(JsonPropertyNames.OperationId, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>parameters</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Operation WithParameters(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Operation.ParametersEntityArray value)
+        {
+            return this.SetProperty(JsonPropertyNames.Parameters, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>requestBody</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Operation WithRequestBody(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Operation.RequestBodyEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.RequestBody, value);
+        }
+
+        /// <summary>
+        /// Sets the <c>responses</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Operation WithResponsesValue(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Responses value)
+        {
+            return this.SetProperty(JsonPropertyNames.ResponsesValue, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>security</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Operation WithSecurity(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Operation.SecurityRequirementArray value)
+        {
+            return this.SetProperty(JsonPropertyNames.Security, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>servers</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Operation WithServers(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Operation.ServerArray value)
+        {
+            return this.SetProperty(JsonPropertyNames.Servers, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>summary</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Operation WithSummary(in Corvus.Json.JsonString value)
+        {
+            return this.SetProperty(JsonPropertyNames.Summary, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>tags</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Operation WithTags(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Operation.JsonStringArray value)
+        {
+            return this.SetProperty(JsonPropertyNames.Tags, value);
+        }
+
+        /// <summary>
         /// Get a property.
         /// </summary>
         /// <param name="name">The name of the property.</param>

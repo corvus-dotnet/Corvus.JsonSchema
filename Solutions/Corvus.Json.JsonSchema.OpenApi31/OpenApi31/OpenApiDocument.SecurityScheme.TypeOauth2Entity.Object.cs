@@ -294,6 +294,16 @@ public readonly partial struct OpenApiDocument
             }
 
             /// <summary>
+            /// Sets the (optional) <c>flows</c> property.
+            /// </summary>
+            /// <param name="value">The new property value</param>
+            /// <returns>The instance with the property set.</returns>
+            public TypeOauth2Entity WithFlows(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OauthFlows value)
+            {
+                return this.SetProperty(JsonPropertyNames.Flows, value);
+            }
+
+            /// <summary>
             /// Get a property.
             /// </summary>
             /// <param name="name">The name of the property.</param>

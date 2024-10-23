@@ -27,7 +27,7 @@ public readonly partial struct JsonPatchDocument
     /// </summary>
     /// <remarks>
     /// <para>
-    /// Move operation. "from" is a JSON Pointer.
+    /// Move operation. &quot;from&quot; is a JSON Pointer.
     /// </para>
     /// </remarks>
     public readonly partial struct MoveOperation

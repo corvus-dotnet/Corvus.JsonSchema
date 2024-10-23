@@ -708,6 +708,126 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
+        /// Sets the (optional) <c>delete</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public PathItem WithDelete(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Operation value)
+        {
+            return this.SetProperty(JsonPropertyNames.Delete, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>description</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public PathItem WithDescription(in Corvus.Json.JsonString value)
+        {
+            return this.SetProperty(JsonPropertyNames.Description, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>get</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public PathItem WithGet(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Operation value)
+        {
+            return this.SetProperty(JsonPropertyNames.Get, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>head</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public PathItem WithHead(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Operation value)
+        {
+            return this.SetProperty(JsonPropertyNames.Head, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>options</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public PathItem WithOptions(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Operation value)
+        {
+            return this.SetProperty(JsonPropertyNames.Options, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>parameters</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public PathItem WithParameters(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.PathItem.ParameterOrReferenceArray value)
+        {
+            return this.SetProperty(JsonPropertyNames.Parameters, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>patch</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public PathItem WithPatch(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Operation value)
+        {
+            return this.SetProperty(JsonPropertyNames.Patch, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>post</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public PathItem WithPost(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Operation value)
+        {
+            return this.SetProperty(JsonPropertyNames.Post, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>put</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public PathItem WithPut(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Operation value)
+        {
+            return this.SetProperty(JsonPropertyNames.Put, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>servers</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public PathItem WithServers(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.PathItem.ServerArray value)
+        {
+            return this.SetProperty(JsonPropertyNames.Servers, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>summary</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public PathItem WithSummary(in Corvus.Json.JsonString value)
+        {
+            return this.SetProperty(JsonPropertyNames.Summary, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>trace</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public PathItem WithTrace(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Operation value)
+        {
+            return this.SetProperty(JsonPropertyNames.Trace, value);
+        }
+
+        /// <summary>
         /// Get a property.
         /// </summary>
         /// <param name="name">The name of the property.</param>

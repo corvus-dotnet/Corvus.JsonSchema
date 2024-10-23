@@ -295,6 +295,16 @@ public readonly partial struct OpenApiDocument
             }
 
             /// <summary>
+            /// Sets the <c>in</c> property.
+            /// </summary>
+            /// <param name="value">The new property value</param>
+            /// <returns>The instance with the property set.</returns>
+            public RequiredIn WithIn(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.RequiredIn.InEntity value)
+            {
+                return this.SetProperty(JsonPropertyNames.In, value);
+            }
+
+            /// <summary>
             /// Get a property.
             /// </summary>
             /// <param name="name">The name of the property.</param>

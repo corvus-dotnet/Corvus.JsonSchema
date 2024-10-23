@@ -41,7 +41,7 @@ public readonly partial struct OpenApiDocument
     /// <code>
     /// [
     ///         {
-    ///           "url": "/"
+    ///           &quot;url&quot;: &quot;/&quot;
     ///         }
     ///       ]
     /// </code>

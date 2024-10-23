@@ -520,6 +520,76 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
+        /// Sets the (optional) <c>contact</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Info WithContactValue(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Contact value)
+        {
+            return this.SetProperty(JsonPropertyNames.ContactValue, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>description</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Info WithDescription(in Corvus.Json.JsonString value)
+        {
+            return this.SetProperty(JsonPropertyNames.Description, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>license</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Info WithLicenseValue(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.License value)
+        {
+            return this.SetProperty(JsonPropertyNames.LicenseValue, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>summary</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Info WithSummary(in Corvus.Json.JsonString value)
+        {
+            return this.SetProperty(JsonPropertyNames.Summary, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>termsOfService</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Info WithTermsOfService(in Corvus.Json.JsonUri value)
+        {
+            return this.SetProperty(JsonPropertyNames.TermsOfService, value);
+        }
+
+        /// <summary>
+        /// Sets the <c>title</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Info WithTitle(in Corvus.Json.JsonString value)
+        {
+            return this.SetProperty(JsonPropertyNames.Title, value);
+        }
+
+        /// <summary>
+        /// Sets the <c>version</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Info WithVersion(in Corvus.Json.JsonString value)
+        {
+            return this.SetProperty(JsonPropertyNames.Version, value);
+        }
+
+        /// <summary>
         /// Get a property.
         /// </summary>
         /// <param name="name">The name of the property.</param>

@@ -11,7 +11,6 @@
 
 using System.Runtime.CompilerServices;
 using System.Text.Json;
-using System.Text.RegularExpressions;
 using Corvus.Json;
 
 namespace Corvus.Json.JsonSchema.OpenApi30;
@@ -77,11 +76,6 @@ public readonly partial struct OpenApiDocument
         public static partial class CorvusValidation
         {
             /// <summary>
-            /// A regular expression for the <c>patternProperties</c> keyword.
-            /// </summary>
-            public static readonly Regex PatternProperties = CreatePatternProperties();
-
-            /// <summary>
             /// Core type validation.
             /// </summary>
             /// <param name="valueKind">The <see cref="JsonValueKind" /> of the value to validate.</param>
@@ -120,7 +114,6 @@ public readonly partial struct OpenApiDocument
                         ValidationContext ignoredResult = validationContext;
                         ignoredResult = ignoredResult.WithResult(isValid: true, "Validation additionalProperties - ignored because the value is not an object", "additionalProperties");
                         ignoredResult = ignoredResult.WithResult(isValid: true, "Validation properties - ignored because the value is not an object", "properties");
-                        ignoredResult = ignoredResult.WithResult(isValid: true, "Validation patternProperties - ignored because the value is not an object", "patternProperties");
 
                         return ignoredResult;
                     }
@@ -132,29 +125,6 @@ public readonly partial struct OpenApiDocument
                 foreach (JsonObjectProperty property in value.EnumerateObject())
                 {
                     string? propertyNameAsString = null;
-
-                    propertyNameAsString ??= property.Name.GetString();
-
-                    if (PatternProperties.IsMatch(propertyNameAsString))
-                    {
-                        result = result.WithLocalProperty(propertyCount);
-                        if (level > ValidationLevel.Basic)
-                        {
-                            result = result.PushValidationLocationReducedPathModifierAndProperty(new JsonReference("#/patternProperties"), propertyNameAsString);
-                        }
-
-                        result = property.Value.As<Corvus.Json.JsonAny>().Validate(result, level);
-
-                        if (level > ValidationLevel.Basic)
-                        {
-                            result = result.PopLocation();
-                        }
-
-                        if (level == ValidationLevel.Flag && !result.IsValid)
-                        {
-                            return result;
-                        }
-                    }
 
                     if (property.NameEquals(JsonPropertyNames.AllowReservedUtf8, JsonPropertyNames.AllowReserved))
                     {
@@ -288,13 +258,6 @@ public readonly partial struct OpenApiDocument
 
                 return result;
             }
-
-#if NET8_0_OR_GREATER && !DYNAMIC_BUILD
-            [GeneratedRegex("^x-")]
-            private static partial Regex CreatePatternProperties();
-#else
-            private static Regex CreatePatternProperties() => new("^x-", RegexOptions.Compiled);
-#endif
         }
     }
 }

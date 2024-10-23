@@ -583,6 +583,96 @@ public readonly partial struct Core
     }
 
     /// <summary>
+    /// Sets the (optional) <c>$anchor</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    public Core WithAnchor(in Corvus.Json.JsonSchema.Draft202012.Core.AnchorString value)
+    {
+        return this.SetProperty(JsonPropertyNames.Anchor, value);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>$comment</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    public Core WithComment(in Corvus.Json.JsonString value)
+    {
+        return this.SetProperty(JsonPropertyNames.Comment, value);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>$defs</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    public Core WithDefs(in Corvus.Json.JsonSchema.Draft202012.Core.DefsEntity value)
+    {
+        return this.SetProperty(JsonPropertyNames.Defs, value);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>$dynamicAnchor</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    public Core WithDynamicAnchor(in Corvus.Json.JsonSchema.Draft202012.Core.AnchorString value)
+    {
+        return this.SetProperty(JsonPropertyNames.DynamicAnchor, value);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>$dynamicRef</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    public Core WithDynamicRef(in Corvus.Json.JsonUriReference value)
+    {
+        return this.SetProperty(JsonPropertyNames.DynamicRef, value);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>$id</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    public Core WithId(in Corvus.Json.JsonSchema.Draft202012.Core.IdEntity value)
+    {
+        return this.SetProperty(JsonPropertyNames.Id, value);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>$ref</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    public Core WithRef(in Corvus.Json.JsonUriReference value)
+    {
+        return this.SetProperty(JsonPropertyNames.Ref, value);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>$schema</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    public Core WithSchema(in Corvus.Json.JsonUri value)
+    {
+        return this.SetProperty(JsonPropertyNames.Schema, value);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>$vocabulary</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    public Core WithVocabulary(in Corvus.Json.JsonSchema.Draft202012.Core.VocabularyEntity value)
+    {
+        return this.SetProperty(JsonPropertyNames.Vocabulary, value);
+    }
+
+    /// <summary>
     /// Get a property.
     /// </summary>
     /// <param name="name">The name of the property.</param>

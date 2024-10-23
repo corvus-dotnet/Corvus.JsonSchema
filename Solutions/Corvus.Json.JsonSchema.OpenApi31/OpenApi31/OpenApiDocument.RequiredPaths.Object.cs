@@ -290,6 +290,16 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
+        /// Sets the <c>paths</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public RequiredPaths WithPaths(in Corvus.Json.JsonAny value)
+        {
+            return this.SetProperty(JsonPropertyNames.Paths, value);
+        }
+
+        /// <summary>
         /// Get a property.
         /// </summary>
         /// <param name="name">The name of the property.</param>

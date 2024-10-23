@@ -355,6 +355,36 @@ public readonly partial struct Content
     }
 
     /// <summary>
+    /// Sets the (optional) <c>contentEncoding</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    public Content WithContentEncoding(in Corvus.Json.JsonString value)
+    {
+        return this.SetProperty(JsonPropertyNames.ContentEncoding, value);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>contentMediaType</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    public Content WithContentMediaType(in Corvus.Json.JsonString value)
+    {
+        return this.SetProperty(JsonPropertyNames.ContentMediaType, value);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>contentSchema</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    public Content WithContentSchema(in Corvus.Json.JsonSchema.Draft201909.Schema value)
+    {
+        return this.SetProperty(JsonPropertyNames.ContentSchema, value);
+    }
+
+    /// <summary>
     /// Get a property.
     /// </summary>
     /// <param name="name">The name of the property.</param>

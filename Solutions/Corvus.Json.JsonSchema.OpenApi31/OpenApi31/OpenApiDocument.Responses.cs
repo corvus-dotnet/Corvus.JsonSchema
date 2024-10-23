@@ -215,50 +215,6 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the instance as a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Responses.IfEntity" />.
-        /// </summary>
-        public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Responses.IfEntity AsIfEntity
-        {
-            get
-            {
-                return this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Responses.IfEntity>();
-            }
-        }
-
-        /// <summary>
-        /// Gets a value indicating whether the instance is a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Responses.IfEntity" />.
-        /// </summary>
-        public bool IsIfEntity
-        {
-            get
-            {
-                return this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Responses.IfEntity>().IsValid();
-            }
-        }
-
-        /// <summary>
-        /// Gets the instance as a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Responses.RequiredDefault" />.
-        /// </summary>
-        public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Responses.RequiredDefault AsRequiredDefault
-        {
-            get
-            {
-                return this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Responses.RequiredDefault>();
-            }
-        }
-
-        /// <summary>
-        /// Gets a value indicating whether the instance is a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Responses.RequiredDefault" />.
-        /// </summary>
-        public bool IsRequiredDefault
-        {
-            get
-            {
-                return this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Responses.RequiredDefault>().IsValid();
-            }
-        }
-
-        /// <summary>
         /// Gets the instance as a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SpecificationExtensions" />.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SpecificationExtensions AsSpecificationExtensions
@@ -762,73 +718,6 @@ public readonly partial struct OpenApiDocument
         public override string ToString()
         {
             return this.Serialize();
-        }
-
-        /// <summary>
-        /// Matches the value against the 'if' type, and returns the result of calling the provided match function for
-        /// the 'then' type if the match is successful.
-        /// </summary>
-        /// <typeparam name="TIn">The immutable context to pass in to the match function.</typeparam>
-        /// <typeparam name="TOut">The result of calling the match function.</typeparam>
-        /// <param name="context">The context to pass to the match function.</param>
-        /// <param name="matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentResponsesRequiredDefault">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Responses.RequiredDefault"/>.</param>
-        /// <param name="defaultMatch">Default match if the 'if' schema did not match.</param>
-        /// <returns>An instance of the value returned by the match function.</returns>
-        public TOut Match<TIn, TOut>(
-            in TIn context,
-            Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Responses.RequiredDefault, TIn, TOut> matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentResponsesRequiredDefault,
-            Matcher<Responses, TIn, TOut> defaultMatch)
-        {
-            Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Responses.IfEntity ifValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Responses.IfEntity>();
-            if (ifValue.IsValid())
-            {
-                return matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentResponsesRequiredDefault(this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Responses.RequiredDefault>(), context);
-            }
-
-            return defaultMatch(this, context);
-        }
-
-        /// <summary>
-        /// Matches the value against the 'if' type, and returns the result of calling the provided match function for
-        /// the 'then' type if the match is successful.
-        /// </summary>
-        /// <typeparam name="TOut">The result of calling the match function.</typeparam>
-        /// <param name="matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentResponsesRequiredDefault">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Responses.RequiredDefault"/>.</param>
-        /// <param name="defaultMatch">Default match if the 'if' schema did not match.</param>
-        /// <returns>An instance of the value returned by the match function.</returns>
-        public TOut Match<TOut>(
-            Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Responses.RequiredDefault, TOut> matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentResponsesRequiredDefault,
-            Matcher<Responses, TOut> defaultMatch)
-        {
-            Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Responses.IfEntity ifValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Responses.IfEntity>();
-            if (ifValue.IsValid())
-            {
-                return matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentResponsesRequiredDefault(this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Responses.RequiredDefault>());
-            }
-
-            return defaultMatch(this);
-        }
-
-        /// <summary>
-        /// Gets the value as a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Responses.IfEntity" />.
-        /// </summary>
-        /// <param name="result">The result of the conversions.</param>
-        /// <returns><see langword="true" /> if the conversion was valid.</returns>
-        public bool TryGetAsIfEntity(out Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Responses.IfEntity result)
-        {
-            result = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Responses.IfEntity>();
-            return result.IsValid();
-        }
-
-        /// <summary>
-        /// Gets the value as a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Responses.RequiredDefault" />.
-        /// </summary>
-        /// <param name="result">The result of the conversions.</param>
-        /// <returns><see langword="true" /> if the conversion was valid.</returns>
-        public bool TryGetAsRequiredDefault(out Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Responses.RequiredDefault result)
-        {
-            result = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Responses.RequiredDefault>();
-            return result.IsValid();
         }
 
         /// <summary>

@@ -36,7 +36,7 @@ public readonly partial struct OpenApiDocument
         if (level > ValidationLevel.Basic)
         {
             result = result.UsingStack();
-            result = result.PushSchemaLocation("https://raw.githubusercontent.com/OAI/OpenAPI-Specification/main/schemas/v3.1/schema.json");
+            result = result.PushSchemaLocation("OpenApi31.json");
         }
 
         JsonValueKind valueKind = this.ValueKind;

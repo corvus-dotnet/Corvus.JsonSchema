@@ -495,6 +495,61 @@ public readonly partial struct Person
     }
 
     /// <summary>
+    /// Sets the (optional) <c>dateOfBirth</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    public Person WithDateOfBirth(in Sandbox.Models.Person.DateOfBirthEntity? value)
+    {
+        return value.HasValue ? this.SetProperty(JsonPropertyNames.DateOfBirth, value.Value) : this.RemoveProperty(JsonPropertyNames.DateOfBirth);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>email</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    public Person WithEmail(in Corvus.Json.JsonEmail? value)
+    {
+        return value.HasValue ? this.SetProperty(JsonPropertyNames.Email, value.Value) : this.RemoveProperty(JsonPropertyNames.Email);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>height</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    public Person WithHeight(in Sandbox.Models.HeightRangeDouble? value)
+    {
+        return value.HasValue ? this.SetProperty(JsonPropertyNames.Height, value.Value) : this.RemoveProperty(JsonPropertyNames.Height);
+    }
+
+    /// <summary>
+    /// Sets the <c>name</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    /// <remarks>
+    /// <para>
+    /// A name of a person.
+    /// </para>
+    /// </remarks>
+    public Person WithName(in Sandbox.Models.PersonName value)
+    {
+        return this.SetProperty(JsonPropertyNames.Name, value);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>netWorth</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    public Person WithNetWorth(in Corvus.Json.JsonDecimal? value)
+    {
+        return value.HasValue ? this.SetProperty(JsonPropertyNames.NetWorth, value.Value) : this.RemoveProperty(JsonPropertyNames.NetWorth);
+    }
+
+    /// <summary>
     /// Get a property.
     /// </summary>
     /// <param name="name">The name of the property.</param>

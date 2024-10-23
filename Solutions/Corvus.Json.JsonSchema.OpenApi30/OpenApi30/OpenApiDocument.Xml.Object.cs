@@ -450,6 +450,56 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
+        /// Sets the (optional) <c>attribute</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Xml WithAttribute(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Xml.AttributeEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.Attribute, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>name</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Xml WithName(in Corvus.Json.JsonString value)
+        {
+            return this.SetProperty(JsonPropertyNames.Name, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>namespace</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Xml WithNamespace(in Corvus.Json.JsonUri value)
+        {
+            return this.SetProperty(JsonPropertyNames.Namespace, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>prefix</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Xml WithPrefix(in Corvus.Json.JsonString value)
+        {
+            return this.SetProperty(JsonPropertyNames.Prefix, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>wrapped</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Xml WithWrapped(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Xml.WrappedEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.Wrapped, value);
+        }
+
+        /// <summary>
         /// Get a property.
         /// </summary>
         /// <param name="name">The name of the property.</param>

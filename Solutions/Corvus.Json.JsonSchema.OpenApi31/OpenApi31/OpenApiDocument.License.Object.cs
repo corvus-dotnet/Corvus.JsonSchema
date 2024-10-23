@@ -367,6 +367,36 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
+        /// Sets the (optional) <c>identifier</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public License WithIdentifier(in Corvus.Json.JsonString value)
+        {
+            return this.SetProperty(JsonPropertyNames.Identifier, value);
+        }
+
+        /// <summary>
+        /// Sets the <c>name</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public License WithName(in Corvus.Json.JsonString value)
+        {
+            return this.SetProperty(JsonPropertyNames.Name, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>url</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public License WithUrl(in Corvus.Json.JsonUri value)
+        {
+            return this.SetProperty(JsonPropertyNames.Url, value);
+        }
+
+        /// <summary>
         /// Get a property.
         /// </summary>
         /// <param name="name">The name of the property.</param>

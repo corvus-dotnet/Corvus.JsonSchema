@@ -122,6 +122,38 @@ public readonly partial struct OpenApiDocument
                 }
 
                 /// <summary>
+                /// Gets the (optional) <c>name</c> property.
+                /// </summary>
+                public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity.RequiredRequired.NameEntity Name
+                {
+                    get
+                    {
+                        if ((this.backing & Backing.JsonElement) != 0)
+                        {
+                            if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                            {
+                                return default;
+                            }
+
+                            if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.NameUtf8, out JsonElement result))
+                            {
+                                return new(result);
+                            }
+                        }
+
+                        if ((this.backing & Backing.Object) != 0)
+                        {
+                            if (this.objectBacking.TryGetValue(JsonPropertyNames.Name, out JsonAny result))
+                            {
+                                return result.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity.RequiredRequired.NameEntity>();
+                            }
+                        }
+
+                        return default;
+                    }
+                }
+
+                /// <summary>
                 /// Gets the (optional) <c>required</c> property.
                 /// </summary>
                 public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity.RequiredRequired.RequiredEntity Required
@@ -210,9 +242,17 @@ public readonly partial struct OpenApiDocument
                 /// <summary>
                 /// Creates an instance of a <see cref="StylesForPathEntity"/>.
                 /// </summary>
-                public static StylesForPathEntity Create(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity.RequiredRequired.RequiredEntity? required = null, in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity.RequiredRequired.StyleEntity? style = null)
+                public static StylesForPathEntity Create(
+                    in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity.RequiredRequired.NameEntity? name = null,
+                    in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity.RequiredRequired.RequiredEntity? required = null,
+                    in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity.RequiredRequired.StyleEntity? style = null)
                 {
                     var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
+
+                    if (name is not null)
+                    {
+                        builder.Add(JsonPropertyNames.Name, name.Value.AsAny);
+                    }
 
                     if (required is not null)
                     {
@@ -333,6 +373,36 @@ public readonly partial struct OpenApiDocument
                     }
 
                     throw new InvalidOperationException();
+                }
+
+                /// <summary>
+                /// Sets the (optional) <c>name</c> property.
+                /// </summary>
+                /// <param name="value">The new property value</param>
+                /// <returns>The instance with the property set.</returns>
+                public StylesForPathEntity WithName(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity.RequiredRequired.NameEntity value)
+                {
+                    return this.SetProperty(JsonPropertyNames.Name, value);
+                }
+
+                /// <summary>
+                /// Sets the (optional) <c>required</c> property.
+                /// </summary>
+                /// <param name="value">The new property value</param>
+                /// <returns>The instance with the property set.</returns>
+                public StylesForPathEntity WithRequired(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity.RequiredRequired.RequiredEntity value)
+                {
+                    return this.SetProperty(JsonPropertyNames.Required, value);
+                }
+
+                /// <summary>
+                /// Sets the (optional) <c>style</c> property.
+                /// </summary>
+                /// <param name="value">The new property value</param>
+                /// <returns>The instance with the property set.</returns>
+                public StylesForPathEntity WithStyle(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity.RequiredRequired.StyleEntity value)
+                {
+                    return this.SetProperty(JsonPropertyNames.Style, value);
                 }
 
                 /// <summary>
@@ -724,6 +794,11 @@ public readonly partial struct OpenApiDocument
                 public static class JsonPropertyNames
                 {
                     /// <summary>
+                    /// Gets the JSON property name for <see cref="Name"/>.
+                    /// </summary>
+                    public const string Name = "name";
+
+                    /// <summary>
                     /// Gets the JSON property name for <see cref="Required"/>.
                     /// </summary>
                     public const string Required = "required";
@@ -732,6 +807,11 @@ public readonly partial struct OpenApiDocument
                     /// Gets the JSON property name for <see cref="Style"/>.
                     /// </summary>
                     public const string Style = "style";
+
+                    /// <summary>
+                    /// Gets the JSON property name for <see cref="Name"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> NameUtf8 => "name"u8;
 
                     /// <summary>
                     /// Gets the JSON property name for <see cref="Required"/>.

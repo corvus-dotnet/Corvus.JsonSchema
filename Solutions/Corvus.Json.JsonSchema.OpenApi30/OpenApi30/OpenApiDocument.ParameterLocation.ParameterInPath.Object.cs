@@ -382,6 +382,36 @@ public readonly partial struct OpenApiDocument
             }
 
             /// <summary>
+            /// Sets the (optional) <c>in</c> property.
+            /// </summary>
+            /// <param name="value">The new property value</param>
+            /// <returns>The instance with the property set.</returns>
+            public ParameterInPath WithIn(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInPath.InEntity value)
+            {
+                return this.SetProperty(JsonPropertyNames.In, value);
+            }
+
+            /// <summary>
+            /// Sets the <c>required</c> property.
+            /// </summary>
+            /// <param name="value">The new property value</param>
+            /// <returns>The instance with the property set.</returns>
+            public ParameterInPath WithRequired(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInPath.RequiredEntity value)
+            {
+                return this.SetProperty(JsonPropertyNames.Required, value);
+            }
+
+            /// <summary>
+            /// Sets the (optional) <c>style</c> property.
+            /// </summary>
+            /// <param name="value">The new property value</param>
+            /// <returns>The instance with the property set.</returns>
+            public ParameterInPath WithStyle(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInPath.StyleEntity value)
+            {
+                return this.SetProperty(JsonPropertyNames.Style, value);
+            }
+
+            /// <summary>
             /// Get a property.
             /// </summary>
             /// <param name="name">The name of the property.</param>

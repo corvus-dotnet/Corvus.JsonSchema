@@ -376,6 +376,36 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
+        /// Sets the (optional) <c>description</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public OAuth2SecurityScheme WithDescription(in Corvus.Json.JsonString value)
+        {
+            return this.SetProperty(JsonPropertyNames.Description, value);
+        }
+
+        /// <summary>
+        /// Sets the <c>flows</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public OAuth2SecurityScheme WithFlows(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OAuthFlows value)
+        {
+            return this.SetProperty(JsonPropertyNames.Flows, value);
+        }
+
+        /// <summary>
+        /// Sets the <c>type</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public OAuth2SecurityScheme WithType(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OAuth2SecurityScheme.TypeEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.Type, value);
+        }
+
+        /// <summary>
         /// Get a property.
         /// </summary>
         /// <param name="name">The name of the property.</param>

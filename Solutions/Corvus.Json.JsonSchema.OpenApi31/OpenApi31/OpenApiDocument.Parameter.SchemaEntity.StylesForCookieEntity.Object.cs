@@ -299,6 +299,16 @@ public readonly partial struct OpenApiDocument
                 }
 
                 /// <summary>
+                /// Sets the (optional) <c>style</c> property.
+                /// </summary>
+                /// <param name="value">The new property value</param>
+                /// <returns>The instance with the property set.</returns>
+                public StylesForCookieEntity WithStyle(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForCookieEntity.WithStyleForm.StyleEntity value)
+                {
+                    return this.SetProperty(JsonPropertyNames.Style, value);
+                }
+
+                /// <summary>
                 /// Get a property.
                 /// </summary>
                 /// <param name="name">The name of the property.</param>

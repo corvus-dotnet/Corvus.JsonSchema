@@ -215,6 +215,28 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
+        /// Gets the instance as a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Encoding.ExplodeDefaultEntity" />.
+        /// </summary>
+        public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Encoding.ExplodeDefaultEntity AsExplodeDefaultEntity
+        {
+            get
+            {
+                return this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Encoding.ExplodeDefaultEntity>();
+            }
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether the instance is a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Encoding.ExplodeDefaultEntity" />.
+        /// </summary>
+        public bool IsExplodeDefaultEntity
+        {
+            get
+            {
+                return this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Encoding.ExplodeDefaultEntity>().IsValid();
+            }
+        }
+
+        /// <summary>
         /// Gets the instance as a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SpecificationExtensions" />.
         /// </summary>
         public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SpecificationExtensions AsSpecificationExtensions
@@ -233,28 +255,6 @@ public readonly partial struct OpenApiDocument
             get
             {
                 return this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SpecificationExtensions>().IsValid();
-            }
-        }
-
-        /// <summary>
-        /// Gets the instance as a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm" />.
-        /// </summary>
-        public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm AsStylesForForm
-        {
-            get
-            {
-                return this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm>();
-            }
-        }
-
-        /// <summary>
-        /// Gets a value indicating whether the instance is a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm" />.
-        /// </summary>
-        public bool IsStylesForForm
-        {
-            get
-            {
-                return this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm>().IsValid();
             }
         }
 
@@ -332,19 +332,19 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Conversion to <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm"/>.
+        /// Conversion to <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Encoding.ExplodeDefaultEntity"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
-        public static implicit operator Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm(Encoding value)
+        public static implicit operator Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Encoding.ExplodeDefaultEntity(Encoding value)
         {
-            return value.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm>();
+            return value.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Encoding.ExplodeDefaultEntity>();
         }
 
         /// <summary>
-        /// Conversion from <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm"/>.
+        /// Conversion from <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Encoding.ExplodeDefaultEntity"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
-        public static explicit operator Encoding(Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm value)
+        public static explicit operator Encoding(Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Encoding.ExplodeDefaultEntity value)
         {
             return value.As<Encoding>();
         }
@@ -767,13 +767,13 @@ public readonly partial struct OpenApiDocument
         /// <typeparam name="TOut">The result of calling the match function.</typeparam>
         /// <param name="context">The context to pass to the match function.</param>
         /// <param name="matchSpecificationExtensions">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SpecificationExtensions"/>.</param>
-        /// <param name="matchStylesForForm">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm"/>.</param>
+        /// <param name="matchExplodeDefaultEntity">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Encoding.ExplodeDefaultEntity"/>.</param>
         /// <param name="defaultMatch">Match any other value.</param>
         /// <returns>An instance of the value returned by the match function.</returns>
         public TOut Match<TIn, TOut>(
             in TIn context,
             Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SpecificationExtensions, TIn, TOut> matchSpecificationExtensions,
-            Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm, TIn, TOut> matchStylesForForm,
+            Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Encoding.ExplodeDefaultEntity, TIn, TOut> matchExplodeDefaultEntity,
             Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Encoding, TIn, TOut> defaultMatch)
         {
             Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SpecificationExtensions matchSpecificationExtensionsValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SpecificationExtensions>();
@@ -782,10 +782,10 @@ public readonly partial struct OpenApiDocument
                 return matchSpecificationExtensions(matchSpecificationExtensionsValue, context);
             }
 
-            Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm matchStylesForFormValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm>();
-            if (matchStylesForFormValue.IsValid())
+            Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Encoding.ExplodeDefaultEntity matchExplodeDefaultEntityValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Encoding.ExplodeDefaultEntity>();
+            if (matchExplodeDefaultEntityValue.IsValid())
             {
-                return matchStylesForForm(matchStylesForFormValue, context);
+                return matchExplodeDefaultEntity(matchExplodeDefaultEntityValue, context);
             }
 
             return defaultMatch(this, context);
@@ -796,12 +796,12 @@ public readonly partial struct OpenApiDocument
         /// </summary>
         /// <typeparam name="TOut">The result of calling the match function.</typeparam>
         /// <param name="matchSpecificationExtensions">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SpecificationExtensions"/>.</param>
-        /// <param name="matchStylesForForm">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm"/>.</param>
+        /// <param name="matchExplodeDefaultEntity">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Encoding.ExplodeDefaultEntity"/>.</param>
         /// <param name="defaultMatch">Match any other value.</param>
         /// <returns>An instance of the value returned by the match function.</returns>
         public TOut Match<TOut>(
             Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SpecificationExtensions, TOut> matchSpecificationExtensions,
-            Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm, TOut> matchStylesForForm,
+            Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Encoding.ExplodeDefaultEntity, TOut> matchExplodeDefaultEntity,
             Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Encoding, TOut> defaultMatch)
         {
             Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SpecificationExtensions matchSpecificationExtensionsValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SpecificationExtensions>();
@@ -810,13 +810,24 @@ public readonly partial struct OpenApiDocument
                 return matchSpecificationExtensions(matchSpecificationExtensionsValue);
             }
 
-            Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm matchStylesForFormValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm>();
-            if (matchStylesForFormValue.IsValid())
+            Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Encoding.ExplodeDefaultEntity matchExplodeDefaultEntityValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Encoding.ExplodeDefaultEntity>();
+            if (matchExplodeDefaultEntityValue.IsValid())
             {
-                return matchStylesForForm(matchStylesForFormValue);
+                return matchExplodeDefaultEntity(matchExplodeDefaultEntityValue);
             }
 
             return defaultMatch(this);
+        }
+
+        /// <summary>
+        /// Gets the value as a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Encoding.ExplodeDefaultEntity" />.
+        /// </summary>
+        /// <param name="result">The result of the conversions.</param>
+        /// <returns><see langword="true" /> if the conversion was valid.</returns>
+        public bool TryGetAsExplodeDefaultEntity(out Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Encoding.ExplodeDefaultEntity result)
+        {
+            result = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Encoding.ExplodeDefaultEntity>();
+            return result.IsValid();
         }
 
         /// <summary>
@@ -827,17 +838,6 @@ public readonly partial struct OpenApiDocument
         public bool TryGetAsSpecificationExtensions(out Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SpecificationExtensions result)
         {
             result = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SpecificationExtensions>();
-            return result.IsValid();
-        }
-
-        /// <summary>
-        /// Gets the value as a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm" />.
-        /// </summary>
-        /// <param name="result">The result of the conversions.</param>
-        /// <returns><see langword="true" /> if the conversion was valid.</returns>
-        public bool TryGetAsStylesForForm(out Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm result)
-        {
-            result = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm>();
             return result.IsValid();
         }
     }

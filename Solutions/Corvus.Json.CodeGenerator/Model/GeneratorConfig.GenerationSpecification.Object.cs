@@ -510,6 +510,76 @@ public readonly partial struct GeneratorConfig
         }
 
         /// <summary>
+        /// Sets the (optional) <c>outputRootNamespace</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        /// <remarks>
+        /// <para>
+        /// The name of the .NET namespace into which to emit the root type
+        /// </para>
+        /// </remarks>
+        public GenerationSpecification WithOutputRootNamespace(in Corvus.Json.JsonString? value)
+        {
+            return value.HasValue ? this.SetProperty(JsonPropertyNames.OutputRootNamespace, value.Value) : this.RemoveProperty(JsonPropertyNames.OutputRootNamespace);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>outputRootTypeName</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        /// <remarks>
+        /// <para>
+        /// The .NET name of the root type to generate.
+        /// </para>
+        /// </remarks>
+        public GenerationSpecification WithOutputRootTypeName(in Corvus.Json.JsonString? value)
+        {
+            return value.HasValue ? this.SetProperty(JsonPropertyNames.OutputRootTypeName, value.Value) : this.RemoveProperty(JsonPropertyNames.OutputRootTypeName);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>rebaseToRootPath</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public GenerationSpecification WithRebaseToRootPath(in Corvus.Json.CodeGenerator.GeneratorConfig.GenerationSpecification.RebaseToRootPathEntity? value)
+        {
+            return value.HasValue ? this.SetProperty(JsonPropertyNames.RebaseToRootPath, value.Value) : this.RemoveProperty(JsonPropertyNames.RebaseToRootPath);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>rootPath</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        /// <remarks>
+        /// <para>
+        /// The path in the document for the root type.
+        /// </para>
+        /// </remarks>
+        public GenerationSpecification WithRootPath(in Corvus.Json.JsonUriReference? value)
+        {
+            return value.HasValue ? this.SetProperty(JsonPropertyNames.RootPath, value.Value) : this.RemoveProperty(JsonPropertyNames.RootPath);
+        }
+
+        /// <summary>
+        /// Sets the <c>schemaFile</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        /// <remarks>
+        /// <para>
+        /// The path to the schema file to process.
+        /// </para>
+        /// </remarks>
+        public GenerationSpecification WithSchemaFile(in Corvus.Json.JsonString value)
+        {
+            return this.SetProperty(JsonPropertyNames.SchemaFile, value);
+        }
+
+        /// <summary>
         /// Get a property.
         /// </summary>
         /// <param name="name">The name of the property.</param>

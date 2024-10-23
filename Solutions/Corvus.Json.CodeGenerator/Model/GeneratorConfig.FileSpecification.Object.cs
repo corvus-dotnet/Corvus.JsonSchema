@@ -334,6 +334,36 @@ public readonly partial struct GeneratorConfig
         }
 
         /// <summary>
+        /// Sets the <c>canonicalUri</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        /// <remarks>
+        /// <para>
+        /// The canonical uri of the file.
+        /// </para>
+        /// </remarks>
+        public FileSpecification WithCanonicalUri(in Corvus.Json.JsonIri value)
+        {
+            return this.SetProperty(JsonPropertyNames.CanonicalUri, value);
+        }
+
+        /// <summary>
+        /// Sets the <c>contentPath</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        /// <remarks>
+        /// <para>
+        /// The path to the file to add to the generation context.
+        /// </para>
+        /// </remarks>
+        public FileSpecification WithContentPath(in Corvus.Json.JsonString value)
+        {
+            return this.SetProperty(JsonPropertyNames.ContentPath, value);
+        }
+
+        /// <summary>
         /// Get a property.
         /// </summary>
         /// <param name="name">The name of the property.</param>

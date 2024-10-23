@@ -295,6 +295,16 @@ public readonly partial struct OpenApiDocument
             }
 
             /// <summary>
+            /// Sets the <c>schema</c> property.
+            /// </summary>
+            /// <param name="value">The new property value</param>
+            /// <returns>The instance with the property set.</returns>
+            public RequiredSchema WithSchema(in Corvus.Json.JsonAny value)
+            {
+                return this.SetProperty(JsonPropertyNames.Schema, value);
+            }
+
+            /// <summary>
             /// Get a property.
             /// </summary>
             /// <param name="name">The name of the property.</param>

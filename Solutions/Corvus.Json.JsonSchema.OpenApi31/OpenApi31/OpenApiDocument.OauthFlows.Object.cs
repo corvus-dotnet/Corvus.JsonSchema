@@ -404,6 +404,46 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
+        /// Sets the (optional) <c>authorizationCode</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public OauthFlows WithAuthorizationCode(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OauthFlows.RequiredAuthorizationUrlAndScopesAndTokenUrl value)
+        {
+            return this.SetProperty(JsonPropertyNames.AuthorizationCode, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>clientCredentials</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public OauthFlows WithClientCredentials(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OauthFlows.RequiredScopesAndTokenUrl value)
+        {
+            return this.SetProperty(JsonPropertyNames.ClientCredentials, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>implicit</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public OauthFlows WithImplicit(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OauthFlows.RequiredAuthorizationUrlAndScopes value)
+        {
+            return this.SetProperty(JsonPropertyNames.Implicit, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>password</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public OauthFlows WithPassword(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OauthFlows.OauthFlowsRequiredScopesAndTokenUrl value)
+        {
+            return this.SetProperty(JsonPropertyNames.Password, value);
+        }
+
+        /// <summary>
         /// Get a property.
         /// </summary>
         /// <param name="name">The name of the property.</param>

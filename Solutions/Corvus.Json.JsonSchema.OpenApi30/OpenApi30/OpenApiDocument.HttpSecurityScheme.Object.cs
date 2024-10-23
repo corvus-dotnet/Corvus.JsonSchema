@@ -414,6 +414,46 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
+        /// Sets the (optional) <c>bearerFormat</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public HttpSecurityScheme WithBearerFormat(in Corvus.Json.JsonString value)
+        {
+            return this.SetProperty(JsonPropertyNames.BearerFormat, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>description</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public HttpSecurityScheme WithDescription(in Corvus.Json.JsonString value)
+        {
+            return this.SetProperty(JsonPropertyNames.Description, value);
+        }
+
+        /// <summary>
+        /// Sets the <c>scheme</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public HttpSecurityScheme WithScheme(in Corvus.Json.JsonString value)
+        {
+            return this.SetProperty(JsonPropertyNames.Scheme, value);
+        }
+
+        /// <summary>
+        /// Sets the <c>type</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public HttpSecurityScheme WithType(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme.TypeEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.Type, value);
+        }
+
+        /// <summary>
         /// Get a property.
         /// </summary>
         /// <param name="name">The name of the property.</param>

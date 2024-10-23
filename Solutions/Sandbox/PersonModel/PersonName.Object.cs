@@ -113,7 +113,7 @@ public readonly partial struct PersonName
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// <para>
-    /// The person's family name.
+    /// The person&#39;s family name.
     /// </para>
     /// </remarks>
     public Sandbox.Models.PersonNameElement FamilyName
@@ -153,7 +153,7 @@ public readonly partial struct PersonName
     /// If this JSON property is <see cref="JsonValueKind.Undefined"/> then the value returned will be <see langword="null" />.
     /// </para>
     /// <para>
-    /// The person's given name.
+    /// The person&#39;s given name.
     /// </para>
     /// </remarks>
     public Sandbox.Models.PersonNameElement? GivenName
@@ -397,6 +397,51 @@ public readonly partial struct PersonName
         }
 
         throw new InvalidOperationException();
+    }
+
+    /// <summary>
+    /// Sets the <c>familyName</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    /// <remarks>
+    /// <para>
+    /// The person&#39;s family name.
+    /// </para>
+    /// </remarks>
+    public PersonName WithFamilyName(in Sandbox.Models.PersonNameElement value)
+    {
+        return this.SetProperty(JsonPropertyNames.FamilyName, value);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>givenName</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    /// <remarks>
+    /// <para>
+    /// The person&#39;s given name.
+    /// </para>
+    /// </remarks>
+    public PersonName WithGivenName(in Sandbox.Models.PersonNameElement? value)
+    {
+        return value.HasValue ? this.SetProperty(JsonPropertyNames.GivenName, value.Value) : this.RemoveProperty(JsonPropertyNames.GivenName);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>otherNames</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    /// <remarks>
+    /// <para>
+    /// Other (middle) names for the person
+    /// </para>
+    /// </remarks>
+    public PersonName WithOtherNames(in Sandbox.Models.OtherNames? value)
+    {
+        return value.HasValue ? this.SetProperty(JsonPropertyNames.OtherNames, value.Value) : this.RemoveProperty(JsonPropertyNames.OtherNames);
     }
 
     /// <summary>

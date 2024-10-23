@@ -338,6 +338,26 @@ public readonly partial struct OpenApiDocument
             }
 
             /// <summary>
+            /// Sets the <c>operationId</c> property.
+            /// </summary>
+            /// <param name="value">The new property value</param>
+            /// <returns>The instance with the property set.</returns>
+            public OperationIdAndOperationRefAreMutuallyExclusive WithOperationId(in Corvus.Json.JsonAny value)
+            {
+                return this.SetProperty(JsonPropertyNames.OperationId, value);
+            }
+
+            /// <summary>
+            /// Sets the <c>operationRef</c> property.
+            /// </summary>
+            /// <param name="value">The new property value</param>
+            /// <returns>The instance with the property set.</returns>
+            public OperationIdAndOperationRefAreMutuallyExclusive WithOperationRef(in Corvus.Json.JsonAny value)
+            {
+                return this.SetProperty(JsonPropertyNames.OperationRef, value);
+            }
+
+            /// <summary>
             /// Get a property.
             /// </summary>
             /// <param name="name">The name of the property.</param>

@@ -415,6 +415,46 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
+        /// Sets the <c>authorizationUrl</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public AuthorizationCodeOAuthFlow WithAuthorizationUrl(in Corvus.Json.JsonUriReference value)
+        {
+            return this.SetProperty(JsonPropertyNames.AuthorizationUrl, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>refreshUrl</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public AuthorizationCodeOAuthFlow WithRefreshUrl(in Corvus.Json.JsonUriReference value)
+        {
+            return this.SetProperty(JsonPropertyNames.RefreshUrl, value);
+        }
+
+        /// <summary>
+        /// Sets the <c>scopes</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public AuthorizationCodeOAuthFlow WithScopes(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.AuthorizationCodeOAuthFlow.ScopesEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.Scopes, value);
+        }
+
+        /// <summary>
+        /// Sets the <c>tokenUrl</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public AuthorizationCodeOAuthFlow WithTokenUrl(in Corvus.Json.JsonUriReference value)
+        {
+            return this.SetProperty(JsonPropertyNames.TokenUrl, value);
+        }
+
+        /// <summary>
         /// Get a property.
         /// </summary>
         /// <param name="name">The name of the property.</param>
