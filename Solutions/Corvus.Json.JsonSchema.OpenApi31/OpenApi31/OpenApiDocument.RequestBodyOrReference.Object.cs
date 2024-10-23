@@ -442,6 +442,56 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
+        /// Sets the (optional) <c>$ref</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public RequestBodyOrReference WithRef(in Corvus.Json.JsonUriReference value)
+        {
+            return this.SetProperty(JsonPropertyNames.Ref, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>content</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public RequestBodyOrReference WithContent(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Content value)
+        {
+            return this.SetProperty(JsonPropertyNames.Content, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>description</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public RequestBodyOrReference WithDescription(in Corvus.Json.JsonString value)
+        {
+            return this.SetProperty(JsonPropertyNames.Description, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>required</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public RequestBodyOrReference WithRequired(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.RequestBody.RequiredEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.Required, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>summary</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public RequestBodyOrReference WithSummary(in Corvus.Json.JsonString value)
+        {
+            return this.SetProperty(JsonPropertyNames.Summary, value);
+        }
+
+        /// <summary>
         /// Get a property.
         /// </summary>
         /// <param name="name">The name of the property.</param>

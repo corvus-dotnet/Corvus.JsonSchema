@@ -338,6 +338,26 @@ public readonly partial struct OpenApiDocument
                 }
 
                 /// <summary>
+                /// Sets the <c>scheme</c> property.
+                /// </summary>
+                /// <param name="value">The new property value</param>
+                /// <returns>The instance with the property set.</returns>
+                public RequiredSchemeAndType WithScheme(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeHttpBearerEntity.RequiredSchemeAndType.SchemeEntity value)
+                {
+                    return this.SetProperty(JsonPropertyNames.Scheme, value);
+                }
+
+                /// <summary>
+                /// Sets the <c>type</c> property.
+                /// </summary>
+                /// <param name="value">The new property value</param>
+                /// <returns>The instance with the property set.</returns>
+                public RequiredSchemeAndType WithType(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeHttpBearerEntity.RequiredSchemeAndType.TypeEntity value)
+                {
+                    return this.SetProperty(JsonPropertyNames.Type, value);
+                }
+
+                /// <summary>
                 /// Get a property.
                 /// </summary>
                 /// <param name="name">The name of the property.</param>

@@ -63,13 +63,6 @@ public readonly partial struct OpenApiDocument
                 return result;
             }
 
-            result = CorvusValidation.TernaryIfValidationHandler(this, result, level);
-
-            if (level == ValidationLevel.Flag && !result.IsValid)
-            {
-                return result;
-            }
-
             result = CorvusValidation.ObjectValidationHandler(this, valueKind, result, level);
 
             if (level == ValidationLevel.Flag && !result.IsValid)
@@ -155,94 +148,6 @@ public readonly partial struct OpenApiDocument
                 else
                 {
                     result = result.MergeChildContext(refResult, level >= ValidationLevel.Detailed);
-                }
-
-                return result;
-            }
-
-            /// <summary>
-            /// If/then/else composition validation.
-            /// </summary>
-            /// <param name="value">The value to validate.</param>
-            /// <param name="validationContext">The current validation context.</param>
-            /// <param name="level">The current validation level.</param>
-            /// <returns>The resulting validation context after validation.</returns>
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            internal static ValidationContext TernaryIfValidationHandler(
-                in Responses value,
-                in ValidationContext validationContext,
-                ValidationLevel level = ValidationLevel.Flag)
-            {
-                ValidationContext result = validationContext;
-
-                if (level > ValidationLevel.Basic)
-                {
-                    result = result.PushValidationLocationReducedPathModifier(new("#/if"));
-                }
-
-                ValidationContext ifResult = value.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Responses.IfEntity>().Validate(validationContext.CreateChildContext(), level);
-
-                if (!ifResult.IsValid)
-                {
-                    if (level >= ValidationLevel.Verbose)
-                    {
-                        result = validationContext.MergeResults(true, level, ifResult);
-                    }
-                }
-                else
-                {
-                    if (level >= ValidationLevel.Verbose)
-                    {
-                        result = result.MergeChildContext(ifResult, true);
-                    }
-                    else
-                    {
-                        result = result.MergeChildContext(ifResult, false);
-                    }
-                }
-
-                if (level > ValidationLevel.Basic)
-                {
-                    result = result.PopLocation();
-                }
-
-                if (ifResult.IsValid)
-                {
-                    if (level > ValidationLevel.Basic)
-                    {
-                        result = result.PushValidationLocationReducedPathModifier(new("#/then"));
-                    }
-
-                    ValidationContext thenResult = value.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Responses.RequiredDefault>().Validate(validationContext.CreateChildContext(), level);
-
-                    if (!thenResult.IsValid)
-                    {
-                        if (level >= ValidationLevel.Basic)
-                        {
-                            result = validationContext.MergeResults(false, level, ifResult, thenResult);
-                            result = result.WithResult(isValid: false, "Validation then - failed to validate against the then schema");
-                        }
-                        else
-                        {
-                            result = validationContext.WithResult(isValid: false);
-                        }
-                    }
-                    else
-                    {
-                        if (level >= ValidationLevel.Basic)
-                        {
-                            result = result.MergeChildContext(thenResult, true);
-                        }
-                        else
-                        {
-                            result = result.MergeChildContext(thenResult, false);
-                        }
-                    }
-
-                    if (level > ValidationLevel.Basic)
-                    {
-                        result = result.PopLocation();
-                    }
                 }
 
                 return result;

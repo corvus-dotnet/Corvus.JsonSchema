@@ -404,6 +404,46 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
+        /// Sets the (optional) <c>encoding</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public MediaType WithEncoding(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.MediaType.EncodingEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.Encoding, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>example</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public MediaType WithExample(in Corvus.Json.JsonAny value)
+        {
+            return this.SetProperty(JsonPropertyNames.Example, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>examples</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public MediaType WithExamplesValue(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Examples.ExamplesEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.ExamplesValue, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>schema</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public MediaType WithSchemaValue(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Schema value)
+        {
+            return this.SetProperty(JsonPropertyNames.SchemaValue, value);
+        }
+
+        /// <summary>
         /// Get a property.
         /// </summary>
         /// <param name="name">The name of the property.</param>

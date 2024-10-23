@@ -341,6 +341,26 @@ public readonly partial struct OpenApiDocument
                     }
 
                     /// <summary>
+                    /// Sets the (optional) <c>allowReserved</c> property.
+                    /// </summary>
+                    /// <param name="value">The new property value</param>
+                    /// <returns>The instance with the property set.</returns>
+                    public ThenEntity WithAllowReserved(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForQueryEntity.ThenEntity.AllowReservedEntity value)
+                    {
+                        return this.SetProperty(JsonPropertyNames.AllowReserved, value);
+                    }
+
+                    /// <summary>
+                    /// Sets the (optional) <c>style</c> property.
+                    /// </summary>
+                    /// <param name="value">The new property value</param>
+                    /// <returns>The instance with the property set.</returns>
+                    public ThenEntity WithStyle(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForQueryEntity.ThenEntity.StyleEntity value)
+                    {
+                        return this.SetProperty(JsonPropertyNames.Style, value);
+                    }
+
+                    /// <summary>
                     /// Get a property.
                     /// </summary>
                     /// <param name="name">The name of the property.</param>

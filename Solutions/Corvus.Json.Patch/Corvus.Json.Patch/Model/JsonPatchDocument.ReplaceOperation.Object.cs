@@ -366,6 +366,36 @@ public readonly partial struct JsonPatchDocument
         }
 
         /// <summary>
+        /// Sets the <c>op</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public ReplaceOperation WithOp(in Corvus.Json.Patch.Model.JsonPatchDocument.ReplaceOperation.OpEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.Op, value);
+        }
+
+        /// <summary>
+        /// Sets the <c>path</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public ReplaceOperation WithPath(in Corvus.Json.JsonPointer value)
+        {
+            return this.SetProperty(JsonPropertyNames.Path, value);
+        }
+
+        /// <summary>
+        /// Sets the <c>value</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public ReplaceOperation WithValue(in Corvus.Json.JsonAny value)
+        {
+            return this.SetProperty(JsonPropertyNames.Value, value);
+        }
+
+        /// <summary>
         /// Get a property.
         /// </summary>
         /// <param name="name">The name of the property.</param>

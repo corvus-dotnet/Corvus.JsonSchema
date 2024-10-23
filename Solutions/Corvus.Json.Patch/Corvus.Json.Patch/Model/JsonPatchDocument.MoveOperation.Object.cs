@@ -26,7 +26,7 @@ public readonly partial struct JsonPatchDocument
     /// </summary>
     /// <remarks>
     /// <para>
-    /// Move operation. "from" is a JSON Pointer.
+    /// Move operation. &quot;from&quot; is a JSON Pointer.
     /// </para>
     /// </remarks>
     public readonly partial struct MoveOperation
@@ -363,6 +363,36 @@ public readonly partial struct JsonPatchDocument
             }
 
             throw new InvalidOperationException();
+        }
+
+        /// <summary>
+        /// Sets the <c>from</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public MoveOperation WithFrom(in Corvus.Json.JsonPointer value)
+        {
+            return this.SetProperty(JsonPropertyNames.From, value);
+        }
+
+        /// <summary>
+        /// Sets the <c>op</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public MoveOperation WithOp(in Corvus.Json.Patch.Model.JsonPatchDocument.MoveOperation.OpEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.Op, value);
+        }
+
+        /// <summary>
+        /// Sets the <c>path</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public MoveOperation WithPath(in Corvus.Json.JsonPointer value)
+        {
+            return this.SetProperty(JsonPropertyNames.Path, value);
         }
 
         /// <summary>

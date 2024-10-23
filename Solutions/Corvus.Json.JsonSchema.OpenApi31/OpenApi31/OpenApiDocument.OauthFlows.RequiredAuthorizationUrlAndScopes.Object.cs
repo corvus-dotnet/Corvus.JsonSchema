@@ -373,6 +373,36 @@ public readonly partial struct OpenApiDocument
             }
 
             /// <summary>
+            /// Sets the <c>authorizationUrl</c> property.
+            /// </summary>
+            /// <param name="value">The new property value</param>
+            /// <returns>The instance with the property set.</returns>
+            public RequiredAuthorizationUrlAndScopes WithAuthorizationUrl(in Corvus.Json.JsonUri value)
+            {
+                return this.SetProperty(JsonPropertyNames.AuthorizationUrl, value);
+            }
+
+            /// <summary>
+            /// Sets the (optional) <c>refreshUrl</c> property.
+            /// </summary>
+            /// <param name="value">The new property value</param>
+            /// <returns>The instance with the property set.</returns>
+            public RequiredAuthorizationUrlAndScopes WithRefreshUrl(in Corvus.Json.JsonUri value)
+            {
+                return this.SetProperty(JsonPropertyNames.RefreshUrl, value);
+            }
+
+            /// <summary>
+            /// Sets the <c>scopes</c> property.
+            /// </summary>
+            /// <param name="value">The new property value</param>
+            /// <returns>The instance with the property set.</returns>
+            public RequiredAuthorizationUrlAndScopes WithScopes(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.MapOfStrings value)
+            {
+                return this.SetProperty(JsonPropertyNames.Scopes, value);
+            }
+
+            /// <summary>
             /// Get a property.
             /// </summary>
             /// <param name="name">The name of the property.</param>

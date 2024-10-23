@@ -594,6 +594,96 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
+        /// Sets the (optional) <c>content</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Header WithContent(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.ContentEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.Content, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>deprecated</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Header WithDeprecated(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.DeprecatedEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.Deprecated, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>description</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Header WithDescription(in Corvus.Json.JsonString value)
+        {
+            return this.SetProperty(JsonPropertyNames.Description, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>example</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Header WithExample(in Corvus.Json.JsonAny value)
+        {
+            return this.SetProperty(JsonPropertyNames.Example, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>examples</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Header WithExamples(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Examples.ExamplesEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.Examples, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>explode</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Header WithExplode(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.WithStyleSimple.ExplodeEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.Explode, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>required</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Header WithRequired(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.RequiredEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.Required, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>schema</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Header WithSchemaValue(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Schema value)
+        {
+            return this.SetProperty(JsonPropertyNames.SchemaValue, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>style</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Header WithStyle(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.WithStyleSimple.StyleEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.Style, value);
+        }
+
+        /// <summary>
         /// Get a property.
         /// </summary>
         /// <param name="name">The name of the property.</param>

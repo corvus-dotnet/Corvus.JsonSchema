@@ -390,6 +390,54 @@ public readonly partial struct GeneratorConfig
         }
 
         /// <summary>
+        /// Sets the (optional) <c>dotnetNamespace</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        /// <remarks>
+        /// <para>
+        /// The (optional) .NET namespace to use for the schema.
+        /// </para>
+        /// <para>
+        /// This will generate the type directly in the namespace, rather than as a child of its containing type.
+        /// </para>
+        /// </remarks>
+        public NamedTypeSpecification WithDotnetNamespace(in Corvus.Json.JsonString? value)
+        {
+            return value.HasValue ? this.SetProperty(JsonPropertyNames.DotnetNamespace, value.Value) : this.RemoveProperty(JsonPropertyNames.DotnetNamespace);
+        }
+
+        /// <summary>
+        /// Sets the <c>dotnetTypeName</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        /// <remarks>
+        /// <para>
+        /// The .NET name to use for the schema.
+        /// </para>
+        /// </remarks>
+        public NamedTypeSpecification WithDotnetTypeName(in Corvus.Json.JsonString value)
+        {
+            return this.SetProperty(JsonPropertyNames.DotnetTypeName, value);
+        }
+
+        /// <summary>
+        /// Sets the <c>reference</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        /// <remarks>
+        /// <para>
+        /// The fully-qualified reference to the schema to name, include the base URI and the pointer fragment.
+        /// </para>
+        /// </remarks>
+        public NamedTypeSpecification WithReference(in Corvus.Json.JsonIriReference value)
+        {
+            return this.SetProperty(JsonPropertyNames.Reference, value);
+        }
+
+        /// <summary>
         /// Get a property.
         /// </summary>
         /// <param name="name">The name of the property.</param>

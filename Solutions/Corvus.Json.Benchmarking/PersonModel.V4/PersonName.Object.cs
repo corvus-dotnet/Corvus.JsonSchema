@@ -113,7 +113,7 @@ public readonly partial struct PersonName
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// <para>
-    /// The person's family name.
+    /// The person&#39;s family name.
     /// </para>
     /// </remarks>
     public Corvus.Json.Benchmarking.Models.V4.PersonNameElement FamilyName
@@ -150,7 +150,7 @@ public readonly partial struct PersonName
     /// </summary>
     /// <remarks>
     /// <para>
-    /// The person's given name.
+    /// The person&#39;s given name.
     /// </para>
     /// </remarks>
     public Corvus.Json.Benchmarking.Models.V4.PersonNameElement GivenName
@@ -371,6 +371,51 @@ public readonly partial struct PersonName
         }
 
         throw new InvalidOperationException();
+    }
+
+    /// <summary>
+    /// Sets the <c>familyName</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    /// <remarks>
+    /// <para>
+    /// The person&#39;s family name.
+    /// </para>
+    /// </remarks>
+    public PersonName WithFamilyName(in Corvus.Json.Benchmarking.Models.V4.PersonNameElement value)
+    {
+        return this.SetProperty(JsonPropertyNames.FamilyName, value);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>givenName</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    /// <remarks>
+    /// <para>
+    /// The person&#39;s given name.
+    /// </para>
+    /// </remarks>
+    public PersonName WithGivenName(in Corvus.Json.Benchmarking.Models.V4.PersonNameElement value)
+    {
+        return this.SetProperty(JsonPropertyNames.GivenName, value);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>otherNames</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    /// <remarks>
+    /// <para>
+    /// Other (middle) names for the person
+    /// </para>
+    /// </remarks>
+    public PersonName WithOtherNames(in Corvus.Json.Benchmarking.Models.V4.OtherNames value)
+    {
+        return this.SetProperty(JsonPropertyNames.OtherNames, value);
     }
 
     /// <summary>

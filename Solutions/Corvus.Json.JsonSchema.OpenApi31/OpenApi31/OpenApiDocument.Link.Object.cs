@@ -480,6 +480,66 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
+        /// Sets the (optional) <c>body</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Link WithBody(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Server value)
+        {
+            return this.SetProperty(JsonPropertyNames.Body, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>description</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Link WithDescription(in Corvus.Json.JsonString value)
+        {
+            return this.SetProperty(JsonPropertyNames.Description, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>operationId</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Link WithOperationId(in Corvus.Json.JsonString value)
+        {
+            return this.SetProperty(JsonPropertyNames.OperationId, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>operationRef</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Link WithOperationRef(in Corvus.Json.JsonUriReference value)
+        {
+            return this.SetProperty(JsonPropertyNames.OperationRef, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>parameters</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Link WithParameters(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.MapOfStrings value)
+        {
+            return this.SetProperty(JsonPropertyNames.Parameters, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>requestBody</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Link WithRequestBody(in Corvus.Json.JsonAny value)
+        {
+            return this.SetProperty(JsonPropertyNames.RequestBody, value);
+        }
+
+        /// <summary>
         /// Get a property.
         /// </summary>
         /// <param name="name">The name of the property.</param>

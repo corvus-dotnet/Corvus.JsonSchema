@@ -315,6 +315,26 @@ public readonly partial struct Unevaluated
     }
 
     /// <summary>
+    /// Sets the (optional) <c>unevaluatedItems</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    public Unevaluated WithUnevaluatedItems(in Corvus.Json.JsonSchema.Draft202012.Schema value)
+    {
+        return this.SetProperty(JsonPropertyNames.UnevaluatedItems, value);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>unevaluatedProperties</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    public Unevaluated WithUnevaluatedProperties(in Corvus.Json.JsonSchema.Draft202012.Schema value)
+    {
+        return this.SetProperty(JsonPropertyNames.UnevaluatedProperties, value);
+    }
+
+    /// <summary>
     /// Get a property.
     /// </summary>
     /// <param name="name">The name of the property.</param>

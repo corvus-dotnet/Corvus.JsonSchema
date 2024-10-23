@@ -68,7 +68,7 @@ public readonly partial struct OpenApiDocument
     /// <summary>
     /// Gets the schema location from which this type was generated.
     /// </summary>
-    public static string SchemaLocation { get; } = "https://raw.githubusercontent.com/OAI/OpenAPI-Specification/main/schemas/v3.0/schema.json";
+    public static string SchemaLocation { get; } = "OpenApi30.json";
 
     /// <summary>
     /// Gets a Null instance.

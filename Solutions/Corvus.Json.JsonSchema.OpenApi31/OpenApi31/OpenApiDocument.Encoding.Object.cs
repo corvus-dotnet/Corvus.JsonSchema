@@ -442,6 +442,56 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
+        /// Sets the (optional) <c>allowReserved</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Encoding WithAllowReserved(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Encoding.AllowReservedEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.AllowReserved, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>contentType</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Encoding WithContentType(in Corvus.Json.JsonString value)
+        {
+            return this.SetProperty(JsonPropertyNames.ContentType, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>explode</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Encoding WithExplode(in Corvus.Json.JsonBoolean value)
+        {
+            return this.SetProperty(JsonPropertyNames.Explode, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>headers</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Encoding WithHeaders(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Encoding.HeadersEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.Headers, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>style</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Encoding WithStyle(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Encoding.StyleEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.Style, value);
+        }
+
+        /// <summary>
         /// Get a property.
         /// </summary>
         /// <param name="name">The name of the property.</param>

@@ -1006,6 +1006,225 @@ public readonly partial struct GeneratorConfig
     }
 
     /// <summary>
+    /// Sets the (optional) <c>additionalFiles</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    /// <remarks>
+    /// <para>
+    /// Additional files to add to the generation context.
+    /// </para>
+    /// </remarks>
+    public GeneratorConfig WithAdditionalFiles(in Corvus.Json.CodeGenerator.GeneratorConfig.FileList? value)
+    {
+        return value.HasValue ? this.SetProperty(JsonPropertyNames.AdditionalFiles, value.Value) : this.RemoveProperty(JsonPropertyNames.AdditionalFiles);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>assertFormat</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    /// <remarks>
+    /// <para>
+    /// If true, assert format specifications.
+    /// </para>
+    /// </remarks>
+    public GeneratorConfig WithAssertFormat(in Corvus.Json.JsonBoolean? value)
+    {
+        return value.HasValue ? this.SetProperty(JsonPropertyNames.AssertFormat, value.Value) : this.RemoveProperty(JsonPropertyNames.AssertFormat);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>disabledNamingHeuristics</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    /// <remarks>
+    /// <para>
+    /// A list of naming heuristics to disable.
+    /// </para>
+    /// </remarks>
+    public GeneratorConfig WithDisabledNamingHeuristics(in Corvus.Json.CodeGenerator.GeneratorConfig.JsonStringArray? value)
+    {
+        return value.HasValue ? this.SetProperty(JsonPropertyNames.DisabledNamingHeuristics, value.Value) : this.RemoveProperty(JsonPropertyNames.DisabledNamingHeuristics);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>disableOptionalNameHeuristics</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    /// <remarks>
+    /// <para>
+    /// If true, do not use optional name heuristics.
+    /// </para>
+    /// </remarks>
+    public GeneratorConfig WithDisableOptionalNameHeuristics(in Corvus.Json.CodeGenerator.GeneratorConfig.DisableOptionalNameHeuristicsEntity? value)
+    {
+        return value.HasValue ? this.SetProperty(JsonPropertyNames.DisableOptionalNameHeuristics, value.Value) : this.RemoveProperty(JsonPropertyNames.DisableOptionalNameHeuristics);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>namedTypes</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    /// <remarks>
+    /// <para>
+    /// A list of schema that are to be named explicitly.
+    /// </para>
+    /// </remarks>
+    public GeneratorConfig WithNamedTypes(in Corvus.Json.CodeGenerator.GeneratorConfig.NamedTypeList? value)
+    {
+        return value.HasValue ? this.SetProperty(JsonPropertyNames.NamedTypes, value.Value) : this.RemoveProperty(JsonPropertyNames.NamedTypes);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>namespaces</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    /// <remarks>
+    /// <para>
+    /// A map of schema base URIs to .NET namespaces.
+    /// </para>
+    /// <para>
+    /// Any schema under the given base URI will be mapped into the target namespace.
+    /// </para>
+    /// </remarks>
+    public GeneratorConfig WithNamespaces(in Corvus.Json.CodeGenerator.GeneratorConfig.NamespaceMap? value)
+    {
+        return value.HasValue ? this.SetProperty(JsonPropertyNames.Namespaces, value.Value) : this.RemoveProperty(JsonPropertyNames.Namespaces);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>optionalAsNullable</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    /// <remarks>
+    /// <para>
+    /// If NullOrUndefined, optional properties are emitted as .NET nullable values.
+    /// </para>
+    /// </remarks>
+    public GeneratorConfig WithOptionalAsNullableValue(in Corvus.Json.CodeGenerator.GeneratorConfig.OptionalAsNullable? value)
+    {
+        return value.HasValue ? this.SetProperty(JsonPropertyNames.OptionalAsNullableValue, value.Value) : this.RemoveProperty(JsonPropertyNames.OptionalAsNullableValue);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>outputMapFile</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    /// <remarks>
+    /// <para>
+    /// The name to use for a map file which includes details of the files that were written.
+    /// </para>
+    /// </remarks>
+    public GeneratorConfig WithOutputMapFile(in Corvus.Json.JsonString? value)
+    {
+        return value.HasValue ? this.SetProperty(JsonPropertyNames.OutputMapFile, value.Value) : this.RemoveProperty(JsonPropertyNames.OutputMapFile);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>outputPath</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    /// <remarks>
+    /// <para>
+    /// The path to which to write the generated code.
+    /// </para>
+    /// </remarks>
+    public GeneratorConfig WithOutputPath(in Corvus.Json.JsonString? value)
+    {
+        return value.HasValue ? this.SetProperty(JsonPropertyNames.OutputPath, value.Value) : this.RemoveProperty(JsonPropertyNames.OutputPath);
+    }
+
+    /// <summary>
+    /// Sets the <c>rootNamespace</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    /// <remarks>
+    /// <para>
+    /// The default root namespace for generated types.
+    /// </para>
+    /// </remarks>
+    public GeneratorConfig WithRootNamespace(in Corvus.Json.JsonString value)
+    {
+        return this.SetProperty(JsonPropertyNames.RootNamespace, value);
+    }
+
+    /// <summary>
+    /// Sets the <c>typesToGenerate</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    /// <remarks>
+    /// <para>
+    /// The generation specification for the code generator.
+    /// </para>
+    /// </remarks>
+    public GeneratorConfig WithTypesToGenerate(in Corvus.Json.CodeGenerator.GeneratorConfig.GenerationSpecifications value)
+    {
+        return this.SetProperty(JsonPropertyNames.TypesToGenerate, value);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>useImplicitOperatorString</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    /// <remarks>
+    /// <para>
+    /// If true, then the conversion operator to string will be implicit, rather than explicit.
+    /// </para>
+    /// <para>
+    /// Warning: if this is enabled, it is easy to accidentally allocate strings without being explicit about doing so.
+    /// </para>
+    /// </remarks>
+    public GeneratorConfig WithUseImplicitOperatorString(in Corvus.Json.JsonBoolean? value)
+    {
+        return value.HasValue ? this.SetProperty(JsonPropertyNames.UseImplicitOperatorString, value.Value) : this.RemoveProperty(JsonPropertyNames.UseImplicitOperatorString);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>useSchema</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    /// <remarks>
+    /// <para>
+    /// Provides the fallback schema to use if vocabulary analysis fails.
+    /// </para>
+    /// <para>
+    /// Well-known fallback draft schema.
+    /// </para>
+    /// </remarks>
+    public GeneratorConfig WithUseSchemaValue(in Corvus.Json.CodeGenerator.GeneratorConfig.UseSchema? value)
+    {
+        return value.HasValue ? this.SetProperty(JsonPropertyNames.UseSchemaValue, value.Value) : this.RemoveProperty(JsonPropertyNames.UseSchemaValue);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>useUnixLineEndings</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    /// <remarks>
+    /// <para>
+    /// If true, then the generated files will use Unix line endings (\\n). Otherwise it will use Windows line endings (\\r\\n).
+    /// </para>
+    /// </remarks>
+    public GeneratorConfig WithUseUnixLineEndings(in Corvus.Json.JsonBoolean? value)
+    {
+        return value.HasValue ? this.SetProperty(JsonPropertyNames.UseUnixLineEndings, value.Value) : this.RemoveProperty(JsonPropertyNames.UseUnixLineEndings);
+    }
+
+    /// <summary>
     /// Get a property.
     /// </summary>
     /// <param name="name">The name of the property.</param>

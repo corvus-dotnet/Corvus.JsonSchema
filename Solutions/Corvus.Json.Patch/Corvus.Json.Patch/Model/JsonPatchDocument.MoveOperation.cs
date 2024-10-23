@@ -28,7 +28,7 @@ public readonly partial struct JsonPatchDocument
     /// </summary>
     /// <remarks>
     /// <para>
-    /// Move operation. "from" is a JSON Pointer.
+    /// Move operation. &quot;from&quot; is a JSON Pointer.
     /// </para>
     /// </remarks>
     [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<MoveOperation>))]

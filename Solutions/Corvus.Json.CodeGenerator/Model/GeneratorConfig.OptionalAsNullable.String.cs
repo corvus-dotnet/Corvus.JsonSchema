@@ -30,7 +30,7 @@ public readonly partial struct GeneratorConfig
     /// Examples:
     /// <example>
     /// <code>
-    /// "None"
+    /// &quot;None&quot;
     /// </code>
     /// </example>
     /// </para>

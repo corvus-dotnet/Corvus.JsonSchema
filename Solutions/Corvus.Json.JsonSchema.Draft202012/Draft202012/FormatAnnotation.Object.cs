@@ -278,6 +278,16 @@ public readonly partial struct FormatAnnotation
     }
 
     /// <summary>
+    /// Sets the (optional) <c>format</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    public FormatAnnotation WithFormat(in Corvus.Json.JsonString value)
+    {
+        return this.SetProperty(JsonPropertyNames.Format, value);
+    }
+
+    /// <summary>
     /// Get a property.
     /// </summary>
     /// <param name="name">The name of the property.</param>

@@ -405,6 +405,46 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
+        /// Sets the (optional) <c>content</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Response WithContentValue(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Content value)
+        {
+            return this.SetProperty(JsonPropertyNames.ContentValue, value);
+        }
+
+        /// <summary>
+        /// Sets the <c>description</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Response WithDescription(in Corvus.Json.JsonString value)
+        {
+            return this.SetProperty(JsonPropertyNames.Description, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>headers</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Response WithHeaders(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Response.HeadersEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.Headers, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>links</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Response WithLinks(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Response.LinksEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.Links, value);
+        }
+
+        /// <summary>
         /// Get a property.
         /// </summary>
         /// <param name="name">The name of the property.</param>

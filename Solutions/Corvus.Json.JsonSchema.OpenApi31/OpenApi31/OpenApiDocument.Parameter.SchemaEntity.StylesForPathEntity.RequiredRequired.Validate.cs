@@ -117,7 +117,28 @@ public readonly partial struct OpenApiDocument
                             int propertyCount = 0;
                             foreach (JsonObjectProperty property in value.EnumerateObject())
                             {
-                                if (property.NameEquals(JsonPropertyNames.RequiredUtf8, JsonPropertyNames.Required))
+                                if (property.NameEquals(JsonPropertyNames.NameUtf8, JsonPropertyNames.Name))
+                                {
+                                    result = result.WithLocalProperty(propertyCount);
+                                    if (level > ValidationLevel.Basic)
+                                    {
+                                        result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/name"), JsonPropertyNames.Name);
+                                    }
+
+                                    ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity.RequiredRequired.NameEntity>().Validate(result.CreateChildContext(), level);
+                                    if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                                    {
+                                        return propertyResult;
+                                    }
+
+                                    result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
+                                    if (level > ValidationLevel.Basic)
+                                    {
+                                        result = result.PopLocation();
+                                    }
+                                }
+                                else if (property.NameEquals(JsonPropertyNames.RequiredUtf8, JsonPropertyNames.Required))
                                 {
                                     hasSeenRequired = true;
                                     result = result.WithLocalProperty(propertyCount);

@@ -31,7 +31,7 @@ public readonly partial struct GeneratorConfig
     /// Examples:
     /// <example>
     /// <code>
-    /// "Draft202012"
+    /// &quot;Draft202012&quot;
     /// </code>
     /// </example>
     /// </para>

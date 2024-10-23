@@ -375,6 +375,36 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
+        /// Sets the <c>default</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public ServerVariable WithDefault(in Corvus.Json.JsonString value)
+        {
+            return this.SetProperty(JsonPropertyNames.Default, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>description</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public ServerVariable WithDescription(in Corvus.Json.JsonString value)
+        {
+            return this.SetProperty(JsonPropertyNames.Description, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>enum</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public ServerVariable WithEnum(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ServerVariable.JsonStringArray value)
+        {
+            return this.SetProperty(JsonPropertyNames.Enum, value);
+        }
+
+        /// <summary>
         /// Get a property.
         /// </summary>
         /// <param name="name">The name of the property.</param>

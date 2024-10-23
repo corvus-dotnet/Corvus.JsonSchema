@@ -415,6 +415,46 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
+        /// Sets the (optional) <c>description</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public ApiKeySecurityScheme WithDescription(in Corvus.Json.JsonString value)
+        {
+            return this.SetProperty(JsonPropertyNames.Description, value);
+        }
+
+        /// <summary>
+        /// Sets the <c>in</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public ApiKeySecurityScheme WithIn(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ApiKeySecurityScheme.InEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.In, value);
+        }
+
+        /// <summary>
+        /// Sets the <c>name</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public ApiKeySecurityScheme WithName(in Corvus.Json.JsonString value)
+        {
+            return this.SetProperty(JsonPropertyNames.Name, value);
+        }
+
+        /// <summary>
+        /// Sets the <c>type</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public ApiKeySecurityScheme WithType(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ApiKeySecurityScheme.TypeEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.Type, value);
+        }
+
+        /// <summary>
         /// Get a property.
         /// </summary>
         /// <param name="name">The name of the property.</param>

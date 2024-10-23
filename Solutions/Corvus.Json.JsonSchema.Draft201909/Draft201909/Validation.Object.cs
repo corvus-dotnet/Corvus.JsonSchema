@@ -1001,6 +1001,206 @@ public readonly partial struct Validation
     }
 
     /// <summary>
+    /// Sets the (optional) <c>const</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    public Validation WithConst(in Corvus.Json.JsonAny value)
+    {
+        return this.SetProperty(JsonPropertyNames.Const, value);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>dependentRequired</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    public Validation WithDependentRequired(in Corvus.Json.JsonSchema.Draft201909.Validation.DependentRequiredEntity value)
+    {
+        return this.SetProperty(JsonPropertyNames.DependentRequired, value);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>enum</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    public Validation WithEnum(in Corvus.Json.JsonArray value)
+    {
+        return this.SetProperty(JsonPropertyNames.Enum, value);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>exclusiveMaximum</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    public Validation WithExclusiveMaximum(in Corvus.Json.JsonNumber value)
+    {
+        return this.SetProperty(JsonPropertyNames.ExclusiveMaximum, value);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>exclusiveMinimum</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    public Validation WithExclusiveMinimum(in Corvus.Json.JsonNumber value)
+    {
+        return this.SetProperty(JsonPropertyNames.ExclusiveMinimum, value);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>maxContains</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    public Validation WithMaxContains(in Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeInteger value)
+    {
+        return this.SetProperty(JsonPropertyNames.MaxContains, value);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>maximum</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    public Validation WithMaximum(in Corvus.Json.JsonNumber value)
+    {
+        return this.SetProperty(JsonPropertyNames.Maximum, value);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>maxItems</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    public Validation WithMaxItems(in Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeInteger value)
+    {
+        return this.SetProperty(JsonPropertyNames.MaxItems, value);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>maxLength</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    public Validation WithMaxLength(in Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeInteger value)
+    {
+        return this.SetProperty(JsonPropertyNames.MaxLength, value);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>maxProperties</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    public Validation WithMaxProperties(in Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeInteger value)
+    {
+        return this.SetProperty(JsonPropertyNames.MaxProperties, value);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>minContains</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    public Validation WithMinContains(in Corvus.Json.JsonSchema.Draft201909.Validation.MinContainsEntity value)
+    {
+        return this.SetProperty(JsonPropertyNames.MinContains, value);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>minimum</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    public Validation WithMinimum(in Corvus.Json.JsonNumber value)
+    {
+        return this.SetProperty(JsonPropertyNames.Minimum, value);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>minItems</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    public Validation WithMinItems(in Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeIntegerDefault0 value)
+    {
+        return this.SetProperty(JsonPropertyNames.MinItems, value);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>minLength</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    public Validation WithMinLength(in Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeIntegerDefault0 value)
+    {
+        return this.SetProperty(JsonPropertyNames.MinLength, value);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>minProperties</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    public Validation WithMinProperties(in Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeIntegerDefault0 value)
+    {
+        return this.SetProperty(JsonPropertyNames.MinProperties, value);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>multipleOf</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    public Validation WithMultipleOf(in Corvus.Json.JsonSchema.Draft201909.Validation.MultipleOfEntity value)
+    {
+        return this.SetProperty(JsonPropertyNames.MultipleOf, value);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>pattern</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    public Validation WithPattern(in Corvus.Json.JsonRegex value)
+    {
+        return this.SetProperty(JsonPropertyNames.Pattern, value);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>required</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    public Validation WithRequired(in Corvus.Json.JsonSchema.Draft201909.Validation.StringArray value)
+    {
+        return this.SetProperty(JsonPropertyNames.Required, value);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>type</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    public Validation WithType(in Corvus.Json.JsonSchema.Draft201909.Validation.TypeEntity value)
+    {
+        return this.SetProperty(JsonPropertyNames.Type, value);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>uniqueItems</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    public Validation WithUniqueItems(in Corvus.Json.JsonSchema.Draft201909.Validation.UniqueItemsEntity value)
+    {
+        return this.SetProperty(JsonPropertyNames.UniqueItems, value);
+    }
+
+    /// <summary>
     /// Get a property.
     /// </summary>
     /// <param name="name">The name of the property.</param>

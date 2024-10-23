@@ -412,6 +412,46 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
+        /// Sets the (optional) <c>authorizationCode</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public OAuthFlows WithAuthorizationCode(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.AuthorizationCodeOAuthFlow value)
+        {
+            return this.SetProperty(JsonPropertyNames.AuthorizationCode, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>clientCredentials</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public OAuthFlows WithClientCredentials(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ClientCredentialsFlow value)
+        {
+            return this.SetProperty(JsonPropertyNames.ClientCredentials, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>implicit</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public OAuthFlows WithImplicit(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ImplicitOAuthFlow value)
+        {
+            return this.SetProperty(JsonPropertyNames.Implicit, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>password</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public OAuthFlows WithPassword(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.PasswordOAuthFlow value)
+        {
+            return this.SetProperty(JsonPropertyNames.Password, value);
+        }
+
+        /// <summary>
         /// Get a property.
         /// </summary>
         /// <param name="name">The name of the property.</param>

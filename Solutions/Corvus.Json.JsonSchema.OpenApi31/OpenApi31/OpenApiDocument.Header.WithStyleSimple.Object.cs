@@ -409,6 +409,46 @@ public readonly partial struct OpenApiDocument
             }
 
             /// <summary>
+            /// Sets the (optional) <c>example</c> property.
+            /// </summary>
+            /// <param name="value">The new property value</param>
+            /// <returns>The instance with the property set.</returns>
+            public WithStyleSimple WithExample(in Corvus.Json.JsonAny value)
+            {
+                return this.SetProperty(JsonPropertyNames.Example, value);
+            }
+
+            /// <summary>
+            /// Sets the (optional) <c>examples</c> property.
+            /// </summary>
+            /// <param name="value">The new property value</param>
+            /// <returns>The instance with the property set.</returns>
+            public WithStyleSimple WithExamples(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Examples.ExamplesEntity value)
+            {
+                return this.SetProperty(JsonPropertyNames.Examples, value);
+            }
+
+            /// <summary>
+            /// Sets the (optional) <c>explode</c> property.
+            /// </summary>
+            /// <param name="value">The new property value</param>
+            /// <returns>The instance with the property set.</returns>
+            public WithStyleSimple WithExplode(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.WithStyleSimple.ExplodeEntity value)
+            {
+                return this.SetProperty(JsonPropertyNames.Explode, value);
+            }
+
+            /// <summary>
+            /// Sets the (optional) <c>style</c> property.
+            /// </summary>
+            /// <param name="value">The new property value</param>
+            /// <returns>The instance with the property set.</returns>
+            public WithStyleSimple WithStyle(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.WithStyleSimple.StyleEntity value)
+            {
+                return this.SetProperty(JsonPropertyNames.Style, value);
+            }
+
+            /// <summary>
             /// Get a property.
             /// </summary>
             /// <param name="name">The name of the property.</param>

@@ -507,6 +507,76 @@ public readonly partial struct MetaData
     }
 
     /// <summary>
+    /// Sets the (optional) <c>default</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    public MetaData WithDefault(in Corvus.Json.JsonAny value)
+    {
+        return this.SetProperty(JsonPropertyNames.Default, value);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>deprecated</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    public MetaData WithDeprecated(in Corvus.Json.JsonSchema.Draft202012.MetaData.DeprecatedEntity value)
+    {
+        return this.SetProperty(JsonPropertyNames.Deprecated, value);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>description</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    public MetaData WithDescription(in Corvus.Json.JsonString value)
+    {
+        return this.SetProperty(JsonPropertyNames.Description, value);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>examples</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    public MetaData WithExamples(in Corvus.Json.JsonArray value)
+    {
+        return this.SetProperty(JsonPropertyNames.Examples, value);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>readOnly</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    public MetaData WithReadOnly(in Corvus.Json.JsonSchema.Draft202012.MetaData.ReadOnlyEntity value)
+    {
+        return this.SetProperty(JsonPropertyNames.ReadOnly, value);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>title</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    public MetaData WithTitle(in Corvus.Json.JsonString value)
+    {
+        return this.SetProperty(JsonPropertyNames.Title, value);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>writeOnly</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    public MetaData WithWriteOnly(in Corvus.Json.JsonSchema.Draft202012.MetaData.WriteOnlyEntity value)
+    {
+        return this.SetProperty(JsonPropertyNames.WriteOnly, value);
+    }
+
+    /// <summary>
     /// Get a property.
     /// </summary>
     /// <param name="name">The name of the property.</param>

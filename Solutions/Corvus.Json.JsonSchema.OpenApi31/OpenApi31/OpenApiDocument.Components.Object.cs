@@ -640,6 +640,106 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
+        /// Sets the (optional) <c>callbacks</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Components WithCallbacks(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Components.CallbacksEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.Callbacks, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>examples</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Components WithExamples(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Components.ExamplesEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.Examples, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>headers</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Components WithHeaders(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Components.HeadersEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.Headers, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>links</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Components WithLinks(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Components.LinksEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.Links, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>parameters</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Components WithParameters(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Components.ParametersEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.Parameters, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>pathItems</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Components WithPathItems(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Components.PathItemsEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.PathItems, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>requestBodies</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Components WithRequestBodies(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Components.RequestBodiesEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.RequestBodies, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>responses</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Components WithResponses(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Components.ResponsesEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.Responses, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>schemas</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Components WithSchemas(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Components.SchemasEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.Schemas, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>securitySchemes</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Components WithSecuritySchemes(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Components.SecuritySchemesEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.SecuritySchemes, value);
+        }
+
+        /// <summary>
         /// Get a property.
         /// </summary>
         /// <param name="name">The name of the property.</param>

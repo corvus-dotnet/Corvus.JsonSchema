@@ -748,6 +748,136 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
+        /// Sets the (optional) <c>allowEmptyValue</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Parameter WithAllowEmptyValue(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.ThenEntity.AllowEmptyValueEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.AllowEmptyValue, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>allowReserved</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Parameter WithAllowReserved(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForQueryEntity.ThenEntity.AllowReservedEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.AllowReserved, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>content</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Parameter WithContent(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.ContentEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.Content, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>deprecated</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Parameter WithDeprecated(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.DeprecatedEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.Deprecated, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>description</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Parameter WithDescription(in Corvus.Json.JsonString value)
+        {
+            return this.SetProperty(JsonPropertyNames.Description, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>example</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Parameter WithExample(in Corvus.Json.JsonAny value)
+        {
+            return this.SetProperty(JsonPropertyNames.Example, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>examples</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Parameter WithExamples(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Examples.ExamplesEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.Examples, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>explode</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Parameter WithExplode(in Corvus.Json.JsonBoolean value)
+        {
+            return this.SetProperty(JsonPropertyNames.Explode, value);
+        }
+
+        /// <summary>
+        /// Sets the <c>in</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Parameter WithIn(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.InEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.In, value);
+        }
+
+        /// <summary>
+        /// Sets the <c>name</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Parameter WithName(in Corvus.Json.JsonString value)
+        {
+            return this.SetProperty(JsonPropertyNames.Name, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>required</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Parameter WithRequired(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.RequiredEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.Required, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>schema</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Parameter WithSchemaValue(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Schema value)
+        {
+            return this.SetProperty(JsonPropertyNames.SchemaValue, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>style</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Parameter WithStyle(in Corvus.Json.JsonString value)
+        {
+            return this.SetProperty(JsonPropertyNames.Style, value);
+        }
+
+        /// <summary>
         /// Get a property.
         /// </summary>
         /// <param name="name">The name of the property.</param>

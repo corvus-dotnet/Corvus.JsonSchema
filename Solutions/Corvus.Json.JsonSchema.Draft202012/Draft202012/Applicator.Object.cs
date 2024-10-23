@@ -811,6 +811,156 @@ public readonly partial struct Applicator
     }
 
     /// <summary>
+    /// Sets the (optional) <c>additionalProperties</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    public Applicator WithAdditionalProperties(in Corvus.Json.JsonSchema.Draft202012.Schema value)
+    {
+        return this.SetProperty(JsonPropertyNames.AdditionalProperties, value);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>allOf</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    public Applicator WithAllOf(in Corvus.Json.JsonSchema.Draft202012.Schema.SchemaArray value)
+    {
+        return this.SetProperty(JsonPropertyNames.AllOf, value);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>anyOf</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    public Applicator WithAnyOf(in Corvus.Json.JsonSchema.Draft202012.Applicator.SchemaArray value)
+    {
+        return this.SetProperty(JsonPropertyNames.AnyOf, value);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>contains</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    public Applicator WithContains(in Corvus.Json.JsonSchema.Draft202012.Schema value)
+    {
+        return this.SetProperty(JsonPropertyNames.Contains, value);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>dependentSchemas</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    public Applicator WithDependentSchemas(in Corvus.Json.JsonSchema.Draft202012.Applicator.DependentSchemasEntity value)
+    {
+        return this.SetProperty(JsonPropertyNames.DependentSchemas, value);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>else</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    public Applicator WithElse(in Corvus.Json.JsonSchema.Draft202012.Schema value)
+    {
+        return this.SetProperty(JsonPropertyNames.Else, value);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>if</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    public Applicator WithIf(in Corvus.Json.JsonSchema.Draft202012.Schema value)
+    {
+        return this.SetProperty(JsonPropertyNames.If, value);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>items</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    public Applicator WithItemsValue(in Corvus.Json.JsonSchema.Draft202012.Schema value)
+    {
+        return this.SetProperty(JsonPropertyNames.ItemsValue, value);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>not</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    public Applicator WithNot(in Corvus.Json.JsonSchema.Draft202012.Schema value)
+    {
+        return this.SetProperty(JsonPropertyNames.Not, value);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>oneOf</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    public Applicator WithOneOf(in Corvus.Json.JsonSchema.Draft202012.Applicator.SchemaArray value)
+    {
+        return this.SetProperty(JsonPropertyNames.OneOf, value);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>patternProperties</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    public Applicator WithPatternProperties(in Corvus.Json.JsonSchema.Draft202012.Applicator.PatternPropertiesEntity value)
+    {
+        return this.SetProperty(JsonPropertyNames.PatternProperties, value);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>prefixItems</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    public Applicator WithPrefixItems(in Corvus.Json.JsonSchema.Draft202012.Applicator.SchemaArray value)
+    {
+        return this.SetProperty(JsonPropertyNames.PrefixItems, value);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>properties</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    public Applicator WithProperties(in Corvus.Json.JsonSchema.Draft202012.Applicator.PropertiesEntity value)
+    {
+        return this.SetProperty(JsonPropertyNames.Properties, value);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>propertyNames</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    public Applicator WithPropertyNames(in Corvus.Json.JsonSchema.Draft202012.Schema value)
+    {
+        return this.SetProperty(JsonPropertyNames.PropertyNames, value);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>then</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    public Applicator WithThen(in Corvus.Json.JsonSchema.Draft202012.Schema value)
+    {
+        return this.SetProperty(JsonPropertyNames.Then, value);
+    }
+
+    /// <summary>
     /// Get a property.
     /// </summary>
     /// <param name="name">The name of the property.</param>

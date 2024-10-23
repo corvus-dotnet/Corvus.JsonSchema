@@ -632,6 +632,106 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
+        /// Sets the (optional) <c>$ref</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public SecuritySchemeOrReference WithRef(in Corvus.Json.JsonUriReference value)
+        {
+            return this.SetProperty(JsonPropertyNames.Ref, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>bearerFormat</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public SecuritySchemeOrReference WithBearerFormat(in Corvus.Json.JsonString value)
+        {
+            return this.SetProperty(JsonPropertyNames.BearerFormat, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>description</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public SecuritySchemeOrReference WithDescription(in Corvus.Json.JsonString value)
+        {
+            return this.SetProperty(JsonPropertyNames.Description, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>flows</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public SecuritySchemeOrReference WithFlows(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OauthFlows value)
+        {
+            return this.SetProperty(JsonPropertyNames.Flows, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>in</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public SecuritySchemeOrReference WithIn(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeApikeyEntity.RequiredInAndName.InEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.In, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>name</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public SecuritySchemeOrReference WithName(in Corvus.Json.JsonString value)
+        {
+            return this.SetProperty(JsonPropertyNames.Name, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>openIdConnectUrl</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public SecuritySchemeOrReference WithOpenIdConnectUrl(in Corvus.Json.JsonUri value)
+        {
+            return this.SetProperty(JsonPropertyNames.OpenIdConnectUrl, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>scheme</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public SecuritySchemeOrReference WithScheme(in Corvus.Json.JsonString value)
+        {
+            return this.SetProperty(JsonPropertyNames.Scheme, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>summary</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public SecuritySchemeOrReference WithSummary(in Corvus.Json.JsonString value)
+        {
+            return this.SetProperty(JsonPropertyNames.Summary, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>type</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public SecuritySchemeOrReference WithType(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.Type, value);
+        }
+
+        /// <summary>
         /// Get a property.
         /// </summary>
         /// <param name="name">The name of the property.</param>

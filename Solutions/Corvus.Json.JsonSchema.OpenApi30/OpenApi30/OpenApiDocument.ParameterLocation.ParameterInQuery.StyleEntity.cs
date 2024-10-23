@@ -55,7 +55,7 @@ public readonly partial struct OpenApiDocument
             /// Examples:
             /// <example>
             /// <code>
-            /// "form"
+            /// &quot;form&quot;
             /// </code>
             /// </example>
             /// </para>

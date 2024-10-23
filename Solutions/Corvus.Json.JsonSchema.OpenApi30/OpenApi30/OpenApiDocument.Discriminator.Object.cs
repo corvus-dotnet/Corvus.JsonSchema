@@ -327,6 +327,26 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
+        /// Sets the (optional) <c>mapping</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Discriminator WithMapping(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Discriminator.MappingEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.Mapping, value);
+        }
+
+        /// <summary>
+        /// Sets the <c>propertyName</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Discriminator WithPropertyName(in Corvus.Json.JsonString value)
+        {
+            return this.SetProperty(JsonPropertyNames.PropertyName, value);
+        }
+
+        /// <summary>
         /// Get a property.
         /// </summary>
         /// <param name="name">The name of the property.</param>

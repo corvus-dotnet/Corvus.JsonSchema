@@ -33,7 +33,7 @@ public readonly partial struct OpenApiDocument
     /// Examples:
     /// <example>
     /// <code>
-    /// "https://spec.openapis.org/oas/3.1/dialect/base"
+    /// &quot;https://spec.openapis.org/oas/3.1/dialect/base&quot;
     /// </code>
     /// </example>
     /// </para>

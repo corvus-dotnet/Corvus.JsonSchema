@@ -278,6 +278,16 @@ public readonly partial struct NotDisabled
     }
 
     /// <summary>
+    /// Sets the (optional) <c>disabled</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    public NotDisabled WithDisabled(in Corvus.Json.JsonNotAny value)
+    {
+        return this.SetProperty(JsonPropertyNames.Disabled, value);
+    }
+
+    /// <summary>
     /// Get a property.
     /// </summary>
     /// <param name="name">The name of the property.</param>

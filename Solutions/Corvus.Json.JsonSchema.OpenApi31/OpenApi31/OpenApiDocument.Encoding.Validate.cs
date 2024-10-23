@@ -145,7 +145,7 @@ public readonly partial struct OpenApiDocument
                     allOfResult1 = allOfResult1.PushValidationLocationReducedPathModifier(new("#/allOf/1/$ref"));
                 }
 
-                allOfResult1 = value.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm>().Validate(allOfResult1, level);
+                allOfResult1 = value.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Encoding.ExplodeDefaultEntity>().Validate(allOfResult1, level);
 
                 if (!allOfResult1.IsValid)
                 {

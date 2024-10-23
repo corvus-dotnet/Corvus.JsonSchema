@@ -299,6 +299,16 @@ public readonly partial struct OpenApiDocument
             }
 
             /// <summary>
+            /// Sets the (optional) <c>scheme</c> property.
+            /// </summary>
+            /// <param name="value">The new property value</param>
+            /// <returns>The instance with the property set.</returns>
+            public NonBearer WithScheme(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme.NonBearer.SchemeEntity value)
+            {
+                return this.SetProperty(JsonPropertyNames.Scheme, value);
+            }
+
+            /// <summary>
             /// Get a property.
             /// </summary>
             /// <param name="name">The name of the property.</param>

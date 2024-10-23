@@ -375,6 +375,36 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
+        /// Sets the (optional) <c>description</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Server WithDescription(in Corvus.Json.JsonString value)
+        {
+            return this.SetProperty(JsonPropertyNames.Description, value);
+        }
+
+        /// <summary>
+        /// Sets the <c>url</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Server WithUrl(in Corvus.Json.JsonString value)
+        {
+            return this.SetProperty(JsonPropertyNames.Url, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>variables</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Server WithVariables(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Server.VariablesEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.Variables, value);
+        }
+
+        /// <summary>
         /// Get a property.
         /// </summary>
         /// <param name="name">The name of the property.</param>
