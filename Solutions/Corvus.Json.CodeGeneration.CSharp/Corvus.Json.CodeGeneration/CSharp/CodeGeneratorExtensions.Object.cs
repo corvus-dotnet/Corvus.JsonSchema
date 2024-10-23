@@ -1043,6 +1043,59 @@ internal static partial class CodeGeneratorExtensions
     }
 
     /// <summary>
+    /// Append the <c>With[PropertyName]()</c> methods.
+    /// </summary>
+    /// <param name="generator">The code generator.</param>
+    /// <param name="typeDeclaration">The type declaration containing the properties.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendWithPropertyMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
+        foreach (PropertyDeclaration property in typeDeclaration.PropertyDeclarations)
+        {
+            if (generator.IsCancellationRequested)
+            {
+                return generator;
+            }
+
+            bool isNullable = typeDeclaration.OptionalAsNullable() && property.RequiredOrOptional == RequiredOrOptional.Optional;
+            generator
+                .AppendSeparatorLine()
+                .AppendWithPropertyDocumentation(property)
+                .AppendObsoleteAttribute(property);
+            if (isNullable)
+            {
+                generator
+                    .BeginReservedMethodDeclaration(
+                        "public",
+                        typeDeclaration.DotnetTypeName(),
+                        "With" + property.DotnetPropertyName(),
+                        new MethodParameter("in", property.ReducedPropertyType.FullyQualifiedDotnetTypeName(), "value", typeIsNullable: true))
+                    .AppendLineIndent("return value.HasValue ? this.SetProperty(", generator.JsonPropertyNamesClassName(), ".", property.DotnetPropertyName(), ", value.Value) : this.RemoveProperty(", generator.JsonPropertyNamesClassName(), ".", property.DotnetPropertyName(), ");");
+            }
+            else
+            {
+                generator
+                    .BeginReservedMethodDeclaration(
+                        "public",
+                        typeDeclaration.DotnetTypeName(),
+                        "With" + property.DotnetPropertyName(),
+                        new MethodParameter("in", property.ReducedPropertyType.FullyQualifiedDotnetTypeName(), "value", typeIsNullable: false))
+                    .AppendLineIndent("return this.SetProperty(", generator.JsonPropertyNamesClassName(), ".", property.DotnetPropertyName(), ", value);");
+            }
+
+            generator
+                .EndMethodDeclaration();
+        }
+
+        return generator;
+    }
+
+    /// <summary>
     /// Append the <c>HasProperty()</c> methods.
     /// </summary>
     /// <param name="generator">The code generator.</param>
@@ -1189,6 +1242,74 @@ internal static partial class CodeGeneratorExtensions
                 .AppendGetPropertyBackingWith(typeDeclaration.DotnetTypeName(), "in JsonPropertyName")
             .PopIndent()
             .AppendLineIndent("}");
+    }
+
+    private static CodeGenerator AppendWithPropertyDocumentation(this CodeGenerator generator, PropertyDeclaration property)
+    {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
+        bool optional = property.RequiredOrOptional == RequiredOrOptional.Optional;
+
+        generator
+            .AppendLineIndent("/// <summary>")
+            .AppendLineIndent(
+            "/// Sets the ",
+            optional ? "(optional) " : string.Empty,
+            "<c>",
+            SymbolDisplay.FormatLiteral(property.JsonPropertyName, false),
+            "</c> ",
+            "property.");
+
+        // We include documentation attached to the local (unreduced) type; this is usually the means by
+        // which property-specific documentation is attached to a particular instance of a common reference type.
+        if (property.UnreducedPropertyType.ShortDocumentation() is string shortDocumentation)
+        {
+            generator
+                .AppendBlockIndentWithPrefix(shortDocumentation, "/// ");
+        }
+
+        generator
+            .AppendLineIndent("/// </summary>")
+            .AppendLineIndent("/// <param name=\"value\">The new property value</param>")
+            .AppendLineIndent("/// <returns>The instance with the property set.</returns>");
+
+        bool usingRemarks = false;
+
+        if (property.UnreducedPropertyType.LongDocumentation() is string longDocumentation)
+        {
+            if (!usingRemarks)
+            {
+                usingRemarks = true;
+                generator
+                    .AppendLineIndent("/// <remarks>");
+            }
+
+            generator
+                .AppendParagraphs(longDocumentation);
+        }
+
+        if (property.ReducedPropertyType != property.UnreducedPropertyType && property.ReducedPropertyType.LongDocumentation() is string longDocumentationReduced)
+        {
+            if (!usingRemarks)
+            {
+                usingRemarks = true;
+                generator
+                    .AppendLineIndent("/// <remarks>");
+            }
+
+            generator
+                .AppendParagraphs(longDocumentationReduced);
+        }
+
+        if (usingRemarks)
+        {
+            generator.AppendLineIndent("/// </remarks>");
+        }
+
+        return generator;
     }
 
     private static CodeGenerator AppendPropertyDocumentation(this CodeGenerator generator, PropertyDeclaration property)
