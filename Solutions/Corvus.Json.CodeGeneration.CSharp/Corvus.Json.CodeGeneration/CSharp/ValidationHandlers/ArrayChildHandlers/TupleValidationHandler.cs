@@ -82,11 +82,6 @@ public class TupleValidationHandler : IChildArrayItemValidationHandler
                             return result;
                         }
 
-                        if (level > ValidationLevel.Basic)
-                        {
-                            result = result.PopLocation();
-                        }
-
                         result = result.WithLocalItemIndex(length);
                         break;
                         """)
