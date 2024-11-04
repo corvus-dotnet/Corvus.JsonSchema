@@ -1,18 +1,18 @@
 # Corvus.JsonSchema
 Build-time code generation for [Json Schema](https://json-schema.org/) validation, and serialization.
 
-It supports serialization of *every feature of JSON schema* from draft4 to draft2020-12, including the OpenApi3.0 variant of draft4. (i.e. it doesn't give up on complex structure and lapse back to 'anonymous JSON objects' like most dotnet tooling.)
+It supports serialization of *every feature of JSON schema* from draft4 to draft2020-12, including the OpenApi3.0 variant of draft4. (i.e. it doesn't give up on complex structure and lapse back to 'anonymous JSON objects' like most .NET tooling.)
 
 ## Supported platforms
 
-### netstandard2.0
-It now works with **every supported .NET version** by providing netstandard2.0 packages.
+### .NET 4.8.1 (Windows)
+It now works with .NET 4.8.1 and later by providing `netstandard2.0` packages.
 
-### net80 and later
-There are also optimized packages that take advantage of features in NET8.0 and later.
+### .NET 8.0, 9.0 (Windows, Linux, MacOs)
+We take advantage of features in .NET 8.0 and later, by providing `net80` packages. These are supported on Windows, Linux, and MacOS.
 
 Note that if you are building libraries using `Corvus.Json.ExtendedTypes`, and generated schema types, you should ensure
-that you target *both* `netsandard2.0` *and* `net80` (or later) to ensure that your library can be consumed
+that you target *both* `netstandard2.0` *and* `net80` (or later) to ensure that your library can be consumed
 by the widest possible range of projects
 
 If you build your library against `netstandard2.0` only, and are consumed by a `net80` or later project, you will see type load errors.
