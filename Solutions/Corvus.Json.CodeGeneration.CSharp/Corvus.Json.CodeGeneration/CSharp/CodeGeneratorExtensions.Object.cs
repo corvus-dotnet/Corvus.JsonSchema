@@ -770,8 +770,10 @@ internal static partial class CodeGeneratorExtensions
                 return generator;
             }
 
+            string builderName = generator.GetUniqueVariableNameInScope("builder");
+
             generator
-                .AppendLineIndent("var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();");
+                .AppendLineIndent("var ", builderName, " = ImmutableList.CreateBuilder<JsonObjectProperty>();");
 
             foreach (PropertyDeclaration property in properties)
             {
@@ -782,20 +784,20 @@ internal static partial class CodeGeneratorExtensions
 
                 if (property.RequiredOrOptional == RequiredOrOptional.Required)
                 {
-                    AddRequiredProperty(generator, property);
+                    AddRequiredProperty(generator, property, builderName);
                 }
                 else
                 {
-                    AddOptionalProperty(generator, property);
+                    AddOptionalProperty(generator, property, builderName);
                 }
             }
 
             return generator
                 .AppendSeparatorLine()
-                .AppendLineIndent("return new(builder.ToImmutable());");
+                .AppendLineIndent("return new(", builderName, ".ToImmutable());");
         }
 
-        static void AddRequiredProperty(CodeGenerator generator, PropertyDeclaration property)
+        static void AddRequiredProperty(CodeGenerator generator, PropertyDeclaration property, string builderName)
         {
             if (generator.IsCancellationRequested)
             {
@@ -807,7 +809,8 @@ internal static partial class CodeGeneratorExtensions
             {
                 generator
                     .AppendLineIndent(
-                        "builder.Add(",
+                        builderName,
+                        ".Add(",
                         propertyNamesClass,
                         ".",
                         property.DotnetPropertyName(),
@@ -821,7 +824,8 @@ internal static partial class CodeGeneratorExtensions
 
                 generator
                     .AppendLineIndent(
-                        "builder.Add(",
+                        builderName,
+                        ".Add(",
                         propertyNamesClass,
                         ".",
                         property.DotnetPropertyName(),
@@ -831,7 +835,7 @@ internal static partial class CodeGeneratorExtensions
             }
         }
 
-        static void AddOptionalProperty(CodeGenerator generator, PropertyDeclaration property)
+        static void AddOptionalProperty(CodeGenerator generator, PropertyDeclaration property, string builderName)
         {
             if (generator.IsCancellationRequested)
             {
@@ -847,7 +851,8 @@ internal static partial class CodeGeneratorExtensions
                 .AppendLineIndent("{")
                 .PushIndent()
                     .AppendLineIndent(
-                        "builder.Add(",
+                        builderName,
+                        ".Add(",
                         propertyNamesClass,
                         ".",
                         property.DotnetPropertyName(),
