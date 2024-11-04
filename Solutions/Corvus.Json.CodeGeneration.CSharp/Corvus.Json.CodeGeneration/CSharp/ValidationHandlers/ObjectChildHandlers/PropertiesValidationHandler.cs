@@ -220,21 +220,23 @@ public class PropertiesValidationHandler : IChildObjectPropertyValidationHandler
                 if (enumeratorIsCorrectType)
                 {
                     generator
-                        .AppendLineIndent("result = property.Value.Validate(result, level);");
+                        .AppendLineIndent("ValidationContext propertyResult = property.Value.Validate(result.CreateChildContext(), level);");
                 }
                 else
                 {
                     generator
-                        .AppendLineIndent("result = property.Value.As<", fallbackPropertyType.ReducedType.FullyQualifiedDotnetTypeName(), ">().Validate(result, level);");
+                        .AppendLineIndent("ValidationContext propertyResult = property.Value.As<", fallbackPropertyType.ReducedType.FullyQualifiedDotnetTypeName(), ">().Validate(result.CreateChildContext(), level);");
                 }
 
                 generator
-                    .AppendLineIndent("if (level == ValidationLevel.Flag && !result.IsValid)")
+                    .AppendLineIndent("if (level == ValidationLevel.Flag && !propertyResult.IsValid)")
                     .AppendLineIndent("{")
                     .PushIndent()
-                        .AppendLineIndent("return result;")
+                        .AppendLineIndent("return propertyResult;")
                     .PopIndent()
-                    .AppendLineIndent("}");
+                    .AppendLineIndent("}")
+                    .AppendSeparatorLine()
+                    .AppendLineIndent("result = result.MergeResults(propertyResult.IsValid, level, propertyResult);");
             }
 
             generator
