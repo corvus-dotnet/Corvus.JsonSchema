@@ -98,11 +98,11 @@ public class CSharpMemberName(
             if (totalLength == 0)
             {
                 EntitySuffix.CopyTo(buffer);
-
+                totalLength = EntitySuffix.Length;
                 if (this.Casing == Casing.CamelCase)
                 {
                     // We are already in PascalCase, so no need to translate for that.
-                    totalLength = Formatting.ToCamelCase(buffer[..EntitySuffix.Length]);
+                    totalLength = Formatting.ToCamelCase(buffer[..totalLength]);
                 }
             }
         }
