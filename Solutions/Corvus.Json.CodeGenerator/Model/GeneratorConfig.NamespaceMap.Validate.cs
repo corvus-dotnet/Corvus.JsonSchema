@@ -145,11 +145,13 @@ public readonly partial struct GeneratorConfig
                             result = result.PushValidationLocationReducedPathModifierAndProperty(new JsonReference("#/unevaluatedProperties").AppendUnencodedPropertyNameToFragment(localEvaluatedPropertyName), localEvaluatedPropertyName);
                         }
 
-                        result = property.Value.Validate(result, level);
-                        if (level == ValidationLevel.Flag && !result.IsValid)
+                        ValidationContext propertyResult = property.Value.Validate(result.CreateChildContext(), level);
+                        if (level == ValidationLevel.Flag && !propertyResult.IsValid)
                         {
-                            return result;
+                            return propertyResult;
                         }
+
+                        result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
 
                         if (level > ValidationLevel.Basic)
                         {

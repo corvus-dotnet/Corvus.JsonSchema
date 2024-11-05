@@ -8,9 +8,9 @@ $toolPath = './Corvus.Json.CodeGenerator/bin/Debug/net8.0/Corvus.Json.JsonSchema
 & $toolPath --rootNamespace Corvus.Json.JsonSchema.Draft201909 --outputPath .\Corvus.Json.JsonSchema.Draft201909\Draft201909\ https://json-schema.org/draft/2019-09/schema
 & $toolPath --rootNamespace Corvus.Json.JsonSchema.Draft202012 --outputPath .\Corvus.Json.JsonSchema.Draft202012\Draft202012\ https://json-schema.org/draft/2020-12/schema
 
-& $toolPath --rootNamespace Corvus.Json.JsonSchema.OpenApi30 --outputPath .\Corvus.Json.JsonSchema.OpenApi30\OpenApi30\ --outputRootTypeName OpenApiDocument https://raw.githubusercontent.com/OAI/OpenAPI-Specification/main/schemas/v3.0/schema.json
+& $toolPath --rootNamespace Corvus.Json.JsonSchema.OpenApi30 --outputPath .\Corvus.Json.JsonSchema.OpenApi30\OpenApi30\ --outputRootTypeName OpenApiDocument .\Corvus.Json.JsonSchema.OpenApi30\OpenApi30.json
 
-& $toolPath --rootNamespace Corvus.Json.JsonSchema.OpenApi31 --outputPath .\Corvus.Json.JsonSchema.OpenApi31\OpenApi31\ --outputRootTypeName OpenApiDocument https://raw.githubusercontent.com/OAI/OpenAPI-Specification/main/schemas/v3.1/schema.json
+& $toolPath --rootNamespace Corvus.Json.JsonSchema.OpenApi31 --outputPath .\Corvus.Json.JsonSchema.OpenApi31\OpenApi31\ --outputRootTypeName OpenApiDocument .\Corvus.Json.JsonSchema.OpenApi31\OpenApi31.json
 
 & $toolPath --rootNamespace Corvus.Json.Patch.Model --outputPath .\Corvus.Json.Patch\Corvus.Json.Patch\Model\ .\Corvus.Json.Patch\Corvus.Json.Patch\json-patch.json
 

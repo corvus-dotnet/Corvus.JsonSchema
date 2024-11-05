@@ -256,11 +256,13 @@ public readonly partial struct OpenApiDocument
                             result = result.PushValidationLocationReducedPathModifierAndProperty(new JsonReference("#/additionalProperties").AppendUnencodedPropertyNameToFragment(localEvaluatedPropertyName), localEvaluatedPropertyName);
                         }
 
-                        result = property.Value.As<Corvus.Json.JsonNotAny>().Validate(result, level);
-                        if (level == ValidationLevel.Flag && !result.IsValid)
+                        ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonNotAny>().Validate(result.CreateChildContext(), level);
+                        if (level == ValidationLevel.Flag && !propertyResult.IsValid)
                         {
-                            return result;
+                            return propertyResult;
                         }
+
+                        result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
 
                         if (level > ValidationLevel.Basic)
                         {
