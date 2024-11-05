@@ -128,11 +128,13 @@ public readonly partial struct Core
                             result = result.PushValidationLocationReducedPathModifierAndProperty(new JsonReference("#/additionalProperties").AppendUnencodedPropertyNameToFragment(localEvaluatedPropertyName).AppendFragment(new("#/$dynamicRef")), localEvaluatedPropertyName);
                         }
 
-                        result = property.Value.Validate(result, level);
-                        if (level == ValidationLevel.Flag && !result.IsValid)
+                        ValidationContext propertyResult = property.Value.Validate(result.CreateChildContext(), level);
+                        if (level == ValidationLevel.Flag && !propertyResult.IsValid)
                         {
-                            return result;
+                            return propertyResult;
                         }
+
+                        result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
 
                         if (level > ValidationLevel.Basic)
                         {
