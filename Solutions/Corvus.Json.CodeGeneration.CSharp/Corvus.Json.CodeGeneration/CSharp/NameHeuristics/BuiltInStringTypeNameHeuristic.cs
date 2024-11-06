@@ -34,6 +34,7 @@ public sealed class BuiltInStringTypeNameHeuristic : IBuiltInTypeNameHeuristic
             !typeDeclaration.UseImplicitOperatorString())
         {
             string? candidateFormat = null;
+            bool assertFormat = typeDeclaration.AlwaysAssertFormat();
 
             // We are a simple string type
             foreach (IKeyword keyword in typeDeclaration.Keywords())
@@ -52,6 +53,7 @@ public sealed class BuiltInStringTypeNameHeuristic : IBuiltInTypeNameHeuristic
                 if (keyword is IFormatProviderKeyword formatKeyword)
                 {
                     formatKeyword.TryGetFormat(typeDeclaration, out candidateFormat);
+                    assertFormat |= keyword is IFormatValidationKeyword;
                     continue;
                 }
 
@@ -59,19 +61,25 @@ public sealed class BuiltInStringTypeNameHeuristic : IBuiltInTypeNameHeuristic
                 return false;
             }
 
-            typeDeclaration.SetDotnetNamespace("Corvus.Json");
-
             if (candidateFormat is string format)
             {
-                typeDeclaration.SetDotnetTypeName(FormatHandlerRegistry.Instance.StringFormatHandlers.GetCorvusJsonTypeNameFor(format) ?? "JsonString");
+                // If we have a format and are asserting format, then set the built in type.
+                // otherwise fall through to code gen so we get the formatted conversions etc
+                // but we do not assert the format.
+                if (assertFormat)
+                {
+                    typeDeclaration.SetDotnetNamespace("Corvus.Json");
+                    typeDeclaration.SetDotnetTypeName(FormatHandlerRegistry.Instance.StringFormatHandlers.GetCorvusJsonTypeNameFor(format) ?? "JsonString");
+                    return true;
+                }
             }
             else
             {
-                // This is a simple string
+                // If we do not have a format then this is a simple string.
+                typeDeclaration.SetDotnetNamespace("Corvus.Json");
                 typeDeclaration.SetDotnetTypeName("JsonString");
+                return true;
             }
-
-            return true;
         }
 
         return false;
