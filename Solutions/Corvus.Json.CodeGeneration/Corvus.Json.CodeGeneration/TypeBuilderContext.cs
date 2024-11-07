@@ -112,12 +112,30 @@ public class TypeBuilderContext
             return false;
         }
 
-        JsonReference newScopeLocation = this.Scope.Location.Apply(new JsonReference(scopeName));
+        JsonReference newScopeNameReference = new(scopeName);
+        JsonReference newScopeLocation;
+        JsonReference newScopePath;
+
+        if (newScopeNameReference.HasFragment && newScopeNameReference.Fragment.Length > 1)
+        {
+            if (newScopeNameReference.HasUri)
+            {
+                throw new InvalidOperationException("Unable to enter a base scope with both URI and fragment.");
+            }
+
+            newScopePath = newScopeNameReference;
+            newScopeLocation = this.Scope.Location;
+        }
+        else
+        {
+            newScopePath = new JsonReference("#");
+            newScopeLocation = this.Scope.Location.Apply(newScopeNameReference);
+        }
 
         JsonReference currentLocation = this.SubschemaLocation;
         this.scopeStack.Push(
             (newScopeLocation,
-            new JsonReference("#"),
+            newScopePath,
             typeDeclaration.LocatedSchema,
             ImmutableList<(JsonReference Location,
             TypeDeclaration Type)>.Empty));
