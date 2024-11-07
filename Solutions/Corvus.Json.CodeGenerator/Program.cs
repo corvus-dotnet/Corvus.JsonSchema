@@ -14,6 +14,7 @@ class Program
                 c.AddCommand<GenerateWithDriverCommand>("config");
                 c.AddCommand<ListNamingHeuristicsCommand>("listNameHeuristics");
                 c.AddCommand<ValidateDocumentCommand>("validateDocument");
+                c.AddCommand<VersionCommand>("version");
             });
         return app.RunAsync(args);
     }
