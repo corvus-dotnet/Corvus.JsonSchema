@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System.Diagnostics;
+using System.Reflection;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
@@ -11,7 +12,29 @@ internal class VersionCommand : Command
 {
     public override int Execute(CommandContext context)
     {
-        AnsiConsole.MarkupLineInterpolated($"[green]Version:[/] {(Assembly.GetEntryAssembly()?.GetName()?.Version?.ToString()) ?? "Not available."}");
+        string? assemblyLocation = Assembly.GetEntryAssembly()?.Location;
+        string? version = null;
+        string? build = null;
+
+        if (assemblyLocation is string al)
+        {
+            var versionInfo = FileVersionInfo.GetVersionInfo(assemblyLocation);
+            if (versionInfo is not null)
+            {
+                string? pv = versionInfo.ProductVersion;
+                if (pv is not null)
+                {
+                    int index = pv.IndexOf('+');
+                    if (index >= 0)
+                    {
+                        version = pv.Substring(0, index);
+                        build = pv.Substring(index + 1);
+                    }
+                }
+            }
+        }
+
+        AnsiConsole.MarkupLineInterpolated($"[green]Version:[/] {version ?? "Not available."} [green]Build[/]: {build ?? "Not available."}");
 
         return 1;
     }
