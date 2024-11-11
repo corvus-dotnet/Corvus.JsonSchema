@@ -115,9 +115,8 @@ public class StringRegexValidationHandler : IChildValidationHandler
             }
 
             generator
-                .Append("{input.ToString()} matched ")
-                .Append(" '")
-                .Append(SymbolDisplay.FormatLiteral(expression, false))
+                .Append("{input.ToString()} matched '")
+                .Append(FormatRegularExpression(expression))
                 .Append("'");
         }
 
@@ -129,9 +128,8 @@ public class StringRegexValidationHandler : IChildValidationHandler
             }
 
             generator
-                .Append("{input.ToString()} did not match ")
-                .Append(" '")
-                .Append(SymbolDisplay.FormatLiteral(expression, false))
+                .Append("{input.ToString()} did not match '")
+                .Append(FormatRegularExpression(expression))
                 .Append("'");
         }
 
@@ -143,10 +141,14 @@ public class StringRegexValidationHandler : IChildValidationHandler
             }
 
             generator
-                .Append("The value did not match ")
-                .Append(" '")
-                .Append(SymbolDisplay.FormatLiteral(expression, false))
+                .Append("The value did not match '")
+                .Append(FormatRegularExpression(expression))
                 .Append("'");
+        }
+
+        static string FormatRegularExpression(string expression)
+        {
+            return SymbolDisplay.FormatLiteral(expression, true)[1..^1].Replace("{", "{{").Replace("}", "}}");
         }
     }
 
