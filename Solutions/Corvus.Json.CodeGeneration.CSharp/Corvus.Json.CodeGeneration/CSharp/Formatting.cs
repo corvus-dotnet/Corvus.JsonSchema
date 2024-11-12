@@ -92,6 +92,7 @@ public static class Formatting
         "HasProperty",
         "Insert",
         "InsertRange",
+        "Item",
         "Items",
         "Match",
         "Null",

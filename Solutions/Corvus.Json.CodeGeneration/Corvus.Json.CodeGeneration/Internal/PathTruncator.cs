@@ -28,12 +28,7 @@ public static class PathTruncator
 
         if (path.Length <= maxLength)
         {
-            if (path.IndexOf(Path.AltDirectorySeparatorChar) >= 0)
-            {
-                return path.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
-            }
-
-            return path;
+            return NormalizePath(path);
         }
 
         ReadOnlySpan<char> pathSpan = path.AsSpan();
@@ -157,6 +152,21 @@ public static class PathTruncator
         result[..currentIndex].Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
 
         return result[..currentIndex].ToString();
+    }
+
+    /// <summary>
+    /// Normalize the separators in a path.
+    /// </summary>
+    /// <param name="path">The path for which to normalize directory separators.</param>
+    /// <returns>The normalized path.</returns>
+    public static string NormalizePath(string path)
+    {
+        if (path.IndexOf(Path.AltDirectorySeparatorChar) >= 0)
+        {
+            return path.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
+        }
+
+        return path;
     }
 
     private static int TruncateStartSegment(ReadOnlySpan<char> readOnlySpan, Span<char> span, int remaining, bool isFirstSegment)

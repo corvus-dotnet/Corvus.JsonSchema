@@ -15,20 +15,20 @@ public class CSharpMemberName(
     string? suffix = null)
     : MemberName(fullyQualifiedScope, baseName, casing, prefix, suffix)
 {
-    private static ReadOnlySpan<char> FallbackName => "Item".AsSpan();
+    private static ReadOnlySpan<char> FallbackName => "Value".AsSpan();
 
-    private static ReadOnlySpan<char> PascalPrefix => "Item".AsSpan();
+    private static ReadOnlySpan<char> PascalPrefix => "Value".AsSpan();
 
-    private static ReadOnlySpan<char> CamelPrefix => "item".AsSpan();
+    private static ReadOnlySpan<char> CamelPrefix => "value".AsSpan();
 
     /// <inheritdoc/>
     public override string BuildName()
     {
-        string baseName = string.IsNullOrWhiteSpace(this.BaseName) ? "Item" : this.BaseName;
+        string baseName = string.IsNullOrWhiteSpace(this.BaseName) ? "Value" : this.BaseName;
 
         if (baseName.Length == 1 && !char.IsLetter(baseName[0]))
         {
-            baseName = TranslateNonLetterToWord(baseName[0]) ?? "Item";
+            baseName = TranslateNonLetterToWord(baseName[0]) ?? "Value";
         }
 
         string prefix = string.IsNullOrWhiteSpace(this.Prefix) ? string.Empty : this.Prefix;
