@@ -15,20 +15,20 @@ public class CSharpMemberName(
     string? suffix = null)
     : MemberName(fullyQualifiedScope, baseName, casing, prefix, suffix)
 {
-    private static ReadOnlySpan<char> EntitySuffix => "Entity".AsSpan();
+    private static ReadOnlySpan<char> FallbackName => "Item".AsSpan();
 
-    private static ReadOnlySpan<char> PascalPrefix => "V".AsSpan();
+    private static ReadOnlySpan<char> PascalPrefix => "Item".AsSpan();
 
-    private static ReadOnlySpan<char> CamelPrefix => "v".AsSpan();
+    private static ReadOnlySpan<char> CamelPrefix => "item".AsSpan();
 
     /// <inheritdoc/>
     public override string BuildName()
     {
-        string baseName = string.IsNullOrWhiteSpace(this.BaseName) ? "Empty" : this.BaseName;
+        string baseName = string.IsNullOrWhiteSpace(this.BaseName) ? "Item" : this.BaseName;
 
         if (baseName.Length == 1 && !char.IsLetter(baseName[0]))
         {
-            baseName = TranslateNonLetterToWord(baseName[0]) ?? "NonLetter";
+            baseName = TranslateNonLetterToWord(baseName[0]) ?? "Item";
         }
 
         string prefix = string.IsNullOrWhiteSpace(this.Prefix) ? string.Empty : this.Prefix;
@@ -36,7 +36,7 @@ public class CSharpMemberName(
 
         ReadOnlySpan<char> leadingDigitPrefix = this.Casing == Casing.PascalCase ? PascalPrefix : CamelPrefix;
 
-        int bufferLength = Formatting.GetBufferLength(baseName.Length + prefix.Length + suffix.Length, leadingDigitPrefix, EntitySuffix);
+        int bufferLength = Formatting.GetBufferLength(baseName.Length + prefix.Length + suffix.Length, leadingDigitPrefix, FallbackName);
 
         Span<char> buffer = stackalloc char[bufferLength];
 
@@ -93,12 +93,12 @@ public class CSharpMemberName(
                 totalLength += Formatting.ToPascalCase(buffer[(prefix.Length + baseName.Length)..]);
             }
 
-            totalLength = Formatting.FixReservedWords(buffer, totalLength, leadingDigitPrefix, EntitySuffix);
+            totalLength = Formatting.FixReservedWords(buffer, totalLength, leadingDigitPrefix, FallbackName);
 
             if (totalLength == 0)
             {
-                EntitySuffix.CopyTo(buffer);
-                totalLength = EntitySuffix.Length;
+                FallbackName.CopyTo(buffer);
+                totalLength = FallbackName.Length;
                 if (this.Casing == Casing.CamelCase)
                 {
                     // We are already in PascalCase, so no need to translate for that.
