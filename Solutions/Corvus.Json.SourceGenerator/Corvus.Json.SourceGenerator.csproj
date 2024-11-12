@@ -71,21 +71,21 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.11.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.12.0-2.final" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.Text.Json" Version="9.0.0-rc.2.24473.5" PrivateAssets="all" GeneratePathProperty="true" />
-    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="9.0.0-rc.2.24473.5" PrivateAssets="all" GeneratePathProperty="true" />
+    <PackageReference Include="System.Text.Json" Version="9.0.0" PrivateAssets="all" GeneratePathProperty="true" />
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="9.0.0" PrivateAssets="all" GeneratePathProperty="true" />
     <PackageReference Include="Microsoft.Bcl.HashCode" Version="1.1.1" PrivateAssets="all" GeneratePathProperty="true" />
     <PackageReference Include="System.Buffers" Version="4.5.1" PrivateAssets="all" GeneratePathProperty="true" />
     <PackageReference Include="System.Collections.Immutable" Version="8.0.0" PrivateAssets="all" GeneratePathProperty="true" />
-    <PackageReference Include="System.IO.Pipelines" Version="9.0.0-rc.2.24473.5" PrivateAssets="all" GeneratePathProperty="true" />
+    <PackageReference Include="System.IO.Pipelines" Version="9.0.0" PrivateAssets="all" GeneratePathProperty="true" />
     <PackageReference Include="System.Memory" Version="4.5.5" PrivateAssets="all" GeneratePathProperty="true" />
     <PackageReference Include="System.Numerics.Vectors" Version="4.5.0" PrivateAssets="all" GeneratePathProperty="true" />
     <PackageReference Include="System.Reflection.Metadata" Version="8.0.1" PrivateAssets="all" GeneratePathProperty="true" />
-    <PackageReference Include="System.Text.Encoding.CodePages" Version="9.0.0-rc.2.24473.5" PrivateAssets="all" GeneratePathProperty="true" />
-    <PackageReference Include="System.Text.Encodings.Web" Version="9.0.0-rc.2.24473.5" PrivateAssets="all" GeneratePathProperty="true" />
+    <PackageReference Include="System.Text.Encoding.CodePages" Version="9.0.0" PrivateAssets="all" GeneratePathProperty="true" />
+    <PackageReference Include="System.Text.Encodings.Web" Version="9.0.0" PrivateAssets="all" GeneratePathProperty="true" />
     <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.4" PrivateAssets="all" GeneratePathProperty="true" />
   </ItemGroup>
 
@@ -156,6 +156,10 @@
     <None Include="$(PKGSystem_Text_Encoding_CodePages)\lib\netstandard2.0\System.Text.Encoding.CodePages.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
     <None Include="$(PKGSystem_Text_Encodings_Web)\lib\netstandard2.0\System.Text.Encodings.Web.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
     <None Include="$(PKGSystem_Threading_Tasks_Extensions)\lib\netstandard2.0\System.Threading.Tasks.Extensions.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="Roslynator.Analyzers" Version="4.12.9" />
   </ItemGroup>
 
 </Project>

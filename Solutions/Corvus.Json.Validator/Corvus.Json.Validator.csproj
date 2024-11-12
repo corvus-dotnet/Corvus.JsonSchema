@@ -30,10 +30,12 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.Extensions.DependencyModel" Version="9.0.0-rc.2.24473.5" />
+    <PackageReference Include="Microsoft.Extensions.DependencyModel" Version="9.0.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.12.0-2.final" />
+    <PackageReference Include="System.Collections.Immutable" Version="9.0.0" />
+    <PackageReference Include="System.Reflection.Metadata" Version="9.0.0" />
     <PackageReference Include="System.Runtime.Loader" Version="4.3.0" />
-    <PackageReference Include="System.Text.Json" Version="9.0.0-rc.2.24473.5" />
+    <PackageReference Include="System.Text.Json" Version="9.0.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -55,7 +57,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Update="Roslynator.Analyzers" Version="4.12.4" />
+    <PackageReference Update="Roslynator.Analyzers" Version="4.12.9" />
   </ItemGroup>
 
   <ItemGroup>

@@ -17,9 +17,10 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.0-rc.2.24473.5" />
-    <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="9.0.0-rc.2.24474.3" />
-    <PackageReference Include="NodaTime" Version="3.1.12" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="9.0.0" />
+    <PackageReference Include="NodaTime" Version="3.2.0" />
+    <PackageReference Include="System.Collections.Immutable" Version="9.0.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -31,7 +32,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Update="Roslynator.Analyzers" Version="4.12.4" />
+    <PackageReference Update="Roslynator.Analyzers" Version="4.12.9" />
   </ItemGroup>
 
   <ItemGroup>

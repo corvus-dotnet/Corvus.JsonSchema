@@ -16,5 +16,9 @@
   <ItemGroup>
     <AdditionalFiles Include="test.json" />
   </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Collections.Immutable" Version="9.0.0" />
+  </ItemGroup>
   
 </Project>
