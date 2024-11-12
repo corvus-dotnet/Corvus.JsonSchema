@@ -2,7 +2,7 @@
 
 	<PropertyGroup>
 		<OutputType>Exe</OutputType>
-		<TargetFramework>net8.0</TargetFramework>
+		<TargetFrameworks>net8.0;net9.0</TargetFrameworks>
 		<AssemblyName>Corvus.Json.JsonSchema.TypeGeneratorTool</AssemblyName>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
@@ -10,15 +10,20 @@
 		<ToolCommandName>generatejsonschematypes</ToolCommandName>
 		<PackageOutputPath>./nupkg</PackageOutputPath>
     <PreserveCompilationContext>true</PreserveCompilationContext>
-	</PropertyGroup>
+  </PropertyGroup>
 
-	<PropertyGroup>
-		<PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
-	</PropertyGroup>
+  <PropertyGroup>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageReadmeFile>readme.md</PackageReadmeFile>
+  </PropertyGroup>
 
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\"/>
+  </ItemGroup>
 	<ItemGroup>
 	  <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.12.0-2.final" />
-	  <PackageReference Include="Spectre.Console.Cli" Version="0.49.2-preview.0.44" />
+	  <PackageReference Include="Spectre.Console.Cli" Version="0.49.1" />
 	  <PackageReference Include="System.Collections.Immutable" Version="9.0.0" />
 	  <PackageReference Include="System.Reflection.Metadata" Version="9.0.0" />
 	</ItemGroup>
