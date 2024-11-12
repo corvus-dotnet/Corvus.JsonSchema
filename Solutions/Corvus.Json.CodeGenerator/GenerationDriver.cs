@@ -197,7 +197,7 @@ public static class GenerationDriver
     {
         currentTask = context.AddTask("Writing files", true, generatedCode.Count);
 
-        HashSet<string> writtenFiles = [];
+        HashSet<string> writtenFiles = new(StringComparer.OrdinalIgnoreCase);
 
         int index = 0;
 
@@ -232,8 +232,8 @@ public static class GenerationDriver
     private static string TruncateFileNameIfRequired(string outputPath, HashSet<string> writtenFiles, GeneratedCodeFile generatedCodeFile)
     {
         string outputFile = Path.Combine(outputPath, generatedCodeFile.FileName);
-        string originalFileName = outputFile;
-        outputFile = PathTruncator.TruncatePath(outputFile);
+        string originalFileName = PathTruncator.NormalizePath(outputFile);
+        outputFile = PathTruncator.TruncatePath(originalFileName);
         if (!writtenFiles.Add(outputFile))
         {
             if (originalFileName != outputFile)
@@ -245,7 +245,21 @@ public static class GenerationDriver
             }
             else
             {
-                throw new InvalidOperationException("Unexpected duplicate file generated.");
+                string path = Path.GetDirectoryName(outputFile)!;
+                string baseName = Path.GetFileNameWithoutExtension(outputFile);
+                string extension = Path.GetExtension(outputFile);
+                int counter = 1;
+                do
+                {
+                    outputFile = PathTruncator.TruncatePath(Path.Combine(path, $"{baseName}{counter++}{extension}"));
+                }
+
+                while (!writtenFiles.Add(outputFile) && counter < 1000);
+
+                if (counter == 1000)
+                {
+                    throw new InvalidOperationException("Unexpected duplicate file generated.");
+                }
             }
         }
 
