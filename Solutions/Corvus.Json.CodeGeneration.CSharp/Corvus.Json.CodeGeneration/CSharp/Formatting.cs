@@ -45,87 +45,87 @@ public static class Formatting
     private static readonly string[] ReservedNames =
     [
         "Add",
-            "AddRange",
-            "As",
-            "AsAny",
-            "AsArray",
-            "AsBoolean",
-            "AsImmutableList",
-            "AsImmutableListBuilder",
-            "AsJsonElement",
-            "AsObject",
-            "AsString",
-            "Concatenate",
-            "ConstInstance",
-            "Count",
-            "Create",
-            "CreateFromSerializedInstance",
-            "DefaultInstance",
-            "Dimension",
-            "EnumerateArray",
-            "Equals",
-            "EqualsString",
-            "EqualsUtf8Bytes",
-            "FromAny",
-            "FromItems",
-            "FromProperties",
-            "FromRange",
-            "FromValues",
-            "GetArrayLength",
-            "GetBoolean",
-            "GetDate",
-            "GetDateTime",
-            "GetDecodedBase64Bytes",
-            "GetDecodedBufferSize",
-            "GetEnumerator",
-            "GetGuid",
-            "GetHashCode",
-            "GetIPAddress",
-            "GetJsonDocument",
-            "GetRegex",
-            "GetString",
-            "GetTime",
-            "HasBase64Bytes",
-            "HasDotnetBacking",
-            "HasJsonElementBacking",
-            "HasProperties",
-            "HasProperty",
-            "Insert",
-            "InsertRange",
-            "Items",
-            "Match",
-            "Null",
-            "Parse",
-            "Rank",
-            "Remove",
-            "RemoveAt",
-            "RemoveProperty",
-            "RemoveRange",
-            "SchemaLocation",
-            "SetProperty",
-            "ToString",
-            "TryCreateUriTemplateParser",
-            "TryGetBoolean",
-            "TryGetDate",
-            "TryGetDateTime",
-            "TryGetDecodedBase64Bytes",
-            "TryGetGuid",
-            "TryGetIPAddress",
-            "TryGetJsonDocument",
-            "TryGetNumericValues",
-            "TryGetProperty",
-            "TryGetString",
-            "TryGetTime",
-            "TryGetUnescapedString",
-            "TryGetUri",
-            "TryGetUriTemplate",
-            "Undefined",
-            "Validate",
-            "ValueBufferSize",
-            "ValueKind",
-            "WriteTo",
-            "__CorvusArrayHelpers",
-            "__CorvusObjectHelpers"
+        "AddRange",
+        "As",
+        "AsAny",
+        "AsArray",
+        "AsBoolean",
+        "AsImmutableList",
+        "AsImmutableListBuilder",
+        "AsJsonElement",
+        "AsObject",
+        "AsString",
+        "Concatenate",
+        "ConstInstance",
+        "Count",
+        "Create",
+        "CreateFromSerializedInstance",
+        "DefaultInstance",
+        "Dimension",
+        "EnumerateArray",
+        "Equals",
+        "EqualsString",
+        "EqualsUtf8Bytes",
+        "FromAny",
+        "FromItems",
+        "FromProperties",
+        "FromRange",
+        "FromValues",
+        "GetArrayLength",
+        "GetBoolean",
+        "GetDate",
+        "GetDateTime",
+        "GetDecodedBase64Bytes",
+        "GetDecodedBufferSize",
+        "GetEnumerator",
+        "GetGuid",
+        "GetHashCode",
+        "GetIPAddress",
+        "GetJsonDocument",
+        "GetRegex",
+        "GetString",
+        "GetTime",
+        "HasBase64Bytes",
+        "HasDotnetBacking",
+        "HasJsonElementBacking",
+        "HasProperties",
+        "HasProperty",
+        "Insert",
+        "InsertRange",
+        "Items",
+        "Match",
+        "Null",
+        "Parse",
+        "Rank",
+        "Remove",
+        "RemoveAt",
+        "RemoveProperty",
+        "RemoveRange",
+        "SchemaLocation",
+        "SetProperty",
+        "ToString",
+        "TryCreateUriTemplateParser",
+        "TryGetBoolean",
+        "TryGetDate",
+        "TryGetDateTime",
+        "TryGetDecodedBase64Bytes",
+        "TryGetGuid",
+        "TryGetIPAddress",
+        "TryGetJsonDocument",
+        "TryGetNumericValues",
+        "TryGetProperty",
+        "TryGetString",
+        "TryGetTime",
+        "TryGetUnescapedString",
+        "TryGetUri",
+        "TryGetUriTemplate",
+        "Undefined",
+        "Validate",
+        "ValueBufferSize",
+        "ValueKind",
+        "WriteTo",
+        "__CorvusArrayHelpers",
+        "__CorvusObjectHelpers"
     ];
 
     private static ReadOnlySpan<char> EntitySuffix => "Entity".AsSpan();
@@ -146,7 +146,14 @@ public static class Formatting
     {
         writtenLength = Formatting.ToPascalCase(propertyNameBuffer[..writtenLength]);
         writtenLength = Formatting.FixReservedWords(propertyNameBuffer, writtenLength, "V".AsSpan(), "Value".AsSpan());
-        return Formatting.FixReservedWords(ReservedNames, propertyNameBuffer, writtenLength, "V".AsSpan(), "Value".AsSpan());
+        writtenLength = Formatting.FixReservedWords(ReservedNames, propertyNameBuffer, writtenLength, "V".AsSpan(), "Value".AsSpan());
+        if (writtenLength == 0)
+        {
+            PropertySuffix.CopyTo(propertyNameBuffer);
+            writtenLength = PropertySuffix.Length;
+        }
+
+        return writtenLength;
     }
 
     /// <summary>
@@ -163,10 +170,17 @@ public static class Formatting
             ThrowIdentifierTooLongException(typeDeclaration);
         }
 
-        Span<char> corvusTypeNameBuffer = typeNameBuffer[..corvusTypeName.Length];
-        int writtenLength = Formatting.ToPascalCase(corvusTypeNameBuffer);
+        int writtenLength = Formatting.ToPascalCase(typeNameBuffer[..corvusTypeName.Length]);
         writtenLength = Formatting.FixReservedWords(typeNameBuffer, writtenLength, TypePrefix, Formatting.EntitySuffix);
-        return Formatting.FixReservedWords(ReservedNames, typeNameBuffer, writtenLength, TypePrefix, Formatting.EntitySuffix);
+        writtenLength = Formatting.FixReservedWords(ReservedNames, typeNameBuffer, writtenLength, TypePrefix, Formatting.EntitySuffix);
+
+        if (writtenLength == 0)
+        {
+            EntitySuffix.CopyTo(typeNameBuffer);
+            writtenLength = EntitySuffix.Length;
+        }
+
+        return writtenLength;
     }
 
     /// <summary>
