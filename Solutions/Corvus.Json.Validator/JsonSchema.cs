@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Reflection;
+
 #if NET8_0_OR_GREATER
 using System.Runtime.Loader;
 #endif
@@ -61,14 +62,17 @@ public readonly struct JsonSchema
     /// <param name="canonicalUri">The canonical URI for the document. If
     /// <see langword="null"/> then the <paramref name="canonicalUri"/> an attempt
     /// will be made to find the canonical URI in the schema.</param>
+    /// <param name="options">Generation options.</param>
     /// <returns>The JSON schema instance.</returns>
     /// <exception cref="InvalidOperationException">No canonical URI could be found for the schema document.</exception>
-    public static JsonSchema FromText(string text, string? canonicalUri = null)
+    public static JsonSchema FromText(string text, string? canonicalUri = null, Options? options = null)
     {
         if (canonicalUri is not null && CachedSchema.TryGetValue(canonicalUri, out ValidateCallback? value))
         {
             return new(value);
         }
+
+        options = options ?? Options.Default;
 
         var document = JsonDocument.Parse(text);
 
@@ -79,31 +83,34 @@ public readonly struct JsonSchema
 
         PrepopulatedDocumentResolver documentResolver = new();
         documentResolver.AddDocument(canonicalUri, document);
-        return FromCore(canonicalUri, CompoundWithMetaschemaResolver(documentResolver));
+        return FromCore(canonicalUri, CompoundWithMetaschemaResolver(documentResolver, options), options.FallbackVocabulary);
     }
 
     /// <summary>
     /// Create an instance of a JSON schema from a JSON document.
     /// </summary>
     /// <param name="fileName">The canonical URI for the document.</param>
+    /// <param name="options">Generation options.</param>
     /// <returns>The JSON schema instance.</returns>
-    public static JsonSchema FromFile(string fileName)
+    public static JsonSchema FromFile(string fileName, Options? options = null)
     {
+        options = options ?? Options.Default;
+
         if (SchemaReferenceNormalization.TryNormalizeSchemaReference(fileName, out string? result))
         {
             fileName = result;
         }
 
-        if (CachedSchema.TryGetValue(fileName, out ValidateCallback? value))
+        if (CachedSchema.TryGetValue($"{fileName}__{options.AlwaysAssertFormat}", out ValidateCallback? value))
         {
             return new(value);
         }
 
-        CompoundDocumentResolver resolver = CompoundWithMetaschemaResolver();
+        CompoundDocumentResolver resolver = CompoundWithMetaschemaResolver(null, options);
 
         resolver.AddDocument(fileName, JsonDocument.Parse(File.ReadAllText(fileName)));
 
-        return FromCore(fileName, resolver);
+        return FromCore(fileName, resolver, options.FallbackVocabulary);
     }
 
     /// <summary>
@@ -111,10 +118,13 @@ public readonly struct JsonSchema
     /// </summary>
     /// <param name="jsonSchemaUri">The canonical URI for the document.</param>
     /// <param name="baseUriResolver">The base URI resolver.</param>
+    /// <param name="options">Generation options.</param>
     /// <returns>The JSON schema instance.</returns>
-    public static JsonSchema FromUri(string jsonSchemaUri, BaseUriResolver? baseUriResolver = null)
+    public static JsonSchema FromUri(string jsonSchemaUri, BaseUriResolver? baseUriResolver = null, Options? options = null)
     {
-        if (CachedSchema.TryGetValue(jsonSchemaUri, out ValidateCallback? value))
+        options = options ?? Options.Default;
+
+        if (CachedSchema.TryGetValue($"{jsonSchemaUri}__{options.AlwaysAssertFormat}", out ValidateCallback? value))
         {
             return new(value);
         }
@@ -123,25 +133,28 @@ public readonly struct JsonSchema
             CompoundWithMetaschemaResolver(
                 baseUriResolver is not null
                     ? new CallbackDocumentResolver(baseUriResolver)
-                    : null);
+                    : null,
+                options);
 
-        return FromCore(jsonSchemaUri, resolver);
+        return FromCore(jsonSchemaUri, resolver, options.FallbackVocabulary);
     }
 
     /// <summary>
     /// Create an instance of a JSON schema from a JSON document.
     /// </summary>
     /// <param name="jsonSchemaUri">The canonical URI for the document.</param>
-    /// <param name="documentResolver">The prepared document resolver.</param>
+    /// <param name="options">Generation options.</param>
     /// <returns>The JSON schema instance.</returns>
-    public static JsonSchema From(string jsonSchemaUri, IDocumentResolver documentResolver)
+    public static JsonSchema From(string jsonSchemaUri, Options? options = null)
     {
-        if (CachedSchema.TryGetValue(jsonSchemaUri, out ValidateCallback? value))
+        options = options ?? Options.Default;
+
+        if (CachedSchema.TryGetValue($"{jsonSchemaUri}__{options.AlwaysAssertFormat}", out ValidateCallback? value))
         {
             return new(value);
         }
 
-        return FromCore(jsonSchemaUri, documentResolver);
+        return FromCore(jsonSchemaUri, CompoundWithMetaschemaResolver(null, options), options.FallbackVocabulary);
     }
 
     /// <summary>
@@ -155,7 +168,7 @@ public readonly struct JsonSchema
         return this.validateCallback(jsonElement, ValidationContext.ValidContext, level);
     }
 
-    private static JsonSchema FromCore(string jsonSchemaUri, IDocumentResolver documentResolver)
+    private static JsonSchema FromCore(string jsonSchemaUri, IDocumentResolver documentResolver, IVocabulary fallbackVocabulary)
     {
         JsonSchemaTypeBuilder typeBuilder = new(documentResolver, VocabularyRegistry);
 
@@ -221,21 +234,29 @@ public readonly struct JsonSchema
         return vocabularyRegistry;
     }
 
-    private static CompoundDocumentResolver CompoundWithMetaschemaResolver(IDocumentResolver? additionalResolver = null)
+    private static CompoundDocumentResolver CompoundWithMetaschemaResolver(IDocumentResolver? additionalResolver, Options options)
     {
+        List<IDocumentResolver> resolvers = [];
+
         if (additionalResolver is not null)
         {
-            return new(
-                additionalResolver,
-                new FileSystemDocumentResolver(),
-                new HttpClientDocumentResolver(new HttpClient()),
-                MetaschemaDocumentResolver);
+            resolvers.Add(additionalResolver);
         }
 
-        return new(
-            new FileSystemDocumentResolver(),
-            new HttpClientDocumentResolver(new HttpClient()),
-            MetaschemaDocumentResolver);
+        if (options.AdditionalDocumentResolver is not null)
+        {
+            resolvers.Add(options.AdditionalDocumentResolver);
+        }
+
+        if (options.AllowFileSystemAndHttpResolution)
+        {
+            resolvers.Add(new FileSystemDocumentResolver());
+            resolvers.Add(new HttpClientDocumentResolver(new HttpClient()));
+        }
+
+        resolvers.Add(MetaschemaDocumentResolver);
+
+        return new([.. resolvers]);
     }
 
     private static ValidateCallback BuildValidateCallback(Type schemaType)
@@ -364,6 +385,56 @@ public readonly struct JsonSchema
         {
             yield return CSharpSyntaxTree.ParseText(type.FileContent, options: parseOptions, path: type.FileName);
         }
+    }
+
+    /// <summary>
+    /// Options for validation.
+    /// </summary>
+    public sealed class Options
+    {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Options"/> class.
+        /// </summary>
+        /// <param name="additionalDocumentResolver">Any additional document resolver.</param>
+        /// <param name="allowFileSystemAndHttpResolution">If <see langword="true"/> then FileSystem and HttpClient document resolvers will be available.</param>
+        /// <param name="fallbackVocabulary">The fallback vocabulary (defaults to <see cref="Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.DefaultVocabulary"/>).</param>
+        /// <param name="alwaysAssertFormat">If true, <c>format</c> will always be asserted, even for vocabularies that usually annotate.</param>
+        public Options(
+            IDocumentResolver? additionalDocumentResolver = null,
+            bool allowFileSystemAndHttpResolution = true,
+            IVocabulary? fallbackVocabulary = null,
+            bool alwaysAssertFormat = true)
+        {
+            this.AdditionalDocumentResolver = additionalDocumentResolver;
+            this.AllowFileSystemAndHttpResolution = allowFileSystemAndHttpResolution;
+            this.FallbackVocabulary = fallbackVocabulary ?? CodeGeneration.Draft202012.VocabularyAnalyser.DefaultVocabulary;
+            this.AlwaysAssertFormat = alwaysAssertFormat;
+        }
+
+        /// <summary>
+        /// Gets the default options.
+        /// </summary>
+        public static Options Default { get; } = new();
+
+        /// <summary>
+        /// Gets any additional document resolver.
+        /// </summary>
+        public IDocumentResolver? AdditionalDocumentResolver { get; }
+
+        /// <summary>
+        /// Gets a value indicating whether FileSystem and HttpClient document resolvers will be available.
+        /// </summary>
+        public bool AllowFileSystemAndHttpResolution { get; }
+
+        /// <summary>
+        /// Gets the fallback vocabulary.
+        /// </summary>
+        public IVocabulary FallbackVocabulary { get; }
+
+        /// <summary>
+        /// Gets a value indicating whether <c>format</c> will always be asserted, even for vocabularies that usually annotate.
+        /// </summary>
+        public bool AlwaysAssertFormat { get; }
     }
 
 #if NET8_0_OR_GREATER
