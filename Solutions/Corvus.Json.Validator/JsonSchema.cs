@@ -83,7 +83,7 @@ public readonly struct JsonSchema
 
         PrepopulatedDocumentResolver documentResolver = new();
         documentResolver.AddDocument(canonicalUri, document);
-        return FromCore(canonicalUri, CompoundWithMetaschemaResolver(documentResolver, options), options.FallbackVocabulary);
+        return FromCore(canonicalUri, CompoundWithMetaschemaResolver(documentResolver, options), options.FallbackVocabulary, options.AlwaysAssertFormat);
     }
 
     /// <summary>
@@ -110,7 +110,7 @@ public readonly struct JsonSchema
 
         resolver.AddDocument(fileName, JsonDocument.Parse(File.ReadAllText(fileName)));
 
-        return FromCore(fileName, resolver, options.FallbackVocabulary);
+        return FromCore(fileName, resolver, options.FallbackVocabulary, options.AlwaysAssertFormat);
     }
 
     /// <summary>
@@ -136,7 +136,7 @@ public readonly struct JsonSchema
                     : null,
                 options);
 
-        return FromCore(jsonSchemaUri, resolver, options.FallbackVocabulary);
+        return FromCore(jsonSchemaUri, resolver, options.FallbackVocabulary, options.AlwaysAssertFormat);
     }
 
     /// <summary>
@@ -154,7 +154,7 @@ public readonly struct JsonSchema
             return new(value);
         }
 
-        return FromCore(jsonSchemaUri, CompoundWithMetaschemaResolver(null, options), options.FallbackVocabulary);
+        return FromCore(jsonSchemaUri, CompoundWithMetaschemaResolver(null, options), options.FallbackVocabulary, options.AlwaysAssertFormat);
     }
 
     /// <summary>
@@ -168,18 +168,18 @@ public readonly struct JsonSchema
         return this.validateCallback(jsonElement, ValidationContext.ValidContext, level);
     }
 
-    private static JsonSchema FromCore(string jsonSchemaUri, IDocumentResolver documentResolver, IVocabulary fallbackVocabulary)
+    private static JsonSchema FromCore(string jsonSchemaUri, IDocumentResolver documentResolver, IVocabulary fallbackVocabulary, bool alwaysAssertFormat)
     {
         JsonSchemaTypeBuilder typeBuilder = new(documentResolver, VocabularyRegistry);
 
         TypeDeclaration rootType =
             typeBuilder.AddTypeDeclarations(
                 new JsonReference(jsonSchemaUri),
-                CodeGeneration.Draft202012.VocabularyAnalyser.DefaultVocabulary);
+                fallbackVocabulary);
 
         IReadOnlyCollection<GeneratedCodeFile> generatedCode =
             typeBuilder.GenerateCodeUsing(
-                CSharpLanguageProvider.Default,
+                CSharpLanguageProvider.DefaultWithOptions(new CSharpLanguageProvider.Options("GeneratedCode", alwaysAssertFormat: alwaysAssertFormat)),
                 CancellationToken.None,
                 rootType);
 
