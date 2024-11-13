@@ -248,13 +248,13 @@ public readonly struct JsonSchema
             resolvers.Add(options.AdditionalDocumentResolver);
         }
 
+        resolvers.Add(MetaschemaDocumentResolver);
+
         if (options.AllowFileSystemAndHttpResolution)
         {
             resolvers.Add(new FileSystemDocumentResolver());
             resolvers.Add(new HttpClientDocumentResolver(new HttpClient()));
         }
-
-        resolvers.Add(MetaschemaDocumentResolver);
 
         return new([.. resolvers]);
     }

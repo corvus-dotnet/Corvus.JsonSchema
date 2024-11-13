@@ -26,78 +26,78 @@ internal static class Metaschema
         Debug.Assert(assembly is not null, "The assembly containing this type must exist");
 
         documentResolver.AddDocument(
-            "http://json_schema.org/draft-04/schema",
+            "http://json-schema.org/draft-04/schema",
             Parse(assembly, "metaschema.draft4.schema.json"));
 
         documentResolver.AddDocument(
-            "http://json_schema.org/draft-06/schema",
+            "http://json-schema.org/draft-06/schema",
             Parse(assembly, "metaschema.draft6.schema.json"));
 
         documentResolver.AddDocument(
-            "http://json_schema.org/draft-07/schema",
+            "http://json-schema.org/draft-07/schema",
             Parse(assembly, "metaschema.draft7.schema.json"));
 
         documentResolver.AddDocument(
-            "https://json_schema.org/draft/2019-09/schema",
+            "https://json-schema.org/draft/2019-09/schema",
             Parse(assembly, "metaschema.draft2019_09.schema.json"));
         documentResolver.AddDocument(
-            "https://json_schema.org/draft/2019-09/meta/applicator",
+            "https://json-schema.org/draft/2019-09/meta/applicator",
             Parse(assembly, "metaschema.draft2019_09.meta.applicator.json"));
         documentResolver.AddDocument(
-            "https://json_schema.org/draft/2019-09/meta/content",
+            "https://json-schema.org/draft/2019-09/meta/content",
             Parse(assembly, "metaschema.draft2019_09.meta.content.json"));
         documentResolver.AddDocument(
-            "https://json_schema.org/draft/2019-09/meta/core",
+            "https://json-schema.org/draft/2019-09/meta/core",
             Parse(assembly, "metaschema.draft2019_09.meta.core.json"));
         documentResolver.AddDocument(
-            "https://json_schema.org/draft/2019-09/meta/format",
+            "https://json-schema.org/draft/2019-09/meta/format",
             Parse(assembly, "metaschema.draft2019_09.meta.format.json"));
         documentResolver.AddDocument(
-            "https://json_schema.org/draft/2019-09/meta/hyper_schema",
+            "https://json-schema.org/draft/2019-09/meta/hyper_schema",
             Parse(assembly, "metaschema.draft2019_09.meta.hyper-schema.json"));
         documentResolver.AddDocument(
-            "https://json_schema.org/draft/2019-09/meta/meta_data",
+            "https://json-schema.org/draft/2019-09/meta/meta_data",
             Parse(assembly, "metaschema.draft2019_09.meta.meta-data.json"));
         documentResolver.AddDocument(
-            "https://json_schema.org/draft/2019-09/meta/validation",
+            "https://json-schema.org/draft/2019-09/meta/validation",
             Parse(assembly, "metaschema.draft2019_09.meta.validation.json"));
 
         documentResolver.AddDocument(
-            "https://json_schema.org/draft/2020-12/schema",
+            "https://json-schema.org/draft/2020-12/schema",
             Parse(assembly, "metaschema.draft2020_12.schema.json"));
         documentResolver.AddDocument(
-            "https://json_schema.org/draft/2020-12/meta/applicator",
+            "https://json-schema.org/draft/2020-12/meta/applicator",
             Parse(assembly, "metaschema.draft2020_12.meta.applicator.json"));
         documentResolver.AddDocument(
-            "https://json_schema.org/draft/2020-12/meta/content",
+            "https://json-schema.org/draft/2020-12/meta/content",
             Parse(assembly, "metaschema.draft2020_12.meta.content.json"));
         documentResolver.AddDocument(
-            "https://json_schema.org/draft/2020-12/meta/core",
+            "https://json-schema.org/draft/2020-12/meta/core",
             Parse(assembly, "metaschema.draft2020_12.meta.core.json"));
         documentResolver.AddDocument(
-            "https://json_schema.org/draft/2020-12/meta/format_annotation",
+            "https://json-schema.org/draft/2020-12/meta/format_annotation",
             Parse(assembly, "metaschema.draft2020_12.meta.format-annotation.json"));
         documentResolver.AddDocument(
-            "https://json_schema.org/draft/2020-12/meta/format_assertion",
+            "https://json-schema.org/draft/2020-12/meta/format_assertion",
             Parse(assembly, "metaschema.draft2020_12.meta.format-assertion.json"));
         documentResolver.AddDocument(
-            "https://json_schema.org/draft/2020-12/meta/hyper_schema",
+            "https://json-schema.org/draft/2020-12/meta/hyper_schema",
             Parse(assembly, "metaschema.draft2020_12.meta.hyper-schema.json"));
         documentResolver.AddDocument(
-            "https://json_schema.org/draft/2020-12/meta/meta_data",
+            "https://json-schema.org/draft/2020-12/meta/meta_data",
             Parse(assembly, "metaschema.draft2020_12.meta.meta-data.json"));
         documentResolver.AddDocument(
-            "https://json_schema.org/draft/2020-12/meta/unevaluated",
+            "https://json-schema.org/draft/2020-12/meta/unevaluated",
             Parse(assembly, "metaschema.draft2020_12.meta.unevaluated.json"));
         documentResolver.AddDocument(
-            "https://json_schema.org/draft/2020-12/meta/validation",
+            "https://json-schema.org/draft/2020-12/meta/validation",
             Parse(assembly, "metaschema.draft2020_12.meta.validation.json"));
 
         documentResolver.AddDocument(
-            "https://corvus_oss.org/json_schema/2020-12/schema",
+            "https://corvus-oss.org/json_schema/2020-12/schema",
             Parse(assembly, "metaschema.corvus.schema.json"));
         documentResolver.AddDocument(
-            "https://corvus_oss.org/json_schema/2020-12/meta/corvus_extensions",
+            "https://corvus-oss.org/json_schema/2020-12/meta/corvus_extensions",
             Parse(assembly, "metaschema.corvus.meta.corvus-extensions.json"));
 
         return documentResolver;

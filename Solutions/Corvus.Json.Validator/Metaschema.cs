@@ -26,78 +26,78 @@ internal static class Metaschema
         Debug.Assert(assembly is not null, "The assembly containing this type must exist");
 
         documentResolver.AddDocument(
-            "http://json_schema.org/draft-04/schema",
+            "http://json-schema.org/draft-04/schema",
             JsonDocument.Parse(ReadResource(assembly, "metaschema.draft4.schema.json")));
 
         documentResolver.AddDocument(
-            "http://json_schema.org/draft-06/schema",
+            "http://json-schema.org/draft-06/schema",
             JsonDocument.Parse(ReadResource(assembly, "metaschema.draft6.schema.json")));
 
         documentResolver.AddDocument(
-            "http://json_schema.org/draft-07/schema",
+            "http://json-schema.org/draft-07/schema",
             JsonDocument.Parse(ReadResource(assembly, "metaschema.draft7.schema.json")));
 
         documentResolver.AddDocument(
-            "https://json_schema.org/draft/2019-09/schema",
+            "https://json-schema.org/draft/2019-09/schema",
             JsonDocument.Parse(ReadResource(assembly, "metaschema.draft2019_09.schema.json")));
         documentResolver.AddDocument(
-            "https://json_schema.org/draft/2019-09/meta/applicator",
+            "https://json-schema.org/draft/2019-09/meta/applicator",
             JsonDocument.Parse(ReadResource(assembly, "metaschema.draft2019_09.meta.applicator.json")));
         documentResolver.AddDocument(
-            "https://json_schema.org/draft/2019-09/meta/content",
+            "https://json-schema.org/draft/2019-09/meta/content",
             JsonDocument.Parse(ReadResource(assembly, "metaschema.draft2019_09.meta.content.json")));
         documentResolver.AddDocument(
-            "https://json_schema.org/draft/2019-09/meta/core",
+            "https://json-schema.org/draft/2019-09/meta/core",
             JsonDocument.Parse(ReadResource(assembly, "metaschema.draft2019_09.meta.core.json")));
         documentResolver.AddDocument(
-            "https://json_schema.org/draft/2019-09/meta/format",
+            "https://json-schema.org/draft/2019-09/meta/format",
             JsonDocument.Parse(ReadResource(assembly, "metaschema.draft2019_09.meta.format.json")));
         documentResolver.AddDocument(
-            "https://json_schema.org/draft/2019-09/meta/hyper_schema",
+            "https://json-schema.org/draft/2019-09/meta/hyper_schema",
             JsonDocument.Parse(ReadResource(assembly, "metaschema.draft2019_09.meta.hyper-schema.json")));
         documentResolver.AddDocument(
-            "https://json_schema.org/draft/2019-09/meta/meta_data",
+            "https://json-schema.org/draft/2019-09/meta/meta_data",
             JsonDocument.Parse(ReadResource(assembly, "metaschema.draft2019_09.meta.meta-data.json")));
         documentResolver.AddDocument(
-            "https://json_schema.org/draft/2019-09/meta/validation",
+            "https://json-schema.org/draft/2019-09/meta/validation",
             JsonDocument.Parse(ReadResource(assembly, "metaschema.draft2019_09.meta.validation.json")));
 
         documentResolver.AddDocument(
-            "https://json_schema.org/draft/2020-12/schema",
+            "https://json-schema.org/draft/2020-12/schema",
             JsonDocument.Parse(ReadResource(assembly, "metaschema.draft2020_12.schema.json")));
         documentResolver.AddDocument(
-            "https://json_schema.org/draft/2020-12/meta/applicator",
+            "https://json-schema.org/draft/2020-12/meta/applicator",
             JsonDocument.Parse(ReadResource(assembly, "metaschema.draft2020_12.meta.applicator.json")));
         documentResolver.AddDocument(
-            "https://json_schema.org/draft/2020-12/meta/content",
+            "https://json-schema.org/draft/2020-12/meta/content",
             JsonDocument.Parse(ReadResource(assembly, "metaschema.draft2020_12.meta.content.json")));
         documentResolver.AddDocument(
-            "https://json_schema.org/draft/2020-12/meta/core",
+            "https://json-schema.org/draft/2020-12/meta/core",
             JsonDocument.Parse(ReadResource(assembly, "metaschema.draft2020_12.meta.core.json")));
         documentResolver.AddDocument(
-            "https://json_schema.org/draft/2020-12/meta/format_annotation",
+            "https://json-schema.org/draft/2020-12/meta/format_annotation",
             JsonDocument.Parse(ReadResource(assembly, "metaschema.draft2020_12.meta.format-annotation.json")));
         documentResolver.AddDocument(
-            "https://json_schema.org/draft/2020-12/meta/format_assertion",
+            "https://json-schema.org/draft/2020-12/meta/format_assertion",
             JsonDocument.Parse(ReadResource(assembly, "metaschema.draft2020_12.meta.format-assertion.json")));
         documentResolver.AddDocument(
-            "https://json_schema.org/draft/2020-12/meta/hyper_schema",
+            "https://json-schema.org/draft/2020-12/meta/hyper_schema",
             JsonDocument.Parse(ReadResource(assembly, "metaschema.draft2020_12.meta.hyper-schema.json")));
         documentResolver.AddDocument(
-            "https://json_schema.org/draft/2020-12/meta/meta_data",
+            "https://json-schema.org/draft/2020-12/meta/meta_data",
             JsonDocument.Parse(ReadResource(assembly, "metaschema.draft2020_12.meta.meta-data.json")));
         documentResolver.AddDocument(
-            "https://json_schema.org/draft/2020-12/meta/unevaluated",
+            "https://json-schema.org/draft/2020-12/meta/unevaluated",
             JsonDocument.Parse(ReadResource(assembly, "metaschema.draft2020_12.meta.unevaluated.json")));
         documentResolver.AddDocument(
-            "https://json_schema.org/draft/2020-12/meta/validation",
+            "https://json-schema.org/draft/2020-12/meta/validation",
             JsonDocument.Parse(ReadResource(assembly, "metaschema.draft2020_12.meta.validation.json")));
 
         documentResolver.AddDocument(
-            "https://corvus_oss.org/json_schema/2020-12/schema",
+            "https://corvus-oss.org/json_schema/2020-12/schema",
             JsonDocument.Parse(ReadResource(assembly, "metaschema.corvus.schema.json")));
         documentResolver.AddDocument(
-            "https://corvus_oss.org/json_schema/2020-12/meta/corvus_extensions",
+            "https://corvus-oss.org/json_schema/2020-12/meta/corvus_extensions",
             JsonDocument.Parse(ReadResource(assembly, "metaschema.corvus.meta.corvus-extensions.json")));
 
         return documentResolver;
