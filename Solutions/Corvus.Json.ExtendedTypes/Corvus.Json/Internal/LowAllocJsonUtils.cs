@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.InteropServices;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using CommunityToolkit.HighPerformance.Buffers;
@@ -37,22 +38,8 @@ public static class LowAllocJsonUtils
         in Utf8Parser<TState, TResult> callback,
         [NotNullWhen(true)] out TResult? result)
     {
-        PooledWriter? writerPair = null;
-        try
-        {
-            writerPair = WriterPool.Get();
-            (Utf8JsonWriter w, ArrayPoolBufferWriter<byte> writer) = writerPair.Get();
-            element.WriteTo(w);
-            w.Flush();
-            return callback(writer.WrittenSpan[1..^1], state, out result);
-        }
-        finally
-        {
-            if (writerPair is not null)
-            {
-                WriterPool.Return(writerPair);
-            }
-        }
+        ReadOnlySpan<byte> rawValue = JsonMarshal.GetRawUtf8Value(element);
+        return callback(rawValue[1..^1], state, out result);
     }
 
     /// <summary>
@@ -71,22 +58,8 @@ public static class LowAllocJsonUtils
         in Utf8Parser<TState, TResult> callback,
         [NotNullWhen(true)] out TResult? result)
     {
-        PooledWriter? writerPair = null;
-        try
-        {
-            writerPair = WriterPool.Get();
-            (Utf8JsonWriter w, ArrayPoolBufferWriter<byte> writer) = writerPair.Get();
-            element.WriteTo(w);
-            w.Flush();
-            return callback(writer.WrittenSpan, state, out result);
-        }
-        finally
-        {
-            if (writerPair is not null)
-            {
-                WriterPool.Return(writerPair);
-            }
-        }
+        ReadOnlySpan<byte> rawValue = JsonMarshal.GetRawUtf8Value(element);
+        return callback(rawValue[1..^1], state, out result);
     }
 
     /// <summary>

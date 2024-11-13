@@ -50,9 +50,15 @@ public readonly struct JsonPropertyName
         JsonElement = 0b1000,
     }
 
-    private bool HasStringBacking => (this.backing & Backing.String) != 0;
+    /// <summary>
+    /// Gets a value indicating whether this has a string backing.
+    /// </summary>
+    public bool HasStringBacking => (this.backing & Backing.String) != 0;
 
-    private bool HasJsonElementBacking => (this.backing & Backing.JsonElement) != 0;
+    /// <summary>
+    /// Gets a value indicating whether this has a <see cref="JsonElement"/> backing.
+    /// </summary>
+    public bool HasJsonElementBacking => (this.backing & Backing.JsonElement) != 0;
 
     /// <summary>
     /// Conversion from string.
@@ -146,11 +152,7 @@ public readonly struct JsonPropertyName
             return new(value.AsJsonElement);
         }
 
-#if NET8_0_OR_GREATER
-        return new((string)value);
-#else
-        return new((string)value.AsString);
-#endif
+        return new(value.GetString()!);
     }
 
     /// <summary>
@@ -468,6 +470,29 @@ public readonly struct JsonPropertyName
 #else
         return this.EqualsString(((string)name).AsSpan());
 #endif
+    }
+
+    /// <summary>
+    /// Compare with the name of a <see cref="JsonProperty"/>.
+    /// </summary>
+    /// <param name="utf8Name">The name with which to compare as a UTF8 string.</param>
+    /// <param name="name">The name with which to compare as a string.</param>
+    /// <returns><see langword="true"/> if the property name was equal to this name.</returns>
+    /// <exception cref="InvalidOperationException">The property name did not have a valid backing.</exception>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool Equals(ReadOnlySpan<byte> utf8Name, string name)
+    {
+        if (this.HasJsonElementBacking)
+        {
+            return this.jsonElementBacking.ValueEquals(name);
+        }
+
+        if (this.HasStringBacking)
+        {
+            return this.stringBacking.Equals(name);
+        }
+
+        throw new InvalidOperationException("Unsupported JSON property name");
     }
 
     /// <summary>

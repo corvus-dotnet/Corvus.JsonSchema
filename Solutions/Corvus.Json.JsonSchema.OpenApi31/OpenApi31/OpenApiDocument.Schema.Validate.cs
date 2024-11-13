@@ -6,11 +6,23 @@
 //     the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
+
 #nullable enable
+
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
 
 namespace Corvus.Json.JsonSchema.OpenApi31;
+
+/// <summary>
+/// Generated from JSON Schema.
+/// </summary>
+/// <remarks>
+/// <para>
+/// The description of OpenAPI v3.1.x documents without schema validation, as defined by https://spec.openapis.org/oas/v3.1.0
+/// </para>
+/// </remarks>
 public readonly partial struct OpenApiDocument
 {
     /// <summary>
@@ -34,18 +46,86 @@ public readonly partial struct OpenApiDocument
             }
 
             JsonValueKind valueKind = this.ValueKind;
-            result = this.ValidateType(valueKind, result, level);
+
+            result = CorvusValidation.TypeValidationHandler(valueKind, result, level);
+
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;
             }
 
-            if (level != ValidationLevel.Flag)
+            if (level > ValidationLevel.Basic)
             {
                 result = result.PopLocation();
             }
 
             return result;
+        }
+
+        /// <summary>
+        /// Validation constants for the type.
+        /// </summary>
+        public static partial class CorvusValidation
+        {
+            /// <summary>
+            /// Core type validation.
+            /// </summary>
+            /// <param name="valueKind">The <see cref="JsonValueKind" /> of the value to validate.</param>
+            /// <param name="validationContext">The current validation context.</param>
+            /// <param name="level">The current validation level.</param>
+            /// <returns>The resulting validation context after validation.</returns>
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            internal static ValidationContext TypeValidationHandler(
+                JsonValueKind valueKind,
+                in ValidationContext validationContext,
+                ValidationLevel level = ValidationLevel.Flag)
+            {
+                bool isValid = false;
+
+                ValidationContext localResultObject = Corvus.Json.ValidateWithoutCoreType.TypeObject(valueKind, ValidationContext.ValidContext, level, "type");
+                if (level == ValidationLevel.Flag && localResultObject.IsValid)
+                {
+                    return validationContext;
+                }
+
+                if (localResultObject.IsValid)
+                {
+                    isValid = true;
+                }
+
+                ValidationContext localResultBoolean = Corvus.Json.ValidateWithoutCoreType.TypeBoolean(valueKind, ValidationContext.ValidContext, level, "type");
+                if (level == ValidationLevel.Flag && localResultBoolean.IsValid)
+                {
+                    return validationContext;
+                }
+
+                if (localResultBoolean.IsValid)
+                {
+                    isValid = true;
+                }
+
+                if (!isValid)
+                {
+                    if (level >= ValidationLevel.Verbose)
+                    {
+                        return validationContext.WithResult(isValid: false, $"Validation type - should have been 'object', 'boolean' but was '{valueKind}'", "type");
+                    }
+                    else if (level >= ValidationLevel.Detailed)
+                    {
+                        return validationContext.WithResult(isValid: false, "Validation type - should have been 'object', 'boolean'.", "type");
+                    }
+                    else
+                    {
+                        return validationContext.WithResult(isValid: false);
+                    }
+                }
+
+                if (level >= ValidationLevel.Verbose)
+                {
+                    return validationContext.WithResult(isValid: true, $"Validation type - was 'object', 'boolean'.", "type");
+                }
+                return validationContext;
+            }
         }
     }
 }

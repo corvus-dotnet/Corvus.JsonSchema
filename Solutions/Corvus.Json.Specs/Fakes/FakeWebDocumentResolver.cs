@@ -44,6 +44,9 @@ public class FakeWebDocumentResolver : IDocumentResolver
     {
         this.CheckDisposed();
 
+#if NET8_0_OR_GREATER
+        return this.documents.TryAdd(uri, document);
+#else
         if (!this.documents.ContainsKey(uri))
         {
             this.documents.Add(uri, document);
@@ -51,6 +54,7 @@ public class FakeWebDocumentResolver : IDocumentResolver
         }
 
         return false;
+#endif
     }
 
     /// <inheritdoc/>
@@ -92,8 +96,12 @@ public class FakeWebDocumentResolver : IDocumentResolver
 
         try
         {
+#if NET8_0_OR_GREATER
+            await using Stream stream = File.OpenRead(path);
+#else
             using Stream stream = File.OpenRead(path);
-            result = await JsonDocument.ParseAsync(stream).ConfigureAwait(false);
+#endif
+            result = await JsonDocument.ParseAsync(stream);
             return JsonPointerUtilities.ResolvePointer(result, reference.Fragment);
         }
         catch (Exception)
@@ -150,9 +158,13 @@ public class FakeWebDocumentResolver : IDocumentResolver
 
     private void CheckDisposed()
     {
+#if NET8_0_OR_GREATER
+        ObjectDisposedException.ThrowIf(this.disposedValue, this);
+#else
         if (this.disposedValue)
         {
-            throw new ObjectDisposedException(nameof(CompoundDocumentResolver));
+            throw new ObjectDisposedException(nameof(FakeWebDocumentResolver));
         }
+#endif
     }
 }

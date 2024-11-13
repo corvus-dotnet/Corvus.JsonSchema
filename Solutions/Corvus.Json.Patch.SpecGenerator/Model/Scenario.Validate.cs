@@ -6,7 +6,10 @@
 //     the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
+
 #nullable enable
+
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
 
@@ -28,26 +31,191 @@ public readonly partial struct Scenario
         if (level > ValidationLevel.Basic)
         {
             result = result.UsingStack();
-            result = result.PushSchemaLocation("json-patch-test.json#/$defs/Scenario");
+            result = result.PushSchemaLocation("#/$defs/Scenario");
         }
 
-        result = this.ValidateAllOf(result, level);
+        result = CorvusValidation.CompositionAllOfValidationHandler(this, result, level);
+
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
             return result;
         }
 
-        result = this.ValidateOneOf(result, level);
+        result = CorvusValidation.CompositionOneOfValidationHandler(this, result, level);
+
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
             return result;
         }
 
-        if (level != ValidationLevel.Flag)
+        if (level > ValidationLevel.Basic)
         {
             result = result.PopLocation();
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// Validation constants for the type.
+    /// </summary>
+    public static partial class CorvusValidation
+    {
+        /// <summary>
+        /// Composition validation (all-of).
+        /// </summary>
+        /// <param name="value">The value to validate.</param>
+        /// <param name="validationContext">The current validation context.</param>
+        /// <param name="level">The current validation level.</param>
+        /// <returns>The resulting validation context after validation.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static ValidationContext CompositionAllOfValidationHandler(
+            in Scenario value,
+            in ValidationContext validationContext,
+            ValidationLevel level = ValidationLevel.Flag)
+        {
+            ValidationContext result = validationContext;
+            ValidationContext childContextBase = result;
+
+            ValidationContext allOfResult0 = childContextBase.CreateChildContext();
+            if (level > ValidationLevel.Basic)
+            {
+                allOfResult0 = allOfResult0.PushValidationLocationReducedPathModifier(new("#/allOf/0/$ref"));
+            }
+
+            allOfResult0 = value.As<Corvus.Json.Patch.SpecGenerator.ScenarioCommon>().Validate(allOfResult0, level);
+
+            if (!allOfResult0.IsValid)
+            {
+                if (level >= ValidationLevel.Basic)
+                {
+                    result = result.MergeChildContext(allOfResult0, true).PushValidationLocationProperty("allOf").WithResult(isValid: false, "Validation - allOf failed to validate against the schema.").PopLocation();
+                }
+                else
+                {
+                    result = result.MergeChildContext(allOfResult0, false).WithResult(isValid: false);
+                    return result;
+                }
+            }
+            else
+            {
+                result = result.MergeChildContext(allOfResult0, level >= ValidationLevel.Detailed);
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Composition validation (one-of).
+        /// </summary>
+        /// <param name="value">The value to validate.</param>
+        /// <param name="validationContext">The current validation context.</param>
+        /// <param name="level">The current validation level.</param>
+        /// <returns>The resulting validation context after validation.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static ValidationContext CompositionOneOfValidationHandler(
+            in Scenario value,
+            in ValidationContext validationContext,
+            ValidationLevel level = ValidationLevel.Flag)
+        {
+            ValidationContext result = validationContext;
+
+            int oneOfFoundValid = 0;
+
+            ValidationContext oneOfChildContext0 = validationContext.CreateChildContext();
+            if (level > ValidationLevel.Basic)
+            {
+                oneOfChildContext0 = oneOfChildContext0.PushValidationLocationReducedPathModifier(new("#/oneOf/0/$ref"));
+            }
+
+            ValidationContext oneOfResult0 = value.As<Corvus.Json.Patch.SpecGenerator.ScenarioWithResult>().Validate(oneOfChildContext0, level);
+
+            if (oneOfResult0.IsValid)
+            {
+                result = result.MergeChildContext(oneOfResult0, level >= ValidationLevel.Verbose);
+                oneOfFoundValid++;
+            }
+            else
+            {
+                if (level >= ValidationLevel.Verbose)
+                {
+                    result = result.MergeResults(result.IsValid, level, oneOfResult0);
+                }
+            }
+
+            ValidationContext oneOfChildContext1 = validationContext.CreateChildContext();
+            if (level > ValidationLevel.Basic)
+            {
+                oneOfChildContext1 = oneOfChildContext1.PushValidationLocationReducedPathModifier(new("#/oneOf/1/$ref"));
+            }
+
+            ValidationContext oneOfResult1 = value.As<Corvus.Json.Patch.SpecGenerator.ScenarioWithError>().Validate(oneOfChildContext1, level);
+
+            if (oneOfResult1.IsValid)
+            {
+                result = result.MergeChildContext(oneOfResult1, level >= ValidationLevel.Verbose);
+                oneOfFoundValid++;
+            }
+            else
+            {
+                if (level >= ValidationLevel.Verbose)
+                {
+                    result = result.MergeResults(result.IsValid, level, oneOfResult1);
+                }
+            }
+
+            ValidationContext oneOfChildContext2 = validationContext.CreateChildContext();
+            if (level > ValidationLevel.Basic)
+            {
+                oneOfChildContext2 = oneOfChildContext2.PushValidationLocationReducedPathModifier(new("#/oneOf/2/$ref"));
+            }
+
+            ValidationContext oneOfResult2 = value.As<Corvus.Json.Patch.SpecGenerator.DisabledScenario>().Validate(oneOfChildContext2, level);
+
+            if (oneOfResult2.IsValid)
+            {
+                result = result.MergeChildContext(oneOfResult2, level >= ValidationLevel.Verbose);
+                oneOfFoundValid++;
+            }
+            else
+            {
+                if (level >= ValidationLevel.Verbose)
+                {
+                    result = result.MergeResults(result.IsValid, level, oneOfResult2);
+                }
+            }
+
+            if (oneOfFoundValid == 1)
+            {
+                if (level >= ValidationLevel.Verbose)
+                {
+                    result = result.WithResult(isValid: true, "Validation oneOf - validated against the schema.", "oneOf");
+                }
+            }
+            else if (oneOfFoundValid > 1)
+            {
+                if (level >= ValidationLevel.Basic)
+                {
+                    result = result.WithResult(isValid: false, "Validation oneOf - validated against more than 1 of the schema.", "oneOf");
+                }
+                else
+                {
+                    result = result.WithResult(isValid: false);
+                }
+            }
+            else
+            {
+                if (level >= ValidationLevel.Basic)
+                {
+                    result = result.WithResult(isValid: false, "Validation oneOf - did not validate against any of the schema.", "oneOf");
+                }
+                else
+                {
+                    result = result.WithResult(isValid: false);
+                }
+            }
+
+            return result;
+        }
     }
 }

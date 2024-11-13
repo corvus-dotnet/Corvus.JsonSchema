@@ -2,7 +2,6 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Buffers;
 using System.Collections.Immutable;
 using System.Net;
 using System.Text;
@@ -27,6 +26,8 @@ public class JsonValueSteps
     /// The key for the subject under test.
     /// </summary>
     internal const string SubjectUnderTest = "Value";
+    internal const string DecodedBase64Bytes = "DecodedBase64Bytes";
+    internal const string DecodedBase64ByteCount = "DecodedBase64ByteCount";
 
     /// <summary>
     /// The key for a serialization result.
@@ -120,6 +121,24 @@ public class JsonValueSteps
     }
 
     /// <summary>
+    /// Serializes an <see cref="IJsonValue"/> from the context variable <see cref="SubjectUnderTest"/>, stores the resulting value in the context variable <see cref="SerializationResult"/>.
+    /// </summary>
+    [When("the json value is serialized to a string using pretty formatting")]
+    public void WhenTheJsonValueIsSerializedToAStringUsingPrettyFormatting()
+    {
+        try
+        {
+            IJsonValue sut = this.scenarioContext.Get<IJsonValue>(SubjectUnderTest);
+            string json = sut.AsAny.Serialize(new JsonSerializerOptions { WriteIndented = true });
+            this.scenarioContext.Set(json, SerializationResult);
+        }
+        catch (Exception ex)
+        {
+            this.scenarioContext.Set(ex, SerializationException);
+        }
+    }
+
+    /// <summary>
     /// Serializes an <see cref="IJsonValue"/> from the context variable <see cref="SubjectUnderTest"/>, deserializes and stores the resulting <see cref="JsonAny"/> in the context variable <see cref="SerializationResult"/>.
     /// </summary>
     [When("the json value is round-tripped via Serialization without enabling inefficient serialization")]
@@ -179,6 +198,16 @@ public class JsonValueSteps
     public void ThenTheRound_TrippedResultShouldBeEqualToTheJsonAny(string expected)
     {
         Assert.AreEqual(JsonAny.Parse(expected), this.scenarioContext.Get<JsonAny>(SerializationResult));
+    }
+
+    /// <summary>
+    /// Compares the string from the context variable <see cref="SerializationResult"/> with the expected value.
+    /// </summary>
+    /// <param name="expected">The expected value.</param>
+    [Then("the serialized string should equal (.*)")]
+    public void ThenTheSerializedStringShouldEqual(string expected)
+    {
+        Assert.AreEqual(expected.Replace("\\r\\n", Environment.NewLine), this.scenarioContext.Get<string>(SerializationResult));
     }
 
     /* notAny */
@@ -555,7 +584,70 @@ public class JsonValueSteps
         }
     }
 
+    /* base64content */
+
+    /// <summary>
+    /// Store a <see cref="JsonElement"/>-backed value in the context variable <c>Value</c>.
+    /// </summary>
+    /// <param name="value">The json value.</param>
+    [Given("the JsonElement backed JsonBase64ContentPre201909 (.*)")]
+    public void GivenTheJsonElementBackedJsonBase64ContentPre201909(string value)
+    {
+        this.scenarioContext.Set(JsonBase64ContentPre201909.Parse(value), SubjectUnderTest);
+    }
+
+    /// <summary>
+    /// Store a dotnet-type-backed value in the context variable <c>Value</c>.
+    /// </summary>
+    /// <param name="value">The value.</param>
+    [Given("the dotnet backed JsonBase64ContentPre201909 (.*)")]
+    public void GivenTheDotnetBackedJsonBase64ContentPre201909(string value)
+    {
+        if (value == "null")
+        {
+            this.scenarioContext.Set(JsonBase64ContentPre201909.Null, SubjectUnderTest);
+        }
+        else
+        {
+            this.scenarioContext.Set(JsonBase64ContentPre201909.Parse(value).AsDotnetBackedValue(), SubjectUnderTest);
+        }
+    }
+
     /* base64string */
+
+    [When("I get the decoded value for the JsonBase64String with a buffer size of (.*)")]
+    public void WhenIGetTheDecodedValueForTheJsonBase64String(int bufferSize)
+    {
+        JsonBase64String base64String = this.scenarioContext.Get<JsonBase64String>(SubjectUnderTest);
+
+        byte[] buffer = new byte[bufferSize];
+        if (base64String.TryGetDecodedBase64Bytes(buffer.AsSpan(), out int written))
+        {
+            // Just slice off what we need. Don't worry too much about allocations :)
+            this.scenarioContext.Set(buffer.AsSpan()[..written].ToArray(), DecodedBase64Bytes);
+        }
+
+        this.scenarioContext.Set(written, DecodedBase64ByteCount);
+    }
+
+    [Then("the decoded value should be the UTF8 bytes for '([^']*)'")]
+    public void ThenTheDecodedValueShouldBeTheUTFBytesFor(string expected)
+    {
+        byte[] bytes = this.scenarioContext.Get<byte[]>(DecodedBase64Bytes);
+        CollectionAssert.AreEqual(Encoding.UTF8.GetBytes(expected), bytes);
+    }
+
+    [Then("the decoded byte count should be ([0-9]*)")]
+    public void ThenTheDecodedByteCountShouldBe(int expected)
+    {
+        Assert.AreEqual(expected, this.scenarioContext.Get<int>(DecodedBase64ByteCount));
+    }
+
+    [Then("the decoded byte count should be greater than or equal to (.*)")]
+    public void ThenTheDecodedByteCountShouldBeGreaterThanOrEqualTo(int expected)
+    {
+        Assert.GreaterOrEqual(this.scenarioContext.Get<int>(DecodedBase64ByteCount), expected);
+    }
 
     /// <summary>
     /// Store a <see cref="JsonElement"/>-backed value in the context variable <c>Value</c>.
@@ -581,6 +673,47 @@ public class JsonValueSteps
         else
         {
             this.scenarioContext.Set(JsonBase64String.Parse(value).AsDotnetBackedValue(), SubjectUnderTest);
+        }
+    }
+
+    [Then("the JsonBase64String has base64 bytes")]
+    public void ThenTheJsonBaseStringHasBase64Bytes()
+    {
+        Assert.IsTrue(this.scenarioContext.Get<JsonBase64String>(SubjectUnderTest).HasBase64Bytes());
+    }
+
+    [Then("the JsonBase64String does not have base64 bytes")]
+    public void ThenTheJsonBaseStringDoesNotHaveBase64Bytes()
+    {
+        Assert.IsFalse(this.scenarioContext.Get<JsonBase64String>(SubjectUnderTest).HasBase64Bytes());
+    }
+
+    /* base64StringPre201909 */
+
+    /// <summary>
+    /// Store a <see cref="JsonElement"/>-backed value in the context variable <c>Value</c>.
+    /// </summary>
+    /// <param name="value">The json value.</param>
+    [Given("the JsonElement backed JsonBase64StringPre201909 (.*)")]
+    public void GivenTheJsonElementBackedJsonBase64StringPre201909(string value)
+    {
+        this.scenarioContext.Set(JsonBase64StringPre201909.Parse(value), SubjectUnderTest);
+    }
+
+    /// <summary>
+    /// Store a dotnet-type-backed value in the context variable <c>Value</c>.
+    /// </summary>
+    /// <param name="value">The value.</param>
+    [Given("the dotnet backed JsonBase64StringPre201909 (.*)")]
+    public void GivenTheDotnetBackedJsonBase64StringPre201909(string value)
+    {
+        if (value == "null")
+        {
+            this.scenarioContext.Set(JsonBase64StringPre201909.Null, SubjectUnderTest);
+        }
+        else
+        {
+            this.scenarioContext.Set(JsonBase64StringPre201909.Parse(value).AsDotnetBackedValue(), SubjectUnderTest);
         }
     }
 
@@ -610,6 +743,35 @@ public class JsonValueSteps
         else
         {
             this.scenarioContext.Set(JsonContent.Parse(value).AsDotnetBackedValue(), SubjectUnderTest);
+        }
+    }
+
+    /* content-pre201909 */
+
+    /// <summary>
+    /// Store a <see cref="JsonElement"/>-backed value in the context variable <c>Value</c>.
+    /// </summary>
+    /// <param name="value">The json value.</param>
+    [Given("the JsonElement backed JsonContentPre201909 (.*)")]
+    public void GivenTheJsonElementBackedJsonContentPre201909(string value)
+    {
+        this.scenarioContext.Set(JsonContentPre201909.Parse(value), SubjectUnderTest);
+    }
+
+    /// <summary>
+    /// Store a dotnet-type-backed value in the context variable <c>Value</c>.
+    /// </summary>
+    /// <param name="value">The value.</param>
+    [Given("the dotnet backed JsonContentPre201909 (.*)")]
+    public void GivenTheDotnetBackedJsonContentPre201909(string value)
+    {
+        if (value == "null")
+        {
+            this.scenarioContext.Set(JsonContentPre201909.Null, SubjectUnderTest);
+        }
+        else
+        {
+            this.scenarioContext.Set(JsonContentPre201909.Parse(value).AsDotnetBackedValue(), SubjectUnderTest);
         }
     }
 
@@ -845,6 +1007,296 @@ public class JsonValueSteps
         }
     }
 
+    /* integer */
+
+    /// <summary>
+    /// Store a <see cref="JsonElement"/>-backed value in the context variable <c>Value</c>.
+    /// </summary>
+    /// <param name="value">The json value.</param>
+    [Given("the JsonElement backed JsonUInt128 (.*)")]
+    public void GivenTheJsonElementBackedJsonUInt128(string value)
+    {
+        this.scenarioContext.Set(JsonUInt128.Parse(value), SubjectUnderTest);
+    }
+
+    /// <summary>
+    /// Store a dotnet-type-backed value in the context variable <c>Value</c>.
+    /// </summary>
+    /// <param name="value">The value.</param>
+    [Given("the dotnet backed JsonUInt128 (.*)")]
+    public void GivenTheDotnetBackedJsonUInt128(string value)
+    {
+        if (value == "null")
+        {
+            this.scenarioContext.Set(JsonUInt128.Null, SubjectUnderTest);
+        }
+        else
+        {
+            this.scenarioContext.Set(JsonUInt128.Parse(value).AsDotnetBackedValue(), SubjectUnderTest);
+        }
+    }
+
+    /* integer */
+
+    /// <summary>
+    /// Store a <see cref="JsonElement"/>-backed value in the context variable <c>Value</c>.
+    /// </summary>
+    /// <param name="value">The json value.</param>
+    [Given("the JsonElement backed JsonInt128 (.*)")]
+    public void GivenTheJsonElementBackedJsonInt128(string value)
+    {
+        this.scenarioContext.Set(JsonInt128.Parse(value), SubjectUnderTest);
+    }
+
+    /// <summary>
+    /// Store a dotnet-type-backed value in the context variable <c>Value</c>.
+    /// </summary>
+    /// <param name="value">The value.</param>
+    [Given("the dotnet backed JsonInt128 (.*)")]
+    public void GivenTheDotnetBackedJsonInt128(string value)
+    {
+        if (value == "null")
+        {
+            this.scenarioContext.Set(JsonInt128.Null, SubjectUnderTest);
+        }
+        else
+        {
+            this.scenarioContext.Set(JsonInt128.Parse(value).AsDotnetBackedValue(), SubjectUnderTest);
+        }
+    }
+
+    /* integer */
+
+    /// <summary>
+    /// Store a <see cref="JsonElement"/>-backed value in the context variable <c>Value</c>.
+    /// </summary>
+    /// <param name="value">The json value.</param>
+    [Given("the JsonElement backed JsonInt64 (.*)")]
+    public void GivenTheJsonElementBackedJsonInt64(string value)
+    {
+        this.scenarioContext.Set(JsonInt64.Parse(value), SubjectUnderTest);
+    }
+
+    /// <summary>
+    /// Store a dotnet-type-backed value in the context variable <c>Value</c>.
+    /// </summary>
+    /// <param name="value">The value.</param>
+    [Given("the dotnet backed JsonInt64 (.*)")]
+    public void GivenTheDotnetBackedJsonInt64(string value)
+    {
+        if (value == "null")
+        {
+            this.scenarioContext.Set(JsonInt64.Null, SubjectUnderTest);
+        }
+        else
+        {
+            this.scenarioContext.Set(JsonInt64.Parse(value).AsDotnetBackedValue(), SubjectUnderTest);
+        }
+    }
+
+    /* integer */
+
+    /// <summary>
+    /// Store a <see cref="JsonElement"/>-backed value in the context variable <c>Value</c>.
+    /// </summary>
+    /// <param name="value">The json value.</param>
+    [Given("the JsonElement backed JsonInt32 (.*)")]
+    public void GivenTheJsonElementBackedJsonInt32(string value)
+    {
+        this.scenarioContext.Set(JsonInt32.Parse(value), SubjectUnderTest);
+    }
+
+    /// <summary>
+    /// Store a dotnet-type-backed value in the context variable <c>Value</c>.
+    /// </summary>
+    /// <param name="value">The value.</param>
+    [Given("the dotnet backed JsonInt32 (.*)")]
+    public void GivenTheDotnetBackedJsonInt32(string value)
+    {
+        if (value == "null")
+        {
+            this.scenarioContext.Set(JsonInt32.Null, SubjectUnderTest);
+        }
+        else
+        {
+            this.scenarioContext.Set(JsonInt32.Parse(value).AsDotnetBackedValue(), SubjectUnderTest);
+        }
+    }
+
+    /* integer */
+
+    /// <summary>
+    /// Store a <see cref="JsonElement"/>-backed value in the context variable <c>Value</c>.
+    /// </summary>
+    /// <param name="value">The json value.</param>
+    [Given("the JsonElement backed JsonInt16 (.*)")]
+    public void GivenTheJsonElementBackedJsonInt16(string value)
+    {
+        this.scenarioContext.Set(JsonInt16.Parse(value), SubjectUnderTest);
+    }
+
+    /// <summary>
+    /// Store a dotnet-type-backed value in the context variable <c>Value</c>.
+    /// </summary>
+    /// <param name="value">The value.</param>
+    [Given("the dotnet backed JsonInt16 (.*)")]
+    public void GivenTheDotnetBackedJsonInt16(string value)
+    {
+        if (value == "null")
+        {
+            this.scenarioContext.Set(JsonInt16.Null, SubjectUnderTest);
+        }
+        else
+        {
+            this.scenarioContext.Set(JsonInt16.Parse(value).AsDotnetBackedValue(), SubjectUnderTest);
+        }
+    }
+
+    /* integer */
+
+    /// <summary>
+    /// Store a <see cref="JsonElement"/>-backed value in the context variable <c>Value</c>.
+    /// </summary>
+    /// <param name="value">The json value.</param>
+    [Given("the JsonElement backed JsonSByte (.*)")]
+    public void GivenTheJsonElementBackedJsonSByte(string value)
+    {
+        this.scenarioContext.Set(JsonSByte.Parse(value), SubjectUnderTest);
+    }
+
+    /// <summary>
+    /// Store a dotnet-type-backed value in the context variable <c>Value</c>.
+    /// </summary>
+    /// <param name="value">The value.</param>
+    [Given("the dotnet backed JsonSByte (.*)")]
+    public void GivenTheDotnetBackedJsonSByte(string value)
+    {
+        if (value == "null")
+        {
+            this.scenarioContext.Set(JsonSByte.Null, SubjectUnderTest);
+        }
+        else
+        {
+            this.scenarioContext.Set(JsonSByte.Parse(value).AsDotnetBackedValue(), SubjectUnderTest);
+        }
+    }
+
+    /* integer */
+
+    /// <summary>
+    /// Store a <see cref="JsonElement"/>-backed value in the context variable <c>Value</c>.
+    /// </summary>
+    /// <param name="value">The json value.</param>
+    [Given("the JsonElement backed JsonUInt64 (.*)")]
+    public void GivenTheJsonElementBackedJsonUInt64(string value)
+    {
+        this.scenarioContext.Set(JsonUInt64.Parse(value), SubjectUnderTest);
+    }
+
+    /// <summary>
+    /// Store a dotnet-type-backed value in the context variable <c>Value</c>.
+    /// </summary>
+    /// <param name="value">The value.</param>
+    [Given("the dotnet backed JsonUInt64 (.*)")]
+    public void GivenTheDotnetBackedJsonUInt64(string value)
+    {
+        if (value == "null")
+        {
+            this.scenarioContext.Set(JsonUInt64.Null, SubjectUnderTest);
+        }
+        else
+        {
+            this.scenarioContext.Set(JsonUInt64.Parse(value).AsDotnetBackedValue(), SubjectUnderTest);
+        }
+    }
+
+    /* integer */
+
+    /// <summary>
+    /// Store a <see cref="JsonElement"/>-backed value in the context variable <c>Value</c>.
+    /// </summary>
+    /// <param name="value">The json value.</param>
+    [Given("the JsonElement backed JsonUInt32 (.*)")]
+    public void GivenTheJsonElementBackedJsonUInt32(string value)
+    {
+        this.scenarioContext.Set(JsonUInt32.Parse(value), SubjectUnderTest);
+    }
+
+    /// <summary>
+    /// Store a dotnet-type-backed value in the context variable <c>Value</c>.
+    /// </summary>
+    /// <param name="value">The value.</param>
+    [Given("the dotnet backed JsonUInt32 (.*)")]
+    public void GivenTheDotnetBackedJsonUInt32(string value)
+    {
+        if (value == "null")
+        {
+            this.scenarioContext.Set(JsonUInt32.Null, SubjectUnderTest);
+        }
+        else
+        {
+            this.scenarioContext.Set(JsonUInt32.Parse(value).AsDotnetBackedValue(), SubjectUnderTest);
+        }
+    }
+
+    /* integer */
+
+    /// <summary>
+    /// Store a <see cref="JsonElement"/>-backed value in the context variable <c>Value</c>.
+    /// </summary>
+    /// <param name="value">The json value.</param>
+    [Given("the JsonElement backed JsonUInt16 (.*)")]
+    public void GivenTheJsonElementBackedJsonUInt16(string value)
+    {
+        this.scenarioContext.Set(JsonUInt16.Parse(value), SubjectUnderTest);
+    }
+
+    /// <summary>
+    /// Store a dotnet-type-backed value in the context variable <c>Value</c>.
+    /// </summary>
+    /// <param name="value">The value.</param>
+    [Given("the dotnet backed JsonUInt16 (.*)")]
+    public void GivenTheDotnetBackedJsonUInt16(string value)
+    {
+        if (value == "null")
+        {
+            this.scenarioContext.Set(JsonUInt16.Null, SubjectUnderTest);
+        }
+        else
+        {
+            this.scenarioContext.Set(JsonUInt16.Parse(value).AsDotnetBackedValue(), SubjectUnderTest);
+        }
+    }
+
+    /* integer */
+
+    /// <summary>
+    /// Store a <see cref="JsonElement"/>-backed value in the context variable <c>Value</c>.
+    /// </summary>
+    /// <param name="value">The json value.</param>
+    [Given("the JsonElement backed JsonByte (.*)")]
+    public void GivenTheJsonElementBackedJsonByte(string value)
+    {
+        this.scenarioContext.Set(JsonByte.Parse(value), SubjectUnderTest);
+    }
+
+    /// <summary>
+    /// Store a dotnet-type-backed value in the context variable <c>Value</c>.
+    /// </summary>
+    /// <param name="value">The value.</param>
+    [Given("the dotnet backed JsonByte (.*)")]
+    public void GivenTheDotnetBackedJsonByte(string value)
+    {
+        if (value == "null")
+        {
+            this.scenarioContext.Set(JsonByte.Null, SubjectUnderTest);
+        }
+        else
+        {
+            this.scenarioContext.Set(JsonByte.Parse(value).AsDotnetBackedValue(), SubjectUnderTest);
+        }
+    }
+
     /* number */
 
     /// <summary>
@@ -871,6 +1323,120 @@ public class JsonValueSteps
         else
         {
             this.scenarioContext.Set(JsonNumber.Parse(value).AsDotnetBackedValue(), SubjectUnderTest);
+        }
+    }
+
+    /* number */
+
+    /// <summary>
+    /// Store a <see cref="JsonElement"/>-backed value in the context variable <c>Value</c>.
+    /// </summary>
+    /// <param name="value">The json value.</param>
+    [Given("the JsonElement backed JsonDecimal (.*)")]
+    public void GivenTheJsonElementBackedJsonDecimal(string value)
+    {
+        this.scenarioContext.Set(JsonDecimal.Parse(value), SubjectUnderTest);
+    }
+
+    /// <summary>
+    /// Store a dotnet-type-backed value in the context variable <c>Value</c>.
+    /// </summary>
+    /// <param name="value">The value.</param>
+    [Given("the dotnet backed JsonDecimal (.*)")]
+    public void GivenTheDotnetBackedJsonDecimal(string value)
+    {
+        if (value == "null")
+        {
+            this.scenarioContext.Set(JsonDecimal.Null, SubjectUnderTest);
+        }
+        else
+        {
+            this.scenarioContext.Set(JsonDecimal.Parse(value).AsDotnetBackedValue(), SubjectUnderTest);
+        }
+    }
+
+    /* number */
+
+    /// <summary>
+    /// Store a <see cref="JsonElement"/>-backed value in the context variable <c>Value</c>.
+    /// </summary>
+    /// <param name="value">The json value.</param>
+    [Given("the JsonElement backed JsonDouble (.*)")]
+    public void GivenTheJsonElementBackedJsonDouble(string value)
+    {
+        this.scenarioContext.Set(JsonDouble.Parse(value), SubjectUnderTest);
+    }
+
+    /// <summary>
+    /// Store a dotnet-type-backed value in the context variable <c>Value</c>.
+    /// </summary>
+    /// <param name="value">The value.</param>
+    [Given("the dotnet backed JsonDouble (.*)")]
+    public void GivenTheDotnetBackedJsonDouble(string value)
+    {
+        if (value == "null")
+        {
+            this.scenarioContext.Set(JsonDouble.Null, SubjectUnderTest);
+        }
+        else
+        {
+            this.scenarioContext.Set(JsonDouble.Parse(value).AsDotnetBackedValue(), SubjectUnderTest);
+        }
+    }
+
+    /* number */
+
+    /// <summary>
+    /// Store a <see cref="JsonElement"/>-backed value in the context variable <c>Value</c>.
+    /// </summary>
+    /// <param name="value">The json value.</param>
+    [Given("the JsonElement backed JsonSingle (.*)")]
+    public void GivenTheJsonElementBackedJsonSingle(string value)
+    {
+        this.scenarioContext.Set(JsonSingle.Parse(value), SubjectUnderTest);
+    }
+
+    /// <summary>
+    /// Store a dotnet-type-backed value in the context variable <c>Value</c>.
+    /// </summary>
+    /// <param name="value">The value.</param>
+    [Given("the dotnet backed JsonSingle (.*)")]
+    public void GivenTheDotnetBackedJsonSingle(string value)
+    {
+        if (value == "null")
+        {
+            this.scenarioContext.Set(JsonSingle.Null, SubjectUnderTest);
+        }
+        else
+        {
+            this.scenarioContext.Set(JsonSingle.Parse(value).AsDotnetBackedValue(), SubjectUnderTest);
+        }
+    }
+
+    /// <summary>
+    /// Store a <see cref="JsonElement"/>-backed value in the context variable <c>Value</c>.
+    /// </summary>
+    /// <param name="value">The json value.</param>
+    [Given("the JsonElement backed JsonHalf (.*)")]
+    public void GivenTheJsonElementBackedJsonHalf(string value)
+    {
+        this.scenarioContext.Set(JsonHalf.Parse(value), SubjectUnderTest);
+    }
+
+    /// <summary>
+    /// Store a dotnet-type-backed value in the context variable <c>Value</c>.
+    /// </summary>
+    /// <param name="value">The value.</param>
+    [Given("the dotnet backed JsonHalf (.*)")]
+    public void GivenTheDotnetBackedJsonHalf(string value)
+    {
+        if (value == "null")
+        {
+            this.scenarioContext.Set(JsonHalf.Null, SubjectUnderTest);
+        }
+        else
+        {
+            this.scenarioContext.Set(JsonHalf.Parse(value).AsDotnetBackedValue(), SubjectUnderTest);
         }
     }
 
@@ -1388,6 +1954,16 @@ public class JsonValueSteps
     /// <param name="value">The float value.</param>
     [Given("the double for (.*)")]
     public void GivenTheDoubleFor(double value)
+    {
+        this.scenarioContext.Set(value, SubjectUnderTest);
+    }
+
+    /// <summary>
+    /// Stores the <see cref="decimal"/> <paramref name="value"/> in the context key <see cref="SubjectUnderTest"/>.
+    /// </summary>
+    /// <param name="value">The float value.</param>
+    [Given("the decimal for (.*)")]
+    public void GivenTheDecimalFor(decimal value)
     {
         this.scenarioContext.Set(value, SubjectUnderTest);
     }

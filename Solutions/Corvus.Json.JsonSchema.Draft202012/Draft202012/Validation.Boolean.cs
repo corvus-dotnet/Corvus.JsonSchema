@@ -6,10 +6,11 @@
 //     the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
+
 #nullable enable
+
 using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
-using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
 using Corvus.Json.Internal;
@@ -18,49 +19,49 @@ namespace Corvus.Json.JsonSchema.Draft202012;
 /// <summary>
 /// Validation vocabulary meta-schema
 /// </summary>
-public readonly partial struct Validation : IJsonBoolean<Validation>
+public readonly partial struct Validation
+    : IJsonBoolean<Corvus.Json.JsonSchema.Draft202012.Validation>
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref = "Validation"/> struct.
+    /// Conversion from <see cref="bool"/>.
     /// </summary>
-    /// <param name = "value">The value from which to construct the instance.</param>
-    public Validation(bool value)
-    {
-        this.jsonElementBacking = default;
-        this.backing = Backing.Bool;
-        this.boolBacking = value;
-        this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
-    }
-
-    /// <summary>
-    /// Conversion from JsonBoolean.
-    /// </summary>
-    /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator Validation(JsonBoolean value)
-    {
-        if (value.HasDotnetBacking && (value.ValueKind == JsonValueKind.True || value.ValueKind == JsonValueKind.False))
-        {
-            return new((bool)value);
-        }
-
-        return new(value.AsJsonElement);
-    }
-
-    /// <summary>
-    /// Conversion from bool.
-    /// </summary>
-    /// <param name = "value">The value from which to convert.</param>
+    /// <param name="value">The value from which to convert.</param>
     public static implicit operator Validation(bool value)
     {
         return new(value);
     }
 
     /// <summary>
-    /// Conversion to bool.
+    /// Conversion from JsonBoolean.
     /// </summary>
-    /// <param name = "value">The value from which to convert.</param>
-    /// <exception cref = "InvalidOperationException">The value was not a string.</exception>
-    public static implicit operator bool (Validation value)
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator Validation(JsonBoolean value)
+    {
+        if (value.HasDotnetBacking && (value.ValueKind == JsonValueKind.False || value.ValueKind == JsonValueKind.True))
+        {
+            return new(
+                (bool)value);
+        }
+
+        return new(value.AsJsonElement);
+    }
+
+    /// <summary>
+    /// Conversion to JsonBoolean.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator JsonBoolean(Validation value)
+    {
+        return
+            value.AsBoolean;
+    }
+
+    /// <summary>
+    /// Conversion to <see langword="bool"/>.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    /// <exception cref="InvalidOperationException">The value was not a boolean.</exception>
+    public static implicit operator bool(Validation value)
     {
         return value.GetBoolean() ?? throw new InvalidOperationException();
     }
@@ -68,7 +69,7 @@ public readonly partial struct Validation : IJsonBoolean<Validation>
     /// <summary>
     /// Try to retrieve the value as a boolean.
     /// </summary>
-    /// <param name = "result"><see langword="true"/> if the value was true, otherwise <see langword="false"/>.</param>
+    /// <param name="result"><see langword="true"/> if the value was true, otherwise <see langword="false"/>.</param>
     /// <returns><see langword="true"/> if the value was representable as a boolean, otherwise <see langword="false"/>.</returns>
     public bool TryGetBoolean([NotNullWhen(true)] out bool result)
     {

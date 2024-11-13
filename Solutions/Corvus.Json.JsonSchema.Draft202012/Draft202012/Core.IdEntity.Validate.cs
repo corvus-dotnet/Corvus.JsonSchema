@@ -6,11 +6,19 @@
 //     the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
+
 #nullable enable
+
+using System.Runtime.CompilerServices;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Corvus.Json;
 
 namespace Corvus.Json.JsonSchema.Draft202012;
+
+/// <summary>
+/// Core vocabulary meta-schema
+/// </summary>
 public readonly partial struct Core
 {
     /// <summary>
@@ -33,24 +41,165 @@ public readonly partial struct Core
                 result = result.PushSchemaLocation("https://json-schema.org/draft/2020-12/meta/core#/properties/$id");
             }
 
-            result = this.ValidateRef(result, level);
+            JsonValueKind valueKind = this.ValueKind;
+
+            result = CorvusValidation.StringValidationHandler(this, valueKind, result, level);
+
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;
             }
 
-            result = Corvus.Json.Validate.ValidateString(this, result, level, null, null, __CorvusPatternExpression);
+            result = CorvusValidation.CompositionAllOfValidationHandler(this, result, level);
+
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;
             }
 
-            if (level != ValidationLevel.Flag)
+            if (level > ValidationLevel.Basic)
             {
                 result = result.PopLocation();
             }
 
             return result;
+        }
+
+        /// <summary>
+        /// Validation constants for the type.
+        /// </summary>
+        public static partial class CorvusValidation
+        {
+            /// <summary>
+            /// A regular expression for the <c>pattern</c> keyword.
+            /// </summary>
+            public static readonly Regex Pattern = CreatePattern();
+
+            /// <summary>
+            /// String validation.
+            /// </summary>
+            /// <param name="value">The value to validate.</param>
+            /// <param name="valueKind">The <see cref="JsonValueKind" /> of the value to validate.</param>
+            /// <param name="validationContext">The current validation context.</param>
+            /// <param name="level">The current validation level.</param>
+            /// <returns>The resulting validation context after validation.</returns>
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            internal static ValidationContext StringValidationHandler(
+                in IdEntity value,
+                JsonValueKind valueKind,
+                in ValidationContext validationContext,
+                ValidationLevel level = ValidationLevel.Flag)
+            {
+                if (valueKind != JsonValueKind.String)
+                {
+                    if (level == ValidationLevel.Verbose)
+                    {
+                        ValidationContext ignoredResult = validationContext;
+                        ignoredResult = ignoredResult.WithResult(isValid: true, "Validation pattern - ignored because the value is not a string", "pattern");
+
+                        return ignoredResult;
+                    }
+
+                    return validationContext;
+                }
+
+                ValidationContext result = validationContext;
+                value.AsString.TryGetValue(StringValidator, new Corvus.Json.Validate.ValidationContextWrapper(result, level), out result);
+
+                return result;
+
+                static bool StringValidator(ReadOnlySpan<char> input, in Corvus.Json.Validate.ValidationContextWrapper context, out ValidationContext result)
+                {
+                    result = context.Context;
+
+                    if (context.Level > ValidationLevel.Basic)
+                    {
+                        result = result.PushValidationLocationReducedPathModifier(new("#/pattern"));
+                    }
+
+                    if (Pattern.IsMatch(input))
+                    {
+                        if (context.Level == ValidationLevel.Verbose)
+                        {
+                            result = result.WithResult(isValid: true, $"Validation pattern - {input.ToString()} matched  '^[^#]*#?$'");
+                        }
+                    }
+                    else
+                    {
+                        if (context.Level >= ValidationLevel.Detailed)
+                        {
+                            result = result.WithResult(isValid: false, $"Validation pattern - {input.ToString()} did not match  '^[^#]*#?$'");
+                        }
+                        else if (context.Level >= ValidationLevel.Basic)
+                        {
+                            result = result.WithResult(isValid: false, "Validation pattern - The value did not match  '^[^#]*#?$'");
+                        }
+                        else
+                        {
+                            result = context.Context.WithResult(isValid: false);
+                            return true;
+                        }
+                    }
+
+                    if (context.Level > ValidationLevel.Basic)
+                    {
+                        result = result.PopLocation();
+                    }
+
+                    return true;
+                }
+            }
+
+            /// <summary>
+            /// Composition validation (all-of).
+            /// </summary>
+            /// <param name="value">The value to validate.</param>
+            /// <param name="validationContext">The current validation context.</param>
+            /// <param name="level">The current validation level.</param>
+            /// <returns>The resulting validation context after validation.</returns>
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            internal static ValidationContext CompositionAllOfValidationHandler(
+                in IdEntity value,
+                in ValidationContext validationContext,
+                ValidationLevel level = ValidationLevel.Flag)
+            {
+                ValidationContext result = validationContext;
+                ValidationContext childContextBase = result;
+
+                ValidationContext refResult = childContextBase.CreateChildContext();
+                if (level > ValidationLevel.Basic)
+                {
+                    refResult = refResult.PushValidationLocationReducedPathModifier(new("#/$ref"));
+                }
+
+                refResult = value.As<Corvus.Json.JsonUriReference>().Validate(refResult, level);
+
+                if (!refResult.IsValid)
+                {
+                    if (level >= ValidationLevel.Basic)
+                    {
+                        result = result.MergeChildContext(refResult, true).PushValidationLocationProperty("$ref").WithResult(isValid: false, "Validation - $ref failed to validate against the schema.").PopLocation();
+                    }
+                    else
+                    {
+                        result = result.MergeChildContext(refResult, false).WithResult(isValid: false);
+                        return result;
+                    }
+                }
+                else
+                {
+                    result = result.MergeChildContext(refResult, level >= ValidationLevel.Detailed);
+                }
+
+                return result;
+            }
+
+#if NET8_0_OR_GREATER && !DYNAMIC_BUILD
+            [GeneratedRegex("^[^#]*#?$")]
+            private static partial Regex CreatePattern();
+#else
+            private static Regex CreatePattern() => new("^[^#]*#?$", RegexOptions.Compiled);
+#endif
         }
     }
 }

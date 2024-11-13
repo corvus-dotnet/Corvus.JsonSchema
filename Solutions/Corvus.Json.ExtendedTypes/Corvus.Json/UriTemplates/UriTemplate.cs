@@ -3,10 +3,10 @@
 // </copyright>
 // Derived from Tavis.UriTemplate https://github.com/tavis-software/Tavis.UriTemplates/blob/master/License.txt
 
-using System.Buffers;
 using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
+using Corvus.HighPerformance;
 using Corvus.UriTemplates;
 
 namespace Corvus.Json.UriTemplates;
@@ -195,11 +195,7 @@ public readonly struct UriTemplate
         foreach (JsonObjectProperty property in parameters.EnumerateObject())
         {
             string name = property.Name.GetString();
-            if (builder.ContainsKey(name))
-            {
-                builder.Remove(name);
-            }
-
+            builder.Remove(name);
             builder.Add(name, property.Value);
         }
 
@@ -217,11 +213,7 @@ public readonly struct UriTemplate
         builder.AddRange(this.parameters);
         foreach ((string name, JsonAny value) in parameters)
         {
-            if (builder.ContainsKey(name))
-            {
-                builder.Remove(name);
-            }
-
+            builder.Remove(name);
             builder.Add(name, value);
         }
 
@@ -350,13 +342,18 @@ public readonly struct UriTemplate
     /// <returns>The resolved template.</returns>
     public string Resolve()
     {
-        ArrayBufferWriter<char> output = new();
+        // Use a fixed 4k, stack allocated buffer as our initial guess at a buffer size
+        // ValueStringBuilder will grow it with a rented buffer if necessary, but this is
+        // super-fast for the "general" case. It is also not a recursive operation, so we
+        // are not going to overflow the buffer.
+        Span<char> buffer = stackalloc char[4096];
+        ValueStringBuilder output = new(buffer);
         var properties = this.parameters.ToImmutableDictionary(k => new JsonPropertyName(k.Key), v => v.Value);
-        if (!JsonUriTemplateResolver.TryResolveResult(this.template.AsSpan(), output, this.resolvePartially, JsonObject.FromProperties(properties)))
+        if (!JsonUriTemplateResolver.TryResolveResult(this.template.AsSpan(), ref output, this.resolvePartially, JsonObject.FromProperties(properties)))
         {
             throw new ArgumentException("Malformed template.");
         }
 
-        return output.WrittenSpan.ToString();
+        return output.CreateStringAndDispose();
     }
 }

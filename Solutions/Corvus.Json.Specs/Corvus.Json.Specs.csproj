@@ -1,8 +1,8 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 	<Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
 
 	<PropertyGroup>
-		<TargetFrameworks>net481;net8.0</TargetFrameworks>
+		<TargetFrameworks>net481;net8.0;net9.0</TargetFrameworks>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<IsPackable>false</IsPackable>
@@ -19,43 +19,47 @@
 	</PropertyGroup>
 
 	<ItemGroup Condition="'$(TargetFramework)' == 'net481'">
-		<PackageReference Include="Microsoft.Extensions.DependencyModel" Version="8.0.0" />
+		<PackageReference Include="Microsoft.Extensions.DependencyModel" Version="9.0.0" />
 		<PackageReference Include="System.Runtime.Loader" Version="4.3.0" />
 		<PackageReference Include="System.Net.Http" Version="4.3.4" />
-		<SpecFlowFeatureFiles Remove="Features/UriTemplates/*.feature" />
 		<SpecFlowFeatureFiles Remove="Features/**/numeric-format.feature" />
-		<Compile Remove="Features/UriTemplates/*.cs" />
 		<Compile Remove="Features/**/numeric-format.feature.cs" />
-		<Compile Remove="Steps\UriTemplateSteps.cs" />
     <SpecFlowFeatureFiles Remove="Features/**/*-net80.feature" />
     <Compile Remove="Features/**/*-net80.feature.cs" />
+    <SpecFlowFeatureFiles Remove="Features/**/TruncatePath.feature" />
+    <Compile Remove="Features/**/TruncatePath.feature.cs" />
   </ItemGroup>
 
 	<ItemGroup Condition="'$(TargetFramework)' == 'net80'">
-		<SpecFlowFeatureFiles Remove="Features/**/numeric-format-netstandard20.feature" />
+    <SpecFlowFeatureFiles Remove="Features/**/numeric-format-netstandard20.feature" />
 		<Compile Remove="Features/**/numeric-format-netstandard20.feature.cs" />
-	</ItemGroup>
+  </ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Corvus.Testing.SpecFlow.NUnit" Version="3.1.1" />
-		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.0" />
-		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.9.0" />
+    <PackageReference Include="System.Collections.Immutable" Version="9.0.0" />
+    <PackageReference Include="System.Reflection.Metadata" Version="9.0.0" />
+    <PackageReference Include="System.Text.RegularExpressions" Version="4.3.1" />
+    <PackageReference Include="System.Text.Json" Version="9.0.0" />
+
+    <PackageReference Include="Corvus.Testing.SpecFlow.NUnit" Version="3.0.2" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.0" />
+		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
 		<PackageReference Include="SolidToken.SpecFlow.DependencyInjection" Version="3.9.3" />
 
-		<PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.12">
+		<PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.13">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.9.2" />
+		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.12.0-2.final" />
 
 
 		<PackageReference Include="SpecFlow.NUnit" Version="3.9.74" />
 		<PackageReference Include="nunit" Version="3.14.0" />
-		<PackageReference Include="NUnit3TestAdapter" Version="4.5.0" />
+		<PackageReference Include="NUnit3TestAdapter" Version="4.6.0" />
 		<!-- Required for publishing test results directly to Azure Pipelines -->
 		<PackageReference Include="azurepipelines.testlogger" Version="1.2.3" />
 
-		<PackageReference Include="FluentAssertions" Version="6.12.0" />
+		<PackageReference Include="FluentAssertions" Version="6.12.2" />
 
 		<ProjectReference Include="..\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.201909.csproj" />
 
@@ -67,6 +71,8 @@
 
 		<ProjectReference Include="..\Corvus.Json.CodeGeneration.7\Corvus.Json.CodeGeneration.7.csproj" />
 
+		<ProjectReference Include="..\Corvus.Json.CodeGeneration.CSharp\Corvus.Json.CodeGeneration.CSharp.csproj" />
+
 		<ProjectReference Include="..\Corvus.Json.CodeGeneration.OpenApi30\Corvus.Json.CodeGeneration.OpenApi30.csproj" />
 
 		<ProjectReference Include="..\Corvus.Json.Patch\Corvus.Json.Patch.csproj" />
@@ -77,6 +83,69 @@
 		<None Update="appsettings.json">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
+		<None Update="metaschema\draft2019-09\meta\applicator.json">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="metaschema\draft2019-09\meta\content.json">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="metaschema\draft2019-09\meta\core.json">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="metaschema\draft2019-09\meta\format.json">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="metaschema\draft2019-09\meta\hyper-schema.json">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="metaschema\draft2019-09\meta\meta-data.json">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="metaschema\draft2019-09\meta\validation.json">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="metaschema\draft2019-09\schema.json">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="metaschema\draft2020-12\meta\applicator.json">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="metaschema\draft2020-12\meta\content.json">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="metaschema\draft2020-12\meta\core.json">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="metaschema\draft2020-12\meta\format-annotation.json">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="metaschema\draft2020-12\meta\format-assertion.json">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="metaschema\draft2020-12\meta\hyper-schema.json">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="metaschema\draft2020-12\meta\meta-data.json">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="metaschema\draft2020-12\meta\unevaluated.json">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="metaschema\draft2020-12\meta\validation.json">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="metaschema\draft2020-12\schema.json">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="metaschema\draft4\schema.json">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="metaschema\draft6\schema.json">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="metaschema\draft7\schema.json">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
 	</ItemGroup>
 
 	<PropertyGroup>
@@ -85,7 +154,11 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Update="Roslynator.Analyzers" Version="4.6.2" />
+		<PackageReference Update="Roslynator.Analyzers" Version="4.12.9" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="Features\ImplicitConversionToString\" />
 	</ItemGroup>
 
 </Project>

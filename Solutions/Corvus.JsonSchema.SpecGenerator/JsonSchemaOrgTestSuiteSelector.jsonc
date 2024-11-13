@@ -85,7 +85,7 @@
             "subdirectories": {
                 "optional": {
                     "excludeFromThisDirectory": [
-                        "cross-draft\\.json",
+                        ////"cross-draft\\.json",
                         "bignum\\.json",
                         "ecmascript-regex\\.json",
                         "non-bmp-regex\\.json"
@@ -130,12 +130,12 @@
             "outputFolder": "Draft201909",
             "excludeFromThisDirectory": [
                 // We don't support custom metaschema
-                "vocabulary\\.json"
+                ////"vocabulary\\.json"
             ],
             "subdirectories": {
                 "optional": {
                     "excludeFromThisDirectory": [
-                        "cross-draft\\.json",
+                        ////"cross-draft\\.json",
                         "bignum\\.json",
                         "ecmascript-regex\\.json",
                         "non-bmp-regex\\.json"
@@ -185,12 +185,12 @@
             "subdirectories": {
                 "optional": {
                     "excludeFromThisDirectory": [
-                        "cross-draft\\.json",
+                        ////"cross-draft\\.json",
+                        ////"format-assertion,\\.json"
+                        "dynamicRef\\.json",
                         "bignum\\.json",
                         "ecmascript-regex\\.json",
-                        "non-bmp-regex\\.json",
-                        "dynamicRef\\.json",
-                        "format-assertion\\.json"
+                        "non-bmp-regex\\.json"
                     ],
                     "subdirectories": {
                         "format": {

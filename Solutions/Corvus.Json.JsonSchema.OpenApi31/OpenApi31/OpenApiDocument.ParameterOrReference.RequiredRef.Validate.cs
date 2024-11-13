@@ -6,13 +6,28 @@
 //     the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
+
 #nullable enable
+
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
 
 namespace Corvus.Json.JsonSchema.OpenApi31;
+
+/// <summary>
+/// Generated from JSON Schema.
+/// </summary>
+/// <remarks>
+/// <para>
+/// The description of OpenAPI v3.1.x documents without schema validation, as defined by https://spec.openapis.org/oas/v3.1.0
+/// </para>
+/// </remarks>
 public readonly partial struct OpenApiDocument
 {
+    /// <summary>
+    /// Generated from JSON Schema.
+    /// </summary>
     public readonly partial struct ParameterOrReference
     {
         /// <summary>
@@ -36,24 +51,138 @@ public readonly partial struct OpenApiDocument
                 }
 
                 JsonValueKind valueKind = this.ValueKind;
-                result = this.ValidateType(valueKind, result, level);
+
+                result = CorvusValidation.TypeValidationHandler(valueKind, result, level);
+
                 if (level == ValidationLevel.Flag && !result.IsValid)
                 {
                     return result;
                 }
 
-                result = this.ValidateObject(valueKind, result, level);
+                result = CorvusValidation.ObjectValidationHandler(this, valueKind, result, level);
+
                 if (level == ValidationLevel.Flag && !result.IsValid)
                 {
                     return result;
                 }
 
-                if (level != ValidationLevel.Flag)
+                if (level > ValidationLevel.Basic)
                 {
                     result = result.PopLocation();
                 }
 
                 return result;
+            }
+
+            /// <summary>
+            /// Validation constants for the type.
+            /// </summary>
+            public static partial class CorvusValidation
+            {
+                /// <summary>
+                /// Core type validation.
+                /// </summary>
+                /// <param name="valueKind">The <see cref="JsonValueKind" /> of the value to validate.</param>
+                /// <param name="validationContext">The current validation context.</param>
+                /// <param name="level">The current validation level.</param>
+                /// <returns>The resulting validation context after validation.</returns>
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                internal static ValidationContext TypeValidationHandler(
+                    JsonValueKind valueKind,
+                    in ValidationContext validationContext,
+                    ValidationLevel level = ValidationLevel.Flag)
+                {
+                    return Corvus.Json.ValidateWithoutCoreType.TypeObject(valueKind, validationContext, level, "type");
+                }
+
+                /// <summary>
+                /// Object validation.
+                /// </summary>
+                /// <param name="value">The value to validate.</param>
+                /// <param name="valueKind">The <see cref="JsonValueKind" /> of the value to validate.</param>
+                /// <param name="validationContext">The current validation context.</param>
+                /// <param name="level">The current validation level.</param>
+                /// <returns>The resulting validation context after validation.</returns>
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                internal static ValidationContext ObjectValidationHandler(
+                    in RequiredRef value,
+                    JsonValueKind valueKind,
+                    in ValidationContext validationContext,
+                    ValidationLevel level = ValidationLevel.Flag)
+                {
+                    ValidationContext result = validationContext;
+                    if (valueKind != JsonValueKind.Object)
+                    {
+                        if (level == ValidationLevel.Verbose)
+                        {
+                            ValidationContext ignoredResult = validationContext;
+                            ignoredResult = ignoredResult.WithResult(isValid: true, "Validation required - ignored because the value is not an object", "required");
+
+                            return ignoredResult;
+                        }
+
+                        return validationContext;
+                    }
+
+                    bool hasSeenRef = false;
+
+                    int propertyCount = 0;
+                    foreach (JsonObjectProperty property in value.EnumerateObject())
+                    {
+                        if (property.NameEquals(JsonPropertyNames.RefUtf8, JsonPropertyNames.Ref))
+                        {
+                            hasSeenRef = true;
+                            result = result.WithLocalProperty(propertyCount);
+                            if (level > ValidationLevel.Basic)
+                            {
+                                result = result.PushValidationLocationReducedPathModifierAndProperty(new(""), JsonPropertyNames.Ref);
+                            }
+
+                            ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonAny>().Validate(result.CreateChildContext(), level);
+                            if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                            {
+                                return propertyResult;
+                            }
+
+                            result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
+                            if (level > ValidationLevel.Basic)
+                            {
+                                result = result.PopLocation();
+                            }
+                        }
+
+                        propertyCount++;
+                    }
+
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PushValidationLocationReducedPathModifier(new("#/required/0"));
+                    }
+
+                    if (!hasSeenRef)
+                    {
+                        if (level >= ValidationLevel.Basic)
+                        {
+                            result = result.WithResult(isValid: false, "Validation required - the required property '$ref' was not present.");
+                        }
+                        else
+                        {
+                            return ValidationContext.InvalidContext;
+                        }
+                    }
+                    else if (level == ValidationLevel.Verbose)
+                    {
+                        result = result.WithResult(isValid: true, "Validation required - the required property '$ref' was present.");
+                    }
+
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PopLocation();
+                    }
+
+                    return result;
+                }
             }
         }
     }

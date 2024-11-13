@@ -6,13 +6,28 @@
 //     the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
+
 #nullable enable
+
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
 
 namespace Corvus.Json.JsonSchema.OpenApi30;
+
+/// <summary>
+/// Generated from JSON Schema.
+/// </summary>
+/// <remarks>
+/// <para>
+/// The description of OpenAPI v3.0.x documents, as defined by https://spec.openapis.org/oas/v3.0.3
+/// </para>
+/// </remarks>
 public readonly partial struct OpenApiDocument
 {
+    /// <summary>
+    /// Generated from JSON Schema.
+    /// </summary>
     public readonly partial struct Parameter
     {
         /// <summary>
@@ -35,26 +50,173 @@ public readonly partial struct OpenApiDocument
                     result = result.PushSchemaLocation("https://spec.openapis.org/oas/3.0/schema/2021-09-28#/definitions/Parameter/properties/content");
                 }
 
-                result = result.UsingEvaluatedProperties();
                 JsonValueKind valueKind = this.ValueKind;
-                result = this.ValidateType(valueKind, result, level);
+                result = result.UsingEvaluatedProperties();
+
+                result = CorvusValidation.TypeValidationHandler(valueKind, result, level);
+
                 if (level == ValidationLevel.Flag && !result.IsValid)
                 {
                     return result;
                 }
 
-                result = this.ValidateObject(valueKind, result, level);
+                result = CorvusValidation.ObjectValidationHandler(this, valueKind, result, level);
+
                 if (level == ValidationLevel.Flag && !result.IsValid)
                 {
                     return result;
                 }
 
-                if (level != ValidationLevel.Flag)
+                if (level > ValidationLevel.Basic)
                 {
                     result = result.PopLocation();
                 }
 
                 return result;
+            }
+
+            /// <summary>
+            /// Validation constants for the type.
+            /// </summary>
+            public static partial class CorvusValidation
+            {
+                /// <summary>
+                /// A constant for the <c>maxProperties</c> keyword.
+                /// </summary>
+                public static readonly long MaxProperties = 1;
+
+                /// <summary>
+                /// A constant for the <c>minProperties</c> keyword.
+                /// </summary>
+                public static readonly long MinProperties = 1;
+
+                /// <summary>
+                /// Core type validation.
+                /// </summary>
+                /// <param name="valueKind">The <see cref="JsonValueKind" /> of the value to validate.</param>
+                /// <param name="validationContext">The current validation context.</param>
+                /// <param name="level">The current validation level.</param>
+                /// <returns>The resulting validation context after validation.</returns>
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                internal static ValidationContext TypeValidationHandler(
+                    JsonValueKind valueKind,
+                    in ValidationContext validationContext,
+                    ValidationLevel level = ValidationLevel.Flag)
+                {
+                    return Corvus.Json.ValidateWithoutCoreType.TypeObject(valueKind, validationContext, level, "type");
+                }
+
+                /// <summary>
+                /// Object validation.
+                /// </summary>
+                /// <param name="value">The value to validate.</param>
+                /// <param name="valueKind">The <see cref="JsonValueKind" /> of the value to validate.</param>
+                /// <param name="validationContext">The current validation context.</param>
+                /// <param name="level">The current validation level.</param>
+                /// <returns>The resulting validation context after validation.</returns>
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                internal static ValidationContext ObjectValidationHandler(
+                    in ContentEntity value,
+                    JsonValueKind valueKind,
+                    in ValidationContext validationContext,
+                    ValidationLevel level = ValidationLevel.Flag)
+                {
+                    ValidationContext result = validationContext;
+                    if (valueKind != JsonValueKind.Object)
+                    {
+                        if (level == ValidationLevel.Verbose)
+                        {
+                            ValidationContext ignoredResult = validationContext;
+                            ignoredResult = ignoredResult.WithResult(isValid: true, "Validation maxProperties - ignored because the value is not an object", "maxProperties");
+                            ignoredResult = ignoredResult.WithResult(isValid: true, "Validation minProperties - ignored because the value is not an object", "minProperties");
+                            ignoredResult = ignoredResult.WithResult(isValid: true, "Validation additionalProperties - ignored because the value is not an object", "additionalProperties");
+
+                            return ignoredResult;
+                        }
+
+                        return validationContext;
+                    }
+
+                    int propertyCount = 0;
+                    foreach (JsonObjectProperty<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.MediaType> property in value.EnumerateObject())
+                    {
+                        string? propertyNameAsString = null;
+
+                        if (!result.HasEvaluatedLocalProperty(propertyCount))
+                        {
+                            if (level > ValidationLevel.Basic)
+                            {
+                                string localEvaluatedPropertyName = (propertyNameAsString ??= property.Name.GetString());
+                                result = result.PushValidationLocationReducedPathModifierAndProperty(new JsonReference("#/additionalProperties").AppendUnencodedPropertyNameToFragment(localEvaluatedPropertyName).AppendFragment(new("#/$ref")), localEvaluatedPropertyName);
+                            }
+
+                            ValidationContext propertyResult = property.Value.Validate(result.CreateChildContext(), level);
+                            if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                            {
+                                return propertyResult;
+                            }
+
+                            result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
+                            if (level > ValidationLevel.Basic)
+                            {
+                                result = result.PopLocation();
+                            }
+
+                            result = result.WithLocalProperty(propertyCount);
+                        }
+
+                        propertyCount++;
+                    }
+
+                    if (propertyCount <= MaxProperties)
+                    {
+                        if (level == ValidationLevel.Verbose)
+                        {
+                            result = result.WithResult(isValid: true, $"Validation maxProperties - property count {propertyCount} is less than or equal to {MaxProperties}", "maxProperties");
+                        }
+                    }
+                    else
+                    {
+                        if (level >= ValidationLevel.Detailed)
+                        {
+                            result = result.WithResult(isValid: false, $"Validation maxProperties - array of length {propertyCount} is greater than {MaxProperties}", "maxProperties");
+                        }
+                        else if (level >= ValidationLevel.Basic)
+                        {
+                            result = result.WithResult(isValid: false, "Validation maxProperties - is greater than the required count.", "maxProperties");
+                        }
+                        else
+                        {
+                            return ValidationContext.InvalidContext;
+                        }
+                    }
+
+                    if (propertyCount >= MinProperties)
+                    {
+                        if (level == ValidationLevel.Verbose)
+                        {
+                            result = result.WithResult(isValid: true, $"Validation minProperties - property count {propertyCount} is greater than or equal to {MinProperties}", "minProperties");
+                        }
+                    }
+                    else
+                    {
+                        if (level >= ValidationLevel.Detailed)
+                        {
+                            result = result.WithResult(isValid: false, $"Validation minProperties - array of length {propertyCount} is less than {MinProperties}", "minProperties");
+                        }
+                        else if (level >= ValidationLevel.Basic)
+                        {
+                            result = result.WithResult(isValid: false, "Validation minProperties - is less than the required count.", "minProperties");
+                        }
+                        else
+                        {
+                            return ValidationContext.InvalidContext;
+                        }
+                    }
+
+                    return result;
+                }
             }
         }
     }

@@ -6,9 +6,10 @@
 //     the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
+
 #nullable enable
+
 using System.Buffers;
-using System.ComponentModel;
 using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
@@ -16,6 +17,15 @@ using Corvus.Json;
 using Corvus.Json.Internal;
 
 namespace Corvus.Json.JsonSchema.OpenApi30;
+
+/// <summary>
+/// Generated from JSON Schema.
+/// </summary>
+/// <remarks>
+/// <para>
+/// The description of OpenAPI v3.0.x documents, as defined by https://spec.openapis.org/oas/v3.0.3
+/// </para>
+/// </remarks>
 public readonly partial struct OpenApiDocument
 {
     /// <summary>
@@ -23,12 +33,14 @@ public readonly partial struct OpenApiDocument
     /// </summary>
     [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<Parameter>))]
     public readonly partial struct Parameter
+
     {
         private readonly Backing backing;
         private readonly JsonElement jsonElementBacking;
         private readonly ImmutableList<JsonObjectProperty> objectBacking;
+
         /// <summary>
-        /// Initializes a new instance of the <see cref = "Parameter"/> struct.
+        /// Initializes a new instance of the <see cref="Parameter"/> struct.
         /// </summary>
         public Parameter()
         {
@@ -38,9 +50,9 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref = "Parameter"/> struct.
+        /// Initializes a new instance of the <see cref="Parameter"/> struct.
         /// </summary>
-        /// <param name = "value">The value from which to construct the instance.</param>
+        /// <param name="value">The value from which to construct the instance.</param>
         public Parameter(in JsonElement value)
         {
             this.jsonElementBacking = value;
@@ -49,19 +61,33 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
+        /// Initializes a new instance of the <see cref="Parameter"/> struct.
+        /// </summary>
+        /// <param name="value">The value from which to construct the instance.</param>
+        public Parameter(ImmutableList<JsonObjectProperty> value)
+        {
+            this.backing = Backing.Object;
+            this.jsonElementBacking = default;
+            this.objectBacking = value;
+        }
+
+        /// <summary>
         /// Gets the schema location from which this type was generated.
         /// </summary>
         public static string SchemaLocation { get; } = "https://spec.openapis.org/oas/3.0/schema/2021-09-28#/definitions/Parameter";
+
         /// <summary>
         /// Gets a Null instance.
         /// </summary>
         public static Parameter Null { get; } = new(JsonValueHelpers.NullElement);
+
         /// <summary>
         /// Gets an Undefined instance.
         /// </summary>
         public static Parameter Undefined { get; }
+
         /// <summary>
-        /// Gets the default instance of the type.
+        /// Gets the default instance.
         /// </summary>
         public static Parameter DefaultInstance { get; }
 
@@ -188,6 +214,72 @@ public readonly partial struct OpenApiDocument
             }
         }
 
+        /// <summary>
+        /// Gets the instance as a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExampleXorExamples" />.
+        /// </summary>
+        public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExampleXorExamples AsExampleXorExamples
+        {
+            get
+            {
+                return this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExampleXorExamples>();
+            }
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether the instance is a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExampleXorExamples" />.
+        /// </summary>
+        public bool IsExampleXorExamples
+        {
+            get
+            {
+                return this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExampleXorExamples>().IsValid();
+            }
+        }
+
+        /// <summary>
+        /// Gets the instance as a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation" />.
+        /// </summary>
+        public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation AsParameterLocation
+        {
+            get
+            {
+                return this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation>();
+            }
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether the instance is a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation" />.
+        /// </summary>
+        public bool IsParameterLocation
+        {
+            get
+            {
+                return this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation>().IsValid();
+            }
+        }
+
+        /// <summary>
+        /// Gets the instance as a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent" />.
+        /// </summary>
+        public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent AsSchemaXorContent
+        {
+            get
+            {
+                return this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent>();
+            }
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether the instance is a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent" />.
+        /// </summary>
+        public bool IsSchemaXorContent
+        {
+            get
+            {
+                return this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent>().IsValid();
+            }
+        }
+
         /// <inheritdoc/>
         public bool HasJsonElementBacking
         {
@@ -221,11 +313,6 @@ public readonly partial struct OpenApiDocument
                     return JsonValueKind.Object;
                 }
 
-                if ((this.backing & Backing.Null) != 0)
-                {
-                    return JsonValueKind.Null;
-                }
-
                 return JsonValueKind.Undefined;
             }
         }
@@ -233,9 +320,8 @@ public readonly partial struct OpenApiDocument
         /// <summary>
         /// Conversion from JsonAny.
         /// </summary>
-        /// <param name = "value">The value from which to convert.</param>
-        /// <exception cref = "InvalidOperationException">The value was not compatible with this type.</exception>
-        public static implicit operator Parameter(in JsonAny value)
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator Parameter(JsonAny value)
         {
             return value.As<Parameter>();
         }
@@ -243,43 +329,309 @@ public readonly partial struct OpenApiDocument
         /// <summary>
         /// Conversion to JsonAny.
         /// </summary>
-        /// <param name = "value">The value from which to convert.</param>
-        /// <exception cref = "InvalidOperationException">The value was not compatible with this type.</exception>
-        public static implicit operator JsonAny(in Parameter value)
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator JsonAny(Parameter value)
         {
             return value.AsAny;
         }
 
         /// <summary>
-        /// Equality operator.
+        /// Conversion to <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExampleXorExamples"/>.
         /// </summary>
-        /// <param name = "left">The lhs.</param>
-        /// <param name = "right">The rhs.</param>
-        /// <returns><c>True</c> if the values are equal.</returns>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExampleXorExamples(Parameter value)
+        {
+            return value.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExampleXorExamples>();
+        }
+
+        /// <summary>
+        /// Conversion from <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExampleXorExamples"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static explicit operator Parameter(Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExampleXorExamples value)
+        {
+            return value.As<Parameter>();
+        }
+
+        /// <summary>
+        /// Conversion to <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent(Parameter value)
+        {
+            return value.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent>();
+        }
+
+        /// <summary>
+        /// Conversion from <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static explicit operator Parameter(Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent value)
+        {
+            return value.As<Parameter>();
+        }
+
+        /// <summary>
+        /// Conversion to <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation(Parameter value)
+        {
+            return value.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation>();
+        }
+
+        /// <summary>
+        /// Conversion from <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static explicit operator Parameter(Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation value)
+        {
+            return value.As<Parameter>();
+        }
+
+        /// <summary>
+        /// Conversion to <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.RequiredSchema"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static explicit operator Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.RequiredSchema(Parameter value)
+        {
+            return value.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.RequiredSchema>();
+        }
+
+        /// <summary>
+        /// Conversion from <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.RequiredSchema"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static explicit operator Parameter(Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.RequiredSchema value)
+        {
+            return value.As<Parameter>();
+        }
+
+        /// <summary>
+        /// Conversion to <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static explicit operator Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent(Parameter value)
+        {
+            return value.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent>();
+        }
+
+        /// <summary>
+        /// Conversion from <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static explicit operator Parameter(Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent value)
+        {
+            return value.As<Parameter>();
+        }
+
+        /// <summary>
+        /// Conversion to <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf0Entity"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static explicit operator Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf0Entity(Parameter value)
+        {
+            return value.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf0Entity>();
+        }
+
+        /// <summary>
+        /// Conversion from <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf0Entity"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static explicit operator Parameter(Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf0Entity value)
+        {
+            return value.As<Parameter>();
+        }
+
+        /// <summary>
+        /// Conversion to <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf1Entity"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static explicit operator Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf1Entity(Parameter value)
+        {
+            return value.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf1Entity>();
+        }
+
+        /// <summary>
+        /// Conversion from <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf1Entity"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static explicit operator Parameter(Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf1Entity value)
+        {
+            return value.As<Parameter>();
+        }
+
+        /// <summary>
+        /// Conversion to <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf2Entity"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static explicit operator Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf2Entity(Parameter value)
+        {
+            return value.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf2Entity>();
+        }
+
+        /// <summary>
+        /// Conversion from <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf2Entity"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static explicit operator Parameter(Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf2Entity value)
+        {
+            return value.As<Parameter>();
+        }
+
+        /// <summary>
+        /// Conversion to <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf3Entity"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static explicit operator Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf3Entity(Parameter value)
+        {
+            return value.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf3Entity>();
+        }
+
+        /// <summary>
+        /// Conversion from <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf3Entity"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static explicit operator Parameter(Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf3Entity value)
+        {
+            return value.As<Parameter>();
+        }
+
+        /// <summary>
+        /// Conversion to <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf4Entity"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static explicit operator Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf4Entity(Parameter value)
+        {
+            return value.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf4Entity>();
+        }
+
+        /// <summary>
+        /// Conversion from <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf4Entity"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static explicit operator Parameter(Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf4Entity value)
+        {
+            return value.As<Parameter>();
+        }
+
+        /// <summary>
+        /// Conversion to <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInPath"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static explicit operator Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInPath(Parameter value)
+        {
+            return value.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInPath>();
+        }
+
+        /// <summary>
+        /// Conversion from <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInPath"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static explicit operator Parameter(Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInPath value)
+        {
+            return value.As<Parameter>();
+        }
+
+        /// <summary>
+        /// Conversion to <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInQuery"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static explicit operator Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInQuery(Parameter value)
+        {
+            return value.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInQuery>();
+        }
+
+        /// <summary>
+        /// Conversion from <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInQuery"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static explicit operator Parameter(Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInQuery value)
+        {
+            return value.As<Parameter>();
+        }
+
+        /// <summary>
+        /// Conversion to <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInHeader"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static explicit operator Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInHeader(Parameter value)
+        {
+            return value.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInHeader>();
+        }
+
+        /// <summary>
+        /// Conversion from <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInHeader"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static explicit operator Parameter(Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInHeader value)
+        {
+            return value.As<Parameter>();
+        }
+
+        /// <summary>
+        /// Conversion to <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInCookie"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static explicit operator Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInCookie(Parameter value)
+        {
+            return value.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInCookie>();
+        }
+
+        /// <summary>
+        /// Conversion from <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInCookie"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static explicit operator Parameter(Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInCookie value)
+        {
+            return value.As<Parameter>();
+        }
+
+        /// <summary>
+        /// Operator ==.
+        /// </summary>
+        /// <param name="left">The lhs of the operator.</param>
+        /// <param name="right">The rhs of the operator.</param>
+        /// <returns>
+        /// <c>True</c> if the values are equal.
+        /// </returns>
         public static bool operator ==(in Parameter left, in Parameter right)
         {
             return left.Equals(right);
         }
 
         /// <summary>
-        /// Inequality operator.
+        /// Operator !=.
         /// </summary>
-        /// <param name = "left">The lhs.</param>
-        /// <param name = "right">The rhs.</param>
-        /// <returns><c>True</c> if the values are equal.</returns>
+        /// <param name="left">The lhs of the operator.</param>
+        /// <param name="right">The rhs of the operator.</param>
+        /// <returns>
+        /// <c>True</c> if the values are not equal.
+        /// </returns>
         public static bool operator !=(in Parameter left, in Parameter right)
         {
             return !left.Equals(right);
         }
 
         /// <summary>
-        /// Gets an instance of the JSON value from a JsonAny value.
+        /// Gets an instance of the JSON value from a <see cref="JsonElement"/> value.
         /// </summary>
-        /// <param name = "value">The <see cref = "JsonAny"/> value from which to instantiate the instance.</param>
-        /// <returns>An instance of this type, initialized from the <see cref = "JsonAny"/>.</returns>
+        /// <param name="value">The <see cref="JsonElement"/> value from which to instantiate the instance.</param>
+        /// <returns>An instance of this type, initialized from the <see cref="JsonElement"/>.</returns>
         /// <remarks>The returned value will have a <see cref = "IJsonValue.ValueKind"/> of <see cref = "JsonValueKind.Undefined"/> if the
-        /// value cannot be constructed from the given instance (e.g. because they have an incompatible dotnet backing type.
+        /// value cannot be constructed from the given instance (e.g. because they have an incompatible .NET backing type).
         /// </remarks>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Parameter FromJson(in JsonElement value)
+        {
+            return new(value);
+        }
+
+        /// <summary>
+        /// Gets an instance of the JSON value from a <see cref="JsonAny"/> value.
+        /// </summary>
+        /// <param name="value">The <see cref="JsonAny"/> value from which to instantiate the instance.</param>
+        /// <returns>An instance of this type, initialized from the <see cref="JsonAny"/> value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Parameter FromAny(in JsonAny value)
         {
@@ -288,8 +640,7 @@ public readonly partial struct OpenApiDocument
                 return new(value.AsJsonElement);
             }
 
-            JsonValueKind valueKind = value.ValueKind;
-            return valueKind switch
+            return value.ValueKind switch
             {
                 JsonValueKind.Object => new(value.AsObject.AsPropertyBacking()),
                 JsonValueKind.Null => Null,
@@ -297,100 +648,69 @@ public readonly partial struct OpenApiDocument
             };
         }
 
+#if NET8_0_OR_GREATER
         /// <summary>
-        /// Gets an instance of the JSON value from a <see cref = "JsonElement"/> value.
+        /// Gets an instance of the JSON value from the provided value.
         /// </summary>
-        /// <param name = "value">The <see cref = "JsonElement"/> value from which to instantiate the instance.</param>
-        /// <returns>An instance of this type, initialized from the <see cref = "JsonElement"/>.</returns>
+        /// <typeparam name="TValue">The type of the value.</typeparam>
+        /// <param name="value">The value from which to instantiate the instance.</param>
+        /// <returns>An instance of this type, initialized from the provided value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Parameter FromJson(in JsonElement value)
+        static Parameter IJsonValue<Parameter>.FromBoolean<TValue>(in TValue value)
         {
-            return new(value);
+            if (value.HasJsonElementBacking)
+            {
+                return new(value.AsJsonElement);
+            }
+
+            return Undefined;
         }
+#endif
 
 #if NET8_0_OR_GREATER
-    /// <summary>
-    /// Gets an instance of the JSON value from a boolean value.
-    /// </summary>
-    /// <typeparam name = "TValue">The type of the value.</typeparam>
-    /// <param name="value">The value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the value.</returns>
-    /// <remarks>This will be Parameter.Undefined if the type is not compatible.</remarks>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    static Parameter IJsonValue<Parameter>.FromBoolean<TValue>(in TValue value)
-    {
-        if (value.HasJsonElementBacking)
-        {
-            return new(value.AsJsonElement);
-        }
-
-        return Undefined;
-    }
-#endif
-#if NET8_0_OR_GREATER
-    /// <summary>
-    /// Gets an instance of the JSON value from a string value.
-    /// </summary>
-    /// <typeparam name="TValue">The type of the value.</typeparam>
-    /// <param name="value">The value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the value.</returns>
-    /// <remarks>This will be Parameter.Undefined if the type is not compatible.</remarks>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    static Parameter IJsonValue<Parameter>.FromString<TValue>(in TValue value)
-    {
-        if (value.HasJsonElementBacking)
-        {
-            return new(value.AsJsonElement);
-        }
-
-        return Undefined;
-    }
-#endif
-#if NET8_0_OR_GREATER
-    /// <summary>
-    /// Gets an instance of the JSON value from a number value.
-    /// </summary>
-    /// <typeparam name="TValue">The type of the value.</typeparam>
-    /// <param name="value">The value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the value.</returns>
-    /// <remarks>This will be Parameter.Undefined if the type is not compatible.</remarks>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    static Parameter IJsonValue<Parameter>.FromNumber<TValue>(in TValue value)
-    {
-        if (value.HasJsonElementBacking)
-        {
-            return new(value.AsJsonElement);
-        }
-
-        return Undefined;
-    }
-#endif
-#if NET8_0_OR_GREATER
-    /// <summary>
-    /// Gets an instance of the JSON value from an array value.
-    /// </summary>
-    /// <typeparam name="TValue">The type of the value.</typeparam>
-    /// <param name="value">The value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the value.</returns>
-    /// <remarks>This will be Parameter.Undefined if the type is not compatible.</remarks>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    static Parameter IJsonValue<Parameter>.FromArray<TValue>(in TValue value)
-    {
-        if (value.HasJsonElementBacking)
-        {
-            return new(value.AsJsonElement);
-        }
-
-        return Undefined;
-    }
-#endif
         /// <summary>
-        /// Gets an instance of the JSON value from an object value.
+        /// Gets an instance of the JSON value from the provided value.
         /// </summary>
-        /// <typeparam name = "TValue">The type of the value.</typeparam>
-        /// <param name = "value">The value from which to instantiate the instance.</param>
-        /// <returns>An instance of this type, initialized from the value.</returns>
-        /// <remarks>This will be Parameter.Undefined if the type is not compatible.</remarks>
+        /// <typeparam name="TValue">The type of the value.</typeparam>
+        /// <param name="value">The value from which to instantiate the instance.</param>
+        /// <returns>An instance of this type, initialized from the provided value.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static Parameter IJsonValue<Parameter>.FromString<TValue>(in TValue value)
+        {
+            if (value.HasJsonElementBacking)
+            {
+                return new(value.AsJsonElement);
+            }
+
+            return Undefined;
+        }
+#endif
+
+#if NET8_0_OR_GREATER
+        /// <summary>
+        /// Gets an instance of the JSON value from the provided value.
+        /// </summary>
+        /// <typeparam name="TValue">The type of the value.</typeparam>
+        /// <param name="value">The value from which to instantiate the instance.</param>
+        /// <returns>An instance of this type, initialized from the provided value.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static Parameter IJsonValue<Parameter>.FromNumber<TValue>(in TValue value)
+        {
+            if (value.HasJsonElementBacking)
+            {
+                return new(value.AsJsonElement);
+            }
+
+            return Undefined;
+        }
+#endif
+
+        /// <summary>
+        /// Gets an instance of the JSON value from the provided value.
+        /// </summary>
+        /// <typeparam name="TValue">The type of the value.</typeparam>
+        /// <param name="value">The value from which to instantiate the instance.</param>
+        /// <returns>An instance of this type, initialized from the provided value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Parameter FromObject<TValue>(in TValue value)
             where TValue : struct, IJsonObject<TValue>
@@ -400,142 +720,166 @@ public readonly partial struct OpenApiDocument
                 return new(value.AsJsonElement);
             }
 
-            if (value.ValueKind == JsonValueKind.Object)
+            return value.ValueKind switch
             {
-                return new(value.AsPropertyBacking());
+                JsonValueKind.Object => new(value.AsPropertyBacking()),
+                JsonValueKind.Null => Null,
+                _ => Undefined,
+            };
+        }
+
+#if NET8_0_OR_GREATER
+        /// <summary>
+        /// Gets an instance of the JSON value from the provided value.
+        /// </summary>
+        /// <typeparam name="TValue">The type of the value.</typeparam>
+        /// <param name="value">The value from which to instantiate the instance.</param>
+        /// <returns>An instance of this type, initialized from the provided value.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static Parameter IJsonValue<Parameter>.FromArray<TValue>(in TValue value)
+        {
+            if (value.HasJsonElementBacking)
+            {
+                return new(value.AsJsonElement);
             }
 
             return Undefined;
         }
+#endif
 
         /// <summary>
-        /// Parses a JSON string into a Parameter.
+        /// Parses the Parameter.
         /// </summary>
-        /// <param name = "json">The json string to parse.</param>
-        /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-        /// <returns>A <see cref = "Parameter"/> instance built from the JSON string.</returns>
-        public static Parameter Parse(string json, JsonDocumentOptions options = default)
+        /// <param name="source">The source of the JSON string to parse.</param>
+        /// <param name="options">The (optional) JsonDocumentOptions.</param>
+        public static Parameter Parse(string source, JsonDocumentOptions options = default)
         {
-            using var jsonDocument = JsonDocument.Parse(json, options);
-            return new Parameter(jsonDocument.RootElement.Clone());
+            using var jsonDocument = JsonDocument.Parse(source, options);
+            return new(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses a JSON string into a Parameter.
+        /// Parses the Parameter.
         /// </summary>
-        /// <param name = "utf8Json">The json string to parse.</param>
-        /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-        /// <returns>A <see cref = "Parameter"/> instance built from the JSON string.</returns>
-        public static Parameter Parse(Stream utf8Json, JsonDocumentOptions options = default)
+        /// <param name="source">The source of the JSON string to parse.</param>
+        /// <param name="options">The (optional) JsonDocumentOptions.</param>
+        public static Parameter Parse(Stream source, JsonDocumentOptions options = default)
         {
-            using var jsonDocument = JsonDocument.Parse(utf8Json, options);
-            return new Parameter(jsonDocument.RootElement.Clone());
+            using var jsonDocument = JsonDocument.Parse(source, options);
+            return new(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses a JSON string into a Parameter.
+        /// Parses the Parameter.
         /// </summary>
-        /// <param name = "utf8Json">The json string to parse.</param>
-        /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-        /// <returns>A <see cref = "Parameter"/> instance built from the JSON string.</returns>
-        public static Parameter Parse(ReadOnlyMemory<byte> utf8Json, JsonDocumentOptions options = default)
+        /// <param name="source">The source of the JSON string to parse.</param>
+        /// <param name="options">The (optional) JsonDocumentOptions.</param>
+        public static Parameter Parse(ReadOnlyMemory<byte> source, JsonDocumentOptions options = default)
         {
-            using var jsonDocument = JsonDocument.Parse(utf8Json, options);
-            return new Parameter(jsonDocument.RootElement.Clone());
+            using var jsonDocument = JsonDocument.Parse(source, options);
+            return new(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses a JSON string into a Parameter.
+        /// Parses the Parameter.
         /// </summary>
-        /// <param name = "json">The json string to parse.</param>
-        /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-        /// <returns>A <see cref = "Parameter"/> instance built from the JSON string.</returns>
-        public static Parameter Parse(ReadOnlyMemory<char> json, JsonDocumentOptions options = default)
+        /// <param name="source">The source of the JSON string to parse.</param>
+        /// <param name="options">The (optional) JsonDocumentOptions.</param>
+        public static Parameter Parse(ReadOnlyMemory<char> source, JsonDocumentOptions options = default)
         {
-            using var jsonDocument = JsonDocument.Parse(json, options);
-            return new Parameter(jsonDocument.RootElement.Clone());
+            using var jsonDocument = JsonDocument.Parse(source, options);
+            return new(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses a JSON string into a Parameter.
+        /// Parses the Parameter.
         /// </summary>
-        /// <param name = "utf8Json">The json string to parse.</param>
-        /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-        /// <returns>A <see cref = "Parameter"/> instance built from the JSON string.</returns>
-        public static Parameter Parse(ReadOnlySequence<byte> utf8Json, JsonDocumentOptions options = default)
+        /// <param name="source">The source of the JSON string to parse.</param>
+        /// <param name="options">The (optional) JsonDocumentOptions.</param>
+        public static Parameter Parse(ReadOnlySequence<byte> source, JsonDocumentOptions options = default)
         {
-            using var jsonDocument = JsonDocument.Parse(utf8Json, options);
-            return new Parameter(jsonDocument.RootElement.Clone());
+            using var jsonDocument = JsonDocument.Parse(source, options);
+            return new(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses a JSON value from a buffer.
+        /// Parses the Parameter.
         /// </summary>
-        /// <param name = "buffer">The buffer from which to parse the value.</param>
-        /// <returns>The parsed value.</returns>
-        static Parameter ParseValue(ReadOnlySpan<char> buffer)
+        /// <param name="source">The source of the JSON string to parse.</param>
+        public static Parameter ParseValue(string source)
         {
 #if NET8_0_OR_GREATER
-        return IJsonValue<Parameter>.ParseValue(buffer);
+            return IJsonValue<Parameter>.ParseValue(source);
 #else
-            return JsonValueHelpers.ParseValue<Parameter>(buffer);
+            return JsonValueHelpers.ParseValue<Parameter>(source.AsSpan());
 #endif
         }
 
         /// <summary>
-        /// Parses a JSON value from a buffer.
+        /// Parses the Parameter.
         /// </summary>
-        /// <param name = "buffer">The buffer from which to parse the value.</param>
-        /// <returns>The parsed value.</returns>
-        static Parameter ParseValue(ReadOnlySpan<byte> buffer)
+        /// <param name="source">The source of the JSON string to parse.</param>
+        public static Parameter ParseValue(ReadOnlySpan<char> source)
         {
 #if NET8_0_OR_GREATER
-        return IJsonValue<Parameter>.ParseValue(buffer);
+            return IJsonValue<Parameter>.ParseValue(source);
 #else
-            return JsonValueHelpers.ParseValue<Parameter>(buffer);
+            return JsonValueHelpers.ParseValue<Parameter>(source);
 #endif
         }
 
         /// <summary>
-        /// Parses a JSON value from a buffer.
+        /// Parses the Parameter.
         /// </summary>
-        /// <param name = "reader">The reader from which to parse the value.</param>
-        /// <returns>The parsed value.</returns>
-        static Parameter ParseValue(ref Utf8JsonReader reader)
+        /// <param name="source">The source of the JSON string to parse.</param>
+        public static Parameter ParseValue(ReadOnlySpan<byte> source)
         {
 #if NET8_0_OR_GREATER
-        return IJsonValue<Parameter>.ParseValue(ref reader);
+            return IJsonValue<Parameter>.ParseValue(source);
 #else
-            return JsonValueHelpers.ParseValue<Parameter>(ref reader);
+            return JsonValueHelpers.ParseValue<Parameter>(source);
+#endif
+        }
+
+        /// <summary>
+        /// Parses the Parameter.
+        /// </summary>
+        /// <param name="source">The source of the JSON string to parse.</param>
+        public static Parameter ParseValue(ref Utf8JsonReader source)
+        {
+#if NET8_0_OR_GREATER
+            return IJsonValue<Parameter>.ParseValue(ref source);
+#else
+            return JsonValueHelpers.ParseValue<Parameter>(ref source);
 #endif
         }
 
         /// <summary>
         /// Gets the value as an instance of the target value.
         /// </summary>
-        /// <typeparam name = "TTarget">The type of the target.</typeparam>
+        /// <typeparam name="TTarget">The type of the target.</typeparam>
         /// <returns>An instance of the target type.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public TTarget As<TTarget>()
             where TTarget : struct, IJsonValue<TTarget>
         {
 #if NET8_0_OR_GREATER
-        if ((this.backing & Backing.JsonElement) != 0)
-        {
-            return TTarget.FromJson(this.jsonElementBacking);
-        }
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                return TTarget.FromJson(this.jsonElementBacking);
+            }
 
-        if ((this.backing & Backing.Object) != 0)
-        {
-            return TTarget.FromObject(this);
-        }
+            if ((this.backing & Backing.Object) != 0)
+            {
+                return TTarget.FromObject(this);
+            }
 
-        if ((this.backing & Backing.Null) != 0)
-        {
-            return TTarget.Null;
-        }
+            if ((this.backing & Backing.Null) != 0)
+            {
+                return TTarget.Null;
+            }
 
-        return TTarget.Undefined;
+            return TTarget.Undefined;
 #else
             return this.As<Parameter, TTarget>();
 #endif
@@ -544,24 +888,64 @@ public readonly partial struct OpenApiDocument
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            return (obj is IJsonValue jv && this.Equals(jv.AsAny)) || (obj is null && this.IsNull());
+            return
+                (obj is IJsonValue jv && this.Equals(jv.As<Parameter>())) ||
+                (obj is null && this.IsNull());
         }
 
         /// <inheritdoc/>
         public bool Equals<T>(in T other)
             where T : struct, IJsonValue<T>
         {
-            return JsonValueHelpers.CompareValues(this, other);
+            return this.Equals(other.As<Parameter>());
         }
 
         /// <summary>
         /// Equality comparison.
         /// </summary>
-        /// <param name = "other">The other item with which to compare.</param>
+        /// <param name="other">The other item with which to compare.</param>
         /// <returns><see langword="true"/> if the values were equal.</returns>
         public bool Equals(in Parameter other)
         {
-            return JsonValueHelpers.CompareValues(this, other);
+            JsonValueKind thisKind = this.ValueKind;
+            JsonValueKind otherKind = other.ValueKind;
+            if (thisKind != otherKind)
+            {
+                return false;
+            }
+
+            if (thisKind == JsonValueKind.Null || thisKind == JsonValueKind.Undefined)
+            {
+                return true;
+            }
+
+            if (thisKind == JsonValueKind.Object)
+            {
+                int count = 0;
+                foreach (JsonObjectProperty property in this.EnumerateObject())
+                {
+                    if (!other.TryGetProperty(property.Name, out JsonAny value) || !property.Value.Equals(value))
+                    {
+                        return false;
+                    }
+
+                    count++;
+                }
+
+                int otherCount = 0;
+                foreach (JsonObjectProperty otherProperty in other.EnumerateObject())
+                {
+                    otherCount++;
+                    if (otherCount > count)
+                    {
+                        return false;
+                    }
+                }
+
+                return count == otherCount;
+            }
+
+            return false;
         }
 
         /// <inheritdoc/>
@@ -580,12 +964,14 @@ public readonly partial struct OpenApiDocument
             if ((this.backing & Backing.Object) != 0)
             {
                 JsonValueHelpers.WriteProperties(this.objectBacking, writer);
+
                 return;
             }
 
             if ((this.backing & Backing.Null) != 0)
             {
                 writer.WriteNullValue();
+
                 return;
             }
         }
@@ -593,13 +979,131 @@ public readonly partial struct OpenApiDocument
         /// <inheritdoc/>
         public override int GetHashCode()
         {
-            return JsonValueHelpers.GetHashCode(this);
+            return this.ValueKind switch
+            {
+                JsonValueKind.Array => JsonValueHelpers.GetArrayHashCode(((IJsonValue)this).AsArray),
+                JsonValueKind.Object => JsonValueHelpers.GetObjectHashCode(this),
+                JsonValueKind.Number => JsonValueHelpers.GetHashCodeForNumber(((IJsonValue)this).AsNumber),
+                JsonValueKind.String => JsonValueHelpers.GetHashCodeForString(((IJsonValue)this).AsString),
+                JsonValueKind.True => true.GetHashCode(),
+                JsonValueKind.False => false.GetHashCode(),
+                JsonValueKind.Null => JsonValueHelpers.NullHashCode,
+                _ => JsonValueHelpers.UndefinedHashCode,
+            };
         }
 
         /// <inheritdoc/>
         public override string ToString()
         {
             return this.Serialize();
+        }
+
+        /// <summary>
+        /// Matches the value against the composed values, and returns the result of calling the provided match function for the first match found.
+        /// </summary>
+        /// <typeparam name="TIn">The immutable context to pass in to the match function.</typeparam>
+        /// <typeparam name="TOut">The result of calling the match function.</typeparam>
+        /// <param name="context">The context to pass to the match function.</param>
+        /// <param name="matchExampleXorExamples">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExampleXorExamples"/>.</param>
+        /// <param name="matchSchemaXorContent">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent"/>.</param>
+        /// <param name="matchParameterLocation">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation"/>.</param>
+        /// <param name="defaultMatch">Match any other value.</param>
+        /// <returns>An instance of the value returned by the match function.</returns>
+        public TOut Match<TIn, TOut>(
+            in TIn context,
+            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExampleXorExamples, TIn, TOut> matchExampleXorExamples,
+            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent, TIn, TOut> matchSchemaXorContent,
+            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation, TIn, TOut> matchParameterLocation,
+            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Parameter, TIn, TOut> defaultMatch)
+        {
+            Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExampleXorExamples matchExampleXorExamplesValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExampleXorExamples>();
+            if (matchExampleXorExamplesValue.IsValid())
+            {
+                return matchExampleXorExamples(matchExampleXorExamplesValue, context);
+            }
+
+            Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent matchSchemaXorContentValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent>();
+            if (matchSchemaXorContentValue.IsValid())
+            {
+                return matchSchemaXorContent(matchSchemaXorContentValue, context);
+            }
+
+            Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation matchParameterLocationValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation>();
+            if (matchParameterLocationValue.IsValid())
+            {
+                return matchParameterLocation(matchParameterLocationValue, context);
+            }
+
+            return defaultMatch(this, context);
+        }
+
+        /// <summary>
+        /// Matches the value against the composed values, and returns the result of calling the provided match function for the first match found.
+        /// </summary>
+        /// <typeparam name="TOut">The result of calling the match function.</typeparam>
+        /// <param name="matchExampleXorExamples">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExampleXorExamples"/>.</param>
+        /// <param name="matchSchemaXorContent">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent"/>.</param>
+        /// <param name="matchParameterLocation">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation"/>.</param>
+        /// <param name="defaultMatch">Match any other value.</param>
+        /// <returns>An instance of the value returned by the match function.</returns>
+        public TOut Match<TOut>(
+            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExampleXorExamples, TOut> matchExampleXorExamples,
+            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent, TOut> matchSchemaXorContent,
+            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation, TOut> matchParameterLocation,
+            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Parameter, TOut> defaultMatch)
+        {
+            Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExampleXorExamples matchExampleXorExamplesValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExampleXorExamples>();
+            if (matchExampleXorExamplesValue.IsValid())
+            {
+                return matchExampleXorExamples(matchExampleXorExamplesValue);
+            }
+
+            Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent matchSchemaXorContentValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent>();
+            if (matchSchemaXorContentValue.IsValid())
+            {
+                return matchSchemaXorContent(matchSchemaXorContentValue);
+            }
+
+            Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation matchParameterLocationValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation>();
+            if (matchParameterLocationValue.IsValid())
+            {
+                return matchParameterLocation(matchParameterLocationValue);
+            }
+
+            return defaultMatch(this);
+        }
+
+        /// <summary>
+        /// Gets the value as a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExampleXorExamples" />.
+        /// </summary>
+        /// <param name="result">The result of the conversions.</param>
+        /// <returns><see langword="true" /> if the conversion was valid.</returns>
+        public bool TryGetAsExampleXorExamples(out Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExampleXorExamples result)
+        {
+            result = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExampleXorExamples>();
+            return result.IsValid();
+        }
+
+        /// <summary>
+        /// Gets the value as a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation" />.
+        /// </summary>
+        /// <param name="result">The result of the conversions.</param>
+        /// <returns><see langword="true" /> if the conversion was valid.</returns>
+        public bool TryGetAsParameterLocation(out Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation result)
+        {
+            result = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation>();
+            return result.IsValid();
+        }
+
+        /// <summary>
+        /// Gets the value as a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent" />.
+        /// </summary>
+        /// <param name="result">The result of the conversions.</param>
+        /// <returns><see langword="true" /> if the conversion was valid.</returns>
+        public bool TryGetAsSchemaXorContent(out Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent result)
+        {
+            result = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent>();
+            return result.IsValid();
         }
     }
 }

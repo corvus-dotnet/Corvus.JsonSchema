@@ -6,7 +6,10 @@
 //     the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
+
 #nullable enable
+
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
 
@@ -32,23 +35,278 @@ public readonly partial struct MetaData
         }
 
         JsonValueKind valueKind = this.ValueKind;
-        result = this.ValidateType(valueKind, result, level);
+
+        result = CorvusValidation.TypeValidationHandler(valueKind, result, level);
+
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
             return result;
         }
 
-        result = this.ValidateObject(valueKind, result, level);
+        result = CorvusValidation.ObjectValidationHandler(this, valueKind, result, level);
+
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
             return result;
         }
 
-        if (level != ValidationLevel.Flag)
+        if (level > ValidationLevel.Basic)
         {
             result = result.PopLocation();
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// Validation constants for the type.
+    /// </summary>
+    public static partial class CorvusValidation
+    {
+        /// <summary>
+        /// Core type validation.
+        /// </summary>
+        /// <param name="valueKind">The <see cref="JsonValueKind" /> of the value to validate.</param>
+        /// <param name="validationContext">The current validation context.</param>
+        /// <param name="level">The current validation level.</param>
+        /// <returns>The resulting validation context after validation.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static ValidationContext TypeValidationHandler(
+            JsonValueKind valueKind,
+            in ValidationContext validationContext,
+            ValidationLevel level = ValidationLevel.Flag)
+        {
+            bool isValid = false;
+
+            ValidationContext localResultObject = Corvus.Json.ValidateWithoutCoreType.TypeObject(valueKind, ValidationContext.ValidContext, level, "type");
+            if (level == ValidationLevel.Flag && localResultObject.IsValid)
+            {
+                return validationContext;
+            }
+
+            if (localResultObject.IsValid)
+            {
+                isValid = true;
+            }
+
+            ValidationContext localResultBoolean = Corvus.Json.ValidateWithoutCoreType.TypeBoolean(valueKind, ValidationContext.ValidContext, level, "type");
+            if (level == ValidationLevel.Flag && localResultBoolean.IsValid)
+            {
+                return validationContext;
+            }
+
+            if (localResultBoolean.IsValid)
+            {
+                isValid = true;
+            }
+
+            if (!isValid)
+            {
+                if (level >= ValidationLevel.Verbose)
+                {
+                    return validationContext.WithResult(isValid: false, $"Validation type - should have been 'object', 'boolean' but was '{valueKind}'", "type");
+                }
+                else if (level >= ValidationLevel.Detailed)
+                {
+                    return validationContext.WithResult(isValid: false, "Validation type - should have been 'object', 'boolean'.", "type");
+                }
+                else
+                {
+                    return validationContext.WithResult(isValid: false);
+                }
+            }
+
+            if (level >= ValidationLevel.Verbose)
+            {
+                return validationContext.WithResult(isValid: true, $"Validation type - was 'object', 'boolean'.", "type");
+            }
+            return validationContext;
+        }
+
+        /// <summary>
+        /// Object validation.
+        /// </summary>
+        /// <param name="value">The value to validate.</param>
+        /// <param name="valueKind">The <see cref="JsonValueKind" /> of the value to validate.</param>
+        /// <param name="validationContext">The current validation context.</param>
+        /// <param name="level">The current validation level.</param>
+        /// <returns>The resulting validation context after validation.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static ValidationContext ObjectValidationHandler(
+            in MetaData value,
+            JsonValueKind valueKind,
+            in ValidationContext validationContext,
+            ValidationLevel level = ValidationLevel.Flag)
+        {
+            ValidationContext result = validationContext;
+            if (valueKind != JsonValueKind.Object)
+            {
+                if (level == ValidationLevel.Verbose)
+                {
+                    ValidationContext ignoredResult = validationContext;
+                    ignoredResult = ignoredResult.WithResult(isValid: true, "Validation properties - ignored because the value is not an object", "properties");
+
+                    return ignoredResult;
+                }
+
+                return validationContext;
+            }
+
+            int propertyCount = 0;
+            foreach (JsonObjectProperty property in value.EnumerateObject())
+            {
+                if (property.NameEquals(JsonPropertyNames.DefaultUtf8, JsonPropertyNames.Default))
+                {
+                    result = result.WithLocalProperty(propertyCount);
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/default"), JsonPropertyNames.Default);
+                    }
+
+                    ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonAny>().Validate(result.CreateChildContext(), level);
+                    if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                    {
+                        return propertyResult;
+                    }
+
+                    result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PopLocation();
+                    }
+                }
+                else if (property.NameEquals(JsonPropertyNames.DeprecatedUtf8, JsonPropertyNames.Deprecated))
+                {
+                    result = result.WithLocalProperty(propertyCount);
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/deprecated"), JsonPropertyNames.Deprecated);
+                    }
+
+                    ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonSchema.Draft202012.MetaData.DeprecatedEntity>().Validate(result.CreateChildContext(), level);
+                    if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                    {
+                        return propertyResult;
+                    }
+
+                    result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PopLocation();
+                    }
+                }
+                else if (property.NameEquals(JsonPropertyNames.DescriptionUtf8, JsonPropertyNames.Description))
+                {
+                    result = result.WithLocalProperty(propertyCount);
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/description"), JsonPropertyNames.Description);
+                    }
+
+                    ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonString>().Validate(result.CreateChildContext(), level);
+                    if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                    {
+                        return propertyResult;
+                    }
+
+                    result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PopLocation();
+                    }
+                }
+                else if (property.NameEquals(JsonPropertyNames.ExamplesUtf8, JsonPropertyNames.Examples))
+                {
+                    result = result.WithLocalProperty(propertyCount);
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/examples"), JsonPropertyNames.Examples);
+                    }
+
+                    ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonArray>().Validate(result.CreateChildContext(), level);
+                    if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                    {
+                        return propertyResult;
+                    }
+
+                    result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PopLocation();
+                    }
+                }
+                else if (property.NameEquals(JsonPropertyNames.ReadOnlyUtf8, JsonPropertyNames.ReadOnly))
+                {
+                    result = result.WithLocalProperty(propertyCount);
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/readOnly"), JsonPropertyNames.ReadOnly);
+                    }
+
+                    ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonSchema.Draft202012.MetaData.ReadOnlyEntity>().Validate(result.CreateChildContext(), level);
+                    if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                    {
+                        return propertyResult;
+                    }
+
+                    result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PopLocation();
+                    }
+                }
+                else if (property.NameEquals(JsonPropertyNames.TitleUtf8, JsonPropertyNames.Title))
+                {
+                    result = result.WithLocalProperty(propertyCount);
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/title"), JsonPropertyNames.Title);
+                    }
+
+                    ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonString>().Validate(result.CreateChildContext(), level);
+                    if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                    {
+                        return propertyResult;
+                    }
+
+                    result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PopLocation();
+                    }
+                }
+                else if (property.NameEquals(JsonPropertyNames.WriteOnlyUtf8, JsonPropertyNames.WriteOnly))
+                {
+                    result = result.WithLocalProperty(propertyCount);
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/writeOnly"), JsonPropertyNames.WriteOnly);
+                    }
+
+                    ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonSchema.Draft202012.MetaData.WriteOnlyEntity>().Validate(result.CreateChildContext(), level);
+                    if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                    {
+                        return propertyResult;
+                    }
+
+                    result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PopLocation();
+                    }
+                }
+
+                propertyCount++;
+            }
+
+            return result;
+        }
     }
 }

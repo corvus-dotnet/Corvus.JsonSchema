@@ -6,11 +6,31 @@
 //     the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
+
 #nullable enable
+
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
 
 namespace Corvus.Json.JsonSchema.Draft4;
+
+/// <summary>
+/// Generated from JSON Schema.
+/// </summary>
+/// <remarks>
+/// <para>
+/// Core schema meta-schema
+/// </para>
+/// <para>
+/// Examples:
+/// <example>
+/// <code>
+/// {}
+/// </code>
+/// </example>
+/// </para>
+/// </remarks>
 public readonly partial struct Schema
 {
     /// <summary>
@@ -33,18 +53,94 @@ public readonly partial struct Schema
                 result = result.PushSchemaLocation("http://json-schema.org/draft-04/schema#/definitions/positiveIntegerDefault0");
             }
 
-            result = this.ValidateAllOf(result, level);
+            result = CorvusValidation.CompositionAllOfValidationHandler(this, result, level);
+
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;
             }
 
-            if (level != ValidationLevel.Flag)
+            if (level > ValidationLevel.Basic)
             {
                 result = result.PopLocation();
             }
 
             return result;
+        }
+
+        /// <summary>
+        /// Validation constants for the type.
+        /// </summary>
+        public static partial class CorvusValidation
+        {
+            /// <summary>
+            /// Composition validation (all-of).
+            /// </summary>
+            /// <param name="value">The value to validate.</param>
+            /// <param name="validationContext">The current validation context.</param>
+            /// <param name="level">The current validation level.</param>
+            /// <returns>The resulting validation context after validation.</returns>
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            internal static ValidationContext CompositionAllOfValidationHandler(
+                in PositiveIntegerDefault0 value,
+                in ValidationContext validationContext,
+                ValidationLevel level = ValidationLevel.Flag)
+            {
+                ValidationContext result = validationContext;
+                ValidationContext childContextBase = result;
+
+                ValidationContext allOfResult0 = childContextBase.CreateChildContext();
+                if (level > ValidationLevel.Basic)
+                {
+                    allOfResult0 = allOfResult0.PushValidationLocationReducedPathModifier(new("#/allOf/0/$ref"));
+                }
+
+                allOfResult0 = value.As<Corvus.Json.JsonSchema.Draft4.Schema.PositiveInteger>().Validate(allOfResult0, level);
+
+                if (!allOfResult0.IsValid)
+                {
+                    if (level >= ValidationLevel.Basic)
+                    {
+                        result = result.MergeChildContext(allOfResult0, true).PushValidationLocationProperty("allOf").WithResult(isValid: false, "Validation - allOf failed to validate against the schema.").PopLocation();
+                    }
+                    else
+                    {
+                        result = result.MergeChildContext(allOfResult0, false).WithResult(isValid: false);
+                        return result;
+                    }
+                }
+                else
+                {
+                    result = result.MergeChildContext(allOfResult0, level >= ValidationLevel.Detailed);
+                }
+
+                ValidationContext allOfResult1 = childContextBase.CreateChildContext();
+                if (level > ValidationLevel.Basic)
+                {
+                    allOfResult1 = allOfResult1.PushValidationLocationReducedPathModifier(new("#/allOf/1"));
+                }
+
+                allOfResult1 = value.As<Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0.DefaultValueType0>().Validate(allOfResult1, level);
+
+                if (!allOfResult1.IsValid)
+                {
+                    if (level >= ValidationLevel.Basic)
+                    {
+                        result = result.MergeChildContext(allOfResult1, true).PushValidationLocationProperty("allOf").WithResult(isValid: false, "Validation - allOf failed to validate against the schema.").PopLocation();
+                    }
+                    else
+                    {
+                        result = result.MergeChildContext(allOfResult1, false).WithResult(isValid: false);
+                        return result;
+                    }
+                }
+                else
+                {
+                    result = result.MergeChildContext(allOfResult1, level >= ValidationLevel.Detailed);
+                }
+
+                return result;
+            }
         }
     }
 }

@@ -1,13 +1,8 @@
-﻿using System.Collections.Immutable;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
-using Corvus.Json.CodeGeneration;
-using System.Text.Json;
-using Microsoft.CodeAnalysis.CSharp;
 using Spectre.Console.Cli;
-using Microsoft.CodeAnalysis;
 
-namespace Corvus.Json.SchemaGenerator;
+namespace Corvus.Json.CodeGenerator;
 
 /// <summary>
 /// Spectre.Console.Cli command for code generation.
@@ -28,7 +23,7 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
         public string? RootPath { get; init; }
 
         [CommandOption("--useSchema")]
-        [Description("Override the schema variant to use. If NotSpecified, and it cannot be picked up from the schema itself, it will use Draft2020-12.")]
+        [Description("Override the fallback schema variant to use. If NotSpecified, and it cannot be inferred from the schema itself, it will use Draft2020-12.")]
         [DefaultValue(SchemaVariant.NotSpecified)]
         public SchemaVariant UseSchema { get; init; }
 
@@ -37,11 +32,11 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
         public string? OutputMapFile { get; init; }
 
         [CommandOption("--outputPath")]
-        [Description("The dotnet type name for the root type.")]
+        [Description("The path to which to write the generated code.")]
         public string? OutputPath { get; init; }
 
         [CommandOption("--outputRootTypeName")]
-        [Description("The dotnet type name for the root type.")]
+        [Description("The .NET type name for the root type.")]
         [DefaultValue(null)]
         public string? OutputRootTypeName { get; init; }
 
@@ -59,6 +54,31 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
         [CommandArgument(0, "<schemaFile>")]
         [NotNull] // <> => NotNull
         public string? SchemaFile { get; init; }
+
+
+        [CommandOption("--disableOptionalNamingHeuristics")]
+        [Description("Disables all optional naming heuristics.")]
+        [DefaultValue(false)]
+        public bool DisableOptionalNamingHeuristics { get; init; }
+
+        [CommandOption("--disableNamingHeuristic")]
+        [Description("Disables the specific naming heuristic.")]
+        public string[]? DisableNamingHeuristic { get; init; }
+
+        [CommandOption("--optionalAsNullable")]
+        [Description("If NullOrUndefined, optional properties are emitted as .NET nullable values.")]
+        [DefaultValue(OptionalAsNullable.None)]
+        public OptionalAsNullable OptionalAsNullable { get; init; }
+
+        [CommandOption("--useImplicitOperatorString")]
+        [Description("If true, conversion operators to string are implicit, rather than explicit.")]
+        [DefaultValue(false)]
+        public bool UseImplicitOperatorString { get; init; }
+
+        [CommandOption("--useUnixLineEndings")]
+        [Description("If true, line endings emitted using the Unix style ('\\n'). Otherwise, it uses the Windows style ('\\r\\n').")]
+        [DefaultValue(false)]
+        public bool UseUnixLineEndings { get; init; }
     }
 
     /// <inheritdoc/>
@@ -67,144 +87,24 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
         ArgumentNullException.ThrowIfNullOrEmpty(settings.SchemaFile); // We will never see this exception if the framework is doing its job; it should have blown up inside the CLI command handling
         ArgumentNullException.ThrowIfNullOrEmpty(settings.RootNamespace); // We will never see this exception if the framework is doing its job; it should have blown up inside the CLI command handling
 
-        return GenerateTypes(settings.SchemaFile, settings.RootNamespace, settings.RootPath, settings.RebaseToRootPath, settings.OutputPath, settings.OutputMapFile, settings.OutputRootTypeName, settings.UseSchema, settings.AssertFormat);
+        var config = GeneratorConfig.Create(
+            settings.RootNamespace,
+            [GeneratorConfig.GenerationSpecification.Create(
+                schemaFile: settings.SchemaFile,
+                outputRootTypeName: settings.OutputRootTypeName.AsNullableJsonString(),
+                rebaseToRootPath: settings.RebaseToRootPath,
+                rootPath: settings.RootPath.AsNullableJsonString())],
+            additionalFiles: null,
+            assertFormat: settings.AssertFormat,
+            disabledNamingHeuristics: settings.DisableNamingHeuristic is string[] disabledItems ? JsonArray.FromRange(disabledItems) : default(GeneratorConfig.JsonStringArray?),
+            disableOptionalNameHeuristics: settings.DisableOptionalNamingHeuristics,
+            optionalAsNullableValue: settings.OptionalAsNullable.ToString(),
+            outputMapFile: settings.OutputMapFile.AsNullableJsonString(),
+            outputPath: settings.OutputPath.AsNullableJsonString(),
+            useSchemaValue: settings.UseSchema != SchemaVariant.NotSpecified ? (GeneratorConfig.UseSchema)settings.UseSchema.ToString() : default(GeneratorConfig.UseSchema?),
+            useImplicitOperatorString: settings.UseImplicitOperatorString,
+            useUnixLineEndings: settings.UseUnixLineEndings);
+
+        return GenerationDriver.GenerateTypes(config);
     }
-
-    private static async Task<int> GenerateTypes(string schemaFile, string rootNamespace, string? rootPath, bool rebaseToRootPath, string? outputPath, string? outputMapFile, string? rootTypeName, SchemaVariant schemaVariant, bool assertFormat)
-    {
-        try
-        {
-            var typeBuilder = new JsonSchemaTypeBuilder(new CompoundDocumentResolver(new FileSystemDocumentResolver(), new HttpClientDocumentResolver(new HttpClient())));
-            JsonReference reference = new(schemaFile, rootPath ?? string.Empty);
-            SchemaVariant sv = ValidationSemanticsToSchemaVariant(await typeBuilder.GetValidationSemantics(reference, rebaseToRootPath).ConfigureAwait(false));
-
-            if (sv == SchemaVariant.NotSpecified)
-            {
-                sv = schemaVariant;
-            }
-
-            IJsonSchemaBuilder builder =
-                sv switch
-                {
-                    SchemaVariant.Draft4 => new CodeGeneration.Draft4.JsonSchemaBuilder(typeBuilder),
-                    SchemaVariant.Draft6 => new CodeGeneration.Draft6.JsonSchemaBuilder(typeBuilder),
-                    SchemaVariant.Draft7 => new CodeGeneration.Draft7.JsonSchemaBuilder(typeBuilder),
-                    SchemaVariant.Draft202012 => new CodeGeneration.Draft202012.JsonSchemaBuilder(typeBuilder),
-                    SchemaVariant.Draft201909 => new CodeGeneration.Draft201909.JsonSchemaBuilder(typeBuilder),
-                    SchemaVariant.OpenApi30 => new CodeGeneration.OpenApi30.JsonSchemaBuilder(typeBuilder),
-                    _ => new CodeGeneration.Draft202012.JsonSchemaBuilder(typeBuilder)
-                };
-
-            (string RootType, ImmutableDictionary<JsonReference, TypeAndCode> GeneratedTypes) = await builder.BuildTypesFor(reference, rootNamespace ?? string.Empty, rebaseToRootPath, rootTypeName: rootTypeName, validateFormat: assertFormat).ConfigureAwait(false);
-
-            if (!string.IsNullOrEmpty(outputPath))
-            {
-                Directory.CreateDirectory(outputPath);
-            }
-            else
-            {
-                outputPath = Path.GetDirectoryName(schemaFile)!;
-            }
-
-            string? mapFile = string.IsNullOrEmpty(outputMapFile) ? outputMapFile : Path.Combine(outputPath, outputMapFile);
-            if (!string.IsNullOrEmpty(mapFile))
-            {
-                File.Delete(mapFile);
-                File.AppendAllText(mapFile, "[");
-            }
-
-            bool first = true;
-
-            foreach (KeyValuePair<JsonReference, TypeAndCode> generatedType in GeneratedTypes)
-            {
-                Console.WriteLine($"Generating: {generatedType.Value.DotnetTypeName}");
-                foreach (CodeAndFilename typeAndCode in generatedType.Value.Code)
-                {
-                    try
-                    {
-                        string source =
-                            SyntaxFactory.ParseCompilationUnit(typeAndCode.Code)
-                             .NormalizeWhitespace()
-                             .GetText()
-                             .ToString();
-
-                        string outputFile = Path.Combine(outputPath, typeAndCode.Filename);
-                        File.WriteAllText(outputFile, source);
-
-                        if (!string.IsNullOrEmpty(mapFile))
-                        {
-                            if (first)
-                            {
-                                first = false;
-                            }
-                            else
-                            {
-                                File.AppendAllText(mapFile, ", ");
-                            }
-                            File.AppendAllText(mapFile, $"{{\"key\": \"{JsonEncodedText.Encode(generatedType.Key)}\", \"class\": \"{JsonEncodedText.Encode(generatedType.Value.DotnetTypeName)}\", \"path\": \"{JsonEncodedText.Encode(outputFile)}\"}}\r\n");
-                        }
-                    }
-                    catch (Exception)
-                    {
-                        Console.Error.WriteLine($"Unable to parse generated type: {generatedType.Value.DotnetTypeName} from location {generatedType.Key}");
-                        return -1;
-                    }
-                }
-            }
-
-            if (!string.IsNullOrEmpty(mapFile))
-            {
-                File.AppendAllText(mapFile, "]");
-            }
-
-        }
-        catch (Exception ex)
-        {
-            Console.Error.WriteLine(ex.Message);
-            return -1;
-        }
-
-        return 0;
-    }
-
-    private static SchemaVariant ValidationSemanticsToSchemaVariant(ValidationSemantics validationSemantics)
-    {
-        if (validationSemantics == ValidationSemantics.Unknown)
-        {
-            return SchemaVariant.NotSpecified;
-        }
-
-        if ((validationSemantics & ValidationSemantics.Draft4) != 0)
-        {
-            return SchemaVariant.Draft4;
-        }
-
-        if ((validationSemantics & ValidationSemantics.Draft6) != 0)
-        {
-            return SchemaVariant.Draft6;
-        }
-
-        if ((validationSemantics & ValidationSemantics.Draft7) != 0)
-        {
-            return SchemaVariant.Draft7;
-        }
-
-        if ((validationSemantics & ValidationSemantics.Draft201909) != 0)
-        {
-            return SchemaVariant.Draft201909;
-        }
-
-        if ((validationSemantics & ValidationSemantics.Draft202012) != 0)
-        {
-            return SchemaVariant.Draft202012;
-        }
-
-        if ((validationSemantics & ValidationSemantics.OpenApi30) != 0)
-        {
-            return SchemaVariant.OpenApi30;
-        }
-
-        return SchemaVariant.NotSpecified;
-    }
-
 }

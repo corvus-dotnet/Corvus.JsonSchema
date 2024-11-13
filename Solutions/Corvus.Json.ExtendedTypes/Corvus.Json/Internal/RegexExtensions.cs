@@ -8,9 +8,9 @@ using System.Text.RegularExpressions;
 namespace Corvus.Json;
 
 /// <summary>
-/// External extensions for Regex for netstandard2.0 compatibility.
+/// Regex extensions for Regex for netstandard2.0 compatibility.
 /// </summary>
-internal static class RegexExtensions
+public static class RegexExtensions
 {
     /// <summary>
     /// Gets a value indicating whether the regex matches the given value.

@@ -6,11 +6,31 @@
 //     the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
+
 #nullable enable
+
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
 
 namespace Corvus.Json.JsonSchema.Draft4;
+
+/// <summary>
+/// Generated from JSON Schema.
+/// </summary>
+/// <remarks>
+/// <para>
+/// Core schema meta-schema
+/// </para>
+/// <para>
+/// Examples:
+/// <example>
+/// <code>
+/// {}
+/// </code>
+/// </example>
+/// </para>
+/// </remarks>
 public readonly partial struct Schema
 {
     /// <summary>
@@ -18,8 +38,6 @@ public readonly partial struct Schema
     /// </summary>
     public readonly partial struct MultipleOfEntity
     {
-        private static readonly BinaryJsonNumber __Corvus_Minimum = new(0);
-        private static readonly BinaryJsonNumber __Corvus_ExclusiveMinimum = new(0);
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
         {
@@ -36,24 +54,111 @@ public readonly partial struct Schema
             }
 
             JsonValueKind valueKind = this.ValueKind;
-            result = this.ValidateType(valueKind, result, level);
+
+            result = CorvusValidation.TypeValidationHandler(valueKind, result, level);
+
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;
             }
 
-            result = Corvus.Json.Validate.ValidateNumber(this, result, level, BinaryJsonNumber.None, BinaryJsonNumber.None, BinaryJsonNumber.None, __Corvus_Minimum, __Corvus_ExclusiveMinimum);
+            result = CorvusValidation.NumberValidationHandler(this, valueKind, result, level);
+
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;
             }
 
-            if (level != ValidationLevel.Flag)
+            if (level > ValidationLevel.Basic)
             {
                 result = result.PopLocation();
             }
 
             return result;
+        }
+
+        /// <summary>
+        /// Validation constants for the type.
+        /// </summary>
+        public static partial class CorvusValidation
+        {
+            /// <summary>
+            /// A constant for the <c>minimum</c> keyword.
+            /// </summary>
+            public static readonly BinaryJsonNumber Minimum = new(0);
+
+            /// <summary>
+            /// Core type validation.
+            /// </summary>
+            /// <param name="valueKind">The <see cref="JsonValueKind" /> of the value to validate.</param>
+            /// <param name="validationContext">The current validation context.</param>
+            /// <param name="level">The current validation level.</param>
+            /// <returns>The resulting validation context after validation.</returns>
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            internal static ValidationContext TypeValidationHandler(
+                JsonValueKind valueKind,
+                in ValidationContext validationContext,
+                ValidationLevel level = ValidationLevel.Flag)
+            {
+                return Corvus.Json.ValidateWithoutCoreType.TypeNumber(valueKind, validationContext, level, "type");
+            }
+
+            /// <summary>
+            /// Numeric validation.
+            /// </summary>
+            /// <param name="value">The value to validate.</param>
+            /// <param name="valueKind">The <see cref="JsonValueKind" /> of the value to validate.</param>
+            /// <param name="validationContext">The current validation context.</param>
+            /// <param name="level">The current validation level.</param>
+            /// <returns>The resulting validation context after validation.</returns>
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            internal static ValidationContext NumberValidationHandler(
+                in MultipleOfEntity value,
+                JsonValueKind valueKind,
+                in ValidationContext validationContext,
+                ValidationLevel level = ValidationLevel.Flag)
+            {
+                if (valueKind != JsonValueKind.Number)
+                {
+                    if (level == ValidationLevel.Verbose)
+                    {
+                        ValidationContext ignoredResult = validationContext;
+                        ignoredResult = ignoredResult.WithResult(isValid: true, "Validation minimum - ignored because the value is not a number", "minimum");
+
+                        return ignoredResult;
+                    }
+
+                    return validationContext;
+                }
+
+                ValidationContext result = validationContext;
+
+                if ((value.HasJsonElementBacking
+                    ? BinaryJsonNumber.Compare(value.AsJsonElement, Minimum)
+                    : BinaryJsonNumber.Compare(value.AsBinaryJsonNumber, Minimum))> 0)
+                {
+                    if (level == ValidationLevel.Verbose)
+                    {
+                        result = result.WithResult(isValid: true, $"Validation minimum - {value} is greater than {Minimum}", "minimum");
+                    }
+                }
+                else
+                {
+                    if (level >= ValidationLevel.Detailed)
+                    {
+                        result = result.WithResult(isValid: false, $"Validation minimum - {value} is less than or equal to {Minimum}", "minimum");
+                    }
+                    else if (level >= ValidationLevel.Basic)
+                    {
+                        result = result.WithResult(isValid: false, "Validation minimum - is less than or equal to the required value.", "minimum");
+                    }
+                    else
+                    {
+                        return ValidationContext.InvalidContext;
+                    }
+                }
+                return result;
+            }
         }
     }
 }

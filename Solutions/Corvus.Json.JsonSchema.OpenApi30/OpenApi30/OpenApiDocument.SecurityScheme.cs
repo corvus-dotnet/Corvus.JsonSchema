@@ -6,9 +6,10 @@
 //     the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
+
 #nullable enable
+
 using System.Buffers;
-using System.ComponentModel;
 using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
@@ -16,6 +17,15 @@ using Corvus.Json;
 using Corvus.Json.Internal;
 
 namespace Corvus.Json.JsonSchema.OpenApi30;
+
+/// <summary>
+/// Generated from JSON Schema.
+/// </summary>
+/// <remarks>
+/// <para>
+/// The description of OpenAPI v3.0.x documents, as defined by https://spec.openapis.org/oas/v3.0.3
+/// </para>
+/// </remarks>
 public readonly partial struct OpenApiDocument
 {
     /// <summary>
@@ -23,12 +33,14 @@ public readonly partial struct OpenApiDocument
     /// </summary>
     [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<SecurityScheme>))]
     public readonly partial struct SecurityScheme
+        : IJsonValue<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SecurityScheme>
     {
         private readonly Backing backing;
         private readonly JsonElement jsonElementBacking;
         private readonly ImmutableList<JsonObjectProperty> objectBacking;
+
         /// <summary>
-        /// Initializes a new instance of the <see cref = "SecurityScheme"/> struct.
+        /// Initializes a new instance of the <see cref="SecurityScheme"/> struct.
         /// </summary>
         public SecurityScheme()
         {
@@ -38,9 +50,9 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref = "SecurityScheme"/> struct.
+        /// Initializes a new instance of the <see cref="SecurityScheme"/> struct.
         /// </summary>
-        /// <param name = "value">The value from which to construct the instance.</param>
+        /// <param name="value">The value from which to construct the instance.</param>
         public SecurityScheme(in JsonElement value)
         {
             this.jsonElementBacking = value;
@@ -49,19 +61,33 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
+        /// Initializes a new instance of the <see cref="SecurityScheme"/> struct.
+        /// </summary>
+        /// <param name="value">The value from which to construct the instance.</param>
+        public SecurityScheme(ImmutableList<JsonObjectProperty> value)
+        {
+            this.backing = Backing.Object;
+            this.jsonElementBacking = default;
+            this.objectBacking = value;
+        }
+
+        /// <summary>
         /// Gets the schema location from which this type was generated.
         /// </summary>
         public static string SchemaLocation { get; } = "https://spec.openapis.org/oas/3.0/schema/2021-09-28#/definitions/SecurityScheme";
+
         /// <summary>
         /// Gets a Null instance.
         /// </summary>
         public static SecurityScheme Null { get; } = new(JsonValueHelpers.NullElement);
+
         /// <summary>
         /// Gets an Undefined instance.
         /// </summary>
         public static SecurityScheme Undefined { get; }
+
         /// <summary>
-        /// Gets the default instance of the type.
+        /// Gets the default instance.
         /// </summary>
         public static SecurityScheme DefaultInstance { get; }
 
@@ -188,6 +214,94 @@ public readonly partial struct OpenApiDocument
             }
         }
 
+        /// <summary>
+        /// Gets the instance as a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ApiKeySecurityScheme" />.
+        /// </summary>
+        public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ApiKeySecurityScheme AsApiKeySecurityScheme
+        {
+            get
+            {
+                return this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ApiKeySecurityScheme>();
+            }
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether the instance is a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ApiKeySecurityScheme" />.
+        /// </summary>
+        public bool IsApiKeySecurityScheme
+        {
+            get
+            {
+                return this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ApiKeySecurityScheme>().IsValid();
+            }
+        }
+
+        /// <summary>
+        /// Gets the instance as a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme" />.
+        /// </summary>
+        public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme AsHttpSecurityScheme
+        {
+            get
+            {
+                return this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme>();
+            }
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether the instance is a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme" />.
+        /// </summary>
+        public bool IsHttpSecurityScheme
+        {
+            get
+            {
+                return this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme>().IsValid();
+            }
+        }
+
+        /// <summary>
+        /// Gets the instance as a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OAuth2SecurityScheme" />.
+        /// </summary>
+        public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OAuth2SecurityScheme AsOAuth2SecurityScheme
+        {
+            get
+            {
+                return this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OAuth2SecurityScheme>();
+            }
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether the instance is a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OAuth2SecurityScheme" />.
+        /// </summary>
+        public bool IsOAuth2SecurityScheme
+        {
+            get
+            {
+                return this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OAuth2SecurityScheme>().IsValid();
+            }
+        }
+
+        /// <summary>
+        /// Gets the instance as a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OpenIdConnectSecurityScheme" />.
+        /// </summary>
+        public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OpenIdConnectSecurityScheme AsOpenIdConnectSecurityScheme
+        {
+            get
+            {
+                return this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OpenIdConnectSecurityScheme>();
+            }
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether the instance is a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OpenIdConnectSecurityScheme" />.
+        /// </summary>
+        public bool IsOpenIdConnectSecurityScheme
+        {
+            get
+            {
+                return this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OpenIdConnectSecurityScheme>().IsValid();
+            }
+        }
+
         /// <inheritdoc/>
         public bool HasJsonElementBacking
         {
@@ -221,11 +335,6 @@ public readonly partial struct OpenApiDocument
                     return JsonValueKind.Object;
                 }
 
-                if ((this.backing & Backing.Null) != 0)
-                {
-                    return JsonValueKind.Null;
-                }
-
                 return JsonValueKind.Undefined;
             }
         }
@@ -233,9 +342,8 @@ public readonly partial struct OpenApiDocument
         /// <summary>
         /// Conversion from JsonAny.
         /// </summary>
-        /// <param name = "value">The value from which to convert.</param>
-        /// <exception cref = "InvalidOperationException">The value was not compatible with this type.</exception>
-        public static implicit operator SecurityScheme(in JsonAny value)
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator SecurityScheme(JsonAny value)
         {
             return value.As<SecurityScheme>();
         }
@@ -243,43 +351,165 @@ public readonly partial struct OpenApiDocument
         /// <summary>
         /// Conversion to JsonAny.
         /// </summary>
-        /// <param name = "value">The value from which to convert.</param>
-        /// <exception cref = "InvalidOperationException">The value was not compatible with this type.</exception>
-        public static implicit operator JsonAny(in SecurityScheme value)
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator JsonAny(SecurityScheme value)
         {
             return value.AsAny;
         }
 
         /// <summary>
-        /// Equality operator.
+        /// Conversion to <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ApiKeySecurityScheme"/>.
         /// </summary>
-        /// <param name = "left">The lhs.</param>
-        /// <param name = "right">The rhs.</param>
-        /// <returns><c>True</c> if the values are equal.</returns>
+        /// <param name="value">The value from which to convert.</param>
+        public static explicit operator Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ApiKeySecurityScheme(SecurityScheme value)
+        {
+            return value.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ApiKeySecurityScheme>();
+        }
+
+        /// <summary>
+        /// Conversion from <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ApiKeySecurityScheme"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator SecurityScheme(Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ApiKeySecurityScheme value)
+        {
+            return value.As<SecurityScheme>();
+        }
+
+        /// <summary>
+        /// Conversion to <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static explicit operator Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme(SecurityScheme value)
+        {
+            return value.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme>();
+        }
+
+        /// <summary>
+        /// Conversion from <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator SecurityScheme(Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme value)
+        {
+            return value.As<SecurityScheme>();
+        }
+
+        /// <summary>
+        /// Conversion to <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OAuth2SecurityScheme"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static explicit operator Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OAuth2SecurityScheme(SecurityScheme value)
+        {
+            return value.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OAuth2SecurityScheme>();
+        }
+
+        /// <summary>
+        /// Conversion from <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OAuth2SecurityScheme"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator SecurityScheme(Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OAuth2SecurityScheme value)
+        {
+            return value.As<SecurityScheme>();
+        }
+
+        /// <summary>
+        /// Conversion to <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OpenIdConnectSecurityScheme"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static explicit operator Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OpenIdConnectSecurityScheme(SecurityScheme value)
+        {
+            return value.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OpenIdConnectSecurityScheme>();
+        }
+
+        /// <summary>
+        /// Conversion from <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OpenIdConnectSecurityScheme"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator SecurityScheme(Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OpenIdConnectSecurityScheme value)
+        {
+            return value.As<SecurityScheme>();
+        }
+
+        /// <summary>
+        /// Conversion to <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme.Bearer"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static explicit operator Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme.Bearer(SecurityScheme value)
+        {
+            return value.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme.Bearer>();
+        }
+
+        /// <summary>
+        /// Conversion from <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme.Bearer"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator SecurityScheme(Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme.Bearer value)
+        {
+            return value.As<SecurityScheme>();
+        }
+
+        /// <summary>
+        /// Conversion to <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme.NonBearer"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static explicit operator Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme.NonBearer(SecurityScheme value)
+        {
+            return value.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme.NonBearer>();
+        }
+
+        /// <summary>
+        /// Conversion from <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme.NonBearer"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator SecurityScheme(Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme.NonBearer value)
+        {
+            return value.As<SecurityScheme>();
+        }
+
+        /// <summary>
+        /// Operator ==.
+        /// </summary>
+        /// <param name="left">The lhs of the operator.</param>
+        /// <param name="right">The rhs of the operator.</param>
+        /// <returns>
+        /// <c>True</c> if the values are equal.
+        /// </returns>
         public static bool operator ==(in SecurityScheme left, in SecurityScheme right)
         {
             return left.Equals(right);
         }
 
         /// <summary>
-        /// Inequality operator.
+        /// Operator !=.
         /// </summary>
-        /// <param name = "left">The lhs.</param>
-        /// <param name = "right">The rhs.</param>
-        /// <returns><c>True</c> if the values are equal.</returns>
+        /// <param name="left">The lhs of the operator.</param>
+        /// <param name="right">The rhs of the operator.</param>
+        /// <returns>
+        /// <c>True</c> if the values are not equal.
+        /// </returns>
         public static bool operator !=(in SecurityScheme left, in SecurityScheme right)
         {
             return !left.Equals(right);
         }
 
         /// <summary>
-        /// Gets an instance of the JSON value from a JsonAny value.
+        /// Gets an instance of the JSON value from a <see cref="JsonElement"/> value.
         /// </summary>
-        /// <param name = "value">The <see cref = "JsonAny"/> value from which to instantiate the instance.</param>
-        /// <returns>An instance of this type, initialized from the <see cref = "JsonAny"/>.</returns>
+        /// <param name="value">The <see cref="JsonElement"/> value from which to instantiate the instance.</param>
+        /// <returns>An instance of this type, initialized from the <see cref="JsonElement"/>.</returns>
         /// <remarks>The returned value will have a <see cref = "IJsonValue.ValueKind"/> of <see cref = "JsonValueKind.Undefined"/> if the
-        /// value cannot be constructed from the given instance (e.g. because they have an incompatible dotnet backing type.
+        /// value cannot be constructed from the given instance (e.g. because they have an incompatible .NET backing type).
         /// </remarks>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static SecurityScheme FromJson(in JsonElement value)
+        {
+            return new(value);
+        }
+
+        /// <summary>
+        /// Gets an instance of the JSON value from a <see cref="JsonAny"/> value.
+        /// </summary>
+        /// <param name="value">The <see cref="JsonAny"/> value from which to instantiate the instance.</param>
+        /// <returns>An instance of this type, initialized from the <see cref="JsonAny"/> value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static SecurityScheme FromAny(in JsonAny value)
         {
@@ -288,8 +518,7 @@ public readonly partial struct OpenApiDocument
                 return new(value.AsJsonElement);
             }
 
-            JsonValueKind valueKind = value.ValueKind;
-            return valueKind switch
+            return value.ValueKind switch
             {
                 JsonValueKind.Object => new(value.AsObject.AsPropertyBacking()),
                 JsonValueKind.Null => Null,
@@ -297,100 +526,69 @@ public readonly partial struct OpenApiDocument
             };
         }
 
+#if NET8_0_OR_GREATER
         /// <summary>
-        /// Gets an instance of the JSON value from a <see cref = "JsonElement"/> value.
+        /// Gets an instance of the JSON value from the provided value.
         /// </summary>
-        /// <param name = "value">The <see cref = "JsonElement"/> value from which to instantiate the instance.</param>
-        /// <returns>An instance of this type, initialized from the <see cref = "JsonElement"/>.</returns>
+        /// <typeparam name="TValue">The type of the value.</typeparam>
+        /// <param name="value">The value from which to instantiate the instance.</param>
+        /// <returns>An instance of this type, initialized from the provided value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static SecurityScheme FromJson(in JsonElement value)
+        static SecurityScheme IJsonValue<SecurityScheme>.FromBoolean<TValue>(in TValue value)
         {
-            return new(value);
+            if (value.HasJsonElementBacking)
+            {
+                return new(value.AsJsonElement);
+            }
+
+            return Undefined;
         }
+#endif
 
 #if NET8_0_OR_GREATER
-    /// <summary>
-    /// Gets an instance of the JSON value from a boolean value.
-    /// </summary>
-    /// <typeparam name = "TValue">The type of the value.</typeparam>
-    /// <param name="value">The value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the value.</returns>
-    /// <remarks>This will be SecurityScheme.Undefined if the type is not compatible.</remarks>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    static SecurityScheme IJsonValue<SecurityScheme>.FromBoolean<TValue>(in TValue value)
-    {
-        if (value.HasJsonElementBacking)
-        {
-            return new(value.AsJsonElement);
-        }
-
-        return Undefined;
-    }
-#endif
-#if NET8_0_OR_GREATER
-    /// <summary>
-    /// Gets an instance of the JSON value from a string value.
-    /// </summary>
-    /// <typeparam name="TValue">The type of the value.</typeparam>
-    /// <param name="value">The value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the value.</returns>
-    /// <remarks>This will be SecurityScheme.Undefined if the type is not compatible.</remarks>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    static SecurityScheme IJsonValue<SecurityScheme>.FromString<TValue>(in TValue value)
-    {
-        if (value.HasJsonElementBacking)
-        {
-            return new(value.AsJsonElement);
-        }
-
-        return Undefined;
-    }
-#endif
-#if NET8_0_OR_GREATER
-    /// <summary>
-    /// Gets an instance of the JSON value from a number value.
-    /// </summary>
-    /// <typeparam name="TValue">The type of the value.</typeparam>
-    /// <param name="value">The value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the value.</returns>
-    /// <remarks>This will be SecurityScheme.Undefined if the type is not compatible.</remarks>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    static SecurityScheme IJsonValue<SecurityScheme>.FromNumber<TValue>(in TValue value)
-    {
-        if (value.HasJsonElementBacking)
-        {
-            return new(value.AsJsonElement);
-        }
-
-        return Undefined;
-    }
-#endif
-#if NET8_0_OR_GREATER
-    /// <summary>
-    /// Gets an instance of the JSON value from an array value.
-    /// </summary>
-    /// <typeparam name="TValue">The type of the value.</typeparam>
-    /// <param name="value">The value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the value.</returns>
-    /// <remarks>This will be SecurityScheme.Undefined if the type is not compatible.</remarks>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    static SecurityScheme IJsonValue<SecurityScheme>.FromArray<TValue>(in TValue value)
-    {
-        if (value.HasJsonElementBacking)
-        {
-            return new(value.AsJsonElement);
-        }
-
-        return Undefined;
-    }
-#endif
         /// <summary>
-        /// Gets an instance of the JSON value from an object value.
+        /// Gets an instance of the JSON value from the provided value.
         /// </summary>
-        /// <typeparam name = "TValue">The type of the value.</typeparam>
-        /// <param name = "value">The value from which to instantiate the instance.</param>
-        /// <returns>An instance of this type, initialized from the value.</returns>
-        /// <remarks>This will be SecurityScheme.Undefined if the type is not compatible.</remarks>
+        /// <typeparam name="TValue">The type of the value.</typeparam>
+        /// <param name="value">The value from which to instantiate the instance.</param>
+        /// <returns>An instance of this type, initialized from the provided value.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static SecurityScheme IJsonValue<SecurityScheme>.FromString<TValue>(in TValue value)
+        {
+            if (value.HasJsonElementBacking)
+            {
+                return new(value.AsJsonElement);
+            }
+
+            return Undefined;
+        }
+#endif
+
+#if NET8_0_OR_GREATER
+        /// <summary>
+        /// Gets an instance of the JSON value from the provided value.
+        /// </summary>
+        /// <typeparam name="TValue">The type of the value.</typeparam>
+        /// <param name="value">The value from which to instantiate the instance.</param>
+        /// <returns>An instance of this type, initialized from the provided value.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static SecurityScheme IJsonValue<SecurityScheme>.FromNumber<TValue>(in TValue value)
+        {
+            if (value.HasJsonElementBacking)
+            {
+                return new(value.AsJsonElement);
+            }
+
+            return Undefined;
+        }
+#endif
+
+        /// <summary>
+        /// Gets an instance of the JSON value from the provided value.
+        /// </summary>
+        /// <typeparam name="TValue">The type of the value.</typeparam>
+        /// <param name="value">The value from which to instantiate the instance.</param>
+        /// <returns>An instance of this type, initialized from the provided value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static SecurityScheme FromObject<TValue>(in TValue value)
             where TValue : struct, IJsonObject<TValue>
@@ -400,142 +598,166 @@ public readonly partial struct OpenApiDocument
                 return new(value.AsJsonElement);
             }
 
-            if (value.ValueKind == JsonValueKind.Object)
+            return value.ValueKind switch
             {
-                return new(value.AsPropertyBacking());
+                JsonValueKind.Object => new(value.AsPropertyBacking()),
+                JsonValueKind.Null => Null,
+                _ => Undefined,
+            };
+        }
+
+#if NET8_0_OR_GREATER
+        /// <summary>
+        /// Gets an instance of the JSON value from the provided value.
+        /// </summary>
+        /// <typeparam name="TValue">The type of the value.</typeparam>
+        /// <param name="value">The value from which to instantiate the instance.</param>
+        /// <returns>An instance of this type, initialized from the provided value.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static SecurityScheme IJsonValue<SecurityScheme>.FromArray<TValue>(in TValue value)
+        {
+            if (value.HasJsonElementBacking)
+            {
+                return new(value.AsJsonElement);
             }
 
             return Undefined;
         }
+#endif
 
         /// <summary>
-        /// Parses a JSON string into a SecurityScheme.
+        /// Parses the SecurityScheme.
         /// </summary>
-        /// <param name = "json">The json string to parse.</param>
-        /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-        /// <returns>A <see cref = "SecurityScheme"/> instance built from the JSON string.</returns>
-        public static SecurityScheme Parse(string json, JsonDocumentOptions options = default)
+        /// <param name="source">The source of the JSON string to parse.</param>
+        /// <param name="options">The (optional) JsonDocumentOptions.</param>
+        public static SecurityScheme Parse(string source, JsonDocumentOptions options = default)
         {
-            using var jsonDocument = JsonDocument.Parse(json, options);
-            return new SecurityScheme(jsonDocument.RootElement.Clone());
+            using var jsonDocument = JsonDocument.Parse(source, options);
+            return new(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses a JSON string into a SecurityScheme.
+        /// Parses the SecurityScheme.
         /// </summary>
-        /// <param name = "utf8Json">The json string to parse.</param>
-        /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-        /// <returns>A <see cref = "SecurityScheme"/> instance built from the JSON string.</returns>
-        public static SecurityScheme Parse(Stream utf8Json, JsonDocumentOptions options = default)
+        /// <param name="source">The source of the JSON string to parse.</param>
+        /// <param name="options">The (optional) JsonDocumentOptions.</param>
+        public static SecurityScheme Parse(Stream source, JsonDocumentOptions options = default)
         {
-            using var jsonDocument = JsonDocument.Parse(utf8Json, options);
-            return new SecurityScheme(jsonDocument.RootElement.Clone());
+            using var jsonDocument = JsonDocument.Parse(source, options);
+            return new(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses a JSON string into a SecurityScheme.
+        /// Parses the SecurityScheme.
         /// </summary>
-        /// <param name = "utf8Json">The json string to parse.</param>
-        /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-        /// <returns>A <see cref = "SecurityScheme"/> instance built from the JSON string.</returns>
-        public static SecurityScheme Parse(ReadOnlyMemory<byte> utf8Json, JsonDocumentOptions options = default)
+        /// <param name="source">The source of the JSON string to parse.</param>
+        /// <param name="options">The (optional) JsonDocumentOptions.</param>
+        public static SecurityScheme Parse(ReadOnlyMemory<byte> source, JsonDocumentOptions options = default)
         {
-            using var jsonDocument = JsonDocument.Parse(utf8Json, options);
-            return new SecurityScheme(jsonDocument.RootElement.Clone());
+            using var jsonDocument = JsonDocument.Parse(source, options);
+            return new(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses a JSON string into a SecurityScheme.
+        /// Parses the SecurityScheme.
         /// </summary>
-        /// <param name = "json">The json string to parse.</param>
-        /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-        /// <returns>A <see cref = "SecurityScheme"/> instance built from the JSON string.</returns>
-        public static SecurityScheme Parse(ReadOnlyMemory<char> json, JsonDocumentOptions options = default)
+        /// <param name="source">The source of the JSON string to parse.</param>
+        /// <param name="options">The (optional) JsonDocumentOptions.</param>
+        public static SecurityScheme Parse(ReadOnlyMemory<char> source, JsonDocumentOptions options = default)
         {
-            using var jsonDocument = JsonDocument.Parse(json, options);
-            return new SecurityScheme(jsonDocument.RootElement.Clone());
+            using var jsonDocument = JsonDocument.Parse(source, options);
+            return new(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses a JSON string into a SecurityScheme.
+        /// Parses the SecurityScheme.
         /// </summary>
-        /// <param name = "utf8Json">The json string to parse.</param>
-        /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-        /// <returns>A <see cref = "SecurityScheme"/> instance built from the JSON string.</returns>
-        public static SecurityScheme Parse(ReadOnlySequence<byte> utf8Json, JsonDocumentOptions options = default)
+        /// <param name="source">The source of the JSON string to parse.</param>
+        /// <param name="options">The (optional) JsonDocumentOptions.</param>
+        public static SecurityScheme Parse(ReadOnlySequence<byte> source, JsonDocumentOptions options = default)
         {
-            using var jsonDocument = JsonDocument.Parse(utf8Json, options);
-            return new SecurityScheme(jsonDocument.RootElement.Clone());
+            using var jsonDocument = JsonDocument.Parse(source, options);
+            return new(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses a JSON value from a buffer.
+        /// Parses the SecurityScheme.
         /// </summary>
-        /// <param name = "buffer">The buffer from which to parse the value.</param>
-        /// <returns>The parsed value.</returns>
-        static SecurityScheme ParseValue(ReadOnlySpan<char> buffer)
+        /// <param name="source">The source of the JSON string to parse.</param>
+        public static SecurityScheme ParseValue(string source)
         {
 #if NET8_0_OR_GREATER
-        return IJsonValue<SecurityScheme>.ParseValue(buffer);
+            return IJsonValue<SecurityScheme>.ParseValue(source);
 #else
-            return JsonValueHelpers.ParseValue<SecurityScheme>(buffer);
+            return JsonValueHelpers.ParseValue<SecurityScheme>(source.AsSpan());
 #endif
         }
 
         /// <summary>
-        /// Parses a JSON value from a buffer.
+        /// Parses the SecurityScheme.
         /// </summary>
-        /// <param name = "buffer">The buffer from which to parse the value.</param>
-        /// <returns>The parsed value.</returns>
-        static SecurityScheme ParseValue(ReadOnlySpan<byte> buffer)
+        /// <param name="source">The source of the JSON string to parse.</param>
+        public static SecurityScheme ParseValue(ReadOnlySpan<char> source)
         {
 #if NET8_0_OR_GREATER
-        return IJsonValue<SecurityScheme>.ParseValue(buffer);
+            return IJsonValue<SecurityScheme>.ParseValue(source);
 #else
-            return JsonValueHelpers.ParseValue<SecurityScheme>(buffer);
+            return JsonValueHelpers.ParseValue<SecurityScheme>(source);
 #endif
         }
 
         /// <summary>
-        /// Parses a JSON value from a buffer.
+        /// Parses the SecurityScheme.
         /// </summary>
-        /// <param name = "reader">The reader from which to parse the value.</param>
-        /// <returns>The parsed value.</returns>
-        static SecurityScheme ParseValue(ref Utf8JsonReader reader)
+        /// <param name="source">The source of the JSON string to parse.</param>
+        public static SecurityScheme ParseValue(ReadOnlySpan<byte> source)
         {
 #if NET8_0_OR_GREATER
-        return IJsonValue<SecurityScheme>.ParseValue(ref reader);
+            return IJsonValue<SecurityScheme>.ParseValue(source);
 #else
-            return JsonValueHelpers.ParseValue<SecurityScheme>(ref reader);
+            return JsonValueHelpers.ParseValue<SecurityScheme>(source);
+#endif
+        }
+
+        /// <summary>
+        /// Parses the SecurityScheme.
+        /// </summary>
+        /// <param name="source">The source of the JSON string to parse.</param>
+        public static SecurityScheme ParseValue(ref Utf8JsonReader source)
+        {
+#if NET8_0_OR_GREATER
+            return IJsonValue<SecurityScheme>.ParseValue(ref source);
+#else
+            return JsonValueHelpers.ParseValue<SecurityScheme>(ref source);
 #endif
         }
 
         /// <summary>
         /// Gets the value as an instance of the target value.
         /// </summary>
-        /// <typeparam name = "TTarget">The type of the target.</typeparam>
+        /// <typeparam name="TTarget">The type of the target.</typeparam>
         /// <returns>An instance of the target type.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public TTarget As<TTarget>()
             where TTarget : struct, IJsonValue<TTarget>
         {
 #if NET8_0_OR_GREATER
-        if ((this.backing & Backing.JsonElement) != 0)
-        {
-            return TTarget.FromJson(this.jsonElementBacking);
-        }
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                return TTarget.FromJson(this.jsonElementBacking);
+            }
 
-        if ((this.backing & Backing.Object) != 0)
-        {
-            return TTarget.FromObject(this);
-        }
+            if ((this.backing & Backing.Object) != 0)
+            {
+                return TTarget.FromObject(this.AsObject);
+            }
 
-        if ((this.backing & Backing.Null) != 0)
-        {
-            return TTarget.Null;
-        }
+            if ((this.backing & Backing.Null) != 0)
+            {
+                return TTarget.Null;
+            }
 
-        return TTarget.Undefined;
+            return TTarget.Undefined;
 #else
             return this.As<SecurityScheme, TTarget>();
 #endif
@@ -544,24 +766,66 @@ public readonly partial struct OpenApiDocument
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            return (obj is IJsonValue jv && this.Equals(jv.AsAny)) || (obj is null && this.IsNull());
+            return
+                (obj is IJsonValue jv && this.Equals(jv.As<SecurityScheme>())) ||
+                (obj is null && this.IsNull());
         }
 
         /// <inheritdoc/>
         public bool Equals<T>(in T other)
             where T : struct, IJsonValue<T>
         {
-            return JsonValueHelpers.CompareValues(this, other);
+            return this.Equals(other.As<SecurityScheme>());
         }
 
         /// <summary>
         /// Equality comparison.
         /// </summary>
-        /// <param name = "other">The other item with which to compare.</param>
+        /// <param name="other">The other item with which to compare.</param>
         /// <returns><see langword="true"/> if the values were equal.</returns>
         public bool Equals(in SecurityScheme other)
         {
-            return JsonValueHelpers.CompareValues(this, other);
+            JsonValueKind thisKind = this.ValueKind;
+            JsonValueKind otherKind = other.ValueKind;
+            if (thisKind != otherKind)
+            {
+                return false;
+            }
+
+            if (thisKind == JsonValueKind.Null || thisKind == JsonValueKind.Undefined)
+            {
+                return true;
+            }
+
+            if (thisKind == JsonValueKind.Object)
+            {
+                JsonObject thisObject = this.AsObject;
+                JsonObject otherObject = other.AsObject;
+                int count = 0;
+                foreach (JsonObjectProperty property in thisObject.EnumerateObject())
+                {
+                    if (!otherObject.TryGetProperty(property.Name, out JsonAny value) || !property.Value.Equals(value))
+                    {
+                        return false;
+                    }
+
+                    count++;
+                }
+
+                int otherCount = 0;
+                foreach (JsonObjectProperty otherProperty in otherObject.EnumerateObject())
+                {
+                    otherCount++;
+                    if (otherCount > count)
+                    {
+                        return false;
+                    }
+                }
+
+                return count == otherCount;
+            }
+
+            return false;
         }
 
         /// <inheritdoc/>
@@ -580,12 +844,14 @@ public readonly partial struct OpenApiDocument
             if ((this.backing & Backing.Object) != 0)
             {
                 JsonValueHelpers.WriteProperties(this.objectBacking, writer);
+
                 return;
             }
 
             if ((this.backing & Backing.Null) != 0)
             {
                 writer.WriteNullValue();
+
                 return;
             }
         }
@@ -593,13 +859,158 @@ public readonly partial struct OpenApiDocument
         /// <inheritdoc/>
         public override int GetHashCode()
         {
-            return JsonValueHelpers.GetHashCode(this);
+            return this.ValueKind switch
+            {
+                JsonValueKind.Array => JsonValueHelpers.GetArrayHashCode(((IJsonValue)this).AsArray),
+                JsonValueKind.Object => JsonValueHelpers.GetObjectHashCode(this),
+                JsonValueKind.Number => JsonValueHelpers.GetHashCodeForNumber(((IJsonValue)this).AsNumber),
+                JsonValueKind.String => JsonValueHelpers.GetHashCodeForString(((IJsonValue)this).AsString),
+                JsonValueKind.True => true.GetHashCode(),
+                JsonValueKind.False => false.GetHashCode(),
+                JsonValueKind.Null => JsonValueHelpers.NullHashCode,
+                _ => JsonValueHelpers.UndefinedHashCode,
+            };
         }
 
         /// <inheritdoc/>
         public override string ToString()
         {
             return this.Serialize();
+        }
+
+        /// <summary>
+        /// Matches the value against the composed values, and returns the result of calling the provided match function for the first match found.
+        /// </summary>
+        /// <typeparam name="TIn">The immutable context to pass in to the match function.</typeparam>
+        /// <typeparam name="TOut">The result of calling the match function.</typeparam>
+        /// <param name="context">The context to pass to the match function.</param>
+        /// <param name="matchApiKeySecurityScheme">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ApiKeySecurityScheme"/>.</param>
+        /// <param name="matchHttpSecurityScheme">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme"/>.</param>
+        /// <param name="matchOAuth2SecurityScheme">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OAuth2SecurityScheme"/>.</param>
+        /// <param name="matchOpenIdConnectSecurityScheme">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OpenIdConnectSecurityScheme"/>.</param>
+        /// <param name="defaultMatch">Match any other value.</param>
+        /// <returns>An instance of the value returned by the match function.</returns>
+        public TOut Match<TIn, TOut>(
+            in TIn context,
+            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ApiKeySecurityScheme, TIn, TOut> matchApiKeySecurityScheme,
+            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme, TIn, TOut> matchHttpSecurityScheme,
+            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OAuth2SecurityScheme, TIn, TOut> matchOAuth2SecurityScheme,
+            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OpenIdConnectSecurityScheme, TIn, TOut> matchOpenIdConnectSecurityScheme,
+            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SecurityScheme, TIn, TOut> defaultMatch)
+        {
+            Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ApiKeySecurityScheme matchApiKeySecuritySchemeValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ApiKeySecurityScheme>();
+            if (matchApiKeySecuritySchemeValue.IsValid())
+            {
+                return matchApiKeySecurityScheme(matchApiKeySecuritySchemeValue, context);
+            }
+
+            Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme matchHttpSecuritySchemeValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme>();
+            if (matchHttpSecuritySchemeValue.IsValid())
+            {
+                return matchHttpSecurityScheme(matchHttpSecuritySchemeValue, context);
+            }
+
+            Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OAuth2SecurityScheme matchOAuth2SecuritySchemeValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OAuth2SecurityScheme>();
+            if (matchOAuth2SecuritySchemeValue.IsValid())
+            {
+                return matchOAuth2SecurityScheme(matchOAuth2SecuritySchemeValue, context);
+            }
+
+            Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OpenIdConnectSecurityScheme matchOpenIdConnectSecuritySchemeValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OpenIdConnectSecurityScheme>();
+            if (matchOpenIdConnectSecuritySchemeValue.IsValid())
+            {
+                return matchOpenIdConnectSecurityScheme(matchOpenIdConnectSecuritySchemeValue, context);
+            }
+
+            return defaultMatch(this, context);
+        }
+
+        /// <summary>
+        /// Matches the value against the composed values, and returns the result of calling the provided match function for the first match found.
+        /// </summary>
+        /// <typeparam name="TOut">The result of calling the match function.</typeparam>
+        /// <param name="matchApiKeySecurityScheme">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ApiKeySecurityScheme"/>.</param>
+        /// <param name="matchHttpSecurityScheme">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme"/>.</param>
+        /// <param name="matchOAuth2SecurityScheme">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OAuth2SecurityScheme"/>.</param>
+        /// <param name="matchOpenIdConnectSecurityScheme">Match a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OpenIdConnectSecurityScheme"/>.</param>
+        /// <param name="defaultMatch">Match any other value.</param>
+        /// <returns>An instance of the value returned by the match function.</returns>
+        public TOut Match<TOut>(
+            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ApiKeySecurityScheme, TOut> matchApiKeySecurityScheme,
+            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme, TOut> matchHttpSecurityScheme,
+            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OAuth2SecurityScheme, TOut> matchOAuth2SecurityScheme,
+            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OpenIdConnectSecurityScheme, TOut> matchOpenIdConnectSecurityScheme,
+            Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SecurityScheme, TOut> defaultMatch)
+        {
+            Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ApiKeySecurityScheme matchApiKeySecuritySchemeValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ApiKeySecurityScheme>();
+            if (matchApiKeySecuritySchemeValue.IsValid())
+            {
+                return matchApiKeySecurityScheme(matchApiKeySecuritySchemeValue);
+            }
+
+            Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme matchHttpSecuritySchemeValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme>();
+            if (matchHttpSecuritySchemeValue.IsValid())
+            {
+                return matchHttpSecurityScheme(matchHttpSecuritySchemeValue);
+            }
+
+            Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OAuth2SecurityScheme matchOAuth2SecuritySchemeValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OAuth2SecurityScheme>();
+            if (matchOAuth2SecuritySchemeValue.IsValid())
+            {
+                return matchOAuth2SecurityScheme(matchOAuth2SecuritySchemeValue);
+            }
+
+            Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OpenIdConnectSecurityScheme matchOpenIdConnectSecuritySchemeValue = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OpenIdConnectSecurityScheme>();
+            if (matchOpenIdConnectSecuritySchemeValue.IsValid())
+            {
+                return matchOpenIdConnectSecurityScheme(matchOpenIdConnectSecuritySchemeValue);
+            }
+
+            return defaultMatch(this);
+        }
+
+        /// <summary>
+        /// Gets the value as a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ApiKeySecurityScheme" />.
+        /// </summary>
+        /// <param name="result">The result of the conversions.</param>
+        /// <returns><see langword="true" /> if the conversion was valid.</returns>
+        public bool TryGetAsApiKeySecurityScheme(out Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ApiKeySecurityScheme result)
+        {
+            result = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ApiKeySecurityScheme>();
+            return result.IsValid();
+        }
+
+        /// <summary>
+        /// Gets the value as a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme" />.
+        /// </summary>
+        /// <param name="result">The result of the conversions.</param>
+        /// <returns><see langword="true" /> if the conversion was valid.</returns>
+        public bool TryGetAsHttpSecurityScheme(out Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme result)
+        {
+            result = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme>();
+            return result.IsValid();
+        }
+
+        /// <summary>
+        /// Gets the value as a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OAuth2SecurityScheme" />.
+        /// </summary>
+        /// <param name="result">The result of the conversions.</param>
+        /// <returns><see langword="true" /> if the conversion was valid.</returns>
+        public bool TryGetAsOAuth2SecurityScheme(out Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OAuth2SecurityScheme result)
+        {
+            result = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OAuth2SecurityScheme>();
+            return result.IsValid();
+        }
+
+        /// <summary>
+        /// Gets the value as a <see cref="Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OpenIdConnectSecurityScheme" />.
+        /// </summary>
+        /// <param name="result">The result of the conversions.</param>
+        /// <returns><see langword="true" /> if the conversion was valid.</returns>
+        public bool TryGetAsOpenIdConnectSecurityScheme(out Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OpenIdConnectSecurityScheme result)
+        {
+            result = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OpenIdConnectSecurityScheme>();
+            return result.IsValid();
         }
     }
 }

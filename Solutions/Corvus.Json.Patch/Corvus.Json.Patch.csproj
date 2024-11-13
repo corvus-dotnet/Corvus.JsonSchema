@@ -13,13 +13,14 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.12">
+		<PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.13">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" />
-		<PackageReference Include="Microsoft.Extensions.ObjectPool" Version="8.0.3" />
-		<PackageReference Include="NodaTime" Version="3.1.11" />
+		<PackageReference Include="Microsoft.Extensions.Http" Version="9.0.0" />
+		<PackageReference Include="Microsoft.Extensions.ObjectPool" Version="9.0.0" />
+		<PackageReference Include="NodaTime" Version="3.2.0" />
+		<PackageReference Include="System.Collections.Immutable" Version="9.0.0" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -31,7 +32,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Update="Roslynator.Analyzers" Version="4.11.0" />
+		<PackageReference Update="Roslynator.Analyzers" Version="4.12.9" />
 	</ItemGroup>
 
 </Project>

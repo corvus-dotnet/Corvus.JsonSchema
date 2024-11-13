@@ -1,44 +1,47 @@
-<Project Sdk="Microsoft.NET.Sdk">
-	<Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
 
-	<PropertyGroup>
-		<TargetFrameworks>netstandard2.0;net8.0</TargetFrameworks>
-		<ImplicitUsings>enable</ImplicitUsings>
-		<Nullable>enable</Nullable>
-	</PropertyGroup>
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;net8.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
 
-	<PropertyGroup>
-		<NoWarn>CS1591</NoWarn>
-	</PropertyGroup>
+  <PropertyGroup>
+    <NoWarn>CS1591</NoWarn>
+  </PropertyGroup>
 
-	<PropertyGroup>
-		<PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
-		<Description>A library for generating code from .NET types representing data types found in JSON.</Description>
-	</PropertyGroup>
+  <PropertyGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+    <NoWarn>$(NoWarn);nullable</NoWarn>
+  </PropertyGroup>
 
-	<ItemGroup>
-		<PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.12">
-			<PrivateAssets>all</PrivateAssets>
-			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-		</PackageReference>
-		<PackageReference Include="System.CodeDom" Version="8.0.0" />
-	</ItemGroup>
+  <PropertyGroup>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <Description>Defines the vocabulary for the Draft 7 dialect.</Description>
+  </PropertyGroup>
 
-	<ItemGroup>
-		<ProjectReference Include="..\Corvus.Json.CodeGeneration.Abstractions\Corvus.Json.CodeGeneration.Abstractions.csproj" />
-		<ProjectReference Include="..\Corvus.Json.JsonSchema.Draft7\Corvus.Json.JsonSchema.Draft7.csproj" />
-	</ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.13">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="System.Collections.Immutable" Version="9.0.0" />
+  </ItemGroup>
 
-	<ItemGroup>
-		<PackageReference Update="StyleCop.Analyzers" Version="1.2.0-beta.435" />
-	</ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+    <PackageReference Include="System.Text.Json" Version="9.0.0" />
+  </ItemGroup>
 
-	<ItemGroup>
-		<PackageReference Update="Roslynator.Analyzers" Version="4.11.0" />
-	</ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Corvus.Json.CodeGeneration\Corvus.Json.CodeGeneration.csproj" />
+  </ItemGroup>
 
-	<ItemGroup>
-		<Folder Include="Corvus.Json.CodeGeneration.Draft7\Generators\" />
-	</ItemGroup>
+  <ItemGroup>
+    <PackageReference Update="StyleCop.Analyzers" Version="1.2.0-beta.435" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="Roslynator.Analyzers" Version="4.12.9" />
+  </ItemGroup>
+
 </Project>
-

@@ -6,12 +6,10 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // </licensing>
 
+#if !NET8_0_OR_GREATER
+
 using System.Buffers;
-using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using System.Text.Encodings.Web;
 
 #pragma warning disable
 
@@ -261,3 +259,5 @@ public readonly struct Rune
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static Rune UnsafeCreate(uint scalarValue) => new Rune(scalarValue);
 }
+
+#endif

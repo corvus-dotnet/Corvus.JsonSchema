@@ -6,9 +6,10 @@
 //     the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
+
 #nullable enable
+
 using System.Buffers;
-using System.ComponentModel;
 using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
@@ -21,13 +22,15 @@ namespace Corvus.Json.JsonSchema.Draft201909;
 /// </summary>
 [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<Schema>))]
 public readonly partial struct Schema
+
 {
     private readonly Backing backing;
     private readonly JsonElement jsonElementBacking;
     private readonly bool boolBacking;
     private readonly ImmutableList<JsonObjectProperty> objectBacking;
+
     /// <summary>
-    /// Initializes a new instance of the <see cref = "Schema"/> struct.
+    /// Initializes a new instance of the <see cref="Schema"/> struct.
     /// </summary>
     public Schema()
     {
@@ -38,9 +41,9 @@ public readonly partial struct Schema
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref = "Schema"/> struct.
+    /// Initializes a new instance of the <see cref="Schema"/> struct.
     /// </summary>
-    /// <param name = "value">The value from which to construct the instance.</param>
+    /// <param name="value">The value from which to construct the instance.</param>
     public Schema(in JsonElement value)
     {
         this.jsonElementBacking = value;
@@ -50,19 +53,46 @@ public readonly partial struct Schema
     }
 
     /// <summary>
+    /// Initializes a new instance of the <see cref="Schema"/> struct.
+    /// </summary>
+    /// <param name="value">The value from which to construct the instance.</param>
+    public Schema(bool value)
+    {
+        this.backing = Backing.Bool;
+        this.jsonElementBacking = default;
+        this.boolBacking = value;
+        this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="Schema"/> struct.
+    /// </summary>
+    /// <param name="value">The value from which to construct the instance.</param>
+    public Schema(ImmutableList<JsonObjectProperty> value)
+    {
+        this.backing = Backing.Object;
+        this.jsonElementBacking = default;
+        this.boolBacking = default;
+        this.objectBacking = value;
+    }
+
+    /// <summary>
     /// Gets the schema location from which this type was generated.
     /// </summary>
     public static string SchemaLocation { get; } = "https://json-schema.org/draft/2019-09/schema";
+
     /// <summary>
     /// Gets a Null instance.
     /// </summary>
     public static Schema Null { get; } = new(JsonValueHelpers.NullElement);
+
     /// <summary>
     /// Gets an Undefined instance.
     /// </summary>
     public static Schema Undefined { get; }
+
     /// <summary>
-    /// Gets the default instance of the type.
+    /// Gets the default instance.
     /// </summary>
     public static Schema DefaultInstance { get; }
 
@@ -204,6 +234,138 @@ public readonly partial struct Schema
         }
     }
 
+    /// <summary>
+    /// Gets the instance as a <see cref="Corvus.Json.JsonSchema.Draft201909.Applicator" />.
+    /// </summary>
+    public Corvus.Json.JsonSchema.Draft201909.Applicator AsApplicator
+    {
+        get
+        {
+            return this.As<Corvus.Json.JsonSchema.Draft201909.Applicator>();
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether the instance is a <see cref="Corvus.Json.JsonSchema.Draft201909.Applicator" />.
+    /// </summary>
+    public bool IsApplicator
+    {
+        get
+        {
+            return this.As<Corvus.Json.JsonSchema.Draft201909.Applicator>().IsValid();
+        }
+    }
+
+    /// <summary>
+    /// Gets the instance as a <see cref="Corvus.Json.JsonSchema.Draft201909.Content" />.
+    /// </summary>
+    public Corvus.Json.JsonSchema.Draft201909.Content AsContent
+    {
+        get
+        {
+            return this.As<Corvus.Json.JsonSchema.Draft201909.Content>();
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether the instance is a <see cref="Corvus.Json.JsonSchema.Draft201909.Content" />.
+    /// </summary>
+    public bool IsContent
+    {
+        get
+        {
+            return this.As<Corvus.Json.JsonSchema.Draft201909.Content>().IsValid();
+        }
+    }
+
+    /// <summary>
+    /// Gets the instance as a <see cref="Corvus.Json.JsonSchema.Draft201909.Core" />.
+    /// </summary>
+    public Corvus.Json.JsonSchema.Draft201909.Core AsCore
+    {
+        get
+        {
+            return this.As<Corvus.Json.JsonSchema.Draft201909.Core>();
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether the instance is a <see cref="Corvus.Json.JsonSchema.Draft201909.Core" />.
+    /// </summary>
+    public bool IsCore
+    {
+        get
+        {
+            return this.As<Corvus.Json.JsonSchema.Draft201909.Core>().IsValid();
+        }
+    }
+
+    /// <summary>
+    /// Gets the instance as a <see cref="Corvus.Json.JsonSchema.Draft201909.Format" />.
+    /// </summary>
+    public Corvus.Json.JsonSchema.Draft201909.Format AsFormat
+    {
+        get
+        {
+            return this.As<Corvus.Json.JsonSchema.Draft201909.Format>();
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether the instance is a <see cref="Corvus.Json.JsonSchema.Draft201909.Format" />.
+    /// </summary>
+    public bool IsFormat
+    {
+        get
+        {
+            return this.As<Corvus.Json.JsonSchema.Draft201909.Format>().IsValid();
+        }
+    }
+
+    /// <summary>
+    /// Gets the instance as a <see cref="Corvus.Json.JsonSchema.Draft201909.MetaData" />.
+    /// </summary>
+    public Corvus.Json.JsonSchema.Draft201909.MetaData AsMetaData
+    {
+        get
+        {
+            return this.As<Corvus.Json.JsonSchema.Draft201909.MetaData>();
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether the instance is a <see cref="Corvus.Json.JsonSchema.Draft201909.MetaData" />.
+    /// </summary>
+    public bool IsMetaData
+    {
+        get
+        {
+            return this.As<Corvus.Json.JsonSchema.Draft201909.MetaData>().IsValid();
+        }
+    }
+
+    /// <summary>
+    /// Gets the instance as a <see cref="Corvus.Json.JsonSchema.Draft201909.Validation" />.
+    /// </summary>
+    public Corvus.Json.JsonSchema.Draft201909.Validation AsValidation
+    {
+        get
+        {
+            return this.As<Corvus.Json.JsonSchema.Draft201909.Validation>();
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether the instance is a <see cref="Corvus.Json.JsonSchema.Draft201909.Validation" />.
+    /// </summary>
+    public bool IsValidation
+    {
+        get
+        {
+            return this.As<Corvus.Json.JsonSchema.Draft201909.Validation>().IsValid();
+        }
+    }
+
     /// <inheritdoc/>
     public bool HasJsonElementBacking
     {
@@ -242,11 +404,6 @@ public readonly partial struct Schema
                 return JsonValueKind.Object;
             }
 
-            if ((this.backing & Backing.Null) != 0)
-            {
-                return JsonValueKind.Null;
-            }
-
             return JsonValueKind.Undefined;
         }
     }
@@ -254,9 +411,8 @@ public readonly partial struct Schema
     /// <summary>
     /// Conversion from JsonAny.
     /// </summary>
-    /// <param name = "value">The value from which to convert.</param>
-    /// <exception cref = "InvalidOperationException">The value was not compatible with this type.</exception>
-    public static implicit operator Schema(in JsonAny value)
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator Schema(JsonAny value)
     {
         return value.As<Schema>();
     }
@@ -264,43 +420,165 @@ public readonly partial struct Schema
     /// <summary>
     /// Conversion to JsonAny.
     /// </summary>
-    /// <param name = "value">The value from which to convert.</param>
-    /// <exception cref = "InvalidOperationException">The value was not compatible with this type.</exception>
-    public static implicit operator JsonAny(in Schema value)
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator JsonAny(Schema value)
     {
         return value.AsAny;
     }
 
     /// <summary>
-    /// Equality operator.
+    /// Conversion to <see cref="Corvus.Json.JsonSchema.Draft201909.Core"/>.
     /// </summary>
-    /// <param name = "left">The lhs.</param>
-    /// <param name = "right">The rhs.</param>
-    /// <returns><c>True</c> if the values are equal.</returns>
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator Corvus.Json.JsonSchema.Draft201909.Core(Schema value)
+    {
+        return value.As<Corvus.Json.JsonSchema.Draft201909.Core>();
+    }
+
+    /// <summary>
+    /// Conversion from <see cref="Corvus.Json.JsonSchema.Draft201909.Core"/>.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static explicit operator Schema(Corvus.Json.JsonSchema.Draft201909.Core value)
+    {
+        return value.As<Schema>();
+    }
+
+    /// <summary>
+    /// Conversion to <see cref="Corvus.Json.JsonSchema.Draft201909.Applicator"/>.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator Corvus.Json.JsonSchema.Draft201909.Applicator(Schema value)
+    {
+        return value.As<Corvus.Json.JsonSchema.Draft201909.Applicator>();
+    }
+
+    /// <summary>
+    /// Conversion from <see cref="Corvus.Json.JsonSchema.Draft201909.Applicator"/>.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static explicit operator Schema(Corvus.Json.JsonSchema.Draft201909.Applicator value)
+    {
+        return value.As<Schema>();
+    }
+
+    /// <summary>
+    /// Conversion to <see cref="Corvus.Json.JsonSchema.Draft201909.Validation"/>.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator Corvus.Json.JsonSchema.Draft201909.Validation(Schema value)
+    {
+        return value.As<Corvus.Json.JsonSchema.Draft201909.Validation>();
+    }
+
+    /// <summary>
+    /// Conversion from <see cref="Corvus.Json.JsonSchema.Draft201909.Validation"/>.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static explicit operator Schema(Corvus.Json.JsonSchema.Draft201909.Validation value)
+    {
+        return value.As<Schema>();
+    }
+
+    /// <summary>
+    /// Conversion to <see cref="Corvus.Json.JsonSchema.Draft201909.MetaData"/>.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator Corvus.Json.JsonSchema.Draft201909.MetaData(Schema value)
+    {
+        return value.As<Corvus.Json.JsonSchema.Draft201909.MetaData>();
+    }
+
+    /// <summary>
+    /// Conversion from <see cref="Corvus.Json.JsonSchema.Draft201909.MetaData"/>.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static explicit operator Schema(Corvus.Json.JsonSchema.Draft201909.MetaData value)
+    {
+        return value.As<Schema>();
+    }
+
+    /// <summary>
+    /// Conversion to <see cref="Corvus.Json.JsonSchema.Draft201909.Format"/>.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator Corvus.Json.JsonSchema.Draft201909.Format(Schema value)
+    {
+        return value.As<Corvus.Json.JsonSchema.Draft201909.Format>();
+    }
+
+    /// <summary>
+    /// Conversion from <see cref="Corvus.Json.JsonSchema.Draft201909.Format"/>.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static explicit operator Schema(Corvus.Json.JsonSchema.Draft201909.Format value)
+    {
+        return value.As<Schema>();
+    }
+
+    /// <summary>
+    /// Conversion to <see cref="Corvus.Json.JsonSchema.Draft201909.Content"/>.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator Corvus.Json.JsonSchema.Draft201909.Content(Schema value)
+    {
+        return value.As<Corvus.Json.JsonSchema.Draft201909.Content>();
+    }
+
+    /// <summary>
+    /// Conversion from <see cref="Corvus.Json.JsonSchema.Draft201909.Content"/>.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static explicit operator Schema(Corvus.Json.JsonSchema.Draft201909.Content value)
+    {
+        return value.As<Schema>();
+    }
+
+    /// <summary>
+    /// Operator ==.
+    /// </summary>
+    /// <param name="left">The lhs of the operator.</param>
+    /// <param name="right">The rhs of the operator.</param>
+    /// <returns>
+    /// <c>True</c> if the values are equal.
+    /// </returns>
     public static bool operator ==(in Schema left, in Schema right)
     {
         return left.Equals(right);
     }
 
     /// <summary>
-    /// Inequality operator.
+    /// Operator !=.
     /// </summary>
-    /// <param name = "left">The lhs.</param>
-    /// <param name = "right">The rhs.</param>
-    /// <returns><c>True</c> if the values are equal.</returns>
+    /// <param name="left">The lhs of the operator.</param>
+    /// <param name="right">The rhs of the operator.</param>
+    /// <returns>
+    /// <c>True</c> if the values are not equal.
+    /// </returns>
     public static bool operator !=(in Schema left, in Schema right)
     {
         return !left.Equals(right);
     }
 
     /// <summary>
-    /// Gets an instance of the JSON value from a JsonAny value.
+    /// Gets an instance of the JSON value from a <see cref="JsonElement"/> value.
     /// </summary>
-    /// <param name = "value">The <see cref = "JsonAny"/> value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the <see cref = "JsonAny"/>.</returns>
+    /// <param name="value">The <see cref="JsonElement"/> value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the <see cref="JsonElement"/>.</returns>
     /// <remarks>The returned value will have a <see cref = "IJsonValue.ValueKind"/> of <see cref = "JsonValueKind.Undefined"/> if the
-    /// value cannot be constructed from the given instance (e.g. because they have an incompatible dotnet backing type.
+    /// value cannot be constructed from the given instance (e.g. because they have an incompatible .NET backing type).
     /// </remarks>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Schema FromJson(in JsonElement value)
+    {
+        return new(value);
+    }
+
+    /// <summary>
+    /// Gets an instance of the JSON value from a <see cref="JsonAny"/> value.
+    /// </summary>
+    /// <param name="value">The <see cref="JsonAny"/> value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the <see cref="JsonAny"/> value.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Schema FromAny(in JsonAny value)
     {
@@ -309,8 +587,7 @@ public readonly partial struct Schema
             return new(value.AsJsonElement);
         }
 
-        JsonValueKind valueKind = value.ValueKind;
-        return valueKind switch
+        return value.ValueKind switch
         {
             JsonValueKind.True => new(true),
             JsonValueKind.False => new(false),
@@ -321,23 +598,11 @@ public readonly partial struct Schema
     }
 
     /// <summary>
-    /// Gets an instance of the JSON value from a <see cref = "JsonElement"/> value.
+    /// Gets an instance of the JSON value from the provided value.
     /// </summary>
-    /// <param name = "value">The <see cref = "JsonElement"/> value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the <see cref = "JsonElement"/>.</returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Schema FromJson(in JsonElement value)
-    {
-        return new(value);
-    }
-
-    /// <summary>
-    /// Gets an instance of the JSON value from a boolean value.
-    /// </summary>
-    /// <typeparam name = "TValue">The type of the value.</typeparam>
-    /// <param name = "value">The value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the value.</returns>
-    /// <remarks>This will be Schema.Undefined if the type is not compatible.</remarks>
+    /// <typeparam name="TValue">The type of the value.</typeparam>
+    /// <param name="value">The value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the provided value.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Schema FromBoolean<TValue>(in TValue value)
         where TValue : struct, IJsonBoolean<TValue>
@@ -347,27 +612,22 @@ public readonly partial struct Schema
             return new(value.AsJsonElement);
         }
 
-        if (value.ValueKind == JsonValueKind.True)
+        return value.ValueKind switch
         {
-            return new(true);
-        }
-
-        if (value.ValueKind == JsonValueKind.False)
-        {
-            return new(false);
-        }
-
-        return Undefined;
+            JsonValueKind.True => new(true),
+            JsonValueKind.False => new(false),
+            JsonValueKind.Null => Null,
+            _ => Undefined,
+        };
     }
 
 #if NET8_0_OR_GREATER
     /// <summary>
-    /// Gets an instance of the JSON value from a string value.
+    /// Gets an instance of the JSON value from the provided value.
     /// </summary>
     /// <typeparam name="TValue">The type of the value.</typeparam>
     /// <param name="value">The value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the value.</returns>
-    /// <remarks>This will be Schema.Undefined if the type is not compatible.</remarks>
+    /// <returns>An instance of this type, initialized from the provided value.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     static Schema IJsonValue<Schema>.FromString<TValue>(in TValue value)
     {
@@ -379,14 +639,14 @@ public readonly partial struct Schema
         return Undefined;
     }
 #endif
+
 #if NET8_0_OR_GREATER
     /// <summary>
-    /// Gets an instance of the JSON value from a number value.
+    /// Gets an instance of the JSON value from the provided value.
     /// </summary>
     /// <typeparam name="TValue">The type of the value.</typeparam>
     /// <param name="value">The value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the value.</returns>
-    /// <remarks>This will be Schema.Undefined if the type is not compatible.</remarks>
+    /// <returns>An instance of this type, initialized from the provided value.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     static Schema IJsonValue<Schema>.FromNumber<TValue>(in TValue value)
     {
@@ -398,14 +658,37 @@ public readonly partial struct Schema
         return Undefined;
     }
 #endif
-#if NET8_0_OR_GREATER
+
     /// <summary>
-    /// Gets an instance of the JSON value from an array value.
+    /// Gets an instance of the JSON value from the provided value.
     /// </summary>
     /// <typeparam name="TValue">The type of the value.</typeparam>
     /// <param name="value">The value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the value.</returns>
-    /// <remarks>This will be Schema.Undefined if the type is not compatible.</remarks>
+    /// <returns>An instance of this type, initialized from the provided value.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Schema FromObject<TValue>(in TValue value)
+        where TValue : struct, IJsonObject<TValue>
+    {
+        if (value.HasJsonElementBacking)
+        {
+            return new(value.AsJsonElement);
+        }
+
+        return value.ValueKind switch
+        {
+            JsonValueKind.Object => new(value.AsPropertyBacking()),
+            JsonValueKind.Null => Null,
+            _ => Undefined,
+        };
+    }
+
+#if NET8_0_OR_GREATER
+    /// <summary>
+    /// Gets an instance of the JSON value from the provided value.
+    /// </summary>
+    /// <typeparam name="TValue">The type of the value.</typeparam>
+    /// <param name="value">The value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the provided value.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     static Schema IJsonValue<Schema>.FromArray<TValue>(in TValue value)
     {
@@ -417,136 +700,118 @@ public readonly partial struct Schema
         return Undefined;
     }
 #endif
+
     /// <summary>
-    /// Gets an instance of the JSON value from an object value.
+    /// Parses the Schema.
     /// </summary>
-    /// <typeparam name = "TValue">The type of the value.</typeparam>
-    /// <param name = "value">The value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the value.</returns>
-    /// <remarks>This will be Schema.Undefined if the type is not compatible.</remarks>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Schema FromObject<TValue>(in TValue value)
-        where TValue : struct, IJsonObject<TValue>
+    /// <param name="source">The source of the JSON string to parse.</param>
+    /// <param name="options">The (optional) JsonDocumentOptions.</param>
+    public static Schema Parse(string source, JsonDocumentOptions options = default)
     {
-        if (value.HasJsonElementBacking)
-        {
-            return new(value.AsJsonElement);
-        }
-
-        if (value.ValueKind == JsonValueKind.Object)
-        {
-            return new(value.AsPropertyBacking());
-        }
-
-        return Undefined;
+        using var jsonDocument = JsonDocument.Parse(source, options);
+        return new(jsonDocument.RootElement.Clone());
     }
 
     /// <summary>
-    /// Parses a JSON string into a Schema.
+    /// Parses the Schema.
     /// </summary>
-    /// <param name = "json">The json string to parse.</param>
-    /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-    /// <returns>A <see cref = "Schema"/> instance built from the JSON string.</returns>
-    public static Schema Parse(string json, JsonDocumentOptions options = default)
+    /// <param name="source">The source of the JSON string to parse.</param>
+    /// <param name="options">The (optional) JsonDocumentOptions.</param>
+    public static Schema Parse(Stream source, JsonDocumentOptions options = default)
     {
-        using var jsonDocument = JsonDocument.Parse(json, options);
-        return new Schema(jsonDocument.RootElement.Clone());
+        using var jsonDocument = JsonDocument.Parse(source, options);
+        return new(jsonDocument.RootElement.Clone());
     }
 
     /// <summary>
-    /// Parses a JSON string into a Schema.
+    /// Parses the Schema.
     /// </summary>
-    /// <param name = "utf8Json">The json string to parse.</param>
-    /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-    /// <returns>A <see cref = "Schema"/> instance built from the JSON string.</returns>
-    public static Schema Parse(Stream utf8Json, JsonDocumentOptions options = default)
+    /// <param name="source">The source of the JSON string to parse.</param>
+    /// <param name="options">The (optional) JsonDocumentOptions.</param>
+    public static Schema Parse(ReadOnlyMemory<byte> source, JsonDocumentOptions options = default)
     {
-        using var jsonDocument = JsonDocument.Parse(utf8Json, options);
-        return new Schema(jsonDocument.RootElement.Clone());
+        using var jsonDocument = JsonDocument.Parse(source, options);
+        return new(jsonDocument.RootElement.Clone());
     }
 
     /// <summary>
-    /// Parses a JSON string into a Schema.
+    /// Parses the Schema.
     /// </summary>
-    /// <param name = "utf8Json">The json string to parse.</param>
-    /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-    /// <returns>A <see cref = "Schema"/> instance built from the JSON string.</returns>
-    public static Schema Parse(ReadOnlyMemory<byte> utf8Json, JsonDocumentOptions options = default)
+    /// <param name="source">The source of the JSON string to parse.</param>
+    /// <param name="options">The (optional) JsonDocumentOptions.</param>
+    public static Schema Parse(ReadOnlyMemory<char> source, JsonDocumentOptions options = default)
     {
-        using var jsonDocument = JsonDocument.Parse(utf8Json, options);
-        return new Schema(jsonDocument.RootElement.Clone());
+        using var jsonDocument = JsonDocument.Parse(source, options);
+        return new(jsonDocument.RootElement.Clone());
     }
 
     /// <summary>
-    /// Parses a JSON string into a Schema.
+    /// Parses the Schema.
     /// </summary>
-    /// <param name = "json">The json string to parse.</param>
-    /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-    /// <returns>A <see cref = "Schema"/> instance built from the JSON string.</returns>
-    public static Schema Parse(ReadOnlyMemory<char> json, JsonDocumentOptions options = default)
+    /// <param name="source">The source of the JSON string to parse.</param>
+    /// <param name="options">The (optional) JsonDocumentOptions.</param>
+    public static Schema Parse(ReadOnlySequence<byte> source, JsonDocumentOptions options = default)
     {
-        using var jsonDocument = JsonDocument.Parse(json, options);
-        return new Schema(jsonDocument.RootElement.Clone());
+        using var jsonDocument = JsonDocument.Parse(source, options);
+        return new(jsonDocument.RootElement.Clone());
     }
 
     /// <summary>
-    /// Parses a JSON string into a Schema.
+    /// Parses the Schema.
     /// </summary>
-    /// <param name = "utf8Json">The json string to parse.</param>
-    /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-    /// <returns>A <see cref = "Schema"/> instance built from the JSON string.</returns>
-    public static Schema Parse(ReadOnlySequence<byte> utf8Json, JsonDocumentOptions options = default)
-    {
-        using var jsonDocument = JsonDocument.Parse(utf8Json, options);
-        return new Schema(jsonDocument.RootElement.Clone());
-    }
-
-    /// <summary>
-    /// Parses a JSON value from a buffer.
-    /// </summary>
-    /// <param name = "buffer">The buffer from which to parse the value.</param>
-    /// <returns>The parsed value.</returns>
-    static Schema ParseValue(ReadOnlySpan<char> buffer)
+    /// <param name="source">The source of the JSON string to parse.</param>
+    public static Schema ParseValue(string source)
     {
 #if NET8_0_OR_GREATER
-        return IJsonValue<Schema>.ParseValue(buffer);
+        return IJsonValue<Schema>.ParseValue(source);
 #else
-        return JsonValueHelpers.ParseValue<Schema>(buffer);
+        return JsonValueHelpers.ParseValue<Schema>(source.AsSpan());
 #endif
     }
 
     /// <summary>
-    /// Parses a JSON value from a buffer.
+    /// Parses the Schema.
     /// </summary>
-    /// <param name = "buffer">The buffer from which to parse the value.</param>
-    /// <returns>The parsed value.</returns>
-    static Schema ParseValue(ReadOnlySpan<byte> buffer)
+    /// <param name="source">The source of the JSON string to parse.</param>
+    public static Schema ParseValue(ReadOnlySpan<char> source)
     {
 #if NET8_0_OR_GREATER
-        return IJsonValue<Schema>.ParseValue(buffer);
+        return IJsonValue<Schema>.ParseValue(source);
 #else
-        return JsonValueHelpers.ParseValue<Schema>(buffer);
+        return JsonValueHelpers.ParseValue<Schema>(source);
 #endif
     }
 
     /// <summary>
-    /// Parses a JSON value from a buffer.
+    /// Parses the Schema.
     /// </summary>
-    /// <param name = "reader">The reader from which to parse the value.</param>
-    /// <returns>The parsed value.</returns>
-    static Schema ParseValue(ref Utf8JsonReader reader)
+    /// <param name="source">The source of the JSON string to parse.</param>
+    public static Schema ParseValue(ReadOnlySpan<byte> source)
     {
 #if NET8_0_OR_GREATER
-        return IJsonValue<Schema>.ParseValue(ref reader);
+        return IJsonValue<Schema>.ParseValue(source);
 #else
-        return JsonValueHelpers.ParseValue<Schema>(ref reader);
+        return JsonValueHelpers.ParseValue<Schema>(source);
+#endif
+    }
+
+    /// <summary>
+    /// Parses the Schema.
+    /// </summary>
+    /// <param name="source">The source of the JSON string to parse.</param>
+    public static Schema ParseValue(ref Utf8JsonReader source)
+    {
+#if NET8_0_OR_GREATER
+        return IJsonValue<Schema>.ParseValue(ref source);
+#else
+        return JsonValueHelpers.ParseValue<Schema>(ref source);
 #endif
     }
 
     /// <summary>
     /// Gets the value as an instance of the target value.
     /// </summary>
-    /// <typeparam name = "TTarget">The type of the target.</typeparam>
+    /// <typeparam name="TTarget">The type of the target.</typeparam>
     /// <returns>An instance of the target type.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public TTarget As<TTarget>()
@@ -582,24 +847,69 @@ public readonly partial struct Schema
     /// <inheritdoc/>
     public override bool Equals(object? obj)
     {
-        return (obj is IJsonValue jv && this.Equals(jv.AsAny)) || (obj is null && this.IsNull());
+        return
+            (obj is IJsonValue jv && this.Equals(jv.As<Schema>())) ||
+            (obj is null && this.IsNull());
     }
 
     /// <inheritdoc/>
     public bool Equals<T>(in T other)
         where T : struct, IJsonValue<T>
     {
-        return JsonValueHelpers.CompareValues(this, other);
+        return this.Equals(other.As<Schema>());
     }
 
     /// <summary>
     /// Equality comparison.
     /// </summary>
-    /// <param name = "other">The other item with which to compare.</param>
+    /// <param name="other">The other item with which to compare.</param>
     /// <returns><see langword="true"/> if the values were equal.</returns>
     public bool Equals(in Schema other)
     {
-        return JsonValueHelpers.CompareValues(this, other);
+        JsonValueKind thisKind = this.ValueKind;
+        JsonValueKind otherKind = other.ValueKind;
+        if (thisKind != otherKind)
+        {
+            return false;
+        }
+
+        if (thisKind == JsonValueKind.Null || thisKind == JsonValueKind.Undefined)
+        {
+            return true;
+        }
+
+        if (thisKind == JsonValueKind.True || thisKind == JsonValueKind.False)
+        {
+            return true;
+        }
+
+        if (thisKind == JsonValueKind.Object)
+        {
+            int count = 0;
+            foreach (JsonObjectProperty property in this.EnumerateObject())
+            {
+                if (!other.TryGetProperty(property.Name, out JsonAny value) || !property.Value.Equals(value))
+                {
+                    return false;
+                }
+
+                count++;
+            }
+
+            int otherCount = 0;
+            foreach (JsonObjectProperty otherProperty in other.EnumerateObject())
+            {
+                otherCount++;
+                if (otherCount > count)
+                {
+                    return false;
+                }
+            }
+
+            return count == otherCount;
+        }
+
+        return false;
     }
 
     /// <inheritdoc/>
@@ -618,18 +928,21 @@ public readonly partial struct Schema
         if ((this.backing & Backing.Bool) != 0)
         {
             writer.WriteBooleanValue(this.boolBacking);
+
             return;
         }
 
         if ((this.backing & Backing.Object) != 0)
         {
             JsonValueHelpers.WriteProperties(this.objectBacking, writer);
+
             return;
         }
 
         if ((this.backing & Backing.Null) != 0)
         {
             writer.WriteNullValue();
+
             return;
         }
     }
@@ -637,12 +950,211 @@ public readonly partial struct Schema
     /// <inheritdoc/>
     public override int GetHashCode()
     {
-        return JsonValueHelpers.GetHashCode(this);
+        return this.ValueKind switch
+        {
+            JsonValueKind.Array => JsonValueHelpers.GetArrayHashCode(((IJsonValue)this).AsArray),
+            JsonValueKind.Object => JsonValueHelpers.GetObjectHashCode(this),
+            JsonValueKind.Number => JsonValueHelpers.GetHashCodeForNumber(((IJsonValue)this).AsNumber),
+            JsonValueKind.String => JsonValueHelpers.GetHashCodeForString(((IJsonValue)this).AsString),
+            JsonValueKind.True => true.GetHashCode(),
+            JsonValueKind.False => false.GetHashCode(),
+            JsonValueKind.Null => JsonValueHelpers.NullHashCode,
+            _ => JsonValueHelpers.UndefinedHashCode,
+        };
     }
 
     /// <inheritdoc/>
     public override string ToString()
     {
         return this.Serialize();
+    }
+
+    /// <summary>
+    /// Matches the value against the composed values, and returns the result of calling the provided match function for the first match found.
+    /// </summary>
+    /// <typeparam name="TIn">The immutable context to pass in to the match function.</typeparam>
+    /// <typeparam name="TOut">The result of calling the match function.</typeparam>
+    /// <param name="context">The context to pass to the match function.</param>
+    /// <param name="matchCore">Match a <see cref="Corvus.Json.JsonSchema.Draft201909.Core"/>.</param>
+    /// <param name="matchApplicator">Match a <see cref="Corvus.Json.JsonSchema.Draft201909.Applicator"/>.</param>
+    /// <param name="matchValidation">Match a <see cref="Corvus.Json.JsonSchema.Draft201909.Validation"/>.</param>
+    /// <param name="matchMetaData">Match a <see cref="Corvus.Json.JsonSchema.Draft201909.MetaData"/>.</param>
+    /// <param name="matchFormat">Match a <see cref="Corvus.Json.JsonSchema.Draft201909.Format"/>.</param>
+    /// <param name="matchContent">Match a <see cref="Corvus.Json.JsonSchema.Draft201909.Content"/>.</param>
+    /// <param name="defaultMatch">Match any other value.</param>
+    /// <returns>An instance of the value returned by the match function.</returns>
+    public TOut Match<TIn, TOut>(
+        in TIn context,
+        Matcher<Corvus.Json.JsonSchema.Draft201909.Core, TIn, TOut> matchCore,
+        Matcher<Corvus.Json.JsonSchema.Draft201909.Applicator, TIn, TOut> matchApplicator,
+        Matcher<Corvus.Json.JsonSchema.Draft201909.Validation, TIn, TOut> matchValidation,
+        Matcher<Corvus.Json.JsonSchema.Draft201909.MetaData, TIn, TOut> matchMetaData,
+        Matcher<Corvus.Json.JsonSchema.Draft201909.Format, TIn, TOut> matchFormat,
+        Matcher<Corvus.Json.JsonSchema.Draft201909.Content, TIn, TOut> matchContent,
+        Matcher<Corvus.Json.JsonSchema.Draft201909.Schema, TIn, TOut> defaultMatch)
+    {
+        Corvus.Json.JsonSchema.Draft201909.Core matchCoreValue = this.As<Corvus.Json.JsonSchema.Draft201909.Core>();
+        if (matchCoreValue.IsValid())
+        {
+            return matchCore(matchCoreValue, context);
+        }
+
+        Corvus.Json.JsonSchema.Draft201909.Applicator matchApplicatorValue = this.As<Corvus.Json.JsonSchema.Draft201909.Applicator>();
+        if (matchApplicatorValue.IsValid())
+        {
+            return matchApplicator(matchApplicatorValue, context);
+        }
+
+        Corvus.Json.JsonSchema.Draft201909.Validation matchValidationValue = this.As<Corvus.Json.JsonSchema.Draft201909.Validation>();
+        if (matchValidationValue.IsValid())
+        {
+            return matchValidation(matchValidationValue, context);
+        }
+
+        Corvus.Json.JsonSchema.Draft201909.MetaData matchMetaDataValue = this.As<Corvus.Json.JsonSchema.Draft201909.MetaData>();
+        if (matchMetaDataValue.IsValid())
+        {
+            return matchMetaData(matchMetaDataValue, context);
+        }
+
+        Corvus.Json.JsonSchema.Draft201909.Format matchFormatValue = this.As<Corvus.Json.JsonSchema.Draft201909.Format>();
+        if (matchFormatValue.IsValid())
+        {
+            return matchFormat(matchFormatValue, context);
+        }
+
+        Corvus.Json.JsonSchema.Draft201909.Content matchContentValue = this.As<Corvus.Json.JsonSchema.Draft201909.Content>();
+        if (matchContentValue.IsValid())
+        {
+            return matchContent(matchContentValue, context);
+        }
+
+        return defaultMatch(this, context);
+    }
+
+    /// <summary>
+    /// Matches the value against the composed values, and returns the result of calling the provided match function for the first match found.
+    /// </summary>
+    /// <typeparam name="TOut">The result of calling the match function.</typeparam>
+    /// <param name="matchCore">Match a <see cref="Corvus.Json.JsonSchema.Draft201909.Core"/>.</param>
+    /// <param name="matchApplicator">Match a <see cref="Corvus.Json.JsonSchema.Draft201909.Applicator"/>.</param>
+    /// <param name="matchValidation">Match a <see cref="Corvus.Json.JsonSchema.Draft201909.Validation"/>.</param>
+    /// <param name="matchMetaData">Match a <see cref="Corvus.Json.JsonSchema.Draft201909.MetaData"/>.</param>
+    /// <param name="matchFormat">Match a <see cref="Corvus.Json.JsonSchema.Draft201909.Format"/>.</param>
+    /// <param name="matchContent">Match a <see cref="Corvus.Json.JsonSchema.Draft201909.Content"/>.</param>
+    /// <param name="defaultMatch">Match any other value.</param>
+    /// <returns>An instance of the value returned by the match function.</returns>
+    public TOut Match<TOut>(
+        Matcher<Corvus.Json.JsonSchema.Draft201909.Core, TOut> matchCore,
+        Matcher<Corvus.Json.JsonSchema.Draft201909.Applicator, TOut> matchApplicator,
+        Matcher<Corvus.Json.JsonSchema.Draft201909.Validation, TOut> matchValidation,
+        Matcher<Corvus.Json.JsonSchema.Draft201909.MetaData, TOut> matchMetaData,
+        Matcher<Corvus.Json.JsonSchema.Draft201909.Format, TOut> matchFormat,
+        Matcher<Corvus.Json.JsonSchema.Draft201909.Content, TOut> matchContent,
+        Matcher<Corvus.Json.JsonSchema.Draft201909.Schema, TOut> defaultMatch)
+    {
+        Corvus.Json.JsonSchema.Draft201909.Core matchCoreValue = this.As<Corvus.Json.JsonSchema.Draft201909.Core>();
+        if (matchCoreValue.IsValid())
+        {
+            return matchCore(matchCoreValue);
+        }
+
+        Corvus.Json.JsonSchema.Draft201909.Applicator matchApplicatorValue = this.As<Corvus.Json.JsonSchema.Draft201909.Applicator>();
+        if (matchApplicatorValue.IsValid())
+        {
+            return matchApplicator(matchApplicatorValue);
+        }
+
+        Corvus.Json.JsonSchema.Draft201909.Validation matchValidationValue = this.As<Corvus.Json.JsonSchema.Draft201909.Validation>();
+        if (matchValidationValue.IsValid())
+        {
+            return matchValidation(matchValidationValue);
+        }
+
+        Corvus.Json.JsonSchema.Draft201909.MetaData matchMetaDataValue = this.As<Corvus.Json.JsonSchema.Draft201909.MetaData>();
+        if (matchMetaDataValue.IsValid())
+        {
+            return matchMetaData(matchMetaDataValue);
+        }
+
+        Corvus.Json.JsonSchema.Draft201909.Format matchFormatValue = this.As<Corvus.Json.JsonSchema.Draft201909.Format>();
+        if (matchFormatValue.IsValid())
+        {
+            return matchFormat(matchFormatValue);
+        }
+
+        Corvus.Json.JsonSchema.Draft201909.Content matchContentValue = this.As<Corvus.Json.JsonSchema.Draft201909.Content>();
+        if (matchContentValue.IsValid())
+        {
+            return matchContent(matchContentValue);
+        }
+
+        return defaultMatch(this);
+    }
+
+    /// <summary>
+    /// Gets the value as a <see cref="Corvus.Json.JsonSchema.Draft201909.Applicator" />.
+    /// </summary>
+    /// <param name="result">The result of the conversions.</param>
+    /// <returns><see langword="true" /> if the conversion was valid.</returns>
+    public bool TryGetAsApplicator(out Corvus.Json.JsonSchema.Draft201909.Applicator result)
+    {
+        result = this.As<Corvus.Json.JsonSchema.Draft201909.Applicator>();
+        return result.IsValid();
+    }
+
+    /// <summary>
+    /// Gets the value as a <see cref="Corvus.Json.JsonSchema.Draft201909.Content" />.
+    /// </summary>
+    /// <param name="result">The result of the conversions.</param>
+    /// <returns><see langword="true" /> if the conversion was valid.</returns>
+    public bool TryGetAsContent(out Corvus.Json.JsonSchema.Draft201909.Content result)
+    {
+        result = this.As<Corvus.Json.JsonSchema.Draft201909.Content>();
+        return result.IsValid();
+    }
+
+    /// <summary>
+    /// Gets the value as a <see cref="Corvus.Json.JsonSchema.Draft201909.Core" />.
+    /// </summary>
+    /// <param name="result">The result of the conversions.</param>
+    /// <returns><see langword="true" /> if the conversion was valid.</returns>
+    public bool TryGetAsCore(out Corvus.Json.JsonSchema.Draft201909.Core result)
+    {
+        result = this.As<Corvus.Json.JsonSchema.Draft201909.Core>();
+        return result.IsValid();
+    }
+
+    /// <summary>
+    /// Gets the value as a <see cref="Corvus.Json.JsonSchema.Draft201909.Format" />.
+    /// </summary>
+    /// <param name="result">The result of the conversions.</param>
+    /// <returns><see langword="true" /> if the conversion was valid.</returns>
+    public bool TryGetAsFormat(out Corvus.Json.JsonSchema.Draft201909.Format result)
+    {
+        result = this.As<Corvus.Json.JsonSchema.Draft201909.Format>();
+        return result.IsValid();
+    }
+
+    /// <summary>
+    /// Gets the value as a <see cref="Corvus.Json.JsonSchema.Draft201909.MetaData" />.
+    /// </summary>
+    /// <param name="result">The result of the conversions.</param>
+    /// <returns><see langword="true" /> if the conversion was valid.</returns>
+    public bool TryGetAsMetaData(out Corvus.Json.JsonSchema.Draft201909.MetaData result)
+    {
+        result = this.As<Corvus.Json.JsonSchema.Draft201909.MetaData>();
+        return result.IsValid();
+    }
+
+    /// <summary>
+    /// Gets the value as a <see cref="Corvus.Json.JsonSchema.Draft201909.Validation" />.
+    /// </summary>
+    /// <param name="result">The result of the conversions.</param>
+    /// <returns><see langword="true" /> if the conversion was valid.</returns>
+    public bool TryGetAsValidation(out Corvus.Json.JsonSchema.Draft201909.Validation result)
+    {
+        result = this.As<Corvus.Json.JsonSchema.Draft201909.Validation>();
+        return result.IsValid();
     }
 }

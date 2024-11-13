@@ -6,13 +6,28 @@
 //     the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
+
 #nullable enable
+
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
 
 namespace Corvus.Json.JsonSchema.OpenApi31;
+
+/// <summary>
+/// Generated from JSON Schema.
+/// </summary>
+/// <remarks>
+/// <para>
+/// The description of OpenAPI v3.1.x documents without schema validation, as defined by https://spec.openapis.org/oas/v3.1.0
+/// </para>
+/// </remarks>
 public readonly partial struct OpenApiDocument
 {
+    /// <summary>
+    /// Generated from JSON Schema.
+    /// </summary>
     public readonly partial struct SecurityScheme
     {
         /// <summary>
@@ -35,18 +50,113 @@ public readonly partial struct OpenApiDocument
                     result = result.PushSchemaLocation("https://spec.openapis.org/oas/3.1/schema/2022-10-07#/$defs/security-scheme/$defs/type-apikey");
                 }
 
-                result = this.ValidateIfThenElse(result, level);
+                result = CorvusValidation.TernaryIfValidationHandler(this, result, level);
+
                 if (level == ValidationLevel.Flag && !result.IsValid)
                 {
                     return result;
                 }
 
-                if (level != ValidationLevel.Flag)
+                if (level > ValidationLevel.Basic)
                 {
                     result = result.PopLocation();
                 }
 
                 return result;
+            }
+
+            /// <summary>
+            /// Validation constants for the type.
+            /// </summary>
+            public static partial class CorvusValidation
+            {
+                /// <summary>
+                /// If/then/else composition validation.
+                /// </summary>
+                /// <param name="value">The value to validate.</param>
+                /// <param name="validationContext">The current validation context.</param>
+                /// <param name="level">The current validation level.</param>
+                /// <returns>The resulting validation context after validation.</returns>
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                internal static ValidationContext TernaryIfValidationHandler(
+                    in TypeApikeyEntity value,
+                    in ValidationContext validationContext,
+                    ValidationLevel level = ValidationLevel.Flag)
+                {
+                    ValidationContext result = validationContext;
+
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PushValidationLocationReducedPathModifier(new("#/if"));
+                    }
+
+                    ValidationContext ifResult = value.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeApikeyEntity.RequiredType>().Validate(validationContext.CreateChildContext(), level);
+
+                    if (!ifResult.IsValid)
+                    {
+                        if (level >= ValidationLevel.Verbose)
+                        {
+                            result = validationContext.MergeResults(true, level, ifResult);
+                        }
+                    }
+                    else
+                    {
+                        if (level >= ValidationLevel.Verbose)
+                        {
+                            result = result.MergeChildContext(ifResult, true);
+                        }
+                        else
+                        {
+                            result = result.MergeChildContext(ifResult, false);
+                        }
+                    }
+
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PopLocation();
+                    }
+
+                    if (ifResult.IsValid)
+                    {
+                        if (level > ValidationLevel.Basic)
+                        {
+                            result = result.PushValidationLocationReducedPathModifier(new("#/then"));
+                        }
+
+                        ValidationContext thenResult = value.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeApikeyEntity.RequiredInAndName>().Validate(validationContext.CreateChildContext(), level);
+
+                        if (!thenResult.IsValid)
+                        {
+                            if (level >= ValidationLevel.Basic)
+                            {
+                                result = validationContext.MergeResults(false, level, ifResult, thenResult);
+                                result = result.WithResult(isValid: false, "Validation then - failed to validate against the then schema");
+                            }
+                            else
+                            {
+                                result = validationContext.WithResult(isValid: false);
+                            }
+                        }
+                        else
+                        {
+                            if (level >= ValidationLevel.Basic)
+                            {
+                                result = result.MergeChildContext(thenResult, true);
+                            }
+                            else
+                            {
+                                result = result.MergeChildContext(thenResult, false);
+                            }
+                        }
+
+                        if (level > ValidationLevel.Basic)
+                        {
+                            result = result.PopLocation();
+                        }
+                    }
+
+                    return result;
+                }
             }
         }
     }

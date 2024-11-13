@@ -131,7 +131,7 @@ namespace Benchmarks
         #line hidden
         
         #line 39 "Benchmark.tt"
-        this.Write(@""").ConfigureAwait(false);
+        this.Write(@""");
         }
 
         /// <summary>

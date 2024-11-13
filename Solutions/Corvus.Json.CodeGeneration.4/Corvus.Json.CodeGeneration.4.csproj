@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
 
   <PropertyGroup>
@@ -11,22 +11,29 @@
     <NoWarn>CS1591</NoWarn>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+    <NoWarn>$(NoWarn);nullable</NoWarn>
+  </PropertyGroup>
+
   <PropertyGroup>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
-    <Description>A library for generating code from .NET types representing data types found in JSON.</Description>
+    <Description>Defines the vocabulary for the Draft 4 dialect.</Description>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.12">
+    <PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.13">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="System.CodeDom" Version="8.0.0" />
+    <PackageReference Include="System.Collections.Immutable" Version="9.0.0" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+    <PackageReference Include="System.Text.Json" Version="9.0.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Corvus.Json.CodeGeneration.Abstractions\Corvus.Json.CodeGeneration.Abstractions.csproj" />
-    <ProjectReference Include="..\Corvus.Json.JsonSchema.Draft4\Corvus.Json.JsonSchema.Draft4.csproj" />
+    <ProjectReference Include="..\Corvus.Json.CodeGeneration\Corvus.Json.CodeGeneration.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -34,8 +41,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Update="Roslynator.Analyzers" Version="4.11.0" />
+    <PackageReference Update="Roslynator.Analyzers" Version="4.12.9" />
   </ItemGroup>
 
 </Project>
-

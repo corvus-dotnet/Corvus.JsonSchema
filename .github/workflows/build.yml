@@ -52,9 +52,9 @@ jobs:
 
   build:
     needs: prepareConfig
-    uses: ./.github/workflows/matrix-build-workflow.yml
+    uses: endjin/Endjin.RecommendedPractices.GitHubActions/.github/workflows/scripted-build-matrix-pipeline.yml@main
     with:
-      netSdkVersion: '8.0.x'
+      netSdkVersion: '9.0.x'
       # additionalNetSdkVersion: '7.0.x'
       # workflow_dispatch inputs are always strings, the type property is just for the UI
       forcePublish: ${{ github.event.inputs.forcePublish == 'true' }}
@@ -67,7 +67,6 @@ jobs:
       publishPhaseEnv: ${{ needs.prepareConfig.outputs.RESOLVED_ENV_VARS }}
       additionalCachePaths: |
         JSON-Schema-Test-Suite
-      enableCrossOsCaching: true
     secrets:
       compilePhaseAzureCredentials: ${{ secrets.AZURE_READER_CREDENTIALS }}
       # testPhaseAzureCredentials: ${{ secrets.TESTS_KV_READER_CREDENTIALS }}

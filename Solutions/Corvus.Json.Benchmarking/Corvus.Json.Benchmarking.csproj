@@ -1,35 +1,44 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 	<Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
 
 	<PropertyGroup>
 		<OutputType>Exe</OutputType>
-		<TargetFrameworks>net481;net8.0</TargetFrameworks>
-		<ImplicitUsings>enable</ImplicitUsings>
+    <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<IsPackable>false</IsPackable>
-	</PropertyGroup>
+    <NoWarn>SA1615</NoWarn>
+    <Platforms>AnyCPU</Platforms>
+    <PreserveCompilationContext>true</PreserveCompilationContext>
+  </PropertyGroup>
 
 	<ItemGroup>
 		<ProjectReference Include="..\Corvus.Json.ExtendedTypes\Corvus.Json.ExtendedTypes.csproj" />
+		<ProjectReference Include="..\Corvus.Json.Validator\Corvus.Json.Validator.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="BenchmarkDotNet" Version="0.13.12" />
-		<PackageReference Include="BenchmarkDotNet.Diagnostics.Windows" Version="0.13.12" />
-		<PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.12">
-			<PrivateAssets>all</PrivateAssets>
-			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-		</PackageReference>
-		<PackageReference Include="JsonSchema.Net" Version="6.0.7" />
-		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.0" />
-		<PackageReference Include="JsonPatch.Net" Version="3.0.0" />
-	</ItemGroup>
+    <PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.13">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="BenchmarkDotNet" Version="0.14.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.12.0-2.final" />
+    <PackageReference Include="Microsoft.VisualStudio.DiagnosticsHub.BenchmarkDotNetDiagnosers" Version="17.13.35505.2" />
+    <PackageReference Include="System.Collections.Immutable" Version="9.0.0" />
+    <PackageReference Include="System.Reflection.Metadata" Version="9.0.0" />
+    <PackageReference Include="System.Text.Json" Version="9.0.0" />
+		<PackageReference Include="BenchmarkDotNet.Diagnostics.Windows" Version="0.14.0" />
+		<PackageReference Include="JsonSchema.Net" Version="7.2.3" />
+		<PackageReference Include="JsonPatch.Net" Version="3.1.1" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.0" />
+  </ItemGroup>
 
 	<ItemGroup>
-	  <None Update="PersonModel\person-array-schema.json">
+	  <None Update="person-array-schema.json">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </None>
-	  <None Update="PersonModel\person-schema.json">
+	  <None Update="person-schema.json">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </None>
 	</ItemGroup>
@@ -40,7 +49,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <PackageReference Update="Roslynator.Analyzers" Version="4.6.2" />
+	  <PackageReference Update="Roslynator.Analyzers" Version="4.12.9" />
 	</ItemGroup>
 
 </Project>

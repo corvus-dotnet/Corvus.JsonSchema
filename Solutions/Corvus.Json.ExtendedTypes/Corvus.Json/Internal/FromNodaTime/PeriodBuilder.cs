@@ -7,6 +7,7 @@
 // as found in the LICENSE.txt file.
 // </licensing>
 
+#if NET8_0_OR_GREATER
 using NodaTime;
 
 namespace Corvus.Json;
@@ -140,3 +141,5 @@ public struct PeriodBuilder
     /// <returns>The total number of nanoseconds in the period.</returns>
     public readonly Period BuildPeriod() => new Period(this.Years, this.Months, this.Weeks, this.Days, this.Hours, this.Minutes, this.Seconds, this.Milliseconds, this.Ticks, this.Nanoseconds);
 }
+
+#endif

@@ -6,9 +6,10 @@
 //     the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
+
 #nullable enable
+
 using System.Buffers;
-using System.ComponentModel;
 using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
@@ -16,10 +17,25 @@ using Corvus.Json;
 using Corvus.Json.Internal;
 
 namespace Corvus.Json.JsonSchema.OpenApi31;
+
+/// <summary>
+/// Generated from JSON Schema.
+/// </summary>
+/// <remarks>
+/// <para>
+/// The description of OpenAPI v3.1.x documents without schema validation, as defined by https://spec.openapis.org/oas/v3.1.0
+/// </para>
+/// </remarks>
 public readonly partial struct OpenApiDocument
 {
+    /// <summary>
+    /// Generated from JSON Schema.
+    /// </summary>
     public readonly partial struct Parameter
     {
+        /// <summary>
+        /// Generated from JSON Schema.
+        /// </summary>
         public readonly partial struct SchemaEntity
         {
             /// <summary>
@@ -27,12 +43,14 @@ public readonly partial struct OpenApiDocument
             /// </summary>
             [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<StylesForFormEntity>))]
             public readonly partial struct StylesForFormEntity
+                : IJsonValue<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForFormEntity>
             {
                 private readonly Backing backing;
                 private readonly JsonElement jsonElementBacking;
                 private readonly ImmutableList<JsonObjectProperty> objectBacking;
+
                 /// <summary>
-                /// Initializes a new instance of the <see cref = "StylesForFormEntity"/> struct.
+                /// Initializes a new instance of the <see cref="StylesForFormEntity"/> struct.
                 /// </summary>
                 public StylesForFormEntity()
                 {
@@ -42,9 +60,9 @@ public readonly partial struct OpenApiDocument
                 }
 
                 /// <summary>
-                /// Initializes a new instance of the <see cref = "StylesForFormEntity"/> struct.
+                /// Initializes a new instance of the <see cref="StylesForFormEntity"/> struct.
                 /// </summary>
-                /// <param name = "value">The value from which to construct the instance.</param>
+                /// <param name="value">The value from which to construct the instance.</param>
                 public StylesForFormEntity(in JsonElement value)
                 {
                     this.jsonElementBacking = value;
@@ -53,19 +71,33 @@ public readonly partial struct OpenApiDocument
                 }
 
                 /// <summary>
+                /// Initializes a new instance of the <see cref="StylesForFormEntity"/> struct.
+                /// </summary>
+                /// <param name="value">The value from which to construct the instance.</param>
+                public StylesForFormEntity(ImmutableList<JsonObjectProperty> value)
+                {
+                    this.backing = Backing.Object;
+                    this.jsonElementBacking = default;
+                    this.objectBacking = value;
+                }
+
+                /// <summary>
                 /// Gets the schema location from which this type was generated.
                 /// </summary>
                 public static string SchemaLocation { get; } = "https://spec.openapis.org/oas/3.1/schema/2022-10-07#/$defs/parameter/dependentSchemas/schema/$defs/styles-for-form";
+
                 /// <summary>
                 /// Gets a Null instance.
                 /// </summary>
                 public static StylesForFormEntity Null { get; } = new(JsonValueHelpers.NullElement);
+
                 /// <summary>
                 /// Gets an Undefined instance.
                 /// </summary>
                 public static StylesForFormEntity Undefined { get; }
+
                 /// <summary>
-                /// Gets the default instance of the type.
+                /// Gets the default instance.
                 /// </summary>
                 public static StylesForFormEntity DefaultInstance { get; }
 
@@ -192,6 +224,72 @@ public readonly partial struct OpenApiDocument
                     }
                 }
 
+                /// <summary>
+                /// Gets the instance as a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForFormEntity.ElseEntity" />.
+                /// </summary>
+                public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForFormEntity.ElseEntity AsElseEntity
+                {
+                    get
+                    {
+                        return this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForFormEntity.ElseEntity>();
+                    }
+                }
+
+                /// <summary>
+                /// Gets a value indicating whether the instance is a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForFormEntity.ElseEntity" />.
+                /// </summary>
+                public bool IsElseEntity
+                {
+                    get
+                    {
+                        return this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForFormEntity.ElseEntity>().IsValid();
+                    }
+                }
+
+                /// <summary>
+                /// Gets the instance as a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForFormEntity.RequiredStyle" />.
+                /// </summary>
+                public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForFormEntity.RequiredStyle AsRequiredStyle
+                {
+                    get
+                    {
+                        return this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForFormEntity.RequiredStyle>();
+                    }
+                }
+
+                /// <summary>
+                /// Gets a value indicating whether the instance is a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForFormEntity.RequiredStyle" />.
+                /// </summary>
+                public bool IsRequiredStyle
+                {
+                    get
+                    {
+                        return this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForFormEntity.RequiredStyle>().IsValid();
+                    }
+                }
+
+                /// <summary>
+                /// Gets the instance as a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForFormEntity.ThenEntity" />.
+                /// </summary>
+                public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForFormEntity.ThenEntity AsThenEntity
+                {
+                    get
+                    {
+                        return this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForFormEntity.ThenEntity>();
+                    }
+                }
+
+                /// <summary>
+                /// Gets a value indicating whether the instance is a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForFormEntity.ThenEntity" />.
+                /// </summary>
+                public bool IsThenEntity
+                {
+                    get
+                    {
+                        return this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForFormEntity.ThenEntity>().IsValid();
+                    }
+                }
+
                 /// <inheritdoc/>
                 public bool HasJsonElementBacking
                 {
@@ -225,11 +323,6 @@ public readonly partial struct OpenApiDocument
                             return JsonValueKind.Object;
                         }
 
-                        if ((this.backing & Backing.Null) != 0)
-                        {
-                            return JsonValueKind.Null;
-                        }
-
                         return JsonValueKind.Undefined;
                     }
                 }
@@ -237,9 +330,8 @@ public readonly partial struct OpenApiDocument
                 /// <summary>
                 /// Conversion from JsonAny.
                 /// </summary>
-                /// <param name = "value">The value from which to convert.</param>
-                /// <exception cref = "InvalidOperationException">The value was not compatible with this type.</exception>
-                public static implicit operator StylesForFormEntity(in JsonAny value)
+                /// <param name="value">The value from which to convert.</param>
+                public static implicit operator StylesForFormEntity(JsonAny value)
                 {
                     return value.As<StylesForFormEntity>();
                 }
@@ -247,43 +339,57 @@ public readonly partial struct OpenApiDocument
                 /// <summary>
                 /// Conversion to JsonAny.
                 /// </summary>
-                /// <param name = "value">The value from which to convert.</param>
-                /// <exception cref = "InvalidOperationException">The value was not compatible with this type.</exception>
-                public static implicit operator JsonAny(in StylesForFormEntity value)
+                /// <param name="value">The value from which to convert.</param>
+                public static implicit operator JsonAny(StylesForFormEntity value)
                 {
                     return value.AsAny;
                 }
 
                 /// <summary>
-                /// Equality operator.
+                /// Operator ==.
                 /// </summary>
-                /// <param name = "left">The lhs.</param>
-                /// <param name = "right">The rhs.</param>
-                /// <returns><c>True</c> if the values are equal.</returns>
+                /// <param name="left">The lhs of the operator.</param>
+                /// <param name="right">The rhs of the operator.</param>
+                /// <returns>
+                /// <c>True</c> if the values are equal.
+                /// </returns>
                 public static bool operator ==(in StylesForFormEntity left, in StylesForFormEntity right)
                 {
                     return left.Equals(right);
                 }
 
                 /// <summary>
-                /// Inequality operator.
+                /// Operator !=.
                 /// </summary>
-                /// <param name = "left">The lhs.</param>
-                /// <param name = "right">The rhs.</param>
-                /// <returns><c>True</c> if the values are equal.</returns>
+                /// <param name="left">The lhs of the operator.</param>
+                /// <param name="right">The rhs of the operator.</param>
+                /// <returns>
+                /// <c>True</c> if the values are not equal.
+                /// </returns>
                 public static bool operator !=(in StylesForFormEntity left, in StylesForFormEntity right)
                 {
                     return !left.Equals(right);
                 }
 
                 /// <summary>
-                /// Gets an instance of the JSON value from a JsonAny value.
+                /// Gets an instance of the JSON value from a <see cref="JsonElement"/> value.
                 /// </summary>
-                /// <param name = "value">The <see cref = "JsonAny"/> value from which to instantiate the instance.</param>
-                /// <returns>An instance of this type, initialized from the <see cref = "JsonAny"/>.</returns>
+                /// <param name="value">The <see cref="JsonElement"/> value from which to instantiate the instance.</param>
+                /// <returns>An instance of this type, initialized from the <see cref="JsonElement"/>.</returns>
                 /// <remarks>The returned value will have a <see cref = "IJsonValue.ValueKind"/> of <see cref = "JsonValueKind.Undefined"/> if the
-                /// value cannot be constructed from the given instance (e.g. because they have an incompatible dotnet backing type.
+                /// value cannot be constructed from the given instance (e.g. because they have an incompatible .NET backing type).
                 /// </remarks>
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static StylesForFormEntity FromJson(in JsonElement value)
+                {
+                    return new(value);
+                }
+
+                /// <summary>
+                /// Gets an instance of the JSON value from a <see cref="JsonAny"/> value.
+                /// </summary>
+                /// <param name="value">The <see cref="JsonAny"/> value from which to instantiate the instance.</param>
+                /// <returns>An instance of this type, initialized from the <see cref="JsonAny"/> value.</returns>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static StylesForFormEntity FromAny(in JsonAny value)
                 {
@@ -292,8 +398,7 @@ public readonly partial struct OpenApiDocument
                         return new(value.AsJsonElement);
                     }
 
-                    JsonValueKind valueKind = value.ValueKind;
-                    return valueKind switch
+                    return value.ValueKind switch
                     {
                         JsonValueKind.Object => new(value.AsObject.AsPropertyBacking()),
                         JsonValueKind.Null => Null,
@@ -301,100 +406,69 @@ public readonly partial struct OpenApiDocument
                     };
                 }
 
+#if NET8_0_OR_GREATER
                 /// <summary>
-                /// Gets an instance of the JSON value from a <see cref = "JsonElement"/> value.
+                /// Gets an instance of the JSON value from the provided value.
                 /// </summary>
-                /// <param name = "value">The <see cref = "JsonElement"/> value from which to instantiate the instance.</param>
-                /// <returns>An instance of this type, initialized from the <see cref = "JsonElement"/>.</returns>
+                /// <typeparam name="TValue">The type of the value.</typeparam>
+                /// <param name="value">The value from which to instantiate the instance.</param>
+                /// <returns>An instance of this type, initialized from the provided value.</returns>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public static StylesForFormEntity FromJson(in JsonElement value)
+                static StylesForFormEntity IJsonValue<StylesForFormEntity>.FromBoolean<TValue>(in TValue value)
                 {
-                    return new(value);
+                    if (value.HasJsonElementBacking)
+                    {
+                        return new(value.AsJsonElement);
+                    }
+
+                    return Undefined;
                 }
+#endif
 
 #if NET8_0_OR_GREATER
-    /// <summary>
-    /// Gets an instance of the JSON value from a boolean value.
-    /// </summary>
-    /// <typeparam name = "TValue">The type of the value.</typeparam>
-    /// <param name="value">The value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the value.</returns>
-    /// <remarks>This will be StylesForFormEntity.Undefined if the type is not compatible.</remarks>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    static StylesForFormEntity IJsonValue<StylesForFormEntity>.FromBoolean<TValue>(in TValue value)
-    {
-        if (value.HasJsonElementBacking)
-        {
-            return new(value.AsJsonElement);
-        }
-
-        return Undefined;
-    }
-#endif
-#if NET8_0_OR_GREATER
-    /// <summary>
-    /// Gets an instance of the JSON value from a string value.
-    /// </summary>
-    /// <typeparam name="TValue">The type of the value.</typeparam>
-    /// <param name="value">The value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the value.</returns>
-    /// <remarks>This will be StylesForFormEntity.Undefined if the type is not compatible.</remarks>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    static StylesForFormEntity IJsonValue<StylesForFormEntity>.FromString<TValue>(in TValue value)
-    {
-        if (value.HasJsonElementBacking)
-        {
-            return new(value.AsJsonElement);
-        }
-
-        return Undefined;
-    }
-#endif
-#if NET8_0_OR_GREATER
-    /// <summary>
-    /// Gets an instance of the JSON value from a number value.
-    /// </summary>
-    /// <typeparam name="TValue">The type of the value.</typeparam>
-    /// <param name="value">The value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the value.</returns>
-    /// <remarks>This will be StylesForFormEntity.Undefined if the type is not compatible.</remarks>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    static StylesForFormEntity IJsonValue<StylesForFormEntity>.FromNumber<TValue>(in TValue value)
-    {
-        if (value.HasJsonElementBacking)
-        {
-            return new(value.AsJsonElement);
-        }
-
-        return Undefined;
-    }
-#endif
-#if NET8_0_OR_GREATER
-    /// <summary>
-    /// Gets an instance of the JSON value from an array value.
-    /// </summary>
-    /// <typeparam name="TValue">The type of the value.</typeparam>
-    /// <param name="value">The value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the value.</returns>
-    /// <remarks>This will be StylesForFormEntity.Undefined if the type is not compatible.</remarks>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    static StylesForFormEntity IJsonValue<StylesForFormEntity>.FromArray<TValue>(in TValue value)
-    {
-        if (value.HasJsonElementBacking)
-        {
-            return new(value.AsJsonElement);
-        }
-
-        return Undefined;
-    }
-#endif
                 /// <summary>
-                /// Gets an instance of the JSON value from an object value.
+                /// Gets an instance of the JSON value from the provided value.
                 /// </summary>
-                /// <typeparam name = "TValue">The type of the value.</typeparam>
-                /// <param name = "value">The value from which to instantiate the instance.</param>
-                /// <returns>An instance of this type, initialized from the value.</returns>
-                /// <remarks>This will be StylesForFormEntity.Undefined if the type is not compatible.</remarks>
+                /// <typeparam name="TValue">The type of the value.</typeparam>
+                /// <param name="value">The value from which to instantiate the instance.</param>
+                /// <returns>An instance of this type, initialized from the provided value.</returns>
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                static StylesForFormEntity IJsonValue<StylesForFormEntity>.FromString<TValue>(in TValue value)
+                {
+                    if (value.HasJsonElementBacking)
+                    {
+                        return new(value.AsJsonElement);
+                    }
+
+                    return Undefined;
+                }
+#endif
+
+#if NET8_0_OR_GREATER
+                /// <summary>
+                /// Gets an instance of the JSON value from the provided value.
+                /// </summary>
+                /// <typeparam name="TValue">The type of the value.</typeparam>
+                /// <param name="value">The value from which to instantiate the instance.</param>
+                /// <returns>An instance of this type, initialized from the provided value.</returns>
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                static StylesForFormEntity IJsonValue<StylesForFormEntity>.FromNumber<TValue>(in TValue value)
+                {
+                    if (value.HasJsonElementBacking)
+                    {
+                        return new(value.AsJsonElement);
+                    }
+
+                    return Undefined;
+                }
+#endif
+
+                /// <summary>
+                /// Gets an instance of the JSON value from the provided value.
+                /// </summary>
+                /// <typeparam name="TValue">The type of the value.</typeparam>
+                /// <param name="value">The value from which to instantiate the instance.</param>
+                /// <returns>An instance of this type, initialized from the provided value.</returns>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static StylesForFormEntity FromObject<TValue>(in TValue value)
                     where TValue : struct, IJsonObject<TValue>
@@ -404,142 +478,166 @@ public readonly partial struct OpenApiDocument
                         return new(value.AsJsonElement);
                     }
 
-                    if (value.ValueKind == JsonValueKind.Object)
+                    return value.ValueKind switch
                     {
-                        return new(value.AsPropertyBacking());
+                        JsonValueKind.Object => new(value.AsPropertyBacking()),
+                        JsonValueKind.Null => Null,
+                        _ => Undefined,
+                    };
+                }
+
+#if NET8_0_OR_GREATER
+                /// <summary>
+                /// Gets an instance of the JSON value from the provided value.
+                /// </summary>
+                /// <typeparam name="TValue">The type of the value.</typeparam>
+                /// <param name="value">The value from which to instantiate the instance.</param>
+                /// <returns>An instance of this type, initialized from the provided value.</returns>
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                static StylesForFormEntity IJsonValue<StylesForFormEntity>.FromArray<TValue>(in TValue value)
+                {
+                    if (value.HasJsonElementBacking)
+                    {
+                        return new(value.AsJsonElement);
                     }
 
                     return Undefined;
                 }
+#endif
 
                 /// <summary>
-                /// Parses a JSON string into a StylesForFormEntity.
+                /// Parses the StylesForFormEntity.
                 /// </summary>
-                /// <param name = "json">The json string to parse.</param>
-                /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-                /// <returns>A <see cref = "StylesForFormEntity"/> instance built from the JSON string.</returns>
-                public static StylesForFormEntity Parse(string json, JsonDocumentOptions options = default)
+                /// <param name="source">The source of the JSON string to parse.</param>
+                /// <param name="options">The (optional) JsonDocumentOptions.</param>
+                public static StylesForFormEntity Parse(string source, JsonDocumentOptions options = default)
                 {
-                    using var jsonDocument = JsonDocument.Parse(json, options);
-                    return new StylesForFormEntity(jsonDocument.RootElement.Clone());
+                    using var jsonDocument = JsonDocument.Parse(source, options);
+                    return new(jsonDocument.RootElement.Clone());
                 }
 
                 /// <summary>
-                /// Parses a JSON string into a StylesForFormEntity.
+                /// Parses the StylesForFormEntity.
                 /// </summary>
-                /// <param name = "utf8Json">The json string to parse.</param>
-                /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-                /// <returns>A <see cref = "StylesForFormEntity"/> instance built from the JSON string.</returns>
-                public static StylesForFormEntity Parse(Stream utf8Json, JsonDocumentOptions options = default)
+                /// <param name="source">The source of the JSON string to parse.</param>
+                /// <param name="options">The (optional) JsonDocumentOptions.</param>
+                public static StylesForFormEntity Parse(Stream source, JsonDocumentOptions options = default)
                 {
-                    using var jsonDocument = JsonDocument.Parse(utf8Json, options);
-                    return new StylesForFormEntity(jsonDocument.RootElement.Clone());
+                    using var jsonDocument = JsonDocument.Parse(source, options);
+                    return new(jsonDocument.RootElement.Clone());
                 }
 
                 /// <summary>
-                /// Parses a JSON string into a StylesForFormEntity.
+                /// Parses the StylesForFormEntity.
                 /// </summary>
-                /// <param name = "utf8Json">The json string to parse.</param>
-                /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-                /// <returns>A <see cref = "StylesForFormEntity"/> instance built from the JSON string.</returns>
-                public static StylesForFormEntity Parse(ReadOnlyMemory<byte> utf8Json, JsonDocumentOptions options = default)
+                /// <param name="source">The source of the JSON string to parse.</param>
+                /// <param name="options">The (optional) JsonDocumentOptions.</param>
+                public static StylesForFormEntity Parse(ReadOnlyMemory<byte> source, JsonDocumentOptions options = default)
                 {
-                    using var jsonDocument = JsonDocument.Parse(utf8Json, options);
-                    return new StylesForFormEntity(jsonDocument.RootElement.Clone());
+                    using var jsonDocument = JsonDocument.Parse(source, options);
+                    return new(jsonDocument.RootElement.Clone());
                 }
 
                 /// <summary>
-                /// Parses a JSON string into a StylesForFormEntity.
+                /// Parses the StylesForFormEntity.
                 /// </summary>
-                /// <param name = "json">The json string to parse.</param>
-                /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-                /// <returns>A <see cref = "StylesForFormEntity"/> instance built from the JSON string.</returns>
-                public static StylesForFormEntity Parse(ReadOnlyMemory<char> json, JsonDocumentOptions options = default)
+                /// <param name="source">The source of the JSON string to parse.</param>
+                /// <param name="options">The (optional) JsonDocumentOptions.</param>
+                public static StylesForFormEntity Parse(ReadOnlyMemory<char> source, JsonDocumentOptions options = default)
                 {
-                    using var jsonDocument = JsonDocument.Parse(json, options);
-                    return new StylesForFormEntity(jsonDocument.RootElement.Clone());
+                    using var jsonDocument = JsonDocument.Parse(source, options);
+                    return new(jsonDocument.RootElement.Clone());
                 }
 
                 /// <summary>
-                /// Parses a JSON string into a StylesForFormEntity.
+                /// Parses the StylesForFormEntity.
                 /// </summary>
-                /// <param name = "utf8Json">The json string to parse.</param>
-                /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-                /// <returns>A <see cref = "StylesForFormEntity"/> instance built from the JSON string.</returns>
-                public static StylesForFormEntity Parse(ReadOnlySequence<byte> utf8Json, JsonDocumentOptions options = default)
+                /// <param name="source">The source of the JSON string to parse.</param>
+                /// <param name="options">The (optional) JsonDocumentOptions.</param>
+                public static StylesForFormEntity Parse(ReadOnlySequence<byte> source, JsonDocumentOptions options = default)
                 {
-                    using var jsonDocument = JsonDocument.Parse(utf8Json, options);
-                    return new StylesForFormEntity(jsonDocument.RootElement.Clone());
+                    using var jsonDocument = JsonDocument.Parse(source, options);
+                    return new(jsonDocument.RootElement.Clone());
                 }
 
                 /// <summary>
-                /// Parses a JSON value from a buffer.
+                /// Parses the StylesForFormEntity.
                 /// </summary>
-                /// <param name = "buffer">The buffer from which to parse the value.</param>
-                /// <returns>The parsed value.</returns>
-                static StylesForFormEntity ParseValue(ReadOnlySpan<char> buffer)
+                /// <param name="source">The source of the JSON string to parse.</param>
+                public static StylesForFormEntity ParseValue(string source)
                 {
 #if NET8_0_OR_GREATER
-        return IJsonValue<StylesForFormEntity>.ParseValue(buffer);
+                    return IJsonValue<StylesForFormEntity>.ParseValue(source);
 #else
-                    return JsonValueHelpers.ParseValue<StylesForFormEntity>(buffer);
+                    return JsonValueHelpers.ParseValue<StylesForFormEntity>(source.AsSpan());
 #endif
                 }
 
                 /// <summary>
-                /// Parses a JSON value from a buffer.
+                /// Parses the StylesForFormEntity.
                 /// </summary>
-                /// <param name = "buffer">The buffer from which to parse the value.</param>
-                /// <returns>The parsed value.</returns>
-                static StylesForFormEntity ParseValue(ReadOnlySpan<byte> buffer)
+                /// <param name="source">The source of the JSON string to parse.</param>
+                public static StylesForFormEntity ParseValue(ReadOnlySpan<char> source)
                 {
 #if NET8_0_OR_GREATER
-        return IJsonValue<StylesForFormEntity>.ParseValue(buffer);
+                    return IJsonValue<StylesForFormEntity>.ParseValue(source);
 #else
-                    return JsonValueHelpers.ParseValue<StylesForFormEntity>(buffer);
+                    return JsonValueHelpers.ParseValue<StylesForFormEntity>(source);
 #endif
                 }
 
                 /// <summary>
-                /// Parses a JSON value from a buffer.
+                /// Parses the StylesForFormEntity.
                 /// </summary>
-                /// <param name = "reader">The reader from which to parse the value.</param>
-                /// <returns>The parsed value.</returns>
-                static StylesForFormEntity ParseValue(ref Utf8JsonReader reader)
+                /// <param name="source">The source of the JSON string to parse.</param>
+                public static StylesForFormEntity ParseValue(ReadOnlySpan<byte> source)
                 {
 #if NET8_0_OR_GREATER
-        return IJsonValue<StylesForFormEntity>.ParseValue(ref reader);
+                    return IJsonValue<StylesForFormEntity>.ParseValue(source);
 #else
-                    return JsonValueHelpers.ParseValue<StylesForFormEntity>(ref reader);
+                    return JsonValueHelpers.ParseValue<StylesForFormEntity>(source);
+#endif
+                }
+
+                /// <summary>
+                /// Parses the StylesForFormEntity.
+                /// </summary>
+                /// <param name="source">The source of the JSON string to parse.</param>
+                public static StylesForFormEntity ParseValue(ref Utf8JsonReader source)
+                {
+#if NET8_0_OR_GREATER
+                    return IJsonValue<StylesForFormEntity>.ParseValue(ref source);
+#else
+                    return JsonValueHelpers.ParseValue<StylesForFormEntity>(ref source);
 #endif
                 }
 
                 /// <summary>
                 /// Gets the value as an instance of the target value.
                 /// </summary>
-                /// <typeparam name = "TTarget">The type of the target.</typeparam>
+                /// <typeparam name="TTarget">The type of the target.</typeparam>
                 /// <returns>An instance of the target type.</returns>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public TTarget As<TTarget>()
                     where TTarget : struct, IJsonValue<TTarget>
                 {
 #if NET8_0_OR_GREATER
-        if ((this.backing & Backing.JsonElement) != 0)
-        {
-            return TTarget.FromJson(this.jsonElementBacking);
-        }
+                    if ((this.backing & Backing.JsonElement) != 0)
+                    {
+                        return TTarget.FromJson(this.jsonElementBacking);
+                    }
 
-        if ((this.backing & Backing.Object) != 0)
-        {
-            return TTarget.FromObject(this);
-        }
+                    if ((this.backing & Backing.Object) != 0)
+                    {
+                        return TTarget.FromObject(this.AsObject);
+                    }
 
-        if ((this.backing & Backing.Null) != 0)
-        {
-            return TTarget.Null;
-        }
+                    if ((this.backing & Backing.Null) != 0)
+                    {
+                        return TTarget.Null;
+                    }
 
-        return TTarget.Undefined;
+                    return TTarget.Undefined;
 #else
                     return this.As<StylesForFormEntity, TTarget>();
 #endif
@@ -548,24 +646,66 @@ public readonly partial struct OpenApiDocument
                 /// <inheritdoc/>
                 public override bool Equals(object? obj)
                 {
-                    return (obj is IJsonValue jv && this.Equals(jv.AsAny)) || (obj is null && this.IsNull());
+                    return
+                        (obj is IJsonValue jv && this.Equals(jv.As<StylesForFormEntity>())) ||
+                        (obj is null && this.IsNull());
                 }
 
                 /// <inheritdoc/>
                 public bool Equals<T>(in T other)
                     where T : struct, IJsonValue<T>
                 {
-                    return JsonValueHelpers.CompareValues(this, other);
+                    return this.Equals(other.As<StylesForFormEntity>());
                 }
 
                 /// <summary>
                 /// Equality comparison.
                 /// </summary>
-                /// <param name = "other">The other item with which to compare.</param>
+                /// <param name="other">The other item with which to compare.</param>
                 /// <returns><see langword="true"/> if the values were equal.</returns>
                 public bool Equals(in StylesForFormEntity other)
                 {
-                    return JsonValueHelpers.CompareValues(this, other);
+                    JsonValueKind thisKind = this.ValueKind;
+                    JsonValueKind otherKind = other.ValueKind;
+                    if (thisKind != otherKind)
+                    {
+                        return false;
+                    }
+
+                    if (thisKind == JsonValueKind.Null || thisKind == JsonValueKind.Undefined)
+                    {
+                        return true;
+                    }
+
+                    if (thisKind == JsonValueKind.Object)
+                    {
+                        JsonObject thisObject = this.AsObject;
+                        JsonObject otherObject = other.AsObject;
+                        int count = 0;
+                        foreach (JsonObjectProperty property in thisObject.EnumerateObject())
+                        {
+                            if (!otherObject.TryGetProperty(property.Name, out JsonAny value) || !property.Value.Equals(value))
+                            {
+                                return false;
+                            }
+
+                            count++;
+                        }
+
+                        int otherCount = 0;
+                        foreach (JsonObjectProperty otherProperty in otherObject.EnumerateObject())
+                        {
+                            otherCount++;
+                            if (otherCount > count)
+                            {
+                                return false;
+                            }
+                        }
+
+                        return count == otherCount;
+                    }
+
+                    return false;
                 }
 
                 /// <inheritdoc/>
@@ -584,12 +724,14 @@ public readonly partial struct OpenApiDocument
                     if ((this.backing & Backing.Object) != 0)
                     {
                         JsonValueHelpers.WriteProperties(this.objectBacking, writer);
+
                         return;
                     }
 
                     if ((this.backing & Backing.Null) != 0)
                     {
                         writer.WriteNullValue();
+
                         return;
                     }
                 }
@@ -597,13 +739,107 @@ public readonly partial struct OpenApiDocument
                 /// <inheritdoc/>
                 public override int GetHashCode()
                 {
-                    return JsonValueHelpers.GetHashCode(this);
+                    return this.ValueKind switch
+                    {
+                        JsonValueKind.Array => JsonValueHelpers.GetArrayHashCode(((IJsonValue)this).AsArray),
+                        JsonValueKind.Object => JsonValueHelpers.GetObjectHashCode(this),
+                        JsonValueKind.Number => JsonValueHelpers.GetHashCodeForNumber(((IJsonValue)this).AsNumber),
+                        JsonValueKind.String => JsonValueHelpers.GetHashCodeForString(((IJsonValue)this).AsString),
+                        JsonValueKind.True => true.GetHashCode(),
+                        JsonValueKind.False => false.GetHashCode(),
+                        JsonValueKind.Null => JsonValueHelpers.NullHashCode,
+                        _ => JsonValueHelpers.UndefinedHashCode,
+                    };
                 }
 
                 /// <inheritdoc/>
                 public override string ToString()
                 {
                     return this.Serialize();
+                }
+
+                /// <summary>
+                /// Matches the value against the 'if' type, and returns the result of calling the provided match function for
+                /// the 'then' type if the match is successful or
+                /// the 'else' type if the match is not successful.
+                /// </summary>
+                /// <typeparam name="TIn">The immutable context to pass in to the match function.</typeparam>
+                /// <typeparam name="TOut">The result of calling the match function.</typeparam>
+                /// <param name="context">The context to pass to the match function.</param>
+                /// <param name="matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterSchemaEntityStylesForFormEntityThenEntity">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForFormEntity.ThenEntity"/>.</param>
+                /// <param name="matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterSchemaEntityStylesForFormEntityElseEntity">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForFormEntity.ElseEntity"/>.</param>
+                /// <returns>An instance of the value returned by the match function.</returns>
+                public TOut Match<TIn, TOut>(
+                    in TIn context,
+                    Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForFormEntity.ThenEntity, TIn, TOut> matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterSchemaEntityStylesForFormEntityThenEntity,
+                    Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForFormEntity.ElseEntity, TIn, TOut> matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterSchemaEntityStylesForFormEntityElseEntity)
+                {
+                    Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForFormEntity.RequiredStyle ifValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForFormEntity.RequiredStyle>();
+                    if (ifValue.IsValid())
+                    {
+                        return matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterSchemaEntityStylesForFormEntityThenEntity(this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForFormEntity.ThenEntity>(), context);
+                    }
+                    else
+                    {
+                        return matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterSchemaEntityStylesForFormEntityElseEntity(this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForFormEntity.ElseEntity>(), context);
+                    }
+                }
+
+                /// <summary>
+                /// Matches the value against the 'if' type, and returns the result of calling the provided match function for
+                /// the 'then' type if the match is successful or
+                /// the 'else' type if the match is not successful.
+                /// </summary>
+                /// <typeparam name="TOut">The result of calling the match function.</typeparam>
+                /// <param name="matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterSchemaEntityStylesForFormEntityThenEntity">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForFormEntity.ThenEntity"/>.</param>
+                /// <param name="matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterSchemaEntityStylesForFormEntityElseEntity">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForFormEntity.ElseEntity"/>.</param>
+                /// <returns>An instance of the value returned by the match function.</returns>
+                public TOut Match<TOut>(
+                    Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForFormEntity.ThenEntity, TOut> matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterSchemaEntityStylesForFormEntityThenEntity,
+                    Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForFormEntity.ElseEntity, TOut> matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterSchemaEntityStylesForFormEntityElseEntity)
+                {
+                    Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForFormEntity.RequiredStyle ifValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForFormEntity.RequiredStyle>();
+                    if (ifValue.IsValid())
+                    {
+                        return matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterSchemaEntityStylesForFormEntityThenEntity(this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForFormEntity.ThenEntity>());
+                    }
+                    else
+                    {
+                        return matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentParameterSchemaEntityStylesForFormEntityElseEntity(this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForFormEntity.ElseEntity>());
+                    }
+                }
+
+                /// <summary>
+                /// Gets the value as a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForFormEntity.ElseEntity" />.
+                /// </summary>
+                /// <param name="result">The result of the conversions.</param>
+                /// <returns><see langword="true" /> if the conversion was valid.</returns>
+                public bool TryGetAsElseEntity(out Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForFormEntity.ElseEntity result)
+                {
+                    result = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForFormEntity.ElseEntity>();
+                    return result.IsValid();
+                }
+
+                /// <summary>
+                /// Gets the value as a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForFormEntity.RequiredStyle" />.
+                /// </summary>
+                /// <param name="result">The result of the conversions.</param>
+                /// <returns><see langword="true" /> if the conversion was valid.</returns>
+                public bool TryGetAsRequiredStyle(out Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForFormEntity.RequiredStyle result)
+                {
+                    result = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForFormEntity.RequiredStyle>();
+                    return result.IsValid();
+                }
+
+                /// <summary>
+                /// Gets the value as a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForFormEntity.ThenEntity" />.
+                /// </summary>
+                /// <param name="result">The result of the conversions.</param>
+                /// <returns><see langword="true" /> if the conversion was valid.</returns>
+                public bool TryGetAsThenEntity(out Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForFormEntity.ThenEntity result)
+                {
+                    result = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForFormEntity.ThenEntity>();
+                    return result.IsValid();
                 }
             }
         }

@@ -6,75 +6,111 @@
 //     the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
+
 #nullable enable
-using System.Collections.Immutable;
+
+using System.Diagnostics.CodeAnalysis;
+
+#if NET8_0_OR_GREATER
 using System.Numerics;
-using System.Runtime.CompilerServices;
+#endif
 using System.Text.Json;
 using Corvus.Json;
 using Corvus.Json.Internal;
 
 namespace Corvus.Json.JsonSchema.OpenApi30;
+
+/// <summary>
+/// Generated from JSON Schema.
+/// </summary>
+/// <remarks>
+/// <para>
+/// The description of OpenAPI v3.0.x documents, as defined by https://spec.openapis.org/oas/v3.0.3
+/// </para>
+/// </remarks>
 public readonly partial struct OpenApiDocument
 {
+    /// <summary>
+    /// Generated from JSON Schema.
+    /// </summary>
     public readonly partial struct Schema
     {
         /// <summary>
         /// Generated from JSON Schema.
         /// </summary>
-        public readonly partial struct MinPropertiesEntity 
+        /// <remarks>
+        /// <para>
+        /// Examples:
+        /// <example>
+        /// <code>
+        /// 0
+        /// </code>
+        /// </example>
+        /// </para>
+        /// </remarks>
+        public readonly partial struct MinPropertiesEntity
 #if NET8_0_OR_GREATER
-: IJsonNumber<MinPropertiesEntity>,
-  IAdditionOperators<MinPropertiesEntity, MinPropertiesEntity, MinPropertiesEntity>,
-  ISubtractionOperators<MinPropertiesEntity, MinPropertiesEntity, MinPropertiesEntity>,
-  IMultiplyOperators<MinPropertiesEntity, MinPropertiesEntity, MinPropertiesEntity>,
-  IDivisionOperators<MinPropertiesEntity, MinPropertiesEntity, MinPropertiesEntity>,
-  IIncrementOperators<MinPropertiesEntity>,
-  IDecrementOperators<MinPropertiesEntity>
+            : IJsonNumber<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MinPropertiesEntity>,
+              IAdditionOperators<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MinPropertiesEntity, Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MinPropertiesEntity, Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MinPropertiesEntity>,
+              ISubtractionOperators<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MinPropertiesEntity, Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MinPropertiesEntity, Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MinPropertiesEntity>,
+              IMultiplyOperators<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MinPropertiesEntity, Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MinPropertiesEntity, Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MinPropertiesEntity>,
+              IDivisionOperators<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MinPropertiesEntity, Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MinPropertiesEntity, Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MinPropertiesEntity>,
+              IIncrementOperators<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MinPropertiesEntity>,
+              IDecrementOperators<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MinPropertiesEntity>
 #else
-        : IJsonNumber<MinPropertiesEntity>
+            : IJsonNumber<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MinPropertiesEntity>
 #endif
         {
             /// <summary>
             /// Initializes a new instance of the <see cref = "MinPropertiesEntity"/> struct.
             /// </summary>
-            /// <param name = "value">The value from which to construct the instance.</param>
-            public MinPropertiesEntity(in BinaryJsonNumber value)
-            {
-                this.jsonElementBacking = default;
-                this.backing = Backing.Number;
-                this.numberBacking = value;
-            }
-
-            /// <summary>
-            /// Initializes a new instance of the <see cref = "MinPropertiesEntity"/> struct.
-            /// </summary>
-            /// <param name = "value">The value from which to initialize the number.</param>
-            public MinPropertiesEntity(long value) : this(new BinaryJsonNumber(value))
+            /// <param name="value">The value from which to construct the instance.</param>
+            public MinPropertiesEntity(long value)
+                : this(new BinaryJsonNumber(value))
             {
             }
 
             /// <summary>
             /// Conversion from JsonNumber.
             /// </summary>
-            /// <param name = "value">The value from which to convert.</param>
+            /// <param name="value">The value from which to convert.</param>
             public static implicit operator MinPropertiesEntity(JsonNumber value)
             {
                 if (value.HasDotnetBacking && value.ValueKind == JsonValueKind.Number)
                 {
-                    return new(value.AsBinaryJsonNumber);
+                    return new(
+                        value.AsBinaryJsonNumber);
                 }
 
                 return new(value.AsJsonElement);
             }
 
             /// <summary>
+            /// Conversion to JsonNumber.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator JsonNumber(MinPropertiesEntity value)
+            {
+                return
+                    value.AsNumber;
+            }
+
+            /// <summary>
+            /// Conversion to JsonInteger.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator JsonInteger(MinPropertiesEntity value)
+            {
+                return
+                    value.As<JsonInteger>();
+            }
+
+            /// <summary>
             /// Conversion to byte.
             /// </summary>
-            /// <param name = "value">The value to convert.</param>
-            /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
-            /// <exception cref = "FormatException">The value was not formatted as a byte.</exception>
-            public static explicit operator byte (MinPropertiesEntity value)
+            /// <param name="value">The value from which to convert.</param>
+            /// <returns>An instance of the byte.</returns>
+            public static explicit operator byte(MinPropertiesEntity value)
             {
                 if ((value.backing & Backing.JsonElement) != 0)
                 {
@@ -90,12 +126,21 @@ public readonly partial struct OpenApiDocument
             }
 
             /// <summary>
+            /// Conversion from byte.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            /// <returns>An instance of the <see cref="MinPropertiesEntity"/>.</returns>
+            public static explicit operator MinPropertiesEntity(byte value)
+            {
+                return new(new BinaryJsonNumber(value));
+            }
+
+            /// <summary>
             /// Conversion to decimal.
             /// </summary>
-            /// <param name = "value">The value to convert.</param>
-            /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
-            /// <exception cref = "FormatException">The value was not formatted as a decimal.</exception>
-            public static explicit operator decimal (MinPropertiesEntity value)
+            /// <param name="value">The value from which to convert.</param>
+            /// <returns>An instance of the decimal.</returns>
+            public static explicit operator decimal(MinPropertiesEntity value)
             {
                 if ((value.backing & Backing.JsonElement) != 0)
                 {
@@ -111,12 +156,21 @@ public readonly partial struct OpenApiDocument
             }
 
             /// <summary>
+            /// Conversion from decimal.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            /// <returns>An instance of the <see cref="MinPropertiesEntity"/>.</returns>
+            public static explicit operator MinPropertiesEntity(decimal value)
+            {
+                return new(new BinaryJsonNumber(value));
+            }
+
+            /// <summary>
             /// Conversion to double.
             /// </summary>
-            /// <param name = "value">The value to convert.</param>
-            /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
-            /// <exception cref = "FormatException">The value was not formatted as a double.</exception>
-            public static explicit operator double (MinPropertiesEntity value)
+            /// <param name="value">The value from which to convert.</param>
+            /// <returns>An instance of the double.</returns>
+            public static explicit operator double(MinPropertiesEntity value)
             {
                 if ((value.backing & Backing.JsonElement) != 0)
                 {
@@ -132,12 +186,21 @@ public readonly partial struct OpenApiDocument
             }
 
             /// <summary>
-            /// Conversion to Int16.
+            /// Conversion from double.
             /// </summary>
-            /// <param name = "value">The value to convert.</param>
-            /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
-            /// <exception cref = "FormatException">The value was not formatted as an Int16.</exception>
-            public static explicit operator short (MinPropertiesEntity value)
+            /// <param name="value">The value from which to convert.</param>
+            /// <returns>An instance of the <see cref="MinPropertiesEntity"/>.</returns>
+            public static explicit operator MinPropertiesEntity(double value)
+            {
+                return new(new BinaryJsonNumber(value));
+            }
+
+            /// <summary>
+            /// Conversion to short.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            /// <returns>An instance of the short.</returns>
+            public static explicit operator short(MinPropertiesEntity value)
             {
                 if ((value.backing & Backing.JsonElement) != 0)
                 {
@@ -153,12 +216,21 @@ public readonly partial struct OpenApiDocument
             }
 
             /// <summary>
-            /// Conversion to Int32.
+            /// Conversion from short.
             /// </summary>
-            /// <param name = "value">The value to convert.</param>
-            /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
-            /// <exception cref = "FormatException">The value was not formatted as an Int32.</exception>
-            public static explicit operator int (MinPropertiesEntity value)
+            /// <param name="value">The value from which to convert.</param>
+            /// <returns>An instance of the <see cref="MinPropertiesEntity"/>.</returns>
+            public static explicit operator MinPropertiesEntity(short value)
+            {
+                return new(new BinaryJsonNumber(value));
+            }
+
+            /// <summary>
+            /// Conversion to int.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            /// <returns>An instance of the int.</returns>
+            public static explicit operator int(MinPropertiesEntity value)
             {
                 if ((value.backing & Backing.JsonElement) != 0)
                 {
@@ -174,12 +246,21 @@ public readonly partial struct OpenApiDocument
             }
 
             /// <summary>
-            /// Conversion to Int64.
+            /// Conversion from int.
             /// </summary>
-            /// <param name = "value">The value to convert.</param>
-            /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
-            /// <exception cref = "FormatException">The value was not formatted as an Int64.</exception>
-            public static explicit operator long (MinPropertiesEntity value)
+            /// <param name="value">The value from which to convert.</param>
+            /// <returns>An instance of the <see cref="MinPropertiesEntity"/>.</returns>
+            public static explicit operator MinPropertiesEntity(int value)
+            {
+                return new(new BinaryJsonNumber(value));
+            }
+
+            /// <summary>
+            /// Conversion to long.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            /// <returns>An instance of the long.</returns>
+            public static implicit operator long(MinPropertiesEntity value)
             {
                 if ((value.backing & Backing.JsonElement) != 0)
                 {
@@ -194,35 +275,54 @@ public readonly partial struct OpenApiDocument
                 throw new InvalidOperationException();
             }
 
-#if NET8_0_OR_GREATER
-    /// <summary>
-    /// Conversion to Int128.
-    /// </summary>
-    /// <param name="value">The value to convert.</param>
-    /// <exception cref="InvalidOperationException">The value was not a number.</exception>
-    /// <exception cref="FormatException">The value was not formatted as an Int64.</exception>
-    public static explicit operator Int128(MinPropertiesEntity value)
-    {
-        if ((value.backing & Backing.JsonElement) != 0)
-        {
-            return value.jsonElementBacking.SafeGetInt128();
-        }
-
-        if ((value.backing & Backing.Number) != 0)
-        {
-            return value.numberBacking.CreateChecked<Int128>();
-        }
-
-        throw new InvalidOperationException();
-    }
-#endif
             /// <summary>
-            /// Conversion to SByte.
+            /// Conversion from long.
             /// </summary>
-            /// <param name = "value">The value to convert.</param>
-            /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
-            /// <exception cref = "FormatException">The value was not formatted as an SByte.</exception>
-            public static explicit operator sbyte (MinPropertiesEntity value)
+            /// <param name="value">The value from which to convert.</param>
+            /// <returns>An instance of the <see cref="MinPropertiesEntity"/>.</returns>
+            public static implicit operator MinPropertiesEntity(long value)
+            {
+                return new(new BinaryJsonNumber(value));
+            }
+
+#if NET8_0_OR_GREATER
+            /// <summary>
+            /// Conversion to Int128.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            /// <returns>An instance of the Int128.</returns>
+            public static explicit operator Int128(MinPropertiesEntity value)
+            {
+                if ((value.backing & Backing.JsonElement) != 0)
+                {
+                    return value.jsonElementBacking.SafeGetInt128();
+                }
+
+                if ((value.backing & Backing.Number) != 0)
+                {
+                    return value.numberBacking.CreateChecked<Int128>();
+                }
+
+                throw new InvalidOperationException();
+            }
+
+            /// <summary>
+            /// Conversion from Int128.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            /// <returns>An instance of the <see cref="MinPropertiesEntity"/>.</returns>
+            public static explicit operator MinPropertiesEntity(Int128 value)
+            {
+                return new(new BinaryJsonNumber(value));
+            }
+#endif
+
+            /// <summary>
+            /// Conversion to sbyte.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            /// <returns>An instance of the sbyte.</returns>
+            public static explicit operator sbyte(MinPropertiesEntity value)
             {
                 if ((value.backing & Backing.JsonElement) != 0)
                 {
@@ -237,35 +337,54 @@ public readonly partial struct OpenApiDocument
                 throw new InvalidOperationException();
             }
 
-#if NET8_0_OR_GREATER
-    /// <summary>
-    /// Conversion to Half.
-    /// </summary>
-    /// <param name="value">The value to convert.</param>
-    /// <exception cref="InvalidOperationException">The value was not a number.</exception>
-    /// <exception cref="FormatException">The value was not formatted as a Single.</exception>
-    public static explicit operator Half(MinPropertiesEntity value)
-    {
-        if ((value.backing & Backing.JsonElement) != 0)
-        {
-            return value.jsonElementBacking.SafeGetHalf();
-        }
-
-        if ((value.backing & Backing.Number) != 0)
-        {
-            return value.numberBacking.CreateChecked<Half>();
-        }
-
-        throw new InvalidOperationException();
-    }
-#endif
             /// <summary>
-            /// Conversion to Single.
+            /// Conversion from sbyte.
             /// </summary>
-            /// <param name = "value">The value to convert.</param>
-            /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
-            /// <exception cref = "FormatException">The value was not formatted as a Single.</exception>
-            public static explicit operator float (MinPropertiesEntity value)
+            /// <param name="value">The value from which to convert.</param>
+            /// <returns>An instance of the <see cref="MinPropertiesEntity"/>.</returns>
+            public static explicit operator MinPropertiesEntity(sbyte value)
+            {
+                return new(new BinaryJsonNumber(value));
+            }
+
+#if NET8_0_OR_GREATER
+            /// <summary>
+            /// Conversion to Half.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            /// <returns>An instance of the Half.</returns>
+            public static explicit operator Half(MinPropertiesEntity value)
+            {
+                if ((value.backing & Backing.JsonElement) != 0)
+                {
+                    return value.jsonElementBacking.SafeGetHalf();
+                }
+
+                if ((value.backing & Backing.Number) != 0)
+                {
+                    return value.numberBacking.CreateChecked<Half>();
+                }
+
+                throw new InvalidOperationException();
+            }
+
+            /// <summary>
+            /// Conversion from Half.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            /// <returns>An instance of the <see cref="MinPropertiesEntity"/>.</returns>
+            public static explicit operator MinPropertiesEntity(Half value)
+            {
+                return new(new BinaryJsonNumber(value));
+            }
+#endif
+
+            /// <summary>
+            /// Conversion to float.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            /// <returns>An instance of the float.</returns>
+            public static explicit operator float(MinPropertiesEntity value)
             {
                 if ((value.backing & Backing.JsonElement) != 0)
                 {
@@ -281,12 +400,21 @@ public readonly partial struct OpenApiDocument
             }
 
             /// <summary>
-            /// Conversion to UInt16.
+            /// Conversion from float.
             /// </summary>
-            /// <param name = "value">The value to convert.</param>
-            /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
-            /// <exception cref = "FormatException">The value was not formatted as an UInt16.</exception>
-            public static explicit operator ushort (MinPropertiesEntity value)
+            /// <param name="value">The value from which to convert.</param>
+            /// <returns>An instance of the <see cref="MinPropertiesEntity"/>.</returns>
+            public static explicit operator MinPropertiesEntity(float value)
+            {
+                return new(new BinaryJsonNumber(value));
+            }
+
+            /// <summary>
+            /// Conversion to ushort.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            /// <returns>An instance of the ushort.</returns>
+            public static explicit operator ushort(MinPropertiesEntity value)
             {
                 if ((value.backing & Backing.JsonElement) != 0)
                 {
@@ -302,12 +430,21 @@ public readonly partial struct OpenApiDocument
             }
 
             /// <summary>
-            /// Conversion to UInt32.
+            /// Conversion from ushort.
             /// </summary>
-            /// <param name = "value">The value to convert.</param>
-            /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
-            /// <exception cref = "FormatException">The value was not formatted as an UInt32.</exception>
-            public static explicit operator uint (MinPropertiesEntity value)
+            /// <param name="value">The value from which to convert.</param>
+            /// <returns>An instance of the <see cref="MinPropertiesEntity"/>.</returns>
+            public static explicit operator MinPropertiesEntity(ushort value)
+            {
+                return new(new BinaryJsonNumber(value));
+            }
+
+            /// <summary>
+            /// Conversion to uint.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            /// <returns>An instance of the uint.</returns>
+            public static explicit operator uint(MinPropertiesEntity value)
             {
                 if ((value.backing & Backing.JsonElement) != 0)
                 {
@@ -323,12 +460,21 @@ public readonly partial struct OpenApiDocument
             }
 
             /// <summary>
-            /// Conversion to UInt64.
+            /// Conversion from uint.
             /// </summary>
-            /// <param name = "value">The value to convert.</param>
-            /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
-            /// <exception cref = "FormatException">The value was not formatted as an UInt64.</exception>
-            public static explicit operator ulong (MinPropertiesEntity value)
+            /// <param name="value">The value from which to convert.</param>
+            /// <returns>An instance of the <see cref="MinPropertiesEntity"/>.</returns>
+            public static explicit operator MinPropertiesEntity(uint value)
+            {
+                return new(new BinaryJsonNumber(value));
+            }
+
+            /// <summary>
+            /// Conversion to ulong.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            /// <returns>An instance of the ulong.</returns>
+            public static explicit operator ulong(MinPropertiesEntity value)
             {
                 if ((value.backing & Backing.JsonElement) != 0)
                 {
@@ -343,185 +489,70 @@ public readonly partial struct OpenApiDocument
                 throw new InvalidOperationException();
             }
 
-#if NET8_0_OR_GREATER
-    /// <summary>
-    /// Conversion to UInt128.
-    /// </summary>
-    /// <param name="value">The value to convert.</param>
-    /// <exception cref="InvalidOperationException">The value was not a number.</exception>
-    /// <exception cref="FormatException">The value was not formatted as an UInt64.</exception>
-    public static explicit operator UInt128(MinPropertiesEntity value)
-    {
-        if ((value.backing & Backing.JsonElement) != 0)
-        {
-            return value.jsonElementBacking.SafeGetUInt128();
-        }
-
-        if ((value.backing & Backing.Number) != 0)
-        {
-            return value.numberBacking.CreateChecked<UInt128>();
-        }
-
-        throw new InvalidOperationException();
-    }
-#endif
-            /// <summary>
-            /// Conversion from decimal.
-            /// </summary>
-            /// <param name = "value">The value to convert.</param>
-            public static explicit operator MinPropertiesEntity(decimal value)
-            {
-                return new(new BinaryJsonNumber(value));
-            }
-
-            /// <summary>
-            /// Conversion from double.
-            /// </summary>
-            /// <param name = "value">The value to convert.</param>
-            public static explicit operator MinPropertiesEntity(double value)
-            {
-                return new(new BinaryJsonNumber(value));
-            }
-
-#if NET8_0_OR_GREATER
-    /// <summary>
-    /// Conversion from Half.
-    /// </summary>
-    /// <param name="value">The value to convert.</param>
-    public static explicit operator MinPropertiesEntity(Half value)
-    {
-        return new(new BinaryJsonNumber(value));
-    }
-#endif
-            /// <summary>
-            /// Conversion from float.
-            /// </summary>
-            /// <param name = "value">The value to convert.</param>
-            public static explicit operator MinPropertiesEntity(float value)
-            {
-                return new(new BinaryJsonNumber(value));
-            }
-
-            /// <summary>
-            /// Conversion from byte.
-            /// </summary>
-            /// <param name = "value">The value to convert.</param>
-            public static explicit operator MinPropertiesEntity(byte value)
-            {
-                return new(new BinaryJsonNumber(value));
-            }
-
-            /// <summary>
-            /// Conversion from short.
-            /// </summary>
-            /// <param name = "value">The value to convert.</param>
-            public static explicit operator MinPropertiesEntity(short value)
-            {
-                return new(new BinaryJsonNumber(value));
-            }
-
-            /// <summary>
-            /// Conversion from int.
-            /// </summary>
-            /// <param name = "value">The value to convert.</param>
-            public static explicit operator MinPropertiesEntity(int value)
-            {
-                return new(new BinaryJsonNumber(value));
-            }
-
-            /// <summary>
-            /// Conversion from long.
-            /// </summary>
-            /// <param name = "value">The value to convert.</param>
-            public static explicit operator MinPropertiesEntity(long value)
-            {
-                return new(new BinaryJsonNumber(value));
-            }
-
-            /// <summary>
-            /// Conversion from sbyte.
-            /// </summary>
-            /// <param name = "value">The value to convert.</param>
-            public static explicit operator MinPropertiesEntity(sbyte value)
-            {
-                return new(new BinaryJsonNumber(value));
-            }
-
-            /// <summary>
-            /// Conversion from ushort.
-            /// </summary>
-            /// <param name = "value">The value to convert.</param>
-            public static explicit operator MinPropertiesEntity(ushort value)
-            {
-                return new(new BinaryJsonNumber(value));
-            }
-
-            /// <summary>
-            /// Conversion from uint.
-            /// </summary>
-            /// <param name = "value">The value to convert.</param>
-            public static explicit operator MinPropertiesEntity(uint value)
-            {
-                return new(new BinaryJsonNumber(value));
-            }
-
             /// <summary>
             /// Conversion from ulong.
             /// </summary>
-            /// <param name = "value">The value to convert.</param>
+            /// <param name="value">The value from which to convert.</param>
+            /// <returns>An instance of the <see cref="MinPropertiesEntity"/>.</returns>
             public static explicit operator MinPropertiesEntity(ulong value)
             {
                 return new(new BinaryJsonNumber(value));
             }
 
 #if NET8_0_OR_GREATER
-    /// <summary>
-    /// Conversion from Int128.
-    /// </summary>
-    /// <param name="value">The value to convert.</param>
-    public static explicit operator MinPropertiesEntity(Int128 value)
-    {
-        return new(new BinaryJsonNumber(value));
-    }
+            /// <summary>
+            /// Conversion to UInt128.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            /// <returns>An instance of the UInt128.</returns>
+            public static explicit operator UInt128(MinPropertiesEntity value)
+            {
+                if ((value.backing & Backing.JsonElement) != 0)
+                {
+                    return value.jsonElementBacking.SafeGetUInt128();
+                }
 
-    /// <summary>
-    /// Conversion from UInt128.
-    /// </summary>
-    /// <param name="value">The value to convert.</param>
-    public static explicit operator MinPropertiesEntity(UInt128 value)
-    {
-        return new(new BinaryJsonNumber(value));
-    }
+                if ((value.backing & Backing.Number) != 0)
+                {
+                    return value.numberBacking.CreateChecked<UInt128>();
+                }
+
+                throw new InvalidOperationException();
+            }
+
+            /// <summary>
+            /// Conversion from UInt128.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            /// <returns>An instance of the <see cref="MinPropertiesEntity"/>.</returns>
+            public static explicit operator MinPropertiesEntity(UInt128 value)
+            {
+                return new(new BinaryJsonNumber(value));
+            }
 #endif
+
             /// <summary>
             /// Less than operator.
             /// </summary>
-            /// <param name = "left">The LHS of the comparison.</param>
-            /// <param name = "right">The RHS of the comparison.</param>
-            /// <returns><see langword="true"/> if the left is less than the right, otherwise <see langword="false"/>.</returns>
-            public static bool operator <(in MinPropertiesEntity left, in MinPropertiesEntity right)
+            /// <param name="left">The LHS of the comparison.</param>
+            /// <param name="right">The RHS of the comparison.</param>
+            /// <returns>
+            /// <see langword="true"/> if the left is less than the right, otherwise <see langword="false"/>.
+            /// </returns>
+            public static bool operator <(MinPropertiesEntity left, MinPropertiesEntity right)
             {
                 return left.IsNotNullOrUndefined() && right.IsNotNullOrUndefined() && Compare(left, right) < 0;
             }
 
             /// <summary>
-            /// Greater than operator.
+            /// Less than or equals operator.
             /// </summary>
-            /// <param name = "left">The LHS of the comparison.</param>
-            /// <param name = "right">The RHS of the comparison.</param>
-            /// <returns><see langword="true"/> if the left is greater than the right, otherwise <see langword="false"/>.</returns>
-            public static bool operator>(in MinPropertiesEntity left, in MinPropertiesEntity right)
-            {
-                return left.IsNotNullOrUndefined() && right.IsNotNullOrUndefined() && Compare(left, right) > 0;
-            }
-
-            /// <summary>
-            /// Less than operator.
-            /// </summary>
-            /// <param name = "left">The LHS of the comparison.</param>
-            /// <param name = "right">The RHS of the comparison.</param>
-            /// <returns><see langword="true"/> if the left is less than the right, otherwise <see langword="false"/>.</returns>
-            public static bool operator <=(in MinPropertiesEntity left, in MinPropertiesEntity right)
+            /// <param name="left">The LHS of the comparison.</param>
+            /// <param name="right">The RHS of the comparison.</param>
+            /// <returns>
+            /// <see langword="true"/> if the left is less than or equal to the right, otherwise <see langword="false"/>.
+            /// </returns>
+            public static bool operator <=(MinPropertiesEntity left, MinPropertiesEntity right)
             {
                 return left.IsNotNullOrUndefined() && right.IsNotNullOrUndefined() && Compare(left, right) <= 0;
             }
@@ -529,86 +560,102 @@ public readonly partial struct OpenApiDocument
             /// <summary>
             /// Greater than operator.
             /// </summary>
-            /// <param name = "left">The LHS of the comparison.</param>
-            /// <param name = "right">The RHS of the comparison.</param>
-            /// <returns><see langword="true"/> if the left is greater than the right, otherwise <see langword="false"/>.</returns>
-            public static bool operator >=(in MinPropertiesEntity left, in MinPropertiesEntity right)
+            /// <param name="left">The LHS of the comparison.</param>
+            /// <param name="right">The RHS of the comparison.</param>
+            /// <returns>
+            /// <see langword="true"/> if the left is greater than the right, otherwise <see langword="false"/>.
+            /// </returns>
+            public static bool operator >(MinPropertiesEntity left, MinPropertiesEntity right)
+            {
+                return left.IsNotNullOrUndefined() && right.IsNotNullOrUndefined() && Compare(left, right) > 0;
+            }
+
+            /// <summary>
+            /// Greater than or equals operator.
+            /// </summary>
+            /// <param name="left">The LHS of the comparison.</param>
+            /// <param name="right">The RHS of the comparison.</param>
+            /// <returns>
+            /// <see langword="true"/> if the left is greater than or equal to the right, otherwise <see langword="false"/>.
+            /// </returns>
+            public static bool operator >=(MinPropertiesEntity left, MinPropertiesEntity right)
             {
                 return left.IsNotNullOrUndefined() && right.IsNotNullOrUndefined() && Compare(left, right) >= 0;
             }
 
             /// <summary>
-            /// Adds two values together to compute their sum.
+            /// Adds two numbers to produce their sum.
             /// </summary>
-            /// <param name = "left">The left hand side.</param>
-            /// <param name = "right">The right hand side.</param>
-            /// <returns>The resulting value.</returns>
+            /// <param name="left">The left hand side of the binary operator.</param>
+            /// <param name="right">The right hand side of the binary operator.</param>
+            /// <returns>The result of the operation.</returns>
             public static MinPropertiesEntity operator +(MinPropertiesEntity left, MinPropertiesEntity right)
             {
                 return new(left.AsBinaryJsonNumber + right.AsBinaryJsonNumber);
             }
 
             /// <summary>
-            /// Subtracts two values together to compute their difference.
+            /// Subtracts two numbers to produce their difference.
             /// </summary>
-            /// <param name = "left">The left hand side.</param>
-            /// <param name = "right">The right hand side.</param>
-            /// <returns>The resulting value.</returns>
+            /// <param name="left">The left hand side of the binary operator.</param>
+            /// <param name="right">The right hand side of the binary operator.</param>
+            /// <returns>The result of the operation.</returns>
             public static MinPropertiesEntity operator -(MinPropertiesEntity left, MinPropertiesEntity right)
             {
                 return new(left.AsBinaryJsonNumber - right.AsBinaryJsonNumber);
             }
 
             /// <summary>
-            /// Multiplies two values together.
+            /// Multiplies two numbers.
             /// </summary>
-            /// <param name = "left">The left hand side.</param>
-            /// <param name = "right">The right hand side.</param>
-            /// <returns>The resulting value.</returns>
+            /// <param name="left">The left hand side of the binary operator.</param>
+            /// <param name="right">The right hand side of the binary operator.</param>
+            /// <returns>The result of the operation.</returns>
             public static MinPropertiesEntity operator *(MinPropertiesEntity left, MinPropertiesEntity right)
             {
                 return new(left.AsBinaryJsonNumber * right.AsBinaryJsonNumber);
             }
 
             /// <summary>
-            /// Divides two values.
+            /// Divides two numbers.
             /// </summary>
-            /// <param name = "left">The left hand side.</param>
-            /// <param name = "right">The right hand side.</param>
-            /// <returns>The resulting value.</returns>
+            /// <param name="left">The left hand side of the binary operator.</param>
+            /// <param name="right">The right hand side of the binary operator.</param>
+            /// <returns>The result of the operation.</returns>
             public static MinPropertiesEntity operator /(MinPropertiesEntity left, MinPropertiesEntity right)
             {
                 return new(left.AsBinaryJsonNumber / right.AsBinaryJsonNumber);
             }
 
             /// <summary>
-            /// Increments the value.
+            /// Increments the number.
             /// </summary>
-            /// <param name = "value">The value.</param>
-            /// <returns>The resulting value.</returns>
+            /// <param name="value">The value on which to operate.</param>
+            /// <returns>The result of the operation.</returns>
             public static MinPropertiesEntity operator ++(MinPropertiesEntity value)
             {
-                BinaryJsonNumber num = value.AsBinaryJsonNumber;
-                return new(num++);
+                BinaryJsonNumber num = value.AsBinaryJsonNumber;                return new(num++);
             }
 
             /// <summary>
-            /// Decrements the value.
+            /// Decrements the number.
             /// </summary>
-            /// <param name = "value">The value.</param>
-            /// <returns>The resulting value.</returns>
+            /// <param name="value">The value on which to operate.</param>
+            /// <returns>The result of the operation.</returns>
             public static MinPropertiesEntity operator --(MinPropertiesEntity value)
             {
-                BinaryJsonNumber num = value.AsBinaryJsonNumber;
-                return new(num--);
+                BinaryJsonNumber num = value.AsBinaryJsonNumber;                return new(num--);
             }
 
             /// <summary>
-            /// Compare with another number.
+            /// Compare two numbers.
             /// </summary>
-            /// <param name = "lhs">The lhs of the comparison.</param>
-            /// <param name = "rhs">The rhs of the comparison.</param>
-            /// <returns>0 if the numbers are equal, -1 if the lhs is less than the rhs, and 1 if the lhs is greater than the rhs.</returns>
+            /// <param name="lhs">The left hand side of the comparison.</param>
+            /// <param name="rhs">The right hand side of the comparison.</param>
+            /// <returns>
+            /// 0 if the numbers are equal, -1 if <paramref name="lhs"/> is less than <paramref name="rhs"/>,
+            /// and 1 if <paramref name="lhs"/> is greater than <paramref name="rhs"/>.
+            /// </returns>
             public static int Compare(in MinPropertiesEntity lhs, in MinPropertiesEntity rhs)
             {
                 if (lhs.ValueKind != rhs.ValueKind)
@@ -623,13 +670,6 @@ public readonly partial struct OpenApiDocument
                     return 0;
                 }
 
-                if (lhs.backing == Backing.Number && rhs.backing == Backing.Number)
-                {
-                    return BinaryJsonNumber.Compare(lhs.numberBacking, rhs.numberBacking);
-                }
-
-                // After this point there is no need to check both value kinds because our first quick test verified that they were the same.
-                // If either one is a Backing.Number or a JsonValueKind.Number then we know the rhs is compatible.
                 if (lhs.backing == Backing.Number && rhs.backing == Backing.Number)
                 {
                     return BinaryJsonNumber.Compare(lhs.numberBacking, rhs.numberBacking);
@@ -653,8 +693,71 @@ public readonly partial struct OpenApiDocument
                 throw new InvalidOperationException();
             }
 
-            /// <inheritdoc/>
-            public BinaryJsonNumber AsBinaryJsonNumber => this.HasDotnetBacking ? this.numberBacking : BinaryJsonNumber.FromJson(this.jsonElementBacking);
+            /// <summary>
+            /// Gets the value as a <see cref="BinaryJsonNumber"/>.
+            /// </summary>
+            public BinaryJsonNumber AsBinaryJsonNumber
+            {
+                get
+                {
+                    if ((this.backing & Backing.Number) != 0)
+                    {
+                        return this.numberBacking;
+                    }
+
+                    if ((this.backing & Backing.JsonElement) != 0)
+                    {
+                        return BinaryJsonNumber.FromJson(this.jsonElementBacking, BinaryJsonNumber.Kind.Int64);
+                    }
+
+                    throw new InvalidOperationException();
+                }
+            }
+
+            /// <summary>
+            /// Gets the value as a long.
+            /// </summary>
+            public long AsInt64() => (long)this;
+
+            /// <summary>
+            /// Equality comparison.
+            /// </summary>
+            /// <param name="other">The <c>long</c> with which to compare.</param>
+            /// <returns><see langword="true"/> if the values were equal.</returns>
+            public bool Equals(long other)
+            {
+                if ((this.backing & Backing.JsonElement) != 0)
+                {
+                    return this.jsonElementBacking.ValueKind == JsonValueKind.Number && BinaryJsonNumber.Equals(this.jsonElementBacking, new BinaryJsonNumber(other));
+                }
+
+                if ((this.backing & Backing.Number) != 0)
+                {
+                    return BinaryJsonNumber.Equals(new BinaryJsonNumber(other), this.numberBacking);
+                }
+
+                return false;
+            }
+
+            /// <summary>
+            /// Equality comparison.
+            /// </summary>
+            /// <param name="other">The <see cref="BinaryJsonNumber"/> with which to compare.</param>
+            /// <returns><see langword="true"/> if the values were equal.</returns>
+            public bool Equals(in BinaryJsonNumber other)
+            {
+                if ((this.backing & Backing.JsonElement) != 0)
+                {
+                    return this.jsonElementBacking.ValueKind == JsonValueKind.Number && other.Equals(this.jsonElementBacking);
+                }
+
+                if ((this.backing & Backing.Number) != 0)
+                {
+                    return BinaryJsonNumber.Equals(other, this.numberBacking);
+                }
+
+                return false;
+            }
         }
     }
 }

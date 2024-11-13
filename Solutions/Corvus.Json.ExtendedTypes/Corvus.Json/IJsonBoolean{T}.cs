@@ -9,7 +9,7 @@ namespace Corvus.Json;
 /// <summary>
 /// A JSON boolean.
 /// </summary>
-/// <typeparam name="T">The type implementin the interface.</typeparam>
+/// <typeparam name="T">The type implementing the interface.</typeparam>
 public interface IJsonBoolean<T> : IJsonValue<T>
     where T : struct, IJsonBoolean<T>
 {

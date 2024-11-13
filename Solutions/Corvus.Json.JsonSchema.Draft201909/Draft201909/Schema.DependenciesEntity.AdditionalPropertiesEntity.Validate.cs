@@ -6,13 +6,23 @@
 //     the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
+
 #nullable enable
+
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
 
 namespace Corvus.Json.JsonSchema.Draft201909;
+
+/// <summary>
+/// Core and Validation specifications meta-schema
+/// </summary>
 public readonly partial struct Schema
 {
+    /// <summary>
+    /// Generated from JSON Schema.
+    /// </summary>
     public readonly partial struct DependenciesEntity
     {
         /// <summary>
@@ -35,18 +45,120 @@ public readonly partial struct Schema
                     result = result.PushSchemaLocation("https://json-schema.org/draft/2019-09/schema#/properties/dependencies/additionalProperties");
                 }
 
-                result = this.ValidateAnyOf(result, level);
+                result = CorvusValidation.CompositionAnyOfValidationHandler(this, result, level);
+
                 if (level == ValidationLevel.Flag && !result.IsValid)
                 {
                     return result;
                 }
 
-                if (level != ValidationLevel.Flag)
+                if (level > ValidationLevel.Basic)
                 {
                     result = result.PopLocation();
                 }
 
                 return result;
+            }
+
+            /// <summary>
+            /// Validation constants for the type.
+            /// </summary>
+            public static partial class CorvusValidation
+            {
+                /// <summary>
+                /// Composition validation (any-of).
+                /// </summary>
+                /// <param name="value">The value to validate.</param>
+                /// <param name="validationContext">The current validation context.</param>
+                /// <param name="level">The current validation level.</param>
+                /// <returns>The resulting validation context after validation.</returns>
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                internal static ValidationContext CompositionAnyOfValidationHandler(
+                    in AdditionalPropertiesEntity value,
+                    in ValidationContext validationContext,
+                    ValidationLevel level = ValidationLevel.Flag)
+                {
+                    ValidationContext result = validationContext;
+
+                    bool anyOfFoundValid = false;
+
+                    ValidationContext anyOfChildContext0 = validationContext.CreateChildContext();
+                    if (level > ValidationLevel.Basic)
+                    {
+                        anyOfChildContext0 = anyOfChildContext0.PushValidationLocationReducedPathModifier(new("#/anyOf/0/$recursiveRef"));
+                    }
+
+                    ValidationContext anyOfResult0 = value.As<Corvus.Json.JsonSchema.Draft201909.Schema>().Validate(anyOfChildContext0, level);
+
+                    if (anyOfResult0.IsValid)
+                    {
+                        if (level == ValidationLevel.Flag)
+                        {
+                            return result;
+                        }
+                        else
+                        {
+                            result = result.MergeChildContext(anyOfResult0, level >= ValidationLevel.Verbose);
+                            anyOfFoundValid = true;
+                        }
+                    }
+                    else
+                    {
+                        if (level >= ValidationLevel.Verbose)
+                        {
+                            result = result.MergeResults(result.IsValid, level, anyOfResult0);
+                        }
+                    }
+
+                    ValidationContext anyOfChildContext1 = validationContext.CreateChildContext();
+                    if (level > ValidationLevel.Basic)
+                    {
+                        anyOfChildContext1 = anyOfChildContext1.PushValidationLocationReducedPathModifier(new("#/anyOf/1/$ref"));
+                    }
+
+                    ValidationContext anyOfResult1 = value.As<Corvus.Json.JsonSchema.Draft201909.Validation.StringArray>().Validate(anyOfChildContext1, level);
+
+                    if (anyOfResult1.IsValid)
+                    {
+                        if (level == ValidationLevel.Flag)
+                        {
+                            return result;
+                        }
+                        else
+                        {
+                            result = result.MergeChildContext(anyOfResult1, level >= ValidationLevel.Verbose);
+                            anyOfFoundValid = true;
+                        }
+                    }
+                    else
+                    {
+                        if (level >= ValidationLevel.Verbose)
+                        {
+                            result = result.MergeResults(result.IsValid, level, anyOfResult1);
+                        }
+                    }
+
+                    if (anyOfFoundValid)
+                    {
+                        if (level >= ValidationLevel.Verbose)
+                        {
+                            result = result.WithResult(isValid: true, "Validation anyOf - validated against the schema.", "anyOf");
+                        }
+                    }
+                    else
+                    {
+                        if (level >= ValidationLevel.Basic)
+                        {
+                            result = result.WithResult(isValid: false, "Validation anyOf - did not validate against the schema.", "anyOf");
+                        }
+                        else
+                        {
+                            result = result.WithResult(isValid: false);
+                        }
+                    }
+
+                    return result;
+                }
             }
         }
     }

@@ -6,13 +6,33 @@
 //     the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
+
 #nullable enable
+
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
 
 namespace Corvus.Json.JsonSchema.OpenApi30;
+
+/// <summary>
+/// Generated from JSON Schema.
+/// </summary>
+/// <remarks>
+/// <para>
+/// The description of OpenAPI v3.0.x documents, as defined by https://spec.openapis.org/oas/v3.0.3
+/// </para>
+/// </remarks>
 public readonly partial struct OpenApiDocument
 {
+    /// <summary>
+    /// Generated from JSON Schema.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Parameter location
+    /// </para>
+    /// </remarks>
     public readonly partial struct ParameterLocation
     {
         /// <summary>
@@ -41,18 +61,107 @@ public readonly partial struct OpenApiDocument
                 }
 
                 JsonValueKind valueKind = this.ValueKind;
-                result = this.ValidateObject(valueKind, result, level);
+
+                result = CorvusValidation.ObjectValidationHandler(this, valueKind, result, level);
+
                 if (level == ValidationLevel.Flag && !result.IsValid)
                 {
                     return result;
                 }
 
-                if (level != ValidationLevel.Flag)
+                if (level > ValidationLevel.Basic)
                 {
                     result = result.PopLocation();
                 }
 
                 return result;
+            }
+
+            /// <summary>
+            /// Validation constants for the type.
+            /// </summary>
+            public static partial class CorvusValidation
+            {
+                /// <summary>
+                /// Object validation.
+                /// </summary>
+                /// <param name="value">The value to validate.</param>
+                /// <param name="valueKind">The <see cref="JsonValueKind" /> of the value to validate.</param>
+                /// <param name="validationContext">The current validation context.</param>
+                /// <param name="level">The current validation level.</param>
+                /// <returns>The resulting validation context after validation.</returns>
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                internal static ValidationContext ObjectValidationHandler(
+                    in ParameterInQuery value,
+                    JsonValueKind valueKind,
+                    in ValidationContext validationContext,
+                    ValidationLevel level = ValidationLevel.Flag)
+                {
+                    ValidationContext result = validationContext;
+                    if (valueKind != JsonValueKind.Object)
+                    {
+                        if (level == ValidationLevel.Verbose)
+                        {
+                            ValidationContext ignoredResult = validationContext;
+                            ignoredResult = ignoredResult.WithResult(isValid: true, "Validation properties - ignored because the value is not an object", "properties");
+
+                            return ignoredResult;
+                        }
+
+                        return validationContext;
+                    }
+
+                    int propertyCount = 0;
+                    foreach (JsonObjectProperty property in value.EnumerateObject())
+                    {
+                        if (property.NameEquals(JsonPropertyNames.InUtf8, JsonPropertyNames.In))
+                        {
+                            result = result.WithLocalProperty(propertyCount);
+                            if (level > ValidationLevel.Basic)
+                            {
+                                result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/in"), JsonPropertyNames.In);
+                            }
+
+                            ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInQuery.InEntity>().Validate(result.CreateChildContext(), level);
+                            if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                            {
+                                return propertyResult;
+                            }
+
+                            result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
+                            if (level > ValidationLevel.Basic)
+                            {
+                                result = result.PopLocation();
+                            }
+                        }
+                        else if (property.NameEquals(JsonPropertyNames.StyleUtf8, JsonPropertyNames.Style))
+                        {
+                            result = result.WithLocalProperty(propertyCount);
+                            if (level > ValidationLevel.Basic)
+                            {
+                                result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/style"), JsonPropertyNames.Style);
+                            }
+
+                            ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInQuery.StyleEntity>().Validate(result.CreateChildContext(), level);
+                            if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                            {
+                                return propertyResult;
+                            }
+
+                            result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
+                            if (level > ValidationLevel.Basic)
+                            {
+                                result = result.PopLocation();
+                            }
+                        }
+
+                        propertyCount++;
+                    }
+
+                    return result;
+                }
             }
         }
     }

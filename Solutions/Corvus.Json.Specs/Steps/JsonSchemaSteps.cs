@@ -5,8 +5,10 @@
 using System.Text.Json;
 using Corvus.Json;
 using Corvus.Json.CodeGeneration;
+using Corvus.Json.CodeGeneration.CSharp;
 using Drivers;
-
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.Extensions.Configuration;
 
 using NUnit.Framework;
@@ -25,10 +27,13 @@ public class JsonSchemaSteps
     private const string InputData = "InputData";
     private const string InputDataPath = "InputDataPath";
     private const string SchemaType = "SchemaType";
+    private const string SchemaCode = "SchemaCode";
     private const string SchemaInstance = "SchemaInstance";
     private const string SchemaValidationResult = "SchemaValidationResult";
     private const string ValidateFormatKey = "ValidateFormat";
     private const string CreateException = "CreateException";
+    private const string NullablePropertiesKey = "NullableProperties";
+    private const string UseImplicitOperatorStringKey = "UseImplicitOperatorString";
     private readonly FeatureContext featureContext;
     private readonly ScenarioContext scenarioContext;
     private readonly JsonSchemaBuilderDriver driver;
@@ -47,6 +52,20 @@ public class JsonSchemaSteps
         this.scenarioContext = scenarioContext;
         this.driver = driver;
         this.configuration = configuration;
+    }
+
+    [Given("I construct an instance of the V3 generated type as a JsonElement backed object")]
+    public void GivenAnInstanceOfTheV3GeneratedTypeJsonElement()
+    {
+        var value = Model.V3.Basictypes.FromJson(this.scenarioContext.Get<JsonElement>(InputData));
+        this.scenarioContext.Set(value, SchemaInstance);
+    }
+
+    [Given("I construct an instance of the V3 generated type as a dotnet backed object")]
+    public void GivenAnInstanceOfTheV3GeneratedTypeDotnet()
+    {
+        var value = Model.V3.Basictypes.FromJson(this.scenarioContext.Get<JsonElement>(InputData));
+        this.scenarioContext.Set(value.AsDotnetBackedValue(), SchemaInstance);
     }
 
     /// <summary>
@@ -82,7 +101,7 @@ public class JsonSchemaSteps
     /// <summary>
     /// Determines whether we will assert formatting or not.
     /// </summary>
-    [Given(@"I assert format")]
+    [Given("I assert format")]
     public void GivenIAssertFormat()
     {
         this.scenarioContext.Set(true, ValidateFormatKey);
@@ -96,7 +115,7 @@ public class JsonSchemaSteps
     [Given(@"the input data at ""(.*)""")]
     public async Task GivenTheInputDataAt(string referenceFragment)
     {
-        JsonElement? element = await this.driver.GetElementFromLocalFile(this.scenarioContext.Get<string>(InputJsonFileName), referenceFragment).ConfigureAwait(false);
+        JsonElement? element = await this.driver.GetElementFromLocalFile(this.scenarioContext.Get<string>(InputJsonFileName), referenceFragment);
         Assert.NotNull(
             element,
             $"Failed to load input data at {this.scenarioContext.Get<string>(InputJsonFileName)}, ref {referenceFragment}, jsonSchemaBuilder201909DriverSettings:testBaseDirectory: '{this.configuration["jsonSchemaBuilder201909DriverSettings:testBaseDirectory"]}', jsonSchemaBuilder202012DriverSettings: '{this.configuration["jsonSchemaBuilder202012DriverSettings:testBaseDirectory"]}' CWD: '{Environment.CurrentDirectory}'");
@@ -108,7 +127,7 @@ public class JsonSchemaSteps
     public void GivenASchemaFileWithContent(string schema)
     {
         this.scenarioContext.Set(schema, SchemaInstance);
-        string featureName = Formatting.ToPascalCaseWithReservedWords(this.featureContext.FeatureInfo.Title).ToString();
+        string featureName = ToPascalCaseWithReservedWords(this.featureContext.FeatureInfo.Title);
 
         string scenarioName = BuildScenarioOutlineNameFromScenarioName(this.scenarioContext);
 
@@ -125,7 +144,7 @@ public class JsonSchemaSteps
                 scenarioName = scenarioName[..index];
             }
 
-            return Formatting.ToPascalCaseWithReservedWords(scenarioName).ToString();
+            return ToPascalCaseWithReservedWords(scenarioName);
         }
     }
 
@@ -133,7 +152,7 @@ public class JsonSchemaSteps
     public void GivenASchemaFileWithFormat(string format, string schema)
     {
         this.scenarioContext.Set(schema.Replace("{{format}}", format), SchemaInstance);
-        string featureName = Formatting.ToPascalCaseWithReservedWords(this.featureContext.FeatureInfo.Title).ToString();
+        string featureName = ToPascalCaseWithReservedWords(this.featureContext.FeatureInfo.Title);
 
         string scenarioName = BuildScenarioOutlineNameFromScenarioName(this.scenarioContext);
 
@@ -150,7 +169,7 @@ public class JsonSchemaSteps
                 scenarioName = scenarioName[..index];
             }
 
-            return Formatting.ToPascalCaseWithReservedWords(scenarioName).ToString();
+            return ToPascalCaseWithReservedWords(scenarioName);
         }
     }
 
@@ -225,12 +244,12 @@ public class JsonSchemaSteps
         {
             uint[] itemArray = BuildUInt32Array(inputDataString);
 
-/* Unmerged change from project 'Corvus.Json.Specs (net481)'
-Before:
-            return this.driver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
-After:
-            return JsonSchemaBuilderDriver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
-*/
+            /* Unmerged change from project 'Corvus.Json.Specs (net481)'
+            Before:
+                        return this.driver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
+            After:
+                        return JsonSchemaBuilderDriver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
+            */
             return JsonSchemaBuilderDriver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
         }
 
@@ -238,12 +257,12 @@ After:
         {
             ushort[] itemArray = BuildUInt16Array(inputDataString);
 
-/* Unmerged change from project 'Corvus.Json.Specs (net481)'
-Before:
-            return this.driver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
-After:
-            return JsonSchemaBuilderDriver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
-*/
+            /* Unmerged change from project 'Corvus.Json.Specs (net481)'
+            Before:
+                        return this.driver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
+            After:
+                        return JsonSchemaBuilderDriver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
+            */
             return JsonSchemaBuilderDriver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
         }
 
@@ -267,12 +286,12 @@ After:
         {
             long[] itemArray = BuildInt64Array(inputDataString);
 
-/* Unmerged change from project 'Corvus.Json.Specs (net481)'
-Before:
-            return this.driver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
-After:
-            return JsonSchemaBuilderDriver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
-*/
+            /* Unmerged change from project 'Corvus.Json.Specs (net481)'
+            Before:
+                        return this.driver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
+            After:
+                        return JsonSchemaBuilderDriver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
+            */
             return JsonSchemaBuilderDriver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
         }
 
@@ -280,12 +299,12 @@ After:
         {
             int[] itemArray = BuildInt32Array(inputDataString);
 
-/* Unmerged change from project 'Corvus.Json.Specs (net481)'
-Before:
-            return this.driver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
-After:
-            return JsonSchemaBuilderDriver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
-*/
+            /* Unmerged change from project 'Corvus.Json.Specs (net481)'
+            Before:
+                        return this.driver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
+            After:
+                        return JsonSchemaBuilderDriver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
+            */
             return JsonSchemaBuilderDriver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
         }
 
@@ -293,12 +312,12 @@ After:
         {
             short[] itemArray = BuildInt16Array(inputDataString);
 
-/* Unmerged change from project 'Corvus.Json.Specs (net481)'
-Before:
-            return this.driver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
-After:
-            return JsonSchemaBuilderDriver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
-*/
+            /* Unmerged change from project 'Corvus.Json.Specs (net481)'
+            Before:
+                        return this.driver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
+            After:
+                        return JsonSchemaBuilderDriver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
+            */
             return JsonSchemaBuilderDriver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
         }
 
@@ -306,12 +325,12 @@ After:
         {
             sbyte[] itemArray = BuildSByteArray(inputDataString);
 
-/* Unmerged change from project 'Corvus.Json.Specs (net481)'
-Before:
-            return this.driver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
-After:
-            return JsonSchemaBuilderDriver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
-*/
+            /* Unmerged change from project 'Corvus.Json.Specs (net481)'
+            Before:
+                        return this.driver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
+            After:
+                        return JsonSchemaBuilderDriver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
+            */
             return JsonSchemaBuilderDriver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
         }
 
@@ -415,12 +434,12 @@ After:
         {
             uint[] itemArray = BuildUInt32Array(inputDataString);
 
-/* Unmerged change from project 'Corvus.Json.Specs (net481)'
-Before:
-            return this.driver.CompareInstanceOfNumericArrayWithValues(
-After:
-            return JsonSchemaBuilderDriver.CompareInstanceOfNumericArrayWithValues(
-*/
+            /* Unmerged change from project 'Corvus.Json.Specs (net481)'
+            Before:
+                        return this.driver.CompareInstanceOfNumericArrayWithValues(
+            After:
+                        return JsonSchemaBuilderDriver.CompareInstanceOfNumericArrayWithValues(
+            */
             return JsonSchemaBuilderDriver.CompareInstanceOfNumericArrayWithValues(
                 this.scenarioContext.Get<Type>(SchemaType),
                 this.scenarioContext.Get<IJsonValue>(SchemaInstance),
@@ -431,12 +450,12 @@ After:
         {
             ushort[] itemArray = BuildUInt16Array(inputDataString);
 
-/* Unmerged change from project 'Corvus.Json.Specs (net481)'
-Before:
-            return this.driver.CompareInstanceOfNumericArrayWithValues(
-After:
-            return JsonSchemaBuilderDriver.CompareInstanceOfNumericArrayWithValues(
-*/
+            /* Unmerged change from project 'Corvus.Json.Specs (net481)'
+            Before:
+                        return this.driver.CompareInstanceOfNumericArrayWithValues(
+            After:
+                        return JsonSchemaBuilderDriver.CompareInstanceOfNumericArrayWithValues(
+            */
             return JsonSchemaBuilderDriver.CompareInstanceOfNumericArrayWithValues(
                 this.scenarioContext.Get<Type>(SchemaType),
                 this.scenarioContext.Get<IJsonValue>(SchemaInstance),
@@ -469,12 +488,12 @@ After:
         {
             long[] itemArray = BuildInt64Array(inputDataString);
 
-/* Unmerged change from project 'Corvus.Json.Specs (net481)'
-Before:
-            return this.driver.CompareInstanceOfNumericArrayWithValues(
-After:
-            return JsonSchemaBuilderDriver.CompareInstanceOfNumericArrayWithValues(
-*/
+            /* Unmerged change from project 'Corvus.Json.Specs (net481)'
+            Before:
+                        return this.driver.CompareInstanceOfNumericArrayWithValues(
+            After:
+                        return JsonSchemaBuilderDriver.CompareInstanceOfNumericArrayWithValues(
+            */
             return JsonSchemaBuilderDriver.CompareInstanceOfNumericArrayWithValues(
                 this.scenarioContext.Get<Type>(SchemaType),
                 this.scenarioContext.Get<IJsonValue>(SchemaInstance),
@@ -485,12 +504,12 @@ After:
         {
             int[] itemArray = BuildInt32Array(inputDataString);
 
-/* Unmerged change from project 'Corvus.Json.Specs (net481)'
-Before:
-            return this.driver.CompareInstanceOfNumericArrayWithValues(
-After:
-            return JsonSchemaBuilderDriver.CompareInstanceOfNumericArrayWithValues(
-*/
+            /* Unmerged change from project 'Corvus.Json.Specs (net481)'
+            Before:
+                        return this.driver.CompareInstanceOfNumericArrayWithValues(
+            After:
+                        return JsonSchemaBuilderDriver.CompareInstanceOfNumericArrayWithValues(
+            */
             return JsonSchemaBuilderDriver.CompareInstanceOfNumericArrayWithValues(
                 this.scenarioContext.Get<Type>(SchemaType),
                 this.scenarioContext.Get<IJsonValue>(SchemaInstance),
@@ -501,12 +520,12 @@ After:
         {
             short[] itemArray = BuildInt16Array(inputDataString);
 
-/* Unmerged change from project 'Corvus.Json.Specs (net481)'
-Before:
-            return this.driver.CompareInstanceOfNumericArrayWithValues(
-After:
-            return JsonSchemaBuilderDriver.CompareInstanceOfNumericArrayWithValues(
-*/
+            /* Unmerged change from project 'Corvus.Json.Specs (net481)'
+            Before:
+                        return this.driver.CompareInstanceOfNumericArrayWithValues(
+            After:
+                        return JsonSchemaBuilderDriver.CompareInstanceOfNumericArrayWithValues(
+            */
             return JsonSchemaBuilderDriver.CompareInstanceOfNumericArrayWithValues(
                 this.scenarioContext.Get<Type>(SchemaType),
                 this.scenarioContext.Get<IJsonValue>(SchemaInstance),
@@ -517,12 +536,12 @@ After:
         {
             sbyte[] itemArray = BuildSByteArray(inputDataString);
 
-/* Unmerged change from project 'Corvus.Json.Specs (net481)'
-Before:
-            return this.driver.CompareInstanceOfNumericArrayWithValues(
-After:
-            return JsonSchemaBuilderDriver.CompareInstanceOfNumericArrayWithValues(
-*/
+            /* Unmerged change from project 'Corvus.Json.Specs (net481)'
+            Before:
+                        return this.driver.CompareInstanceOfNumericArrayWithValues(
+            After:
+                        return JsonSchemaBuilderDriver.CompareInstanceOfNumericArrayWithValues(
+            */
             return JsonSchemaBuilderDriver.CompareInstanceOfNumericArrayWithValues(
                 this.scenarioContext.Get<Type>(SchemaType),
                 this.scenarioContext.Get<IJsonValue>(SchemaInstance),
@@ -572,6 +591,101 @@ After:
 #endif
     }
 
+    [Given("I generate a type for the schema with optional properties nullable")]
+    public Task GivenIGenerateATypeForTheSchemaWithOptionalPropertiesNullable()
+    {
+        this.scenarioContext.Set(true, NullablePropertiesKey);
+        return this.GivenIGenerateATypeForTheSchema();
+    }
+
+    [Given("I generate a type for the schema with implicit conversion to string enabled")]
+    public Task GivenIGenerateATypeForTheSchemaWithImplicitConversionToStringEnabled()
+    {
+        this.scenarioContext.Set(true, UseImplicitOperatorStringKey);
+        return this.GivenIGenerateATypeForTheSchema();
+    }
+
+    [Given("I generate a type for the schema with optional properties not nullable")]
+    public Task GivenIGenerateATypeForTheSchemaWithOptionalPropertiesNotNullable()
+    {
+        this.scenarioContext.Set(false, NullablePropertiesKey);
+        return this.GivenIGenerateATypeForTheSchema();
+    }
+
+    [Given("I generate the code for the schema")]
+    [When("I generate the code for the schema")]
+    public async Task GivenIGenerateTheCodeForTheSchema()
+    {
+        string featureName = ToPascalCaseWithReservedWords(this.featureContext.FeatureInfo.Title);
+        string scenarioName = ToPascalCaseWithReservedWords(this.scenarioContext.ScenarioInfo.Title);
+        string filename = this.scenarioContext.Get<string>(InputJsonFileName);
+        string schemaPath = this.scenarioContext.Get<string>(SchemaPath);
+
+        IReadOnlyCollection<GeneratedCodeFile> code;
+
+        this.scenarioContext.TryGetValue(ValidateFormatKey, out bool validateFormat);
+
+        if (this.scenarioContext.ContainsKey(InputDataPath))
+        {
+            code = await this.driver.GenerateCodeForJsonSchemaTestSuite(
+                filename,
+                schemaPath,
+                featureName,
+                scenarioName,
+                validateFormat,
+                this.scenarioContext.TryGetValue(NullablePropertiesKey, out bool optionalAsNullable) && optionalAsNullable,
+                this.scenarioContext.TryGetValue(UseImplicitOperatorStringKey, out bool useImplicitOperatorString) && useImplicitOperatorString);
+        }
+        else
+        {
+            string schema = this.scenarioContext.Get<string>(SchemaInstance);
+            code = await this.driver.GenerateCodeForVirtualFile(
+                schema,
+                filename,
+                featureName,
+                scenarioName,
+                validateFormat,
+                this.scenarioContext.TryGetValue(NullablePropertiesKey, out bool optionalAsNullable) && optionalAsNullable,
+                this.scenarioContext.TryGetValue(UseImplicitOperatorStringKey, out bool useImplicitOperatorString) && useImplicitOperatorString);
+        }
+
+        this.scenarioContext.Set(code, SchemaCode);
+    }
+
+    [Then(@"the remarks for the file '([^']*)' parent struct '([^']*)' child struct '([^']*)' property '([^']*)' will be")]
+    public void ThenTheRemarksForTheFileStructPropertyWillBe(string fileName, string parentStructName, string structName, string propertyName, string remarksText)
+    {
+        IReadOnlyCollection<GeneratedCodeFile> code = this.scenarioContext.Get<IReadOnlyCollection<GeneratedCodeFile>>(SchemaCode);
+        GeneratedCodeFile? file = code.SingleOrDefault(f => f.FileName == fileName);
+        Assert.NotNull(file);
+        Microsoft.CodeAnalysis.SyntaxTree syntaxTree = CSharpSyntaxTree.ParseText(file!.FileContent);
+        CompilationUnitSyntax root = syntaxTree.GetCompilationUnitRoot();
+        PropertyDeclarationSyntax? property = root.Members
+            .OfType<FileScopedNamespaceDeclarationSyntax>()
+            .SingleOrDefault()
+            ?.Members
+            .OfType<StructDeclarationSyntax>()
+            .SingleOrDefault(s => s.Identifier.Text == parentStructName)
+            ?.Members
+            .OfType<StructDeclarationSyntax>()
+            .SingleOrDefault(s => s.Identifier.Text == structName)
+            ?.Members
+            .OfType<PropertyDeclarationSyntax>()
+            .SingleOrDefault(s => s.Identifier.Text == propertyName);
+        Assert.NotNull(property);
+        string trivia = property!.GetLeadingTrivia().ToString();
+        int remarksStart = trivia.IndexOf("<remarks>");
+        Assert.GreaterOrEqual(remarksStart, 0);
+        remarksStart += "<remarks>".Length;
+        int remarksEnd = trivia.IndexOf("/// </remarks>");
+        Assert.GreaterOrEqual(remarksEnd, remarksStart);
+
+        // Normalize the line endings
+        string actual = trivia[remarksStart..remarksEnd].Replace("\r\n", "\n").Trim();
+        string expected = remarksText.Replace("\r\n", "\n").Trim();
+        Assert.AreEqual(expected, actual);
+    }
+
     /// <summary>
     /// Generates the code for the schema in the scenario property <see cref="SchemaPath"/>, compiles it, and loads the assembly. The fully qualified type name is stored in a scenario property called <see cref="SchemaType"/>.
     /// </summary>
@@ -579,8 +693,8 @@ After:
     [Given("I generate a type for the schema")]
     public async Task GivenIGenerateATypeForTheSchema()
     {
-        string featureName = Formatting.ToPascalCaseWithReservedWords(this.featureContext.FeatureInfo.Title).ToString();
-        string scenarioName = Formatting.ToPascalCaseWithReservedWords(this.scenarioContext.ScenarioInfo.Title).ToString();
+        string featureName = ToPascalCaseWithReservedWords(this.featureContext.FeatureInfo.Title);
+        string scenarioName = ToPascalCaseWithReservedWords(this.scenarioContext.ScenarioInfo.Title);
         string filename = this.scenarioContext.Get<string>(InputJsonFileName);
         string schemaPath = this.scenarioContext.Get<string>(SchemaPath);
         string key = filename + schemaPath;
@@ -602,7 +716,9 @@ After:
                     schemaPath,
                     featureName,
                     scenarioName,
-                    validateFormat).ConfigureAwait(false);
+                    validateFormat,
+                    this.scenarioContext.TryGetValue(NullablePropertiesKey, out bool optionalAsNullable) && optionalAsNullable,
+                    this.scenarioContext.TryGetValue(UseImplicitOperatorStringKey, out bool useImplicitOperatorString) && useImplicitOperatorString);
             }
             else
             {
@@ -612,7 +728,9 @@ After:
                     filename,
                     featureName,
                     scenarioName,
-                    validateFormat).ConfigureAwait(false);
+                    validateFormat,
+                    this.scenarioContext.TryGetValue(NullablePropertiesKey, out bool optionalAsNullable) && optionalAsNullable,
+                    this.scenarioContext.TryGetValue(UseImplicitOperatorStringKey, out bool useImplicitOperatorString) && useImplicitOperatorString);
             }
 
             this.featureContext.Set(type, key);
@@ -627,8 +745,8 @@ After:
     [Given("I synchronously generate a type for the schema")]
     public void GivenISynchronouslyGenerateATypeForTheSchema()
     {
-        string featureName = Formatting.ToPascalCaseWithReservedWords(this.featureContext.FeatureInfo.Title).ToString();
-        string scenarioName = Formatting.ToPascalCaseWithReservedWords(this.scenarioContext.ScenarioInfo.Title).ToString();
+        string featureName = ToPascalCaseWithReservedWords(this.featureContext.FeatureInfo.Title);
+        string scenarioName = ToPascalCaseWithReservedWords(this.scenarioContext.ScenarioInfo.Title);
         string filename = this.scenarioContext.Get<string>(InputJsonFileName);
         string schemaPath = this.scenarioContext.Get<string>(SchemaPath);
         string key = filename + schemaPath;
@@ -650,7 +768,8 @@ After:
                     schemaPath,
                     featureName,
                     scenarioName,
-                    validateFormat);
+                    validateFormat,
+                    optionalAsNullable: false);
             }
             else
             {
@@ -660,7 +779,8 @@ After:
                     filename,
                     featureName,
                     scenarioName,
-                    validateFormat);
+                    validateFormat,
+                    optionalAsNullable: false);
             }
 
             this.featureContext.Set(type, key);
@@ -673,10 +793,23 @@ After:
     /// Constructs an instance of the type whose name is stored in the scenario property <see cref="SchemaType"/>, using the <see cref="JsonElement"/> stored in the scenario property called <see cref="InputData"/>, and stores it in the scenario property <see cref="SchemaInstance"/>.
     /// </summary>
     [Given("I construct an instance of the schema type from the data")]
+    [When("I construct an instance of the schema type from the data")]
     public void GivenIConstructAnInstanceOfTheSchemaTypeFromTheData()
     {
         IJsonValue value = JsonSchemaBuilderDriver.CreateInstance(this.scenarioContext.Get<Type>(SchemaType), this.scenarioContext.Get<JsonElement>(InputData));
         this.scenarioContext.Set(value, SchemaInstance);
+    }
+
+    /// <summary>
+    /// Calls the validation method on the instance in the scenario property <see cref="SchemaInstance"/> and stores the validation result in <see cref="SchemaValidationResult"/>.
+    /// </summary>
+    /// <param name="level">The validation level.</param>
+    [When("I validate the instance with level (.*)")]
+    public void WhenIValidateTheInstanceWithLevel(ValidationLevel level)
+    {
+        IJsonValue jsonValue = this.scenarioContext.Get<IJsonValue>(SchemaInstance);
+        ValidationContext validationContext = jsonValue.Validate(ValidationContext.ValidContext, level);
+        this.scenarioContext.Set(validationContext, SchemaValidationResult);
     }
 
     /// <summary>
@@ -691,6 +824,40 @@ After:
     }
 
     /// <summary>
+    /// Gets a non-nullable property frrom the instance in the scenario property <see cref="SchemaInstance"/> and checks its value.
+    /// </summary>
+    /// <param name="propertyName">The .NET name of the property.</param>
+    /// <param name="value">The value to test against.</param>
+    [Then("the property '([^']*)' from the instance has the value '([^']*)'")]
+    public void WhenIGetThePropertyFromTheInstanceIsValueWillBe(string propertyName, string value)
+    {
+        bool result = JsonSchemaBuilderDriver.CompareStringValue(
+            this.scenarioContext.Get<Type>(SchemaType),
+            this.scenarioContext.Get<IJsonValue>(SchemaInstance),
+            propertyName,
+            value);
+
+        Assert.IsTrue(result);
+    }
+
+    /// <summary>
+    /// Gets a nullable property frrom the instance in the scenario property <see cref="SchemaInstance"/> and checks its value.
+    /// </summary>
+    /// <param name="propertyName">The .NET name of the property.</param>
+    /// <param name="value">The value to test against.</param>
+    [Then("the nullable property '([^']*)' from the instance has the value '([^']*)'")]
+    public void WhenIGetTheNullablePropertyFromTheInstanceIsValueWillBe(string propertyName, string value)
+    {
+        bool result = JsonSchemaBuilderDriver.CompareNullableStringValue(
+            this.scenarioContext.Get<Type>(SchemaType),
+            this.scenarioContext.Get<IJsonValue>(SchemaInstance),
+            propertyName,
+            value);
+
+        Assert.IsTrue(result);
+    }
+
+    /// <summary>
     /// Uses the <see cref="ValidationResult"/> stored in the scenario property <see cref="SchemaValidationResult"/> and checks its <see cref="ValidationResult.Valid"/> property.
     /// </summary>
     /// <param name="expectedValidity"><c>True</c> if the result is expected to be valid, otherwise false.</param>
@@ -699,6 +866,45 @@ After:
     {
         ValidationContext actual = this.scenarioContext.Get<ValidationContext>(SchemaValidationResult);
         Assert.AreEqual(expectedValidity, actual.IsValid);
+    }
+
+    /// <summary>
+    /// Uses the <see cref="ValidationResult"/> stored in the scenario property <see cref="SchemaValidationResult"/> and checks its <see cref="ValidationResult.Valid"/> property.
+    /// </summary>
+    /// <param name="count">The number of results expected in the result set.</param>
+    [Then("there will be (.*) results")]
+    public void ThenTheResultWillBe(int count)
+    {
+        ValidationContext actual = this.scenarioContext.Get<ValidationContext>(SchemaValidationResult);
+        Assert.AreEqual(count, actual.Results.Count);
+    }
+
+    /// <summary>
+    /// Gets the value as an string, using an implicit conversion.
+    /// </summary>
+    /// <param name="scenarioContext">The scenario context.</param>
+    /// <returns>The value as a string, using implicit conversion.</returns>
+    internal static string GetTheValueAsStringImplicit(ScenarioContext scenarioContext)
+    {
+        Type type = scenarioContext.Get<Type>(SchemaType);
+        IJsonValue value = scenarioContext.Get<IJsonValue>(SchemaInstance);
+        return
+            type
+                .GetMethods()
+                .SingleOrDefault(m => m.Name == "op_Implicit" && m.ReturnType == typeof(string))
+                ?.Invoke(null, [value])
+            is string s
+                ? s
+                : throw new InvalidOperationException("No string returned from the implicit conversion.");
+    }
+
+    private static string ToPascalCaseWithReservedWords(string input)
+    {
+        Span<char> value = stackalloc char[Formatting.GetBufferLength(input.Length, "Entity".AsSpan(), ReadOnlySpan<char>.Empty)];
+        input.AsSpan().CopyTo(value);
+        int written = Formatting.ToPascalCase(value[..input.Length]);
+        written = Formatting.FixReservedWords(value, written, "Entity".AsSpan(), ReadOnlySpan<char>.Empty);
+        return value[..written].ToString();
     }
 
     private static ulong[] BuildUInt64Array(string inputDataString)

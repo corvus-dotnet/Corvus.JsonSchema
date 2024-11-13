@@ -6,15 +6,39 @@
 //     the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
+
 #nullable enable
+
+using System.Runtime.CompilerServices;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Corvus.Json;
 
 namespace Corvus.Json.JsonSchema.OpenApi30;
+
+/// <summary>
+/// Generated from JSON Schema.
+/// </summary>
+/// <remarks>
+/// <para>
+/// The description of OpenAPI v3.0.x documents, as defined by https://spec.openapis.org/oas/v3.0.3
+/// </para>
+/// </remarks>
 public readonly partial struct OpenApiDocument
 {
+    /// <summary>
+    /// Generated from JSON Schema.
+    /// </summary>
     public readonly partial struct HttpSecurityScheme
     {
+        /// <summary>
+        /// Generated from JSON Schema.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Bearer
+        /// </para>
+        /// </remarks>
         public readonly partial struct Bearer
         {
             /// <summary>
@@ -38,24 +62,136 @@ public readonly partial struct OpenApiDocument
                     }
 
                     JsonValueKind valueKind = this.ValueKind;
-                    result = this.ValidateType(valueKind, result, level);
+
+                    result = CorvusValidation.TypeValidationHandler(valueKind, result, level);
+
                     if (level == ValidationLevel.Flag && !result.IsValid)
                     {
                         return result;
                     }
 
-                    result = Corvus.Json.Validate.ValidateString(this, result, level, null, null, __CorvusPatternExpression);
+                    result = CorvusValidation.StringValidationHandler(this, valueKind, result, level);
+
                     if (level == ValidationLevel.Flag && !result.IsValid)
                     {
                         return result;
                     }
 
-                    if (level != ValidationLevel.Flag)
+                    if (level > ValidationLevel.Basic)
                     {
                         result = result.PopLocation();
                     }
 
                     return result;
+                }
+
+                /// <summary>
+                /// Validation constants for the type.
+                /// </summary>
+                public static partial class CorvusValidation
+                {
+                    /// <summary>
+                    /// A regular expression for the <c>pattern</c> keyword.
+                    /// </summary>
+                    public static readonly Regex Pattern = CreatePattern();
+
+                    /// <summary>
+                    /// Core type validation.
+                    /// </summary>
+                    /// <param name="valueKind">The <see cref="JsonValueKind" /> of the value to validate.</param>
+                    /// <param name="validationContext">The current validation context.</param>
+                    /// <param name="level">The current validation level.</param>
+                    /// <returns>The resulting validation context after validation.</returns>
+                    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                    internal static ValidationContext TypeValidationHandler(
+                        JsonValueKind valueKind,
+                        in ValidationContext validationContext,
+                        ValidationLevel level = ValidationLevel.Flag)
+                    {
+                        return Corvus.Json.ValidateWithoutCoreType.TypeString(valueKind, validationContext, level, "type");
+                    }
+
+                    /// <summary>
+                    /// String validation.
+                    /// </summary>
+                    /// <param name="value">The value to validate.</param>
+                    /// <param name="valueKind">The <see cref="JsonValueKind" /> of the value to validate.</param>
+                    /// <param name="validationContext">The current validation context.</param>
+                    /// <param name="level">The current validation level.</param>
+                    /// <returns>The resulting validation context after validation.</returns>
+                    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                    internal static ValidationContext StringValidationHandler(
+                        in SchemeEntity value,
+                        JsonValueKind valueKind,
+                        in ValidationContext validationContext,
+                        ValidationLevel level = ValidationLevel.Flag)
+                    {
+                        if (valueKind != JsonValueKind.String)
+                        {
+                            if (level == ValidationLevel.Verbose)
+                            {
+                                ValidationContext ignoredResult = validationContext;
+                                ignoredResult = ignoredResult.WithResult(isValid: true, "Validation pattern - ignored because the value is not a string", "pattern");
+
+                                return ignoredResult;
+                            }
+
+                            return validationContext;
+                        }
+
+                        ValidationContext result = validationContext;
+                        value.TryGetValue(StringValidator, new Corvus.Json.Validate.ValidationContextWrapper(result, level), out result);
+
+                        return result;
+
+                        static bool StringValidator(ReadOnlySpan<char> input, in Corvus.Json.Validate.ValidationContextWrapper context, out ValidationContext result)
+                        {
+                            result = context.Context;
+
+                            if (context.Level > ValidationLevel.Basic)
+                            {
+                                result = result.PushValidationLocationReducedPathModifier(new("#/pattern"));
+                            }
+
+                            if (Pattern.IsMatch(input))
+                            {
+                                if (context.Level == ValidationLevel.Verbose)
+                                {
+                                    result = result.WithResult(isValid: true, $"Validation pattern - {input.ToString()} matched  '^[Bb][Ee][Aa][Rr][Ee][Rr]$'");
+                                }
+                            }
+                            else
+                            {
+                                if (context.Level >= ValidationLevel.Detailed)
+                                {
+                                    result = result.WithResult(isValid: false, $"Validation pattern - {input.ToString()} did not match  '^[Bb][Ee][Aa][Rr][Ee][Rr]$'");
+                                }
+                                else if (context.Level >= ValidationLevel.Basic)
+                                {
+                                    result = result.WithResult(isValid: false, "Validation pattern - The value did not match  '^[Bb][Ee][Aa][Rr][Ee][Rr]$'");
+                                }
+                                else
+                                {
+                                    result = context.Context.WithResult(isValid: false);
+                                    return true;
+                                }
+                            }
+
+                            if (context.Level > ValidationLevel.Basic)
+                            {
+                                result = result.PopLocation();
+                            }
+
+                            return true;
+                        }
+                    }
+
+#if NET8_0_OR_GREATER && !DYNAMIC_BUILD
+                    [GeneratedRegex("^[Bb][Ee][Aa][Rr][Ee][Rr]$")]
+                    private static partial Regex CreatePattern();
+#else
+                    private static Regex CreatePattern() => new("^[Bb][Ee][Aa][Rr][Ee][Rr]$", RegexOptions.Compiled);
+#endif
                 }
             }
         }

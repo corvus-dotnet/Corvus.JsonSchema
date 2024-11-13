@@ -6,64 +6,87 @@
 //     the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
+
 #nullable enable
-using System.Collections.Immutable;
+
 using System.Diagnostics.CodeAnalysis;
-using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
 using Corvus.Json.Internal;
 
 namespace Corvus.Json.JsonSchema.OpenApi30;
+
+/// <summary>
+/// Generated from JSON Schema.
+/// </summary>
+/// <remarks>
+/// <para>
+/// The description of OpenAPI v3.0.x documents, as defined by https://spec.openapis.org/oas/v3.0.3
+/// </para>
+/// </remarks>
 public readonly partial struct OpenApiDocument
 {
+    /// <summary>
+    /// Generated from JSON Schema.
+    /// </summary>
     public readonly partial struct Header
     {
         /// <summary>
         /// Generated from JSON Schema.
         /// </summary>
-        public readonly partial struct AllowReservedEntity : IJsonBoolean<AllowReservedEntity>
+        /// <remarks>
+        /// <para>
+        /// Examples:
+        /// <example>
+        /// <code>
+        /// false
+        /// </code>
+        /// </example>
+        /// </para>
+        /// </remarks>
+        public readonly partial struct AllowReservedEntity
+            : IJsonBoolean<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Header.AllowReservedEntity>
         {
             /// <summary>
-            /// Initializes a new instance of the <see cref = "AllowReservedEntity"/> struct.
+            /// Conversion from <see cref="bool"/>.
             /// </summary>
-            /// <param name = "value">The value from which to construct the instance.</param>
-            public AllowReservedEntity(bool value)
-            {
-                this.jsonElementBacking = default;
-                this.backing = Backing.Bool;
-                this.boolBacking = value;
-            }
-
-            /// <summary>
-            /// Conversion from JsonBoolean.
-            /// </summary>
-            /// <param name = "value">The value from which to convert.</param>
-            public static implicit operator AllowReservedEntity(JsonBoolean value)
-            {
-                if (value.HasDotnetBacking && (value.ValueKind == JsonValueKind.True || value.ValueKind == JsonValueKind.False))
-                {
-                    return new((bool)value);
-                }
-
-                return new(value.AsJsonElement);
-            }
-
-            /// <summary>
-            /// Conversion from bool.
-            /// </summary>
-            /// <param name = "value">The value from which to convert.</param>
+            /// <param name="value">The value from which to convert.</param>
             public static implicit operator AllowReservedEntity(bool value)
             {
                 return new(value);
             }
 
             /// <summary>
-            /// Conversion to bool.
+            /// Conversion from JsonBoolean.
             /// </summary>
-            /// <param name = "value">The value from which to convert.</param>
-            /// <exception cref = "InvalidOperationException">The value was not a string.</exception>
-            public static implicit operator bool (AllowReservedEntity value)
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator AllowReservedEntity(JsonBoolean value)
+            {
+                if (value.HasDotnetBacking && (value.ValueKind == JsonValueKind.False || value.ValueKind == JsonValueKind.True))
+                {
+                    return new(
+                        (bool)value);
+                }
+
+                return new(value.AsJsonElement);
+            }
+
+            /// <summary>
+            /// Conversion to JsonBoolean.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator JsonBoolean(AllowReservedEntity value)
+            {
+                return
+                    value.AsBoolean;
+            }
+
+            /// <summary>
+            /// Conversion to <see langword="bool"/>.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            /// <exception cref="InvalidOperationException">The value was not a boolean.</exception>
+            public static implicit operator bool(AllowReservedEntity value)
             {
                 return value.GetBoolean() ?? throw new InvalidOperationException();
             }
@@ -71,7 +94,7 @@ public readonly partial struct OpenApiDocument
             /// <summary>
             /// Try to retrieve the value as a boolean.
             /// </summary>
-            /// <param name = "result"><see langword="true"/> if the value was true, otherwise <see langword="false"/>.</param>
+            /// <param name="result"><see langword="true"/> if the value was true, otherwise <see langword="false"/>.</param>
             /// <returns><see langword="true"/> if the value was representable as a boolean, otherwise <see langword="false"/>.</returns>
             public bool TryGetBoolean([NotNullWhen(true)] out bool result)
             {

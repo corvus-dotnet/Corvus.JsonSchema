@@ -1,11 +1,38 @@
 # Corvus.JsonSchema
 Build-time code generation for [Json Schema](https://json-schema.org/) validation, and serialization.
 
-It supports serialization of *every feature of JSON schema* from draft4 to draft2020-12, including the OpenApi3.0 variant of draft4. (i.e. it doesn't give up on complex structure and lapse back to 'anonymous JSON objects' like most dotnet tooling.)
+It supports serialization of *every feature of JSON schema* from draft4 to draft2020-12, including the OpenApi3.0 variant of draft4. (i.e. it doesn't give up on complex structure and lapse back to 'anonymous JSON objects' like most .NET tooling.)
 
 ## Supported platforms
 
-It now works with **every supported .NET version** by providing netstandard2.0 packages, with optimized packages that take advantage of features in NET8.0 and later.
+### .NET 4.8.1 (Windows)
+It now works with .NET 4.8.1 and later by providing `netstandard2.0` packages.
+
+### .NET 8.0, 9.0 (Windows, Linux, MacOs)
+We take advantage of features in .NET 8.0 and later, by providing `net80` packages. These are supported on Windows, Linux, and MacOS.
+
+Note that if you are building libraries using `Corvus.Json.ExtendedTypes`, and generated schema types, you should ensure
+that you target *both* `netstandard2.0` *and* `net80` (or later) to ensure that your library can be consumed
+by the widest possible range of projects
+
+If you build your library against `netstandard2.0` only, and are consumed by a `net80` or later project, you will see type load errors.
+
+## Support schema dialects
+
+In V4 we have full support for the following schema dialects:
+
+- Draft 4
+- OpenAPI 3.0
+- Draft 6
+- Draft 7
+- 2019-09
+- 2020-12 (Including OpenAPI 3.1)
+
+You can see full details of the supported schema dialects [on the bowtie website](https://bowtie.report/#/implementations/dotnet-corvus-jsonschema).
+
+Bowtie is tool for understanding and comparing implementations of the JSON Schema specification across all programming languages.
+
+It uses the official JSON Schema Test Suite to display bugs or functionality gaps in implementations.
 
 ## Project Sponsor
 
@@ -43,11 +70,11 @@ There are 2 key features:
 
 ### Serialization
 
-You use our `generatejsonschematypes` tool to generate code (on Windows, Linux or MacOS) from an existing JSON Schema document, and compile it in a standard dotnet assembly.
+You use our `generatejsonschematypes` tool to generate code (on Windows, Linux or MacOS) from an existing JSON Schema document, and compile it in a standard .NET assembly.
 
 The generated code provides object models for JSON Schema documents that give you rich, idiomatic C# types with strongly typed properties, pattern matching and efficient cast operations.
 
-You can operate directly over the JSON data, or mix-and-match building new JSON models from dotnet primitive types.
+You can operate directly over the JSON data, or mix-and-match building new JSON models from .NET primitive types.
 
 ```csharp
 string jsonText = 
@@ -69,7 +96,7 @@ Console.WriteLine($"{person.Name.FamilyName}"});
 
 ### Validation
 
-The same object-model provides ultra-fast, zero/low validation of JSON data against a JSON Schema.
+The same object-model provides ultra-fast, zero/low allocation validation of JSON data against a JSON Schema.
 
 Having "deserialized" (really 'mapped') the JSON into the object model you can make use of the validation:
 
@@ -123,27 +150,31 @@ generatejsonschematypes -h
 This should produce output similar to the following:
 
 ```
-Description:
-  Generate C# types from a JSON schema.
+USAGE:
+    generatejsonschematypes <schemaFile> [OPTIONS]
 
-Usage:
-  generatejsonschematypes <schemaFile> [options]
+ARGUMENTS:
+    <schemaFile>    The path to the schema file to process
 
-Arguments:
-  <schemaFile>  The path to the schema file to process
-
-Options:
-  --rootNamespace <rootNamespace>            The default root namespace for generated types
-  --rootPath <rootPath>                      The path in the document for the root type.
-  --useSchema <Draft201909|Draft202012|Draft4|Draft6|Draft7|OpenApi30>      The schema variant to use. [default: Draft201909]
-  --outputMapFile <outputMapFile>            The name to use for a map file which includes details of the files that
-                                             were written.
-  --outputPath <outputPath>                  The output directory. It defaults to the same folder as the schema file.
-  --outputRootTypeName <outputRootTypeName>  The Dotnet TypeName for the root type. []
-  --rebaseToRootPath                         If a --rootPath is specified, rebase the document as if it was rooted on
-                                             the specified element.
-  --version                                  Show version information
-  -?, -h, --help                             Show help and usage information
+OPTIONS:
+                                             DEFAULT
+    -h, --help                                               Prints help information
+        --rootNamespace                                      The default root namespace for generated types
+        --rootPath                                           The path in the document for the root type
+        --useSchema                          NotSpecified    Override the fallback schema variant to use. If
+                                                             NotSpecified, and it cannot be inferred from the schema
+                                                             itself, it will use Draft2020-12
+        --outputMapFile                                      The name to use for a map file which includes details of
+                                                             the files that were written
+        --outputPath                                         The path to which to write the generated code
+        --outputRootTypeName                                 The .NET type name for the root type
+        --rebaseToRootPath                                   If a --rootPath is specified, rebase the document as if it
+                                                             was rooted on the specified element
+        --assertFormat                       True            If --assertFormat is specified, assert format
+                                                             specifications
+        --disableOptionalNamingHeuristics                    Disables optional naming heuristics
+        --optionalAsNullable                 None            If NullOrUndefined, optional properties are emitted as .NET
+                                                             nullable values
   ```
 
 To run it against a JSON Schema file in the local file system:
@@ -283,14 +314,11 @@ We also provide  a [full hands-on-lab](docs/GettingStartedWithJsonSchemaCodeGene
 
 # Development environment
 
-## Use of dotnet-t4
+## Use of PowerShell
 
-This project uses [dotnet-t4](https://www.nuget.org/packages/dotnet-t4) to generate the code-behind for the t4 templates that actually emit the code for a particular template. If you add or update templates, you will need to run the relevant `BuildTemplates.cmd` batch file to regenerate them. (There is one that will
-regenerate all templates in the `/Solutions` folder; you can find others in the individual generator projects - more details on this can be found in the section on the Organization of the repository, below).
-
-```
-dotnet tool install --global dotnet-t4 --version 2.2.1
-```
+This project uses its own code generation to generate code for the built-in JSON types in `Corvus.Json.ExtendedTypes`, and the
+types for working with various schema dialects such as `Corvus.Json.JsonSchema.Draft202012`.
+If you add or update core types, you will need to run the `./Solutions/generatetypes.ps1` script file to regenerate them.
 
 ## Use of JSON-Schema-Test-Suite
 
@@ -325,7 +353,7 @@ updating from there.)
 
 ### Corvus.Json.CodeGenerator
 
-A dotnet command line tool that generates C# code from JSON schema.
+A .NET command line tool that generates C# code from JSON schema.
 
 ### Corvus.Json.ExtendedTypes
 
@@ -333,34 +361,27 @@ Builds on System.Text.Json to provide a rich object model over JSON data, with v
 
 ### Corvus.Json.JsonSchema.*
 
-Object models for working with JSON Schema documents. *This does not provide validation of data - it is purely a model for reading,  writing, and validating JSON Schema documents of various flavours.*
+Object models for working with JSON Schema documents. *This does not provide validation of your own JSON Schema - it is purely a model for reading,  writing, and validating JSON Schema documents of various flavours.*
 
-### Corvus.Json.CodeGeneration.Abstractions
+### Corvus.Json.CodeGeneration
 
-Common code to assist with building code generators for various flavours of JSON schema. It includes a common data model for abstracting schema into C# types in the form of a `TypeDeclaration.cs`, a set of T4 templates in `/SharedTemplates/*.tt` for common JSON schema features, and useful `Formatting.cs` utilities.
+Common code to assist with building code generators for various flavours of JSON schema. It includes a common data model for abstracting schema into an object model which can be consumed by an `ILanguageProvider` (or other analyser).
 
-### Corvus.CodeGeneration.202012
-### Corvus.CodeGeneration.201909
-### Corvus.CodeGeneration.7
-### Corvus.CodeGeneration.6
+### Corvus.Json.CodeGenerator.CSharp
 
-Specific implementations of the code generators for various JSON schema dialects.
+A C# `ILanguageProvider` that can take the anlysis of a JSON Schema document from Corvus.Json.CodeGeneration and generate C# code from it.
 
-The code in `JsonSchemaBuilder` uses the `JsonSchemaWalker` to build the appropriate `TypeDeclaration` instances for the particular schema.
+### Corvus.Json.CodeGeneration.202012, Corvus.Json.CodeGeneration.201909, Corvus.Json.CodeGeneration.7, Corvus.Json.CodeGeneration.6, Corvus.Json.CodeGeneration.4, Corvus.Json.CodeGeneration.OpenApi30
 
-It then passes those to the various T4 code generators to generate the partial classes for each type discovered. It only generates partials for the features needed for that type.
+Specific dialects that collect keywords into vocabularies, and provide analysers to determine the specific vocabulary in play for a particular JSON Schema document.
 
-The code for those T4 code generators is produced using the `BuildTemplates.cmd`. This automates the process of taking the T4 templates, both from the SharedTemplates folder in `Corvus.Json.CodeGeneration.Abstractions` and custom templates that are included in the local `Templates/*.tt` for those elements which vary in that particular schema.
+### Corvus.Json.Validator
 
-If you are building your own generators, or modifying the existing ones, pointers to instructions for using this tool can be found in `BuildTemplates.cmd`.
-
-The T4 templates need "code-behind" partials to provide the context for the generator. These are also generated from a T4 template called `Templates/CodeGeneratorPartial.tt`, by the `BuildTemplates.cmd` command. Again, these can be customized to extend the generator context required by your own generators.
-
-You would not normally need to run those commands to build the solution, as their output is checked into the repository.
+Dynamic JSON Schema validator that can validate JSON data against a JSON Schema document loaded at runtime, without the need to generate code ahead-of-time.
 
 ### Corvus.Json.Patch
 
-A fast, low-allocation implementation of JSON Patch over `Corvus.Json.ExtendedTypes`.
+An implementation of JSON Patch over `Corvus.Json.ExtendedTypes`.
 
 ### Corvus.Json.Specs
 
@@ -379,6 +400,234 @@ Generates Feature Files in `Corvus.Json.Specs` for the JSON Patch tests.
 
 Benchmark suites for various components.
 
+### Corvus.Json.SourceGenerator
+
+The Source Generator which generates types from Json Schema.
+
+## V4.0 Updates
+
+There are a number of significant changes in this release
+
+### Support for cross-vocabulary schema generation.
+  
+  So if you are upgrading a draft6 or draft7 schema set to 2020-12, for example, you can do it piecemeal and reference a schema with one dialect from a schema with another.
+
+### Opt-in support for .NET nullable properties
+
+  Where JSON Schema object properties are optional or nullable, use the `--optionalAsNullable` command line switch to emit nullable properties.
+
+### Opt-in support for implicit conversions to `string` from JSON `string` types
+
+If you have a JSON `string` type, we currently emit an `explicit` operator to convert to a .NET `string` (the counterpart of the `implicit` conversion operator *from* a .NET `string`).
+
+We do this because conversion to string causes an allocation, and it is very easy to inadvertently do this when working with APIs that offer `string`-based overloads, in addition to e.g.
+`ReadOnlySpan<char>` overloads. When passing an instance of the generated type directly to the API, the implicit conversion would kick in, allocating a string, with no warning that this
+is what you have done. In a high-performance/low-allocation scenario this would be undesirable, and you would prefer to use the `GetValue()` method on the instance,
+and pass the `ReadOnlySpan<char>` provided to the callback for that method.
+
+However, sometimes you just want the convenience of being able to behave as if your JSON value is a `string`.
+
+If so, you can now use the `--useImplicitOperatorString` command line switch to emit an implicit conversion operator to `string` for JSON `string` types.
+
+Note: this means you will never use the built-in `Corvus.Json` types for your string-like types. This could increase the amount of code generated for your schema.
+
+### New Source Generator
+
+We now have a source generator that can generate types at compile time, rather than using the `generatejsonschematypes` tool.
+
+### Using the source generator
+
+Add a reference to the `Corvus.Json.SourceGenerator` nuget package in addition to `Corvus.Json.ExtendedTypes`. [Note, you may need to restart Visual Studio once you have done this.]
+Add your JSON schema file(s), and set the Build Action to _C# analyzer additional file_.
+
+```xml
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Corvus.Json.ExtendedTypes\Corvus.Json.ExtendedTypes.csproj" />
+    <ProjectReference 
+        Include="..\Corvus.Json.SourceGenerator\Corvus.Json.SourceGenerator.csproj"
+        OutputItemType="Analyzer"
+        ReferenceOutputAssembly="false"
+        SetTargetFramework="TargetFramework=netstandard2.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AdditionalFiles Include="test.json" />
+  </ItemGroup>
+  
+</Project>
+```
+
+Now, create a `readonly partial struct` as a placeholder for your root generated type, and attribute it with
+`[JsonSchemaTypeGenerator]`. The path to the schema file is relative to the file containing the attribute. You can
+provide a pointer fragment in the usual way, if you need to e.g. `"./somefile.json#/components/schema/mySchema"`
+
+```csharp
+namespace SourceGenTest2.Model;
+
+using Corvus.Json;
+
+[JsonSchemaTypeGenerator("../test.json")]
+public readonly partial struct FlimFlam
+{
+}
+```
+
+The source generator will now automatically emit code for your schema, and you can use the generated types in your code.
+
+```
+using Corvus.Json;
+using SourceGenTest2.Model;
+
+FlimFlam flimFlam = JsonAny.ParseValue("[1,2,3]"u8);
+Console.WriteLine(flimFlam);
+JsonArray array = flimFlam.As<JsonArray>();
+Console.WriteLine(array);
+```
+
+You can find an example project here: [Sandbox.SourceGenerator](./Solutions/Sandbox.SourceGenerator)
+
+We'd like to credit our Google Summer of Code 2024 contributor, [Pranay Joshi](https://github.com/pranayjoshi) and mentor [Greg Dennis](https://github.com/gregsdennis) for their work on this tool.
+
+### New dynamic schema validation
+
+There is a new `Corvus.Json.Validator` assembly, containing a `JsonSchema` type.
+
+This is a new *dynamic* JSON Schema validator that can validate JSON data against a JSON Schema document, without the need to generate code ahead-of-time.
+
+This is useful for scenarios where you have a JSON Schema document that is not known at compile time, and you only require validation, not deserialization.
+
+You can load the schema with
+
+```csharp
+var corvusSchema = CorvusValidator.JsonSchema.FromFile("./person-array-schema.json");
+```
+
+This builds and caches a schema object from the file, and you can then validate JSON data against it with
+
+```csharp
+JsonElement elementToValidate = ...
+ValidationContext result = this.corvusSchema.Validate(elementToValidate);
+```
+
+Note that this uses dynamic code generation under the hood, with Roslyn, so there is an appreciable cold-start cost for the very first schema you validate in this way
+while the Roslyn components are jitted. Subsequent schema are much faster, and reused schema come from the cache.
+
+If you reference the `Corvus.Validator` package directly in your executing assembly, it will include a target that ensures `<PreserveCompilationContext>true</PreserveCompilationContext>`
+is added to a `<PropertyGroup>` in your project.
+
+If you are using the `Corvus.Json.Validator` package in a library, you should ensure that the consuming project has this property set, to avoid issues with dynamic code generation.
+
+You will have to do this manually if it is consumed via a Project Reference.
+
+### New `generatejsonschematypes config` command
+
+  Supply a json config file to the generate command, to configure and generate 1 or many schema in a single command.
+  
+  The configuration file also allows you to explicitly name arbitrary types, and optionally map them in to a specific .NET namespace.
+  
+  You can also map json schema base file URIs to specific .NET namespaces, and pre-load known-good versions of file reference dependencies.
+  
+  The [schema for the configuration file is here](./Corvus.Json.CodeGenerator/generator-config.json).
+
+### New command line validator with `generatejsonschematypes validateDocument`
+
+This command will validate a JSON document against a JSON schema, and output the results to the console.
+
+For example, given schema `schema.json`
+
+```json
+{
+    "$schema": "https://corvus-oss.org/json-schema/2020-12/schema",
+    "type": "array",
+    "prefixItems": [
+        {
+            "$corvusTypeName": "PositiveInt32",
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+        },
+        { "type": "string" },
+        {
+            "type": "string",
+            "format": "date-time"
+        }
+    ],
+    "unevaluatedItems": false
+}
+```
+
+and the document `document_to_validate.json`
+
+```json
+[
+    -1,
+    "Hello",
+    "Goodbye"
+]
+```
+
+If we run:
+
+```
+generatejsonschematypes validateDocument ./schema.json ./document_to_validate.json`
+```
+
+We see the output:
+
+```
+Validation minimum - -1 is less than 0 (#/prefixItems/0/minimum, #/prefixItems/0, #/0, ./testdoc.json#1:4)
+Validation type - should have been 'string' with format 'datetime' but was 'Goodbye'. (#/prefixItems/2, , #/2, ./testdoc.json#3:4)
+```
+### Multi-language code generator engine
+
+- Brand new JSON Schema analyser engine, which is now language independent.
+- Brand new code generation engine, which is more flexible and extensible, and uses the result of the schema analyser.
+- An extensible C# language provider which generates code-using-code. No more T4 templates in the language engine.
+
+### Additional features
+
+- Opt-out of optional naming heuristics introduced in V3.0 with the `--disableOptionalNamingHeuristics` command line switch.
+- Opt-out of specific naming heuristics by specifying `--disableNamingHeuristic`. You can list the available name heuristics with the new `generatejsonschematypes listNameHeuristics` command 
+- Safe truncation for extremely long file names
+- Access to all JSON schema validation constants via the `CorvusValidation` nested static class.
+- All formatted types (e.g. string or number formats) are now convertible to the equivalent core types (e.g. your custom `"format": "date"` type is freely convertible to and from `JsonDate`) and offer the same accessors and conversions as the core types.
+
+### Upgrading to V4
+- Code generated using V3.1 of the generator can still be built against V4 of Corvus.Json.ExtendedTypes, and used interoperably.
+  
+  This allows you to upgrade your code piecemeal to the new version of the generator. You do not need to update everything all at once.
+
+- For the vast majority of schema, the new naming heuristics will continue to work as they did in V3.
+  However, if you have a schema that is not generating the names you expect, you can inject `$corvusTypeName` into the schema to provide a hint to the generator.
+  If you  hit one of these cases, please [open an issue in github](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues).
+
+- We now generate fewer files for each type. You should delete your previous generated files before running the new version of the generator, to avoid leaving duplicate partial definitions.
+
+### Breaking changes
+- .NET 6 and .NET 7 are now out-of-support. We no longer support these versions. The `netstandard2.0` builds will fail at runtime.
+
+- - We no longer generate the property 'default' accessors.
+
+  Prior to V4 we emitted methods like `TryGetDefault(in JsonPropertyName name, out JsonAny value)` on objects whose properties had types with default values.
+
+  This was somewhat redundant code, as
+  a) it lacked strong typing and
+  b) it had unncessary overhead - you could go directly to the property type to get the default value, rather than doing a lookup by the property name.
+
+  If you want to discover the default value for a property, you must now do so by inspecting the `Default` static property of its type.
+  If you are affected by this change, you can copy the `[typename].Default.cs` file for the relevant type from your V3 code base to provide the capability.
+  
+  However, we recommend refactoring to use the static `Default` property on the property type instead.
+
 ## V3.0 Updates
 
 The big change with v3.0 is support for older (supported) versions of .NET, including the .NET Framework, through netstandard2.0.
@@ -387,11 +636,11 @@ As of v3.0.23 we also support draft4 and OpenAPI3.0 schema.
 
 Additional changes include:
 
-    - Pattern matching methods for anyOf, oneOf and enum types.
-    - Implicit cast to bool for boolean types
-    - Specify an explicit type name hint for a schema with the $corvusTypeName keyword
-    - Improved heuristic for type naming based on `title` and `documentation` as fallbacks if no better name can be dervied.
-    
+- Pattern matching methods for anyOf, oneOf and enum types.
+- Implicit cast to bool for boolean types
+- Specify an explicit type name hint for a schema with the $corvusTypeName keyword
+- Improved heuristic for type naming based on `title` and `documentation` as fallbacks if no better name can be dervied.
+
 ## V2.0 Updates
 
 There have been considerable breaking changes with V2.0 of the generator. This section will help you understand what has changed, and how to update your code.

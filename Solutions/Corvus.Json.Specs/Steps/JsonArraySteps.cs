@@ -338,7 +338,7 @@ public class JsonArraySteps
     }
 
     /// <summary>
-    /// Checks the the entity in the context with key <see cref="ArrayExceptionKey"/> is an ArgumentOutOfRangeException.
+    /// Checks the entity in the context with key <see cref="ArrayExceptionKey"/> is an ArgumentOutOfRangeException.
     /// </summary>
     [Then("the array operation should produce an ArgumentOutOfRangeException")]
     public void ThenTheArrayOperationShouldProduceAndArgumentOutOfRangeException()
@@ -348,7 +348,7 @@ public class JsonArraySteps
     }
 
     /// <summary>
-    /// Checks the the entity in the context with key <see cref="ArrayExceptionKey"/> is an IndexOutOfRangeException.
+    /// Checks the entity in the context with key <see cref="ArrayExceptionKey"/> is an IndexOutOfRangeException.
     /// </summary>
     [Then("the array operation should produce an IndexOutOfRangeException")]
     public void ThenTheArrayOperationShouldProduceAndIndexOutOfRangeException()

@@ -6,13 +6,28 @@
 //     the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
+
 #nullable enable
+
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
 
 namespace Corvus.Json.JsonSchema.OpenApi30;
+
+/// <summary>
+/// Generated from JSON Schema.
+/// </summary>
+/// <remarks>
+/// <para>
+/// The description of OpenAPI v3.0.x documents, as defined by https://spec.openapis.org/oas/v3.0.3
+/// </para>
+/// </remarks>
 public readonly partial struct OpenApiDocument
 {
+    /// <summary>
+    /// Generated from JSON Schema.
+    /// </summary>
     public readonly partial struct Operation
     {
         /// <summary>
@@ -36,24 +51,149 @@ public readonly partial struct OpenApiDocument
                 }
 
                 JsonValueKind valueKind = this.ValueKind;
-                result = this.ValidateType(valueKind, result, level);
+
+                result = CorvusValidation.TypeValidationHandler(valueKind, result, level);
+
                 if (level == ValidationLevel.Flag && !result.IsValid)
                 {
                     return result;
                 }
 
-                result = this.ValidateArray(valueKind, result, level);
+                result = CorvusValidation.ArrayValidationHandler(this, valueKind, result, level);
+
                 if (level == ValidationLevel.Flag && !result.IsValid)
                 {
                     return result;
                 }
 
-                if (level != ValidationLevel.Flag)
+                if (level > ValidationLevel.Basic)
                 {
                     result = result.PopLocation();
                 }
 
                 return result;
+            }
+
+            /// <summary>
+            /// Validation constants for the type.
+            /// </summary>
+            public static partial class CorvusValidation
+            {
+                /// <summary>
+                /// Core type validation.
+                /// </summary>
+                /// <param name="valueKind">The <see cref="JsonValueKind" /> of the value to validate.</param>
+                /// <param name="validationContext">The current validation context.</param>
+                /// <param name="level">The current validation level.</param>
+                /// <returns>The resulting validation context after validation.</returns>
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                internal static ValidationContext TypeValidationHandler(
+                    JsonValueKind valueKind,
+                    in ValidationContext validationContext,
+                    ValidationLevel level = ValidationLevel.Flag)
+                {
+                    return Corvus.Json.ValidateWithoutCoreType.TypeArray(valueKind, validationContext, level, "type");
+                }
+
+                /// <summary>
+                /// Array validation.
+                /// </summary>
+                /// <param name="value">The value to validate.</param>
+                /// <param name="valueKind">The <see cref="JsonValueKind" /> of the value to validate.</param>
+                /// <param name="validationContext">The current validation context.</param>
+                /// <param name="level">The current validation level.</param>
+                /// <returns>The resulting validation context after validation.</returns>
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                internal static ValidationContext ArrayValidationHandler(
+                    in ParametersEntityArray value,
+                    JsonValueKind valueKind,
+                    in ValidationContext validationContext,
+                    ValidationLevel level)
+                {
+                    ValidationContext result = validationContext;
+                    if (valueKind != JsonValueKind.Array)
+                    {
+                        if (level == ValidationLevel.Verbose)
+                        {
+                            ValidationContext ignoredResult = validationContext;
+                            ignoredResult = ignoredResult.WithResult(isValid: true, "Validation items - ignored because the value is not an array", "items");
+                            ignoredResult = ignoredResult.WithResult(isValid: true, "Validation uniqueItems - ignored because the value is not an array", "uniqueItems");
+
+                            return ignoredResult;
+                        }
+
+                        return validationContext;
+                    }
+
+                    int length = 0;
+                    using JsonArrayEnumerator<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Operation.ParametersEntityArray.ParametersEntity> arrayEnumerator = value.EnumerateArray();
+                    while (arrayEnumerator.MoveNext())
+                    {
+                        if (level > ValidationLevel.Basic)
+                        {
+                            result = result.PushDocumentArrayIndex(length);
+                        }
+
+                        using JsonArrayEnumerator<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Operation.ParametersEntityArray.ParametersEntity> innerEnumerator = value.EnumerateArray();
+                        int innerIndex = -1;
+                        while (innerIndex < length && 
+innerEnumerator.MoveNext())
+                        {
+                            innerIndex++;
+                        }
+
+                        bool foundDuplicate = false;                        while (innerEnumerator.MoveNext())
+                        {
+                            if (innerEnumerator.Current.Equals(arrayEnumerator.Current))                            {
+                                foundDuplicate = true;
+
+                                if (level >= ValidationLevel.Detailed)
+                                {
+                                    result = result.WithResult(isValid: false, $"Validation uniqueItems - duplicate items were found at indices innerIndex and {length}.", "uniqueItems");
+                                }
+                                else if (level >= ValidationLevel.Basic)
+                                {
+                                    result = result.WithResult(isValid: false, "Validation uniqueItems - duplicate items were found.", "uniqueItems");
+                                }
+                                else
+                                {
+                                    return ValidationContext.InvalidContext;
+                                }
+                            }
+                        }
+
+                        if (!foundDuplicate && level == ValidationLevel.Verbose)
+                        {
+                            result = result.WithResult(isValid: true, "Validation uniqueItems - no duplicate items found.", "uniqueItems");
+                        }
+                        if (level > ValidationLevel.Basic)
+                        {
+                            result = result.PushValidationLocationReducedPathModifier(new("#/items"));
+                        }
+
+                        result = arrayEnumerator.Current.Validate(result, level);
+                        if (level == ValidationLevel.Flag && !result.IsValid)
+                        {
+                            return result;
+                        }
+
+                        if (level > ValidationLevel.Basic)
+                        {
+                            result = result.PopLocation();
+                        }
+
+                        result = result.WithLocalItemIndex(length);
+
+                        if (level > ValidationLevel.Basic)
+                        {
+                            result = result.PopLocation();
+                        }
+
+                        length++;
+                    }
+
+                    return result;
+                }
             }
         }
     }

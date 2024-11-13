@@ -6,94 +6,1490 @@
 //     the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
+
 #nullable enable
+
 using System.Collections.Immutable;
-using System.Runtime.CompilerServices;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Corvus.Json;
 using Corvus.Json.Internal;
 
 namespace Corvus.Json.JsonSchema.OpenApi30;
+
+/// <summary>
+/// Generated from JSON Schema.
+/// </summary>
+/// <remarks>
+/// <para>
+/// The description of OpenAPI v3.0.x documents, as defined by https://spec.openapis.org/oas/v3.0.3
+/// </para>
+/// </remarks>
 public readonly partial struct OpenApiDocument
 {
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
-    public readonly partial struct Schema : IJsonObject<Schema>
+    public readonly partial struct Schema
+        : IJsonObject<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema>
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref = "Schema"/> struct.
+        /// The pattern matching '^x-'
+        /// for the pattern property producing the type
+        /// <see cref="Corvus.Json.JsonAny"/>.
         /// </summary>
-        /// <param name = "value">The value from which to construct the instance.</param>
-        public Schema(ImmutableList<JsonObjectProperty> value)
+        public static Regex PatternPropertyJsonAny => CorvusValidation.PatternProperties;
+
+        /// <summary>
+        /// Conversion from <see cref="ImmutableList{JsonObjectProperty}"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator Schema(ImmutableList<JsonObjectProperty> value)
         {
-            this.jsonElementBacking = default;
-            this.backing = Backing.Object;
-            this.objectBacking = value;
+            return new(value);
+        }
+
+        /// <summary>
+        /// Conversion to <see cref="ImmutableList{JsonObjectProperty}"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator ImmutableList<JsonObjectProperty>(Schema value)
+        {
+            return
+                __CorvusObjectHelpers.GetPropertyBacking(value);
         }
 
         /// <summary>
         /// Conversion from JsonObject.
         /// </summary>
-        /// <param name = "value">The value from which to convert.</param>
+        /// <param name="value">The value from which to convert.</param>
         public static implicit operator Schema(JsonObject value)
         {
             if (value.HasDotnetBacking && value.ValueKind == JsonValueKind.Object)
             {
-                return new(value.AsPropertyBacking());
+                return new(
+                    __CorvusObjectHelpers.GetPropertyBacking(value));
             }
 
             return new(value.AsJsonElement);
         }
 
-        /// <inheritdoc/>
-        public ImmutableList<JsonObjectProperty> AsPropertyBacking()
+        /// <summary>
+        /// Conversion to JsonObject.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator JsonObject(Schema value)
         {
-            return this.GetPropertyBacking();
+            return
+                value.AsObject;
         }
 
         /// <inheritdoc/>
-        public JsonAny this[in JsonPropertyName name]
+        public Corvus.Json.JsonAny this[in JsonPropertyName name]
         {
             get
             {
-                if (this.TryGetProperty(name, out JsonAny result))
+                if (this.TryGetProperty(name, out Corvus.Json.JsonAny result))
                 {
                     return result;
                 }
 
-                throw new IndexOutOfRangeException();
+                throw new InvalidOperationException();
             }
         }
 
         /// <summary>
-        /// Creates an instance of the type from the given dictionary of properties.
+        /// Gets the number of properties in the object.
         /// </summary>
-        /// <param name = "source">The dictionary of properties.</param>
-        /// <returns>An instance of the type initialized from the dictionary of properties.</returns>
+        public int Count
+        {
+            get
+            {
+                if ((this.backing & Backing.JsonElement) != 0)
+                {
+                    return this.jsonElementBacking.GetPropertyCount();
+                }
+
+                if ((this.backing & Backing.Object) != 0)
+                {
+                    return this.objectBacking.Count;
+                }
+
+                throw new InvalidOperationException();
+            }
+        }
+
+        /// <summary>
+        /// Gets the (optional) <c>additionalProperties</c> property.
+        /// </summary>
+        public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.AdditionalPropertiesEntity AdditionalProperties
+        {
+            get
+            {
+                if ((this.backing & Backing.JsonElement) != 0)
+                {
+                    if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                    {
+                        return default;
+                    }
+
+                    if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.AdditionalPropertiesUtf8, out JsonElement result))
+                    {
+                        return new(result);
+                    }
+                }
+
+                if ((this.backing & Backing.Object) != 0)
+                {
+                    if (this.objectBacking.TryGetValue(JsonPropertyNames.AdditionalProperties, out JsonAny result))
+                    {
+                        return result.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.AdditionalPropertiesEntity>();
+                    }
+                }
+
+                return default;
+            }
+        }
+
+        /// <summary>
+        /// Gets the (optional) <c>allOf</c> property.
+        /// </summary>
+        public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.AllOfEntityArray AllOf
+        {
+            get
+            {
+                if ((this.backing & Backing.JsonElement) != 0)
+                {
+                    if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                    {
+                        return default;
+                    }
+
+                    if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.AllOfUtf8, out JsonElement result))
+                    {
+                        return new(result);
+                    }
+                }
+
+                if ((this.backing & Backing.Object) != 0)
+                {
+                    if (this.objectBacking.TryGetValue(JsonPropertyNames.AllOf, out JsonAny result))
+                    {
+                        return result.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.AllOfEntityArray>();
+                    }
+                }
+
+                return default;
+            }
+        }
+
+        /// <summary>
+        /// Gets the (optional) <c>anyOf</c> property.
+        /// </summary>
+        public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.AnyOfEntityArray AnyOf
+        {
+            get
+            {
+                if ((this.backing & Backing.JsonElement) != 0)
+                {
+                    if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                    {
+                        return default;
+                    }
+
+                    if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.AnyOfUtf8, out JsonElement result))
+                    {
+                        return new(result);
+                    }
+                }
+
+                if ((this.backing & Backing.Object) != 0)
+                {
+                    if (this.objectBacking.TryGetValue(JsonPropertyNames.AnyOf, out JsonAny result))
+                    {
+                        return result.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.AnyOfEntityArray>();
+                    }
+                }
+
+                return default;
+            }
+        }
+
+        /// <summary>
+        /// Gets the (optional) <c>default</c> property.
+        /// </summary>
+        public Corvus.Json.JsonAny Default
+        {
+            get
+            {
+                if ((this.backing & Backing.JsonElement) != 0)
+                {
+                    if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                    {
+                        return default;
+                    }
+
+                    if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.DefaultUtf8, out JsonElement result))
+                    {
+                        return new(result);
+                    }
+                }
+
+                if ((this.backing & Backing.Object) != 0)
+                {
+                    if (this.objectBacking.TryGetValue(JsonPropertyNames.Default, out JsonAny result))
+                    {
+                        return result;
+                    }
+                }
+
+                return default;
+            }
+        }
+
+        /// <summary>
+        /// Gets the (optional) <c>deprecated</c> property.
+        /// </summary>
+        public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.DeprecatedEntity Deprecated
+        {
+            get
+            {
+                if ((this.backing & Backing.JsonElement) != 0)
+                {
+                    if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                    {
+                        return default;
+                    }
+
+                    if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.DeprecatedUtf8, out JsonElement result))
+                    {
+                        return new(result);
+                    }
+                }
+
+                if ((this.backing & Backing.Object) != 0)
+                {
+                    if (this.objectBacking.TryGetValue(JsonPropertyNames.Deprecated, out JsonAny result))
+                    {
+                        return result.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.DeprecatedEntity>();
+                    }
+                }
+
+                return default;
+            }
+        }
+
+        /// <summary>
+        /// Gets the (optional) <c>description</c> property.
+        /// </summary>
+        public Corvus.Json.JsonString Description
+        {
+            get
+            {
+                if ((this.backing & Backing.JsonElement) != 0)
+                {
+                    if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                    {
+                        return default;
+                    }
+
+                    if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.DescriptionUtf8, out JsonElement result))
+                    {
+                        return new(result);
+                    }
+                }
+
+                if ((this.backing & Backing.Object) != 0)
+                {
+                    if (this.objectBacking.TryGetValue(JsonPropertyNames.Description, out JsonAny result))
+                    {
+                        return result.As<Corvus.Json.JsonString>();
+                    }
+                }
+
+                return default;
+            }
+        }
+
+        /// <summary>
+        /// Gets the (optional) <c>discriminator</c> property.
+        /// </summary>
+        public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Discriminator DiscriminatorValue
+        {
+            get
+            {
+                if ((this.backing & Backing.JsonElement) != 0)
+                {
+                    if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                    {
+                        return default;
+                    }
+
+                    if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.DiscriminatorValueUtf8, out JsonElement result))
+                    {
+                        return new(result);
+                    }
+                }
+
+                if ((this.backing & Backing.Object) != 0)
+                {
+                    if (this.objectBacking.TryGetValue(JsonPropertyNames.DiscriminatorValue, out JsonAny result))
+                    {
+                        return result.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Discriminator>();
+                    }
+                }
+
+                return default;
+            }
+        }
+
+        /// <summary>
+        /// Gets the (optional) <c>enum</c> property.
+        /// </summary>
+        public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.JsonAnyArray Enum
+        {
+            get
+            {
+                if ((this.backing & Backing.JsonElement) != 0)
+                {
+                    if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                    {
+                        return default;
+                    }
+
+                    if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.EnumUtf8, out JsonElement result))
+                    {
+                        return new(result);
+                    }
+                }
+
+                if ((this.backing & Backing.Object) != 0)
+                {
+                    if (this.objectBacking.TryGetValue(JsonPropertyNames.Enum, out JsonAny result))
+                    {
+                        return result.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.JsonAnyArray>();
+                    }
+                }
+
+                return default;
+            }
+        }
+
+        /// <summary>
+        /// Gets the (optional) <c>example</c> property.
+        /// </summary>
+        public Corvus.Json.JsonAny Example
+        {
+            get
+            {
+                if ((this.backing & Backing.JsonElement) != 0)
+                {
+                    if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                    {
+                        return default;
+                    }
+
+                    if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.ExampleUtf8, out JsonElement result))
+                    {
+                        return new(result);
+                    }
+                }
+
+                if ((this.backing & Backing.Object) != 0)
+                {
+                    if (this.objectBacking.TryGetValue(JsonPropertyNames.Example, out JsonAny result))
+                    {
+                        return result;
+                    }
+                }
+
+                return default;
+            }
+        }
+
+        /// <summary>
+        /// Gets the (optional) <c>exclusiveMaximum</c> property.
+        /// </summary>
+        public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.ExclusiveMaximumEntity ExclusiveMaximum
+        {
+            get
+            {
+                if ((this.backing & Backing.JsonElement) != 0)
+                {
+                    if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                    {
+                        return default;
+                    }
+
+                    if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.ExclusiveMaximumUtf8, out JsonElement result))
+                    {
+                        return new(result);
+                    }
+                }
+
+                if ((this.backing & Backing.Object) != 0)
+                {
+                    if (this.objectBacking.TryGetValue(JsonPropertyNames.ExclusiveMaximum, out JsonAny result))
+                    {
+                        return result.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.ExclusiveMaximumEntity>();
+                    }
+                }
+
+                return default;
+            }
+        }
+
+        /// <summary>
+        /// Gets the (optional) <c>exclusiveMinimum</c> property.
+        /// </summary>
+        public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.ExclusiveMinimumEntity ExclusiveMinimum
+        {
+            get
+            {
+                if ((this.backing & Backing.JsonElement) != 0)
+                {
+                    if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                    {
+                        return default;
+                    }
+
+                    if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.ExclusiveMinimumUtf8, out JsonElement result))
+                    {
+                        return new(result);
+                    }
+                }
+
+                if ((this.backing & Backing.Object) != 0)
+                {
+                    if (this.objectBacking.TryGetValue(JsonPropertyNames.ExclusiveMinimum, out JsonAny result))
+                    {
+                        return result.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.ExclusiveMinimumEntity>();
+                    }
+                }
+
+                return default;
+            }
+        }
+
+        /// <summary>
+        /// Gets the (optional) <c>externalDocs</c> property.
+        /// </summary>
+        public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExternalDocumentation ExternalDocs
+        {
+            get
+            {
+                if ((this.backing & Backing.JsonElement) != 0)
+                {
+                    if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                    {
+                        return default;
+                    }
+
+                    if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.ExternalDocsUtf8, out JsonElement result))
+                    {
+                        return new(result);
+                    }
+                }
+
+                if ((this.backing & Backing.Object) != 0)
+                {
+                    if (this.objectBacking.TryGetValue(JsonPropertyNames.ExternalDocs, out JsonAny result))
+                    {
+                        return result.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExternalDocumentation>();
+                    }
+                }
+
+                return default;
+            }
+        }
+
+        /// <summary>
+        /// Gets the (optional) <c>format</c> property.
+        /// </summary>
+        public Corvus.Json.JsonString Format
+        {
+            get
+            {
+                if ((this.backing & Backing.JsonElement) != 0)
+                {
+                    if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                    {
+                        return default;
+                    }
+
+                    if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.FormatUtf8, out JsonElement result))
+                    {
+                        return new(result);
+                    }
+                }
+
+                if ((this.backing & Backing.Object) != 0)
+                {
+                    if (this.objectBacking.TryGetValue(JsonPropertyNames.Format, out JsonAny result))
+                    {
+                        return result.As<Corvus.Json.JsonString>();
+                    }
+                }
+
+                return default;
+            }
+        }
+
+        /// <summary>
+        /// Gets the (optional) <c>items</c> property.
+        /// </summary>
+        public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.ItemsEntity ItemsValue
+        {
+            get
+            {
+                if ((this.backing & Backing.JsonElement) != 0)
+                {
+                    if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                    {
+                        return default;
+                    }
+
+                    if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.ItemsValueUtf8, out JsonElement result))
+                    {
+                        return new(result);
+                    }
+                }
+
+                if ((this.backing & Backing.Object) != 0)
+                {
+                    if (this.objectBacking.TryGetValue(JsonPropertyNames.ItemsValue, out JsonAny result))
+                    {
+                        return result.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.ItemsEntity>();
+                    }
+                }
+
+                return default;
+            }
+        }
+
+        /// <summary>
+        /// Gets the (optional) <c>maximum</c> property.
+        /// </summary>
+        public Corvus.Json.JsonNumber Maximum
+        {
+            get
+            {
+                if ((this.backing & Backing.JsonElement) != 0)
+                {
+                    if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                    {
+                        return default;
+                    }
+
+                    if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.MaximumUtf8, out JsonElement result))
+                    {
+                        return new(result);
+                    }
+                }
+
+                if ((this.backing & Backing.Object) != 0)
+                {
+                    if (this.objectBacking.TryGetValue(JsonPropertyNames.Maximum, out JsonAny result))
+                    {
+                        return result.As<Corvus.Json.JsonNumber>();
+                    }
+                }
+
+                return default;
+            }
+        }
+
+        /// <summary>
+        /// Gets the (optional) <c>maxItems</c> property.
+        /// </summary>
+        public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MaxItemsEntity MaxItems
+        {
+            get
+            {
+                if ((this.backing & Backing.JsonElement) != 0)
+                {
+                    if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                    {
+                        return default;
+                    }
+
+                    if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.MaxItemsUtf8, out JsonElement result))
+                    {
+                        return new(result);
+                    }
+                }
+
+                if ((this.backing & Backing.Object) != 0)
+                {
+                    if (this.objectBacking.TryGetValue(JsonPropertyNames.MaxItems, out JsonAny result))
+                    {
+                        return result.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MaxItemsEntity>();
+                    }
+                }
+
+                return default;
+            }
+        }
+
+        /// <summary>
+        /// Gets the (optional) <c>maxLength</c> property.
+        /// </summary>
+        public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MaxLengthEntity MaxLength
+        {
+            get
+            {
+                if ((this.backing & Backing.JsonElement) != 0)
+                {
+                    if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                    {
+                        return default;
+                    }
+
+                    if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.MaxLengthUtf8, out JsonElement result))
+                    {
+                        return new(result);
+                    }
+                }
+
+                if ((this.backing & Backing.Object) != 0)
+                {
+                    if (this.objectBacking.TryGetValue(JsonPropertyNames.MaxLength, out JsonAny result))
+                    {
+                        return result.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MaxLengthEntity>();
+                    }
+                }
+
+                return default;
+            }
+        }
+
+        /// <summary>
+        /// Gets the (optional) <c>maxProperties</c> property.
+        /// </summary>
+        public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MaxPropertiesEntity MaxProperties
+        {
+            get
+            {
+                if ((this.backing & Backing.JsonElement) != 0)
+                {
+                    if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                    {
+                        return default;
+                    }
+
+                    if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.MaxPropertiesUtf8, out JsonElement result))
+                    {
+                        return new(result);
+                    }
+                }
+
+                if ((this.backing & Backing.Object) != 0)
+                {
+                    if (this.objectBacking.TryGetValue(JsonPropertyNames.MaxProperties, out JsonAny result))
+                    {
+                        return result.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MaxPropertiesEntity>();
+                    }
+                }
+
+                return default;
+            }
+        }
+
+        /// <summary>
+        /// Gets the (optional) <c>minimum</c> property.
+        /// </summary>
+        public Corvus.Json.JsonNumber Minimum
+        {
+            get
+            {
+                if ((this.backing & Backing.JsonElement) != 0)
+                {
+                    if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                    {
+                        return default;
+                    }
+
+                    if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.MinimumUtf8, out JsonElement result))
+                    {
+                        return new(result);
+                    }
+                }
+
+                if ((this.backing & Backing.Object) != 0)
+                {
+                    if (this.objectBacking.TryGetValue(JsonPropertyNames.Minimum, out JsonAny result))
+                    {
+                        return result.As<Corvus.Json.JsonNumber>();
+                    }
+                }
+
+                return default;
+            }
+        }
+
+        /// <summary>
+        /// Gets the (optional) <c>minItems</c> property.
+        /// </summary>
+        public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MinItemsEntity MinItems
+        {
+            get
+            {
+                if ((this.backing & Backing.JsonElement) != 0)
+                {
+                    if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                    {
+                        return default;
+                    }
+
+                    if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.MinItemsUtf8, out JsonElement result))
+                    {
+                        return new(result);
+                    }
+                }
+
+                if ((this.backing & Backing.Object) != 0)
+                {
+                    if (this.objectBacking.TryGetValue(JsonPropertyNames.MinItems, out JsonAny result))
+                    {
+                        return result.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MinItemsEntity>();
+                    }
+                }
+
+                return default;
+            }
+        }
+
+        /// <summary>
+        /// Gets the (optional) <c>minLength</c> property.
+        /// </summary>
+        public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MinLengthEntity MinLength
+        {
+            get
+            {
+                if ((this.backing & Backing.JsonElement) != 0)
+                {
+                    if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                    {
+                        return default;
+                    }
+
+                    if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.MinLengthUtf8, out JsonElement result))
+                    {
+                        return new(result);
+                    }
+                }
+
+                if ((this.backing & Backing.Object) != 0)
+                {
+                    if (this.objectBacking.TryGetValue(JsonPropertyNames.MinLength, out JsonAny result))
+                    {
+                        return result.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MinLengthEntity>();
+                    }
+                }
+
+                return default;
+            }
+        }
+
+        /// <summary>
+        /// Gets the (optional) <c>minProperties</c> property.
+        /// </summary>
+        public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MinPropertiesEntity MinProperties
+        {
+            get
+            {
+                if ((this.backing & Backing.JsonElement) != 0)
+                {
+                    if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                    {
+                        return default;
+                    }
+
+                    if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.MinPropertiesUtf8, out JsonElement result))
+                    {
+                        return new(result);
+                    }
+                }
+
+                if ((this.backing & Backing.Object) != 0)
+                {
+                    if (this.objectBacking.TryGetValue(JsonPropertyNames.MinProperties, out JsonAny result))
+                    {
+                        return result.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MinPropertiesEntity>();
+                    }
+                }
+
+                return default;
+            }
+        }
+
+        /// <summary>
+        /// Gets the (optional) <c>multipleOf</c> property.
+        /// </summary>
+        public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MultipleOfEntity MultipleOf
+        {
+            get
+            {
+                if ((this.backing & Backing.JsonElement) != 0)
+                {
+                    if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                    {
+                        return default;
+                    }
+
+                    if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.MultipleOfUtf8, out JsonElement result))
+                    {
+                        return new(result);
+                    }
+                }
+
+                if ((this.backing & Backing.Object) != 0)
+                {
+                    if (this.objectBacking.TryGetValue(JsonPropertyNames.MultipleOf, out JsonAny result))
+                    {
+                        return result.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MultipleOfEntity>();
+                    }
+                }
+
+                return default;
+            }
+        }
+
+        /// <summary>
+        /// Gets the (optional) <c>not</c> property.
+        /// </summary>
+        public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.NotEntity Not
+        {
+            get
+            {
+                if ((this.backing & Backing.JsonElement) != 0)
+                {
+                    if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                    {
+                        return default;
+                    }
+
+                    if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.NotUtf8, out JsonElement result))
+                    {
+                        return new(result);
+                    }
+                }
+
+                if ((this.backing & Backing.Object) != 0)
+                {
+                    if (this.objectBacking.TryGetValue(JsonPropertyNames.Not, out JsonAny result))
+                    {
+                        return result.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.NotEntity>();
+                    }
+                }
+
+                return default;
+            }
+        }
+
+        /// <summary>
+        /// Gets the (optional) <c>nullable</c> property.
+        /// </summary>
+        public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.NullableEntity Nullable
+        {
+            get
+            {
+                if ((this.backing & Backing.JsonElement) != 0)
+                {
+                    if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                    {
+                        return default;
+                    }
+
+                    if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.NullableUtf8, out JsonElement result))
+                    {
+                        return new(result);
+                    }
+                }
+
+                if ((this.backing & Backing.Object) != 0)
+                {
+                    if (this.objectBacking.TryGetValue(JsonPropertyNames.Nullable, out JsonAny result))
+                    {
+                        return result.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.NullableEntity>();
+                    }
+                }
+
+                return default;
+            }
+        }
+
+        /// <summary>
+        /// Gets the (optional) <c>oneOf</c> property.
+        /// </summary>
+        public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.OneOfEntityArray OneOf
+        {
+            get
+            {
+                if ((this.backing & Backing.JsonElement) != 0)
+                {
+                    if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                    {
+                        return default;
+                    }
+
+                    if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.OneOfUtf8, out JsonElement result))
+                    {
+                        return new(result);
+                    }
+                }
+
+                if ((this.backing & Backing.Object) != 0)
+                {
+                    if (this.objectBacking.TryGetValue(JsonPropertyNames.OneOf, out JsonAny result))
+                    {
+                        return result.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.OneOfEntityArray>();
+                    }
+                }
+
+                return default;
+            }
+        }
+
+        /// <summary>
+        /// Gets the (optional) <c>pattern</c> property.
+        /// </summary>
+        public Corvus.Json.JsonRegex Pattern
+        {
+            get
+            {
+                if ((this.backing & Backing.JsonElement) != 0)
+                {
+                    if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                    {
+                        return default;
+                    }
+
+                    if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.PatternUtf8, out JsonElement result))
+                    {
+                        return new(result);
+                    }
+                }
+
+                if ((this.backing & Backing.Object) != 0)
+                {
+                    if (this.objectBacking.TryGetValue(JsonPropertyNames.Pattern, out JsonAny result))
+                    {
+                        return result.As<Corvus.Json.JsonRegex>();
+                    }
+                }
+
+                return default;
+            }
+        }
+
+        /// <summary>
+        /// Gets the (optional) <c>properties</c> property.
+        /// </summary>
+        public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.PropertiesEntity Properties
+        {
+            get
+            {
+                if ((this.backing & Backing.JsonElement) != 0)
+                {
+                    if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                    {
+                        return default;
+                    }
+
+                    if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.PropertiesUtf8, out JsonElement result))
+                    {
+                        return new(result);
+                    }
+                }
+
+                if ((this.backing & Backing.Object) != 0)
+                {
+                    if (this.objectBacking.TryGetValue(JsonPropertyNames.Properties, out JsonAny result))
+                    {
+                        return result.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.PropertiesEntity>();
+                    }
+                }
+
+                return default;
+            }
+        }
+
+        /// <summary>
+        /// Gets the (optional) <c>readOnly</c> property.
+        /// </summary>
+        public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.ReadOnlyEntity ReadOnly
+        {
+            get
+            {
+                if ((this.backing & Backing.JsonElement) != 0)
+                {
+                    if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                    {
+                        return default;
+                    }
+
+                    if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.ReadOnlyUtf8, out JsonElement result))
+                    {
+                        return new(result);
+                    }
+                }
+
+                if ((this.backing & Backing.Object) != 0)
+                {
+                    if (this.objectBacking.TryGetValue(JsonPropertyNames.ReadOnly, out JsonAny result))
+                    {
+                        return result.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.ReadOnlyEntity>();
+                    }
+                }
+
+                return default;
+            }
+        }
+
+        /// <summary>
+        /// Gets the (optional) <c>required</c> property.
+        /// </summary>
+        public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.JsonStringArray Required
+        {
+            get
+            {
+                if ((this.backing & Backing.JsonElement) != 0)
+                {
+                    if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                    {
+                        return default;
+                    }
+
+                    if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.RequiredUtf8, out JsonElement result))
+                    {
+                        return new(result);
+                    }
+                }
+
+                if ((this.backing & Backing.Object) != 0)
+                {
+                    if (this.objectBacking.TryGetValue(JsonPropertyNames.Required, out JsonAny result))
+                    {
+                        return result.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.JsonStringArray>();
+                    }
+                }
+
+                return default;
+            }
+        }
+
+        /// <summary>
+        /// Gets the (optional) <c>title</c> property.
+        /// </summary>
+        public Corvus.Json.JsonString Title
+        {
+            get
+            {
+                if ((this.backing & Backing.JsonElement) != 0)
+                {
+                    if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                    {
+                        return default;
+                    }
+
+                    if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.TitleUtf8, out JsonElement result))
+                    {
+                        return new(result);
+                    }
+                }
+
+                if ((this.backing & Backing.Object) != 0)
+                {
+                    if (this.objectBacking.TryGetValue(JsonPropertyNames.Title, out JsonAny result))
+                    {
+                        return result.As<Corvus.Json.JsonString>();
+                    }
+                }
+
+                return default;
+            }
+        }
+
+        /// <summary>
+        /// Gets the (optional) <c>type</c> property.
+        /// </summary>
+        public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.TypeEntity Type
+        {
+            get
+            {
+                if ((this.backing & Backing.JsonElement) != 0)
+                {
+                    if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                    {
+                        return default;
+                    }
+
+                    if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.TypeUtf8, out JsonElement result))
+                    {
+                        return new(result);
+                    }
+                }
+
+                if ((this.backing & Backing.Object) != 0)
+                {
+                    if (this.objectBacking.TryGetValue(JsonPropertyNames.Type, out JsonAny result))
+                    {
+                        return result.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.TypeEntity>();
+                    }
+                }
+
+                return default;
+            }
+        }
+
+        /// <summary>
+        /// Gets the (optional) <c>uniqueItems</c> property.
+        /// </summary>
+        public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.UniqueItemsEntity UniqueItems
+        {
+            get
+            {
+                if ((this.backing & Backing.JsonElement) != 0)
+                {
+                    if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                    {
+                        return default;
+                    }
+
+                    if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.UniqueItemsUtf8, out JsonElement result))
+                    {
+                        return new(result);
+                    }
+                }
+
+                if ((this.backing & Backing.Object) != 0)
+                {
+                    if (this.objectBacking.TryGetValue(JsonPropertyNames.UniqueItems, out JsonAny result))
+                    {
+                        return result.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.UniqueItemsEntity>();
+                    }
+                }
+
+                return default;
+            }
+        }
+
+        /// <summary>
+        /// Gets the (optional) <c>writeOnly</c> property.
+        /// </summary>
+        public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.WriteOnlyEntity WriteOnly
+        {
+            get
+            {
+                if ((this.backing & Backing.JsonElement) != 0)
+                {
+                    if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                    {
+                        return default;
+                    }
+
+                    if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.WriteOnlyUtf8, out JsonElement result))
+                    {
+                        return new(result);
+                    }
+                }
+
+                if ((this.backing & Backing.Object) != 0)
+                {
+                    if (this.objectBacking.TryGetValue(JsonPropertyNames.WriteOnly, out JsonAny result))
+                    {
+                        return result.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.WriteOnlyEntity>();
+                    }
+                }
+
+                return default;
+            }
+        }
+
+        /// <summary>
+        /// Gets the (optional) <c>xml</c> property.
+        /// </summary>
+        public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Xml XmlValue
+        {
+            get
+            {
+                if ((this.backing & Backing.JsonElement) != 0)
+                {
+                    if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                    {
+                        return default;
+                    }
+
+                    if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.XmlValueUtf8, out JsonElement result))
+                    {
+                        return new(result);
+                    }
+                }
+
+                if ((this.backing & Backing.Object) != 0)
+                {
+                    if (this.objectBacking.TryGetValue(JsonPropertyNames.XmlValue, out JsonAny result))
+                    {
+                        return result.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Xml>();
+                    }
+                }
+
+                return default;
+            }
+        }
+
+        /// <inheritdoc/>
         public static Schema FromProperties(IDictionary<JsonPropertyName, JsonAny> source)
         {
             return new(source.Select(kvp => new JsonObjectProperty(kvp.Key, kvp.Value)).ToImmutableList());
         }
 
+        /// <inheritdoc/>
+        public static Schema FromProperties(params (JsonPropertyName Name, JsonAny Value)[] source)
+        {
+            return new(source.Select(s => new JsonObjectProperty(s.Name, s.Value.AsAny)).ToImmutableList());
+        }
+
         /// <summary>
-        /// Creates an instance of the type from the given dictionary of properties.
+        /// Creates an instance of the type from the given immutable list of properties.
         /// </summary>
-        /// <param name = "source">The dictionary of properties.</param>
-        /// <returns>An instance of the type initialized from the dictionary of properties.</returns>
+        /// <param name="source">The list of properties.</param>
+        /// <returns>An instance of the type initialized from the list of properties.</returns>
         public static Schema FromProperties(ImmutableList<JsonObjectProperty> source)
         {
             return new(source);
         }
 
         /// <summary>
-        /// Creates an instance of the type from the given dictionary of properties.
+        /// Creates an instance of a <see cref="Schema"/>.
         /// </summary>
-        /// <param name = "source">The dictionary of properties.</param>
-        /// <returns>An instance of the type initialized from the dictionary of properties.</returns>
-        public static Schema FromProperties(params (JsonPropertyName Name, JsonAny Value)[] source)
+        public static Schema Create(
+            in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.AdditionalPropertiesEntity? additionalProperties = null,
+            in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.AllOfEntityArray? allOf = null,
+            in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.AnyOfEntityArray? anyOf = null,
+            in Corvus.Json.JsonAny? defaultEntity = null,
+            in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.DeprecatedEntity? deprecated = null,
+            in Corvus.Json.JsonString? description = null,
+            in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Discriminator? discriminatorValue = null,
+            in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.JsonAnyArray? enumEntity = null,
+            in Corvus.Json.JsonAny? example = null,
+            in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.ExclusiveMaximumEntity? exclusiveMaximum = null,
+            in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.ExclusiveMinimumEntity? exclusiveMinimum = null,
+            in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExternalDocumentation? externalDocs = null,
+            in Corvus.Json.JsonString? format = null,
+            in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.ItemsEntity? itemsValue = null,
+            in Corvus.Json.JsonNumber? maximum = null,
+            in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MaxItemsEntity? maxItems = null,
+            in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MaxLengthEntity? maxLength = null,
+            in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MaxPropertiesEntity? maxProperties = null,
+            in Corvus.Json.JsonNumber? minimum = null,
+            in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MinItemsEntity? minItems = null,
+            in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MinLengthEntity? minLength = null,
+            in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MinPropertiesEntity? minProperties = null,
+            in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MultipleOfEntity? multipleOf = null,
+            in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.NotEntity? not = null,
+            in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.NullableEntity? nullable = null,
+            in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.OneOfEntityArray? oneOf = null,
+            in Corvus.Json.JsonRegex? pattern = null,
+            in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.PropertiesEntity? properties = null,
+            in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.ReadOnlyEntity? readOnly = null,
+            in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.JsonStringArray? required = null,
+            in Corvus.Json.JsonString? title = null,
+            in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.TypeEntity? type = null,
+            in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.UniqueItemsEntity? uniqueItems = null,
+            in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.WriteOnlyEntity? writeOnly = null,
+            in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Xml? xmlValue = null)
         {
-            return new(source.Select(s => new JsonObjectProperty(s.Name, s.Value)).ToImmutableList());
+            var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
+
+            if (additionalProperties is not null)
+            {
+                builder.Add(JsonPropertyNames.AdditionalProperties, additionalProperties.Value.AsAny);
+            }
+
+            if (allOf is not null)
+            {
+                builder.Add(JsonPropertyNames.AllOf, allOf.Value.AsAny);
+            }
+
+            if (anyOf is not null)
+            {
+                builder.Add(JsonPropertyNames.AnyOf, anyOf.Value.AsAny);
+            }
+
+            if (defaultEntity is not null)
+            {
+                builder.Add(JsonPropertyNames.Default, defaultEntity.Value.AsAny);
+            }
+
+            if (deprecated is not null)
+            {
+                builder.Add(JsonPropertyNames.Deprecated, deprecated.Value.AsAny);
+            }
+
+            if (description is not null)
+            {
+                builder.Add(JsonPropertyNames.Description, description.Value.AsAny);
+            }
+
+            if (discriminatorValue is not null)
+            {
+                builder.Add(JsonPropertyNames.DiscriminatorValue, discriminatorValue.Value.AsAny);
+            }
+
+            if (enumEntity is not null)
+            {
+                builder.Add(JsonPropertyNames.Enum, enumEntity.Value.AsAny);
+            }
+
+            if (example is not null)
+            {
+                builder.Add(JsonPropertyNames.Example, example.Value.AsAny);
+            }
+
+            if (exclusiveMaximum is not null)
+            {
+                builder.Add(JsonPropertyNames.ExclusiveMaximum, exclusiveMaximum.Value.AsAny);
+            }
+
+            if (exclusiveMinimum is not null)
+            {
+                builder.Add(JsonPropertyNames.ExclusiveMinimum, exclusiveMinimum.Value.AsAny);
+            }
+
+            if (externalDocs is not null)
+            {
+                builder.Add(JsonPropertyNames.ExternalDocs, externalDocs.Value.AsAny);
+            }
+
+            if (format is not null)
+            {
+                builder.Add(JsonPropertyNames.Format, format.Value.AsAny);
+            }
+
+            if (itemsValue is not null)
+            {
+                builder.Add(JsonPropertyNames.ItemsValue, itemsValue.Value.AsAny);
+            }
+
+            if (maximum is not null)
+            {
+                builder.Add(JsonPropertyNames.Maximum, maximum.Value.AsAny);
+            }
+
+            if (maxItems is not null)
+            {
+                builder.Add(JsonPropertyNames.MaxItems, maxItems.Value.AsAny);
+            }
+
+            if (maxLength is not null)
+            {
+                builder.Add(JsonPropertyNames.MaxLength, maxLength.Value.AsAny);
+            }
+
+            if (maxProperties is not null)
+            {
+                builder.Add(JsonPropertyNames.MaxProperties, maxProperties.Value.AsAny);
+            }
+
+            if (minimum is not null)
+            {
+                builder.Add(JsonPropertyNames.Minimum, minimum.Value.AsAny);
+            }
+
+            if (minItems is not null)
+            {
+                builder.Add(JsonPropertyNames.MinItems, minItems.Value.AsAny);
+            }
+
+            if (minLength is not null)
+            {
+                builder.Add(JsonPropertyNames.MinLength, minLength.Value.AsAny);
+            }
+
+            if (minProperties is not null)
+            {
+                builder.Add(JsonPropertyNames.MinProperties, minProperties.Value.AsAny);
+            }
+
+            if (multipleOf is not null)
+            {
+                builder.Add(JsonPropertyNames.MultipleOf, multipleOf.Value.AsAny);
+            }
+
+            if (not is not null)
+            {
+                builder.Add(JsonPropertyNames.Not, not.Value.AsAny);
+            }
+
+            if (nullable is not null)
+            {
+                builder.Add(JsonPropertyNames.Nullable, nullable.Value.AsAny);
+            }
+
+            if (oneOf is not null)
+            {
+                builder.Add(JsonPropertyNames.OneOf, oneOf.Value.AsAny);
+            }
+
+            if (pattern is not null)
+            {
+                builder.Add(JsonPropertyNames.Pattern, pattern.Value.AsAny);
+            }
+
+            if (properties is not null)
+            {
+                builder.Add(JsonPropertyNames.Properties, properties.Value.AsAny);
+            }
+
+            if (readOnly is not null)
+            {
+                builder.Add(JsonPropertyNames.ReadOnly, readOnly.Value.AsAny);
+            }
+
+            if (required is not null)
+            {
+                builder.Add(JsonPropertyNames.Required, required.Value.AsAny);
+            }
+
+            if (title is not null)
+            {
+                builder.Add(JsonPropertyNames.Title, title.Value.AsAny);
+            }
+
+            if (type is not null)
+            {
+                builder.Add(JsonPropertyNames.Type, type.Value.AsAny);
+            }
+
+            if (uniqueItems is not null)
+            {
+                builder.Add(JsonPropertyNames.UniqueItems, uniqueItems.Value.AsAny);
+            }
+
+            if (writeOnly is not null)
+            {
+                builder.Add(JsonPropertyNames.WriteOnly, writeOnly.Value.AsAny);
+            }
+
+            if (xmlValue is not null)
+            {
+                builder.Add(JsonPropertyNames.XmlValue, xmlValue.Value.AsAny);
+            }
+
+            return new(builder.ToImmutable());
+        }
+
+        /// <inheritdoc/>
+        public ImmutableList<JsonObjectProperty> AsPropertyBacking()
+        {
+            return __CorvusObjectHelpers.GetPropertyBacking(this);
+        }
+        /// <inheritdoc/>
+        public ImmutableList<JsonObjectProperty>.Builder AsPropertyBackingBuilder()
+        {
+            return __CorvusObjectHelpers.GetPropertyBacking(this).ToBuilder();
         }
 
         /// <inheritdoc/>
@@ -129,78 +1525,440 @@ public readonly partial struct OpenApiDocument
             throw new InvalidOperationException();
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public bool HasProperty(in JsonPropertyName name)
         {
+            if ((this.backing & Backing.Object) != 0)
+            {
+                return this.objectBacking.ContainsKey(name);
+            }
+
             if ((this.backing & Backing.JsonElement) != 0)
             {
                 return name.TryGetProperty(this.jsonElementBacking, out JsonElement _);
             }
 
-            if ((this.backing & Backing.Object) != 0)
-            {
-                return this.objectBacking.ContainsKey(name);
-            }
-
             throw new InvalidOperationException();
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public bool HasProperty(string name)
         {
-            if ((this.backing & Backing.JsonElement) != 0)
-            {
-                return this.jsonElementBacking.TryGetProperty(name, out _);
-            }
-
             if ((this.backing & Backing.Object) != 0)
             {
                 return this.objectBacking.ContainsKey(name);
             }
 
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                return this.jsonElementBacking.TryGetProperty(name, out _);
+            }
+
             throw new InvalidOperationException();
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public bool HasProperty(ReadOnlySpan<char> name)
         {
-            if ((this.backing & Backing.JsonElement) != 0)
-            {
-                return this.jsonElementBacking.TryGetProperty(name, out _);
-            }
-
             if ((this.backing & Backing.Object) != 0)
             {
                 return this.objectBacking.ContainsKey(name);
             }
 
-            throw new InvalidOperationException();
-        }
-
-        /// <inheritdoc/>
-        public bool HasProperty(ReadOnlySpan<byte> utf8Name)
-        {
             if ((this.backing & Backing.JsonElement) != 0)
             {
-                return this.jsonElementBacking.TryGetProperty(utf8Name, out _);
-            }
-
-            if ((this.backing & Backing.Object) != 0)
-            {
-                return this.objectBacking.ContainsKey(utf8Name);
+                return this.jsonElementBacking.TryGetProperty(name, out _);
             }
 
             throw new InvalidOperationException();
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
+        public bool HasProperty(ReadOnlySpan<byte> name)
+        {
+            if ((this.backing & Backing.Object) != 0)
+            {
+                return this.objectBacking.ContainsKey(name);
+            }
+
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                return this.jsonElementBacking.TryGetProperty(name, out _);
+            }
+
+            throw new InvalidOperationException();
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>additionalProperties</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Schema WithAdditionalProperties(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.AdditionalPropertiesEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.AdditionalProperties, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>allOf</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Schema WithAllOf(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.AllOfEntityArray value)
+        {
+            return this.SetProperty(JsonPropertyNames.AllOf, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>anyOf</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Schema WithAnyOf(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.AnyOfEntityArray value)
+        {
+            return this.SetProperty(JsonPropertyNames.AnyOf, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>default</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Schema WithDefault(in Corvus.Json.JsonAny value)
+        {
+            return this.SetProperty(JsonPropertyNames.Default, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>deprecated</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Schema WithDeprecated(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.DeprecatedEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.Deprecated, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>description</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Schema WithDescription(in Corvus.Json.JsonString value)
+        {
+            return this.SetProperty(JsonPropertyNames.Description, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>discriminator</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Schema WithDiscriminatorValue(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Discriminator value)
+        {
+            return this.SetProperty(JsonPropertyNames.DiscriminatorValue, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>enum</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Schema WithEnum(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.JsonAnyArray value)
+        {
+            return this.SetProperty(JsonPropertyNames.Enum, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>example</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Schema WithExample(in Corvus.Json.JsonAny value)
+        {
+            return this.SetProperty(JsonPropertyNames.Example, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>exclusiveMaximum</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Schema WithExclusiveMaximum(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.ExclusiveMaximumEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.ExclusiveMaximum, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>exclusiveMinimum</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Schema WithExclusiveMinimum(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.ExclusiveMinimumEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.ExclusiveMinimum, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>externalDocs</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Schema WithExternalDocs(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExternalDocumentation value)
+        {
+            return this.SetProperty(JsonPropertyNames.ExternalDocs, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>format</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Schema WithFormat(in Corvus.Json.JsonString value)
+        {
+            return this.SetProperty(JsonPropertyNames.Format, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>items</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Schema WithItemsValue(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.ItemsEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.ItemsValue, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>maximum</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Schema WithMaximum(in Corvus.Json.JsonNumber value)
+        {
+            return this.SetProperty(JsonPropertyNames.Maximum, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>maxItems</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Schema WithMaxItems(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MaxItemsEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.MaxItems, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>maxLength</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Schema WithMaxLength(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MaxLengthEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.MaxLength, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>maxProperties</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Schema WithMaxProperties(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MaxPropertiesEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.MaxProperties, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>minimum</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Schema WithMinimum(in Corvus.Json.JsonNumber value)
+        {
+            return this.SetProperty(JsonPropertyNames.Minimum, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>minItems</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Schema WithMinItems(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MinItemsEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.MinItems, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>minLength</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Schema WithMinLength(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MinLengthEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.MinLength, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>minProperties</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Schema WithMinProperties(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MinPropertiesEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.MinProperties, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>multipleOf</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Schema WithMultipleOf(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MultipleOfEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.MultipleOf, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>not</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Schema WithNot(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.NotEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.Not, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>nullable</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Schema WithNullable(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.NullableEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.Nullable, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>oneOf</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Schema WithOneOf(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.OneOfEntityArray value)
+        {
+            return this.SetProperty(JsonPropertyNames.OneOf, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>pattern</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Schema WithPattern(in Corvus.Json.JsonRegex value)
+        {
+            return this.SetProperty(JsonPropertyNames.Pattern, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>properties</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Schema WithProperties(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.PropertiesEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.Properties, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>readOnly</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Schema WithReadOnly(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.ReadOnlyEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.ReadOnly, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>required</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Schema WithRequired(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.JsonStringArray value)
+        {
+            return this.SetProperty(JsonPropertyNames.Required, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>title</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Schema WithTitle(in Corvus.Json.JsonString value)
+        {
+            return this.SetProperty(JsonPropertyNames.Title, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>type</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Schema WithType(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.TypeEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.Type, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>uniqueItems</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Schema WithUniqueItems(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.UniqueItemsEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.UniqueItems, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>writeOnly</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Schema WithWriteOnly(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.WriteOnlyEntity value)
+        {
+            return this.SetProperty(JsonPropertyNames.WriteOnly, value);
+        }
+
+        /// <summary>
+        /// Sets the (optional) <c>xml</c> property.
+        /// </summary>
+        /// <param name="value">The new property value</param>
+        /// <returns>The instance with the property set.</returns>
+        public Schema WithXmlValue(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Xml value)
+        {
+            return this.SetProperty(JsonPropertyNames.XmlValue, value);
+        }
+
+        /// <summary>
+        /// Get a property.
+        /// </summary>
+        /// <param name="name">The name of the property.</param>
+        /// <param name="value">The value of the property.</param>
+        /// <returns><c>True</c> if the property was present.</returns>
+        /// <exception cref="InvalidOperationException">The value is not an object.</exception>
         public bool TryGetProperty(in JsonPropertyName name, out JsonAny value)
         {
             if ((this.backing & Backing.JsonElement) != 0)
             {
-                if (name.TryGetProperty(this.jsonElementBacking, out JsonElement result))
+                if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
                 {
-                    value = new(result);
+                    value = default;
+                    return false;
+                }
+
+                if (name.TryGetProperty(this.jsonElementBacking, out JsonElement element))
+                {
+                    value = new(element);
                     return true;
                 }
 
@@ -210,20 +1968,39 @@ public readonly partial struct OpenApiDocument
 
             if ((this.backing & Backing.Object) != 0)
             {
-                return this.objectBacking.TryGetValue(name, out value);
+                if (this.objectBacking.TryGetValue(name, out JsonAny result))
+                {
+                    value = result;
+                    return true;
+                }
+
+                value = default;
+                return false;
             }
 
             throw new InvalidOperationException();
         }
 
-        /// <inheritdoc/>
+        /// <summary>
+        /// Get a property.
+        /// </summary>
+        /// <param name="name">The name of the property.</param>
+        /// <param name="value">The value of the property.</param>
+        /// <returns><c>True</c> if the property was present.</returns>
+        /// <exception cref="InvalidOperationException">The value is not an object.</exception>
         public bool TryGetProperty(string name, out JsonAny value)
         {
             if ((this.backing & Backing.JsonElement) != 0)
             {
-                if (this.jsonElementBacking.TryGetProperty(name, out JsonElement result))
+                if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
                 {
-                    value = new(result);
+                    value = default;
+                    return false;
+                }
+
+                if (this.jsonElementBacking.TryGetProperty(name, out JsonElement element))
+                {
+                    value = new(element);
                     return true;
                 }
 
@@ -233,20 +2010,39 @@ public readonly partial struct OpenApiDocument
 
             if ((this.backing & Backing.Object) != 0)
             {
-                return this.objectBacking.TryGetValue(name, out value);
+                if (this.objectBacking.TryGetValue(name, out JsonAny result))
+                {
+                    value = result;
+                    return true;
+                }
+
+                value = default;
+                return false;
             }
 
             throw new InvalidOperationException();
         }
 
-        /// <inheritdoc/>
+        /// <summary>
+        /// Get a property.
+        /// </summary>
+        /// <param name="name">The name of the property.</param>
+        /// <param name="value">The value of the property.</param>
+        /// <returns><c>True</c> if the property was present.</returns>
+        /// <exception cref="InvalidOperationException">The value is not an object.</exception>
         public bool TryGetProperty(ReadOnlySpan<char> name, out JsonAny value)
         {
             if ((this.backing & Backing.JsonElement) != 0)
             {
-                if (this.jsonElementBacking.TryGetProperty(name, out JsonElement result))
+                if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
                 {
-                    value = new(result);
+                    value = default;
+                    return false;
+                }
+
+                if (this.jsonElementBacking.TryGetProperty(name, out JsonElement element))
+                {
+                    value = new(element);
                     return true;
                 }
 
@@ -256,20 +2052,39 @@ public readonly partial struct OpenApiDocument
 
             if ((this.backing & Backing.Object) != 0)
             {
-                return this.objectBacking.TryGetValue(name, out value);
+                if (this.objectBacking.TryGetValue(name, out JsonAny result))
+                {
+                    value = result;
+                    return true;
+                }
+
+                value = default;
+                return false;
             }
 
             throw new InvalidOperationException();
         }
 
-        /// <inheritdoc/>
-        public bool TryGetProperty(ReadOnlySpan<byte> utf8Name, out JsonAny value)
+        /// <summary>
+        /// Get a property.
+        /// </summary>
+        /// <param name="name">The name of the property.</param>
+        /// <param name="value">The value of the property.</param>
+        /// <returns><c>True</c> if the property was present.</returns>
+        /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+        public bool TryGetProperty(ReadOnlySpan<byte> name, out JsonAny value)
         {
             if ((this.backing & Backing.JsonElement) != 0)
             {
-                if (this.jsonElementBacking.TryGetProperty(utf8Name, out JsonElement result))
+                if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
                 {
-                    value = new(result);
+                    value = default;
+                    return false;
+                }
+
+                if (this.jsonElementBacking.TryGetProperty(name, out JsonElement element))
+                {
+                    value = new(element);
                     return true;
                 }
 
@@ -279,25 +2094,39 @@ public readonly partial struct OpenApiDocument
 
             if ((this.backing & Backing.Object) != 0)
             {
-                return this.objectBacking.TryGetValue(utf8Name, out value);
+                if (this.objectBacking.TryGetValue(name, out JsonAny result))
+                {
+                    value = result;
+                    return true;
+                }
+
+                value = default;
+                return false;
             }
 
             throw new InvalidOperationException();
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public bool TryGetProperty<TValue>(in JsonPropertyName name, out TValue value)
             where TValue : struct, IJsonValue<TValue>
         {
             if ((this.backing & Backing.JsonElement) != 0)
             {
-                if (name.TryGetProperty(this.jsonElementBacking, out JsonElement result))
+                if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                {
+                    value = default;
+                    return false;
+                }
+
+                if (name.TryGetProperty(this.jsonElementBacking, out JsonElement element))
                 {
 #if NET8_0_OR_GREATER
-                value = TValue.FromJson(result);
+                    value = TValue.FromJson(element);
 #else
-                    value = JsonValueNetStandard20Extensions.FromJsonElement<TValue>(result);
+                    value = JsonValueNetStandard20Extensions.FromJsonElement<TValue>(element);
 #endif
+
                     return true;
                 }
 
@@ -310,7 +2139,7 @@ public readonly partial struct OpenApiDocument
                 if (this.objectBacking.TryGetValue(name, out JsonAny result))
                 {
 #if NET8_0_OR_GREATER
-                value = TValue.FromAny(result);
+                    value = TValue.FromAny(result);
 #else
                     value = result.As<TValue>();
 #endif
@@ -324,19 +2153,26 @@ public readonly partial struct OpenApiDocument
             throw new InvalidOperationException();
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public bool TryGetProperty<TValue>(string name, out TValue value)
             where TValue : struct, IJsonValue<TValue>
         {
             if ((this.backing & Backing.JsonElement) != 0)
             {
-                if (this.jsonElementBacking.TryGetProperty(name, out JsonElement result))
+                if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                {
+                    value = default;
+                    return false;
+                }
+
+                if (this.jsonElementBacking.TryGetProperty(name, out JsonElement element))
                 {
 #if NET8_0_OR_GREATER
-                value = TValue.FromJson(result);
+                    value = TValue.FromJson(element);
 #else
-                    value = JsonValueNetStandard20Extensions.FromJsonElement<TValue>(result);
+                    value = JsonValueNetStandard20Extensions.FromJsonElement<TValue>(element);
 #endif
+
                     return true;
                 }
 
@@ -349,7 +2185,7 @@ public readonly partial struct OpenApiDocument
                 if (this.objectBacking.TryGetValue(name, out JsonAny result))
                 {
 #if NET8_0_OR_GREATER
-                value = TValue.FromAny(result);
+                    value = TValue.FromAny(result);
 #else
                     value = result.As<TValue>();
 #endif
@@ -363,19 +2199,26 @@ public readonly partial struct OpenApiDocument
             throw new InvalidOperationException();
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public bool TryGetProperty<TValue>(ReadOnlySpan<char> name, out TValue value)
             where TValue : struct, IJsonValue<TValue>
         {
             if ((this.backing & Backing.JsonElement) != 0)
             {
-                if (this.jsonElementBacking.TryGetProperty(name, out JsonElement result))
+                if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                {
+                    value = default;
+                    return false;
+                }
+
+                if (this.jsonElementBacking.TryGetProperty(name, out JsonElement element))
                 {
 #if NET8_0_OR_GREATER
-                value = TValue.FromJson(result);
+                    value = TValue.FromJson(element);
 #else
-                    value = JsonValueNetStandard20Extensions.FromJsonElement<TValue>(result);
+                    value = JsonValueNetStandard20Extensions.FromJsonElement<TValue>(element);
 #endif
+
                     return true;
                 }
 
@@ -388,7 +2231,7 @@ public readonly partial struct OpenApiDocument
                 if (this.objectBacking.TryGetValue(name, out JsonAny result))
                 {
 #if NET8_0_OR_GREATER
-                value = TValue.FromAny(result);
+                    value = TValue.FromAny(result);
 #else
                     value = result.As<TValue>();
 #endif
@@ -402,19 +2245,26 @@ public readonly partial struct OpenApiDocument
             throw new InvalidOperationException();
         }
 
-        /// <inheritdoc/>
-        public bool TryGetProperty<TValue>(ReadOnlySpan<byte> utf8Name, out TValue value)
+        /// <inheritdoc />
+        public bool TryGetProperty<TValue>(ReadOnlySpan<byte> name, out TValue value)
             where TValue : struct, IJsonValue<TValue>
         {
             if ((this.backing & Backing.JsonElement) != 0)
             {
-                if (this.jsonElementBacking.TryGetProperty(utf8Name, out JsonElement result))
+                if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                {
+                    value = default;
+                    return false;
+                }
+
+                if (this.jsonElementBacking.TryGetProperty(name, out JsonElement element))
                 {
 #if NET8_0_OR_GREATER
-                value = TValue.FromJson(result);
+                    value = TValue.FromJson(element);
 #else
-                    value = JsonValueNetStandard20Extensions.FromJsonElement<TValue>(result);
+                    value = JsonValueNetStandard20Extensions.FromJsonElement<TValue>(element);
 #endif
+
                     return true;
                 }
 
@@ -424,10 +2274,10 @@ public readonly partial struct OpenApiDocument
 
             if ((this.backing & Backing.Object) != 0)
             {
-                if (this.objectBacking.TryGetValue(utf8Name, out JsonAny result))
+                if (this.objectBacking.TryGetValue(name, out JsonAny result))
                 {
 #if NET8_0_OR_GREATER
-                value = TValue.FromAny(result);
+                    value = TValue.FromAny(result);
 #else
                     value = result.As<TValue>();
 #endif
@@ -441,126 +2291,538 @@ public readonly partial struct OpenApiDocument
             throw new InvalidOperationException();
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public Schema SetProperty<TValue>(in JsonPropertyName name, TValue value)
             where TValue : struct, IJsonValue
         {
-            return new(this.GetPropertyBackingWith(name, value.AsAny));
+            return new(__CorvusObjectHelpers.GetPropertyBackingWith(this, name, value.AsAny));
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public Schema RemoveProperty(in JsonPropertyName name)
         {
-            return new(this.GetPropertyBackingWithout(name));
+            return new(__CorvusObjectHelpers.GetPropertyBackingWithout(this, name));
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public Schema RemoveProperty(string name)
         {
-            return new(this.GetPropertyBackingWithout(name));
+            return new(__CorvusObjectHelpers.GetPropertyBackingWithout(this, name));
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public Schema RemoveProperty(ReadOnlySpan<char> name)
         {
-            return new(this.GetPropertyBackingWithout(name));
+            return new(__CorvusObjectHelpers.GetPropertyBackingWithout(this, name));
         }
 
-        /// <inheritdoc/>
-        public Schema RemoveProperty(ReadOnlySpan<byte> utf8Name)
+        /// <inheritdoc />
+        public Schema RemoveProperty(ReadOnlySpan<byte> name)
         {
-            return new(this.GetPropertyBackingWithout(utf8Name));
-        }
-
-        /// <summary>
-        /// Builds an <see cref = "ImmutableList{JsonObjectProperty}"/> from the object.
-        /// </summary>
-        /// <returns>An immutable list of <see cref = "JsonAny"/> built from the array.</returns>
-        /// <exception cref = "InvalidOperationException">The value is not an array.</exception>
-        private ImmutableList<JsonObjectProperty> GetPropertyBacking()
-        {
-            if ((this.backing & Backing.Object) != 0)
-            {
-                return this.objectBacking;
-            }
-
-            return PropertyBackingBuilders.GetPropertyBackingBuilder(this.jsonElementBacking).ToImmutable();
+            return new(__CorvusObjectHelpers.GetPropertyBackingWithout(this, name));
         }
 
         /// <summary>
-        /// Builds an <see cref = "ImmutableList{JsonObjectProperty}"/> from the object, without a specific property.
+        /// Determines if a property name matches '^x-'
+        /// for the pattern property producing the type
+        /// <see cref="Corvus.Json.JsonAny"/>.
         /// </summary>
-        /// <returns>An immutable dictionary builder of <see cref = "JsonPropertyName"/> to <see cref = "JsonAny"/>, built from the existing object, without the given property.</returns>
-        /// <exception cref = "InvalidOperationException">The value is not an object.</exception>
-        private ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(in JsonPropertyName name)
+        public static bool MatchesPatternJsonAny(in JsonObjectProperty property) => property.Name.IsMatch(CorvusValidation.PatternProperties);
+
+        /// <summary>
+        /// Gets an instance of the type
+        /// <see cref="Corvus.Json.JsonAny"/>
+        /// if the property name matches '^x-'.
+        /// </summary>
+        public static bool TryAsPatternJsonAny(in JsonObjectProperty property, out Corvus.Json.JsonAny result)
         {
-            if ((this.backing & Backing.Object) != 0)
+            if (property.Name.IsMatch(CorvusValidation.PatternProperties))
             {
-                return this.objectBacking.Remove(name);
+                result = property.Value.As<Corvus.Json.JsonAny>();
+                return result.IsValid();
             }
 
-            return PropertyBackingBuilders.GetPropertyBackingBuilderWithout(this.jsonElementBacking, name).ToImmutable();
+            result = Corvus.Json.JsonAny.Undefined;
+            return false;
         }
 
         /// <summary>
-        /// Builds an <see cref = "ImmutableList{JsonObjectProperty}"/> from the object, without a specific property.
+        /// Provides UTF8 and string versions of the JSON property names on the object.
         /// </summary>
-        /// <returns>An immutable dictionary builder of <see cref = "JsonPropertyName"/> to <see cref = "JsonAny"/>, built from the existing object, without the given property.</returns>
-        /// <exception cref = "InvalidOperationException">The value is not an object.</exception>
-        private ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(ReadOnlySpan<char> name)
+        public static class JsonPropertyNames
         {
-            if ((this.backing & Backing.Object) != 0)
-            {
-                return this.objectBacking.Remove(name);
-            }
+            /// <summary>
+            /// Gets the JSON property name for <see cref="AdditionalProperties"/>.
+            /// </summary>
+            public const string AdditionalProperties = "additionalProperties";
 
-            return PropertyBackingBuilders.GetPropertyBackingBuilderWithout(this.jsonElementBacking, name).ToImmutable();
+            /// <summary>
+            /// Gets the JSON property name for <see cref="AllOf"/>.
+            /// </summary>
+            public const string AllOf = "allOf";
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="AnyOf"/>.
+            /// </summary>
+            public const string AnyOf = "anyOf";
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="Default"/>.
+            /// </summary>
+            public const string Default = "default";
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="Deprecated"/>.
+            /// </summary>
+            public const string Deprecated = "deprecated";
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="Description"/>.
+            /// </summary>
+            public const string Description = "description";
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="DiscriminatorValue"/>.
+            /// </summary>
+            public const string DiscriminatorValue = "discriminator";
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="Enum"/>.
+            /// </summary>
+            public const string Enum = "enum";
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="Example"/>.
+            /// </summary>
+            public const string Example = "example";
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="ExclusiveMaximum"/>.
+            /// </summary>
+            public const string ExclusiveMaximum = "exclusiveMaximum";
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="ExclusiveMinimum"/>.
+            /// </summary>
+            public const string ExclusiveMinimum = "exclusiveMinimum";
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="ExternalDocs"/>.
+            /// </summary>
+            public const string ExternalDocs = "externalDocs";
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="Format"/>.
+            /// </summary>
+            public const string Format = "format";
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="ItemsValue"/>.
+            /// </summary>
+            public const string ItemsValue = "items";
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="Maximum"/>.
+            /// </summary>
+            public const string Maximum = "maximum";
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="MaxItems"/>.
+            /// </summary>
+            public const string MaxItems = "maxItems";
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="MaxLength"/>.
+            /// </summary>
+            public const string MaxLength = "maxLength";
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="MaxProperties"/>.
+            /// </summary>
+            public const string MaxProperties = "maxProperties";
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="Minimum"/>.
+            /// </summary>
+            public const string Minimum = "minimum";
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="MinItems"/>.
+            /// </summary>
+            public const string MinItems = "minItems";
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="MinLength"/>.
+            /// </summary>
+            public const string MinLength = "minLength";
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="MinProperties"/>.
+            /// </summary>
+            public const string MinProperties = "minProperties";
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="MultipleOf"/>.
+            /// </summary>
+            public const string MultipleOf = "multipleOf";
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="Not"/>.
+            /// </summary>
+            public const string Not = "not";
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="Nullable"/>.
+            /// </summary>
+            public const string Nullable = "nullable";
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="OneOf"/>.
+            /// </summary>
+            public const string OneOf = "oneOf";
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="Pattern"/>.
+            /// </summary>
+            public const string Pattern = "pattern";
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="Properties"/>.
+            /// </summary>
+            public const string Properties = "properties";
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="ReadOnly"/>.
+            /// </summary>
+            public const string ReadOnly = "readOnly";
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="Required"/>.
+            /// </summary>
+            public const string Required = "required";
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="Title"/>.
+            /// </summary>
+            public const string Title = "title";
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="Type"/>.
+            /// </summary>
+            public const string Type = "type";
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="UniqueItems"/>.
+            /// </summary>
+            public const string UniqueItems = "uniqueItems";
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="WriteOnly"/>.
+            /// </summary>
+            public const string WriteOnly = "writeOnly";
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="XmlValue"/>.
+            /// </summary>
+            public const string XmlValue = "xml";
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="AdditionalProperties"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> AdditionalPropertiesUtf8 => "additionalProperties"u8;
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="AllOf"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> AllOfUtf8 => "allOf"u8;
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="AnyOf"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> AnyOfUtf8 => "anyOf"u8;
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="Default"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> DefaultUtf8 => "default"u8;
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="Deprecated"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> DeprecatedUtf8 => "deprecated"u8;
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="Description"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> DescriptionUtf8 => "description"u8;
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="DiscriminatorValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> DiscriminatorValueUtf8 => "discriminator"u8;
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="Enum"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> EnumUtf8 => "enum"u8;
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="Example"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> ExampleUtf8 => "example"u8;
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="ExclusiveMaximum"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> ExclusiveMaximumUtf8 => "exclusiveMaximum"u8;
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="ExclusiveMinimum"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> ExclusiveMinimumUtf8 => "exclusiveMinimum"u8;
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="ExternalDocs"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> ExternalDocsUtf8 => "externalDocs"u8;
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="Format"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> FormatUtf8 => "format"u8;
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="ItemsValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> ItemsValueUtf8 => "items"u8;
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="Maximum"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> MaximumUtf8 => "maximum"u8;
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="MaxItems"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> MaxItemsUtf8 => "maxItems"u8;
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="MaxLength"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> MaxLengthUtf8 => "maxLength"u8;
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="MaxProperties"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> MaxPropertiesUtf8 => "maxProperties"u8;
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="Minimum"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> MinimumUtf8 => "minimum"u8;
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="MinItems"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> MinItemsUtf8 => "minItems"u8;
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="MinLength"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> MinLengthUtf8 => "minLength"u8;
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="MinProperties"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> MinPropertiesUtf8 => "minProperties"u8;
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="MultipleOf"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> MultipleOfUtf8 => "multipleOf"u8;
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="Not"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> NotUtf8 => "not"u8;
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="Nullable"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> NullableUtf8 => "nullable"u8;
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="OneOf"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> OneOfUtf8 => "oneOf"u8;
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="Pattern"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> PatternUtf8 => "pattern"u8;
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="Properties"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> PropertiesUtf8 => "properties"u8;
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="ReadOnly"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> ReadOnlyUtf8 => "readOnly"u8;
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="Required"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> RequiredUtf8 => "required"u8;
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="Title"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> TitleUtf8 => "title"u8;
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="Type"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> TypeUtf8 => "type"u8;
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="UniqueItems"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> UniqueItemsUtf8 => "uniqueItems"u8;
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="WriteOnly"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> WriteOnlyUtf8 => "writeOnly"u8;
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="XmlValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> XmlValueUtf8 => "xml"u8;
         }
 
-        /// <summary>
-        /// Builds an <see cref = "ImmutableList{JsonObjectProperty}"/> from the object, without a specific property.
-        /// </summary>
-        /// <returns>An immutable dictionary builder of <see cref = "JsonPropertyName"/> to <see cref = "JsonAny"/>, built from the existing object, without the given property.</returns>
-        /// <exception cref = "InvalidOperationException">The value is not an object.</exception>
-        private ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(ReadOnlySpan<byte> name)
+        private static class __CorvusObjectHelpers
         {
-            if ((this.backing & Backing.Object) != 0)
+            /// <summary>
+            /// Builds an <see cref="ImmutableList{JsonObjectProperty}"/> from the object.
+            /// </summary>
+            /// <returns>An immutable list of <see cref="JsonAny"/> built from the object.</returns>
+            /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+            public static ImmutableList<JsonObjectProperty> GetPropertyBacking(in Schema that)
             {
-                return this.objectBacking.Remove(name);
+                if ((that.backing & Backing.Object) != 0)
+                {
+                    return that.objectBacking;
+                }
+
+                if ((that.backing & Backing.JsonElement) != 0)
+                {
+                    return PropertyBackingBuilders.GetPropertyBackingBuilder(that.jsonElementBacking).ToImmutable();
+                }
+
+                throw new InvalidOperationException();
             }
 
-            return PropertyBackingBuilders.GetPropertyBackingBuilderWithout(this.jsonElementBacking, name).ToImmutable();
-        }
-
-        /// <summary>
-        /// Builds an <see cref = "ImmutableList{JsonObjectProperty}"/> from the object, without a specific property.
-        /// </summary>
-        /// <returns>An immutable dictionary builder of <see cref = "JsonPropertyName"/> to <see cref = "JsonAny"/>, built from the existing object, without the given property.</returns>
-        /// <exception cref = "InvalidOperationException">The value is not an object.</exception>
-        private ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(string name)
-        {
-            if ((this.backing & Backing.Object) != 0)
+            /// <summary>
+            /// Builds an <see cref="ImmutableList{JsonObjectProperty}"/> from the object, without a specific property.
+            /// </summary>
+            /// <returns>An immutable list of <see cref="JsonObjectProperty"/>, built from the existing object, without the given property.</returns>
+            /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+            public static ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(in Schema that, in JsonPropertyName name)
             {
-                return this.objectBacking.Remove(name);
+                if ((that.backing & Backing.Object) != 0)
+                {
+                    return that.objectBacking.Remove(name);
+                }
+
+                if ((that.backing & Backing.JsonElement) != 0)
+                {
+                    return PropertyBackingBuilders.GetPropertyBackingBuilderWithout(that.jsonElementBacking, name).ToImmutable();
+                }
+
+                throw new InvalidOperationException();
             }
 
-            return PropertyBackingBuilders.GetPropertyBackingBuilderWithout(this.jsonElementBacking, name).ToImmutable();
-        }
-
-        /// <summary>
-        /// Builds an <see cref = "ImmutableList{JsonObjectProperty}"/> from the object, without a specific property.
-        /// </summary>
-        /// <returns>An immutable dictionary builder of <see cref = "JsonPropertyName"/> to <see cref = "JsonAny"/>, built from the existing object, without the given property.</returns>
-        /// <exception cref = "InvalidOperationException">The value is not an object.</exception>
-        private ImmutableList<JsonObjectProperty> GetPropertyBackingWith(in JsonPropertyName name, in JsonAny value)
-        {
-            if ((this.backing & Backing.Object) != 0)
+            /// <summary>
+            /// Builds an <see cref="ImmutableList{JsonObjectProperty}"/> from the object, without a specific property.
+            /// </summary>
+            /// <returns>An immutable list of <see cref="JsonObjectProperty"/>, built from the existing object, without the given property.</returns>
+            /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+            public static ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(in Schema that, ReadOnlySpan<char> name)
             {
-                return this.objectBacking.SetItem(name, value);
+                if ((that.backing & Backing.Object) != 0)
+                {
+                    return that.objectBacking.Remove(name);
+                }
+
+                if ((that.backing & Backing.JsonElement) != 0)
+                {
+                    return PropertyBackingBuilders.GetPropertyBackingBuilderWithout(that.jsonElementBacking, name).ToImmutable();
+                }
+
+                throw new InvalidOperationException();
             }
 
-            ImmutableList<JsonObjectProperty>.Builder result = PropertyBackingBuilders.GetPropertyBackingBuilderReplacing(this.jsonElementBacking, name, value);
-            return result.ToImmutable();
+            /// <summary>
+            /// Builds an <see cref="ImmutableList{JsonObjectProperty}"/> from the object, without a specific property.
+            /// </summary>
+            /// <returns>An immutable list of <see cref="JsonObjectProperty"/>, built from the existing object, without the given property.</returns>
+            /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+            public static ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(in Schema that, ReadOnlySpan<byte> name)
+            {
+                if ((that.backing & Backing.Object) != 0)
+                {
+                    return that.objectBacking.Remove(name);
+                }
+
+                if ((that.backing & Backing.JsonElement) != 0)
+                {
+                    return PropertyBackingBuilders.GetPropertyBackingBuilderWithout(that.jsonElementBacking, name).ToImmutable();
+                }
+
+                throw new InvalidOperationException();
+            }
+
+            /// <summary>
+            /// Builds an <see cref="ImmutableList{JsonObjectProperty}"/> from the object, without a specific property.
+            /// </summary>
+            /// <returns>An immutable list of <see cref="JsonObjectProperty"/>, built from the existing object, without the given property.</returns>
+            /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+            public static ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(in Schema that, string name)
+            {
+                if ((that.backing & Backing.Object) != 0)
+                {
+                    return that.objectBacking.Remove(name);
+                }
+
+                if ((that.backing & Backing.JsonElement) != 0)
+                {
+                    return PropertyBackingBuilders.GetPropertyBackingBuilderWithout(that.jsonElementBacking, name).ToImmutable();
+                }
+
+                throw new InvalidOperationException();
+            }
+
+            /// <summary>
+            /// Builds an <see cref="ImmutableList{JsonObjectProperty}"/> from the object, without a specific property.
+            /// </summary>
+            /// <returns>An immutable list of <see cref="JsonObjectProperty"/>, built from the existing object, with the given property.</returns>
+            /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+            public static ImmutableList<JsonObjectProperty> GetPropertyBackingWith(in Schema that, in JsonPropertyName name, in JsonAny value)
+            {
+                if ((that.backing & Backing.Object) != 0)
+                {
+                    return that.objectBacking.SetItem(name, value);
+                }
+
+                if ((that.backing & Backing.JsonElement) != 0)
+                {
+                    return PropertyBackingBuilders.GetPropertyBackingBuilderReplacing(that.jsonElementBacking, name, value).ToImmutable();
+                }
+
+                throw new InvalidOperationException();
+            }
         }
     }
 }

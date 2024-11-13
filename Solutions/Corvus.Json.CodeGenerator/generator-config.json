@@ -1,0 +1,163 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "JSON Schema for a configuration driver file for the corvus codegenerator.",
+    "type": "object",
+    "required": [ "typesToGenerate", "rootNamespace" ],
+    "properties": {
+        "rootNamespace": {
+            "type": "string",
+            "description": "The default root namespace for generated types."
+        },
+        "typesToGenerate": { "$ref": "#/$defs/generationSpecifications" },
+        "assertFormat": {
+            "type": "boolean",
+            "description": "If true, assert format specifications."
+        },
+        "outputMapFile": {
+            "type": "string",
+            "description": "The name to use for a map file which includes details of the files that were written."
+        },
+        "useSchema": {
+            "$ref": "#/$defs/useSchema",
+            "description": "Provides the fallback schema to use if vocabulary analysis fails."
+        },
+        "outputPath": {
+            "type": "string",
+            "description": "The path to which to write the generated code."
+        },
+        "disableOptionalNameHeuristics": {
+            "type": "boolean",
+            "default": false,
+            "description": "If true, do not use optional name heuristics."
+        },
+        "disabledNamingHeuristics": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "A list of naming heuristics to disable."
+        },
+        "optionalAsNullable": {
+            "$ref": "#/$defs/optionalAsNullable",
+            "description": "If NullOrUndefined, optional properties are emitted as .NET nullable values."
+        },
+        "additionalFiles": {
+            "$ref": "#/$defs/fileList",
+            "description": "Additional files to add to the generation context."
+        },
+        "namedTypes": {
+            "$ref": "#/$defs/namedTypeList",
+            "description": "A list of schema that are to be named explicitly."
+        },
+        "namespaces": {
+            "$ref": "#/$defs/namespaceMap",
+            "description": "A map of schema base URIs to .NET namespaces.\r\nAny schema under the given base URI will be mapped into the target namespace."
+        },
+        "useImplicitOperatorString": {
+            "type": "boolean",
+            "description": "If true, then the conversion operator to string will be implicit, rather than explicit.\r\nWarning: if this is enabled, it is easy to accidentally allocate strings without being explicit about doing so."
+        },
+        "useUnixLineEndings": {
+            "type": "boolean",
+            "description":  "If true, then the generated files will use Unix line endings (\\n). Otherwise it will use Windows line endings (\\r\\n)."
+        }
+    },
+    "$defs": {
+        "namespaceMap": {
+            "type": "object",
+            "propertyNames": {
+                "format": "iri",
+                "description": "The base URI of the schemas to map to a .NET namespace."
+            },
+            "unevaluatedProperties": {
+                "type": "string",
+                "description": "The .NET namespace to use for the base URI."
+            }
+        },
+        "namedTypeList": {
+            "type": "array",
+            "items": { "$ref": "#/$defs/namedTypeSpecification" }
+        },
+        "namedTypeSpecification": {
+            "type": "object",
+            "required": [ "reference", "dotnetTypeName" ],
+            "properties": {
+                "reference": {
+                    "type": "string",
+                    "format": "iri-reference",
+                    "description": "The fully-qualified reference to the schema to name, include the base URI and the pointer fragment."
+                },
+                "dotnetTypeName": {
+                    "type": "string",
+                    "description": "The .NET name to use for the schema."
+                },
+                "dotnetNamespace": {
+                    "type": "string",
+                    "description": "The (optional) .NET namespace to use for the schema.\r\nThis will generate the type directly in the namespace, rather than as a child of its containing type."
+                }
+            }
+        },
+        "fileList": {
+            "type": "array",
+            "items": { "$ref": "#/$defs/fileSpecification" }
+        },
+        "fileSpecification": {
+            "type": "object",
+            "required": [ "canonicalUri", "contentPath" ],
+            "properties": {
+                "canonicalUri": {
+                    "type": "string",
+                    "format": "iri",
+                    "description": "The canonical uri of the file."
+                },
+                "contentPath": {
+                    "type": "string",
+                    "description": "The path to the file to add to the generation context."
+                }
+            },
+            "description": "Describes a file and its canonical uri."
+        },
+        "optionalAsNullable": {
+            "type": "string",
+            "enum": [ "None", "NullOrUndefined" ],
+            "default":  "None"
+        },
+        "useSchema": {
+            "type": "string",
+            "enum": [ "Draft4", "Draft6", "Draft7", "Draft201909", "Draft202012", "OpenApi30" ],
+            "default": "Draft202012",
+            "description": "Well-known fallback draft schema."
+        },
+        "generationSpecifications": {
+            "type": "array",
+            "items": { "$ref": "#/$defs/generationSpecification" },
+            "minItems": 1,
+            "description": "The generation specification for the code generator."
+        },
+        "generationSpecification": {
+            "type": "object",
+            "required": [ "schemaFile" ],
+            "properties": {
+                "schemaFile": {
+                    "type": "string",
+                    "description": "The path to the schema file to process."
+                },
+                "rootPath": {
+                    "type": "string",
+                    "format": "uri-reference",
+                    "description": "The path in the document for the root type."
+                },
+                "outputRootTypeName": {
+                    "type": "string",
+                    "description": "The .NET name of the root type to generate."
+                },
+                "outputRootNamespace": {
+                    "type": "string",
+                    "description": "The name of the .NET namespace into which to emit the root type"
+                },
+                "rebaseToRootPath": {
+                    "type": "boolean",
+                    "default": false
+                }
+            }
+        }
+    }
+}
