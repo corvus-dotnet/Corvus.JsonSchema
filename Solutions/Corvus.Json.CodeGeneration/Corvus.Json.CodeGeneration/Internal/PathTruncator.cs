@@ -161,6 +161,7 @@ public static class PathTruncator
     /// <returns>The normalized path.</returns>
     public static string NormalizePath(string path)
     {
+        path = Path.GetFullPath(path);
         if (path.IndexOf(Path.AltDirectorySeparatorChar) >= 0)
         {
             return path.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
