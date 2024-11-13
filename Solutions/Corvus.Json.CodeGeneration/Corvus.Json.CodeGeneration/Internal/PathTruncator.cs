@@ -28,7 +28,7 @@ public static class PathTruncator
 
         if (path.Length <= maxLength)
         {
-            return NormalizePath(path);
+            return NormalizePath(path, false);
         }
 
         ReadOnlySpan<char> pathSpan = path.AsSpan();
@@ -158,10 +158,15 @@ public static class PathTruncator
     /// Normalize the separators in a path.
     /// </summary>
     /// <param name="path">The path for which to normalize directory separators.</param>
+    /// <param name="convertToFullPath">Determines whether to convert to a full path before normalization.</param>
     /// <returns>The normalized path.</returns>
-    public static string NormalizePath(string path)
+    public static string NormalizePath(string path, bool convertToFullPath = true)
     {
-        path = Path.GetFullPath(path);
+        if (convertToFullPath)
+        {
+            path = Path.GetFullPath(path);
+        }
+
         if (path.IndexOf(Path.AltDirectorySeparatorChar) >= 0)
         {
             return path.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
