@@ -102,7 +102,7 @@ public static partial class ValidationCodeGeneratorExtensions
     /// </summary>
     /// <param name="generator">The code generator to which to append the enumeration.</param>
     /// <param name="arrayItems">The <see cref="ArrayItemsTypeDeclaration"/> for which to emit validation code.</param>
-    /// <param name="enumeratorIsCorrectType">Indicates whether the enumerator automatically reutrns the correct type for validation.</param>
+    /// <param name="enumeratorIsCorrectType">Indicates whether the enumerator automatically returns the correct type for validation.</param>
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendValidateNonTupleItemsType(this CodeGenerator generator, ArrayItemsTypeDeclaration arrayItems, bool enumeratorIsCorrectType)
     {
@@ -129,33 +129,46 @@ public static partial class ValidationCodeGeneratorExtensions
             {
                 generator
                     .AppendLineIndent(
-                        "result = arrayEnumerator.Current.Validate(result, level);");
+                        "var nonTupleItemsResult = arrayEnumerator.Current.Validate(result.CreateChildContext(), level);")
+                    .AppendBlockIndent(
+                        """
+                        if (level == ValidationLevel.Flag && !nonTupleItemsResult.IsValid)
+                        {
+                            return nonTupleItemsResult;
+                        }
+
+                        result = result.MergeResults(nonTupleItemsResult.IsValid, level, nonTupleItemsResult);
+                        """);
             }
             else
             {
                 generator
                     .AppendLineIndent(
-                        "result = arrayEnumerator.Current.As<",
+                        "var nonTupleItemsResult = arrayEnumerator.Current.As<",
                         arrayItems.ReducedType.FullyQualifiedDotnetTypeName(),
-                        ">().Validate(result, level);");
+                        ">().Validate(result.CreateChildContext(), level);")
+                    .AppendBlockIndent(
+                        """
+                        if (level == ValidationLevel.Flag && !nonTupleItemsResult.IsValid)
+                        {
+                            return nonTupleItemsResult;
+                        }
+
+                        result = result.MergeResults(nonTupleItemsResult.IsValid, level, nonTupleItemsResult);
+                        """);
             }
         }
 
         return generator
             .AppendBlockIndent(
-            """
-            if (level == ValidationLevel.Flag && !result.IsValid)
-            {
-                return result;
-            }
+                """
+                if (level > ValidationLevel.Basic)
+                {
+                    result = result.PopLocation();
+                }
 
-            if (level > ValidationLevel.Basic)
-            {
-                result = result.PopLocation();
-            }
-
-            result = result.WithLocalItemIndex(length);
-            """);
+                result = result.WithLocalItemIndex(length);
+                """);
     }
 
     /// <summary>
@@ -163,7 +176,7 @@ public static partial class ValidationCodeGeneratorExtensions
     /// </summary>
     /// <param name="generator">The code generator to which to append the enumeration.</param>
     /// <param name="arrayItems">The <see cref="ArrayItemsTypeDeclaration"/> for which to emit validation code.</param>
-    /// <param name="enumeratorIsCorrectType">Indicates whether the enumerator automatically reutrns the correct type for validation.</param>
+    /// <param name="enumeratorIsCorrectType">Indicates whether the enumerator automatically returns the correct type for validation.</param>
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendValidateUnevaluatedItemsType(this CodeGenerator generator, ArrayItemsTypeDeclaration arrayItems, bool enumeratorIsCorrectType)
     {
@@ -193,26 +206,39 @@ public static partial class ValidationCodeGeneratorExtensions
             {
                 generator
                     .AppendLineIndent(
-                        "result = arrayEnumerator.Current.Validate(result, level);");
+                        "var unevaluatedItemsResult = arrayEnumerator.Current.Validate(result.CreateChildContext(), level);")
+                    .AppendBlockIndent(
+                        """
+                        if (level == ValidationLevel.Flag && !unevaluatedItemsResult.IsValid)
+                        {
+                            return unevaluatedItemsResult;
+                        }
+
+                        result = result.MergeResults(unevaluatedItemsResult.IsValid, level, unevaluatedItemsResult);
+                        """);
             }
             else
             {
                 generator
                     .AppendLineIndent(
-                        "result = arrayEnumerator.Current.As<",
+                        "var unevaluatedItemsResult = arrayEnumerator.Current.As<",
                         arrayItems.ReducedType.FullyQualifiedDotnetTypeName(),
-                        ">().Validate(result, level);");
+                        ">().Validate(result.CreateChildContext(), level);")
+                    .AppendBlockIndent(
+                        """
+                        if (level == ValidationLevel.Flag && !unevaluatedItemsResult.IsValid)
+                        {
+                            return unevaluatedItemsResult;
+                        }
+
+                        result = result.MergeResults(unevaluatedItemsResult.IsValid, level, unevaluatedItemsResult);
+                        """);
             }
         }
 
         return generator
             .AppendBlockIndent(
             """
-                if (level == ValidationLevel.Flag && !result.IsValid)
-                {
-                    return result;
-                }
-
                 if (level > ValidationLevel.Basic)
                 {
                     result = result.PopLocation();

@@ -43,6 +43,7 @@ public class TupleValidationHandler : IChildArrayItemValidationHandler
         {
             generator
                 .AppendSeparatorLine()
+                .AppendLineIndent("ValidationContext itemResult;")
                 .AppendLineIndent("switch (length)")
                 .AppendLineIndent("{")
                 .PushIndent();
@@ -72,16 +73,23 @@ public class TupleValidationHandler : IChildArrayItemValidationHandler
                         .AppendLineIndent("}")
                         .AppendSeparatorLine()
                         .AppendLineIndent(
-                            "result = arrayEnumerator.Current.As<",
+                            "itemResult = arrayEnumerator.Current.As<",
                             item.ReducedType.FullyQualifiedDotnetTypeName(),
-                            ">().Validate(result, level);")
+                            ">().Validate(result.CreateChildContext(), level);")
                         .AppendBlockIndent(
                         """
-                        if (level == ValidationLevel.Flag && !result.IsValid)
+                        if (level == ValidationLevel.Flag && !itemResult.IsValid)
                         {
-                            return result;
+                            return itemResult;
                         }
 
+                        result = result.MergeResults(itemResult.IsValid, level, itemResult);
+                        
+                        if (level > ValidationLevel.Basic)
+                        {
+                            result = result.PopLocation();
+                        }
+                        
                         result = result.WithLocalItemIndex(length);
                         break;
                         """)
