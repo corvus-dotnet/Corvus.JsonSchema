@@ -215,13 +215,13 @@ public readonly partial struct OpenApiDocument
             /// <summary>
             /// Creates an instance of a <see cref="ParameterInQuery"/>.
             /// </summary>
-            public static ParameterInQuery Create(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInQuery.InEntity? inEntity = null, in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInQuery.StyleEntity? style = null)
+            public static ParameterInQuery Create(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInQuery.InEntity? inValue = null, in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInQuery.StyleEntity? style = null)
             {
                 var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
 
-                if (inEntity is not null)
+                if (inValue is not null)
                 {
-                    builder.Add(JsonPropertyNames.In, inEntity.Value.AsAny);
+                    builder.Add(JsonPropertyNames.In, inValue.Value.AsAny);
                 }
 
                 if (style is not null)

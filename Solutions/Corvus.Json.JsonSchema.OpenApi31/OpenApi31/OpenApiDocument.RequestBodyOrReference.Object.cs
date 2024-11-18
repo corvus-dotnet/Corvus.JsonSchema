@@ -297,7 +297,7 @@ public readonly partial struct OpenApiDocument
         /// Creates an instance of a <see cref="RequestBodyOrReference"/>.
         /// </summary>
         public static RequestBodyOrReference Create(
-            in Corvus.Json.JsonUriReference? refEntity = null,
+            in Corvus.Json.JsonUriReference? refValue = null,
             in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Content? content = null,
             in Corvus.Json.JsonString? description = null,
             in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.RequestBody.RequiredEntity? required = null,
@@ -305,9 +305,9 @@ public readonly partial struct OpenApiDocument
         {
             var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
 
-            if (refEntity is not null)
+            if (refValue is not null)
             {
-                builder.Add(JsonPropertyNames.Ref, refEntity.Value.AsAny);
+                builder.Add(JsonPropertyNames.Ref, refValue.Value.AsAny);
             }
 
             if (content is not null)

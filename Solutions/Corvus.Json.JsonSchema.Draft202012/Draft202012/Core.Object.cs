@@ -420,7 +420,7 @@ public readonly partial struct Core
         in Corvus.Json.JsonSchema.Draft202012.Core.AnchorString? dynamicAnchor = null,
         in Corvus.Json.JsonUriReference? dynamicRef = null,
         in Corvus.Json.JsonSchema.Draft202012.Core.IdEntity? id = null,
-        in Corvus.Json.JsonUriReference? refEntity = null,
+        in Corvus.Json.JsonUriReference? refValue = null,
         in Corvus.Json.JsonUri? schema = null,
         in Corvus.Json.JsonSchema.Draft202012.Core.VocabularyEntity? vocabulary = null)
     {
@@ -456,9 +456,9 @@ public readonly partial struct Core
             builder.Add(JsonPropertyNames.Id, id.Value.AsAny);
         }
 
-        if (refEntity is not null)
+        if (refValue is not null)
         {
-            builder.Add(JsonPropertyNames.Ref, refEntity.Value.AsAny);
+            builder.Add(JsonPropertyNames.Ref, refValue.Value.AsAny);
         }
 
         if (schema is not null)

@@ -350,7 +350,7 @@ public readonly partial struct MetaData
     /// Creates an instance of a <see cref="MetaData"/>.
     /// </summary>
     public static MetaData Create(
-        in Corvus.Json.JsonAny? defaultEntity = null,
+        in Corvus.Json.JsonAny? defaultValue = null,
         in Corvus.Json.JsonSchema.Draft202012.MetaData.DeprecatedEntity? deprecated = null,
         in Corvus.Json.JsonString? description = null,
         in Corvus.Json.JsonArray? examples = null,
@@ -360,9 +360,9 @@ public readonly partial struct MetaData
     {
         var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
 
-        if (defaultEntity is not null)
+        if (defaultValue is not null)
         {
-            builder.Add(JsonPropertyNames.Default, defaultEntity.Value.AsAny);
+            builder.Add(JsonPropertyNames.Default, defaultValue.Value.AsAny);
         }
 
         if (deprecated is not null)

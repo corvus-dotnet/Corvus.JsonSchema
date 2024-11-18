@@ -121,12 +121,13 @@ public readonly partial struct PersonNameElementArray
                     result = result.PushValidationLocationReducedPathModifier(new("#/items/$ref"));
                 }
 
-                result = arrayEnumerator.Current.Validate(result, level);
-                if (level == ValidationLevel.Flag && !result.IsValid)
+                var nonTupleItemsResult = arrayEnumerator.Current.Validate(result.CreateChildContext(), level);
+                if (level == ValidationLevel.Flag && !nonTupleItemsResult.IsValid)
                 {
-                    return result;
+                    return nonTupleItemsResult;
                 }
 
+                result = result.MergeResults(nonTupleItemsResult.IsValid, level, nonTupleItemsResult);
                 if (level > ValidationLevel.Basic)
                 {
                     result = result.PopLocation();

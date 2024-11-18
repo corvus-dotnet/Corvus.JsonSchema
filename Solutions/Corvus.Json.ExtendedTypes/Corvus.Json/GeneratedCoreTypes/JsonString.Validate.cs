@@ -33,7 +33,7 @@ public readonly partial struct JsonString
             result = result.UsingStack();
             result = result.PushSchemaLocation("corvus:/JsonString");
         }
-        result = Json.Validate.TypeString(this.ValueKind, validationContext, level, null);
+        result = Json.Validate.TypeString(this.ValueKind, result, level, null);
         if (level > ValidationLevel.Basic)
         {
             result = result.PopLocation();

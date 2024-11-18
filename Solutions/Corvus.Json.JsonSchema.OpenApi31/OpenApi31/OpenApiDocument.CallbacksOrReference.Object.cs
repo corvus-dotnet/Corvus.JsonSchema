@@ -233,15 +233,15 @@ public readonly partial struct OpenApiDocument
         /// Creates an instance of a <see cref="CallbacksOrReference"/>.
         /// </summary>
         public static CallbacksOrReference Create(
-            in Corvus.Json.JsonUriReference? refEntity = null,
+            in Corvus.Json.JsonUriReference? refValue = null,
             in Corvus.Json.JsonString? description = null,
             in Corvus.Json.JsonString? summary = null)
         {
             var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
 
-            if (refEntity is not null)
+            if (refValue is not null)
             {
-                builder.Add(JsonPropertyNames.Ref, refEntity.Value.AsAny);
+                builder.Add(JsonPropertyNames.Ref, refValue.Value.AsAny);
             }
 
             if (description is not null)

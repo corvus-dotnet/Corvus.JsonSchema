@@ -33,7 +33,7 @@ public readonly partial struct JsonArray
             result = result.UsingStack();
             result = result.PushSchemaLocation("corvus:/JsonArray");
         }
-        result = Json.Validate.TypeArray(this.ValueKind, validationContext, level, null);
+        result = Json.Validate.TypeArray(this.ValueKind, result, level, null);
         if (level > ValidationLevel.Basic)
         {
             result = result.PopLocation();

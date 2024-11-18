@@ -1268,11 +1268,11 @@ public readonly partial struct OpenApiDocument
             in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.AdditionalPropertiesEntity? additionalProperties = null,
             in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.AllOfEntityArray? allOf = null,
             in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.AnyOfEntityArray? anyOf = null,
-            in Corvus.Json.JsonAny? defaultEntity = null,
+            in Corvus.Json.JsonAny? defaultValue = null,
             in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.DeprecatedEntity? deprecated = null,
             in Corvus.Json.JsonString? description = null,
             in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Discriminator? discriminatorValue = null,
-            in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.JsonAnyArray? enumEntity = null,
+            in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.JsonAnyArray? enumValue = null,
             in Corvus.Json.JsonAny? example = null,
             in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.ExclusiveMaximumEntity? exclusiveMaximum = null,
             in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.ExclusiveMinimumEntity? exclusiveMinimum = null,
@@ -1318,9 +1318,9 @@ public readonly partial struct OpenApiDocument
                 builder.Add(JsonPropertyNames.AnyOf, anyOf.Value.AsAny);
             }
 
-            if (defaultEntity is not null)
+            if (defaultValue is not null)
             {
-                builder.Add(JsonPropertyNames.Default, defaultEntity.Value.AsAny);
+                builder.Add(JsonPropertyNames.Default, defaultValue.Value.AsAny);
             }
 
             if (deprecated is not null)
@@ -1338,9 +1338,9 @@ public readonly partial struct OpenApiDocument
                 builder.Add(JsonPropertyNames.DiscriminatorValue, discriminatorValue.Value.AsAny);
             }
 
-            if (enumEntity is not null)
+            if (enumValue is not null)
             {
-                builder.Add(JsonPropertyNames.Enum, enumEntity.Value.AsAny);
+                builder.Add(JsonPropertyNames.Enum, enumValue.Value.AsAny);
             }
 
             if (example is not null)

@@ -33,7 +33,7 @@ public readonly partial struct JsonBoolean
             result = result.UsingStack();
             result = result.PushSchemaLocation("corvus:/JsonBoolean");
         }
-        result = Json.Validate.TypeBoolean(this.ValueKind, validationContext, level, null);
+        result = Json.Validate.TypeBoolean(this.ValueKind, result, level, null);
         if (level > ValidationLevel.Basic)
         {
             result = result.PopLocation();

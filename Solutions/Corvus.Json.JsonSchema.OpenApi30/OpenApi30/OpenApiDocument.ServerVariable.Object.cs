@@ -246,21 +246,21 @@ public readonly partial struct OpenApiDocument
         /// Creates an instance of a <see cref="ServerVariable"/>.
         /// </summary>
         public static ServerVariable Create(
-            in Corvus.Json.JsonString defaultEntity,
+            in Corvus.Json.JsonString defaultValue,
             in Corvus.Json.JsonString? description = null,
-            in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ServerVariable.JsonStringArray? enumEntity = null)
+            in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ServerVariable.JsonStringArray? enumValue = null)
         {
             var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
-            builder.Add(JsonPropertyNames.Default, defaultEntity.AsAny);
+            builder.Add(JsonPropertyNames.Default, defaultValue.AsAny);
 
             if (description is not null)
             {
                 builder.Add(JsonPropertyNames.Description, description.Value.AsAny);
             }
 
-            if (enumEntity is not null)
+            if (enumValue is not null)
             {
-                builder.Add(JsonPropertyNames.Enum, enumEntity.Value.AsAny);
+                builder.Add(JsonPropertyNames.Enum, enumValue.Value.AsAny);
             }
 
             return new(builder.ToImmutable());

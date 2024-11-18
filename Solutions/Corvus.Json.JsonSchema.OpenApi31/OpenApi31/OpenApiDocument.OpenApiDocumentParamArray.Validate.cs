@@ -42,7 +42,7 @@ public readonly partial struct OpenApiDocument
             if (level > ValidationLevel.Basic)
             {
                 result = result.UsingStack();
-                result = result.PushSchemaLocation("https://spec.openapis.org/oas/3.1/schema/2022-10-07?dynamicScope=D%3A%2Fsource%2Fcorvus-dotnet%2Fvnext%2FCorvus.JsonSchema%2FSolutions%2FCorvus.Json.JsonSchema.OpenApi31%2FOpenApi31.json#/$defs/path-item/properties/parameters");
+                result = result.PushSchemaLocation("https://spec.openapis.org/oas/3.1/schema/2022-10-07?dynamicScope=D%3A%2Fsource%2Fcorvus-dotnet%2FCorvus.JsonSchema%2FSolutions%2FCorvus.Json.JsonSchema.OpenApi31%2FOpenApi31.json#/$defs/path-item/properties/parameters");
             }
 
             JsonValueKind valueKind = this.ValueKind;
@@ -132,12 +132,13 @@ public readonly partial struct OpenApiDocument
                         result = result.PushValidationLocationReducedPathModifier(new("#/items/$ref"));
                     }
 
-                    result = arrayEnumerator.Current.Validate(result, level);
-                    if (level == ValidationLevel.Flag && !result.IsValid)
+                    var nonTupleItemsResult = arrayEnumerator.Current.Validate(result.CreateChildContext(), level);
+                    if (level == ValidationLevel.Flag && !nonTupleItemsResult.IsValid)
                     {
-                        return result;
+                        return nonTupleItemsResult;
                     }
 
+                    result = result.MergeResults(nonTupleItemsResult.IsValid, level, nonTupleItemsResult);
                     if (level > ValidationLevel.Basic)
                     {
                         result = result.PopLocation();

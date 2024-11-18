@@ -573,31 +573,31 @@ public static partial class ValidationCodeGeneratorExtensions
             {
                 case "JsonObject":
                     generator
-                        .AppendLineIndent("result = Json.Validate.TypeObject(this.ValueKind, validationContext, level, ", typeKeywordDisplay, ");");
+                        .AppendLineIndent("result = Json.Validate.TypeObject(this.ValueKind, result, level, ", typeKeywordDisplay, ");");
                     break;
                 case "JsonArray":
                     generator
-                        .AppendLineIndent("result = Json.Validate.TypeArray(this.ValueKind, validationContext, level, ", typeKeywordDisplay, ");");
+                        .AppendLineIndent("result = Json.Validate.TypeArray(this.ValueKind, result, level, ", typeKeywordDisplay, ");");
                     break;
                 case "JsonString":
                     generator
-                        .AppendLineIndent("result = Json.Validate.TypeString(this.ValueKind, validationContext, level, ", typeKeywordDisplay, ");");
+                        .AppendLineIndent("result = Json.Validate.TypeString(this.ValueKind, result, level, ", typeKeywordDisplay, ");");
                     break;
                 case "JsonBoolean":
                     generator
-                        .AppendLineIndent("result = Json.Validate.TypeBoolean(this.ValueKind, validationContext, level, ", typeKeywordDisplay, ");");
+                        .AppendLineIndent("result = Json.Validate.TypeBoolean(this.ValueKind, result, level, ", typeKeywordDisplay, ");");
                     break;
                 case "JsonNumber":
                     generator
-                        .AppendLineIndent("result = Json.Validate.TypeNumber(this.ValueKind, validationContext, level, ", typeKeywordDisplay, ");");
+                        .AppendLineIndent("result = Json.Validate.TypeNumber(this.ValueKind, result, level, ", typeKeywordDisplay, ");");
                     break;
                 case "JsonInteger":
                     generator
-                        .AppendLineIndent("result = Json.Validate.TypeInteger(this, validationContext, level, ", typeKeywordDisplay, ");");
+                        .AppendLineIndent("result = Json.Validate.TypeInteger(this, result, level, ", typeKeywordDisplay, ");");
                     break;
                 case "JsonNull":
                     generator
-                        .AppendLineIndent("result = Json.Validate.TypeNull(this.ValueKind, validationContext, level, ", typeKeywordDisplay, ");");
+                        .AppendLineIndent("result = Json.Validate.TypeNull(this.ValueKind, result, level, ", typeKeywordDisplay, ");");
                     break;
                 case "JsonNotAny":
                     generator

@@ -402,7 +402,7 @@ public readonly partial struct OpenApiDocument
             in Corvus.Json.JsonString? bearerFormat = null,
             in Corvus.Json.JsonString? description = null,
             in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OauthFlows? flows = null,
-            in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeApikeyEntity.RequiredInAndName.InEntity? inEntity = null,
+            in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeApikeyEntity.RequiredInAndName.InEntity? inValue = null,
             in Corvus.Json.JsonString? name = null,
             in Corvus.Json.JsonUri? openIdConnectUrl = null,
             in Corvus.Json.JsonString? scheme = null)
@@ -425,9 +425,9 @@ public readonly partial struct OpenApiDocument
                 builder.Add(JsonPropertyNames.Flows, flows.Value.AsAny);
             }
 
-            if (inEntity is not null)
+            if (inValue is not null)
             {
-                builder.Add(JsonPropertyNames.In, inEntity.Value.AsAny);
+                builder.Add(JsonPropertyNames.In, inValue.Value.AsAny);
             }
 
             if (name is not null)

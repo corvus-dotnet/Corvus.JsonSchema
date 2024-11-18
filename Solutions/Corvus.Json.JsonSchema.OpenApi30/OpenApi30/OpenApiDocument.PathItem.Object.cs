@@ -312,7 +312,7 @@ public readonly partial struct OpenApiDocument
         /// Creates an instance of a <see cref="PathItem"/>.
         /// </summary>
         public static PathItem Create(
-            in Corvus.Json.JsonString? refEntity = null,
+            in Corvus.Json.JsonString? refValue = null,
             in Corvus.Json.JsonString? description = null,
             in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.PathItem.ParametersEntityArray? parameters = null,
             in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.PathItem.ServerArray? servers = null,
@@ -320,9 +320,9 @@ public readonly partial struct OpenApiDocument
         {
             var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
 
-            if (refEntity is not null)
+            if (refValue is not null)
             {
-                builder.Add(JsonPropertyNames.Ref, refEntity.Value.AsAny);
+                builder.Add(JsonPropertyNames.Ref, refValue.Value.AsAny);
             }
 
             if (description is not null)

@@ -178,10 +178,10 @@ public readonly partial struct OpenApiDocument
             /// <summary>
             /// Creates an instance of a <see cref="RequiredRef"/>.
             /// </summary>
-            public static RequiredRef Create(in Corvus.Json.JsonAny refEntity)
+            public static RequiredRef Create(in Corvus.Json.JsonAny refValue)
             {
                 var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
-                builder.Add(JsonPropertyNames.Ref, refEntity.AsAny);
+                builder.Add(JsonPropertyNames.Ref, refValue.AsAny);
 
                 return new(builder.ToImmutable());
             }

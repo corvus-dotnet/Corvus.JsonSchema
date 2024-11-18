@@ -74,7 +74,7 @@ public readonly partial struct OpenApiDocument
         /// <summary>
         /// Gets the schema location from which this type was generated.
         /// </summary>
-        public static string SchemaLocation { get; } = "https://spec.openapis.org/oas/3.1/schema/2022-10-07?dynamicScope=D%3A%2Fsource%2Fcorvus-dotnet%2Fvnext%2FCorvus.JsonSchema%2FSolutions%2FCorvus.Json.JsonSchema.OpenApi31%2FOpenApi31.json#/$defs/media-type/properties/encoding";
+        public static string SchemaLocation { get; } = "https://spec.openapis.org/oas/3.1/schema/2022-10-07?dynamicScope=D%3A%2Fsource%2Fcorvus-dotnet%2FCorvus.JsonSchema%2FSolutions%2FCorvus.Json.JsonSchema.OpenApi31%2FOpenApi31.json#/$defs/media-type/properties/encoding";
 
         /// <summary>
         /// Gets a Null instance.

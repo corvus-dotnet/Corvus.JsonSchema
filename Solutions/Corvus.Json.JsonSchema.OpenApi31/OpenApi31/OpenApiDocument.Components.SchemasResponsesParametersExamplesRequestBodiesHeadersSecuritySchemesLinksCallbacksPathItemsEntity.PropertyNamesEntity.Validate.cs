@@ -129,18 +129,18 @@ public readonly partial struct OpenApiDocument
                             {
                                 if (context.Level == ValidationLevel.Verbose)
                                 {
-                                    result = result.WithResult(isValid: true, $"Validation pattern - {input.ToString()} matched  '^[a-zA-Z0-9._-]+$'");
+                                    result = result.WithResult(isValid: true, $"Validation pattern - {input.ToString()} matched '^[a-zA-Z0-9._-]+$'");
                                 }
                             }
                             else
                             {
                                 if (context.Level >= ValidationLevel.Detailed)
                                 {
-                                    result = result.WithResult(isValid: false, $"Validation pattern - {input.ToString()} did not match  '^[a-zA-Z0-9._-]+$'");
+                                    result = result.WithResult(isValid: false, $"Validation pattern - {input.ToString()} did not match '^[a-zA-Z0-9._-]+$'");
                                 }
                                 else if (context.Level >= ValidationLevel.Basic)
                                 {
-                                    result = result.WithResult(isValid: false, "Validation pattern - The value did not match  '^[a-zA-Z0-9._-]+$'");
+                                    result = result.WithResult(isValid: false, "Validation pattern - The value did not match '^[a-zA-Z0-9._-]+$'");
                                 }
                                 else
                                 {
