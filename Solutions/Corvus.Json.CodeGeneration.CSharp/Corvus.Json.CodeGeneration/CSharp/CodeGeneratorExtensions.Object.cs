@@ -505,8 +505,8 @@ internal static partial class CodeGeneratorExtensions
                             rootScope: generator.ValidationClassScope(),
                             suffix: hasIndex ? index.ToString() : null);
 
-                    string matchesPatternName = generator.GetMethodNameInScope(declaration.ReducedPatternPropertyType.DotnetTypeName(), prefix: "MatchesPattern");
-                    string tryAsPatternName = generator.GetMethodNameInScope(declaration.ReducedPatternPropertyType.DotnetTypeName(), prefix: "TryAsPattern");
+                    string matchesPatternName = generator.GetUniqueMethodNameInScope(declaration.ReducedPatternPropertyType.DotnetTypeName(), prefix: "MatchesPattern");
+                    string tryAsPatternName = generator.GetUniqueMethodNameInScope(declaration.ReducedPatternPropertyType.DotnetTypeName(), prefix: "TryAsPattern");
 
                     generator
                         .AppendSeparatorLine()
@@ -584,7 +584,7 @@ internal static partial class CodeGeneratorExtensions
                             rootScope: generator.ValidationClassScope(),
                             suffix: hasIndex ? index.ToString() : null);
 
-                    string propertyName = generator.GetPropertyNameInScope(declaration.ReducedPatternPropertyType.DotnetTypeName(), prefix: "PatternProperty");
+                    string propertyName = generator.GetUniquePropertyNameInScope(declaration.ReducedPatternPropertyType.DotnetTypeName(), prefix: "PatternProperty");
 
                     generator
                         .AppendSeparatorLine()
