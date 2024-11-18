@@ -457,11 +457,11 @@ public readonly partial struct OpenApiDocument
         /// Creates an instance of a <see cref="SecuritySchemeOrReference"/>.
         /// </summary>
         public static SecuritySchemeOrReference Create(
-            in Corvus.Json.JsonUriReference? refEntity = null,
+            in Corvus.Json.JsonUriReference? refValue = null,
             in Corvus.Json.JsonString? bearerFormat = null,
             in Corvus.Json.JsonString? description = null,
             in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OauthFlows? flows = null,
-            in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeApikeyEntity.RequiredInAndName.InEntity? inEntity = null,
+            in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeApikeyEntity.RequiredInAndName.InEntity? inValue = null,
             in Corvus.Json.JsonString? name = null,
             in Corvus.Json.JsonUri? openIdConnectUrl = null,
             in Corvus.Json.JsonString? scheme = null,
@@ -470,9 +470,9 @@ public readonly partial struct OpenApiDocument
         {
             var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
 
-            if (refEntity is not null)
+            if (refValue is not null)
             {
-                builder.Add(JsonPropertyNames.Ref, refEntity.Value.AsAny);
+                builder.Add(JsonPropertyNames.Ref, refValue.Value.AsAny);
             }
 
             if (bearerFormat is not null)
@@ -490,9 +490,9 @@ public readonly partial struct OpenApiDocument
                 builder.Add(JsonPropertyNames.Flows, flows.Value.AsAny);
             }
 
-            if (inEntity is not null)
+            if (inValue is not null)
             {
-                builder.Add(JsonPropertyNames.In, inEntity.Value.AsAny);
+                builder.Add(JsonPropertyNames.In, inValue.Value.AsAny);
             }
 
             if (name is not null)

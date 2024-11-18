@@ -183,13 +183,13 @@ public readonly partial struct OpenApiDocument
         /// <summary>
         /// Creates an instance of a <see cref="Responses"/>.
         /// </summary>
-        public static Responses Create(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Responses.DefaultEntity? defaultEntity = null)
+        public static Responses Create(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Responses.DefaultEntity? defaultValue = null)
         {
             var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
 
-            if (defaultEntity is not null)
+            if (defaultValue is not null)
             {
-                builder.Add(JsonPropertyNames.Default, defaultEntity.Value.AsAny);
+                builder.Add(JsonPropertyNames.Default, defaultValue.Value.AsAny);
             }
 
             return new(builder.ToImmutable());

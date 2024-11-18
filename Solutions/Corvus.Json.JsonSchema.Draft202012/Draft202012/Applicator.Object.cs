@@ -611,8 +611,8 @@ public readonly partial struct Applicator
         in Corvus.Json.JsonSchema.Draft202012.Applicator.SchemaArray? anyOf = null,
         in Corvus.Json.JsonSchema.Draft202012.Schema? contains = null,
         in Corvus.Json.JsonSchema.Draft202012.Applicator.DependentSchemasEntity? dependentSchemas = null,
-        in Corvus.Json.JsonSchema.Draft202012.Schema? elseEntity = null,
-        in Corvus.Json.JsonSchema.Draft202012.Schema? ifEntity = null,
+        in Corvus.Json.JsonSchema.Draft202012.Schema? elseValue = null,
+        in Corvus.Json.JsonSchema.Draft202012.Schema? ifValue = null,
         in Corvus.Json.JsonSchema.Draft202012.Schema? itemsValue = null,
         in Corvus.Json.JsonSchema.Draft202012.Schema? not = null,
         in Corvus.Json.JsonSchema.Draft202012.Applicator.SchemaArray? oneOf = null,
@@ -649,14 +649,14 @@ public readonly partial struct Applicator
             builder.Add(JsonPropertyNames.DependentSchemas, dependentSchemas.Value.AsAny);
         }
 
-        if (elseEntity is not null)
+        if (elseValue is not null)
         {
-            builder.Add(JsonPropertyNames.Else, elseEntity.Value.AsAny);
+            builder.Add(JsonPropertyNames.Else, elseValue.Value.AsAny);
         }
 
-        if (ifEntity is not null)
+        if (ifValue is not null)
         {
-            builder.Add(JsonPropertyNames.If, ifEntity.Value.AsAny);
+            builder.Add(JsonPropertyNames.If, ifValue.Value.AsAny);
         }
 
         if (itemsValue is not null)

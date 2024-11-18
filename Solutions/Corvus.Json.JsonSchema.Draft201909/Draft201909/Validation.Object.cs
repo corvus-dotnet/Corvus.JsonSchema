@@ -766,9 +766,9 @@ public readonly partial struct Validation
     /// Creates an instance of a <see cref="Validation"/>.
     /// </summary>
     public static Validation Create(
-        in Corvus.Json.JsonAny? constEntity = null,
+        in Corvus.Json.JsonAny? constValue = null,
         in Corvus.Json.JsonSchema.Draft201909.Validation.DependentRequiredEntity? dependentRequired = null,
-        in Corvus.Json.JsonArray? enumEntity = null,
+        in Corvus.Json.JsonArray? enumValue = null,
         in Corvus.Json.JsonNumber? exclusiveMaximum = null,
         in Corvus.Json.JsonNumber? exclusiveMinimum = null,
         in Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeInteger? maxContains = null,
@@ -789,9 +789,9 @@ public readonly partial struct Validation
     {
         var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
 
-        if (constEntity is not null)
+        if (constValue is not null)
         {
-            builder.Add(JsonPropertyNames.Const, constEntity.Value.AsAny);
+            builder.Add(JsonPropertyNames.Const, constValue.Value.AsAny);
         }
 
         if (dependentRequired is not null)
@@ -799,9 +799,9 @@ public readonly partial struct Validation
             builder.Add(JsonPropertyNames.DependentRequired, dependentRequired.Value.AsAny);
         }
 
-        if (enumEntity is not null)
+        if (enumValue is not null)
         {
-            builder.Add(JsonPropertyNames.Enum, enumEntity.Value.AsAny);
+            builder.Add(JsonPropertyNames.Enum, enumValue.Value.AsAny);
         }
 
         if (exclusiveMaximum is not null)

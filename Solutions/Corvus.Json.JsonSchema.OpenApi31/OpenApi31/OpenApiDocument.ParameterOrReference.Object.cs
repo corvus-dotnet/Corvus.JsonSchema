@@ -617,7 +617,7 @@ public readonly partial struct OpenApiDocument
         /// Creates an instance of a <see cref="ParameterOrReference"/>.
         /// </summary>
         public static ParameterOrReference Create(
-            in Corvus.Json.JsonUriReference? refEntity = null,
+            in Corvus.Json.JsonUriReference? refValue = null,
             in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.ThenEntity.AllowEmptyValueEntity? allowEmptyValue = null,
             in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForQueryEntity.ThenEntity.AllowReservedEntity? allowReserved = null,
             in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.ContentEntity? content = null,
@@ -626,7 +626,7 @@ public readonly partial struct OpenApiDocument
             in Corvus.Json.JsonAny? example = null,
             in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Examples.ExamplesEntity? examples = null,
             in Corvus.Json.JsonBoolean? explode = null,
-            in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.InEntity? inEntity = null,
+            in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.InEntity? inValue = null,
             in Corvus.Json.JsonString? name = null,
             in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.RequiredEntity? required = null,
             in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Schema? schema = null,
@@ -635,9 +635,9 @@ public readonly partial struct OpenApiDocument
         {
             var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
 
-            if (refEntity is not null)
+            if (refValue is not null)
             {
-                builder.Add(JsonPropertyNames.Ref, refEntity.Value.AsAny);
+                builder.Add(JsonPropertyNames.Ref, refValue.Value.AsAny);
             }
 
             if (allowEmptyValue is not null)
@@ -680,9 +680,9 @@ public readonly partial struct OpenApiDocument
                 builder.Add(JsonPropertyNames.Explode, explode.Value.AsAny);
             }
 
-            if (inEntity is not null)
+            if (inValue is not null)
             {
-                builder.Add(JsonPropertyNames.In, inEntity.Value.AsAny);
+                builder.Add(JsonPropertyNames.In, inValue.Value.AsAny);
             }
 
             if (name is not null)

@@ -254,15 +254,15 @@ public readonly partial struct OpenApiDocument
             /// </summary>
             public static ParameterInPath Create(
                 in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInPath.RequiredEntity required,
-                in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInPath.InEntity? inEntity = null,
+                in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInPath.InEntity? inValue = null,
                 in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInPath.StyleEntity? style = null)
             {
                 var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
                 builder.Add(JsonPropertyNames.Required, required.AsAny);
 
-                if (inEntity is not null)
+                if (inValue is not null)
                 {
-                    builder.Add(JsonPropertyNames.In, inEntity.Value.AsAny);
+                    builder.Add(JsonPropertyNames.In, inValue.Value.AsAny);
                 }
 
                 if (style is not null)

@@ -288,13 +288,13 @@ public readonly partial struct OpenApiDocument
         /// Creates an instance of a <see cref="ApiKeySecurityScheme"/>.
         /// </summary>
         public static ApiKeySecurityScheme Create(
-            in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ApiKeySecurityScheme.InEntity inEntity,
+            in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ApiKeySecurityScheme.InEntity inValue,
             in Corvus.Json.JsonString name,
             in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ApiKeySecurityScheme.TypeEntity type,
             in Corvus.Json.JsonString? description = null)
         {
             var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
-            builder.Add(JsonPropertyNames.In, inEntity.AsAny);
+            builder.Add(JsonPropertyNames.In, inValue.AsAny);
             builder.Add(JsonPropertyNames.Name, name.AsAny);
             builder.Add(JsonPropertyNames.Type, type.AsAny);
 

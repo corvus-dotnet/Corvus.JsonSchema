@@ -215,13 +215,13 @@ public readonly partial struct OpenApiDocument
             /// <summary>
             /// Creates an instance of a <see cref="ParameterInCookie"/>.
             /// </summary>
-            public static ParameterInCookie Create(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInCookie.InEntity? inEntity = null, in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInCookie.StyleEntity? style = null)
+            public static ParameterInCookie Create(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInCookie.InEntity? inValue = null, in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInCookie.StyleEntity? style = null)
             {
                 var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
 
-                if (inEntity is not null)
+                if (inValue is not null)
                 {
-                    builder.Add(JsonPropertyNames.In, inEntity.Value.AsAny);
+                    builder.Add(JsonPropertyNames.In, inValue.Value.AsAny);
                 }
 
                 if (style is not null)

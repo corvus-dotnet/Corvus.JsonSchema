@@ -33,7 +33,7 @@ public readonly partial struct JsonInteger
             result = result.UsingStack();
             result = result.PushSchemaLocation("corvus:/JsonInteger");
         }
-        result = Json.Validate.TypeInteger(this, validationContext, level, null);
+        result = Json.Validate.TypeInteger(this, result, level, null);
         if (level > ValidationLevel.Basic)
         {
             result = result.PopLocation();

@@ -220,10 +220,10 @@ public readonly partial struct OpenApiDocument
                 /// <summary>
                 /// Creates an instance of a <see cref="RequiredInAndName"/>.
                 /// </summary>
-                public static RequiredInAndName Create(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeApikeyEntity.RequiredInAndName.InEntity inEntity, in Corvus.Json.JsonString name)
+                public static RequiredInAndName Create(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeApikeyEntity.RequiredInAndName.InEntity inValue, in Corvus.Json.JsonString name)
                 {
                     var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
-                    builder.Add(JsonPropertyNames.In, inEntity.AsAny);
+                    builder.Add(JsonPropertyNames.In, inValue.AsAny);
                     builder.Add(JsonPropertyNames.Name, name.AsAny);
 
                     return new(builder.ToImmutable());

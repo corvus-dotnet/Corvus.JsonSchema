@@ -571,7 +571,7 @@ public readonly partial struct OpenApiDocument
         /// Creates an instance of a <see cref="Parameter"/>.
         /// </summary>
         public static Parameter Create(
-            in Corvus.Json.JsonString inEntity,
+            in Corvus.Json.JsonString inValue,
             in Corvus.Json.JsonString name,
             in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Parameter.AllowEmptyValueEntity? allowEmptyValue = null,
             in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Parameter.AllowReservedEntity? allowReserved = null,
@@ -586,7 +586,7 @@ public readonly partial struct OpenApiDocument
             in Corvus.Json.JsonString? style = null)
         {
             var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
-            builder.Add(JsonPropertyNames.In, inEntity.AsAny);
+            builder.Add(JsonPropertyNames.In, inValue.AsAny);
             builder.Add(JsonPropertyNames.Name, name.AsAny);
 
             if (allowEmptyValue is not null)

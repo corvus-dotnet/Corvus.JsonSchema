@@ -307,7 +307,7 @@ public readonly partial struct OpenApiDocument
         public static Xml Create(
             in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Xml.AttributeEntity? attribute = null,
             in Corvus.Json.JsonString? name = null,
-            in Corvus.Json.JsonUri? namespaceEntity = null,
+            in Corvus.Json.JsonUri? namespaceValue = null,
             in Corvus.Json.JsonString? prefix = null,
             in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Xml.WrappedEntity? wrapped = null)
         {
@@ -323,9 +323,9 @@ public readonly partial struct OpenApiDocument
                 builder.Add(JsonPropertyNames.Name, name.Value.AsAny);
             }
 
-            if (namespaceEntity is not null)
+            if (namespaceValue is not null)
             {
-                builder.Add(JsonPropertyNames.Namespace, namespaceEntity.Value.AsAny);
+                builder.Add(JsonPropertyNames.Namespace, namespaceValue.Value.AsAny);
             }
 
             if (prefix is not null)

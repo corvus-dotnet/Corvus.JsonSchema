@@ -139,18 +139,18 @@ public readonly partial struct OpenApiDocument
                                     {
                                         if (context.Level == ValidationLevel.Verbose)
                                         {
-                                            result = result.WithResult(isValid: true, $"Validation pattern - {input.ToString()} matched  '[^/#?]+$'");
+                                            result = result.WithResult(isValid: true, $"Validation pattern - {input.ToString()} matched '[^/#?]+$'");
                                         }
                                     }
                                     else
                                     {
                                         if (context.Level >= ValidationLevel.Detailed)
                                         {
-                                            result = result.WithResult(isValid: false, $"Validation pattern - {input.ToString()} did not match  '[^/#?]+$'");
+                                            result = result.WithResult(isValid: false, $"Validation pattern - {input.ToString()} did not match '[^/#?]+$'");
                                         }
                                         else if (context.Level >= ValidationLevel.Basic)
                                         {
-                                            result = result.WithResult(isValid: false, "Validation pattern - The value did not match  '[^/#?]+$'");
+                                            result = result.WithResult(isValid: false, "Validation pattern - The value did not match '[^/#?]+$'");
                                         }
                                         else
                                         {

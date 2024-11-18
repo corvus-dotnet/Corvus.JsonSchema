@@ -205,13 +205,13 @@ public readonly partial struct OpenApiDocument
             /// <summary>
             /// Creates an instance of a <see cref="TypeApikeyEntity"/>.
             /// </summary>
-            public static TypeApikeyEntity Create(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeApikeyEntity.RequiredInAndName.InEntity? inEntity = null, in Corvus.Json.JsonString? name = null)
+            public static TypeApikeyEntity Create(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeApikeyEntity.RequiredInAndName.InEntity? inValue = null, in Corvus.Json.JsonString? name = null)
             {
                 var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
 
-                if (inEntity is not null)
+                if (inValue is not null)
                 {
-                    builder.Add(JsonPropertyNames.In, inEntity.Value.AsAny);
+                    builder.Add(JsonPropertyNames.In, inValue.Value.AsAny);
                 }
 
                 if (name is not null)

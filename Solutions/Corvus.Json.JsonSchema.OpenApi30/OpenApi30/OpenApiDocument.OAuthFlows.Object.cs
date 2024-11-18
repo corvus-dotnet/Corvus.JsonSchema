@@ -275,7 +275,7 @@ public readonly partial struct OpenApiDocument
         public static OAuthFlows Create(
             in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.AuthorizationCodeOAuthFlow? authorizationCode = null,
             in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ClientCredentialsFlow? clientCredentials = null,
-            in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ImplicitOAuthFlow? implicitEntity = null,
+            in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ImplicitOAuthFlow? implicitValue = null,
             in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.PasswordOAuthFlow? password = null)
         {
             var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
@@ -290,9 +290,9 @@ public readonly partial struct OpenApiDocument
                 builder.Add(JsonPropertyNames.ClientCredentials, clientCredentials.Value.AsAny);
             }
 
-            if (implicitEntity is not null)
+            if (implicitValue is not null)
             {
-                builder.Add(JsonPropertyNames.Implicit, implicitEntity.Value.AsAny);
+                builder.Add(JsonPropertyNames.Implicit, implicitValue.Value.AsAny);
             }
 
             if (password is not null)

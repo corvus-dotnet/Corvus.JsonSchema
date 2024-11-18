@@ -98,7 +98,6 @@ public static class Formatting
         "Match",
         "Null",
         "Parse",
-        "Path",
         "Rank",
         "Remove",
         "RemoveAt",

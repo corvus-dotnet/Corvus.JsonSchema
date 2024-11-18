@@ -177,11 +177,6 @@ innerEnumerator.MoveNext())
                         result = result.PushValidationLocationReducedPathModifier(new("#/items"));
                     }
 
-                    if (level == ValidationLevel.Flag && !result.IsValid)
-                    {
-                        return result;
-                    }
-
                     if (level > ValidationLevel.Basic)
                     {
                         result = result.PopLocation();

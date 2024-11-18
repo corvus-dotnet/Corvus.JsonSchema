@@ -1205,11 +1205,11 @@ public readonly partial struct Schema
         in Corvus.Json.JsonSchema.Draft4.Schema.AdditionalPropertiesEntity? additionalProperties = null,
         in Corvus.Json.JsonSchema.Draft4.Schema.SchemaArray? allOf = null,
         in Corvus.Json.JsonSchema.Draft4.Schema.SchemaArray? anyOf = null,
-        in Corvus.Json.JsonAny? defaultEntity = null,
+        in Corvus.Json.JsonAny? defaultValue = null,
         in Corvus.Json.JsonSchema.Draft4.Schema.DefinitionsEntity? definitions = null,
         in Corvus.Json.JsonSchema.Draft4.Schema.DependenciesEntity? dependencies = null,
         in Corvus.Json.JsonString? description = null,
-        in Corvus.Json.JsonSchema.Draft4.Schema.EnumArray? enumEntity = null,
+        in Corvus.Json.JsonSchema.Draft4.Schema.EnumArray? enumValue = null,
         in Corvus.Json.JsonSchema.Draft4.Schema.ExclusiveMaximumEntity? exclusiveMaximum = null,
         in Corvus.Json.JsonSchema.Draft4.Schema.ExclusiveMinimumEntity? exclusiveMinimum = null,
         in Corvus.Json.JsonString? format = null,
@@ -1261,9 +1261,9 @@ public readonly partial struct Schema
             builder.Add(JsonPropertyNames.AnyOf, anyOf.Value.AsAny);
         }
 
-        if (defaultEntity is not null)
+        if (defaultValue is not null)
         {
-            builder.Add(JsonPropertyNames.Default, defaultEntity.Value.AsAny);
+            builder.Add(JsonPropertyNames.Default, defaultValue.Value.AsAny);
         }
 
         if (definitions is not null)
@@ -1281,9 +1281,9 @@ public readonly partial struct Schema
             builder.Add(JsonPropertyNames.Description, description.Value.AsAny);
         }
 
-        if (enumEntity is not null)
+        if (enumValue is not null)
         {
-            builder.Add(JsonPropertyNames.Enum, enumEntity.Value.AsAny);
+            builder.Add(JsonPropertyNames.Enum, enumValue.Value.AsAny);
         }
 
         if (exclusiveMaximum is not null)
