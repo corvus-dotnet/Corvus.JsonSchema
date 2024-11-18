@@ -33,15 +33,23 @@ Examples:
 	| inputData                                                                                                                                                                                                                                                                | valid |
 	| { "foo": { "a_doc": "aaa", "b_doc": "bbb" } } | true  |
 
-	Scenario Outline: Generation error with single pattern properties.
+Scenario Outline: Generation error with verbose pattern properties.
 	Given a schema file
 		"""
 		{
 			"$schema": "https://json-schema.org/draft-07/schema",
 			"type": "object",
 			"patternProperties": {
-				".*_doc$|^doc$": {
-					"type": "string"
+				"^(?!.*?\\$schema).*$": {
+					"type": "object",
+					"patternProperties": {
+						".*_doc$|^doc$": {
+							"type": "string"
+						},
+						".*_code$|^code$": {
+							"type": "string"
+						}
+					}
 				}
 			}
 		}
@@ -49,9 +57,10 @@ Examples:
 	And the input data value <inputData>
 	And I generate a type for the schema
 	And I construct an instance of the schema type from the data
-	When I validate the instance
+	When I validate the instance with level Verbose
 	Then the result will be <valid>
 
 Examples:
 	| inputData                                                                                                                                                                                                                                                                | valid |
-	| { "a_doc": "aaa", "b_doc": "bbb" } | true  |
+	| { "foo": { "a_doc": "aaa", "b_doc": "bbb" } } | true  |
+
