@@ -3,12 +3,14 @@
 // </copyright>
 
 using System.Collections.Immutable;
+using System.Diagnostics;
 
 namespace Corvus.Json;
 
 /// <summary>
 /// The current validation context.
 /// </summary>
+[DebuggerDisplay("IsValid = {IsValid}")]
 public readonly struct ValidationContext
 {
     /// <summary>
