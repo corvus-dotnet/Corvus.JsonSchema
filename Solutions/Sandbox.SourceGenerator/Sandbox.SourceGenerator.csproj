@@ -1,11 +1,15 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
+  <Import Project="..\Corvus.Json.SourceGenerator\Corvus.Json.SourceGenerator.props"/>
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
     <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <CorvusJsonSchemaOptionalAsNullable>None</CorvusJsonSchemaOptionalAsNullable>
   </PropertyGroup>
 
   <ItemGroup>

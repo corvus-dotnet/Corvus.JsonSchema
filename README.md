@@ -497,6 +497,33 @@ You can find an example project here: [Sandbox.SourceGenerator](./Solutions/Sand
 
 We'd like to credit our Google Summer of Code 2024 contributor, [Pranay Joshi](https://github.com/pranayjoshi) and mentor [Greg Dennis](https://github.com/gregsdennis) for their work on this tool.
 
+#### Configuring the source generator
+
+There are a number of global configuration options for the source generator. These can be added to a `PropertyGroup` in your `.csproj` file.
+
+e.g.
+
+```xml
+<PropertyGroup>
+   <CorvusJsonSchemaOptionalAsNullable>None</CorvusJsonSchemaOptionalAsNullable>
+</PropertyGroup>
+```
+
+`CorvusJsonSchemaOptionalAsNullable`
+  - `None` - Do not emit nullable properties for optional properties
+  - `NullOrUndefined` - Emit nullable properties for optional properties
+
+`CorvusJsonSchemaDisableOptionalNamingHeuristics`
+  - `False` - Enable optional naming heuristics [default]
+  - `True` - Disable optional naming heuristics
+
+`CorvusJsonSchemaDisabledNamingHeuristics`
+  - Semi-colon separated list of naming heuristics to disable. You can list the available name heuristics with the `generatejsonschematypes listNameHeuristics` command in the CLI.
+
+`CorvusJsonSchemaAlwaysAssertFormat`
+  - `False` - Respect the vocabulary's format assertion
+  - `True` - Always assert format assertions [default]
+
 ### New dynamic schema validation
 
 There is a new `Corvus.Json.Validator` assembly, containing a `JsonSchema` type.

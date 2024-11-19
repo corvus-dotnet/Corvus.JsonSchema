@@ -639,12 +639,12 @@ internal static partial class CodeGeneratorExtensions
                     }
 
                     string name = generator.GetMethodNameInScope("TryAsDependentSchemaFor", suffix: declaration.JsonPropertyName);
-                    string dotnetPropertyName =
-                        typeDeclaration
+                    PropertyDeclaration property = typeDeclaration
                             .PropertyDeclarations
-                            .Single(p => p.JsonPropertyName == declaration.JsonPropertyName)
-                            .DotnetPropertyName();
+                            .Single(p => p.JsonPropertyName == declaration.JsonPropertyName);
+                    string dotnetPropertyName = property.DotnetPropertyName();
                     string targetName = declaration.ReducedDepdendentSchemaType.FullyQualifiedDotnetTypeName();
+                    bool isNullable = typeDeclaration.OptionalAsNullable() && property.RequiredOrOptional == RequiredOrOptional.Optional;
 
                     generator
                         .AppendSeparatorLine()
@@ -661,15 +661,10 @@ internal static partial class CodeGeneratorExtensions
                         .AppendLineIndent("public bool ", name, "(out ", targetName, " result)")
                         .AppendLineIndent("{")
                         .PushIndent()
-                            .AppendLineIndent("if (this.", dotnetPropertyName, ".IsNotUndefined())")
-                            .AppendLineIndent("{")
-                            .PushIndent()
-                                .AppendLineIndent("result = this.As<", targetName, ">();")
-                                .AppendLineIndent("return result.IsValid();")
-                            .PopIndent()
-                            .AppendLineIndent("}")
+                            .AppendConditionalBackingValueCallbackIndent("Backing.JsonElement", "jsonElementBacking", (g, f) => AppendJsonBackedTest(g, typeDeclaration, f, property, targetName))
+                            .AppendConditionalBackingValueCallbackIndent("Backing.Object", "objectBacking", (g, f) => AppendObjectBackedTest(g, typeDeclaration, f, property, targetName))
                             .AppendSeparatorLine()
-                            .AppendLineIndent("result = ", targetName, ".Undefined;")
+                            .AppendLineIndent("result = default;")
                             .AppendLineIndent("return false;")
                         .PopIndent()
                         .AppendLineIndent("}");
@@ -678,6 +673,65 @@ internal static partial class CodeGeneratorExtensions
         }
 
         return generator;
+
+        static void AppendJsonBackedTest(CodeGenerator generator, TypeDeclaration typeDeclaration, string fieldName, PropertyDeclaration property, string targetName)
+        {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
+            generator
+                .AppendLineIndent("if (this.", fieldName, ".ValueKind != JsonValueKind.Object)")
+                .AppendLineIndent("{")
+                .PushIndent()
+                    .AppendLineIndent("result = default;")
+                    .AppendLineIndent("return false;")
+                .PopIndent()
+                .AppendLineIndent("}")
+                .AppendSeparatorLine()
+                .AppendLineIndent(
+                    "if (this.",
+                    fieldName,
+                    ".TryGetProperty(",
+                    generator.JsonPropertyNamesClassName(),
+                    ".",
+                    property.DotnetPropertyName(),
+                    "Utf8, out _))")
+                .AppendLineIndent("{")
+                .PushIndent();
+
+            generator
+                    .AppendLineIndent("result = this.As<", targetName, ">();")
+                    .AppendLineIndent("return result.IsValid();")
+                .PopIndent()
+                .AppendLineIndent("}");
+        }
+
+        static void AppendObjectBackedTest(CodeGenerator generator, TypeDeclaration typeDeclaration, string fieldName, PropertyDeclaration property, string targetName)
+        {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
+            generator
+                .AppendSeparatorLine()
+                .AppendLineIndent(
+                    "if (this.",
+                    fieldName,
+                    ".TryGetValue(",
+                    generator.JsonPropertyNamesClassName(),
+                    ".",
+                    property.DotnetPropertyName(),
+                    ", out _))")
+                .AppendLineIndent("{")
+                .PushIndent()
+                    .AppendLineIndent("result = this.As<", targetName, ">();")
+                    .AppendLineIndent("return result.IsValid();")
+                .PopIndent()
+                .AppendLineIndent("}");
+        }
     }
 
     /// <summary>
