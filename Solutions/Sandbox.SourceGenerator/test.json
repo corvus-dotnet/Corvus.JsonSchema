@@ -1,15 +1,23 @@
 {
     "$schema": "https://corvus-oss.org/json-schema/2020-12/schema",
-    "type": "array",
-    "prefixItems": [
-        {
-            "$corvusTypeName": "PositiveInt32",
-            "type": "integer",
-            "format": "int32",
-            "minimum": 0
-        },
-        { "type": "string" },
-        { "type":  "number", "minimum": 3.5 }
-    ],
-    "unevaluatedItems": false
+    "type": "object",
+    "properties": {
+        "theArray": {
+            "type": "array",
+            "prefixItems": [
+                {
+                    "$corvusTypeName": "PositiveInt32",
+                    "type": "integer",
+                    "format": "int32",
+                    "minimum": 0
+                },
+                { "type": "string" },
+                {
+                    "type": "number",
+                    "minimum": 3.5
+                }
+            ],
+            "unevaluatedItems": false
+        }
+    }
 }
