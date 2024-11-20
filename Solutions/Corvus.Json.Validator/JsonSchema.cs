@@ -39,7 +39,6 @@ public readonly struct JsonSchema
         """;
 
     private static readonly PrepopulatedDocumentResolver MetaschemaDocumentResolver = CreateMetaschemaDocumentResolver();
-    private static readonly VocabularyRegistry VocabularyRegistry = RegisterVocabularies(MetaschemaDocumentResolver);
     private static readonly ConcurrentDictionary<string, ValidateCallback> CachedSchema = [];
 
 #if NET8_0_OR_GREATER
@@ -170,7 +169,9 @@ public readonly struct JsonSchema
 
     private static JsonSchema FromCore(string jsonSchemaUri, IDocumentResolver documentResolver, IVocabulary fallbackVocabulary, bool alwaysAssertFormat)
     {
-        JsonSchemaTypeBuilder typeBuilder = new(documentResolver, VocabularyRegistry);
+        VocabularyRegistry vocabularyRegistry = RegisterVocabularies(documentResolver);
+
+        JsonSchemaTypeBuilder typeBuilder = new(documentResolver, vocabularyRegistry);
 
         TypeDeclaration rootType =
             typeBuilder.AddTypeDeclarations(
