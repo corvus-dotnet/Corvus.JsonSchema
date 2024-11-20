@@ -79,6 +79,8 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
         List<CSharpLanguageProvider.NamedType> namedTypes = [];
         JsonSchemaTypeBuilder typeBuilder = new(generationSource.DocumentResolver, VocabularyRegistry);
 
+        string? defaultNamespace = null;
+
         foreach (GenerationSpecification spec in generationSource.GenerationSpecifications)
         {
             if (context.CancellationToken.IsCancellationRequested)
@@ -107,6 +109,8 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
 
             typesToGenerate.Add(rootType);
 
+            defaultNamespace = defaultNamespace ?? spec.Namespace;
+
             namedTypes.Add(
                 new CSharpLanguageProvider.NamedType(
                     rootType.ReducedTypeDeclaration().ReducedType.LocatedSchema.Location,
@@ -115,7 +119,7 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
         }
 
         CSharpLanguageProvider.Options options = new(
-            "GeneratedTypes",
+            defaultNamespace ?? "GeneratedTypes",
             namedTypes.ToArray(),
             disabledNamingHeuristics: generationSource.DisabledNamingHeuristics.ToArray(),
             optionalAsNullable: generationSource.OptionalAsNullable,
