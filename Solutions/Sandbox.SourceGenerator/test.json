@@ -1,8 +1,13 @@
 {
     "$schema": "https://corvus-oss.org/json-schema/2020-12/schema",
-    "type": "object",
-    "properties": {
-        "theArray": {
+    "$defs": {
+        "FlimFlam": {
+            "type": "object",
+            "properties": {
+                "theArray": { "$ref": "#/%24defs/someArray" }
+            }
+        },
+        "someArray": {
             "type": "array",
             "prefixItems": [
                 {

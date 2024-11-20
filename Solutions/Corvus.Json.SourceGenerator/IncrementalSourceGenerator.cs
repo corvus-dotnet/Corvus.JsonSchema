@@ -3,7 +3,6 @@
 // </copyright>
 
 using System.Collections.Immutable;
-using System.Diagnostics;
 using System.Text;
 using Corvus.Json.CodeGeneration;
 using Corvus.Json.CodeGeneration.CSharp;
@@ -109,7 +108,7 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
 
             typesToGenerate.Add(rootType);
 
-            defaultNamespace = defaultNamespace ?? spec.Namespace;
+            defaultNamespace ??= spec.Namespace;
 
             namedTypes.Add(
                 new CSharpLanguageProvider.NamedType(
