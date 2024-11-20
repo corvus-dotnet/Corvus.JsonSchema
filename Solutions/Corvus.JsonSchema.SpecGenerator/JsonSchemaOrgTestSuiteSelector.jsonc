@@ -184,7 +184,7 @@
             "outputFolder": "Draft2020212",
             "excludeFromThisDirectory": [
                 // We don't support custom metaschema (yet!)
-                "vocabulary\\.json"
+                ////"vocabulary\\.json"
             ],
             "subdirectories": {
                 "optional": {
