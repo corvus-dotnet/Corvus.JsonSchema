@@ -15,7 +15,6 @@ Scenario Outline: validation of string-encoded content based on media type
     Given the input JSON file "content.json"
     And the schema at "#/0/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -40,7 +39,6 @@ Scenario Outline: validation of binary string-encoding
     Given the input JSON file "content.json"
     And the schema at "#/1/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -66,7 +64,6 @@ Scenario Outline: validation of binary-encoded media type documents
     Given the input JSON file "content.json"
     And the schema at "#/2/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -95,7 +92,6 @@ Scenario Outline: validation of binary-encoded media type documents with schema
     Given the input JSON file "content.json"
     And the schema at "#/3/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance

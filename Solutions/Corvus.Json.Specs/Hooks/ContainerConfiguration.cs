@@ -33,7 +33,23 @@ public static class ContainerConfiguration
 
         var services = new ServiceCollection();
 
-        services.AddTransient(serviceProvider => new CompoundDocumentResolver(new FakeWebDocumentResolver(serviceProvider.GetRequiredService<IConfiguration>()["jsonSchemaBuilderDriverSettings:remotesBaseDirectory"]!), new FileSystemDocumentResolver()).AddMetaschema());
+        services.AddTransient(serviceProvider =>
+        {
+            ScenarioContext scenarioContext = serviceProvider.GetRequiredService<ScenarioContext>();
+            string path;
+            if (scenarioContext.ScenarioInfo.ScenarioAndFeatureTags.Any(t => t == "openApi30"))
+            {
+                path = serviceProvider.GetRequiredService<IConfiguration>()["jsonSchemaBuilderOpenApi30DriverSettings:remotesBaseDirectory"]!;
+            }
+            else
+            {
+                path = serviceProvider.GetRequiredService<IConfiguration>()["jsonSchemaBuilderDriverSettings:remotesBaseDirectory"]!;
+            }
+
+            return new CompoundDocumentResolver(
+                new FakeWebDocumentResolver(path),
+                new FileSystemDocumentResolver()).AddMetaschema();
+        });
         services.AddTransient<JsonSchemaTypeBuilder>();
         services.AddTransient(sp =>
         {

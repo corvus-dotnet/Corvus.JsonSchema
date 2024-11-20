@@ -17,7 +17,6 @@ Scenario Outline: ignore if without then or else
     Given the input JSON file "if-then-else.json"
     And the schema at "#/0/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -42,7 +41,6 @@ Scenario Outline: ignore then without if
     Given the input JSON file "if-then-else.json"
     And the schema at "#/1/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -67,7 +65,6 @@ Scenario Outline: ignore else without if
     Given the input JSON file "if-then-else.json"
     And the schema at "#/2/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -95,7 +92,6 @@ Scenario Outline: if and then without else
     Given the input JSON file "if-then-else.json"
     And the schema at "#/3/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -125,7 +121,6 @@ Scenario Outline: if and else without then
     Given the input JSON file "if-then-else.json"
     And the schema at "#/4/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -158,7 +153,6 @@ Scenario Outline: validate against correct branch, then vs else
     Given the input JSON file "if-then-else.json"
     And the schema at "#/5/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -201,7 +195,6 @@ Scenario Outline: non-interference across combined schemas
     Given the input JSON file "if-then-else.json"
     And the schema at "#/6/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -226,7 +219,6 @@ Scenario Outline: if with boolean schema true
     Given the input JSON file "if-then-else.json"
     And the schema at "#/7/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -251,7 +243,6 @@ Scenario Outline: if with boolean schema false
     Given the input JSON file "if-then-else.json"
     And the schema at "#/8/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -276,7 +267,6 @@ Scenario Outline: if appears at the end when serialized (keyword processing sequ
     Given the input JSON file "if-then-else.json"
     And the schema at "#/9/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance

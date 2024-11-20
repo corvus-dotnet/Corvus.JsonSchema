@@ -21,7 +21,6 @@ Scenario Outline: schema that uses custom metaschema with with no validation voc
     Given the input JSON file "vocabulary.json"
     And the schema at "#/0/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -46,7 +45,6 @@ Scenario Outline: ignore unrecognized optional vocabulary
     Given the input JSON file "vocabulary.json"
     And the schema at "#/1/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance

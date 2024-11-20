@@ -28,7 +28,6 @@ Scenario Outline: allOf
     Given the input JSON file "allOf.json"
     And the schema at "#/0/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -70,7 +69,6 @@ Scenario Outline: allOf with base schema
     Given the input JSON file "allOf.json"
     And the schema at "#/1/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -102,7 +100,6 @@ Scenario Outline: allOf simple types
     Given the input JSON file "allOf.json"
     And the schema at "#/2/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -125,7 +122,6 @@ Scenario Outline: allOf with boolean schemas, all true
     Given the input JSON file "allOf.json"
     And the schema at "#/3/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -146,7 +142,6 @@ Scenario Outline: allOf with boolean schemas, some false
     Given the input JSON file "allOf.json"
     And the schema at "#/4/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -167,7 +162,6 @@ Scenario Outline: allOf with boolean schemas, all false
     Given the input JSON file "allOf.json"
     And the schema at "#/5/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -190,7 +184,6 @@ Scenario Outline: allOf with one empty schema
     Given the input JSON file "allOf.json"
     And the schema at "#/6/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -214,7 +207,6 @@ Scenario Outline: allOf with two empty schemas
     Given the input JSON file "allOf.json"
     And the schema at "#/7/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -238,7 +230,6 @@ Scenario Outline: allOf with the first empty schema
     Given the input JSON file "allOf.json"
     And the schema at "#/8/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -264,7 +255,6 @@ Scenario Outline: allOf with the last empty schema
     Given the input JSON file "allOf.json"
     And the schema at "#/9/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -295,7 +285,6 @@ Scenario Outline: nested allOf, to check validation semantics
     Given the input JSON file "allOf.json"
     And the schema at "#/10/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -320,7 +309,6 @@ Scenario Outline: allOf combined with anyOf, oneOf
     Given the input JSON file "allOf.json"
     And the schema at "#/11/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance

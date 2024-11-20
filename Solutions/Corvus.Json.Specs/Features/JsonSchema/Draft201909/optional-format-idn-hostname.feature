@@ -15,7 +15,6 @@ Scenario Outline: validation of internationalized host names
     Given the input JSON file "optional/format/idn-hostname.json"
     And the schema at "#/0/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -109,7 +108,7 @@ Scenario Outline: validation of internationalized host names
         | #/000/tests/041/data | true  | KATAKANA MIDDLE DOT with Katakana                                                |
         # ・丈
         | #/000/tests/042/data | true  | KATAKANA MIDDLE DOT with Han                                                     |
-        # ٠۰
+        # ب٠۰
         | #/000/tests/043/data | false | Arabic-Indic digits mixed with Extended Arabic-Indic digits                      |
         # ب٠ب
         | #/000/tests/044/data | true  | Arabic-Indic digits not mixed with Extended Arabic-Indic digits                  |

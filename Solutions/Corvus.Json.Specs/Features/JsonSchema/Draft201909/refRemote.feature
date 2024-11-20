@@ -15,7 +15,6 @@ Scenario Outline: remote ref
     Given the input JSON file "refRemote.json"
     And the schema at "#/0/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -38,7 +37,6 @@ Scenario Outline: fragment within remote ref
     Given the input JSON file "refRemote.json"
     And the schema at "#/1/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -61,7 +59,6 @@ Scenario Outline: anchor within remote ref
     Given the input JSON file "refRemote.json"
     And the schema at "#/2/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -84,7 +81,6 @@ Scenario Outline: ref within remote ref
     Given the input JSON file "refRemote.json"
     And the schema at "#/3/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -111,7 +107,6 @@ Scenario Outline: base URI change
     Given the input JSON file "refRemote.json"
     And the schema at "#/4/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -143,7 +138,6 @@ Scenario Outline: base URI change - change folder
     Given the input JSON file "refRemote.json"
     And the schema at "#/5/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -179,7 +173,6 @@ Scenario Outline: base URI change - change folder in subschema
     Given the input JSON file "refRemote.json"
     And the schema at "#/6/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -206,7 +199,6 @@ Scenario Outline: root ref in remote ref
     Given the input JSON file "refRemote.json"
     And the schema at "#/7/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -232,7 +224,6 @@ Scenario Outline: remote ref with ref to defs
     Given the input JSON file "refRemote.json"
     And the schema at "#/8/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -255,7 +246,6 @@ Scenario Outline: Location-independent identifier in remote ref
     Given the input JSON file "refRemote.json"
     And the schema at "#/9/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -281,7 +271,6 @@ Scenario Outline: retrieved nested refs resolve relative to their URI not $id
     Given the input JSON file "refRemote.json"
     And the schema at "#/10/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -304,7 +293,6 @@ Scenario Outline: remote HTTP ref with different $id
     Given the input JSON file "refRemote.json"
     And the schema at "#/11/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -327,7 +315,6 @@ Scenario Outline: remote HTTP ref with different URN $id
     Given the input JSON file "refRemote.json"
     And the schema at "#/12/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -350,7 +337,6 @@ Scenario Outline: remote HTTP ref with nested absolute ref
     Given the input JSON file "refRemote.json"
     And the schema at "#/13/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -373,7 +359,6 @@ Scenario Outline: $ref to $ref finds detached $anchor
     Given the input JSON file "refRemote.json"
     And the schema at "#/14/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance

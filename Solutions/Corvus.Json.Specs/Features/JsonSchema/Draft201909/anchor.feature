@@ -21,7 +21,6 @@ Scenario Outline: Location-independent identifier
     Given the input JSON file "anchor.json"
     And the schema at "#/0/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -51,7 +50,6 @@ Scenario Outline: Location-independent identifier with absolute URI
     Given the input JSON file "anchor.json"
     And the schema at "#/1/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -86,7 +84,6 @@ Scenario Outline: Location-independent identifier with base URI change in subsch
     Given the input JSON file "anchor.json"
     And the schema at "#/2/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -126,7 +123,6 @@ Scenario Outline: same $anchor with different base uri
     Given the input JSON file "anchor.json"
     And the schema at "#/3/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance

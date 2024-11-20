@@ -18,7 +18,6 @@ Scenario Outline: $recursiveRef without $recursiveAnchor works like $ref
     Given the input JSON file "recursiveRef.json"
     And the schema at "#/0/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -62,7 +61,6 @@ Scenario Outline: $recursiveRef without using nesting
     Given the input JSON file "recursiveRef.json"
     And the schema at "#/1/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -109,7 +107,6 @@ Scenario Outline: $recursiveRef with nesting
     Given the input JSON file "recursiveRef.json"
     And the schema at "#/2/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -156,7 +153,6 @@ Scenario Outline: $recursiveRef with $recursiveAnchor: false works like $ref
     Given the input JSON file "recursiveRef.json"
     And the schema at "#/3/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -202,7 +198,6 @@ Scenario Outline: $recursiveRef with no $recursiveAnchor works like $ref
     Given the input JSON file "recursiveRef.json"
     And the schema at "#/4/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -246,7 +241,6 @@ Scenario Outline: $recursiveRef with no $recursiveAnchor in the initial target s
     Given the input JSON file "recursiveRef.json"
     And the schema at "#/5/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -285,7 +279,6 @@ Scenario Outline: $recursiveRef with no $recursiveAnchor in the outer schema res
     Given the input JSON file "recursiveRef.json"
     And the schema at "#/6/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -338,7 +331,6 @@ Scenario Outline: multiple dynamic paths to the $recursiveRef keyword
     Given the input JSON file "recursiveRef.json"
     And the schema at "#/7/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -386,7 +378,6 @@ Scenario Outline: dynamic $recursiveRef destination (not predictable at schema c
     Given the input JSON file "recursiveRef.json"
     And the schema at "#/8/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance

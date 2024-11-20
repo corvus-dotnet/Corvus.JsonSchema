@@ -15,7 +15,6 @@ Scenario Outline: maxItems validation
     Given the input JSON file "maxItems.json"
     And the schema at "#/0/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -42,7 +41,6 @@ Scenario Outline: maxItems validation with a decimal
     Given the input JSON file "maxItems.json"
     And the schema at "#/1/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance

@@ -20,7 +20,6 @@ Scenario Outline: invalid type for default
     Given the input JSON file "default.json"
     And the schema at "#/0/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -49,7 +48,6 @@ Scenario Outline: invalid string value for default
     Given the input JSON file "default.json"
     And the schema at "#/1/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -79,7 +77,6 @@ Scenario Outline: the default keyword does not do anything if the property is mi
     Given the input JSON file "default.json"
     And the schema at "#/2/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance

@@ -27,7 +27,7 @@ Scenario Outline: remote ref
 
 Scenario Outline: fragment within remote ref
 /* Schema: 
-{"$ref": "http://localhost:1234/subSchemas.json#/definitions/integer"}
+{"$ref": "http://localhost:1234/draft4/subSchemas.json#/definitions/integer"}
 */
     Given the input JSON file "refRemote.json"
     And the schema at "#/1/schema"
@@ -48,7 +48,7 @@ Scenario Outline: fragment within remote ref
 Scenario Outline: ref within remote ref
 /* Schema: 
 {
-            "$ref": "http://localhost:1234/subSchemas.json#/definitions/refToInteger"
+            "$ref": "http://localhost:1234/draft4/subSchemas.json#/definitions/refToInteger"
         }
 */
     Given the input JSON file "refRemote.json"
@@ -169,7 +169,7 @@ Scenario Outline: root ref in remote ref
             "id": "http://localhost:1234/object",
             "type": "object",
             "properties": {
-                "name": {"$ref": "name.json#/definitions/orNull"}
+                "name": {"$ref": "draft4/name.json#/definitions/orNull"}
             }
         }
 */
@@ -194,7 +194,7 @@ Scenario Outline: root ref in remote ref
 Scenario Outline: Location-independent identifier in remote ref
 /* Schema: 
 {
-            "$ref": "http://localhost:1234/locationIndependentIdentifierDraft4.json#/definitions/refToInteger"
+            "$ref": "http://localhost:1234/draft4/locationIndependentIdentifier.json#/definitions/refToInteger"
         }
 */
     Given the input JSON file "refRemote.json"

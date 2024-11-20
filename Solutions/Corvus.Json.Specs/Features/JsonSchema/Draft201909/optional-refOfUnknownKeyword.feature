@@ -18,7 +18,6 @@ Scenario Outline: reference of a root arbitrary keyword
     Given the input JSON file "optional/refOfUnknownKeyword.json"
     And the schema at "#/0/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -44,7 +43,6 @@ Scenario Outline: reference of an arbitrary keyword of a sub-schema
     Given the input JSON file "optional/refOfUnknownKeyword.json"
     And the schema at "#/1/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -71,7 +69,6 @@ Scenario Outline: reference internals of known non-applicator
     Given the input JSON file "optional/refOfUnknownKeyword.json"
     And the schema at "#/2/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance

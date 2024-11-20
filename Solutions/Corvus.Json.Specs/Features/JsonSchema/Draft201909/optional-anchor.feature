@@ -38,7 +38,6 @@ Scenario Outline: $anchor inside an enum is not a real identifier
     Given the input JSON file "optional/anchor.json"
     And the schema at "#/0/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance

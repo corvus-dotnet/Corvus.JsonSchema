@@ -22,7 +22,6 @@ Scenario Outline: anyOf
     Given the input JSON file "anyOf.json"
     And the schema at "#/0/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -57,7 +56,6 @@ Scenario Outline: anyOf with base schema
     Given the input JSON file "anyOf.json"
     And the schema at "#/1/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -82,7 +80,6 @@ Scenario Outline: anyOf with boolean schemas, all true
     Given the input JSON file "anyOf.json"
     And the schema at "#/2/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -103,7 +100,6 @@ Scenario Outline: anyOf with boolean schemas, some true
     Given the input JSON file "anyOf.json"
     And the schema at "#/3/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -124,7 +120,6 @@ Scenario Outline: anyOf with boolean schemas, all false
     Given the input JSON file "anyOf.json"
     And the schema at "#/4/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -158,7 +153,6 @@ Scenario Outline: anyOf complex types
     Given the input JSON file "anyOf.json"
     And the schema at "#/5/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -188,7 +182,6 @@ Scenario Outline: anyOf with one empty schema
     Given the input JSON file "anyOf.json"
     And the schema at "#/6/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -219,7 +212,6 @@ Scenario Outline: nested anyOf, to check validation semantics
     Given the input JSON file "anyOf.json"
     And the schema at "#/7/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance

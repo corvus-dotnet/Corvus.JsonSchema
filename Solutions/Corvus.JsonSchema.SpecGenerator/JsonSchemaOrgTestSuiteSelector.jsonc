@@ -22,6 +22,7 @@
                     "subdirectories": {
                         "format": {
                             "excludeFromThisDirectory": [
+                                "ecmascript-regex\\.json"
                             ],
                             "testExclusions": {
                                 "optional/format/date-time.json": {
@@ -57,6 +58,7 @@
                     "subdirectories": {
                         "format": {
                             "excludeFromThisDirectory": [
+                                "ecmascript-regex\\.json"
                             ],
                             "testExclusions": {
                                 "optional/format/date-time.json": {
@@ -93,6 +95,7 @@
                     "subdirectories": {
                         "format": {
                             "excludeFromThisDirectory": [
+                                "ecmascript-regex\\.json"
                             ],
                             "testExclusions": {
                                 "optional/format/date-time.json": {
@@ -125,7 +128,7 @@
         },
 
         "draft2019-09": {
-            "assertFormat": true,
+            "assertFormat": false,
             "testSet": "draft2019-09",
             "outputFolder": "Draft201909",
             "excludeFromThisDirectory": [
@@ -143,7 +146,8 @@
                     "subdirectories": {
                         "format": {
                             "excludeFromThisDirectory": [
-                                "unknown\\.json"
+                                "unknown\\.json",
+                                "ecmascript-regex\\.json"
                             ],
                             "testExclusions": {
                                 "optional/format/date-time.json": {
@@ -194,8 +198,9 @@
                     ],
                     "subdirectories": {
                         "format": {
-                            "assertFormat":  true,
+                            "assertFormat": true,
                             "excludeFromThisDirectory": [
+                                "ecmascript-regex\\.json"
                             ],
                             "testExclusions": {
                                 "optional/format/date-time.json": {

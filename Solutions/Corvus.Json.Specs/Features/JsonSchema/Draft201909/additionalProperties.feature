@@ -17,7 +17,6 @@ Scenario Outline: additionalProperties being false does not allow other properti
     Given the input JSON file "additionalProperties.json"
     And the schema at "#/0/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -49,7 +48,6 @@ Scenario Outline: non-ASCII pattern with additionalProperties
     Given the input JSON file "additionalProperties.json"
     And the schema at "#/1/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -73,7 +71,6 @@ Scenario Outline: additionalProperties with schema
     Given the input JSON file "additionalProperties.json"
     And the schema at "#/2/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -98,7 +95,6 @@ Scenario Outline: additionalProperties can exist by itself
     Given the input JSON file "additionalProperties.json"
     And the schema at "#/3/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -121,7 +117,6 @@ Scenario Outline: additionalProperties are allowed by default
     Given the input JSON file "additionalProperties.json"
     And the schema at "#/4/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -145,7 +140,6 @@ Scenario Outline: additionalProperties does not look in applicators
     Given the input JSON file "additionalProperties.json"
     And the schema at "#/5/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -168,7 +162,6 @@ Scenario Outline: additionalProperties with null valued instance properties
     Given the input JSON file "additionalProperties.json"
     And the schema at "#/6/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -194,7 +187,6 @@ Scenario Outline: additionalProperties with propertyNames
     Given the input JSON file "additionalProperties.json"
     And the schema at "#/7/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -226,7 +218,6 @@ Scenario Outline: dependentSchemas with additionalProperties
     Given the input JSON file "additionalProperties.json"
     And the schema at "#/8/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
