@@ -15,7 +15,6 @@ Scenario Outline: maximum validation
     Given the input JSON file "maximum.json"
     And the schema at "#/0/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -42,7 +41,6 @@ Scenario Outline: maximum validation with unsigned integer
     Given the input JSON file "maximum.json"
     And the schema at "#/1/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance

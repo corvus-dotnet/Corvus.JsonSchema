@@ -15,7 +15,6 @@ Scenario Outline: uniqueItems validation
     Given the input JSON file "uniqueItems.json"
     And the schema at "#/0/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -91,7 +90,6 @@ Scenario Outline: uniqueItems with an array of items
     Given the input JSON file "uniqueItems.json"
     And the schema at "#/1/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -128,7 +126,6 @@ Scenario Outline: uniqueItems with an array of items and additionalItems equals 
     Given the input JSON file "uniqueItems.json"
     And the schema at "#/2/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -157,7 +154,6 @@ Scenario Outline: uniqueItems equals false validation
     Given the input JSON file "uniqueItems.json"
     And the schema at "#/3/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -207,7 +203,6 @@ Scenario Outline: uniqueItems equals false with an array of items
     Given the input JSON file "uniqueItems.json"
     And the schema at "#/4/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -244,7 +239,6 @@ Scenario Outline: uniqueItems equals false with an array of items and additional
     Given the input JSON file "uniqueItems.json"
     And the schema at "#/5/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance

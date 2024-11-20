@@ -15,7 +15,6 @@ Scenario Outline: propertyNames validation
     Given the input JSON file "propertyNames.json"
     And the schema at "#/0/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -46,7 +45,6 @@ Scenario Outline: propertyNames validation with pattern
     Given the input JSON file "propertyNames.json"
     And the schema at "#/1/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -71,7 +69,6 @@ Scenario Outline: propertyNames with boolean schema true
     Given the input JSON file "propertyNames.json"
     And the schema at "#/2/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -94,7 +91,6 @@ Scenario Outline: propertyNames with boolean schema false
     Given the input JSON file "propertyNames.json"
     And the schema at "#/3/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance

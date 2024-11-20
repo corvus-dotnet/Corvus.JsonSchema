@@ -19,7 +19,6 @@ Scenario Outline: required validation
     Given the input JSON file "required.json"
     And the schema at "#/0/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -50,7 +49,6 @@ Scenario Outline: required default validation
     Given the input JSON file "required.json"
     And the schema at "#/1/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -74,7 +72,6 @@ Scenario Outline: required with empty array
     Given the input JSON file "required.json"
     And the schema at "#/2/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -102,7 +99,6 @@ Scenario Outline: required with escaped characters
     Given the input JSON file "required.json"
     And the schema at "#/3/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -125,7 +121,6 @@ Scenario Outline: required properties whose names are Javascript object property
     Given the input JSON file "required.json"
     And the schema at "#/4/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance

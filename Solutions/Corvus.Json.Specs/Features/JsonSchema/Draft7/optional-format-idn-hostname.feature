@@ -106,7 +106,7 @@ Scenario Outline: validation of internationalized host names
         | #/000/tests/041/data | true  | KATAKANA MIDDLE DOT with Katakana                                                |
         # ・丈
         | #/000/tests/042/data | true  | KATAKANA MIDDLE DOT with Han                                                     |
-        # ٠۰
+        # ب٠۰
         | #/000/tests/043/data | false | Arabic-Indic digits mixed with Extended Arabic-Indic digits                      |
         # ب٠ب
         | #/000/tests/044/data | true  | Arabic-Indic digits not mixed with Extended Arabic-Indic digits                  |

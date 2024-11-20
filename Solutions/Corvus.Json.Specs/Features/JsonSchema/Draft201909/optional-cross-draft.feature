@@ -16,7 +16,6 @@ Scenario Outline: refs to future drafts are processed as future drafts
     Given the input JSON file "optional/cross-draft.json"
     And the schema at "#/0/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -42,7 +41,6 @@ Scenario Outline: refs to historic drafts are processed as historic drafts
     Given the input JSON file "optional/cross-draft.json"
     And the schema at "#/1/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance

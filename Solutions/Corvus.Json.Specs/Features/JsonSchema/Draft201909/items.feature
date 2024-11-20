@@ -15,7 +15,6 @@ Scenario Outline: a schema given for items
     Given the input JSON file "items.json"
     And the schema at "#/0/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -45,7 +44,6 @@ Scenario Outline: an array of schemas for items
     Given the input JSON file "items.json"
     And the schema at "#/1/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -76,7 +74,6 @@ Scenario Outline: items with boolean schema (true)
     Given the input JSON file "items.json"
     And the schema at "#/2/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -99,7 +96,6 @@ Scenario Outline: items with boolean schema (false)
     Given the input JSON file "items.json"
     And the schema at "#/3/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -122,7 +118,6 @@ Scenario Outline: items with boolean schemas
     Given the input JSON file "items.json"
     And the schema at "#/4/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -167,7 +162,6 @@ Scenario Outline: items and subitems
     Given the input JSON file "items.json"
     And the schema at "#/5/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -210,7 +204,6 @@ Scenario Outline: nested items
     Given the input JSON file "items.json"
     And the schema at "#/6/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -237,7 +230,6 @@ Scenario Outline: single-form items with null instance elements
     Given the input JSON file "items.json"
     And the schema at "#/7/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -262,7 +254,6 @@ Scenario Outline: array-form items with null instance elements
     Given the input JSON file "items.json"
     And the schema at "#/8/schema"
     And the input data at "<inputDataReference>"
-    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
