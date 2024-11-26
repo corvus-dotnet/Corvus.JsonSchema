@@ -428,6 +428,23 @@ public readonly struct ValidationContext
     }
 
     /// <summary>
+    /// Replaces the reduced path modifier on the location stack for the context.
+    /// </summary>
+    /// <param name="reducedPathModifier">The reduced path modifier to push.</param>
+    /// <returns>Pops the current location, then updates the context with the given location.</returns>
+    public ValidationContext ReplaceValidationLocationReducedPathModifier(JsonReference reducedPathModifier)
+    {
+        if ((this.usingFeatures & UsingFeatures.Stack) == 0)
+        {
+            return this;
+        }
+
+        ImmutableStack<(JsonReference ValidationLocation, JsonReference SchemaLocation, JsonReference DocumentLocation)> stack = this.locationStack.Pop();
+        (JsonReference validationLocation, JsonReference schemaLocation, JsonReference documentLocation) = this.locationStack.Peek();
+        return new ValidationContext(this.evaluatedItems, this.evaluatedProperties, this.evaluatedExtensions, stack.Push((validationLocation.AppendFragment(reducedPathModifier), schemaLocation.AppendFragment(reducedPathModifier), documentLocation)), this.Results, this.usingFeatures);
+    }
+
+    /// <summary>
     /// Pushes the reduced path modifier and property name onto the location and document stacks for the context.
     /// </summary>
     /// <param name="reducedPathModifier">The reduced path modifier to push.</param>

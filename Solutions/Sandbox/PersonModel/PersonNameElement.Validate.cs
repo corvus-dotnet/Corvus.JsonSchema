@@ -163,12 +163,7 @@ public readonly partial struct PersonNameElement
 
                 if (context.Level > ValidationLevel.Basic)
                 {
-                    result = result.PopLocation();
-                }
-
-                if (context.Level > ValidationLevel.Basic)
-                {
-                    result = result.PushValidationLocationReducedPathModifier(new("#/minLength"));
+                    result = result.ReplaceValidationLocationReducedPathModifier(new("#/minLength"));
                 }
 
                 if (length >= MinLength)

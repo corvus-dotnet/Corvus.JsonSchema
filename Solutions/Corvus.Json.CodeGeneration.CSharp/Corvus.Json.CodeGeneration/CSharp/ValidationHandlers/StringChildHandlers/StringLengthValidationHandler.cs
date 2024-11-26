@@ -33,7 +33,9 @@ public class StringLengthValidationHandler : IChildValidationHandler
             return generator;
         }
 
-        foreach (IStringLengthConstantValidationKeyword keyword in typeDeclaration.Keywords().OfType<IStringLengthConstantValidationKeyword>())
+        bool isFirst = true;
+        var keywords = typeDeclaration.Keywords().OfType<IStringLengthConstantValidationKeyword>().ToList();
+        foreach (IStringLengthConstantValidationKeyword keyword in keywords)
         {
             if (generator.IsCancellationRequested)
             {
@@ -49,16 +51,34 @@ public class StringLengthValidationHandler : IChildValidationHandler
             string memberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword);
 
             generator
-                .AppendSeparatorLine()
-                .AppendLineIndent("if (context.Level > ValidationLevel.Basic)")
-                .AppendLineIndent("{")
-                .PushIndent()
+                .AppendSeparatorLine();
+
+            if (isFirst)
+            {
+                generator
+                    .AppendLineIndent("if (context.Level > ValidationLevel.Basic)")
+                    .AppendLineIndent("{")
+                    .PushIndent()
+                        .AppendLineIndent(
+                            "result = result.PushValidationLocationReducedPathModifier(new(",
+                            SymbolDisplay.FormatLiteral(keyword.GetPathModifier(), true),
+                            "));")
+                    .PopIndent()
+                    .AppendLineIndent("}");
+            }
+            else
+            {
+                // The "if" will have been created at the end of the previous block if this is not first.
+                generator
                     .AppendLineIndent(
-                        "result = result.PushValidationLocationReducedPathModifier(new(",
+                        "result = result.ReplaceValidationLocationReducedPathModifier(new(",
                         SymbolDisplay.FormatLiteral(keyword.GetPathModifier(), true),
                         "));")
-                .PopIndent()
-                .AppendLineIndent("}")
+                    .PopIndent()
+                    .AppendLineIndent("}");
+            }
+
+            generator
                 .AppendSeparatorLine()
                 .AppendIndent("if (length ")
                 .AppendOperator(op)
@@ -102,11 +122,21 @@ public class StringLengthValidationHandler : IChildValidationHandler
                 .AppendSeparatorLine()
                 .AppendLineIndent("if (context.Level > ValidationLevel.Basic)")
                 .AppendLineIndent("{")
-                .PushIndent()
+                .PushIndent();
+
+            if (isFirst)
+            {
+                isFirst = false;
+            }
+        }
+
+        if (keywords.Count > 0)
+        {
+            // Close off the final if.
+            generator
                     .AppendLineIndent("result = result.PopLocation();")
                 .PopIndent()
-                .AppendLineIndent("}")
-;
+                .AppendLineIndent("}");
         }
 
         return generator;
