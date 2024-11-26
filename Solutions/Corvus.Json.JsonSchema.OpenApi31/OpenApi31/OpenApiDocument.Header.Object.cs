@@ -1073,13 +1073,31 @@ public readonly partial struct OpenApiDocument
         /// <returns><see langword="true" /> if the property was present, and the instance matches the dependent schema.</returns>
         public bool TryAsDependentSchemaForSchema(out Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.WithStyleSimple result)
         {
-            if (this.SchemaValue.IsNotUndefined())
+            if ((this.backing & Backing.JsonElement) != 0)
             {
-                result = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.WithStyleSimple>();
-                return result.IsValid();
+                if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                {
+                    result = default;
+                    return false;
+                }
+
+                if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.SchemaValueUtf8, out _))
+                {
+                    result = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.WithStyleSimple>();
+                    return result.IsValid();
+                }
             }
 
-            result = Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.WithStyleSimple.Undefined;
+            if ((this.backing & Backing.Object) != 0)
+            {
+                if (this.objectBacking.TryGetValue(JsonPropertyNames.SchemaValue, out _))
+                {
+                    result = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.WithStyleSimple>();
+                    return result.IsValid();
+                }
+            }
+
+            result = default;
             return false;
         }
 

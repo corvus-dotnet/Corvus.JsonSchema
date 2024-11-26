@@ -1,11 +1,11 @@
-﻿// <copyright file="ValidateLargeDocumentUsingJsonMarshal.cs" company="Endjin Limited">
+﻿// <copyright file="ValidateLargeDocumentCorvusOnly.cs" company="Endjin Limited">
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
 using System.Collections.Immutable;
 using System.Text.Json;
 using BenchmarkDotNet.Attributes;
-////using Microsoft.VSDiagnostics;
+using Microsoft.VSDiagnostics;
 
 namespace Corvus.Json.Benchmarking;
 
@@ -13,7 +13,7 @@ namespace Corvus.Json.Benchmarking;
 /// Construct elements from a JSON element.
 /// </summary>
 [MemoryDiagnoser]
-public class ValidateLargeDocumentUsingJsonMarshal
+public class ValidateLargeDocumentCorvusOnly
 {
     private const string JsonText =
         """
@@ -31,6 +31,7 @@ public class ValidateLargeDocumentUsingJsonMarshal
         """;
 
     private JsonDocument? objectDocument;
+    private Models.V3.PersonArray personArrayV3;
     private Models.V4.PersonArray personArrayV4;
 
     /// <summary>
@@ -44,10 +45,12 @@ public class ValidateLargeDocumentUsingJsonMarshal
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
         for (int i = 0; i < 10000; ++i)
         {
-            builder.Add(Models.V4.Person.FromJson(this.objectDocument.RootElement));
+            builder.Add(Models.V3.Person.FromJson(this.objectDocument.RootElement));
         }
 
-        this.personArrayV4 = Models.V4.PersonArray.From(builder.ToImmutable()).AsJsonElementBackedValue();
+        ImmutableList<JsonAny> arrayContent = builder.ToImmutable();
+        this.personArrayV3 = Models.V3.PersonArray.From(arrayContent).AsJsonElementBackedValue();
+        this.personArrayV4 = Models.V4.PersonArray.From(arrayContent).AsJsonElementBackedValue();
     }
 
     /// <summary>
@@ -63,9 +66,19 @@ public class ValidateLargeDocumentUsingJsonMarshal
     }
 
     /// <summary>
-    /// Validates using the Corvus V4 types.
+    /// Validates using the Corvus V3 types.
     /// </summary>
     [Benchmark(Baseline = true)]
+    public bool ValidateLargeArrayCorvusV3()
+    {
+        ValidationContext result = this.personArrayV3.Validate(ValidationContext.ValidContext);
+        return result.IsValid;
+    }
+
+    /// <summary>
+    /// Validates using the Corvus V4 types.
+    /// </summary>
+    [Benchmark]
     public bool ValidateLargeArrayCorvusV4()
     {
         ValidationContext result = this.personArrayV4.Validate(ValidationContext.ValidContext);

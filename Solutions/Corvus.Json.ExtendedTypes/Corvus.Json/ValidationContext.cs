@@ -4,8 +4,8 @@
 
 using System.Collections.Immutable;
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using CommunityToolkit.HighPerformance;
 
 namespace Corvus.Json;
 
@@ -70,6 +70,26 @@ public readonly struct ValidationContext
     public bool IsValid => (this.usingFeatures & UsingFeatures.IsValid) != 0;
 
     /// <summary>
+    /// Gets a value indicating whether this is using results.
+    /// </summary>
+    public bool IsUsingResults => (this.usingFeatures & UsingFeatures.Results) != 0;
+
+    /// <summary>
+    /// Gets a value indicating whether this is using the location stack.
+    /// </summary>
+    public bool IsUsingStack => (this.usingFeatures & UsingFeatures.Stack) != 0;
+
+    /// <summary>
+    /// Gets a value indicating whether this is using evaluated properties.
+    /// </summary>
+    public bool IsUsingEvaluatedProperties => (this.usingFeatures & UsingFeatures.EvaluatedProperties) != 0;
+
+    /// <summary>
+    /// Gets a value indicating whether this is using evaluated items.
+    /// </summary>
+    public bool IsUsingEvaluatedItems => (this.usingFeatures & UsingFeatures.EvaluatedItems) != 0;
+
+    /// <summary>
     /// Gets the validation results.
     /// </summary>
     public ImmutableList<ValidationResult> Results { get; }
@@ -88,9 +108,7 @@ public readonly struct ValidationContext
     /// <returns>The validation context enabled with the keyword stack.</returns>
     public ValidationContext UsingResults()
     {
-        bool usingResults = (this.usingFeatures & UsingFeatures.Results) != 0;
-
-        return new ValidationContext(this.evaluatedItems, this.evaluatedProperties, this.evaluatedExtensions, this.locationStack, usingResults ? this.Results : ImmutableList<ValidationResult>.Empty, this.usingFeatures | UsingFeatures.Results);
+        return new ValidationContext(this.evaluatedItems, this.evaluatedProperties, this.evaluatedExtensions, this.locationStack, this.Results, this.usingFeatures | UsingFeatures.Results);
     }
 
     /// <summary>
@@ -102,6 +120,16 @@ public readonly struct ValidationContext
     {
         bool usingStack = (this.usingFeatures & UsingFeatures.Stack) != 0;
         return new ValidationContext(this.evaluatedItems, this.evaluatedProperties, this.evaluatedExtensions, usingStack ? this.locationStack : RootLocationStack, this.Results, this.usingFeatures | UsingFeatures.Stack);
+    }
+
+    /// <summary>
+    /// Force using the keyword stack.
+    /// </summary>
+    /// <returns>The validation context enabled with the keyword stack.</returns>
+    /// <remarks>This will reset any existing stack using the root location stack.</remarks>
+    public ValidationContext ForceUsingStack()
+    {
+        return new ValidationContext(this.evaluatedItems, this.evaluatedProperties, this.evaluatedExtensions, RootLocationStack, this.Results, this.usingFeatures | UsingFeatures.Stack);
     }
 
     /// <summary>
@@ -323,7 +351,8 @@ public readonly struct ValidationContext
             return this;
         }
 
-        return new ValidationContext(this.evaluatedItems, this.evaluatedProperties, this.evaluatedExtensions, this.locationStack.Push((this.locationStack.Peek().ValidationLocation, new JsonReference(schemaLocation), this.locationStack.Peek().DocumentLocation)), this.Results, this.usingFeatures);
+        (JsonReference validationLocation, _, JsonReference documentLocation) = this.locationStack.Peek();
+        return new ValidationContext(this.evaluatedItems, this.evaluatedProperties, this.evaluatedExtensions, this.locationStack.Push((validationLocation, new JsonReference(schemaLocation), documentLocation)), this.Results, this.usingFeatures);
     }
 
     /// <summary>
@@ -340,7 +369,14 @@ public readonly struct ValidationContext
         }
 
         // We push both the document property, and the fact that we are validating a "properties" value.
-        return new ValidationContext(this.evaluatedItems, this.evaluatedProperties, this.evaluatedExtensions, this.locationStack.Push((this.locationStack.Peek().ValidationLocation.AppendUnencodedPropertyNameToFragment(propertiesMapName).AppendUnencodedPropertyNameToFragment(propertyName), this.locationStack.Peek().SchemaLocation.AppendUnencodedPropertyNameToFragment(propertiesMapName).AppendUnencodedPropertyNameToFragment(propertyName), this.locationStack.Peek().DocumentLocation.AppendUnencodedPropertyNameToFragment(propertyName))), this.Results, this.usingFeatures);
+        (JsonReference validationLocation, JsonReference schemaLocation, JsonReference documentLocation) = this.locationStack.Peek();
+        int length = propertiesMapName.Length + propertyName.Length + 1;
+        Span<char> buffer = stackalloc char[length];
+        propertiesMapName.AsSpan().CopyTo(buffer);
+        buffer[propertiesMapName.Length] = '/';
+        propertyName.AsSpan().CopyTo(buffer[(propertiesMapName.Length + 1)..]);
+
+        return new ValidationContext(this.evaluatedItems, this.evaluatedProperties, this.evaluatedExtensions, this.locationStack.Push((validationLocation.AppendUnencodedPropertyNameToFragment(buffer[..length]), schemaLocation.AppendUnencodedPropertyNameToFragment(buffer[..length]), documentLocation.AppendUnencodedPropertyNameToFragment(propertyName))), this.Results, this.usingFeatures);
     }
 
     /// <summary>
@@ -355,7 +391,8 @@ public readonly struct ValidationContext
             return this;
         }
 
-        return new ValidationContext(this.evaluatedItems, this.evaluatedProperties, this.evaluatedExtensions, this.locationStack.Push((this.locationStack.Peek().ValidationLocation, this.locationStack.Peek().SchemaLocation, this.locationStack.Peek().DocumentLocation.AppendArrayIndexToFragment(arrayIndex))), this.Results, this.usingFeatures);
+        (JsonReference validationLocation, JsonReference schemaLocation, JsonReference documentLocation) = this.locationStack.Peek();
+        return new ValidationContext(this.evaluatedItems, this.evaluatedProperties, this.evaluatedExtensions, this.locationStack.Push((validationLocation, schemaLocation, documentLocation.AppendArrayIndexToFragment(arrayIndex))), this.Results, this.usingFeatures);
     }
 
     /// <summary>
@@ -370,7 +407,8 @@ public readonly struct ValidationContext
             return this;
         }
 
-        return new ValidationContext(this.evaluatedItems, this.evaluatedProperties, this.evaluatedExtensions, this.locationStack.Push((this.locationStack.Peek().ValidationLocation.AppendUnencodedPropertyNameToFragment(propertyName), this.locationStack.Peek().SchemaLocation.AppendUnencodedPropertyNameToFragment(propertyName), this.locationStack.Peek().DocumentLocation)), this.Results, this.usingFeatures);
+        (JsonReference validationLocation, JsonReference schemaLocation, JsonReference documentLocation) = this.locationStack.Peek();
+        return new ValidationContext(this.evaluatedItems, this.evaluatedProperties, this.evaluatedExtensions, this.locationStack.Push((validationLocation.AppendUnencodedPropertyNameToFragment(propertyName), schemaLocation.AppendUnencodedPropertyNameToFragment(propertyName), documentLocation)), this.Results, this.usingFeatures);
     }
 
     /// <summary>
@@ -385,7 +423,8 @@ public readonly struct ValidationContext
             return this;
         }
 
-        return new ValidationContext(this.evaluatedItems, this.evaluatedProperties, this.evaluatedExtensions, this.locationStack.Push((this.locationStack.Peek().ValidationLocation.AppendFragment(reducedPathModifier), this.locationStack.Peek().SchemaLocation.AppendFragment(reducedPathModifier), this.locationStack.Peek().DocumentLocation)), this.Results, this.usingFeatures);
+        (JsonReference validationLocation, JsonReference schemaLocation, JsonReference documentLocation) = this.locationStack.Peek();
+        return new ValidationContext(this.evaluatedItems, this.evaluatedProperties, this.evaluatedExtensions, this.locationStack.Push((validationLocation.AppendFragment(reducedPathModifier), schemaLocation.AppendFragment(reducedPathModifier), documentLocation)), this.Results, this.usingFeatures);
     }
 
     /// <summary>
@@ -401,7 +440,8 @@ public readonly struct ValidationContext
             return this;
         }
 
-        return new ValidationContext(this.evaluatedItems, this.evaluatedProperties, this.evaluatedExtensions, this.locationStack.Push((this.locationStack.Peek().ValidationLocation.AppendFragment(reducedPathModifier), this.locationStack.Peek().SchemaLocation.AppendFragment(reducedPathModifier), this.locationStack.Peek().DocumentLocation.AppendUnencodedPropertyNameToFragment(propertyName))), this.Results, this.usingFeatures);
+        (JsonReference validationLocation, JsonReference schemaLocation, JsonReference documentLocation) = this.locationStack.Peek();
+        return new ValidationContext(this.evaluatedItems, this.evaluatedProperties, this.evaluatedExtensions, this.locationStack.Push((validationLocation.AppendFragment(reducedPathModifier), schemaLocation.AppendFragment(reducedPathModifier), documentLocation.AppendUnencodedPropertyNameToFragment(propertyName))), this.Results, this.usingFeatures);
     }
 
     /// <summary>
@@ -416,7 +456,8 @@ public readonly struct ValidationContext
             return this;
         }
 
-        return new ValidationContext(this.evaluatedItems, this.evaluatedProperties, this.evaluatedExtensions, this.locationStack.Push((this.locationStack.Peek().ValidationLocation.AppendArrayIndexToFragment(arrayIndex), this.locationStack.Peek().SchemaLocation.AppendArrayIndexToFragment(arrayIndex), this.locationStack.Peek().DocumentLocation)), this.Results, this.usingFeatures);
+        (JsonReference validationLocation, JsonReference schemaLocation, JsonReference documentLocation) = this.locationStack.Peek();
+        return new ValidationContext(this.evaluatedItems, this.evaluatedProperties, this.evaluatedExtensions, this.locationStack.Push((validationLocation.AppendArrayIndexToFragment(arrayIndex), schemaLocation.AppendArrayIndexToFragment(arrayIndex), documentLocation)), this.Results, this.usingFeatures);
     }
 
     /// <summary>
@@ -439,11 +480,6 @@ public readonly struct ValidationContext
     /// <returns>A new (valid) validation context with no evaluated items or properties, at the current location.</returns>
     public ValidationContext CreateChildContext()
     {
-        if ((this.usingFeatures & ~UsingFeatures.IsValid) == 0)
-        {
-            return ValidContext;
-        }
-
         return new ValidationContext(0, 0, null, this.locationStack, ImmutableList<ValidationResult>.Empty, this.usingFeatures | UsingFeatures.IsValid);
     }
 

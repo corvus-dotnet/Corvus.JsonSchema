@@ -23,14 +23,18 @@ public readonly partial struct JsonInt16
     public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
     {
         ValidationContext result = validationContext;
-        if (level > ValidationLevel.Flag)
+        if (level > ValidationLevel.Flag && !result.IsUsingResults)
         {
             result = result.UsingResults();
         }
 
         if (level > ValidationLevel.Basic)
         {
-            result = result.UsingStack();
+            if (!result.IsUsingStack)
+            {
+                result = result.ForceUsingStack();
+            }
+
             result = result.PushSchemaLocation("corvus:/JsonInt16");
         }
         result =  Corvus.Json.Validate.TypeInt16(this, result, level, null, null);

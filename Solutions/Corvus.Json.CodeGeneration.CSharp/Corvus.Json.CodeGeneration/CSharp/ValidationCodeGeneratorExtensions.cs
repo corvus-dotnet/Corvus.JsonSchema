@@ -201,10 +201,15 @@ public static partial class ValidationCodeGeneratorExtensions
         if (typeDeclaration.RequiresItemsEvaluationTracking())
         {
             generator
-                .AppendIndent(generator.ResultIdentifierName())
-                .Append(" = ")
-                .Append(generator.ResultIdentifierName())
-                .AppendLine(".UsingEvaluatedItems();");
+                .AppendLineIndent("if (!", generator.ResultIdentifierName(), ".IsUsingEvaluatedItems)")
+                .AppendLineIndent("{")
+                .PushIndent()
+                    .AppendIndent(generator.ResultIdentifierName())
+                    .Append(" = ")
+                    .Append(generator.ResultIdentifierName())
+                    .AppendLine(".UsingEvaluatedItems();")
+                .PopIndent()
+                .AppendLineIndent("}");
         }
 
         return generator;
@@ -226,10 +231,15 @@ public static partial class ValidationCodeGeneratorExtensions
         if (typeDeclaration.RequiresPropertyEvaluationTracking())
         {
             generator
-                .AppendIndent(generator.ResultIdentifierName())
-                .Append(" = ")
-                .Append(generator.ResultIdentifierName())
-                .AppendLine(".UsingEvaluatedProperties();");
+                .AppendLineIndent("if (!", generator.ResultIdentifierName(), ".IsUsingEvaluatedProperties)")
+                .AppendLineIndent("{")
+                .PushIndent()
+                    .AppendIndent(generator.ResultIdentifierName())
+                    .Append(" = ")
+                    .Append(generator.ResultIdentifierName())
+                    .AppendLine(".UsingEvaluatedProperties();")
+                .PopIndent()
+                .AppendLineIndent("}");
         }
 
         return generator;
@@ -555,14 +565,18 @@ public static partial class ValidationCodeGeneratorExtensions
                 .AppendBlockIndent(
                     """
                     ValidationContext result = validationContext;
-                    if (level > ValidationLevel.Flag)
+                    if (level > ValidationLevel.Flag && !result.IsUsingResults)
                     {
                         result = result.UsingResults();
                     }
                             
                     if (level > ValidationLevel.Basic)
                     {
-                        result = result.UsingStack();
+                        if (!result.IsUsingStack)
+                        {
+                            result = result.ForceUsingStack();
+                        }
+
                     """)
                 .PushIndent()
                     .AppendLineIndent("result = result.PushSchemaLocation(\"corvus:/", SymbolDisplay.FormatLiteral(typeDeclaration.RelativeSchemaLocation, false)[HashSlashDollarDefsSlashLength..], "\");")
@@ -643,14 +657,18 @@ public static partial class ValidationCodeGeneratorExtensions
                 .AppendBlockIndent(
                     $$"""
                     ValidationContext result = validationContext;
-                    if (level > ValidationLevel.Flag)
+                    if (level > ValidationLevel.Flag && !result.IsUsingResults)
                     {
                         result = result.UsingResults();
                     }
         
                     if (level > ValidationLevel.Basic)
                     {
-                        result = result.UsingStack();
+                        if (!result.IsUsingStack)
+                        {
+                            result = result.UsingStack();
+                        }
+
                         result = result.PushSchemaLocation({{SymbolDisplay.FormatLiteral(typeDeclaration.RelativeSchemaLocation, true)}});
                     }
                     """)

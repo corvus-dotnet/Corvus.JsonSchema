@@ -31,8 +31,7 @@
                 "height": {
                     "$ref": "#/%24defs/HeightRangeDouble"
                 }
-            },
-            "unevaluatedProperties": false
+            }
         },
         "HeightRangeDouble": {
             "type": "number",

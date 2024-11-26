@@ -320,6 +320,16 @@ public readonly struct JsonReference
     /// <returns>A JSON reference with the encoded fragment appended.</returns>
     public JsonReference AppendUnencodedPropertyNameToFragment(string unencodedPropertyName)
     {
+        return this.AppendUnencodedPropertyNameToFragment(unencodedPropertyName.AsSpan());
+    }
+
+    /// <summary>
+    /// Append an unencoded JSON property name to the fragment in the reference.
+    /// </summary>
+    /// <param name="unencodedPropertyName">The name to append.</param>
+    /// <returns>A JSON reference with the encoded fragment appended.</returns>
+    public JsonReference AppendUnencodedPropertyNameToFragment(ReadOnlySpan<char> unencodedPropertyName)
+    {
         int? hi = FindHash(this.reference.Span);
         int requiredLength = this.reference.Length + (unencodedPropertyName.Length * 2) + 1;
         bool hasHash = hi is not null;
@@ -342,7 +352,7 @@ public readonly struct JsonReference
         int copiedByteCount = writeIndex;
 
         Span<char> target = encodedValue[writeIndex..];
-        int writtenBytes = JsonPointerUtilities.EncodePointer(unencodedPropertyName.AsSpan(), ref target);
+        int writtenBytes = JsonPointerUtilities.EncodePointer(unencodedPropertyName, ref target);
         int totalWritten = copiedByteCount + writtenBytes;
         var output = new Memory<char>(new char[totalWritten]);
         encodedValue[..totalWritten].CopyTo(output.Span);

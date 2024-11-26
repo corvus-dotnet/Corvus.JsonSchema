@@ -23,14 +23,18 @@ public readonly partial struct JsonUri
     public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
     {
         ValidationContext result = validationContext;
-        if (level > ValidationLevel.Flag)
+        if (level > ValidationLevel.Flag && !result.IsUsingResults)
         {
             result = result.UsingResults();
         }
 
         if (level > ValidationLevel.Basic)
         {
-            result = result.UsingStack();
+            if (!result.IsUsingStack)
+            {
+                result = result.ForceUsingStack();
+            }
+
             result = result.PushSchemaLocation("corvus:/JsonUri");
         }
         result =  Corvus.Json.Validate.TypeUri(this, result, level, null, null);

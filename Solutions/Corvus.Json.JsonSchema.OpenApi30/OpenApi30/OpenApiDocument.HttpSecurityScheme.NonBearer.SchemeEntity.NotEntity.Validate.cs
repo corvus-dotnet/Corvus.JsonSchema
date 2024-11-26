@@ -55,14 +55,18 @@ public readonly partial struct OpenApiDocument
                     public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
                     {
                         ValidationContext result = validationContext;
-                        if (level > ValidationLevel.Flag)
+                        if (level > ValidationLevel.Flag && !result.IsUsingResults)
                         {
                             result = result.UsingResults();
                         }
 
                         if (level > ValidationLevel.Basic)
                         {
-                            result = result.UsingStack();
+                            if (!result.IsUsingStack)
+                            {
+                                result = result.UsingStack();
+                            }
+
                             result = result.PushSchemaLocation("https://spec.openapis.org/oas/3.0/schema/2021-09-28#/definitions/HTTPSecurityScheme/oneOf/1/properties/scheme/not");
                         }
 
