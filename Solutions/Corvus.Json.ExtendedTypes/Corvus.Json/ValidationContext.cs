@@ -305,6 +305,30 @@ public readonly struct ValidationContext
     }
 
     /// <summary>
+    /// Adds a result to the validation context.
+    /// </summary>
+    /// <param name="isValid">Whether the result is valid.</param>
+    /// <param name="validationLocationReducedPathModifier">The validation location reduced path modifier.</param>
+    /// <param name="message">The validation message.</param>
+    /// <returns>The updated validation context.</returns>
+    public ValidationContext WithResult(bool isValid, JsonReference validationLocationReducedPathModifier, string? message = null)
+    {
+        if ((this.usingFeatures & UsingFeatures.Results) == 0)
+        {
+            return new ValidationContext(this.evaluatedItems, this.evaluatedProperties, this.evaluatedExtensions, this.locationStack, this.Results, isValid ? this.usingFeatures : this.usingFeatures & ~UsingFeatures.IsValid);
+        }
+
+        if ((this.usingFeatures & UsingFeatures.Stack) == 0)
+        {
+            return new ValidationContext(this.evaluatedItems, this.evaluatedProperties, this.evaluatedExtensions, this.locationStack, this.Results.Add(new ValidationResult(isValid, message ?? string.Empty, null)), isValid ? this.usingFeatures : this.usingFeatures & ~UsingFeatures.IsValid);
+        }
+
+        (JsonReference ValidationLocation, JsonReference SchemaLocation, JsonReference DocumentLocation) location = this.locationStack.Peek();
+        (JsonReference, JsonReference, JsonReference DocumentLocation) newLocation = (location.ValidationLocation.AppendFragment(validationLocationReducedPathModifier), location.SchemaLocation.AppendFragment(validationLocationReducedPathModifier), location.DocumentLocation);
+        return new ValidationContext(this.evaluatedItems, this.evaluatedProperties, this.evaluatedExtensions, this.locationStack, this.Results.Add(new ValidationResult(isValid, message ?? string.Empty, newLocation)), isValid ? this.usingFeatures : this.usingFeatures & ~UsingFeatures.IsValid);
+    }
+
+    /// <summary>
     /// Adds an item index to the evaluated items array.
     /// </summary>
     /// <param name="index">The index to add.</param>

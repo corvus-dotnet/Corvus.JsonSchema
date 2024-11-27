@@ -144,6 +144,7 @@ public static class PublicCodeGeneratorExtensions
     /// <param name="reasonText">The reason for ignoring the keyword.</param>
     /// <param name="useInterpolatedString">If <see langword="true"/>, then the message string will be an interpolated string.</param>
     /// <param name="withKeyword">If <see langword="true"/>, then the keyword will be passed to the call to <c>WithResult()</c>.</param>
+    /// <param name="reducedPathModifier">The reduced path modifier to add to the result. Incompatible with <paramref name="withKeyword"/> <see langword="true"/>.</param>
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendKeywordValidationResult(
         this CodeGenerator generator,
@@ -152,7 +153,8 @@ public static class PublicCodeGeneratorExtensions
         string validationContextIdentifier,
         string reasonText,
         bool useInterpolatedString = false,
-        bool withKeyword = false)
+        bool withKeyword = false,
+        string? reducedPathModifier = null)
     {
         if (generator.IsCancellationRequested)
         {
@@ -166,6 +168,15 @@ public static class PublicCodeGeneratorExtensions
             .Append(".WithResult(isValid: ")
             .Append(isValid ? "true" : "false")
             .Append(", ");
+
+        if (reducedPathModifier is string rpm)
+        {
+            Debug.Assert(!withKeyword, "You cannot use the reduced path modifier and the keyword");
+            generator
+                .Append("validationLocationReducedPathModifier: new JsonReference(")
+                .Append(SymbolDisplay.FormatLiteral(keyword.Keyword, true))
+                .Append("), ");
+        }
 
         if (useInterpolatedString)
         {
@@ -191,6 +202,7 @@ public static class PublicCodeGeneratorExtensions
     /// <param name="appendReasonText">An function which will append the validation reason to the (optionally interpolated) string for the keyword.</param>
     /// <param name="useInterpolatedString">If <see langword="true"/>, then the message string will be an interpolated string.</param>
     /// <param name="withKeyword">If <see langword="true"/>, then the keyword will be passed to the call to <c>WithResult()</c>.</param>
+    /// <param name="reducedPathModifier">The reduced path modifier to add to the result. Incompatible with <paramref name="withKeyword"/> <see langword="true"/>.</param>
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendKeywordValidationResult(
         this CodeGenerator generator,
@@ -199,7 +211,8 @@ public static class PublicCodeGeneratorExtensions
         string validationContextIdentifier,
         Action<CodeGenerator> appendReasonText,
         bool useInterpolatedString = false,
-        bool withKeyword = false)
+        bool withKeyword = false,
+        string? reducedPathModifier = null)
     {
         if (generator.IsCancellationRequested)
         {
@@ -213,6 +226,15 @@ public static class PublicCodeGeneratorExtensions
             .Append(".WithResult(isValid: ")
             .Append(isValid ? "true" : "false")
             .Append(", ");
+
+        if (reducedPathModifier is string rpm)
+        {
+            Debug.Assert(!withKeyword, "You cannot use the reduced path modifier and the keyword");
+            generator
+                .Append("validationLocationReducedPathModifier: new JsonReference(")
+                .Append(SymbolDisplay.FormatLiteral(keyword.Keyword, true))
+                .Append("), ");
+        }
 
         if (useInterpolatedString)
         {
