@@ -285,13 +285,13 @@ public readonly partial struct OpenApiDocument
                         }
                         else
                         {
-                            if (level >= ValidationLevel.Basic)
+                            if (level == ValidationLevel.Flag)
                             {
-                                result = result.WithResult(isValid: false, "Validation enum - did not validate against the enumeration.", "enum");
+                                result = result.WithResult(isValid: false);
                             }
                             else
                             {
-                                result = result.WithResult(isValid: false);
+                                result = result.WithResult(isValid: false, "Validation enum - did not validate against the enumeration.", "enum");
                             }
                         }
 

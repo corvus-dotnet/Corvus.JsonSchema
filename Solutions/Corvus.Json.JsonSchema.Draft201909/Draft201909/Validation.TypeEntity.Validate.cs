@@ -146,13 +146,13 @@ public readonly partial struct Validation
                 }
                 else
                 {
-                    if (level >= ValidationLevel.Basic)
+                    if (level == ValidationLevel.Flag)
                     {
-                        result = result.WithResult(isValid: false, "Validation anyOf - did not validate against the schema.", "anyOf");
+                        result = result.WithResult(isValid: false);
                     }
                     else
                     {
-                        result = result.WithResult(isValid: false);
+                        result = result.WithResult(isValid: false, "Validation anyOf - did not validate against the schema.", "anyOf");
                     }
                 }
 
