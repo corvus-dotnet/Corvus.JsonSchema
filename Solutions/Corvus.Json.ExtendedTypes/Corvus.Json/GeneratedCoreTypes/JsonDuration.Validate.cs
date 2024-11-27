@@ -23,26 +23,7 @@ public readonly partial struct JsonDuration
     public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
     {
         ValidationContext result = validationContext;
-        if (level > ValidationLevel.Flag && !result.IsUsingResults)
-        {
-            result = result.UsingResults();
-        }
-
-        if (level > ValidationLevel.Basic)
-        {
-            if (!result.IsUsingStack)
-            {
-                result = result.ForceUsingStack();
-            }
-
-            result = result.PushSchemaLocation("corvus:/JsonDuration");
-        }
         result =  Corvus.Json.Validate.TypeDuration(this, result, level, null, null);
-        if (level > ValidationLevel.Basic)
-        {
-            result = result.PopLocation();
-        }
-
         return result;
     }
 }

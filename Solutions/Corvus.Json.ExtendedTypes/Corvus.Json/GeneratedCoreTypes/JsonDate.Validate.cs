@@ -23,26 +23,7 @@ public readonly partial struct JsonDate
     public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
     {
         ValidationContext result = validationContext;
-        if (level > ValidationLevel.Flag && !result.IsUsingResults)
-        {
-            result = result.UsingResults();
-        }
-
-        if (level > ValidationLevel.Basic)
-        {
-            if (!result.IsUsingStack)
-            {
-                result = result.ForceUsingStack();
-            }
-
-            result = result.PushSchemaLocation("corvus:/JsonDate");
-        }
         result =  Corvus.Json.Validate.TypeDate(this, result, level, null, null);
-        if (level > ValidationLevel.Basic)
-        {
-            result = result.PopLocation();
-        }
-
         return result;
     }
 }

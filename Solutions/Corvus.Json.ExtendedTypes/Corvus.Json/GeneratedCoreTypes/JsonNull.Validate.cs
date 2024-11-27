@@ -23,26 +23,7 @@ public readonly partial struct JsonNull
     public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
     {
         ValidationContext result = validationContext;
-        if (level > ValidationLevel.Flag && !result.IsUsingResults)
-        {
-            result = result.UsingResults();
-        }
-
-        if (level > ValidationLevel.Basic)
-        {
-            if (!result.IsUsingStack)
-            {
-                result = result.ForceUsingStack();
-            }
-
-            result = result.PushSchemaLocation("corvus:/JsonNull");
-        }
         result = Json.Validate.TypeNull(this.ValueKind, result, level, null);
-        if (level > ValidationLevel.Basic)
-        {
-            result = result.PopLocation();
-        }
-
         return result;
     }
 }
