@@ -133,42 +133,27 @@ public readonly partial struct OpenApiDocument
                         {
                             ValidationContext result = validationContext;
 
-                            if (level > ValidationLevel.Basic)
-                            {
-                                result = result.PushValidationLocationReducedPathModifier(new("#/const"));
-                            }
-
                             if (value.Equals(CorvusValidation.Const))
                             {
                                 if (level == ValidationLevel.Verbose)
                                 {
-                                    result = result.WithResult(isValid: true, $"Validation const - the value '{value}' matched '\"simple\'.");
-                                }
-
-                                if (level > ValidationLevel.Basic)
-                                {
-                                    result = result.PopLocation();
+                                    result = result.WithResult(isValid: true, validationLocationReducedPathModifier: new JsonReference("const"), $"Validation const - the value '{value}' matched '\"simple\'.");
                                 }
 
                                 return result;
                             }
 
-                            if (level >= ValidationLevel.Detailed)
-                            {
-                                result = result.WithResult(isValid: false, $"Validation const - the value '{value}' did not match '\"simple\'.");
-                            }
-                            else if (level == ValidationLevel.Basic)
-                            {
-                                result = result.WithResult(isValid: false, "Validation const - the value did not match '\"simple\'.");
-                            }
-                            else
+                            if (level == ValidationLevel.Flag)
                             {
                                 return ValidationContext.InvalidContext;
                             }
-
-                            if (level > ValidationLevel.Basic)
+                            else if (level >= ValidationLevel.Detailed)
                             {
-                                result = result.PopLocation();
+                                result = result.WithResult(isValid: false, validationLocationReducedPathModifier: new JsonReference("const"), $"Validation const - the value '{value}' did not match '\"simple\'.");
+                            }
+                            else
+                            {
+                                result = result.WithResult(isValid: false, validationLocationReducedPathModifier: new JsonReference("const"), "Validation const - the value did not match '\"simple\'.");
                             }
 
                             return result;

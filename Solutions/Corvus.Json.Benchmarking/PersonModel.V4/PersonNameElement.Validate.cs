@@ -141,18 +141,18 @@ public readonly partial struct PersonNameElement
                 }
                 else
                 {
-                    if (context.Level >= ValidationLevel.Detailed)
-                    {
-                        result = result.WithResult(isValid: false, validationLocationReducedPathModifier: new JsonReference("maxLength"), $"Validation maxLength - {input.ToString()} of {length} is greater than {MaxLength}");
-                    }
-                    else if (context.Level >= ValidationLevel.Basic)
-                    {
-                        result = result.WithResult(isValid: false, validationLocationReducedPathModifier: new JsonReference("maxLength"), "Validation maxLength - is greater than the required length.");
-                    }
-                    else
+                    if (context.Level == ValidationLevel.Flag)
                     {
                         result = context.Context.WithResult(isValid: false);
                         return true;
+                    }
+                    else if (context.Level >= ValidationLevel.Detailed)
+                    {
+                        result = result.WithResult(isValid: false, validationLocationReducedPathModifier: new JsonReference("maxLength"), $"Validation maxLength - {input.ToString()} of {length} is greater than {MaxLength}");
+                    }
+                    else
+                    {
+                        result = result.WithResult(isValid: false, validationLocationReducedPathModifier: new JsonReference("maxLength"), "Validation maxLength - is greater than the required length.");
                     }
                 }
 
@@ -165,18 +165,18 @@ public readonly partial struct PersonNameElement
                 }
                 else
                 {
-                    if (context.Level >= ValidationLevel.Detailed)
-                    {
-                        result = result.WithResult(isValid: false, validationLocationReducedPathModifier: new JsonReference("minLength"), $"Validation minLength - {input.ToString()} of {length} is less than {MinLength}");
-                    }
-                    else if (context.Level >= ValidationLevel.Basic)
-                    {
-                        result = result.WithResult(isValid: false, validationLocationReducedPathModifier: new JsonReference("minLength"), "Validation minLength - is less than the required length.");
-                    }
-                    else
+                    if (context.Level == ValidationLevel.Flag)
                     {
                         result = context.Context.WithResult(isValid: false);
                         return true;
+                    }
+                    else if (context.Level >= ValidationLevel.Detailed)
+                    {
+                        result = result.WithResult(isValid: false, validationLocationReducedPathModifier: new JsonReference("minLength"), $"Validation minLength - {input.ToString()} of {length} is less than {MinLength}");
+                    }
+                    else
+                    {
+                        result = result.WithResult(isValid: false, validationLocationReducedPathModifier: new JsonReference("minLength"), "Validation minLength - is less than the required length.");
                     }
                 }
 

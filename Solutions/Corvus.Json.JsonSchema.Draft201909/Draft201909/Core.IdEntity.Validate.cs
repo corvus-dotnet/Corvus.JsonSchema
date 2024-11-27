@@ -170,38 +170,28 @@ public readonly partial struct Core
                 {
                     result = context.Context;
 
-                    if (context.Level > ValidationLevel.Basic)
-                    {
-                        result = result.PushValidationLocationReducedPathModifier(new("#/pattern"));
-                    }
-
                     if (Pattern.IsMatch(input))
                     {
                         if (context.Level == ValidationLevel.Verbose)
                         {
-                            result = result.WithResult(isValid: true, $"Validation pattern - {input.ToString()} matched '^[^#]*#?$'");
+                            result = result.WithResult(isValid: true, validationLocationReducedPathModifier: new JsonReference("pattern"), $"Validation pattern - {input.ToString()} matched '^[^#]*#?$'");
                         }
                     }
                     else
                     {
-                        if (context.Level >= ValidationLevel.Detailed)
-                        {
-                            result = result.WithResult(isValid: false, $"Validation pattern - {input.ToString()} did not match '^[^#]*#?$'");
-                        }
-                        else if (context.Level >= ValidationLevel.Basic)
-                        {
-                            result = result.WithResult(isValid: false, "Validation pattern - The value did not match '^[^#]*#?$'");
-                        }
-                        else
+                        if (context.Level == ValidationLevel.Flag)
                         {
                             result = context.Context.WithResult(isValid: false);
                             return true;
                         }
-                    }
-
-                    if (context.Level > ValidationLevel.Basic)
-                    {
-                        result = result.PopLocation();
+                        else if (context.Level >= ValidationLevel.Detailed)
+                        {
+                            result = result.WithResult(isValid: false, validationLocationReducedPathModifier: new JsonReference("pattern"), $"Validation pattern - {input.ToString()} did not match '^[^#]*#?$'");
+                        }
+                        else
+                        {
+                            result = result.WithResult(isValid: false, validationLocationReducedPathModifier: new JsonReference("pattern"), "Validation pattern - The value did not match '^[^#]*#?$'");
+                        }
                     }
 
                     return true;
