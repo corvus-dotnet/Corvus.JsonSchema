@@ -6,7 +6,6 @@ using System.Collections.Immutable;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using BenchmarkDotNet.Attributes;
-using Microsoft.VSDiagnostics;
 using CorvusValidator = global::Corvus.Json.Validator;
 using JsonEverything = global::Json.Schema;
 
@@ -16,7 +15,6 @@ namespace Corvus.Json.Benchmarking;
 /// Construct elements from a JSON element.
 /// </summary>
 [MemoryDiagnoser]
-[CPUUsageDiagnoser]
 public class ValidateLargeDocument
 {
     private const string JsonText =
