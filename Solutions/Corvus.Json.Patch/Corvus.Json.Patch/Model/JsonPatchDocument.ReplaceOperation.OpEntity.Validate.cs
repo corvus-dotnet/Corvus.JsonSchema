@@ -44,14 +44,18 @@ public readonly partial struct JsonPatchDocument
             public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
             {
                 ValidationContext result = validationContext;
-                if (level > ValidationLevel.Flag)
+                if (level > ValidationLevel.Flag && !result.IsUsingResults)
                 {
                     result = result.UsingResults();
                 }
 
                 if (level > ValidationLevel.Basic)
                 {
-                    result = result.UsingStack();
+                    if (!result.IsUsingStack)
+                    {
+                        result = result.UsingStack();
+                    }
+
                     result = result.PushSchemaLocation("#/$defs/ReplaceOperation/properties/op");
                 }
 
@@ -114,42 +118,27 @@ public readonly partial struct JsonPatchDocument
                     {
                         ValidationContext result = validationContext;
 
-                        if (level > ValidationLevel.Basic)
-                        {
-                            result = result.PushValidationLocationReducedPathModifier(new("#/const"));
-                        }
-
                         if (value.Equals(CorvusValidation.Const))
                         {
                             if (level == ValidationLevel.Verbose)
                             {
-                                result = result.WithResult(isValid: true, $"Validation const - the value '{value}' matched '\"replace\'.");
-                            }
-
-                            if (level > ValidationLevel.Basic)
-                            {
-                                result = result.PopLocation();
+                                result = result.WithResult(isValid: true, validationLocationReducedPathModifier: new JsonReference("const"), $"Validation const - the value '{value}' matched '\"replace\'.");
                             }
 
                             return result;
                         }
 
-                        if (level >= ValidationLevel.Detailed)
-                        {
-                            result = result.WithResult(isValid: false, $"Validation const - the value '{value}' did not match '\"replace\'.");
-                        }
-                        else if (level == ValidationLevel.Basic)
-                        {
-                            result = result.WithResult(isValid: false, "Validation const - the value did not match '\"replace\'.");
-                        }
-                        else
+                        if (level == ValidationLevel.Flag)
                         {
                             return ValidationContext.InvalidContext;
                         }
-
-                        if (level > ValidationLevel.Basic)
+                        else if (level >= ValidationLevel.Detailed)
                         {
-                            result = result.PopLocation();
+                            result = result.WithResult(isValid: false, validationLocationReducedPathModifier: new JsonReference("const"), $"Validation const - the value '{value}' did not match '\"replace\'.");
+                        }
+                        else
+                        {
+                            result = result.WithResult(isValid: false, validationLocationReducedPathModifier: new JsonReference("const"), "Validation const - the value did not match '\"replace\'.");
                         }
 
                         return result;

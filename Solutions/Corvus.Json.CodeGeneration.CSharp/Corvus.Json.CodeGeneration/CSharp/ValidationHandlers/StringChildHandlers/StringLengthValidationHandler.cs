@@ -33,7 +33,8 @@ public class StringLengthValidationHandler : IChildValidationHandler
             return generator;
         }
 
-        foreach (IStringLengthConstantValidationKeyword keyword in typeDeclaration.Keywords().OfType<IStringLengthConstantValidationKeyword>())
+        var keywords = typeDeclaration.Keywords().OfType<IStringLengthConstantValidationKeyword>().ToList();
+        foreach (IStringLengthConstantValidationKeyword keyword in keywords)
         {
             if (generator.IsCancellationRequested)
             {
@@ -47,18 +48,9 @@ public class StringLengthValidationHandler : IChildValidationHandler
 
             // Gets the field name for the validation constant.
             string memberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword);
+            string quotedReducedPathModifier = SymbolDisplay.FormatLiteral(keyword.GetPathModifier(), true);
 
             generator
-                .AppendSeparatorLine()
-                .AppendLineIndent("if (context.Level > ValidationLevel.Basic)")
-                .AppendLineIndent("{")
-                .PushIndent()
-                    .AppendLineIndent(
-                        "result = result.PushValidationLocationReducedPathModifier(new(",
-                        SymbolDisplay.FormatLiteral(keyword.GetPathModifier(), true),
-                        "));")
-                .PopIndent()
-                .AppendLineIndent("}")
                 .AppendSeparatorLine()
                 .AppendIndent("if (length ")
                 .AppendOperator(op)
@@ -70,7 +62,7 @@ public class StringLengthValidationHandler : IChildValidationHandler
                     .AppendLineIndent("if (context.Level == ValidationLevel.Verbose)")
                     .AppendLineIndent("{")
                     .PushIndent()
-                        .AppendKeywordValidationResult(isValid: true, keyword, "result", g => GetValidMessage(g, op, memberName), useInterpolatedString: true)
+                        .AppendKeywordValidationResult(isValid: true, keyword, "result", g => GetValidMessage(g, op, memberName), useInterpolatedString: true, reducedPathModifier: quotedReducedPathModifier)
                     .PopIndent()
                     .AppendLineIndent("}")
                 .PopIndent()
@@ -78,35 +70,27 @@ public class StringLengthValidationHandler : IChildValidationHandler
                 .AppendLineIndent("else")
                 .AppendLineIndent("{")
                 .PushIndent()
-                    .AppendLineIndent("if (context.Level >= ValidationLevel.Detailed)")
-                    .AppendLineIndent("{")
-                    .PushIndent()
-                        .AppendKeywordValidationResult(isValid: false, keyword, "result", g => GetInvalidMessage(g, op, memberName), useInterpolatedString: true)
-                    .PopIndent()
-                    .AppendLineIndent("}")
-                    .AppendLineIndent("else if (context.Level >= ValidationLevel.Basic)")
-                    .AppendLineIndent("{")
-                    .PushIndent()
-                        .AppendKeywordValidationResult(isValid: false, keyword, "result", g => GetSimplifiedInvalidMessage(g, op), useInterpolatedString: false)
-                    .PopIndent()
-                    .AppendLineIndent("}")
-                    .AppendLineIndent("else")
+                    .AppendLineIndent("if (context.Level == ValidationLevel.Flag)")
                     .AppendLineIndent("{")
                     .PushIndent()
                         .AppendLineIndent("result = context.Context.WithResult(isValid: false);")
                         .AppendLineIndent("return true;")
                     .PopIndent()
                     .AppendLineIndent("}")
+                    .AppendLineIndent("else if (context.Level >= ValidationLevel.Detailed)")
+                    .AppendLineIndent("{")
+                    .PushIndent()
+                        .AppendKeywordValidationResult(isValid: false, keyword, "result", g => GetInvalidMessage(g, op, memberName), useInterpolatedString: true, reducedPathModifier: quotedReducedPathModifier)
+                    .PopIndent()
+                    .AppendLineIndent("}")
+                    .AppendLineIndent("else")
+                    .AppendLineIndent("{")
+                    .PushIndent()
+                        .AppendKeywordValidationResult(isValid: false, keyword, "result", g => GetSimplifiedInvalidMessage(g, op), useInterpolatedString: false, reducedPathModifier: quotedReducedPathModifier)
+                    .PopIndent()
+                    .AppendLineIndent("}")
                 .PopIndent()
-                .AppendLineIndent("}")
-                .AppendSeparatorLine()
-                .AppendLineIndent("if (context.Level > ValidationLevel.Basic)")
-                .AppendLineIndent("{")
-                .PushIndent()
-                    .AppendLineIndent("result = result.PopLocation();")
-                .PopIndent()
-                .AppendLineIndent("}")
-;
+                .AppendLineIndent("}");
         }
 
         return generator;

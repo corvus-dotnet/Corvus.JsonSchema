@@ -35,14 +35,18 @@ public readonly partial struct OpenApiDocument
         public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
         {
             ValidationContext result = validationContext;
-            if (level > ValidationLevel.Flag)
+            if (level > ValidationLevel.Flag && !result.IsUsingResults)
             {
                 result = result.UsingResults();
             }
 
             if (level > ValidationLevel.Basic)
             {
-                result = result.UsingStack();
+                if (!result.IsUsingStack)
+                {
+                    result = result.UsingStack();
+                }
+
                 result = result.PushSchemaLocation("https://spec.openapis.org/oas/3.1/schema/2022-10-07#/$defs/specification-extensions");
             }
 

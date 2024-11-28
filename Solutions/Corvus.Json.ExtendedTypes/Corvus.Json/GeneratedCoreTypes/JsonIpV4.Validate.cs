@@ -23,22 +23,7 @@ public readonly partial struct JsonIpV4
     public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
     {
         ValidationContext result = validationContext;
-        if (level > ValidationLevel.Flag)
-        {
-            result = result.UsingResults();
-        }
-
-        if (level > ValidationLevel.Basic)
-        {
-            result = result.UsingStack();
-            result = result.PushSchemaLocation("corvus:/JsonIpV4");
-        }
         result =  Corvus.Json.Validate.TypeIpV4(this, result, level, null, null);
-        if (level > ValidationLevel.Basic)
-        {
-            result = result.PopLocation();
-        }
-
         return result;
     }
 }

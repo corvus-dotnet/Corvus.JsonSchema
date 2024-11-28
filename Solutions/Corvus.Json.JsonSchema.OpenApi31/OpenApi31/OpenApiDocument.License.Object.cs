@@ -786,13 +786,31 @@ public readonly partial struct OpenApiDocument
         /// <returns><see langword="true" /> if the property was present, and the instance matches the dependent schema.</returns>
         public bool TryAsDependentSchemaForIdentifier(out Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.License.IdentifierEntity result)
         {
-            if (this.Identifier.IsNotUndefined())
+            if ((this.backing & Backing.JsonElement) != 0)
             {
-                result = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.License.IdentifierEntity>();
-                return result.IsValid();
+                if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                {
+                    result = default;
+                    return false;
+                }
+
+                if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.IdentifierUtf8, out _))
+                {
+                    result = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.License.IdentifierEntity>();
+                    return result.IsValid();
+                }
             }
 
-            result = Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.License.IdentifierEntity.Undefined;
+            if ((this.backing & Backing.Object) != 0)
+            {
+                if (this.objectBacking.TryGetValue(JsonPropertyNames.Identifier, out _))
+                {
+                    result = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.License.IdentifierEntity>();
+                    return result.IsValid();
+                }
+            }
+
+            result = default;
             return false;
         }
 

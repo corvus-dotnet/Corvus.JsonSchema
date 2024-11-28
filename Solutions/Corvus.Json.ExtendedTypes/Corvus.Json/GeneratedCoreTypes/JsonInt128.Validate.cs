@@ -23,22 +23,7 @@ public readonly partial struct JsonInt128
     public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
     {
         ValidationContext result = validationContext;
-        if (level > ValidationLevel.Flag)
-        {
-            result = result.UsingResults();
-        }
-
-        if (level > ValidationLevel.Basic)
-        {
-            result = result.UsingStack();
-            result = result.PushSchemaLocation("corvus:/JsonInt128");
-        }
         result =  Corvus.Json.Validate.TypeInt128(this, result, level, null, null);
-        if (level > ValidationLevel.Basic)
-        {
-            result = result.PopLocation();
-        }
-
         return result;
     }
 }

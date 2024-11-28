@@ -23,19 +23,22 @@ public readonly partial struct Person
     public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
     {
         ValidationContext result = validationContext;
-        if (level > ValidationLevel.Flag)
+        if (level > ValidationLevel.Flag && !result.IsUsingResults)
         {
             result = result.UsingResults();
         }
 
         if (level > ValidationLevel.Basic)
         {
-            result = result.UsingStack();
+            if (!result.IsUsingStack)
+            {
+                result = result.UsingStack();
+            }
+
             result = result.PushSchemaLocation("#/$defs/Person");
         }
 
         JsonValueKind valueKind = this.ValueKind;
-        result = result.UsingEvaluatedProperties();
 
         result = CorvusValidation.TypeValidationHandler(valueKind, result, level);
 
@@ -102,7 +105,6 @@ public readonly partial struct Person
                 {
                     ValidationContext ignoredResult = validationContext;
                     ignoredResult = ignoredResult.WithResult(isValid: true, "Validation properties - ignored because the value is not an object", "properties");
-                    ignoredResult = ignoredResult.WithResult(isValid: true, "Validation unevaluatedProperties - ignored because the value is not an object", "unevaluatedProperties");
                     ignoredResult = ignoredResult.WithResult(isValid: true, "Validation required - ignored because the value is not an object", "required");
 
                     return ignoredResult;
@@ -116,8 +118,6 @@ public readonly partial struct Person
             int propertyCount = 0;
             foreach (JsonObjectProperty property in value.EnumerateObject())
             {
-                string? propertyNameAsString = null;
-
                 if (property.NameEquals(JsonPropertyNames.DateOfBirthUtf8, JsonPropertyNames.DateOfBirth))
                 {
                     result = result.WithLocalProperty(propertyCount);
@@ -223,29 +223,6 @@ public readonly partial struct Person
                     {
                         result = result.PopLocation();
                     }
-                }
-                if (!result.HasEvaluatedLocalOrAppliedProperty(propertyCount))
-                {
-                    if (level > ValidationLevel.Basic)
-                    {
-                        string localEvaluatedPropertyName = (propertyNameAsString ??= property.Name.GetString());
-                        result = result.PushValidationLocationReducedPathModifierAndProperty(new JsonReference("#/unevaluatedProperties").AppendUnencodedPropertyNameToFragment(localEvaluatedPropertyName), localEvaluatedPropertyName);
-                    }
-
-                    ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonNotAny>().Validate(result.CreateChildContext(), level);
-                    if (level == ValidationLevel.Flag && !propertyResult.IsValid)
-                    {
-                        return propertyResult;
-                    }
-
-                    result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
-
-                    if (level > ValidationLevel.Basic)
-                    {
-                        result = result.PopLocation();
-                    }
-
-                    result = result.WithLocalProperty(propertyCount);
                 }
 
                 propertyCount++;

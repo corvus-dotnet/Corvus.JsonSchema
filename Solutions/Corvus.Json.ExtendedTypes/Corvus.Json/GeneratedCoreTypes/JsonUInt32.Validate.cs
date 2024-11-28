@@ -23,22 +23,7 @@ public readonly partial struct JsonUInt32
     public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
     {
         ValidationContext result = validationContext;
-        if (level > ValidationLevel.Flag)
-        {
-            result = result.UsingResults();
-        }
-
-        if (level > ValidationLevel.Basic)
-        {
-            result = result.UsingStack();
-            result = result.PushSchemaLocation("corvus:/JsonUInt32");
-        }
         result =  Corvus.Json.Validate.TypeUInt32(this, result, level, null, null);
-        if (level > ValidationLevel.Basic)
-        {
-            result = result.PopLocation();
-        }
-
         return result;
     }
 }

@@ -34,14 +34,18 @@ public readonly partial struct GeneratorConfig
         public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
         {
             ValidationContext result = validationContext;
-            if (level > ValidationLevel.Flag)
+            if (level > ValidationLevel.Flag && !result.IsUsingResults)
             {
                 result = result.UsingResults();
             }
 
             if (level > ValidationLevel.Basic)
             {
-                result = result.UsingStack();
+                if (!result.IsUsingStack)
+                {
+                    result = result.UsingStack();
+                }
+
                 result = result.PushSchemaLocation("#/$defs/generationSpecifications");
             }
 
@@ -169,17 +173,17 @@ public readonly partial struct GeneratorConfig
                 }
                 else
                 {
-                    if (level >= ValidationLevel.Detailed)
+                    if (level == ValidationLevel.Flag)
+                    {
+                        return ValidationContext.InvalidContext;
+                    }
+                    else if (level >= ValidationLevel.Detailed)
                     {
                         result = result.WithResult(isValid: false, $"Validation minItems - array of length {length} is less than {MinItems}", "minItems");
                     }
-                    else if (level >= ValidationLevel.Basic)
-                    {
-                        result = result.WithResult(isValid: false, "Validation minItems - is less than the required length.", "minItems");
-                    }
                     else
                     {
-                        return ValidationContext.InvalidContext;
+                        result = result.WithResult(isValid: false, "Validation minItems - is less than the required length.", "minItems");
                     }
                 }
 

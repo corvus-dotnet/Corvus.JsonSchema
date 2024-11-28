@@ -54,14 +54,18 @@ public readonly partial struct OpenApiDocument
                 public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
                 {
                     ValidationContext result = validationContext;
-                    if (level > ValidationLevel.Flag)
+                    if (level > ValidationLevel.Flag && !result.IsUsingResults)
                     {
                         result = result.UsingResults();
                     }
 
                     if (level > ValidationLevel.Basic)
                     {
-                        result = result.UsingStack();
+                        if (!result.IsUsingStack)
+                        {
+                            result = result.UsingStack();
+                        }
+
                         result = result.PushSchemaLocation("https://spec.openapis.org/oas/3.0/schema/2021-09-28#/definitions/ParameterLocation/oneOf/0/properties/required");
                     }
 
@@ -140,13 +144,13 @@ public readonly partial struct OpenApiDocument
                             }
                             else
                             {
-                                if (level >= ValidationLevel.Basic)
+                                if (level == ValidationLevel.Flag)
                                 {
-                                    result = result.WithResult(isValid: false, "Validation enum - did not validate against the enumeration.", "enum");
+                                    result = result.WithResult(isValid: false);
                                 }
                                 else
                                 {
-                                    result = result.WithResult(isValid: false);
+                                    result = result.WithResult(isValid: false, "Validation enum - did not validate against the enumeration.", "enum");
                                 }
                             }
 

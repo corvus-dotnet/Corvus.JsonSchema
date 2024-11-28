@@ -38,11 +38,13 @@ public readonly partial struct PersonArray
                 result = result.PushValidationLocationProperty("items");
             }
 
-            result = arrayEnumerator.Current.Validate(result, level);
-            if (level == ValidationLevel.Flag && !result.IsValid)
+            var childResult = arrayEnumerator.Current.Validate(result.CreateChildContext(), level);
+            if (level == ValidationLevel.Flag && !childResult.IsValid)
             {
-                return result;
+                return childResult;
             }
+
+            result = result.MergeResults(childResult.IsValid, level, childResult);
 
             if (level > ValidationLevel.Basic)
             {

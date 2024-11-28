@@ -29,14 +29,18 @@ public readonly partial struct Schema
         public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
         {
             ValidationContext result = validationContext;
-            if (level > ValidationLevel.Flag)
+            if (level > ValidationLevel.Flag && !result.IsUsingResults)
             {
                 result = result.UsingResults();
             }
 
             if (level > ValidationLevel.Basic)
             {
-                result = result.UsingStack();
+                if (!result.IsUsingStack)
+                {
+                    result = result.UsingStack();
+                }
+
                 result = result.PushSchemaLocation("https://json-schema.org/draft/2020-12/meta/applicator?dynamicScope=https%3A%2F%2Fjson-schema.org%2Fdraft%2F2020-12%2Fschema#/$defs/schemaArray");
             }
 
@@ -164,17 +168,17 @@ public readonly partial struct Schema
                 }
                 else
                 {
-                    if (level >= ValidationLevel.Detailed)
+                    if (level == ValidationLevel.Flag)
+                    {
+                        return ValidationContext.InvalidContext;
+                    }
+                    else if (level >= ValidationLevel.Detailed)
                     {
                         result = result.WithResult(isValid: false, $"Validation minItems - array of length {length} is less than {MinItems}", "minItems");
                     }
-                    else if (level >= ValidationLevel.Basic)
-                    {
-                        result = result.WithResult(isValid: false, "Validation minItems - is less than the required length.", "minItems");
-                    }
                     else
                     {
-                        return ValidationContext.InvalidContext;
+                        result = result.WithResult(isValid: false, "Validation minItems - is less than the required length.", "minItems");
                     }
                 }
 

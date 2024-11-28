@@ -23,14 +23,18 @@ public readonly partial struct PersonNameElement
     public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
     {
         ValidationContext result = validationContext;
-        if (level > ValidationLevel.Flag)
+        if (level > ValidationLevel.Flag && !result.IsUsingResults)
         {
             result = result.UsingResults();
         }
 
         if (level > ValidationLevel.Basic)
         {
-            result = result.UsingStack();
+            if (!result.IsUsingStack)
+            {
+                result = result.UsingStack();
+            }
+
             result = result.PushSchemaLocation("#/$defs/PersonNameElement");
         }
 
@@ -128,72 +132,52 @@ public readonly partial struct PersonNameElement
                 int length = Corvus.Json.Validate.CountRunes(input);
                 result = context.Context;
 
-                if (context.Level > ValidationLevel.Basic)
-                {
-                    result = result.PushValidationLocationReducedPathModifier(new("#/maxLength"));
-                }
-
                 if (length <= MaxLength)
                 {
                     if (context.Level == ValidationLevel.Verbose)
                     {
-                        result = result.WithResult(isValid: true, $"Validation maxLength - {input.ToString()} of {length} is less than or equal to {MaxLength}");
+                        result = result.WithResult(isValid: true, validationLocationReducedPathModifier: new JsonReference("maxLength"), $"Validation maxLength - {input.ToString()} of {length} is less than or equal to {MaxLength}");
                     }
                 }
                 else
                 {
-                    if (context.Level >= ValidationLevel.Detailed)
-                    {
-                        result = result.WithResult(isValid: false, $"Validation maxLength - {input.ToString()} of {length} is greater than {MaxLength}");
-                    }
-                    else if (context.Level >= ValidationLevel.Basic)
-                    {
-                        result = result.WithResult(isValid: false, "Validation maxLength - is greater than the required length.");
-                    }
-                    else
+                    if (context.Level == ValidationLevel.Flag)
                     {
                         result = context.Context.WithResult(isValid: false);
                         return true;
                     }
-                }
-
-                if (context.Level > ValidationLevel.Basic)
-                {
-                    result = result.PopLocation();
-                }
-
-                if (context.Level > ValidationLevel.Basic)
-                {
-                    result = result.PushValidationLocationReducedPathModifier(new("#/minLength"));
+                    else if (context.Level >= ValidationLevel.Detailed)
+                    {
+                        result = result.WithResult(isValid: false, validationLocationReducedPathModifier: new JsonReference("maxLength"), $"Validation maxLength - {input.ToString()} of {length} is greater than {MaxLength}");
+                    }
+                    else
+                    {
+                        result = result.WithResult(isValid: false, validationLocationReducedPathModifier: new JsonReference("maxLength"), "Validation maxLength - is greater than the required length.");
+                    }
                 }
 
                 if (length >= MinLength)
                 {
                     if (context.Level == ValidationLevel.Verbose)
                     {
-                        result = result.WithResult(isValid: true, $"Validation minLength - {input.ToString()} of {length} is greater than or equal to {MinLength}");
+                        result = result.WithResult(isValid: true, validationLocationReducedPathModifier: new JsonReference("minLength"), $"Validation minLength - {input.ToString()} of {length} is greater than or equal to {MinLength}");
                     }
                 }
                 else
                 {
-                    if (context.Level >= ValidationLevel.Detailed)
-                    {
-                        result = result.WithResult(isValid: false, $"Validation minLength - {input.ToString()} of {length} is less than {MinLength}");
-                    }
-                    else if (context.Level >= ValidationLevel.Basic)
-                    {
-                        result = result.WithResult(isValid: false, "Validation minLength - is less than the required length.");
-                    }
-                    else
+                    if (context.Level == ValidationLevel.Flag)
                     {
                         result = context.Context.WithResult(isValid: false);
                         return true;
                     }
-                }
-
-                if (context.Level > ValidationLevel.Basic)
-                {
-                    result = result.PopLocation();
+                    else if (context.Level >= ValidationLevel.Detailed)
+                    {
+                        result = result.WithResult(isValid: false, validationLocationReducedPathModifier: new JsonReference("minLength"), $"Validation minLength - {input.ToString()} of {length} is less than {MinLength}");
+                    }
+                    else
+                    {
+                        result = result.WithResult(isValid: false, validationLocationReducedPathModifier: new JsonReference("minLength"), "Validation minLength - is less than the required length.");
+                    }
                 }
 
                 return true;

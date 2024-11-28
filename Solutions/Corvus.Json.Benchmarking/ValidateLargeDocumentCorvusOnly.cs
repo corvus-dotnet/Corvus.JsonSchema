@@ -1,13 +1,11 @@
-﻿// <copyright file="ValidateLargeDocument.cs" company="Endjin Limited">
+﻿// <copyright file="ValidateLargeDocumentCorvusOnly.cs" company="Endjin Limited">
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
 using System.Collections.Immutable;
 using System.Text.Json;
-using System.Text.Json.Nodes;
 using BenchmarkDotNet.Attributes;
-using CorvusValidator = global::Corvus.Json.Validator;
-using JsonEverything = global::Json.Schema;
+using Microsoft.VSDiagnostics;
 
 namespace Corvus.Json.Benchmarking;
 
@@ -15,7 +13,7 @@ namespace Corvus.Json.Benchmarking;
 /// Construct elements from a JSON element.
 /// </summary>
 [MemoryDiagnoser]
-public class ValidateLargeDocument
+public class ValidateLargeDocumentCorvusOnly
 {
     private const string JsonText =
         """
@@ -32,15 +30,9 @@ public class ValidateLargeDocument
         }
         """;
 
-    private static readonly JsonEverything.EvaluationOptions Options = new() { OutputFormat = JsonEverything.OutputFormat.Flag };
-
     private JsonDocument? objectDocument;
     private Models.V3.PersonArray personArrayV3;
     private Models.V4.PersonArray personArrayV4;
-    private JsonNode? node;
-    private JsonElement element;
-    private JsonEverything.JsonSchema? schema;
-    private CorvusValidator.JsonSchema corvusSchema;
 
     /// <summary>
     /// Global setup.
@@ -56,11 +48,9 @@ public class ValidateLargeDocument
             builder.Add(Models.V3.Person.FromJson(this.objectDocument.RootElement));
         }
 
-        this.personArrayV3 = Models.V3.PersonArray.From(builder.ToImmutable()).AsJsonElementBackedValue();
-        this.personArrayV4 = Models.V4.PersonArray.From(builder.ToImmutable()).AsJsonElementBackedValue();
-
-        this.node = System.Text.Json.Nodes.JsonArray.Create(this.personArrayV3.AsJsonElement.Clone());
-        this.element = this.personArrayV3.AsJsonElement.Clone();
+        ImmutableList<JsonAny> arrayContent = builder.ToImmutable();
+        this.personArrayV3 = Models.V3.PersonArray.From(arrayContent).AsJsonElementBackedValue();
+        this.personArrayV4 = Models.V4.PersonArray.From(arrayContent).AsJsonElementBackedValue();
     }
 
     /// <summary>
@@ -93,26 +83,5 @@ public class ValidateLargeDocument
     {
         ValidationContext result = this.personArrayV4.Validate(ValidationContext.ValidContext);
         return result.IsValid;
-    }
-
-    /// <summary>
-    /// Validates using the Corvus V4 types.
-    /// </summary>
-    [Benchmark]
-    public bool ValidateLargeArrayCorvusValidator()
-    {
-        this.corvusSchema = CorvusValidator.JsonSchema.FromFile("./person-array-schema.json");
-        ValidationContext result = this.corvusSchema.Validate(this.element, ValidationLevel.Flag);
-        return result.IsValid;
-    }
-
-    /// <summary>
-    /// Validates using the JsonEverything types.
-    /// </summary>
-    [Benchmark]
-    public JsonEverything.EvaluationResults ValidateLargeArrayJsonEverything()
-    {
-        this.schema = JsonEverything.JsonSchema.FromFile("./person-array-schema.json");
-        return this.schema!.Evaluate(this.node, Options);
     }
 }

@@ -59,14 +59,18 @@ public readonly partial struct OpenApiDocument
                         public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
                         {
                             ValidationContext result = validationContext;
-                            if (level > ValidationLevel.Flag)
+                            if (level > ValidationLevel.Flag && !result.IsUsingResults)
                             {
                                 result = result.UsingResults();
                             }
 
                             if (level > ValidationLevel.Basic)
                             {
-                                result = result.UsingStack();
+                                if (!result.IsUsingStack)
+                                {
+                                    result = result.UsingStack();
+                                }
+
                                 result = result.PushSchemaLocation("https://spec.openapis.org/oas/3.1/schema/2022-10-07#/$defs/parameter/dependentSchemas/schema/$defs/styles-for-header/if/properties/in");
                             }
 
@@ -129,42 +133,27 @@ public readonly partial struct OpenApiDocument
                                 {
                                     ValidationContext result = validationContext;
 
-                                    if (level > ValidationLevel.Basic)
-                                    {
-                                        result = result.PushValidationLocationReducedPathModifier(new("#/const"));
-                                    }
-
                                     if (value.Equals(CorvusValidation.Const))
                                     {
                                         if (level == ValidationLevel.Verbose)
                                         {
-                                            result = result.WithResult(isValid: true, $"Validation const - the value '{value}' matched '\"header\'.");
-                                        }
-
-                                        if (level > ValidationLevel.Basic)
-                                        {
-                                            result = result.PopLocation();
+                                            result = result.WithResult(isValid: true, validationLocationReducedPathModifier: new JsonReference("const"), $"Validation const - the value '{value}' matched '\"header\'.");
                                         }
 
                                         return result;
                                     }
 
-                                    if (level >= ValidationLevel.Detailed)
-                                    {
-                                        result = result.WithResult(isValid: false, $"Validation const - the value '{value}' did not match '\"header\'.");
-                                    }
-                                    else if (level == ValidationLevel.Basic)
-                                    {
-                                        result = result.WithResult(isValid: false, "Validation const - the value did not match '\"header\'.");
-                                    }
-                                    else
+                                    if (level == ValidationLevel.Flag)
                                     {
                                         return ValidationContext.InvalidContext;
                                     }
-
-                                    if (level > ValidationLevel.Basic)
+                                    else if (level >= ValidationLevel.Detailed)
                                     {
-                                        result = result.PopLocation();
+                                        result = result.WithResult(isValid: false, validationLocationReducedPathModifier: new JsonReference("const"), $"Validation const - the value '{value}' did not match '\"header\'.");
+                                    }
+                                    else
+                                    {
+                                        result = result.WithResult(isValid: false, validationLocationReducedPathModifier: new JsonReference("const"), "Validation const - the value did not match '\"header\'.");
                                     }
 
                                     return result;

@@ -39,14 +39,18 @@ public readonly partial struct Schema
         public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
         {
             ValidationContext result = validationContext;
-            if (level > ValidationLevel.Flag)
+            if (level > ValidationLevel.Flag && !result.IsUsingResults)
             {
                 result = result.UsingResults();
             }
 
             if (level > ValidationLevel.Basic)
             {
-                result = result.UsingStack();
+                if (!result.IsUsingStack)
+                {
+                    result = result.UsingStack();
+                }
+
                 result = result.PushSchemaLocation("http://json-schema.org/draft-07/schema#/properties/type");
             }
 
@@ -152,13 +156,13 @@ public readonly partial struct Schema
                 }
                 else
                 {
-                    if (level >= ValidationLevel.Basic)
+                    if (level == ValidationLevel.Flag)
                     {
-                        result = result.WithResult(isValid: false, "Validation anyOf - did not validate against the schema.", "anyOf");
+                        result = result.WithResult(isValid: false);
                     }
                     else
                     {
-                        result = result.WithResult(isValid: false);
+                        result = result.WithResult(isValid: false, "Validation anyOf - did not validate against the schema.", "anyOf");
                     }
                 }
 
