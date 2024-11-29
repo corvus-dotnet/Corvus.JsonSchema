@@ -1,6 +1,8 @@
-﻿using System.Text.Json;
+﻿using System.Security.AccessControl;
+using System.Text.Json;
 using Corvus.Json.CodeGeneration;
 using Corvus.Json.CodeGeneration.CSharp;
+using Corvus.Json.CodeGeneration.DocumentResolvers;
 using Corvus.Json.Internal;
 using Microsoft.CodeAnalysis;
 using Spectre.Console;
@@ -21,7 +23,16 @@ public static class GenerationDriver
                 return WriteValidationErrors(generatorConfig);
             }
 
-            var documentResolver = new CompoundDocumentResolver(new FileSystemDocumentResolver(), new HttpClientDocumentResolver(new HttpClient()));
+            CompoundDocumentResolver documentResolver;
+            if (generatorConfig.SupportYaml ?? false)
+            {
+                var preProcessor = new YamlPreProcessor();
+                documentResolver = new CompoundDocumentResolver(new FileSystemDocumentResolver(preProcessor), new HttpClientDocumentResolver(new HttpClient(), preProcessor));
+            }
+            else
+            {
+                documentResolver = new CompoundDocumentResolver(new FileSystemDocumentResolver(), new HttpClientDocumentResolver(new HttpClient()));
+            }
 
             Metaschema.AddMetaschema(documentResolver);
 
@@ -60,9 +71,33 @@ public static class GenerationDriver
     {
         if (generatorConfig.AdditionalFiles is GeneratorConfig.FileList f)
         {
+            YamlPreProcessor? yamlPreProcessor = generatorConfig.SupportYaml ?? false ? new YamlPreProcessor() : null;
+
             foreach (GeneratorConfig.FileSpecification fileSpec in f.EnumerateArray())
             {
-                documentResolver.AddDocument((string)fileSpec.CanonicalUri, await JsonDocument.ParseAsync(File.OpenRead((string)fileSpec.ContentPath)));
+                using FileStream inputStream = File.OpenRead((string)fileSpec.ContentPath);
+                Stream processedStream;
+
+                if (yamlPreProcessor is YamlPreProcessor processor)
+                {
+                    processedStream = processor.Process(inputStream);
+                }
+                else
+                {
+                    processedStream = inputStream;
+                }
+
+                try
+                {
+                    documentResolver.AddDocument((string)fileSpec.CanonicalUri, await JsonDocument.ParseAsync(processedStream));
+                }
+                finally
+                {
+                    if (inputStream != processedStream)
+                    {
+                        processedStream.Dispose();
+                    }
+                }
             }
         }
     }

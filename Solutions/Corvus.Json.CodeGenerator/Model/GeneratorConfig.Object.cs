@@ -594,6 +594,56 @@ public readonly partial struct GeneratorConfig
     }
 
     /// <summary>
+    /// Gets the (optional) <c>supportYaml</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// If this JSON property is <see cref="JsonValueKind.Undefined"/> then the value returned will be <see langword="null" />.
+    /// </para>
+    /// <para>
+    /// If true, YAML support is enabled. You may use YAML, JSON or a mixture of such documents.
+    /// </para>
+    /// </remarks>
+    public Corvus.Json.JsonBoolean? SupportYaml
+    {
+        get
+        {
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                {
+                    return default;
+                }
+
+                if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.SupportYamlUtf8, out JsonElement result))
+                {
+                    if (result.ValueKind == JsonValueKind.Null || result.ValueKind == JsonValueKind.Undefined)
+                    {
+                        return default;
+                    }
+
+                    return new(result);
+                }
+            }
+
+            if ((this.backing & Backing.Object) != 0)
+            {
+                if (this.objectBacking.TryGetValue(JsonPropertyNames.SupportYaml, out JsonAny result))
+                {
+                    if (result.IsNullOrUndefined())
+                    {
+                        return default;
+                    }
+
+                    return result.As<Corvus.Json.JsonBoolean>();
+                }
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
     /// Gets the <c>typesToGenerate</c> property.
     /// </summary>
     /// <remarks>
@@ -826,6 +876,7 @@ public readonly partial struct GeneratorConfig
         in Corvus.Json.CodeGenerator.GeneratorConfig.OptionalAsNullable? optionalAsNullableValue = null,
         in Corvus.Json.JsonString? outputMapFile = null,
         in Corvus.Json.JsonString? outputPath = null,
+        in Corvus.Json.JsonBoolean? supportYaml = null,
         in Corvus.Json.JsonBoolean? useImplicitOperatorString = null,
         in Corvus.Json.CodeGenerator.GeneratorConfig.UseSchema? useSchemaValue = null,
         in Corvus.Json.JsonBoolean? useUnixLineEndings = null)
@@ -877,6 +928,11 @@ public readonly partial struct GeneratorConfig
         if (outputPath is not null)
         {
             builder.Add(JsonPropertyNames.OutputPath, outputPath.Value.AsAny);
+        }
+
+        if (supportYaml is not null)
+        {
+            builder.Add(JsonPropertyNames.SupportYaml, supportYaml.Value.AsAny);
         }
 
         if (useImplicitOperatorString is not null)
@@ -1156,6 +1212,21 @@ public readonly partial struct GeneratorConfig
     public GeneratorConfig WithRootNamespace(in Corvus.Json.JsonString value)
     {
         return this.SetProperty(JsonPropertyNames.RootNamespace, value);
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>supportYaml</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    /// <remarks>
+    /// <para>
+    /// If true, YAML support is enabled. You may use YAML, JSON or a mixture of such documents.
+    /// </para>
+    /// </remarks>
+    public GeneratorConfig WithSupportYaml(in Corvus.Json.JsonBoolean? value)
+    {
+        return value.HasValue ? this.SetProperty(JsonPropertyNames.SupportYaml, value.Value) : this.RemoveProperty(JsonPropertyNames.SupportYaml);
     }
 
     /// <summary>
@@ -1663,6 +1734,11 @@ public readonly partial struct GeneratorConfig
         public const string RootNamespace = "rootNamespace";
 
         /// <summary>
+        /// Gets the JSON property name for <see cref="SupportYaml"/>.
+        /// </summary>
+        public const string SupportYaml = "supportYaml";
+
+        /// <summary>
         /// Gets the JSON property name for <see cref="TypesToGenerate"/>.
         /// </summary>
         public const string TypesToGenerate = "typesToGenerate";
@@ -1731,6 +1807,11 @@ public readonly partial struct GeneratorConfig
         /// Gets the JSON property name for <see cref="RootNamespace"/>.
         /// </summary>
         public static ReadOnlySpan<byte> RootNamespaceUtf8 => "rootNamespace"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="SupportYaml"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> SupportYamlUtf8 => "supportYaml"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="TypesToGenerate"/>.

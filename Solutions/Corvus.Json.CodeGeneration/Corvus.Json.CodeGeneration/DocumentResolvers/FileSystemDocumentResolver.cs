@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Text.Json;
+using Corvus.Json.CodeGeneration.DocumentResolvers;
 
 namespace Corvus.Json.CodeGeneration;
 
@@ -12,6 +13,7 @@ namespace Corvus.Json.CodeGeneration;
 public class FileSystemDocumentResolver : IDocumentResolver
 {
     private readonly string baseDirectory;
+    private readonly IDocumentStreamPreProcessor? preProcessor;
     private readonly Dictionary<string, JsonDocument> documents = [];
     private bool disposedValue;
 
@@ -27,6 +29,32 @@ public class FileSystemDocumentResolver : IDocumentResolver
         }
 
         this.baseDirectory = baseDirectory;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="FileSystemDocumentResolver"/> class.
+    /// </summary>
+    /// <param name="baseDirectory">The base directory for the file system resolver.</param>
+    /// <param name="preProcessor">The document pre-processor.</param>
+    public FileSystemDocumentResolver(string baseDirectory, IDocumentStreamPreProcessor preProcessor)
+    {
+        if (string.IsNullOrEmpty(baseDirectory))
+        {
+            throw new ArgumentException($"'{nameof(baseDirectory)}' cannot be null or empty", nameof(baseDirectory));
+        }
+
+        this.baseDirectory = baseDirectory;
+        this.preProcessor = preProcessor;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="FileSystemDocumentResolver"/> class.
+    /// </summary>
+    /// <param name="preProcessor">The document pre-processor.</param>
+    public FileSystemDocumentResolver(IDocumentStreamPreProcessor preProcessor)
+    {
+        this.baseDirectory = Environment.CurrentDirectory;
+        this.preProcessor = preProcessor;
     }
 
     /// <summary>
@@ -66,13 +94,35 @@ public class FileSystemDocumentResolver : IDocumentResolver
         try
         {
 #if NET8_0_OR_GREATER
-            await using Stream stream = File.OpenRead(path);
+            await using Stream inputStream = File.OpenRead(path);
 #else
-            using Stream stream = File.OpenRead(path);
+            using Stream inputStream = File.OpenRead(path);
 #endif
-            result = await JsonDocument.ParseAsync(stream);
-            this.documents.Add(path, result);
-            return JsonPointerUtilities.ResolvePointer(result, reference.Fragment);
+
+            Stream processedStream;
+
+            if (this.preProcessor is IDocumentStreamPreProcessor preProcessor)
+            {
+                processedStream = preProcessor.Process(inputStream);
+            }
+            else
+            {
+                processedStream = inputStream;
+            }
+
+            try
+            {
+                result = await JsonDocument.ParseAsync(processedStream);
+                this.documents.Add(path, result);
+                return JsonPointerUtilities.ResolvePointer(result, reference.Fragment);
+            }
+            finally
+            {
+                if (processedStream != inputStream)
+                {
+                    processedStream.Dispose();
+                }
+            }
         }
         catch (Exception)
         {

@@ -79,6 +79,11 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
         [Description("If true, line endings emitted using the Unix style ('\\n'). Otherwise, it uses the Windows style ('\\r\\n').")]
         [DefaultValue(false)]
         public bool UseUnixLineEndings { get; init; }
+
+        [CommandOption("--yaml")]
+        [Description("If true, YAML support is enabled. You may use YAML, JSON or a mixture of such documents.")]
+        [DefaultValue(false)]
+        public bool SupportYaml { get; init; }
     }
 
     /// <inheritdoc/>
@@ -103,7 +108,8 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
             outputPath: settings.OutputPath.AsNullableJsonString(),
             useSchemaValue: settings.UseSchema != SchemaVariant.NotSpecified ? (GeneratorConfig.UseSchema)settings.UseSchema.ToString() : default(GeneratorConfig.UseSchema?),
             useImplicitOperatorString: settings.UseImplicitOperatorString,
-            useUnixLineEndings: settings.UseUnixLineEndings);
+            useUnixLineEndings: settings.UseUnixLineEndings,
+            supportYaml: settings.SupportYaml);
 
         return GenerationDriver.GenerateTypes(config);
     }
