@@ -33,6 +33,7 @@
 	  <ProjectReference Include="..\Corvus.Json.CodeGeneration.CSharp\Corvus.Json.CodeGeneration.CSharp.csproj" />
 	  <ProjectReference Include="..\Corvus.Json.CodeGeneration.HttpClientDocumentResolver\Corvus.Json.CodeGeneration.HttpClientDocumentResolver.csproj" />
 	  <ProjectReference Include="..\Corvus.Json.CodeGeneration.OpenApi30\Corvus.Json.CodeGeneration.OpenApi30.csproj" />
+	  <ProjectReference Include="..\Corvus.Json.CodeGeneration.YamlPreProcessor\Corvus.Json.CodeGeneration.YamlPreProcessor.csproj" />
 	  <ProjectReference Include="..\Corvus.Json.Validator\Corvus.Json.Validator.csproj" />
 	</ItemGroup>
 
