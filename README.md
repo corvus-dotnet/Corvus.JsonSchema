@@ -414,6 +414,8 @@ You can mix-and-match YAML and JSON documents in the same schema set, and the to
 
 Your JSON schema can be embedded in a YAML document (such as a YAML-based OpenAPI or AsyncAPI document), and you can resolve internal references just as with a JSON document.
 
+Add the `--yaml` command line option to enable YAML support, or set the `supportYaml: true` property in a generator config file.
+
 ## V4.0 Updates
 
 There are a number of significant changes in this release
