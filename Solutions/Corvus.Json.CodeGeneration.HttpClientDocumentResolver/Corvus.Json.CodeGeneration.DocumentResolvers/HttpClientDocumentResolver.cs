@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Text.Json;
+using Corvus.Json.CodeGeneration.DocumentResolvers;
 
 namespace Corvus.Json.CodeGeneration;
 
@@ -15,6 +16,7 @@ public class HttpClientDocumentResolver : IDocumentResolver
 
     private readonly HttpClient httpClient;
     private readonly Dictionary<string, JsonDocument> documents = [];
+    private readonly IDocumentStreamPreProcessor? preProcessor;
     private readonly bool supportLocalhost;
     private bool disposedValue;
 
@@ -27,6 +29,30 @@ public class HttpClientDocumentResolver : IDocumentResolver
     {
         this.httpClient = httpClientFactory.CreateClient();
         this.supportLocalhost = supportLocalhost;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="HttpClientDocumentResolver"/> class.
+    /// </summary>
+    /// <param name="httpClientFactory">The <see cref="IHttpClientFactory"/> to use to resolve the uri.</param>
+    /// <param name="preProcessor">The document stream pre-processor.</param>
+    /// <param name="supportLocalhost">If true, we support resolving from localhost, otherwise false.</param>
+    public HttpClientDocumentResolver(IHttpClientFactory httpClientFactory, IDocumentStreamPreProcessor preProcessor, bool supportLocalhost = false)
+    {
+        this.httpClient = httpClientFactory.CreateClient();
+        this.preProcessor = preProcessor;
+        this.supportLocalhost = supportLocalhost;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="HttpClientDocumentResolver"/> class.
+    /// </summary>
+    /// <param name="httpClient">The <see cref="HttpClient"/> to use to resolve the uri.</param>
+    /// <param name="preProcessor">The document stream pre-processor.</param>
+    public HttpClientDocumentResolver(HttpClient httpClient, IDocumentStreamPreProcessor preProcessor)
+    {
+        this.httpClient = httpClient;
+        this.preProcessor = preProcessor;
     }
 
     /// <summary>
@@ -68,18 +94,39 @@ public class HttpClientDocumentResolver : IDocumentResolver
         try
         {
 #if NET8_0_OR_GREATER
-            await using Stream stream = await this.httpClient.GetStreamAsync(uri);
+            await using Stream inputStream = await this.httpClient.GetStreamAsync(uri);
 #else
-            using Stream stream = await this.httpClient.GetStreamAsync(uri);
+            using Stream inputStream = await this.httpClient.GetStreamAsync(uri);
 #endif
-            result = await JsonDocument.ParseAsync(stream);
-            this.documents.Add(uri, result);
-            if (JsonPointerUtilities.TryResolvePointer(result, reference.Fragment, out JsonElement? element))
+            Stream processedStream;
+
+            if (this.preProcessor is IDocumentStreamPreProcessor preProcessor)
             {
-                return element;
+                processedStream = preProcessor.Process(inputStream);
+            }
+            else
+            {
+                processedStream = inputStream;
             }
 
-            return default;
+            try
+            {
+                result = await JsonDocument.ParseAsync(processedStream);
+                this.documents.Add(uri, result);
+                if (JsonPointerUtilities.TryResolvePointer(result, reference.Fragment, out JsonElement? element))
+                {
+                    return element;
+                }
+
+                return default;
+            }
+            finally
+            {
+                if (processedStream != inputStream)
+                {
+                    processedStream.Dispose();
+                }
+            }
         }
         catch (Exception)
         {

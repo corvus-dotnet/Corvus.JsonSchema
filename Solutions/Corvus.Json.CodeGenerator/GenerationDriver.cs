@@ -1,6 +1,8 @@
-﻿using System.Text.Json;
+﻿using System.Security.AccessControl;
+using System.Text.Json;
 using Corvus.Json.CodeGeneration;
 using Corvus.Json.CodeGeneration.CSharp;
+using Corvus.Json.CodeGeneration.DocumentResolvers;
 using Corvus.Json.Internal;
 using Microsoft.CodeAnalysis;
 using Spectre.Console;
@@ -21,7 +23,16 @@ public static class GenerationDriver
                 return WriteValidationErrors(generatorConfig);
             }
 
-            var documentResolver = new CompoundDocumentResolver(new FileSystemDocumentResolver(), new HttpClientDocumentResolver(new HttpClient()));
+            CompoundDocumentResolver documentResolver;
+            if (generatorConfig.SupportYaml ?? false)
+            {
+                var preProcessor = new YamlPreProcessor();
+                documentResolver = new CompoundDocumentResolver(new FileSystemDocumentResolver(preProcessor), new HttpClientDocumentResolver(new HttpClient(), preProcessor));
+            }
+            else
+            {
+                documentResolver = new CompoundDocumentResolver(new FileSystemDocumentResolver(), new HttpClientDocumentResolver(new HttpClient()));
+            }
 
             Metaschema.AddMetaschema(documentResolver);
 

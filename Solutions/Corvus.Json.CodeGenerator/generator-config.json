@@ -57,7 +57,11 @@
         },
         "useUnixLineEndings": {
             "type": "boolean",
-            "description":  "If true, then the generated files will use Unix line endings (\\n). Otherwise it will use Windows line endings (\\r\\n)."
+            "description": "If true, then the generated files will use Unix line endings (\\n). Otherwise it will use Windows line endings (\\r\\n)."
+        },
+        "supportYaml": {
+            "type": "boolean",
+            "description": "If true, YAML support is enabled. You may use YAML, JSON or a mixture of such documents."
         }
     },
     "$defs": {
