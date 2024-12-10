@@ -27,6 +27,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="..\Corvus.Json.ExtendedTypes\Corvus.Json\**\*.cs">
+      <Link>Corvus.Json.ExtendedTypes\%(RecursiveDir)\%(Filename)%(Extension)</Link>
+    </Compile>
     <Compile Include="..\Corvus.Json.JsonReference\Corvus.Json\**\*.cs">
       <Link>Corvus.Json.JsonReference\%(RecursiveDir)\%(Filename)%(Extension)</Link>
     </Compile>
@@ -61,6 +64,7 @@
     <Compile Remove="..\Corvus.Json.CodeGeneration\Corvus.Json.CodeGeneration\**\FileSystemDocumentResolver.cs" />
     <Compile Remove="..\Corvus.Json.CodeGeneration.CSharp\Corvus.Json.CodeGeneration\CSharp\**\NullableAttributes.cs" />
     <Compile Remove="..\Corvus.Json.JsonReference\Corvus.Json\**\NullableAttributes.cs" />
+    <Compile Remove="..\Corvus.Json.ExtendedTypes\Corvus.Json\**\NullableAttributes.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -91,26 +95,30 @@
 
 
   <ItemGroup>
+    <PackageReference Include="CommunityToolkit.HighPerformance" Version="8.3.2" />
     <PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.14">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.11.0" />
+    <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="8.0.11" />
+    <PackageReference Include="NodaTime" Version="3.2.0" />
+    <PackageReference Include="System.Reflection.Emit.Lightweight" Version="4.7.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.Text.Json" Version="8.0.5"/>
-    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="8.0.0"/>
-    <PackageReference Include="Microsoft.Bcl.HashCode" Version="1.1.1"/>
-    <PackageReference Include="System.Buffers" Version="4.5.1"/>
-    <PackageReference Include="System.Collections.Immutable" Version="8.0.0"/>
-    <PackageReference Include="System.IO.Pipelines" Version="8.0.0"/>
-    <PackageReference Include="System.Memory" Version="4.5.5"/>
-    <PackageReference Include="System.Numerics.Vectors" Version="4.5.0"/>
-    <PackageReference Include="System.Reflection.Metadata" Version="8.0.1"/>
-    <PackageReference Include="System.Text.Encoding.CodePages" Version="8.0.0"/>
-    <PackageReference Include="System.Text.Encodings.Web" Version="8.0.0"/>
-    <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.4"/>
+    <PackageReference Include="System.Text.Json" Version="8.0.5" />
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Bcl.HashCode" Version="1.1.1" />
+    <PackageReference Include="System.Buffers" Version="4.5.1" />
+    <PackageReference Include="System.Collections.Immutable" Version="8.0.0" />
+    <PackageReference Include="System.IO.Pipelines" Version="8.0.0" />
+    <PackageReference Include="System.Memory" Version="4.5.5" />
+    <PackageReference Include="System.Numerics.Vectors" Version="4.5.0" />
+    <PackageReference Include="System.Reflection.Metadata" Version="8.0.1" />
+    <PackageReference Include="System.Text.Encoding.CodePages" Version="8.0.0" />
+    <PackageReference Include="System.Text.Encodings.Web" Version="8.0.0" />
+    <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.4" />
   </ItemGroup>
 
   <PropertyGroup>
