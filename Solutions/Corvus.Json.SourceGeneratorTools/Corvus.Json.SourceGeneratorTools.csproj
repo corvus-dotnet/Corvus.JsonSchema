@@ -7,14 +7,12 @@
     <Nullable>enable</Nullable>
     <DefineConstants>$(DefineConstants);BUILDING_SOURCE_GENERATOR</DefineConstants>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+    <NoWarn>$(NoWarn);nullable;IDE0007;NU5128;RS2008;SA0001;SA1633;SA1101;SA1201;SA1202;SA1204;SA1401;SA1413;SA1512;SA1629</NoWarn>
   </PropertyGroup>
 
-  <PropertyGroup Label="NuGet">
-    <DevelopmentDependency>true</DevelopmentDependency>
-    <NoWarn>$(NoWarn);nullable;IDE0007;NU5128;RS2008;SA0001;SA1633;SA1101;SA1201;SA1202;SA1204;SA1401;SA1413;SA1512;SA1629</NoWarn>
-    <IncludeBuildOutput>false</IncludeBuildOutput>
-    <GenerateDocumentationFile>false</GenerateDocumentationFile>
-    <IncludeBuildOutput>false</IncludeBuildOutput>
+  <PropertyGroup>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <Description>Tools to assist people building .NET Source Generators with Corvus.JsonSchema.</Description>
   </PropertyGroup>
 
   <ItemGroup>
@@ -141,11 +139,6 @@
     <PackageReference Include="System.Text.Encodings.Web" Version="8.0.0" />
     <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.4" />
   </ItemGroup>
-
-  <PropertyGroup>
-    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
-    <Description>Tools to help you build source generators for JSON Schema.</Description>
-  </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Update="Roslynator.Analyzers" Version="4.12.9" />
