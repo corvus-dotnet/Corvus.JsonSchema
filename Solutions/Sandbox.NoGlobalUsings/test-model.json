@@ -1,0 +1,24 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+        "someArray": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "someBool": {
+            "type": "boolean"
+        },
+        "someNumber": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+        },
+        "someString": {
+            "type": "string",
+            "minLength": 1
+        }
+    }
+}

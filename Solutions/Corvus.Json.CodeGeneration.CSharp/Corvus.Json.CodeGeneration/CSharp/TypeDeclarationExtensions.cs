@@ -23,6 +23,7 @@ public static class TypeDeclarationExtensions
     private const string OptionalAsNullableKey = "CSharp_LanguageProvider_OptionalAsNullable";
     private const string PreferredBinaryJsonNumberKindKey = "CSharp_LanguageProvider_PreferredBinaryJsonNumberKind";
     private const string UseImplicitOperatorStringKey = "CSharp_LanguageProvider_UseImplicitOperatorString";
+    private const string AddExplicitUsingsKey = "CSharp_LanguageProvider_AddExplicitUsings";
 
     /// <summary>
     /// Sets the relevant metadata from the <see cref="CSharpLanguageProvider.Options"/>.
@@ -34,6 +35,7 @@ public static class TypeDeclarationExtensions
         typeDeclaration.SetMetadata(AlwaysAssertFormatKey, options.AlwaysAssertFormat);
         typeDeclaration.SetMetadata(OptionalAsNullableKey, options.OptionalAsNullable);
         typeDeclaration.SetMetadata(UseImplicitOperatorStringKey, options.UseImplicitOperatorString);
+        typeDeclaration.SetMetadata(AddExplicitUsingsKey, options.AddExplicitUsings);
     }
 
     /// <summary>
@@ -173,6 +175,22 @@ public static class TypeDeclarationExtensions
     {
         if (typeDeclaration.TryGetMetadata(UseImplicitOperatorStringKey, out bool? useImplicitOperatorString) &&
             useImplicitOperatorString is bool value)
+        {
+            return value;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether to generate using statements for the standard implicit usings.
+    /// </summary>
+    /// <param name="typeDeclaration">The type declaration to test.</param>
+    /// <returns><see langword="true"/> if the using statements should be added.</returns>
+    public static bool AddExplicitUsings(this TypeDeclaration typeDeclaration)
+    {
+        if (typeDeclaration.TryGetMetadata(AddExplicitUsingsKey, out bool? addExplicitUsings) &&
+            addExplicitUsings is bool value)
         {
             return value;
         }

@@ -69,6 +69,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sandbox.SourceGenerator", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Corvus.Json.SourceGeneratorTools", "Corvus.Json.SourceGeneratorTools\Corvus.Json.SourceGeneratorTools.csproj", "{A7D7CAA6-0747-4CE4-9E7D-EB649C1B4246}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sandbox.NoGlobalUsings", "Sandbox.NoGlobalUsings\Sandbox.NoGlobalUsings.csproj", "{6D9F3F39-45E2-4B3A-821D-1073064812A9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -207,6 +209,10 @@ Global
 		{A7D7CAA6-0747-4CE4-9E7D-EB649C1B4246}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A7D7CAA6-0747-4CE4-9E7D-EB649C1B4246}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A7D7CAA6-0747-4CE4-9E7D-EB649C1B4246}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6D9F3F39-45E2-4B3A-821D-1073064812A9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6D9F3F39-45E2-4B3A-821D-1073064812A9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6D9F3F39-45E2-4B3A-821D-1073064812A9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6D9F3F39-45E2-4B3A-821D-1073064812A9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

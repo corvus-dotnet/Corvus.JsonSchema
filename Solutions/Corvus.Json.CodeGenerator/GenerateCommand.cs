@@ -84,6 +84,11 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
         [Description("If true, YAML support is enabled. You may use YAML, JSON or a mixture of such documents.")]
         [DefaultValue(false)]
         public bool SupportYaml { get; init; }
+
+        [CommandOption("--addExplicitUsings")]
+        [Description("If true, the generate will include using statements for the standard implicit usings.")]
+        [DefaultValue(false)]
+        public bool AddExplicitUsings { get; init; }
     }
 
     /// <inheritdoc/>
@@ -109,7 +114,8 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
             useSchemaValue: settings.UseSchema != SchemaVariant.NotSpecified ? (GeneratorConfig.UseSchema)settings.UseSchema.ToString() : default(GeneratorConfig.UseSchema?),
             useImplicitOperatorString: settings.UseImplicitOperatorString,
             useUnixLineEndings: settings.UseUnixLineEndings,
-            supportYaml: settings.SupportYaml);
+            supportYaml: settings.SupportYaml,
+            addExplicitUsings: settings.AddExplicitUsings);
 
         return GenerationDriver.GenerateTypes(config);
     }
