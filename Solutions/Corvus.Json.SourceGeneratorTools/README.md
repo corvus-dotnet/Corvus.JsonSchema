@@ -72,4 +72,8 @@ We recommend using the command line tool to generate these types to avoid analyz
 
 For example, we provide generated code for the standard JSON Schema meta-schema, and OpenAPI 3.0 and 3.1, compiled into this library. You cannot reference the `Corvus.Json.JsonSchema.*` packages directly in your Source Generator.
 
+## Breaking Changes
 
+### V4.1.3
+
+In V4.1.3 we have changed the signature of the `GenerationSpecification` struct so the type name becomes optional, and allows you to infer it from the schema.

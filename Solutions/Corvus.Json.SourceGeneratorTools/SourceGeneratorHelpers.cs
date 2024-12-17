@@ -86,11 +86,15 @@ public static class SourceGeneratorHelpers
 
             defaultNamespace ??= spec.Namespace;
 
-            namedTypes.Add(
-                new CSharpLanguageProvider.NamedType(
-                    rootType.ReducedTypeDeclaration().ReducedType.LocatedSchema.Location,
-                    spec.TypeName,
-                    spec.Namespace));
+            // Only add the named type if the spec.TypeName is not null or empty.
+            if (!string.IsNullOrEmpty(spec.TypeName))
+            {
+                namedTypes.Add(
+                    new CSharpLanguageProvider.NamedType(
+                        rootType.ReducedTypeDeclaration().ReducedType.LocatedSchema.Location,
+                        spec.TypeName,
+                        spec.Namespace));
+            }
         }
 
         CSharpLanguageProvider.Options options = new(
@@ -255,16 +259,16 @@ public static class SourceGeneratorHelpers
     /// <summary>
     /// Defines the specification for generating a single type and its dependencies.
     /// </summary>
-    /// <param name="typeName">The .NET name of the type.</param>
     /// <param name="ns">The .NET namespace for the type.</param>
     /// <param name="location">The schema location of the type.</param>
     /// <param name="rebaseToRootPath">Indicates whether to rebase the schema as a document root.</param>
-    public readonly struct GenerationSpecification(string typeName, string ns, string location, bool rebaseToRootPath)
+    /// <param name="typeName">The .NET name of the type. If null, the type name will be inferred.</param>
+    public readonly struct GenerationSpecification(string ns, string location, bool rebaseToRootPath, string? typeName = null)
     {
         /// <summary>
         /// Gets the .NET name of the type.
         /// </summary>
-        public string TypeName { get; } = typeName;
+        public string? TypeName { get; } = typeName;
 
         /// <summary>
         /// Gets the .NET namespace for the type.
