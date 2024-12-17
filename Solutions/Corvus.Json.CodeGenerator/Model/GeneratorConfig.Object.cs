@@ -101,6 +101,56 @@ public readonly partial struct GeneratorConfig
     }
 
     /// <summary>
+    /// Gets the (optional) <c>addExplicitUsings</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// If this JSON property is <see cref="JsonValueKind.Undefined"/> then the value returned will be <see langword="null" />.
+    /// </para>
+    /// <para>
+    /// If true, then the generated files will include using statements for the standard implicit usings. You should use this when your project does not use implicit usings.
+    /// </para>
+    /// </remarks>
+    public Corvus.Json.JsonBoolean? AddExplicitUsings
+    {
+        get
+        {
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                {
+                    return default;
+                }
+
+                if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.AddExplicitUsingsUtf8, out JsonElement result))
+                {
+                    if (result.ValueKind == JsonValueKind.Null || result.ValueKind == JsonValueKind.Undefined)
+                    {
+                        return default;
+                    }
+
+                    return new(result);
+                }
+            }
+
+            if ((this.backing & Backing.Object) != 0)
+            {
+                if (this.objectBacking.TryGetValue(JsonPropertyNames.AddExplicitUsings, out JsonAny result))
+                {
+                    if (result.IsNullOrUndefined())
+                    {
+                        return default;
+                    }
+
+                    return result.As<Corvus.Json.JsonBoolean>();
+                }
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
     /// Gets the (optional) <c>additionalFiles</c> property.
     /// </summary>
     /// <remarks>
@@ -867,6 +917,7 @@ public readonly partial struct GeneratorConfig
     public static GeneratorConfig Create(
         in Corvus.Json.JsonString rootNamespace,
         in Corvus.Json.CodeGenerator.GeneratorConfig.GenerationSpecifications typesToGenerate,
+        in Corvus.Json.JsonBoolean? addExplicitUsings = null,
         in Corvus.Json.CodeGenerator.GeneratorConfig.FileList? additionalFiles = null,
         in Corvus.Json.JsonBoolean? assertFormat = null,
         in Corvus.Json.CodeGenerator.GeneratorConfig.JsonStringArray? disabledNamingHeuristics = null,
@@ -884,6 +935,11 @@ public readonly partial struct GeneratorConfig
         var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
         builder.Add(JsonPropertyNames.RootNamespace, rootNamespace.AsAny);
         builder.Add(JsonPropertyNames.TypesToGenerate, typesToGenerate.AsAny);
+
+        if (addExplicitUsings is not null)
+        {
+            builder.Add(JsonPropertyNames.AddExplicitUsings, addExplicitUsings.Value.AsAny);
+        }
 
         if (additionalFiles is not null)
         {
@@ -1059,6 +1115,21 @@ public readonly partial struct GeneratorConfig
         }
 
         throw new InvalidOperationException();
+    }
+
+    /// <summary>
+    /// Sets the (optional) <c>addExplicitUsings</c> property.
+    /// </summary>
+    /// <param name="value">The new property value</param>
+    /// <returns>The instance with the property set.</returns>
+    /// <remarks>
+    /// <para>
+    /// If true, then the generated files will include using statements for the standard implicit usings. You should use this when your project does not use implicit usings.
+    /// </para>
+    /// </remarks>
+    public GeneratorConfig WithAddExplicitUsings(in Corvus.Json.JsonBoolean? value)
+    {
+        return value.HasValue ? this.SetProperty(JsonPropertyNames.AddExplicitUsings, value.Value) : this.RemoveProperty(JsonPropertyNames.AddExplicitUsings);
     }
 
     /// <summary>
@@ -1684,6 +1755,11 @@ public readonly partial struct GeneratorConfig
     public static class JsonPropertyNames
     {
         /// <summary>
+        /// Gets the JSON property name for <see cref="AddExplicitUsings"/>.
+        /// </summary>
+        public const string AddExplicitUsings = "addExplicitUsings";
+
+        /// <summary>
         /// Gets the JSON property name for <see cref="AdditionalFiles"/>.
         /// </summary>
         public const string AdditionalFiles = "additionalFiles";
@@ -1757,6 +1833,11 @@ public readonly partial struct GeneratorConfig
         /// Gets the JSON property name for <see cref="UseUnixLineEndings"/>.
         /// </summary>
         public const string UseUnixLineEndings = "useUnixLineEndings";
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="AddExplicitUsings"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> AddExplicitUsingsUtf8 => "addExplicitUsings"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="AdditionalFiles"/>.
