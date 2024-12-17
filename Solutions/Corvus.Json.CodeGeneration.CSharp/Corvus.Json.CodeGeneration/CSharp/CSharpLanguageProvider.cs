@@ -594,6 +594,7 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
     /// <param name="fileExtension">Gets the file extension to use. Defaults to <c>.cs</c>.</param>
     /// <param name="useImplicitOperatorString">If true, then the string conversion will be implicit.</param>
     /// <param name="lineEndSequence">The line-end sequence. Defaults to <c>\r\n</c>.</param>
+    /// <param name="addExplicitUsings">If true, then the generated files will include using statements for the standard implicit usings. You should use this when your project does not use implicit usings.</param>
     public class Options(
         string defaultNamespace,
         NamedType[]? namedTypes = null,
@@ -604,7 +605,8 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
         string[]? disabledNamingHeuristics = null,
         string fileExtension = ".cs",
         bool useImplicitOperatorString = false,
-        string lineEndSequence = "\r\n")
+        string lineEndSequence = "\r\n",
+        bool addExplicitUsings = false)
     {
         private readonly FrozenDictionary<string, NamedType> namedTypeMap = namedTypes?.ToFrozenDictionary(kvp => kvp.Reference, kvp => kvp) ?? FrozenDictionary<string, NamedType>.Empty;
         private readonly FrozenDictionary<string, string> namespaceMap = namespaces?.ToFrozenDictionary(kvp => kvp.BaseUri, kvp => kvp.DotnetNamespace) ?? FrozenDictionary<string, string>.Empty;
@@ -625,7 +627,7 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
         internal bool UseOptionalNameHeuristics { get; } = useOptionalNameHeuristics;
 
         /// <summary>
-        /// Gets a value indicating whether to always assert the format validation, regardless of the vocabularyy.
+        /// Gets a value indicating whether to always assert the format validation, regardless of the vocabulary.
         /// </summary>
         internal bool AlwaysAssertFormat { get; } = alwaysAssertFormat;
 
@@ -640,7 +642,7 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
         internal string FileExtension { get; } = fileExtension;
 
         /// <summary>
-        /// Gets a value indicating whether to generate an implict operator for conversion to <see langword="string"/>.
+        /// Gets a value indicating whether to generate an implicit operator for conversion to <see langword="string"/>.
         /// </summary>
         internal bool UseImplicitOperatorString { get; } = useImplicitOperatorString;
 
@@ -653,6 +655,14 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
         /// Gets the array of disabled naming heuristics.
         /// </summary>
         internal HashSet<string> DisabledNamingHeuristics { get; } = disabledNamingHeuristics is string[] n ? [.. n] : [];
+
+        /// <summary>
+        /// Gets a value indicating whether to include using statements for the standard implicit usings.
+        /// </summary>
+        /// <remarks>
+        ///  You should use this when your project does not use implicit usings.
+        /// </remarks>
+        internal bool AddExplicitUsings { get; } = addExplicitUsings;
 
         /// <summary>
         /// Gets the namespace for the base URI.

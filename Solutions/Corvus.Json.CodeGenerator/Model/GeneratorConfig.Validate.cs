@@ -119,7 +119,28 @@ public readonly partial struct GeneratorConfig
             int propertyCount = 0;
             foreach (JsonObjectProperty property in value.EnumerateObject())
             {
-                if (property.NameEquals(JsonPropertyNames.AdditionalFilesUtf8, JsonPropertyNames.AdditionalFiles))
+                if (property.NameEquals(JsonPropertyNames.AddExplicitUsingsUtf8, JsonPropertyNames.AddExplicitUsings))
+                {
+                    result = result.WithLocalProperty(propertyCount);
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/addExplicitUsings"), JsonPropertyNames.AddExplicitUsings);
+                    }
+
+                    ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonBoolean>().Validate(result.CreateChildContext(), level);
+                    if (level == ValidationLevel.Flag && !propertyResult.IsValid)
+                    {
+                        return propertyResult;
+                    }
+
+                    result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PopLocation();
+                    }
+                }
+                else if (property.NameEquals(JsonPropertyNames.AdditionalFilesUtf8, JsonPropertyNames.AdditionalFiles))
                 {
                     result = result.WithLocalProperty(propertyCount);
                     if (level > ValidationLevel.Basic)

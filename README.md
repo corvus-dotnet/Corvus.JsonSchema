@@ -404,6 +404,29 @@ Benchmark suites for various components.
 
 The Source Generator which generates types from Json Schema.
 
+## V4.1.2 Updates
+
+Added the `--addExplicitUsings` switch to the code generator (and a corresponding property to the `generator-config.json` schema). If `true`, then
+the source generator will emit the standard global usings explicitly into the generated source files. You can then use the generated code in a project that does not have `<ImplicitUsings>enable</ImplicitUsings>`.
+
+```csharp
+using global::System;
+using global::System.Collections.Generic;
+using global::System.IO;
+using global::System.Linq;
+using global::System.Net.Http;
+using global::System.Threading;
+using global::System.Threading.Tasks;
+```
+
+## V4.1.1 Updates
+
+## Help for people building analyzers and source generators with JSON Schema code generation
+
+We have built a self-contained package called Corvus.Json.SourceGeneratorTools for people looking to build .NET Analyzers or Source Generators that take advantage of JSON Schema code generation.
+
+See the [README](./Solutions/Corvus.Json.SourceGeneratorTools/README.md) for details.
+
 ## V4.1 Updates
 
 ### YAML support

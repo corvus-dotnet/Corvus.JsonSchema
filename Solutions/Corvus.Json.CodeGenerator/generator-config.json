@@ -62,6 +62,10 @@
         "supportYaml": {
             "type": "boolean",
             "description": "If true, YAML support is enabled. You may use YAML, JSON or a mixture of such documents."
+        },
+        "addExplicitUsings": {
+            "type": "boolean",
+            "description":  "If true, then the generated files will include using statements for the standard implicit usings. You should use this when your project does not use implicit usings."
         }
     },
     "$defs": {
