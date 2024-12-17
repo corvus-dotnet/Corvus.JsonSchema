@@ -2072,6 +2072,7 @@ public static class TypeDeclarationExtensions
                     // We don't have an existing constant value,
                     foundElement = value;
                 }
+#if !BUILDING_SOURCE_GENERATOR
                 else if (JsonElement.DeepEquals(foundElement, value))
                 {
                     // The new constant is the same as the old value
@@ -2079,6 +2080,7 @@ public static class TypeDeclarationExtensions
                     // constant from one of the composed types)
                     continue;
                 }
+#endif
                 else
                 {
                     // We have more than keyword that explicitly provides a single constant value
@@ -2105,6 +2107,7 @@ public static class TypeDeclarationExtensions
                         // an explicit declaration
                         foundElement = constantValue;
                     }
+#if !BUILDING_SOURCE_GENERATOR
                     else if (JsonElement.DeepEquals(foundElement, constantValue))
                     {
                         // The new type is the same as the old type
@@ -2112,6 +2115,7 @@ public static class TypeDeclarationExtensions
                         // type from one of the composed types)
                         continue;
                     }
+#endif
                     else
                     {
                         // We have more than keyword that explicitly provides a format

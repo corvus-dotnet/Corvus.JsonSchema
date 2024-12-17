@@ -5,7 +5,6 @@
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using CommunityToolkit.HighPerformance;
 
 namespace Corvus.Json;
 
