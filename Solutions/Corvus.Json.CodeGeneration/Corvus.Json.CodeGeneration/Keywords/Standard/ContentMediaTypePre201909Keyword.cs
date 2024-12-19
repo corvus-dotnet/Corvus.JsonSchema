@@ -81,6 +81,14 @@ public sealed class ContentMediaTypePre201909Keyword
                     return true;
                 }
             }
+            else if (
+                contentMediaType == "application/octet-stream" &&
+                typeDeclaration.ExplicitContentEncoding() is string contentEncoding &&
+                contentEncoding == "base64")
+            {
+                format = "corvus-base64-content";
+                return true;
+            }
         }
 
         format = null;
