@@ -46,7 +46,7 @@
 		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
 		<PackageReference Include="SolidToken.SpecFlow.DependencyInjection" Version="3.9.3" />
 
-		<PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.14">
+		<PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.15">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
