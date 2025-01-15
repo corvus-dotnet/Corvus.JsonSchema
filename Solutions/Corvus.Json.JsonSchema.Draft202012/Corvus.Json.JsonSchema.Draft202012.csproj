@@ -14,7 +14,7 @@
 
 	<ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
 		<PackageReference Include="System.Text.Json" Version="9.0.0" />
-		<PackageReference Include="System.Collections.Immutable" Version="9.0.0" />
+		<PackageReference Include="System.Collections.Immutable" Version="9.0.1" />
 		<PackageReference Include="IndexRange" Version="1.0.3" />
 	</ItemGroup>
 
