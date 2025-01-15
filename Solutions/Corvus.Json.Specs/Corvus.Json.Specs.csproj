@@ -59,7 +59,7 @@
 		<!-- Required for publishing test results directly to Azure Pipelines -->
 		<PackageReference Include="azurepipelines.testlogger" Version="1.2.3" />
 
-		<PackageReference Include="FluentAssertions" Version="6.12.2" />
+		<PackageReference Include="FluentAssertions" Version="8.0.0" />
 
 		<ProjectReference Include="..\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.201909.csproj" />
 
