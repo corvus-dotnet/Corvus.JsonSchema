@@ -39,7 +39,7 @@
     <PackageReference Include="System.Collections.Immutable" Version="9.0.0" />
     <PackageReference Include="System.Reflection.Metadata" Version="9.0.0" />
     <PackageReference Include="System.Text.RegularExpressions" Version="4.3.1" />
-    <PackageReference Include="System.Text.Json" Version="9.0.0" />
+    <PackageReference Include="System.Text.Json" Version="9.0.1" />
 
     <PackageReference Include="Corvus.Testing.SpecFlow.NUnit" Version="3.0.2" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.0" />
