@@ -650,7 +650,7 @@
         "type": "Project",
         "dependencies": {
           "Corvus.Json.CodeGeneration": "[1.0.0, )",
-          "Microsoft.CodeAnalysis.CSharp": "[4.11.0, )",
+          "Microsoft.CodeAnalysis.CSharp": "[4.12.0, )",
           "System.Collections.Immutable": "[9.0.0, )",
           "System.Reflection.Metadata": "[9.0.0, )",
           "System.Text.Json": "[9.0.0, )"
@@ -2060,7 +2060,7 @@
         "type": "Project",
         "dependencies": {
           "Corvus.Json.CodeGeneration": "[1.0.0, )",
-          "Microsoft.CodeAnalysis.CSharp": "[4.11.0, )",
+          "Microsoft.CodeAnalysis.CSharp": "[4.12.0, )",
           "System.Reflection.Metadata": "[9.0.0, )"
         }
       },
@@ -3452,7 +3452,7 @@
         "type": "Project",
         "dependencies": {
           "Corvus.Json.CodeGeneration": "[1.0.0, )",
-          "Microsoft.CodeAnalysis.CSharp": "[4.11.0, )",
+          "Microsoft.CodeAnalysis.CSharp": "[4.12.0, )",
           "System.Reflection.Metadata": "[9.0.0, )"
         }
       },
