@@ -461,24 +461,24 @@ public readonly partial struct OpenApiDocument
     /// Creates an instance of a <see cref="OpenApiDocument"/>.
     /// </summary>
     public static OpenApiDocument Create(
-        in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Info infoValue,
+        in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Info info,
         in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OpenapiEntity openapi,
-        in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Components? componentsValue = null,
+        in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Components? components = null,
         in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ExternalDocumentation? externalDocs = null,
         in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.JsonSchemaDialectEntity? jsonSchemaDialect = null,
-        in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Paths? pathsValue = null,
+        in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Paths? paths = null,
         in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityRequirementArray? security = null,
         in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ServerArray? servers = null,
         in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.TagArray? tags = null,
         in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.WebhooksEntity? webhooks = null)
     {
         var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
-        builder.Add(JsonPropertyNames.InfoValue, infoValue.AsAny);
+        builder.Add(JsonPropertyNames.InfoValue, info.AsAny);
         builder.Add(JsonPropertyNames.Openapi, openapi.AsAny);
 
-        if (componentsValue is not null)
+        if (components is not null)
         {
-            builder.Add(JsonPropertyNames.ComponentsValue, componentsValue.Value.AsAny);
+            builder.Add(JsonPropertyNames.ComponentsValue, components.Value.AsAny);
         }
 
         if (externalDocs is not null)
@@ -491,9 +491,9 @@ public readonly partial struct OpenApiDocument
             builder.Add(JsonPropertyNames.JsonSchemaDialect, jsonSchemaDialect.Value.AsAny);
         }
 
-        if (pathsValue is not null)
+        if (paths is not null)
         {
-            builder.Add(JsonPropertyNames.PathsValue, pathsValue.Value.AsAny);
+            builder.Add(JsonPropertyNames.PathsValue, paths.Value.AsAny);
         }
 
         if (security is not null)

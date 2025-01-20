@@ -2494,7 +2494,7 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
         }
 
         List<GeneratedCodeFile> generatedCode = [];
-        HashSet<string> uniqueFileNames = [];
+        HashSet<string> uniqueFileNames = new(StringComparer.OrdinalIgnoreCase);
 
         foreach (KeyValuePair<TypeDeclaration, Dictionary<string, string>> kvp in this.generatedFiles)
         {

@@ -271,16 +271,16 @@ public readonly partial struct OpenApiDocument
         /// </summary>
         public static Response Create(
             in Corvus.Json.JsonString description,
-            in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Content? contentValue = null,
+            in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Content? content = null,
             in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Response.HeadersEntity? headers = null,
             in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Response.LinksEntity? links = null)
         {
             var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
             builder.Add(JsonPropertyNames.Description, description.AsAny);
 
-            if (contentValue is not null)
+            if (content is not null)
             {
-                builder.Add(JsonPropertyNames.ContentValue, contentValue.Value.AsAny);
+                builder.Add(JsonPropertyNames.ContentValue, content.Value.AsAny);
             }
 
             if (headers is not null)

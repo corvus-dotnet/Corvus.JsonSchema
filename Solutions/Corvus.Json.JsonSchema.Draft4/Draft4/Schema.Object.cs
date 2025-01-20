@@ -1200,7 +1200,7 @@ public readonly partial struct Schema
     /// Creates an instance of a <see cref="Schema"/>.
     /// </summary>
     public static Schema Create(
-        in Corvus.Json.JsonString? schemaValue = null,
+        in Corvus.Json.JsonString? schema = null,
         in Corvus.Json.JsonSchema.Draft4.Schema.AdditionalItemsEntity? additionalItems = null,
         in Corvus.Json.JsonSchema.Draft4.Schema.AdditionalPropertiesEntity? additionalProperties = null,
         in Corvus.Json.JsonSchema.Draft4.Schema.SchemaArray? allOf = null,
@@ -1214,7 +1214,7 @@ public readonly partial struct Schema
         in Corvus.Json.JsonSchema.Draft4.Schema.ExclusiveMinimumEntity? exclusiveMinimum = null,
         in Corvus.Json.JsonString? format = null,
         in Corvus.Json.JsonString? id = null,
-        in Corvus.Json.JsonSchema.Draft4.Schema.ItemsEntity? itemsValue = null,
+        in Corvus.Json.JsonSchema.Draft4.Schema.ItemsEntity? items = null,
         in Corvus.Json.JsonNumber? maximum = null,
         in Corvus.Json.JsonSchema.Draft4.Schema.PositiveInteger? maxItems = null,
         in Corvus.Json.JsonSchema.Draft4.Schema.PositiveInteger? maxLength = null,
@@ -1236,9 +1236,9 @@ public readonly partial struct Schema
     {
         var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
 
-        if (schemaValue is not null)
+        if (schema is not null)
         {
-            builder.Add(JsonPropertyNames.SchemaValue, schemaValue.Value.AsAny);
+            builder.Add(JsonPropertyNames.SchemaValue, schema.Value.AsAny);
         }
 
         if (additionalItems is not null)
@@ -1306,9 +1306,9 @@ public readonly partial struct Schema
             builder.Add(JsonPropertyNames.Id, id.Value.AsAny);
         }
 
-        if (itemsValue is not null)
+        if (items is not null)
         {
-            builder.Add(JsonPropertyNames.ItemsValue, itemsValue.Value.AsAny);
+            builder.Add(JsonPropertyNames.ItemsValue, items.Value.AsAny);
         }
 
         if (maximum is not null)

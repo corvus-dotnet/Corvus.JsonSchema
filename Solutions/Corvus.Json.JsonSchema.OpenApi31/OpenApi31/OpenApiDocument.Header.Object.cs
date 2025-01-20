@@ -432,7 +432,7 @@ public readonly partial struct OpenApiDocument
             in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Examples.ExamplesEntity? examples = null,
             in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.WithStyleSimple.ExplodeEntity? explode = null,
             in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.RequiredEntity? required = null,
-            in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Schema? schemaValue = null,
+            in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Schema? schema = null,
             in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.WithStyleSimple.StyleEntity? style = null)
         {
             var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
@@ -472,9 +472,9 @@ public readonly partial struct OpenApiDocument
                 builder.Add(JsonPropertyNames.Required, required.Value.AsAny);
             }
 
-            if (schemaValue is not null)
+            if (schema is not null)
             {
-                builder.Add(JsonPropertyNames.SchemaValue, schemaValue.Value.AsAny);
+                builder.Add(JsonPropertyNames.SchemaValue, schema.Value.AsAny);
             }
 
             if (style is not null)

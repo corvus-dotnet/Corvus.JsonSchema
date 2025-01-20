@@ -124,7 +124,7 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
             optionalAsNullable: generationSource.OptionalAsNullable,
             useOptionalNameHeuristics: generationSource.UseOptionalNameHeuristics,
             alwaysAssertFormat: generationSource.AlwaysAssertFormat,
-            fileExtension: ".g.cs");
+            fileExtension: "_g.cs");
 
         var languageProvider = CSharpLanguageProvider.DefaultWithOptions(options);
 

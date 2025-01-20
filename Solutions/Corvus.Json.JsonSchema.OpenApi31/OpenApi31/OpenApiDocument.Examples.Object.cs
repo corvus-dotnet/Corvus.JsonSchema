@@ -200,7 +200,7 @@ public readonly partial struct OpenApiDocument
         /// <summary>
         /// Creates an instance of a <see cref="Examples"/>.
         /// </summary>
-        public static Examples Create(in Corvus.Json.JsonAny? example = null, in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Examples.ExamplesEntity? examplesValue = null)
+        public static Examples Create(in Corvus.Json.JsonAny? example = null, in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Examples.ExamplesEntity? examples = null)
         {
             var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
 
@@ -209,9 +209,9 @@ public readonly partial struct OpenApiDocument
                 builder.Add(JsonPropertyNames.Example, example.Value.AsAny);
             }
 
-            if (examplesValue is not null)
+            if (examples is not null)
             {
-                builder.Add(JsonPropertyNames.ExamplesValue, examplesValue.Value.AsAny);
+                builder.Add(JsonPropertyNames.ExamplesValue, examples.Value.AsAny);
             }
 
             return new(builder.ToImmutable());

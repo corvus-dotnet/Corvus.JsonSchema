@@ -267,8 +267,8 @@ public readonly partial struct OpenApiDocument
         public static MediaType Create(
             in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.MediaType.EncodingEntity? encoding = null,
             in Corvus.Json.JsonAny? example = null,
-            in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Examples.ExamplesEntity? examplesValue = null,
-            in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Schema? schemaValue = null)
+            in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Examples.ExamplesEntity? examples = null,
+            in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Schema? schema = null)
         {
             var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
 
@@ -282,14 +282,14 @@ public readonly partial struct OpenApiDocument
                 builder.Add(JsonPropertyNames.Example, example.Value.AsAny);
             }
 
-            if (examplesValue is not null)
+            if (examples is not null)
             {
-                builder.Add(JsonPropertyNames.ExamplesValue, examplesValue.Value.AsAny);
+                builder.Add(JsonPropertyNames.ExamplesValue, examples.Value.AsAny);
             }
 
-            if (schemaValue is not null)
+            if (schema is not null)
             {
-                builder.Add(JsonPropertyNames.SchemaValue, schemaValue.Value.AsAny);
+                builder.Add(JsonPropertyNames.SchemaValue, schema.Value.AsAny);
             }
 
             return new(builder.ToImmutable());

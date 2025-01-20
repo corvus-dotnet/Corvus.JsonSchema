@@ -373,9 +373,9 @@ public readonly partial struct OpenApiDocument
         public static Info Create(
             in Corvus.Json.JsonString title,
             in Corvus.Json.JsonString version,
-            in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Contact? contactValue = null,
+            in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Contact? contact = null,
             in Corvus.Json.JsonString? description = null,
-            in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.License? licenseValue = null,
+            in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.License? license = null,
             in Corvus.Json.JsonString? summary = null,
             in Corvus.Json.JsonUri? termsOfService = null)
         {
@@ -383,9 +383,9 @@ public readonly partial struct OpenApiDocument
             builder.Add(JsonPropertyNames.Title, title.AsAny);
             builder.Add(JsonPropertyNames.Version, version.AsAny);
 
-            if (contactValue is not null)
+            if (contact is not null)
             {
-                builder.Add(JsonPropertyNames.ContactValue, contactValue.Value.AsAny);
+                builder.Add(JsonPropertyNames.ContactValue, contact.Value.AsAny);
             }
 
             if (description is not null)
@@ -393,9 +393,9 @@ public readonly partial struct OpenApiDocument
                 builder.Add(JsonPropertyNames.Description, description.Value.AsAny);
             }
 
-            if (licenseValue is not null)
+            if (license is not null)
             {
-                builder.Add(JsonPropertyNames.LicenseValue, licenseValue.Value.AsAny);
+                builder.Add(JsonPropertyNames.LicenseValue, license.Value.AsAny);
             }
 
             if (summary is not null)

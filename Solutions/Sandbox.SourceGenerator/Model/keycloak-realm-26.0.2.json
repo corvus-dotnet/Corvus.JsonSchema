@@ -1,0 +1,21 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "properties": {
+    "oauth2DevicePollingInterval": {
+      "format": "int32",
+      "type": "integer",
+      "minimum": -2147483648,
+      "maximum": 2147483647,
+      "title": "OAuth 2.0 Device Polling Interval",
+      "description": "The minimum amount of time in seconds that the client should wait between polling requests to the token endpoint."
+    },
+    "oAuth2DevicePollingInterval": {
+      "format": "int32",
+      "type": "integer",
+      "minimum": -2147483648,
+      "maximum": 2147483647
+    }
+  },
+    "additionalProperties": false
+}

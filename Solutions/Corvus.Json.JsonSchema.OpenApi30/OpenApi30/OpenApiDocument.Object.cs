@@ -410,23 +410,23 @@ public readonly partial struct OpenApiDocument
     /// Creates an instance of a <see cref="OpenApiDocument"/>.
     /// </summary>
     public static OpenApiDocument Create(
-        in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Info infoValue,
+        in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Info info,
         in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.OpenapiEntity openapi,
-        in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Paths pathsValue,
-        in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Components? componentsValue = null,
+        in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Paths paths,
+        in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Components? components = null,
         in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExternalDocumentation? externalDocs = null,
         in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SecurityRequirementArray? security = null,
         in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ServerArray? servers = null,
         in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.TagArray? tags = null)
     {
         var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
-        builder.Add(JsonPropertyNames.InfoValue, infoValue.AsAny);
+        builder.Add(JsonPropertyNames.InfoValue, info.AsAny);
         builder.Add(JsonPropertyNames.Openapi, openapi.AsAny);
-        builder.Add(JsonPropertyNames.PathsValue, pathsValue.AsAny);
+        builder.Add(JsonPropertyNames.PathsValue, paths.AsAny);
 
-        if (componentsValue is not null)
+        if (components is not null)
         {
-            builder.Add(JsonPropertyNames.ComponentsValue, componentsValue.Value.AsAny);
+            builder.Add(JsonPropertyNames.ComponentsValue, components.Value.AsAny);
         }
 
         if (externalDocs is not null)

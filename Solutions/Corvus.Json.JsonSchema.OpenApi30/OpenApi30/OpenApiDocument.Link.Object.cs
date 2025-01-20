@@ -342,7 +342,7 @@ public readonly partial struct OpenApiDocument
             in Corvus.Json.JsonUriReference? operationRef = null,
             in Corvus.Json.JsonObject? parameters = null,
             in Corvus.Json.JsonAny? requestBody = null,
-            in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Server? serverValue = null)
+            in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Server? server = null)
         {
             var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
 
@@ -371,9 +371,9 @@ public readonly partial struct OpenApiDocument
                 builder.Add(JsonPropertyNames.RequestBody, requestBody.Value.AsAny);
             }
 
-            if (serverValue is not null)
+            if (server is not null)
             {
-                builder.Add(JsonPropertyNames.ServerValue, serverValue.Value.AsAny);
+                builder.Add(JsonPropertyNames.ServerValue, server.Value.AsAny);
             }
 
             return new(builder.ToImmutable());

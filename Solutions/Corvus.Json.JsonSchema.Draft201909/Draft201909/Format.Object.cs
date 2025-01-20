@@ -157,13 +157,13 @@ public readonly partial struct Format
     /// <summary>
     /// Creates an instance of a <see cref="Format"/>.
     /// </summary>
-    public static Format Create(in Corvus.Json.JsonString? formatValue = null)
+    public static Format Create(in Corvus.Json.JsonString? format = null)
     {
         var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
 
-        if (formatValue is not null)
+        if (format is not null)
         {
-            builder.Add(JsonPropertyNames.FormatValue, formatValue.Value.AsAny);
+            builder.Add(JsonPropertyNames.FormatValue, format.Value.AsAny);
         }
 
         return new(builder.ToImmutable());

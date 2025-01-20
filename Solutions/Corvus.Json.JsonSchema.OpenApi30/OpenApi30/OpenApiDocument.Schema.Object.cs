@@ -1271,14 +1271,14 @@ public readonly partial struct OpenApiDocument
             in Corvus.Json.JsonAny? defaultValue = null,
             in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.DeprecatedEntity? deprecated = null,
             in Corvus.Json.JsonString? description = null,
-            in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Discriminator? discriminatorValue = null,
+            in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Discriminator? discriminator = null,
             in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.JsonAnyArray? enumValue = null,
             in Corvus.Json.JsonAny? example = null,
             in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.ExclusiveMaximumEntity? exclusiveMaximum = null,
             in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.ExclusiveMinimumEntity? exclusiveMinimum = null,
             in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExternalDocumentation? externalDocs = null,
             in Corvus.Json.JsonString? format = null,
-            in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.ItemsEntity? itemsValue = null,
+            in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.ItemsEntity? items = null,
             in Corvus.Json.JsonNumber? maximum = null,
             in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MaxItemsEntity? maxItems = null,
             in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MaxLengthEntity? maxLength = null,
@@ -1299,7 +1299,7 @@ public readonly partial struct OpenApiDocument
             in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.TypeEntity? type = null,
             in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.UniqueItemsEntity? uniqueItems = null,
             in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.WriteOnlyEntity? writeOnly = null,
-            in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Xml? xmlValue = null)
+            in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Xml? xml = null)
         {
             var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
 
@@ -1333,9 +1333,9 @@ public readonly partial struct OpenApiDocument
                 builder.Add(JsonPropertyNames.Description, description.Value.AsAny);
             }
 
-            if (discriminatorValue is not null)
+            if (discriminator is not null)
             {
-                builder.Add(JsonPropertyNames.DiscriminatorValue, discriminatorValue.Value.AsAny);
+                builder.Add(JsonPropertyNames.DiscriminatorValue, discriminator.Value.AsAny);
             }
 
             if (enumValue is not null)
@@ -1368,9 +1368,9 @@ public readonly partial struct OpenApiDocument
                 builder.Add(JsonPropertyNames.Format, format.Value.AsAny);
             }
 
-            if (itemsValue is not null)
+            if (items is not null)
             {
-                builder.Add(JsonPropertyNames.ItemsValue, itemsValue.Value.AsAny);
+                builder.Add(JsonPropertyNames.ItemsValue, items.Value.AsAny);
             }
 
             if (maximum is not null)
@@ -1473,9 +1473,9 @@ public readonly partial struct OpenApiDocument
                 builder.Add(JsonPropertyNames.WriteOnly, writeOnly.Value.AsAny);
             }
 
-            if (xmlValue is not null)
+            if (xml is not null)
             {
-                builder.Add(JsonPropertyNames.XmlValue, xmlValue.Value.AsAny);
+                builder.Add(JsonPropertyNames.XmlValue, xml.Value.AsAny);
             }
 
             return new(builder.ToImmutable());

@@ -528,7 +528,7 @@ public readonly partial struct OpenApiDocument
             in Corvus.Json.JsonString? operationId = null,
             in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Operation.ParameterOrReferenceArray? parameters = null,
             in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.RequestBodyOrReference? requestBody = null,
-            in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Responses? responsesValue = null,
+            in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Responses? responses = null,
             in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Operation.SecurityRequirementArray? security = null,
             in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Operation.ServerArray? servers = null,
             in Corvus.Json.JsonString? summary = null,
@@ -571,9 +571,9 @@ public readonly partial struct OpenApiDocument
                 builder.Add(JsonPropertyNames.RequestBody, requestBody.Value.AsAny);
             }
 
-            if (responsesValue is not null)
+            if (responses is not null)
             {
-                builder.Add(JsonPropertyNames.ResponsesValue, responsesValue.Value.AsAny);
+                builder.Add(JsonPropertyNames.ResponsesValue, responses.Value.AsAny);
             }
 
             if (security is not null)
