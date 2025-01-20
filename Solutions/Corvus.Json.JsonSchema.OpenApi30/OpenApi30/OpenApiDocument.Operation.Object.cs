@@ -534,7 +534,7 @@ public readonly partial struct OpenApiDocument
         /// Creates an instance of a <see cref="Operation"/>.
         /// </summary>
         public static Operation Create(
-            in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Responses responsesValue,
+            in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Responses responses,
             in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Operation.CallbacksEntity? callbacks = null,
             in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Operation.DeprecatedEntity? deprecated = null,
             in Corvus.Json.JsonString? description = null,
@@ -548,7 +548,7 @@ public readonly partial struct OpenApiDocument
             in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Operation.JsonStringArray? tags = null)
         {
             var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
-            builder.Add(JsonPropertyNames.ResponsesValue, responsesValue.AsAny);
+            builder.Add(JsonPropertyNames.ResponsesValue, responses.AsAny);
 
             if (callbacks is not null)
             {

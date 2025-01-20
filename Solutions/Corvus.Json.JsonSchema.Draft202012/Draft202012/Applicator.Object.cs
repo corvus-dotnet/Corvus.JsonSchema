@@ -613,7 +613,7 @@ public readonly partial struct Applicator
         in Corvus.Json.JsonSchema.Draft202012.Applicator.DependentSchemasEntity? dependentSchemas = null,
         in Corvus.Json.JsonSchema.Draft202012.Schema? elseValue = null,
         in Corvus.Json.JsonSchema.Draft202012.Schema? ifValue = null,
-        in Corvus.Json.JsonSchema.Draft202012.Schema? itemsValue = null,
+        in Corvus.Json.JsonSchema.Draft202012.Schema? items = null,
         in Corvus.Json.JsonSchema.Draft202012.Schema? not = null,
         in Corvus.Json.JsonSchema.Draft202012.Applicator.SchemaArray? oneOf = null,
         in Corvus.Json.JsonSchema.Draft202012.Applicator.PatternPropertiesEntity? patternProperties = null,
@@ -659,9 +659,9 @@ public readonly partial struct Applicator
             builder.Add(JsonPropertyNames.If, ifValue.Value.AsAny);
         }
 
-        if (itemsValue is not null)
+        if (items is not null)
         {
-            builder.Add(JsonPropertyNames.ItemsValue, itemsValue.Value.AsAny);
+            builder.Add(JsonPropertyNames.ItemsValue, items.Value.AsAny);
         }
 
         if (not is not null)

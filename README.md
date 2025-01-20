@@ -38,7 +38,7 @@ It uses the official JSON Schema Test Suite to display bugs or functionality gap
 
 This project is sponsored by [endjin](https://endjin.com), a UK based Microsoft Gold Partner for Cloud Platform, Data Platform, Data Analytics, DevOps, and a Power BI Partner.
 
-For more information about our products and services, or for commercial support of this project, please [contact us](https://endjin.com/contact-us). 
+For more information about our products and services, or for commercial support of this project, please [contact us](https://endjin.com/contact-us).
 
 We produce two free weekly newsletters; [Azure Weekly](https://azureweekly.info) for all things about the Microsoft Azure Platform, and [Power BI Weekly](https://powerbiweekly.info).
 
@@ -58,7 +58,7 @@ For a quick introduction, you could read [this blog post by Ian Griffiths (@idg1
 
 There's also [a talk by Ian](https://endjin.com/what-we-think/talks/high-performance-json-serialization-with-code-generation-on-csharp-11-and-dotnet-7-0) on the techniques used in this library.
 
-If you want to see some well-worn patterns with JSON Schema, and how they translate into common .NET idioms, then [this series](https://endjin.com/blog/2024/05/json-schema-patterns-dotnet-data-object) is very useful. The corresponding sample code is found [here](./docs/ExampleRecipes). 
+If you want to see some well-worn patterns with JSON Schema, and how they translate into common .NET idioms, then [this series](https://endjin.com/blog/2024/05/json-schema-patterns-dotnet-data-object) is very useful. The corresponding sample code is found [here](./docs/ExampleRecipes).
 
 ### History
 
@@ -66,7 +66,7 @@ For a more detailed introduction to the concepts, take a look at [this blog post
 
 ### What kind of things is Corvus.JsonSchema good for?
 
-There are 2 key features: 
+There are 2 key features:
 
 ### Serialization
 
@@ -77,7 +77,7 @@ The generated code provides object models for JSON Schema documents that give yo
 You can operate directly over the JSON data, or mix-and-match building new JSON models from .NET primitive types.
 
 ```csharp
-string jsonText = 
+string jsonText =
     """
     {
         "name": {
@@ -101,7 +101,7 @@ The same object-model provides ultra-fast, zero/low allocation validation of JSO
 Having "deserialized" (really 'mapped') the JSON into the object model you can make use of the validation:
 
 ```csharp
-string jsonText = 
+string jsonText =
     """
     {
         "name": {
@@ -404,6 +404,16 @@ Benchmark suites for various components.
 
 The Source Generator which generates types from Json Schema.
 
+## V4.2.0 Updates
+
+### Breaking change
+
+The heuristic for naming (but not ordering) parameters to the `JsonObject.Create()` function has changed, to fix an issue with a parameter naming where properties differ only by case.
+
+This could affect code that is using explicit named parameters with `Create()`, if your parameter changes its name.
+
+If this causes a significant problem in your codebase, please raise an issue here and we will work with you to resolve the problem.
+
 ## V4.1.2 Updates
 
 Added the `--addExplicitUsings` switch to the code generator (and a corresponding property to the `generator-config.json` schema). If `true`, then
@@ -468,7 +478,7 @@ generatejsonschematypes --rootNamespace TestYaml --outputPath .\Model --yaml sch
 There are a number of significant changes in this release
 
 ### Support for cross-vocabulary schema generation.
-  
+
   So if you are upgrading a draft6 or draft7 schema set to 2020-12, for example, you can do it piecemeal and reference a schema with one dialect from a schema with another.
 
 ### Opt-in support for .NET nullable properties
@@ -511,7 +521,7 @@ Add your JSON schema file(s), and set the Build Action to _C# analyzer additiona
 
   <ItemGroup>
     <ProjectReference Include="..\Corvus.Json.ExtendedTypes\Corvus.Json.ExtendedTypes.csproj" />
-    <ProjectReference 
+    <ProjectReference
         Include="..\Corvus.Json.SourceGenerator\Corvus.Json.SourceGenerator.csproj"
         OutputItemType="Analyzer"
         ReferenceOutputAssembly="false"
@@ -521,7 +531,7 @@ Add your JSON schema file(s), and set the Build Action to _C# analyzer additiona
   <ItemGroup>
     <AdditionalFiles Include="test.json" />
   </ItemGroup>
-  
+
 </Project>
 ```
 
@@ -617,11 +627,11 @@ You will have to do this manually if it is consumed via a Project Reference.
 ### New `generatejsonschematypes config` command
 
   Supply a json config file to the generate command, to configure and generate 1 or many schema in a single command.
-  
+
   The configuration file also allows you to explicitly name arbitrary types, and optionally map them in to a specific .NET namespace.
-  
+
   You can also map json schema base file URIs to specific .NET namespaces, and pre-load known-good versions of file reference dependencies.
-  
+
   The [schema for the configuration file is here](./Corvus.Json.CodeGenerator/generator-config.json).
 
 ### New command line validator with `generatejsonschematypes validateDocument`
@@ -682,14 +692,14 @@ Validation type - should have been 'string' with format 'datetime' but was 'Good
 ### Additional features
 
 - Opt-out of optional naming heuristics introduced in V3.0 with the `--disableOptionalNamingHeuristics` command line switch.
-- Opt-out of specific naming heuristics by specifying `--disableNamingHeuristic`. You can list the available name heuristics with the new `generatejsonschematypes listNameHeuristics` command 
+- Opt-out of specific naming heuristics by specifying `--disableNamingHeuristic`. You can list the available name heuristics with the new `generatejsonschematypes listNameHeuristics` command
 - Safe truncation for extremely long file names
 - Access to all JSON schema validation constants via the `CorvusValidation` nested static class.
 - All formatted types (e.g. string or number formats) are now convertible to the equivalent core types (e.g. your custom `"format": "date"` type is freely convertible to and from `JsonDate`) and offer the same accessors and conversions as the core types.
 
 ### Upgrading to V4
 - Code generated using V3.1 of the generator can still be built against V4 of Corvus.Json.ExtendedTypes, and used interoperably.
-  
+
   This allows you to upgrade your code piecemeal to the new version of the generator. You do not need to update everything all at once.
 
 - For the vast majority of schema, the new naming heuristics will continue to work as they did in V3.
@@ -711,7 +721,7 @@ Validation type - should have been 'string' with format 'datetime' but was 'Good
 
   If you want to discover the default value for a property, you must now do so by inspecting the `Default` static property of its type.
   If you are affected by this change, you can copy the `[typename].Default.cs` file for the relevant type from your V3 code base to provide the capability.
-  
+
   However, we recommend refactoring to use the static `Default` property on the property type instead.
 
 ## V3.0 Updates

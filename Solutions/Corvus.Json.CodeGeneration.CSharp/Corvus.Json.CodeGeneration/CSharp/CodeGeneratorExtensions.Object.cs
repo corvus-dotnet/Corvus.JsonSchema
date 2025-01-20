@@ -768,7 +768,7 @@ internal static partial class CodeGeneratorExtensions
                 "Create",
                 methodParameters);
 
-        AppendBuildObjectFromParameters(generator, orderedProperties);
+        AppendBuildObjectFromParameters(generator, methodParameters, orderedProperties);
 
         return generator
             .EndMethodDeclaration();
@@ -788,7 +788,7 @@ internal static partial class CodeGeneratorExtensions
                             .Where(p => p.RequiredOrOptional == RequiredOrOptional.Required &&
                                    p.ReducedPropertyType.SingleConstantValue().ValueKind == JsonValueKind.Undefined)
                             .OrderBy(p => p.JsonPropertyName)
-                            .Select(p => new MethodParameter("in", p.ReducedPropertyType.FullyQualifiedDotnetTypeName(), generator.GetParameterNameInScope(p.DotnetPropertyName(), childScope: "Create"))),
+                            .Select(p => new MethodParameter("in", p.ReducedPropertyType.FullyQualifiedDotnetTypeName(), generator.GetUniqueParameterNameInScope(p.JsonPropertyName, childScope: "Create"))),
                 .. typeDeclaration.PropertyDeclarations
                                         .Where(p => p.RequiredOrOptional == RequiredOrOptional.Optional)
                                         .OrderBy(p => p.JsonPropertyName)
@@ -796,7 +796,7 @@ internal static partial class CodeGeneratorExtensions
                                             new MethodParameter(
                                                 "in",
                                                 p.ReducedPropertyType.FullyQualifiedDotnetTypeName(),
-                                                generator.GetParameterNameInScope(p.DotnetPropertyName(), childScope: "Create"),
+                                                generator.GetUniqueParameterNameInScope(p.JsonPropertyName, childScope: "Create"),
                                                 typeIsNullable: true,
                                                 defaultValue: "null")),
             ];
@@ -817,7 +817,7 @@ internal static partial class CodeGeneratorExtensions
             ];
         }
 
-        static CodeGenerator AppendBuildObjectFromParameters(CodeGenerator generator, PropertyDeclaration[] properties)
+        static CodeGenerator AppendBuildObjectFromParameters(CodeGenerator generator, MethodParameter[] parameters, PropertyDeclaration[] properties)
         {
             if (generator.IsCancellationRequested)
             {
@@ -829,6 +829,8 @@ internal static partial class CodeGeneratorExtensions
             generator
                 .AppendLineIndent("var ", builderName, " = ImmutableList.CreateBuilder<JsonObjectProperty>();");
 
+            int parameterIndex = 0;
+
             foreach (PropertyDeclaration property in properties)
             {
                 if (generator.IsCancellationRequested)
@@ -838,11 +840,11 @@ internal static partial class CodeGeneratorExtensions
 
                 if (property.RequiredOrOptional == RequiredOrOptional.Required)
                 {
-                    AddRequiredProperty(generator, property, builderName);
+                    parameterIndex = AddRequiredProperty(generator, parameters, parameterIndex, property, builderName);
                 }
                 else
                 {
-                    AddOptionalProperty(generator, property, builderName);
+                    parameterIndex = AddOptionalProperty(generator, parameters, parameterIndex, property, builderName);
                 }
             }
 
@@ -851,11 +853,11 @@ internal static partial class CodeGeneratorExtensions
                 .AppendLineIndent("return new(", builderName, ".ToImmutable());");
         }
 
-        static void AddRequiredProperty(CodeGenerator generator, PropertyDeclaration property, string builderName)
+        static int AddRequiredProperty(CodeGenerator generator, MethodParameter[] parameters, int parameterIndex, PropertyDeclaration property, string builderName)
         {
             if (generator.IsCancellationRequested)
             {
-                return;
+                return parameterIndex;
             }
 
             string propertyNamesClass = generator.JsonPropertyNamesClassName();
@@ -874,7 +876,7 @@ internal static partial class CodeGeneratorExtensions
             }
             else
             {
-                string parameterName = generator.GetParameterNameInScope(property.DotnetPropertyName());
+                string parameterName = parameters[parameterIndex++].GetName(generator);
 
                 generator
                     .AppendLineIndent(
@@ -887,17 +889,19 @@ internal static partial class CodeGeneratorExtensions
                         parameterName,
                         ".AsAny);");
             }
+
+            return parameterIndex;
         }
 
-        static void AddOptionalProperty(CodeGenerator generator, PropertyDeclaration property, string builderName)
+        static int AddOptionalProperty(CodeGenerator generator, MethodParameter[] parameters, int parameterIndex, PropertyDeclaration property, string builderName)
         {
             if (generator.IsCancellationRequested)
             {
-                return;
+                return parameterIndex;
             }
 
             string propertyNamesClass = generator.JsonPropertyNamesClassName();
-            string parameterName = generator.GetParameterNameInScope(property.DotnetPropertyName());
+            string parameterName = parameters[parameterIndex++].GetName(generator);
 
             generator
                 .AppendSeparatorLine()
@@ -915,6 +919,8 @@ internal static partial class CodeGeneratorExtensions
                         ".Value.AsAny);")
                 .PopIndent()
                 .AppendLineIndent("}");
+
+            return parameterIndex;
         }
     }
 

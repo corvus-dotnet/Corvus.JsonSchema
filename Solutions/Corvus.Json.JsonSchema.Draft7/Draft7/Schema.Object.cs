@@ -1611,7 +1611,7 @@ public readonly partial struct Schema
         in Corvus.Json.JsonString? comment = null,
         in Corvus.Json.JsonUriReference? id = null,
         in Corvus.Json.JsonUriReference? refValue = null,
-        in Corvus.Json.JsonUri? schemaValue = null,
+        in Corvus.Json.JsonUri? schema = null,
         in Corvus.Json.JsonSchema.Draft7.Schema? additionalItems = null,
         in Corvus.Json.JsonSchema.Draft7.Schema? additionalProperties = null,
         in Corvus.Json.JsonSchema.Draft7.Schema.SchemaArray? allOf = null,
@@ -1631,7 +1631,7 @@ public readonly partial struct Schema
         in Corvus.Json.JsonNumber? exclusiveMinimum = null,
         in Corvus.Json.JsonString? format = null,
         in Corvus.Json.JsonSchema.Draft7.Schema? ifValue = null,
-        in Corvus.Json.JsonSchema.Draft7.Schema.ItemsEntity? itemsValue = null,
+        in Corvus.Json.JsonSchema.Draft7.Schema.ItemsEntity? items = null,
         in Corvus.Json.JsonNumber? maximum = null,
         in Corvus.Json.JsonSchema.Draft7.Schema.NonNegativeInteger? maxItems = null,
         in Corvus.Json.JsonSchema.Draft7.Schema.NonNegativeInteger? maxLength = null,
@@ -1672,9 +1672,9 @@ public readonly partial struct Schema
             builder.Add(JsonPropertyNames.Ref, refValue.Value.AsAny);
         }
 
-        if (schemaValue is not null)
+        if (schema is not null)
         {
-            builder.Add(JsonPropertyNames.SchemaValue, schemaValue.Value.AsAny);
+            builder.Add(JsonPropertyNames.SchemaValue, schema.Value.AsAny);
         }
 
         if (additionalItems is not null)
@@ -1772,9 +1772,9 @@ public readonly partial struct Schema
             builder.Add(JsonPropertyNames.If, ifValue.Value.AsAny);
         }
 
-        if (itemsValue is not null)
+        if (items is not null)
         {
-            builder.Add(JsonPropertyNames.ItemsValue, itemsValue.Value.AsAny);
+            builder.Add(JsonPropertyNames.ItemsValue, items.Value.AsAny);
         }
 
         if (maximum is not null)

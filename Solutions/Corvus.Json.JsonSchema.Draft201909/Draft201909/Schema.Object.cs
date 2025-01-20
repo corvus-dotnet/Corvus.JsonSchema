@@ -2021,7 +2021,7 @@ public readonly partial struct Schema
         in Corvus.Json.JsonSchema.Draft201909.Core.RecursiveAnchorEntity? recursiveAnchor = null,
         in Corvus.Json.JsonUriReference? recursiveRef = null,
         in Corvus.Json.JsonUriReference? refValue = null,
-        in Corvus.Json.JsonUri? schemaValue = null,
+        in Corvus.Json.JsonUri? schema = null,
         in Corvus.Json.JsonSchema.Draft201909.Core.VocabularyEntity? vocabulary = null,
         in Corvus.Json.JsonSchema.Draft201909.Schema? additionalItems = null,
         in Corvus.Json.JsonSchema.Draft201909.Schema? additionalProperties = null,
@@ -2046,7 +2046,7 @@ public readonly partial struct Schema
         in Corvus.Json.JsonNumber? exclusiveMinimum = null,
         in Corvus.Json.JsonString? format = null,
         in Corvus.Json.JsonSchema.Draft201909.Schema? ifValue = null,
-        in Corvus.Json.JsonSchema.Draft201909.Applicator.ItemsEntity? itemsValue = null,
+        in Corvus.Json.JsonSchema.Draft201909.Applicator.ItemsEntity? items = null,
         in Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeInteger? maxContains = null,
         in Corvus.Json.JsonNumber? maximum = null,
         in Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeInteger? maxItems = null,
@@ -2111,9 +2111,9 @@ public readonly partial struct Schema
             builder.Add(JsonPropertyNames.Ref, refValue.Value.AsAny);
         }
 
-        if (schemaValue is not null)
+        if (schema is not null)
         {
-            builder.Add(JsonPropertyNames.SchemaValue, schemaValue.Value.AsAny);
+            builder.Add(JsonPropertyNames.SchemaValue, schema.Value.AsAny);
         }
 
         if (vocabulary is not null)
@@ -2236,9 +2236,9 @@ public readonly partial struct Schema
             builder.Add(JsonPropertyNames.If, ifValue.Value.AsAny);
         }
 
-        if (itemsValue is not null)
+        if (items is not null)
         {
-            builder.Add(JsonPropertyNames.ItemsValue, itemsValue.Value.AsAny);
+            builder.Add(JsonPropertyNames.ItemsValue, items.Value.AsAny);
         }
 
         if (maxContains is not null)

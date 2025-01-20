@@ -924,12 +924,12 @@ public readonly partial struct GeneratorConfig
         in Corvus.Json.CodeGenerator.GeneratorConfig.DisableOptionalNameHeuristicsEntity? disableOptionalNameHeuristics = null,
         in Corvus.Json.CodeGenerator.GeneratorConfig.NamedTypeList? namedTypes = null,
         in Corvus.Json.CodeGenerator.GeneratorConfig.NamespaceMap? namespaces = null,
-        in Corvus.Json.CodeGenerator.GeneratorConfig.OptionalAsNullable? optionalAsNullableValue = null,
+        in Corvus.Json.CodeGenerator.GeneratorConfig.OptionalAsNullable? optionalAsNullable = null,
         in Corvus.Json.JsonString? outputMapFile = null,
         in Corvus.Json.JsonString? outputPath = null,
         in Corvus.Json.JsonBoolean? supportYaml = null,
         in Corvus.Json.JsonBoolean? useImplicitOperatorString = null,
-        in Corvus.Json.CodeGenerator.GeneratorConfig.UseSchema? useSchemaValue = null,
+        in Corvus.Json.CodeGenerator.GeneratorConfig.UseSchema? useSchema = null,
         in Corvus.Json.JsonBoolean? useUnixLineEndings = null)
     {
         var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
@@ -971,9 +971,9 @@ public readonly partial struct GeneratorConfig
             builder.Add(JsonPropertyNames.Namespaces, namespaces.Value.AsAny);
         }
 
-        if (optionalAsNullableValue is not null)
+        if (optionalAsNullable is not null)
         {
-            builder.Add(JsonPropertyNames.OptionalAsNullableValue, optionalAsNullableValue.Value.AsAny);
+            builder.Add(JsonPropertyNames.OptionalAsNullableValue, optionalAsNullable.Value.AsAny);
         }
 
         if (outputMapFile is not null)
@@ -996,9 +996,9 @@ public readonly partial struct GeneratorConfig
             builder.Add(JsonPropertyNames.UseImplicitOperatorString, useImplicitOperatorString.Value.AsAny);
         }
 
-        if (useSchemaValue is not null)
+        if (useSchema is not null)
         {
-            builder.Add(JsonPropertyNames.UseSchemaValue, useSchemaValue.Value.AsAny);
+            builder.Add(JsonPropertyNames.UseSchemaValue, useSchema.Value.AsAny);
         }
 
         if (useUnixLineEndings is not null)

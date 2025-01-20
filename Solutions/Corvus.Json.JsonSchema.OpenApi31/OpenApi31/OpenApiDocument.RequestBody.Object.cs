@@ -238,12 +238,12 @@ public readonly partial struct OpenApiDocument
         /// Creates an instance of a <see cref="RequestBody"/>.
         /// </summary>
         public static RequestBody Create(
-            in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Content contentValue,
+            in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Content content,
             in Corvus.Json.JsonString? description = null,
             in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.RequestBody.RequiredEntity? required = null)
         {
             var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
-            builder.Add(JsonPropertyNames.ContentValue, contentValue.AsAny);
+            builder.Add(JsonPropertyNames.ContentValue, content.AsAny);
 
             if (description is not null)
             {
