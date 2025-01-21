@@ -19,7 +19,7 @@ public static class PathTruncator
     /// <param name="maxLength">The maximum length of the path.</param>
     /// <returns>The truncated path.</returns>
     /// <exception cref="ArgumentException">The directory path is too long to truncation the file name.</exception>
-    public static string TruncatePath(string path, int maxLength = 260)
+    public static string TruncatePath(string path, int maxLength = 259)
     {
         if (string.IsNullOrEmpty(path))
         {
