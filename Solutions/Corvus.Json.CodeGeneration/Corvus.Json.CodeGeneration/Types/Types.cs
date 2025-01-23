@@ -56,6 +56,6 @@ public static class Types
             return CoreTypes.Integer;
         }
 
-        return CoreTypes.None;
+        throw new InvalidOperationException($"Unrecognized core type: {typeValue}");
     }
 }
