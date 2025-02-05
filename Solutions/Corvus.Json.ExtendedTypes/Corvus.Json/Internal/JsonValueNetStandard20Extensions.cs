@@ -97,7 +97,11 @@ public static class JsonValueNetStandard20Extensions
             ILGenerator il = dynamic.GetILGenerator();
 
             // Emit code to call the From() static method on the targetType using the value provided.
-            il.Emit(OpCodes.Ldarg, 0);
+            ParameterInfo param = fromJson.GetParameters()[0];
+            if (param.ParameterType.IsByRef)
+                il.Emit(OpCodes.Ldarga, 0);
+            else
+                il.Emit(OpCodes.Ldarg, 0);
             il.Emit(OpCodes.Call, fromJson);
             il.Emit(OpCodes.Ret);
 
@@ -119,7 +123,11 @@ public static class JsonValueNetStandard20Extensions
             ILGenerator il = dynamic.GetILGenerator();
 
             // Emit code to call the FromJson static method on the targetType using the value provided.
-            il.Emit(OpCodes.Ldarg, 0);
+            ParameterInfo param = fromJson.GetParameters()[0];
+            if (param.ParameterType.IsByRef)
+                il.Emit(OpCodes.Ldarga, 0);
+            else
+                il.Emit(OpCodes.Ldarg, 0);
             il.Emit(OpCodes.Call, fromJson);
             il.Emit(OpCodes.Ret);
 
@@ -142,7 +150,11 @@ public static class JsonValueNetStandard20Extensions
             ILGenerator il = dynamic.GetILGenerator();
 
             // Emit code to call the fromAny static method on the targetType using the value provided.
-            il.Emit(OpCodes.Ldarg_0);
+            ParameterInfo param = fromAny.GetParameters()[0];
+            if (param.ParameterType.IsByRef)
+                il.Emit(OpCodes.Ldarga, 0);
+            else
+                il.Emit(OpCodes.Ldarg, 0);
             il.Emit(OpCodes.Call, fromAny);
             il.Emit(OpCodes.Ret);
 
@@ -172,8 +184,20 @@ public static class JsonValueNetStandard20Extensions
 
             // Emit code to call the fromAny static method on the targetType using the value returned by the
             // asAny method on the sourceType.
-            il.Emit(OpCodes.Ldarg_0);
-            il.Emit(OpCodes.Call, asAny.GetGetMethod());
+            ParameterInfo param = fromAny.GetParameters()[0];
+            if (param.ParameterType.IsByRef)
+            {
+                LocalBuilder anyLocal = il.DeclareLocal(typeof(JsonAny));
+                il.Emit(OpCodes.Ldarga, 0);
+                il.Emit(OpCodes.Call, asAny.GetGetMethod()!);
+                il.Emit(OpCodes.Stloc, anyLocal);
+                il.Emit(OpCodes.Ldloca, anyLocal);
+            }
+            else
+            {
+                il.Emit(OpCodes.Ldarg_0);
+                il.Emit(OpCodes.Call, asAny.GetGetMethod());
+            }
             il.Emit(OpCodes.Call, fromAny);
             il.Emit(OpCodes.Ret);
 
