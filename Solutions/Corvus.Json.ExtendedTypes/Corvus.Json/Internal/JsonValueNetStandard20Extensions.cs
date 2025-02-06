@@ -172,8 +172,11 @@ public static class JsonValueNetStandard20Extensions
 
             // Emit code to call the fromAny static method on the targetType using the value returned by the
             // asAny method on the sourceType.
+            LocalBuilder loc1 = il.DeclareLocal(typeof(JsonAny));
             il.Emit(OpCodes.Ldarga, 0);
-            il.Emit(OpCodes.Call, asAny.GetGetMethod());
+            il.Emit(OpCodes.Call, asAny.GetGetMethod()!);
+            il.Emit(OpCodes.Stloc, loc1);
+            il.Emit(OpCodes.Ldloca, loc1);
             il.Emit(OpCodes.Call, fromAny);
             il.Emit(OpCodes.Ret);
 
