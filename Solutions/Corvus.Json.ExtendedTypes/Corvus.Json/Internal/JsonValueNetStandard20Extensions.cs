@@ -97,7 +97,7 @@ public static class JsonValueNetStandard20Extensions
             ILGenerator il = dynamic.GetILGenerator();
 
             // Emit code to call the From() static method on the targetType using the value provided.
-            il.Emit(OpCodes.Ldarg, 0);
+            il.Emit(OpCodes.Ldarga, 0);
             il.Emit(OpCodes.Call, fromJson);
             il.Emit(OpCodes.Ret);
 
@@ -119,7 +119,7 @@ public static class JsonValueNetStandard20Extensions
             ILGenerator il = dynamic.GetILGenerator();
 
             // Emit code to call the FromJson static method on the targetType using the value provided.
-            il.Emit(OpCodes.Ldarg, 0);
+            il.Emit(OpCodes.Ldarga, 0);
             il.Emit(OpCodes.Call, fromJson);
             il.Emit(OpCodes.Ret);
 
@@ -142,7 +142,7 @@ public static class JsonValueNetStandard20Extensions
             ILGenerator il = dynamic.GetILGenerator();
 
             // Emit code to call the fromAny static method on the targetType using the value provided.
-            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldarga, 0);
             il.Emit(OpCodes.Call, fromAny);
             il.Emit(OpCodes.Ret);
 
@@ -172,8 +172,11 @@ public static class JsonValueNetStandard20Extensions
 
             // Emit code to call the fromAny static method on the targetType using the value returned by the
             // asAny method on the sourceType.
-            il.Emit(OpCodes.Ldarg_0);
-            il.Emit(OpCodes.Call, asAny.GetGetMethod());
+            LocalBuilder loc1 = il.DeclareLocal(typeof(JsonAny));
+            il.Emit(OpCodes.Ldarga, 0);
+            il.Emit(OpCodes.Call, asAny.GetGetMethod()!);
+            il.Emit(OpCodes.Stloc, loc1);
+            il.Emit(OpCodes.Ldloca, loc1);
             il.Emit(OpCodes.Call, fromAny);
             il.Emit(OpCodes.Ret);
 
