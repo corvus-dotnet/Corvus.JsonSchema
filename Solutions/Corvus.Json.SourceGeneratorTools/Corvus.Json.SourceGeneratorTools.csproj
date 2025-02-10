@@ -123,7 +123,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.11.0" />
-    <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="8.0.11" />
+    <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="9.0.1" />
     <PackageReference Include="NodaTime" Version="3.2.1" />
     <PackageReference Include="System.Reflection.Emit.Lightweight" Version="4.7.0" />
     <PackageReference Include="System.Text.Json" Version="8.0.5" />
