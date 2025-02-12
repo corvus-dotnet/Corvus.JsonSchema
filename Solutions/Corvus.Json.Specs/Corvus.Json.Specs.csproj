@@ -19,7 +19,7 @@
 	</PropertyGroup>
 
 	<ItemGroup Condition="'$(TargetFramework)' == 'net481'">
-		<PackageReference Include="Microsoft.Extensions.DependencyModel" Version="9.0.0" />
+		<PackageReference Include="Microsoft.Extensions.DependencyModel" Version="9.0.1" />
 		<PackageReference Include="System.Runtime.Loader" Version="4.3.0" />
 		<PackageReference Include="System.Net.Http" Version="4.3.4" />
 		<SpecFlowFeatureFiles Remove="Features/**/numeric-format.feature" />
