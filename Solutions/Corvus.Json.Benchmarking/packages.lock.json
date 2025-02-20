@@ -89,21 +89,6 @@
         "resolved": "17.13.35505.2",
         "contentHash": "MSwbxbnnf4LzXHjhDbzEgv9K4TEPBLLc8FRj0ipoJGAU3bTWfHj120nGjsYcyTxwCV0xX4qOv7aIVonkZzpueg=="
       },
-      "Roslynator.Analyzers": {
-        "type": "Direct",
-        "requested": "[4.12.10, )",
-        "resolved": "4.12.10",
-        "contentHash": "Wecq3nfhTvnJPxX87hKbjMdX1xeCAMJf9rdBX3nQLTntQs9v0fFbUB2eQSSOArXMuFh7MxjLWaL4+b6XMi1NDA=="
-      },
-      "StyleCop.Analyzers": {
-        "type": "Direct",
-        "requested": "[1.2.0-beta.556, )",
-        "resolved": "1.2.0-beta.556",
-        "contentHash": "llRPgmA1fhC0I0QyFLEcjvtM2239QzKr/tcnbsjArLMJxJlu0AA5G7Fft0OI30pHF3MW63Gf4aSSsjc5m82J1Q==",
-        "dependencies": {
-          "StyleCop.Analyzers.Unstable": "1.2.0.556"
-        }
-      },
       "System.Collections.Immutable": {
         "type": "Direct",
         "requested": "[9.0.0, )",
@@ -463,11 +448,6 @@
         "resolved": "0.3.17",
         "contentHash": "FQgtCoF2HFwvzKWulAwBS5BGLlh8pgbrJtOp47jyBwh2CW16juVtacN1azOA2BqdrJXkXTNLNRMo7ZlHHiuAnA=="
       },
-      "StyleCop.Analyzers.Unstable": {
-        "type": "Transitive",
-        "resolved": "1.2.0.556",
-        "contentHash": "zvn9Mqs/ox/83cpYPignI8hJEM2A93s2HkHs8HYMOAQW0PkampyoErAiIyKxgTLqbbad29HX/shv/6LGSjPJNQ=="
-      },
       "System.Buffers": {
         "type": "Transitive",
         "resolved": "4.5.1",
@@ -605,7 +585,7 @@
           "Corvus.UriTemplates": "[2.2.0, )",
           "NodaTime": "[3.2.1, )",
           "System.Collections.Immutable": "[9.0.0, )",
-          "System.Text.Json": "[9.0.0, )"
+          "System.Text.Json": "[9.0.1, )"
         }
       },
       "corvus.json.jsonreference": {
@@ -633,7 +613,7 @@
           "Microsoft.Extensions.DependencyModel": "[9.0.0, )",
           "System.Collections.Immutable": "[9.0.0, )",
           "System.Reflection.Metadata": "[9.0.0, )",
-          "System.Text.Json": "[9.0.0, )"
+          "System.Text.Json": "[9.0.1, )"
         }
       }
     },
@@ -723,21 +703,6 @@
         "requested": "[17.13.35505.2, )",
         "resolved": "17.13.35505.2",
         "contentHash": "MSwbxbnnf4LzXHjhDbzEgv9K4TEPBLLc8FRj0ipoJGAU3bTWfHj120nGjsYcyTxwCV0xX4qOv7aIVonkZzpueg=="
-      },
-      "Roslynator.Analyzers": {
-        "type": "Direct",
-        "requested": "[4.12.10, )",
-        "resolved": "4.12.10",
-        "contentHash": "Wecq3nfhTvnJPxX87hKbjMdX1xeCAMJf9rdBX3nQLTntQs9v0fFbUB2eQSSOArXMuFh7MxjLWaL4+b6XMi1NDA=="
-      },
-      "StyleCop.Analyzers": {
-        "type": "Direct",
-        "requested": "[1.2.0-beta.556, )",
-        "resolved": "1.2.0-beta.556",
-        "contentHash": "llRPgmA1fhC0I0QyFLEcjvtM2239QzKr/tcnbsjArLMJxJlu0AA5G7Fft0OI30pHF3MW63Gf4aSSsjc5m82J1Q==",
-        "dependencies": {
-          "StyleCop.Analyzers.Unstable": "1.2.0.556"
-        }
       },
       "System.Collections.Immutable": {
         "type": "Direct",
@@ -1085,11 +1050,6 @@
         "resolved": "0.3.17",
         "contentHash": "FQgtCoF2HFwvzKWulAwBS5BGLlh8pgbrJtOp47jyBwh2CW16juVtacN1azOA2BqdrJXkXTNLNRMo7ZlHHiuAnA=="
       },
-      "StyleCop.Analyzers.Unstable": {
-        "type": "Transitive",
-        "resolved": "1.2.0.556",
-        "contentHash": "zvn9Mqs/ox/83cpYPignI8hJEM2A93s2HkHs8HYMOAQW0PkampyoErAiIyKxgTLqbbad29HX/shv/6LGSjPJNQ=="
-      },
       "System.Buffers": {
         "type": "Transitive",
         "resolved": "4.5.1",
@@ -1212,7 +1172,7 @@
           "Corvus.UriTemplates": "[2.2.0, )",
           "NodaTime": "[3.2.1, )",
           "System.Collections.Immutable": "[9.0.0, )",
-          "System.Text.Json": "[9.0.0, )"
+          "System.Text.Json": "[9.0.1, )"
         }
       },
       "corvus.json.jsonreference": {
@@ -1240,7 +1200,7 @@
           "Microsoft.Extensions.DependencyModel": "[9.0.0, )",
           "System.Collections.Immutable": "[9.0.0, )",
           "System.Reflection.Metadata": "[9.0.0, )",
-          "System.Text.Json": "[9.0.0, )"
+          "System.Text.Json": "[9.0.1, )"
         }
       }
     }
