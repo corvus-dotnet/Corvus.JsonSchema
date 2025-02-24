@@ -93,7 +93,8 @@ public static class SourceGeneratorHelpers
                     new CSharpLanguageProvider.NamedType(
                         rootType.ReducedTypeDeclaration().ReducedType.LocatedSchema.Location,
                         spec.TypeName,
-                        spec.Namespace));
+                        spec.Namespace,
+                        spec.Accessibility));
             }
         }
 
@@ -104,7 +105,8 @@ public static class SourceGeneratorHelpers
             alwaysAssertFormat: typesToGenerate.AlwaysAssertFormat,
             optionalAsNullable: typesToGenerate.OptionalAsNullable,
             disabledNamingHeuristics: [.. typesToGenerate.DisabledNamingHeuristics],
-            fileExtension: ".g.cs");
+            fileExtension: ".g.cs",
+            defaultAccessibility: typesToGenerate.DefaultAccessibility);
 
         var languageProvider = CSharpLanguageProvider.DefaultWithOptions(options);
 
@@ -254,6 +256,11 @@ public static class SourceGeneratorHelpers
         /// Gets a value indicating whether to assert format regardless of the vocabulary.
         /// </summary>
         public bool AlwaysAssertFormat => generationContext.AlwaysAssertFormat;
+
+        /// <summary>
+        /// Gets the default accessibility.
+        /// </summary>
+        public GeneratedTypeAccessibility DefaultAccessibility => generationContext.DefaultAccessibility;
     }
 
     /// <summary>
@@ -263,7 +270,8 @@ public static class SourceGeneratorHelpers
     /// <param name="location">The schema location of the type.</param>
     /// <param name="rebaseToRootPath">Indicates whether to rebase the schema as a document root.</param>
     /// <param name="typeName">The .NET name of the type. If null, the type name will be inferred.</param>
-    public readonly struct GenerationSpecification(string ns, string location, bool rebaseToRootPath, string? typeName = null)
+    /// <param name="accessibility">The accessibility of the type. The default is <see cref="GeneratedTypeAccessibility.Public"/>.</param>
+    public readonly struct GenerationSpecification(string ns, string location, bool rebaseToRootPath, string? typeName = null, GeneratedTypeAccessibility accessibility = GeneratedTypeAccessibility.Public)
     {
         /// <summary>
         /// Gets the .NET name of the type.
@@ -284,6 +292,11 @@ public static class SourceGeneratorHelpers
         /// Gets a value indicating whether to rebase the schema as document root.
         /// </summary>
         public bool RebaseToRootPath { get; } = rebaseToRootPath;
+
+        /// <summary>
+        /// Gets the accessibility for the generated type.
+        /// </summary>
+        public GeneratedTypeAccessibility Accessibility { get; } = accessibility;
     }
 
     /// <summary>
@@ -322,6 +335,11 @@ public static class SourceGeneratorHelpers
         /// Gets a value indicating whether to assert format regardless of the vocabulary.
         /// </summary>
         public bool AlwaysAssertFormat { get; } = globalOptions.AlwaysAssertFormat;
+
+        /// <summary>
+        /// Gets the default accessibility for the generated types.
+        /// </summary>
+        public GeneratedTypeAccessibility DefaultAccessibility { get; } = globalOptions.DefaultAccessibility;
     }
 
     /// <summary>
@@ -332,7 +350,8 @@ public static class SourceGeneratorHelpers
     /// <param name="useOptionalNameHeuristics">Indicates whether optional name heuristics should be used.</param>
     /// <param name="alwaysAssertFormat">Indicates whether to assert format regardless of the vocabulary.</param>
     /// <param name="disabledNamingHeuristics">The names of the disabled naming heuristics.</param>
-    public readonly struct GlobalOptions(IVocabulary fallbackVocabulary, bool optionalAsNullable, bool useOptionalNameHeuristics, bool alwaysAssertFormat, ImmutableArray<string> disabledNamingHeuristics)
+    /// <param name="defaultAccessibility">The default accessibility for generated types. Defaults to <see cref="GeneratedTypeAccessibility.Public"/>.</param>
+    public readonly struct GlobalOptions(IVocabulary fallbackVocabulary, bool optionalAsNullable, bool useOptionalNameHeuristics, bool alwaysAssertFormat, ImmutableArray<string> disabledNamingHeuristics, GeneratedTypeAccessibility defaultAccessibility = GeneratedTypeAccessibility.Public)
     {
         /// <summary>
         /// Gets the global fallback vocabulary. This can be overridden for particular types to generate.
@@ -358,5 +377,10 @@ public static class SourceGeneratorHelpers
         /// Gets a value indicating whether to assert format regardless of the vocabulary.
         /// </summary>
         public bool AlwaysAssertFormat { get; } = alwaysAssertFormat;
+
+        /// <summary>
+        /// Gets the default accessibility for generated types.
+        /// </summary>
+        public GeneratedTypeAccessibility DefaultAccessibility { get; } = defaultAccessibility;
     }
 }

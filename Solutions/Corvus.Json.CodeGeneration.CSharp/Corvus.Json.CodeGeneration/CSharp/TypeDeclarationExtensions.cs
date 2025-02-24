@@ -25,7 +25,7 @@ public static class TypeDeclarationExtensions
     private const string UseImplicitOperatorStringKey = "CSharp_LanguageProvider_UseImplicitOperatorString";
     private const string AddExplicitUsingsKey = "CSharp_LanguageProvider_AddExplicitUsings";
     private const string DefaultAccessibilityKey = "CSharp_LanguageProvider_DefaultAccessibilityKey";
-    private const string AccessibilityKey = "CSharp_LanguageProvider_DefaultAccessibilityKey";
+    private const string AccessibilityKey = "CSharp_LanguageProvider_AccessibilityKey";
 
     /// <summary>
     /// Sets the relevant metadata from the <see cref="CSharpLanguageProvider.Options"/>.

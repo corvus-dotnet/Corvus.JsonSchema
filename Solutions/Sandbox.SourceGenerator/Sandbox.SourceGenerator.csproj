@@ -10,6 +10,7 @@
 
   <PropertyGroup>
     <CorvusJsonSchemaOptionalAsNullable>None</CorvusJsonSchemaOptionalAsNullable>
+    <CorvusJsonSchemaDefaultAccessibility>Internal</CorvusJsonSchemaDefaultAccessibility>
   </PropertyGroup>
 
   <ItemGroup>

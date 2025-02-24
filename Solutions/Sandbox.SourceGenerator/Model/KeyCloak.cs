@@ -1,8 +1,9 @@
-﻿namespace Repro547;
-
+﻿
 using Corvus.Json;
 
+namespace Repro547;
+
 [JsonSchemaTypeGenerator("./keycloak-realm-26.0.2.json")]
-public readonly partial struct KeyCloak
+internal readonly partial struct KeyCloak
 {
 }

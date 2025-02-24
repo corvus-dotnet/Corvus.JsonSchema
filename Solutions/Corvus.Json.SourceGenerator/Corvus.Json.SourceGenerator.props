@@ -5,6 +5,7 @@
         <CompilerVisibleProperty Include="CorvusJsonSchemaUseOptionalNameHeuristics" />
         <CompilerVisibleProperty Include="CorvusJsonSchemaAlwaysAssertFormat" />
         <CompilerVisibleProperty Include="CorvusJsonSchemaDisabledNamingHeuristics" />
+        <CompilerVisibleProperty Include="CorvusJsonSchemaDefaultAccessibility" />
     </ItemGroup>
 
     <PropertyGroup>
