@@ -404,6 +404,31 @@ Benchmark suites for various components.
 
 The Source Generator which generates types from Json Schema.
 
+## V4.3.0 Updates
+
+### Type Accessibility using the Source Generator
+
+The source generator now respects the accessibility of the model type.
+
+For example
+
+```csharp
+[JsonSchemaTypeGenerator("../test.json#/$defs/FlimFlam")]
+internal readonly partial struct FlimFlam
+{
+}
+```
+
+Any nested types will be generated with `public` accessibility.
+
+Only `internal` and `public` are supported. The source generator will fail for an unsupported accessiblity declaration.
+
+You can override the default accessibility for all generated types with a build property:
+
+`<CorvusJsonSchemaDefaultAccessibility>Internal</CorvusJsonSchemaDefaultAccessibility>`
+
+Note that you can still generate code that will not compile if you incorrectly mix-and-match `public` and `internal`. It is your responsibility to ensure that your types have compatible accessibility.
+
 ## V4.2.0 Updates
 
 ### Breaking change

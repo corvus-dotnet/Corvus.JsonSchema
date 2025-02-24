@@ -245,6 +245,12 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
                 typeDeclaration.SetDotnetNamespace(ns);
             }
 
+            // Set the accessibility, if it has been explicitly overridden
+            if (typeName.Accessibility is GeneratedTypeAccessibility accessibility)
+            {
+                typeDeclaration.SetDotnetAccessibility(accessibility);
+            }
+
             return;
         }
 
@@ -539,7 +545,8 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
     /// <param name="reference">The reference to the schema.</param>
     /// <param name="dotnetTypeName">The .NET type name to use.</param>
     /// <param name="dotnetNamespace">The (optional) .NET namespace to use.</param>
-    public readonly struct NamedType(JsonReference reference, string dotnetTypeName, string? dotnetNamespace = null)
+    /// <param name="accessibility">The (optional) accessibility for the type.</param>
+    public readonly struct NamedType(JsonReference reference, string dotnetTypeName, string? dotnetNamespace = null, GeneratedTypeAccessibility? accessibility = null)
     {
         /// <summary>
         /// Gets the reference to schema with an explicit name.
@@ -560,6 +567,25 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
         /// as a child of its parent.
         /// </remarks>
         internal string? DotnetNamespace { get; } = dotnetNamespace;
+
+        /// <summary>
+        /// Gets the (optional) accessibility to use for the type.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Providing a value for this property will ensure that the type is generated
+        /// with the given accessibility.
+        /// </para>
+        /// <para>
+        /// Any types for which this is the parent will inherit the accessibility of this
+        /// type. However, care must be taken not to reference/expose types which have
+        /// a more restricted accessibility than the type itself.
+        /// </para>
+        /// <para>You should consider using <see cref="Options.DefaultAccessibility"/>
+        /// to set the accessibility for all generated types rather overriding a specific type.
+        /// </para>
+        /// </remarks>
+        internal GeneratedTypeAccessibility? Accessibility { get; } = accessibility;
     }
 
     /// <summary>
@@ -595,6 +621,7 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
     /// <param name="useImplicitOperatorString">If true, then the string conversion will be implicit.</param>
     /// <param name="lineEndSequence">The line-end sequence. Defaults to <c>\r\n</c>.</param>
     /// <param name="addExplicitUsings">If true, then the generated files will include using statements for the standard implicit usings. You should use this when your project does not use implicit usings.</param>
+    /// <param name="defaultAccessibility">Defines the accessibility of the generated types. Defaults to <see cref="GeneratedTypeAccessibility.Public"/>.</param>
     public class Options(
         string defaultNamespace,
         NamedType[]? namedTypes = null,
@@ -606,7 +633,8 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
         string fileExtension = ".cs",
         bool useImplicitOperatorString = false,
         string lineEndSequence = "\r\n",
-        bool addExplicitUsings = false)
+        bool addExplicitUsings = false,
+        GeneratedTypeAccessibility defaultAccessibility = GeneratedTypeAccessibility.Public)
     {
         private readonly FrozenDictionary<string, NamedType> namedTypeMap = namedTypes?.ToFrozenDictionary(kvp => kvp.Reference, kvp => kvp) ?? FrozenDictionary<string, NamedType>.Empty;
         private readonly FrozenDictionary<string, string> namespaceMap = namespaces?.ToFrozenDictionary(kvp => kvp.BaseUri, kvp => kvp.DotnetNamespace) ?? FrozenDictionary<string, string>.Empty;
@@ -663,6 +691,11 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
         ///  You should use this when your project does not use implicit usings.
         /// </remarks>
         internal bool AddExplicitUsings { get; } = addExplicitUsings;
+
+        /// <summary>
+        /// Gets the default accessibility of the generated types.
+        /// </summary>
+        internal GeneratedTypeAccessibility DefaultAccessibility { get; } = defaultAccessibility;
 
         /// <summary>
         /// Gets the namespace for the base URI.

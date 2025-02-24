@@ -50,7 +50,8 @@ public sealed class StringPartial : ICodeFileBuilder
                     .AppendLine()
                     .BeginTypeDeclarationNesting(typeDeclaration)
                         .AppendDocumentation(typeDeclaration)
-                        .BeginPublicReadonlyPartialStructDeclaration(
+                        .BeginReadonlyPartialStructDeclaration(
+                            typeDeclaration.DotnetAccessibility(),
                             typeDeclaration.DotnetTypeName(),
                             interfaces:
                                 [
