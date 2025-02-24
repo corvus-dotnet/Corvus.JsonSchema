@@ -47,7 +47,8 @@ public sealed class CorePartial : ICodeFileBuilder
                 .BeginTypeDeclarationNesting(typeDeclaration)
                     .AppendDocumentation(typeDeclaration)
                     .AppendJsonConverterAttribute(typeDeclaration)
-                    .BeginPublicReadonlyPartialStructDeclaration(
+                    .BeginReadonlyPartialStructDeclaration(
+                        typeDeclaration.DotnetAccessibility(),
                         typeDeclaration.DotnetTypeName(),
                         interfaces: [
                             JsonAnyType(typeDeclaration)

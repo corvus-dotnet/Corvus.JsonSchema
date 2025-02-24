@@ -3695,7 +3695,8 @@ internal static partial class CodeGeneratorExtensions
             generator
                 .AppendSeparatorLine()
                 .AppendDocumentation(parent)
-                .BeginPublicReadonlyPartialStructDeclaration(
+                .BeginReadonlyPartialStructDeclaration(
+                    parent.DotnetAccessibility(),
                     parent.DotnetTypeName());
         }
 
@@ -3990,11 +3991,13 @@ internal static partial class CodeGeneratorExtensions
     /// Emits the start of a partial struct declaration.
     /// </summary>
     /// <param name="generator">The generator to which to append the beginning of the struct declaration.</param>
+    /// <param name="accessibility">The accessibility for the generated type.</param>
     /// <param name="dotnetTypeName">The .NET type name for the partial struct.</param>
     /// <param name="interfaces">Interfaces to implement.</param>
     /// <returns>A reference to the generator having completed the operation.</returns>
-    public static CodeGenerator BeginPublicReadonlyPartialStructDeclaration(
+    public static CodeGenerator BeginReadonlyPartialStructDeclaration(
         this CodeGenerator generator,
+        GeneratedTypeAccessibility accessibility,
         string dotnetTypeName,
         ConditionalCodeSpecification[]? interfaces = null)
     {
@@ -4003,9 +4006,16 @@ internal static partial class CodeGeneratorExtensions
             return generator;
         }
 
+        string accessibilityString = accessibility switch
+        {
+            GeneratedTypeAccessibility.Public => "public",
+            GeneratedTypeAccessibility.Internal => "internal",
+            _ => throw new ArgumentOutOfRangeException(nameof(accessibility)),
+        };
+
         generator.ReserveNameIfNotReserved(dotnetTypeName);
         generator
-            .AppendIndent("public readonly partial struct ")
+            .AppendIndent(accessibilityString, " readonly partial struct ")
             .AppendLine(dotnetTypeName);
 
         if (interfaces is ConditionalCodeSpecification[] conditionalSpecifications)

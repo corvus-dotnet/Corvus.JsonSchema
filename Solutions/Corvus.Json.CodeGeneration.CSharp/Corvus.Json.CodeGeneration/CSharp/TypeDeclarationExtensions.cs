@@ -24,6 +24,8 @@ public static class TypeDeclarationExtensions
     private const string PreferredBinaryJsonNumberKindKey = "CSharp_LanguageProvider_PreferredBinaryJsonNumberKind";
     private const string UseImplicitOperatorStringKey = "CSharp_LanguageProvider_UseImplicitOperatorString";
     private const string AddExplicitUsingsKey = "CSharp_LanguageProvider_AddExplicitUsings";
+    private const string DefaultAccessibilityKey = "CSharp_LanguageProvider_DefaultAccessibilityKey";
+    private const string AccessibilityKey = "CSharp_LanguageProvider_DefaultAccessibilityKey";
 
     /// <summary>
     /// Sets the relevant metadata from the <see cref="CSharpLanguageProvider.Options"/>.
@@ -36,6 +38,7 @@ public static class TypeDeclarationExtensions
         typeDeclaration.SetMetadata(OptionalAsNullableKey, options.OptionalAsNullable);
         typeDeclaration.SetMetadata(UseImplicitOperatorStringKey, options.UseImplicitOperatorString);
         typeDeclaration.SetMetadata(AddExplicitUsingsKey, options.AddExplicitUsings);
+        typeDeclaration.SetMetadata(DefaultAccessibilityKey, options.DefaultAccessibility);
     }
 
     /// <summary>
@@ -600,6 +603,49 @@ public static class TypeDeclarationExtensions
     {
         typeDeclaration.SetMetadata(DotnetNamespaceKey, ns);
         return typeDeclaration;
+    }
+
+    /// <summary>
+    /// Sets the .NET accessibility.
+    /// </summary>
+    /// <param name="typeDeclaration">The type declaration.</param>
+    /// <param name="accessibility">The <see cref="GeneratedTypeAccessibility"/>.</param>
+    /// <returns>A reference to the type declaration after the operation has completed.</returns>
+    public static TypeDeclaration SetDotnetAccessibility(this TypeDeclaration typeDeclaration, GeneratedTypeAccessibility accessibility)
+    {
+        typeDeclaration.SetMetadata(AccessibilityKey, accessibility);
+        return typeDeclaration;
+    }
+
+    /// <summary>
+    /// Gets the .NET accessibility.
+    /// </summary>
+    /// <param name="typeDeclaration">The type declaration.</param>
+    /// <returns>
+    /// The <see cref="GeneratedTypeAccessibility"/> for the type. If this has been set explicitly, it will return the accessibility for this type.
+    /// If it has a <c>Parent</c>, it will be <see cref="GeneratedTypeAccessibility.Public"/>. Otherwise, it will fall back to the default accessibility
+    /// for the code generation context (which defaults to <see cref="GeneratedTypeAccessibility.Public"/>).
+    /// </returns>
+    public static GeneratedTypeAccessibility DotnetAccessibility(this TypeDeclaration typeDeclaration)
+    {
+        if (typeDeclaration.TryGetMetadata(AccessibilityKey, out GeneratedTypeAccessibility? typeAccessibility) &&
+            typeAccessibility is GeneratedTypeAccessibility value)
+        {
+            return value;
+        }
+
+        if (typeDeclaration.Parent() is not null)
+        {
+            return GeneratedTypeAccessibility.Public;
+        }
+
+        if (typeDeclaration.TryGetMetadata(DefaultAccessibilityKey, out GeneratedTypeAccessibility? defaultTypeAccessibility) &&
+            defaultTypeAccessibility is GeneratedTypeAccessibility defaultValue)
+        {
+            return defaultValue;
+        }
+
+        return GeneratedTypeAccessibility.Public;
     }
 
     /// <summary>

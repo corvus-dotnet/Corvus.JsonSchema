@@ -42,12 +42,14 @@ public sealed class ValidatePartial : ICodeFileBuilder
                         new("global::System.Threading.Tasks", addExplicitUsings),
                         "System.Runtime.CompilerServices",
                         "System.Text.Json",
-                        RequiresRegularExressions(typeDeclaration) ? "System.Text.RegularExpressions" : ConditionalCodeSpecification.DoNotEmit,
+                        RequiresRegularExpressions(typeDeclaration) ? "System.Text.RegularExpressions" : ConditionalCodeSpecification.DoNotEmit,
                         new("Corvus.Json", EmitIfNotCorvusJsonExtendedType(typeDeclaration)))
                     .AppendLine()
                     .BeginTypeDeclarationNesting(typeDeclaration)
                         .AppendDocumentation(typeDeclaration)
-                        .BeginPublicReadonlyPartialStructDeclaration(typeDeclaration.DotnetTypeName());
+                        .BeginReadonlyPartialStructDeclaration(
+                            typeDeclaration.DotnetAccessibility(),
+                            typeDeclaration.DotnetTypeName());
 
             // This is a core type
             if (typeDeclaration.IsCorvusJsonExtendedType())
@@ -85,7 +87,7 @@ public sealed class ValidatePartial : ICodeFileBuilder
         }
     }
 
-    private static bool RequiresRegularExressions(TypeDeclaration typeDeclaration)
+    private static bool RequiresRegularExpressions(TypeDeclaration typeDeclaration)
     {
         return typeDeclaration.ValidationRegularExpressions() is IReadOnlyDictionary<IValidationRegexProviderKeyword, IReadOnlyList<string>> regexes && regexes.Count != 0;
     }

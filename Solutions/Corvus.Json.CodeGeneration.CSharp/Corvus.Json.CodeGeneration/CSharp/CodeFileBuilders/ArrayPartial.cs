@@ -52,7 +52,8 @@ public sealed class ArrayPartial : ICodeFileBuilder
                     .BeginTypeDeclarationNesting(typeDeclaration)
                         .AppendDocumentation(typeDeclaration)
                         .AppendDotnet80OrGreaterCollectionBuilderAttribute(typeDeclaration)
-                        .BeginPublicReadonlyPartialStructDeclaration(
+                        .BeginReadonlyPartialStructDeclaration(
+                            typeDeclaration.DotnetAccessibility(),
                             typeDeclaration.DotnetTypeName(),
                             interfaces:
                             [
