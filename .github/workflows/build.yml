@@ -49,6 +49,7 @@ jobs:
           BUILDVAR_NuGetPublishSource: "${{ startsWith(github.ref, 'refs/tags/') && 'https://api.nuget.org/v3/index.json' || format('https://nuget.pkg.github.com/{0}/index.json', github.repository_owner) }}"
         secretsYaml: |
           NUGET_API_KEY: "${{ startsWith(github.ref, 'refs/tags/') && secrets.NUGET_APIKEY || secrets.BUILD_PUBLISHER_PAT }}"
+        secretsEncryptionKey: ${{ secrets.SHARED_WORKFLOW_KEY }}
 
   build:
     needs: prepareConfig
@@ -76,3 +77,4 @@ jobs:
       # testPhaseSecrets: ${{ needs.prepareConfig.outputs.RESOLVED_SECRETS }}
       # packagePhaseSecrets: ${{ needs.prepareConfig.outputs.RESOLVED_SECRETS }}
       publishPhaseSecrets: ${{ needs.prepareConfig.outputs.RESOLVED_SECRETS }}
+      secretsEncryptionKey: ${{ secrets.SHARED_WORKFLOW_KEY }}
