@@ -4081,7 +4081,7 @@ public readonly struct BinaryJsonNumber :
             where TIn : INumberBase<TIn>
         {
             result = TOut.CreateTruncating(value);
-            var delta = TIn.Abs(TIn.CreateTruncating(result) - value);
+            TIn delta = TIn.Abs(TIn.CreateTruncating(result) - value);
             return TIn.IsZero(delta);
         }
 

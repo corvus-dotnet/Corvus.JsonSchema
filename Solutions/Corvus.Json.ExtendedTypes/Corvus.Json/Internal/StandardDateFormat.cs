@@ -103,7 +103,7 @@ public static class StandardDateFormat
             return false;
         }
 
-        if (!ParseOffsetTimeCore(text, out int hours, out int minutes, out int seconds, out int milliseconds, out int nanoseconds, out int offsetSeconds))
+        if (!ParseOffsetTimeCore(text, out int hours, out int minutes, out int seconds, out int milliseconds, out int microseconds, out int nanoseconds, out int offsetSeconds))
         {
             value = default;
             return false;
@@ -111,9 +111,9 @@ public static class StandardDateFormat
 
         var localTime = new LocalTime(hours, minutes, seconds, milliseconds);
 
-        if (nanoseconds != 0)
+        if (microseconds != 0 || nanoseconds != 0)
         {
-            localTime = localTime.PlusNanoseconds(nanoseconds);
+            localTime = localTime.PlusNanoseconds((microseconds * 1000) + nanoseconds);
         }
 
         value = new OffsetTime(
@@ -152,7 +152,7 @@ public static class StandardDateFormat
             return false;
         }
 
-        if (!ParseOffsetTimeCore(text[11..], out int hours, out int minutes, out int seconds, out int milliseconds, out int nanoseconds, out int offsetSeconds))
+        if (!ParseOffsetTimeCore(text[11..], out int hours, out int minutes, out int seconds, out int milliseconds, out int microseconds, out int nanoseconds, out int offsetSeconds))
         {
             value = default;
             return false;
@@ -162,9 +162,9 @@ public static class StandardDateFormat
             new LocalDateTime(year, month, day, hours, minutes, seconds, milliseconds),
             Offset.FromSeconds(offsetSeconds));
 
-        if (nanoseconds != 0)
+        if (microseconds != 0 || nanoseconds != 0)
         {
-            value = value.PlusNanoseconds(nanoseconds);
+            value = value.PlusNanoseconds((microseconds * 1000) + nanoseconds);
         }
 
         return true;
@@ -195,7 +195,7 @@ public static class StandardDateFormat
         return GregorianYearMonthDayCalculator.TryValidateGregorianYearMonthDay(year, month, day);
     }
 
-    private static bool ParseOffsetTimeCore(ReadOnlySpan<char> text, out int hours, out int minutes, out int seconds, out int milliseconds, out int nanoseconds, out int offsetSeconds)
+    private static bool ParseOffsetTimeCore(ReadOnlySpan<char> text, out int hours, out int minutes, out int seconds, out int milliseconds, out int microseconds, out int nanoseconds, out int offsetSeconds)
     {
         // We can start searching from 8 after the beginning as we know it won't come in
         // the time section
@@ -207,15 +207,16 @@ public static class StandardDateFormat
             minutes = 0;
             seconds = 0;
             milliseconds = 0;
-            offsetSeconds = 0;
+            microseconds = 0;
             nanoseconds = 0;
+            offsetSeconds = 0;
             return false;
         }
 
         // Add the 8 characters back on!
         indexOfOffset += 8;
 
-        if (!ParseTimeCore(text[..indexOfOffset], out hours, out minutes, out seconds, out milliseconds, out nanoseconds))
+        if (!ParseTimeCore(text[..indexOfOffset], out hours, out minutes, out seconds, out milliseconds, out microseconds, out nanoseconds))
         {
             offsetSeconds = 0;
             return false;
@@ -233,6 +234,7 @@ public static class StandardDateFormat
             minutes = 0;
             seconds = 0;
             milliseconds = 0;
+            microseconds = 0;
             offsetSeconds = 0;
             nanoseconds = 0;
             return false;
@@ -250,6 +252,7 @@ public static class StandardDateFormat
             minutes = 0;
             seconds = 0;
             milliseconds = 0;
+            microseconds = 0;
             offsetSeconds = 0;
             return false;
         }
@@ -263,6 +266,7 @@ public static class StandardDateFormat
             minutes = 0;
             seconds = 0;
             milliseconds = 0;
+            microseconds = 0;
             offsetSeconds = 0;
             return false;
         }
@@ -276,6 +280,7 @@ public static class StandardDateFormat
             minutes = 0;
             seconds = 0;
             milliseconds = 0;
+            microseconds = 0;
             offsetSeconds = 0;
             return false;
         }
@@ -288,7 +293,7 @@ public static class StandardDateFormat
         return true;
     }
 
-    private static bool ParseTimeCore(ReadOnlySpan<char> text, out int hours, out int minutes, out int seconds, out int milliseconds, out int nanoseconds)
+    private static bool ParseTimeCore(ReadOnlySpan<char> text, out int hours, out int minutes, out int seconds, out int milliseconds, out int microseconds, out int nanoseconds)
     {
         if (text[2] != ':' ||
             text[5] != ':' ||
@@ -303,6 +308,7 @@ public static class StandardDateFormat
             minutes = 0;
             seconds = 0;
             milliseconds = 0;
+            microseconds = 0;
             nanoseconds = 0;
             return false;
         }
@@ -311,6 +317,8 @@ public static class StandardDateFormat
         minutes = ((text[3] - '0') * 10) + (text[4] - '0');
         seconds = ((text[6] - '0') * 10) + (text[7] - '0');
         milliseconds = 0;
+        microseconds = 0;
+        nanoseconds = 0;
 
         if (text.Length > 8)
         {
@@ -322,14 +330,14 @@ public static class StandardDateFormat
                 minutes = 0;
                 seconds = 0;
                 milliseconds = 0;
+                microseconds = 0;
                 nanoseconds = 0;
                 return false;
             }
 
-            // The initial multiplier is 10^(number of digits remaining - 1)
-            int multiplier = (int)Math.Pow(10, text.Length - 10);
-
             // This does the milliseconds
+            // The initial multiplier is 10^(number of digits remaining - 1)
+            int multiplier = 100;
             for (int i = 9; i < Math.Min(12, text.Length); ++i)
             {
                 if (IsNotNumeric(text[i]))
@@ -338,6 +346,7 @@ public static class StandardDateFormat
                     minutes = 0;
                     seconds = 0;
                     milliseconds = 0;
+                    microseconds = 0;
                     nanoseconds = 0;
                     return false;
                 }
@@ -345,19 +354,47 @@ public static class StandardDateFormat
                 milliseconds += (text[i] - '0') * multiplier;
                 multiplier /= 10;
             }
+
+            // This does the microseconds
+            multiplier = 100;
+            for (int i = 12; i < Math.Min(15, text.Length); ++i)
+            {
+                if (IsNotNumeric(text[i]))
+                {
+                    hours = 0;
+                    minutes = 0;
+                    seconds = 0;
+                    milliseconds = 0;
+                    microseconds = 0;
+                    nanoseconds = 0;
+                    return false;
+                }
+
+                microseconds += (text[i] - '0') * multiplier;
+                multiplier /= 10;
+            }
+
+            // This does the nanoseconds
+            multiplier = 100;
+            for (int i = 15; i < Math.Min(18, text.Length); ++i)
+            {
+                if (IsNotNumeric(text[i]))
+                {
+                    hours = 0;
+                    minutes = 0;
+                    seconds = 0;
+                    milliseconds = 0;
+                    microseconds = 0;
+                    nanoseconds = 0;
+                    return false;
+                }
+
+                nanoseconds += (text[i] - '0') * multiplier;
+                multiplier /= 10;
+            }
         }
 
-        if (milliseconds >= 1000)
-        {
-            nanoseconds = milliseconds % 1000;
-            milliseconds /= 1000;
-        }
-        else
-        {
-            nanoseconds = 0;
-        }
-
-        if (hours < 24 && minutes < 60 && seconds < 60 && milliseconds < 1000 && nanoseconds < 1000)
+        if (hours < 24 && minutes < 60 && seconds < 60 && milliseconds < 1000 && microseconds < 1000 && nanoseconds < 1000)
         {
             return true;
         }
@@ -366,6 +403,7 @@ public static class StandardDateFormat
         minutes = 0;
         seconds = 0;
         milliseconds = 0;
+        microseconds = 0;
         nanoseconds = 0;
         return false;
     }
