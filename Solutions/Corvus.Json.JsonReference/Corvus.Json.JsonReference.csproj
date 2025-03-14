@@ -24,7 +24,7 @@
   <ItemGroup>
     <PackageReference Include="Corvus.HighPerformance" Version="1.0.0" />
     <PackageReference Include="System.Text.Json" Version="9.0.0" />
-    <PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.15">
+    <PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.18">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
