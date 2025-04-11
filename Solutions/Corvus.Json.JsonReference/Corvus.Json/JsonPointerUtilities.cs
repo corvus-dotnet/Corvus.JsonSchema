@@ -418,7 +418,11 @@ public static class JsonPointerUtilities
                         break;
                     }
 
+                    // Read to the property value.
                     reader.Read();
+
+                    // Skip to the next property or EndObject token.
+                    reader.Skip();
                 }
 
                 if (!found)
