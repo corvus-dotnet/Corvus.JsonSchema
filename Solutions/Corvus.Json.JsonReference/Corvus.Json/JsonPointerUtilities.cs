@@ -421,8 +421,9 @@ public static class JsonPointerUtilities
                     // Read to the property value.
                     reader.Read();
 
-                    // Skip to the next property or EndObject token.
+                    // Skip to the end of the current value, then read to the next property or EndObject token.
                     reader.Skip();
+                    reader.Read();
                 }
 
                 if (!found)
