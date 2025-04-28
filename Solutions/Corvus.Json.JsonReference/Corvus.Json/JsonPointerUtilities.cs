@@ -355,10 +355,12 @@ public static class JsonPointerUtilities
     /// <param name="fragment">The fragment in <c>#/blah/foo/3/bar/baz</c> form.</param>
     /// <param name="throwOnFailure">If true, we throw on failure.</param>
     /// <param name="offset">The element found at the given location.</param>
+    /// <param name="options">The JSON reader options.</param>
     /// <returns><c>true</c> if the element was found.</returns>
-    public static bool TryResolvePointer(ReadOnlySpan<byte> input, ReadOnlySpan<char> fragment, bool throwOnFailure, out long offset)
+    public static bool TryResolvePointer(ReadOnlySpan<byte> input, ReadOnlySpan<char> fragment, bool throwOnFailure, out long offset, JsonReaderOptions options = default)
     {
-        var reader = new Utf8JsonReader(input);
+        var reader = new Utf8JsonReader(input, options);
+
         if (!reader.Read())
         {
             offset = reader.BytesConsumed;
@@ -423,7 +425,6 @@ public static class JsonPointerUtilities
 
                     // Skip to the end of the current value, then read to the next property or EndObject token.
                     reader.Skip();
-                    reader.Read();
                 }
 
                 if (!found)
