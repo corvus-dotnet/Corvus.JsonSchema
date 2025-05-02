@@ -241,12 +241,25 @@ public static class StandardDateFormat
         }
 
         ReadOnlySpan<char> offsetText = text[(indexOfOffset + 1)..];
-        if (offsetText.Length != 5 ||
-            offsetText[2] != ':' ||
+        if (offsetText.Length == 5 &&
+            (offsetText[2] != ':' ||
             IsNotNumeric(offsetText[0]) ||
             IsNotNumeric(offsetText[1]) ||
             IsNotNumeric(offsetText[3]) ||
-            IsNotNumeric(offsetText[4]))
+            IsNotNumeric(offsetText[4])))
+        {
+            hours = 0;
+            minutes = 0;
+            seconds = 0;
+            milliseconds = 0;
+            microseconds = 0;
+            offsetSeconds = 0;
+            return false;
+        }
+
+        if (offsetText.Length == 2 &&
+            (IsNotNumeric(offsetText[0]) ||
+            IsNotNumeric(offsetText[1])))
         {
             hours = 0;
             minutes = 0;
@@ -258,7 +271,7 @@ public static class StandardDateFormat
         }
 
         int offsetHours = ((offsetText[0] - '0') * 10) + (offsetText[1] - '0');
-        int offsetMinutes = ((offsetText[3] - '0') * 10) + (offsetText[4] - '0');
+        int offsetMinutes = offsetText.Length == 5 ? ((offsetText[3] - '0') * 10) + (offsetText[4] - '0') : 0;
 
         if (offsetHours > 18 || offsetMinutes >= 60)
         {
