@@ -2,13 +2,15 @@
 
 using Corvus.Json;
 
-var dt1 = DateTime.Parse("2025-03-10T14:55:00.123456Z");
-var dt2 = DateTime.Parse("2025-03-10T14:55:00.1234567Z");
+var dt = DateTime.Parse("2025-04-09T12:00:00+01:00");
+var jdt = new JsonDateTime(dt);
 
-var jdt1 = new JsonDateTime(dt1);
-var jdt2 = new JsonDateTime(dt2);
+var jdta = new JsonDateTime("2025-04-09T12:00:00+01"); // IsValid(): false
+var jdtb = new JsonDateTime("2025-04-09T12:00:00+01:00"); // IsValid(): true
 
-jdt1.IsValid(); // true
-jdt2.IsValid(); // false
+
+Console.WriteLine(jdt.IsValid());
+Console.WriteLine(jdta.IsValid());
+Console.WriteLine(jdtb.IsValid());
 
 Console.ReadLine();
