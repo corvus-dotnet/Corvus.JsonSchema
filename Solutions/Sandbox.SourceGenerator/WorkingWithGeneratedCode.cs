@@ -1,4 +1,5 @@
-﻿using Corvus.Json;
+﻿using System;
+using Corvus.Json;
 using SourceGenTest2.Model;
 
 namespace Sandbox.SourceGenerator;

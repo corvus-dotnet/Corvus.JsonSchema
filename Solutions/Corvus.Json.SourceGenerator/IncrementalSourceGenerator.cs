@@ -126,7 +126,8 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
             useOptionalNameHeuristics: generationSource.UseOptionalNameHeuristics,
             alwaysAssertFormat: generationSource.AlwaysAssertFormat,
             fileExtension: "_g.cs",
-            defaultAccessibility: generationSource.DefaultAccessibility);
+            defaultAccessibility: generationSource.DefaultAccessibility,
+            addExplicitUsings: generationSource.AddExplicitUsings);
 
         var languageProvider = CSharpLanguageProvider.DefaultWithOptions(options);
 
@@ -209,6 +210,13 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
             optionalAsNullable = optionalAsNullableName == "NullOrUndefined";
         }
 
+        bool addExplicitUsings = true;
+
+        if (source.GlobalOptions.TryGetValue("build_property.CorvusJsonSchemaAddExplicitUsings", out string? addExplicitUsingsName))
+        {
+            addExplicitUsings = addExplicitUsingsName == "true" || addExplicitUsingsName == "True";
+        }
+
         bool useOptionalNameHeuristics = true;
 
         if (source.GlobalOptions.TryGetValue("build_property.CorvusJsonSchemaUseOptionalNameHeuristics", out string? useOptionalNameHeuristicsName))
@@ -247,7 +255,7 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
             disabledNamingHeuristics = disabledNames.Select(d => d.Trim()).ToImmutableArray();
         }
 
-        return new(fallbackVocabulary, optionalAsNullable, useOptionalNameHeuristics, alwaysAssertFormat, disabledNamingHeuristics ?? DefaultDisabledNamingHeuristics, defaultAccessibility);
+        return new(fallbackVocabulary, optionalAsNullable, useOptionalNameHeuristics, alwaysAssertFormat, disabledNamingHeuristics ?? DefaultDisabledNamingHeuristics, defaultAccessibility, addExplicitUsings);
     }
 
     private static CompoundDocumentResolver BuildDocumentResolver(ImmutableArray<AdditionalText> source, CancellationToken token)
@@ -382,6 +390,8 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
         public bool AlwaysAssertFormat { get; } = right.AlwaysAssertFormat;
 
         public GeneratedTypeAccessibility DefaultAccessibility { get; } = right.DefaultAccessibility;
+
+        public bool AddExplicitUsings { get; } = right.AddExplicitUsings;
     }
 
     private readonly struct TypesToGenerate(ImmutableArray<GenerationSpecification> left, GenerationContext right)
@@ -401,9 +411,11 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
         public bool AlwaysAssertFormat { get; } = right.AlwaysAssertFormat;
 
         public GeneratedTypeAccessibility DefaultAccessibility { get; } = right.DefaultAccessibility;
+
+        public bool AddExplicitUsings { get; } = right.AddExplicitUsings;
     }
 
-    private readonly struct GlobalOptions(IVocabulary fallbackVocabulary, bool optionalAsNullable, bool useOptionalNameHeuristics, bool alwaysAssertFormat, ImmutableArray<string> disabledNamingHeuristics, GeneratedTypeAccessibility defaultAccessibility)
+    private readonly struct GlobalOptions(IVocabulary fallbackVocabulary, bool optionalAsNullable, bool useOptionalNameHeuristics, bool alwaysAssertFormat, ImmutableArray<string> disabledNamingHeuristics, GeneratedTypeAccessibility defaultAccessibility, bool addExplicitUsings)
     {
         public IVocabulary FallbackVocabulary { get; } = fallbackVocabulary;
 
@@ -416,5 +428,7 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
         public bool AlwaysAssertFormat { get; } = alwaysAssertFormat;
 
         public GeneratedTypeAccessibility DefaultAccessibility { get; } = defaultAccessibility;
+
+        public bool AddExplicitUsings { get; } = addExplicitUsings;
     }
 }

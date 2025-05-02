@@ -2,7 +2,7 @@
   <Import Project="..\Corvus.Json.SourceGenerator\Corvus.Json.SourceGenerator.props" />
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
+    <ImplicitUsings>disable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
     <IsPackable>false</IsPackable>
@@ -11,6 +11,7 @@
   <PropertyGroup>
     <CorvusJsonSchemaOptionalAsNullable>None</CorvusJsonSchemaOptionalAsNullable>
     <CorvusJsonSchemaDefaultAccessibility>Internal</CorvusJsonSchemaDefaultAccessibility>
+    <CorvusJsonSchemaAddExplicitUsings>True</CorvusJsonSchemaAddExplicitUsings>
   </PropertyGroup>
 
   <ItemGroup>
