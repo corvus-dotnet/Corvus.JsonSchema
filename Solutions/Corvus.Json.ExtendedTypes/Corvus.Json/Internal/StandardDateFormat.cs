@@ -241,25 +241,12 @@ public static class StandardDateFormat
         }
 
         ReadOnlySpan<char> offsetText = text[(indexOfOffset + 1)..];
-        if (offsetText.Length == 5 &&
-            (offsetText[2] != ':' ||
+
+        if (!(offsetText.Length == 2 || offsetText.Length == 5) ||
             IsNotNumeric(offsetText[0]) ||
             IsNotNumeric(offsetText[1]) ||
-            IsNotNumeric(offsetText[3]) ||
-            IsNotNumeric(offsetText[4])))
-        {
-            hours = 0;
-            minutes = 0;
-            seconds = 0;
-            milliseconds = 0;
-            microseconds = 0;
-            offsetSeconds = 0;
-            return false;
-        }
-
-        if (offsetText.Length == 2 &&
-            (IsNotNumeric(offsetText[0]) ||
-            IsNotNumeric(offsetText[1])))
+            (offsetText.Length == 5 &&
+             offsetText[2] != ':'))
         {
             hours = 0;
             minutes = 0;
