@@ -311,9 +311,24 @@ public static class JsonPointerUtilities
     /// <returns><see langword="true"/> if the pointer was successfully resolved.</returns>
     public static bool TryGetLineAndOffsetForPointer(ReadOnlySpan<byte> utf8Input, ReadOnlySpan<char> fragment, out int line, out int chars, out long lineOffset)
     {
+        return TryGetLineAndOffsetForPointer(utf8Input, fragment, default, out line, out chars, out lineOffset);
+    }
+
+    /// <summary>
+    /// Gets the line and offset for the pointer in the input.
+    /// </summary>
+    /// <param name="utf8Input">The UTF8 input text.</param>
+    /// <param name="fragment">The fragment for the JSON pointer.</param>
+    /// <param name="options">The <see cref="JsonReaderOptions"/>.</param>
+    /// <param name="line">If the pointer was successfully resolved, this is the line in the input text.</param>
+    /// <param name="chars">If the pointer was successfully resolved, this is the character offset in the line.</param>
+    /// <param name="lineOffset">If the pointer was successfully resolved, this is the total offset to the start of the line in the input text.</param>
+    /// <returns><see langword="true"/> if the pointer was successfully resolved.</returns>
+    public static bool TryGetLineAndOffsetForPointer(ReadOnlySpan<byte> utf8Input, ReadOnlySpan<char> fragment, JsonReaderOptions options, out int line, out int chars, out long lineOffset)
+    {
         int lineCount = 0;
         int accumulatedOffset = 0;
-        if (TryResolvePointer(utf8Input, fragment, false, out long longOffset))
+        if (TryResolvePointer(utf8Input, fragment, throwOnFailure: false, out long longOffset, options))
         {
             while (true)
             {

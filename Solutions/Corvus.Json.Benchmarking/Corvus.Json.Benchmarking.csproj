@@ -7,7 +7,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<IsPackable>false</IsPackable>
-    <NoWarn>SA1615</NoWarn>
+    <NoWarn>$(NoWarn);SA1615;NU1510</NoWarn>
     <Platforms>AnyCPU</Platforms>
     <PreserveCompilationContext>true</PreserveCompilationContext>
   </PropertyGroup>
