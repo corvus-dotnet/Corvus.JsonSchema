@@ -431,15 +431,19 @@ public static class JsonPointerUtilities
                 {
                     if (reader.ValueTextEquals(component))
                     {
+                        // Move to the start of the property value.
+                        reader.Read();
                         found = true;
                         break;
                     }
 
-                    // Read to the property value.
-                    reader.Read();
-
-                    // Skip to the end of the current value, then read to the next property or EndObject token.
+                    // Read to the property value, and skip to the end of the current value.
                     reader.Skip();
+
+                    // The Skip leaves us at the end of, but still inside of, the current property's
+                    // value. So we now need to Read again to move on to the next property, or the
+                    // end of the object.
+                    reader.Read();
                 }
 
                 if (!found)
