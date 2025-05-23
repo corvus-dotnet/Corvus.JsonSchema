@@ -545,12 +545,11 @@ Add your JSON schema file(s), and set the Build Action to _C# analyzer additiona
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Corvus.Json.ExtendedTypes\Corvus.Json.ExtendedTypes.csproj" />
-    <ProjectReference
-        Include="..\Corvus.Json.SourceGenerator\Corvus.Json.SourceGenerator.csproj"
-        OutputItemType="Analyzer"
-        ReferenceOutputAssembly="false"
-        SetTargetFramework="TargetFramework=netstandard2.0" />
+    <PackageReference Include="Corvus.Json.ExtendedTypes" Version="4.3.9" />
+    <PackageReference Include="Corvus.Json.SourceGenerator" Version="4.3.9">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
   </ItemGroup>
 
   <ItemGroup>
