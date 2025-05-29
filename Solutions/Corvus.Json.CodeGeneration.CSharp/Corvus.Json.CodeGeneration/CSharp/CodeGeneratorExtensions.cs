@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text.Json;
 using System.Web;
@@ -1876,8 +1877,13 @@ internal static partial class CodeGeneratorExtensions
 
         HashSet<string> visitedTypes = [];
 
+        int index = 0;
+
+        HashSet<string> usedPropertyNames = new();
+
         foreach (TypeDeclaration t in rootDeclaration.CompositionTypeDeclarations())
         {
+            ++index;
             if (generator.IsCancellationRequested)
             {
                 return generator;
@@ -1889,7 +1895,52 @@ internal static partial class CodeGeneratorExtensions
             }
 
             string propertyNameAs = generator.GetPropertyNameInScope("As", suffix: t.DotnetTypeName());
+            string currentPropertyName = propertyNameAs;
+
+            int pnIndex = 0;
+            while (usedPropertyNames.Contains(currentPropertyName))
+            {
+                if (pnIndex == 0)
+                {
+                    currentPropertyName = generator.GetPropertyNameInScope("As", suffix: t.DotnetTypeNameWithoutNamespace());
+
+                    // Create the new base name
+                    propertyNameAs = currentPropertyName;
+                }
+                else
+                {
+                    currentPropertyName = generator.GetPropertyNameInScope(propertyNameAs, suffix: pnIndex.ToString());
+                }
+
+                pnIndex++;
+            }
+
+            propertyNameAs = currentPropertyName;
+            usedPropertyNames.Add(propertyNameAs);
+
             string propertyNameIs = generator.GetPropertyNameInScope("Is", suffix: t.DotnetTypeName());
+            currentPropertyName = propertyNameIs;
+
+            pnIndex = 0;
+            while (usedPropertyNames.Contains(currentPropertyName))
+            {
+                if (pnIndex == 0)
+                {
+                    currentPropertyName = generator.GetPropertyNameInScope("Is", suffix: t.DotnetTypeNameWithoutNamespace());
+
+                    // Create the new base name
+                    propertyNameIs = currentPropertyName;
+                }
+                else
+                {
+                    currentPropertyName = generator.GetPropertyNameInScope(propertyNameIs, suffix: pnIndex.ToString());
+                }
+
+                pnIndex++;
+            }
+
+            propertyNameIs = currentPropertyName;
+            usedPropertyNames.Add(propertyNameIs);
 
             generator
                 .AppendSeparatorLine()

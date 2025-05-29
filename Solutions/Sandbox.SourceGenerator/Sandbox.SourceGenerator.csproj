@@ -17,6 +17,7 @@
 
   <ItemGroup>
     <None Remove="Model\keycloak-realm-26.0.2.json" />
+    <None Remove="test2.json" />
   </ItemGroup>
 
   <ItemGroup>
@@ -27,6 +28,7 @@
   <ItemGroup>
     <AdditionalFiles Include="Model\keycloak-realm-26.0.2.json" />
     <AdditionalFiles Include="test.json" />
+    <AdditionalFiles Include="test2.json" />
   </ItemGroup>
 
   <ItemGroup>
