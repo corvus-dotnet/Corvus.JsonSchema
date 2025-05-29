@@ -16,7 +16,7 @@
                     "format": "int32",
                     "minimum": 0
                 },
-                { "type": "string" },
+                { "type": "string", "minLength": 0 },
                 {
                     "type": "number",
                     "minimum": 3.5

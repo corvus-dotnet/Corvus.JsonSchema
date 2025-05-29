@@ -12,6 +12,7 @@
     <CorvusJsonSchemaOptionalAsNullable>None</CorvusJsonSchemaOptionalAsNullable>
     <CorvusJsonSchemaDefaultAccessibility>Internal</CorvusJsonSchemaDefaultAccessibility>
     <CorvusJsonSchemaAddExplicitUsings>True</CorvusJsonSchemaAddExplicitUsings>
+    <CorvusJsonSchemaUseImplicitOperatorString>True</CorvusJsonSchemaUseImplicitOperatorString>
   </PropertyGroup>
 
   <ItemGroup>
