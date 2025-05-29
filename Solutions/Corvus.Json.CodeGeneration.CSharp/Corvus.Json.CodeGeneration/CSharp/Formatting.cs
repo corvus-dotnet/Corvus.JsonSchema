@@ -106,6 +106,7 @@ public static class Formatting
         "SchemaLocation",
         "SetProperty",
         "Stream",
+        "System",
         "ToString",
         "TryCreateUriTemplateParser",
         "TryGetBoolean",
