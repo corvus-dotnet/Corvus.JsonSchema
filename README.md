@@ -404,6 +404,12 @@ Benchmark suites for various components.
 
 The Source Generator which generates types from Json Schema.
 
+## V4.3.10 Updates
+
+Added `<CorvusJsonSchemaUseImplicitOperatorString>true</CorvusJsonSchemaUseImplicitOperatorString>` to enable implicit conversion to `string`.
+
+WARNING: Although this is very convenient for string-heavy code, it may cause unintended allocations if used without care.
+
 ## V4.3.0 Updates
 
 ### Type Accessibility using the Source Generator

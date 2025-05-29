@@ -127,7 +127,8 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
             alwaysAssertFormat: generationSource.AlwaysAssertFormat,
             fileExtension: "_g.cs",
             defaultAccessibility: generationSource.DefaultAccessibility,
-            addExplicitUsings: generationSource.AddExplicitUsings);
+            addExplicitUsings: generationSource.AddExplicitUsings,
+            useImplicitOperatorString: generationSource.UseImplicitOperatorString);
 
         var languageProvider = CSharpLanguageProvider.DefaultWithOptions(options);
 
@@ -217,6 +218,13 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
             addExplicitUsings = addExplicitUsingsName == "true" || addExplicitUsingsName == "True";
         }
 
+        bool useImplicitOperatorString = true;
+
+        if (source.GlobalOptions.TryGetValue("build_property.CorvusJsonSchemaUseImplicitOperatorString", out string? useImplicitOperatorStringName))
+        {
+            useImplicitOperatorString = useImplicitOperatorStringName == "true" || useImplicitOperatorStringName == "True";
+        }
+
         bool useOptionalNameHeuristics = true;
 
         if (source.GlobalOptions.TryGetValue("build_property.CorvusJsonSchemaUseOptionalNameHeuristics", out string? useOptionalNameHeuristicsName))
@@ -255,7 +263,7 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
             disabledNamingHeuristics = disabledNames.Select(d => d.Trim()).ToImmutableArray();
         }
 
-        return new(fallbackVocabulary, optionalAsNullable, useOptionalNameHeuristics, alwaysAssertFormat, disabledNamingHeuristics ?? DefaultDisabledNamingHeuristics, defaultAccessibility, addExplicitUsings);
+        return new(fallbackVocabulary, optionalAsNullable, useOptionalNameHeuristics, alwaysAssertFormat, disabledNamingHeuristics ?? DefaultDisabledNamingHeuristics, defaultAccessibility, addExplicitUsings, useImplicitOperatorString);
     }
 
     private static CompoundDocumentResolver BuildDocumentResolver(ImmutableArray<AdditionalText> source, CancellationToken token)
@@ -392,6 +400,8 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
         public GeneratedTypeAccessibility DefaultAccessibility { get; } = right.DefaultAccessibility;
 
         public bool AddExplicitUsings { get; } = right.AddExplicitUsings;
+
+        public bool UseImplicitOperatorString { get; } = right.UseImplicitOperatorString;
     }
 
     private readonly struct TypesToGenerate(ImmutableArray<GenerationSpecification> left, GenerationContext right)
@@ -413,9 +423,11 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
         public GeneratedTypeAccessibility DefaultAccessibility { get; } = right.DefaultAccessibility;
 
         public bool AddExplicitUsings { get; } = right.AddExplicitUsings;
+
+        public bool UseImplicitOperatorString { get; } = right.UseImplicitOperatorString;
     }
 
-    private readonly struct GlobalOptions(IVocabulary fallbackVocabulary, bool optionalAsNullable, bool useOptionalNameHeuristics, bool alwaysAssertFormat, ImmutableArray<string> disabledNamingHeuristics, GeneratedTypeAccessibility defaultAccessibility, bool addExplicitUsings)
+    private readonly struct GlobalOptions(IVocabulary fallbackVocabulary, bool optionalAsNullable, bool useOptionalNameHeuristics, bool alwaysAssertFormat, ImmutableArray<string> disabledNamingHeuristics, GeneratedTypeAccessibility defaultAccessibility, bool addExplicitUsings, bool useImplicitOperatorString)
     {
         public IVocabulary FallbackVocabulary { get; } = fallbackVocabulary;
 
@@ -430,5 +442,7 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
         public GeneratedTypeAccessibility DefaultAccessibility { get; } = defaultAccessibility;
 
         public bool AddExplicitUsings { get; } = addExplicitUsings;
+
+        public bool UseImplicitOperatorString { get; } = useImplicitOperatorString;
     }
 }
