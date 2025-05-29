@@ -1,16 +1,20 @@
-﻿using Sandbox.SourceGenerator;
+﻿using Corvus.Json;
 
-using Corvus.Json;
+var secondsPeriod = NodaTime.Period.FromSeconds(14);
+var secondsDuration = new JsonDuration(secondsPeriod); // PT14S
+bool secondsDurationValid = secondsDuration.IsValid(); // true
+var secondsDurationToPeriod = secondsDuration.GetPeriod(); // OK
 
-var dt = DateTime.Parse("2025-04-09T12:00:00+01:00");
-var jdt = new JsonDateTime(dt);
+var millisecondsPeriod = NodaTime.Period.FromMilliseconds(1400);
+var millisecondsDuration = new JsonDuration(millisecondsPeriod); // PT1.4S
+bool millisecondsDurationValid = millisecondsDuration.IsValid();  // true
+var millisecondsDurationToPeriod = millisecondsDuration.GetPeriod(); // InvalidOperationException: Operation is not valid due to the current state of the object
 
-var jdta = new JsonDateTime("2025-04-09T12:00:00+01"); // IsValid(): false
-var jdtb = new JsonDateTime("2025-04-09T12:00:00+01:00"); // IsValid(): true
+// same occurs with JsonDuration that was constructed from a string, e.g. new JsonDuration("PT1.4S"), or was deserialized from a JSON document
 
-
-Console.WriteLine(jdt.IsValid());
-Console.WriteLine(jdta.IsValid());
-Console.WriteLine(jdtb.IsValid());
-
-Console.ReadLine();
+var hoursDuration = new JsonDuration("PT1.5H");
+var hoursDurationValid = hoursDuration.IsValid(); // false
+if (hoursDurationValid)
+{
+    var hoursDurationToPeriod = hoursDuration.GetPeriod(); // InvalidOperationException
+}

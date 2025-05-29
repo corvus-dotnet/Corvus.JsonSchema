@@ -646,7 +646,7 @@ public readonly struct Period : IEquatable<Period>
                     return false;
                 }
 
-                return false;
+                return true;
             }
 
             builder[unit] = unitValue;
