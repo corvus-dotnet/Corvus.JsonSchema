@@ -785,7 +785,7 @@ internal static partial class CodeGeneratorExtensions
             return
             [
                 .. typeDeclaration.PropertyDeclarations
-                            .Where(p => p.RequiredOrOptional == RequiredOrOptional.Required &&
+                            .Where(p => p.RequiredOrOptional != RequiredOrOptional.Optional &&
                                    p.ReducedPropertyType.SingleConstantValue().ValueKind == JsonValueKind.Undefined)
                             .OrderBy(p => p.JsonPropertyName)
                             .Select(p => new MethodParameter("in", p.ReducedPropertyType.FullyQualifiedDotnetTypeName(), generator.GetUniqueParameterNameInScope(p.JsonPropertyName, childScope: "Create"))),
@@ -809,7 +809,7 @@ internal static partial class CodeGeneratorExtensions
             return
             [
                 .. typeDeclaration.PropertyDeclarations
-                                            .Where(p => p.RequiredOrOptional == RequiredOrOptional.Required)
+                                            .Where(p => p.RequiredOrOptional != RequiredOrOptional.Optional)
                                             .OrderBy(p => p.JsonPropertyName),
                 .. typeDeclaration.PropertyDeclarations
                                             .Where(p => p.RequiredOrOptional == RequiredOrOptional.Optional)
@@ -838,7 +838,7 @@ internal static partial class CodeGeneratorExtensions
                     return generator;
                 }
 
-                if (property.RequiredOrOptional == RequiredOrOptional.Required)
+                if (property.RequiredOrOptional != RequiredOrOptional.Optional)
                 {
                     parameterIndex = AddRequiredProperty(generator, parameters, parameterIndex, property, builderName);
                 }

@@ -138,7 +138,7 @@ public sealed class TypeDeclaration(LocatedSchema locatedSchema)
                     MergeRequiredOrOptional(propertyDeclaration, existingProperty),
                     propertyDeclaration.LocalOrComposed,
                     propertyDeclaration.Keyword ?? existingProperty.Keyword,
-                    propertyDeclaration.RequiredKeyword ?? existingProperty.RequiredKeyword);
+                    existingProperty.RequiredKeyword ?? propertyDeclaration.RequiredKeyword);
         }
         else if (propertyDeclaration.Owner != this)
         {
@@ -147,7 +147,7 @@ public sealed class TypeDeclaration(LocatedSchema locatedSchema)
                     this,
                     propertyDeclaration.JsonPropertyName,
                     propertyDeclaration.UnreducedPropertyType,
-                    propertyDeclaration.RequiredOrOptional,
+                    propertyDeclaration.RequiredOrOptional == RequiredOrOptional.Required ? RequiredOrOptional.ComposedRequired : propertyDeclaration.RequiredOrOptional,
                     LocalOrComposed.Composed,
                     propertyDeclaration.Keyword,
                     propertyDeclaration.RequiredKeyword);
@@ -159,13 +159,17 @@ public sealed class TypeDeclaration(LocatedSchema locatedSchema)
 
         static RequiredOrOptional MergeRequiredOrOptional(PropertyDeclaration propertyDeclaration, PropertyDeclaration existingProperty)
         {
-            if (propertyDeclaration.RequiredOrOptional == RequiredOrOptional.Required ||
-                existingProperty.RequiredOrOptional == RequiredOrOptional.Required)
+            if (existingProperty.RequiredOrOptional == RequiredOrOptional.Required)
             {
                 return RequiredOrOptional.Required;
             }
 
-            return RequiredOrOptional.Optional;
+            if (propertyDeclaration.RequiredOrOptional is RequiredOrOptional.Required or RequiredOrOptional.ComposedRequired)
+            {
+                return RequiredOrOptional.ComposedRequired;
+            }
+
+            return existingProperty.RequiredOrOptional;
         }
     }
 
