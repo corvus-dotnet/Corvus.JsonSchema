@@ -1007,8 +1007,8 @@ public static class TypeDeclarationExtensions
         {
             propertyTypes =
                 that.PropertyDeclarations.Where(
-                    p => p.LocalOrComposed == LocalOrComposed.Local &&
-                    p.RequiredOrOptional == RequiredOrOptional.Required).ToList();
+                    p =>
+                        p.RequiredOrOptional == RequiredOrOptional.Required).ToList();
 
             that.SetMetadata(nameof(ExplicitRequiredProperties), propertyTypes);
         }
@@ -1028,7 +1028,7 @@ public static class TypeDeclarationExtensions
         {
             propertyTypes =
                 that.PropertyDeclarations.Where(
-                    p => p.LocalOrComposed == LocalOrComposed.Local).ToList();
+                    p => p.LocalOrComposed == LocalOrComposed.Local || p.RequiredOrOptional == RequiredOrOptional.Required).ToList();
 
             that.SetMetadata(nameof(ExplicitProperties), propertyTypes);
         }

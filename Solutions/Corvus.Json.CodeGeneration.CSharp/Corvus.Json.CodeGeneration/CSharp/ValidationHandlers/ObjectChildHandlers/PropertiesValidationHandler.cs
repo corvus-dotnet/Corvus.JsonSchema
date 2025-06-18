@@ -96,7 +96,7 @@ public class PropertiesValidationHandler : IChildObjectPropertyValidationHandler
                 .AppendLineIndent("{")
                 .PushIndent();
 
-            if (property.RequiredOrOptional == RequiredOrOptional.Required &&
+            if (property.RequiredOrOptional != RequiredOrOptional.Optional &&
                 !property.ReducedPropertyType.HasDefaultValue())
             {
                 string hasSeenField = RequiredValidationHandler.GetHasSeenVariableName(generator, property);
@@ -104,38 +104,43 @@ public class PropertiesValidationHandler : IChildObjectPropertyValidationHandler
                     .AppendLineIndent(hasSeenField, " = true;");
             }
 
+            if (property.LocalOrComposed == LocalOrComposed.Local)
+            {
+                generator
+                        .AppendLineIndent("result = result.WithLocalProperty(propertyCount);")
+                        .AppendLineIndent("if (level > ValidationLevel.Basic)")
+                        .AppendLineIndent("{")
+                        .PushIndent()
+                            .AppendLineIndent(
+                                "result = result.PushValidationLocationReducedPathModifierAndProperty(new(",
+                                SymbolDisplay.FormatLiteral(property.KeywordPathModifier, true),
+                                "), ",
+                                generator.JsonPropertyNamesClassName(),
+                                ".",
+                                property.DotnetPropertyName(),
+                                ");")
+                        .PopIndent()
+                        .AppendLineIndent("}")
+                        .AppendSeparatorLine()
+                        .AppendLineIndent("ValidationContext propertyResult = property.Value.As<", property.ReducedPropertyType.FullyQualifiedDotnetTypeName(), ">().Validate(result.CreateChildContext(), level);")
+                        .AppendLineIndent("if (level == ValidationLevel.Flag && !propertyResult.IsValid)")
+                        .AppendLineIndent("{")
+                        .PushIndent()
+                            .AppendLineIndent("return propertyResult;")
+                        .PopIndent()
+                        .AppendLineIndent("}")
+                        .AppendSeparatorLine()
+                        .AppendLineIndent("result = result.MergeResults(propertyResult.IsValid, level, propertyResult);")
+                        .AppendSeparatorLine()
+                        .AppendLineIndent("if (level > ValidationLevel.Basic)")
+                        .AppendLineIndent("{")
+                        .PushIndent()
+                            .AppendLineIndent("result = result.PopLocation();")
+                        .PopIndent()
+                        .AppendLineIndent("}");
+            }
+
             generator
-                    .AppendLineIndent("result = result.WithLocalProperty(propertyCount);")
-                    .AppendLineIndent("if (level > ValidationLevel.Basic)")
-                    .AppendLineIndent("{")
-                    .PushIndent()
-                        .AppendLineIndent(
-                            "result = result.PushValidationLocationReducedPathModifierAndProperty(new(",
-                            SymbolDisplay.FormatLiteral(property.KeywordPathModifier, true),
-                            "), ",
-                            generator.JsonPropertyNamesClassName(),
-                            ".",
-                            property.DotnetPropertyName(),
-                            ");")
-                    .PopIndent()
-                    .AppendLineIndent("}")
-                    .AppendSeparatorLine()
-                    .AppendLineIndent("ValidationContext propertyResult = property.Value.As<", property.ReducedPropertyType.FullyQualifiedDotnetTypeName(), ">().Validate(result.CreateChildContext(), level);")
-                    .AppendLineIndent("if (level == ValidationLevel.Flag && !propertyResult.IsValid)")
-                    .AppendLineIndent("{")
-                    .PushIndent()
-                        .AppendLineIndent("return propertyResult;")
-                    .PopIndent()
-                    .AppendLineIndent("}")
-                    .AppendSeparatorLine()
-                    .AppendLineIndent("result = result.MergeResults(propertyResult.IsValid, level, propertyResult);")
-                    .AppendSeparatorLine()
-                    .AppendLineIndent("if (level > ValidationLevel.Basic)")
-                    .AppendLineIndent("{")
-                    .PushIndent()
-                        .AppendLineIndent("result = result.PopLocation();")
-                    .PopIndent()
-                    .AppendLineIndent("}")
                 .PopIndent()
                 .AppendLineIndent("}");
         }

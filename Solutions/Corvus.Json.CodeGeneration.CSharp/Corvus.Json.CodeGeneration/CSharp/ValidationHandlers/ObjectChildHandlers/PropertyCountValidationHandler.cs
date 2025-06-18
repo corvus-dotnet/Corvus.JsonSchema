@@ -116,7 +116,7 @@ public class PropertyCountValidationHandler : IChildArrayItemValidationHandler
             }
 
             generator
-                .Append("array of length {propertyCount} ")
+                .Append("property count {propertyCount} ")
                 .AppendTextForInverseOperator(op)
                 .Append(" {")
                 .Append(memberName)

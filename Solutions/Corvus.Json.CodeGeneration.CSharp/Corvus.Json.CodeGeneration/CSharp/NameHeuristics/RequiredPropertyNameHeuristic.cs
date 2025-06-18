@@ -42,7 +42,7 @@ public sealed class RequiredPropertyNameHeuristic : INameHeuristicBeforeSubschem
         foreach (PropertyDeclaration property in
                     typeDeclaration.PropertyDeclarations
                         .Where(p =>
-                            p.RequiredOrOptional == RequiredOrOptional.Required))
+                            p.RequiredOrOptional != RequiredOrOptional.Optional))
         {
             if (count > 3)
             {

@@ -15,6 +15,11 @@ public enum RequiredOrOptional
     Required,
 
     /// <summary>
+    /// The property is required by composition.
+    /// </summary>
+    ComposedRequired,
+
+    /// <summary>
     /// The property is optional.
     /// </summary>
     Optional,

@@ -58,7 +58,7 @@ public sealed class RequiredKeyword : IPropertyProviderKeyword, IObjectRequiredP
                         target,
                         Uri.UnescapeDataString(propertyName),
                         WellKnownTypeDeclarations.JsonAny,
-                        treatRequiredAsOptional ? RequiredOrOptional.Optional : RequiredOrOptional.Required,
+                        treatRequiredAsOptional ? RequiredOrOptional.Optional : source == target ? RequiredOrOptional.Required : RequiredOrOptional.ComposedRequired,
                         source == target ? LocalOrComposed.Local : LocalOrComposed.Composed,
                         this,
                         this));
