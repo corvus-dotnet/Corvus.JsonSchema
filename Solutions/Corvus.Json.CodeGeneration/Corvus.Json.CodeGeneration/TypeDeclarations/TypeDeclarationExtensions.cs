@@ -1126,7 +1126,11 @@ public static class TypeDeclarationExtensions
     /// explicitly a strongly-typed tuple.
     /// </summary>
     /// <param name="that">The type declaration for which to get the array type.</param>
-    /// <returns>The <see cref="ArrayItemsTypeDeclaration"/> for the strongly typed array items.</returns>
+    /// <returns>The <see cref="TupleTypeDeclaration"/> for the tuple items.</returns>
+    /// <remarks>This will return a tuple if and only if it is explicitly declared on this type.
+    /// Typically this is used for validation purposes.</remarks>
+    /// <seealso cref="TupleType(TypeDeclaration)"/>
+    /// <seealso cref="ImplicitTupleType(TypeDeclaration)"/>
     public static TupleTypeDeclaration? ExplicitTupleType(this TypeDeclaration that)
     {
         if (!that.TryGetMetadata(nameof(ExplicitTupleType), out TupleTypeDeclaration? tupleType))
@@ -1139,11 +1143,35 @@ public static class TypeDeclarationExtensions
     }
 
     /// <summary>
+    /// Gets the implicit type of a tuple, or <see langword="null"/> if the type is not
+    /// explicitly a strongly-typed tuple.
+    /// </summary>
+    /// <param name="that">The type declaration for which to get the tuple type.</param>
+    /// <returns>The <see cref="TupleTypeDeclaration"/> for the tuple items.</returns>
+    /// <remarks>This will return a tuple if it is explicitly declared on this type, or
+    /// through composition. Typically this is used for creation purposes.</remarks>
+    /// <seealso cref="TupleType(TypeDeclaration)"/>
+    /// <seealso cref="ExplicitTupleType(TypeDeclaration)"/>
+    public static TupleTypeDeclaration? ImplicitTupleType(this TypeDeclaration that)
+    {
+        if (!that.TryGetMetadata(nameof(ImplicitTupleType), out TupleTypeDeclaration? tupleType))
+        {
+            BuildArrayTypes(that);
+            that.TryGetMetadata(nameof(ImplicitTupleType), out tupleType);
+        }
+
+        return tupleType;
+    }
+
+    /// <summary>
     /// Gets the type of a tuple, or <see langword="null"/> if the type is not
     /// a strongly-typed tuple.
     /// </summary>
     /// <param name="that">The type declaration for which to get the array type.</param>
-    /// <returns>The <see cref="ArrayItemsTypeDeclaration"/> for the strongly typed array items.</returns>
+    /// <returns>The <see cref="TupleTypeDeclaration"/> for the tuple items.</returns>
+    /// <remarks>This will return null if the type allows items other than the tuple.</remarks>
+    /// <seealso cref="ImplicitTupleType(TypeDeclaration)"/>
+    /// <seealso cref="ExplicitTupleType(TypeDeclaration)"/>
     public static TupleTypeDeclaration? TupleType(this TypeDeclaration that)
     {
         if (!that.TryGetMetadata(nameof(TupleType), out TupleTypeDeclaration? tupleType))
@@ -2241,9 +2269,18 @@ public static class TypeDeclarationExtensions
             typeDeclaration.SetMetadata(nameof(TupleType), default(TupleTypeDeclaration?));
         }
 
-        if (tupleType is TupleTypeDeclaration t && t.IsExplicit)
+        if (tupleType is TupleTypeDeclaration ti && !ti.IsExplicit)
         {
-            typeDeclaration.SetMetadata(nameof(ExplicitTupleType), t);
+            typeDeclaration.SetMetadata(nameof(ImplicitTupleType), ti);
+        }
+        else
+        {
+            typeDeclaration.SetMetadata(nameof(ImplicitTupleType), default(TupleTypeDeclaration?));
+        }
+
+        if (tupleType is TupleTypeDeclaration te && te.IsExplicit)
+        {
+            typeDeclaration.SetMetadata(nameof(ExplicitTupleType), te);
         }
         else
         {
