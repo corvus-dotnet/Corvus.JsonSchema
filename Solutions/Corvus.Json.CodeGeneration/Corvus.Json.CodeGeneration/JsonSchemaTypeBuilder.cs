@@ -260,8 +260,6 @@ public class JsonSchemaTypeBuilder(
                 return;
             }
 
-            // Tell ourselves early that we have visited this type declaration already.
-
             // We only set a name for ourselves if we cannot be reduced.
             if (!typeDeclaration.CanReduce())
             {
@@ -306,8 +304,6 @@ public class JsonSchemaTypeBuilder(
                 return;
             }
 
-            // Tell ourselves early that we have visited this type declaration already.
-
             // We only set a name for ourselves if we cannot be reduced.
             if (typeDeclaration.CanReduce())
             {
@@ -344,9 +340,6 @@ public class JsonSchemaTypeBuilder(
             {
                 return;
             }
-
-            // Tell ourselves early that we have visited this type declaration already.
-            visitedTypeDeclarations.Add(typeDeclaration);
 
             // We only set a name for ourselves if we cannot be reduced.
             if (!typeDeclaration.CanReduce())
