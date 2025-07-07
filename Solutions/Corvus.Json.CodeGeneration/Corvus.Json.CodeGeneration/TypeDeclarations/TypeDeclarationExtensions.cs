@@ -141,7 +141,7 @@ public static class TypeDeclarationExtensions
     /// Gets a value indicating whether the type has an exclusive maximum modifier.
     /// </summary>
     /// <param name="that">The type declaration to test.</param>
-    /// <returns><see langword="true"/> if the type declaration has an exclusve maximum modifier.</returns>
+    /// <returns><see langword="true"/> if the type declaration has an exclusive maximum modifier.</returns>
     public static bool HasExclusiveMaximumModifier(this TypeDeclaration that)
     {
         if (!that.TryGetMetadata(nameof(HasExclusiveMaximumModifier), out bool? result))
@@ -157,7 +157,7 @@ public static class TypeDeclarationExtensions
     /// Gets a value indicating whether the type has an exclusive minimum modifier.
     /// </summary>
     /// <param name="that">The type declaration to test.</param>
-    /// <returns><see langword="true"/> if the type declaration has an exclusve minimum modifier.</returns>
+    /// <returns><see langword="true"/> if the type declaration has an exclusive minimum modifier.</returns>
     public static bool HasExclusiveMinimumModifier(this TypeDeclaration that)
     {
         if (!that.TryGetMetadata(nameof(HasExclusiveMinimumModifier), out bool? result))
@@ -218,9 +218,9 @@ public static class TypeDeclarationExtensions
     }
 
     /// <summary>
-    /// Gets the pattern property delcarations for the type declaration.
+    /// Gets the pattern property declarations for the type declaration.
     /// </summary>
-    /// <param name="that">The type declaration for which to get the pattern properties..</param>
+    /// <param name="that">The type declaration for which to get the pattern properties.</param>
     /// <returns>The collection of <see cref="PatternPropertyDeclaration"/>, by keyword or <see langword="null"/>
     /// if no pattern properties were defined.</returns>
     public static IReadOnlyDictionary<IObjectPatternPropertyValidationKeyword, IReadOnlyCollection<PatternPropertyDeclaration>>? PatternProperties(this TypeDeclaration that)
@@ -302,7 +302,7 @@ public static class TypeDeclarationExtensions
     }
 
     /// <summary>
-    /// Gets the if subschema type, if available.
+    /// Gets the 'if' subschema type, if available.
     /// </summary>
     /// <param name="that">The type declaration for which to get the subschema type.</param>
     /// <returns>The <see cref="SingleSubschemaKeywordTypeDeclaration"/>, or <see langword="null"/> if no type was available.</returns>
@@ -329,7 +329,7 @@ public static class TypeDeclarationExtensions
     }
 
     /// <summary>
-    /// Gets then subschema type, if available.
+    /// Gets the 'then' subschema type, if available.
     /// </summary>
     /// <param name="that">The type declaration for which to get the subschema type.</param>
     /// <returns>The <see cref="SingleSubschemaKeywordTypeDeclaration"/>, or <see langword="null"/> if no type was available.</returns>
@@ -356,7 +356,7 @@ public static class TypeDeclarationExtensions
     }
 
     /// <summary>
-    /// Gets the property names subschema type, if available.
+    /// Gets the 'property names' subschema type, if available.
     /// </summary>
     /// <param name="that">The type declaration for which to get the subschema type.</param>
     /// <returns>The <see cref="SingleSubschemaKeywordTypeDeclaration"/>, or <see langword="null"/> if no type was available.</returns>
@@ -383,7 +383,7 @@ public static class TypeDeclarationExtensions
     }
 
     /// <summary>
-    /// Gets the else subschema type, if available.
+    /// Gets the 'else' subschema type, if available.
     /// </summary>
     /// <param name="that">The type declaration for which to get the subschema type.</param>
     /// <returns>The <see cref="SingleSubschemaKeywordTypeDeclaration"/>, or <see langword="null"/> if no type was available.</returns>
