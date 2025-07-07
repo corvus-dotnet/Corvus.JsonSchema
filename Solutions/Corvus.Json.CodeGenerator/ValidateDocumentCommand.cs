@@ -56,7 +56,7 @@ internal class ValidateDocumentCommand : Command<ValidateDocumentCommand.Setting
             {
                 foreach (ValidationResult error in result.Results)
                 {
-                    if (error.Location is (JsonReference validationLocation, JsonReference SchemaLocation, JsonReference DocumentLocation) location &&
+                    if (error.Location is (var validationLocation, var schemaLocation, var documentLocation) location &&
                         JsonPointerUtilities.TryGetLineAndOffsetForPointer(bytes, location.DocumentLocation.Fragment, out int line, out int chars, out long lineOffset))
                     {
                         AnsiConsole.Markup($"[yellow]{error.Message}[/] ({location.ValidationLocation}, {location.SchemaLocation}, {location.DocumentLocation}");

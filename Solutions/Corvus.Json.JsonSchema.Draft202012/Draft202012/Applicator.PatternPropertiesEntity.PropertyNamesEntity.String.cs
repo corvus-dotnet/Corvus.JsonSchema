@@ -102,7 +102,7 @@ public readonly partial struct Applicator
             public static implicit operator System.Text.RegularExpressions.Regex(PropertyNamesEntity value)
             {
                 return
-                    value.GetRegex();;
+                    value.GetRegex();
             }
 
             /// <summary>

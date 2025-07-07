@@ -55,7 +55,6 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
         [NotNull] // <> => NotNull
         public string? SchemaFile { get; init; }
 
-
         [CommandOption("--disableOptionalNamingHeuristics")]
         [Description("Disables all optional naming heuristics.")]
         [DefaultValue(false)]

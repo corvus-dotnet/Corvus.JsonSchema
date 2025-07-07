@@ -99,7 +99,7 @@ public sealed class PropertyDeclaration(
         if (result)
         {
             value = (T?)candidate;
-            return true;
+            return value != null;
         }
 
         value = default;

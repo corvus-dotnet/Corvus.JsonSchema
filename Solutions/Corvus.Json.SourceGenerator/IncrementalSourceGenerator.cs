@@ -28,7 +28,7 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
         new(
             id: "CRV1001",
             title: "JSON Schema Type Generator Error",
-            messageFormat: $"Error generating C# code: {{0}}",
+            messageFormat: "Error generating C# code: {{0}}",
             category: "JsonSchemaCodeGenerator",
             DiagnosticSeverity.Error,
             isEnabledByDefault: true);
@@ -37,7 +37,7 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
         new(
             id: "CRV1000",
             title: "JSON Schema Type Generator Error",
-            messageFormat: $"Error adding type declarations for path '{{0}}': {{1}}",
+            messageFormat: "Error adding type declarations for path '{{0}}': {{1}}",
             category: "JsonSchemaCodeGenerator",
             DiagnosticSeverity.Error,
             isEnabledByDefault: true);
@@ -102,7 +102,6 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
                         Location.None,
                         reference,
                         ex.Message));
-
                 return;
             }
 
@@ -318,9 +317,7 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
         CodeGeneration.OpenApi30.VocabularyAnalyser.RegisterAnalyser(vocabularyRegistry);
 
         // And register the custom vocabulary for Corvus extensions.
-        vocabularyRegistry.RegisterVocabularies(
-            CodeGeneration.CorvusVocabulary.SchemaVocabulary.DefaultInstance);
-
+        vocabularyRegistry.RegisterVocabularies(CodeGeneration.CorvusVocabulary.SchemaVocabulary.DefaultInstance);
         return vocabularyRegistry;
     }
 
@@ -364,10 +361,10 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
     {
         return
             node is StructDeclarationSyntax structDeclarationSyntax &&
-            structDeclarationSyntax
-                .Modifiers
-                .Any(m => m.IsKind(SyntaxKind.PartialKeyword)) &&
-            structDeclarationSyntax.Parent is (FileScopedNamespaceDeclarationSyntax or NamespaceDeclarationSyntax);
+               structDeclarationSyntax
+                   .Modifiers
+                   .Any(m => m.IsKind(SyntaxKind.PartialKeyword)) &&
+               structDeclarationSyntax.Parent is (FileScopedNamespaceDeclarationSyntax or NamespaceDeclarationSyntax);
     }
 
     private readonly struct GenerationSpecification(string typeName, string ns, string location, bool rebaseToRootPath, Accessibility accessibility)

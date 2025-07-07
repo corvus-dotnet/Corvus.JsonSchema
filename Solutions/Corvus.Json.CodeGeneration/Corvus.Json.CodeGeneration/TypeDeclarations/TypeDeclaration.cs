@@ -123,7 +123,7 @@ public sealed class TypeDeclaration(LocatedSchema locatedSchema)
         if (result)
         {
             value = (T?)candidate;
-            return true;
+            return value != null;
         }
 
         value = default;

@@ -71,7 +71,7 @@ public readonly struct JsonSchema
             return new(value);
         }
 
-        options = options ?? Options.Default;
+        options ??= Options.Default;
 
         var document = JsonDocument.Parse(text);
 
@@ -93,7 +93,7 @@ public readonly struct JsonSchema
     /// <returns>The JSON schema instance.</returns>
     public static JsonSchema FromFile(string fileName, Options? options = null)
     {
-        options = options ?? Options.Default;
+        options ??= Options.Default;
 
         if (SchemaReferenceNormalization.TryNormalizeSchemaReference(fileName, out string? result))
         {
@@ -121,7 +121,7 @@ public readonly struct JsonSchema
     /// <returns>The JSON schema instance.</returns>
     public static JsonSchema FromUri(string jsonSchemaUri, BaseUriResolver? baseUriResolver = null, Options? options = null)
     {
-        options = options ?? Options.Default;
+        options ??= Options.Default;
 
         if (CachedSchema.TryGetValue($"{jsonSchemaUri}__{options.AlwaysAssertFormat}", out ValidateCallback? value))
         {
@@ -146,7 +146,7 @@ public readonly struct JsonSchema
     /// <returns>The JSON schema instance.</returns>
     public static JsonSchema From(string jsonSchemaUri, Options? options = null)
     {
-        options = options ?? Options.Default;
+        options ??= Options.Default;
 
         if (CachedSchema.TryGetValue($"{jsonSchemaUri}__{options.AlwaysAssertFormat}", out ValidateCallback? value))
         {
@@ -229,9 +229,7 @@ public readonly struct JsonSchema
         CodeGeneration.OpenApi30.VocabularyAnalyser.RegisterAnalyser(vocabularyRegistry);
 
         // And register the custom vocabulary for Corvus extensions.
-        vocabularyRegistry.RegisterVocabularies(
-            CodeGeneration.CorvusVocabulary.SchemaVocabulary.DefaultInstance);
-
+        vocabularyRegistry.RegisterVocabularies(CodeGeneration.CorvusVocabulary.SchemaVocabulary.DefaultInstance);
         return vocabularyRegistry;
     }
 

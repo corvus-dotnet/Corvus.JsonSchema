@@ -772,7 +772,7 @@ public static class TypeDeclarationExtensions
             // recursive references)
             that.SetMetadata(nameof(IsFixedSizeArray), isFixedSizeArray);
 
-            if ((isFixedSizeArray ?? false) &&
+            if (isFixedSizeArray.Value &&
                 that.ArrayItemsType() is ArrayItemsTypeDeclaration childItemsType &&
                 (childItemsType.ReducedType.ImpliedCoreTypes() & CoreTypes.Array) != 0)
             {
@@ -784,8 +784,7 @@ public static class TypeDeclarationExtensions
 
         return isFixedSizeArray ?? false;
 
-        static bool GetIsFixedSizeArray(
-            TypeDeclaration typeDeclaration)
+        static bool GetIsFixedSizeArray(TypeDeclaration typeDeclaration)
         {
             return typeDeclaration.ArrayDimension() is not null;
         }
@@ -894,8 +893,7 @@ public static class TypeDeclarationExtensions
 
         return arrayDimension;
 
-        static int? GetArrayDimension(
-            TypeDeclaration typeDeclaration)
+        static int? GetArrayDimension(TypeDeclaration typeDeclaration)
         {
             if (typeDeclaration.HasSiblingHidingKeyword())
             {
@@ -928,8 +926,6 @@ public static class TypeDeclarationExtensions
                             break;
                         case Operator.LessThan:
                             maximumValue = Math.Max(value - 1, maximumValue);
-                            break;
-                        default:
                             break;
                     }
                 }
@@ -1193,19 +1189,19 @@ public static class TypeDeclarationExtensions
     {
         if (!that.TryGetMetadata(nameof(IsInDefinitionsContainer), out bool isInDefinitionsContainer))
         {
-            isInDefinitionsContainer = IsInDefinitionsContainer(that);
+            isInDefinitionsContainer = GetIsInDefinitionsContainer(that);
             that.SetMetadata(nameof(IsInDefinitionsContainer), isInDefinitionsContainer);
         }
 
         return isInDefinitionsContainer;
 
-        static bool IsInDefinitionsContainer(TypeDeclaration typeDeclaration)
+        static bool GetIsInDefinitionsContainer(TypeDeclaration typeDeclaration)
         {
             JsonReference reference = typeDeclaration.LocatedSchema.Location;
 
-            foreach (IKeyword keyword in typeDeclaration.LocatedSchema.Vocabulary.Keywords.OfType<IDefinitionsKeyword>())
+            foreach (IDefinitionsKeyword keyword in typeDeclaration.LocatedSchema.Vocabulary.Keywords.OfType<IDefinitionsKeyword>())
             {
-                if (reference.HasFragment && reference.Fragment.Length > 1 && reference.Fragment.LastIndexOf('/') == keyword.Keyword.Length + 2 && reference.Fragment[2..].StartsWith(keyword.Keyword.AsSpan()))
+                if (reference is { HasFragment: true, Fragment.Length: > 1 } && reference.Fragment.LastIndexOf('/') == keyword.Keyword.Length + 2 && reference.Fragment[2..].StartsWith(keyword.Keyword.AsSpan()))
                 {
                     return true;
                 }
@@ -1229,24 +1225,23 @@ public static class TypeDeclarationExtensions
 
         if (!that.TryGetMetadata(nameof(RequiresItemsEvaluationTracking), out bool requiresTracking))
         {
-            requiresTracking = RequiresItemsEvaluationTracking(that);
+            requiresTracking = GetRequiresItemsEvaluationTracking(that);
             that.SetMetadata(nameof(RequiresItemsEvaluationTracking), requiresTracking);
         }
 
         return requiresTracking;
 
-        static bool RequiresItemsEvaluationTracking(
-            TypeDeclaration typeDeclaration)
+        static bool GetRequiresItemsEvaluationTracking(TypeDeclaration typeDeclaration)
         {
             if (typeDeclaration.HasSiblingHidingKeyword())
             {
                 return false;
             }
 
-            return
-                typeDeclaration.Keywords()
-                    .OfType<IArrayValidationKeyword>()
-                    .Any(k => k.RequiresItemsEvaluationTracking(typeDeclaration));
+            return typeDeclaration
+                .Keywords()
+                .OfType<IArrayValidationKeyword>()
+                .Any(k => k.RequiresItemsEvaluationTracking(typeDeclaration));
         }
     }
 
@@ -1264,24 +1259,22 @@ public static class TypeDeclarationExtensions
 
         if (!that.TryGetMetadata(nameof(RequiresArrayLength), out bool requiresTracking))
         {
-            requiresTracking = RequiresArrayLength(that);
+            requiresTracking = GetRequiresArrayLength(that);
             that.SetMetadata(nameof(RequiresArrayLength), requiresTracking);
         }
 
         return requiresTracking;
 
-        static bool RequiresArrayLength(
-            TypeDeclaration typeDeclaration)
+        static bool GetRequiresArrayLength(TypeDeclaration typeDeclaration)
         {
             if (typeDeclaration.HasSiblingHidingKeyword())
             {
                 return false;
             }
 
-            return
-                typeDeclaration.Keywords()
-                    .OfType<IArrayValidationKeyword>()
-                    .Any(k => k.RequiresArrayLength(typeDeclaration));
+            return typeDeclaration.Keywords()
+                .OfType<IArrayValidationKeyword>()
+                .Any(k => k.RequiresArrayLength(typeDeclaration));
         }
     }
 
@@ -1299,14 +1292,13 @@ public static class TypeDeclarationExtensions
 
         if (!that.TryGetMetadata(nameof(RequiresArrayEnumeration), out bool requiresEnumeration))
         {
-            requiresEnumeration = RequiresArrayEnumeration(that);
+            requiresEnumeration = GetRequiresArrayEnumeration(that);
             that.SetMetadata(nameof(RequiresArrayEnumeration), requiresEnumeration);
         }
 
         return requiresEnumeration;
 
-        static bool RequiresArrayEnumeration(
-            TypeDeclaration typeDeclaration)
+        static bool GetRequiresArrayEnumeration(TypeDeclaration typeDeclaration)
         {
             if (typeDeclaration.HasSiblingHidingKeyword())
             {
@@ -1334,13 +1326,13 @@ public static class TypeDeclarationExtensions
 
         if (!that.TryGetMetadata(nameof(RequiresObjectEnumeration), out bool requiresEnumeration))
         {
-            requiresEnumeration = RequiresObjectEnumeration(that);
+            requiresEnumeration = GetRequiresObjectEnumeration(that);
             that.SetMetadata(nameof(RequiresObjectEnumeration), requiresEnumeration);
         }
 
         return requiresEnumeration;
 
-        static bool RequiresObjectEnumeration(
+        static bool GetRequiresObjectEnumeration(
             TypeDeclaration typeDeclaration)
         {
             if (typeDeclaration.HasSiblingHidingKeyword())
@@ -1369,13 +1361,13 @@ public static class TypeDeclarationExtensions
 
         if (!that.TryGetMetadata(nameof(RequiresPropertyEvaluationTracking), out bool requiresTracking))
         {
-            requiresTracking = RequiresPropertyEvaluationTracking(that);
+            requiresTracking = GetRequiresPropertyEvaluationTracking(that);
             that.SetMetadata(nameof(RequiresPropertyEvaluationTracking), requiresTracking);
         }
 
         return requiresTracking;
 
-        static bool RequiresPropertyEvaluationTracking(
+        static bool GetRequiresPropertyEvaluationTracking(
             TypeDeclaration typeDeclaration)
         {
             if (typeDeclaration.HasSiblingHidingKeyword())
@@ -1404,14 +1396,13 @@ public static class TypeDeclarationExtensions
 
         if (!that.TryGetMetadata(nameof(RequiresJsonValueKind), out bool requiresJsonValueKind))
         {
-            requiresJsonValueKind = RequiresJsonValueKind(that);
+            requiresJsonValueKind = GetRequiresJsonValueKind(that);
             that.SetMetadata(nameof(RequiresJsonValueKind), requiresJsonValueKind);
         }
 
         return requiresJsonValueKind;
 
-        static bool RequiresJsonValueKind(
-            TypeDeclaration typeDeclaration)
+        static bool GetRequiresJsonValueKind(TypeDeclaration typeDeclaration)
         {
             if (typeDeclaration.HasSiblingHidingKeyword())
             {
@@ -1464,9 +1455,7 @@ public static class TypeDeclarationExtensions
                 return default;
             }
 
-            foreach (
-                IDefaultValueProviderKeyword keyword in
-                typeDeclaration.Keywords().OfType<IDefaultValueProviderKeyword>())
+            foreach (IDefaultValueProviderKeyword keyword in typeDeclaration.Keywords().OfType<IDefaultValueProviderKeyword>())
             {
                 if (keyword.TryGetDefaultValue(typeDeclaration, out JsonElement defaultValue))
                 {
@@ -1519,7 +1508,7 @@ public static class TypeDeclarationExtensions
     {
         if (!that.TryGetMetadata(nameof(Keywords), out IReadOnlyCollection<IKeyword>? keywords))
         {
-            if (!TryGetKeywords(that, out keywords))
+            if (!InternalTryGetKeywords(that, out keywords))
             {
                 keywords = [];
             }
@@ -1529,13 +1518,11 @@ public static class TypeDeclarationExtensions
 
         return keywords ?? [];
 
-        static bool TryGetKeywords(
+        static bool InternalTryGetKeywords(
             TypeDeclaration typeDeclaration,
             [NotNullWhen(true)] out IReadOnlyCollection<IKeyword>? keywords)
         {
-            var allKeywords =
-                typeDeclaration.LocatedSchema.Vocabulary.Keywords
-                    .Where(k => typeDeclaration.HasKeyword(k)).ToList();
+            var allKeywords = typeDeclaration.LocatedSchema.Vocabulary.Keywords.Where(typeDeclaration.HasKeyword).ToList();
 
             if (allKeywords.Count > 0)
             {

@@ -1,10 +1,8 @@
-﻿using System.Security.AccessControl;
-using System.Text.Json;
+﻿using System.Text.Json;
 using Corvus.Json.CodeGeneration;
 using Corvus.Json.CodeGeneration.CSharp;
 using Corvus.Json.CodeGeneration.DocumentResolvers;
 using Corvus.Json.Internal;
-using Microsoft.CodeAnalysis;
 using Spectre.Console;
 
 namespace Corvus.Json.CodeGenerator;
@@ -24,6 +22,7 @@ public static class GenerationDriver
             }
 
             CompoundDocumentResolver documentResolver;
+
             if (generatorConfig.SupportYaml ?? false)
             {
                 var preProcessor = new YamlPreProcessor();
@@ -34,23 +33,18 @@ public static class GenerationDriver
                 documentResolver = new CompoundDocumentResolver(new FileSystemDocumentResolver(), new HttpClientDocumentResolver(new HttpClient()));
             }
 
-            Metaschema.AddMetaschema(documentResolver);
+            documentResolver.AddMetaschema();
 
             await RegisterAdditionalFiles(generatorConfig, documentResolver);
 
-            VocabularyRegistry vocabularyRegistry = ReigsterVocabularies(documentResolver);
+            VocabularyRegistry vocabularyRegistry = RegisterVocabularies(documentResolver);
 
             // This will be our fallback vocabulary
             IVocabulary defaultVocabulary = GetFallbackVocabulary(generatorConfig.UseSchemaValue ?? GeneratorConfig.UseSchema.DefaultInstance);
 
             JsonSchemaTypeBuilder typeBuilder = new(documentResolver, vocabularyRegistry);
 
-            Progress progress =
-                AnsiConsole.Progress()
-                    .Columns(
-                    [
-                        new TaskDescriptionColumn { Alignment = Justify.Left },    // Task description
-                    ]);
+            Progress progress = AnsiConsole.Progress().Columns(new TaskDescriptionColumn { Alignment = Justify.Left });
 
             await progress.StartAsync(async context =>
             {
@@ -69,23 +63,16 @@ public static class GenerationDriver
 
     private static async Task RegisterAdditionalFiles(GeneratorConfig generatorConfig, CompoundDocumentResolver documentResolver)
     {
-        if (generatorConfig.AdditionalFiles is GeneratorConfig.FileList f)
+        if (generatorConfig.AdditionalFiles is GeneratorConfig.FileList fileList)
         {
             YamlPreProcessor? yamlPreProcessor = generatorConfig.SupportYaml ?? false ? new YamlPreProcessor() : null;
 
-            foreach (GeneratorConfig.FileSpecification fileSpec in f.EnumerateArray())
+            foreach (GeneratorConfig.FileSpecification fileSpec in fileList.EnumerateArray())
             {
-                using FileStream inputStream = File.OpenRead((string)fileSpec.ContentPath);
-                Stream processedStream;
-
-                if (yamlPreProcessor is YamlPreProcessor processor)
-                {
-                    processedStream = processor.Process(inputStream);
-                }
-                else
-                {
-                    processedStream = inputStream;
-                }
+                await using FileStream inputStream = File.OpenRead((string)fileSpec.ContentPath);
+                Stream processedStream = yamlPreProcessor is null
+                    ? inputStream
+                    : yamlPreProcessor.Process(inputStream);
 
                 try
                 {
@@ -95,14 +82,14 @@ public static class GenerationDriver
                 {
                     if (inputStream != processedStream)
                     {
-                        processedStream.Dispose();
+                        await processedStream.DisposeAsync();
                     }
                 }
             }
         }
     }
 
-    private static VocabularyRegistry ReigsterVocabularies(IDocumentResolver documentResolver)
+    private static VocabularyRegistry RegisterVocabularies(IDocumentResolver documentResolver)
     {
         VocabularyRegistry vocabularyRegistry = new();
 
@@ -115,8 +102,7 @@ public static class GenerationDriver
         CodeGeneration.OpenApi30.VocabularyAnalyser.RegisterAnalyser(vocabularyRegistry);
 
         // And register the custom vocabulary for Corvus extensions.
-        vocabularyRegistry.RegisterVocabularies(
-            CodeGeneration.CorvusVocabulary.SchemaVocabulary.DefaultInstance);
+        vocabularyRegistry.RegisterVocabularies(CodeGeneration.CorvusVocabulary.SchemaVocabulary.DefaultInstance);
         return vocabularyRegistry;
     }
 
@@ -134,7 +120,7 @@ public static class GenerationDriver
 
     private static async Task ExecuteTask(GeneratorConfig generatorConfig, ProgressContext context, IVocabulary defaultVocabulary, JsonSchemaTypeBuilder typeBuilder)
     {
-        ProgressTask outerTask = context.AddTask($"Generating JSON types", maxValue: generatorConfig.TypesToGenerate.GetArrayLength());
+        ProgressTask outerTask = context.AddTask("Generating JSON types", maxValue: generatorConfig.TypesToGenerate.GetArrayLength());
 
         List<TypeDeclaration> typesToGenerate = [];
 
@@ -168,7 +154,7 @@ public static class GenerationDriver
 
         CSharpLanguageProvider.Options options = MapGeneratorConfigToOptions(generatorConfig, namedTypes);
 
-        ProgressTask currentTask = context.AddTask($"Generating code for schema.");
+        ProgressTask currentTask = context.AddTask("Generating code for schema.");
         var languageProvider = CSharpLanguageProvider.DefaultWithOptions(options);
         IReadOnlyCollection<GeneratedCodeFile> generatedCode =
             typeBuilder.GenerateCodeUsing(
@@ -178,14 +164,14 @@ public static class GenerationDriver
         currentTask.Increment(100);
         currentTask.StopTask();
 
-        string? outputPath = generatorConfig.OutputPath?.GetString() ?? fallbackOutputPath ?? Environment.CurrentDirectory;
+        string outputPath = generatorConfig.OutputPath?.GetString() ?? fallbackOutputPath ?? Environment.CurrentDirectory;
 
         if (!string.IsNullOrEmpty(outputPath))
         {
             Directory.CreateDirectory(outputPath);
         }
 
-        currentTask = await WriteFiles(generatorConfig, context, currentTask, generatedCode, outputPath);
+        currentTask = await WriteFiles(generatorConfig, context, generatedCode, outputPath);
 
         currentTask.StopTask();
         outerTask.Increment(100);
@@ -228,10 +214,9 @@ public static class GenerationDriver
         }
     }
 
-
-    private static async Task<ProgressTask> WriteFiles(GeneratorConfig generatorConfig, ProgressContext context, ProgressTask currentTask, IReadOnlyCollection<GeneratedCodeFile> generatedCode, string outputPath)
+    private static async Task<ProgressTask> WriteFiles(GeneratorConfig generatorConfig, ProgressContext context, IReadOnlyCollection<GeneratedCodeFile> generatedCode, string outputPath)
     {
-        currentTask = context.AddTask("Writing files", true, generatedCode.Count);
+        ProgressTask currentTask = context.AddTask("Writing files", true, generatedCode.Count);
 
         HashSet<string> writtenFiles = new(StringComparer.OrdinalIgnoreCase);
 
