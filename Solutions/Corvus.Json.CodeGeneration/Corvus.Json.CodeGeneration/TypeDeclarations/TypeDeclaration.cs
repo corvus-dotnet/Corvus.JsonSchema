@@ -102,6 +102,15 @@ public sealed class TypeDeclaration(LocatedSchema locatedSchema)
     }
 
     /// <summary>
+    /// Sets a metadata value.
+    /// </summary>
+    /// <param name="key">The key for the metadata value.</param>
+    public void RemoveMetadata(string key)
+    {
+        this.metadata.TryRemove(key, out _);
+    }
+
+    /// <summary>
     /// Gets a metadata value set for the type declaration.
     /// </summary>
     /// <typeparam name="T">The type of the metadata value.</typeparam>

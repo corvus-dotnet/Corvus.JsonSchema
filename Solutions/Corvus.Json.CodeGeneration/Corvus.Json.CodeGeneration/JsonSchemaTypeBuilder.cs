@@ -345,7 +345,7 @@ public class JsonSchemaTypeBuilder(
             if (!typeDeclaration.CanReduce())
             {
                 // Set the name for this type
-                languageProvider.SetNamesAfterSubschema(typeDeclaration, cancellationToken);
+                languageProvider.SetNamesAfterSubschema(typeDeclaration, visitedTypeDeclarations, cancellationToken);
             }
 
             if (cancellationToken.IsCancellationRequested)

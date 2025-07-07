@@ -267,13 +267,14 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
     }
 
     /// <inheritdoc/>
-    public void SetNamesAfterSubschema(TypeDeclaration typeDeclaration, CancellationToken cancellationToken)
+    public void SetNamesAfterSubschema(TypeDeclaration typeDeclaration, IEnumerable<TypeDeclaration> existingTypeDeclarations, CancellationToken cancellationToken)
     {
         JsonReferenceBuilder reference = GetReferenceWithoutQuery(typeDeclaration);
 
         Span<char> typeNameBuffer = stackalloc char[Formatting.MaxIdentifierLength];
         this.UpdateTypeNameWithKeywordHeuristics(
             typeDeclaration,
+            existingTypeDeclarations,
             reference,
             typeNameBuffer,
             this.GetOrderedNameAfterSubschemaHeuristics(),
@@ -376,6 +377,7 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
 
     private void UpdateTypeNameWithKeywordHeuristics(
         TypeDeclaration typeDeclaration,
+        IEnumerable<TypeDeclaration> existingDeclarations,
         JsonReferenceBuilder reference,
         Span<char> typeNameBuffer,
         IEnumerable<INameHeuristic> nameHeuristics,
@@ -414,6 +416,21 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
             else if (!typeDeclaration.DoNotGenerate())
             {
                 child.SetDoNotGenerate(resetParent: false);
+            }
+        }
+
+        string fqdtn = typeDeclaration.FullyQualifiedDotnetTypeName();
+        string baseName = typeDeclaration.DotnetTypeName();
+
+        // And now resolve any matching names from definitions containers
+        if (!typeDeclaration.DoNotGenerate() &&
+            typeDeclaration.IsInDefinitionsContainer())
+        {
+            int index = 1;
+            while (existingDeclarations.Any(t => t != typeDeclaration && !t.DoNotGenerate() && t.HasDotnetTypeName() && t.FullyQualifiedDotnetTypeName() == fqdtn))
+            {
+                typeDeclaration.SetDotnetTypeName($"{baseName}{index++}");
+                fqdtn = typeDeclaration.FullyQualifiedDotnetTypeName();
             }
         }
     }

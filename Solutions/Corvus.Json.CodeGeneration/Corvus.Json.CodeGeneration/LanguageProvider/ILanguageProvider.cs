@@ -83,6 +83,7 @@ public interface ILanguageProvider
     /// Set the name for the type declaration, and any outstanding properties, after its subschema names have been set.
     /// </summary>
     /// <param name="typeDeclaration">The type declaration for which to set the name.</param>
+    /// <param name="existingTypeDeclarations">The existing type declarations that have already been processed.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    void SetNamesAfterSubschema(TypeDeclaration typeDeclaration, CancellationToken cancellationToken);
+    void SetNamesAfterSubschema(TypeDeclaration typeDeclaration, IEnumerable<TypeDeclaration> existingTypeDeclarations, CancellationToken cancellationToken);
 }
