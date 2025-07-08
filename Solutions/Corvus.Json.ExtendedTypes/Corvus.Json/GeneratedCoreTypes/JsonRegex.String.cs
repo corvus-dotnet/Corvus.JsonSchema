@@ -80,7 +80,7 @@ public readonly partial struct JsonRegex
     public static implicit operator System.Text.RegularExpressions.Regex(JsonRegex value)
     {
         return
-            value.GetRegex();;
+            value.GetRegex();
     }
 
     /// <summary>

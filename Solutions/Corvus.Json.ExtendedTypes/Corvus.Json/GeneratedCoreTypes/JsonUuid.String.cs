@@ -80,7 +80,7 @@ public readonly partial struct JsonUuid
     public static implicit operator Guid(JsonUuid value)
     {
         return
-            value.GetGuid();;
+            value.GetGuid();
     }
 
     /// <summary>
