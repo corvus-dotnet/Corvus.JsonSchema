@@ -2478,7 +2478,7 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
             return string.Empty;
         }
 
-        return childScope is string c ? $"{rootScope ?? this.FullyQualifiedScope}.{c}" : this.FullyQualifiedScope;
+        return childScope is string c ? $"{rootScope ?? this.FullyQualifiedScope}.{c}" : rootScope ?? this.FullyQualifiedScope;
     }
 
     /// <summary>
