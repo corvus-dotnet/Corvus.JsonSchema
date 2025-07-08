@@ -29,6 +29,13 @@ public interface IDocumentResolver : IDisposable
     bool AddDocument(string uri, JsonDocument document);
 
     /// <summary>
+    /// Adds an existing document to the cache.
+    /// </summary>
+    /// <param name="metaSchema">The <see cref="IMetaSchema"/> document to add.</param>
+    /// <returns><c>True</c> if the document was added, otherwise false.</returns>
+    bool AddDocument(IMetaSchema metaSchema);
+
+    /// <summary>
     /// Reset the document resolver.
     /// </summary>
     void Reset();

@@ -44,8 +44,6 @@
     <ProjectReference Include="..\Corvus.Json.CodeGeneration.CSharp\Corvus.Json.CodeGeneration.CSharp.csproj" />
     <ProjectReference Include="..\Corvus.Json.CodeGeneration.HttpClientDocumentResolver\Corvus.Json.CodeGeneration.HttpClientDocumentResolver.csproj" />
     <ProjectReference Include="..\Corvus.Json.CodeGeneration.OpenApi30\Corvus.Json.CodeGeneration.OpenApi30.csproj" />
-    <ProjectReference Include="..\Corvus.Json.CodeGeneration\Corvus.Json.CodeGeneration.csproj" />
-    <ProjectReference Include="..\Corvus.Json.ExtendedTypes\Corvus.Json.ExtendedTypes.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -77,7 +75,6 @@
     <EmbeddedResource Include="metaschema\draft2020-12\meta\unevaluated.json" />
     <EmbeddedResource Include="metaschema\draft2020-12\meta\validation.json" />
     <EmbeddedResource Include="metaschema\draft2020-12\schema.json" />
-    <EmbeddedResource Include="metaschema\draft4\schema.json" />
     <EmbeddedResource Include="metaschema\draft6\schema.json" />
     <EmbeddedResource Include="metaschema\draft7\schema.json" />
   </ItemGroup>

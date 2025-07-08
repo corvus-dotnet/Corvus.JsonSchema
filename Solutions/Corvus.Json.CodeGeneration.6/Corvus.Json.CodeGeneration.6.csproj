@@ -34,6 +34,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Corvus.Json.CodeGeneration\Corvus.Json.CodeGeneration.csproj" />
+    <ProjectReference Include="..\Corvus.Json.JsonSchema.Draft6\Corvus.Json.JsonSchema.Draft6.csproj" />
   </ItemGroup>
 
   <ItemGroup>

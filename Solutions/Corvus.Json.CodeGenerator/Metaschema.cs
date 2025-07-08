@@ -17,10 +17,6 @@ internal static class Metaschema
         string assemblyPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? throw new InvalidOperationException("Cannot find the executing assembly path.");
 
         documentResolver.AddDocument(
-            "http://json-schema.org/draft-04/schema",
-            JsonDocument.Parse(File.ReadAllText(Path.Combine(assemblyPath, "./metaschema/draft4/schema.json"))));
-
-        documentResolver.AddDocument(
             "http://json-schema.org/draft-06/schema",
             JsonDocument.Parse(File.ReadAllText(Path.Combine(assemblyPath, "./metaschema/draft6/schema.json"))));
 

@@ -24,6 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Corvus.Json.CodeGeneration.4\Corvus.Json.CodeGeneration.4.csproj" />
     <ProjectReference Include="..\Corvus.Json.ExtendedTypes\Corvus.Json.ExtendedTypes.csproj" />
   </ItemGroup>
 

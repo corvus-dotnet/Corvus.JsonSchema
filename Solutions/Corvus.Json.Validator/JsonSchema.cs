@@ -212,6 +212,7 @@ public readonly struct JsonSchema
     private static PrepopulatedDocumentResolver CreateMetaschemaDocumentResolver()
     {
         var result = new PrepopulatedDocumentResolver();
+        result.AddDocument(Corvus.Json.JsonSchema.Draft4.MetaSchema.Instance);
         result.AddMetaschema();
         return result;
     }

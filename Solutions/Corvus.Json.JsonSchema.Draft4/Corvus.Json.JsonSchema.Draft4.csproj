@@ -37,7 +37,7 @@
 
   <ItemGroup>
     <Folder Include="Draft4\" />
+    <EmbeddedResource Include="metaschema\draft4\schema.json" />
   </ItemGroup>
 
 </Project>
-

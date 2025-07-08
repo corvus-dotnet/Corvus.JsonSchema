@@ -75,6 +75,10 @@ public class FileSystemDocumentResolver : IDocumentResolver
     }
 
     /// <inheritdoc/>
+    public bool AddDocument(IMetaSchema metaSchema)
+        => this.AddDocument(metaSchema.Uri, metaSchema.Document);
+
+    /// <inheritdoc/>
     public async ValueTask<JsonElement?> TryResolve(JsonReference reference)
     {
         this.CheckDisposed();

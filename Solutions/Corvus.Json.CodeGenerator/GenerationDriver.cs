@@ -33,6 +33,7 @@ public static class GenerationDriver
                 documentResolver = new CompoundDocumentResolver(new FileSystemDocumentResolver(), new HttpClientDocumentResolver(new HttpClient()));
             }
 
+            documentResolver.AddDocument(JsonSchema.Draft4.MetaSchema.Instance);
             documentResolver.AddMetaschema();
 
             await RegisterAdditionalFiles(generatorConfig, documentResolver);

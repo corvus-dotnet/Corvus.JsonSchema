@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System;
 using System.Text.Json;
 
 namespace Corvus.Json.CodeGeneration;
@@ -31,6 +32,10 @@ public class CompoundDocumentResolver : IDocumentResolver
         this.CheckDisposed();
         return this.documents.TryAdd(uri, document);
     }
+
+    /// <inheritdoc/>
+    public bool AddDocument(IMetaSchema metaSchema)
+        => this.AddDocument(metaSchema.Uri, metaSchema.Document);
 
     /// <inheritdoc/>
     public async ValueTask<JsonElement?> TryResolve(JsonReference reference)

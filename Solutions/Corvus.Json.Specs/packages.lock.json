@@ -607,6 +607,7 @@
         "type": "Project",
         "dependencies": {
           "Corvus.Json.CodeGeneration": "[1.0.0, )",
+          "Corvus.Json.JsonSchema.Draft201909": "[1.0.0, )",
           "System.Collections.Immutable": "[9.0.0, )",
           "System.Text.Json": "[9.0.0, )"
         }
@@ -615,6 +616,7 @@
         "type": "Project",
         "dependencies": {
           "Corvus.Json.CodeGeneration": "[1.0.0, )",
+          "Corvus.Json.JsonSchema.Draft202012": "[1.0.0, )",
           "System.Collections.Immutable": "[9.0.0, )",
           "System.Text.Json": "[9.0.0, )"
         }
@@ -623,6 +625,7 @@
         "type": "Project",
         "dependencies": {
           "Corvus.Json.CodeGeneration": "[1.0.0, )",
+          "Corvus.Json.JsonSchema.Draft4": "[1.0.0, )",
           "System.Collections.Immutable": "[9.0.0, )",
           "System.Text.Json": "[9.0.0, )"
         }
@@ -631,6 +634,7 @@
         "type": "Project",
         "dependencies": {
           "Corvus.Json.CodeGeneration": "[1.0.0, )",
+          "Corvus.Json.JsonSchema.Draft6": "[1.0.0, )",
           "System.Collections.Immutable": "[9.0.0, )",
           "System.Text.Json": "[9.0.0, )"
         }
@@ -639,6 +643,7 @@
         "type": "Project",
         "dependencies": {
           "Corvus.Json.CodeGeneration": "[1.0.0, )",
+          "Corvus.Json.JsonSchema.Draft7": "[1.0.0, )",
           "System.Collections.Immutable": "[9.0.0, )",
           "System.Text.Json": "[9.0.0, )"
         }
@@ -657,6 +662,7 @@
         "type": "Project",
         "dependencies": {
           "Corvus.Json.CodeGeneration": "[1.0.0, )",
+          "Corvus.Json.JsonSchema.OpenApi30": "[1.0.0, )",
           "System.Collections.Immutable": "[9.0.0, )",
           "System.Text.Json": "[9.0.0, )"
         }
@@ -678,6 +684,69 @@
           "Corvus.HighPerformance": "[1.0.0, )",
           "IndexRange": "[1.0.3, )",
           "System.Text.Json": "[9.0.0, )"
+        }
+      },
+      "corvus.json.jsonschema.draft201909": {
+        "type": "Project",
+        "dependencies": {
+          "Corvus.Json.ExtendedTypes": "[1.0.0, )",
+          "Microsoft.Extensions.Http": "[9.0.0, )",
+          "Microsoft.Extensions.ObjectPool": "[9.0.0, )",
+          "NodaTime": "[3.2.1, )",
+          "System.Collections.Immutable": "[9.0.0, )"
+        }
+      },
+      "corvus.json.jsonschema.draft202012": {
+        "type": "Project",
+        "dependencies": {
+          "Corvus.Json.ExtendedTypes": "[1.0.0, )",
+          "IndexRange": "[1.0.3, )",
+          "Microsoft.Extensions.Http": "[9.0.0, )",
+          "Microsoft.Extensions.ObjectPool": "[9.0.0, )",
+          "NodaTime": "[3.2.1, )",
+          "System.Collections.Immutable": "[9.0.0, )",
+          "System.Text.Json": "[9.0.0, )"
+        }
+      },
+      "corvus.json.jsonschema.draft4": {
+        "type": "Project",
+        "dependencies": {
+          "Corvus.Json.ExtendedTypes": "[1.0.0, )",
+          "Microsoft.Extensions.Http": "[9.0.0, )",
+          "Microsoft.Extensions.ObjectPool": "[9.0.0, )",
+          "NodaTime": "[3.2.1, )",
+          "System.Collections.Immutable": "[9.0.0, )"
+        }
+      },
+      "corvus.json.jsonschema.draft6": {
+        "type": "Project",
+        "dependencies": {
+          "Corvus.Json.ExtendedTypes": "[1.0.0, )",
+          "Microsoft.Extensions.Http": "[9.0.0, )",
+          "Microsoft.Extensions.ObjectPool": "[9.0.0, )",
+          "NodaTime": "[3.2.1, )",
+          "System.Collections.Immutable": "[9.0.0, )"
+        }
+      },
+      "corvus.json.jsonschema.draft7": {
+        "type": "Project",
+        "dependencies": {
+          "Corvus.Json.ExtendedTypes": "[1.0.0, )",
+          "Microsoft.Extensions.Http": "[9.0.0, )",
+          "Microsoft.Extensions.ObjectPool": "[9.0.0, )",
+          "NodaTime": "[3.2.1, )",
+          "System.Collections.Immutable": "[9.0.0, )"
+        }
+      },
+      "corvus.json.jsonschema.openapi30": {
+        "type": "Project",
+        "dependencies": {
+          "Corvus.Json.CodeGeneration.4": "[1.0.0, )",
+          "Corvus.Json.ExtendedTypes": "[1.0.0, )",
+          "Microsoft.Extensions.Http": "[9.0.0, )",
+          "Microsoft.Extensions.ObjectPool": "[9.0.0, )",
+          "NodaTime": "[3.2.1, )",
+          "System.Collections.Immutable": "[9.0.0, )"
         }
       },
       "corvus.json.patch": {
@@ -2033,6 +2102,7 @@
         "type": "Project",
         "dependencies": {
           "Corvus.Json.CodeGeneration": "[1.0.0, )",
+          "Corvus.Json.JsonSchema.Draft201909": "[1.0.0, )",
           "System.Collections.Immutable": "[9.0.0, )"
         }
       },
@@ -2040,6 +2110,7 @@
         "type": "Project",
         "dependencies": {
           "Corvus.Json.CodeGeneration": "[1.0.0, )",
+          "Corvus.Json.JsonSchema.Draft202012": "[1.0.0, )",
           "System.Collections.Immutable": "[9.0.0, )"
         }
       },
@@ -2047,6 +2118,7 @@
         "type": "Project",
         "dependencies": {
           "Corvus.Json.CodeGeneration": "[1.0.0, )",
+          "Corvus.Json.JsonSchema.Draft4": "[1.0.0, )",
           "System.Collections.Immutable": "[9.0.0, )"
         }
       },
@@ -2054,6 +2126,7 @@
         "type": "Project",
         "dependencies": {
           "Corvus.Json.CodeGeneration": "[1.0.0, )",
+          "Corvus.Json.JsonSchema.Draft6": "[1.0.0, )",
           "System.Collections.Immutable": "[9.0.0, )"
         }
       },
@@ -2061,6 +2134,7 @@
         "type": "Project",
         "dependencies": {
           "Corvus.Json.CodeGeneration": "[1.0.0, )",
+          "Corvus.Json.JsonSchema.Draft7": "[1.0.0, )",
           "System.Collections.Immutable": "[9.0.0, )"
         }
       },
@@ -2076,6 +2150,7 @@
         "type": "Project",
         "dependencies": {
           "Corvus.Json.CodeGeneration": "[1.0.0, )",
+          "Corvus.Json.JsonSchema.OpenApi30": "[1.0.0, )",
           "System.Collections.Immutable": "[9.0.0, )"
         }
       },
@@ -2094,6 +2169,66 @@
         "dependencies": {
           "Corvus.HighPerformance": "[1.0.0, )",
           "System.Text.Json": "[9.0.0, )"
+        }
+      },
+      "corvus.json.jsonschema.draft201909": {
+        "type": "Project",
+        "dependencies": {
+          "Corvus.Json.ExtendedTypes": "[1.0.0, )",
+          "Microsoft.Extensions.Http": "[9.0.0, )",
+          "Microsoft.Extensions.ObjectPool": "[9.0.0, )",
+          "NodaTime": "[3.2.1, )",
+          "System.Collections.Immutable": "[9.0.0, )"
+        }
+      },
+      "corvus.json.jsonschema.draft202012": {
+        "type": "Project",
+        "dependencies": {
+          "Corvus.Json.ExtendedTypes": "[1.0.0, )",
+          "Microsoft.Extensions.Http": "[9.0.0, )",
+          "Microsoft.Extensions.ObjectPool": "[9.0.0, )",
+          "NodaTime": "[3.2.1, )"
+        }
+      },
+      "corvus.json.jsonschema.draft4": {
+        "type": "Project",
+        "dependencies": {
+          "Corvus.Json.ExtendedTypes": "[1.0.0, )",
+          "Microsoft.Extensions.Http": "[9.0.0, )",
+          "Microsoft.Extensions.ObjectPool": "[9.0.0, )",
+          "NodaTime": "[3.2.1, )",
+          "System.Collections.Immutable": "[9.0.0, )"
+        }
+      },
+      "corvus.json.jsonschema.draft6": {
+        "type": "Project",
+        "dependencies": {
+          "Corvus.Json.ExtendedTypes": "[1.0.0, )",
+          "Microsoft.Extensions.Http": "[9.0.0, )",
+          "Microsoft.Extensions.ObjectPool": "[9.0.0, )",
+          "NodaTime": "[3.2.1, )",
+          "System.Collections.Immutable": "[9.0.0, )"
+        }
+      },
+      "corvus.json.jsonschema.draft7": {
+        "type": "Project",
+        "dependencies": {
+          "Corvus.Json.ExtendedTypes": "[1.0.0, )",
+          "Microsoft.Extensions.Http": "[9.0.0, )",
+          "Microsoft.Extensions.ObjectPool": "[9.0.0, )",
+          "NodaTime": "[3.2.1, )",
+          "System.Collections.Immutable": "[9.0.0, )"
+        }
+      },
+      "corvus.json.jsonschema.openapi30": {
+        "type": "Project",
+        "dependencies": {
+          "Corvus.Json.CodeGeneration.4": "[1.0.0, )",
+          "Corvus.Json.ExtendedTypes": "[1.0.0, )",
+          "Microsoft.Extensions.Http": "[9.0.0, )",
+          "Microsoft.Extensions.ObjectPool": "[9.0.0, )",
+          "NodaTime": "[3.2.1, )",
+          "System.Collections.Immutable": "[9.0.0, )"
         }
       },
       "corvus.json.patch": {
@@ -3436,6 +3571,7 @@
         "type": "Project",
         "dependencies": {
           "Corvus.Json.CodeGeneration": "[1.0.0, )",
+          "Corvus.Json.JsonSchema.Draft201909": "[1.0.0, )",
           "System.Collections.Immutable": "[9.0.0, )"
         }
       },
@@ -3443,6 +3579,7 @@
         "type": "Project",
         "dependencies": {
           "Corvus.Json.CodeGeneration": "[1.0.0, )",
+          "Corvus.Json.JsonSchema.Draft202012": "[1.0.0, )",
           "System.Collections.Immutable": "[9.0.0, )"
         }
       },
@@ -3450,6 +3587,7 @@
         "type": "Project",
         "dependencies": {
           "Corvus.Json.CodeGeneration": "[1.0.0, )",
+          "Corvus.Json.JsonSchema.Draft4": "[1.0.0, )",
           "System.Collections.Immutable": "[9.0.0, )"
         }
       },
@@ -3457,6 +3595,7 @@
         "type": "Project",
         "dependencies": {
           "Corvus.Json.CodeGeneration": "[1.0.0, )",
+          "Corvus.Json.JsonSchema.Draft6": "[1.0.0, )",
           "System.Collections.Immutable": "[9.0.0, )"
         }
       },
@@ -3464,6 +3603,7 @@
         "type": "Project",
         "dependencies": {
           "Corvus.Json.CodeGeneration": "[1.0.0, )",
+          "Corvus.Json.JsonSchema.Draft7": "[1.0.0, )",
           "System.Collections.Immutable": "[9.0.0, )"
         }
       },
@@ -3479,6 +3619,7 @@
         "type": "Project",
         "dependencies": {
           "Corvus.Json.CodeGeneration": "[1.0.0, )",
+          "Corvus.Json.JsonSchema.OpenApi30": "[1.0.0, )",
           "System.Collections.Immutable": "[9.0.0, )"
         }
       },
@@ -3497,6 +3638,66 @@
         "dependencies": {
           "Corvus.HighPerformance": "[1.0.0, )",
           "System.Text.Json": "[9.0.0, )"
+        }
+      },
+      "corvus.json.jsonschema.draft201909": {
+        "type": "Project",
+        "dependencies": {
+          "Corvus.Json.ExtendedTypes": "[1.0.0, )",
+          "Microsoft.Extensions.Http": "[9.0.0, )",
+          "Microsoft.Extensions.ObjectPool": "[9.0.0, )",
+          "NodaTime": "[3.2.1, )",
+          "System.Collections.Immutable": "[9.0.0, )"
+        }
+      },
+      "corvus.json.jsonschema.draft202012": {
+        "type": "Project",
+        "dependencies": {
+          "Corvus.Json.ExtendedTypes": "[1.0.0, )",
+          "Microsoft.Extensions.Http": "[9.0.0, )",
+          "Microsoft.Extensions.ObjectPool": "[9.0.0, )",
+          "NodaTime": "[3.2.1, )"
+        }
+      },
+      "corvus.json.jsonschema.draft4": {
+        "type": "Project",
+        "dependencies": {
+          "Corvus.Json.ExtendedTypes": "[1.0.0, )",
+          "Microsoft.Extensions.Http": "[9.0.0, )",
+          "Microsoft.Extensions.ObjectPool": "[9.0.0, )",
+          "NodaTime": "[3.2.1, )",
+          "System.Collections.Immutable": "[9.0.0, )"
+        }
+      },
+      "corvus.json.jsonschema.draft6": {
+        "type": "Project",
+        "dependencies": {
+          "Corvus.Json.ExtendedTypes": "[1.0.0, )",
+          "Microsoft.Extensions.Http": "[9.0.0, )",
+          "Microsoft.Extensions.ObjectPool": "[9.0.0, )",
+          "NodaTime": "[3.2.1, )",
+          "System.Collections.Immutable": "[9.0.0, )"
+        }
+      },
+      "corvus.json.jsonschema.draft7": {
+        "type": "Project",
+        "dependencies": {
+          "Corvus.Json.ExtendedTypes": "[1.0.0, )",
+          "Microsoft.Extensions.Http": "[9.0.0, )",
+          "Microsoft.Extensions.ObjectPool": "[9.0.0, )",
+          "NodaTime": "[3.2.1, )",
+          "System.Collections.Immutable": "[9.0.0, )"
+        }
+      },
+      "corvus.json.jsonschema.openapi30": {
+        "type": "Project",
+        "dependencies": {
+          "Corvus.Json.CodeGeneration.4": "[1.0.0, )",
+          "Corvus.Json.ExtendedTypes": "[1.0.0, )",
+          "Microsoft.Extensions.Http": "[9.0.0, )",
+          "Microsoft.Extensions.ObjectPool": "[9.0.0, )",
+          "NodaTime": "[3.2.1, )",
+          "System.Collections.Immutable": "[9.0.0, )"
         }
       },
       "corvus.json.patch": {

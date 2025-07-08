@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System;
 using System.Text.Json;
 
 namespace Corvus.Json.CodeGeneration.DocumentResolvers;
@@ -28,6 +29,10 @@ public sealed class CallbackDocumentResolver : IDocumentResolver
     {
         return this.resolver.AddDocument(uri, document);
     }
+
+    /// <inheritdoc/>
+    public bool AddDocument(IMetaSchema metaSchema)
+        => this.AddDocument(metaSchema.Uri, metaSchema.Document);
 
     /// <inheritdoc/>
     public void Dispose()
