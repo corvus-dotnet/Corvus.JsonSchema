@@ -684,28 +684,6 @@ public readonly struct BinaryJsonNumber :
     }
 
     /// <summary>
-    /// The equality operator.
-    /// </summary>
-    /// <param name="left">The lhs.</param>
-    /// <param name="right">The rhs.</param>
-    /// <returns><see langword="true"/> if the values are equal.</returns>
-    public static bool operator ==(BinaryJsonNumber left, BinaryJsonNumber right)
-    {
-        return left.Equals(right);
-    }
-
-    /// <summary>
-    /// The inequality operator.
-    /// </summary>
-    /// <param name="left">The lhs.</param>
-    /// <param name="right">The rhs.</param>
-    /// <returns><see langword="true"/> if the values are not equal.</returns>
-    public static bool operator !=(BinaryJsonNumber left, BinaryJsonNumber right)
-    {
-        return !left.Equals(right);
-    }
-
-    /// <summary>
     /// Increment operator.
     /// </summary>
     /// <param name="value">The value to increment.</param>
