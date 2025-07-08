@@ -86,7 +86,7 @@ public class JsonSchemaTypeBuilder(
         CancellationToken ct = cancellationToken ?? CancellationToken.None;
 
         // First we do a document "load" - this enables us to build the map of the schema, anchors etc.
-        var (schemaLocation, baseLocation) = await this.schemaRegistry.RegisterBaseSchema(documentPath, fallbackVocabulary, rebaseAsRoot, ct);
+        (JsonReference schemaLocation, JsonReference baseLocation) = await this.schemaRegistry.RegisterBaseSchema(documentPath, fallbackVocabulary, rebaseAsRoot, ct);
 
         if (ct.IsCancellationRequested)
         {
