@@ -22,7 +22,7 @@ public sealed class VocabularyAnalyser : IVocabularyAnalyser
     /// <summary>
     /// Gets the default vocabulary for the analyser.
     /// </summary>
-    public static IVocabulary DefaultVocabulary => SchemaVocabulary.DefaultInstance;
+    public static IVocabulary DefaultVocabulary => Draft202012.VocabularyAnalyser.DefaultVocabulary;
 
     /// <summary>
     /// Register the vocabulary analyser.
@@ -47,9 +47,9 @@ public sealed class VocabularyAnalyser : IVocabularyAnalyser
             return new ValueTask<IVocabulary?>(default(IVocabulary?));
         }
 
-        if (dollarSchema.ValueEquals(SchemaVocabulary.DefaultInstance.UriUtf8))
+        if (dollarSchema.ValueEquals(DefaultVocabulary.UriUtf8))
         {
-            return new ValueTask<IVocabulary?>(SchemaVocabulary.DefaultInstance);
+            return new ValueTask<IVocabulary?>(DefaultVocabulary);
         }
 
         return new ValueTask<IVocabulary?>(default(IVocabulary?));
