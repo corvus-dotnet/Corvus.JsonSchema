@@ -192,7 +192,7 @@ internal static partial class CodeGeneratorExtensions
             .Append(returnType)
             .Append(' ')
             .Append(methodName)
-            .ReserveName(methodName) // Reserve the method name in the parent scope
+            .ReserveNameIfNotReserved(methodName) // Reserve the method name in the parent scope
             .PushMemberScope(methodName, ScopeType.Method) // Then move to the method scope before appending parameters
             .AppendParameterList(parameters)
             .AppendLineIndent("{")
