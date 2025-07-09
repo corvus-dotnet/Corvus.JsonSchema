@@ -324,15 +324,6 @@ public readonly struct BinaryJsonNumber :
     /// <param name="right">The right hand side of the comparison.</param>
     /// <returns><see langword="true"/> if the values are equal.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool operator ==(in BinaryJsonNumber left, in BinaryJsonNumber right) => Equals(left, right);
-
-    /// <summary>
-    /// Equality operator.
-    /// </summary>
-    /// <param name="left">The left hand side of the comparison.</param>
-    /// <param name="right">The right hand side of the comparison.</param>
-    /// <returns><see langword="true"/> if the values are equal.</returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool operator ==(in BinaryJsonNumber left, in JsonElement right) => Equals(left, right);
 
     /// <summary>
@@ -343,15 +334,6 @@ public readonly struct BinaryJsonNumber :
     /// <returns><see langword="true"/> if the values are equal.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool operator ==(in JsonElement left, in BinaryJsonNumber right) => Equals(left, right);
-
-    /// <summary>
-    /// Inequality operator.
-    /// </summary>
-    /// <param name="left">The left hand side of the comparison.</param>
-    /// <param name="right">The right hand side of the comparison.</param>
-    /// <returns><see langword="true"/> if the values are not equal.</returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool operator !=(in BinaryJsonNumber left, in BinaryJsonNumber right) => !Equals(left, right);
 
     /// <summary>
     /// Inequality operator.
