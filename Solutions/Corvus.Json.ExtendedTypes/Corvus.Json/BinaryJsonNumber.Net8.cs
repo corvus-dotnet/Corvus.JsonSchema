@@ -300,6 +300,24 @@ public readonly struct BinaryJsonNumber :
     public bool HasValue => this.numericKind != Kind.None;
 
     /// <summary>
+    /// The equality operator.
+    /// </summary>
+    /// <param name="left">The lhs.</param>
+    /// <param name="right">The rhs.</param>
+    /// <returns><see langword="true"/> if the values are equal.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool operator ==(BinaryJsonNumber left, BinaryJsonNumber right) => left.Equals(right);
+
+    /// <summary>
+    /// The inequality operator.
+    /// </summary>
+    /// <param name="left">The lhs.</param>
+    /// <param name="right">The rhs.</param>
+    /// <returns><see langword="true"/> if the values are not equal.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool operator !=(BinaryJsonNumber left, BinaryJsonNumber right) => !left.Equals(right);
+
+    /// <summary>
     /// Equality operator.
     /// </summary>
     /// <param name="left">The left hand side of the comparison.</param>
@@ -333,10 +351,7 @@ public readonly struct BinaryJsonNumber :
     /// <param name="right">The right hand side of the comparison.</param>
     /// <returns><see langword="true"/> if the values are not equal.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool operator !=(in BinaryJsonNumber left, in BinaryJsonNumber right)
-    {
-        return !(left == right);
-    }
+    public static bool operator !=(in BinaryJsonNumber left, in BinaryJsonNumber right) => !Equals(left, right);
 
     /// <summary>
     /// Inequality operator.
@@ -736,28 +751,6 @@ public readonly struct BinaryJsonNumber :
             Kind.UInt128 => new(ReadUInt128(value.binaryData) - 1),
             _ => throw new NotSupportedException(),
         };
-    }
-
-    /// <summary>
-    /// The equality operator.
-    /// </summary>
-    /// <param name="left">The lhs.</param>
-    /// <param name="right">The rhs.</param>
-    /// <returns><see langword="true"/> if the values are equal.</returns>
-    public static bool operator ==(BinaryJsonNumber left, BinaryJsonNumber right)
-    {
-        return left.Equals(right);
-    }
-
-    /// <summary>
-    /// The inequality operator.
-    /// </summary>
-    /// <param name="left">The lhs.</param>
-    /// <param name="right">The rhs.</param>
-    /// <returns><see langword="true"/> if the values are not equal.</returns>
-    public static bool operator !=(BinaryJsonNumber left, BinaryJsonNumber right)
-    {
-        return !left.Equals(right);
     }
 
     /// <summary>
