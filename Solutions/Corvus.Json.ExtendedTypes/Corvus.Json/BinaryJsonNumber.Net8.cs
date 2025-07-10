@@ -317,7 +317,6 @@ public readonly struct BinaryJsonNumber :
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool operator ==(in JsonElement left, in BinaryJsonNumber right) => Equals(left, right);
 
-
     /// <summary>
     /// Inequality operator.
     /// </summary>
