@@ -25,14 +25,6 @@ internal static class Metaschema
         Debug.Assert(assembly is not null, "The assembly containing this type must exist");
 
         documentResolver.AddDocument(
-            "http://json-schema.org/draft-06/schema",
-            JsonDocument.Parse(ReadResource(assembly, "metaschema.draft6.schema.json")));
-
-        documentResolver.AddDocument(
-            "http://json-schema.org/draft-07/schema",
-            JsonDocument.Parse(ReadResource(assembly, "metaschema.draft7.schema.json")));
-
-        documentResolver.AddDocument(
             "https://json-schema.org/draft/2019-09/schema",
             JsonDocument.Parse(ReadResource(assembly, "metaschema.draft2019_09.schema.json")));
         documentResolver.AddDocument(

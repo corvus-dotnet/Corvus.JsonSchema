@@ -35,5 +35,8 @@
 		<PackageReference Update="Roslynator.Analyzers" Version="4.12.9" />
 	</ItemGroup>
 
-</Project>
+	<ItemGroup>
+		<EmbeddedResource Include="metaschema\draft6\schema.json" />
+	</ItemGroup>
 
+</Project>

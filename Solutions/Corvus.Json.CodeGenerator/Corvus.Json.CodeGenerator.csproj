@@ -9,101 +9,95 @@
 		<PackAsTool>true</PackAsTool>
 		<ToolCommandName>generatejsonschematypes</ToolCommandName>
 		<PackageOutputPath>./nupkg</PackageOutputPath>
-    <PreserveCompilationContext>true</PreserveCompilationContext>
-  </PropertyGroup>
+		<PreserveCompilationContext>true</PreserveCompilationContext>
+	</PropertyGroup>
 
-  <PropertyGroup>
-    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
-  </PropertyGroup>
+	<PropertyGroup>
+		<PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+	</PropertyGroup>
 
 	<ItemGroup>
-	  <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.11.0" />
-	  <PackageReference Include="Spectre.Console.Cli" Version="0.49.1" />
-	  <PackageReference Include="System.Collections.Immutable" Version="9.0.0" />
-	  <PackageReference Include="System.Reflection.Metadata" Version="9.0.0" />
+		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.11.0" />
+		<PackageReference Include="Spectre.Console.Cli" Version="0.49.1" />
+		<PackageReference Include="System.Collections.Immutable" Version="9.0.0" />
+		<PackageReference Include="System.Reflection.Metadata" Version="9.0.0" />
 	</ItemGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.201909.csproj" />
-	  <ProjectReference Include="..\Corvus.Json.CodeGeneration.202012\Corvus.Json.CodeGeneration.202012.csproj" />
-	  <ProjectReference Include="..\Corvus.Json.CodeGeneration.4\Corvus.Json.CodeGeneration.4.csproj" />
-	  <ProjectReference Include="..\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.6.csproj" />
-	  <ProjectReference Include="..\Corvus.Json.CodeGeneration.7\Corvus.Json.CodeGeneration.7.csproj" />
-	  <ProjectReference Include="..\Corvus.Json.CodeGeneration.CorvusVocabulary\Corvus.Json.CodeGeneration.CorvusVocabulary.csproj" />
-	  <ProjectReference Include="..\Corvus.Json.CodeGeneration.CSharp\Corvus.Json.CodeGeneration.CSharp.csproj" />
-	  <ProjectReference Include="..\Corvus.Json.CodeGeneration.HttpClientDocumentResolver\Corvus.Json.CodeGeneration.HttpClientDocumentResolver.csproj" />
-	  <ProjectReference Include="..\Corvus.Json.CodeGeneration.OpenApi30\Corvus.Json.CodeGeneration.OpenApi30.csproj" />
-	  <ProjectReference Include="..\Corvus.Json.CodeGeneration.YamlPreProcessor\Corvus.Json.CodeGeneration.YamlPreProcessor.csproj" />
-	  <ProjectReference Include="..\Corvus.Json.Validator\Corvus.Json.Validator.csproj" />
+		<ProjectReference Include="..\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.201909.csproj" />
+		<ProjectReference Include="..\Corvus.Json.CodeGeneration.202012\Corvus.Json.CodeGeneration.202012.csproj" />
+		<ProjectReference Include="..\Corvus.Json.CodeGeneration.4\Corvus.Json.CodeGeneration.4.csproj" />
+		<ProjectReference Include="..\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.6.csproj" />
+		<ProjectReference Include="..\Corvus.Json.CodeGeneration.7\Corvus.Json.CodeGeneration.7.csproj" />
+		<ProjectReference Include="..\Corvus.Json.CodeGeneration.CorvusVocabulary\Corvus.Json.CodeGeneration.CorvusVocabulary.csproj" />
+		<ProjectReference Include="..\Corvus.Json.CodeGeneration.CSharp\Corvus.Json.CodeGeneration.CSharp.csproj" />
+		<ProjectReference Include="..\Corvus.Json.CodeGeneration.HttpClientDocumentResolver\Corvus.Json.CodeGeneration.HttpClientDocumentResolver.csproj" />
+		<ProjectReference Include="..\Corvus.Json.CodeGeneration.OpenApi30\Corvus.Json.CodeGeneration.OpenApi30.csproj" />
+		<ProjectReference Include="..\Corvus.Json.CodeGeneration.YamlPreProcessor\Corvus.Json.CodeGeneration.YamlPreProcessor.csproj" />
+		<ProjectReference Include="..\Corvus.Json.Validator\Corvus.Json.Validator.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
-	  <None Update="metaschema\corvus\meta\corvus-extensions.json">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </None>
-	  <None Update="metaschema\corvus\schema.json">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </None>
-	  <None Update="metaschema\draft2019-09\meta\applicator.json">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </None>
-	  <None Update="metaschema\draft2019-09\meta\content.json">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </None>
-	  <None Update="metaschema\draft2019-09\meta\core.json">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </None>
-	  <None Update="metaschema\draft2019-09\meta\format.json">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </None>
-	  <None Update="metaschema\draft2019-09\meta\hyper-schema.json">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </None>
-	  <None Update="metaschema\draft2019-09\meta\meta-data.json">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </None>
-	  <None Update="metaschema\draft2019-09\meta\validation.json">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </None>
-	  <None Update="metaschema\draft2019-09\schema.json">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </None>
-	  <None Update="metaschema\draft2020-12\meta\applicator.json">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </None>
-	  <None Update="metaschema\draft2020-12\meta\content.json">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </None>
-	  <None Update="metaschema\draft2020-12\meta\core.json">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </None>
-	  <None Update="metaschema\draft2020-12\meta\format-annotation.json">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </None>
-	  <None Update="metaschema\draft2020-12\meta\format-assertion.json">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </None>
-	  <None Update="metaschema\draft2020-12\meta\hyper-schema.json">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </None>
-	  <None Update="metaschema\draft2020-12\meta\meta-data.json">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </None>
-	  <None Update="metaschema\draft2020-12\meta\unevaluated.json">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </None>
-	  <None Update="metaschema\draft2020-12\meta\validation.json">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </None>
-	  <None Update="metaschema\draft2020-12\schema.json">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </None>
-	  <None Update="metaschema\draft6\schema.json">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </None>
-	  <None Update="metaschema\draft7\schema.json">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </None>
+		<None Update="metaschema\corvus\meta\corvus-extensions.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="metaschema\corvus\schema.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="metaschema\draft2019-09\meta\applicator.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="metaschema\draft2019-09\meta\content.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="metaschema\draft2019-09\meta\core.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="metaschema\draft2019-09\meta\format.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="metaschema\draft2019-09\meta\hyper-schema.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="metaschema\draft2019-09\meta\meta-data.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="metaschema\draft2019-09\meta\validation.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="metaschema\draft2019-09\schema.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="metaschema\draft2020-12\meta\applicator.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="metaschema\draft2020-12\meta\content.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="metaschema\draft2020-12\meta\core.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="metaschema\draft2020-12\meta\format-annotation.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="metaschema\draft2020-12\meta\format-assertion.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="metaschema\draft2020-12\meta\hyper-schema.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="metaschema\draft2020-12\meta\meta-data.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="metaschema\draft2020-12\meta\unevaluated.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="metaschema\draft2020-12\meta\validation.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="metaschema\draft2020-12\schema.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
 	</ItemGroup>
 
 </Project>

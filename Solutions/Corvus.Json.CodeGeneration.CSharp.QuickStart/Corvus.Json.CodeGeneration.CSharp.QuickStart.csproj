@@ -75,8 +75,6 @@
     <EmbeddedResource Include="metaschema\draft2020-12\meta\unevaluated.json" />
     <EmbeddedResource Include="metaschema\draft2020-12\meta\validation.json" />
     <EmbeddedResource Include="metaschema\draft2020-12\schema.json" />
-    <EmbeddedResource Include="metaschema\draft6\schema.json" />
-    <EmbeddedResource Include="metaschema\draft7\schema.json" />
   </ItemGroup>
 
 </Project>

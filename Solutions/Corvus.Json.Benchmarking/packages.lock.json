@@ -577,6 +577,7 @@
         "type": "Project",
         "dependencies": {
           "Corvus.Json.CodeGeneration": "[1.0.0, )",
+          "Corvus.Json.CodeGeneration.202012": "[1.0.0, )",
           "System.Collections.Immutable": "[9.0.0, )"
         }
       },
@@ -1250,6 +1251,7 @@
         "type": "Project",
         "dependencies": {
           "Corvus.Json.CodeGeneration": "[1.0.0, )",
+          "Corvus.Json.CodeGeneration.202012": "[1.0.0, )",
           "System.Collections.Immutable": "[9.0.0, )"
         }
       },
