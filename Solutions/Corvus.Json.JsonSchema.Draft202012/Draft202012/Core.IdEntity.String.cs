@@ -87,7 +87,7 @@ public readonly partial struct Core
         public static implicit operator Uri(IdEntity value)
         {
             return
-                value.GetUri();;
+                value.GetUri();
         }
 
         /// <summary>

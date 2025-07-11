@@ -17,7 +17,7 @@ namespace Corvus.UriTemplates;
 public delegate void ParameterCallback<TState>(bool reset, ReadOnlySpan<char> name, ReadOnlySpan<char> value, ref TState state);
 
 /// <summary>
-/// A callback when a parameter is found, in which the match is identified with a <see cref="Range"/>.
+/// A callback when a parameter is found, in which the match is identified with a Range.
 /// </summary>
 /// <typeparam name="TState">The type of the state to pass.</typeparam>
 /// <param name="reset">Whether to reset the parameters that we have seen so far.</param>

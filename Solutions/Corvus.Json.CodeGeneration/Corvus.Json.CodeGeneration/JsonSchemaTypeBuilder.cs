@@ -2,7 +2,6 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 
@@ -29,12 +28,19 @@ public class JsonSchemaTypeBuilder(
     /// </summary>
     /// <param name="documentPath">The path to the root of the json-schema document.</param>
     /// <param name="fallbackVocabulary">The default vocabulary to use if one cannot be analysed.</param>
-    /// <param name="rebaseAsRoot">Whether to rebase the <paramref name="documentPath"/> as a root document. This should only be done for a JSON schema island in a larger non-schema document.
-    /// If <see langword="true"/>, then references in this document should be taken as if the fragment was the root of a document. This will effectively generate a custom $id for the root scope.</param>
+    /// <param name="rebaseAsRoot">
+    /// Whether to rebase the <paramref name="documentPath"/> as a root document.
+    /// This should only be done for a JSON schema island in a larger non-schema document.
+    /// If <see langword="true"/>, then references in this document should be taken as if the fragment was the root of a document.
+    /// This will effectively generate a custom $id for the root scope.
+    /// </param>
     /// <param name="cancellationToken">A cancellation token to abandon generation.</param>
     /// <returns>A <see cref="ValueTask"/> which, when complete, provides the requested type declaration.</returns>
     /// <remarks>
-    /// <para>This method may be called multiple times to build up a set of related types, perhaps from multiple fragments of a single document, or a family of related documents.</para>
+    /// <para>
+    /// This method may be called multiple times to build up a set of related types,
+    /// perhaps from multiple fragments of a single document, or a family of related documents.
+    /// </para>
     /// <para>Any re-used schema will (if possible) be reduced to the same type, to build a single coherent type system.</para>
     /// <para>Once you have finished adding types, call <see cref="GenerateCodeUsing(ILanguageProvider, CancellationToken, TypeDeclaration[])"/> to generate the code for each language you need to support.</para>
     /// <para>Note: this requires the <see cref="IDocumentResolver"/> to be pre-configured with all the files required by the type build.
@@ -47,8 +53,7 @@ public class JsonSchemaTypeBuilder(
         bool rebaseAsRoot = false,
         CancellationToken? cancellationToken = null)
     {
-        ValueTask<TypeDeclaration> task =
-            this.AddTypeDeclarationsAsync(documentPath, fallbackVocabulary, rebaseAsRoot);
+        ValueTask<TypeDeclaration> task = this.AddTypeDeclarationsAsync(documentPath, fallbackVocabulary, rebaseAsRoot, cancellationToken);
 
         if (!task.IsCompleted)
         {
@@ -72,7 +77,11 @@ public class JsonSchemaTypeBuilder(
     /// <para>Any re-used schema will (if possible) be reduced to the same type, to build a single coherent type system.</para>
     /// <para>Once you have finished adding types, call <see cref="GenerateCodeUsing(ILanguageProvider, CancellationToken, TypeDeclaration[])"/> to generate the code for each language you need to support.</para>
     /// </remarks>
-    public async ValueTask<TypeDeclaration> AddTypeDeclarationsAsync(JsonReference documentPath, IVocabulary fallbackVocabulary, bool rebaseAsRoot = false, CancellationToken? cancellationToken = null)
+    public async ValueTask<TypeDeclaration> AddTypeDeclarationsAsync(
+        JsonReference documentPath,
+        IVocabulary fallbackVocabulary,
+        bool rebaseAsRoot = false,
+        CancellationToken? cancellationToken = null)
     {
         CancellationToken ct = cancellationToken ?? CancellationToken.None;
 
@@ -246,13 +255,10 @@ public class JsonSchemaTypeBuilder(
         void IdentifyNonGeneratedTypes(TypeDeclaration typeDeclaration, HashSet<TypeDeclaration> visitedTypeDeclarations, CancellationToken cancellationToken)
         {
             // Quit early if we are already visiting the type declaration.
-            if (visitedTypeDeclarations.Contains(typeDeclaration))
+            if (!visitedTypeDeclarations.Add(typeDeclaration))
             {
                 return;
             }
-
-            // Tell ourselves early that we have visited this type declaration already.
-            visitedTypeDeclarations.Add(typeDeclaration);
 
             // We only set a name for ourselves if we cannot be reduced.
             if (!typeDeclaration.CanReduce())
@@ -293,13 +299,10 @@ public class JsonSchemaTypeBuilder(
         void SetNamesBeforeSubschema(TypeDeclaration typeDeclaration, HashSet<TypeDeclaration> visitedTypeDeclarations, CancellationToken cancellationToken)
         {
             // Quit early if we are already visiting the type declaration.
-            if (visitedTypeDeclarations.Contains(typeDeclaration))
+            if (!visitedTypeDeclarations.Add(typeDeclaration))
             {
                 return;
             }
-
-            // Tell ourselves early that we have visited this type declaration already.
-            visitedTypeDeclarations.Add(typeDeclaration);
 
             // We only set a name for ourselves if we cannot be reduced.
             if (typeDeclaration.CanReduce())
@@ -333,13 +336,10 @@ public class JsonSchemaTypeBuilder(
         void SetNamesAfterSubschema(TypeDeclaration typeDeclaration, HashSet<TypeDeclaration> visitedTypeDeclarations, CancellationToken cancellationToken)
         {
             // Quit early if we are already visiting the type declaration.
-            if (visitedTypeDeclarations.Contains(typeDeclaration))
+            if (!visitedTypeDeclarations.Add(typeDeclaration))
             {
                 return;
             }
-
-            // Tell ourselves early that we have visited this type declaration already.
-            visitedTypeDeclarations.Add(typeDeclaration);
 
             // We only set a name for ourselves if we cannot be reduced.
             if (!typeDeclaration.CanReduce())
@@ -411,12 +411,10 @@ public class JsonSchemaTypeBuilder(
 
         void SetParentsCore(TypeDeclaration type, HashSet<TypeDeclaration> visitedTypes, CancellationToken cancellationToken)
         {
-            if (visitedTypes.Contains(type))
+            if (!visitedTypes.Add(type))
             {
                 return;
             }
-
-            visitedTypes.Add(type);
 
             SetParent(type);
             foreach (TypeDeclaration child in type.SubschemaTypeDeclarations.Values)

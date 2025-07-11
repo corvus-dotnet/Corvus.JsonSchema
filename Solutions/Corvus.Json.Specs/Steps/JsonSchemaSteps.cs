@@ -120,7 +120,7 @@ public class JsonSchemaSteps
             element,
             $"Failed to load input data at {this.scenarioContext.Get<string>(InputJsonFileName)}, ref {referenceFragment}, jsonSchemaBuilder201909DriverSettings:testBaseDirectory: '{this.configuration["jsonSchemaBuilder201909DriverSettings:testBaseDirectory"]}', jsonSchemaBuilder202012DriverSettings: '{this.configuration["jsonSchemaBuilder202012DriverSettings:testBaseDirectory"]}' CWD: '{Environment.CurrentDirectory}'");
         this.scenarioContext.Set(referenceFragment, InputDataPath);
-        this.scenarioContext.Set(element.Value, InputData);
+        this.scenarioContext.Set(element!.Value, InputData);
     }
 
     [Given("a schema file")]

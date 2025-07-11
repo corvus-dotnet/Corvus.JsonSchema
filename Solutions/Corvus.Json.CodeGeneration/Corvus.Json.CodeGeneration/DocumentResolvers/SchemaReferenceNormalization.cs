@@ -29,7 +29,7 @@ public static class SchemaReferenceNormalization
     /// <param name="basePath">The current base path, for relative references.</param>
     /// <param name="result">The resulting reference URI.</param>
     /// <returns><see langword="true"/> if the reference was successfully normalized.</returns>
-    public static bool TryNormalizeSchemaReference(string schemaFile, string basePath, [NotNullWhen(true)] out string? result)
+    public static bool TryNormalizeSchemaReference(string schemaFile, string? basePath, [NotNullWhen(true)] out string? result)
     {
         if (!IsValid(schemaFile, out Uri? uri) || uri.IsFile)
         {

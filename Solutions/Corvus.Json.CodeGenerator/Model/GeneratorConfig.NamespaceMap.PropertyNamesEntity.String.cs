@@ -97,7 +97,7 @@ public readonly partial struct GeneratorConfig
             public static implicit operator Uri(PropertyNamesEntity value)
             {
                 return
-                    value.GetUri();;
+                    value.GetUri();
             }
 
             /// <summary>

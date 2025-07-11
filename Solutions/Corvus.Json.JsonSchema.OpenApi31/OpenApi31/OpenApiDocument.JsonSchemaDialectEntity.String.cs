@@ -102,7 +102,7 @@ public readonly partial struct OpenApiDocument
         public static implicit operator Uri(JsonSchemaDialectEntity value)
         {
             return
-                value.GetUri();;
+                value.GetUri();
         }
 
         /// <summary>

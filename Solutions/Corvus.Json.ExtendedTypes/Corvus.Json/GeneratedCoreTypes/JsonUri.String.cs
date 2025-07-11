@@ -80,7 +80,7 @@ public readonly partial struct JsonUri
     public static implicit operator Uri(JsonUri value)
     {
         return
-            value.GetUri();;
+            value.GetUri();
     }
 
     /// <summary>

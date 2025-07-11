@@ -93,7 +93,7 @@ public sealed class PropertyDeclaration(
     /// <param name="key">The key for the metadata value.</param>
     /// <param name="value">The metadata value, if found.</param>
     /// <returns><see langword="true"/> if the metadata value was found.</returns>
-    public bool TryGetMetadata<T>(string key, [MaybeNullWhen(false)] out T? value)
+    public bool TryGetMetadata<T>(string key, out T? value)
     {
         bool result = this.metadata.TryGetValue(key, out object? candidate);
         if (result)

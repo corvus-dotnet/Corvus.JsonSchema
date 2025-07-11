@@ -76,7 +76,7 @@ public static class TypeDeclarationExtensions
     /// Gets a value indicating whether this type prefers 128bit integers.
     /// </summary>
     /// <param name="typeDeclaration">The type declaration to test.</param>
-    /// <returns><see langword="true"/> if the type prefers 128 bit integers.</returns>
+    /// <returns><see langword="true"/> if the type prefers 128-bit integers.</returns>
     public static string PreferredBinaryJsonNumberKind(this TypeDeclaration typeDeclaration)
     {
         if (!typeDeclaration.TryGetMetadata(PreferredBinaryJsonNumberKindKey, out string? numericType))
@@ -243,8 +243,7 @@ public static class TypeDeclarationExtensions
     }
 
     /// <summary>
-    /// Gets a value which determines if this type is the built-in JsonAny type
-    /// type.
+    /// Gets a value which determines if this type is the built-in JsonAny type.
     /// </summary>
     /// <param name="typeDeclaration">The type declaration to test.</param>
     /// <returns><see langword="true"/> if the type declaration is the <see cref="WellKnownTypeDeclarations.JsonAny"/> type.</returns>
@@ -256,8 +255,7 @@ public static class TypeDeclarationExtensions
     }
 
     /// <summary>
-    /// Gets a value which determines if this type is the built-in JsonAny type
-    /// type.
+    /// Gets a value which determines if this type is the built-in JsonAny type.
     /// </summary>
     /// <param name="typeDeclaration">The type declaration to test.</param>
     /// <returns><see langword="true"/> if the type declaration is the <see cref="WellKnownTypeDeclarations.JsonAny"/> type.</returns>
@@ -272,8 +270,7 @@ public static class TypeDeclarationExtensions
     }
 
     /// <summary>
-    /// Gets a value which determines if this type is the built-in JsonAny type
-    /// type.
+    /// Gets a value which determines if this type is the built-in JsonAny type.
     /// </summary>
     /// <param name="typeDeclaration">The type declaration to test.</param>
     /// <returns><see langword="true"/> if the type declaration is the <see cref="WellKnownTypeDeclarations.JsonAny"/> type.</returns>
@@ -573,7 +570,7 @@ public static class TypeDeclarationExtensions
     }
 
     /// <summary>
-    /// Gets a value indicating whether the .NET type name has been set for the type declaration..
+    /// Gets a value indicating whether the .NET type name has been set for the type declaration.
     /// </summary>
     /// <param name="typeDeclaration">The type declaration.</param>
     /// <returns><see langword="true"/> if the type name has been set.</returns>
@@ -583,7 +580,7 @@ public static class TypeDeclarationExtensions
     }
 
     /// <summary>
-    /// Tries to gets the .NET type name for the type declaration..
+    /// Tries to get the .NET type name for the type declaration.
     /// </summary>
     /// <param name="typeDeclaration">The type declaration.</param>
     /// <param name="name">The .NET type name.</param>
