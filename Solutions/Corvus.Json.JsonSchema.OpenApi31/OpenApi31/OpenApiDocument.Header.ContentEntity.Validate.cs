@@ -180,7 +180,7 @@ public readonly partial struct OpenApiDocument
                     {
                         if (level >= ValidationLevel.Detailed)
                         {
-                            result = result.WithResult(isValid: false, $"Validation maxProperties - array of length {propertyCount} is greater than {MaxProperties}", "maxProperties");
+                            result = result.WithResult(isValid: false, $"Validation maxProperties - property count {propertyCount} is greater than {MaxProperties}", "maxProperties");
                         }
                         else if (level >= ValidationLevel.Basic)
                         {
@@ -203,7 +203,7 @@ public readonly partial struct OpenApiDocument
                     {
                         if (level >= ValidationLevel.Detailed)
                         {
-                            result = result.WithResult(isValid: false, $"Validation minProperties - array of length {propertyCount} is less than {MinProperties}", "minProperties");
+                            result = result.WithResult(isValid: false, $"Validation minProperties - property count {propertyCount} is less than {MinProperties}", "minProperties");
                         }
                         else if (level >= ValidationLevel.Basic)
                         {
