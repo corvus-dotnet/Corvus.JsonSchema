@@ -253,7 +253,7 @@ public readonly partial struct OpenApiDocument
                 {
                     if (level >= ValidationLevel.Detailed)
                     {
-                        result = result.WithResult(isValid: false, $"Validation minProperties - array of length {propertyCount} is less than {MinProperties}", "minProperties");
+                        result = result.WithResult(isValid: false, $"Validation minProperties - property count {propertyCount} is less than {MinProperties}", "minProperties");
                     }
                     else if (level >= ValidationLevel.Basic)
                     {

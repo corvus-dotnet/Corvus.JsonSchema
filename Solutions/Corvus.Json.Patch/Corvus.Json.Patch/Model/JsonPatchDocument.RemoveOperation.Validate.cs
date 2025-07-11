@@ -151,14 +151,11 @@ public readonly partial struct JsonPatchDocument
                     return validationContext;
                 }
 
-                bool hasSeenOp = false;
-
                 int propertyCount = 0;
                 foreach (JsonObjectProperty property in value.EnumerateObject())
                 {
                     if (property.NameEquals(JsonPropertyNames.OpUtf8, JsonPropertyNames.Op))
                     {
-                        hasSeenOp = true;
                         result = result.WithLocalProperty(propertyCount);
                         if (level > ValidationLevel.Basic)
                         {
@@ -180,32 +177,6 @@ public readonly partial struct JsonPatchDocument
                     }
 
                     propertyCount++;
-                }
-
-                if (level > ValidationLevel.Basic)
-                {
-                    result = result.PushValidationLocationReducedPathModifier(new("#/required"));
-                }
-
-                if (!hasSeenOp)
-                {
-                    if (level >= ValidationLevel.Basic)
-                    {
-                        result = result.WithResult(isValid: false, "Validation properties - the required property 'op' was not present.");
-                    }
-                    else
-                    {
-                        return ValidationContext.InvalidContext;
-                    }
-                }
-                else if (level == ValidationLevel.Verbose)
-                {
-                    result = result.WithResult(isValid: true, "Validation properties - the required property 'op' was present.");
-                }
-
-                if (level > ValidationLevel.Basic)
-                {
-                    result = result.PopLocation();
                 }
 
                 return result;
