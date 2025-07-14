@@ -93,6 +93,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".Benchmarks", ".Benchmarks"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".Sandboxes", ".Sandboxes", "{4AEFC523-70EA-4ACC-A424-F8FF8D4F285A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Corvus.Json.CodeGeneration.OpenApi31", "Corvus.Json.CodeGeneration.OpenApi31\Corvus.Json.CodeGeneration.OpenApi31.csproj", "{589ED819-DE6C-ABF5-07DC-FCF11D666FCF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -235,6 +237,10 @@ Global
 		{6D9F3F39-45E2-4B3A-821D-1073064812A9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6D9F3F39-45E2-4B3A-821D-1073064812A9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6D9F3F39-45E2-4B3A-821D-1073064812A9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{589ED819-DE6C-ABF5-07DC-FCF11D666FCF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{589ED819-DE6C-ABF5-07DC-FCF11D666FCF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{589ED819-DE6C-ABF5-07DC-FCF11D666FCF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{589ED819-DE6C-ABF5-07DC-FCF11D666FCF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -275,6 +281,7 @@ Global
 		{30D98060-7807-46E1-BC51-A0712820DF66} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{F6E781FA-DAEF-4E55-B7AA-C6B650B61680} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{907DC949-3413-4A70-AC7F-D7307DF1440A} = {D2E9E1BB-9ADE-4A9F-945E-5DCAEA860E80}
+		{589ED819-DE6C-ABF5-07DC-FCF11D666FCF} = {30D98060-7807-46E1-BC51-A0712820DF66}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A9FB3137-5BE5-44D0-86AC-4BC1DA4BA066}

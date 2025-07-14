@@ -80,7 +80,7 @@ public readonly partial struct JsonIpV4
     public static implicit operator System.Net.IPAddress(JsonIpV4 value)
     {
         return
-            value.GetIPAddress();;
+            value.GetIPAddress();
     }
 
     /// <summary>

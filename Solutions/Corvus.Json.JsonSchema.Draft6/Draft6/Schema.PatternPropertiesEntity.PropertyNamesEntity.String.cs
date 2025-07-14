@@ -112,7 +112,7 @@ public readonly partial struct Schema
             public static implicit operator System.Text.RegularExpressions.Regex(PropertyNamesEntity value)
             {
                 return
-                    value.GetRegex();;
+                    value.GetRegex();
             }
 
             /// <summary>

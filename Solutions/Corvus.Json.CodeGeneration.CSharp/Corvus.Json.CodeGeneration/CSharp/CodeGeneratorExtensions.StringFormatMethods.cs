@@ -684,7 +684,7 @@ internal static partial class CodeGeneratorExtensions
         }
 
         generator
-            .AppendImplicitConversionToType(typeDeclaration, "Uri", "value.GetUri();")
+            .AppendImplicitConversionToType(typeDeclaration, "Uri", "value.GetUri()")
             .AppendImplicitConversionFromTypeUsingConstructor(typeDeclaration, "Uri", useInForSourceType: true);
 
         return true;
@@ -739,7 +739,7 @@ internal static partial class CodeGeneratorExtensions
         }
 
         generator
-            .AppendImplicitConversionToType(typeDeclaration, "Uri", "value.GetUri();")
+            .AppendImplicitConversionToType(typeDeclaration, "Uri", "value.GetUri()")
             .AppendImplicitConversionFromTypeUsingConstructor(typeDeclaration, "Uri", useInForSourceType: true);
 
         return true;
@@ -794,7 +794,7 @@ internal static partial class CodeGeneratorExtensions
         }
 
         generator
-            .AppendImplicitConversionToType(typeDeclaration, "Uri", "value.GetUri();")
+            .AppendImplicitConversionToType(typeDeclaration, "Uri", "value.GetUri()")
             .AppendImplicitConversionFromTypeUsingConstructor(typeDeclaration, "Uri", useInForSourceType: true);
 
         return true;
@@ -849,7 +849,7 @@ internal static partial class CodeGeneratorExtensions
         }
 
         generator
-            .AppendImplicitConversionToType(typeDeclaration, "Uri", "value.GetUri();")
+            .AppendImplicitConversionToType(typeDeclaration, "Uri", "value.GetUri()")
             .AppendImplicitConversionFromTypeUsingConstructor(typeDeclaration, "Uri", useInForSourceType: true);
 
         return true;
@@ -904,7 +904,7 @@ internal static partial class CodeGeneratorExtensions
         }
 
         generator
-            .AppendImplicitConversionToType(typeDeclaration, "Guid", "value.GetGuid();")
+            .AppendImplicitConversionToType(typeDeclaration, "Guid", "value.GetGuid()")
             .AppendImplicitConversionFromTypeUsingConstructor(typeDeclaration, "Guid", useInForSourceType: true);
 
         return true;
@@ -1060,7 +1060,7 @@ internal static partial class CodeGeneratorExtensions
         }
 
         generator
-            .AppendImplicitConversionToType(typeDeclaration, "System.Net.IPAddress", "value.GetIPAddress();")
+            .AppendImplicitConversionToType(typeDeclaration, "System.Net.IPAddress", "value.GetIPAddress()")
             .AppendImplicitConversionFromTypeUsingConstructor(typeDeclaration, "System.Net.IPAddress", useInForSourceType: true);
 
         return true;
@@ -1176,7 +1176,7 @@ internal static partial class CodeGeneratorExtensions
         }
 
         generator
-            .AppendImplicitConversionToType(typeDeclaration, "System.Text.RegularExpressions.Regex", "value.GetRegex();")
+            .AppendImplicitConversionToType(typeDeclaration, "System.Text.RegularExpressions.Regex", "value.GetRegex()")
             .AppendImplicitConversionFromTypeUsingConstructor(typeDeclaration, "System.Text.RegularExpressions.Regex");
 
         return true;
@@ -1282,7 +1282,7 @@ internal static partial class CodeGeneratorExtensions
         }
 
         generator
-            .AppendImplicitConversionToType(typeDeclaration, "System.Net.IPAddress", "value.GetIPAddress();")
+            .AppendImplicitConversionToType(typeDeclaration, "System.Net.IPAddress", "value.GetIPAddress()")
             .AppendImplicitConversionFromTypeUsingConstructor(typeDeclaration, "System.Net.IPAddress", useInForSourceType: true);
 
         return true;

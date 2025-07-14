@@ -28,7 +28,7 @@
     <Using Include="System.Threading.Tasks" />
     <Using Include="System.Collections.Generic" />
   </ItemGroup>
-  
+
   <ItemGroup>
     <Compile Include="..\Corvus.Json.JsonReference\Corvus.Json\**\*.cs">
       <Link>Corvus.Json.JsonReference\%(RecursiveDir)\%(Filename)%(Extension)</Link>
@@ -75,6 +75,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="IndexRange" Version="1.0.3" PrivateAssets="all" GeneratePathProperty="true" />
     <PackageReference Include="System.Text.Json" Version="9.0.0" PrivateAssets="all" GeneratePathProperty="true" />
     <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="9.0.0" PrivateAssets="all" GeneratePathProperty="true" />
     <PackageReference Include="Microsoft.Bcl.HashCode" Version="1.1.1" PrivateAssets="all" GeneratePathProperty="true" />
@@ -95,6 +96,7 @@
 
   <Target Name="GetDependencyTargetPaths">
     <ItemGroup>
+      <TargetPathWithTargetPlatformMoniker Include="$(PKGIndexRange)\lib\netstandard2.0\IndexRange.dll" IncludeRuntimeDependency="false" />
       <TargetPathWithTargetPlatformMoniker Include="$(PKGSystem_Text_Json)\lib\netstandard2.0\System.Text.Json.dll" IncludeRuntimeDependency="false" />
       <TargetPathWithTargetPlatformMoniker Include="$(PKGMicrosoft_Bcl_AsyncInterfaces)\lib\netstandard2.0\Microsoft.Bcl.AsyncInterfaces.dll" IncludeRuntimeDependency="false" />
       <TargetPathWithTargetPlatformMoniker Include="$(PKGMicrosoft_Bcl_HashCode)\lib\netstandard2.0\Microsoft.Bcl.HashCode.dll" IncludeRuntimeDependency="false" />
@@ -144,6 +146,7 @@
   <ItemGroup>
     <!-- Package the generator in the analyzer directory of the nuget package -->
     <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+    <None Include="$(PKGIndexRange)\lib\netstandard2.0\IndexRange.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
     <None Include="$(PKGSystem_Text_Json)\lib\netstandard2.0\System.Text.Json.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
     <None Include="$(PKGMicrosoft_Bcl_AsyncInterfaces)\lib\netstandard2.0\Microsoft.Bcl.AsyncInterfaces.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
     <None Include="$(PKGMicrosoft_Bcl_HashCode)\lib\netstandard2.0\Microsoft.Bcl.HashCode.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />

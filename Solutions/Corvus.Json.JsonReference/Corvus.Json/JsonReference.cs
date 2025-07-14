@@ -5,7 +5,6 @@
 using System.Buffers;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Text;
 using Corvus.HighPerformance;
 
 namespace Corvus.Json;
@@ -105,7 +104,7 @@ public readonly struct JsonReference
     public bool HasFragment => FindHash(this.reference.Span) >= 0;
 
     /// <summary>
-    /// Gets a value indicating whether the ref has a uri.
+    /// Gets a value indicating whether the ref has an uri.
     /// </summary>
     public bool HasUri => this.FindUri().Length > 0;
 
@@ -269,7 +268,7 @@ public readonly struct JsonReference
         otherFragment = otherFragment[1..];
 
         int? h1 = FindHash(this.reference.Span);
-        bool hasHash = h1 is int;
+        bool hasHash = h1.HasValue;
 
         int requiredLength = this.reference.Length + otherFragment.Length;
 
@@ -459,14 +458,14 @@ public readonly struct JsonReference
     /// <returns>The combined reference.</returns>
     public JsonReference Apply(JsonReference other, bool strict = true)
     {
-        JsonReferenceBuilder baseReference = this.AsBuilder();
-        JsonReferenceBuilder reference = other.AsBuilder();
+        JsonReferenceBuilder thisReference = this.AsBuilder();
+        JsonReferenceBuilder otherReference = other.AsBuilder();
 
-        ReadOnlySpan<char> scheme = reference.Scheme;
-        ReadOnlySpan<char> authority = reference.Authority;
-        ReadOnlySpan<char> path = reference.Path;
-        ReadOnlySpan<char> query = reference.Query;
-        ReadOnlySpan<char> fragment = reference.Fragment;
+        ReadOnlySpan<char> scheme = otherReference.Scheme;
+        ReadOnlySpan<char> authority = otherReference.Authority;
+        ReadOnlySpan<char> path = otherReference.Path;
+        ReadOnlySpan<char> query = otherReference.Query;
+        ReadOnlySpan<char> fragment = otherReference.Fragment;
 
         ReadOnlySpan<char> resultScheme;
         ReadOnlySpan<char> resultAuthority;
@@ -474,12 +473,12 @@ public readonly struct JsonReference
         ReadOnlySpan<char> resultQuery;
         ReadOnlySpan<char> resultFragment;
 
-        char[] pathBuffer = ArrayPool<char>.Shared.Rent(baseReference.Path.Length + reference.Path.Length + 1);
+        char[] pathBuffer = ArrayPool<char>.Shared.Rent(thisReference.Path.Length + otherReference.Path.Length + 1);
         Memory<char> pathMemory = pathBuffer.AsMemory();
 
         try
         {
-            if (!strict && scheme.Equals(baseReference.Scheme, StringComparison.Ordinal))
+            if (!strict && scheme.Equals(thisReference.Scheme, StringComparison.Ordinal))
             {
                 scheme = ReadOnlySpan<char>.Empty;
             }
@@ -503,14 +502,14 @@ public readonly struct JsonReference
                 {
                     if (path.Length == 0)
                     {
-                        resultPath = baseReference.Path;
+                        resultPath = thisReference.Path;
                         if (query.Length > 0)
                         {
                             resultQuery = query;
                         }
                         else
                         {
-                            resultQuery = baseReference.Query;
+                            resultQuery = thisReference.Query;
                         }
                     }
                     else
@@ -521,7 +520,7 @@ public readonly struct JsonReference
                         }
                         else
                         {
-                            int mergedLength = Merge(baseReference.Path, path, baseReference.Authority.Length > 0, in pathMemory);
+                            int mergedLength = Merge(thisReference.Path, path, thisReference.Authority.Length > 0, in pathMemory);
                             ReadOnlySpan<char> mergedPaths = pathMemory[..mergedLength].Span;
                             resultPath = pathMemory.Span[..RemoveDotSegments(mergedPaths, in pathMemory)];
                         }
@@ -529,10 +528,10 @@ public readonly struct JsonReference
                         resultQuery = query;
                     }
 
-                    resultAuthority = baseReference.Authority;
+                    resultAuthority = thisReference.Authority;
                 }
 
-                resultScheme = baseReference.Scheme;
+                resultScheme = thisReference.Scheme;
             }
 
             resultFragment = fragment;
