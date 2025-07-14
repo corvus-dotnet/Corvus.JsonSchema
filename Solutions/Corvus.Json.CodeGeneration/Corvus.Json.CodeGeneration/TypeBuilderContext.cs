@@ -197,7 +197,7 @@ public class TypeBuilderContext
         // We remove the existing one and replace it, for this context.
         this.ReplaceDeclarationInScope(this.SubschemaLocation, dynamicTypeDeclaration);
         this.RemoveLocatedTypeDeclaration(this.SubschemaLocation);
-        UpdateDynamicLocation(typeDeclaration, dynamicScope);
+        this.UpdateDynamicLocation(typeDeclaration, dynamicScope);
 
         if (this.TryGetLocatedTypeDeclaration(typeDeclaration.LocatedSchema.Location, out TypeDeclaration? existingTypeForDynamicScope))
         {
@@ -427,7 +427,7 @@ public class TypeBuilderContext
     /// </summary>
     /// <param name="typeDeclaration">The type declaration.</param>
     /// <param name="dynamicScopeLocation">The new dynamic scope location.</param>
-    private static void UpdateDynamicLocation(TypeDeclaration typeDeclaration, JsonReference dynamicScopeLocation)
+    private void UpdateDynamicLocation(TypeDeclaration typeDeclaration, JsonReference dynamicScopeLocation)
     {
         JsonReferenceBuilder builder = typeDeclaration.LocatedSchema.Location.AsBuilder();
         builder = new JsonReferenceBuilder(builder.Scheme, builder.Authority, builder.Path, ("dynamicScope=" + Uri.EscapeDataString(dynamicScopeLocation.ToString())).AsSpan(), builder.Fragment);
