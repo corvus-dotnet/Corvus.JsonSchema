@@ -509,7 +509,7 @@ public readonly partial struct JsonUuid
 #else
         if (this.jsonElementBacking.ValueKind == JsonValueKind.String)
         {
-            return StandardUuid.GuidParser(this.jsonElementBacking.GetString(), null, out result);
+            return StandardUuid.GuidParser(this.jsonElementBacking.GetString()!, null, out result);
         }
 #endif
 

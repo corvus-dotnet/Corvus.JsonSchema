@@ -404,6 +404,10 @@ Benchmark suites for various components.
 
 The Source Generator which generates types from Json Schema.
 
+## V4.3.17 Updates
+
+Added netstandard2.1 packages for `Corvus.Json.ExtendedTypes` and `Corvus.Json.JsonReference` in order to support Unity builds.
+
 ## V4.3.16 Updates
 
 ### Use of IndexRange package is deprecated.

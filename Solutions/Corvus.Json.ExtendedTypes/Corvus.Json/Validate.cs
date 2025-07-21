@@ -3925,7 +3925,7 @@ public static partial class Validate
 #if NET8_0_OR_GREATER
         instance.AsString.TryGetValue(IpV6Validator, new ValidationContextWrapperWithFormatKeyword(result, level, formatKeyword), out result);
 #else
-        IpV6Validator(instance.AsString.GetString(), new ValidationContextWrapperWithFormatKeyword(result, level, formatKeyword), out result);
+        IpV6Validator(instance.AsString.GetString()!, new ValidationContextWrapperWithFormatKeyword(result, level, formatKeyword), out result);
 #endif
 
         if (level == ValidationLevel.Flag && !result.IsValid)
@@ -4018,7 +4018,7 @@ public static partial class Validate
 #if NET8_0_OR_GREATER
         instance.AsString.TryGetValue(IpV4Validator, new ValidationContextWrapperWithFormatKeyword(result, level, formatKeyword), out result);
 #else
-        IpV4Validator(instance.AsString.GetString(), new ValidationContextWrapperWithFormatKeyword(result, level, formatKeyword), out result);
+        IpV4Validator(instance.AsString.GetString()!, new ValidationContextWrapperWithFormatKeyword(result, level, formatKeyword), out result);
 #endif
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
