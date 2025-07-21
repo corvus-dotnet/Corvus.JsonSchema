@@ -1933,7 +1933,7 @@ public static partial class ValidateWithoutCoreType
 #if NET8_0_OR_GREATER
         instance.AsString.TryGetValue(IpV6Validator, new Validate.ValidationContextWrapperWithFormatKeyword(result, level, formatKeyword), out result);
 #else
-        IpV6Validator(instance.AsString.GetString(), new Validate.ValidationContextWrapperWithFormatKeyword(result, level, formatKeyword), out result);
+        IpV6Validator(instance.AsString.GetString()!, new Validate.ValidationContextWrapperWithFormatKeyword(result, level, formatKeyword), out result);
 #endif
 
         if (level == ValidationLevel.Flag && !result.IsValid)
@@ -2002,7 +2002,7 @@ public static partial class ValidateWithoutCoreType
 #if NET8_0_OR_GREATER
         instance.AsString.TryGetValue(IpV4Validator, new Validate.ValidationContextWrapperWithFormatKeyword(result, level, formatKeyword), out result);
 #else
-        IpV4Validator(instance.AsString.GetString(), new Validate.ValidationContextWrapperWithFormatKeyword(result, level, formatKeyword), out result);
+        IpV4Validator(instance.AsString.GetString()!, new Validate.ValidationContextWrapperWithFormatKeyword(result, level, formatKeyword), out result);
 #endif
         if (level == ValidationLevel.Flag && !result.IsValid)
         {

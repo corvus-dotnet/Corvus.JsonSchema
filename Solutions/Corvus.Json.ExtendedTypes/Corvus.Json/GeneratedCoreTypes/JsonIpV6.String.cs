@@ -509,7 +509,7 @@ public readonly partial struct JsonIpV6
 #else
         if (this.jsonElementBacking.ValueKind == JsonValueKind.String)
         {
-            return StandardIPAddress.IPAddressParser(this.jsonElementBacking.GetString(), null, out result);
+            return StandardIPAddress.IPAddressParser(this.jsonElementBacking.GetString()!, null, out result);
         }
 #endif
 

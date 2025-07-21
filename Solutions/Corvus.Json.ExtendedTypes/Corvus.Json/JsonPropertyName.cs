@@ -561,7 +561,7 @@ public readonly struct JsonPropertyName
 
             throw new InvalidOperationException();
 #else
-            return this.jsonElementBacking.GetString().GetHashCode();
+            return this.jsonElementBacking.GetString()?.GetHashCode() ?? 0;
 #endif
         }
 
