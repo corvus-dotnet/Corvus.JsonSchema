@@ -404,6 +404,16 @@ Benchmark suites for various components.
 
 The Source Generator which generates types from Json Schema.
 
+## V4.3.17 Updates
+
+Added netstandard2.1 packages for `Corvus.Json.ExtendedTypes` and `Corvus.Json.JsonReference` in order to support Unity builds.
+
+## V4.3.16 Updates
+
+### Use of IndexRange package is deprecated.
+
+As of V1.1 of IndexRange, it now type-forwards to the recently shipped `Microsoft.Bcl.Memory` library. We will be removing the dependency on IndexRange in the V4.4 release cycle (some time after .NET 10 ships), and replacing it directly with `Microsoft.Bcl.Memory`. You should make the changes in your own code base if you have a direct dependency on `IndexRange` with this releasee in order to prepare for that change.
+
 ## V4.3.10 Updates
 
 Added `<CorvusJsonSchemaUseImplicitOperatorString>true</CorvusJsonSchemaUseImplicitOperatorString>` to enable implicit conversion to `string`.

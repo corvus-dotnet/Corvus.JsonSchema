@@ -139,7 +139,7 @@ public static partial class JsonValueHelpers
             return true;
         }
 #else
-        return value.GetString().GetHashCode();
+        return value.GetString()?.GetHashCode() ?? 0;
 #endif
     }
 
