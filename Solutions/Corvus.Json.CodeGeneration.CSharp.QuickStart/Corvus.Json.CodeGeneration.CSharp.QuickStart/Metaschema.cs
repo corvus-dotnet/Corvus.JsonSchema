@@ -16,17 +16,13 @@ internal static class Metaschema
     /// <summary>
     /// Add the standard metaschema to the document resolver.
     /// </summary>
-    /// <param name="documentResolver">The document resovler to which to apply the metaschema.</param>
+    /// <param name="documentResolver">The document resolver to which to apply the metaschema.</param>
     /// <returns>A reference to the <see cref="IDocumentResolver"/> after the operation has completed.</returns>
     internal static IDocumentResolver AddMetaschema(this IDocumentResolver documentResolver)
     {
         var assembly = Assembly.GetAssembly(typeof(Metaschema));
 
         Debug.Assert(assembly is not null, "The assembly containing this type must exist");
-
-        documentResolver.AddDocument(
-            "http://json-schema.org/draft-04/schema",
-            JsonDocument.Parse(ReadResource(assembly, "metaschema.draft4.schema.json")));
 
         documentResolver.AddDocument(
             "http://json-schema.org/draft-06/schema",

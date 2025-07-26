@@ -58,6 +58,10 @@ public class FakeWebDocumentResolver : IDocumentResolver
     }
 
     /// <inheritdoc/>
+    public bool AddDocument(IMetaSchema metaSchema)
+        => this.AddDocument(metaSchema.Uri, metaSchema.Document);
+
+    /// <inheritdoc/>
     public void Reset()
     {
         this.CheckDisposed();

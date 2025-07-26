@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System;
 using System.Text.Json;
 
 namespace Corvus.Json;
@@ -30,6 +31,10 @@ public class PrepopulatedDocumentResolver : IDocumentResolver
         return true;
 #endif
     }
+
+    /// <inheritdoc/>
+    public bool AddDocument(IMetaSchema metaSchema)
+        => this.AddDocument(metaSchema.Uri, metaSchema.Document);
 
     /// <inheritdoc/>
     public ValueTask<JsonElement?> TryResolve(JsonReference reference)

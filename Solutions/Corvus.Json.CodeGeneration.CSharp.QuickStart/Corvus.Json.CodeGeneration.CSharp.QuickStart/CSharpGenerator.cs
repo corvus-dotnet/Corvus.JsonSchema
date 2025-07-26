@@ -110,9 +110,13 @@ public sealed class CSharpGenerator
 
     private static PrepopulatedDocumentResolver CreateMetaschemaDocumentResolver()
     {
-        var result = new PrepopulatedDocumentResolver();
-        result.AddMetaschema();
-        return result;
+        PrepopulatedDocumentResolver documentResolver = new();
+
+        // Add support for the meta schemas we are interested in.
+        documentResolver.AddDocument(JsonSchema.Draft4.MetaSchema.Instance);
+        documentResolver.AddMetaschema();
+
+        return documentResolver;
     }
 
     private static VocabularyRegistry RegisterVocabularies(IDocumentResolver documentResolver)
@@ -136,8 +140,6 @@ public sealed class CSharpGenerator
 
     private static CompoundDocumentResolver CompoundWithMetaschemaResolver(IDocumentResolver metaschemaDocumentResolver, IDocumentResolver additionalResolver)
     {
-        return new(
-            additionalResolver,
-            metaschemaDocumentResolver);
+        return new(additionalResolver, metaschemaDocumentResolver);
     }
 }

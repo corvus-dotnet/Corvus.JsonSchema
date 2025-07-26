@@ -35,6 +35,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Corvus.Json.CodeGeneration.202012\Corvus.Json.CodeGeneration.202012.csproj" />
     <ProjectReference Include="..\Corvus.Json.CodeGeneration\Corvus.Json.CodeGeneration.csproj" />
+    <ProjectReference Include="..\Corvus.Json.JsonSchema.OpenApi31\Corvus.Json.JsonSchema.OpenApi31.csproj" />
   </ItemGroup>
 
   <ItemGroup>
