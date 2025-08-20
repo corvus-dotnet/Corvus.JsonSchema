@@ -51,7 +51,12 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
 
         IncrementalValueProvider<GlobalOptions> globalOptions = initializationContext.AnalyzerConfigOptionsProvider.Select(GetGlobalOptions);
 
-        IncrementalValuesProvider<AdditionalText> jsonSourceFiles = initializationContext.AdditionalTextsProvider.Where(p => p.Path.EndsWith(".json"));
+        IncrementalValuesProvider<AdditionalText> jsonSourceFiles = initializationContext.AdditionalTextsProvider
+            .Where(p =>
+            {
+                string path = p.Path;
+                return path.EndsWith(".json") || path.EndsWith(".yaml") || path.EndsWith(".yml");
+            });
 
         IncrementalValueProvider<CompoundDocumentResolver> documentResolver = jsonSourceFiles.Collect().Select(BuildDocumentResolver);
 
@@ -304,6 +309,26 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
             {
                 try
                 {
+                    string extensions = Path.GetExtension(additionalText.Path);
+                    if (string.Equals(extensions, ".yaml", StringComparison.InvariantCultureIgnoreCase)
+                        || string.Equals(extensions, ".yml", StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        YamlDotNet.Serialization.IDeserializer deserializer =
+                            new YamlDotNet.Serialization.DeserializerBuilder()
+                            .WithAttemptingUnquotedStringTypeDeserialization()
+                            .Build();
+                        object? yamlObject = deserializer.Deserialize(json);
+
+                        using var writer = new StringWriter();
+                        YamlDotNet.Serialization.ISerializer serializer =
+                            new YamlDotNet.Serialization.SerializerBuilder()
+                            .JsonCompatible()
+                            .Build();
+
+                        serializer.Serialize(writer, yamlObject);
+                        j = writer.ToString();
+                    }
+
                     var doc = JsonDocument.Parse(j);
                     if (SchemaReferenceNormalization.TryNormalizeSchemaReference(additionalText.Path, string.Empty, out string? normalizedReference))
                     {
@@ -321,6 +346,10 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
                 catch (JsonException)
                 {
                     // We ignore bad JSON files.
+                }
+                catch (YamlDotNet.Core.YamlException)
+                {
+                    // We ignore bad YAML files.
                 }
             }
         }

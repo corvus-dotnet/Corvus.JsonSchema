@@ -1,0 +1,17 @@
+$schema: https://corvus-oss.org/json-schema/2020-12/schema
+$defs:
+  FlimFlamYaml:
+    type: object
+    properties:
+      theArray: { $ref: '#/%24defs/someArrayYaml' }
+  someArrayYaml:
+    type: array
+    prefixItems:
+      - $corvusTypeName: PositiveInt32
+        type: integer
+        format: int32
+        minimum: 0
+      - { "type": "string", "minLength": 0 }
+      - type: number
+        minimum: 3.5
+    unevaluatedItems: false
