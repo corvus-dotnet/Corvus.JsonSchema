@@ -41,11 +41,11 @@ public sealed class ObjectPartial : ICodeFileBuilder
                         new("global::System.Net.Http", addExplicitUsings),
                         new("global::System.Threading", addExplicitUsings),
                         new("global::System.Threading.Tasks", addExplicitUsings),
-                        new("gobal::System.Collections", EmitIfIsMapObject(typeDeclaration)),
-                        "gobal::System.Collections.Immutable",
-                        new("gobal::System.Diagnostics.CodeAnalysis", EmitIfIsMapObject(typeDeclaration)),
-                        "gobal::System.Text.Json",
-                        new("gobal::System.Text.RegularExpressions", EmitIfObjectHasPatternProperties(typeDeclaration)),
+                        new("global::System.Collections", EmitIfIsMapObject(typeDeclaration)),
+                        "global::System.Collections.Immutable",
+                        new("global::System.Diagnostics.CodeAnalysis", EmitIfIsMapObject(typeDeclaration)),
+                        "global::System.Text.Json",
+                        new("global::System.Text.RegularExpressions", EmitIfObjectHasPatternProperties(typeDeclaration)),
                         new("Corvus.Json", EmitIfNotCorvusJsonExtendedType(typeDeclaration)),
                         "Corvus.Json.Internal")
                     .AppendLine()

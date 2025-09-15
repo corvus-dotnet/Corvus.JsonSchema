@@ -41,10 +41,10 @@ public sealed class BooleanPartial : ICodeFileBuilder
                         new("global::System.Net.Http", addExplicitUsings),
                         new("global::System.Threading", addExplicitUsings),
                         new("global::System.Threading.Tasks", addExplicitUsings),
-                        new("gobal::System.Collections.Immutable", EmitIfIsObjectOrArray(typeDeclaration)),
-                        "gobal::System.Diagnostics.CodeAnalysis",
-                        "gobal::System.Text.Json",
-                        new("gobal::Corvus.Json", EmitIfNotCorvusJsonExtendedType(typeDeclaration)),
+                        new("global::System.Collections.Immutable", EmitIfIsObjectOrArray(typeDeclaration)),
+                        "global::System.Diagnostics.CodeAnalysis",
+                        "global::System.Text.Json",
+                        new("global::Corvus.Json", EmitIfNotCorvusJsonExtendedType(typeDeclaration)),
                         "Corvus.Json.Internal")
                     .AppendLine()
                     .BeginTypeDeclarationNesting(typeDeclaration)

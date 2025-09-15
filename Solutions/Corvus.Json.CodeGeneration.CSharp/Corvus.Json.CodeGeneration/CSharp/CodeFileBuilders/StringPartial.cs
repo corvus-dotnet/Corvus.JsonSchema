@@ -41,10 +41,10 @@ public sealed class StringPartial : ICodeFileBuilder
                         new("global::System.Net.Http", addExplicitUsings),
                         new("global::System.Threading", addExplicitUsings),
                         new("global::System.Threading.Tasks", addExplicitUsings),
-                        "gobal::System.Buffers",
-                        new("gobal::System.Collections.Immutable", EmitIfIsObjectOrArray(typeDeclaration)),
-                        "gobal::System.Diagnostics.CodeAnalysis",
-                        "gobal::System.Text.Json",
+                        "global::System.Buffers",
+                        new("global::System.Collections.Immutable", EmitIfIsObjectOrArray(typeDeclaration)),
+                        "global::System.Diagnostics.CodeAnalysis",
+                        "global::System.Text.Json",
                         new("Corvus.Json", EmitIfNotCorvusJsonExtendedType(typeDeclaration)),
                         "Corvus.Json.Internal")
                     .AppendLine()
