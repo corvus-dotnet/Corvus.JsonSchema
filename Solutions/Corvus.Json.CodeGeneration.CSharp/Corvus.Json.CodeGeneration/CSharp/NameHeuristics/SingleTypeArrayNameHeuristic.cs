@@ -65,7 +65,7 @@ public sealed class SingleTypeArrayNameHeuristic : INameHeuristicAfterSubschema
             nameWithoutArraySuffix.CopyTo(typeNameBuffer);
             int written = nameWithoutArraySuffix.Length;
             itemsNameSpan.CopyTo(typeNameBuffer[written..]);
-            written = itemsNameSpan.Length;
+            written += itemsNameSpan.Length;
             written += Formatting.ApplyArraySuffix(typeNameBuffer[written..]);
             return written;
         }
