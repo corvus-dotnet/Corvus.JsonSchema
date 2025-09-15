@@ -41,10 +41,10 @@ public sealed class NumberPartial : ICodeFileBuilder
                         new("global::System.Net.Http", addExplicitUsings),
                         new("global::System.Threading", addExplicitUsings),
                         new("global::System.Threading.Tasks", addExplicitUsings),
-                        new("System.Collections.Immutable", EmitIfIsObjectOrArray(typeDeclaration)),
-                        "System.Diagnostics.CodeAnalysis",
-                        new("System.Numerics", FrameworkType.Net80OrGreater),
-                        "System.Text.Json",
+                        new("global::System.Collections.Immutable", EmitIfIsObjectOrArray(typeDeclaration)),
+                        "global::System.Diagnostics.CodeAnalysis",
+                        new("global::System.Numerics", FrameworkType.Net80OrGreater),
+                        "global::System.Text.Json",
                         new("Corvus.Json", EmitIfNotCorvusJsonExtendedType(typeDeclaration)),
                         "Corvus.Json.Internal")
                     .AppendLine()

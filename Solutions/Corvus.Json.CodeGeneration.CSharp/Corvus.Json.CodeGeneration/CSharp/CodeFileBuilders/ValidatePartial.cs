@@ -40,9 +40,9 @@ public sealed class ValidatePartial : ICodeFileBuilder
                         new("global::System.Net.Http", addExplicitUsings),
                         new("global::System.Threading", addExplicitUsings),
                         new("global::System.Threading.Tasks", addExplicitUsings),
-                        "System.Runtime.CompilerServices",
-                        "System.Text.Json",
-                        RequiresRegularExpressions(typeDeclaration) ? "System.Text.RegularExpressions" : ConditionalCodeSpecification.DoNotEmit,
+                        "global::System.Runtime.CompilerServices",
+                        "global::System.Text.Json",
+                        RequiresRegularExpressions(typeDeclaration) ? "global::System.Text.RegularExpressions" : ConditionalCodeSpecification.DoNotEmit,
                         new("Corvus.Json", EmitIfNotCorvusJsonExtendedType(typeDeclaration)))
                     .AppendLine()
                     .BeginTypeDeclarationNesting(typeDeclaration)
