@@ -41,11 +41,11 @@ public sealed class ArrayPartial : ICodeFileBuilder
                         new("global::System.Net.Http", addExplicitUsings),
                         new("global::System.Threading", addExplicitUsings),
                         new("global::System.Threading.Tasks", addExplicitUsings),
-                        new("System.Buffers", FrameworkType.Net80OrGreater),
-                        "System.Collections",
-                        "System.Collections.Immutable",
-                        "System.Runtime.CompilerServices",
-                        "System.Text.Json",
+                        new("gobal::System.Buffers", FrameworkType.Net80OrGreater),
+                        "gobal::System.Collections",
+                        "gobal::System.Collections.Immutable",
+                        "gobal::System.Runtime.CompilerServices",
+                        "gobal::System.Text.Json",
                         new("Corvus.Json", EmitIfNotCorvusJsonExtendedType(typeDeclaration)),
                         "Corvus.Json.Internal")
                     .AppendLine()

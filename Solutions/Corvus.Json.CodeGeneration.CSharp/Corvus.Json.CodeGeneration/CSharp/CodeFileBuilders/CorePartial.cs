@@ -37,10 +37,10 @@ public sealed class CorePartial : ICodeFileBuilder
                     new("global::System.Net.Http", addExplicitUsings),
                     new("global::System.Threading", addExplicitUsings),
                     new("global::System.Threading.Tasks", addExplicitUsings),
-                    "System.Buffers",
-                    RequiresImmutableCollections(typeDeclaration) ? "System.Collections.Immutable" : ConditionalCodeSpecification.DoNotEmit,
-                    "System.Runtime.CompilerServices",
-                    "System.Text.Json",
+                    "gobal::System.Buffers",
+                    RequiresImmutableCollections(typeDeclaration) ? "gobal::System.Collections.Immutable" : ConditionalCodeSpecification.DoNotEmit,
+                    "gobal::System.Runtime.CompilerServices",
+                    "gobal::System.Text.Json",
                     new("Corvus.Json", EmitIfNotCorvusJsonExtendedType(typeDeclaration)),
                     "Corvus.Json.Internal")
                 .AppendLine()
