@@ -10,12 +10,12 @@
 #nullable enable
 
 #if NET8_0_OR_GREATER
-using System.Buffers;
+using global::System.Buffers;
 #endif
-using System.Collections;
-using System.Collections.Immutable;
-using System.Runtime.CompilerServices;
-using System.Text.Json;
+using global::System.Collections;
+using global::System.Collections.Immutable;
+using global::System.Runtime.CompilerServices;
+using global::System.Text.Json;
 using Corvus.Json;
 using Corvus.Json.Internal;
 

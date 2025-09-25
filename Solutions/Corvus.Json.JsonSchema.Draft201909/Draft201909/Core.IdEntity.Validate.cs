@@ -9,9 +9,9 @@
 
 #nullable enable
 
-using System.Runtime.CompilerServices;
-using System.Text.Json;
-using System.Text.RegularExpressions;
+using global::System.Runtime.CompilerServices;
+using global::System.Text.Json;
+using global::System.Text.RegularExpressions;
 using Corvus.Json;
 
 namespace Corvus.Json.JsonSchema.Draft201909;

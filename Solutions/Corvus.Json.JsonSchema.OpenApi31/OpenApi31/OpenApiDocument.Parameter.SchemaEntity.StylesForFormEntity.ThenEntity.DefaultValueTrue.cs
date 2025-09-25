@@ -9,9 +9,9 @@
 
 #nullable enable
 
-using System.Buffers;
-using System.Runtime.CompilerServices;
-using System.Text.Json;
+using global::System.Buffers;
+using global::System.Runtime.CompilerServices;
+using global::System.Text.Json;
 using Corvus.Json;
 using Corvus.Json.Internal;
 

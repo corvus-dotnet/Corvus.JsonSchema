@@ -9,10 +9,10 @@
 
 #nullable enable
 
-using System.Buffers;
-using System.Collections.Immutable;
-using System.Runtime.CompilerServices;
-using System.Text.Json;
+using global::System.Buffers;
+using global::System.Collections.Immutable;
+using global::System.Runtime.CompilerServices;
+using global::System.Text.Json;
 using Corvus.Json;
 using Corvus.Json.Internal;
 
@@ -31,8 +31,8 @@ public readonly partial struct OpenApiDocument
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
-    [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<OpenApiDocumentParamArray>))]
-    public readonly partial struct OpenApiDocumentParamArray
+    [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<OpenApiDocumentParametersParameterOrReferenceArray>))]
+    public readonly partial struct OpenApiDocumentParametersParameterOrReferenceArray
 
     {
         private readonly Backing backing;
@@ -40,9 +40,9 @@ public readonly partial struct OpenApiDocument
         private readonly ImmutableList<JsonAny> arrayBacking;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="OpenApiDocumentParamArray"/> struct.
+        /// Initializes a new instance of the <see cref="OpenApiDocumentParametersParameterOrReferenceArray"/> struct.
         /// </summary>
-        public OpenApiDocumentParamArray()
+        public OpenApiDocumentParametersParameterOrReferenceArray()
         {
             this.jsonElementBacking = default;
             this.backing = Backing.JsonElement;
@@ -50,10 +50,10 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="OpenApiDocumentParamArray"/> struct.
+        /// Initializes a new instance of the <see cref="OpenApiDocumentParametersParameterOrReferenceArray"/> struct.
         /// </summary>
         /// <param name="value">The value from which to construct the instance.</param>
-        public OpenApiDocumentParamArray(in JsonElement value)
+        public OpenApiDocumentParametersParameterOrReferenceArray(in JsonElement value)
         {
             this.jsonElementBacking = value;
             this.backing = Backing.JsonElement;
@@ -61,10 +61,10 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="OpenApiDocumentParamArray"/> struct.
+        /// Initializes a new instance of the <see cref="OpenApiDocumentParametersParameterOrReferenceArray"/> struct.
         /// </summary>
         /// <param name="value">The value from which to construct the instance.</param>
-        public OpenApiDocumentParamArray(ImmutableList<JsonAny> value)
+        public OpenApiDocumentParametersParameterOrReferenceArray(ImmutableList<JsonAny> value)
         {
             this.backing = Backing.Array;
             this.jsonElementBacking = default;
@@ -79,17 +79,17 @@ public readonly partial struct OpenApiDocument
         /// <summary>
         /// Gets a Null instance.
         /// </summary>
-        public static OpenApiDocumentParamArray Null { get; } = new(JsonValueHelpers.NullElement);
+        public static OpenApiDocumentParametersParameterOrReferenceArray Null { get; } = new(JsonValueHelpers.NullElement);
 
         /// <summary>
         /// Gets an Undefined instance.
         /// </summary>
-        public static OpenApiDocumentParamArray Undefined { get; }
+        public static OpenApiDocumentParametersParameterOrReferenceArray Undefined { get; }
 
         /// <summary>
         /// Gets the default instance.
         /// </summary>
-        public static OpenApiDocumentParamArray DefaultInstance { get; }
+        public static OpenApiDocumentParametersParameterOrReferenceArray DefaultInstance { get; }
 
         /// <inheritdoc/>
         public JsonAny AsAny
@@ -255,16 +255,16 @@ public readonly partial struct OpenApiDocument
         /// Conversion from JsonAny.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
-        public static implicit operator OpenApiDocumentParamArray(JsonAny value)
+        public static implicit operator OpenApiDocumentParametersParameterOrReferenceArray(JsonAny value)
         {
-            return value.As<OpenApiDocumentParamArray>();
+            return value.As<OpenApiDocumentParametersParameterOrReferenceArray>();
         }
 
         /// <summary>
         /// Conversion to JsonAny.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
-        public static implicit operator JsonAny(OpenApiDocumentParamArray value)
+        public static implicit operator JsonAny(OpenApiDocumentParametersParameterOrReferenceArray value)
         {
             return value.AsAny;
         }
@@ -277,7 +277,7 @@ public readonly partial struct OpenApiDocument
         /// <returns>
         /// <c>True</c> if the values are equal.
         /// </returns>
-        public static bool operator ==(in OpenApiDocumentParamArray left, in OpenApiDocumentParamArray right)
+        public static bool operator ==(in OpenApiDocumentParametersParameterOrReferenceArray left, in OpenApiDocumentParametersParameterOrReferenceArray right)
         {
             return left.Equals(right);
         }
@@ -290,7 +290,7 @@ public readonly partial struct OpenApiDocument
         /// <returns>
         /// <c>True</c> if the values are not equal.
         /// </returns>
-        public static bool operator !=(in OpenApiDocumentParamArray left, in OpenApiDocumentParamArray right)
+        public static bool operator !=(in OpenApiDocumentParametersParameterOrReferenceArray left, in OpenApiDocumentParametersParameterOrReferenceArray right)
         {
             return !left.Equals(right);
         }
@@ -304,7 +304,7 @@ public readonly partial struct OpenApiDocument
         /// value cannot be constructed from the given instance (e.g. because they have an incompatible .NET backing type).
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static OpenApiDocumentParamArray FromJson(in JsonElement value)
+        public static OpenApiDocumentParametersParameterOrReferenceArray FromJson(in JsonElement value)
         {
             return new(value);
         }
@@ -315,7 +315,7 @@ public readonly partial struct OpenApiDocument
         /// <param name="value">The <see cref="JsonAny"/> value from which to instantiate the instance.</param>
         /// <returns>An instance of this type, initialized from the <see cref="JsonAny"/> value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static OpenApiDocumentParamArray FromAny(in JsonAny value)
+        public static OpenApiDocumentParametersParameterOrReferenceArray FromAny(in JsonAny value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -338,7 +338,7 @@ public readonly partial struct OpenApiDocument
         /// <param name="value">The value from which to instantiate the instance.</param>
         /// <returns>An instance of this type, initialized from the provided value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static OpenApiDocumentParamArray IJsonValue<OpenApiDocumentParamArray>.FromBoolean<TValue>(in TValue value)
+        static OpenApiDocumentParametersParameterOrReferenceArray IJsonValue<OpenApiDocumentParametersParameterOrReferenceArray>.FromBoolean<TValue>(in TValue value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -357,7 +357,7 @@ public readonly partial struct OpenApiDocument
         /// <param name="value">The value from which to instantiate the instance.</param>
         /// <returns>An instance of this type, initialized from the provided value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static OpenApiDocumentParamArray IJsonValue<OpenApiDocumentParamArray>.FromString<TValue>(in TValue value)
+        static OpenApiDocumentParametersParameterOrReferenceArray IJsonValue<OpenApiDocumentParametersParameterOrReferenceArray>.FromString<TValue>(in TValue value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -376,7 +376,7 @@ public readonly partial struct OpenApiDocument
         /// <param name="value">The value from which to instantiate the instance.</param>
         /// <returns>An instance of this type, initialized from the provided value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static OpenApiDocumentParamArray IJsonValue<OpenApiDocumentParamArray>.FromNumber<TValue>(in TValue value)
+        static OpenApiDocumentParametersParameterOrReferenceArray IJsonValue<OpenApiDocumentParametersParameterOrReferenceArray>.FromNumber<TValue>(in TValue value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -395,7 +395,7 @@ public readonly partial struct OpenApiDocument
         /// <param name="value">The value from which to instantiate the instance.</param>
         /// <returns>An instance of this type, initialized from the provided value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static OpenApiDocumentParamArray IJsonValue<OpenApiDocumentParamArray>.FromObject<TValue>(in TValue value)
+        static OpenApiDocumentParametersParameterOrReferenceArray IJsonValue<OpenApiDocumentParametersParameterOrReferenceArray>.FromObject<TValue>(in TValue value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -413,7 +413,7 @@ public readonly partial struct OpenApiDocument
         /// <param name="value">The value from which to instantiate the instance.</param>
         /// <returns>An instance of this type, initialized from the provided value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static OpenApiDocumentParamArray FromArray<TValue>(in TValue value)
+        public static OpenApiDocumentParametersParameterOrReferenceArray FromArray<TValue>(in TValue value)
             where TValue : struct, IJsonArray<TValue>
         {
             if (value.HasJsonElementBacking)
@@ -430,109 +430,109 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Parses the OpenApiDocumentParamArray.
+        /// Parses the OpenApiDocumentParametersParameterOrReferenceArray.
         /// </summary>
         /// <param name="source">The source of the JSON string to parse.</param>
         /// <param name="options">The (optional) JsonDocumentOptions.</param>
-        public static OpenApiDocumentParamArray Parse(string source, JsonDocumentOptions options = default)
+        public static OpenApiDocumentParametersParameterOrReferenceArray Parse(string source, JsonDocumentOptions options = default)
         {
             using var jsonDocument = JsonDocument.Parse(source, options);
             return new(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses the OpenApiDocumentParamArray.
+        /// Parses the OpenApiDocumentParametersParameterOrReferenceArray.
         /// </summary>
         /// <param name="source">The source of the JSON string to parse.</param>
         /// <param name="options">The (optional) JsonDocumentOptions.</param>
-        public static OpenApiDocumentParamArray Parse(Stream source, JsonDocumentOptions options = default)
+        public static OpenApiDocumentParametersParameterOrReferenceArray Parse(Stream source, JsonDocumentOptions options = default)
         {
             using var jsonDocument = JsonDocument.Parse(source, options);
             return new(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses the OpenApiDocumentParamArray.
+        /// Parses the OpenApiDocumentParametersParameterOrReferenceArray.
         /// </summary>
         /// <param name="source">The source of the JSON string to parse.</param>
         /// <param name="options">The (optional) JsonDocumentOptions.</param>
-        public static OpenApiDocumentParamArray Parse(ReadOnlyMemory<byte> source, JsonDocumentOptions options = default)
+        public static OpenApiDocumentParametersParameterOrReferenceArray Parse(ReadOnlyMemory<byte> source, JsonDocumentOptions options = default)
         {
             using var jsonDocument = JsonDocument.Parse(source, options);
             return new(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses the OpenApiDocumentParamArray.
+        /// Parses the OpenApiDocumentParametersParameterOrReferenceArray.
         /// </summary>
         /// <param name="source">The source of the JSON string to parse.</param>
         /// <param name="options">The (optional) JsonDocumentOptions.</param>
-        public static OpenApiDocumentParamArray Parse(ReadOnlyMemory<char> source, JsonDocumentOptions options = default)
+        public static OpenApiDocumentParametersParameterOrReferenceArray Parse(ReadOnlyMemory<char> source, JsonDocumentOptions options = default)
         {
             using var jsonDocument = JsonDocument.Parse(source, options);
             return new(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses the OpenApiDocumentParamArray.
+        /// Parses the OpenApiDocumentParametersParameterOrReferenceArray.
         /// </summary>
         /// <param name="source">The source of the JSON string to parse.</param>
         /// <param name="options">The (optional) JsonDocumentOptions.</param>
-        public static OpenApiDocumentParamArray Parse(ReadOnlySequence<byte> source, JsonDocumentOptions options = default)
+        public static OpenApiDocumentParametersParameterOrReferenceArray Parse(ReadOnlySequence<byte> source, JsonDocumentOptions options = default)
         {
             using var jsonDocument = JsonDocument.Parse(source, options);
             return new(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses the OpenApiDocumentParamArray.
+        /// Parses the OpenApiDocumentParametersParameterOrReferenceArray.
         /// </summary>
         /// <param name="source">The source of the JSON string to parse.</param>
-        public static OpenApiDocumentParamArray ParseValue(string source)
+        public static OpenApiDocumentParametersParameterOrReferenceArray ParseValue(string source)
         {
 #if NET8_0_OR_GREATER
-            return IJsonValue<OpenApiDocumentParamArray>.ParseValue(source);
+            return IJsonValue<OpenApiDocumentParametersParameterOrReferenceArray>.ParseValue(source);
 #else
-            return JsonValueHelpers.ParseValue<OpenApiDocumentParamArray>(source.AsSpan());
+            return JsonValueHelpers.ParseValue<OpenApiDocumentParametersParameterOrReferenceArray>(source.AsSpan());
 #endif
         }
 
         /// <summary>
-        /// Parses the OpenApiDocumentParamArray.
+        /// Parses the OpenApiDocumentParametersParameterOrReferenceArray.
         /// </summary>
         /// <param name="source">The source of the JSON string to parse.</param>
-        public static OpenApiDocumentParamArray ParseValue(ReadOnlySpan<char> source)
+        public static OpenApiDocumentParametersParameterOrReferenceArray ParseValue(ReadOnlySpan<char> source)
         {
 #if NET8_0_OR_GREATER
-            return IJsonValue<OpenApiDocumentParamArray>.ParseValue(source);
+            return IJsonValue<OpenApiDocumentParametersParameterOrReferenceArray>.ParseValue(source);
 #else
-            return JsonValueHelpers.ParseValue<OpenApiDocumentParamArray>(source);
+            return JsonValueHelpers.ParseValue<OpenApiDocumentParametersParameterOrReferenceArray>(source);
 #endif
         }
 
         /// <summary>
-        /// Parses the OpenApiDocumentParamArray.
+        /// Parses the OpenApiDocumentParametersParameterOrReferenceArray.
         /// </summary>
         /// <param name="source">The source of the JSON string to parse.</param>
-        public static OpenApiDocumentParamArray ParseValue(ReadOnlySpan<byte> source)
+        public static OpenApiDocumentParametersParameterOrReferenceArray ParseValue(ReadOnlySpan<byte> source)
         {
 #if NET8_0_OR_GREATER
-            return IJsonValue<OpenApiDocumentParamArray>.ParseValue(source);
+            return IJsonValue<OpenApiDocumentParametersParameterOrReferenceArray>.ParseValue(source);
 #else
-            return JsonValueHelpers.ParseValue<OpenApiDocumentParamArray>(source);
+            return JsonValueHelpers.ParseValue<OpenApiDocumentParametersParameterOrReferenceArray>(source);
 #endif
         }
 
         /// <summary>
-        /// Parses the OpenApiDocumentParamArray.
+        /// Parses the OpenApiDocumentParametersParameterOrReferenceArray.
         /// </summary>
         /// <param name="source">The source of the JSON string to parse.</param>
-        public static OpenApiDocumentParamArray ParseValue(ref Utf8JsonReader source)
+        public static OpenApiDocumentParametersParameterOrReferenceArray ParseValue(ref Utf8JsonReader source)
         {
 #if NET8_0_OR_GREATER
-            return IJsonValue<OpenApiDocumentParamArray>.ParseValue(ref source);
+            return IJsonValue<OpenApiDocumentParametersParameterOrReferenceArray>.ParseValue(ref source);
 #else
-            return JsonValueHelpers.ParseValue<OpenApiDocumentParamArray>(ref source);
+            return JsonValueHelpers.ParseValue<OpenApiDocumentParametersParameterOrReferenceArray>(ref source);
 #endif
         }
 
@@ -563,7 +563,7 @@ public readonly partial struct OpenApiDocument
 
             return TTarget.Undefined;
 #else
-            return this.As<OpenApiDocumentParamArray, TTarget>();
+            return this.As<OpenApiDocumentParametersParameterOrReferenceArray, TTarget>();
 #endif
         }
 
@@ -571,7 +571,7 @@ public readonly partial struct OpenApiDocument
         public override bool Equals(object? obj)
         {
             return
-                (obj is IJsonValue jv && this.Equals(jv.As<OpenApiDocumentParamArray>())) ||
+                (obj is IJsonValue jv && this.Equals(jv.As<OpenApiDocumentParametersParameterOrReferenceArray>())) ||
                 (obj is null && this.IsNull());
         }
 
@@ -579,7 +579,7 @@ public readonly partial struct OpenApiDocument
         public bool Equals<T>(in T other)
             where T : struct, IJsonValue<T>
         {
-            return this.Equals(other.As<OpenApiDocumentParamArray>());
+            return this.Equals(other.As<OpenApiDocumentParametersParameterOrReferenceArray>());
         }
 
         /// <summary>
@@ -587,7 +587,7 @@ public readonly partial struct OpenApiDocument
         /// </summary>
         /// <param name="other">The other item with which to compare.</param>
         /// <returns><see langword="true"/> if the values were equal.</returns>
-        public bool Equals(in OpenApiDocumentParamArray other)
+        public bool Equals(in OpenApiDocumentParametersParameterOrReferenceArray other)
         {
             JsonValueKind thisKind = this.ValueKind;
             JsonValueKind otherKind = other.ValueKind;

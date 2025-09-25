@@ -16,8 +16,8 @@ using global::System.Linq;
 using global::System.Net.Http;
 using global::System.Threading;
 using global::System.Threading.Tasks;
-using System.Collections.Immutable;
-using System.Text.Json;
+using global::System.Collections.Immutable;
+using global::System.Text.Json;
 using Corvus.Json;
 using Corvus.Json.Internal;
 

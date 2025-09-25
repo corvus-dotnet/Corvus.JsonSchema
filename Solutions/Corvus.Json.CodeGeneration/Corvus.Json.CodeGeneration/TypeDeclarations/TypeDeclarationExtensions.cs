@@ -13,6 +13,8 @@ namespace Corvus.Json.CodeGeneration;
 /// </summary>
 public static class TypeDeclarationExtensions
 {
+    private const string DynamicSourceKey = "DynamicSource";
+
     private delegate bool ArrayItemKeywordAccessor<T>(T keyword, TypeDeclaration typeDeclaration, out ArrayItemsTypeDeclaration? value)
         where T : IArrayItemsTypeProviderKeyword;
 
@@ -44,7 +46,7 @@ public static class TypeDeclarationExtensions
     /// Gets the explicit content media type for the type declaration.
     /// </summary>
     /// <param name="that">The type declaration.</param>
-    /// <returns>The content media type, or <see langword="null"/> if the type is not set.</returns>
+    /// <returns>The content media type, or <see langword="null"/> if the type is not set.</returns>https://github.com/corvus-dotnet/Corvus.JsonSchema
     public static string? ExplicitContentMediaType(this TypeDeclaration that)
     {
         if (!that.TryGetMetadata(nameof(ExplicitContentMediaType), out string? result))
@@ -288,7 +290,17 @@ public static class TypeDeclarationExtensions
                     {
                         JsonReference updatedPathModifier = currentPathModifier.AppendUnencodedPropertyNameToFragment(refKeyword.Keyword);
                         ReducedTypeDeclaration declaration = referencedTypeDeclaration.ReducedTypeDeclaration();
+
+                        if (declaration.ReducedType.LocatedSchema.LocatedAnchors.Any() && !declaration.ReducedType.TryGetDynamicSource(out _))
+                        {
+                            if (!baseType.LocatedSchema.Location.HasFragment || baseType.IsInDefinitionsContainer())
+                            {
+                                declaration.ReducedType.SetMetadata(DynamicSourceKey, baseType);
+                            }
+                        }
+
                         updatedPathModifier = updatedPathModifier.AppendFragment(declaration.ReducedPathModifier);
+
                         return new(declaration.ReducedType, updatedPathModifier);
                     }
                 }
@@ -299,6 +311,22 @@ public static class TypeDeclarationExtensions
 
             return new(baseType, currentPathModifier);
         }
+    }
+
+    /// <summary>
+    /// Try to get the dynamic source for a type declaration.
+    /// </summary>
+    /// <param name="that">The type declaration for which to get the dynamic source.</param>
+    /// <param name="source">The dynamic source, or null if this is not a dynamic type.</param>
+    /// <returns><see langword="true"/> if this type has a dynamic source.</returns>
+    /// <remarks>
+    /// When a type declaration is an instance of a dynamic-resolved type (e.g. via $dynamicRef),
+    /// then we wish to know the root un-reduced type declaration from on which to base our local
+    /// name for that type.
+    /// </remarks>
+    public static bool TryGetDynamicSource(this TypeDeclaration that, [NotNullWhen(true)] out TypeDeclaration? source)
+    {
+        return that.TryGetMetadata(DynamicSourceKey, out source);
     }
 
     /// <summary>

@@ -21,7 +21,7 @@ public static  class StandardUuid
     {
         if (Guid.TryParse(text, out Guid guid))
 #else
-    public static bool GuidParser(string text, in object? state, out Guid value)
+    public static bool GuidParser(string? text, in object? state, out Guid value)
     {
         if (Guid.TryParse(text, out Guid guid))
 #endif

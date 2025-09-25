@@ -227,34 +227,20 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
             return;
         }
 
-        string ns = this.options.GetNamespace(typeDeclaration);
-
-        JsonReferenceBuilder reference = GetReferenceWithoutQuery(typeDeclaration);
-
-        if (this.options.TryGetTypeName(reference.ToString(), out NamedType typeName))
+        TypeDeclaration? dynamic = null;
+        if (typeDeclaration.TryGetDynamicSource(out dynamic) && TrySetNameFromOptions(this.options, dynamic, typeDeclaration))
         {
-            typeDeclaration.SetDotnetTypeName(typeName.DotnetTypeName);
+            return;
+        }
 
-            if (typeName.DotnetNamespace is string nsOverride)
-            {
-                typeDeclaration.SetDotnetNamespace(nsOverride);
-                typeDeclaration.SetParent(null);
-            }
-            else
-            {
-                typeDeclaration.SetDotnetNamespace(ns);
-            }
-
-            // Set the accessibility, if it has been explicitly overridden
-            if (typeName.Accessibility is GeneratedTypeAccessibility accessibility)
-            {
-                typeDeclaration.SetDotnetAccessibility(accessibility);
-            }
-
+        if (TrySetNameFromOptions(this.options, typeDeclaration, typeDeclaration))
+        {
             return;
         }
 
         Span<char> typeNameBuffer = stackalloc char[Formatting.MaxIdentifierLength];
+        string ns = this.options.GetNamespace(typeDeclaration, dynamic);
+        JsonReferenceBuilder reference = GetReferenceWithoutQuery(dynamic ?? typeDeclaration);
 
         this.SetTypeNameWithKeywordHeuristics(
              typeDeclaration,
@@ -264,6 +250,37 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
              fallbackName,
              this.GetOrderedNameBeforeSubschemaHeuristics(),
              cancellationToken);
+
+        static bool TrySetNameFromOptions(Options options, TypeDeclaration sourceType, TypeDeclaration targetType)
+        {
+            string ns = options.GetNamespace(sourceType);
+            JsonReferenceBuilder reference = GetReferenceWithoutQuery(sourceType);
+
+            if (options.TryGetTypeName(reference.ToString(), out NamedType typeName))
+            {
+                targetType.SetDotnetTypeName(typeName.DotnetTypeName);
+
+                if (typeName.DotnetNamespace is string nsOverride)
+                {
+                    targetType.SetDotnetNamespace(nsOverride);
+                    targetType.SetParent(null);
+                }
+                else
+                {
+                    targetType.SetDotnetNamespace(ns);
+                }
+
+                // Set the accessibility, if it has been explicitly overridden
+                if (typeName.Accessibility is GeneratedTypeAccessibility accessibility)
+                {
+                    targetType.SetDotnetAccessibility(accessibility);
+                }
+
+                return true;
+            }
+
+            return false;
+        }
     }
 
     /// <inheritdoc/>
@@ -718,10 +735,16 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
         /// Gets the namespace for the base URI.
         /// </summary>
         /// <param name="typeDeclaration">The type declaration for which to get the namespace.</param>
+        /// <param name="dynamic">The dynamic source of the type declaration if available.</param>
         /// <returns>The namespace.</returns>
-        internal string GetNamespace(TypeDeclaration typeDeclaration)
+        internal string GetNamespace(TypeDeclaration typeDeclaration, TypeDeclaration? dynamic = null)
         {
-            if (!this.TryGetNamespace(typeDeclaration.LocatedSchema.Location, out string? ns))
+            if (dynamic is TypeDeclaration d && this.TryGetNamespace(d.LocatedSchema.Location, out string? ns))
+            {
+                return ns;
+            }
+
+            if (!this.TryGetNamespace(typeDeclaration.LocatedSchema.Location, out ns))
             {
                 ns = this.DefaultNamespace;
             }
