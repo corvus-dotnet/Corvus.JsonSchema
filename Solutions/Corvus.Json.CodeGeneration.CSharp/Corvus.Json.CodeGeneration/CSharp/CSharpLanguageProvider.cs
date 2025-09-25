@@ -227,7 +227,8 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
             return;
         }
 
-        if (typeDeclaration.TryGetDynamicSource(out TypeDeclaration? dynamic) && TrySetNameFromOptions(this.options, dynamic, typeDeclaration))
+        TypeDeclaration? dynamic = null;
+        if (typeDeclaration.CanReduce() && typeDeclaration.TryGetDynamicSource(out dynamic) && TrySetNameFromOptions(this.options, dynamic, typeDeclaration))
         {
             return;
         }
