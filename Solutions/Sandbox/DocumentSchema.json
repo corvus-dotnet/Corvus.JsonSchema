@@ -1,10 +1,43 @@
 {
-    "$schema": "https://json-schema.org/draft/2019-09/schema",
-    "title": "Document",
-    "type": "object",
-    "properties": {
-        "size": {
-            "type": [ "integer", "string" ]
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$defs": {
+        "compound": {
+            "type": "object",
+            "properties": {
+                "a": { "$ref": "#/$defs/numberOrString" },
+                "b": { "$ref": "#/$defs/arrayOrString" }
+            },
+            "required": [ "a", "b" ]
+        },
+        "numberOrString": {
+            "$ref": "thingOrString",
+            "$defs": {
+                "myThing": {
+                    "$dynamicAnchor": "thing",
+                    "type": "number"
+                }
+            }
+        },
+        "arrayOrString": {
+            "$ref": "thingOrString",
+            "$defs": {
+                "myThing": {
+                    "$dynamicAnchor": "thing",
+                    "type": "array"
+                }
+            }
+        },
+        "thingOrString": {
+            "$id": "thingOrString",
+            "oneOf": [
+                { "$dynamicRef": "#thing" },
+                { "type": "string" }
+            ],
+            "$defs": {
+                "defaultThing": {
+                    "$dynamicAnchor": "thing"
+                }
+            }
         }
     }
 }
