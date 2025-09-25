@@ -9,9 +9,9 @@
 
 #nullable enable
 
-using System.Buffers;
-using System.Diagnostics.CodeAnalysis;
-using System.Text.Json;
+using global::System.Buffers;
+using global::System.Diagnostics.CodeAnalysis;
+using global::System.Text.Json;
 using Corvus.Json.Internal;
 
 namespace Corvus.Json;
@@ -509,7 +509,7 @@ public readonly partial struct JsonIpV4
 #else
         if (this.jsonElementBacking.ValueKind == JsonValueKind.String)
         {
-            return StandardIPAddress.IPAddressParser(this.jsonElementBacking.GetString()!, null, out result);
+            return StandardIPAddress.IPAddressParser(this.jsonElementBacking.GetString(), null, out result);
         }
 #endif
 

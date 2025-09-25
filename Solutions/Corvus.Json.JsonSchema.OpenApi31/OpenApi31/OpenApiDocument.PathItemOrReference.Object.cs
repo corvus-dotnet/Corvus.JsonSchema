@@ -9,8 +9,8 @@
 
 #nullable enable
 
-using System.Collections.Immutable;
-using System.Text.Json;
+using global::System.Collections.Immutable;
+using global::System.Text.Json;
 using Corvus.Json;
 using Corvus.Json.Internal;
 
@@ -306,7 +306,7 @@ public readonly partial struct OpenApiDocument
         /// <summary>
         /// Gets the (optional) <c>parameters</c> property.
         /// </summary>
-        public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OpenApiDocumentParamArray Parameters
+        public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OpenApiDocumentParametersParameterOrReferenceArray Parameters
         {
             get
             {
@@ -327,7 +327,7 @@ public readonly partial struct OpenApiDocument
                 {
                     if (this.objectBacking.TryGetValue(JsonPropertyNames.Parameters, out JsonAny result))
                     {
-                        return result.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OpenApiDocumentParamArray>();
+                        return result.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OpenApiDocumentParametersParameterOrReferenceArray>();
                     }
                 }
 
@@ -559,7 +559,7 @@ public readonly partial struct OpenApiDocument
             in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Operation? get = null,
             in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Operation? head = null,
             in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Operation? options = null,
-            in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OpenApiDocumentParamArray? parameters = null,
+            in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OpenApiDocumentParametersParameterOrReferenceArray? parameters = null,
             in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Operation? patch = null,
             in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Operation? post = null,
             in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Operation? put = null,
@@ -810,7 +810,7 @@ public readonly partial struct OpenApiDocument
         /// </summary>
         /// <param name="value">The new property value</param>
         /// <returns>The instance with the property set.</returns>
-        public PathItemOrReference WithParameters(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OpenApiDocumentParamArray value)
+        public PathItemOrReference WithParameters(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OpenApiDocumentParametersParameterOrReferenceArray value)
         {
             return this.SetProperty(JsonPropertyNames.Parameters, value);
         }

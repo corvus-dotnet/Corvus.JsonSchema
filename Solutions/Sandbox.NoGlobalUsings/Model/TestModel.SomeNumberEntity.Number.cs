@@ -16,12 +16,12 @@ using global::System.Linq;
 using global::System.Net.Http;
 using global::System.Threading;
 using global::System.Threading.Tasks;
-using System.Diagnostics.CodeAnalysis;
+using global::System.Diagnostics.CodeAnalysis;
 
 #if NET8_0_OR_GREATER
-using System.Numerics;
+using global::System.Numerics;
 #endif
-using System.Text.Json;
+using global::System.Text.Json;
 using Corvus.Json;
 using Corvus.Json.Internal;
 

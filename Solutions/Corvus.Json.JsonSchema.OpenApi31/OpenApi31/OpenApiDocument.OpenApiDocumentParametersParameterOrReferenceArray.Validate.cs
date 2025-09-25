@@ -9,8 +9,8 @@
 
 #nullable enable
 
-using System.Runtime.CompilerServices;
-using System.Text.Json;
+using global::System.Runtime.CompilerServices;
+using global::System.Text.Json;
 using Corvus.Json;
 
 namespace Corvus.Json.JsonSchema.OpenApi31;
@@ -28,7 +28,7 @@ public readonly partial struct OpenApiDocument
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
-    public readonly partial struct OpenApiDocumentParamArray
+    public readonly partial struct OpenApiDocumentParametersParameterOrReferenceArray
     {
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
@@ -104,7 +104,7 @@ public readonly partial struct OpenApiDocument
             /// <returns>The resulting validation context after validation.</returns>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             internal static ValidationContext ArrayValidationHandler(
-                in OpenApiDocumentParamArray value,
+                in OpenApiDocumentParametersParameterOrReferenceArray value,
                 JsonValueKind valueKind,
                 in ValidationContext validationContext,
                 ValidationLevel level)

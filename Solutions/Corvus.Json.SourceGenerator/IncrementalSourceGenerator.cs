@@ -28,7 +28,7 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
         new(
             id: "CRV1001",
             title: "JSON Schema Type Generator Error",
-            messageFormat: "Error generating C# code: {{0}}",
+            messageFormat: "Error generating C# code: {0}",
             category: "JsonSchemaCodeGenerator",
             DiagnosticSeverity.Error,
             isEnabledByDefault: true);
@@ -37,7 +37,7 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
         new(
             id: "CRV1000",
             title: "JSON Schema Type Generator Error",
-            messageFormat: "Error adding type declarations for path '{{0}}': {{1}}",
+            messageFormat: "Error adding type declarations for path '{0}': {1}",
             category: "JsonSchemaCodeGenerator",
             DiagnosticSeverity.Error,
             isEnabledByDefault: true);
@@ -284,6 +284,14 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
                     if (SchemaReferenceNormalization.TryNormalizeSchemaReference(additionalText.Path, string.Empty, out string? normalizedReference))
                     {
                         newResolver.AddDocument(normalizedReference, doc);
+                    }
+
+                    // Add the document by its $id if it has one.
+                    if (doc.RootElement.TryGetProperty("$id", out JsonElement idElement) &&
+                        idElement.ValueKind == JsonValueKind.String)
+                    {
+                        string id = idElement.GetString()!;
+                        newResolver.AddDocument(id, doc);
                     }
                 }
                 catch (JsonException)

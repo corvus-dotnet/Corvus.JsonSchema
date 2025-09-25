@@ -9,9 +9,9 @@
 
 #nullable enable
 
-using System.Diagnostics.CodeAnalysis;
-using System.Text.Json;
-using Corvus.Json;
+using global::System.Diagnostics.CodeAnalysis;
+using global::System.Text.Json;
+using global::Corvus.Json;
 using Corvus.Json.Internal;
 
 namespace Corvus.Json.JsonSchema.OpenApi31;

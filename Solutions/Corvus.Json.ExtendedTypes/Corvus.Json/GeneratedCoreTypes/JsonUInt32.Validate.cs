@@ -9,8 +9,8 @@
 
 #nullable enable
 
-using System.Runtime.CompilerServices;
-using System.Text.Json;
+using global::System.Runtime.CompilerServices;
+using global::System.Text.Json;
 
 namespace Corvus.Json;
 /// <summary>

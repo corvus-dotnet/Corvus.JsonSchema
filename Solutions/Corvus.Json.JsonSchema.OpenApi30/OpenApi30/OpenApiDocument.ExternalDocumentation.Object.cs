@@ -9,9 +9,9 @@
 
 #nullable enable
 
-using System.Collections.Immutable;
-using System.Text.Json;
-using System.Text.RegularExpressions;
+using global::System.Collections.Immutable;
+using global::System.Text.Json;
+using global::System.Text.RegularExpressions;
 using Corvus.Json;
 using Corvus.Json.Internal;
 

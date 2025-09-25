@@ -9,10 +9,10 @@
 
 #nullable enable
 
-using System.Collections;
-using System.Collections.Immutable;
-using System.Diagnostics.CodeAnalysis;
-using System.Text.Json;
+using global::System.Collections;
+using global::System.Collections.Immutable;
+using global::System.Diagnostics.CodeAnalysis;
+using global::System.Text.Json;
 using Corvus.Json;
 using Corvus.Json.Internal;
 

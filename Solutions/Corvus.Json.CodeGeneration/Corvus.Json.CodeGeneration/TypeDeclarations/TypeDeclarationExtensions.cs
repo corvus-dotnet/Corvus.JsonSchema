@@ -293,7 +293,10 @@ public static class TypeDeclarationExtensions
 
                         if (declaration.ReducedType.LocatedSchema.LocatedAnchors.Any() && !declaration.ReducedType.TryGetDynamicSource(out _))
                         {
-                            declaration.ReducedType.SetMetadata(DynamicSourceKey, baseType);
+                            if (!baseType.LocatedSchema.Location.HasFragment || baseType.IsInDefinitionsContainer())
+                            {
+                                declaration.ReducedType.SetMetadata(DynamicSourceKey, baseType);
+                            }
                         }
 
                         updatedPathModifier = updatedPathModifier.AppendFragment(declaration.ReducedPathModifier);

@@ -9,8 +9,8 @@
 
 #nullable enable
 
-using System.Collections.Immutable;
-using System.Text.Json;
+using global::System.Collections.Immutable;
+using global::System.Text.Json;
 using Corvus.Json.Internal;
 
 namespace Corvus.Json;

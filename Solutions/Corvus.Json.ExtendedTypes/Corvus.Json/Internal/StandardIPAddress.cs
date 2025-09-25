@@ -23,7 +23,7 @@ public static class StandardIPAddress
     {
         if (IPAddress.TryParse(span, out IPAddress? address))
 #else
-    public static bool IPAddressParser(string span, in object? state, out IPAddress value)
+    public static bool IPAddressParser(string? span, in object? state, out IPAddress value)
     {
         if (IPAddress.TryParse(span, out IPAddress? address))
 #endif
