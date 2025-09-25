@@ -42,12 +42,13 @@ public static class SourceGeneratorHelpers
     /// <param name="context">The <see cref="SourceProductionContext"/>.</param>
     /// <param name="typesToGenerate">The types to generate.</param>
     /// <param name="vocabularyRegistry">The vocabulary registry.</param>
-    public static void GenerateCode(SourceProductionContext context, TypesToGenerate typesToGenerate, VocabularyRegistry vocabularyRegistry)
+    /// <returns>The list of root type declarations that were generated.</returns>
+    public static List<TypeDeclaration> GenerateCode(SourceProductionContext context, TypesToGenerate typesToGenerate, VocabularyRegistry vocabularyRegistry)
     {
         if (typesToGenerate.GenerationSpecifications.Length == 0)
         {
             // Nothing to generate
-            return;
+            return [];
         }
 
         List<TypeDeclaration> typeDeclarationsToGenerate = [];
@@ -60,7 +61,7 @@ public static class SourceGeneratorHelpers
         {
             if (context.CancellationToken.IsCancellationRequested)
             {
-                return;
+                return [];
             }
 
             string schemaFile = spec.Location;
@@ -79,7 +80,7 @@ public static class SourceGeneratorHelpers
                         reference,
                         ex.Message));
 
-                return;
+                return [];
             }
 
             typeDeclarationsToGenerate.Add(rootType);
@@ -128,7 +129,7 @@ public static class SourceGeneratorHelpers
                     Location.None,
                     ex.Message));
 
-            return;
+            return [];
         }
 
         foreach (GeneratedCodeFile codeFile in generatedCode)
@@ -138,6 +139,8 @@ public static class SourceGeneratorHelpers
                 context.AddSource(codeFile.FileName, SourceText.From(codeFile.FileContent, Encoding.UTF8));
             }
         }
+
+        return typeDeclarationsToGenerate;
     }
 
     /// <summary>
@@ -165,6 +168,14 @@ public static class SourceGeneratorHelpers
                     if (SchemaReferenceNormalization.TryNormalizeSchemaReference(additionalText.Path, string.Empty, out string? normalizedReference))
                     {
                         newResolver.AddDocument(normalizedReference, doc);
+                    }
+
+                    // Add the document by its $id if it has one.
+                    if (doc.RootElement.TryGetProperty("$id", out JsonElement idElement) &&
+                        idElement.ValueKind == JsonValueKind.String)
+                    {
+                        string id = idElement.GetString()!;
+                        newResolver.AddDocument(id, doc);
                     }
                 }
                 catch (JsonException)
