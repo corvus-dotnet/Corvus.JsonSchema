@@ -1,0 +1,15 @@
+﻿{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "LargeIntegerExample",
+    "title": "LargeIntegerExample",
+    "description": "An example schema demonstrating a large decimal number with specific constraints.",
+    "type": "object",
+    "properties": {
+        "largeDecimal": {
+            "type": "number",
+            "maximum": 999999999999,
+            "minimum": 0,
+            "multipleOf": 0.000001
+        }
+    }
+}

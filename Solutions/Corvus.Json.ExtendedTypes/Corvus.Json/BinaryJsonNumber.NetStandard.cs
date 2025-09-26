@@ -1673,14 +1673,14 @@ public readonly struct BinaryJsonNumber :
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsMultipleOf(JsonElement x, BinaryJsonNumber y)
     {
-        if (x.TryGetDouble(out double doubleValue))
-        {
-            return IsMultipleOf(doubleValue, y);
-        }
-
         if (x.TryGetDecimal(out decimal decimalValue))
         {
             return IsMultipleOf(decimalValue, y);
+        }
+
+        if (x.TryGetDouble(out double doubleValue))
+        {
+            return IsMultipleOf(doubleValue, y);
         }
 
         throw new OverflowException();
@@ -1702,7 +1702,7 @@ public readonly struct BinaryJsonNumber :
             return Math.Abs(Math.IEEERemainder(x, y.GetDouble())) <= 1.0E-9;
         }
 
-        return Math.Abs(decimal.Remainder((decimal)x, y.decimalBacking)) <= 1.0E-5M;
+        return Math.Abs(decimal.Remainder((decimal)x, y.decimalBacking)) == 0;
     }
 
     /// <summary>
@@ -1717,10 +1717,10 @@ public readonly struct BinaryJsonNumber :
     {
         if (y.numericKind != Kind.Decimal)
         {
-            return Math.Abs(decimal.Remainder(x, (decimal)y.GetDouble())) <= 1.0E-5M;
+            return Math.Abs(decimal.Remainder(x, (decimal)y.GetDouble())) == 0;
         }
 
-        return Math.Abs(decimal.Remainder(x, y.decimalBacking)) <= 1.0E-5M;
+        return Math.Abs(decimal.Remainder(x, y.decimalBacking)) == 0;
     }
 
     /// <summary>
