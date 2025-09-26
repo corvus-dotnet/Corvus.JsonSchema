@@ -1,20 +1,19 @@
 ﻿using Corvus.Json;
+using Repro672;
 
-var secondsPeriod = NodaTime.Period.FromSeconds(14);
-var secondsDuration = new JsonDuration(secondsPeriod); // PT14S
-bool secondsDurationValid = secondsDuration.IsValid(); // true
-var secondsDurationToPeriod = secondsDuration.GetPeriod(); // OK
+// Arrange
+const decimal expectedValue = 999999999998.999999m;
+var capacity = LargeIntegerExample.Create(
+    new JsonNumber(
+        new BinaryJsonNumber(expectedValue)
+    )
+);
 
-var millisecondsPeriod = NodaTime.Period.FromMilliseconds(1400);
-var millisecondsDuration = new JsonDuration(millisecondsPeriod); // PT1.4S
-bool millisecondsDurationValid = millisecondsDuration.IsValid();  // true
-var millisecondsDurationToPeriod = millisecondsDuration.GetPeriod(); // InvalidOperationException: Operation is not valid due to the current state of the object
+// Act
+var result = LargeIntegerExample.Parse(capacity.Serialize());
+var validationContext = result.Validate(ValidationContext.ValidContext.UsingResults(), ValidationLevel.Detailed);
 
-// same occurs with JsonDuration that was constructed from a string, e.g. new JsonDuration("PT1.4S"), or was deserialized from a JSON document
-
-var hoursDuration = new JsonDuration("PT1.5H");
-var hoursDurationValid = hoursDuration.IsValid(); // false
-if (hoursDurationValid)
-{
-    var hoursDurationToPeriod = hoursDuration.GetPeriod(); // InvalidOperationException
-}
+// Assert
+Console.WriteLine($"Results count: {validationContext.Results.Count()}");
+Console.WriteLine($"IsValid: {validationContext.IsValid}");
+Console.WriteLine($"{result.LargeDecimal.As<JsonDecimal>().AsDecimal()} == {expectedValue} is {result.LargeDecimal.As<JsonDecimal>().AsDecimal() == expectedValue}");

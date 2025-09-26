@@ -32,6 +32,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <AdditionalFiles Include="LargeIntegerExample.json" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="System.Collections.Immutable" Version="9.0.0" />
   </ItemGroup>
   

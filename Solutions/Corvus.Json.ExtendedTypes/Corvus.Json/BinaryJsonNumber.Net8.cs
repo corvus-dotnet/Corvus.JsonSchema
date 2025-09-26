@@ -2278,14 +2278,14 @@ public readonly struct BinaryJsonNumber :
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsMultipleOf(JsonElement x, BinaryJsonNumber y)
     {
-        if (x.TryGetDouble(out double doubleValue))
-        {
-            return IsMultipleOf(doubleValue, y);
-        }
-
         if (x.TryGetDecimal(out decimal decimalValue))
         {
             return IsMultipleOf(decimalValue, y);
+        }
+
+        if (x.TryGetDouble(out double doubleValue))
+        {
+            return IsMultipleOf(doubleValue, y);
         }
 
         throw new OverflowException();
@@ -2304,7 +2304,7 @@ public readonly struct BinaryJsonNumber :
     {
         if (PreciseConversionTo<decimal>.TryFrom(y, out decimal yAsDecimal))
         {
-            return decimal.Abs(decimal.Remainder(x, yAsDecimal)) <= 1.0E-5M;
+            return decimal.Abs(decimal.Remainder(x, yAsDecimal)) == 0;
         }
 
         if (PreciseConversionTo<double>.TryFrom(x, out double xAsDouble) &&
@@ -2349,7 +2349,7 @@ public readonly struct BinaryJsonNumber :
                 if (PreciseConversionTo<decimal>.TryFrom(x, out decimal xAsDecimal) &&
                     PreciseConversionTo<decimal>.TryFrom(y, out decimal yAsDecimal))
                 {
-                    return decimal.Abs(decimal.Remainder(xAsDecimal, yAsDecimal)) <= 1.0E-5M;
+                    return decimal.Abs(decimal.Remainder(xAsDecimal, yAsDecimal)) == 0;
                 }
             }
             else if (PreciseConversionTo<double>.TryFrom(x, out double xAsDouble) &&
@@ -2367,7 +2367,7 @@ public readonly struct BinaryJsonNumber :
             if (PreciseConversionTo<decimal>.TryFrom(x, out decimal xAsDecimal) &&
                 PreciseConversionTo<decimal>.TryFrom(y, out decimal yAsDecimal))
             {
-                return decimal.Abs(decimal.Remainder(xAsDecimal, yAsDecimal)) <= 1.0E-5M;
+                return decimal.Abs(decimal.Remainder(xAsDecimal, yAsDecimal)) == 0;
             }
         }
         else if (PreciseConversionTo<decimal>.TryFrom(x, out decimal xAsDecimal) &&
