@@ -88,6 +88,37 @@ public readonly struct JsonSchema
     /// <summary>
     /// Create an instance of a JSON schema from a JSON document.
     /// </summary>
+    /// <param name="stream">The stream containing the document.</param>
+    /// <param name="canonicalUri">The canonical URI for the document. If
+    /// <see langword="null"/> then the <paramref name="canonicalUri"/> an attempt
+    /// will be made to find the canonical URI in the schema.</param>
+    /// <param name="options">Generation options.</param>
+    /// <returns>The JSON schema instance.</returns>
+    /// <exception cref="InvalidOperationException">No canonical URI could be found for the schema document.</exception>
+    public static JsonSchema FromStream(Stream stream, string? canonicalUri = null, Options? options = null)
+    {
+        if (canonicalUri is not null && CachedSchema.TryGetValue(canonicalUri, out ValidateCallback? value))
+        {
+            return new(value);
+        }
+
+        options ??= Options.Default;
+
+        var document = JsonDocument.Parse(stream);
+
+        if (canonicalUri is null && !TryGetCanonicalUri(document, out canonicalUri))
+        {
+            throw new InvalidOperationException("The document does not have a canonical URI and one was not provided.");
+        }
+
+        PrepopulatedDocumentResolver documentResolver = new();
+        documentResolver.AddDocument(canonicalUri, document);
+        return FromCore(canonicalUri, CompoundWithMetaschemaResolver(documentResolver, options), options.FallbackVocabulary, options.AlwaysAssertFormat);
+    }
+
+    /// <summary>
+    /// Create an instance of a JSON schema from a JSON document.
+    /// </summary>
     /// <param name="fileName">The canonical URI for the document.</param>
     /// <param name="options">Generation options.</param>
     /// <returns>The JSON schema instance.</returns>
