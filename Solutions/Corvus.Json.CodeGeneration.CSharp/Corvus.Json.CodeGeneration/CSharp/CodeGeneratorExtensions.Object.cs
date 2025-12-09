@@ -205,9 +205,21 @@ internal static partial class CodeGeneratorExtensions
                 .BeginPublicReadOnlyPropertyDeclaration(property.ReducedPropertyType.FullyQualifiedDotnetTypeName(), property.DotnetPropertyName(), isNullable)
                     .AppendConditionalBackingValueCallbackIndent("Backing.JsonElement", "jsonElementBacking", (g, f) => AppendJsonBackedAccessor(g, typeDeclaration, f, property))
                     .AppendConditionalBackingValueCallbackIndent("Backing.Object", "objectBacking", (g, f) => AppendObjectBackedAccessor(g, typeDeclaration, f, property))
-                    .AppendSeparatorLine()
-                    .AppendLineIndent("return default;")
-                .EndReadOnlyPropertyDeclaration();
+                    .AppendSeparatorLine();
+
+            if (property.ReducedPropertyType.HasDefaultValue())
+            {
+                generator
+                    .AppendLineIndent("return ", property.ReducedPropertyType.FullyQualifiedDotnetTypeName(), ".DefaultInstance;");
+            }
+            else
+            {
+                generator
+                    .AppendLineIndent("return default;");
+            }
+
+            generator
+                    .EndReadOnlyPropertyDeclaration();
         }
 
         return generator;
@@ -241,7 +253,7 @@ internal static partial class CodeGeneratorExtensions
             if (typeDeclaration.OptionalAsNullable() && property.RequiredOrOptional == RequiredOrOptional.Optional)
             {
                 generator
-                    .AppendLineIndent("if (result.ValueKind == JsonValueKind.Null || result.ValueKind == JsonValueKind.Undefined)")
+                    .AppendLineIndent("if (result.ValueKind == JsonValueKind.Null)")
                     .AppendLineIndent("{")
                     .PushIndent()
                         .AppendLineIndent("return default;")
