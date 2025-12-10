@@ -94,7 +94,11 @@ public readonly struct JsonObjectProperty<T>
                 return this.value;
             }
 
-            return default;
+#if NET8_0_OR_GREATER
+            return T.DefaultInstance;
+#else
+            return JsonValueNetStandard20Extensions.DefaultInstance<T>();
+#endif
         }
     }
 
