@@ -404,6 +404,24 @@ Benchmark suites for various components.
 
 The Source Generator which generates types from Json Schema.
 
+## V4.4 Updates
+
+### Breaking changes
+
+The property accessor mechanism now respects the default value of the property type.
+
+If the schema for the property defines a `default` value, then the property accessor will return this value if and only if the value actual value is `ValueKind.Undefined`.
+
+This does *not* affect equality or other comparisons for the object as a whole - if one value has the property *explicitly* set to the default value, and the other is relying on the "default" value, then the instances *will not* be equal.
+
+If you use the `TryGetProperty()` mechanism to get the property value, this *will not* return the default from its `JsonObjectProperty.Value`. However, if you have access to a `JsonObjectProperty<TValue>` where the type of the property is known, then the `Value` will respect the default in the same way as the property itself.
+
+### Fixes
+
+In the latest version of the .NET SourceGenerator codebase, the behaviour when properties are missing has changed (we would suggest "is broken"). It no longer returns false and a null value for a missing property, but instead provides an empty string. This broke our default-value logic for settings - the net effect of which is that forcing format validation by default is accidentally switched off.
+
+We have restored the previous behaviour, regardless of which version of the source generator infrastructure is in use.
+
 ## V4.3.17 Updates
 
 Added netstandard2.1 packages for `Corvus.Json.ExtendedTypes` and `Corvus.Json.JsonReference` in order to support Unity builds.
