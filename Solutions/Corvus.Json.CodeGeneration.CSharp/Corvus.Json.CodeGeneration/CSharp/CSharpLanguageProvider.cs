@@ -732,6 +732,57 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
         internal GeneratedTypeAccessibility DefaultAccessibility { get; } = defaultAccessibility;
 
         /// <summary>
+        /// Try to get the namespace for the base URI.
+        /// </summary>
+        /// <param name="baseUri">The base URI.</param>
+        /// <param name="namespaceMap">The namespace map to search.</param>
+        /// <param name="ns">The resulting namespace.</param>
+        /// <returns><see langword="true"/> if the namespace was provided.</returns>
+        /// <remarks>
+        /// This method first tries an exact match, then falls back to prefix matching
+        /// to find the longest matching base URI.
+        /// </remarks>
+        public static bool TryGetNamespace(JsonReference baseUri, FrozenDictionary<string, string> namespaceMap, [NotNullWhen(true)] out string? ns)
+        {
+            if (!baseUri.HasAbsoluteUri)
+            {
+                ns = null;
+                return false;
+            }
+
+            string uriString = baseUri.Uri.ToString();
+
+            // First try an exact match
+            if (namespaceMap.TryGetValue(uriString, out ns))
+            {
+                return true;
+            }
+
+            // Then try prefix matching - find the longest matching base URI
+            string? bestMatch = null;
+            string? bestNamespace = null;
+
+            foreach (KeyValuePair<string, string> kvp in namespaceMap)
+            {
+                if (uriString.StartsWith(kvp.Key, StringComparison.Ordinal) &&
+                    (bestMatch is null || kvp.Key.Length > bestMatch.Length))
+                {
+                    bestMatch = kvp.Key;
+                    bestNamespace = kvp.Value;
+                }
+            }
+
+            if (bestNamespace is not null)
+            {
+                ns = bestNamespace;
+                return true;
+            }
+
+            ns = null;
+            return false;
+        }
+
+        /// <summary>
         /// Gets the namespace for the base URI.
         /// </summary>
         /// <param name="typeDeclaration">The type declaration for which to get the namespace.</param>
@@ -771,13 +822,7 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
         /// <returns><see langword="true"/> if the namespace was provided.</returns>
         private bool TryGetNamespace(JsonReference baseUri, [NotNullWhen(true)] out string? ns)
         {
-            if (!baseUri.HasAbsoluteUri)
-            {
-                ns = null;
-                return false;
-            }
-
-            return this.namespaceMap.TryGetValue(baseUri.Uri.ToString(), out ns);
+            return TryGetNamespace(baseUri, this.namespaceMap, out ns);
         }
     }
 }
