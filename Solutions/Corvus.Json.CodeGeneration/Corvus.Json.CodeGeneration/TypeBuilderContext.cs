@@ -68,6 +68,39 @@ public class TypeBuilderContext
     public JsonSchemaRegistry SchemaRegistry { get; }
 
     /// <summary>
+    /// Gets reference for the target location relative to the base location.
+    /// </summary>
+    /// <param name="target">The target location.</param>
+    /// <param name="baseLocation">The base location.</param>
+    /// <returns>The relative location.</returns>
+    /// <remarks>The target must be an absolute location.</remarks>
+    public static JsonReference GetRelativeLocationFor(JsonReference target, JsonReference baseLocation)
+    {
+        if (target.IsImplicitFile)
+        {
+            if (target == baseLocation)
+            {
+                return new JsonReference(Path.GetFileName(target));
+            }
+
+            JsonReference relative = baseLocation.MakeRelative(target);
+            return PrependFilenameIfNeeded(relative, baseLocation.Uri.ToString());
+        }
+
+        // Handle the case where the target was made absolute by prepending the DefaultAbsoluteLocation.
+        // This happens on Linux/macOS where file paths don't match the Windows-style IsImplicitFile pattern.
+        // In this case, we need to make a relative reference from the base location.
+        if (baseLocation.HasAbsoluteUri && target.HasAbsoluteUri)
+        {
+            JsonReference relative = baseLocation.MakeRelative(target);
+            JsonReferenceBuilder baseBuilder = baseLocation.AsBuilder();
+            return PrependFilenameIfNeeded(relative, baseBuilder.Path.ToString());
+        }
+
+        return target;
+    }
+
+    /// <summary>
     /// Leave the existing scope.
     /// </summary>
     /// <returns>The scope we have just left.</returns>
@@ -423,15 +456,29 @@ public class TypeBuilderContext
     }
 
     /// <summary>
-    /// Updates the located schema associated with this type to present a new dynamic location.
+    /// Prepends the filename from the given path to a relative reference if the relative reference
+    /// has no URI component (i.e., it's empty or just a fragment).
     /// </summary>
-    /// <param name="typeDeclaration">The type declaration.</param>
-    /// <param name="dynamicScopeLocation">The new dynamic scope location.</param>
-    private void UpdateDynamicLocation(TypeDeclaration typeDeclaration, JsonReference dynamicScopeLocation)
+    /// <param name="relative">The relative reference.</param>
+    /// <param name="pathForFilename">The path from which to extract the filename.</param>
+    /// <returns>The relative reference with filename prepended if needed.</returns>
+    private static JsonReference PrependFilenameIfNeeded(JsonReference relative, string pathForFilename)
     {
-        JsonReferenceBuilder builder = typeDeclaration.LocatedSchema.Location.AsBuilder();
-        builder = new JsonReferenceBuilder(builder.Scheme, builder.Authority, builder.Path, ("dynamicScope=" + Uri.EscapeDataString(dynamicScopeLocation.ToString())).AsSpan(), builder.Fragment);
-        typeDeclaration.UpdateLocation(builder.AsReference());
+        // If MakeRelative returned an empty path or just a fragment, we need to include the filename
+        // to match the expected behavior for schema locations.
+        if (!relative.HasUri || relative.Uri.Length == 0)
+        {
+            string fileName = Path.GetFileName(pathForFilename);
+
+            if (relative.HasFragment && relative.Fragment.Length > 0)
+            {
+                return new JsonReference(fileName, relative.Fragment.ToString());
+            }
+
+            return new JsonReference(fileName);
+        }
+
+        return relative;
     }
 
     /// <summary>
@@ -442,16 +489,18 @@ public class TypeBuilderContext
     /// <remarks>The target must be an absolute location.</remarks>
     private JsonReference GetRelativeLocationFor(JsonReference target)
     {
-        if (target.IsImplicitFile)
-        {
-            if (target == this.baseLocation)
-            {
-                return new JsonReference(Path.GetFileName(target));
-            }
+        return GetRelativeLocationFor(target, this.baseLocation);
+    }
 
-            return this.baseLocation.MakeRelative(target);
-        }
-
-        return target;
+    /// <summary>
+    /// Updates the located schema associated with this type to present a new dynamic location.
+    /// </summary>
+    /// <param name="typeDeclaration">The type declaration.</param>
+    /// <param name="dynamicScopeLocation">The new dynamic scope location.</param>
+    private void UpdateDynamicLocation(TypeDeclaration typeDeclaration, JsonReference dynamicScopeLocation)
+    {
+        JsonReferenceBuilder builder = typeDeclaration.LocatedSchema.Location.AsBuilder();
+        builder = new JsonReferenceBuilder(builder.Scheme, builder.Authority, builder.Path, ("dynamicScope=" + Uri.EscapeDataString(dynamicScopeLocation.ToString())).AsSpan(), builder.Fragment);
+        typeDeclaration.UpdateLocation(builder.AsReference());
     }
 }
