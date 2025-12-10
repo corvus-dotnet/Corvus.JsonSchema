@@ -4,7 +4,8 @@
         "FlimFlam": {
             "type": "object",
             "properties": {
-                "theArray": { "$ref": "#/%24defs/someArray" }
+              "theArray": { "$ref": "#/%24defs/someArray" },
+              "someInt32":  {"type": "number", "format": "int32"}
             }
         },
         "someArray": {

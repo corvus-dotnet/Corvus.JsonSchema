@@ -64,6 +64,24 @@ public static class JsonValueNetStandard20Extensions
         return From<JsonElement, TTarget>(jsonElement);
     }
 
+    /// <summary>
+    /// Create an instance of the default value of the given type.
+    /// </summary>
+    /// <typeparam name="TTarget">The target type.</typeparam>
+    /// <returns>An instance of the default value of the given type.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static TTarget DefaultInstance<TTarget>()
+        where TTarget : struct, IJsonValue<TTarget>
+    {
+        PropertyInfo? prop = typeof(TTarget).GetProperty("DefaultInstance", BindingFlags.Static | BindingFlags.Public);
+        if (prop is null)
+        {
+            return default;
+        }
+
+        return (TTarget)prop.GetValue(null);
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static TTarget From<TSource, TTarget>(in TSource source)
         where TTarget : struct, IJsonValue

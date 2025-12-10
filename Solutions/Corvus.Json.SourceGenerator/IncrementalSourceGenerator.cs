@@ -235,7 +235,18 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
 
         if (source.GlobalOptions.TryGetValue("build_property.CorvusJsonSchemaAlwaysAssertFormat", out string? alwaysAssertFormatName))
         {
-            alwaysAssertFormat = alwaysAssertFormatName == "true" || alwaysAssertFormatName == "True";
+            if (alwaysAssertFormatName == "false" || alwaysAssertFormatName == "False")
+            {
+                alwaysAssertFormat = false;
+            }
+            else if (alwaysAssertFormatName == "true" || alwaysAssertFormatName == "True" || alwaysAssertFormatName == string.Empty)
+            {
+                alwaysAssertFormat = true;
+            }
+            else
+            {
+                throw new InvalidOperationException($"Unrecognized value '{alwaysAssertFormatName}' for 'CorvusJsonSchemaAlwaysAssertFormat'. Try 'true' or 'false'.");
+            }
         }
 
         GeneratedTypeAccessibility defaultAccessibility = GeneratedTypeAccessibility.Public;
@@ -262,7 +273,15 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
             disabledNamingHeuristics = disabledNames.Select(d => d.Trim()).ToImmutableArray();
         }
 
-        return new(fallbackVocabulary, optionalAsNullable, useOptionalNameHeuristics, alwaysAssertFormat, disabledNamingHeuristics ?? DefaultDisabledNamingHeuristics, defaultAccessibility, addExplicitUsings, useImplicitOperatorString);
+        return new(
+            fallbackVocabulary,
+            optionalAsNullable,
+            useOptionalNameHeuristics,
+            alwaysAssertFormat,
+            disabledNamingHeuristics ?? DefaultDisabledNamingHeuristics,
+            defaultAccessibility,
+            addExplicitUsings,
+            useImplicitOperatorString);
     }
 
     private static CompoundDocumentResolver BuildDocumentResolver(ImmutableArray<AdditionalText> source, CancellationToken token)
@@ -432,7 +451,15 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
         public bool UseImplicitOperatorString { get; } = right.UseImplicitOperatorString;
     }
 
-    private readonly struct GlobalOptions(IVocabulary fallbackVocabulary, bool optionalAsNullable, bool useOptionalNameHeuristics, bool alwaysAssertFormat, ImmutableArray<string> disabledNamingHeuristics, GeneratedTypeAccessibility defaultAccessibility, bool addExplicitUsings, bool useImplicitOperatorString)
+    private readonly struct GlobalOptions(
+        IVocabulary fallbackVocabulary,
+        bool optionalAsNullable,
+        bool useOptionalNameHeuristics,
+        bool alwaysAssertFormat,
+        ImmutableArray<string> disabledNamingHeuristics,
+        GeneratedTypeAccessibility defaultAccessibility,
+        bool addExplicitUsings,
+        bool useImplicitOperatorString)
     {
         public IVocabulary FallbackVocabulary { get; } = fallbackVocabulary;
 
