@@ -841,6 +841,21 @@ public class JsonSchemaSteps
     }
 
     /// <summary>
+    /// Gets a non-nullable property frrom the instance in the scenario property <see cref="SchemaInstance"/> and checks its value.
+    /// </summary>
+    /// <param name="propertyName">The .NET name of the property.</param>
+    [Then("the property '([^']*)' from the instance is undefined")]
+    public void WhenIGetThePropertyFromTheInstanceItsValueIsUndefined(string propertyName)
+    {
+        bool result = JsonSchemaBuilderDriver.IsValueUndefined(
+            this.scenarioContext.Get<Type>(SchemaType),
+            this.scenarioContext.Get<IJsonValue>(SchemaInstance),
+            propertyName);
+
+        Assert.IsTrue(result);
+    }
+
+    /// <summary>
     /// Gets a nullable property frrom the instance in the scenario property <see cref="SchemaInstance"/> and checks its value.
     /// </summary>
     /// <param name="propertyName">The .NET name of the property.</param>

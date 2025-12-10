@@ -166,6 +166,19 @@ public class JsonSchemaBuilderDriver : IDisposable
         return value is not null && value.Equals((JsonString)expectedValue);
     }
 
+    public static bool IsValueUndefined(Type instanceType, IJsonValue instance, string propertyName)
+    {
+        PropertyInfo? property = instanceType.GetProperty(propertyName);
+        if (property is null)
+        {
+            return false;
+        }
+
+        object? value = property.GetValue(instance);
+
+        return value is IJsonValue v && v.ValueKind == JsonValueKind.Undefined;
+    }
+
     public static bool CompareNullableStringValue(Type instanceType, IJsonValue instance, string propertyName, string expectedValue)
     {
         PropertyInfo? property = instanceType.GetProperty(propertyName);
