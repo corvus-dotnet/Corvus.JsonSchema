@@ -76,6 +76,10 @@ public class TypeBuilderContext
     /// <remarks>The target must be an absolute location.</remarks>
     public static JsonReference GetRelativeLocationFor(JsonReference target, JsonReference baseLocation)
     {
+        JsonReference relative;
+
+        string path;
+
         if (target.IsImplicitFile)
         {
             if (target == baseLocation)
@@ -83,21 +87,23 @@ public class TypeBuilderContext
                 return new JsonReference(Path.GetFileName(target));
             }
 
-            JsonReference relative = baseLocation.MakeRelative(target);
-            return PrependFilenameIfNeeded(relative, baseLocation.Uri.ToString());
+            relative = baseLocation.MakeRelative(target);
+            path = baseLocation.Uri.ToString();
         }
-
-        // Handle the case where the target was made absolute by prepending the DefaultAbsoluteLocation.
-        // This happens on Linux/macOS where file paths don't match the Windows-style IsImplicitFile pattern.
-        // In this case, we need to make a relative reference from the base location.
-        if (baseLocation.HasAbsoluteUri && target.HasAbsoluteUri)
+        else if (baseLocation.HasAbsoluteUri && target.HasAbsoluteUri)
         {
-            JsonReference relative = baseLocation.MakeRelative(target);
+            relative = baseLocation.MakeRelative(target);
             JsonReferenceBuilder baseBuilder = baseLocation.AsBuilder();
-            return PrependFilenameIfNeeded(relative, baseBuilder.Path.ToString());
+            path = baseBuilder.Path.ToString();
+        }
+        else
+        {
+            relative = target;
+            JsonReferenceBuilder baseBuilder = baseLocation.AsBuilder();
+            path = baseBuilder.Path.ToString();
         }
 
-        return target;
+        return PrependFilenameIfNeeded(relative, path);
     }
 
     /// <summary>

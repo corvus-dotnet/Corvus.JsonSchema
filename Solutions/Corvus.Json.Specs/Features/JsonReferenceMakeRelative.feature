@@ -52,3 +52,16 @@ Scenario Outline: GetRelativeLocationFor returns filename for base location (abs
 		| https://endjin.com/home/user/test.json       | https://endjin.com/home/other/file.json                  | ../other/file.json             |
 		| https://endjin.com/schema.json               | https://endjin.com/schema.json#/$defs/Type               | schema.json#/$defs/Type        |
 		| https://endjin.com/path/to/schema.json       | https://endjin.com/path/to/schema.json#/properties/name  | schema.json#/properties/name   |
+
+Scenario Outline: GetRelativeLocationFor returns filename for base location (relative URIs)
+	When I get relative location for "<target>" with base "<base>"
+	Then the relative reference will be "<relative>"
+
+	Examples:
+		| base              | target                      | relative                       |
+		| ./test.json       | test.json                   | test.json                      |
+		| ./test.json       | test.json#/$defs/TestType   | test.json#/$defs/TestType      |
+		| ./test.json       | other.json                  | other.json                     |
+		| ./test.json       | other.json#/$defs/TestType  | other.json#/$defs/TestType     |
+		| ./test.json       | user/test.json              | user/test.json                 |
+
