@@ -42,6 +42,8 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
             DiagnosticSeverity.Error,
             isEnabledByDefault: true);
 
+    private static readonly IVocabulary Corvus202012Vocab = CodeGeneration.Draft202012.VocabularyAnalyser.DefaultVocabularyWith([CodeGeneration.CorvusVocabulary.SchemaVocabulary.DefaultInstance]);
+
     /// <inheritdoc/>
     public void Initialize(IncrementalGeneratorInitializationContext initializationContext)
     {
@@ -191,6 +193,8 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
         IVocabulary fallbackVocabulary = CodeGeneration.Draft202012.VocabularyAnalyser.DefaultVocabulary;
         if (source.GlobalOptions.TryGetValue("build_property.CorvusJsonSchemaFallbackVocabulary", out string? fallbackVocabularyName))
         {
+            Console.WriteLine($"Fallback vocabulary: {fallbackVocabularyName}");
+
             fallbackVocabulary = fallbackVocabularyName switch
             {
                 "Draft202012" => CodeGeneration.Draft202012.VocabularyAnalyser.DefaultVocabulary,
@@ -199,6 +203,7 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
                 "Draft6" => CodeGeneration.Draft6.VocabularyAnalyser.DefaultVocabulary,
                 "Draft4" => CodeGeneration.Draft4.VocabularyAnalyser.DefaultVocabulary,
                 "OpenApi30" => CodeGeneration.OpenApi30.VocabularyAnalyser.DefaultVocabulary,
+                "Corvus202012" => Corvus202012Vocab,
                 _ => CodeGeneration.Draft202012.VocabularyAnalyser.DefaultVocabulary,
             };
         }

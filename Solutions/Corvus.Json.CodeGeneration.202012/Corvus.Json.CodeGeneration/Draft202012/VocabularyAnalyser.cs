@@ -32,6 +32,13 @@ public sealed class VocabularyAnalyser : IVocabularyAnalyser
     public static IVocabulary DefaultVocabulary => SchemaVocabulary.DefaultInstance;
 
     /// <summary>
+    /// Gets the default vocabulary with the additional specified vocabularies.
+    /// </summary>
+    /// <param name="vocabularies">The additional vocabularies to apply.</param>
+    /// <returns>The default vocabulary with the additional vocabularies merged.</returns>
+    public static IVocabulary DefaultVocabularyWith(IVocabulary[] vocabularies) => SchemaVocabulary.DefaultInstanceWith(vocabularies);
+
+    /// <summary>
     /// Register the vocabulary analyser.
     /// </summary>
     /// <param name="documentResolver">The document resolver for the vocabulary resolver.</param>
