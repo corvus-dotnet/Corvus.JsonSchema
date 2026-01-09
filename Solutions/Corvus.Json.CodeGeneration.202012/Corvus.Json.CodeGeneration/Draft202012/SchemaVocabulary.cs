@@ -12,6 +12,16 @@ namespace Corvus.Json.CodeGeneration.Draft202012;
 /// </summary>
 internal sealed class SchemaVocabulary : IVocabulary
 {
+    private static readonly IVocabulary[] DefaultVocabularies = [
+            Core.Instance,
+            Applicator.Instance,
+            Content.Instance,
+            FormatAnnotation.Instance,
+            MetaData.Instance,
+            Unevaluated.Instance,
+            Validation.Instance,
+        ];
+
     private readonly IVocabulary[] vocabularies;
 
     /// <summary>
@@ -27,16 +37,7 @@ internal sealed class SchemaVocabulary : IVocabulary
     /// <summary>
     /// Gets the singleton instance of the Draft 2020-12 default vocabulary.
     /// </summary>
-    public static SchemaVocabulary DefaultInstance { get; } = new SchemaVocabulary(
-        [
-            Core.Instance,
-            Applicator.Instance,
-            Content.Instance,
-            FormatAnnotation.Instance,
-            MetaData.Instance,
-            Unevaluated.Instance,
-            Validation.Instance,
-        ]);
+    public static SchemaVocabulary DefaultInstance { get; } = new SchemaVocabulary(DefaultVocabularies);
 
     /// <inheritdoc/>
     public string Uri => "https://json-schema.org/draft/2020-12/schema";
@@ -51,6 +52,13 @@ internal sealed class SchemaVocabulary : IVocabulary
             DefinitionsKeyword.Instance,
             DependenciesKeyword.Instance,
         ]);
+
+    /// <summary>
+    /// Gets the default 2020-12 vocabulary with the additional specified vocabularies.
+    /// </summary>
+    /// <param name="vocabularies">Additional vocabularies to add to the default vocabularies.</param>
+    /// <returns>The required vocabulary.</returns>
+    public static IVocabulary DefaultInstanceWith(IVocabulary[] vocabularies) => new SchemaVocabulary([.. DefaultVocabularies.Union(vocabularies)]);
 
     /// <inheritdoc/>
     public JsonDocument? BuildReferenceSchemaInstance(JsonReference jsonSchemaPath)

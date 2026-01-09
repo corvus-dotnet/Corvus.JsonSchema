@@ -1,5 +1,4 @@
 {
-    "$schema": "https://corvus-oss.org/json-schema/2020-12/schema",
     "$defs": {
         "FlimFlam": {
             "type": "object",
