@@ -532,6 +532,10 @@ minimum: 0
 generatejsonschematypes --rootNamespace TestYaml --outputPath .\Model --yaml schema.yaml
 ```
 
+## V4.4.3 Updates
+
+Added <CorvusJsonSchemaFallbackVocabulary>Corvus202012</CorvusJsonSchemaFallbackVocabulary> to support the `$corvusTypeName` keyword without requiring you to specify an explicit `$schema` for the vocabulary.
+
 ## V4.0 Updates
 
 There are a number of significant changes in this release

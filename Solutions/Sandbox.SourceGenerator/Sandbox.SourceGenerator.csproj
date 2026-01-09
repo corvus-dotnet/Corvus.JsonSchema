@@ -13,6 +13,7 @@
     <CorvusJsonSchemaDefaultAccessibility>Internal</CorvusJsonSchemaDefaultAccessibility>
     <CorvusJsonSchemaAddExplicitUsings>True</CorvusJsonSchemaAddExplicitUsings>
     <CorvusJsonSchemaUseImplicitOperatorString>True</CorvusJsonSchemaUseImplicitOperatorString>
+    <CorvusJsonSchemaFallbackVocabulary>Corvus202012</CorvusJsonSchemaFallbackVocabulary>
   </PropertyGroup>
 
   <ItemGroup>
