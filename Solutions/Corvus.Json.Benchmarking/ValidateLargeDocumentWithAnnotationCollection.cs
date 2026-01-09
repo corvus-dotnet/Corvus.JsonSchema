@@ -36,8 +36,8 @@ public class ValidateLargeDocumentWithAnnotationCollection
     private JsonDocument? objectDocument;
     private Models.V3.PersonArray personArrayV3;
     private Models.V4.PersonArray personArrayV4;
-    private JsonNode? node;
     private JsonEverything.JsonSchema? schema;
+    private JsonElement element;
 
     /// <summary>
     /// Global setup.
@@ -56,8 +56,8 @@ public class ValidateLargeDocumentWithAnnotationCollection
         this.personArrayV3 = Models.V3.PersonArray.From(builder.ToImmutable()).AsJsonElementBackedValue();
         this.personArrayV4 = Models.V4.PersonArray.From(builder.ToImmutable()).AsJsonElementBackedValue();
 
-        this.schema = JsonEverything.JsonSchema.FromFile("./person-array-schema.json");
-        this.node = System.Text.Json.Nodes.JsonArray.Create(this.personArrayV3.AsJsonElement.Clone());
+        this.schema = JsonEverything.JsonSchema.FromFile(Path.GetFullPath("./person-array-schema.json"));
+        this.element = this.personArrayV3.AsJsonElement.Clone();
     }
 
     /// <summary>
@@ -98,6 +98,6 @@ public class ValidateLargeDocumentWithAnnotationCollection
     [Benchmark]
     public JsonEverything.EvaluationResults ValidateLargeArrayJsonEverything()
     {
-        return this.schema!.Evaluate(this.node, Options);
+        return this.schema!.Evaluate(this.element, Options);
     }
 }

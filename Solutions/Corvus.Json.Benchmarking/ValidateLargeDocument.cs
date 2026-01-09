@@ -37,7 +37,6 @@ public class ValidateLargeDocument
     private JsonDocument? objectDocument;
     private Models.V3.PersonArray personArrayV3;
     private Models.V4.PersonArray personArrayV4;
-    private JsonNode? node;
     private JsonElement element;
     private JsonEverything.JsonSchema? schema;
     private CorvusValidator.JsonSchema corvusSchema;
@@ -59,8 +58,9 @@ public class ValidateLargeDocument
         this.personArrayV3 = Models.V3.PersonArray.From(builder.ToImmutable()).AsJsonElementBackedValue();
         this.personArrayV4 = Models.V4.PersonArray.From(builder.ToImmutable()).AsJsonElementBackedValue();
 
-        this.node = System.Text.Json.Nodes.JsonArray.Create(this.personArrayV3.AsJsonElement.Clone());
         this.element = this.personArrayV3.AsJsonElement.Clone();
+        this.corvusSchema = CorvusValidator.JsonSchema.FromFile("./person-array-schema.json");
+        this.schema = JsonEverything.JsonSchema.FromFile(Path.GetFullPath("./person-array-schema.json"));
     }
 
     /// <summary>
@@ -101,7 +101,6 @@ public class ValidateLargeDocument
     [Benchmark]
     public bool ValidateLargeArrayCorvusValidator()
     {
-        this.corvusSchema = CorvusValidator.JsonSchema.FromFile("./person-array-schema.json");
         ValidationContext result = this.corvusSchema.Validate(this.element, ValidationLevel.Flag);
         return result.IsValid;
     }
@@ -112,7 +111,6 @@ public class ValidateLargeDocument
     [Benchmark]
     public JsonEverything.EvaluationResults ValidateLargeArrayJsonEverything()
     {
-        this.schema = JsonEverything.JsonSchema.FromFile("./person-array-schema.json");
-        return this.schema!.Evaluate(this.node, Options);
+        return this.schema!.Evaluate(this.element, Options);
     }
 }

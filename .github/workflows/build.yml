@@ -55,7 +55,18 @@ jobs:
     needs: prepareConfig
     uses: endjin/Endjin.RecommendedPractices.GitHubActions/.github/workflows/scripted-build-matrix-pipeline.yml@main
     with:
-      netSdkVersion: '9.0.x'
+      testPhaseMatrixJson: |
+          {
+            "os": ["ubuntu-latest", "windows-latest"],
+            "dotnetFramework": ["net10.0", "net8.0", "net481"],
+            "exclude": [
+              {
+                "os": "ubuntu-latest",
+                "dotnetFramework": "net481"
+              }
+            ]
+          }
+      netSdkVersion: '10.0.x'
       # additionalNetSdkVersion: '7.0.x'
       # workflow_dispatch inputs are always strings, the type property is just for the UI
       forcePublish: ${{ github.event.inputs.forcePublish == 'true' }}

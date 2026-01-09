@@ -36,7 +36,6 @@ public class ValidateSmallDocument
     private JsonDocument? objectDocument;
     private Models.V3.Person personV3;
     private Models.V4.Person personV4;
-    private JsonNode? node;
     private JsonElement element;
     private JsonEverything.JsonSchema? schema;
     private CorvusValidator.JsonSchema corvusSchema;
@@ -52,7 +51,6 @@ public class ValidateSmallDocument
         this.personV4 = Models.V4.Person.FromJson(this.objectDocument.RootElement.Clone());
         this.schema = JsonEverything.JsonSchema.FromFile("./person-schema.json");
         this.corvusSchema = CorvusValidator.JsonSchema.FromFile("./person-schema.json");
-        this.node = System.Text.Json.Nodes.JsonObject.Create(this.personV3.AsJsonElement.Clone());
         this.element = this.personV3.AsJsonElement.Clone();
     }
 
@@ -94,7 +92,7 @@ public class ValidateSmallDocument
     [Benchmark]
     public JsonEverything.EvaluationResults ValidateSmallDocumentJsonEverything()
     {
-        return this.schema!.Evaluate(this.node, Options);
+        return this.schema!.Evaluate(this.element, Options);
     }
 
     /// <summary>

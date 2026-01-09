@@ -3,7 +3,7 @@
 
 	<PropertyGroup>
 		<OutputType>Exe</OutputType>
-    <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
+    <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<IsPackable>false</IsPackable>
@@ -22,16 +22,16 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="BenchmarkDotNet" Version="0.14.0" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.11.0" />
-    <PackageReference Include="Microsoft.VisualStudio.DiagnosticsHub.BenchmarkDotNetDiagnosers" Version="17.13.35505.2" />
-    <PackageReference Include="System.Collections.Immutable" Version="9.0.0" />
-    <PackageReference Include="System.Reflection.Metadata" Version="9.0.0" />
-    <PackageReference Include="System.Text.Json" Version="9.0.0" />
-		<PackageReference Include="BenchmarkDotNet.Diagnostics.Windows" Version="0.14.0" />
-		<PackageReference Include="JsonSchema.Net" Version="7.3.4" />
-		<PackageReference Include="JsonPatch.Net" Version="3.3.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.0" />
+    <PackageReference Include="BenchmarkDotNet" Version="0.15.8" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.14.0" />
+    <PackageReference Include="Microsoft.VisualStudio.DiagnosticsHub.BenchmarkDotNetDiagnosers" Version="18.3.36812.1" />
+    <PackageReference Include="System.Collections.Immutable" Version="10.0.1" />
+    <PackageReference Include="System.Reflection.Metadata" Version="10.0.1" />
+    <PackageReference Include="System.Text.Json" Version="10.0.1" />
+		<PackageReference Include="BenchmarkDotNet.Diagnostics.Windows" Version="0.15.8" />
+		<PackageReference Include="JsonSchema.Net" Version="8.0.5" />
+		<PackageReference Include="JsonPatch.Net" Version="4.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.1" />
   </ItemGroup>
 
 	<ItemGroup>
@@ -49,7 +49,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <PackageReference Update="Roslynator.Analyzers" Version="4.12.9" />
+	  <PackageReference Update="Roslynator.Analyzers" Version="4.15.0" />
 	</ItemGroup>
 
 </Project>
