@@ -12,6 +12,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Text;
+using Yaml = YamlDotNet.Serialization;
 
 namespace Corvus.Json.SourceGenerator;
 
@@ -43,6 +44,12 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
             isEnabledByDefault: true);
 
     private static readonly IVocabulary Corvus202012Vocab = CodeGeneration.Draft202012.VocabularyAnalyser.DefaultVocabularyWith([CodeGeneration.CorvusVocabulary.SchemaVocabulary.DefaultInstance]);
+
+    private static readonly Lazy<Yaml.IDeserializer> YamlDeserializer =
+        new(static () => new Yaml.DeserializerBuilder().WithAttemptingUnquotedStringTypeDeserialization().Build());
+
+    private static readonly Lazy<Yaml.ISerializer> YamlSerializer =
+        new(static () => new Yaml.SerializerBuilder().JsonCompatible().Build());
 
     /// <inheritdoc/>
     public void Initialize(IncrementalGeneratorInitializationContext initializationContext)
@@ -313,19 +320,10 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
                     if (string.Equals(extensions, ".yaml", StringComparison.InvariantCultureIgnoreCase)
                         || string.Equals(extensions, ".yml", StringComparison.InvariantCultureIgnoreCase))
                     {
-                        YamlDotNet.Serialization.IDeserializer deserializer =
-                            new YamlDotNet.Serialization.DeserializerBuilder()
-                            .WithAttemptingUnquotedStringTypeDeserialization()
-                            .Build();
-                        object? yamlObject = deserializer.Deserialize(json);
+                        object? yamlObject = YamlDeserializer.Value.Deserialize(json);
 
                         using var writer = new StringWriter();
-                        YamlDotNet.Serialization.ISerializer serializer =
-                            new YamlDotNet.Serialization.SerializerBuilder()
-                            .JsonCompatible()
-                            .Build();
-
-                        serializer.Serialize(writer, yamlObject);
+                        YamlSerializer.Value.Serialize(writer, yamlObject);
                         j = writer.ToString();
                     }
 
