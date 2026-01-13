@@ -18,7 +18,7 @@ namespace Corvus.Json.CodeGeneration;
 /// <param name="vocabularyRegistry">The vocabulary registry used to provide vocabularies.</param>
 public class JsonSchemaRegistry(IDocumentResolver documentResolver, VocabularyRegistry vocabularyRegistry)
 {
-    private static readonly JsonReference DefaultAbsoluteLocation = new("https://endjin.com");
+    private static readonly JsonReference DefaultAbsoluteLocation = new(string.Empty);
     private readonly Dictionary<string, LocatedSchema> locatedSchema = [];
 
     /// <summary>
