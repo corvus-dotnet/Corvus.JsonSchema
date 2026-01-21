@@ -404,6 +404,50 @@ Benchmark suites for various components.
 
 The Source Generator which generates types from Json Schema.
 
+## V4.5 Updates
+
+### Breaking changes (Language Provider Implementers only)
+
+The `IKeywordValidationHandler` interface contains a number of APIs that are, with hindsight, specific to the particular implementation in the `CSharpLanguageProvider` implementation.
+
+It forces you into a method definition / method call pattern, and also implementing the "child handler" pattern.
+
+While the child-handler pattern is still likely useful, it may have a completely different implementation in other providers.
+
+The method definition / method call pattern is very much an "implementer's choice" and should not be imposed on all future implementations.
+
+This breaking change applies to *language provider implementers* only, and it splits `IKeywordValidationHandler` into `IKeywordValidationHandler` and `IMethodBasedKeywordValidationHandlerWithChildren`
+
+If you have any existing code that depends on `IKeywordValidationHandler` you will need to update it to use `IMethodBasedKeywordValidationHandlerWithChildren` instead. This can be done with a global search and replace.
+
+You will likely also need to use the new overload of the `TypeDeclaration` extension method `OrderedValidationHandlers<T>()` to retrieve the handlers using the correct interface.
+
+For example, the CSharpLanguageProvider has been updated in three places to use the new overload, so we can access the handler via the new interface. Unsurprisingly, these are the three places that make use of the method based/child handler pattern. Here's one of those.
+
+```csharp
+    private static CodeGenerator AppendValidationHandlerSetup(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
+        generator.AppendUsingEvaluatedItems(typeDeclaration);
+        generator.AppendUsingEvaluatedProperties(typeDeclaration);
+
+        foreach (IMethodBasedKeywordValidationHandlerWithChildren handler in typeDeclaration.OrderedValidationHandlers<IMethodBasedKeywordValidationHandlerWithChildren>(generator.LanguageProvider))
+        {
+            handler.AppendValidationSetup(generator, typeDeclaration);
+        }
+
+        return generator;
+    }
+```
+
+## V4.4.3 Updates
+
+Added <CorvusJsonSchemaFallbackVocabulary>Corvus202012</CorvusJsonSchemaFallbackVocabulary> to support the `$corvusTypeName` keyword without requiring you to specify an explicit `$schema` for the vocabulary.
+
 ## V4.4 Updates
 
 ### Breaking changes
@@ -531,10 +575,6 @@ minimum: 0
 ```
 generatejsonschematypes --rootNamespace TestYaml --outputPath .\Model --yaml schema.yaml
 ```
-
-## V4.4.3 Updates
-
-Added <CorvusJsonSchemaFallbackVocabulary>Corvus202012</CorvusJsonSchemaFallbackVocabulary> to support the `$corvusTypeName` keyword without requiring you to specify an explicit `$schema` for the vocabulary.
 
 ## V4.0 Updates
 

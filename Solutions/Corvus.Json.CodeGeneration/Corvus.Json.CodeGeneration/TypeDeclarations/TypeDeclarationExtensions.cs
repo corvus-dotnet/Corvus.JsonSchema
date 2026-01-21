@@ -1639,6 +1639,19 @@ public static class TypeDeclarationExtensions
     }
 
     /// <summary>
+    /// Gets the ordered validation handlers of a specific type for the type declaration.
+    /// </summary>
+    /// <typeparam name="T">The type of <see cref="IKeywordValidationHandler"/>.</typeparam>
+    /// <param name="that">The type declaration.</param>
+    /// <param name="languageProvider">The language provider.</param>
+    /// <returns>The ordered collection of validation handlers.</returns>
+    public static IEnumerable<T> OrderedValidationHandlers<T>(this TypeDeclaration that, ILanguageProvider languageProvider)
+        where T : IKeywordValidationHandler
+    {
+        return that.OrderedValidationHandlers(languageProvider).OfType<T>();
+    }
+
+    /// <summary>
     /// Gets the ordered validation handlers for the type declaration.
     /// </summary>
     /// <param name="that">The type declaration.</param>

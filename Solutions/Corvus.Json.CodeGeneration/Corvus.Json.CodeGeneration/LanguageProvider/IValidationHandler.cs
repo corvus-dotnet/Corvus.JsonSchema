@@ -14,13 +14,8 @@ namespace Corvus.Json.CodeGeneration;
 /// a <see cref="TypeDeclaration"/>.
 /// </para>
 /// <para>
-/// Typically, there will be a small number of these top-level <see cref="IKeywordValidationHandler"/> types
-/// which in turn depend on child handlers (<see cref="IKeywordValidationHandler.RegisterChildHandlers(Corvus.Json.CodeGeneration.IChildValidationHandler[])"/>
-/// to provide specific validation semantics.
-/// </para>
-/// <para>
 /// While most <see cref="ILanguageProvider"/> implementations will register a standard set of <see cref="IValidationHandler"/>
-/// instances, using custom vocabularies may require you to add a new <see cref="IKeywordValidationHandler"/> or child <see cref="IValidationHandler"/> instances to add custom validation capabilities.
+/// instances, using custom vocabularies may require you to add new <see cref="IKeywordValidationHandler"/> or child <see cref="IValidationHandler"/> instances to add custom validation capabilities.
 /// </para>
 /// </remarks>
 public interface IValidationHandler
