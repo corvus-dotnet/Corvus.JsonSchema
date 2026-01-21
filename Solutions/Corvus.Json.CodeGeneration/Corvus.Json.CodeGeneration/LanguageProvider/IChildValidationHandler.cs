@@ -32,7 +32,7 @@ public interface IChildValidationHandler : IValidationHandler
     /// <param name="typeDeclaration">The type declaration for which to append the validation method.</param>
     /// <returns>A reference to the generator after the operation has completed.</returns>
     /// <remarks>
-    /// This method will be injected before the parent's <see cref="IKeywordValidationHandler.AppendValidationSetup(CodeGenerator, TypeDeclaration)"/>
+    /// This method will be injected before the parent's <see cref="IMethodBasedKeywordValidationHandlerWithChildren.AppendValidationSetup(CodeGenerator, TypeDeclaration)"/>
     /// code if its <see cref="IValidationHandler.ValidationHandlerPriority"/>
     /// is less than or equal to the parent's <see cref="IValidationHandler.ValidationHandlerPriority"/>,
     /// and afterwards if it is greater than that of the parent.

@@ -812,7 +812,7 @@ public static partial class ValidationCodeGeneratorExtensions
         generator.AppendUsingEvaluatedItems(typeDeclaration);
         generator.AppendUsingEvaluatedProperties(typeDeclaration);
 
-        foreach (IKeywordValidationHandler handler in typeDeclaration.OrderedValidationHandlers(generator.LanguageProvider))
+        foreach (IMethodBasedKeywordValidationHandlerWithChildren handler in typeDeclaration.OrderedValidationHandlers<IMethodBasedKeywordValidationHandlerWithChildren>(generator.LanguageProvider))
         {
             handler.AppendValidationSetup(generator, typeDeclaration);
         }
@@ -829,7 +829,7 @@ public static partial class ValidationCodeGeneratorExtensions
             return generator;
         }
 
-        foreach (IKeywordValidationHandler handler in typeDeclaration.OrderedValidationHandlers(generator.LanguageProvider))
+        foreach (IMethodBasedKeywordValidationHandlerWithChildren handler in typeDeclaration.OrderedValidationHandlers<IMethodBasedKeywordValidationHandlerWithChildren>(generator.LanguageProvider))
         {
             if (generator.IsCancellationRequested)
             {
@@ -849,7 +849,7 @@ public static partial class ValidationCodeGeneratorExtensions
             return generator;
         }
 
-        foreach (IKeywordValidationHandler handler in typeDeclaration.OrderedValidationHandlers(generator.LanguageProvider))
+        foreach (IMethodBasedKeywordValidationHandlerWithChildren handler in typeDeclaration.OrderedValidationHandlers<IMethodBasedKeywordValidationHandlerWithChildren>(generator.LanguageProvider))
         {
             if (generator.IsCancellationRequested)
             {
