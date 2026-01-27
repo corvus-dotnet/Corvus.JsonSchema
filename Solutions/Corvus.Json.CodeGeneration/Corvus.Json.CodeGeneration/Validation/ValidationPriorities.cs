@@ -15,6 +15,11 @@ public static class ValidationPriorities
     public const uint First = 0;
 
     /// <summary>
+    /// The priority of core-type contributing keywords.
+    /// </summary>
+    public const uint CoreType = First + 1000;
+
+    /// <summary>
     /// The default priority.
     /// </summary>
     public const uint Default = uint.MaxValue / 2;
