@@ -891,15 +891,21 @@ internal static partial class CodeGeneratorExtensions
                 string parameterName = parameters[parameterIndex++].GetName(generator);
 
                 generator
-                    .AppendLineIndent(
-                        builderName,
-                        ".Add(",
-                        propertyNamesClass,
-                        ".",
-                        property.DotnetPropertyName(),
-                        ", ",
-                        parameterName,
-                        ".AsAny);");
+                    .AppendSeparatorLine()
+                    .AppendLineIndent("if (", parameterName, ".IsNotUndefined())")
+                    .AppendLineIndent("{")
+                    .PushIndent()
+                        .AppendLineIndent(
+                            builderName,
+                            ".Add(",
+                            propertyNamesClass,
+                            ".",
+                            property.DotnetPropertyName(),
+                            ", ",
+                            parameterName,
+                            ".AsAny);")
+                    .PopIndent()
+                    .AppendLineIndent("}");
             }
 
             return parameterIndex;
@@ -914,10 +920,11 @@ internal static partial class CodeGeneratorExtensions
 
             string propertyNamesClass = generator.JsonPropertyNamesClassName();
             string parameterName = parameters[parameterIndex++].GetName(generator);
-
+            string parameterType = parameters[parameterIndex - 1].Type;
+            string nonNullParameterName = generator.GetUniqueVariableNameInScope(parameterName, suffix: "NotNull");
             generator
                 .AppendSeparatorLine()
-                .AppendLineIndent("if (", parameterName, " is not null)")
+                .AppendLineIndent("if (", parameterName, " is ", parameterType, " ", nonNullParameterName, " && ", nonNullParameterName, ".IsNotUndefined())")
                 .AppendLineIndent("{")
                 .PushIndent()
                     .AppendLineIndent(
