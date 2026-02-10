@@ -37,8 +37,7 @@ public class RequiredValidationHandler : IChildObjectPropertyValidationHandler
                     return generator;
                 }
 
-                // Don't bother with properties that have default values.
-                if (property.ReducedPropertyType.HasDefaultValue() || property.RequiredKeyword is not IObjectRequiredPropertyValidationKeyword keyword)
+                if (property.RequiredKeyword is not IObjectRequiredPropertyValidationKeyword keyword)
                 {
                     continue;
                 }
@@ -138,12 +137,6 @@ public class RequiredValidationHandler : IChildObjectPropertyValidationHandler
                 if (generator.IsCancellationRequested)
                 {
                     return generator;
-                }
-
-                // Don't bother with properties that have default values.
-                if (property.ReducedPropertyType.HasDefaultValue())
-                {
-                    continue;
                 }
 
                 string requiredName = GetHasSeenVariableName(generator, property);

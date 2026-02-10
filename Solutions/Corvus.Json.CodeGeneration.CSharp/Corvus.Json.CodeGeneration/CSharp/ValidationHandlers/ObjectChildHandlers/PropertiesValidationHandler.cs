@@ -96,8 +96,7 @@ public class PropertiesValidationHandler : IChildObjectPropertyValidationHandler
                 .AppendLineIndent("{")
                 .PushIndent();
 
-            if (property.RequiredOrOptional == RequiredOrOptional.Required &&
-                !property.ReducedPropertyType.HasDefaultValue())
+            if (property.RequiredOrOptional == RequiredOrOptional.Required)
             {
                 string hasSeenField = RequiredValidationHandler.GetHasSeenVariableName(generator, property);
                 generator
