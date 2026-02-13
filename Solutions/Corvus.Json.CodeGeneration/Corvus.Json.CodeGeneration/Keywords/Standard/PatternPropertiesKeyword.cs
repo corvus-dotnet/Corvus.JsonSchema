@@ -107,8 +107,8 @@ public sealed class PatternPropertiesKeyword
     public bool RequiresObjectEnumeration(TypeDeclaration typeDeclaration) => typeDeclaration.HasKeyword(this);
 
     /// <inheritdoc/>
-    public string GetPathModifier(ReducedTypeDeclaration propertyTypeDeclaration)
+    public string GetPathModifier(string pattern, ReducedTypeDeclaration propertyTypeDeclaration)
     {
-        return KeywordPathReference.AppendFragment(propertyTypeDeclaration.ReducedPathModifier);
+        return KeywordPathReference.AppendUnencodedPropertyNameToFragment(pattern).AppendFragment(propertyTypeDeclaration.ReducedPathModifier);
     }
 }

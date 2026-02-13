@@ -32,5 +32,5 @@ public sealed class PatternPropertyDeclaration(IObjectPatternPropertyValidationK
     /// <summary>
     /// Gets the reduced path modifier for the pattern property.
     /// </summary>
-    public string KeywordPathModifier { get; } = keyword.GetPathModifier(patternPropertyType.ReducedTypeDeclaration());
+    public string KeywordPathModifier { get; } = keyword.GetPathModifier(pattern, patternPropertyType.ReducedTypeDeclaration());
 }
