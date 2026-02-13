@@ -80,7 +80,7 @@ public class TypeBuilderContext
 
         string path;
 
-        if (target.IsImplicitFile)
+        if (target.IsImplicitFile || target.Uri.StartsWith(baseLocation.Uri))
         {
             if (target == baseLocation)
             {

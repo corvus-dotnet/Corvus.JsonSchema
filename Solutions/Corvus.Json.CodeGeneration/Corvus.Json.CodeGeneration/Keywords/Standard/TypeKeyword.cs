@@ -27,7 +27,7 @@ public sealed class TypeKeyword : ICoreTypeValidationKeyword
     public ReadOnlySpan<byte> KeywordUtf8 => "type"u8;
 
     /// <inheritdoc />
-    public uint ValidationPriority => ValidationPriorities.Default;
+    public uint ValidationPriority => ValidationPriorities.CoreType;
 
     /// <inheritdoc />
     public CoreTypes ImpliesCoreTypes(TypeDeclaration typeDeclaration)

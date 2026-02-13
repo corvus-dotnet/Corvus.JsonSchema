@@ -7,7 +7,7 @@ namespace Corvus.Json.CodeGeneration.CSharp;
 /// <summary>
 /// A base class for <see cref="IKeywordValidationHandler"/> implementations.
 /// </summary>
-public abstract class KeywordValidationHandlerBase : IKeywordValidationHandler
+public abstract class KeywordValidationHandlerBase : IMethodBasedKeywordValidationHandlerWithChildren
 {
     private readonly ChildValidationHandlerRegistry childHandlers = new();
 

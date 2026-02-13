@@ -552,15 +552,15 @@ public readonly struct JsonReference
     /// <exception cref="InvalidOperationException">One of the references was not absolute.</exception>
     public JsonReference MakeRelative(in JsonReference other)
     {
-        if (!this.HasAbsoluteUri)
-        {
-            throw new InvalidOperationException("The base reference must be absolute to produce a relative URI");
-        }
+        ////if (!this.HasAbsoluteUri)
+        ////{
+        ////    throw new InvalidOperationException("The base reference must be absolute to produce a relative URI");
+        ////}
 
-        if (!other.HasAbsoluteUri)
-        {
-            throw new InvalidOperationException("The target reference must be absolute to produce a relative URI");
-        }
+        ////if (!other.HasAbsoluteUri)
+        ////{
+        ////    throw new InvalidOperationException("The target reference must be absolute to produce a relative URI");
+        ////}
 
         JsonReferenceBuilder uriBuilder = this.AsBuilder();
         JsonReferenceBuilder otherBuilder = other.AsBuilder();
