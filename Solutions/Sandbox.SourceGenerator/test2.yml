@@ -1,0 +1,21 @@
+$schema: http://json-schema.org/draft-07/schema
+type: object
+anyOf:
+  - type: object
+    required: [ "kind", 'data' ]
+    additionalProperties: false
+    properties:
+      kind: { const: foo }
+      data:
+        anyOf:
+          - type: object
+            required: [ kind ]
+            additionalProperties: false
+            properties:
+              kind: { const: "bar" }
+          - type: object
+            required: [ kind ]
+            additionalProperties: false
+            properties:
+              kind: { const: "barz" }
+  - $ref: '#/anyOf/0/properties/data/anyOf/0'
