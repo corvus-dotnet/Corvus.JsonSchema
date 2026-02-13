@@ -13,7 +13,8 @@ public interface IObjectPatternPropertyValidationKeyword : IObjectValidationKeyw
     /// <summary>
     /// Gets the reduced path modifier for the pattern property declaration.
     /// </summary>
+    /// <param name="pattern">The pattern that produced the type declaration.</param>
     /// <param name="propertyTypeDeclaration">The pattern property type declaration.</param>
     /// <returns>The path modifier for this item from this keyword.</returns>
-    string GetPathModifier(ReducedTypeDeclaration propertyTypeDeclaration);
+    string GetPathModifier(string pattern, ReducedTypeDeclaration propertyTypeDeclaration);
 }
