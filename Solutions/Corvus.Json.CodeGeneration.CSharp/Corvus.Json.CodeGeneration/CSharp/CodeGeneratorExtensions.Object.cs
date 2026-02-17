@@ -1159,7 +1159,7 @@ internal static partial class CodeGeneratorExtensions
                         typeDeclaration.DotnetTypeName(),
                         "With" + property.DotnetPropertyName(),
                         new MethodParameter("in", property.ReducedPropertyType.FullyQualifiedDotnetTypeName(), "value", typeIsNullable: true))
-                    .AppendLineIndent("return value.HasValue ? this.SetProperty(", generator.JsonPropertyNamesClassName(), ".", property.DotnetPropertyName(), ", value.Value) : this.RemoveProperty(", generator.JsonPropertyNamesClassName(), ".", property.DotnetPropertyName(), ");");
+                    .AppendLineIndent("return value.HasValue && value.Value.IsNotUndefined() ? this.SetProperty(", generator.JsonPropertyNamesClassName(), ".", property.DotnetPropertyName(), ", value.Value) : this.RemoveProperty(", generator.JsonPropertyNamesClassName(), ".", property.DotnetPropertyName(), ");");
             }
             else
             {
@@ -1169,7 +1169,7 @@ internal static partial class CodeGeneratorExtensions
                         typeDeclaration.DotnetTypeName(),
                         "With" + property.DotnetPropertyName(),
                         new MethodParameter("in", property.ReducedPropertyType.FullyQualifiedDotnetTypeName(), "value", typeIsNullable: false))
-                    .AppendLineIndent("return this.SetProperty(", generator.JsonPropertyNamesClassName(), ".", property.DotnetPropertyName(), ", value);");
+                    .AppendLineIndent("return value.IsNotUndefined() ? this.SetProperty(", generator.JsonPropertyNamesClassName(), ".", property.DotnetPropertyName(), ", value) : this.RemoveProperty(", generator.JsonPropertyNamesClassName(), ".", property.DotnetPropertyName(), ");");
             }
 
             generator
