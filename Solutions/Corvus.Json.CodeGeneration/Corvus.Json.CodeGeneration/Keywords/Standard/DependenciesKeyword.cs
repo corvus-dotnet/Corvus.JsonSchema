@@ -67,6 +67,55 @@ public sealed class DependenciesKeyword
             visitedTypeDeclarations,
             true,
             cancellationToken);
+
+        if (source.LocatedSchema.Schema.ValueKind == JsonValueKind.Object &&
+            source.LocatedSchema.Schema.TryGetProperty(this.KeywordUtf8, out JsonElement value) &&
+            value.ValueKind == JsonValueKind.Object)
+        {
+            foreach (JsonProperty property in value.EnumerateObject())
+            {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    return;
+                }
+
+                if (property.Value.ValueKind != JsonValueKind.Array)
+                {
+                    continue;
+                }
+
+                // Add the dependentRequired property itself
+                target.AddOrUpdatePropertyDeclaration(
+                    new PropertyDeclaration(
+                        target,
+                        Uri.UnescapeDataString(property.Name),
+                        WellKnownTypeDeclarations.JsonAny,
+                        RequiredOrOptional.Optional,
+                        source == target ? LocalOrComposed.Local : LocalOrComposed.Composed,
+                        this,
+                        null));
+
+                foreach (JsonElement requiredValue in property.Value.EnumerateArray())
+                {
+                    if (cancellationToken.IsCancellationRequested)
+                    {
+                        return;
+                    }
+
+                    string propertyName = requiredValue.GetString() ?? throw new InvalidOperationException("The dependencies properties in dependent required form must must be strings.");
+                    target.AddOrUpdatePropertyDeclaration(
+                        new PropertyDeclaration(
+                            target,
+                            Uri.UnescapeDataString(propertyName),
+                            WellKnownTypeDeclarations.JsonAny,
+                            RequiredOrOptional.Optional,
+                            source == target ? LocalOrComposed.Local : LocalOrComposed.Composed,
+                            this,
+                            null));
+                }
+            }
+        }
+
     }
 
     /// <inheritdoc />
