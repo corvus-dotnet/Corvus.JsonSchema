@@ -55,6 +55,27 @@ public class VocabularyRegistry
     }
 
     /// <summary>
+    /// Gets the standard vocabulary for the given schema dialect.
+    /// </summary>
+    /// <param name="schemaUri">The schema URI.</param>
+    /// <param name="vocabulary">The <see cref="IVocabulary"/> with the given URI.</param>
+    /// <returns><see langword="true"/> when the vocabulary is found.</returns>
+    public bool TryGetSchemaDialect(string schemaUri, [NotNullWhen(true)] out IVocabulary? vocabulary)
+    {
+        foreach (IVocabularyAnalyser analyser in this.analysers)
+        {
+            if (analyser.TryGetVocabulary(schemaUri) is IVocabulary v)
+            {
+                vocabulary = v;
+                return true;
+            }
+        }
+
+        vocabulary = null;
+        return false;
+    }
+
+    /// <summary>
     /// Analyses a schema element to discover its vocabulary.
     /// </summary>
     /// <param name="schemaElement">The schema element to analyse.</param>
