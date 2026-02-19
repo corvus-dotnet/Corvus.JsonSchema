@@ -12,6 +12,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Text;
+using Yaml = YamlDotNet.Serialization;
 
 namespace Corvus.Json.SourceGenerator;
 
@@ -44,6 +45,12 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
 
     private static readonly IVocabulary Corvus202012Vocab = CodeGeneration.Draft202012.VocabularyAnalyser.DefaultVocabularyWith([CodeGeneration.CorvusVocabulary.SchemaVocabulary.DefaultInstance]);
 
+    private static readonly Lazy<Yaml.IDeserializer> YamlDeserializer =
+        new(static () => new Yaml.DeserializerBuilder().WithAttemptingUnquotedStringTypeDeserialization().Build());
+
+    private static readonly Lazy<Yaml.ISerializer> YamlSerializer =
+        new(static () => new Yaml.SerializerBuilder().JsonCompatible().Build());
+
     /// <inheritdoc/>
     public void Initialize(IncrementalGeneratorInitializationContext initializationContext)
     {
@@ -51,7 +58,12 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
 
         IncrementalValueProvider<GlobalOptions> globalOptions = initializationContext.AnalyzerConfigOptionsProvider.Select(GetGlobalOptions);
 
-        IncrementalValuesProvider<AdditionalText> jsonSourceFiles = initializationContext.AdditionalTextsProvider.Where(p => p.Path.EndsWith(".json"));
+        IncrementalValuesProvider<AdditionalText> jsonSourceFiles = initializationContext.AdditionalTextsProvider
+            .Where(p =>
+            {
+                string path = p.Path;
+                return path.EndsWith(".json") || path.EndsWith(".yaml") || path.EndsWith(".yml");
+            });
 
         IncrementalValueProvider<CompoundDocumentResolver> documentResolver = jsonSourceFiles.Collect().Select(BuildDocumentResolver);
 
@@ -304,6 +316,17 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
             {
                 try
                 {
+                    string extensions = Path.GetExtension(additionalText.Path);
+                    if (string.Equals(extensions, ".yaml", StringComparison.InvariantCultureIgnoreCase)
+                        || string.Equals(extensions, ".yml", StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        object? yamlObject = YamlDeserializer.Value.Deserialize(json);
+
+                        using var writer = new StringWriter();
+                        YamlSerializer.Value.Serialize(writer, yamlObject);
+                        j = writer.ToString();
+                    }
+
                     var doc = JsonDocument.Parse(j);
                     if (SchemaReferenceNormalization.TryNormalizeSchemaReference(additionalText.Path, string.Empty, out string? normalizedReference))
                     {
@@ -321,6 +344,10 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
                 catch (JsonException)
                 {
                     // We ignore bad JSON files.
+                }
+                catch (YamlDotNet.Core.YamlException)
+                {
+                    // We ignore bad YAML files.
                 }
             }
         }
