@@ -68,6 +68,17 @@ public sealed class VocabularyAnalyser : IVocabularyAnalyser
             AnalyseChild);
     }
 
+    /// <inheritdoc/>
+    public IVocabulary? TryGetVocabulary(string iri)
+    {
+        if (iri.Equals(SchemaVocabulary.DefaultInstance.Uri))
+        {
+            return SchemaVocabulary.DefaultInstance;
+        }
+
+        return null;
+    }
+
     private static async ValueTask<IVocabulary?> AnalyseChild(IDocumentResolver documentResolver, VocabularyRegistry vocabularyRegistry, JsonReference childSchema)
     {
         JsonElement? childSchemaInstance = await documentResolver.TryResolve(childSchema);

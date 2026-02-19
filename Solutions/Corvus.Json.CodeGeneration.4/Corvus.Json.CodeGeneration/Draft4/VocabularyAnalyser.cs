@@ -54,4 +54,15 @@ public sealed class VocabularyAnalyser : IVocabularyAnalyser
 
         return new ValueTask<IVocabulary?>(default(IVocabulary?));
     }
+
+    /// <inheritdoc/>
+    public IVocabulary? TryGetVocabulary(string iri)
+    {
+        if (iri.Equals(SchemaVocabulary.DefaultInstance.Uri))
+        {
+            return SchemaVocabulary.DefaultInstance;
+        }
+
+        return null;
+    }
 }

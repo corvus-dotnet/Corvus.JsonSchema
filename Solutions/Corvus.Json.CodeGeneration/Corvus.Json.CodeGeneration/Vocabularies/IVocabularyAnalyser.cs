@@ -17,4 +17,12 @@ public interface IVocabularyAnalyser
     /// <param name="schemaInstance">The schema instance for which to get the vocabulary.</param>
     /// <returns>The <see cref="IVocabulary"/> for the schema instance.</returns>
     ValueTask<IVocabulary?> TryGetVocabulary(JsonElement schemaInstance);
+
+    /// <summary>
+    /// Gets the default vocabulary for the well-known schema IRI.
+    /// </summary>
+    /// <param name="iri">The IRI of the vocabulary.</param>
+    /// <returns>The <see cref="IVocabulary"/> corresponding to the schema version identified by the given IRI, or
+    /// <see langword="null"/>.</returns>
+    IVocabulary? TryGetVocabulary(string iri);
 }
