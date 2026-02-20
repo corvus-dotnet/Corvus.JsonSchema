@@ -98,7 +98,7 @@ public static class SourceGeneratorHelpers
             }
         }
 
-        ILanguageProvider languageProvider = typesToGenerate.GlobalOptions.CreateLanguageProvider();
+        ILanguageProvider languageProvider = typesToGenerate.GlobalOptions.CreateLanguageProvider(defaultNamespace);
 
         IReadOnlyCollection<GeneratedCodeFile> generatedCode;
 

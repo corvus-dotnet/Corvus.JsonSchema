@@ -28,6 +28,7 @@ public interface IGlobalOptions
     /// <summary>
     /// Creates a language provider from the Global Options.
     /// </summary>
+    /// <param name="defaultNamespace">The default namespace to use for the language provider, or <see langword="null"/> if no language provider is specified.</param>
     /// <returns>An instance of the language provider created from the global options.</returns>
-    ILanguageProvider CreateLanguageProvider();
+    ILanguageProvider CreateLanguageProvider(string? defaultNamespace);
 }
