@@ -1,0 +1,150 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>12.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <DefineConstants>$(DefineConstants);BUILDING_SOURCE_GENERATOR</DefineConstants>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+    <NoWarn>$(NoWarn);nullable;IDE0007;NU5128;RS2008;SA0001;SA1633;SA1101;SA1201;SA1202;SA1204;SA1401;SA1413;SA1512;SA1629</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <Description>Tools to assist people building .NET Source Generators for language providers other than the original Corvus.Json.CodeGeneration.CSharp.CSharpLanguageProvider.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Using Include="System" />
+    <Using Include="System.IO" />
+    <Using Include="System.Linq" />
+    <Using Include="System.Text.Json" />
+    <Using Include="System.Threading" />
+    <Using Include="System.Threading.Tasks" />
+    <Using Include="System.Collections.Generic" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Corvus.Json.ExtendedTypes\Corvus.Json\**\*.cs">
+      <Link>Corvus.Json.ExtendedTypes\%(RecursiveDir)\%(Filename)%(Extension)</Link>
+    </Compile>
+    <Compile Include="..\Corvus.Json.JsonReference\Corvus.Json\**\*.cs">
+      <Link>Corvus.Json.JsonReference\%(RecursiveDir)\%(Filename)%(Extension)</Link>
+    </Compile>
+    <Compile Include="..\Corvus.Json.CodeGeneration\Corvus.Json.CodeGeneration\**\*.cs">
+      <Link>Corvus.Json.CodeGeneration\%(RecursiveDir)\%(Filename)%(Extension)</Link>
+    </Compile>
+    <Compile Include="..\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration\Draft201909\**\*.cs">
+      <Link>Corvus.Json.CodeGeneration.201909\%(RecursiveDir)\%(Filename)%(Extension)</Link>
+    </Compile>
+    <Compile Include="..\Corvus.Json.CodeGeneration.202012\Corvus.Json.CodeGeneration\Draft202012\**\*.cs">
+      <Link>Corvus.Json.CodeGeneration.202012\%(RecursiveDir)\%(Filename)%(Extension)</Link>
+    </Compile>
+    <Compile Include="..\Corvus.Json.CodeGeneration.4\Corvus.Json.CodeGeneration\Draft4\**\*.cs">
+      <Link>Corvus.Json.CodeGeneration.4\%(RecursiveDir)\%(Filename)%(Extension)</Link>
+    </Compile>
+    <Compile Include="..\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration\Draft6\**\*.cs">
+      <Link>Corvus.Json.CodeGeneration.6\%(RecursiveDir)\%(Filename)%(Extension)</Link>
+    </Compile>
+    <Compile Include="..\Corvus.Json.CodeGeneration.7\Corvus.Json.CodeGeneration\Draft7\**\*.cs">
+      <Link>Corvus.Json.CodeGeneration.7\%(RecursiveDir)\%(Filename)%(Extension)</Link>
+    </Compile>
+    <Compile Include="..\Corvus.Json.CodeGeneration.CorvusVocabulary\Corvus.Json.CodeGeneration\CorvusVocabulary\**\*.cs">
+      <Link>Corvus.Json.CodeGeneration.CorvusVocabulary\%(RecursiveDir)\%(Filename)%(Extension)</Link>
+    </Compile>
+    <Compile Include="..\Corvus.Json.CodeGeneration.OpenApi30\Corvus.Json.CodeGeneration\OpenApi30\**\*.cs">
+      <Link>Corvus.Json.CodeGeneration.OpenApi30\%(RecursiveDir)\%(Filename)%(Extension)</Link>
+    </Compile>
+    <Compile Include="..\Corvus.Json.JsonSchema.Draft201909\Draft201909\**\*.cs">
+      <Link>Corvus.Json.CodeGeneration.Draft201909\%(RecursiveDir)\%(Filename)%(Extension)</Link>
+    </Compile>
+    <Compile Include="..\Corvus.Json.JsonSchema.Draft202012\Draft202012\**\*.cs">
+      <Link>Corvus.Json.CodeGeneration.Draft202012\%(RecursiveDir)\%(Filename)%(Extension)</Link>
+    </Compile>
+    <Compile Include="..\Corvus.Json.JsonSchema.Draft4\Draft4\**\*.cs">
+      <Link>Corvus.Json.CodeGeneration.Draft4\%(RecursiveDir)\%(Filename)%(Extension)</Link>
+    </Compile>
+    <Compile Include="..\Corvus.Json.JsonSchema.Draft6\Draft6\**\*.cs">
+      <Link>Corvus.Json.CodeGeneration.Draft6\%(RecursiveDir)\%(Filename)%(Extension)</Link>
+    </Compile>
+    <Compile Include="..\Corvus.Json.JsonSchema.Draft7\Draft7\**\*.cs">
+      <Link>Corvus.Json.CodeGeneration.Draft7\%(RecursiveDir)\%(Filename)%(Extension)</Link>
+    </Compile>
+    <Compile Include="..\Corvus.Json.JsonSchema.OpenApi30\OpenApi30\**\*.cs">
+      <Link>Corvus.Json.CodeGeneration.OpenApi30\%(RecursiveDir)\%(Filename)%(Extension)</Link>
+    </Compile>
+    <Compile Include="..\Corvus.Json.JsonSchema.OpenApi31\OpenApi31\**\*.cs">
+      <Link>Corvus.Json.CodeGeneration.OpenApi31\%(RecursiveDir)\%(Filename)%(Extension)</Link>
+    </Compile>
+
+    <Compile Remove="..\Corvus.Json.CodeGeneration\Corvus.Json.CodeGeneration\**\FileSystemDocumentResolver.cs" />
+    <Compile Remove="..\Corvus.Json.CodeGeneration.CSharp\Corvus.Json.CodeGeneration\CSharp\**\NullableAttributes.cs" />
+    <Compile Remove="..\Corvus.Json.JsonReference\Corvus.Json\**\NullableAttributes.cs" />
+    <Compile Remove="..\Corvus.Json.ExtendedTypes\Corvus.Json\**\NullableAttributes.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="metaschema\corvus\meta\corvus-extensions.json" />
+    <EmbeddedResource Include="metaschema\corvus\schema.json" />
+    <EmbeddedResource Include="metaschema\draft2019-09\meta\applicator.json" />
+    <EmbeddedResource Include="metaschema\draft2019-09\meta\content.json" />
+    <EmbeddedResource Include="metaschema\draft2019-09\meta\core.json" />
+    <EmbeddedResource Include="metaschema\draft2019-09\meta\format.json" />
+    <EmbeddedResource Include="metaschema\draft2019-09\meta\hyper-schema.json" />
+    <EmbeddedResource Include="metaschema\draft2019-09\meta\meta-data.json" />
+    <EmbeddedResource Include="metaschema\draft2019-09\meta\validation.json" />
+    <EmbeddedResource Include="metaschema\draft2019-09\schema.json" />
+    <EmbeddedResource Include="metaschema\draft2020-12\meta\applicator.json" />
+    <EmbeddedResource Include="metaschema\draft2020-12\meta\content.json" />
+    <EmbeddedResource Include="metaschema\draft2020-12\meta\core.json" />
+    <EmbeddedResource Include="metaschema\draft2020-12\meta\format-annotation.json" />
+    <EmbeddedResource Include="metaschema\draft2020-12\meta\format-assertion.json" />
+    <EmbeddedResource Include="metaschema\draft2020-12\meta\hyper-schema.json" />
+    <EmbeddedResource Include="metaschema\draft2020-12\meta\meta-data.json" />
+    <EmbeddedResource Include="metaschema\draft2020-12\meta\unevaluated.json" />
+    <EmbeddedResource Include="metaschema\draft2020-12\meta\validation.json" />
+    <EmbeddedResource Include="metaschema\draft2020-12\schema.json" />
+    <EmbeddedResource Include="metaschema\draft4\schema.json" />
+    <EmbeddedResource Include="metaschema\draft6\schema.json" />
+    <EmbeddedResource Include="metaschema\draft7\schema.json" />
+  </ItemGroup>
+
+
+  <ItemGroup>
+    <PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.18">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="IndexRange" Version="1.1.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.11.0" />
+    <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="8.0.11" />
+    <PackageReference Include="NodaTime" Version="3.2.1" />
+    <PackageReference Include="System.Reflection.Emit.Lightweight" Version="4.7.0" />
+    <PackageReference Include="System.Text.Json" Version="8.0.5" />
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Bcl.HashCode" Version="1.1.1" />
+    <PackageReference Include="Microsoft.Bcl.Memory" Version="9.0.0" />
+    <PackageReference Include="System.Buffers" Version="4.5.1" />
+    <PackageReference Include="System.Collections.Immutable" Version="8.0.0" />
+    <PackageReference Include="System.IO.Pipelines" Version="8.0.0" />
+    <PackageReference Include="System.Memory" Version="4.5.5" />
+    <PackageReference Include="System.Numerics.Vectors" Version="4.5.0" />
+    <PackageReference Include="System.Reflection.Metadata" Version="8.0.1" />
+    <PackageReference Include="System.Text.Encoding.CodePages" Version="8.0.0" />
+    <PackageReference Include="System.Text.Encodings.Web" Version="8.0.0" />
+    <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="Roslynator.Analyzers" Version="4.12.9" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Community.HighPerformance\Buffers\Views\" />
+  </ItemGroup>
+
+</Project>

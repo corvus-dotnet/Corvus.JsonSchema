@@ -296,7 +296,12 @@ public static class GenerationDriver
                 File.AppendAllText(mapFile, ", ");
             }
 
-            File.AppendAllText(mapFile, $"{{\"key\": \"{JsonEncodedText.Encode(generatedCodeFile.TypeDeclaration.LocatedSchema.Location)}\", \"class\": \"{JsonEncodedText.Encode(CSharpLanguageProvider.GetFullyQualifiedDotnetTypeName(generatedCodeFile))}\", \"path\": \"{JsonEncodedText.Encode(outputFile)}\"}}\r\n");
+            string? typeName = CSharpLanguageProvider.GetFullyQualifiedDotnetTypeName(generatedCodeFile);
+            
+            if (typeName is not null && generatedCodeFile.TypeDeclaration is not null)
+            {
+                File.AppendAllText(mapFile, $"{{\"key\": \"{JsonEncodedText.Encode(generatedCodeFile.TypeDeclaration.LocatedSchema.Location)}\", \"class\": \"{JsonEncodedText.Encode(typeName)}\", \"path\": \"{JsonEncodedText.Encode(outputFile)}\"}}\r\n");
+            }
         }
     }
 

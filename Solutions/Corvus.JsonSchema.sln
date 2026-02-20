@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.0.31903.59
+# Visual Studio Version 18
+VisualStudioVersion = 18.2.11430.68 d18.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Corvus.Json.Benchmarking", "Corvus.Json.Benchmarking\Corvus.Json.Benchmarking.csproj", "{D1227031-B358-4B5A-94BC-3CD28FEBADEC}"
 EndProject
@@ -96,6 +96,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Corvus.Json.CodeGeneration.OpenApi31", "Corvus.Json.CodeGeneration.OpenApi31\Corvus.Json.CodeGeneration.OpenApi31.csproj", "{589ED819-DE6C-ABF5-07DC-FCF11D666FCF}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sandbox.NetStandard21", "Sandbox.NetStandard21\Sandbox.NetStandard21.csproj", "{E7D530C9-462A-46DA-BCEB-54A249C975B8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Corvus.Json.SourceGeneratorTools.ForLanguageProvider", "Corvus.Json.SourceGeneratorTools.ForLanguageProvider\Corvus.Json.SourceGeneratorTools.ForLanguageProvider.csproj", "{97BE8BE6-F8BC-67EA-0209-8DC4C35DA096}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -247,6 +249,10 @@ Global
 		{E7D530C9-462A-46DA-BCEB-54A249C975B8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E7D530C9-462A-46DA-BCEB-54A249C975B8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E7D530C9-462A-46DA-BCEB-54A249C975B8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{97BE8BE6-F8BC-67EA-0209-8DC4C35DA096}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{97BE8BE6-F8BC-67EA-0209-8DC4C35DA096}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{97BE8BE6-F8BC-67EA-0209-8DC4C35DA096}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{97BE8BE6-F8BC-67EA-0209-8DC4C35DA096}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -289,6 +295,7 @@ Global
 		{907DC949-3413-4A70-AC7F-D7307DF1440A} = {D2E9E1BB-9ADE-4A9F-945E-5DCAEA860E80}
 		{589ED819-DE6C-ABF5-07DC-FCF11D666FCF} = {30D98060-7807-46E1-BC51-A0712820DF66}
 		{E7D530C9-462A-46DA-BCEB-54A249C975B8} = {4AEFC523-70EA-4ACC-A424-F8FF8D4F285A}
+		{97BE8BE6-F8BC-67EA-0209-8DC4C35DA096} = {FA2BAFA4-A8B6-479A-AB4C-BBFCA25D27A9}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A9FB3137-5BE5-44D0-86AC-4BC1DA4BA066}

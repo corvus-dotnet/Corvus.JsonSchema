@@ -2503,9 +2503,9 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
             {
                 generatedCode.Add(
                     new(
-                        kvp.Key,
                         GetFileName(fileNameDescription, fileAndContent.Key, uniqueFileNames),
-                        fileAndContent.Value));
+                        fileAndContent.Value,
+                        kvp.Key));
             }
         }
 
