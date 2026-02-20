@@ -42,9 +42,9 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
     /// </summary>
     /// <param name="generatedCodeFile">The generated code file.</param>
     /// <returns>The fully qualified .NET type name.</returns>
-    public static string GetFullyQualifiedDotnetTypeName(GeneratedCodeFile generatedCodeFile)
+    public static string? GetFullyQualifiedDotnetTypeName(GeneratedCodeFile generatedCodeFile)
     {
-        return GetFullyQualifiedDotnetTypeName(generatedCodeFile.TypeDeclaration);
+        return generatedCodeFile.TypeDeclaration is TypeDeclaration t ? GetFullyQualifiedDotnetTypeName(t) : null;
     }
 
     /// <summary>
@@ -52,9 +52,9 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
     /// </summary>
     /// <param name="generatedCodeFile">The generated code file.</param>
     /// <returns>The .NET type name.</returns>
-    public static string GetDotnetTypeName(GeneratedCodeFile generatedCodeFile)
+    public static string? GetDotnetTypeName(GeneratedCodeFile generatedCodeFile)
     {
-        return GetDotnetTypeName(generatedCodeFile.TypeDeclaration);
+        return generatedCodeFile.TypeDeclaration is TypeDeclaration t ? GetDotnetTypeName(t) : null;
     }
 
     /// <summary>
