@@ -2479,7 +2479,8 @@ public static class TypeDeclarationExtensions
             {
                 foreach (TypeDeclaration t in keyword.GetSubschemaTypeDeclarations(typeDeclaration))
                 {
-                    if (t.TupleType() is TupleTypeDeclaration referencedTupleTypeDeclaration)
+                    TupleTypeDeclaration? tupleType = t.TupleType() ?? t.ExplicitTupleType() ?? t.ImplicitTupleType();
+                    if (tupleType is TupleTypeDeclaration referencedTupleTypeDeclaration)
                     {
                         if (declaration is null)
                         {
