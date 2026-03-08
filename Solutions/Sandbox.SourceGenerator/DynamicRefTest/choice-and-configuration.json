@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Common deployment engine types",
+  "$id": "http://endjin.com/schemas/deployment-engine/service-configuration-template",
+  "$defs": {
+    "choiceAndConfiguration": {
+      "type": "object",
+      "properties": {
+        "option": { "type": "string" },
+        "configuration": { "type": "object" }
+      },
+      "required": [ "option" ]
+    },
+    "choiceAndConfigurationOrStringExpression": {
+      "$id": "choiceAndConfigurationOrStringExpressionDynamicRoot",
+      "$ref": "http://endjin.com/schemas/app-model/common#/$defs/entityOrStringExpression",
+      "$defs": {
+        "choiceAndConfiguration": {
+          "$dynamicAnchor": "entityOrStringExpressionEntity",
+          "$ref": "http://endjin.com/schemas/deployment-engine/service-configuration-template#/$defs/choiceAndConfiguration"
+        }
+      }
+    }
+  }
+}
