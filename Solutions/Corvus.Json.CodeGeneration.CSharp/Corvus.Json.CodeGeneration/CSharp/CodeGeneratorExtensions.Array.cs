@@ -1564,7 +1564,7 @@ internal static partial class CodeGeneratorExtensions
             .AppendLineIndent("/// <param name=\"values\">The numeric values from which to create the array.</param>")
             .AppendLineIndent("/// <returns>An instance of the array populated from the given values.</returns>")
             .AppendLineIndent("/// <remarks>")
-            .AppendIndent("/// The <paramref name=\"values\"> span should be of length ")
+            .AppendIndent("/// The <paramref name=\"values\" /> span should be of length ")
             .Append(typeDeclaration.ArrayValueBufferSize())
             .AppendLine(".")
             .AppendLineIndent("/// </remarks>")

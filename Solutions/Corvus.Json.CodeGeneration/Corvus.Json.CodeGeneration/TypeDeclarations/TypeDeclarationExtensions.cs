@@ -972,6 +972,8 @@ public static class TypeDeclarationExtensions
                         }
                     }
                 }
+
+                return null;
             }
 
             return minimumValue;
