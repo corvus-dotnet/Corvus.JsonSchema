@@ -961,7 +961,17 @@ public static class TypeDeclarationExtensions
 
             if (minimumValue != maximumValue)
             {
-                return null;
+                // Now go through all the allOf union types and see if we can find one
+                foreach (IAllOfSubschemaValidationKeyword keyword in typeDeclaration.Keywords().OfType<IAllOfSubschemaValidationKeyword>())
+                {
+                    foreach (TypeDeclaration t in keyword.GetSubschemaTypeDeclarations(typeDeclaration).Select(t => t.ReducedTypeDeclaration().ReducedType))
+                    {
+                        if (GetArrayDimension(t) is int referencedArrayDimension)
+                        {
+                            return referencedArrayDimension;
+                        }
+                    }
+                }
             }
 
             return minimumValue;
