@@ -404,6 +404,12 @@ Benchmark suites for various components.
 
 The Source Generator which generates types from Json Schema.
 
+## V4.6 Updates
+
+### Breaking changes
+
+We had a long-standing bug with the pseudo-generic type pattern and `$dynamicRef` where you would get an extra level of indirection because the anchoring `$ref` was not reducible. This is now fixed, but any code using `$dynamicRef` will need to be simplified to remove the redundant indirection.
+
 ## V4.5 Updates
 
 ### Breaking changes (Language Provider Implementers only)
