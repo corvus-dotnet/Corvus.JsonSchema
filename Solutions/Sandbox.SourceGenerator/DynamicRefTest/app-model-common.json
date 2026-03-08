@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Common app model types",
+  "$id": "http://endjin.com/schemas/app-model/common",
+
+  "$defs": {
+    "stringExpression": { "type": "string" },
+
+    "entityOrStringExpression": {
+      "comment": "Either an entity of a type determined by the entityOrStringExpressionEntity dynamic anchor, or a string expression representing a value of that type",
+      "oneOf": [
+        { "$ref": "#/$defs/stringExpression" },
+        { "$dynamicRef": "#entityOrStringExpressionEntity" }
+      ],
+      "$defs": {
+        "defaultThing": {
+          "description": "Only necessary due to annoying bookending constraint of 2012 schema",
+          "$dynamicAnchor": "entityOrStringExpressionEntity"
+        }
+      }
+    }
+  }
+}

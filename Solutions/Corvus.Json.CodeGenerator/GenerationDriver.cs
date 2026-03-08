@@ -236,7 +236,7 @@ public static class GenerationDriver
 
     private static void WriteFile(ProgressContext context, ProgressTask currentTask, string outputPath, string? mapFile, int index, HashSet<string> writtenFiles, GeneratedCodeFile generatedCodeFile)
     {
-        ProgressTask subtask = context.AddTask($"{generatedCodeFile.FileName} [green]({generatedCodeFile.TypeDeclaration.RelativeSchemaLocation.ToString().EscapeMarkup()})[/]");
+        ProgressTask subtask = context.AddTask($"{generatedCodeFile.FileName} [green]({generatedCodeFile.TypeDeclaration?.RelativeSchemaLocation.ToString().EscapeMarkup()})[/]");
         currentTask.Increment(1);
         string source = generatedCodeFile.FileContent;
 

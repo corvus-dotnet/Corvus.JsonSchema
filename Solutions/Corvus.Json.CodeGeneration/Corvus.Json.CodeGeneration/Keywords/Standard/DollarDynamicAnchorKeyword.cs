@@ -51,7 +51,7 @@ public sealed class DollarDynamicAnchorKeyword : IAnchorKeyword
     public bool CanReduce(in JsonElement schemaValue)
     {
         return
-            Reduction.CanReduceNonReducingKeyword(schemaValue, this.KeywordUtf8) &&
+            Reduction.CanReduceNonReducingKeyword(schemaValue, this.KeywordUtf8) ||
             Reduction.CanReduceNonReducingKeyword(schemaValue, DollarIdKeyword.Instance.KeywordUtf8);
     }
 

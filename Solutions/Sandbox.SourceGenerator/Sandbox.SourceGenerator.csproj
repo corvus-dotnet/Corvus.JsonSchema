@@ -17,6 +17,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="DynamicRefTest\app-model-common.json" />
+    <None Remove="DynamicRefTest\choice-and-configuration.json" />
     <None Remove="Model\keycloak-realm-26.0.2.json" />
     <None Remove="test2.json" />
   </ItemGroup>
@@ -27,6 +29,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <AdditionalFiles Include="DynamicRefTest\app-model-common.json" />
+    <AdditionalFiles Include="DynamicRefTest\choice-and-configuration.json" />
     <AdditionalFiles Include="Model\keycloak-realm-26.0.2.json" />
     <AdditionalFiles Include="test.json" />
     <AdditionalFiles Include="test2.json" />
