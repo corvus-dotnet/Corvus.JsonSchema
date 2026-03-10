@@ -212,7 +212,7 @@ internal static partial class CodeGeneratorExtensions
             }
 
             generator
-                .AppendLineIndent("if (this.", fieldName, ".ValueKind != JsonValueKind.Number)")
+                .AppendLineIndent("if (this.", fieldName, ".ValueKind != JsonValueKind.Array)")
                 .AppendBlockIndent(
                     """
                     {
@@ -537,8 +537,8 @@ internal static partial class CodeGeneratorExtensions
             .ReserveNameIfNotReserved("RemoveAt")
             .ReserveNameIfNotReserved("RemoveRange")
             .AppendRemoveJsonAny(typeDeclaration, isTupleOrHasArrayItemsType)
-            .AppendRemoveAt(typeDeclaration, isTupleOrHasArrayItemsType)
-            .AppendRemoveRange(typeDeclaration, isTupleOrHasArrayItemsType)
+            .AppendRemoveAt(typeDeclaration, typeDeclaration.IsTuple())
+            .AppendRemoveRange(typeDeclaration, typeDeclaration.IsTuple())
             .AppendRemoveArrayItemsType(typeDeclaration);
     }
 
@@ -2840,7 +2840,7 @@ internal static partial class CodeGeneratorExtensions
         return generator;
     }
 
-    private static CodeGenerator AppendRemoveAt(this CodeGenerator generator, TypeDeclaration typeDeclaration, bool isTupleOrHasArrayItemsType)
+    private static CodeGenerator AppendRemoveAt(this CodeGenerator generator, TypeDeclaration typeDeclaration, bool isTuple)
     {
         if (generator.IsCancellationRequested)
         {
@@ -2849,7 +2849,7 @@ internal static partial class CodeGeneratorExtensions
 
         generator.AppendSeparatorLine();
 
-        if (isTupleOrHasArrayItemsType)
+        if (isTuple)
         {
             generator
                 .AppendLineIndent("/// <inheritdoc/>")
@@ -2875,7 +2875,7 @@ internal static partial class CodeGeneratorExtensions
             .AppendLineIndent("}");
     }
 
-    private static CodeGenerator AppendRemoveRange(this CodeGenerator generator, TypeDeclaration typeDeclaration, bool isTupleOrHasArrayItemsType)
+    private static CodeGenerator AppendRemoveRange(this CodeGenerator generator, TypeDeclaration typeDeclaration, bool isTuple)
     {
         if (generator.IsCancellationRequested)
         {
@@ -2884,7 +2884,7 @@ internal static partial class CodeGeneratorExtensions
 
         generator.AppendSeparatorLine();
 
-        if (isTupleOrHasArrayItemsType)
+        if (isTuple)
         {
             generator
                 .AppendLineIndent("/// <inheritdoc/>")
