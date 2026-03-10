@@ -212,7 +212,7 @@ internal static partial class CodeGeneratorExtensions
             }
 
             generator
-                .AppendLineIndent("if (this.", fieldName, ".ValueKind != JsonValueKind.Number)")
+                .AppendLineIndent("if (this.", fieldName, ".ValueKind != JsonValueKind.Array)")
                 .AppendBlockIndent(
                     """
                     {
