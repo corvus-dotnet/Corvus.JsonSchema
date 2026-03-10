@@ -40,7 +40,14 @@ public static class SchemaReferenceNormalization
                     schemaFile = Path.Combine(basePath, schemaFile);
                 }
 
-                schemaFile = Path.GetFullPath(schemaFile);
+                if (schemaFile.StartsWith("file:///"))
+                {
+                    schemaFile = Path.GetFullPath(schemaFile.Substring("file:///".Length));
+                }
+                else
+                {
+                    schemaFile = Path.GetFullPath(schemaFile);
+                }
             }
 
             result = schemaFile.Replace('\\', '/');
