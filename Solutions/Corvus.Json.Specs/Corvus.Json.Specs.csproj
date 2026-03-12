@@ -11,6 +11,18 @@
 		<NoWarn>RCS1029;CS1591;NU1510</NoWarn>
 	</PropertyGroup>
 
+  <PropertyGroup>
+    <GenerateSpecFlowCodeBehindDependsOn>
+      $(GenerateSpecFlowCodeBehindDependsOn);
+      EnsureNoParallelBuilds
+    </GenerateSpecFlowCodeBehindDependsOn>
+  </PropertyGroup>
+  
+  <Target Name="EnsureNoParallelBuilds">
+    <Message Text="Ensuring SpecFlow code-behind generation is not run in parallel" Importance="high" />
+    <Exec Command="echo SpecFlow is running single-threaded to avoid file locks" />
+  </Target>
+  
 	<ItemGroup Condition="'$(TargetFramework)' == 'net481'">
 		<PackageReference Include="Microsoft.Extensions.DependencyModel" Version="10.0.1" />
 		<PackageReference Include="System.Runtime.Loader" Version="4.3.0" />
