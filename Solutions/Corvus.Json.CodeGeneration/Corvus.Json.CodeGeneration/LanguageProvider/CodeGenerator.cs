@@ -830,7 +830,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
     /// </summary>
     /// <param name="segments">The segements to append.</param>
     /// <returns>A reference to this instance after the operation has completed.</returns>
+#if NET9_0_OR_GREATER
+    public CodeGenerator AppendLineIndent(params ReadOnlySpan<Segment> segments)
+#else
     public CodeGenerator AppendLineIndent(params Segment[] segments)
+#endif
     {
         for (int i = 0; i < segments.Length; ++i)
         {
@@ -864,11 +868,111 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
     }
 
     /// <summary>
+    /// Append two segments as an indented line.
+    /// </summary>
+    /// <param name="segment1">The first segment (indented).</param>
+    /// <param name="segment2">The second segment (with line end).</param>
+    /// <returns>A reference to this instance after the operation has completed.</returns>
+    public CodeGenerator AppendLineIndent(Segment segment1, Segment segment2)
+    {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
+        segment1.AppendIndent(this);
+
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
+        segment2.AppendLine(this);
+        return this;
+    }
+
+    /// <summary>
+    /// Append three segments as an indented line.
+    /// </summary>
+    /// <param name="segment1">The first segment (indented).</param>
+    /// <param name="segment2">The second segment.</param>
+    /// <param name="segment3">The third segment (with line end).</param>
+    /// <returns>A reference to this instance after the operation has completed.</returns>
+    public CodeGenerator AppendLineIndent(Segment segment1, Segment segment2, Segment segment3)
+    {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
+        segment1.AppendIndent(this);
+
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
+        segment2.Append(this);
+
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
+        segment3.AppendLine(this);
+        return this;
+    }
+
+    /// <summary>
+    /// Append four segments as an indented line.
+    /// </summary>
+    /// <param name="segment1">The first segment (indented).</param>
+    /// <param name="segment2">The second segment.</param>
+    /// <param name="segment3">The third segment.</param>
+    /// <param name="segment4">The fourth segment (with line end).</param>
+    /// <returns>A reference to this instance after the operation has completed.</returns>
+    public CodeGenerator AppendLineIndent(Segment segment1, Segment segment2, Segment segment3, Segment segment4)
+    {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
+        segment1.AppendIndent(this);
+
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
+        segment2.Append(this);
+
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
+        segment3.Append(this);
+
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
+        segment4.AppendLine(this);
+        return this;
+    }
+
+    /// <summary>
     /// Append multiple segments with an initial indent.
     /// </summary>
     /// <param name="segments">The segements to append.</param>
     /// <returns>A reference to this instance after the operation has completed.</returns>
+#if NET9_0_OR_GREATER
+    public CodeGenerator AppendIndent(params ReadOnlySpan<Segment> segments)
+#else
     public CodeGenerator AppendIndent(params Segment[] segments)
+#endif
     {
         for (int i = 0; i < segments.Length; ++i)
         {
@@ -891,11 +995,111 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
     }
 
     /// <summary>
+    /// Append two segments with an initial indent.
+    /// </summary>
+    /// <param name="segment1">The first segment (indented).</param>
+    /// <param name="segment2">The second segment.</param>
+    /// <returns>A reference to this instance after the operation has completed.</returns>
+    public CodeGenerator AppendIndent(Segment segment1, Segment segment2)
+    {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
+        segment1.AppendIndent(this);
+
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
+        segment2.Append(this);
+        return this;
+    }
+
+    /// <summary>
+    /// Append three segments with an initial indent.
+    /// </summary>
+    /// <param name="segment1">The first segment (indented).</param>
+    /// <param name="segment2">The second segment.</param>
+    /// <param name="segment3">The third segment.</param>
+    /// <returns>A reference to this instance after the operation has completed.</returns>
+    public CodeGenerator AppendIndent(Segment segment1, Segment segment2, Segment segment3)
+    {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
+        segment1.AppendIndent(this);
+
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
+        segment2.Append(this);
+
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
+        segment3.Append(this);
+        return this;
+    }
+
+    /// <summary>
+    /// Append four segments with an initial indent.
+    /// </summary>
+    /// <param name="segment1">The first segment (indented).</param>
+    /// <param name="segment2">The second segment.</param>
+    /// <param name="segment3">The third segment.</param>
+    /// <param name="segment4">The fourth segment.</param>
+    /// <returns>A reference to this instance after the operation has completed.</returns>
+    public CodeGenerator AppendIndent(Segment segment1, Segment segment2, Segment segment3, Segment segment4)
+    {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
+        segment1.AppendIndent(this);
+
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
+        segment2.Append(this);
+
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
+        segment3.Append(this);
+
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
+        segment4.Append(this);
+        return this;
+    }
+
+    /// <summary>
     /// Append multiple segments with an initial indent.
     /// </summary>
     /// <param name="segments">The segements to append.</param>
     /// <returns>A reference to this instance after the operation has completed.</returns>
+#if NET9_0_OR_GREATER
+    public CodeGenerator AppendLine(params ReadOnlySpan<Segment> segments)
+#else
     public CodeGenerator AppendLine(params Segment[] segments)
+#endif
     {
         for (int i = 0; i < segments.Length; ++i)
         {
@@ -914,6 +1118,102 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
             }
         }
 
+        return this;
+    }
+
+    /// <summary>
+    /// Append two segments as a line.
+    /// </summary>
+    /// <param name="segment1">The first segment.</param>
+    /// <param name="segment2">The second segment (with line end).</param>
+    /// <returns>A reference to this instance after the operation has completed.</returns>
+    public CodeGenerator AppendLine(Segment segment1, Segment segment2)
+    {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
+        segment1.Append(this);
+
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
+        segment2.AppendLine(this);
+        return this;
+    }
+
+    /// <summary>
+    /// Append three segments as a line.
+    /// </summary>
+    /// <param name="segment1">The first segment.</param>
+    /// <param name="segment2">The second segment.</param>
+    /// <param name="segment3">The third segment (with line end).</param>
+    /// <returns>A reference to this instance after the operation has completed.</returns>
+    public CodeGenerator AppendLine(Segment segment1, Segment segment2, Segment segment3)
+    {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
+        segment1.Append(this);
+
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
+        segment2.Append(this);
+
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
+        segment3.AppendLine(this);
+        return this;
+    }
+
+    /// <summary>
+    /// Append four segments as a line.
+    /// </summary>
+    /// <param name="segment1">The first segment.</param>
+    /// <param name="segment2">The second segment.</param>
+    /// <param name="segment3">The third segment.</param>
+    /// <param name="segment4">The fourth segment (with line end).</param>
+    /// <returns>A reference to this instance after the operation has completed.</returns>
+    public CodeGenerator AppendLine(Segment segment1, Segment segment2, Segment segment3, Segment segment4)
+    {
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
+        segment1.Append(this);
+
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
+        segment2.Append(this);
+
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
+        segment3.Append(this);
+
+        if (this.cancellationToken.IsCancellationRequested)
+        {
+            return this;
+        }
+
+        segment4.AppendLine(this);
         return this;
     }
 
