@@ -19,7 +19,7 @@ namespace Corvus.Json.CodeGeneration;
 public class JsonSchemaRegistry(IDocumentResolver documentResolver, VocabularyRegistry vocabularyRegistry)
 {
     private static readonly JsonReference DefaultAbsoluteLocation = new(string.Empty);
-    private readonly Dictionary<string, LocatedSchema> locatedSchema = [];
+    private readonly Dictionary<string, LocatedSchema> locatedSchema = new(StringComparer.Ordinal);
 
     /// <summary>
     /// Walk a JSON document and build a schema map.

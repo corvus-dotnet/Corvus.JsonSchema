@@ -14,7 +14,7 @@ public class FileSystemDocumentResolver : IDocumentResolver
 {
     private readonly string baseDirectory;
     private readonly IDocumentStreamPreProcessor? preProcessor;
-    private readonly Dictionary<string, JsonDocument> documents = [];
+    private readonly Dictionary<string, JsonDocument> documents = new(StringComparer.Ordinal);
     private bool disposedValue;
 
     /// <summary>

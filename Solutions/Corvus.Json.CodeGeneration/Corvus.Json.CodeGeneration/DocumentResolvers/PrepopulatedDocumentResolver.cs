@@ -11,7 +11,7 @@ namespace Corvus.Json;
 /// </summary>
 public class PrepopulatedDocumentResolver : IDocumentResolver
 {
-    private readonly Dictionary<string, JsonDocument> documents = [];
+    private readonly Dictionary<string, JsonDocument> documents = new(StringComparer.Ordinal);
     private bool disposedValue;
 
     /// <inheritdoc/>

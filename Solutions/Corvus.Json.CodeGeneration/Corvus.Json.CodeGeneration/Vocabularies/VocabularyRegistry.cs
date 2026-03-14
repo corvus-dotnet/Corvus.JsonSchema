@@ -13,7 +13,7 @@ namespace Corvus.Json.CodeGeneration;
 public class VocabularyRegistry
 {
     private List<IVocabularyAnalyser> analysers = [];
-    private Dictionary<string, IVocabulary> vocabularies = [];
+    private Dictionary<string, IVocabulary> vocabularies = new(StringComparer.Ordinal);
 
     /// <summary>
     /// Registers an analyser.
