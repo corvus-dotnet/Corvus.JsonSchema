@@ -36,14 +36,24 @@ namespace Corvus.Json.CodeGeneration;
 [DebuggerDisplay("{LocatedSchema.Location}")]
 public sealed class TypeDeclaration(LocatedSchema locatedSchema)
 {
-    private readonly Dictionary<string, TypeDeclaration> subschemaTypeDeclarations = [];
-    private readonly ConcurrentDictionary<string, object?> metadata = [];
-    private readonly Dictionary<string, PropertyDeclaration> properties = [];
+    private readonly Dictionary<string, TypeDeclaration> subschemaTypeDeclarations = new(StringComparer.Ordinal);
+    private readonly ConcurrentDictionary<string, object?> metadata = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, PropertyDeclaration> properties = new(StringComparer.Ordinal);
+    private IReadOnlyList<PropertyDeclaration>? cachedPropertyDeclarations;
+    private IReadOnlyList<TypeDeclaration>? cachedOrderedSubschemaTypeDeclarations;
 
     /// <summary>
     /// Gets the subschema type declarations.
     /// </summary>
     public IReadOnlyDictionary<string, TypeDeclaration> SubschemaTypeDeclarations => this.subschemaTypeDeclarations;
+
+    /// <summary>
+    /// Gets the subschema type declarations, ordered by location.
+    /// </summary>
+    public IReadOnlyList<TypeDeclaration> OrderedSubschemaTypeDeclarations =>
+        this.cachedOrderedSubschemaTypeDeclarations ??= this.subschemaTypeDeclarations.Values
+            .OrderBy(t => t.LocatedSchema.Location)
+            .ToArray();
 
     /// <summary>
     /// Gets the located schema for the type declaration.
@@ -58,7 +68,8 @@ public sealed class TypeDeclaration(LocatedSchema locatedSchema)
     /// <summary>
     /// Gets the property declarations for this type declaration.
     /// </summary>
-    public IEnumerable<PropertyDeclaration> PropertyDeclarations => this.properties.Values.OrderBy(p => p.JsonPropertyName);
+    public IReadOnlyList<PropertyDeclaration> PropertyDeclarations =>
+        this.cachedPropertyDeclarations ??= this.properties.Values.OrderBy(p => p.JsonPropertyName).ToArray();
 
     /// <summary>
     /// Gets a value indicating whether the type has any property declarations.
@@ -86,6 +97,7 @@ public sealed class TypeDeclaration(LocatedSchema locatedSchema)
     /// <param name="subschemaTypeDeclaration">The type declaration for the subschema.</param>
     public void AddSubschemaTypeDeclaration(JsonReference subschemaPath, TypeDeclaration subschemaTypeDeclaration)
     {
+        this.cachedOrderedSubschemaTypeDeclarations = null;
         this.subschemaTypeDeclarations.Add(subschemaPath, subschemaTypeDeclaration);
     }
 
@@ -135,6 +147,8 @@ public sealed class TypeDeclaration(LocatedSchema locatedSchema)
     /// <param name="propertyDeclaration">The property declaration to add or update.</param>
     public void AddOrUpdatePropertyDeclaration(PropertyDeclaration propertyDeclaration)
     {
+        this.cachedPropertyDeclarations = null;
+
         if (this.properties.TryGetValue(propertyDeclaration.JsonPropertyName, out PropertyDeclaration? existingProperty))
         {
             // Merge whether this is a required property with the parent

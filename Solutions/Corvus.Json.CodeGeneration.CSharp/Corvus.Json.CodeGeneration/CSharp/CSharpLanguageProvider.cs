@@ -132,7 +132,7 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
     public IReadOnlyCollection<GeneratedCodeFile> GenerateCodeFor(IEnumerable<TypeDeclaration> typeDeclarations, CancellationToken cancellationToken)
     {
 #if DEBUG
-        Dictionary<string, TypeDeclaration> namesSeen = [];
+        Dictionary<string, TypeDeclaration> namesSeen = new(StringComparer.Ordinal);
 #endif
         CodeGenerator generator = new(this, cancellationToken, lineEndSequence: this.options.LineEndSequence);
 

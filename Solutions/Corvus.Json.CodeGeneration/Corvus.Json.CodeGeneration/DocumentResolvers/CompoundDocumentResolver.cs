@@ -12,7 +12,7 @@ namespace Corvus.Json.CodeGeneration;
 public class CompoundDocumentResolver : IDocumentResolver
 {
     private readonly IDocumentResolver[] documentResolvers;
-    private readonly Dictionary<string, JsonDocument> documents = [];
+    private readonly Dictionary<string, JsonDocument> documents = new(StringComparer.Ordinal);
     private bool disposedValue;
 
     /// <summary>

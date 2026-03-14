@@ -28,7 +28,7 @@ public sealed class PropertyDeclaration(
     IObjectValidationKeyword? keyword,
     IObjectRequiredPropertyValidationKeyword? requiredKeyword)
 {
-    private readonly Dictionary<string, object?> metadata = [];
+    private readonly Dictionary<string, object?> metadata = new(StringComparer.Ordinal);
 
     /// <summary>
     /// Gets the type that owns the property.

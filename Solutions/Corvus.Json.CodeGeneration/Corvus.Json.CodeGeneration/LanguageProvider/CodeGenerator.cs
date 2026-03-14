@@ -22,12 +22,14 @@ namespace Corvus.Json.CodeGeneration;
 /// <param name="lineEndSequence">The line end sequence.</param>
 public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken cancellationToken, int instancesPerIndent = 4, string indentSequence = " ", string lineEndSequence = "\r\n")
 {
+    private const int MaxCachedIndentLevel = 20;
     private readonly string indentSequence = string.Concat(Enumerable.Repeat(indentSequence, instancesPerIndent));
+    private readonly string[] cachedIndentStrings = BuildIndentCache(string.Concat(Enumerable.Repeat(indentSequence, instancesPerIndent)), MaxCachedIndentLevel);
     private readonly StringBuilder stringBuilder = new();
     private readonly Dictionary<MemberName, string> memberNames = [];
-    private readonly Dictionary<string, HashSet<string>> memberNamesByScope = [];
+    private readonly Dictionary<string, HashSet<string>> memberNamesByScope = new(StringComparer.Ordinal);
     private readonly Stack<ScopeValue> scope = [];
-    private readonly Dictionary<string, Stack<object?>> metadata = [];
+    private readonly Dictionary<string, Stack<object?>> metadata = new(StringComparer.Ordinal);
     private readonly Dictionary<TypeDeclaration, Dictionary<string, string>> generatedFiles = [];
     private readonly CancellationToken cancellationToken = cancellationToken;
     private int indentationLevel = 0;
@@ -219,7 +221,7 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
 
         // Clear the string builder.
         this.stringBuilder.Clear();
-        this.currentTypeDeclarationFiles = [];
+        this.currentTypeDeclarationFiles = new(StringComparer.Ordinal);
 
         // Clear the internal state for the type declaration.
         this.memberNames.Clear();
@@ -2549,6 +2551,18 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
         }
     }
 
+    private static string[] BuildIndentCache(string singleIndent, int maxLevel)
+    {
+        string[] cache = new string[maxLevel];
+        cache[0] = string.Empty;
+        for (int i = 1; i < maxLevel; i++)
+        {
+            cache[i] = string.Concat(Enumerable.Repeat(singleIndent, i));
+        }
+
+        return cache;
+    }
+
     private string AddName(MemberName memberName)
     {
         if (!this.memberNamesByScope.TryGetValue(memberName.FullyQualifiedScope, out HashSet<string>? memberNamesForScope))
@@ -2576,9 +2590,22 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
 
     private void WriteIndent()
     {
-        for (int i = 0; i < this.indentationLevel; ++i)
+        if (this.indentationLevel <= 0)
         {
-            this.stringBuilder.Append(this.indentSequence);
+            return;
+        }
+
+        if (this.indentationLevel < MaxCachedIndentLevel)
+        {
+            this.stringBuilder.Append(this.cachedIndentStrings[this.indentationLevel]);
+        }
+        else
+        {
+            this.stringBuilder.Append(this.cachedIndentStrings[MaxCachedIndentLevel - 1]);
+            for (int i = MaxCachedIndentLevel - 1; i < this.indentationLevel; ++i)
+            {
+                this.stringBuilder.Append(this.indentSequence);
+            }
         }
     }
 

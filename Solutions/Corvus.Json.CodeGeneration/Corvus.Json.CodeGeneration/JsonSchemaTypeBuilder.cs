@@ -19,7 +19,7 @@ public class JsonSchemaTypeBuilder(
     IDocumentResolver documentResolver,
     VocabularyRegistry vocabularyRegistry)
 {
-    private readonly Dictionary<string, TypeDeclaration> locatedTypeDeclarations = [];
+    private readonly Dictionary<string, TypeDeclaration> locatedTypeDeclarations = new(StringComparer.Ordinal);
     private readonly JsonSchemaRegistry schemaRegistry = new(documentResolver, vocabularyRegistry);
     private readonly HashSet<TypeDeclaration> propertiesCollected = [];
 
@@ -268,7 +268,7 @@ public class JsonSchemaTypeBuilder(
             }
 
             // Then set the names for the subschema it requires.
-            foreach (TypeDeclaration child in typeDeclaration.SubschemaTypeDeclarations.Values.OrderBy(t => t.LocatedSchema.Location.ToString()))
+            foreach (TypeDeclaration child in typeDeclaration.OrderedSubschemaTypeDeclarations)
             {
                 if (cancellationToken.IsCancellationRequested)
                 {
@@ -320,16 +320,15 @@ public class JsonSchemaTypeBuilder(
             }
 
             // Then set the names for the subschema it requires.
-            foreach (TypeDeclaration child in typeDeclaration.SubschemaTypeDeclarations.Values
-                        .Select(s => s.ReducedTypeDeclaration().ReducedType)
-                        .OrderBy(t => t.LocatedSchema.Location.ToString()))
+            foreach (TypeDeclaration child in typeDeclaration.OrderedSubschemaTypeDeclarations)
             {
                 if (cancellationToken.IsCancellationRequested)
                 {
                     return;
                 }
 
-                SetNamesBeforeSubschema(child, visitedTypeDeclarations, cancellationToken);
+                TypeDeclaration reducedChild = child.CanReduce() ? child.ReducedTypeDeclaration().ReducedType : child;
+                SetNamesBeforeSubschema(reducedChild, visitedTypeDeclarations, cancellationToken);
             }
         }
 
@@ -354,11 +353,10 @@ public class JsonSchemaTypeBuilder(
             }
 
             // Then set the names for the subschema it requires.
-            foreach (TypeDeclaration child in typeDeclaration.SubschemaTypeDeclarations.Values
-                            .Select(s => s.ReducedTypeDeclaration().ReducedType)
-                            .OrderBy(t => t.LocatedSchema.Location.ToString()))
+            foreach (TypeDeclaration child in typeDeclaration.OrderedSubschemaTypeDeclarations)
             {
-                SetNamesAfterSubschema(child, visitedTypeDeclarations, cancellationToken);
+                TypeDeclaration reducedChild = child.CanReduce() ? child.ReducedTypeDeclaration().ReducedType : child;
+                SetNamesAfterSubschema(reducedChild, visitedTypeDeclarations, cancellationToken);
             }
         }
     }
