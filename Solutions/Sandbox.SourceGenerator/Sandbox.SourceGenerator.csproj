@@ -33,7 +33,9 @@
     <AdditionalFiles Include="DynamicRefTest\choice-and-configuration.json" />
     <AdditionalFiles Include="Model\keycloak-realm-26.0.2.json" />
     <AdditionalFiles Include="test.json" />
+    <AdditionalFiles Include="test.yaml" />
     <AdditionalFiles Include="test2.json" />
+    <AdditionalFiles Include="test2.yml" />
   </ItemGroup>
 
   <ItemGroup>
