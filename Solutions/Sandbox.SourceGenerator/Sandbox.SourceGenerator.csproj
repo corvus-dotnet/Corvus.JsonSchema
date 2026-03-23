@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <Import Project="..\Corvus.Json.SourceGenerator\Corvus.Json.SourceGenerator.props" />
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -41,7 +41,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.Collections.Immutable" Version="10.0.1" />
+    <PackageReference Include="System.Collections.Immutable" Version="10.0.4" />
   </ItemGroup>
   
 </Project>

@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 	<Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
 
 	<PropertyGroup>
@@ -27,9 +27,9 @@
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
     <PackageReference Include="Corvus.UriTemplates" Version="2.3.2" />
-		<PackageReference Include="NodaTime" Version="3.3.0" />
-		<PackageReference Include="System.Collections.Immutable" Version="10.0.1" />
-    <PackageReference Include="System.Text.Json" Version="10.0.1" />
+		<PackageReference Include="NodaTime" Version="3.3.1" />
+		<PackageReference Include="System.Collections.Immutable" Version="10.0.4" />
+    <PackageReference Include="System.Text.Json" Version="10.0.4" />
   </ItemGroup>
 
 	<ItemGroup>
