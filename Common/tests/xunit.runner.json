@@ -2,6 +2,5 @@
     "diagnosticMessages": true,
     "longRunningTestSeconds": 120,
     "shadowCopy": false,
-    "preEnumerateTheories": false,
-    "maxParallelThreads": 4
+    "preEnumerateTheories": false
 }

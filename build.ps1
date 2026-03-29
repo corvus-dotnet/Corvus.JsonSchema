@@ -161,6 +161,10 @@ $NuSpecFilesToPackage = @(
     # "Solutions/MySolution/MyProject/MyProject.nuspec"
 )
 
+# Run test assemblies sequentially to avoid OOM on CI runners (7 GB).
+# The solution has 7 test assemblies; running them all in parallel exhausts memory.
+$AdditionalTestArgs = @("-m:1")
+
 $CreateGitHubRelease = $true
 $PublishNuGetPackagesAsGitHubReleaseArtefacts = $true
 
