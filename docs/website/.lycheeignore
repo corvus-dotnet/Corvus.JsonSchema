@@ -1,0 +1,18 @@
+# Known-flaky or expected-missing URLs to exclude from link checking.
+# One pattern per line; supports regex.
+
+# Placeholder/example URLs
+https?://example\.com
+https?://localhost
+
+# CDN resources (may rate-limit CI)
+https://cdnjs\.cloudflare\.com
+
+# GitHub API rate limiting
+https://api\.github\.com
+
+# NuGet package pages (may return 404 for pre-release versions)
+https://www\.nuget\.org/packages/.*/\d+\.\d+\.\d+-
+
+# Playground (Blazor WASM, loaded client-side — not crawlable)
+/playground/

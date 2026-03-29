@@ -15,6 +15,7 @@
       8. Build Lunr search index
       9. Build and publish Playground (Blazor WASM)
      10. Rewrite root-relative paths for subpath hosting (when -BasePathPrefix is set)
+     11. Check for broken links (lychee)
 .PARAMETER Preview
     Launches a local preview server after building.
 .PARAMETER ServeOnly
@@ -818,6 +819,52 @@ Disallow: /
     [System.IO.File]::WriteAllText((Join-Path $outputDir "robots.txt"), $robotsTxt)
     Write-Host "  Created robots.txt (noindex — local/preview build)." -ForegroundColor Gray
 }
+
+# -- Step 11: Check for broken links ------------------------------------------
+Write-Host "`n[11] Checking for broken links..." -ForegroundColor Cyan
+$sw = [System.Diagnostics.Stopwatch]::StartNew()
+
+$lycheeVersion = "0.23.0"
+$lycheeCmd = if ($IsWindows -or $env:OS -eq "Windows_NT") {
+    Join-Path $vellumDir "lychee.exe"
+} else {
+    Join-Path $vellumDir "lychee"
+}
+
+if (!(Test-Path $lycheeCmd)) {
+    Write-Host "  Installing lychee $lycheeVersion..." -ForegroundColor Gray
+    if ($IsWindows -or $env:OS -eq "Windows_NT") {
+        $lycheeAsset = "lychee-x86_64-windows.exe"
+        $lycheeUrl = "https://github.com/lycheeverse/lychee/releases/download/lychee-v$lycheeVersion/$lycheeAsset"
+        Invoke-WebRequest -Uri $lycheeUrl -OutFile $lycheeCmd -UseBasicParsing
+    } else {
+        $lycheeAsset = "lychee-x86_64-unknown-linux-gnu.tar.gz"
+        $lycheeUrl = "https://github.com/lycheeverse/lychee/releases/download/lychee-v$lycheeVersion/$lycheeAsset"
+        $lycheeTar = Join-Path $vellumDir $lycheeAsset
+        Invoke-WebRequest -Uri $lycheeUrl -OutFile $lycheeTar -UseBasicParsing
+        tar -xzf $lycheeTar -C $vellumDir "lychee"
+        Remove-Item $lycheeTar -Force
+        chmod +x $lycheeCmd
+    }
+    Write-Host "  lychee installed." -ForegroundColor Green
+} else {
+    Write-Host "  lychee already installed." -ForegroundColor DarkGray
+}
+
+$lycheeIgnore = Join-Path $here ".lycheeignore"
+$lycheeArgs = @(
+    "--base", $outputDir
+    "--include-fragments"
+    "--no-progress"
+)
+if (Test-Path $lycheeIgnore) {
+    $lycheeArgs += "--exclude-file", $lycheeIgnore
+}
+$lycheeArgs += (Join-Path $outputDir "**/*.html")
+
+& $lycheeCmd @lycheeArgs
+if ($LASTEXITCODE -ne 0) { throw "Broken links found — see output above" }
+Write-StepDuration "Link check" $sw
 
 Write-Host "`nBuild complete! Output: $outputDir" -ForegroundColor Green
 
