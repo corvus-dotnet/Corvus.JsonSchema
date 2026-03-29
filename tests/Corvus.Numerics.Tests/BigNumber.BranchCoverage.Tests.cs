@@ -444,19 +444,20 @@ public class BigNumberBranchCoverageTests
     [Fact]
     public void FormatCurrency_NegativeNumber_UsesNegativePattern()
     {
-        // Test currency formatting with negative numbers
+        // Test currency formatting with negative numbers using explicit format info
+        // to avoid locale-dependent differences in negative currency patterns
         BigNumber num = new(-12345, -2);
-        var culture = new CultureInfo("en-US");
-        string result = num.ToString("C2", culture);
+        NumberFormatInfo nfi = new()
+        {
+            CurrencySymbol = "$",
+            CurrencyDecimalSeparator = ".",
+            CurrencyGroupSeparator = ",",
+            CurrencyGroupSizes = [3],
+            CurrencyNegativePattern = 1, // -$n
+        };
+        string result = num.ToString("C2", nfi);
 
-#if NET
-        result.ShouldContain("-");
-#else
-        // .NET Framework uses parentheses for negative currency
-        result.ShouldContain("(");
-        result.ShouldContain(")");
-#endif
-        result.ShouldContain("$");
+        result.ShouldBe("-$123.45");
     }
 
     [Fact]

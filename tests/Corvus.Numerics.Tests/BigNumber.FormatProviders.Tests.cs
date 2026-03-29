@@ -257,18 +257,23 @@ public class BigNumberFormatProvidersTests
     }
 
     [Fact]
-    public void Format_C_Negative_UsesParentheses()
+    public void Format_C_Negative_WithMinusSign()
     {
         BigNumber value = new(-123456, -2);
 
-        string result = value.ToString("C", CultureInfo.GetCultureInfo("en-US"));
+        // Use explicit format info to avoid locale-dependent negative currency patterns
+        NumberFormatInfo nfi = new()
+        {
+            CurrencySymbol = "$",
+            CurrencyDecimalSeparator = ".",
+            CurrencyGroupSeparator = ",",
+            CurrencyGroupSizes = [3],
+            CurrencyNegativePattern = 1, // -$n
+        };
 
-#if NET
+        string result = value.ToString("C", nfi);
+
         result.ShouldBe("-$1,234.56");
-#else
-        // .NET Framework uses parentheses for negative currency by default
-        result.ShouldBe("($1,234.56)");
-#endif
     }
 
     #endregion

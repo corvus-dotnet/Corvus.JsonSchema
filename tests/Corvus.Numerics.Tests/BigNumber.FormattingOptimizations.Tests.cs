@@ -416,29 +416,38 @@ public class BigNumberFormattingOptimizationsTests
     public void FormatCurrency_NegativeSmallNumber_UsesNegativePattern()
     {
         BigNumber num = new(-5, -2); // -0.05
-        var culture = new CultureInfo("en-US");
-        string result = num.ToString("C2", culture);
 
-#if NET
-        result.ShouldContain("-");
-#else
-        // .NET Framework uses parentheses for negative currency
-        result.ShouldContain("(");
-        result.ShouldContain(")");
-#endif
-        result.ShouldContain("$");
-        result.ShouldContain("0.05");
+        // Use explicit format info to avoid locale-dependent negative currency patterns
+        NumberFormatInfo nfi = new()
+        {
+            CurrencySymbol = "$",
+            CurrencyDecimalSeparator = ".",
+            CurrencyGroupSeparator = ",",
+            CurrencyGroupSizes = [3],
+            CurrencyNegativePattern = 1, // -$n
+        };
+        string result = num.ToString("C2", nfi);
+
+        result.ShouldBe("-$0.05");
     }
 
     [Fact]
     public void FormatPercent_NegativePercent_UsesNegativePattern()
     {
         BigNumber num = new(-12345, -4); // -1.2345 = -123.45%
-        var culture = new CultureInfo("en-US");
-        string result = num.ToString("P2", culture);
 
-        result.ShouldContain("-");
-        result.ShouldContain("%");
+        // Use explicit format info to avoid locale-dependent negative percent patterns
+        NumberFormatInfo nfi = new()
+        {
+            PercentSymbol = "%",
+            PercentDecimalSeparator = ".",
+            PercentGroupSeparator = ",",
+            PercentGroupSizes = [3],
+            PercentNegativePattern = 0, // -n %
+        };
+        string result = num.ToString("P2", nfi);
+
+        result.ShouldBe("-123.45 %");
     }
 
     #endregion
