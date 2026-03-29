@@ -147,6 +147,7 @@ $SkipTestReport = $false
 $SkipPackage = $false
 $SkipAnalysis = $false
 $SkipPrAutoflowEnrollmentCheck = $true
+$BuildWebsite = $Website.IsPresent
 
 
 #
@@ -181,8 +182,7 @@ task PreBuild {
 }
 task PostBuild {
     # Build the documentation website when -Website is set or BUILDVAR_BuildWebsite env var is 'true'
-    $buildWebsite = $Website -or ($env:BUILDVAR_BuildWebsite -eq "true")
-    if ($buildWebsite) {
+    if ($BuildWebsite) {
         $effectiveBasePathPrefix = if ($BasePathPrefix) { $BasePathPrefix } else { $env:BUILDVAR_BasePathPrefix }
 
         $websiteDir = Join-Path $here "docs\website"
