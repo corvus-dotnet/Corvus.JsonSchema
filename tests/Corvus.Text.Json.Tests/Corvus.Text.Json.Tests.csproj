@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net9.0;net10.0;net481</TargetFrameworks>
+    <TargetFrameworks>net8.0;net10.0;net481</TargetFrameworks>
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <!-- SYSLIB0020: JsonSerializerOptions.IgnoreNullValues is obsolete -->
@@ -329,7 +329,7 @@
     <ProjectReference Include="..\Corvus.Text.Json.Tests.MigrationModels.V5\Corvus.Text.Json.Tests.MigrationModels.V5.csproj" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'net9.0'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
     <PackageReference Include="Microsoft.DotNet.XUnitAssert">
       <Version>2.9.2-beta.25225.102</Version>
     </PackageReference>

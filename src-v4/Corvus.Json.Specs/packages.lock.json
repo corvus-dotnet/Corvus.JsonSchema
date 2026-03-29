@@ -107,6 +107,21 @@
           "Reqnroll.Tools.MsBuild.Generation": "3.3.3"
         }
       },
+      "Roslynator.Analyzers": {
+        "type": "Direct",
+        "requested": "[4.13.1, )",
+        "resolved": "4.13.1",
+        "contentHash": "KZpLy6ZlCebMk+d/3I5KU2R7AOb4LNJ6tPJqPtvFXmO8bEBHQvCIAvJOnY2tu4C9/aVOROTDYUFADxFqw1gh/g=="
+      },
+      "StyleCop.Analyzers": {
+        "type": "Direct",
+        "requested": "[1.2.0-beta.556, )",
+        "resolved": "1.2.0-beta.556",
+        "contentHash": "llRPgmA1fhC0I0QyFLEcjvtM2239QzKr/tcnbsjArLMJxJlu0AA5G7Fft0OI30pHF3MW63Gf4aSSsjc5m82J1Q==",
+        "dependencies": {
+          "StyleCop.Analyzers.Unstable": "1.2.0.556"
+        }
+      },
       "System.Collections.Immutable": {
         "type": "Direct",
         "requested": "[10.0.4, )",
@@ -472,6 +487,11 @@
         "resolved": "2.0.6",
         "contentHash": "6OD3Gn+ElluZ9xNa0SspcANjvLt0KdSLiR1wl7ls6ykZxdfDBUruY5LMpMk2q8+EAT3DsvX4SjCDi7EVqdA/fA=="
       },
+      "StyleCop.Analyzers.Unstable": {
+        "type": "Transitive",
+        "resolved": "1.2.0.556",
+        "contentHash": "zvn9Mqs/ox/83cpYPignI8hJEM2A93s2HkHs8HYMOAQW0PkampyoErAiIyKxgTLqbbad29HX/shv/6LGSjPJNQ=="
+      },
       "System.Buffers": {
         "type": "Transitive",
         "resolved": "4.6.1",
@@ -797,6 +817,21 @@
           "NUnit": "3.13.1",
           "Reqnroll": "3.3.3",
           "Reqnroll.Tools.MsBuild.Generation": "3.3.3"
+        }
+      },
+      "Roslynator.Analyzers": {
+        "type": "Direct",
+        "requested": "[4.13.1, )",
+        "resolved": "4.13.1",
+        "contentHash": "KZpLy6ZlCebMk+d/3I5KU2R7AOb4LNJ6tPJqPtvFXmO8bEBHQvCIAvJOnY2tu4C9/aVOROTDYUFADxFqw1gh/g=="
+      },
+      "StyleCop.Analyzers": {
+        "type": "Direct",
+        "requested": "[1.2.0-beta.556, )",
+        "resolved": "1.2.0-beta.556",
+        "contentHash": "llRPgmA1fhC0I0QyFLEcjvtM2239QzKr/tcnbsjArLMJxJlu0AA5G7Fft0OI30pHF3MW63Gf4aSSsjc5m82J1Q==",
+        "dependencies": {
+          "StyleCop.Analyzers.Unstable": "1.2.0.556"
         }
       },
       "System.Collections.Immutable": {
@@ -1142,6 +1177,11 @@
           "NETStandard.Library": "1.6.1"
         }
       },
+      "StyleCop.Analyzers.Unstable": {
+        "type": "Transitive",
+        "resolved": "1.2.0.556",
+        "contentHash": "zvn9Mqs/ox/83cpYPignI8hJEM2A93s2HkHs8HYMOAQW0PkampyoErAiIyKxgTLqbbad29HX/shv/6LGSjPJNQ=="
+      },
       "corvus.json.codegeneration": {
         "type": "Project",
         "dependencies": {
@@ -1215,7 +1255,7 @@
         }
       }
     },
-    "net9.0": {
+    "net8.0": {
       "AzurePipelines.TestLogger": {
         "type": "Direct",
         "requested": "[1.2.3, )",
@@ -1303,6 +1343,21 @@
           "NUnit": "3.13.1",
           "Reqnroll": "3.3.3",
           "Reqnroll.Tools.MsBuild.Generation": "3.3.3"
+        }
+      },
+      "Roslynator.Analyzers": {
+        "type": "Direct",
+        "requested": "[4.13.1, )",
+        "resolved": "4.13.1",
+        "contentHash": "KZpLy6ZlCebMk+d/3I5KU2R7AOb4LNJ6tPJqPtvFXmO8bEBHQvCIAvJOnY2tu4C9/aVOROTDYUFADxFqw1gh/g=="
+      },
+      "StyleCop.Analyzers": {
+        "type": "Direct",
+        "requested": "[1.2.0-beta.556, )",
+        "resolved": "1.2.0-beta.556",
+        "contentHash": "llRPgmA1fhC0I0QyFLEcjvtM2239QzKr/tcnbsjArLMJxJlu0AA5G7Fft0OI30pHF3MW63Gf4aSSsjc5m82J1Q==",
+        "dependencies": {
+          "StyleCop.Analyzers.Unstable": "1.2.0.556"
         }
       },
       "System.Collections.Immutable": {
@@ -1641,7 +1696,8 @@
           "Cucumber.Messages": "30.1.0",
           "Gherkin": "35.0.0",
           "Microsoft.Bcl.AsyncInterfaces": "9.0.6",
-          "Microsoft.Extensions.DependencyModel": "8.0.2"
+          "Microsoft.Extensions.DependencyModel": "8.0.2",
+          "System.Threading.Channels": "9.0.6"
         }
       },
       "Reqnroll.Tools.MsBuild.Generation": {
@@ -1657,6 +1713,11 @@
           "NETStandard.Library": "1.6.1"
         }
       },
+      "StyleCop.Analyzers.Unstable": {
+        "type": "Transitive",
+        "resolved": "1.2.0.556",
+        "contentHash": "zvn9Mqs/ox/83cpYPignI8hJEM2A93s2HkHs8HYMOAQW0PkampyoErAiIyKxgTLqbbad29HX/shv/6LGSjPJNQ=="
+      },
       "System.Diagnostics.DiagnosticSource": {
         "type": "Transitive",
         "resolved": "10.0.4",
@@ -1671,6 +1732,11 @@
         "type": "Transitive",
         "resolved": "10.0.4",
         "contentHash": "6g3B7jNsPRNf4luuYt1qE4R8S3JI+zMsfGWL9Idv4Mk1Z9Gh+rCagp9sG3AejPS87yBj1DjopM4i3wSz0WnEqg=="
+      },
+      "System.Threading.Channels": {
+        "type": "Transitive",
+        "resolved": "9.0.6",
+        "contentHash": "2MaNJVkG2yJiXQbZrrcYoJ55ehV+aX0zqR6rWJkO/Qj7jTsArWthrQ7iWywUf/sE5ylJWX/iLH2kKfwSRdkWsA=="
       },
       "corvus.json.codegeneration": {
         "type": "Project",
