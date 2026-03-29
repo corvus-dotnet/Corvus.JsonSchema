@@ -286,7 +286,25 @@ task PreTestReport {
             }
         }
 }
-task PostTestReport {}
+task PostTestReport {
+    # GitHub PR comments have a 65536 character limit. The coverage summary for this
+    # solution often exceeds that. Truncate and append a note when too large.
+    $summaryPath = Join-Path $CoverageDir "SummaryGithub.md"
+    $maxChars = 60000  # leave headroom for sticky-comment wrapper
+    if (Test-Path $summaryPath) {
+        $content = Get-Content -Raw -Path $summaryPath
+        if ($content.Length -gt $maxChars) {
+            $originalLen = $content.Length
+            $truncated = $content.Substring(0, $maxChars)
+            # Cut at last newline to avoid splitting a table row
+            $lastNl = $truncated.LastIndexOf("`n")
+            if ($lastNl -gt 0) { $truncated = $truncated.Substring(0, $lastNl) }
+            $truncated += "`n`n---`n> **Note:** Coverage summary truncated from $originalLen to $($truncated.Length) characters. Full report is in the build artifacts.`n"
+            Set-Content -Path $summaryPath -Value $truncated -Encoding UTF8 -NoNewline
+            Write-Build Yellow "PostTestReport: truncated $summaryPath from $originalLen to $($truncated.Length) chars"
+        }
+    }
+}
 task PreAnalysis {}
 task PostAnalysis {}
 task PrePackage {}
