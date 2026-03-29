@@ -85,6 +85,8 @@ jobs:
       additionalCachePaths: |
         JSON-Schema-Test-Suite
         docs/website/.output
+        **/bin
+        **/obj
     secrets:
       compilePhaseAzureCredentials: ${{ secrets.AZURE_READER_CREDENTIALS }}
       compilePhaseSecrets: ${{ needs.prepareConfig.outputs.RESOLVED_SECRETS }}
