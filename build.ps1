@@ -165,7 +165,13 @@ $NuSpecFilesToPackage = @(
 # The solution has 7 test assemblies; running them all in parallel exhausts memory.
 # Exclude 'outerloop' (memory stress tests) and 'failing' (known failures) categories
 # which are too resource-intensive for CI runners.
-$AdditionalTestArgs = @("-m:1", "--filter", 'category!=failing&category!=outerloop')
+# Disable SourceLink queries during test — the JSON-Schema-Test-Suite submodule isn't
+# checked out in the test phase, and LocateRepository emits a warning per project.
+$AdditionalTestArgs = @(
+    "-m:1",
+    "--filter", 'category!=failing&category!=outerloop',
+    '-p:EnableSourceControlManagerQueries=false'
+)
 
 $CreateGitHubRelease = $true
 $PublishNuGetPackagesAsGitHubReleaseArtefacts = $true
