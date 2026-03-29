@@ -1,15 +1,5 @@
 <Solution>
 
-<Folder Name="/v4/.Benchmarks/">
-  <Project Path="src-v4/Corvus.Json.Benchmarking/Corvus.Json.Benchmarking.csproj" />
-  <Project Path="src-v4/Corvus.JsonPatch.Benchmarking/Corvus.JsonPatch.Benchmarking.csproj" />
-</Folder>
-  <Folder Name="/v4/.Sandboxes/">
-    <Project Path="src-v4/Sandbox.NetStandard21/Sandbox.NetStandard21.csproj" />
-    <Project Path="src-v4/Sandbox.NoGlobalUsings/Sandbox.NoGlobalUsings.csproj" />
-    <Project Path="src-v4/Sandbox.SourceGenerator/Sandbox.SourceGenerator.csproj" />
-    <Project Path="src-v4/Sandbox/Sandbox.csproj" />
-  </Folder>
   <Folder Name="/v4/.Specs/">
     <Project Path="src-v4/Corvus.Json.Specs/Corvus.Json.Specs.csproj" />
   </Folder>
@@ -57,63 +47,10 @@
     <Project Path="src-v4/Corvus.Json.SourceGeneratorTools.ForLanguageProvider/Corvus.Json.SourceGeneratorTools.ForLanguageProvider.csproj" />
     <Project Path="src-v4/Corvus.Json.SourceGeneratorTools/Corvus.Json.SourceGeneratorTools.csproj" />
   </Folder>
-  <Folder Name="/benchmarks/" />
-  <Folder Name="/benchmarks/SourceMetaModels/">
-    <Project Path="benchmarks/Corvus.Text.Json.AnsibleMetaBenchmarkModels/Corvus.Text.Json.AnsibleMetaBenchmarkModels.csproj" />
-    <Project Path="benchmarks/Corvus.Text.Json.AwsCdkBenchmarkModels/Corvus.Text.Json.AwsCdkBenchmarkModels.csproj" />
-    <Project Path="benchmarks/Corvus.Text.Json.BabelrcBenchmarkModels/Corvus.Text.Json.BabelrcBenchmarkModels.csproj" />
-    <Project Path="benchmarks/Corvus.Text.Json.CmakePresetsBenchmarkModels/Corvus.Text.Json.CmakePresetsBenchmarkModels.csproj" />
-    <Project Path="benchmarks/Corvus.Text.Json.ClangFormatBenchmarkModels/Corvus.Text.Json.ClangFormatBenchmarkModels.csproj" />
-    <Project Path="benchmarks/Corvus.Text.Json.CodeClimateBenchmarkModels/Corvus.Text.Json.CodeClimateBenchmarkModels.csproj" />
-    <Project Path="benchmarks/Corvus.Text.Json.Cql2BenchmarkModels/Corvus.Text.Json.Cql2BenchmarkModels.csproj" />
-    <Project Path="benchmarks/Corvus.Text.Json.CspellBenchmarkModels/Corvus.Text.Json.CspellBenchmarkModels.csproj" />
-    <Project Path="benchmarks/Corvus.Text.Json.CypressBenchmarkModels/Corvus.Text.Json.CypressBenchmarkModels.csproj" />
-    <Project Path="benchmarks/Corvus.Text.Json.DenoBenchmarkModels/Corvus.Text.Json.DenoBenchmarkModels.csproj" />
-    <Project Path="benchmarks/Corvus.Text.Json.DependabotBenchmarkModels/Corvus.Text.Json.DependabotBenchmarkModels.csproj" />
-    <Project Path="benchmarks/Corvus.Text.Json.Draft04BenchmarkModels/Corvus.Text.Json.Draft04BenchmarkModels.csproj" />
-    <Project Path="benchmarks/Corvus.Text.Json.FabricModBenchmarkModels/Corvus.Text.Json.FabricModBenchmarkModels.csproj" />
-    <Project Path="benchmarks/Corvus.Text.Json.GeoJsonBenchmarkModels/Corvus.Text.Json.GeoJsonBenchmarkModels.csproj" />
-    <Project Path="benchmarks/Corvus.Text.Json.GitpodConfigurationBenchmarkModels/Corvus.Text.Json.GitpodConfigurationBenchmarkModels.csproj" />
-    <Project Path="benchmarks/Corvus.Text.Json.HelmChartLockBenchmarkModels/Corvus.Text.Json.HelmChartLockBenchmarkModels.csproj" />
-    <Project Path="benchmarks/Corvus.Text.Json.ImportmapBenchmarkModels/Corvus.Text.Json.ImportmapBenchmarkModels.csproj" />
-    <Project Path="benchmarks/Corvus.Text.Json.JasmineBenchmarkModels/Corvus.Text.Json.JasmineBenchmarkModels.csproj" />
-    <Project Path="benchmarks/Corvus.Text.Json.JsconfigBenchmarkModels/Corvus.Text.Json.JsconfigBenchmarkModels.csproj" />
-    <Project Path="benchmarks/Corvus.Text.Json.KrakendBenchmarkModels/Corvus.Text.Json.KrakendBenchmarkModels.csproj" />
-    <Project Path="benchmarks/Corvus.Text.Json.JshintrcBenchmarkModels/Corvus.Text.Json.JshintrcBenchmarkModels.csproj" />
-    <Project Path="benchmarks/Corvus.Text.Json.LazygitBenchmarkModels/Corvus.Text.Json.LazygitBenchmarkModels.csproj" />
-    <Project Path="benchmarks/Corvus.Text.Json.LernaBenchmarkModels/Corvus.Text.Json.LernaBenchmarkModels.csproj" />
-    <Project Path="benchmarks/Corvus.Text.Json.NestCliBenchmarkModels/Corvus.Text.Json.NestCliBenchmarkModels.csproj" />
-    <Project Path="benchmarks/Corvus.Text.Json.OmnisharpBenchmarkModels/Corvus.Text.Json.OmnisharpBenchmarkModels.csproj" />
-    <Project Path="benchmarks/Corvus.Text.Json.OpenapiBenchmarkModels/Corvus.Text.Json.OpenapiBenchmarkModels.csproj" />
-    <Project Path="benchmarks/Corvus.Text.Json.PreCommitHooksBenchmarkModels/Corvus.Text.Json.PreCommitHooksBenchmarkModels.csproj" />
-    <Project Path="benchmarks/Corvus.Text.Json.PulumiBenchmarkModels/Corvus.Text.Json.PulumiBenchmarkModels.csproj" />
-    <Project Path="benchmarks/Corvus.Text.Json.SemanticReleaseBenchmarkModels/Corvus.Text.Json.SemanticReleaseBenchmarkModels.csproj" />
-    <Project Path="benchmarks/Corvus.Text.Json.StaleBenchmarkModels/Corvus.Text.Json.StaleBenchmarkModels.csproj" />
-    <Project Path="benchmarks/Corvus.Text.Json.StylecopBenchmarkModels/Corvus.Text.Json.StylecopBenchmarkModels.csproj" />
-    <Project Path="benchmarks/Corvus.Text.Json.TmuxinatorBenchmarkModels/Corvus.Text.Json.TmuxinatorBenchmarkModels.csproj" />
-    <Project Path="benchmarks/Corvus.Text.Json.Ui5ManifestBenchmarkModels/Corvus.Text.Json.Ui5ManifestBenchmarkModels.csproj" />
-    <Project Path="benchmarks/Corvus.Text.Json.Ui5BenchmarkModels/Corvus.Text.Json.Ui5BenchmarkModels.csproj" />
-    <Project Path="benchmarks/Corvus.Text.Json.UnrealEngineUprojectBenchmarkModels/Corvus.Text.Json.UnrealEngineUprojectBenchmarkModels.csproj" />
-    <Project Path="benchmarks/Corvus.Text.Json.VercelBenchmarkModels/Corvus.Text.Json.VercelBenchmarkModels.csproj" />
-    <Project Path="benchmarks/Corvus.Text.Json.YamllintBenchmarkModels/Corvus.Text.Json.YamllintBenchmarkModels.csproj" />
-  </Folder>
   <Folder Name="/v4/">
     <Project Path="src-v4/Corvus.Json.Validator/Corvus.Json.Validator.csproj" />
   </Folder>
 
-  <Folder Name="/.benchmarks/">
-    <Project Path="benchmarks/Corvus.Json.Validator.Benchmarks/Corvus.Json.Validator.Benchmarks.csproj" />
-    <Project Path="benchmarks/Corvus.Numerics.Benchmarks/Corvus.Numerics.Benchmarks.csproj" />
-    <Project Path="benchmarks/Corvus.Text.Json.BenchmarkModels/Corvus.Text.Json.BenchmarkModels.csproj" />
-    <Project Path="benchmarks/Corvus.Text.Json.Benchmarks/Corvus.Text.Json.Benchmarks.csproj" />
-    <Project Path="benchmarks/Corvus.Text.Json.ClassicBenchmarkModels/Corvus.Text.Json.ClassicBenchmarkModels.csproj" />
-    <Project Path="benchmarks/Corvus.Text.Json.CodeGeneration.Benchmarks/Corvus.Text.Json.CodeGeneration.Benchmarks.csproj" />
-    <Project Path="benchmarks/Corvus.Text.Json.Validator.Benchmarks/Corvus.Text.Json.Validator.Benchmarks.csproj" />
-    <Project Path="BenchmarkSandbox/BenchmarkSandbox.csproj" />
-  </Folder>
-  <Folder Name="/.sandbox/">
-    <Project Path="src/Sandbox/Sandbox.csproj" />
-  </Folder>
   <Folder Name="/.tests/">
     <Project Path="Common/tests/TestUtilities/TestUtilities.csproj" />
     <Project Path="tests/Corvus.JsonSchemaTestSuite.CodeGenerator/Corvus.JsonSchemaTestSuite.CodeGenerator.csproj" Id="fc46ebe0-6bd7-4a8a-abae-6271aff53420" />

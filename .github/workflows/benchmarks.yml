@@ -1,0 +1,44 @@
+name: benchmarks
+on:
+  workflow_dispatch:
+    inputs:
+      filter:
+        description: 'BenchmarkDotNet filter pattern (e.g. *Validation* or *CodeGeneration*)'
+        required: false
+        default: '*'
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  run-benchmarks:
+    name: Run Benchmarks
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            9.0.x
+            10.0.x
+
+      - name: Build benchmark solution
+        run: dotnet build Corvus.Text.Json.Benchmarks.slnx -c Release
+
+      - name: Run benchmarks
+        working-directory: benchmarks/Corvus.Text.Json.Benchmarks
+        run: dotnet run -c Release -f net10.0 --no-build -- --filter=${{ inputs.filter }} --buildTimeout 1200
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results
+          path: BenchmarkDotNet.Artifacts/
+          if-no-files-found: ignore
