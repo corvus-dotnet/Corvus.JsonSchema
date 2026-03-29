@@ -1,0 +1,985 @@
+{"npmClient": "pnpm", "useWorkspaces": true, "packages": ["packages/*"], "command": {"version": {"exact": true}, "publish": {"npmClient": "npm", "allowBranch": ["canary"], "registry": "https://registry.npmjs.org/"}}, "version": "13.4.20-canary.16"}
+{"npmClient": "yarn", "version": "independent", "$schema": "node_modules/lerna/schemas/lerna-schema.json"}
+{"packages": ["packages/*"], "version": "0.0.0", "npmClient": "yarn", "command": {"version": {"preid": "next", "ignoreChanges": ["scripts/**", ",**/__fixtures__/**", "**/__tests__/**", "**/*.md", "lerna.json", "api/**", "apps/**"], "conventionalCommits": true, "createRelease": "github", "commitHooks": false, "message": "chore(release): publish %s :tada: :rocket:"}, "publish": {"conventionalCommits": true}}}
+{"packages": ["packages/**/*"], "version": "independent", "allowBranch": ["master", "preview"]}
+{"changelog": {"repo": "dvajs/dva", "labels": {"pr(enhancement)": ":rocket: Enhancement", "pr(bug)": ":bug: Bug Fix", "pr(documentation)": ":book: Documentation", "pr(dependency)": ":deciduous_tree: Dependency", "pr(chore)": ":turtle: Chore"}, "cacheDir": ".changelog"}, "packages": ["packages/*"], "command": {"version": {"exact": true}}, "npmClient": "yarn", "version": "independent"}
+{"packages": ["apps/*", "plugins/*", "libs/*"], "version": "3.2.2"}
+{"packages": ["**/*"], "npmClient": "yarn", "version": "0.66.4"}
+{"npmClient": "yarn", "useWorkspaces": true, "version": "5.2.0-alpha.1", "hoist": true}
+{"$schema": "node_modules/lerna/schemas/lerna-schema.json", "useWorkspaces": true, "version": "1.0.4", "npmClient": "yarn", "packages": ["packages/*"]}
+{"$schema": "node_modules/lerna/schemas/lerna-schema.json", "version": "0.0.0", "packages": ["apps/*"], "hoist": "**", "registry": "https://registry.npmjs.org/", "npmClient": "npm"}
+{"packages": ["packages/*"], "npmClient": "yarn", "useWorkspaces": true, "useNx": true, "version": "1.11.1", "stream": "true", "command": {"version": {"message": "chore(release): %s"}}}
+{"version": "3.7.0-alpha.0", "npmClient": "yarn", "useWorkspaces": true, "packages": ["modules/*"], "command": {"publish": {}, "bootstrap": {}}}
+{"packages": ["packages/*", "example"], "npmClient": "yarn", "useWorkspaces": true, "version": "independent", "command": {"publish": {"allowBranch": "main", "conventionalCommits": true, "createRelease": "github", "message": "chore: publish", "ignoreChanges": ["**/__fixtures__/**", "**/__tests__/**", "**/*.md", "**/example/**"]}}}
+{"version": "10.38.0", "registry": "https://registry.npmjs.org/", "npmClient": "pnpm", "$schema": "node_modules/lerna/schemas/lerna-schema.json"}
+{"ci": false, "packages": ["packages/*"], "version": "5.0.8", "command": {"bootstrap": {"hoist": true}, "publish": {"allowBranch": ["crow", "dove"], "message": "chore(release): publish %s", "conventionalCommits": true, "createRelease": "github"}}, "ignoreChanges": ["**/changelog.md", "**/CHANGELOG.md", "**/package-lock.json", "**/yarn.lock", "**/test/**", "lerna.json", "readme.md"]}
+{"packages": ["packages/*", "examples/*"], "npmClient": "yarn", "useWorkspaces": true, "version": "0.0.0"}
+{"command": {"version": {"message": "chore(release): publish", "conventionalCommits": true, "preid": "dev", "changelogPreset": "conventionalcommits"}}, "includeMergedTags": true, "npmClient": "yarn", "useWorkspaces": true, "version": "independent", "useNx": false}
+{"packages": ["packages/*"], "version": "3.0.2", "npmClient": "yarn"}
+{"lerna": "2.9.1", "version": "8.25.7", "packages": ["packages/*"]}
+{"lerna": "2.9.1", "packages": ["packages/*"], "version": "1.4.0", "npmClient": "yarn"}
+{"npmClient": "yarn", "useWorkspaces": true, "version": "0.2.0-beta.12"}
+{"lerna": "2.11.0", "npmClient": "yarn", "useWorkspaces": true, "version": "0.0.0"}
+{"packages": ["packages/*"], "version": "0.5.2"}
+{"packages": ["package", "examples/SampleApp"], "version": "independent", "command": {"run": {"npmClient": "yarn", "stream": true}}}
+{"version": "14.0.0", "command": {"version": {"conventionalCommits": true}, "publish": {"ignoreChanges": ["*.md", "*.test-increment3"]}, "bootstrap": {"hoist": true, "npmClientArgs": ["--no-package-lock"]}}, "packages": ["packages/*"]}
+{"lerna": "3.1.3", "packages": ["core/**/*", "other-packages/**/*"], "version": "2.0.0-rc.68", "npmClient": "yarn", "useWorkspaces": true}
+{"packages": ["packages/*"], "command": {"publish": {"ignoreChanges": ["*.md", "config", "doc"]}, "bootstrap": {"ignore": []}}, "version": "1.7.3"}
+{"lerna": "2.9.1", "version": "8.16.2", "packages": ["packages/*"]}
+{"lerna": "2.9.0", "packages": ["packages/*", "packages/*/examples/*"], "version": "independent"}
+{"version": "0.4.9", "packages": ["packs/*"], "npmClient": "yarn", "lerna": "2.11.0"}
+{"version": "0.2.2", "npmClient": "yarn", "useWorkspaces": true}
+{"tagVersionPrefix": "v", "packages": ["examples/*", "packages/*"], "command": {"version": {"message": "chore(release): publish %s", "allowBranch": "master", "exact": true, "createRelease": "github", "conventionalCommits": true}, "bootstrap": {"hoist": true}}, "version": "4.3.6"}
+{"lerna": "6.0.0", "packages": ["firestore"], "version": "1.0.0"}
+{"packages": ["packages/*", "."], "npmClient": "npm", "version": "independent", "ignoreChanges": ["packages/hermione/**"], "command": {"init": {"exact": true}}}
+{"lerna": "2.9.0", "packages": ["packages/*"], "version": "independent", "npmClient": "yarn", "useWorkspaces": true}
+{"npmClient": "yarn", "useWorkspaces": true, "packages": ["packages/*"], "command": {"version": {"exact": true}, "publish": {"npmClient": "npm", "allowBranch": ["master", "canary"], "registry": "https://registry.npmjs.org/"}}, "version": "10.2.4-canary.4"}
+{"npmClient": "yarn", "useWorkspaces": true, "version": "1.17.1", "command": {"version": {"allowBranch": "master", "exact": true, "ignoreChanges": ["**/*.md"], "message": "build: release version %v"}}}
+{"packages": ["packages/*"], "version": "3.5.9", "npmClient": "yarn", "useWorkspaces": true}
+{"packages": ["**/*"], "npmClient": "yarn", "version": "0.65.0"}
+{"lerna": "3.2.1", "packages": ["packages/*"], "version": "independent", "npmClient": "yarn", "useWorkspaces": true}
+{"packages": ["packages/*", "examples/actionsflow-workflow-example"], "version": "independent", "command": {"create": {"license": "MIT"}, "publish": {"bump": "patch", "conventionalCommits": true, "message": "chore(release): \ud83e\udd16 publish package"}}, "npmClient": "npm", "registry": "https://registry.npmjs.org/", "ignoreChanges": ["CHANGELOG.md", "*.md", "**/__tests__/**", "**/__mocks__/**", "**/__testfixtures__/**"]}
+{"useWorkspaces": true, "packages": ["packages/*"], "version": "6.0.0-alpha.0"}
+{"npmClient": "yarn", "useWorkspaces": true, "version": "5.0.4", "packages": ["packages/@vue/babel-preset-app", "packages/@vue/cli*", "packages/vue-cli-version-marker"], "changelog": {"repo": "vuejs/vue-cli", "labels": {"PR: New Feature": ":rocket: New Features", "PR: Breaking Change": ":boom: Breaking Changes", "PR: Bug Fix": ":bug: Bug Fix", "PR: Documentation": ":memo: Documentation", "PR: Internal": ":house: Internal", "PR: Underlying Tools": ":hammer: Underlying Tools"}, "cacheDir": ".changelog"}}
+{"lerna": "2.9.0", "packages": ["packages/*"], "version": "5.10.1", "npmClient": "yarn", "useWorkspaces": true}
+{"version": "independent", "npmClient": "yarn", "ignoreChanges": ["actions/**", "**/__fixtures__/**", "**/__tests__/**", "**/docs/**", "**/e2e/**", "**/examples/**", "**/*.md"], "command": {"version": {"message": "chore(release): %s"}}, "$schema": "node_modules/lerna/schemas/lerna-schema.json"}
+{"lerna": "3.1.3", "packages": ["core/**/*", "other-packages/**/*"], "version": "2.4.0", "npmClient": "yarn", "useWorkspaces": true}
+{"version": "independent", "npmClient": "yarn", "packages": ["packages/*"], "useWorkspaces": true, "command": {"version": {"message": "chore: publish"}}}
+{"lerna": "5.5.2", "packages": ["packages/*", "storybook"], "npmClient": "yarn", "useWorkspaces": true, "version": "independent"}
+{"version": "independent", "npmClient": "yarn", "tagVersionPrefix": "ui-v", "useWorkspaces": true, "command": {"publish": {"conventionalCommits": true}, "version": {"allowBranch": "main"}}}
+{"lerna": "2.0.0", "packages": ["packages/*"], "version": "independent"}
+{"packages": ["packages/*", "."], "version": "1.0.0"}
+{"packages": ["packages/*"], "npmClient": "yarn", "useWorkspaces": true, "version": "3.5.3", "lerna": "2.11.0", "command": {"version": {"message": "chore(build): %v"}}}
+{"version": "0.9.0-alpha.2", "npmClient": "yarn", "useWorkspaces": true, "npmClientArgs": ["--ignore-engines"], "command": {"version": {"forcePublish": true, "exact": true, "message": "chore(versions): \ud83d\ude0a publish %s"}}}
+{"lerna": "3.18.4", "packages": ["packages/__tests__", "packages/button", "packages/card", "packages/checkbox", "packages/chip-input", "packages/components", "packages/core", "packages/datepicker", "packages/expandable", "packages/form", "packages/grid", "packages/icons", "packages/input", "packages/input-info", "packages/list", "packages/lookup", "packages/modal", "packages/popup", "packages/positioning", "packages/progress", "packages/radio", "packages/select", "packages/sidenav", "packages/slider", "packages/switch", "packages/tabs", "packages/textarea", "packages/tree-view"], "version": "0.25.3"}
+{"lerna": "3.4.1", "version": "0.5.4", "packages": ["packages/*"]}
+{"npmClient": "yarn", "registry": "https://registry.npmjs.org/", "useWorkspaces": true, "version": "independent", "packages": ["packages/*"], "command": {"publish": {"ignoreChanges": ["packages/config-types/**/*"]}}}
+{"version": "8.1.0", "npmClient": "pnpm", "command": {"publish": {"ignoreChanges": ["*.config.js", ".gitignore"], "message": "chore(release): publish %s"}}, "packages": ["packages/browser", "packages/server", "packages/typescript-types"], "$schema": "node_modules/lerna/schemas/lerna-schema.json"}
+{"packages": ["packages/*", "examples/*", "docs"], "npmClient": "pnpm", "command": {"version": {"allowBranch": "master"}, "bootstrap": {"npmClientArgs": ["--no-package-lock", "--legacy-peer-deps"]}}, "version": "1.0.18"}
+{"version": "0.8.4", "npmClient": "yarn", "useWorkspaces": true, "packages": ["packages/*", "examples/basic*"]}
+{"lerna": "2.5.1", "packages": ["api/*", "packages/*"], "version": "4.0.5"}
+{"lerna": "4", "npmClient": "yarn", "useWorkspaces": true, "version": "17.7.1"}
+{"version": "2.9.33-alpha.15", "npmClient": "yarn", "packages": ["packages/*"], "useNx": true, "command": {"publish": {"ignoreChanges": ["*.md", "*.txt", "test/**", "# We ignore every JSON file, except for built-in-modules, built-ins and plugins defined in babel-preset-env/data.", "@(!(built-in-modules|built-ins|plugins|package)).json"]}, "run": {"loadEnvFiles": false}}}
+{"packages": ["packages/*"], "useNx": true, "version": "5.7.0"}
+{"packages": ["packages/*"], "command": {"bootstrap": {"npmClientArgs": ["--frozen-lockfile"]}}, "npmClient": "yarn", "version": "0.24.0"}
+{"command": {"init": {"exact": true}, "bootstrap": {"npmClientArgs": ["--no-package-lock"]}}, "packages": ["packages/*"], "ignoreChanges": ["docs/**", "packages/*/package-lock.json"], "version": "8.2.2"}
+{"version": "independent", "npmClient": "yarn", "useWorkspaces": true, "command": {"publish": {"conventionalCommits": true}, "version": {"message": "chore(release): release"}}}
+{"packages": ["packages/view360", "packages/ngx-view360", "packages/ngx-view360/projects/ngx-view360", "packages/react-view360", "packages/svelte-view360", "packages/vue-view360", "packages/vue3-view360"], "version": "independent", "lernaHelperOptions": {"beforeReleaseScripts": ["npm run demo:build", "npm run demo:deploy"]}}
+{"packages": ["packages/logger", "packages/oauth", "packages/rtm-api", "packages/socket-mode", "packages/types", "packages/web-api", "packages/webhook", "support/*", "examples/*"], "version": "independent", "ignoreChanges": ["**/*.md"]}
+{"packages": ["packages/*"], "command": {"publish": {"ignoreChanges": ["test", "*.log", "*.md", "*-lock.json"], "registry": "https://registry.npmjs.org", "message": "chore(release): publish"}, "version": {"ignoreChanges": ["**/test/**", "**/*.md", "**/*-lock.json"]}}, "version": "independent"}
+{"version": "1.13.0-canary.28", "npmClient": "yarn", "useWorkspaces": true, "packages": ["packages/*"], "command": {"version": {"message": "chore(release): publish %s [skip ci]"}, "publish": {"allowBranch": ["main", "canary"], "conventionalCommits": true, "createRelease": "github", "changelogPreset": {"name": "conventionalcommits", "issueUrlFormat": "{{host}}/{{owner}}/{{repository}}/issues/{{id}}", "issuePrefixes": ["#"], "types": [{"type": "feat", "section": "Features"}, {"type": "feature", "section": "Features"}, {"type": "fix", "section": "Bug Fixes"}, {"type": "perf", "section": "Performance Improvements"}, {"type": "revert", "section": "Reverts"}, {"type": "docs", "section": "Documentation", "hidden": true}, {"type": "style", "section": "Styles", "hidden": true}, {"type": "chore", "section": "Miscellaneous Chores", "hidden": true}, {"type": "refactor", "section": "Code Refactoring", "hidden": true}, {"type": "test", "section": "Tests", "hidden": true}, {"type": "build", "section": "Build System", "hidden": true}, {"type": "ci", "section": "Continuous Integration", "hidden": true}], "commitUrlFormat": "{{host}}/{{owner}}/{{repository}}/commit/{{hash}}", "compareUrlFormat": "{{host}}/{{owner}}/{{repository}}/compare/{{previousTag}}...{{currentTag}}", "userUrlFormat": "{{host}}/{{user}}"}}}}
+{"version": "7.0.0", "useWorkspaces": true, "npmClient": "yarn"}
+{"version": "1.0.0", "testOption": "default", "bootstrapConfig": {"ignore": "package-a"}, "publishConfig": {"ignore": "package-b"}}
+{"packages": ["packages/*"], "version": "12.0.8", "npmClient": "yarn", "changelog": {"labels": {"feature": "Features", "bug": "Bug fixes", "enhancement": "Enhancements", "dependencies": "Dependencies"}}}
+{"version": "independent", "packages": ["packages/*"]}
+{"packages": ["packages/**/*"], "version": "independent"}
+{"version": "1.0.0-beta.45", "npmClient": "yarn", "useWorkspaces": true, "npmClientArgs": ["--ignore-engines"], "command": {"version": {"forcePublish": true, "exact": true, "message": "chore(versions): \ud83d\ude0a publish %s"}}}
+{"lerna": "2.6.0", "npmClient": "yarn", "useWorkspaces": true, "version": "independent", "changelog": {"repo": "facebookincubator/create-react-app", "labels": {"tag: new feature": ":rocket: New Feature", "tag: breaking change": ":boom: Breaking Change", "tag: bug fix": ":bug: Bug Fix", "tag: enhancement": ":nail_care: Enhancement", "tag: documentation": ":memo: Documentation", "tag: internal": ":house: Internal"}, "cacheDir": ".changelog"}}
+{"version": "independent", "npmClient": "yarn", "useWorkspaces": true, "ignoreChanges": ["**/__fixtures__/**", "**/__tests__/**", "**/!(README).md"], "command": {"publish": {"allowBranch": "master", "conventionalCommits": true, "message": "chore(release): publish"}}}
+{"version": "1.6.5", "npmClient": "yarn", "packages": ["client", "core", "interfaces", "plugin-utils", "plugins/*", "full-client", "puppet", "puppet-chrome", "mitm", "replay", "testing", "commons", "website"], "useWorkspaces": true}
+{"packages": ["e2e", "common", "framework", "output", "clients/**", "platforms/**", "integrations/**", "examples/**"], "ignoreChanges": ["*.md", "*.json", "*.txt", "test/**"], "command": {"publish": {"message": ":bookmark: Publish"}}, "version": "independent"}
+{"version": "0.0.0", "npmClient": "pnpm", "useWorkspaces": true}
+{"lerna": "2.11.0", "packages": ["packages/*"], "version": "independent"}
+{"useWorkspaces": true, "npmClient": "yarn", "version": "1.0.7"}
+{"packages": ["packages/*"], "version": "independent", "npmClient": "npm", "stream": true, "nohoist": ["vue-loader", "vue-template-compiler", "@vue/test-utils", "typescript"]}
+{"version": "independent", "packages": ["adaptivecards*/**", "aclint/**", "spec-generator/**", "ac-typed-schema/**"], "command": {"publish": {"ignoreChanges": ["**/dist/**", "**/lib/**", "**/node_modules/**", "**/__tests__/**", "*.md"]}}}
+{"packages": ["packages/*"], "version": "2.1.0", "message": "chore(release): publish", "command": {"publish": {"commitHooks": false, "conventionalCommits": true, "message": "chore(release): publish %s"}}}
+{"packages": ["packages/*"], "version": "1.0.0-alpha.37", "npmClient": "yarn", "useWorkspaces": true}
+{"npmClient": "yarn", "packages": ["packages/*"], "version": "7.4.3", "tagVersionPrefix": "", "lerna": "2.0.0"}
+{"npmClient": "yarn", "useWorkspaces": false, "version": "4.0.0-alpha.1", "packages": ["packages/@vue/babel-preset-app", "packages/@vue/cli*"], "changelog": {"repo": "vuejs/vue-cli", "labels": {"PR: New Feature": ":rocket: New Features", "PR: Breaking Change": ":boom: Breaking Changes", "PR: Bug Fix": ":bug: Bug Fix", "PR: Documentation": ":memo: Documentation", "PR: Internal": ":house: Internal", "PR: Underlying Tools": ":hammer: Underlying Tools"}, "cacheDir": ".changelog"}}
+{"npmClient": "yarn", "version": "independent", "useNx": false}
+{"$schema": "https://json.schemastore.org/lerna", "changelogPreset": "conventional-changelog-conventionalcommits", "command": {"publish": {"message": "chore: publish", "fromPackage": true, "push": false, "gitTagVersion": false}, "version": {"allowBranch": "main", "conventionalCommits": true, "createRelease": "github"}}, "ignoreChanges": ["**/test/**", "**/*.md"], "npmClient": "npm", "useNx": false, "version": "independent"}
+{"$schema": "node_modules/lerna/schemas/lerna-schema.json", "version": "independent", "changelogPreset": "conventionalcommits", "command": {"version": {"conventionalCommits": true}}}
+{"packages": ["auction", "custom-matchers", "deploy", "exchange-v2", "gas-usage-tests", "interfaces", "meta-tx", "lazy-mint", "lib-asset", "lib-bp", "lib-part", "lib-signature", "role-operator", "royalties", "royalties-registry", "royalties-upgradeable", "tokens", "tokens-minimal", "tokens-test", "transfer-manager", "transfer-proxy"], "npmClient": "yarn", "useWorkspaces": true, "version": "independent", "publishConfig": {"access": "public"}, "command": {"publish": {"allowBranch": "master", "conventionalCommits": true, "message": "chore(release): bump versions after release", "yes": true}}}
+{"npmClient": "yarn", "useWorkspaces": true, "packages": ["packages/*"], "version": "9.0.0-pre"}
+{"npmClient": "yarn", "useWorkspaces": true, "lerna": "3.15.0", "packages": ["packages/*"], "version": "0.14.4"}
+{"lerna": "2.9.1", "version": "1.0.10", "npmClient": "yarn", "useWorkspaces": true, "packages": ["modules/*"], "command": {"publish": {}, "bootstrap": {}}}
+{"version": "0.0.0", "packages": ["packages/*"]}
+{"lerna": "2.9.1", "version": "1.0.13", "npmClient": "yarn", "useWorkspaces": true, "packages": ["modules/*"], "command": {"publish": {}, "bootstrap": {}}}
+{"packages": ["*"], "npmClientArgs": ["--production", "--no-optional"], "version": "0.0.0"}
+{"npmClient": "yarn", "version": "independent", "$schema": "node_modules/lerna/schemas/lerna-schema.json"}
+{"npmClient": "yarn", "version": "independent", "$schema": "node_modules/lerna/schemas/lerna-schema.json"}
+{"npmClient": "yarn", "version": "independent", "$schema": "node_modules/lerna/schemas/lerna-schema.json"}
+{"npmClient": "yarn", "version": "independent", "$schema": "node_modules/lerna/schemas/lerna-schema.json"}
+{"packages": ["packages/**/*"], "version": "independent", "allowBranch": ["master", "preview"]}
+{"packages": ["packages/**/*"], "version": "independent", "allowBranch": ["master", "preview"]}
+{"packages": ["packages/**/*"], "version": "independent", "allowBranch": ["master", "preview"]}
+{"packages": ["packages/*", "example"], "npmClient": "yarn", "useWorkspaces": true, "version": "independent", "command": {"publish": {"allowBranch": "main", "conventionalCommits": true, "createRelease": "github", "message": "chore: publish", "ignoreChanges": ["**/__fixtures__/**", "**/__tests__/**", "**/*.md", "**/example/**"]}}}
+{"packages": ["packages/*", "example"], "npmClient": "yarn", "useWorkspaces": true, "version": "independent", "command": {"publish": {"allowBranch": "main", "conventionalCommits": true, "createRelease": "github", "message": "chore: publish", "ignoreChanges": ["**/__fixtures__/**", "**/__tests__/**", "**/*.md", "**/example/**"]}}}
+{"lerna": "2.9.1", "packages": ["packages/*"], "version": "1.4.0", "npmClient": "yarn"}
+{"lerna": "2.11.0", "npmClient": "yarn", "useWorkspaces": true, "version": "0.0.0"}
+{"lerna": "2.11.0", "npmClient": "yarn", "useWorkspaces": true, "version": "0.0.0"}
+{"lerna": "2.11.0", "npmClient": "yarn", "useWorkspaces": true, "version": "0.0.0"}
+{"lerna": "2.11.0", "npmClient": "yarn", "useWorkspaces": true, "version": "0.0.0"}
+{"packages": ["package", "examples/SampleApp"], "version": "independent", "command": {"run": {"npmClient": "yarn", "stream": true}}}
+{"lerna": "3.1.3", "packages": ["core/**/*", "other-packages/**/*"], "version": "2.0.0-rc.68", "npmClient": "yarn", "useWorkspaces": true}
+{"lerna": "3.1.3", "packages": ["core/**/*", "other-packages/**/*"], "version": "2.0.0-rc.68", "npmClient": "yarn", "useWorkspaces": true}
+{"version": "0.2.2", "npmClient": "yarn", "useWorkspaces": true}
+{"lerna": "6.0.0", "packages": ["firestore"], "version": "1.0.0"}
+{"lerna": "2.9.0", "packages": ["packages/*"], "version": "independent", "npmClient": "yarn", "useWorkspaces": true}
+{"lerna": "2.9.0", "packages": ["packages/*"], "version": "independent", "npmClient": "yarn", "useWorkspaces": true}
+{"lerna": "2.9.0", "packages": ["packages/*"], "version": "independent", "npmClient": "yarn", "useWorkspaces": true}
+{"lerna": "2.9.0", "packages": ["packages/*"], "version": "independent", "npmClient": "yarn", "useWorkspaces": true}
+{"npmClient": "yarn", "useWorkspaces": true, "packages": ["packages/*"], "command": {"version": {"exact": true}, "publish": {"npmClient": "npm", "allowBranch": ["master", "canary"], "registry": "https://registry.npmjs.org/"}}, "version": "10.2.4-canary.4"}
+{"version": "independent", "npmClient": "yarn", "tagVersionPrefix": "ui-v", "useWorkspaces": true, "command": {"publish": {"conventionalCommits": true}, "version": {"allowBranch": "main"}}}
+{"lerna": "2.0.0", "packages": ["packages/*"], "version": "independent"}
+{"lerna": "2.0.0", "packages": ["packages/*"], "version": "independent"}
+{"lerna": "2.0.0", "packages": ["packages/*"], "version": "independent"}
+{"lerna": "2.0.0", "packages": ["packages/*"], "version": "independent"}
+{"packages": ["packages/*", "."], "version": "1.0.0"}
+{"packages": ["packages/*", "."], "version": "1.0.0"}
+{"packages": ["packages/*", "."], "version": "1.0.0"}
+{"packages": ["packages/*", "."], "version": "1.0.0"}
+{"packages": ["packages/*"], "npmClient": "yarn", "useWorkspaces": true, "version": "3.5.3", "lerna": "2.11.0", "command": {"version": {"message": "chore(build): %v"}}}
+{"npmClient": "yarn", "registry": "https://registry.npmjs.org/", "useWorkspaces": true, "version": "independent", "packages": ["packages/*"], "command": {"publish": {"ignoreChanges": ["packages/config-types/**/*"]}}}
+{"version": "independent", "npmClient": "yarn", "useWorkspaces": true, "command": {"publish": {"conventionalCommits": true}, "version": {"message": "chore(release): release"}}}
+{"version": "1.0.0", "testOption": "default", "bootstrapConfig": {"ignore": "package-a"}, "publishConfig": {"ignore": "package-b"}}
+{"version": "1.0.0", "testOption": "default", "bootstrapConfig": {"ignore": "package-a"}, "publishConfig": {"ignore": "package-b"}}
+{"version": "1.0.0", "testOption": "default", "bootstrapConfig": {"ignore": "package-a"}, "publishConfig": {"ignore": "package-b"}}
+{"version": "1.0.0", "testOption": "default", "bootstrapConfig": {"ignore": "package-a"}, "publishConfig": {"ignore": "package-b"}}
+{"version": "independent", "packages": ["packages/*"]}
+{"version": "independent", "packages": ["packages/*"]}
+{"version": "independent", "packages": ["packages/*"]}
+{"version": "independent", "packages": ["packages/*"]}
+{"packages": ["packages/**/*"], "version": "independent"}
+{"version": "1.0.0-beta.45", "npmClient": "yarn", "useWorkspaces": true, "npmClientArgs": ["--ignore-engines"], "command": {"version": {"forcePublish": true, "exact": true, "message": "chore(versions): \ud83d\ude0a publish %s"}}}
+{"lerna": "2.6.0", "npmClient": "yarn", "useWorkspaces": true, "version": "independent", "changelog": {"repo": "facebookincubator/create-react-app", "labels": {"tag: new feature": ":rocket: New Feature", "tag: breaking change": ":boom: Breaking Change", "tag: bug fix": ":bug: Bug Fix", "tag: enhancement": ":nail_care: Enhancement", "tag: documentation": ":memo: Documentation", "tag: internal": ":house: Internal"}, "cacheDir": ".changelog"}}
+{"lerna": "2.6.0", "npmClient": "yarn", "useWorkspaces": true, "version": "independent", "changelog": {"repo": "facebookincubator/create-react-app", "labels": {"tag: new feature": ":rocket: New Feature", "tag: breaking change": ":boom: Breaking Change", "tag: bug fix": ":bug: Bug Fix", "tag: enhancement": ":nail_care: Enhancement", "tag: documentation": ":memo: Documentation", "tag: internal": ":house: Internal"}, "cacheDir": ".changelog"}}
+{"lerna": "2.6.0", "npmClient": "yarn", "useWorkspaces": true, "version": "independent", "changelog": {"repo": "facebookincubator/create-react-app", "labels": {"tag: new feature": ":rocket: New Feature", "tag: breaking change": ":boom: Breaking Change", "tag: bug fix": ":bug: Bug Fix", "tag: enhancement": ":nail_care: Enhancement", "tag: documentation": ":memo: Documentation", "tag: internal": ":house: Internal"}, "cacheDir": ".changelog"}}
+{"lerna": "2.6.0", "npmClient": "yarn", "useWorkspaces": true, "version": "independent", "changelog": {"repo": "facebookincubator/create-react-app", "labels": {"tag: new feature": ":rocket: New Feature", "tag: breaking change": ":boom: Breaking Change", "tag: bug fix": ":bug: Bug Fix", "tag: enhancement": ":nail_care: Enhancement", "tag: documentation": ":memo: Documentation", "tag: internal": ":house: Internal"}, "cacheDir": ".changelog"}}
+{"lerna": "2.11.0", "packages": ["packages/*"], "version": "independent"}
+{"lerna": "2.11.0", "packages": ["packages/*"], "version": "independent"}
+{"lerna": "2.11.0", "packages": ["packages/*"], "version": "independent"}
+{"lerna": "2.11.0", "packages": ["packages/*"], "version": "independent"}
+{"packages": ["auction", "custom-matchers", "deploy", "exchange-v2", "gas-usage-tests", "interfaces", "meta-tx", "lazy-mint", "lib-asset", "lib-bp", "lib-part", "lib-signature", "role-operator", "royalties", "royalties-registry", "royalties-upgradeable", "tokens", "tokens-minimal", "tokens-test", "transfer-manager", "transfer-proxy"], "npmClient": "yarn", "useWorkspaces": true, "version": "independent", "publishConfig": {"access": "public"}, "command": {"publish": {"allowBranch": "master", "conventionalCommits": true, "message": "chore(release): bump versions after release", "yes": true}}}
+{"npmClient": "yarn", "useWorkspaces": true, "packages": ["packages/*"], "version": "9.0.0-pre"}
+{"version": "0.0.0", "packages": ["packages/*"]}
+{"version": "0.0.0", "packages": ["packages/*"]}
+{"packages": ["*"], "npmClientArgs": ["--production", "--no-optional"], "version": "0.0.0"}
+{"packages": ["core", "docs", "packages/*"], "version": "7.3.2"}
+{"version": "4.13.2", "packages": ["packages/*", "examples/*"], "npmClient": "yarn", "useWorkspaces": true, "useNx": true}
+{"registry": "https://registry.npmjs.org/", "version": "independent", "command": {"version": {"conventionalCommits": true, "message": "build: publish", "private": false, "exact": true, "createRelease": "github", "ignoreChanges": ["**/tests/**", "**/*.md"]}, "run": {"stream": true}}, "packages": ["packages/*"]}
+{"version": "0.0.0", "npmClient": "yarn"}
+{"npmClient": "yarn", "version": "independant", "useWorkspaces": true, "command": {"run": {"npmClient": "yarn"}}}
+{"version": "independent", "npmClient": "yarn", "useWorkspaces": true, "command": {"version": {"ignoreChanges": ["*.md", "**/*.test.ts", "**/*.spec.ts"], "message": "chore(release): publish"}, "bootstrap": {"npmClientArgs": ["--no-package-lock", "--no-ci"]}}, "changelog": {"labels": {"pr(fix)": ":bug: Bug Fix", "pr(chore)": ":turtle: Chore", "pr(feature)": ":tada: New feature", "pr(breaking)": ":boom: Breaking Change", "pr(internal)": ":house: Internal", "pr(dependency)": ":shamrock: Dependency", "pr(documentation)": ":book: Documentation", "pr(enhancement)": ":rocket: Enhancement", "pr(refactor)": ":100: Refactoring", "pr(test)": ":white_check_mark: Test Case"}}}
+{"packages": ["packages/*"], "npmClient": "yarn", "useWorkspaces": true, "version": "independent", "command": {"publish": {"conventionalCommits": true, "message": "chore(release): publish"}}}
+{"packages": ["packages/*", "example"], "version": "0.3.3"}
+{"packages": ["packages/*", "examples/*", "benchmark/**", "site"], "version": "independent", "npmClient": "yarn", "useWorkspaces": true}
+{"$schema": "node_modules/lerna/schemas/lerna-schema.json", "useWorkspaces": true, "version": "0.6.1"}
+{"useWorkspaces": true, "packages": ["packages/*"], "version": "1.0.0"}
+{"lerna": "2.0.0-beta.31", "version": "0.0.10"}
+{"packages": ["packages/*"], "publish": {"allowBranch": "master", "conventionalCommits": true, "gitRemote": "origin", "message": "chore(release): publish %s"}, "ignoreChanges": ["**/*test.js", "**/*.md"], "version": "independent"}
+{"packages": ["packages/*"], "version": "0.0.0"}
+{"packages": ["packages/*"], "npmClient": "yarn", "version": "0.0.6"}
+{"lerna": "2.8.0", "npmClient": "yarn", "useWorkspaces": true, "version": "independent", "publishConfig": {"access": "public"}}
+{"packages": ["packages/cheers-mp-*"], "version": "1.9.0"}
+{"version": "1.7.4", "npmClient": "yarn", "useWorkspaces": true}
+{"version": "independent", "changelog": {"labels": {"enhancement": ":rocket: Enhancement", "tweak": ":lipstick: Tweak", "bug": ":bug: Bug Fix", "documentation": ":book: Documentation", "dependency": ":deciduous_tree: Dependency", "chore": ":turtle: Chore"}, "repo": "machinaai/ui", "cacheDir": ".changelog"}, "ignoreChanges": ["**/*.md", "**/*.test.ts", "**/*.e2e.ts", "**/fixtures/**", "**/test/**"], "npmClient": "yarn", "useWorkspaces": true}
+{"packages": ["packages/*"], "npmClient": "yarn", "useWorkspaces": true, "command": {"bootstrap": {"hoist": true}}, "version": "0.0.2"}
+{"npmClient": "yarn", "packages": ["packages/*"], "useWorkspaces": true, "useNx": false, "version": "0.0.0"}
+{"lerna": "7.1.4", "packages": ["components/*"], "command": {"run": {"npmClientArgs": ["--mode=production"]}, "init": {"exact": true}, "version": {"npmClientArgs": ["--legacy-peer-deps"], "conventionalCommits": true}, "publish": {"assets": ["package.json", "README.md"], "directory": "{workspaceRoot}/{projectRoot}/build", "exact": true, "ignoreChanges": ["package-lock.json"], "npmClientArgs": ["--production"], "registry": "https://registry.npmjs.org/", "yes": true}}, "private": false, "version": "independent"}
+{"$schema": "node_modules/lerna/schemas/lerna-schema.json", "npmClient": "pnpm", "version": "independent", "command": {"publish": {"registry": "https://registry.npmjs.org/"}}}
+{"packages": ["packages/*"], "npmClient": "yarn", "useWorkspaces": true, "version": "1.0.3"}
+{"npmClient": "yarn", "useWorkspaces": true, "version": "independent", "command": {"publish": {"ignoreChanges": ["*.md", ".gitignore", "*.log"]}}}
+{"version": "1.0.0", "useNx": true, "useWorkspaces": true, "packages": ["examples/*", "packages/*"]}
+{"packages": ["packages/*"], "version": "3.0.2", "command": {"publish": {"ignoreChanges": ["ignored-file", "*.md"], "message": "chore: publish %s"}}}
+{"lerna": "2.1.0", "version": "independent", "npmClient": "npm", "packages": ["packages/*"], "commands": {"publish": {"conventionalCommits": true, "ignore": ["*.md"]}}}
+{"packages": ["packages/*"], "npmClient": "yarn", "useWorkspaces": true, "version": "0.2.13"}
+{"version": "independent", "packages": ["packages/*"], "npmClient": "jlpm", "npmClientArgs": ["--no-lockfile"], "useWorkspaces": true}
+{"packages": ["packages/*"], "version": "3.6.0", "npmClient": "yarn", "useWorkspaces": true}
+{"packages": ["commands/*", "core/*", "models/*", "utils/*"], "version": "0.0.1"}
+{"packages": ["packages/*"], "version": "0.0.2", "npmClient": "yarn", "useWorkspaces": true, "command": {"publish": {"registry": "https://registry.npmjs.org"}}}
+{"packages": ["packages/*", "games/*"], "version": "0.0.0"}
+{"$schema": "node_modules/lerna/schemas/lerna-schema.json", "useWorkspaces": true, "npmClient": "yarn", "version": "0.0.0", "concurrency": 2, "parallel": true}
+{"packages": ["packages/*", "examples/*"], "version": "independent", "useWorkspaces": true, "npmClient": "yarn"}
+{"lerna": "2.5.1", "npmClient": "yarn", "useWorkspaces": true, "version": "2.2.1"}
+{"packages": ["packages/*"], "version": "independent", "npmClient": "yarn", "useWorkspaces": true, "stream": true}
+{"lerna": "3.19.0", "packages": ["packages/*"], "version": "0.1.0"}
+{"version": "0.5.0", "npmClient": "npm", "command": {"publish": {"ignoreChanges": ["*.md"], "message": "Publish %s"}, "bootstrap": {"ignore": "component-*", "npmClientArgs": ["--no-package-lock"]}}, "packages": ["packages/*"]}
+{"version": "independent", "npmClient": "yarn", "useWorkspaces": true, "packages": ["packages/*"], "command": {"publish": {"message": "chore(release): publish", "registry": "https://registry.npmjs.org", "conventionalCommits": true, "yes": true}}}
+{"packages": ["packages/*"], "version": "0.0.1", "command": {"bootstrap": {"hoist": true}, "run": {"stream": true}, "publish": {"message": "chore: publish", "createRelease": "github", "conventionalCommits": true, "verifyAccess": false}, "version": {"private": false}}}
+{"npmClient": "yarn", "packages": ["packages/*"], "command": {"publish": {"npmClient": "npm", "allowBranch": ["master", "canary"], "registry": "https://registry.npmjs.org/"}}, "version": "independent"}
+{"lerna": "2.4.0", "packages": ["apps/*", "future-apps/*", "templates/*", "shared/test-helpers"], "version": "independent"}
+{"packages": ["core/*", "commands/*", "models/*", "utils/*"], "version": "1.0.7"}
+{"lerna": "2.11.0", "packages": ["packages/*"], "version": "independent", "npmClient": "yarn", "useWorkspaces": true, "loglevel": "success", "command": {"publish": {"allowBranch": "master", "conventionalCommits": true, "ignoreChanges": ["CHANGELOG.md"]}}}
+{"version": "0.1.0-alpha.0", "npmClient": "yarn", "useWorkspaces": true, "packages": ["packages/*"]}
+{"useWorkspaces": true, "command": {"publish": {"registry": "https://registry.npmjs.org/", "message": "chore(release): publish"}, "bootstrap": {"npmClientArgs": ["--no-lockfile", "--no-package-lock"]}}, "version": "independent"}
+{"lerna": "latest", "packages": ["packages/*"], "npmClient": "yarn", "useWorkspaces": true, "command": {"bootstrap": {"npmClientArgs": ["--pure-lockfile"]}, "run": {"concurrency": 1}, "version": {"conventionalCommits": true}}, "version": "independent"}
+{"packages": [".", "./server"], "npmClient": "pnpm", "version": "0.0.0"}
+{"$schema": "node_modules/lerna/schemas/lerna-schema.json", "useWorkspaces": true, "version": "independent", "changelogPreset": "conventionalcommits", "command": {"version": {"conventionalCommits": true}}}
+{"lerna": "2.10.2", "npmClient": "yarn", "useWorkspaces": true, "packages": ["packages/*"], "version": "6.1.1"}
+{"npmClient": "yarn", "useWorkspaces": true, "packages": ["packages/*"], "version": "0.0.3"}
+{"access": "public", "allowBranch": ["master", "feature/*"], "conventionalCommits": true, "npmClient": "yarn", "packages": ["packages/*"], "useWorkspaces": true, "version": "independent"}
+{"packages": ["packages/*"], "useWorkspaces": true, "version": "1.0.3", "npmClient": "yarn"}
+{"npmClient": "yarn", "useWorkspaces": true, "version": "independent"}
+{"version": "1.10.0", "packages": ["packages/*"], "npmClient": "yarn", "publishConfig": {"access": "public"}, "useWorkspaces": true, "lerna": "2.9.0"}
+{"lerna": "2.0.0-beta.26", "version": "independent"}
+{"packages": ["packages/*"], "version": "independent", "command": {"publish": {"ignoreChanges": ["ignored-file", "*.md", "**/package-lock.json"], "message": "chore(release): publish", "registry": "https://registry.npmjs.org", "npmClientArgs": ["--no-package-lock"]}, "bootstrap": {"ignore": "component-*", "hoist": false, "nohoist": ["@fibjs/types", "knex", "@fxjs/knex"], "npmClientArgs": ["--no-package-lock"]}, "version": {"ignoreChanges": ["**/package-lock.json"], "allowBranch": ["master", "feature/*"]}}, "devDependencies": {"@fibjs/ci": "^2.5.2", "@fibjs/types": "^0.34.1", "cross-env": "^5.2.0", "fib-typify": "^0.11.3", "lodash": "^4.17.11", "semver": "^5.6.0", "fib-pool": "^1.6.0"}}
+{"packages": ["sanity"], "version": "0.0.0", "npmClient": "npm"}
+{"lerna": "4.0.0", "version": "2.0.2", "npmClient": "yarn", "useWorkspaces": true, "packages": ["packages/*"], "command": {"publish": {"yes": false, "message": "chore(release): publish", "contents": "dist", "allowBranch": ["main", "release/*"], "noCommitHooks": true, "conventionalCommits": true, "ignoreChanges": ["*.snap", "*.spec.ts", "*.md"]}, "bootstrap": {"scope": ["@ng-dnd/*"]}, "exec": {"scope": ["@ng-dnd/*"]}, "clean": {"yes": true}}, "npmClientArgs": ["--no-package-lock"]}
+{"packages": ["packages/*"], "npmClient": "yarn", "npmClientArgs": ["--no-lockfile"], "version": "1.1.0", "useWorkspaces": true}
+{"packages": ["packages/*"], "version": "0.8.0"}
+{"lerna": "2.5.1", "packages": ["packages/*"], "version": "0.4.16", "npmClient": "yarn", "useWorkspaces": true}
+{"packages": ["plugin"], "version": "4.6.12", "command": {"publish": {"conventionalCommits": true}}}
+{"version": "7.15.1", "packages": ["./"]}
+{"version": "1.0.2", "packages": ["core", "www"]}
+{"version": "0.1.4", "packages": ["packages/*"], "npmClient": "yarn", "useWorkspaces": true}
+{"lerna": "3.10.5", "version": "2.3.0", "changelog": {"repo": "alibaba/beidou", "labels": {"tag: bc": ":boom: Breaking Change", "tag: feat": ":rocket: New Feature", "tag: fix": ":bug: Bug Fix", "tag: polish": ":nail_care: Polish", "tag: doc": ":memo: Documentation", "tag: internal": ":house: Internal"}}, "packages": ["examples/*", "packages/*"], "command": {"publish": {"ignoreChanges": ["*.md", "test/**", "node_modules"], "message": "chore(release): publish %s"}}, "npmClient": "yarn"}
+{"packages": ["app/*", "lib/*"], "version": "0.0.0"}
+{"lerna": "2.4.0", "npmClient": "yarn", "useWorkspaces": true, "packages": ["packages/*"], "version": "4.5.1"}
+{"version": "independent", "npmClient": "npm", "useWorkspaces": true, "command": {"publish": {"verifyAccess": false}}}
+{"packages": ["packages/*"], "version": "2.0.3", "command": {"bootstrap": {"npmClientArgs": ["--no-package-lock"]}}}
+{"packages": ["packages/*"], "version": "1.1.0", "npmClient": "yarn", "useWorkspaces": true}
+{"npmClient": "yarn", "publishConfig": {"access": "public", "registry": "https://registry.npmjs.org/"}, "command": {"publish": {"message": "chore(release): releasing packages [ci skip]", "conventionalCommits": true}}, "packages": ["packages/eslint-plugin-pf-codemods", "packages/pf-codemods", "packages/class-name-updater"], "version": "independent"}
+{"lerna": "3.20.2", "packages": ["packages/*"], "npmClient": "yarn", "useWorkspaces": true, "version": "1.14.0"}
+{"npmClient": "yarn", "packages": ["packages/*", "projects/*"], "useWorkspaces": true, "version": "0.0.0"}
+{"npmClient": "yarn", "version": "2.4.4", "$schema": "node_modules/lerna/schemas/lerna-schema.json"}
+{"npmClient": "npm", "version": "0.0.0", "packages": ["main/", "meteor-test-app/"]}
+{"packages": ["packages/ui", "packages/core", "packages/sdk", "packages/module.dashboard", "packages/web"], "version": "0.0.0"}
+{"packages": ["packages/*", "components/*", "storybook/components/*"], "npmClient": "yarn", "useWorkspaces": false, "version": "independent", "command": {"bootstrap": {"mutex": "network:3030"}}}
+{"packages": ["packages/*"], "npmClient": "yarn", "useWorkspaces": true, "version": "independent", "command": {"publish": {"verifyAccess": false}}}
+{"version": "0.1.3", "npmClient": "yarn", "command": {"publish": {"registry": "https://npm.pkg.github.com"}}, "packages": ["packages/*"]}
+{"version": "0.0.1", "npmClient": "yarn", "command": {"version": {"push": false}, "publish": {"registry": "https://npm.pkg.github.com", "ignoreChanges": ["**/docs/**", "*.md", "**/test/**", "**/deploy/**"], "message": "release"}, "bootstrap": {"npmClientArgs": ["--no-lockfile"]}}, "useWorkspaces": true, "packages": ["packages/*"]}
+{"packages": ["packages/*"], "version": "1.2.5"}
+{"packages": ["plugins/**"], "npmClient": "yarn", "useWorkspaces": true, "version": "0.0.0"}
+{"version": "3.0.0", "npmClient": "yarn", "useWorkspaces": true, "ignoreChanges": ["**/*.spec.*"], "command": {"version": {"message": "chore(release): %s", "createRelease": "github", "conventionalCommits": true, "changelogIncludeCommitsClientLogin": " by @%l", "changelogPreset": {"name": "conventionalcommits", "issuePrefixes": ["#"], "types": [{"type": "feat", "section": "Features"}, {"type": "feature", "section": "Features"}, {"type": "fix", "section": "Bug Fixes"}, {"type": "perf", "section": "Performance Improvements"}, {"type": "revert", "section": "Reverts"}, {"type": "docs", "section": "Documentation", "hidden": true}, {"type": "style", "section": "Styles", "hidden": true}, {"type": "chore", "section": "Miscellaneous Chores", "hidden": true}, {"type": "refactor", "section": "Code Refactoring", "hidden": true}, {"type": "test", "section": "Tests", "hidden": true}, {"type": "build", "section": "Build System", "hidden": true}, {"type": "ci", "section": "Continuous Integration", "hidden": true}], "issueUrlFormat": "{{host}}/{{owner}}/{{repository}}/issues/{{id}}", "commitUrlFormat": "{{host}}/{{owner}}/{{repository}}/commit/{{hash}}", "compareUrlFormat": "{{host}}/{{owner}}/{{repository}}/compare/{{previousTag}}...{{currentTag}}", "userUrlFormat": "{{host}}/{{user}}"}, "push": true, "syncWorkspaceLock": true}}}
+{"packages": ["packages/*"], "version": "1.2.3"}
+{"useWorkspaces": true, "packages": ["packages/**"], "version": "1.0.0", "command": {"run": {"npmClient": "yarn"}}}
+{"name": "@akira/root", "packages": ["packages/*"], "version": "independent", "npmClient": "yarn", "useWorkspaces": true}
+{"packages": ["applications/*"], "npmClient": "yarn", "version": "0.1.0"}
+{"version": "5.7.3", "npmClient": "yarn", "useWorkspaces": true}
+{"packages": ["packages/*"], "version": "2.4.0", "command": {"publish": {"conventionalCommits": true}, "version": {"message": "chore(release): v%v"}}}
+{"packages": ["packages/*", "web", "server"], "version": "0.0.0", "useWorkspaces": true, "npmClient": "yarn"}
+{"packages": ["apps/*"], "npmClient": "yarn", "useWorkspaces": true, "version": "0.0.0"}
+{"lerna": "2.11.0", "packages": ["./", "./db-migration", "packages/*"], "npmClient": "yarn", "version": "0.1.2"}
+{"npmCient": "yarn", "packages": ["packages/*", "docs"], "version": "independent", "useWorkspaces": true}
+{"packages": ["packages/*", "site"], "version": "1.0.0"}
+{"npmClient": "yarn", "useWorkspaces": true, "version": "independent", "packages": ["packages/*"]}
+{"packages": ["packages/*"], "version": "0.3.18", "npmClient": "yarn", "useWorkspaces": true}
+{"packages": ["packages/*"], "version": "independent", "npmClient": "yarn", "useWorkspaces": true, "command": {"version": {"allowBranch": ["master", "main"], "changelogPreset": "angular-all", "conventionalCommits": true}, "publish": {"verifyAccess": false}}}
+{"packages": ["packages/*"], "version": "independent", "npmClient": "yarn", "useWorkspaces": true, "command": {"publish": {"npmClient": "yarn", "registry": "https://npm.pkg.github.com"}, "changed": {"npmClient": "yarn", "registry": "https://npm.pkg.github.com"}}}
+{"version": "independent", "npmClient": "pnpm", "useWorkspaces": true, "conventionalCommits": true, "exact": true, "packages": ["packages/*"], "command": {"version": {"allowBranch": ["main"], "message": "chore(release): publish"}, "publish": {"npmClient": "npm"}, "init": {"exact": true}}}
+{"packages": ["packages/*"], "npmClient": "npm", "useWorkspaces": true, "version": "independent", "registry": "http://localhost:4873/", "command": {"publish": {"conventionalCommits": true, "message": "chore(release): publish"}}}
+{"version": "1.0.0-rc.0", "npmClient": "yarn", "useWorkspaces": true, "npmClientArgs": ["--ignore-engines"], "command": {"version": {"forcePublish": true, "exact": true, "message": "chore(release): \ud83d\ude0a publish %s"}}}
+{"packages": ["packages/*"], "npmClient": "yarn", "useWorkspaces": true, "$schema": "node_modules/lerna/schemas/lerna-schema.json", "npmClientArgs": ["--production", "--no-optional"], "version": "0.0.3", "command": {"publish": {"allowBranch": ["main", "dev", "fix/*", "beta/*"], "conventionalCommits": true, "registry": "https://registry.npmjs.org/", "message": "chore: bump versions after release", "yes": true}}, "useNx": false}
+{"lerna": "2.0.0-rc.5", "packages": ["packages/*"], "npmClient": "yarn", "version": "independent"}
+{"lerna": "2.0.0", "packages": ["packages/*"], "version": "0.1.11", "hoist": true, "nohoist": "*-model"}
+{"packages": ["packages/*"], "version": "0.0.0", "useWorkspaces": true, "npmClient": "yarn"}
+{"version": "0.0.1", "packages": ["packages/*"], "npmClient": "yarn"}
+{"version": "11.0.0", "npmClient": "yarn", "useWorkspaces": true, "command": {"publish": {"ignoreChanges": ["**/.yo-rc.json", "**/.eslintrc.json", "**/tsconfig.json"]}}}
+{"version": "independent", "npmClient": "yarn", "useWorkspaces": true, "packages": ["packages/*"], "publishConfig": {"access": "public"}, "command": {"publish": {"ignoreChanges": ["**/*.md", "**/example/**", "**/*.test.ts"]}}}
+{"packages": ["packages/*"], "commands": {"publish": {"ignoreChanges": ["**/examples/**"]}}, "version": "independent"}
+{"lerna": "2.7.0", "packages": ["packages/*"], "version": "2.0.4"}
+{"lerna": "3.4.0", "packages": ["packages/*"], "version": "independent", "npmClient": "yarn", "useWorkspaces": true}
+{"lerna": "3.11.0", "packages": ["packages/*"], "npmClient": "yarn", "useWorkspaces": true, "version": "independent"}
+{"command": {"version": {"allowBranch": "master", "conventionalCommits": true, "forcePublish": true, "message": "chore(release): %s \ud83d\ude80", "ignore": ["test-utils", "docs", "studio"]}}, "version": "2.2.5", "npmClient": "yarn", "useWorkspaces": true}
+{"packages": ["packages/*"], "version": "1.0.8", "command": {"publish": {"message": "(release): publish %s", "ignoreChanges": ["ignored-file", "*.md"]}}}
+{"packages": ["packages/*"], "npmClient": "yarn", "version": "independent", "useWorkspaces": true, "nohoist": ["parcel-bundler"]}
+{"npmClient": "yarn", "useWorkspaces": true, "packages": ["*"], "version": "independent"}
+{"version": "3.22.1", "packages": ["packages/*"], "npmClient": "yarn", "useWorkspaces": true}
+{"npmClient": "yarn", "useWorkspaces": true, "packages": ["packages/chapter-01/*", "packages/chapter-02/*", "packages/chapter-03/*", "packages/chapter-04/*", "packages/chapter-05/*"], "version": "0.0.0"}
+{"version": "6.0.0", "npmClient": "npm", "command": {"bootstrap": {"npmClientArgs": ["--legacy-peer-deps"]}}, "packages": ["packages/*"]}
+{"npmClient": "yarn", "useWorkspaces": true, "version": "5.0.8", "packages": ["packages/@vue/babel-preset-app", "packages/@vue/cli*", "packages/vue-cli-version-marker"], "changelog": {"repo": "vuejs/vue-cli", "labels": {"PR: New Feature": ":rocket: New Features", "PR: Breaking Change": ":boom: Breaking Changes", "PR: Bug Fix": ":bug: Bug Fix", "PR: Documentation": ":memo: Documentation", "PR: Internal": ":house: Internal", "PR: Underlying Tools": ":hammer: Underlying Tools"}, "cacheDir": ".changelog"}}
+{"packages": ["packages/*", "ui"], "version": "0.0.0", "npmClient": "yarn", "useWorkspaces": true}
+{"$schema": "node_modules/@lerna-lite/cli/schemas/lerna-schema.json", "packages": ["packages/*"], "useWorkspaces": true, "npmClient": "pnpm", "command": {"run": {"npmClient": "pnpm"}}, "changelogPreset": {"name": "conventionalcommits", "types": [{"type": "feat", "section": "\u2728 Features | \u65b0\u529f\u80fd"}, {"type": "fix", "section": "\ud83d\udc1b Bug Fixes | Bug \u4fee\u590d"}, {"type": "chore", "section": "\ud83d\ude80 Chore | \u6784\u5efa/\u5de5\u7a0b\u4f9d\u8d56/\u5de5\u5177", "hidden": true}, {"type": "docs", "section": "\ud83d\udcdd Documentation | \u6587\u6863"}, {"type": "style", "section": "\ud83d\udc84 Styles | \u6837\u5f0f"}, {"type": "refactor", "section": "\u267b\ufe0f Code Refactoring | \u4ee3\u7801\u91cd\u6784"}, {"type": "perf", "section": "\u26a1 Performance Improvements | \u6027\u80fd\u4f18\u5316"}, {"type": "test", "section": "\u2705 Tests | \u6d4b\u8bd5", "hidden": true}, {"type": "revert", "section": "\u23ea Revert | \u56de\u9000", "hidden": true}, {"type": "build", "section": "\ud83d\udce6\u200d Build System | \u6253\u5305\u6784\u5efa"}, {"type": "ci", "section": "\ud83d\udc77 Continuous Integration | CI \u914d\u7f6e"}], "issuePrefixes": ["#"], "issueUrlFormat": "{{host}}/{{owner}}/{{repository}}/issues/{{id}}", "commitUrlFormat": "{{host}}/{{owner}}/{{repository}}/commit/{{hash}}", "compareUrlFormat": "{{host}}/{{owner}}/{{repository}}/compare/{{previousTag}}...{{currentTag}}", "userUrlFormat": "{{host}}/{{user}}"}, "version": "0.0.28"}
+{"npmClient": "yarn", "packages": ["packages/*"], "version": "2.1.1", "useWorkspaces": true, "command": {"version": {"allowBranch": ["master", "next"], "message": "chore(release): publish %s"}, "publish": {"allowBranch": ["master", "next"]}}}
+{"packages": ["packages/*"], "version": "0.1.29"}
+{"packages": ["packages/*"], "version": "independent", "command": {"publish": {"registry": "https://npm.pkg.github.com"}}}
+{"packages": ["packages/*"], "version": "independent", "useWorkspaces": true, "command": {"publish": {"conventionalCommits": true, "access": "public", "allowBranch": ["master", "feature/*"]}}}
+{"lerna": "2.7.1", "version": "independent", "useWorkspaces": true, "npmClient": "yarn", "packages": ["packages/*"], "command": {"publish": {"allowBranch": "master", "yes": true}, "version": {"allowBranch": "master", "conventionalCommits": true, "yes": false, "message": "chore(release): publish"}}, "changelog": {"labels": {"enhancement": ":rocket: Enhancement", "bug": ":bug: Bug Fix"}, "cacheDir": ".changelog"}}
+{"version": "0.4.0", "npmClient": "yarn", "useWorkspaces": true}
+{"lerna": "2.9.0", "packages": ["packages/*"], "version": "independent", "command": {"publish": {"ignoreChanges": ["*.md"]}}}
+{"packages": ["packages/*"], "version": "independent", "npmClient": "yarn", "useWorkspaces": true, "command": {"publish": {"ignoreChanges": ["*.md"], "verifyAccess": false, "verifyRegistry": false, "message": "chore: publish", "allowBranch": "master", "conventionalCommits": true}}}
+{"packages": ["packages/*"], "version": "independent", "command": {"publish": {"message": "Publish package", "registry": "https://npm.pkg.github.com"}}}
+{"lerna": "2.10.2", "version": "0.0.1", "packages": ["packages/*"]}
+{"npmClient": "yarn", "packages": ["core/js", "auction/js", "auctioneer/js", "token-vault/js", "token-metadata/js", "metaplex/js", "auction-house/js", "fixed-price-sale/js", "bubblegum/js", "candy-wrapper/js"], "useWorkspaces": true, "version": "independent", "command": {"version": {"allowBranch": ["master"], "message": "chore: version updated packages", "ignoreChanges": ["**/test/**", "**/*.md"]}, "publish": {"registry": "https://registry.npmjs.org/"}}}
+{"lerna": "2.11.0", "packages": ["packages/*"], "version": "0.0.23"}
+{"packages": ["packages/*"], "version": "1.9.9"}
+{"lerna": "2.9.0", "packages": ["packages/*"], "version": "0.0.0", "npmClient": "yarn"}
+{"version": "2.0.0", "lerna": "3.22.1", "npmClient": "yarn", "packages": ["packages/*"]}
+{"packages": ["packages/*"], "version": "0.1.1"}
+{"version": "independent", "packages": ["packages/*"], "command": {"publish": {"ignoreChanges": ["*.md", "*.rst", "tslint.json", "tsconfig.json"]}}, "npmClient": "yarn", "useWorkspaces": true}
+{"packages": ["packages/*"], "version": "0.1.0", "npmClient": "yarn"}
+{"$schema": "node_modules/@lerna-lite/cli/schemas/lerna-schema.json", "npmClient": "pnpm", "version": "independent", "useNx": true, "useWorkspaces": true, "command": {"publish": {}, "version": {"allowBranch": ["main"], "conventionalCommits": true, "syncWorkspaceLock": true, "exact": true, "message": "docs(release): design system packages"}}}
+{"$schema": "node_modules/lerna/schemas/lerna-schema.json", "useWorkspaces": false, "version": "0.0.0", "packages": ["*"]}
+{"version": "1.8.4", "npmClient": "npm", "command": {"publish": {"message": "chore(release): Publish", "registry": "https://registry.npmjs.org/"}, "version": {"message": "chore(release): Publish"}, "bootstrap": {"npmClientArgs": ["--no-package-lock"]}}, "packages": ["packages/*"]}
+{"npmClient": "yarn", "command": {"publish": {"ignoreChanges": ["ignored-file", "*.md"], "message": "chore(release): publish", "allowBranch": "master", "conventionalCommits": true, "exact": true}, "bootstrap": {"ignore": "component-*", "npmClientArgs": ["--no-package-lock"]}}, "useWorkspaces": true, "version": "independent"}
+{"packages": ["shared/**", "apps/**"], "version": "independent", "npmClient": "yarn", "useWorkspaces": true}
+{"version": "5.0.0-alpha.7", "useWorkspaces": true, "npmClient": "yarn", "command": {"publish": {"allowBranch": "master", "conventionalCommits": true}}}
+{"packages": ["packages/*"], "version": "independent", "command": {"version": {"message": "chore(release): [skip-ci] publish new versions"}}}
+{"lerna": "2.11.0", "packages": ["packages/*"], "version": "independent", "npmClient": "yarn", "useWorkspaces": true, "command": {"version": {"message": "chore: publish"}}}
+{"command": {"publish": {"conventionalCommits": true, "message": "chore: release"}}, "packages": ["packages/*"], "version": "independent", "npmClient": "yarn", "useWorkspaces": true}
+{"npmClient": "npm", "version": "0.1.12", "command": {"publish": {"ignoreChanges": ["ignored-file", "*.md"], "message": "chore(release): publish", "registry": "https://registry.npmjs.com/"}, "bootstrap": {"ignore": "component-*", "npmClientArgs": ["--no-package-lock"]}}, "packages": ["packages/*"]}
+{"packages": ["packages/*"], "command": {"version": {"allowBranch": "master"}, "publish": {"ignoreChanges": ["ignored-file", "*.md"], "conventionalCommits": true}}, "version": "1.5.0"}
+{"version": "independent", "npmClient": "yarn", "useWorkspaces": true, "command": {"create": {"esModule": true, "access": "public", "license": "MIT"}, "publish": {"allowBranch": "master", "conventionalCommits": true, "message": "chore(release): release \ud83d\ude80 [skip ci]"}}}
+{"version": "independent", "useWorkspaces": true, "npmClient": "pnpm", "packages": ["packages/*/*"], "ignoreChanges": ["**/__fixtures__", "**/__mocks__", "**/jest.config*.js", "**/.eslintignore"], "command": {"version": {"message": "chore(release): publish [skip ci]", "allowBranch": "main", "conventionalCommits": true}}}
+{"lerna": "2.2.0", "npmClient": "yarn", "useWorkspaces": true, "concurrency": 1, "version": "7.10.0"}
+{"npmClient": "npm", "packages": ["packages/*"], "version": "2.1.0", "command": {"version": {"allowBranch": "master"}, "publish": {"message": "chore(release): publish %s\n\n[skip ci]"}, "bootstrap": {"ignore": "*"}}}
+{"packages": ["packages/*"], "version": "3.5.7"}
+{"packages": ["packages/*"], "version": "independent", "npmClient": "yarn", "command": {"version": {"message": "chore(release): publish"}}}
+{"lerna": "2.8.0", "version": "0.8.5", "npmClient": "yarn", "useWorkspaces": true}
+{"$schema": "node_modules/lerna/schemas/lerna-schema.json", "version": "1.1.1", "packages": ["core", "examples", "shared"], "useNx": true}
+{"packages": ["shell", "dashboard", "order", "sales", "settings"], "version": "0.0.0"}
+{"packages": ["@app/*"], "version": "0.0.0", "loglevel": "warn"}
+{"$schema": "node_modules/lerna/schemas/lerna-schema.json", "useNx": true, "useWorkspaces": true, "npmClient": "npm", "version": "independent", "packages": ["packages/*"], "command": {"publish": {"verifyAccess": true, "registry": "https://npm.pkg.github.com"}, "version": {"exact": true, "conventionalCommits": true, "createRelease": "github", "message": "chore(release): publish [skip ci]", "allowBranch": ["release"]}}}
+{"packages": ["app", "web", "studio"], "version": "1.0.0"}
+{"$schema": "node_modules/lerna/schemas/lerna-schema.json", "npmClient": "yarn", "useNx": true, "useWorkspaces": true, "version": "0.0.0", "command": {"run": {"stream": true}}}
+{"lerna": "3.15.0", "version": "24.8.0", "npmClient": "yarn", "packages": ["packages/*"]}
+{"$schema": "node_modules/lerna/schemas/lerna-schema.json", "version": "1.0.1", "packages": ["packages/*"]}
+{"version": "0.0.3-next.7", "packages": ["./packages/*", "./utilities"], "command": {"version": {"allowBranch": ["master", "stable"], "message": "chore(release): %s"}}, "ignoreChanges": ["**/*.md", "**/*.spec.*"]}
+{"version": "0.0.0", "npmClient": "yarn", "useWorkspaces": true, "conventionalCommits": true, "packages": ["packages/*", "nicespace"], "command": {"publish": {"npmClient": "npm", "message": "chore(release): publish"}}, "changelog": {"labels": {"feat": "New Feature", "fix": "Bug Fix", "docs": "Documentation", "types": "Types", "perf": "Performance", "refactor": "Refactor"}}}
+{"404": "Not Found"}
+{"useWorkspaces": false, "version": "0.0.6", "npmClient": "yarn", "packages": ["packages/*"]}
+{"npmClient": "yarn", "packages": ["packages/*"], "version": "1.2.0"}
+{"packages": ["packages/*"], "npmClient": "yarn", "useWorkspaces": true, "version": "5.0.0-alpha.3", "command": {"publish": {"message": "chore: release"}}}
+{"packages": ["packages/*"], "version": "0.1.0", "npmClient": "yarn", "useWorkspaces": true}
+{"npmClient": "yarn", "packages": ["backend", "frontend"], "version": "0.0.1"}
+{"lerna": "3.4.2", "useWorkspaces": true, "conventionalCommits": true, "npmClient": "yarn", "npmClientArgs": ["--no-lockfile"], "packages": ["packages/*"], "version": "independent", "registry": "https://registry.npmjs.org", "command": {"create": {"homepage": "https://github.com/pyramation/crypto", "license": "SEE LICENSE IN LICENSE", "access": "restricted"}, "publish": {"allowBranch": "master", "conventionalCommits": true, "message": "chore(release): publish"}}}
+{"packages": ["packages/*"], "version": "0.0.24"}
+{"packages": ["libs/*"], "version": "independent", "npmClient": "npm", "command": {"publish": {"conventionalCommits": true, "gitRemote": "pub", "allowBranch": ["master", "next"], "contents": "dist", "ignoreChanges": ["**/*.spec.ts", "**/*.stories.ts"], "message": "chore(release): publish [skip ci]"}}}
+{"lerna": "2.10.2", "packages": ["packages/js/eslint/eslint-config-criography-vanilla", "packages/js/eslint/eslint-config-criography-vuejs", "packages/js/eslint/eslint-config-criography-react"], "version": "independent"}
+{"packages": ["packages/layouts/*", "packages/elements/*", "packages/forms/*"], "ignoreChanges": ["**/*.test.js", "**/*.stories.js", "**/*stories.md"], "version": "independent", "npmClient": "yarn", "useWorkspaces": true, "command": {"publish": {"registry": "https://npm.pkg.github.com/", "conventionalCommits": true}}}
+{"npmClient": "yarn", "version": "independent", "packages": ["packages/*"]}
+{"$schema": "https://schema.easynm.cn/lerna.json", "version": "2.6.6", "npmClient": "yarn", "useWorkspaces": true, "packages": ["packages/*"], "command": {"version": {"allowBranch": "master", "message": "chore(release): publish %s"}, "publish": {"message": "chore(release): publish", "ignoreChanges": ["**/__tests__/**", "**/*.test.{js,mjs,ts,jsx,tsx,vue}", "**/*.{md,mdx}"]}}}
+{"packages": ["packages/*"], "version": "4.5.9"}
+{"version": "1.9.1", "npmClient": "yarn", "useWorkspaces": true}
+{"packages": ["packages/*"], "version": "2.6.2"}
+{"npmClient": "yarn", "packages": ["packages/*"], "version": "0.0.1", "useWorkspaces": true}
+{"packages": ["packages/*"], "command": {"publish": {"ignoreChanges": ["packages/example-*"]}, "run": {"ignore": []}}, "version": "0.1.1", "npmClient": "yarn", "useWorkspaces": true}
+{"version": "3.3.13", "loglevel": "verbose", "npmClient": "yarn", "command": {"version": {"conventionalCommits": false, "syncWorkspaceLock": true, "message": "\ud83d\udd16 release: %v"}, "run": {"cmdDryRun": false}}, "ignoreChanges": ["**/__fixtures__/**", "**/__tests__/**", "**/helpers/**", "**/*.md"], "packages": ["packages/*"]}
+{"$schema": "node_modules/lerna/schemas/lerna-schema.json", "packages": ["apps/*", "components/*"], "version": "2.12.1", "npmClient": "pnpm", "conventionalCommits": true, "command": {"version": {"message": "chore(release): published new version"}}}
+{"lerna": "2.5.1", "packages": ["packages/stranded", "demo"], "version": "0.1.0"}
+{"npmClient": "yarn", "useWorkspaces": true, "version": "independent"}
+{"lerna": "2.10.2", "packages": ["packages/*"], "version": "5.1.0"}
+{"packages": ["packages/*"], "version": "4.0.0", "hoist": true, "stream": true, "bootstrap": {"npmClientArgs": ["--no-package-lock"]}}
+{"packages": ["packages/*"], "version": "independent", "npmClient": "yarn", "useWorkspaces": true, "registry": "https://registry.npmjs.org/", "command": {"version": {"exact": true}, "publish": {"conventionalCommits": true, "message": "chore(release): publish", "ignoreChanges": ["**/stories/**", "**/tests/**"], "allowBranch": "main"}}}
+{"lerna": "3.15.0", "npmClient": "yarn", "useWorkspaces": true, "packages": ["packages/*", "packages/@aws-cdk/*", "packages/@aws-cdk-containers/*", "packages/@aws-cdk/*/lambda-packages/*", "tools/*", "tools/@aws-cdk/*", "scripts/@aws-cdk/script-tests", "packages/individual-packages/*"], "rejectCycles": "true", "version": "0.0.0"}
+{"lerna": "3.16.4", "packages": ["packages/*"], "version": "1.0.0"}
+{"version": "independent", "npmClient": "yarn", "useWorkspaces": true, "command": {"version": {"ignoreChanges": ["*.md", "**/*.test.ts", "**/*.spec.ts"], "message": "chore(release): publish"}, "bootstrap": {"npmClientArgs": ["--no-package-lock", "--no-ci"]}}, "changelog": {"labels": {"pr(fix)": ":bug: Bug Fix", "pr(chore)": ":turtle: Chore", "pr(feature)": ":tada: New feature", "pr(breaking)": ":boom: Breaking Change", "pr(internal)": ":house: Internal", "pr(dependency)": ":shamrock: Dependency", "pr(documentation)": ":book: Documentation", "pr(enhancement)": ":rocket: Enhancement", "pr(refactor)": ":100: Refactoring", "pr(test)": ":white_check_mark: Test Case"}}}
+{"packages": ["packages/*"], "npmClient": "yarn", "useWorkspaces": true, "version": "independent", "command": {"publish": {"conventionalCommits": true, "message": "chore(release): publish"}}}
+{"packages": ["packages/*"], "version": "0.0.0"}
+{"packages": ["packages/*"], "version": "0.0.0"}
+{"packages": ["packages/*", "examples/*"], "version": "independent", "useWorkspaces": true, "npmClient": "yarn"}
+{"packages": ["packages/*", "examples/*"], "version": "independent", "useWorkspaces": true, "npmClient": "yarn"}
+{"lerna": "2.5.1", "npmClient": "yarn", "useWorkspaces": true, "version": "2.2.1"}
+{"access": "public", "allowBranch": ["master", "feature/*"], "conventionalCommits": true, "npmClient": "yarn", "packages": ["packages/*"], "useWorkspaces": true, "version": "independent"}
+{"npmClient": "yarn", "useWorkspaces": true, "version": "independent"}
+{"npmClient": "yarn", "useWorkspaces": true, "version": "independent"}
+{"npmClient": "yarn", "useWorkspaces": true, "version": "independent"}
+{"npmClient": "yarn", "useWorkspaces": true, "version": "independent"}
+{"version": "independent", "npmClient": "npm", "useWorkspaces": true, "command": {"publish": {"verifyAccess": false}}}
+{"packages": ["packages/*"], "version": "2.0.3", "command": {"bootstrap": {"npmClientArgs": ["--no-package-lock"]}}}
+{"packages": ["packages/*"], "version": "1.1.0", "npmClient": "yarn", "useWorkspaces": true}
+{"packages": ["packages/*"], "version": "1.1.0", "npmClient": "yarn", "useWorkspaces": true}
+{"packages": ["packages/*"], "version": "1.2.5"}
+{"packages": ["packages/*", "site"], "version": "1.0.0"}
+{"packages": ["packages/*", "site"], "version": "1.0.0"}
+{"version": "independent", "npmClient": "yarn", "useWorkspaces": true, "packages": ["packages/*"], "publishConfig": {"access": "public"}, "command": {"publish": {"ignoreChanges": ["**/*.md", "**/example/**", "**/*.test.ts"]}}}
+{"$schema": "node_modules/@lerna-lite/cli/schemas/lerna-schema.json", "packages": ["packages/*"], "useWorkspaces": true, "npmClient": "pnpm", "command": {"run": {"npmClient": "pnpm"}}, "changelogPreset": {"name": "conventionalcommits", "types": [{"type": "feat", "section": "\u2728 Features | \u65b0\u529f\u80fd"}, {"type": "fix", "section": "\ud83d\udc1b Bug Fixes | Bug \u4fee\u590d"}, {"type": "chore", "section": "\ud83d\ude80 Chore | \u6784\u5efa/\u5de5\u7a0b\u4f9d\u8d56/\u5de5\u5177", "hidden": true}, {"type": "docs", "section": "\ud83d\udcdd Documentation | \u6587\u6863"}, {"type": "style", "section": "\ud83d\udc84 Styles | \u6837\u5f0f"}, {"type": "refactor", "section": "\u267b\ufe0f Code Refactoring | \u4ee3\u7801\u91cd\u6784"}, {"type": "perf", "section": "\u26a1 Performance Improvements | \u6027\u80fd\u4f18\u5316"}, {"type": "test", "section": "\u2705 Tests | \u6d4b\u8bd5", "hidden": true}, {"type": "revert", "section": "\u23ea Revert | \u56de\u9000", "hidden": true}, {"type": "build", "section": "\ud83d\udce6\u200d Build System | \u6253\u5305\u6784\u5efa"}, {"type": "ci", "section": "\ud83d\udc77 Continuous Integration | CI \u914d\u7f6e"}], "issuePrefixes": ["#"], "issueUrlFormat": "{{host}}/{{owner}}/{{repository}}/issues/{{id}}", "commitUrlFormat": "{{host}}/{{owner}}/{{repository}}/commit/{{hash}}", "compareUrlFormat": "{{host}}/{{owner}}/{{repository}}/compare/{{previousTag}}...{{currentTag}}", "userUrlFormat": "{{host}}/{{user}}"}, "version": "0.0.28"}
+{"packages": ["packages/*"], "version": "independent", "command": {"publish": {"registry": "https://npm.pkg.github.com"}}}
+{"lerna": "2.7.1", "version": "independent", "useWorkspaces": true, "npmClient": "yarn", "packages": ["packages/*"], "command": {"publish": {"allowBranch": "master", "yes": true}, "version": {"allowBranch": "master", "conventionalCommits": true, "yes": false, "message": "chore(release): publish"}}, "changelog": {"labels": {"enhancement": ":rocket: Enhancement", "bug": ":bug: Bug Fix"}, "cacheDir": ".changelog"}}
+{"version": "0.4.0", "npmClient": "yarn", "useWorkspaces": true}
+{"version": "0.4.0", "npmClient": "yarn", "useWorkspaces": true}
+{"version": "0.4.0", "npmClient": "yarn", "useWorkspaces": true}
+{"lerna": "2.9.0", "packages": ["packages/*"], "version": "0.0.0", "npmClient": "yarn"}
+{"lerna": "2.9.0", "packages": ["packages/*"], "version": "0.0.0", "npmClient": "yarn"}
+{"packages": ["packages/*"], "version": "0.1.0", "npmClient": "yarn"}
+{"packages": ["packages/*"], "version": "0.1.0", "npmClient": "yarn"}
+{"packages": ["packages/*"], "version": "0.1.0", "npmClient": "yarn"}
+{"packages": ["packages/*"], "version": "0.1.0", "npmClient": "yarn"}
+{"packages": ["shell", "dashboard", "order", "sales", "settings"], "version": "0.0.0"}
+{"packages": ["packages/*"], "version": "0.1.0", "npmClient": "yarn", "useWorkspaces": true}
+{"packages": ["packages/*"], "version": "0.1.0", "npmClient": "yarn", "useWorkspaces": true}
+{"packages": ["packages/*"], "version": "0.1.0", "npmClient": "yarn", "useWorkspaces": true}
+{"packages": ["packages/*"], "version": "0.1.0", "npmClient": "yarn", "useWorkspaces": true}
+{"packages": ["packages/*"], "version": "independent", "npmClient": "yarn", "useWorkspaces": true, "registry": "https://registry.npmjs.org/", "command": {"version": {"exact": true}, "publish": {"conventionalCommits": true, "message": "chore(release): publish", "ignoreChanges": ["**/stories/**", "**/tests/**"], "allowBranch": "main"}}}
+{"packages": ["packages/*"], "version": "independent", "npmClient": "yarn", "useWorkspaces": true, "registry": "https://registry.npmjs.org/", "command": {"version": {"exact": true}, "publish": {"conventionalCommits": true, "message": "chore(release): publish", "ignoreChanges": ["**/stories/**", "**/tests/**"], "allowBranch": "main"}}}
+{"packages": ["packages/*"], "version": "independent", "npmClient": "yarn", "useWorkspaces": true, "registry": "https://registry.npmjs.org/", "command": {"version": {"exact": true}, "publish": {"conventionalCommits": true, "message": "chore(release): publish", "ignoreChanges": ["**/stories/**", "**/tests/**"], "allowBranch": "main"}}}
+{"lerna": "3.16.4", "packages": ["packages/*"], "version": "1.0.0"}
+{"lerna": "3.16.4", "packages": ["packages/*"], "version": "1.0.0"}
+{"lerna": "3.16.4", "packages": ["packages/*"], "version": "1.0.0"}
+{"lerna": "3.16.4", "packages": ["packages/*"], "version": "1.0.0"}
+{"command": {"create": {"license": "MIT"}, "publish": {"allowBranch": "release/*", "bump": "patch", "conventionalCommits": true, "changelog": false, "message": "chore(release): Publish"}}, "packages": ["packages/*"], "loglevel": "success", "version": "independent", "npmClient": "yarn", "registry": "https://registry.npmjs.org/", "useWorkspaces": true, "ignoreChanges": ["CHANGELOG.md", "**/__tests__/**", "**/__mocks__/**", "**/__testfixtures__/**"]}
+{"packages": ["./"], "version": "7.1.2"}
+{"lerna": "2.0.0", "version": "9.0.0-alpha.35", "npmClient": "yarn", "useWorkspaces": true, "exact": true, "packages": ["modules/*"], "command": {"publish": {"ignoreChanges": ["test", "*.md", "@luma.gl/scripts"]}, "bootstrap": {}}, "publishConfig": {"access": "public"}}
+{"pre-commit": ["lerna run --stream --since HEAD build", "lerna run --stream --since HEAD test", "yarn op-lint-staged", "lerna exec --stream --since HEAD yarn depcheck"], "commit-msg": "yarn op-commitlint $1", "prepare-commit-msg": "exec < /dev/tty && yarn op-commitizen hook \"$1\" \"$2\" \"$3\" || true"}
+{"packages": ["packages/*"], "version": "4.27.0"}
+{"packages": ["packages/*", "configs/*", "scripts"], "version": "independent"}
+{"lerna": "2.4.0", "packages": ["packages/*", "tools/*"], "version": "<%= version %>", "npmClient": "yarn", "useWorkspaces": true}
+{"npmClient": "yarn", "useWorkspaces": true, "packages": ["packages/*"], "version": "1.6.0"}
+{"lerna": "2.0.0", "packages": ["packages/*"], "version": "independent", "npmClient": "yarn", "useWorkspaces": true, "npmClientArgs": ["--concurrency 1"]}
+{"repo_name": "init-prj-lerna", "repo_full_name": "iamchenxin/init-prj-lerna", "repo_owner": "iamchenxin", "repo_description": "lerna project template for init-app.", "repo_private": false, "repo_fork": false, "schemas": [{"name": "schema.graphql", "path": "packages/config-relay-graphql/data/schema.graphql", "sha": "8f2706c0eb8243c68224b87a4e26d0f8622db52b", "url": "https://api.github.com/repositories/75709549/contents/packages/config-relay-graphql/data/schema.graphql?ref=f2d045643ef03cdeb5341166824a3f6fa8fd9309", "git_url": "https://api.github.com/repositories/75709549/git/blobs/8f2706c0eb8243c68224b87a4e26d0f8622db52b", "html_url": "https://github.com/iamchenxin/init-prj-lerna/blob/f2d045643ef03cdeb5341166824a3f6fa8fd9309/packages/config-relay-graphql/data/schema.graphql", "content": "# A item (name, content)\ntype Item implements Node {\n  # The ID of an object\n  id: ID!\n\n  # the name of a content\n  name: String\n\n  # the content\n  content: String\n}\n\n# mainupulate items\ntype ItemBook implements Node {\n  # The ID of an object\n  id: ID!\n  byName(name: String!): Item\n}\n\n# A connection to a list of items.\ntype ItemConnection {\n  # Information to aid in pagination.\n  pageInfo: PageInfo!\n\n  # A list of edges.\n  edges: [ItemEdge]\n}\n\n# An edge in a connection.\ntype ItemEdge {\n  # The item at the end of the edge\n  node: Item\n\n  # A cursor for use in pagination\n  cursor: String!\n}\n\ntype Mutation {\n  setItem(input: SetItemInput!): SetItemPayload\n}\n\n# An interface with an ID\ninterface Node {\n  # The id of the object.\n  id: ID!\n}\n\n# Information about pagination in a connection.\ntype PageInfo {\n  # When paginating forwards, are there more items?\n  hasNextPage: Boolean!\n\n  # When paginating backwards, are there more items?\n  hasPreviousPage: Boolean!\n\n  # When paginating backwards, the cursor to continue.\n  startCursor: String\n\n  # When paginating forwards, the cursor to continue.\n  endCursor: String\n}\n\ntype Query {\n  book: ItemBook\n  nameSeach(text: String): SearchResult\n\n  # Fetches an object given its ID\n  node(\n    # The ID of an object\n    id: ID!\n  ): Node\n}\n\n# the results for a name search\ntype SearchResult implements Node {\n  # The ID of an object\n  id: ID!\n  results(after: String, first: Int, before: String, last: Int): ItemConnection\n}\n\ninput SetItemInput {\n  name: String!\n  content: String!\n  clientMutationId: String!\n}\n\ntype SetItemPayload {\n  item: Item\n  clientMutationId: String!\n}\n", "containsQueryType": true, "validSchema": true, "contentDuplicate": false, "numObjectTypes": 9, "containsCycle": false, "polynomialLevel": 1, "numDefinitions": 11}], "metrics": {"created_at": "2016-12-06T08:12:01Z", "updated_at": "2016-12-06T08:12:29Z", "pushed_at": "2016-12-06T08:17:58Z", "issues": 0, "watchers": 1, "fork_count": 0, "has_wiki_enabled": true, "license": "mit", "pull_requests": 0, "pull_requests_open": 0, "pull_requests_closed": 0, "pull_requests_merged": 0, "releases": 0, "stargazers": 0}}
+{"lerna": "2.0.0-rc.5", "packages": ["packages/*"], "version": "0.0.0"}
+{"packages": ["packages/*"], "version": "independent", "command": {"publish": {"message": "chore(publish): \ud83e\udd16update packages"}}}
+{"packages": ["packages/*"], "version": "independent", "npmClient": "yarn", "useWorkspaces": true, "publishConfig": {"registry": "https://npm.pkg.github.com", "access": "public"}}
+{"lerna": "2.0.0-rc.4", "npmClient": "yarn", "version": "0.0.1"}
+{"packages": ["example/demo/*"], "version": "0.0.0", "npmClient": "npm", "command": {"publish": {"ignoreChanges": ["ignored-file", "*.md"]}, "bootstrap": {"npmClientArgs": ["--no-package-lock"]}}}
+{"packages": ["packages/*"], "version": "independent", "npmClient": "yarn", "useWorkspaces": true, "command": {"version": {"message": "chore(release): publish \ud83c\udfa8 \ud83c\udfa8 \ud83c\udfa8 ", "conventionalCommits": true}}, "ignoreChanges": ["**/*.md", "**/__tests__/**"]}
+{"command": {"publish": {"conventionalCommits": true}}, "registry": "https://registry.npmjs.org/", "packages": ["packages/*", "starter-kits/*", "welcome/*"], "npmClient": "yarn", "useWorkspaces": true, "version": "independent"}
+{"packages": ["packages/kalama", "packages/kalama-api", "packages/kalama-cache"], "version": "independent"}
+{"version": "1.0.0", "npmClient": "yarn", "useWorkspaces": true, "packages": ["packages/*"]}
+{"version": "0.0.5-develop", "packages": ["packages/core", "packages/webserver-express", "packages/webserver-serverless"]}
+{"packages": ["packages/*"], "version": "0.1.1", "useWorkspaces": true}
+{"packages": ["packages/*"], "version": "1.6.0", "npmClient": "yarn", "command": {"publish": {"conventionalCommits": true, "message": "chore(release): Lerna publish"}}}
+{"lerna": "4.0.0", "npmClient": "yarn", "packages": ["packages/*"], "version": "0.0.0"}
+{"version": "independent", "npmClient": "yarn", "useWorkspaces": true, "command": {"version": {"conventionalCommits": true, "changelogPreset": "conventionalcommits", "message": "chore(release): publish"}}}
+{"version": "0.6.8", "packages": ["."]}
+{"packages": ["packages/*"], "version": "0.0.38", "npmClient": "yarn", "useWorkspaces": true}
+{"version": "2.0.0", "npmClient": "yarn", "useWorkspaces": true, "packages": ["packages/*", "server/*", "app/**"]}
+{"useWorkspaces": true, "version": "8.0.1"}
+{"$schema": "node_modules/@lerna-lite/cli/schemas/lerna-schema.json", "version": "independent", "npmClient": "npm", "packages": ["packages/*"]}
+{"lerna": "3.13.4", "npmClient": "npm", "packages": ["packages/*", "sample-apps/*"], "version": "0.0.0", "changelog": {"repo": "open-telemetry/opentelemetry-lambda", "labels": {"breaking": ":boom: Breaking Change", "bug": ":bug: (Bug Fix)", "core": ":wrench: Core", "document": ":books: (Refine Doc)", "enhancement": ":rocket: (Enhancement)", "feature-request": ":sparkles: (Feature)", "internal": ":house: Internal"}, "cacheDir": ".changelog", "ignoreCommitters": ["github-actions"]}}
+{"lerna": "3.4.0", "packages": ["packages/*"], "version": "0.1.0"}
+{"packages": ["autodownload", "environment-life", "environment-registration", "gallerymenu", "inject-uuid", "instrumentation", "userpreferences"], "npmClient": "jlpm", "useWorkspaces": true, "version": "independent"}
+{"packages": ["oauth-pkce"], "version": "independent"}
+{"lerna": "2.11.0", "packages": ["packages/backend"], "npmClient": "npm", "version": "1.0.0"}
+{"packages": ["packages/*"], "version": "1.0.0-alpha.21.1"}
+{"packages": ["apps/*"], "version": "1.0.4"}
+{"packages": ["packages/**"], "version": "independent", "npmClient": "yarn", "useWorkspaces": true, "command": {"publish": {"npmClient": "npm", "verifyAccess": false, "ignoreChanges": [], "conventionalCommits": true}, "version": {"message": "chore(release): publish"}}}
+{"npmClient": "yarn", "useWorkspaces": true, "packages": ["packages/*"], "version": "1.2.1"}
+{"version": "independent", "packages": ["example", "components/*", "packages/*"], "command": {"bootstrap": {"hoist": true, "nohoist": ["example"]}, "run": {"stream": true, "parallel": true}, "exec": {"stream": true, "parallel": true}, "version": {"allowBranch": "master"}}}
+{"packages": ["packages/**", "plugins/**"], "npmClient": "npm", "version": "0.3.0", "publishConfig": {"directory": "lib"}}
+{"packages": ["packages/*", "docs"], "version": "independent", "npmClient": "yarn", "useWorkspaces": true, "registry": "https://registry.npmjs.org/", "command": {"version": {"exact": true}, "publish": {"conventionalCommits": true, "message": "chore(release): publish", "ignoreChanges": ["**/stories/**", "**/tests/**"], "allowBranch": "main"}}}
+{"npmClient": "yarn", "useWorkspaces": true, "packages": ["packages/*"], "version": "independent", "$schema": "node_modules/lerna/schemas/lerna-schema.json", "useNx": false, "registry": "https://registry.npmjs.org"}
+{"lerna": "2.0.0", "version": "0.0.0", "npmClient": "yarn", "useWorkspaces": true}
+{"packages": ["packages/*"], "npmClient": "yarn", "useWorkspaces": true, "version": "0.1.0"}
+{"npmClient": "yarn", "version": "1.0.42", "$schema": "node_modules/lerna/schemas/lerna-schema.json"}
+{"packages": ["packages/*", "integration-tests", "examples/*"], "version": "independent", "ignoreChanges": ["**/*.md"]}
+{"version": "2.3.3", "npmClient": "yarn", "useWorkspaces": true}
+{"packages": ["packages/*", "bundles/*", "demos/*"], "version": "independent"}
+{"$schema": "node_modules/lerna/schemas/lerna-schema.json", "useWorkspaces": true, "useNx": true, "version": "independent", "packages": ["plugins/*"]}
+{"$schema": "node_modules/lerna/schemas/lerna-schema.json", "useWorkspaces": true, "version": "1.0.0", "npmClient": "pnpm"}
+{"packages": [".", "packages/*"], "npmClient": "npm", "command": {"publish": {"message": "chore(release): publish", "registry": "https://registry.npmjs.org"}}, "version": "independent"}
+{"packages": ["packages/*"], "useWorkspaces": true, "npmClient": "yarn", "version": "0.0.0"}
+{"npmClient": "yarn", "packages": ["packages/*", "src/*"], "version": "independent", "useWorkspaces": true}
+{"packages": ["applications/*"], "version": "independent"}
+{"lerna": "3.14.1", "version": "0.1.7", "useWorkspaces": true, "changelog": {"repo": "CareyToboo/ovine", "labels": {"tag: new feature": ":rocket: New Feature", "tag: breaking change": ":boom: Breaking Change", "tag: bug fix": ":bug: Bug Fix", "tag: polish": ":nail_care: Polish", "tag: documentation": ":memo: Documentation", "tag: internal": ":house: Internal", "tag: performance": ":running_woman: Performance"}, "cacheDir": ".changelog"}}
+{"npmClient": "yarn", "packages": ["web"], "version": "0.0.0"}
+{"packages": ["packages/*"], "npmClient": "yarn", "version": "1.0.0", "useWorkspaces": true}
+{"version": "5.2.0", "npmClient": "npm", "packages": ["packages/generator-rfluxx", "packages/rfluxx", "packages/rfluxx-debug", "packages/rfluxx-example", "packages/rfluxx-forms", "packages/rfluxx-i18n", "packages/rfluxx-mui-theming", "packages/rfluxx-react", "packages/rfluxx-routing"]}
+{"packages": ["packages/*"], "npmClient": "npm", "version": "0.1.6", "command": {"publish": {"conventionalCommits": false, "ignoreChanges": ["*.md"], "bootstrap": {"npmClientArgs": ["--no-package-lock"]}}}}
+{"npmClient": "yarn", "useWorkspaces": true, "packages": ["packages/*"], "command": {"version": {"exact": true}, "publish": {"npmClient": "npm", "allowBranch": ["master", "canary"], "registry": "https://registry.npmjs.org/"}}, "version": "10.0.8-canary.13"}
+{"lerna": "3.13.0", "npmClient": "yarn", "version": "0.1.0", "changelog": {"repo": "ever-co/gauzy", "cacheDir": ".changelog", "labels": {}}, "packages": ["libs/*", "apps/*", "packages/*", "packages/plugins/*"], "useWorkspaces": true, "command": {"exec": {"scope": ["@ngx-starter-kit/*"]}, "clean": {"yes": true}}, "npmClientArgs": ["--no-package-lock"]}
+{"lerna": "2.5.1", "packages": ["packages/*", "examples/data-generator"], "version": "2.5.0"}
+{"$schema": "node_modules/lerna/schemas/lerna-schema.json", "useWorkspaces": true, "version": "7.1.0"}
+{"packages": ["packages/*", "example"], "npmClient": "yarn", "useWorkspaces": true, "version": "0.0.0"}
+{"lerna": "2.0.0-rc.5", "packages": ["packages/*", "extensions/*", "demo"], "version": "0.0.0", "npmClient": "yarn"}
+{"packages": ["packages/*", "dev-packages/*"], "version": "0.3.0-alpha", "npmClient": "yarn", "useWorkspaces": true, "command": {"publish": {"graphType": "all", "message": "chore(release): publish %s"}}}
+{"packages": ["packages/*"], "version": "0.0.0"}
+{"version": "independent", "npmClient": "yarn", "useWorkspaces": true, "command": {"publish": {"ignoreChanges": ["*.md", "*.test.ts"], "message": "Release [ci skip]"}}}
+{"lerna": "2.11.0", "packages": ["packages/*"], "version": "0.0.0", "npmClient": "yarn"}
+{"packages": ["packages/*"], "name": "ivue-material-cli", "message": "chore(release): publish", "version": "0.0.0"}
+{"npmClient": "pnpm", "version": "3.0.0", "command": {"version": {"conventionalCommits": true, "changelogPreset": {"name": "conventional-changelog-conventionalcommits", "issuePrefixes": ["#"], "types": [{"type": "feat", "section": "Features"}, {"type": "feature", "section": "Features"}, {"type": "fix", "section": "Bug Fixes"}, {"type": "perf", "section": "Performance Improvements"}, {"type": "revert", "section": "Reverts"}, {"type": "docs", "section": "Documentation", "hidden": true}, {"type": "style", "section": "Styles", "hidden": true}, {"type": "chore", "section": "Miscellaneous Chores", "hidden": true}, {"type": "refactor", "section": "Code Refactoring", "hidden": true}, {"type": "test", "section": "Tests", "hidden": true}, {"type": "build", "section": "Build System", "hidden": true}, {"type": "ci", "section": "Continuous Integration", "hidden": true}], "issueUrlFormat": "{{host}}/{{owner}}/{{repository}}/issues/{{id}}", "commitUrlFormat": "{{host}}/{{owner}}/{{repository}}/commit/{{hash}}", "compareUrlFormat": "{{host}}/{{owner}}/{{repository}}/compare/{{previousTag}}...{{currentTag}}", "userUrlFormat": "{{host}}/{{user}}"}, "message": "chore: update version %s", "push": false}, "publish": {"ignoreChanges": ["ignored-file", "*.md"], "registry": "https://registry.npmjs.org/", "message": "chore: publish release %s"}}}
+{"command": {"version": {"conventionalCommits": true, "exact": true, "message": "chore(release): publish"}}, "packages": ["packages/*"], "npmClient": "yarn", "useWorkspaces": true, "version": "independent"}
+{"version": "0.15.0", "npmClient": "yarn", "useWorkspaces": true, "changelog": {"repo": "assaf/queue-run", "labels": {"tag: new feature": ":rocket: New Feature", "tag: breaking change": ":boom: Breaking Change", "tag: bug fix": ":bug: Bug Fix", "tag: enhancement": ":nail_care: Enhancement", "tag: documentation": ":memo: Documentation", "tag: internal": ":house: Internal", "tag: underlying tools": ":hammer: Underlying Tools"}, "cacheDir": ".changelog"}, "command": {"publish": {"ignoreChanges": ["*.md"], "message": ":house: publish"}}, "packages": ["packages/builder", "packages/cli", "packages/queue-run", "packages/runtime-lambda"]}
+{"npmClient": "yarn", "useWorkspaces": true, "npmClientArgs": ["--ignore-engines"], "packages": ["packages/*", "example/*"], "version": "0.1.0"}
+{"lerna": "3.3.0", "packages": ["./print-server", "./utils", "./dashboard"], "version": "1.0.0"}
+{"npmClient": "yarn", "useWorkspaces": true, "packages": ["packages/*", "examples/*"], "command": {"version": {"exact": true}, "publish": {"npmClient": "yarn", "allowBranch": ["main"], "registry": "https://registry.npmjs.org/"}}, "version": "1.2.0"}
+{"version": "2.1.2", "npmClient": "yarn", "packages": ["packages/*"]}
+{"$schema": "node_modules/lerna/schemas/lerna-schema.json", "useNx": true, "useWorkspaces": true, "version": "0.1.0-alpha.18", "packages": ["packages/*", "apps/*"]}
+{"packages": ["examples/*", "packages/*"], "command": {"run": {"ignore": "example_*"}, "publish": {"ignoreChanges": ["examples/*", "*.md"]}}, "version": "0.7.0"}
+{"private": true, "packages": ["packages/*"], "version": "1.0.1-alpha.9.3.1"}
+{"packages": ["packages/*"], "version": "independent", "registry": "https://registry.npmjs.org/", "publishConfig": {"access": "public"}}
+{"packages": ["packages/*"], "npmClient": "yarn", "version": "independent", "useWorkspaces": true}
+{"packages": ["packages/*"], "version": "1.0.0-alpha.1"}
+{"npmClient": "yarn", "packages": ["lib", "docs"], "useWorkspaces": true, "version": "2.1.0"}
+{"npmClient": "npm", "packages": ["packages/*", "integration"], "version": "independent"}
+{"$schema": "node_modules/@lerna-lite/cli/schemas/lerna-schema.json", "version": "1.0.1", "command": {"version": {"conventionalCommits": false, "noChangelog": true}}, "packages": ["."]}
+{"packages": ["packages/*"], "npmClient": "yarn", "version": "0.0.2", "nohoist": ["parcel-bundler"]}
+{"version": "1.0.0", "packages": ["apps/*", "packages/*"], "npmClient": "yarn"}
+{"version": "independent", "npmClient": "yarn", "useWorkspaces": true, "loglevel": "success", "registry": "https://registry.npmjs.org/", "ignoreChanges": ["CHANGELOG.md", "**/__tests__/**", "**/__mocks__/**"], "command": {"publish": {"allowBranch": "master", "bump": "patch", "conventionalCommits": true, "message": "chore(release): Publish"}, "bootstrap": {"npmClientArgs": ["--no-package-lock"]}}}
+{"packages": ["modules/*"], "version": "3.0.3", "command": {"bootstrap": {"nohoist": ["typedoc"]}}, "hoist": true, "nohoist": ["typedoc"]}
+{"packages": ["packages/*"], "version": "1.6.2", "npmClient": "yarn", "useWorkspaces": true, "command": {"version": {"push": false}}}
+{"packages": ["packages/*"], "npmClient": "yarn", "version": "0.1.2", "useWorkspaces": true, "nohoist": ["parcel-bundler"]}
+{"lerna": "2.2.0", "packages": ["@tessdata/*"], "version": "0.0.0"}
+{"packages": ["packages/*"], "version": "0.4.0-pre.3", "command": {"bootstrap": {"hoist": true}, "publish": {"allowBranch": ["main"], "message": "chore(release): publish %s", "conventionalCommits": true, "createRelease": "github"}}, "ignoreChanges": ["**/changelog.md", "**/CHANGELOG.md", "**/package-lock.json", "**/yarn.lock", "**/test/**", "lerna.json", "readme.md"]}
+{"lerna": "2.9.0", "packages": ["packages/*"], "version": "0.8.0", "useWorkspaces": true}
+{"lerna": "2.11.0", "command": {"publish": {"ignoreChanges": ["*.md"]}, "bootstrap": {"hoist": "**"}}, "packages": ["packages/*", "packages/samples/*"], "version": "0.10.2"}
+{"packages": ["packages/*"], "version": "2.0.15"}
+{"lerna": "2.11.0", "packages": ["packages/*"], "version": "3.5.10", "npmClient": "yarn"}
+{"packages": ["packages/*"], "version": "independent", "command": {"version": {"allowBranch": ["master"], "conventionalCommits": true, "createRelease": "github", "message": "chore(release): publish [skip ci]"}}}
+{"packages": [".", "packages/*"], "version": "0.6.0"}
+{"lerna": "3.13.0", "npmClient": "yarn", "version": "0.3.0", "concurrency": 8, "changelog": {"repo": "ever-co/ever", "cacheDir": ".changelog", "labels": {}}, "packages": ["packages/*"], "useWorkspaces": true, "command": {"bootstrap": {}, "publish": {"conventionalCommits": true, "ignoreChanges": ["*.md", "test/**"], "message": "chore(release): %s"}, "version": {"push": false}, "clean": {"yes": true}}, "npmClientArgs": ["--no-package-lock"], "stream": true}
+{"npmClient": "yarn", "packages": ["packages/*"], "useWorkspaces": true, "version": "6.0.0"}
+{"npmClient": "yarn", "useWorkspaces": true, "version": "1.0.0", "packages": ["src/*"]}
+{"version": "0.17.0", "npmClient": "yarn", "command": {"version": {"allowBranch": "master"}, "publish": {"message": "release %s"}}, "packages": ["packages/*"]}
+{"lerna": "2.0.0", "packages": ["packages/*"], "version": "0.0.0", "npmClient": "npm", "useWorkspaces": false, "commands": {"run": {"ignore": "\\@popperjs/*"}}}
+{"lerna": "6.0.3", "packages": ["packages/*"], "version": "1.0.0-beta.30"}
+{"packages": ["packages/*", "samples/*", "extensions/*"], "npmClient": "npm", "useWorkspaces": true, "version": "8.11.0"}
+{"version": "1.34.7", "npmClient": "yarn", "useWorkspaces": true, "command": {"version": {"allowBranch": "master"}}}
+{"lerna": "5.1.8", "npmClient": "npm", "packages": ["packages/*"], "command": {"publish": {"graphType": "all"}}, "version": "3.12.9"}
+{"version": "0.1.9", "useWorkspaces": true, "npmClient": "yarn", "command": {"run": {"stream": true}}}
+{"npmClient": "yarn", "useWorkspaces": true, "packages": ["packages/*"], "independent": true, "version": "independent"}
+{"lerna": "3.22.1", "packages": ["packages/*"], "npmClient": "yarn", "useWorkspaces": true, "version": "0.0.2"}
+{"packages": ["packages/*"], "version": "1.0.0", "useWorkspaces": true, "npmClient": "yarn"}
+{"packages": ["core", "utils/*"], "version": "0.12.3"}
+{"packages": ["eslint-*"], "version": "2.1.0"}
+{"lerna": "2.4.0", "packages": ["packages/*"], "version": "6.9.0"}
+{"packages": ["packages/*"], "useWorkspaces": true, "version": "independent"}
+{"packages": ["packages/*"], "version": "independent", "command": {"publish": {"yes": true, "message": "chore: publish new versions", "registry": "https://npm.pkg.github.com/", "conventionalCommits": true, "ignoreChanges": ["*.md", "*.spec.ts"]}, "bootstrap": {"scope": ["@jerome-nelson/*"], "hoist": true}, "exec": {"scope": ["@jerome-nelson/*"]}, "clean": {"yes": true}}}
+{"packages": ["libs/*"], "version": "0.0.0", "npmClient": "yarn", "useWorkspaces": true}
+{"npmClient": "yarn", "useWorkspaces": true, "version": "0.9.4", "packages": ["packages/@nodepack/*"]}
+{"packages": ["packages/*"], "version": "independent", "npmClient": "npm", "command": {"publish": {"access": "public", "ignoreChanges": ["ignored-file", "*.md"], "message": "chore(release): publish", "registry": "https://registry.npmjs.org", "yes": true}, "bootstrap": {"npmClientArgs": []}, "create": {"access": "public", "private": false, "license": "MIT"}, "run": {"npmClient": "npm"}, "version": {"allowBranch": "master", "conventionalCommits": true, "exact": true, "message": "chore(release): publish %s [ci skip]", "forcePublish": true, "noGitReset": true, "signGitCommit": false, "signGitTag": false, "createRelease": "github"}}}
+{"$schema": "node_modules/lerna/schemas/lerna-schema.json", "useWorkspaces": true, "version": "2.0.0-beta.6"}
+{"packages": ["packages/api", "packages/ui"], "version": "independent"}
+{"version": "8.0.0-alpha.25", "useWorkspaces": true, "command": {"version": {"allowBranch": "main", "conventionalCommits": true, "push": false, "message": "chore(release): %v"}}}
+{"packages": ["actions/*"], "version": "independent"}
+{"changelogPreset": "@spyke/conventional-changelog-preset", "command": {"version": {"ignoreChanges": ["**/__snapshots__/", "**/__tests__/", "website/", "*.md?(x)", "*.test.?(c|m)js"]}}, "npmClient": "yarn", "useWorkspaces": true, "version": "0.6.1"}
+{"npmClient": "yarn", "command": {"publish": {"message": "chore(release): publish %s", "registry": "https://registry.npmjs.org/"}, "version": {"message": "chore(release): version", "allowBranch": ["release", "main", "feature/*"], "conventionalCommits": true}, "bootstrap": {"npmClientArgs": ["--no-package-lock"]}}, "packages": ["packages/*", "demo/*"], "version": "1.1.70"}
+{"version": "independent", "npmClient": "pnpm", "useWorkspaces": true}
+{"npmClient": "yarn", "useWorkspaces": true, "packages": ["packages/*"], "version": "1.1.5", "command": {"bootstrap": {"npmClientArgs": ["--no-package-lock"]}}}
+{"lerna": "2.2.0", "packages": ["packages/*"], "npmClient": "npm", "version": "1.0.0"}
+{"lerna": "2.7.1", "packages": ["packages/*"], "version": "0.0.1"}
+{"packages": ["elements/*", "generators/*"], "version": "0.0.0"}
+{"version": "0.0.0-beta.2", "npmClient": "npm", "command": {"publish": {"ignoreChanges": ["ignored-file", "*.md"], "message": "chore(release): publish", "registry": "https://npm.pkg.github.com"}, "bootstrap": {"npmClientArgs": ["--no-package-lock"]}}, "packages": ["*"]}
+{"packages": ["packages/*"], "command": {"run": {"npmClient": "npm"}}, "version": "0.0.0"}
+{"packages": ["javascript/*"], "npmClient": "yarn", "useWorkspaces": true, "version": "independent"}
+{"packages": ["package"], "version": "independent", "command": {"init": {"exact": true}, "publish": {"allowBranch": ["master"], "ignoreChanges": ["**/*.spec.ts", "**/*.spec.tsx", "**/tests/**"], "conventionalCommits": true, "yes": true, "message": "chore(release): publish %v [skip ci]", "registry": "https://npm.pkg.github.com"}}}
+{"packages": ["packages/*"], "version": "independent", "npmClient": "yarn", "useWorkspaces": true, "command": {"version": {"allowBranch": "main"}, "publish": {"conventionalCommits": true, "message": "chore(release): publish new version %s", "registry": "https://registry.npmjs.org/"}}, "ignoreChanges": ["**/*.md", "**/*.test.*", "**/*.stories.*", "**/node_modules/**", "**/package.json"]}
+{"packages": ["packages/*"], "version": "independent", "command": {"publish": {"ignoreChanges": ["*.md"]}}}
+{"packages": ["frameworks/keyed/*", "frameworks/non-keyed/*"], "version": "0.0.0"}
+{"npmClient": "npm", "version": "independent", "packages": ["core/*"], "command": {"publish": {"ignoreChanges": ["ignored-file", "*.md"], "message": "chore(release): publish"}, "bootstrap": {"npmClientArgs": ["--no-package-lock"]}}, "changelog": {"repo": "knitkode/framework", "labels": {"tag: new feature": ":rocket: New Feature", "tag: breaking change": ":boom: Breaking Change", "tag: bug fix": ":bug: Bug Fix", "tag: enhancement": ":nail_care: Enhancement", "tag: documentation": ":memo: Documentation", "tag: internal": ":house: Internal", "tag: underlying tools": ":hammer: Underlying Tools"}, "cacheDir": ".changelog"}}
+{"packages": ["packages/*", "examples/*"], "version": "1.0.1"}
+{"packages": ["packages/*"], "version": "0.2.0", "npmClient": "yarn", "useWorkspaces": true, "command": {"publish": {"registry": "http://localhost:4873/", "createRelease": "github", "allowBranch": "master", "conventionalCommits": true, "message": "chore(release): %s"}}}
+{"packages": ["packages/*"], "version": "independent", "npmClient": "npm", "command": {"publish": {"ignoreChanges": ["**/dist", "*.md"]}, "bootstrap": {"npmClientArgs": ["--no-package-lock"]}}}
+{"packages": ["asset", "broken-line", "exchange-v2", "interfaces", "lazy-mint", "royalties", "royalties-registry", "royalties-upgradeable", "tokens", "tokens-test", "transfer-proxy"], "npmClient": "yarn", "useWorkspaces": true, "version": "independent", "publishConfig": {"access": "public"}, "command": {"publish": {"allowBranch": "master", "conventionalCommits": true, "message": "chore(release): bump versions after release", "yes": true}}}
+{"lerna": "2.11.0", "packages": ["packages/*"], "npmClient": "npm", "version": "independent"}
+{"packages": ["core", "visual-test"], "version": "0.0.0", "npmClient": "yarn"}
+{"$schema": "node_modules/lerna/schemas/lerna-schema.json", "version": "1.0.0", "useNx": true}
+{"packages": ["core/*", "commands/*", "models/*", "utils/*"], "version": "0.0.2"}
+{"packages": ["packages/*", "tools/*"], "version": "independent"}
+{"packages": ["modules/*"], "version": "independent"}
+{"command": {"publish": {"conventionalCommits": true}}, "version": "1.0.0", "packages": ["packages/*"]}
+{"lerna": "<%= versions.lerna %>", "version": "independent", "npmClient": "yarn", "npmClientArgs": [], "command": {"publish": {"npmClient": "npm"}}, "useWorkspaces": true}
+{"npmClient": "yarn", "useWorkspaces": true, "packages": ["packages/*", "examples/*"], "version": "independent", "publishConfig": {"access": "public"}}
+{"$schema": "node_modules/lerna/schemas/lerna-schema.json", "useWorkspaces": true, "packages": ["packages/*"], "npmClient": "yarn", "command": {"publish": {"conventionalCommits": true, "yes": false, "ignoreChanges": ["**/*.spec.ts"], "message": "chore(release): publish"}}, "version": "independent"}
+{"packages": ["packages/*"], "command": {"publish": {"ignoreChanges": ["*.md"], "message": "Bump to new release version", "allowBranch": "main", "npmClient": "npm"}}, "loglevel": "info", "registry": "https://registry.npmjs.org/", "npmClient": "npm", "npmClientArgs": ["--no-package-lock"], "version": "independent"}
+{"packages": ["packages/*"], "version": "independent", "command": {"publish": {"preDistTag": "next", "verifyAccess": false, "yes": true}}}
+{"command": {"publish": {"allowBranch": ["master", "dev"], "message": "chore(release): publish %s"}, "version": {"push": true}}, "npmClient": "yarn", "version": "1.5.14", "useWorkspaces": true}
+{"lerna": "3.2.1", "npmClient": "npm", "packages": ["packages/*", "plugins/*"], "useWorkspaces": true, "version": "0.18.25", "ignoreChanges": ["**/*.md", "**/*.spec.tsx?", "**/*.spec.jsx?", "**/__mocks__/**"], "command": {"publish": {"message": "chore: publish %s", "graphType": "all"}, "version": {"message": "chore: publish %s", "exact": true}}}
+{"lerna": "2.11.0", "packages": ["packages/*"], "npmClient": "yarn", "useWorkspaces": true, "version": "0.20.2", "command": {"publish": {"conventionalCommits": true}}}
+{"lerna": "2.11.0", "packages": ["packages/*"], "version": "1.0.0"}
+{"packages": ["packages/*"], "command": {"bootstrap": {"hoist": true, "ignore-scripts": true}, "publish": {"force": true, "conventionalCommits": true}}, "version": "independent", "npmClientArgs": ["--no-optional"]}
+{"$schema": "node_modules/lerna/schemas/lerna-schema.json", "useNx": true, "version": "independent", "packages": ["packages/*", "apps/*", "extensions/*", "servers/*"]}
+{"npmClient": "yarn", "useWorkspaces": true, "version": "independent", "command": {"publish": {"message": "\ud83d\ude80 Publish changes."}}}
+{"packages": ["packages/*"], "npmClient": "yarn", "useWorkspaces": true, "command": {"init": {"exact": true}, "create": {"homepage": "https://github.com/hotell/ts-setup", "license": "MIT"}, "version": {"allowBranch": ["master"], "message": "chore(release): publish %s", "conventionalCommits": true}, "publish": {"allowBranch": ["master"], "message": "chore(release): publish %s", "conventionalCommits": true}}, "ignoreChanges": ["**/__fixtures__/**", "**/__mocks__/**", "**/__tests__/**", "**/*.md"], "version": "1.0.0"}
+{"packages": ["packages/adapter", "packages/snap", "packages/types"], "version": "0.0.15"}
+{"version": "independent", "npmClient": "yarn", "useWorkspaces": true, "publishConfig": {"access": "public"}, "command": {"run": {"parallel": true, "stream": true}, "version": {"allowBranch": ["valid", "master", "development"], "conventionalCommits": true, "message": "chore(release): bumps packages version [skip ci]", "noCommitHooks": true}}}
+{"packages": ["web", "studio"], "npmClient": "yarn", "useWorkspaces": true, "version": "0.0.0"}
+{"packages": ["packages/*", "packages/tira-project-template/templates/*"], "version": "independent", "command": {"publish": {"push": false}}}
+{"packages": ["packages/*"], "npmClient": "yarn", "stream": true, "version": "7.74.0-next"}
+{"lerna": "2.0.0-beta.34", "packages": ["packages/*"], "version": "0.0.0"}
+{"lerna": "2.4.0", "packages": ["packages/*", "docs/", "examples/"], "npmClient": "yarn"}
+{"npmClient": "yarn", "packages": ["app", "packages"], "version": "independent", "useWorkspaces": true}
+{"version": "2.10.2", "packages": [], "command": {"bootstrap": {"npmClientArgs": ["--no-package-lock"], "ci": false}}}
+{"packages": ["packages/*"], "version": "independent", "command": {"publish": {"conventionalCommits": true, "yes": true}, "version": {"message": "chore(release): publish"}}}
+{"version": "2.0.7-canary.0", "npmClient": "npm", "packages": ["."], "command": {"version": {"exact": true, "preid": "canary"}}}
+{"npmClient": "yarn", "packages": ["packages/integration-sdk-*", "packages/cli"], "version": "10.2.0"}
+{"$schema": "node_modules/lerna/schemas/lerna-schema.json", "useWorkspaces": true, "version": "1.0.0-beta.34", "npmClient": "pnpm", "command": {"version": {"allowBranch": "main", "conventionalCommits": true, "message": "chore: publish"}}}
+{"lerna": "3.13.0", "npmClient": "yarn", "version": "0.1.0", "changelog": {"repo": "ever-co/ever-gauzy", "cacheDir": ".changelog", "labels": {}}, "packages": ["libs/*", "apps/*", "packages/*", "packages/plugins/*"], "useNx": true, "useWorkspaces": true, "command": {"exec": {"scope": ["@ngx-starter-kit/*"]}, "clean": {"yes": true}}, "npmClientArgs": ["--no-package-lock"]}
+{"command": {"version": {"signGitTag": true, "signGitCommit": true}}, "packages": ["packages/*"], "version": "0.6.8"}
+{"npmClient": "yarn", "version": "independent", "command": {"version": {"message": "chore(release): publish"}}}
+{"npmClient": "yarn", "useWorkspaces": true, "version": "0.4.14", "packages": ["packages/*"]}
+{"command": {"publish": {"npmClient": "npm", "registry": "https://registry.npmjs.org/"}, "version": {"conventionalCommits": true, "changelogPreset": "conventionalcommits", "allowBranch": "master", "exact": true, "includeMergedTags": true, "message": "chore(release): publish", "ignoreChanges": ["*.md", "*.spec.*"]}, "bootstrap": {"forceLocal": true, "includeDependents": true, "includeDependencies": true}}, "npmClient": "yarn", "packages": ["packages/**"], "useWorkspaces": true, "version": "independent"}
+{"version": "1.12.1", "npmClient": "yarn", "useWorkspaces": true, "concurrency": 2}
+{"packages": ["packages/*"], "version": "5.3.0"}
+{"packages": ["packages/*"], "command": {"publish": {"ignoreChanges": ["*.md", "*.test.mjs", "*.unit.mjs", "*.integration.mjs"], "message": "chore(release): publish", "conventionalCommits": true}}, "version": "independent"}
+{"packages": ["packages/*"], "npmClient": "yarn", "version": "independent", "useWorkspaces": true}
+{"lerna": "2.4.0", "version": "0.0.8-alpha.0", "command": {"publish": {"ignoreChanges": ["*.md"], "message": "Bump to release version %s", "allowBranch": "main", "npmClient": "npm"}}, "packages": ["packages/*"], "loglevel": "success", "registry": "https://registry.npmjs.org/", "npmClient": "npm", "npmClientArgs": ["--pure-lockfile"]}
+{"npmClient": "yarn", "npmClientArgs": ["--frozen-lockfile"], "useWorkspaces": true, "ignoreChanges": ["**/__fixtures__/**", "**/__tests__/**", "**/docs/**", "**/e2e/**", "**/examples/**", "**/*.md"], "packages": ["config/*", "packages/*"], "version": "0.0.1"}
+{"packages": ["packages/*", "projects/*"], "useWorkspaces": true, "npmClient": "yarn", "version": "independent", "includeMergedTags": true, "command": {"version": {"allowBranch": "main"}, "publish": {"allowBranch": "main"}}, "ignoreChanges": ["**/__fixtures__/**", "**/__tests__/**", "**/*.md", "projects/**"]}
+{"version": "independent", "npmClient": "yarn", "useWorkspaces": true, "packages": ["packages/*", "sites/*"]}
+{"npmClient": "yarn", "useWorkspaces": true, "version": "independent"}
+{"version": "1.0.2", "lerna": "2.11.0", "packages": ["modules/*"], "command": {"publish": {"access": "public"}}, "npmClient": "npm"}
+{"packages": ["packages/*", "plugins/*", "examples/*"], "command": {"publish": {"ignoreChanges": ["examples/*"]}, "bootstrap": {"nohoist": "express"}}, "changelog": {"repo": "yiiu/reslow", "labels": {"breaking": ":boom: Breaking Change", "enhancement": ":rocket: Enhancement", "bug": ":bug: Bug Fix", "documentation": ":memo: Documentation", "internal": ":house: Internal"}, "cacheDir": ".changelog"}, "version": "independent"}
+{"packages": ["01-setup/bargs", "02-your-first-test/bargs", "03-actual-tests/bargs", "04-introducing-mocha/bargs"], "command": {"bootstrap": {"npmClientArgs": ["--no-package-lock"]}}, "version": "0.0.0"}
+{"lerna": "2.11.0", "npmClient": "yarn", "useWorkspaces": true, "command": {"publish": {"allowBranch": "master"}}, "packages": ["packages/*"], "version": "0.0.1"}
+{"hoist": true, "packages": ["packages/*", "repos/*"], "version": "0.1.0"}
+{"$schema": "node_modules/lerna/schemas/lerna-schema.json", "useNx": true, "version": "1.0.1", "npmClient": "yarn", "useWorkspaces": true}
+{"packages": ["backend/*", "frontend/*", "packages/*"], "version": "0.0.0", "npmClient": "yarn", "useWorkspaces": true}
+{"packages": ["packages/*", "configs/*", "scripts"], "version": "independent"}
+{"packages": ["packages/*", "configs/*", "scripts"], "version": "independent"}
+{"lerna": "2.4.0", "packages": ["packages/*", "tools/*"], "version": "<%= version %>", "npmClient": "yarn", "useWorkspaces": true}
+{"lerna": "2.0.0-rc.5", "packages": ["packages/*"], "version": "0.0.0"}
+{"lerna": "2.0.0-rc.5", "packages": ["packages/*"], "version": "0.0.0"}
+{"lerna": "2.0.0-rc.5", "packages": ["packages/*"], "version": "0.0.0"}
+{"lerna": "2.0.0-rc.5", "packages": ["packages/*"], "version": "0.0.0"}
+{"packages": ["example/demo/*"], "version": "0.0.0", "npmClient": "npm", "command": {"publish": {"ignoreChanges": ["ignored-file", "*.md"]}, "bootstrap": {"npmClientArgs": ["--no-package-lock"]}}}
+{"packages": ["packages/*"], "version": "independent", "npmClient": "yarn", "useWorkspaces": true, "command": {"version": {"message": "chore(release): publish \ud83c\udfa8 \ud83c\udfa8 \ud83c\udfa8 ", "conventionalCommits": true}}, "ignoreChanges": ["**/*.md", "**/__tests__/**"]}
+{"lerna": "3.13.4", "npmClient": "npm", "packages": ["packages/*", "sample-apps/*"], "version": "0.0.0", "changelog": {"repo": "open-telemetry/opentelemetry-lambda", "labels": {"breaking": ":boom: Breaking Change", "bug": ":bug: (Bug Fix)", "core": ":wrench: Core", "document": ":books: (Refine Doc)", "enhancement": ":rocket: (Enhancement)", "feature-request": ":sparkles: (Feature)", "internal": ":house: Internal"}, "cacheDir": ".changelog", "ignoreCommitters": ["github-actions"]}}
+{"lerna": "3.13.4", "npmClient": "npm", "packages": ["packages/*", "sample-apps/*"], "version": "0.0.0", "changelog": {"repo": "open-telemetry/opentelemetry-lambda", "labels": {"breaking": ":boom: Breaking Change", "bug": ":bug: (Bug Fix)", "core": ":wrench: Core", "document": ":books: (Refine Doc)", "enhancement": ":rocket: (Enhancement)", "feature-request": ":sparkles: (Feature)", "internal": ":house: Internal"}, "cacheDir": ".changelog", "ignoreCommitters": ["github-actions"]}}
+{"lerna": "3.4.0", "packages": ["packages/*"], "version": "0.1.0"}
+{"lerna": "3.4.0", "packages": ["packages/*"], "version": "0.1.0"}
+{"lerna": "2.0.0", "version": "0.0.0", "npmClient": "yarn", "useWorkspaces": true}
+{"packages": ["packages/*"], "npmClient": "yarn", "useWorkspaces": true, "version": "0.1.0"}
+{"packages": ["packages/*"], "npmClient": "yarn", "useWorkspaces": true, "version": "0.1.0"}
+{"packages": ["packages/*"], "npmClient": "yarn", "useWorkspaces": true, "version": "0.1.0"}
+{"packages": ["packages/*"], "npmClient": "yarn", "useWorkspaces": true, "version": "0.1.0"}
+{"$schema": "node_modules/lerna/schemas/lerna-schema.json", "useWorkspaces": true, "version": "1.0.0", "npmClient": "pnpm"}
+{"packages": ["packages/*"], "useWorkspaces": true, "npmClient": "yarn", "version": "0.0.0"}
+{"packages": ["packages/*"], "useWorkspaces": true, "npmClient": "yarn", "version": "0.0.0"}
+{"packages": ["packages/*"], "useWorkspaces": true, "npmClient": "yarn", "version": "0.0.0"}
+{"packages": ["packages/*"], "useWorkspaces": true, "npmClient": "yarn", "version": "0.0.0"}
+{"packages": ["packages/*"], "npmClient": "yarn", "version": "1.0.0", "useWorkspaces": true}
+{"lerna": "3.13.0", "npmClient": "yarn", "version": "0.1.0", "changelog": {"repo": "ever-co/gauzy", "cacheDir": ".changelog", "labels": {}}, "packages": ["libs/*", "apps/*", "packages/*", "packages/plugins/*"], "useWorkspaces": true, "command": {"exec": {"scope": ["@ngx-starter-kit/*"]}, "clean": {"yes": true}}, "npmClientArgs": ["--no-package-lock"]}
+{"packages": ["packages/*"], "version": "0.0.0"}
+{"packages": ["packages/*"], "version": "0.0.0"}
+{"packages": ["packages/*"], "version": "0.0.0"}
+{"packages": ["packages/*"], "version": "0.0.0"}
+{"version": "independent", "npmClient": "yarn", "useWorkspaces": true, "command": {"publish": {"ignoreChanges": ["*.md", "*.test.ts"], "message": "Release [ci skip]"}}}
+{"lerna": "2.11.0", "packages": ["packages/*"], "version": "3.5.10", "npmClient": "yarn"}
+{"lerna": "3.13.0", "npmClient": "yarn", "version": "0.3.0", "concurrency": 8, "changelog": {"repo": "ever-co/ever", "cacheDir": ".changelog", "labels": {}}, "packages": ["packages/*"], "useWorkspaces": true, "command": {"bootstrap": {}, "publish": {"conventionalCommits": true, "ignoreChanges": ["*.md", "test/**"], "message": "chore(release): %s"}, "version": {"push": false}, "clean": {"yes": true}}, "npmClientArgs": ["--no-package-lock"], "stream": true}
+{"lerna": "2.0.0", "packages": ["packages/*"], "version": "0.0.0", "npmClient": "npm", "useWorkspaces": false, "commands": {"run": {"ignore": "\\@popperjs/*"}}}
+{"lerna": "2.0.0", "packages": ["packages/*"], "version": "0.0.0", "npmClient": "npm", "useWorkspaces": false, "commands": {"run": {"ignore": "\\@popperjs/*"}}}
+{"lerna": "2.0.0", "packages": ["packages/*"], "version": "0.0.0", "npmClient": "npm", "useWorkspaces": false, "commands": {"run": {"ignore": "\\@popperjs/*"}}}
+{"lerna": "2.0.0", "packages": ["packages/*"], "version": "0.0.0", "npmClient": "npm", "useWorkspaces": false, "commands": {"run": {"ignore": "\\@popperjs/*"}}}
+{"packages": ["packages/*"], "version": "1.0.0", "useWorkspaces": true, "npmClient": "yarn"}
+{"packages": ["libs/*"], "version": "0.0.0", "npmClient": "yarn", "useWorkspaces": true}
+{"version": "independent", "npmClient": "pnpm", "useWorkspaces": true}
+{"version": "independent", "npmClient": "pnpm", "useWorkspaces": true}
+{"version": "independent", "npmClient": "pnpm", "useWorkspaces": true}
+{"lerna": "2.2.0", "packages": ["packages/*"], "npmClient": "npm", "version": "1.0.0"}
+{"lerna": "2.2.0", "packages": ["packages/*"], "npmClient": "npm", "version": "1.0.0"}
+{"packages": ["frameworks/keyed/*", "frameworks/non-keyed/*"], "version": "0.0.0"}
+{"command": {"publish": {"conventionalCommits": true}}, "version": "1.0.0", "packages": ["packages/*"]}
+{"lerna": "3.2.1", "npmClient": "npm", "packages": ["packages/*", "plugins/*"], "useWorkspaces": true, "version": "0.18.25", "ignoreChanges": ["**/*.md", "**/*.spec.tsx?", "**/*.spec.jsx?", "**/__mocks__/**"], "command": {"publish": {"message": "chore: publish %s", "graphType": "all"}, "version": {"message": "chore: publish %s", "exact": true}}}
+{"npmClient": "yarn", "useWorkspaces": true, "version": "independent", "command": {"publish": {"message": "\ud83d\ude80 Publish changes."}}}
+{"lerna": "2.0.0-beta.34", "packages": ["packages/*"], "version": "0.0.0"}
+{"lerna": "2.0.0-beta.34", "packages": ["packages/*"], "version": "0.0.0"}
+{"lerna": "2.0.0-beta.34", "packages": ["packages/*"], "version": "0.0.0"}
+{"lerna": "2.0.0-beta.34", "packages": ["packages/*"], "version": "0.0.0"}
+{"npmClient": "yarn", "version": "independent", "command": {"version": {"message": "chore(release): publish"}}}
+{"packages": ["packages/*"], "npmClient": "yarn", "version": "independent", "useWorkspaces": true}
+{"packages": ["packages/*"], "npmClient": "yarn", "version": "independent", "useWorkspaces": true}
+{"packages": ["packages/*"], "npmClient": "yarn", "version": "independent", "useWorkspaces": true}
+{"packages": ["packages/*"], "npmClient": "yarn", "version": "independent", "useWorkspaces": true}
+{"npmClient": "yarn", "useWorkspaces": true, "version": "independent"}
+{"lerna": "2.11.0", "npmClient": "yarn", "useWorkspaces": true, "command": {"publish": {"allowBranch": "master"}}, "packages": ["packages/*"], "version": "0.0.1"}
+{"lerna": "2.0.0-beta.38", "version": "0.0.1"}
+{"packages": ["packages/*"], "version": "independent", "npmClient": "yarn", "useWorkspaces": true}
+{"lerna": "3.19.0", "version": "0.61.3", "npmClient": "yarn", "useWorkspaces": true}
+{"npmClient": "yarn", "useWorkspaces": true, "registry": "https://registry.npmjs.org", "version": "5.1.0"}
+{"npmClient": "yarn", "npmClientArgs": ["--prefer-offline"], "packages": ["packages/*"], "version": "independent", "ignoreChanges": ["**/__fixtures__/**", "**/__tests__/**", "**/*.lock"]}
+{"npmClient": "yarn", "useWorkspaces": true, "version": "10.10.0", "command": {"publish": {"allow-branch": ["master"]}}}
+{"id": 17434, "name": "Balerna", "latitude": "45.84638000", "longitude": "9.00724000", "state": {"id": 1643, "name": "Ticino", "state_code": "TI", "latitude": "46.33173400", "longitude": "8.80045290", "type": "canton"}}
+{"npmClient": "yarn", "packages": ["packages/aws-cdk-lib", "packages/cdk-assets", "packages/aws-cdk", "packages/cdk", "packages/@aws-cdk/*", "packages/awslint", "packages/@aws-cdk-containers/*", "packages/@aws-cdk-testing/*", "packages/@aws-cdk/*/lambda-packages/*", "tools/@aws-cdk/cdk-build-tools", "tools/@aws-cdk/cdk-release", "tools/@aws-cdk/cfn2ts", "tools/@aws-cdk/eslint-plugin", "tools/@aws-cdk/node-bundle", "tools/@aws-cdk/pkglint", "tools/@aws-cdk/pkgtools", "tools/@aws-cdk/prlint", "tools/@aws-cdk/spec2cdk", "tools/@aws-cdk/yarn-cling", "scripts/@aws-cdk/script-tests"], "rejectCycles": true, "version": "0.0.0", "$schema": "node_modules/lerna/schemas/lerna-schema.json"}
+{"lerna": "2.4.0", "version": "independent", "npmClient": "yarn", "command": {"run": {"stream": true}}}
+{"command": {"add": {"exact": true}, "publish": {"ignoreChanges": ["*.md"], "npmClient": "npm", "registry": "https://registry.npmjs.org/"}, "run": {"npmClient": "npm"}}, "npmClient": "yarn", "useWorkspaces": true, "version": "6.0.1-nightly.1"}
+{"npmClient": "yarn", "version": "independent", "packages": ["packages/*"], "includeMergedTags": true, "command": {"version": {"message": "chore(release): publish", "allowBranch": ["version/*", "release/*"]}}, "$schema": "node_modules/lerna/schemas/lerna-schema.json"}
+{"lerna": "2.4.0", "packages": ["packages/*"], "commands": {"publish": {"allowBranch": "master"}}, "version": "0.1.0"}
+{"packages": ["packages/*"], "version": "6.4.0", "npmClient": "yarn", "useWorkspaces": true, "registry": "https://registry.npmjs.org/", "command": {"publish": {"allowBranch": "master", "conventionalCommits": true, "gitRemote": "origin", "message": "chore(release): publish %s"}}}
+{"packages": ["app", "database-client", "iam", "identity", "schemas", "types", "signer", "platforms"], "npmClient": "yarn", "version": "independent", "useWorkspaces": true, "stream": true, "changelogPreset": "angular"}
+{"packages": ["packages/*"], "version": "1.42.0", "npmClient": "pnpm", "useWorkspaces": true, "conventionalCommits": true, "command": {"publish": {"message": "chore(release): publish %s", "allowBranch": "main"}}}
+{"lerna": "2.0.0", "packages": ["packages/*"]}
+{"version": "0.1.1", "npmClient": "yarn", "useWorkspaces": true, "command": {"version": {"allowBranch": "master"}}}
+{"lerna": "2.11.0", "npmClient": "yarn", "packages": ["packages/*"], "version": "independent", "useWorkspaces": true}
+{"packages": ["packages/*"], "command": {"bootstrap": {"npmClientArgs": ["--no-package-lock"]}, "version": {"message": "%s"}, "publish": {"registry": "https://registry.npmjs.org", "allowBranch": "master", "ignoreChanges": ["*.md"]}}, "version": "0.2.15-alpha.1"}
+{"packages": ["pkgs/*"], "npmClient": "yarn", "useWorkspaces": true, "version": "0.3.5"}
+{"npmClient": "yarn", "useWorkspaces": true, "packages": ["packages/*"], "version": "0.9.0", "command": {"publish": {"message": "chore(release): publish %s", "bump": "minor", "exact": true, "forcePublish": "*", "conventionalCommits": true, "push": false, "sign-git-tag": true}}}
+{"packages": ["packages/*"], "version": "0.8.4-alpha.3"}
+{"packages": ["packages/*"], "npmClient": "yarn", "version": "1.0.0", "command": {"version": {"ignoreChanges": ["*.md"], "npmClient": "yarn", "message": "chore(release): publish"}, "publish": {"npmClient": "yarn"}}}
+{"npmClient": "yarn", "useWorkspaces": true, "command": {"version": {"allowBranch": "master"}}, "version": "independent"}
+{"ignoreChanges": ["**/__fixtures__/**", "**/__tests__/**", "**/docs/**", "**/e2e/**", "**/examples/**", "**/*.md"], "npmClient": "npm", "packages": ["packages/*"], "command": {"publish": {"allowBranch": "master", "conventionalCommits": true, "message": "ci(release): releasing packages using lerna [skip-ci]"}}, "version": "independent"}
+{"version": "7.6.6", "changelog": {"repo": "babel/babel", "cacheDir": ".changelog", "labels": {"PR: Spec Compliance :eyeglasses:": ":eyeglasses: Spec Compliance", "PR: Breaking Change :boom:": ":boom: Breaking Change", "PR: New Feature :rocket:": ":rocket: New Feature", "PR: Bug Fix :bug:": ":bug: Bug Fix", "PR: Polish :nail_care:": ":nail_care: Polish", "PR: Docs :memo:": ":memo: Documentation", "PR: Internal :house:": ":house: Internal", "PR: Performance :running_woman:": ":running_woman: Performance"}}, "command": {"publish": {"ignoreChanges": ["*.md", "*.txt", "test/**", "codemods/**", "# We ignore every JSON file, except for built-in-modules, built-ins and plugins defined in babel-preset-env/data.", "@(!(built-in-modules|built-ins|plugins|package)).json"]}}, "packages": ["codemods/*", "packages/*"], "npmClient": "yarn", "npmClientArgs": ["--no-lockfile"]}
+{"version": "0.0.0", "packages": ["packages/projects/*", "packages/components/@common/*", "packages/components/@desktop/*", "packages/components/@mobile/*", "packages/components/@utils/*"], "command": {"publish": {"conventionalCommits": true}, "version": {"message": "chore(release): publish %v"}}}
+{"packages": ["packages/*"], "npmClient": "yarn", "useWorkspaces": true, "version": "independent"}
+{"packages": ["packages/*"], "version": "1.0.17"}
+{"lerna": "2.9.0", "packages": ["packages/*"], "version": "0.0.4", "npmClient": "yarn"}
+{"packages": ["packages/@tradegecko/*"], "version": "independent"}
+{"packages": ["packages/*"], "npmClient": "npm", "version": "independent", "command": {"version": {"allowBranch": ["main", "develop"]}}}
+{"npmClient": "yarn", "useWorkspaces": true, "version": "4.1.0"}
+{"packages": ["app/*", "lib/*"], "version": "0.0.0", "npmClient": "yarn", "useWorkspaces": true}
+{"packages": ["packages/*"], "npmClient": "yarn", "version": "independent", "command": {"publish": {"ignoreChanges": ["package.json", "*.lock", "package-lock.json"]}}}
+{"packages": ["packages/*"], "version": "0.0.1-alhpa.1", "npmClient": "yarn", "useWorkspaces": true}
+{"packages": ["packages/*"], "npmClient": "yarn", "publish": {"ignoreChanges": ["ignored-file", "*.md"], "message": "chore(release): publish"}, "version": "independent"}
+{"packages": ["packages/*"], "npmClient": "yarn", "useWorkspaces": true, "command": {"ignoreChanges": ["*.md"], "publish": {"registry": "https://registry.npmjs.org/", "message": "chore(release): publish"}}, "version": "independent"}
+{"packages": ["packages/*"], "version": "independent", "command": {"version": {"allowBranch": ["main", "master"], "message": "chore(release): publish", "noCommitHooks": true, "noPush": true, "noGitTagVersion": true}}}
+{"packages": ["packages/*"], "version": "1.0.9", "publishConfig": {"access": "public"}}
+{"packages": ["packages/*"], "version": "2.0.0"}
+{"version": "0.0.5", "packages": ["packages/*"], "npmClient": "npm"}
+{"packages": ["packages/*"], "useNx": true, "version": "0.0.0", "$schema": "node_modules/lerna/schemas/lerna-schema.json", "useWorkspaces": true}
+{"ci": false, "version": "1.0.0", "packages": ["packages/*"]}
+{"version": "independent", "packages": ["packages/*", "samples/*"], "npmClient": "yarn", "useWorkspaces": true}
+{"version": "0.0.1", "packages": ["api", "app"], "command": {"version": {"allowBranch": ["master", "next"], "exact": true, "gitRemote": "origin", "message": "chore(release): %s"}}, "ignoreChanges": ["**/__tests__/**", "**/*.md"], "npmClient": "yarn", "useWorkspaces": true}
+{"packages": ["packages/*", "packages/plugins/*"], "version": "0.1.1"}
+{"version": "0.13.0", "npmClient": "yarn", "useWorkspaces": true, "command": {"run": {"stream": true}, "publish": {"registry": "https://registry.npmjs.org/"}}}
+{"$schema": "node_modules/lerna/schemas/lerna-schema.json", "version": "1.0.2", "changelog": true, "conventionalCommits": true}
+{"lerna": "2.0.0", "npmClient": "yarn", "useWorkspaces": true, "version": "independent"}
+{"lerna": "2.10.2", "packages": ["packages/@addepar/*"], "version": "independent"}
+{"packages": ["config/eslint-config-stronghold-react", "config/eslint-config-stronghold", "config/monorepo-template-library", "stronghold-cli", "stronghold-http-api", "stronghold-rosetta-api", "stronghold", "stronghold-wasm/nodejs", "stronghold-wasm/web"], "version": "independent", "npmClient": "yarn", "useWorkspaces": true}
+{"lerna": "2.8.0", "packages": ["tsconfig-palmerhq", "tslint-config-palmerhq"], "npmClient": "yarn", "version": "1.1.0"}
+{"key": "Lerna", "url": "https://zexo.dev/tags/lerna", "path": "/tags/lerna", "title": "Tag: Lerna - zexo.dev", "breadcrumbs": {"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "item": "https://zexo.dev", "name": "Home", "position": 1}, {"@type": "ListItem", "item": "https://zexo.dev/tags", "name": "Tags", "position": 2}, {"@type": "ListItem", "item": "https://zexo.dev/tags/lerna", "name": "Lerna", "position": 3}]}, "metas": [{"name": "google-site-verification", "content": "s3PYm0fCo0ImPqqXoPLiUb_bFdlYODKw54VGSkcFgyE"}, {"id": "google-analytics", "name": "google-analytics", "content": "UA-68904127-2"}, {"name": "og:site_name", "content": "zexo.dev"}, {"name": "og:type", "content": "website"}, {"name": "og:description", "itemprop": "description", "content": "Tag: Lerna"}, {"name": "description", "itemprop": "description", "content": "Tag: Lerna"}], "type": "LIST", "data": [{"title": "Monorepo Practice in TypeScript Projects", "id": "monorepo-practice-in-typescript-projects", "created": "2019-11-14T00:00:00.000Z", "updated": "2019-11-14T00:00:00.000Z", "categories": ["Blog"], "tags": ["NPM", "CI", "Typescript", "Monorepo", "Lerna", "Jest"], "cover": "/posts/2019/11/14/monorepo-practice-in-typescript-projects/cover.png", "summary": "\u968f\u7740 Node \u751f\u6001\u793e\u533a\u7684\u53d1\u5c55\uff0c\u8d8a\u6765\u8d8a\u591a\u7684 Nodejs \u4ee3\u7801\u4ed3\u5e93\u5f00\u59cb\u91c7\u7528 Monorepo \u7684\u5f62\u5f0f\u8fdb\u884c\u7ba1\u7406\u3002\u6211\u4eec\u53ef\u4ee5\u770b\u5230\u4e00\u4e9b\u524d\u7aef UI \u6846\u67b6\u3001Web \u6846\u67b6\uff0c\u5728\u65b0\u7248\u672c/\u4e00\u5f00\u59cb\u5c31\u91c7\u7528\u4e86 monorepo \u7684\u5f62\u5f0f\u7ba1\u7406\u4ee3\u7801\u3002Q: \u4ec0\u4e48\u662f Monorepo? Monorepo \u7684\u57fa\u672c\u597d\u5904\u662f\u4ec0\u4e48? A: \u8fd9\u91cc\u4e0d\u591a\u9610\u8ff0\uff0c\u53ef\u4ee5\u53c2\u8003\u77e5\u4e4e\u4e0a\u7684\u8fd9\u7bc7\u6587\u7ae0: https://zhuanlan.zhihu.com/p/31289463\n", "link": "/posts/2019/11/14/monorepo-practice-in-typescript-projects"}]}
+{"version": "1.0.0", "packages": ["packages/*", "package-3"]}
+{"version": "0.1.0", "npmClient": "yarn", "parallel": true, "message": "chore: publish %s [ci skip]", "useWorkspaces": true}
+{"version": "independent", "npmClient": "yarn", "packages": ["packages/*"], "useWorkspaces": true, "command": {"version": {"allowBranch": "main", "ignoreChanges": ["**/__fixtures__/**", "**/__tests__/**", "**/__snapshots__/**", "**/*.md"], "message": "chore(release): publish"}, "publish": {"conventionalCommits": true}}}
+{"$schema": "node_modules/lerna/schemas/lerna-schema.json", "npmClient": "npm", "useNx": true, "useWorkspaces": true, "version": "0.0.0"}
+{"packages": ["packages/**", "preview/**"], "version": "independent", "npmClient": "yarn", "useWorkspaces": true}
+{"lerna": "2.10.0", "packages": ["truffle"], "version": "0.0.0"}
+{"$schema": "node_modules/lerna/schemas/lerna-schema.json", "useWorkspaces": true, "npmClient": "pnpm", "version": "independent"}
+{"version": "0.0.0", "lerna": "2.11.0", "npmClient": "yarn", "useWorkspaces": true}
+{"packages": ["packages/*"], "version": "independent", "command": {"run": {"ignore": ["@fib-orm/plugin-*", "@fib-orm/hql"]}}, "devDependencies": {"@fibjs/ci": "^2.2.0", "@fibjs/types": "^0.27.1", "cross-env": "^5.2.0", "fib-typify": "^0.6.0", "lodash": "^4.17.11", "semver": "^5.6.0", "fib-pool": "^1.6.0"}}
+{"command": {"bootstrap": {"npmClientArgs": ["--frozen-lockfile"]}, "version": {"message": "chore(release): %v"}}, "npmClient": "yarn", "packages": ["packages/*", "apps/*"], "useWorkspaces": true, "version": "0.160.6"}
+{"packages": ["packages/*", "packages/auth/ui", "packages/*/e2e/test-stack"], "version": "independent", "npmClient": "yarn", "useWorkspaces": true}
+{"version": "1.0.7", "npmClient": "yarn", "useWorkspaces": true}
+{"command": {"publish": {"ignoreChanges": ["ignored-file", "*.md"], "message": "Publish"}}, "npmClient": "yarn", "packages": ["packages/*"], "useWorkspaces": true, "version": "independent"}
+{"npmClient": "yarn", "packages": ["packages/*", "packages/demo/*"], "version": "independent"}
+{"lerna": "2.7.0", "version": "5.0.2"}
+{"version": "4.0.15", "packages": ["example/*", "packages/*", "website"], "npmClient": "yarn", "npmClientArgs": ["--production", "--no-optional"]}
+{"$schema": "node_modules/lerna/schemas/lerna-schema.json", "useWorkspaces": true, "version": "0.1.0-alpha.29", "useNx": true, "npmClient": "yarn", "conventionalCommits": true, "conventionalPrerelease": true, "changelog": true, "command": {"version": {"message": "chore(release): publish %s [skip-ci]"}}, "granularPathspec": false}
+{"lerna": "3.16.4", "version": "independent", "useWorkspaces": true, "npmclient": "yarn"}
+{"packages": ["packages/*", "versions/*"], "version": "0.0.0"}
+{"packages": ["packages/*"], "exact": true, "version": "2.15.8", "command": {"version": {"message": "chore(release): %s"}, "run": {"ignore": "integration-test"}}}
+{"packages": ["packages/xnate-cli", "packages/xnate-cli-shared"], "useNx": false, "version": "0.0.2-alpha.0"}
+{"packages": ["packages/*"], "version": "4.2.0", "npmClient": "pnpm", "command": {"publish": {"conventionalCommits": true, "push": true, "ignoreChanges": ["**/tests/**"], "registry": "https://registry.npmjs.org/"}, "version": {"allowBranch": "main", "conventionalCommits": true, "push": true, "createRelease": "github", "message": "chore(release): publish"}, "create": {"license": "AGPL-3.0", "keywords": ["bot", "discord", "plugin", "sapphire", "ts", "typescript", "yarn"]}}}
+{"lerna": "2.9.0", "packages": ["components/*"], "version": "independent", "changelog": {"repo": "interconnectit/deckr", "labels": {"tag: new feature": ":rocket: New Feature", "tag: breaking change": ":boom: Breaking Change", "tag: bug fix": ":bug: Bug Fix", "tag: enhancement": ":nail_care: Enhancement", "tag: documentation": ":memo: Documentation", "tag: internal": ":house: Internal"}, "cacheDir": ".changelog"}}
+{"lerna": "2.6.0", "npmClient": "yarn", "useWorkspaces": true, "version": "independent", "changelog": {"repo": "naviapps/create-nw-react-app", "labels": {"tag: new feature": ":rocket: New Feature", "tag: breaking change": ":boom: Breaking Change", "tag: bug fix": ":bug: Bug Fix", "tag: enhancement": ":nail_care: Enhancement", "tag: documentation": ":memo: Documentation", "tag: internal": ":house: Internal", "tag: underlying tools": ":hammer: Underlying Tools"}, "cacheDir": ".changelog"}}
+{"$schema": "https://json.schemastore.org/lerna.json", "version": "6.7.0-dev.0", "npmClient": "yarn", "useWorkspaces": true, "command": {"bootstrap": {"npmClientArgs": ["--scripts-prepend-node-path"]}, "run": {"npmClient": "yarn", "stream": true, "concurrency": 1}, "version": {"exact": true, "gitTagVersion": false, "forcePublish": true}, "publish": {"gitReset": false, "verifyAccess": false}}}
+{"packages": ["packages/*", "examples/*"], "ignoreChanges": ["**/__fixtures__/**", "**/__tests__/**", "**/*.md"], "npmClient": "pnpm", "command": {"version": {"conventionalCommits": true, "exact": true, "message": "chore(release): publish packages", "private": false}, "publish": {"allowBranch": ["main", "beta"], "message": "chore(release): publish packages"}}, "version": "1.0.81"}
+{"packages": ["packages/i18n/*", "packages/*"], "command": {"publish": {"message": "chore(release): publish %s", "registry": "https://registry.npmjs.org"}}, "version": "0.4.0", "npmClient": "pnpm"}
+{"npmClient": "yarn", "useWorkspaces": true, "version": "4.19.1"}
+{"packages": ["packages/builder", "packages/scripts"], "version": "1.0.0"}
+{"lerna": "2.2.0", "npmClient": "yarn", "useWorkspaces": true, "version": "0.0.1", "packages": ["packages/*"], "command": {"run": {"stream": true}, "publish": {"forcePublish": true, "skipGit": true, "registry": "https://registry.npmjs.org/"}}}
+{"packages": ["."], "version": "independent", "npmClient": "yarn", "command": {"version": {"allowBranch": "main", "conventionalCommits": true, "createRelease": "github"}}}
+{"lerna": "3.4.3", "npmClient": "yarn", "useWorkspaces": true, "version": "independent", "packages": ["apps/*", "packages/*"]}
+{"lerna": "2.5.1", "version": "0.0.4", "packages": ["packages/*"], "npmClient": "npm", "npmClientArgs": []}
+{"packages": ["packages/*", "packages/shared/*"], "npmClient": "npm", "version": "0.0.0", "useWorkspaces": true}
+{"version": "independent", "npmClient": "yarn", "useWorkspaces": true, "ignoreChanges": ["ignored-file", "**/__tests__/**", "**/*.md"], "command": {"publish": {"registry": "https://registry.npmjs.org"}, "version": {"conventionalCommits": true, "message": "chore(release): publish"}}}
+{"packages": ["packages/*"], "npmClient": "yarn", "useWorkspaces": true, "version": "independent", "command": {"version": {"allowBranch": "master", "message": "chore(release): publish"}}}
+{"lerna": "2.8.0", "packages": ["packages/*"], "version": "independent", "npmClient": "yarn", "useWorkspaces": true, "command": {"init": {"exact": true}}}
+{"lerna": "2.8.0", "packages": ["packages/*"], "version": "0.4.13", "npmClient": "yarn", "useWorkspaces": true}
+{"packages": ["packages/*"], "useWorkspaces": true, "version": "1.1.4", "npmClient": "yarn"}
+{"lerna": "3.18.3", "packages": ["packages/*"], "npmClient": "yarn", "useWorkspaces": true, "concurrency": 1, "version": "2.6.0-SNAPSHOT"}
+{"packages": ["packages/*", "libs/*"], "version": "0.0.0"}
+{"lerna": "2.8.0", "packages": ["packages/*"], "version": "independent", "npmClient": "yarn", "useWorkspaces": true, "command": {"publish": {"message": "\ud83d\ude80 RELEASE: New version!"}}}
+{"packages": ["packages/*"], "hoist": true, "version": "0.0.0"}
+{"npmClient": "yarn", "useWorkspaces": true, "packages": ["packages/*"], "command": {"publish": {"conventionalCommits": true, "message": "chore: release"}}, "version": "independent"}
+{"lerna": "3.16.4", "npmClient": "yarn", "packages": ["packages/*"], "version": "independent"}
+{"version": "1.0.0", "npmClient": "yarn", "npmClientArgs": ["--ignore-engines"], "useWorkspaces": true, "command": {"publish": {"message": "chore(release): publish"}}, "packages": ["packages/*"]}
+{"packages": ["packages/core/*", "packages/plugin-packages/*", "packages/test/*"], "version": "2.4.3"}
+{"packages": ["packages/*"], "version": "1.2.0", "npmClient": "npm", "useWorkspaces": true}
+{"version": "26.1.0", "npmClient": "yarn", "packages": ["packages/*"]}
+{"packages": ["packages/*"], "version": "0.3.0", "npmClient": "yarn", "useWorkspaces": true, "command": {"version": {"message": "chore(release): publish %s"}}}
+{"packages": ["packages/*", "services/*"], "version": "0.0.0"}
+{"version": "1.2.6", "command": {"publish": {"registry": "https://verdaccio.servicetitan.com"}}, "packages": ["packages/*"]}
+{"npmClient": "yarn", "useWorkspaces": true, "version": "independent", "command": {"version": {"message": "chore(release): update package versions"}, "publish": {"registry": "https://artifactory.benevity-shared.org/api/npm/content-hub-npm-prod-local/"}}}
+{"packages": ["packages/*"], "version": "independent", "command": {"publish": {"conventionalCommits": true, "message": "chore(release): publish"}, "version": {"message": "chore(release): version %s"}}}
+{"packages": ["packages/*", "packages/services/*"], "version": "0.0.0", "npmClient": "yarn"}
+{"packages": ["your-extensions", "your-extensions/widgets/**/*"], "version": "0.1.0"}
+{"packages": ["packages/*", "tools/*"], "version": "2.0.0-Alpha-SNAPSHOT"}
+{"packages": ["packages/*"], "npmClient": "yarn", "useWorkspaces": true, "command": {"publish": {"ignoreChanges": ["{__tests__,tests}/**/*.{js,jsx,ts,tsx}", "*.mdx", "*.md"], "message": "chore(release): publish [skip ci]", "registry": "https://www.npmjs.com/"}, "version": {"allowBranch": "main", "includeMergedTags": true, "message": "chore(release): publish new version [skip ci]", "conventionalCommits": true}}, "version": "independent"}
+{"lerna": "2.3.1", "npmClient": "yarn", "packages": ["packages/*"], "version": "0.1.0"}
+{"lerna": "2.2.0", "commands": {"bootstrap": {"hoist": true}}, "packages": ["packages/*"], "version": "independent", "changelog": {"repo": "Sanji-IO/thingspro-ui", "labels": {"tag: new feature": ":rocket: New Feature", "tag: breaking change": ":boom: Breaking Change", "tag: bug fix": ":bug: Bug Fix", "tag: enhancement": ":nail_care: Enhancement", "tag: documentation": ":memo: Documentation", "tag: internal": ":house: Internal"}}}
+{"packages": ["packages/*"], "version": "0.0.4-beta.0", "useWorkspaces": true, "npmClient": "yarn", "command": {"version": {"allowBranch": ["master", "beta/*"]}}, "ignoreChanges": ["**/__fixtures__/**", "**/__tests__/**", "**/*.md"]}
+{"packages": ["widgets/*"], "version": "independent"}
+{"packages": ["packages/*"], "npmClient": "yarn", "version": "1.1.1", "useWorkspaces": true, "nohoist": ["parcel", "**/react-native", "**/react-native/**", "**/expo", "**/expo/**", "@types/react-native", "**/tailwindcss", "**/@tailwindcss/**"]}
+{"lerna": "2.0.0-rc.4", "packages": ["packages/*"], "version": "independent", "command": {"init": {"exact": true}}}
+{"packages": ["packages/*"], "useNx": false, "npmClient": "yarn", "version": "0.0.0"}
+{"packages": ["packages/*"], "version": "independent", "npmClient": "yarn", "useWorkspaces": true, "command": {"publish": {"conventionalCommits": true, "yes": true, "message": "chore(release): publish new verion. [skip ci]"}}}
+{"npmClient": "yarn", "packages": ["packages/*"], "useWorkspaces": true, "version": "0.0.18"}
+{"packages": ["applications/*", "packages/*"], "version": "independent", "command": {"publish": {"allowBranch": "master", "message": "ci(release): Publish and update packages"}}}
+{"lerna": "2.5.1", "packages": ["packages/*", "src/data-generator"], "version": "2.3.1"}
+{"$schema": "node_modules/lerna/schemas/lerna-schema.json", "version": "0.2.2"}
+{"packages": ["services/book-store/reference", "services/book-store/products", "services/book-store/reviews", "services/federated-gateway"], "version": "0.0.0", "npmClient": "yarn", "useWorkspaces": true}
+{"$schema": "node_modules/lerna/schemas/lerna-schema.json", "useNx": true, "useWorkspaces": true, "version": "0.3.10"}
+{"packages": ["molecule-demo"], "version": "independent", "npmClient": "yarn"}
+{"npmClient": "yarn", "useWorkspaces": true, "packages": ["packages/*"], "version": "independent", "command": {"version": {"allowBranch": "master", "message": "chore(release): Bump version", "tagVersionPrefix": "v", "conventionalCommits": true}}, "options": {"preset": {"name": "conventionalcommits", "types": [{"type": "feat", "section": ":sparkles: Features", "hidden": false}, {"type": "fix", "section": ":bug: Bug Fixes", "hidden": false}, {"type": "docs", "section": ":memo: Docs", "hidden": false}, {"type": "test", "hidden": true}, {"type": "ci", "hidden": true}, {"type": "chore", "hidden": true}]}}}
+{"packages": ["packages/*"], "version": "1.0.0", "useWorkspaces": true, "npmClient": "yarn"}
+{"lerna": "2.4.0", "packages": ["packages/*"], "version": "1.0.10", "npmClient": "npm"}
+{"lerna": "3.13.4", "version": "5.3.7", "packages": ["packages/*"], "command": {"publish": {"allowBranch": "master"}}, "npmClientArgs": ["--no-lockfile"]}
+{"npmClient": "yarn", "useWorkspaces": true, "version": "2.0.0-alpha.17", "command": {"publish": {"conventionalCommits": true, "yes": true}}}
+{"packages": ["packages/*"], "version": "1.1.325", "command": {"version": {"push": false, "tagVersionPrefix": "", "message": "Published %s"}}}
+{"lerna": "2.1.2", "useWorkspaces": true, "npmClient": "yarn", "packages": ["packages/*"], "version": "0.42.1"}
+{"lerna": "3.4.0", "npmClient": "yarn", "useWorkspaces": true, "version": "1.1.0", "command": {"publish": {"ignoreChanges": ["__tests__/**"]}}}
+{"packages": ["packages/*"], "npmClient": "yarn", "npmClientArgs": ["--no-lockfile"], "version": "independent", "commands": {"publish": {"message": "chore: release"}}}
+{"lerna": "3.15.0", "version": "independent", "npmClient": "yarn", "packages": ["packages/*"], "useWorkspaces": true}
+{"lerna": "2.0.0-beta.30", "version": "0.15.0"}
+{"version": "1.1.5", "packages": ["core", "packages/*", "examples/*", "packages/plugin/*"], "useWorkspaces": true}
+{"version": "3.14.0-beta.1", "packages": ["packages/*", "plugins/*"]}
+{"lerna": "2.5.1", "packages": ["packages/*"], "npmClient": "yarn", "useWorkspaces": true, "version": "1.0.0"}
+{"packages": ["web", "shared", "sdc-qrf"], "npmClient": "yarn", "version": "independent"}
+{"packages": ["packages/*"], "useWorkspaces": true, "version": "0.0.10", "npmClient": "yarn", "npmClientArgs": ["--no-lockfile"]}
+{"packages": ["packages/*"], "version": "1.45.5"}
+{"packages": ["packages/*"], "version": "1.26.9", "npmClient": "yarn", "useWorkspaces": true, "publish": {"conventionalCommits": true}}
+{"lerna": "2.0.0", "packages": ["packages/*"], "version": "1.1.3"}
+{"lerna": "3.6.0", "packages": ["packages/**/*", "demo-app"], "version": "0.0.1-alpha1"}
+{"packages": ["packages/*", "packages/@aws-prototype/*"], "npmClient": "yarn", "useWorkspaces": true, "rejectCycles": "true", "version": "0.0.0"}
+{"packages": ["*"], "version": "0.0.0"}
+{"version": "independent", "npmClient": "npm", "command": {"publish": {"conventionalCommits": "true", "ignoreChanges": ["ignored-file", "*.md", "*.yaml", "*.yml"], "message": "chore(release): publish", "verifyAccess": false}}, "packages": ["core", "arm-helper", "ingredient/*", "system"]}
+{"packages": ["angular/dist", "lib"], "version": "4.0.0"}
+{"version": "independent", "command.publish.ignore": {"ignore": ["*.md"]}, "npmClient": "npm", "useWorkspaces": false, "packages": ["packages/*"]}
+{"lerna": "2.4.0", "packages": ["packages/*"], "npmClientArgs": ["--access public"], "changelog": {"labels": {"enhancement": "Enhancements", "bug": "Bug Fixes", "feat": "Features", "refactor": "Code Refactors"}, "cacheDir": ".changelog"}, "version": "7.0.1"}
+{"lerna": "2.5.1", "npmClient": "yarn", "packages": ["packages/*"], "version": "independent"}
+{"packages": ["packages/*", "!packages/saihubot-react"], "version": "0.38.1"}
+{"version": "independent", "changelog": {"labels": {"tag: new feature": ":rocket: New Feature", "tag: breaking change": ":boom: Breaking Change", "tag: bug fix": ":bug: Bug Fix", "tag: enhancement": ":nail_care: Enhancement", "tag: documentation": ":memo: Documentation", "tag: internal": ":house: Internal"}, "cacheDir": ".changelog"}, "packages": ["modules/*"], "command": {"publish": {"message": "chore(release): publish %v"}}, "ignoreChanges": ["**/*.spec.ts", "**/*.md"]}
+{"packages": ["packages/*"], "version": "0.4.4-alpha.0"}
+{"packages": ["packages/*"], "useNx": false, "version": "0.0.64", "command": {"version": {"message": "[skip actions] publish %s"}, "publish": {"message": "[skip actions] publish %s", "registry": "https://registry.npmjs.org", "verifyAccess": false}}}
+{"packages": ["packages/*"], "version": "0.4.8-beta.0"}
+{"packages": ["packages/*"], "version": "11.13.16", "npmClient": "npm", "publishConfig": {"registry": "https://registry.npmjs.org/"}, "command": {"version": {"allowBranch": ["master", "develop", "test"], "message": "chore(release): publish %s"}, "publish": {"message": "chore(release): publish %s", "allowBranch": ["master", "develop"], "ignoreChanges": [".*", "docker/*"]}}}
+{"packages": ["packages/*"], "version": "0.5.5", "npmClient": "yarn", "useWorkspaces": true, "stream": true, "command": {"publish": {"conventionalCommits": true}}}
+{"packages": ["subgraphs/**"], "useWorkspaces": true, "version": "independent"}
+{"packages": ["packages/*"], "version": "independent", "useWorkspaces": true, "npmClient": "yarn", "command": {"version": {"conventionalCommits": true, "message": "chore: release"}}}
+{"$schema": "node_modules/lerna/schemas/lerna-schema.json", "useWorkspaces": true, "version": "independent", "useNx": true, "conventionalCommits": true, "signGitCommit": true, "signGitTag": true, "forceGitTag": true, "registry": "https://npm.pkg.github.com", "private": false, "command": {"version": {"message": ":package: Prepare release", "allowBranch": "main"}}}
+{"packages": ["packages/*"], "version": "independent", "command": {"version": {"ignoreChanges": ["**/*.md"], "noPrivate": true}}}
+{"npmClient": "yarn", "useWorkspaces": true, "packages": ["packages/*", "src/*"], "version": "0.0.0"}
+{"lerna": "2.1.2", "packages": ["packages/*"], "version": "0.0.0", "npmClient": "yarn"}
+{"lerna": "2.0.0", "exact": true, "version": "independent", "changelog": {"repo": "apollographql/apollo-server", "labels": {"tag: breaking change": ":boom: Breaking Change", "tag: new feature": ":rocket: New Feature", "tag: bug fix": ":bug: Bug Fix", "tag: polish": ":nail_care: Polish", "tag: documentation": "Documentation", "tag: internal": ":house: Internal"}}, "hoist": true, "packages": ["packages/*"]}
+{"version": "independent", "command": {"publish": {"ignoreChanges": ["**/*.md", "**/*.spec.jsx", "**/*.snap", "@tds/core-selector-counter"], "message": "chore(publish): update packages"}}, "packages": ["packages/*", "shared/**"]}
+{"packages": ["packages/*", "linting/*", "buildtool/", "component-overview/"], "version": "independent", "hoist": true, "command": {"publish": {"allowBranch": "main", "conventionalCommits": true, "ignoreChanges": [".eslintrc", ".gitattributes", ".gitignore", ".npmignore", ".npmrc", "*.md", "*.spec.js", "test-setup.js", "ffe-header/images/logo-*.svg"], "message": "chore(release): publish"}}}
+{"npmClient": "npm", "command": {"publish": {"message": "chore(release): publish %s\n\n[skip ci]"}, "bootstrap": {"hoist": true}}, "packages": ["packages/litexa", "packages/litexa-apl", "packages/litexa-assets-wav", "packages/litexa-deploy-aws", "packages/litexa-gadgets", "packages/litexa-html", "packages/litexa-render-template", "packages/litexa-apla", "packages/litexa-voices", "tests"], "version": "0.9.0"}
+{"lerna": "2.11.0", "npmClient": "yarn", "useWorkspaces": true, "packages": ["packages/*"], "version": "2.0.0"}
+{"packages": ["packages/*"], "version": "3.0.31"}
+{"packages": ["packages/*"], "version": "1.0.1-alpha.99"}
+{"$schema": "node_modules/lerna/schemas/lerna-schema.json", "npmClient": "pnpm", "version": "independent"}
+{"$schema": "node_modules/@lerna-lite/cli/schemas/lerna-schema.json", "version": "1.5.2", "command": {"version": {"conventionalCommits": false, "noChangelog": true}}, "packages": ["."]}
+{"lerna": "2.10.2", "npmClient": "yarn", "useWorkspaces": true, "version": "independent", "changelog": {"repo": "MCS-Lite/mcs-lite", "labels": {"tag: new feature": ":rocket: New Feature", "tag: breaking change": ":boom: Breaking Change", "tag: bug fix": ":bug: Bug Fix", "tag: enhancement": ":nail_care: Enhancement", "tag: documentation": ":memo: Documentation", "tag: internal": ":house: Internal"}}}
+{"version": "independent", "npmClient": "yarn", "useWorkspaces": true, "packages": ["packages/*", "docs"], "command": {"publish": {"ignoreChanges": ["ignored-file", "*.md"], "verifyAccess": false, "verifyRegistry": false, "message": "chore: publish", "allowBranch": "master", "conventionalCommits": true}}}
+{"version": "0.0.0", "npmClient": "yarn", "useWorkspaces": true, "packages": ["packages/*"]}
+{"command": {"create": {"license": "MIT"}, "publish": {"allowBranch": "master", "message": "chore(release): publish %s"}}, "loglevel": "success", "packages": ["packages/*"], "version": "independent", "npmClient": "yarn", "registry": "https://registry.npmjs.org/", "useWorkspaces": true, "ignoreChanges": ["CHANGELOG.md", "**/__tests__/**", "**/__mocks__/**", "**/__testfixtures__/**"]}
+{"packages": ["dashboard", "react-components"], "hoist": true, "stream": true, "version": "0.0.1", "command": {"publish": {"message": "Bump version to %s"}}}
+{"command": {"version": {"conventionalCommits": true, "changelogPreset": "angular-all", "message": "chore(release): release"}}, "publish": {"access": "public", "allowBranch": "master", "ignoreChanges": ["CHANGELOG.md"]}, "version": "independent", "npmClient": "yarn", "packages": ["."]}
+{"extends": "./recursive.json", "version": "1.0.0"}
+{"lerna": "3.3.0", "packages": ["packages/*"], "npmClient": "yarn", "useWorkspaces": true, "version": "0.5.29", "command": {"publish": {"gitReset": false, "gitTagVersion": true, "push": true}, "version": {"gitTagVersion": false, "push": false}}}
+{"version": "1.0.0", "useNx": false}
+{"lerna": "2.11.0", "npmClient": "yarn", "useWorkspaces": true, "version": "independent", "packages": ["packages/*"]}
+{"packages": ["packages/*"], "npmClient": "npm", "changelog": {"repo": "svrxjs/svrx-cli", "labels": {"PR: new feature": ":rocket: New Feature", "PR: breaking change": ":boom: Breaking Change", "PR: bug fix": ":bug: Bug Fix", "PR: enhancement": ":nail_care: Enhancement", "PR: documentation": ":memo: Documentation", "PR: internal": ":house: Internal"}, "cacheDir": ".changelog"}, "command": {"version": {"message": "chore(release): publish %s"}, "publish": {"ignoreChanges": ["ignored-file", "*.md", "*.txt", "__tests__/**"]}}, "version": "1.1.4"}
+{"packages": ["packages/*"], "version": "2.1.4", "includeMergedTags": true, "command": {"publish": {"registry": "https://npm.pkg.github.com"}}}
+{"$schema": "node_modules/lerna/schemas/lerna-schema.json", "version": "1.0.1"}
+{"packages": ["packages/*"], "useNx": false, "version": "2.4.1", "npmClient": "yarn"}
+{"version": "7.7.7", "changelog": {"repo": "babel/babel", "cacheDir": ".changelog", "labels": {"PR: Spec Compliance :eyeglasses:": ":eyeglasses: Spec Compliance", "PR: Breaking Change :boom:": ":boom: Breaking Change", "PR: New Feature :rocket:": ":rocket: New Feature", "PR: Bug Fix :bug:": ":bug: Bug Fix", "PR: Polish :nail_care:": ":nail_care: Polish", "PR: Docs :memo:": ":memo: Documentation", "PR: Internal :house:": ":house: Internal", "PR: Performance :running_woman:": ":running_woman: Performance", "PR: Revert :leftwards_arrow_with_hook:": ":leftwards_arrow_with_hook: Revert"}}, "command": {"publish": {"ignoreChanges": ["*.md", "*.txt", "test/**", "**/test/**", "codemods/**", "# We ignore every JSON file, except for built-in-modules, built-ins and plugins defined in babel-preset-env/data.", "@(!(built-in-modules|built-ins|plugins|package)).json", "# Until the ESLint packages version are aligned with Babel's, we ignore them", "eslint/**"]}}, "packages": ["codemods/*", "eslint/*", "packages/*"], "npmClient": "yarn", "npmClientArgs": ["--no-lockfile"]}
+{"$schema": "node_modules/lerna/schemas/lerna-schema.json", "packages": ["apps/*", "components/*"], "version": "2.10.0", "npmClient": "pnpm", "conventionalCommits": true, "command": {"version": {"message": "chore(release): published new version"}}}
+{"packages": ["packages/babel-plugin-nornj-in-jsx", "packages/babel-preset-nornj-with-antd", "packages/nornj", "packages/nornj-loader", "packages/nornj-react"], "command": {"publish": {"message": "chore(release): :bookmark: publish %s"}}, "version": "5.3.5", "npmClient": "yarn"}
+{"lerna": "2.0.0", "version": "7.1.0-beta.1", "npmClient": "yarn", "useWorkspaces": true, "packages": ["modules/*"], "command": {"publish": {}, "bootstrap": {}}}
+{"lerna": "2.0.0-rc.5", "packages": ["packages/*"], "version": "0.0.0-development", "hoist": true, "npmClient": "yarn"}
+{"packages": ["packages/*"], "version": "0.2.6", "npmClient": "npm"}
+{"packages": ["packages/*"], "version": "independent", "npmClient": "yarn", "useWorkspaces": true}
+{"packages": ["packages/*"], "version": "independent", "npmClient": "yarn", "useWorkspaces": true}
+{"packages": ["packages/*"], "version": "independent", "npmClient": "yarn", "useWorkspaces": true}
+{"packages": ["packages/*"], "version": "independent", "npmClient": "yarn", "useWorkspaces": true}
+{"lerna": "3.19.0", "version": "0.61.3", "npmClient": "yarn", "useWorkspaces": true}
+{"npmClient": "yarn", "npmClientArgs": ["--prefer-offline"], "packages": ["packages/*"], "version": "independent", "ignoreChanges": ["**/__fixtures__/**", "**/__tests__/**", "**/*.lock"]}
+{"lerna": "2.4.0", "packages": ["packages/*"], "commands": {"publish": {"allowBranch": "master"}}, "version": "0.1.0"}
+{"packages": ["app", "database-client", "iam", "identity", "schemas", "types", "signer", "platforms"], "npmClient": "yarn", "version": "independent", "useWorkspaces": true, "stream": true, "changelogPreset": "angular"}
+{"lerna": "2.0.0", "packages": ["packages/*"]}
+{"packages": ["packages/*"], "npmClient": "yarn", "version": "1.0.0", "command": {"version": {"ignoreChanges": ["*.md"], "npmClient": "yarn", "message": "chore(release): publish"}, "publish": {"npmClient": "yarn"}}}
+{"npmClient": "yarn", "useWorkspaces": true, "command": {"version": {"allowBranch": "master"}}, "version": "independent"}
+{"packages": ["packages/*"], "npmClient": "yarn", "useWorkspaces": true, "version": "independent"}
+{"packages": ["packages/*"], "version": "1.0.17"}
+{"packages": ["packages/*"], "useNx": true, "version": "0.0.0", "$schema": "node_modules/lerna/schemas/lerna-schema.json", "useWorkspaces": true}
+{"ci": false, "version": "1.0.0", "packages": ["packages/*"]}
+{"lerna": "2.0.0", "npmClient": "yarn", "useWorkspaces": true, "version": "independent"}
+{"lerna": "2.0.0", "npmClient": "yarn", "useWorkspaces": true, "version": "independent"}
+{"version": "1.0.0", "packages": ["packages/*", "package-3"]}
+{"version": "1.0.7", "npmClient": "yarn", "useWorkspaces": true}
+{"lerna": "3.16.4", "version": "independent", "useWorkspaces": true, "npmclient": "yarn"}
+{"packages": ["packages/*", "versions/*"], "version": "0.0.0"}
+{"$schema": "https://json.schemastore.org/lerna.json", "version": "6.7.0-dev.0", "npmClient": "yarn", "useWorkspaces": true, "command": {"bootstrap": {"npmClientArgs": ["--scripts-prepend-node-path"]}, "run": {"npmClient": "yarn", "stream": true, "concurrency": 1}, "version": {"exact": true, "gitTagVersion": false, "forcePublish": true}, "publish": {"gitReset": false, "verifyAccess": false}}}
+{"lerna": "2.2.0", "npmClient": "yarn", "useWorkspaces": true, "version": "0.0.1", "packages": ["packages/*"], "command": {"run": {"stream": true}, "publish": {"forcePublish": true, "skipGit": true, "registry": "https://registry.npmjs.org/"}}}
+{"packages": ["."], "version": "independent", "npmClient": "yarn", "command": {"version": {"allowBranch": "main", "conventionalCommits": true, "createRelease": "github"}}}
+{"packages": ["."], "version": "independent", "npmClient": "yarn", "command": {"version": {"allowBranch": "main", "conventionalCommits": true, "createRelease": "github"}}}
+{"packages": ["."], "version": "independent", "npmClient": "yarn", "command": {"version": {"allowBranch": "main", "conventionalCommits": true, "createRelease": "github"}}}
+{"packages": ["."], "version": "independent", "npmClient": "yarn", "command": {"version": {"allowBranch": "main", "conventionalCommits": true, "createRelease": "github"}}}
+{"packages": ["packages/*", "libs/*"], "version": "0.0.0"}
+{"packages": ["packages/*", "libs/*"], "version": "0.0.0"}
+{"lerna": "2.5.1", "packages": ["packages/*", "src/data-generator"], "version": "2.3.1"}
+{"packages": ["packages/*"], "version": "1.0.0", "useWorkspaces": true, "npmClient": "yarn"}
+{"packages": ["packages/*"], "version": "1.1.325", "command": {"version": {"push": false, "tagVersionPrefix": "", "message": "Published %s"}}}
+{"packages": ["packages/*"], "version": "1.26.9", "npmClient": "yarn", "useWorkspaces": true, "publish": {"conventionalCommits": true}}
+{"packages": ["*"], "version": "0.0.0"}
+{"lerna": "2.5.1", "npmClient": "yarn", "packages": ["packages/*"], "version": "independent"}
+{"lerna": "2.5.1", "npmClient": "yarn", "packages": ["packages/*"], "version": "independent"}
+{"lerna": "2.5.1", "npmClient": "yarn", "packages": ["packages/*"], "version": "independent"}
+{"$schema": "node_modules/lerna/schemas/lerna-schema.json", "npmClient": "pnpm", "version": "independent"}
+{"$schema": "node_modules/lerna/schemas/lerna-schema.json", "npmClient": "pnpm", "version": "independent"}
+{"$schema": "node_modules/lerna/schemas/lerna-schema.json", "npmClient": "pnpm", "version": "independent"}
+{"command": {"version": {"conventionalCommits": true, "changelogPreset": "angular-all", "message": "chore(release): release"}}, "publish": {"access": "public", "allowBranch": "master", "ignoreChanges": ["CHANGELOG.md"]}, "version": "independent", "npmClient": "yarn", "packages": ["."]}
+{"extends": "./recursive.json", "version": "1.0.0"}
+{"extends": "./recursive.json", "version": "1.0.0"}
+{"extends": "./recursive.json", "version": "1.0.0"}
+{"extends": "./recursive.json", "version": "1.0.0"}
+{"version": "1.0.0", "useNx": false}
+{"$schema": "node_modules/lerna/schemas/lerna-schema.json", "version": "1.0.1"}
+{"lerna": "2.4.0", "packages": ["packages/*"], "version": "10.2.4"}
+{"version": "independent", "npmClient": "yarn", "useWorkspaces": true, "command": {"publish": {"message": "chore(release): publish %s"}}}
+{"packages": ["packages/*", "services/*", "facades/*"], "command": {"bootstrap": {"concurrency": 4, "forceLocal": true}, "version": {"conventionalCommits": true, "message": "chore(release): publish"}, "run": {"concurrency": 3}, "clean": {"loglevel": "silent", "concurrency": 8, "yes": true}}, "ignoreChanges": ["**/__fixtures__/**", "**/__tests__/**", "**/*.md"], "version": "independent"}
+{"lerna": "3.13.3", "npmClient": "yarn", "useWorkspaces": true, "concurrency": 1, "version": "0.0.1", "packages": ["packages/{{ electronsFolder }}", "packages/{{ atomsFolder }}/**/*"]}
+{"packages": ["packages/*"], "version": "1.1.22"}
+{"version": "1.11.0", "npmClient": "yarn", "useWorkspaces": true}
+{"dataAPI": {"survey": {"lerna_experience": {"id": "lerna", "entity": {"name": "Lerna", "nameClean": null, "nameHtml": null, "homepage": {"url": "https://lerna.js.org"}, "description": "A tool for managing JavaScript projects with multiple packages.", "github": {"name": "Lerna", "url": "https://github.com/lerna/lerna"}, "npm": {"name": "lerna", "url": "https://www.npmjs.com/package/lerna"}}, "comments": {"year": null}, "experience": {"keys": ["would_use", "would_not_use", "interested", "not_interested", "never_heard"], "all_years": [{"year": 2021, "completion": {"total": 16087, "count": 12747, "percentage_survey": 79.3}, "facets": [{"buckets": [{"id": "would_use", "count": 1927, "countDelta": null, "percentage_survey": 12, "percentage_question": 15.2}, {"id": "would_not_use", "count": 1296, "countDelta": null, "percentage_survey": 8.1, "percentage_question": 10.2}, {"id": "interested", "count": 1960, "countDelta": null, "percentage_survey": 12.2, "percentage_question": 15.4}, {"id": "not_interested", "count": 1568, "countDelta": null, "percentage_survey": 9.8, "percentage_question": 12.4}, {"id": "never_heard", "count": 5996, "countDelta": null, "percentage_survey": 37.3, "percentage_question": 47.1}]}]}]}}}}}
+{"lerna": "2.11.0", "npmClient": "yarn", "stream": true, "useWorkspaces": true, "useNx": true, "version": "independent"}
+{"packages": ["packages/*"], "npmClient": "yarn", "version": "0.4.8"}
+{"command": {"version": {"allowBranch": ["chore_bump-*"], "conventionalCommits": true, "exact": true, "includeMergedTags": true, "gitTagVersion": false, "push": false, "preid": "alpha", "forcePublish": "*", "noChangelog": true}}, "npmClient": "yarn", "useWorkspaces": true, "version": "6.2.1"}
+{"packages": ["packages/*"], "npmClient": "yarn", "useWorkspaces": true, "version": "2.1.2"}
+{"version": "1.0.3", "npmClient": "pnpm", "useWorkspaces": true, "command": {"publish": {"npmClient": "npm", "message": "chore(release): publish %s", "registry": "https://registry.npmjs.org"}, "packages": ["packages/*"]}}
+{"packages": ["packages/ts/*"], "npmClient": "npm", "useNx": true, "version": "2.2.0-beta1"}
+{"lerna": "2.0.0", "packages": ["packages/*"], "version": "independent", "registry": "https://registry.npmjs.org/"}
+{"npmClient": "yarn", "useWorkspaces": true, "packages": ["packages/*"], "version": "1.0.0", "command": {}}
+{"command": {"version": {"allowBranch": "main", "conventionalCommits": true, "createRelease": "github", "message": "chore(release): publish %s", "noPrivate": true}}, "npmClient": "pnpm", "version": "2.2.10", "useNx": true}
+{"useWorkspaces": true, "packages": ["packages/*/*"], "version": "independent", "command": {"run": {"npmClient": "yarn"}}}
+{"lerna": "latest", "packages": ["src/applications/*", "src/packages/*"], "version": "1.0.0", "npmClient": "yarn", "useWorkspaces": true}
+{"version": "independent", "packages": ["packages/*"], "command": {"bootstrap": {"hoist": true, "npmClientArgs": ["--no-package-lock"]}}, "$schema": "node_modules/lerna/schemas/lerna-schema.json"}
+{"$schema": "node_modules/lerna/schemas/lerna-schema.json", "npmClient": "npm", "version": "independent", "useNx": false, "command": {"version": {"message": "Release", "ignoreChanges": ["**/*.md", "examples/**", "**/package-lock.json"], "includeMergedTags": true}, "publish": {"ignoreChanges": ["**/package-lock.json"]}}}
+{"$schema": "node_modules/lerna/schemas/lerna-schema.json", "npmClient": "yarn", "useNx": true, "useWorkspaces": true, "version": "0.1.0"}
+{"$schema": "node_modules/lerna/schemas/lerna-schema.json", "allowBranch": "main", "conventionalCommits": true, "createRelease": "github", "npmClient": "pnpm", "message": "release: publish new versions of packages", "useNx": true, "useWorkspaces": true, "version": "independent"}
+{"$schema": "node_modules/@lerna-lite/cli/schemas/lerna-schema.json", "version": "0.4.3", "packages": [".", "packages/**"]}
+{"version": "4.11.1", "packages": ["packages/*", "examples/*"], "npmClient": "yarn", "useWorkspaces": true, "useNx": true}
+{"version": "independent", "useWorkspaces": true, "npmClient": "yarn", "command": {"run": {"stream": true}}, "packages": ["vscode-*"]}
+{"packages": ["packages/*"], "npmClient": "yarn", "useWorkspaces": true, "version": "0.1.11", "command": {"publish": {"ignoreChanges": ["*.md"]}, "bootstrap": {"npmClientArgs": ["--no-lockfile"]}}}
+{"packages": ["packages/@kws3/*"], "version": "independent"}
+{"packages": ["packages/*", "website"], "version": "independent", "npmClient": "yarn", "useWorkspaces": true, "command": {"publish": {"changelog": false, "conventionalCommits": true, "message": "chore(release): publish %v", "push": false}, "version": {"changelog": false, "conventionalCommits": true, "message": "chore(release): publish %v", "push": false}, "changelog": {"repo": "pbeshai/tidy", "cacheDir": ".changelog", "labels": {"breaking": "BREAKING CHANGE", "feature": "FEATURE", "bug": "BUGFIX", "docs": "DOCUMENTATION"}}}}
+{"lerna": "7", "conventionalCommits": true, "npmClient": "yarn", "npmClientArgs": ["--no-lockfile"], "packages": ["packages/*", "wallets/*"], "version": "independent", "registry": "https://registry.npmjs.org", "command": {"create": {"homepage": "https://github.com/cosmology-tech/cosmos-kit", "license": "SEE LICENSE IN LICENSE", "access": "restricted"}, "publish": {"allowBranch": "main", "message": "chore(release): publish"}}}
+{"independent": false, "packages": ["packages/*", "core/*"], "command": {"exec": {"stream": true}, "publish": {"forcePublish": "*", "allowBranch": ["master", "wat*", "WAT*", "xtap*", "XTAP*"]}}, "version": "0.6.8"}
+{"npmClient": "yarn", "packages": ["packages/*"], "version": "0.7.4-alpha.1", "command": {"publish": {"message": "Bump version to %v", "tagVersionPrefix": ""}}}
+{"$schema": "node_modules/lerna/schemas/lerna-schema.json", "useWorkspaces": true, "version": "0.0.0", "stream": true, "npmClient": "yarn"}
+{"$schema": "node_modules/lerna/schemas/lerna-schema.json", "useWorkspaces": true, "version": "0.0.7"}
+{"$schema": "node_modules/lerna/schemas/lerna-schema.json", "version": "0.1.0", "packages": ["packages/*"]}
+{"packages": ["packages/*", "apps/*"], "npmClient": "yarn", "useWorkspaces": true, "registry": "https://registry.npmjs.org/", "version": "independent", "command": {"version": {"exact": true}, "publish": {"graphType": "all", "allowBranch": "main"}}}
+{"$schema": "node_modules/lerna/schemas/lerna-schema.json", "useNX": true, "useWorkspaces": true, "version": "0.0.1", "packages": ["packages/*"]}
+{"packages": ["packages/*"], "command": {"bootstrap": {"hoist": true}}, "version": "0.0.0"}
+{"npmClient": "yarn", "packages": ["packages/*"], "useWorkspaces": true, "version": "independent", "command": {"publish": {"conventionalCommits": true, "registry": "https://npm.pkg.github.com"}, "version": {"message": "chore(release): publish"}}}
+{"version": "independent", "useWorkspaces": true}
+{"version": "0.4.1", "command": {"version": {"message": "version update: %s"}, "publish": {"ignoreChanges": ["*.md"]}, "bootstrap": {"ignore": "component-*", "npmClientArgs": []}}, "packages": ["packages/*", "packages/scenarios/**/*"]}
+{"$schema": "node_modules/lerna/schemas/lerna-schema.json", "version": "independent"}
+{"useWorkspaces": true, "packages": ["packages/*", "examples/*"], "command": {"version": {"exact": true}, "publish": {"allowBranch": ["main"], "registry": "https://registry.npmjs.org/"}}, "version": "0.14.7"}
+{"lerna": "3.6.0", "packages": ["packages/*"], "version": "independent", "npmClient": "yarn", "useWorkspaces": true}
+{"npmClient": "yarn", "useWorkspaces": true, "version": "independent", "packages": ["packages/*"], "registry": "https://registry.npmjs.org/"}
+{"lerna": "3.10.6", "packages": ["packages/*", "config/*"], "version": "independent", "command": {"init": {"exact": true}}, "npmClient": "yarn", "useWorkspaces": true}
+{"lerna": "2.5.1", "packages": ["packages/*"], "version": "0.1.26"}
+{"version": "independent", "npmClient": "yarn", "useWorkspaces": true, "command": {"publish": {"ignoreChanges": ["*.md", "story.tsx", "*.story.tsx", "*.test.ts", "*.test.tsx", "*.snap", "*.d.ts"], "message": "Release [ci skip]"}}, "packages": ["./packages/*"]}
+{"version": "1.6.2", "packages": ["packages/*"], "command": {"version": {"allowBranch": "master", "message": "chore(release): publish %s"}}, "publishConfig": {"access": "public", "registry": "https://registry.npmjs.com/"}, "npmClient": "yarn", "useWorkspaces": true}
+{"version": "4.0.0", "packages": ["packages/*"], "command": {"publish": {"ignoreChanges": ["*.md", "package-lock.json"]}, "bootstrap": {"hoist": true, "noCi": true, "nohoist": ["cross-env", "egg"], "npmClientArgs": ["--no-package-lock"]}, "version": {"conventionalCommits": true, "allowBranch": ["master", "release"], "registry": "https://registry.npmjs.org/"}}, "npmClient": "npm"}
+{"packages": ["services/*"], "npmClient": "yarn", "useWorkspaces": true, "version": "0.0.0"}
+{"lerna": "3.22.1", "packages": ["packages/*"], "npmClient": "yarn", "useWorkspaces": true, "command": {"run": {"private": false}, "version": {"private": false}}, "version": "0.4.0-alpha.27"}
+{"lerna": "2.11.0", "version": "1.3.6", "npmClient": "yarn", "useWorkspaces": true}
+{"$schema": "node_modules/lerna/schemas/lerna-schema.json", "version": "independent", "packages": ["packages/*"], "npmClient": "yarn", "command": {"version": {"conventionalCommits": true, "message": "chore: prepare versions [skip ci]", "changelogPreset": "@commitlint/config-conventional", "noPrivate": true}}, "ignoreChanges": ["**/*.test.*"]}
+{"version": "1.1.3", "npmClient": "npm", "command": {"publish": {"ignoreChanges": ["ignored-file", "*.md"], "message": "chore(release): publish", "registry": "https://npm.pkg.github.com"}}, "packages": ["packages/*"]}
+{"packages": ["**/*"], "npmClient": "yarn", "version": "0.58.0"}
+{"packages": ["packages/*"], "npmClient": "pnpm", "useWorkspaces": true, "version": "independent", "command": {"publish": {"conventionalCommits": true, "preDistTag": "next"}, "version": {"conventionalCommits": true, "push": true, "exact": true, "gitTagVersion": true, "createRelease": "github", "allowBranch": "master", "message": "chore(release): publish new version"}}, "ignoreChanges": ["**/*.md", "**/*.spec.ts", "**/*.spec.js", "**/fake-classes-to-test.ts", "**/.all-contributorsrc"]}
+{"npmClient": "pnpm", "useWorkspaces": true, "version": "independent", "packages": ["packages/*"]}
+{"ignoreChanges": ["**/*.md"], "loglevel": "info", "packages": ["packages/**", "services/**"], "version": "independent"}
+{"version": "independent", "npmClient": "yarn", "packages": ["services/*", "packages/*"], "useWorkspaces": true, "command": {"version": {"conventionalCommits": false, "noChangelog": true, "exact": true}}, "ignoreChanges": ["**/__fixtures__/**", "**/__tests__/**", "**/*.md"]}
+{"$schema": "node_modules/lerna/schemas/lerna-schema.json", "npmClient": "yarn", "useNx": false, "useWorkspaces": true, "version": "0.1.0"}
+{"version": "independent", "npmClient": "yarn", "command": {"publish": {"ignoreChanges": ["apps/*", "examples/*", "features/*"], "message": "chore(release): publish"}}, "packages": ["apps/*", "examples/*", "features/*", "packages/*"]}
+{"private": true, "hoise": true, "packages": ["web", "studio"], "version": "1.0.0", "npmClient": "yarn"}
+{"packages": ["packages/**"], "version": "0.1.9"}
+{"npmClient": "yarn", "useWorkspaces": true, "command": {"publish": {"allowBranch": "master"}}, "packages": ["packages/*"], "version": "1.7.2"}
+{"packages": ["packages/*"], "version": "2.0.0-alpha.5"}
+{"packages": ["packages/*"], "version": "independent", "npmClient": "yarn", "useWorkspaces": true, "$schema": "node_modules/lerna/schemas/lerna-schema.json"}
+{"version": "3.4.1", "npmClient": "yarn", "useWorkspaces": true, "packages": ["packages/*"]}
+{"lerna": "3.4.3", "packages": ["./", "examples/*", "packages/*"], "version": "0.0.11", "npmClient": "npm", "command": {"publish": {"ignoreChanges": ["*.md"]}}, "hoist": true}
+{"version": "0.1.0", "registry": "https://registry.npmjs.org/", "publishConfig": {"access": "public"}, "npmClient": "yarn", "useWorkspaces": true, "packages": ["packages/*"]}
+{"ci": false, "packages": ["packages/*"], "version": "2.0.7", "useWorkspaces": false, "command": {"bootstrap": {"hoist": true}, "publish": {"message": "chore(release): publish %s", "conventionalCommits": true, "createRelease": "github"}}, "ignoreChanges": ["**/changelog.md", "**/CHANGELOG.md", "**/package-lock.json", "**/yarn.lock", "**/test/**", "lerna.json"]}
+{"version": "3.5.9", "packages": ["core", "www"]}
+{"command": {"create": {"license": "MIT"}, "publish": {"allowBranch": "master", "conventionalCommits": true, "message": "chore(release): Publish"}}, "npmClient": "yarn", "useWorkspaces": true, "version": "independent", "ignoreChanges": ["**/__tests__/**", "**/__mocks__/**", "**/__stories__/**"]}
+{"packages": ["packages/*"], "version": "0.0.4", "npmClient": "yarn", "useWorkspaces": true}
+{"lerna": "3.10.7", "packages": ["packages/*", "plugins/*", "blueprints/*", "cardscript/*", "apps/*", "mods/*", "e2e/*"], "version": "fixed", "hoist": true, "nohoist": ["@wmfs/*"], "command": {"init": {"exact": false}}}
+{"$schema": "node_modules/lerna/schemas/lerna-schema.json", "version": "1.3.1", "npmClient": "yarn"}
+{"packages": ["packages/*", "examples/*"], "command": {"publish": {"conventionalCommits": true, "message": "chore(release): publish", "registry": "https://registry.npmjs.org", "createRelease": "github", "allowBranch": "main"}}, "publishConfig": {"access": "public"}, "npmClient": "yarn", "version": "independent", "ignoreChanges": ["**/changelog.md", "**/CHANGELOG.md", "**/package-lock.json", "**/yarn.lock", "**/test/**", "lerna.json", "readme.md"]}
+{"useWorkspaces": true, "npmClient": "yarn", "packages": ["packages/@cat-smoker/cli*", "packages/test/*"], "version": "0.0.8-alpha.0"}
+{"packages": ["packages/npm/*"], "version": "independent"}
+{"schema": "node_modules/lerna/schemas/lerna-schema.json", "useNx": false, "useWorkspaces": false, "version": "0.0.0", "packages": ["web-no-modal-sdk/**/*", "web-modal-sdk/**/*", "wagmi-connector/*"]}
+{"npmClient": "npm", "version": "0.0.0", "packages": ["api", "web"]}
+{"packages": ["packages/*"], "version": "independent", "command": {"publish": {"allowBranch": ["master", "next"], "conventionalCommits": true, "message": "chore(release): :tada: :rocket: [skip ci]"}}, "ignoreChanges": ["**/CHANGELOG.md", "**/package-lock.json", "**/test/**", "packages/react-dom-primatives/**", "lerna.json", "package.json", "README.md"]}
+{"packages": ["packages/*"], "version": "0.2.5"}
+{"lerna": "2.4.0", "packages": ["packages/*"], "version": "0.0.7"}
+{"version": "independent", "npmClient": "yarn", "useWorkspaces": true, "packages": ["packages/*"], "ignoreChanges": ["CHANGELOG.md", "**/__tests__/**"], "ignore": ["packages/websites"], "command": {"publish": {"message": "chore(release): publish %s", "registry": "https://registry.npmjs.org"}}}
+{"packages": ["packages/*"], "version": "0.0.0", "npmClient": "yarn", "useWorkspaces": true, "publishConfig": {"access": "public"}}

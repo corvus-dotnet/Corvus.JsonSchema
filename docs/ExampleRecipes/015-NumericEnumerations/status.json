@@ -1,0 +1,25 @@
+{
+  "oneOf": [
+    { "$ref": "#/$defs/Pending" },
+    { "$ref": "#/$defs/Active" },
+    { "$ref": "#/$defs/Complete" }
+  ],
+
+  "$defs": {
+    "Pending": {
+      "title": "Pending status",
+      "description": "The operation is waiting to start",
+      "const": 1
+    },
+    "Active": {
+      "title": "Active status",
+      "description": "The operation is currently running",
+      "const": 2
+    },
+    "Complete": {
+      "title": "Complete status",
+      "description": "The operation has finished",
+      "const": 3
+    }
+  }
+}

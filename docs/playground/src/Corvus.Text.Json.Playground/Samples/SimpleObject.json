@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/person.json",
+  "title": "Person",
+  "description": "A person with name and age.",
+  "type": "object",
+  "required": ["name", "age"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "The person's full name."
+    },
+    "age": {
+      "type": "integer",
+      "description": "The person's age in years.",
+      "minimum": 0
+    },
+    "email": {
+      "type": "string",
+      "format": "email",
+      "description": "Optional email address."
+    },
+    "address": {
+      "$ref": "#/$defs/Address"
+    }
+  },
+  "$defs": {
+    "Address": {
+      "type": "object",
+      "required": ["street", "city"],
+      "properties": {
+        "street": {
+          "type": "string"
+        },
+        "city": {
+          "type": "string"
+        },
+        "postcode": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

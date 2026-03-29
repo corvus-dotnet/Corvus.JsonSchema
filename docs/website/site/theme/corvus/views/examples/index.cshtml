@@ -1,0 +1,29 @@
+@model SiteViewModel
+@{
+    Layout = "../Shared/_Layout.cshtml";
+    var recipesParent = Model.SiteContext.Navigation?.Children?
+        .FirstOrDefault(x => x.Url?.ToString()?.Contains("/examples/") == true);
+    var recipes = recipesParent?.Children?.OrderBy(x => x.Rank).ToList();
+}
+<div class="layout-docs container">
+    @await Html.PartialAsync("_Sidebar").ConfigureAwait(false)
+    <main id="main-content" class="layout-docs__main">
+        <div class="doc__content">
+            <h1>Example Recipes</h1>
+            <p>Runnable examples demonstrating JSON Schema patterns with the V5 code generator.</p>
+            <div class="card-grid" style="margin-top:var(--space-lg)">
+                @if (recipes != null)
+                {
+                    @foreach (var recipe in recipes)
+                    {
+                        <a class="card card--link" href="@recipe.Url">
+                            <span class="card__tag">@($"{recipe.Rank:D3}")</span>
+                            <h3 class="card__title">@recipe.Title</h3>
+                            <p class="card__body">@recipe.Description</p>
+                        </a>
+                    }
+                }
+            </div>
+        </div>
+    </main>
+</div>

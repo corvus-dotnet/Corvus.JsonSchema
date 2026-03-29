@@ -1,0 +1,15 @@
+{
+  "private": true,
+  "name": "corvus-text-json-docs",
+  "description": "Build tools for the Corvus.Text.Json documentation website",
+  "scripts": {
+    "build-search-index": "node tools/build-search-index.js"
+  },
+  "dependencies": {
+    "js-yaml": "^4.1.0"
+  },
+  "devDependencies": {
+    "sass": "^1.98.0",
+    "vellum": "^0.4.55"
+  }
+}

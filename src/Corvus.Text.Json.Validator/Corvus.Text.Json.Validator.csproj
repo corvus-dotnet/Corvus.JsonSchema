@@ -1,0 +1,88 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net9.0;net10.0;netstandard2.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>preview</LangVersion>
+    <PreserveCompilationContext>true</PreserveCompilationContext>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <!-- Only upgrade NuGetAudit warnings to errors for official builds. -->
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1901;NU1902;NU1903;NU1904</WarningsNotAsErrors>
+    <NoWarn>$(NoWarn);CS1591;NU1504</NoWarn>
+    <IsPackable>true</IsPackable>
+    <EndjinDisableCreateEditorConfig>true</EndjinDisableCreateEditorConfig>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+    <NoWarn>$(NoWarn);nullable</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <Description>Dynamically load, compile, and validate JSON documents against JSON Schema at runtime using Roslyn and Corvus.Text.Json. Ideal for schema registries, configuration validation, and user-supplied schemas.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyModel" Version="10.0.4" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="5.3.0" />
+    <PackageReference Include="System.Collections.Immutable" Version="10.0.4" />
+    <PackageReference Include="System.Reflection.Metadata" Version="10.0.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src-v4\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.201909.csproj" />
+    <ProjectReference Include="..\..\src-v4\Corvus.Json.CodeGeneration.202012\Corvus.Json.CodeGeneration.202012.csproj" />
+    <ProjectReference Include="..\..\src-v4\Corvus.Json.CodeGeneration.4\Corvus.Json.CodeGeneration.4.csproj" />
+    <ProjectReference Include="..\..\src-v4\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.6.csproj" />
+    <ProjectReference Include="..\..\src-v4\Corvus.Json.CodeGeneration.7\Corvus.Json.CodeGeneration.7.csproj" />
+    <ProjectReference Include="..\..\src-v4\Corvus.Json.CodeGeneration.CorvusVocabulary\Corvus.Json.CodeGeneration.CorvusVocabulary.csproj" />
+    <ProjectReference Include="..\..\src-v4\Corvus.Json.CodeGeneration.HttpClientDocumentResolver\Corvus.Json.CodeGeneration.HttpClientDocumentResolver.csproj" />
+    <ProjectReference Include="..\..\src-v4\Corvus.Json.CodeGeneration.OpenApi30\Corvus.Json.CodeGeneration.OpenApi30.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Corvus.Text.Json.CodeGeneration\Corvus.Text.Json.CodeGeneration.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json\Corvus.Text.Json.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="metaschema\corvus\meta\corvus-extensions.json" LogicalName="metaschema.corvus.meta.corvus-extensions.json" />
+    <EmbeddedResource Include="metaschema\corvus\schema.json" LogicalName="metaschema.corvus.schema.json" />
+    <EmbeddedResource Include="metaschema\draft2019-09\meta\applicator.json" LogicalName="metaschema.draft2019-09.meta.applicator.json" />
+    <EmbeddedResource Include="metaschema\draft2019-09\meta\content.json" LogicalName="metaschema.draft2019-09.meta.content.json" />
+    <EmbeddedResource Include="metaschema\draft2019-09\meta\core.json" LogicalName="metaschema.draft2019-09.meta.core.json" />
+    <EmbeddedResource Include="metaschema\draft2019-09\meta\format.json" LogicalName="metaschema.draft2019-09.meta.format.json" />
+    <EmbeddedResource Include="metaschema\draft2019-09\meta\hyper-schema.json" LogicalName="metaschema.draft2019-09.meta.hyper-schema.json" />
+    <EmbeddedResource Include="metaschema\draft2019-09\meta\meta-data.json" LogicalName="metaschema.draft2019-09.meta.meta-data.json" />
+    <EmbeddedResource Include="metaschema\draft2019-09\meta\validation.json" LogicalName="metaschema.draft2019-09.meta.validation.json" />
+    <EmbeddedResource Include="metaschema\draft2019-09\schema.json" LogicalName="metaschema.draft2019-09.schema.json" />
+    <EmbeddedResource Include="metaschema\draft2020-12\meta\applicator.json" LogicalName="metaschema.draft2020-12.meta.applicator.json" />
+    <EmbeddedResource Include="metaschema\draft2020-12\meta\content.json" LogicalName="metaschema.draft2020-12.meta.content.json" />
+    <EmbeddedResource Include="metaschema\draft2020-12\meta\core.json" LogicalName="metaschema.draft2020-12.meta.core.json" />
+    <EmbeddedResource Include="metaschema\draft2020-12\meta\format-annotation.json" LogicalName="metaschema.draft2020-12.meta.format-annotation.json" />
+    <EmbeddedResource Include="metaschema\draft2020-12\meta\format-assertion.json" LogicalName="metaschema.draft2020-12.meta.format-assertion.json" />
+    <EmbeddedResource Include="metaschema\draft2020-12\meta\hyper-schema.json" LogicalName="metaschema.draft2020-12.meta.hyper-schema.json" />
+    <EmbeddedResource Include="metaschema\draft2020-12\meta\meta-data.json" LogicalName="metaschema.draft2020-12.meta.meta-data.json" />
+    <EmbeddedResource Include="metaschema\draft2020-12\meta\unevaluated.json" LogicalName="metaschema.draft2020-12.meta.unevaluated.json" />
+    <EmbeddedResource Include="metaschema\draft2020-12\meta\validation.json" LogicalName="metaschema.draft2020-12.meta.validation.json" />
+    <EmbeddedResource Include="metaschema\draft2020-12\schema.json" LogicalName="metaschema.draft2020-12.schema.json" />
+    <EmbeddedResource Include="metaschema\draft4\schema.json" LogicalName="metaschema.draft4.schema.json" />
+    <EmbeddedResource Include="metaschema\draft6\schema.json" LogicalName="metaschema.draft6.schema.json" />
+    <EmbeddedResource Include="metaschema\draft7\schema.json" LogicalName="metaschema.draft7.schema.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.18" PrivateAssets="All" />
+    <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.556" PrivateAssets="All" />
+    <PackageReference Include="Roslynator.Analyzers" Version="4.13.1" PrivateAssets="All" />
+  </ItemGroup>
+
+</Project>

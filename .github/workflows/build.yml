@@ -29,8 +29,10 @@ permissions:
   actions: write  # enable cache clean-up
   checks: write  # enable test result annotations
   contents: write  # enable creating releases
+  id-token: write  # enable GitHub Pages deployment
   issues: read
   packages: write  # enable publishing packages
+  pages: write  # enable GitHub Pages deployment
   pull-requests: write  # enable test result annotations
 
 jobs:
@@ -47,8 +49,11 @@ jobs:
       with:
         environmentVariablesYaml: |
           BUILDVAR_NuGetPublishSource: "${{ startsWith(github.ref, 'refs/tags/') && 'https://api.nuget.org/v3/index.json' || format('https://nuget.pkg.github.com/{0}/index.json', github.repository_owner) }}"
+          BUILDVAR_BuildWebsite: "true"
+          BUILDVAR_BasePathPrefix: "/corvus-json-schema"
         secretsYaml: |
           NUGET_API_KEY: "${{ startsWith(github.ref, 'refs/tags/') && secrets.NUGET_APIKEY || secrets.BUILD_PUBLISHER_PAT }}"
+          GH_TOKEN: "${{ secrets.ENDJIN_PACKAGES_TOKEN }}"
         secretsEncryptionKey: ${{ secrets.SHARED_WORKFLOW_KEY }}
 
   build:
@@ -79,13 +84,44 @@ jobs:
       publishPhaseEnv: ${{ needs.prepareConfig.outputs.RESOLVED_ENV_VARS }}
       additionalCachePaths: |
         JSON-Schema-Test-Suite
+        docs/website/.output
     secrets:
       compilePhaseAzureCredentials: ${{ secrets.AZURE_READER_CREDENTIALS }}
+      compilePhaseSecrets: ${{ needs.prepareConfig.outputs.RESOLVED_SECRETS }}
       # testPhaseAzureCredentials: ${{ secrets.TESTS_KV_READER_CREDENTIALS }}
       # packagePhaseAzureCredentials: ${{ secrets.AZURE_PUBLISH_CREDENTIALS }}
       # publishPhaseAzureCredentials: ${{ secrets.AZURE_PUBLISH_CREDENTIALS }}
-      # compilePhaseSecrets: ${{ needs.prepareConfig.outputs.RESOLVED_SECRETS }}
       # testPhaseSecrets: ${{ needs.prepareConfig.outputs.RESOLVED_SECRETS }}
       # packagePhaseSecrets: ${{ needs.prepareConfig.outputs.RESOLVED_SECRETS }}
       publishPhaseSecrets: ${{ needs.prepareConfig.outputs.RESOLVED_SECRETS }}
       secretsEncryptionKey: ${{ secrets.SHARED_WORKFLOW_KEY }}
+
+  deploy-docs:
+    name: Deploy Documentation
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Restore compile cache
+        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7  # v5.0.4
+        with:
+          path: |
+            .nuget-packages
+            Solutions
+            solutions
+            JSON-Schema-Test-Suite
+            docs/website/.output
+          key: build-state-${{ github.run_id }}-compile
+          enableCrossOsArchive: true
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/website/.output
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

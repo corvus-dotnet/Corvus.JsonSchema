@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PureTuple",
+  "description": "A fixed-length tuple array with positional types and no additional items.",
+  "type": "array",
+  "prefixItems": [
+    { "type": "string" },
+    { "type": "integer", "format": "int32" },
+    { "type": "boolean" }
+  ],
+  "items": false
+}

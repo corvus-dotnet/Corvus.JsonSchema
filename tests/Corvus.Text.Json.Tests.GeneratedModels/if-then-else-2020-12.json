@@ -1,0 +1,22 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+        "kind": { "type": "string" },
+        "value": {}
+    },
+    "if": {
+        "properties": { "kind": { "const": "special" } },
+        "required": ["kind"]
+    },
+    "then": {
+        "properties": {
+            "value": { "type": "number", "format": "int32" }
+        }
+    },
+    "else": {
+        "properties": {
+            "value": { "type": "string" }
+        }
+    }
+}

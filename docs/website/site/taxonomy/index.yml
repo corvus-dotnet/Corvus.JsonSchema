@@ -1,0 +1,42 @@
+ContentType: application/vnd.endjin.ssg.page+yaml
+Title: Corvus.Text.Json
+Navigation:
+  Title: Home
+  Parent:
+  Url: /
+  Rank: 0
+  Header:
+    Visible: True
+    Link: True
+  Footer:
+    Visible: True
+    Link: True
+MetaData:
+  Title: "Corvus.Text.Json — High-performance JSON for .NET"
+  Description: "Source-generated strongly-typed C# from JSON Schema. Pooled-memory parsing, schema validation, mutable documents, extended numeric types, and NodaTime integration."
+  Keywords: [JSON, .NET, JSON Schema, source generator, C#, System.Text.Json, high-performance, zero-allocation]
+OpenGraph:
+  Title: "Corvus.Text.Json — High-performance JSON for .NET"
+  Description: "Source-generated strongly-typed C# from JSON Schema with pooled-memory parsing and full draft 2020-12 validation."
+  Image:
+ContentBlocks:
+  - ContentType: application/vnd.endjin.ssg.hero+md
+    Id: Hero
+    Spec:
+      Path: ../content/Home/Hero.md
+  - ContentType: application/vnd.endjin.ssg.content+md
+    Id: WhyCorvus
+    Spec:
+      Path: ../content/Home/WhyCorvus.md
+  - ContentType: application/vnd.endjin.ssg.content+md
+    Id: Features
+    Spec:
+      Path: ../content/Home/Features.md
+  - ContentType: application/vnd.endjin.ssg.content+md
+    Id: QuickStart
+    Spec:
+      Path: ../content/Home/QuickStart.md
+  - ContentType: application/vnd.endjin.ssg.content+md
+    Id: Packages
+    Spec:
+      Path: ../content/Home/Packages.md

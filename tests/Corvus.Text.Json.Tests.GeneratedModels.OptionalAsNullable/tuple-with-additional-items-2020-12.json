@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TupleWithAdditionalItems",
+  "description": "A tuple array with positional types and additional items of a specific type.",
+  "type": "array",
+  "prefixItems": [
+    { "type": "string" },
+    { "type": "integer", "format": "int32" }
+  ],
+  "items": { "type": "boolean" }
+}

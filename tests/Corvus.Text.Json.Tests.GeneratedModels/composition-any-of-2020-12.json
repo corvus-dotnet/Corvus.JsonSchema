@@ -1,0 +1,21 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "anyOf": [
+        {
+            "type": "object",
+            "required": ["kind", "message"],
+            "properties": {
+                "kind": { "const": "text" },
+                "message": { "type": "string" }
+            }
+        },
+        {
+            "type": "object",
+            "required": ["kind", "code"],
+            "properties": {
+                "kind": { "const": "numeric" },
+                "code": { "type": "number", "format": "int32" }
+            }
+        }
+    ]
+}

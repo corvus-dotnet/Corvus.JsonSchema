@@ -1,0 +1,8 @@
+Title: Corvus.Text.Json
+Description: "High-performance JSON for .NET — from schema to code."
+Url: https://corvus-text-json.dev
+ContentType: application/vnd.endjin.ssg.site+yml
+Taxonomy: taxonomy
+Assets: theme/corvus/assets
+Content: content
+Theme: theme/corvus/views

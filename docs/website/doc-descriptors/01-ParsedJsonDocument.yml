@@ -1,0 +1,3 @@
+source: ParsedJsonDocument.md
+navTitle: "Parsing & Reading JSON"
+description: "Parse JSON into read-only, strongly-typed models backed by pooled memory. A high-performance alternative to System.Text.Json's JsonDocument with generic type support and zero-copy element access."

@@ -1,0 +1,19 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "AllOfDoubleVector",
+    "description": "A rank-1 double vector composed via allOf with a base vector definition.",
+    "$defs": {
+        "baseVector": {
+            "type": "array",
+            "items": {
+                "type": "number",
+                "format": "double"
+            },
+            "minItems": 3,
+            "maxItems": 3
+        }
+    },
+    "allOf": [
+        { "$ref": "#/$defs/baseVector" }
+    ]
+}

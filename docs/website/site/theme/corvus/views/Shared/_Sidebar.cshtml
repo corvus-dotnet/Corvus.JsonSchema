@@ -1,0 +1,58 @@
+@model SiteViewModel
+@{
+    var docsParent = Model.SiteContext.Navigation?.Children?
+        .FirstOrDefault(x => x.Url?.ToString()?.Contains("/docs/") == true);
+    var docPages = docsParent?.Children?.OrderBy(x => x.Rank).ToList();
+    var recipesParent = Model.SiteContext.Navigation?.Children?
+        .FirstOrDefault(x => x.Url?.ToString()?.Contains("/examples/") == true);
+    var recipes = recipesParent?.Children?.OrderBy(x => x.Rank).ToList();
+    var currentUrl = Model.PageContext.Navigation?.Url;
+}
+<button class="sidebar-toggle" aria-label="Toggle navigation" aria-expanded="false"></button>
+<div class="sidebar-backdrop"></div>
+<aside class="sidebar">
+    <div class="sidebar__inner">
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Getting Started</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                    <li class="sidebar__item"><a class="sidebar__link" href="/getting-started/index.html">Tutorial</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Documentation</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                    @if (docPages != null)
+                    {
+                        @foreach (var doc in docPages)
+                        {
+                            var isActive = currentUrl != null && Vellum.Cli.Domain.Url.AreEquivalent(doc.Url, currentUrl);
+                            <li class="sidebar__item">
+                                <a class="sidebar__link @(isActive ? "is-active" : "")" href="@doc.Url">@doc.Title</a>
+                            </li>
+                        }
+                    }
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Examples</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                    @if (recipes != null)
+                    {
+                        @foreach (var recipe in recipes)
+                        {
+                            var isActive = currentUrl != null && Vellum.Cli.Domain.Url.AreEquivalent(recipe.Url, currentUrl);
+                            <li class="sidebar__item">
+                                <a class="sidebar__link @(isActive ? "is-active" : "")" href="@recipe.Url">@recipe.Title</a>
+                            </li>
+                        }
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+</aside>

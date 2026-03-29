@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AllOfWithAnyOf",
+  "description": "An object that merges base properties via allOf and discriminates variants via anyOf.",
+  "allOf": [
+    {
+      "type": "object",
+      "required": ["id"],
+      "properties": {
+        "id": { "type": "string" }
+      }
+    }
+  ],
+  "anyOf": [
+    {
+      "type": "object",
+      "required": ["role"],
+      "properties": {
+        "role": { "const": "admin" },
+        "level": { "type": "integer", "format": "int32" }
+      }
+    },
+    {
+      "type": "object",
+      "required": ["role"],
+      "properties": {
+        "role": { "const": "user" },
+        "email": { "type": "string" }
+      }
+    }
+  ]
+}

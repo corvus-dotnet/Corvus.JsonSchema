@@ -1,0 +1,3 @@
+source: CodeGenerator.md
+navTitle: "CLI Code Generation"
+description: "Generate strongly-typed C# models from JSON Schema files using the generatejsonschematypes CLI tool. Same output as the source generator, for CI pipelines and pre-generation workflows."

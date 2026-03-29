@@ -1,0 +1,153 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net9.0;net10.0;netstandard2.0</TargetFrameworks>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <!-- For this project, we want warnings if there are public APIs/types without properly formatted XML comments. -->
+    <SkipIntellisenseNoWarnCS1591>true</SkipIntellisenseNoWarnCS1591>
+    <NoWarn>$(NoWarn);CS8969</NoWarn>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <!-- Only upgrade NuGetAudit warnings to errors for official builds. -->
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1901;NU1902;NU1903;NU1904</WarningsNotAsErrors>
+    <NoWarn Condition="$(TargetFrameworks.Contains('netstandard'))">$(NoWarn);CA1510;CA1511;CA1512;CA1513;CA1845;CA1846;CA1847;CS8600;CS8602</NoWarn>
+    <!-- Warnings to always disable -->
+    <NoWarn>$(NoWarn);CS8500;CS8969;IDE0065;IDE0290;IDE0079;IDE0130;NU1504;CS1591;CS1573;CS1572;CS1570;CS1584;CS1658;CS1574;CS1734</NoWarn>
+    <IsPackable>true</IsPackable>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <Description>Shared code generation engine for producing strongly-typed C# from JSON Schema. Used by Corvus.Text.Json.SourceGenerator and Corvus.Text.Json.CodeGenerator. Supports JSON Schema draft 4, 6, 7, 2019-09, and 2020-12.</Description>
+    <LangVersion>preview</LangVersion>
+    <CorvusTextJsonPath>..\Corvus.Text.Json\</CorvusTextJsonPath>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <EnableDefaultEmbeddedResourceItems>false</EnableDefaultEmbeddedResourceItems>
+    <Nullable>enable</Nullable>
+    <DefineConstants>$(DefineConstants);CORVUS_TEXT_JSON_CODEGENERATION</DefineConstants>
+    <EndjinDisableCreateEditorConfig>true</EndjinDisableCreateEditorConfig>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="StandaloneEvaluatorGenerator.cs" />
+    <Compile Include="CodeGenerationMode.cs" />
+    <Compile Include="RegexPatternCategory.cs" />
+    <Compile Include="CodeFileBuilders\JsonSchemaPartial.cs" />
+    <Compile Include="CodeFileBuilders\MutableCorePartial.cs" />
+    <Compile Include="CodeFileBuilders\CorePartial.cs" />
+    <Compile Include="CodeGeneratorExtensions.Validation.cs" />
+    <Compile Include="CodeGeneratorExtensions.Number.cs" />
+    <Compile Include="CodeGeneratorExtensions.JsonSchema.cs" />
+    <Compile Include="CodeGeneratorExtensions.Array.cs" />
+    <Compile Include="CodeGeneratorExtensions.Object.cs" />
+    <Compile Include="CodeGeneratorExtensions.Builder.cs" />
+    <Compile Include="CodeGeneratorExtensions.Operators.cs" />
+    <Compile Include="CodeGeneratorExtensions.Conversions.cs" />
+    <Compile Include="CodeGeneratorExtensions.Documentation.cs" />
+    <Compile Include="CodeGeneratorExtensions.MemberNames.cs" />
+    <Compile Include="CodeGeneratorExtensions.cs" />
+    <Compile Include="ConditionalCodeSpecification.cs" />
+    <Compile Include="CSharpLanguageProvider.cs" />
+    <Compile Include="CSharpMemberName.cs" />
+    <Compile Include="FormatHandlers\FormatHandlerExtensions.cs" />
+    <Compile Include="FormatHandlers\FormatHandlerRegistry.cs" />
+    <Compile Include="FormatHandlers\IFormatHandler.cs" />
+    <Compile Include="FormatHandlers\INumberFormatHandler.cs" />
+    <Compile Include="FormatHandlers\IStringFormatHandler.cs" />
+    <Compile Include="FormatHandlers\WellKnownNumericFormatHandler.cs" />
+    <Compile Include="FormatHandlers\WellKnownStringFormatHandler.cs" />
+    <Compile Include="Formatting.cs" />
+    <Compile Include="FrameworkType.cs" />
+    <Compile Include="GeneratedTypeAccessibility.cs" />
+    <Compile Include="INameCollisionResolver.cs" />
+    <Compile Include="MethodParameter.cs" />
+    <Compile Include="NameCollisionResolverRegistry.cs" />
+    <Compile Include="NameCollisionResolvers\DefaultNameCollisionResolver.cs" />
+    <Compile Include="NameHeuristics\BaseSchemaNameHeuristic.cs" />
+    <Compile Include="NameHeuristics\ConstPropertyNameHeuristic.cs" />
+    <Compile Include="NameHeuristics\CustomKeywordNameHeuristic.cs" />
+    <Compile Include="NameHeuristics\DefaultValueNameHeuristic.cs" />
+    <Compile Include="NameHeuristics\DocumentationNameHeuristic.cs" />
+    <Compile Include="NameHeuristics\PathNameHeuristic.cs" />
+    <Compile Include="NameHeuristics\RequiredPropertyNameHeuristic.cs" />
+    <Compile Include="NameHeuristics\SimpleCoreTypeNameHeuristic.cs" />
+    <Compile Include="NameHeuristics\SingleTypeArrayNameHeuristic.cs" />
+    <Compile Include="NameHeuristics\SubschemaNameHeuristic.cs" />
+    <Compile Include="NameHeuristics\WellKnownTypeNameHeuristic.cs" />
+    <Compile Include="NullableAttributes.cs" />
+    <Compile Include="PropertyDeclarationExtensions.cs" />
+    <Compile Include="SimpleTypeAndFormatterAndKind.cs" />
+    <Compile Include="ThrowHelper.cs" />
+    <Compile Include="TypeDeclarationExtensions.cs" />
+    <Compile Include="ValidationHandlers\AllOfChildHandlers\AllOfSubschemaValidationHandler.cs" />
+    <Compile Include="ValidationHandlers\AnyOfChildHandlers\AnyOfConstValidationHandler.cs" />
+    <Compile Include="ValidationHandlers\AnyOfChildHandlers\AnyOfSubschemaValidationHandler.cs" />
+    <Compile Include="ValidationHandlers\ArrayChildHandlers\UniqueItemsValidationHandler.cs" />
+    <Compile Include="ValidationHandlers\ArrayChildHandlers\ItemCountValidationHandler.cs" />
+    <Compile Include="ValidationHandlers\ArrayChildHandlers\ContainsValidationHandler.cs" />
+    <Compile Include="ValidationHandlers\ArrayChildHandlers\ItemsValidationHandler.cs" />
+    <Compile Include="ValidationHandlers\CompositionNotValidationHandler.cs" />
+    <Compile Include="ValidationHandlers\IJsonSchemaClassSetup.cs" />
+    <Compile Include="ValidationHandlers\ObjectChildHandlers\IChildArrayItemValidationHandler2.cs" />
+    <Compile Include="ValidationHandlers\ObjectChildHandlers\IChildObjectPropertyValidationHandler2.cs" />
+    <Compile Include="ValidationHandlers\ObjectChildHandlers\HoistedAllOfPropertyValidationHandler.cs" />
+    <Compile Include="ValidationHandlers\ObjectChildHandlers\NamedPropertyChildHandlers\INamedPropertyChildHandler.cs" />
+    <Compile Include="ValidationHandlers\ObjectChildHandlers\PatternPropertiesValidationHandler.cs" />
+    <Compile Include="ValidationHandlers\ObjectChildHandlers\PropertiesValidationHandler.cs" />
+    <Compile Include="ValidationHandlers\ObjectChildHandlers\NamedPropertyChildHandlers\DependentSchemasChildHandler.cs" />
+    <Compile Include="ValidationHandlers\ObjectChildHandlers\NamedPropertyChildHandlers\RequiredPropertyChildHandler.cs" />
+    <Compile Include="ValidationHandlers\ObjectChildHandlers\NamedPropertyChildHandlers\PropertySubschemaChildHandler.cs" />
+    <Compile Include="ValidationHandlers\ObjectChildHandlers\UnevaluatedPropertyValidationHandler.cs" />
+    <Compile Include="ValidationHandlers\ObjectChildHandlers\PropertyNamesValidationHandler.cs" />
+    <Compile Include="ValidationHandlers\ObjectChildHandlers\PropertyCountValidationHandler.cs" />
+    <Compile Include="ValidationHandlers\ObjectChildHandlers\NamedPropertyChildHandlers\ObjectPropertyValidatorParameter.cs" />
+    <Compile Include="ValidationHandlers\ArrayValidationHandler.cs" />
+    <Compile Include="ValidationHandlers\ObjectValidationHandler.cs" />
+    <Compile Include="ValidationHandlers\TernaryIfValidationHandler.cs" />
+    <Compile Include="ValidationHandlers\CompositionOneOfValidationHandler.cs" />
+    <Compile Include="ValidationHandlers\CompositionAnyOfValidationHandler.cs" />
+    <Compile Include="ValidationHandlers\CompositionAllOfValidationHandler.cs" />
+    <Compile Include="ValidationHandlers\NumberChildHandlers\NumberRangeValidationHandler.cs" />
+    <Compile Include="ValidationHandlers\OneOfChildHandlers\OneOfSubschemaValidationHandler.cs" />
+    <Compile Include="ValidationHandlers\StringChildHandlers\StringRegularExpressionValidationHandler.cs" />
+    <Compile Include="ValidationHandlers\StringChildHandlers\StringLengthValidationHandler.cs" />
+    <Compile Include="ValidationHandlers\ConstValidationHandler.cs" />
+    <Compile Include="ValidationHandlers\StringValidationHandler.cs" />
+    <Compile Include="ValidationHandlers\NumberValidationHandler.cs" />
+    <Compile Include="ValidationHandlers\ITypeSensitiveKeywordValidationHandler.cs" />
+    <Compile Include="ValidationHandlers\KeywordValidationHandlerBase.cs" />
+    <Compile Include="ValidationHandlers\FormatValidationHandler.cs" />
+    <Compile Include="ValidationHandlers\TypeValidationHandler.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- DateTimeParsing -->
+    <Compile Include="$(CorvusTextJsonPath)Corvus\Text\Json\Internal\JsonElementHelpers.DateTime.Core.cs" Link="Corvus.Text.Json\JsonElementHelpers.DateTime.Core.cs" />
+    <!-- NumberParsing -->
+    <Compile Include="$(CorvusTextJsonPath)Corvus\Text\Json\Internal\JsonElementHelpers.Numeric.Core.cs" Link="Corvus.Text.Json\JsonElementHelpers.Numeric.Core.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Corvus.Text.Json.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src-v4\Corvus.Json.CodeGeneration\Corvus.Json.CodeGeneration.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.18" PrivateAssets="All" />
+    <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.556" PrivateAssets="All" />
+    <PackageReference Include="Roslynator.Analyzers" Version="4.13.1" PrivateAssets="All" />
+    <PackageReference Include="Microsoft.Bcl.Memory" Version="10.0.4" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="5.3.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="System" />
+    <Using Include="System.Text" />
+  </ItemGroup>
+</Project>

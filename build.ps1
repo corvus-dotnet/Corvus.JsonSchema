@@ -26,6 +26,14 @@
     The logging verbosity.
 .PARAMETER Clean
     When true, the .NET solution will be cleaned and all output/intermediate folders deleted.
+.PARAMETER Website
+    When true, builds the documentation website after the .NET build completes.
+    The website build reuses the already-compiled binaries (skips .NET compilation).
+    Also set when the BUILDVAR_BuildWebsite environment variable is 'true' (for CI).
+.PARAMETER BasePathPrefix
+    Base URL path prefix for the documentation website (e.g. '/Corvus.Text.Json' for
+    GitHub Pages subpath hosting). Only used when -Website is set.
+    Falls back to the BUILDVAR_BasePathPrefix environment variable if not specified.
 .PARAMETER BuildModulePath
     The path to import the Endjin.RecommendedPractices.Build module from. This is useful when
     testing pre-release versions of the Endjin.RecommendedPractices.Build that are not yet
@@ -68,13 +76,19 @@ param (
     [switch] $Clean,
 
     [Parameter()]
+    [switch] $Website,
+
+    [Parameter()]
+    [string] $BasePathPrefix = "",
+
+    [Parameter()]
     [string] $BuildModulePath,
 
     [Parameter()]
     [version] $BuildModuleVersion = "1.5.14",
 
     [Parameter()]
-    [version] $InvokeBuildModuleVersion = "5.11.3"
+    [version] $InvokeBuildModuleVersion = "5.14.23"
 )
 
 $ErrorActionPreference = $ErrorActionPreference ? $ErrorActionPreference : 'Stop'
@@ -83,14 +97,16 @@ $InformationPreference = 'Continue'
 $here = Split-Path -Parent $PSCommandPath
 
 #region InvokeBuild setup
-if (!(Get-Module -ListAvailable InvokeBuild)) {
+if (!(Get-Module -ListAvailable InvokeBuild | Where-Object { $_.Version -eq $InvokeBuildModuleVersion })) {
     Install-Module InvokeBuild -RequiredVersion $InvokeBuildModuleVersion -Scope CurrentUser -Force -Repository PSGallery
 }
-Import-Module InvokeBuild
+Import-Module InvokeBuild -RequiredVersion $InvokeBuildModuleVersion
 # This handles calling the build engine when this file is run like a normal PowerShell script
 # (i.e. avoids the need to have another script to setup the InvokeBuild environment and issue the 'Invoke-Build' command )
 if ($MyInvocation.ScriptName -notlike '*Invoke-Build.ps1') {
     try {
+        # PS 7.4+ adds ProgressAction to $PSBoundParameters which clashes with InvokeBuild
+        $PSBoundParameters.Remove('ProgressAction') | Out-Null
         Invoke-Build $Tasks $MyInvocation.MyCommand.Path @PSBoundParameters
     }
     catch {
@@ -130,12 +146,13 @@ $SkipTest = $false
 $SkipTestReport = $false
 $SkipPackage = $false
 $SkipAnalysis = $false
+$SkipPrAutoflowEnrollmentCheck = $true
 
 
 #
 # Build process configuration
 #
-$SolutionToBuild = (Resolve-Path (Join-Path $here ".\Solutions\Corvus.JsonSchema.sln")).Path
+$SolutionToBuild = (Resolve-Path (Join-Path $here ".\Corvus.Text.Json.slnx")).Path
 $ProjectsToPublish = @(
     # "Solutions/MySolution/MyWebSite/MyWebSite.csproj"
 )
@@ -162,19 +179,43 @@ task PreBuild {
     exec { & git submodule init }
     exec { & git submodule update }
 }
-task PostBuild {}
-task PreTest {
-    # Turn down logging when running Specs, otherwise it overloads the GitHub Actions web interface
-    if ($IsRunningOnBuildServer) {
-        $script:LogLevelBackup = $LogLevel
-        $script:LogLevel = "quiet"
+task PostBuild {
+    # Build the documentation website when -Website is set or BUILDVAR_BuildWebsite env var is 'true'
+    $buildWebsite = $Website -or ($env:BUILDVAR_BuildWebsite -eq "true")
+    if ($buildWebsite) {
+        $effectiveBasePathPrefix = if ($BasePathPrefix) { $BasePathPrefix } else { $env:BUILDVAR_BasePathPrefix }
+
+        $websiteDir = Join-Path $here "docs\website"
+
+        Write-Information "Building documentation website..."
+
+        # Ensure Node dependencies are installed
+        Push-Location $websiteDir
+        try {
+            if (!(Test-Path (Join-Path $websiteDir "node_modules"))) {
+                Write-Information "Installing Node dependencies..."
+                exec { & npm ci --prefix $websiteDir }
+            }
+
+            $websiteBuildArgs = @("-SkipDotNetBuild")
+            if ($effectiveBasePathPrefix) {
+                $websiteBuildArgs += "-BasePathPrefix", $effectiveBasePathPrefix
+            }
+
+            exec { & pwsh -File (Join-Path $websiteDir "build.ps1") @websiteBuildArgs }
+        } finally {
+            Pop-Location
+        }
     }
+}
+task PreTest {
+    # Turn down logging when running Specs to suppress ReqnRoll Given/When/Then output
+    $script:LogLevelBackup = $LogLevel
+    $script:LogLevel = "quiet"
 }
 task PostTest {
     # Revert back to original logging level
-    if ($IsRunningOnBuildServer) {
-        $script:LogLevel = $LogLevelBackup
-    }
+    $script:LogLevel = $LogLevelBackup
 }
 task PreTestReport {}
 task PostTestReport {}

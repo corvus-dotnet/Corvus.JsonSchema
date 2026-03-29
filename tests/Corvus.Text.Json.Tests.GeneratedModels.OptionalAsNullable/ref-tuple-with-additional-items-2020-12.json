@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "RefTupleWithAdditionalItems",
+  "description": "An inline open tuple in allOf with typed additional items. Open in composed type, open locally.",
+  "allOf": [
+    {
+      "type": "array",
+      "prefixItems": [
+        { "type": "string" },
+        { "type": "integer", "format": "int32" }
+      ]
+    }
+  ],
+  "items": { "type": "boolean" }
+}

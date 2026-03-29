@@ -1,0 +1,107 @@
+<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>14</LangVersion>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <StaticWebAssetBasePath>/</StaticWebAssetBasePath>
+    <!-- Disable WebCIL to output regular .dll files that Roslyn can read -->
+    <WasmEnableWebcil>false</WasmEnableWebcil>
+    <!-- Threading disabled for now - re-enable when needed for background execution -->
+    <!-- <WasmEnableThreads>true</WasmEnableThreads> -->
+    <!-- Disable the Endjin analyzers for this standalone tool -->
+    <EndjinDisableCreateEditorConfig>true</EndjinDisableCreateEditorConfig>
+    <EndjinDisableAutoPackagesLock>true</EndjinDisableAutoPackagesLock>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.0" />
+    <PackageReference Include="BlazorMonaco" Version="3.4.0" />
+    <!-- Roslyn for in-browser compilation and IntelliSense -->
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="5.3.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Features" Version="5.3.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.Features" Version="5.3.0" />
+  </ItemGroup>
+
+  <!-- V5 Code Generation (the core engine) -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\src\Corvus.Text.Json.CodeGeneration\Corvus.Text.Json.CodeGeneration.csproj" />
+  </ItemGroup>
+
+  <!-- V5 Runtime library (what generated types reference at compile time) -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\src\Corvus.Text.Json\Corvus.Text.Json.csproj" />
+  </ItemGroup>
+
+  <!-- Vocabulary analyzers (needed to register schema dialects) -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\src-v4\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.201909.csproj" />
+    <ProjectReference Include="..\..\..\..\src-v4\Corvus.Json.CodeGeneration.202012\Corvus.Json.CodeGeneration.202012.csproj" />
+    <ProjectReference Include="..\..\..\..\src-v4\Corvus.Json.CodeGeneration.4\Corvus.Json.CodeGeneration.4.csproj" />
+    <ProjectReference Include="..\..\..\..\src-v4\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.6.csproj" />
+    <ProjectReference Include="..\..\..\..\src-v4\Corvus.Json.CodeGeneration.7\Corvus.Json.CodeGeneration.7.csproj" />
+    <ProjectReference Include="..\..\..\..\src-v4\Corvus.Json.CodeGeneration.CorvusVocabulary\Corvus.Json.CodeGeneration.CorvusVocabulary.csproj" />
+    <ProjectReference Include="..\..\..\..\src-v4\Corvus.Json.CodeGeneration.OpenApi30\Corvus.Json.CodeGeneration.OpenApi30.csproj" />
+  </ItemGroup>
+
+  <!-- Embed metaschema files as resources (shared with the CLI tool) -->
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\..\..\src\Corvus.Json.CodeGenerator\metaschema\**\*.json"
+                      Link="metaschema\%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <!-- Embed sample schema files as resources -->
+  <ItemGroup>
+    <EmbeddedResource Include="Samples\*.json" LogicalName="Sample.%(Filename)" />
+  </ItemGroup>
+
+  <!-- Embed recipe files for playground samples -->
+  <ItemGroup>
+    <RecipeContent Include="..\..\..\ExampleRecipes\**\*.json"
+                   Exclude="..\..\..\ExampleRecipes\**\bin\**;..\..\..\ExampleRecipes\**\obj\**;..\..\..\ExampleRecipes\.vs\**" />
+    <RecipeContent Include="..\..\..\ExampleRecipes\**\Program.cs"
+                   Exclude="..\..\..\ExampleRecipes\**\bin\**;..\..\..\ExampleRecipes\**\obj\**" />
+    <EmbeddedResource Include="@(RecipeContent)" Link="Recipes\%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <!-- Preserve assemblies from trimming for dynamic Roslyn compilation (Phase 2) -->
+  <ItemGroup>
+    <TrimmerRootAssembly Include="System.Private.CoreLib" />
+    <TrimmerRootAssembly Include="System.Runtime" />
+    <TrimmerRootAssembly Include="System.Console" />
+    <TrimmerRootAssembly Include="System.Collections" />
+    <TrimmerRootAssembly Include="System.Linq" />
+    <TrimmerRootAssembly Include="System.Text.Json" />
+    <TrimmerRootAssembly Include="System.Text.Encodings.Web" />
+    <TrimmerRootAssembly Include="System.Buffers" />
+    <TrimmerRootAssembly Include="System.Memory" />
+    <TrimmerRootAssembly Include="System.Threading" />
+    <TrimmerRootAssembly Include="System.Threading.Tasks" />
+    <TrimmerRootAssembly Include="System.Diagnostics.Debug" />
+    <TrimmerRootAssembly Include="System.ComponentModel" />
+    <TrimmerRootAssembly Include="System.Runtime.InteropServices" />
+    <TrimmerRootAssembly Include="netstandard" />
+    <TrimmerRootAssembly Include="Corvus.Text.Json" />
+    <TrimmerRootAssembly Include="Microsoft.CodeAnalysis" />
+    <TrimmerRootAssembly Include="Microsoft.CodeAnalysis.CSharp" />
+    <TrimmerRootAssembly Include="Microsoft.CodeAnalysis.Features" />
+    <TrimmerRootAssembly Include="Microsoft.CodeAnalysis.CSharp.Features" />
+  </ItemGroup>
+
+  <!-- Copy static web assets manifest to wwwroot for Roslyn assembly resolution -->
+  <Target Name="CopyAssetManifestBuild" AfterTargets="Build">
+    <Copy SourceFiles="$(OutputPath)$(AssemblyName).staticwebassets.endpoints.json"
+          DestinationFiles="$(OutputPath)wwwroot/_framework/asset-manifest.json"
+          SkipUnchangedFiles="true"
+          Condition="Exists('$(OutputPath)$(AssemblyName).staticwebassets.endpoints.json')" />
+  </Target>
+
+  <Target Name="CopyAssetManifestPublish" AfterTargets="Publish">
+    <Copy SourceFiles="$(PublishDir)$(AssemblyName).staticwebassets.endpoints.json"
+          DestinationFiles="$(PublishDir)wwwroot/_framework/asset-manifest.json"
+          SkipUnchangedFiles="true"
+          Condition="Exists('$(PublishDir)$(AssemblyName).staticwebassets.endpoints.json')" />
+  </Target>
+</Project>

@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "RefObjectWithProperties",
+  "description": "A $ref-based object composed via allOf with local additional properties.",
+  "$defs": {
+    "basePerson": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string" },
+        "age": { "type": "integer", "format": "int32" }
+      }
+    }
+  },
+  "allOf": [
+    { "$ref": "#/$defs/basePerson" }
+  ],
+  "properties": {
+    "email": { "type": "string" }
+  }
+}

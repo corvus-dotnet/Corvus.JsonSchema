@@ -1,0 +1,3 @@
+source: MigrationAnalyzers.md
+navTitle: "Migration Analyzers"
+description: "Complete reference for the Corvus.Text.Json migration analyzers — Roslyn diagnostics that detect V4 Corvus.Json patterns and guide you to V5 equivalents, with automatic code fixes for common transformations."

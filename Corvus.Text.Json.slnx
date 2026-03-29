@@ -1,0 +1,141 @@
+<Solution>
+
+<Folder Name="/v4/.Benchmarks/">
+  <Project Path="src-v4/Corvus.Json.Benchmarking/Corvus.Json.Benchmarking.csproj" />
+  <Project Path="src-v4/Corvus.JsonPatch.Benchmarking/Corvus.JsonPatch.Benchmarking.csproj" />
+</Folder>
+  <Folder Name="/v4/.Sandboxes/">
+    <Project Path="src-v4/Sandbox.NetStandard21/Sandbox.NetStandard21.csproj" />
+    <Project Path="src-v4/Sandbox.NoGlobalUsings/Sandbox.NoGlobalUsings.csproj" />
+    <Project Path="src-v4/Sandbox.SourceGenerator/Sandbox.SourceGenerator.csproj" />
+    <Project Path="src-v4/Sandbox/Sandbox.csproj" />
+  </Folder>
+  <Folder Name="/v4/.Specs/">
+    <Project Path="src-v4/Corvus.Json.Specs/Corvus.Json.Specs.csproj" />
+  </Folder>
+  <Folder Name="/v4/.Specs/Generators/">
+    <Project Path="src-v4/Corvus.Json.Patch.SpecGenerator/Corvus.Json.Patch.SpecGenerator.csproj" />
+    <Project Path="src-v4/Corvus.JsonSchema.SpecGenerator/Corvus.JsonSchema.SpecGenerator.csproj" />
+  </Folder>
+  <Folder Name="/v4/CodeGeneration/">
+    <Project Path="src-v4/Corvus.Json.CodeGeneration.HttpClientDocumentResolver/Corvus.Json.CodeGeneration.HttpClientDocumentResolver.csproj" />
+    <Project Path="src-v4/Corvus.Json.CodeGeneration.YamlPreProcessor/Corvus.Json.CodeGeneration.YamlPreProcessor.csproj" />
+    <Project Path="src-v4/Corvus.Json.CodeGeneration/Corvus.Json.CodeGeneration.csproj" />
+  </Folder>
+  <Folder Name="/v4/CodeGeneration/CSharp/">
+    <Project Path="src-v4/Corvus.Json.CodeGeneration.CSharp.QuickStart/Corvus.Json.CodeGeneration.CSharp.QuickStart.csproj" />
+    <Project Path="src-v4/Corvus.Json.CodeGeneration.CSharp/Corvus.Json.CodeGeneration.CSharp.csproj" />
+  </Folder>
+  <Folder Name="/v4/CodeGeneration/Dialects/">
+    <Project Path="src-v4/Corvus.Json.CodeGeneration.201909/Corvus.Json.CodeGeneration.201909.csproj" />
+    <Project Path="src-v4/Corvus.Json.CodeGeneration.202012/Corvus.Json.CodeGeneration.202012.csproj" />
+    <Project Path="src-v4/Corvus.Json.CodeGeneration.4/Corvus.Json.CodeGeneration.4.csproj" />
+    <Project Path="src-v4/Corvus.Json.CodeGeneration.6/Corvus.Json.CodeGeneration.6.csproj" />
+    <Project Path="src-v4/Corvus.Json.CodeGeneration.7/Corvus.Json.CodeGeneration.7.csproj" />
+    <Project Path="src-v4/Corvus.Json.CodeGeneration.CorvusVocabulary/Corvus.Json.CodeGeneration.CorvusVocabulary.csproj" />
+    <Project Path="src-v4/Corvus.Json.CodeGeneration.OpenApi30/Corvus.Json.CodeGeneration.OpenApi30.csproj" />
+    <Project Path="src-v4/Corvus.Json.CodeGeneration.OpenApi31/Corvus.Json.CodeGeneration.OpenApi31.csproj" />
+  </Folder>
+  <Folder Name="/v4/JsonExtendedTypes/">
+    <Project Path="src-v4/Corvus.Json.ExtendedTypes/Corvus.Json.ExtendedTypes.csproj" />
+    <Project Path="src-v4/Corvus.Json.JsonReference/Corvus.Json.JsonReference.csproj" />
+  </Folder>
+  <Folder Name="/v4/MetaSchema/">
+    <Project Path="src-v4/Corvus.Json.JsonSchema.Draft201909/Corvus.Json.JsonSchema.Draft201909.csproj" />
+    <Project Path="src-v4/Corvus.Json.JsonSchema.Draft202012/Corvus.Json.JsonSchema.Draft202012.csproj" />
+    <Project Path="src-v4/Corvus.Json.JsonSchema.Draft4/Corvus.Json.JsonSchema.Draft4.csproj" />
+    <Project Path="src-v4/Corvus.Json.JsonSchema.Draft6/Corvus.Json.JsonSchema.Draft6.csproj" />
+    <Project Path="src-v4/Corvus.Json.JsonSchema.Draft7/Corvus.Json.JsonSchema.Draft7.csproj" />
+    <Project Path="src-v4/Corvus.Json.JsonSchema.OpenApi30/Corvus.Json.JsonSchema.OpenApi30.csproj" />
+    <Project Path="src-v4/Corvus.Json.JsonSchema.OpenApi31/Corvus.Json.JsonSchema.OpenApi31.csproj" />
+  </Folder>
+  <Folder Name="/v4/Patch/">
+    <Project Path="src-v4/Corvus.Json.Patch/Corvus.Json.Patch.csproj" />
+  </Folder>
+  <Folder Name="/v4/SourceGenerator/">
+    <Project Path="src-v4/Corvus.Json.SourceGenerator/Corvus.Json.SourceGenerator.csproj" />
+    <Project Path="src-v4/Corvus.Json.SourceGeneratorTools.ForLanguageProvider/Corvus.Json.SourceGeneratorTools.ForLanguageProvider.csproj" />
+    <Project Path="src-v4/Corvus.Json.SourceGeneratorTools/Corvus.Json.SourceGeneratorTools.csproj" />
+  </Folder>
+  <Folder Name="/benchmarks/" />
+  <Folder Name="/benchmarks/SourceMetaModels/">
+    <Project Path="benchmarks/Corvus.Text.Json.AnsibleMetaBenchmarkModels/Corvus.Text.Json.AnsibleMetaBenchmarkModels.csproj" />
+    <Project Path="benchmarks/Corvus.Text.Json.AwsCdkBenchmarkModels/Corvus.Text.Json.AwsCdkBenchmarkModels.csproj" />
+    <Project Path="benchmarks/Corvus.Text.Json.BabelrcBenchmarkModels/Corvus.Text.Json.BabelrcBenchmarkModels.csproj" />
+    <Project Path="benchmarks/Corvus.Text.Json.CmakePresetsBenchmarkModels/Corvus.Text.Json.CmakePresetsBenchmarkModels.csproj" />
+    <Project Path="benchmarks/Corvus.Text.Json.ClangFormatBenchmarkModels/Corvus.Text.Json.ClangFormatBenchmarkModels.csproj" />
+    <Project Path="benchmarks/Corvus.Text.Json.CodeClimateBenchmarkModels/Corvus.Text.Json.CodeClimateBenchmarkModels.csproj" />
+    <Project Path="benchmarks/Corvus.Text.Json.Cql2BenchmarkModels/Corvus.Text.Json.Cql2BenchmarkModels.csproj" />
+    <Project Path="benchmarks/Corvus.Text.Json.CspellBenchmarkModels/Corvus.Text.Json.CspellBenchmarkModels.csproj" />
+    <Project Path="benchmarks/Corvus.Text.Json.CypressBenchmarkModels/Corvus.Text.Json.CypressBenchmarkModels.csproj" />
+    <Project Path="benchmarks/Corvus.Text.Json.DenoBenchmarkModels/Corvus.Text.Json.DenoBenchmarkModels.csproj" />
+    <Project Path="benchmarks/Corvus.Text.Json.DependabotBenchmarkModels/Corvus.Text.Json.DependabotBenchmarkModels.csproj" />
+    <Project Path="benchmarks/Corvus.Text.Json.Draft04BenchmarkModels/Corvus.Text.Json.Draft04BenchmarkModels.csproj" />
+    <Project Path="benchmarks/Corvus.Text.Json.FabricModBenchmarkModels/Corvus.Text.Json.FabricModBenchmarkModels.csproj" />
+    <Project Path="benchmarks/Corvus.Text.Json.GeoJsonBenchmarkModels/Corvus.Text.Json.GeoJsonBenchmarkModels.csproj" />
+    <Project Path="benchmarks/Corvus.Text.Json.GitpodConfigurationBenchmarkModels/Corvus.Text.Json.GitpodConfigurationBenchmarkModels.csproj" />
+    <Project Path="benchmarks/Corvus.Text.Json.HelmChartLockBenchmarkModels/Corvus.Text.Json.HelmChartLockBenchmarkModels.csproj" />
+    <Project Path="benchmarks/Corvus.Text.Json.ImportmapBenchmarkModels/Corvus.Text.Json.ImportmapBenchmarkModels.csproj" />
+    <Project Path="benchmarks/Corvus.Text.Json.JasmineBenchmarkModels/Corvus.Text.Json.JasmineBenchmarkModels.csproj" />
+    <Project Path="benchmarks/Corvus.Text.Json.JsconfigBenchmarkModels/Corvus.Text.Json.JsconfigBenchmarkModels.csproj" />
+    <Project Path="benchmarks/Corvus.Text.Json.KrakendBenchmarkModels/Corvus.Text.Json.KrakendBenchmarkModels.csproj" />
+    <Project Path="benchmarks/Corvus.Text.Json.JshintrcBenchmarkModels/Corvus.Text.Json.JshintrcBenchmarkModels.csproj" />
+    <Project Path="benchmarks/Corvus.Text.Json.LazygitBenchmarkModels/Corvus.Text.Json.LazygitBenchmarkModels.csproj" />
+    <Project Path="benchmarks/Corvus.Text.Json.LernaBenchmarkModels/Corvus.Text.Json.LernaBenchmarkModels.csproj" />
+    <Project Path="benchmarks/Corvus.Text.Json.NestCliBenchmarkModels/Corvus.Text.Json.NestCliBenchmarkModels.csproj" />
+    <Project Path="benchmarks/Corvus.Text.Json.OmnisharpBenchmarkModels/Corvus.Text.Json.OmnisharpBenchmarkModels.csproj" />
+    <Project Path="benchmarks/Corvus.Text.Json.OpenapiBenchmarkModels/Corvus.Text.Json.OpenapiBenchmarkModels.csproj" />
+    <Project Path="benchmarks/Corvus.Text.Json.PreCommitHooksBenchmarkModels/Corvus.Text.Json.PreCommitHooksBenchmarkModels.csproj" />
+    <Project Path="benchmarks/Corvus.Text.Json.PulumiBenchmarkModels/Corvus.Text.Json.PulumiBenchmarkModels.csproj" />
+    <Project Path="benchmarks/Corvus.Text.Json.SemanticReleaseBenchmarkModels/Corvus.Text.Json.SemanticReleaseBenchmarkModels.csproj" />
+    <Project Path="benchmarks/Corvus.Text.Json.StaleBenchmarkModels/Corvus.Text.Json.StaleBenchmarkModels.csproj" />
+    <Project Path="benchmarks/Corvus.Text.Json.StylecopBenchmarkModels/Corvus.Text.Json.StylecopBenchmarkModels.csproj" />
+    <Project Path="benchmarks/Corvus.Text.Json.TmuxinatorBenchmarkModels/Corvus.Text.Json.TmuxinatorBenchmarkModels.csproj" />
+    <Project Path="benchmarks/Corvus.Text.Json.Ui5ManifestBenchmarkModels/Corvus.Text.Json.Ui5ManifestBenchmarkModels.csproj" />
+    <Project Path="benchmarks/Corvus.Text.Json.Ui5BenchmarkModels/Corvus.Text.Json.Ui5BenchmarkModels.csproj" />
+    <Project Path="benchmarks/Corvus.Text.Json.UnrealEngineUprojectBenchmarkModels/Corvus.Text.Json.UnrealEngineUprojectBenchmarkModels.csproj" />
+    <Project Path="benchmarks/Corvus.Text.Json.VercelBenchmarkModels/Corvus.Text.Json.VercelBenchmarkModels.csproj" />
+    <Project Path="benchmarks/Corvus.Text.Json.YamllintBenchmarkModels/Corvus.Text.Json.YamllintBenchmarkModels.csproj" />
+  </Folder>
+  <Folder Name="/v4/">
+    <Project Path="src-v4/Corvus.Json.Validator/Corvus.Json.Validator.csproj" />
+  </Folder>
+
+  <Folder Name="/.benchmarks/">
+    <Project Path="benchmarks/Corvus.Json.Validator.Benchmarks/Corvus.Json.Validator.Benchmarks.csproj" />
+    <Project Path="benchmarks/Corvus.Numerics.Benchmarks/Corvus.Numerics.Benchmarks.csproj" />
+    <Project Path="benchmarks/Corvus.Text.Json.BenchmarkModels/Corvus.Text.Json.BenchmarkModels.csproj" />
+    <Project Path="benchmarks/Corvus.Text.Json.Benchmarks/Corvus.Text.Json.Benchmarks.csproj" />
+    <Project Path="benchmarks/Corvus.Text.Json.ClassicBenchmarkModels/Corvus.Text.Json.ClassicBenchmarkModels.csproj" />
+    <Project Path="benchmarks/Corvus.Text.Json.CodeGeneration.Benchmarks/Corvus.Text.Json.CodeGeneration.Benchmarks.csproj" />
+    <Project Path="benchmarks/Corvus.Text.Json.Validator.Benchmarks/Corvus.Text.Json.Validator.Benchmarks.csproj" />
+    <Project Path="BenchmarkSandbox/BenchmarkSandbox.csproj" />
+  </Folder>
+  <Folder Name="/.sandbox/">
+    <Project Path="src/Sandbox/Sandbox.csproj" />
+  </Folder>
+  <Folder Name="/.tests/">
+    <Project Path="Common/tests/TestUtilities/TestUtilities.csproj" />
+    <Project Path="tests/Corvus.JsonSchemaTestSuite.CodeGenerator/Corvus.JsonSchemaTestSuite.CodeGenerator.csproj" Id="fc46ebe0-6bd7-4a8a-abae-6271aff53420" />
+    <Project Path="tests/Corvus.Numerics.Tests/Corvus.Numerics.Tests.csproj" />
+    <Project Path="tests/Corvus.Text.Json.Analyzers.Tests/Corvus.Text.Json.Analyzers.Tests.csproj" />
+    <Project Path="tests/Corvus.Text.Json.CodeGenerator.Tests/Corvus.Text.Json.CodeGenerator.Tests.csproj" />
+    <Project Path="tests/Corvus.Text.Json.Migration.Analyzers.Tests/Corvus.Text.Json.Migration.Analyzers.Tests.csproj" />
+    <Project Path="tests/Corvus.Text.Json.Tests.GeneratedModels.OptionalAsNullable/Corvus.Text.Json.Tests.GeneratedModels.OptionalAsNullable.csproj" />
+    <Project Path="tests/Corvus.Text.Json.Tests.GeneratedModels/Corvus.Text.Json.Tests.GeneratedModels.csproj" />
+    <Project Path="tests/Corvus.Text.Json.Tests.MigrationModels.V4/Corvus.Text.Json.Tests.MigrationModels.V4.csproj" />
+    <Project Path="tests/Corvus.Text.Json.Tests.MigrationModels.V5/Corvus.Text.Json.Tests.MigrationModels.V5.csproj" />
+    <Project Path="tests/Corvus.Text.Json.Tests/Corvus.Text.Json.Tests.csproj" />
+    <Project Path="tests/Corvus.Text.Json.Validator.Tests/Corvus.Text.Json.Validator.Tests.csproj" />
+  </Folder>
+  <Folder Name="/v5/">
+    <Project Path="src/Corvus.Text.Json.Analyzers/Corvus.Text.Json.Analyzers.csproj" />
+    <Project Path="src/Corvus.Text.Json.CodeGeneration/Corvus.Text.Json.CodeGeneration.csproj" />
+    <Project Path="src/Corvus.Text.Json.Compatibility/Corvus.Text.Json.Compatibility.csproj" />
+    <Project Path="src/Corvus.Text.Json.Migration.Analyzers/Corvus.Text.Json.Migration.Analyzers.csproj" />
+    <Project Path="src/Corvus.Text.Json.SourceGenerator/Corvus.Text.Json.SourceGenerator.csproj" />
+    <Project Path="src/Corvus.Text.Json.Validator/Corvus.Text.Json.Validator.csproj" />
+    <Project Path="src/Corvus.Text.Json/Corvus.Text.Json.csproj" />
+  </Folder>
+  <Project Path="src/Corvus.Json.CodeGenerator/Corvus.Json.CodeGenerator.csproj" />
+</Solution>

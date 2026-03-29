@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AllOfOpenTupleClosedLocally",
+  "description": "An inline open tuple in allOf, closed locally by items:false. Pure tuple — open in composed type, closed locally.",
+  "allOf": [
+    {
+      "type": "array",
+      "prefixItems": [
+        { "type": "string" },
+        { "type": "number" }
+      ]
+    }
+  ],
+  "items": false
+}

@@ -1,0 +1,188 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFrameworks>net481;net8.0;net9.0;net10.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <NoWarn>$(NoWarn);CS1591;SA1615;CA1822</NoWarn>
+    <Platforms>AnyCPU</Platforms>
+    <LangVersion>Preview</LangVersion>
+    <PreserveCompilationContext>true</PreserveCompilationContext>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BenchmarkDotNet" Version="0.15.8" />
+    <PackageReference Include="BenchmarkDotNet.Diagnostics.Windows" Version="0.15.8" />
+    <ProjectReference Include="..\..\src-v4\Corvus.Json.ExtendedTypes\Corvus.Json.ExtendedTypes.csproj" />
+    <ProjectReference Include="..\..\src-v4\Corvus.Json.Validator\Corvus.Json.Validator.csproj" />
+    <PackageReference Include="JsonSchema.Net" Version="9.1.2" />
+    <PackageReference Include="Microsoft.VisualStudio.DiagnosticsHub.BenchmarkDotNetDiagnosers" Version="18.6.37110.2" />
+  </ItemGroup>
+
+  <!-- Only include System.Text.Json for net481 as it's included in .NET 6+ runtime -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net481'">
+    <PackageReference Include="System.Text.Json" Version="10.0.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Corvus.Text.Json.BenchmarkModels\Corvus.Text.Json.BenchmarkModels.csproj" />
+    <ProjectReference Include="..\..\src\Corvus.Text.Json\Corvus.Text.Json.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.ClassicBenchmarkModels\Corvus.Text.Json.ClassicBenchmarkModels.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' != 'net481'">
+    <ProjectReference Include="..\Corvus.Text.Json.AnsibleMetaBenchmarkModels\Corvus.Text.Json.AnsibleMetaBenchmarkModels.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.AwsCdkBenchmarkModels\Corvus.Text.Json.AwsCdkBenchmarkModels.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.BabelrcBenchmarkModels\Corvus.Text.Json.BabelrcBenchmarkModels.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.ClangFormatBenchmarkModels\Corvus.Text.Json.ClangFormatBenchmarkModels.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.CmakePresetsBenchmarkModels\Corvus.Text.Json.CmakePresetsBenchmarkModels.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.CodeClimateBenchmarkModels\Corvus.Text.Json.CodeClimateBenchmarkModels.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.Cql2BenchmarkModels\Corvus.Text.Json.Cql2BenchmarkModels.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.CspellBenchmarkModels\Corvus.Text.Json.CspellBenchmarkModels.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.CypressBenchmarkModels\Corvus.Text.Json.CypressBenchmarkModels.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.DenoBenchmarkModels\Corvus.Text.Json.DenoBenchmarkModels.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.DependabotBenchmarkModels\Corvus.Text.Json.DependabotBenchmarkModels.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.Draft04BenchmarkModels\Corvus.Text.Json.Draft04BenchmarkModels.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.FabricModBenchmarkModels\Corvus.Text.Json.FabricModBenchmarkModels.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.GeoJsonBenchmarkModels\Corvus.Text.Json.GeoJsonBenchmarkModels.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.GitpodConfigurationBenchmarkModels\Corvus.Text.Json.GitpodConfigurationBenchmarkModels.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.HelmChartLockBenchmarkModels\Corvus.Text.Json.HelmChartLockBenchmarkModels.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.ImportmapBenchmarkModels\Corvus.Text.Json.ImportmapBenchmarkModels.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.JasmineBenchmarkModels\Corvus.Text.Json.JasmineBenchmarkModels.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.JsconfigBenchmarkModels\Corvus.Text.Json.JsconfigBenchmarkModels.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.JshintrcBenchmarkModels\Corvus.Text.Json.JshintrcBenchmarkModels.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.KrakendBenchmarkModels\Corvus.Text.Json.KrakendBenchmarkModels.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.LazygitBenchmarkModels\Corvus.Text.Json.LazygitBenchmarkModels.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.LernaBenchmarkModels\Corvus.Text.Json.LernaBenchmarkModels.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.NestCliBenchmarkModels\Corvus.Text.Json.NestCliBenchmarkModels.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.OmnisharpBenchmarkModels\Corvus.Text.Json.OmnisharpBenchmarkModels.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.OpenapiBenchmarkModels\Corvus.Text.Json.OpenapiBenchmarkModels.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.PreCommitHooksBenchmarkModels\Corvus.Text.Json.PreCommitHooksBenchmarkModels.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.PulumiBenchmarkModels\Corvus.Text.Json.PulumiBenchmarkModels.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.SemanticReleaseBenchmarkModels\Corvus.Text.Json.SemanticReleaseBenchmarkModels.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.StaleBenchmarkModels\Corvus.Text.Json.StaleBenchmarkModels.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.StylecopBenchmarkModels\Corvus.Text.Json.StylecopBenchmarkModels.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.TmuxinatorBenchmarkModels\Corvus.Text.Json.TmuxinatorBenchmarkModels.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.Ui5BenchmarkModels\Corvus.Text.Json.Ui5BenchmarkModels.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.Ui5ManifestBenchmarkModels\Corvus.Text.Json.Ui5ManifestBenchmarkModels.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.UnrealEngineUprojectBenchmarkModels\Corvus.Text.Json.UnrealEngineUprojectBenchmarkModels.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.VercelBenchmarkModels\Corvus.Text.Json.VercelBenchmarkModels.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.YamllintBenchmarkModels\Corvus.Text.Json.YamllintBenchmarkModels.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' != 'net481'">
+    <Content Include="..\Corvus.Text.Json.AnsibleMetaBenchmarkModels\ansible-meta-instances.jsonl" Link="ansible-meta-instances.jsonl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\Corvus.Text.Json.AwsCdkBenchmarkModels\aws-cdk-instances.jsonl" Link="aws-cdk-instances.jsonl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\Corvus.Text.Json.BabelrcBenchmarkModels\babelrc-instances.jsonl" Link="babelrc-instances.jsonl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\Corvus.Text.Json.ClangFormatBenchmarkModels\clang-format-instances.jsonl" Link="clang-format-instances.jsonl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\Corvus.Text.Json.CmakePresetsBenchmarkModels\cmake-presets-instances.jsonl" Link="cmake-presets-instances.jsonl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\Corvus.Text.Json.CodeClimateBenchmarkModels\code-climate-instances.jsonl" Link="code-climate-instances.jsonl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\Corvus.Text.Json.Cql2BenchmarkModels\cql2-instances.jsonl" Link="cql2-instances.jsonl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\Corvus.Text.Json.CspellBenchmarkModels\cspell-instances.jsonl" Link="cspell-instances.jsonl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\Corvus.Text.Json.CypressBenchmarkModels\cypress-instances.jsonl" Link="cypress-instances.jsonl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\Corvus.Text.Json.DenoBenchmarkModels\deno-instances.jsonl" Link="deno-instances.jsonl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\Corvus.Text.Json.DependabotBenchmarkModels\dependabot-instances.jsonl" Link="dependabot-instances.jsonl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\Corvus.Text.Json.Draft04BenchmarkModels\draft-04-instances.jsonl" Link="draft-04-instances.jsonl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\Corvus.Text.Json.FabricModBenchmarkModels\fabric-mod-instances.jsonl" Link="fabric-mod-instances.jsonl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\Corvus.Text.Json.GeoJsonBenchmarkModels\geojson-instances.jsonl" Link="geojson-instances.jsonl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\Corvus.Text.Json.GitpodConfigurationBenchmarkModels\gitpod-configuration-instances.jsonl" Link="gitpod-configuration-instances.jsonl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\Corvus.Text.Json.HelmChartLockBenchmarkModels\helm-chart-lock-instances.jsonl" Link="helm-chart-lock-instances.jsonl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\Corvus.Text.Json.ImportmapBenchmarkModels\importmap-instances.jsonl" Link="importmap-instances.jsonl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\Corvus.Text.Json.JasmineBenchmarkModels\jasmine-instances.jsonl" Link="jasmine-instances.jsonl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\Corvus.Text.Json.JsconfigBenchmarkModels\jsconfig-instances.jsonl" Link="jsconfig-instances.jsonl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\Corvus.Text.Json.JshintrcBenchmarkModels\jshintrc-instances.jsonl" Link="jshintrc-instances.jsonl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\Corvus.Text.Json.KrakendBenchmarkModels\krakend-instances.jsonl" Link="krakend-instances.jsonl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\Corvus.Text.Json.LazygitBenchmarkModels\lazygit-instances.jsonl" Link="lazygit-instances.jsonl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\Corvus.Text.Json.LernaBenchmarkModels\lerna-instances.jsonl" Link="lerna-instances.jsonl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\Corvus.Text.Json.NestCliBenchmarkModels\nest-cli-instances.jsonl" Link="nest-cli-instances.jsonl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\Corvus.Text.Json.OmnisharpBenchmarkModels\omnisharp-instances.jsonl" Link="omnisharp-instances.jsonl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\Corvus.Text.Json.OpenapiBenchmarkModels\openapi-instances.jsonl" Link="openapi-instances.jsonl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\Corvus.Text.Json.PreCommitHooksBenchmarkModels\pre-commit-hooks-instances.jsonl" Link="pre-commit-hooks-instances.jsonl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\Corvus.Text.Json.PulumiBenchmarkModels\pulumi-instances.jsonl" Link="pulumi-instances.jsonl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\Corvus.Text.Json.SemanticReleaseBenchmarkModels\semantic-release-instances.jsonl" Link="semantic-release-instances.jsonl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\Corvus.Text.Json.StaleBenchmarkModels\stale-instances.jsonl" Link="stale-instances.jsonl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\Corvus.Text.Json.StylecopBenchmarkModels\stylecop-instances.jsonl" Link="stylecop-instances.jsonl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\Corvus.Text.Json.TmuxinatorBenchmarkModels\tmuxinator-instances.jsonl" Link="tmuxinator-instances.jsonl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\Corvus.Text.Json.Ui5BenchmarkModels\ui5-instances.jsonl" Link="ui5-instances.jsonl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\Corvus.Text.Json.Ui5ManifestBenchmarkModels\ui5-manifest-instances.jsonl" Link="ui5-manifest-instances.jsonl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\Corvus.Text.Json.UnrealEngineUprojectBenchmarkModels\unreal-engine-uproject-instances.jsonl" Link="unreal-engine-uproject-instances.jsonl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\Corvus.Text.Json.VercelBenchmarkModels\vercel-instances.jsonl" Link="vercel-instances.jsonl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\Corvus.Text.Json.YamllintBenchmarkModels\yamllint-instances.jsonl" Link="yamllint-instances.jsonl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+</Project>

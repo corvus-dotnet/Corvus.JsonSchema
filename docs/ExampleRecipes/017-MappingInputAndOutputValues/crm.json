@@ -1,0 +1,15 @@
+{
+  "type": "object",
+  "required": ["customerId", "displayName"],
+  "properties": {
+    "customerId": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "displayName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    }
+  }
+}

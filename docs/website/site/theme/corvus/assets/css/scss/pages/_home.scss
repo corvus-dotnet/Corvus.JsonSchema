@@ -1,0 +1,145 @@
+// ==========================================================================
+// Home — Homepage-specific sections
+// ==========================================================================
+
+@use '../abstracts/mixins' as *;
+
+// ---- Feature grid section ----
+
+.home-features {
+  padding: var(--space-xl) 0;
+
+  &__heading {
+    text-align: center;
+    margin-bottom: var(--space-xl);
+  }
+
+  &__title {
+    font-size: var(--font-size-xxl);
+    color: var(--color-white);
+    margin-bottom: var(--space-sm);
+  }
+
+  &__subtitle {
+    color: var(--color-gray-med);
+    font-size: var(--font-size-lg);
+    max-width: 36rem;
+    margin: 0 auto;
+  }
+}
+
+// ---- Code example showcase ----
+
+.home-code {
+  padding: var(--space-xl) 0;
+
+  &__inner {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-lg);
+    align-items: center;
+
+    @include breakpoint-md {
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-xl);
+    }
+  }
+
+  &__text {
+    order: 2;
+
+    @include breakpoint-md {
+      order: 1;
+    }
+  }
+
+  &__example {
+    order: 1;
+
+    @include breakpoint-md {
+      order: 2;
+    }
+
+    pre {
+      margin: 0;
+    }
+  }
+
+  &__title {
+    font-size: var(--font-size-xxl);
+    color: var(--color-white);
+    margin-bottom: var(--space-sm);
+  }
+
+  &__description {
+    color: var(--color-gray-med);
+    font-size: var(--font-size-rg);
+    margin-bottom: var(--space-lg);
+    line-height: var(--line-height-regular);
+  }
+}
+
+// ---- CTA / call-to-action section ----
+
+.home-cta {
+  padding: var(--space-xxl) 0;
+  text-align: center;
+
+  &__inner {
+    @include glass-surface;
+    padding: var(--space-xl);
+    max-width: 48rem;
+    margin: 0 auto;
+  }
+
+  &__title {
+    font-size: var(--font-size-xxl);
+    color: var(--color-white);
+    margin-bottom: var(--space-sm);
+  }
+
+  &__description {
+    color: var(--color-gray-med);
+    margin-bottom: var(--space-lg);
+    max-width: 32rem;
+    margin-inline: auto;
+    line-height: var(--line-height-regular);
+  }
+
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-sm);
+  }
+}
+
+// ---- Stats / metrics row ----
+
+.home-stats {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-lg);
+  padding: var(--space-lg) 0;
+  border-top: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+
+  &__item {
+    text-align: center;
+    min-width: 8rem;
+  }
+
+  &__value {
+    font-size: var(--font-size-xxl);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-brand);
+    line-height: var(--line-height-base);
+  }
+
+  &__label {
+    font-size: var(--font-size-sm);
+    color: var(--color-gray-dark);
+    margin-top: var(--space-xs);
+  }
+}

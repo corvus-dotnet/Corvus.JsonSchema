@@ -1,0 +1,21 @@
+@model SiteViewModel
+@{
+    Layout = "Shared/_Layout.cshtml";
+    ViewBag.MetaTitle = Model.PageContext.MetaData.Title;
+}
+<!-- 404 -->
+<section class="container">
+    <main id="main-content" class="page page--error">
+        <header class="page-header">
+            <h1 class="page-header__title">Page not found</h1>
+        </header>
+        <article class="text-content">
+            <p>Sorry, the page you were looking for doesn't exist or has been moved.</p>
+            <div class="error-actions">
+                <a href="/index.html" class="hero__cta hero__cta--primary">Back to Home</a>
+                <a href="/docs/index.html" class="hero__cta hero__cta--secondary">Browse Docs</a>
+            </div>
+        </article>
+    </main>
+</section>
+<!-- /404 -->

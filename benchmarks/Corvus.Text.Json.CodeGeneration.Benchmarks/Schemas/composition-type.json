@@ -1,0 +1,63 @@
+{
+  "$defs": {
+    "circle": {
+      "type": "object",
+      "required": ["type", "radius"],
+      "properties": {
+        "type": { "const": "circle" },
+        "radius": { "type": "number", "exclusiveMinimum": 0 },
+        "color": { "type": "string" }
+      }
+    },
+    "rectangle": {
+      "type": "object",
+      "required": ["type", "width", "height"],
+      "properties": {
+        "type": { "const": "rectangle" },
+        "width": { "type": "number", "exclusiveMinimum": 0 },
+        "height": { "type": "number", "exclusiveMinimum": 0 },
+        "color": { "type": "string" }
+      }
+    },
+    "triangle": {
+      "type": "object",
+      "required": ["type", "base", "height"],
+      "properties": {
+        "type": { "const": "triangle" },
+        "base": { "type": "number", "exclusiveMinimum": 0 },
+        "height": { "type": "number", "exclusiveMinimum": 0 },
+        "color": { "type": "string" }
+      }
+    },
+    "named": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 }
+      }
+    },
+    "colored": {
+      "type": "object",
+      "properties": {
+        "color": { "type": "string", "enum": ["red", "green", "blue", "yellow"] }
+      }
+    }
+  },
+  "type": "object",
+  "required": ["shape"],
+  "properties": {
+    "shape": {
+      "oneOf": [
+        { "$ref": "#/$defs/circle" },
+        { "$ref": "#/$defs/rectangle" },
+        { "$ref": "#/$defs/triangle" }
+      ]
+    },
+    "label": {
+      "allOf": [
+        { "$ref": "#/$defs/named" },
+        { "$ref": "#/$defs/colored" }
+      ]
+    }
+  }
+}

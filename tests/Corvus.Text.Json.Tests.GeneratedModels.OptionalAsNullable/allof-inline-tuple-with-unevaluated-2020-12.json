@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AllOfInlineTupleWithUnevaluated",
+  "description": "An inline tuple within allOf with unevaluatedItems at the top level.",
+  "allOf": [
+    {
+      "prefixItems": [
+        { "type": "string" },
+        { "type": "number" }
+      ]
+    }
+  ],
+  "unevaluatedItems": { "type": "boolean" }
+}

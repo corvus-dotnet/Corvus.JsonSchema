@@ -1,0 +1,32 @@
+{
+  "title": "The person schema https://schema.org/Person",
+  "type": "object",
+  "required": [ "familyName", "givenName", "birthDate" ],
+  "properties": {
+    "familyName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "givenName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "otherNames": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "birthDate": {
+      "type": "string",
+      "format": "date"
+    },
+    "height": {
+      "type": "number",
+      "format": "double",
+      "minimum": 0.0,
+      "maximum": 3.0
+    }
+  }
+}

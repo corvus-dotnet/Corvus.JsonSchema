@@ -1,0 +1,1 @@
+Contains [`BigNumber`](/api/corvus-numerics-bignumber.html), a high-precision arbitrary-scale decimal type that preserves the exact representation of JSON numbers beyond the 28–29 significant digit limit of `System.Decimal`. Used internally for JSON Schema numeric comparisons and available for any scenario requiring lossless JSON number round-tripping.

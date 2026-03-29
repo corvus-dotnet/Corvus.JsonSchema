@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "array",
+  "prefixItems": [
+    { "type": "string" },
+    { "type": "integer", "format": "int32" },
+    { "type": "boolean" }
+  ],
+  "items": false
+}

@@ -1,0 +1,99 @@
+// ==========================================================================
+// Cards — Glassmorphism feature & recipe cards
+// ==========================================================================
+
+@use '../abstracts/mixins' as *;
+
+// ---- Card grid container ----
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(22rem, 100%), 1fr));
+  gap: var(--space-md);
+}
+
+// ---- Base card ----
+
+.card {
+  @include glass-surface;
+  padding: var(--space-lg);
+  transition:
+    background var(--transition-base),
+    border-color var(--transition-base),
+    transform var(--transition-base);
+
+  &:hover {
+    background: rgb(41 42 47 / 0.5);
+    border-color: var(--color-border-active);
+    transform: translateY(-2px);
+  }
+
+  // ---- Icon / emoji slot ----
+  &__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 3rem;
+    height: 3rem;
+    margin-bottom: var(--space-md);
+    font-size: var(--font-size-xl);
+    background: rgb(111 177 40 / 0.1);
+    border-radius: var(--radius-md);
+    color: var(--color-brand);
+  }
+
+  // ---- Title ----
+  &__title {
+    margin: 0 0 var(--space-sm);
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-white);
+    line-height: var(--line-height-tight);
+    overflow-wrap: anywhere;
+  }
+
+  // ---- Body text ----
+  &__body {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    color: var(--color-gray-med);
+    line-height: var(--line-height-regular);
+  }
+
+  // ---- Footer / meta row ----
+  &__meta {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-top: var(--space-md);
+    font-size: var(--font-size-sm);
+    color: var(--color-gray-dark);
+  }
+
+  // ---- Tag badges ----
+  &__tag {
+    display: inline-block;
+    padding: 0.1em 0.5em;
+    font-size: 0.75rem;
+    color: var(--color-brand);
+    background: rgb(111 177 40 / 0.1);
+    border-radius: var(--radius-sm);
+    line-height: var(--line-height-tight);
+  }
+
+  // ---- Link card variant (whole card clickable) ----
+  &--link {
+    display: block;
+    text-decoration: none;
+    cursor: pointer;
+
+    &:focus-visible {
+      @include focus-ring;
+    }
+  }
+
+  // ---- Compact card variant ----
+  &--compact {
+    padding: var(--space-md);
+  }
+}

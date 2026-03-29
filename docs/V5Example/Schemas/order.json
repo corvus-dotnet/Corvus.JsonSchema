@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/order",
+  "title": "Order",
+  "type": "object",
+  "required": [ "orderId", "customer", "items" ],
+  "properties": {
+    "orderId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "customer": {
+      "type": "object",
+      "required": [ "name" ],
+      "properties": {
+        "name": { "type": "string" },
+        "email": { "type": "string", "format": "email" }
+      }
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/LineItem"
+      },
+      "minItems": 1
+    },
+    "total": {
+      "type": "number",
+      "minimum": 0
+    },
+    "placedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "status": {
+      "oneOf": [
+        { "const": "pending" },
+        { "const": "shipped" },
+        { "const": "delivered" },
+        { "const": "cancelled" }
+      ]
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "$defs": {
+    "LineItem": {
+      "type": "object",
+      "required": [ "product", "quantity", "unitPrice" ],
+      "properties": {
+        "product": { "type": "string" },
+        "quantity": { "type": "integer", "minimum": 1 },
+        "unitPrice": { "type": "number", "minimum": 0 }
+      }
+    }
+  }
+}

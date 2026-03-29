@@ -1,0 +1,21 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "A composed type using allOf",
+    "$defs": {
+        "base": {
+            "type": "object",
+            "required": ["id"],
+            "properties": {
+                "id": { "type": "string" }
+            }
+        }
+    },
+    "allOf": [
+        { "$ref": "#/$defs/base" }
+    ],
+    "type": "object",
+    "properties": {
+        "name": { "type": "string" },
+        "active": { "type": "boolean" }
+    }
+}

@@ -1,0 +1,22 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "An object with pattern properties via allOf/$ref and unevaluatedProperties: false",
+    "$defs": {
+        "patternBase": {
+            "type": "object",
+            "patternProperties": {
+                "^S_": { "type": "string" },
+                "^I_": { "type": "integer", "format": "int32" }
+            }
+        }
+    },
+    "allOf": [
+        { "$ref": "#/$defs/patternBase" }
+    ],
+    "type": "object",
+    "properties": {
+        "name": { "type": "string" }
+    },
+    "required": ["name"],
+    "unevaluatedProperties": false
+}
