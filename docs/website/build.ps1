@@ -777,13 +777,24 @@ if ($canonicalRepoUrl -ne $defaultGitHubUrl) {
     }
 }
 
-# Write robots.txt to prevent indexing of preview/staging deployments
-$robotsTxt = @"
+# Write robots.txt — allow indexing for production, block for preview/local
+if ($env:GITHUB_ACTIONS -and -not $Preview) {
+    # Production CI build — allow search engines
+    $robotsTxt = @"
+User-agent: *
+Allow: /
+"@
+    [System.IO.File]::WriteAllText((Join-Path $outputDir "robots.txt"), $robotsTxt)
+    Write-Host "  Created robots.txt (allow indexing)." -ForegroundColor Gray
+} else {
+    # Local dev or preview — block indexing
+    $robotsTxt = @"
 User-agent: *
 Disallow: /
 "@
-[System.IO.File]::WriteAllText((Join-Path $outputDir "robots.txt"), $robotsTxt)
-Write-Host "  Created robots.txt (noindex)." -ForegroundColor Gray
+    [System.IO.File]::WriteAllText((Join-Path $outputDir "robots.txt"), $robotsTxt)
+    Write-Host "  Created robots.txt (noindex — local/preview build)." -ForegroundColor Gray
+}
 
 Write-Host "`nBuild complete! Output: $outputDir" -ForegroundColor Green
 

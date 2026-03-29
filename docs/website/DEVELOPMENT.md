@@ -1,6 +1,6 @@
 # Website Development Guide
 
-This document explains how the Corvus.Text.Json documentation website is built, how to make changes, and how the build pipeline works.
+This document explains how the Corvus.JsonSchema documentation website is built, how to make changes, and how the build pipeline works.
 
 ## Prerequisites
 
@@ -38,7 +38,7 @@ This runs the standard .NET build (compile, test, package) and then builds the w
 For GitHub Pages subpath hosting:
 
 ```powershell
-./build.ps1 -Website -BasePathPrefix "/Corvus.Text.Json"
+./build.ps1 -Website -BasePathPrefix "/corvus-json-schema"
 ```
 
 ### Skip .NET compilation (website only)

@@ -1,7 +1,7 @@
 {
   "private": true,
-  "name": "corvus-text-json-docs",
-  "description": "Build tools for the Corvus.Text.Json documentation website",
+  "name": "corvus-json-schema-docs",
+  "description": "Build tools for the Corvus.JsonSchema documentation website",
   "scripts": {
     "build-search-index": "node tools/build-search-index.js"
   },

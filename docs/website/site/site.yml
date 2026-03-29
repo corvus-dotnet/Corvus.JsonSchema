@@ -1,6 +1,6 @@
-Title: Corvus.Text.Json
+Title: Corvus.JsonSchema
 Description: "High-performance JSON for .NET — from schema to code."
-Url: https://corvus-text-json.dev
+Url: https://corvus-oss.org/corvus-json-schema
 ContentType: application/vnd.endjin.ssg.site+yml
 Taxonomy: taxonomy
 Assets: theme/corvus/assets
