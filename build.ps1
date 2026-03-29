@@ -148,6 +148,7 @@ $SkipPackage = $false
 $SkipAnalysis = $false
 $SkipPrAutoflowEnrollmentCheck = $true
 $BuildWebsite = $Website.IsPresent
+$IsPreviewDeployment = $false
 
 # Override the Endjin module's default Covenant version (0.19.0 does not support .slnx)
 $covenantVersion = "0.24.0"
@@ -219,7 +220,7 @@ task PostBuild {
             if ($effectiveBasePathPrefix) {
                 $websiteBuildArgs += "-BasePathPrefix", $effectiveBasePathPrefix
             }
-            if ($env:BUILDVAR_IsPreviewDeployment -eq 'true') {
+            if ($IsPreviewDeployment) {
                 $websiteBuildArgs += "-IsPreviewDeployment"
             }
 
