@@ -1,0 +1,43 @@
+ContentType: application/vnd.endjin.ssg.page+yaml
+Title: Getting Started (V4 Engine)
+Navigation:
+  Title: Getting Started (V4)
+  Description: "Install the V4 tools, define a JSON Schema, generate C# types, and start building."
+  Parent: /
+  Url: /getting-started-v4/index.html
+  Rank: 2
+  Header:
+    Visible: True
+    Link: True
+  Footer:
+    Visible: True
+    Link: True
+MetaData:
+  Title: "Getting Started (V4 Engine) — Corvus.JsonSchema"
+  Description: "Step-by-step guide to the V4 engine: install Corvus.Json.ExtendedTypes, define a JSON Schema, generate strongly-typed C# code, and use it for serialization, validation, and composition."
+  Keywords: [getting started, V4, installation, JSON Schema, code generator, C#, tutorial, Corvus.Json.ExtendedTypes]
+OpenGraph:
+  Title: "Getting Started (V4 Engine) — Corvus.JsonSchema"
+  Description: "Step-by-step guide to the V4 engine: install Corvus.Json.ExtendedTypes, define a JSON Schema, and generate strongly-typed C# code."
+  Image:
+ContentBlocks:
+  - ContentType: application/vnd.endjin.ssg.content+md
+    Id: Introduction
+    Spec:
+      Path: ../../content/GettingStarted-V4/Introduction.md
+  - ContentType: application/vnd.endjin.ssg.content+md
+    Id: SetupAndSchema
+    Spec:
+      Path: ../../content/GettingStarted-V4/SetupAndSchema.md
+  - ContentType: application/vnd.endjin.ssg.content+md
+    Id: ConsumingAndSerializing
+    Spec:
+      Path: ../../content/GettingStarted-V4/ConsumingAndSerializing.md
+  - ContentType: application/vnd.endjin.ssg.content+md
+    Id: ValidationAndNulls
+    Spec:
+      Path: ../../content/GettingStarted-V4/ValidationAndNulls.md
+  - ContentType: application/vnd.endjin.ssg.content+md
+    Id: CreatingAndUnions
+    Spec:
+      Path: ../../content/GettingStarted-V4/CreatingAndUnions.md

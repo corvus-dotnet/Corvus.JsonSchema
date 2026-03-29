@@ -6,6 +6,8 @@ Title: "Introduction"
 ---
 ## Introduction
 
+> **Looking for the V4 engine?** See the [V4 Getting Started guide](/getting-started-v4/index.html).
+
 In this tutorial, you will learn how to define a JSON Schema, generate strongly-typed C# structs from it, and use those types to parse, query, create, mutate, serialize, and validate JSON data — all with zero-allocation performance on the hot path.
 
 We will cover:
