@@ -1,0 +1,75 @@
+<Solution>
+
+  <Folder Name="/v4/.Specs/">
+    <Project Path="src-v4/Corvus.Json.Specs/Corvus.Json.Specs.csproj" />
+  </Folder>
+  <Folder Name="/v4/.Specs/Generators/">
+    <Project Path="src-v4/Corvus.Json.Patch.SpecGenerator/Corvus.Json.Patch.SpecGenerator.csproj" />
+    <Project Path="src-v4/Corvus.JsonSchema.SpecGenerator/Corvus.JsonSchema.SpecGenerator.csproj" />
+  </Folder>
+  <Folder Name="/v4/CodeGeneration/">
+    <Project Path="src-v4/Corvus.Json.CodeGeneration.HttpClientDocumentResolver/Corvus.Json.CodeGeneration.HttpClientDocumentResolver.csproj" />
+    <Project Path="src-v4/Corvus.Json.CodeGeneration.YamlPreProcessor/Corvus.Json.CodeGeneration.YamlPreProcessor.csproj" />
+    <Project Path="src-v4/Corvus.Json.CodeGeneration/Corvus.Json.CodeGeneration.csproj" />
+  </Folder>
+  <Folder Name="/v4/CodeGeneration/CSharp/">
+    <Project Path="src-v4/Corvus.Json.CodeGeneration.CSharp.QuickStart/Corvus.Json.CodeGeneration.CSharp.QuickStart.csproj" />
+    <Project Path="src-v4/Corvus.Json.CodeGeneration.CSharp/Corvus.Json.CodeGeneration.CSharp.csproj" />
+  </Folder>
+  <Folder Name="/v4/CodeGeneration/Dialects/">
+    <Project Path="src-v4/Corvus.Json.CodeGeneration.201909/Corvus.Json.CodeGeneration.201909.csproj" />
+    <Project Path="src-v4/Corvus.Json.CodeGeneration.202012/Corvus.Json.CodeGeneration.202012.csproj" />
+    <Project Path="src-v4/Corvus.Json.CodeGeneration.4/Corvus.Json.CodeGeneration.4.csproj" />
+    <Project Path="src-v4/Corvus.Json.CodeGeneration.6/Corvus.Json.CodeGeneration.6.csproj" />
+    <Project Path="src-v4/Corvus.Json.CodeGeneration.7/Corvus.Json.CodeGeneration.7.csproj" />
+    <Project Path="src-v4/Corvus.Json.CodeGeneration.CorvusVocabulary/Corvus.Json.CodeGeneration.CorvusVocabulary.csproj" />
+    <Project Path="src-v4/Corvus.Json.CodeGeneration.OpenApi30/Corvus.Json.CodeGeneration.OpenApi30.csproj" />
+    <Project Path="src-v4/Corvus.Json.CodeGeneration.OpenApi31/Corvus.Json.CodeGeneration.OpenApi31.csproj" />
+  </Folder>
+  <Folder Name="/v4/JsonExtendedTypes/">
+    <Project Path="src-v4/Corvus.Json.ExtendedTypes/Corvus.Json.ExtendedTypes.csproj" />
+    <Project Path="src-v4/Corvus.Json.JsonReference/Corvus.Json.JsonReference.csproj" />
+  </Folder>
+  <Folder Name="/v4/MetaSchema/">
+    <Project Path="src-v4/Corvus.Json.JsonSchema.Draft201909/Corvus.Json.JsonSchema.Draft201909.csproj" />
+    <Project Path="src-v4/Corvus.Json.JsonSchema.Draft202012/Corvus.Json.JsonSchema.Draft202012.csproj" />
+    <Project Path="src-v4/Corvus.Json.JsonSchema.Draft4/Corvus.Json.JsonSchema.Draft4.csproj" />
+    <Project Path="src-v4/Corvus.Json.JsonSchema.Draft6/Corvus.Json.JsonSchema.Draft6.csproj" />
+    <Project Path="src-v4/Corvus.Json.JsonSchema.Draft7/Corvus.Json.JsonSchema.Draft7.csproj" />
+    <Project Path="src-v4/Corvus.Json.JsonSchema.OpenApi30/Corvus.Json.JsonSchema.OpenApi30.csproj" />
+    <Project Path="src-v4/Corvus.Json.JsonSchema.OpenApi31/Corvus.Json.JsonSchema.OpenApi31.csproj" />
+  </Folder>
+  <Folder Name="/v4/Patch/">
+    <Project Path="src-v4/Corvus.Json.Patch/Corvus.Json.Patch.csproj" />
+  </Folder>
+  <Folder Name="/v4/SourceGenerator/">
+    <Project Path="src-v4/Corvus.Json.SourceGenerator/Corvus.Json.SourceGenerator.csproj" />
+    <Project Path="src-v4/Corvus.Json.SourceGeneratorTools.ForLanguageProvider/Corvus.Json.SourceGeneratorTools.ForLanguageProvider.csproj" />
+    <Project Path="src-v4/Corvus.Json.SourceGeneratorTools/Corvus.Json.SourceGeneratorTools.csproj" />
+  </Folder>
+  <Folder Name="/v4/">
+    <Project Path="src-v4/Corvus.Json.Validator/Corvus.Json.Validator.csproj" />
+  </Folder>
+
+  <Folder Name="/.tests/">
+    <Project Path="Common/tests/TestUtilities/TestUtilities.csproj" />
+    <Project Path="tests/Corvus.JsonSchemaTestSuite.CodeGenerator/Corvus.JsonSchemaTestSuite.CodeGenerator.csproj" Id="fc46ebe0-6bd7-4a8a-abae-6271aff53420" />
+    <Project Path="tests/Corvus.Numerics.Tests/Corvus.Numerics.Tests.csproj" />
+    <Project Path="tests/Corvus.Text.Json.Tests.GeneratedModels.OptionalAsNullable/Corvus.Text.Json.Tests.GeneratedModels.OptionalAsNullable.csproj" />
+    <Project Path="tests/Corvus.Text.Json.Tests.GeneratedModels/Corvus.Text.Json.Tests.GeneratedModels.csproj" />
+    <Project Path="tests/Corvus.Text.Json.Tests.MigrationModels.V4/Corvus.Text.Json.Tests.MigrationModels.V4.csproj" />
+    <Project Path="tests/Corvus.Text.Json.Tests.MigrationModels.V5/Corvus.Text.Json.Tests.MigrationModels.V5.csproj" />
+    <Project Path="tests/Corvus.Text.Json.Tests/Corvus.Text.Json.Tests.csproj" />
+    <Project Path="tests/Corvus.Text.Json.Validator.Tests/Corvus.Text.Json.Validator.Tests.csproj" />
+  </Folder>
+  <Folder Name="/v5/">
+    <Project Path="src/Corvus.Text.Json.Analyzers/Corvus.Text.Json.Analyzers.csproj" />
+    <Project Path="src/Corvus.Text.Json.CodeGeneration/Corvus.Text.Json.CodeGeneration.csproj" />
+    <Project Path="src/Corvus.Text.Json.Compatibility/Corvus.Text.Json.Compatibility.csproj" />
+    <Project Path="src/Corvus.Text.Json.Migration.Analyzers/Corvus.Text.Json.Migration.Analyzers.csproj" />
+    <Project Path="src/Corvus.Text.Json.SourceGenerator/Corvus.Text.Json.SourceGenerator.csproj" />
+    <Project Path="src/Corvus.Text.Json.Validator/Corvus.Text.Json.Validator.csproj" />
+    <Project Path="src/Corvus.Text.Json/Corvus.Text.Json.csproj" />
+  </Folder>
+  <Project Path="src/Corvus.Json.CodeGenerator/Corvus.Json.CodeGenerator.csproj" />
+</Solution>
