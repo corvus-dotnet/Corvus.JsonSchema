@@ -217,17 +217,57 @@ task PostTest {
     # Revert back to original logging level
     $script:LogLevel = $LogLevelBackup
 
-    # The V4 Specs TRX file (~105 MB, 19K tests) exceeds lxml's text-node size limit,
-    # causing the publish-unit-test-result-action to fail with xmlSAX2Characters error.
-    # Remove it so the publisher only processes the smaller V5 TRX files.
-    # V4 test pass/fail is still visible in the build log output.
-    Get-ChildItem -Path "src-v4" -Filter "test-results_*.trx" -Recurse -ErrorAction SilentlyContinue |
+    # The V4 Specs TRX file (~105 MB, 19K tests) exceeds lxml's text-node size limit
+    # in the publish-unit-test-result-action (xmlSAX2Characters error).
+    # Strip per-test <Output> elements (captured Reqnroll step text) to shrink the
+    # file while keeping pass/fail results visible in the CI test report.
+    $v4Path = Join-Path $SourcesDir "src-v4"
+    Get-ChildItem -Path $v4Path -Filter "test-results_*.trx" -Recurse -ErrorAction SilentlyContinue |
         ForEach-Object {
-            Write-Build Yellow "Removing large V4 TRX file: $($_.FullName)"
-            Remove-Item $_.FullName -Force
+            $sizeMB = [math]::Round($_.Length / 1MB, 1)
+            Write-Build Yellow "PostTest: stripping test output from $($_.FullName) ($sizeMB MB)"
+            try {
+                $content = [System.IO.File]::ReadAllText($_.FullName)
+                $content = [regex]::Replace(
+                    $content,
+                    '<Output>\s*<StdOut>.*?</StdOut>\s*</Output>',
+                    '',
+                    [System.Text.RegularExpressions.RegexOptions]::Singleline)
+                [System.IO.File]::WriteAllText($_.FullName, $content)
+                $newSizeMB = [math]::Round((Get-Item $_.FullName).Length / 1MB, 1)
+                Write-Build Yellow "  Reduced to $newSizeMB MB"
+            }
+            catch {
+                Write-Build Yellow "  Strip failed, removing file: $_"
+                Remove-Item $_.FullName -Force -ErrorAction SilentlyContinue
+            }
         }
 }
-task PreTestReport {}
+task PreTestReport {
+    # Backup: if PostTest didn't run, strip or remove V4 TRX files before publishing.
+    $v4Path = Join-Path $SourcesDir "src-v4"
+    Get-ChildItem -Path $v4Path -Filter "test-results_*.trx" -Recurse -ErrorAction SilentlyContinue |
+        Where-Object { $_.Length -gt 10MB } |
+        ForEach-Object {
+            $sizeMB = [math]::Round($_.Length / 1MB, 1)
+            Write-Build Yellow "PreTestReport: stripping large TRX $($_.FullName) ($sizeMB MB)"
+            try {
+                $content = [System.IO.File]::ReadAllText($_.FullName)
+                $content = [regex]::Replace(
+                    $content,
+                    '<Output>\s*<StdOut>.*?</StdOut>\s*</Output>',
+                    '',
+                    [System.Text.RegularExpressions.RegexOptions]::Singleline)
+                [System.IO.File]::WriteAllText($_.FullName, $content)
+                $newSizeMB = [math]::Round((Get-Item $_.FullName).Length / 1MB, 1)
+                Write-Build Yellow "  Reduced to $newSizeMB MB"
+            }
+            catch {
+                Write-Build Yellow "  Strip failed, removing file: $_"
+                Remove-Item $_.FullName -Force -ErrorAction SilentlyContinue
+            }
+        }
+}
 task PostTestReport {}
 task PreAnalysis {}
 task PostAnalysis {}
