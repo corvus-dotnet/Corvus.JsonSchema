@@ -145,7 +145,7 @@ $CleanBuild = $Clean
 $SkipTest = $false
 $SkipTestReport = $false
 $SkipPackage = $false
-$SkipAnalysis = $false
+$SkipAnalysis = $true  # Covenant SBOM tool (v0.19.0) does not support .slnx format
 $SkipPrAutoflowEnrollmentCheck = $true
 $BuildWebsite = $Website.IsPresent
 
