@@ -186,53 +186,61 @@ public sealed class AssemblyInspector(string assemblyPath)
                 continue;
             }
 
-            // Add type key
-            keys.Add($"T:{type.FullName}");
-
-            // Add member keys
-            foreach (System.Reflection.ConstructorInfo ctor in type.GetConstructors(BindingFlags.Public | BindingFlags.Instance))
+            try
             {
-                keys.Add(BuildConstructorXmlKey(type, ctor));
+                // Add type key
+                keys.Add($"T:{type.FullName}");
+
+                // Add member keys
+                foreach (System.Reflection.ConstructorInfo ctor in type.GetConstructors(BindingFlags.Public | BindingFlags.Instance))
+                {
+                    keys.Add(BuildConstructorXmlKey(type, ctor));
+                }
+
+                foreach (System.Reflection.PropertyInfo prop in type.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly))
+                {
+                    string fullName = type.FullName;
+                    System.Reflection.ParameterInfo[] indexParams = prop.GetIndexParameters();
+                    if (indexParams.Length > 0)
+                    {
+                        string paramTypes = string.Join(",", indexParams.Select(p => GetXmlDocTypeName(p.ParameterType)));
+                        keys.Add($"P:{fullName}.{prop.Name}({paramTypes})");
+                    }
+                    else
+                    {
+                        keys.Add($"P:{fullName}.{prop.Name}");
+                    }
+                }
+
+                foreach (System.Reflection.MethodInfo method in type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly))
+                {
+                    if (method.IsSpecialName && method.Name.StartsWith("op_", StringComparison.Ordinal))
+                    {
+                        keys.Add(BuildOperatorXmlKey(type, method));
+                    }
+                    else if (!method.IsSpecialName)
+                    {
+                        keys.Add(BuildMethodXmlKey(type, method));
+                    }
+                }
+
+                foreach (System.Reflection.FieldInfo field in type.GetFields(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly))
+                {
+                    if (!field.IsSpecialName)
+                    {
+                        keys.Add($"F:{type.FullName}.{field.Name}");
+                    }
+                }
+
+                foreach (System.Reflection.EventInfo evt in type.GetEvents(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly))
+                {
+                    keys.Add($"E:{type.FullName}.{evt.Name}");
+                }
             }
-
-            foreach (System.Reflection.PropertyInfo prop in type.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly))
+            catch (Exception ex)
             {
-                string fullName = type.FullName;
-                System.Reflection.ParameterInfo[] indexParams = prop.GetIndexParameters();
-                if (indexParams.Length > 0)
-                {
-                    string paramTypes = string.Join(",", indexParams.Select(p => GetXmlDocTypeName(p.ParameterType)));
-                    keys.Add($"P:{fullName}.{prop.Name}({paramTypes})");
-                }
-                else
-                {
-                    keys.Add($"P:{fullName}.{prop.Name}");
-                }
-            }
-
-            foreach (System.Reflection.MethodInfo method in type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly))
-            {
-                if (method.IsSpecialName && method.Name.StartsWith("op_", StringComparison.Ordinal))
-                {
-                    keys.Add(BuildOperatorXmlKey(type, method));
-                }
-                else if (!method.IsSpecialName)
-                {
-                    keys.Add(BuildMethodXmlKey(type, method));
-                }
-            }
-
-            foreach (System.Reflection.FieldInfo field in type.GetFields(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly))
-            {
-                if (!field.IsSpecialName)
-                {
-                    keys.Add($"F:{type.FullName}.{field.Name}");
-                }
-            }
-
-            foreach (System.Reflection.EventInfo evt in type.GetEvents(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly))
-            {
-                keys.Add($"E:{type.FullName}.{evt.Name}");
+                Console.Error.WriteLine($"  Warning: Skipping type {type.FullName}: {ex.Message}");
+                continue;
             }
         }
 
