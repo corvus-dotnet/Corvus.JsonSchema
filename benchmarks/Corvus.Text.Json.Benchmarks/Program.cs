@@ -20,7 +20,8 @@ internal class Program
         ManualConfig config = ManualConfig.CreateEmpty()
             .AddColumnProvider(DefaultColumnProviders.Instance) // empty config does not define any columns for the output table, we need to define it manually
             .AddLogger(ConsoleLogger.Default)
-            .AddExporter(MarkdownExporter.Default);
+            .AddExporter(MarkdownExporter.Default)
+            .AddExporter(BenchmarkDotNet.Exporters.Json.JsonExporter.Full);
 
         config.AddJob(
             Job.Default
