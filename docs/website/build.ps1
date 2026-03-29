@@ -851,18 +851,21 @@ if (!(Test-Path $lycheeCmd)) {
     Write-Host "  lychee already installed." -ForegroundColor DarkGray
 }
 
-$lycheeIgnore = Join-Path $here ".lycheeignore"
 $lycheeArgs = @(
     "--root-dir", $outputDir
     "--include-fragments"
     "--no-progress"
 )
-if (Test-Path $lycheeIgnore) {
-    $lycheeArgs += "--exclude-file", $lycheeIgnore
-}
-$lycheeArgs += (Join-Path $outputDir "**/*.html")
+# lychee reads .lycheeignore automatically from CWD
+$htmlFiles = Get-ChildItem -Path $outputDir -Filter "*.html" -Recurse | ForEach-Object { $_.FullName }
+$lycheeArgs += $htmlFiles
 
-& $lycheeCmd @lycheeArgs
+Push-Location $here
+try {
+    & $lycheeCmd @lycheeArgs
+} finally {
+    Pop-Location
+}
 if ($LASTEXITCODE -ne 0) { throw "Broken links found — see output above" }
 Write-StepDuration "Link check" $sw
 
