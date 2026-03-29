@@ -216,6 +216,16 @@ task PreTest {
 task PostTest {
     # Revert back to original logging level
     $script:LogLevel = $LogLevelBackup
+
+    # The V4 Specs TRX file (~105 MB, 19K tests) exceeds lxml's text-node size limit,
+    # causing the publish-unit-test-result-action to fail with xmlSAX2Characters error.
+    # Remove it so the publisher only processes the smaller V5 TRX files.
+    # V4 test pass/fail is still visible in the build log output.
+    Get-ChildItem -Path "src-v4" -Filter "test-results_*.trx" -Recurse -ErrorAction SilentlyContinue |
+        ForEach-Object {
+            Write-Build Yellow "Removing large V4 TRX file: $($_.FullName)"
+            Remove-Item $_.FullName -Force
+        }
 }
 task PreTestReport {}
 task PostTestReport {}
