@@ -28,12 +28,12 @@ concurrency:
 permissions:
   actions: write  # enable cache clean-up
   checks: write  # enable test result annotations
-  contents: write  # enable creating releases
-  id-token: write  # enable GitHub Pages deployment
+  contents: write  # enable creating releases and GitHub Pages branch deployment
+  id-token: write  # enable OIDC authentication
   issues: read
   packages: write  # enable publishing packages
-  pages: write  # enable GitHub Pages deployment
-  pull-requests: write  # enable test result annotations
+  pages: write  # enable GitHub Pages environment
+  pull-requests: write  # enable test result annotations and PR preview comments
 
 jobs:
   prepareConfig:
@@ -49,8 +49,9 @@ jobs:
       with:
         environmentVariablesYaml: |
           BUILDVAR_NuGetPublishSource: "${{ startsWith(github.ref, 'refs/tags/') && 'https://api.nuget.org/v3/index.json' || format('https://nuget.pkg.github.com/{0}/index.json', github.repository_owner) }}"
-          BUILDVAR_BuildWebsite: "${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}"
-          BUILDVAR_BasePathPrefix: "/corvus-json-schema"
+          BUILDVAR_BuildWebsite: "${{ (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'pull_request' }}"
+          BUILDVAR_IsPreviewDeployment: "${{ github.event_name == 'pull_request' }}"
+          BUILDVAR_BasePathPrefix: "${{ github.event_name == 'pull_request' && format('/corvus-json-schema/pr-preview/pr-{0}', github.event.pull_request.number) || '/corvus-json-schema' }}"
         secretsYaml: |
           NUGET_API_KEY: "${{ startsWith(github.ref, 'refs/tags/') && secrets.NUGET_APIKEY || secrets.BUILD_PUBLISHER_PAT }}"
           GH_TOKEN: "${{ secrets.ENDJIN_PACKAGES_TOKEN }}"
@@ -101,12 +102,15 @@ jobs:
   deploy-docs:
     name: Deploy Documentation
     needs: build
-    if: github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: https://corvus-oss.org/corvus-json-schema/
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Restore compile cache
         uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7  # v5.0.4
         with:
@@ -119,11 +123,37 @@ jobs:
           key: build-state-${{ github.run_id }}-compile
           enableCrossOsArchive: true
 
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: docs/website/.output
-
       - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: gh-pages
+          folder: docs/website/.output
+          clean-exclude: pr-preview
+
+  deploy-preview:
+    name: Deploy PR Preview
+    needs: build
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    concurrency: preview-${{ github.event.pull_request.number }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Restore compile cache
+        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7  # v5.0.4
+        with:
+          path: |
+            .nuget-packages
+            Solutions
+            solutions
+            JSON-Schema-Test-Suite
+            docs/website/.output
+          key: build-state-${{ github.run_id }}-compile
+          enableCrossOsArchive: true
+
+      - name: Deploy PR preview
+        uses: rossjrw/pr-preview-action@v1
+        with:
+          source-dir: docs/website/.output
+          umbrella-dir: pr-preview

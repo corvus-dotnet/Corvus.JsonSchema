@@ -26,6 +26,10 @@
     Skips steps 1a (V5 build) and 1b (V4 builds). Use when the .NET solution
     has already been built (e.g. by the root build.ps1) and the compiled
     binaries are already in the bin/Release directories.
+.PARAMETER IsPreviewDeployment
+    When set, the build produces a preview site with full robots blocking
+    (noindex meta tag retained, robots.txt Disallow). When not set in CI,
+    the build produces a production site (meta tag stripped, robots.txt Allow).
 #>
 [CmdletBinding()]
 param (
@@ -42,7 +46,10 @@ param (
     [string] $BasePathPrefix = "",
 
     [Parameter()]
-    [switch] $SkipDotNetBuild
+    [switch] $SkipDotNetBuild,
+
+    [Parameter()]
+    [switch] $IsPreviewDeployment
 )
 
 $ErrorActionPreference = 'Stop'
@@ -778,7 +785,7 @@ if ($canonicalRepoUrl -ne $defaultGitHubUrl) {
 }
 
 # Write robots.txt — allow indexing for production, block for preview/local
-if ($env:GITHUB_ACTIONS -and -not $Preview) {
+if ($env:GITHUB_ACTIONS -and -not $Preview -and -not $IsPreviewDeployment) {
     # Production CI build — allow search engines
     $robotsTxt = @"
 User-agent: *
@@ -786,8 +793,24 @@ Allow: /
 "@
     [System.IO.File]::WriteAllText((Join-Path $outputDir "robots.txt"), $robotsTxt)
     Write-Host "  Created robots.txt (allow indexing)." -ForegroundColor Gray
+
+    # Strip the hardcoded <meta name="robots" content="noindex, nofollow" /> from
+    # all HTML files so search engines can index the production site.
+    # The tag remains in _Layout.cshtml as a safe default for local/preview builds.
+    $robotsMetaCount = 0
+    Get-ChildItem -Path $outputDir -Filter "*.html" -Recurse | ForEach-Object {
+        $content = [System.IO.File]::ReadAllText($_.FullName)
+        $newContent = $content -replace '\s*<meta name="robots" content="noindex, nofollow"\s*/>', ''
+        if ($content -ne $newContent) {
+            [System.IO.File]::WriteAllText($_.FullName, $newContent)
+            $robotsMetaCount++
+        }
+    }
+    if ($robotsMetaCount -gt 0) {
+        Write-Host "  Stripped robots noindex meta tag from $robotsMetaCount HTML files." -ForegroundColor Gray
+    }
 } else {
-    # Local dev or preview — block indexing
+    # Local dev, preview, or PR preview — block indexing
     $robotsTxt = @"
 User-agent: *
 Disallow: /

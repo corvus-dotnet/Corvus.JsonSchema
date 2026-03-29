@@ -219,6 +219,9 @@ task PostBuild {
             if ($effectiveBasePathPrefix) {
                 $websiteBuildArgs += "-BasePathPrefix", $effectiveBasePathPrefix
             }
+            if ($env:BUILDVAR_IsPreviewDeployment -eq 'true') {
+                $websiteBuildArgs += "-IsPreviewDeployment"
+            }
 
             exec { & pwsh -File (Join-Path $websiteDir "build.ps1") @websiteBuildArgs }
         } finally {
