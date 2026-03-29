@@ -40,6 +40,9 @@ internal class ValidateDocumentCommand : Command<ValidateDocumentCommand.Setting
     /// <inheritdoc/>
     public override int Execute(CommandContext context, Settings settings, CancellationToken cancellationToken)
     {
+        // Prevent line wrapping in diagnostic output — the file(line,col) format
+        // must remain intact for IDE and tooling integration.
+        AnsiConsole.Profile.Width = 10000;
         ArgumentNullException.ThrowIfNullOrEmpty(settings.SchemaFile); // We will never see this exception if the framework is doing its job; it should have blown up inside the CLI command handling
         ArgumentNullException.ThrowIfNullOrEmpty(settings.DocumentFile); // We will never see this exception if the framework is doing its job; it should have blown up inside the CLI command handling
 

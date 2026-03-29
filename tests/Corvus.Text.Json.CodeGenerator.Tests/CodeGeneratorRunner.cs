@@ -39,11 +39,6 @@ internal static class CodeGeneratorRunner
             CreateNoWindow = true,
         };
 
-        // Prevent Spectre.Console from wrapping long lines at the default 80-column
-        // width when stdout is not a terminal (CI, redirected output). Without this,
-        // file paths on Linux CI are long enough to split (line,col) patterns across lines.
-        psi.Environment["COLUMNS"] = "1000";
-
         using Process process = new() { StartInfo = psi };
 
         StringBuilder stdout = new();

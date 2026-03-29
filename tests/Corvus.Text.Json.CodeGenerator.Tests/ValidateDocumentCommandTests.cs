@@ -57,8 +57,8 @@ public class ValidateDocumentCommandTests
             $"validateDocument \"{schema}\" \"{document}\"");
 
         // Output should contain line/column location in the format (line,col)
-        // The output may be wrapped by Spectre.Console, so check without line breaks
-        string normalized = result.StandardOutput.Replace("\r", "").Replace("\n", " ");
+        // Remove line breaks entirely to handle any Spectre.Console wrapping
+        string normalized = result.StandardOutput.Replace("\r", "").Replace("\n", "");
         Assert.Matches(@"\(\d+,\d+\)", normalized);
     }
 }
