@@ -8,16 +8,18 @@ namespace Corvus.Text.Json.CodeGenerator.Tests;
 /// </summary>
 internal static class CodeGeneratorRunner
 {
-    private static readonly string CodeGeneratorProjectPath = Path.GetFullPath(
-        Path.Combine(
-            AppContext.BaseDirectory,
-            "..", "..", "..", "..", "..",
-            "src", "Corvus.Json.CodeGenerator", "Corvus.Json.CodeGenerator.csproj"));
-
     // Derive the build configuration (Debug/Release) from the test output path.
     // AppContext.BaseDirectory is e.g. .../bin/Debug/net10.0/
     private static readonly string BuildConfiguration =
         new DirectoryInfo(AppContext.BaseDirectory).Parent!.Name;
+
+    // Resolve the code generator DLL directly — avoids MSBuild evaluation which
+    // fails in cross-OS cache scenarios (Windows-built obj/ paths on Linux).
+    private static readonly string CodeGeneratorDllPath = Path.GetFullPath(
+        Path.Combine(
+            AppContext.BaseDirectory,
+            "..", "..", "..", "..", "..",
+            "src", "Corvus.Json.CodeGenerator", "bin", BuildConfiguration, "net10.0", "Corvus.Json.JsonSchema.TypeGeneratorTool.dll"));
 
     /// <summary>
     /// Runs the code generator with the specified arguments and returns the result.
@@ -29,7 +31,7 @@ internal static class CodeGeneratorRunner
         ProcessStartInfo psi = new()
         {
             FileName = "dotnet",
-            Arguments = $"run --no-build --no-launch-profile -c {BuildConfiguration} --framework net10.0 --project \"{CodeGeneratorProjectPath}\" -- {arguments}",
+            Arguments = $"exec \"{CodeGeneratorDllPath}\" {arguments}",
             WorkingDirectory = effectiveWorkingDirectory,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
