@@ -145,9 +145,12 @@ $CleanBuild = $Clean
 $SkipTest = $false
 $SkipTestReport = $false
 $SkipPackage = $false
-$SkipAnalysis = $true  # Covenant SBOM tool (v0.19.0) does not support .slnx format
+$SkipAnalysis = $false
 $SkipPrAutoflowEnrollmentCheck = $true
 $BuildWebsite = $Website.IsPresent
+
+# Override the Endjin module's default Covenant version (0.19.0 does not support .slnx)
+$covenantVersion = "0.24.0"
 
 
 #
@@ -172,6 +175,9 @@ $AdditionalTestArgs = @(
     "--filter", 'category!=failing&category!=outerloop',
     '-p:EnableSourceControlManagerQueries=false'
 )
+
+# Collect code coverage only for the core library assemblies.
+$IncludeFilesInCodeCoverage = "Corvus.Json.CodeGeneration.dll;Corvus.Json.CodeGeneration.CSharp.dll;Corvus.Json.ExtendedTypes.dll;Corvus.Json.JsonReference.dll;Corvus.Text.Json.dll;Corvus.Text.Json.Validator.dll;Corvus.Text.Json.CodeGeneration.dll"
 
 $CreateGitHubRelease = $true
 $PublishNuGetPackagesAsGitHubReleaseArtefacts = $true
