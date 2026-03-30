@@ -147,8 +147,8 @@ $SkipTestReport = $false
 $SkipPackage = $false
 $SkipAnalysis = $false
 $SkipPrAutoflowEnrollmentCheck = $true
-$BuildWebsite = $Website.IsPresent
-$IsPreviewDeployment = $false
+$BuildWebsite = $Website.IsPresent -or ($env:BUILDVAR_BuildWebsite -eq 'true') -or ($env:BUILDVAR_BuildWebsite -eq 'True')
+$IsPreviewDeployment = ($env:BUILDVAR_IsPreviewDeployment -eq 'true') -or ($env:BUILDVAR_IsPreviewDeployment -eq 'True')
 
 # Override the Endjin module's default Covenant version (0.19.0 does not support .slnx)
 $covenantVersion = "0.24.0"
