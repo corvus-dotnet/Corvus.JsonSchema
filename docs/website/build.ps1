@@ -303,6 +303,15 @@ Get-ChildItem $recipesTaxonomyDir -Filter "*.yml" -ErrorAction SilentlyContinue 
 $recipeDirs = Get-ChildItem $recipesSourceDir -Directory | Sort-Object Name
 $recipeCount = 0
 
+# Build a lookup table from numbered directory names to output slugs
+# so we can rewrite cross-recipe relative links (e.g. ../004-OpenVersusClosedTypes/ -> /examples/open-versus-closed-types.html)
+$recipeSlugMap = @{}
+foreach ($d in $recipeDirs) {
+    if ($d.Name -match '^(\d+)-(.+)$') {
+        $recipeSlugMap[$d.Name] = ConvertTo-KebabCase $Matches[2]
+    }
+}
+
 foreach ($dir in $recipeDirs) {
     if ($dir.Name -notmatch '^(\d+)-(.+)$') { continue }
     $number = $Matches[1]
@@ -323,6 +332,16 @@ foreach ($dir in $recipeDirs) {
 
     # Strip the # heading line and any leading blank lines after it
     $body = ($raw -replace '^#[^\n]+\n\s*', '').TrimStart()
+
+    # Rewrite cross-recipe relative links from source format to website format:
+    #   ../004-OpenVersusClosedTypes/  ->  /examples/open-versus-closed-types.html
+    #   ./Program.cs                   ->  GitHub source link for this recipe
+    foreach ($entry in $recipeSlugMap.GetEnumerator()) {
+        $body = $body -replace [regex]::Escape("../$($entry.Key)/"), "/examples/$($entry.Value).html"
+        $body = $body -replace [regex]::Escape("../$($entry.Key)"), "/examples/$($entry.Value).html"
+    }
+    $ghRecipeBase = "https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/v5/docs/ExampleRecipes/$($dir.Name)"
+    $body = $body -replace '\./Program\.cs', "$ghRecipeBase/Program.cs"
 
     # Extract first sentence as description
     if ($body -match '^(.+?\.)\s') {
@@ -507,10 +526,21 @@ foreach ($descriptorFile in $descriptorFiles) {
     # Strip markdown "## Table of Contents" section (the TOC through the next --- or ## heading)
     $docBody = $docBody -replace '(?ms)^## Table of Contents\s*\n(- \[.*?\]\(#.*?\)\s*\n)+\s*---\s*\n?', ''
 
-    # Rewrite cross-doc markdown links: (Source.md) -> (slug.html)
+    # Rewrite cross-doc markdown links:
+    #   (Source.md)                  -> (/docs/slug.html)
+    #   (./Source.md)                -> (/docs/slug.html)
+    #   (Source.md#fragment)         -> (/docs/slug.html#fragment)
+    #   (./Source.md#fragment)       -> (/docs/slug.html#fragment)
     foreach ($srcFile in $docLinkMap.Keys) {
-        $docBody = $docBody -replace [regex]::Escape("($srcFile)"), "($($docLinkMap[$srcFile]))"
+        $escaped = [regex]::Escape($srcFile)
+        $target = "/docs/$($docLinkMap[$srcFile])"
+        $docBody = $docBody -replace "\(\./$escaped(#[^)]+)?\)", "($target`$1)"
+        $docBody = $docBody -replace "\($escaped(#[^)]+)?\)", "($target`$1)"
     }
+
+    # Rewrite links to files that aren't website pages (e.g. copilot/ instructions)
+    # Point them at the GitHub source
+    $docBody = $docBody -replace '\(copilot/([^)]+\.md)\)', '(https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/v5/docs/copilot/$1)'
 
     # Use descriptor nav title, or fall back to doc title
     $navTitle = if ($descriptor['navTitle']) { $descriptor['navTitle'] } else {
@@ -730,11 +760,13 @@ if (!(Test-Path $lycheeCmd)) {
 }
 
 $lycheeIgnore = Join-Path $here ".lycheeignore"
+# --root-dir MUST be an absolute path (lychee requirement) so that
+# root-relative links like /api/index.html resolve inside .output/
+$absOutputDir = (Resolve-Path $outputDir).Path
 $lycheeArgs = @(
-    "--root-dir", "."
-    "--include-fragments"
+    "--root-dir", $absOutputDir
     "--no-progress"
-    "--exclude-path", "api/v4"
+    "--exclude-path", "api[/\\]v4"
     "."
 )
 

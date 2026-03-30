@@ -22,3 +22,25 @@ https://corvus-oss\.org
 
 # Source-code links in API docs point to main branch; 404 until feature branch is merged
 https://github\.com/corvus-dotnet/Corvus\.JsonSchema/blob/main/src/
+https://github\.com/corvus-dotnet/Corvus\.JsonSchema/blob/main/src-v4/
+https://github\.com/corvus-dotnet/Corvus\.JsonSchema/blob/main/Common/
+
+# Microsoft Docs generic interface member URLs that return 404
+# (e.g. IEquatable.Equals, IEnumerator.Current — MS docs uses IEquatable-1.Equals)
+https://learn\.microsoft\.com/dotnet/api/system\.iequatable\.equals
+https://learn\.microsoft\.com/dotnet/api/system\.collections\.generic\.ienumerator\.current
+https://learn\.microsoft\.com/dotnet/api/system\.collections\.generic\.ienumerable\.getenumerator
+https://learn\.microsoft\.com/dotnet/api/system\.collections\.immutable\.immutablelist-1\+builder
+https://learn\.microsoft\.com/dotnet/api/system\.text\.json\.jsonvaluekind\.undefined#undefined
+
+# Truncated MS Docs URLs (lychee sometimes truncates long URLs during crawl)
+https://learn\.microsoft\.com/do\.\.$
+https://learn\.microsoft\.com/dotnet/ap\.\.$
+https://learn\.microsoft\.com/dotnet/api/syste\.\.$
+
+# Unversioned API type pages (XmlDocToMarkdown cross-references missing v4/ or v5/ prefix)
+file:///.*api/corvus-
+
+# V5 internal types excluded from API docs but still cross-referenced
+file:///.*api/v5/corvus-text-json-internal-
+file:///.*api/v5/corvus-text-json-jsonelement\.html$
