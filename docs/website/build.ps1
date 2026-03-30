@@ -851,15 +851,17 @@ if (!(Test-Path $lycheeCmd)) {
     Write-Host "  lychee already installed." -ForegroundColor DarkGray
 }
 
+$lycheeIgnore = Join-Path $here ".lycheeignore"
 $lycheeArgs = @(
-    "--root-dir", $outputDir
     "--include-fragments"
     "--no-progress"
-    "--glob-ignore-case"
-    $outputDir
 )
+if (Test-Path $lycheeIgnore) {
+    $lycheeArgs += "--exclude-file", $lycheeIgnore
+}
+$lycheeArgs += "."
 
-Push-Location $here
+Push-Location $outputDir
 try {
     & $lycheeCmd @lycheeArgs
 } finally {
