@@ -571,7 +571,7 @@ public sealed class MarkdownGenerator(string outputDir, string baseUrl, string? 
         // For single members, show the detail directly
         if (members.Count == 1)
         {
-            WriteMemberDetail(sb, members[0], 2, memberExampleMarkdown: memberExampleMarkdown);
+            WriteMemberDetail(sb, members[0], 2, useSignatureHeading: true, memberExampleMarkdown: memberExampleMarkdown);
 
             WriteAppliesTo(sb, members[0].AvailableOnNetStandard20);
             return;

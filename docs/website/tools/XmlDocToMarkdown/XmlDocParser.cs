@@ -184,9 +184,12 @@ public sealed partial class XmlDocParser(string xmlPath)
                             }
                             else
                             {
-                                // Local type — use fragment anchor on the type page
-                                string anchor = GetMemberAnchor(stripped, memberType);
-                                sb.Append($"[`{memberName}`]({url}#{anchor})");
+                                // Local type — member has its own page:
+                                // type page: /api/v5/corvus-text-json-period.html
+                                // member page: /api/v5/corvus-text-json-period.months.html
+                                string memberSlug = GetMemberAnchor(stripped, memberType);
+                                string memberPageUrl = url.Replace(".html", $".{memberSlug}.html");
+                                sb.Append($"[`{memberName}`]({memberPageUrl})");
                             }
                         }
                         else
@@ -389,15 +392,16 @@ public sealed partial class XmlDocParser(string xmlPath)
         if (parenIdx >= 0)
             name = name[..parenIdx];
 
-        // Strip generic arity
-        int backtickIdx = name.IndexOf('`');
-        if (backtickIdx >= 0)
-            name = name[..backtickIdx];
-
-        // Take the last segment (the member name)
+        // Take the last segment BEFORE stripping generic arity, so that
+        // "System.Buffers.ArrayPool`1.Shared" → "Shared" (not "ArrayPool")
         int lastDot = name.LastIndexOf('.');
         if (lastDot >= 0)
             name = name[(lastDot + 1)..];
+
+        // Strip generic arity from the member name itself (if any)
+        int backtickIdx = name.IndexOf('`');
+        if (backtickIdx >= 0)
+            name = name[..backtickIdx];
 
         // Handle constructor references: #ctor → the type name
         if (name == "#ctor")
