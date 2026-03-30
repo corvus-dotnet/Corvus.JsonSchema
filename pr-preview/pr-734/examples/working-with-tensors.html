@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1C1D21" />
+    <meta name="description" content="This recipe demonstrates how to construct and manipulate fixed-size numeric arrays as tensors in .NET, including span-based construction, `TryGetNumericValues()` extraction, and integration with APIs like `System.Numerics.Tensors`." />
+    <meta name="keywords" content="recipe, JSON Schema, C#, working, tensors, type, items, $ref, minItems, maxItems, $defs, format, TryGetNumericValues, Build, CreateBuilder" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:description" content="This recipe demonstrates how to construct and manipulate fixed-size numeric arrays as tensors in .NET, including span-based construction, `TryGetNumericValues()` extraction, and integration with APIs like `System.Numerics.Tensors`." />
+    <meta name="twitter:image" content="/corvus-json-schema/pr-preview/pr-734/assets/images/og-corvus.png" />
+    <meta name="twitter:title" content="Working with Tensors - Corvus.Text.Json Examples" />
+    <meta property="article:tag" content="recipe" />
+    <meta property="article:tag" content="JSON Schema" />
+    <meta property="article:tag" content="C#" />
+    <meta property="article:tag" content="working" />
+    <meta property="article:tag" content="tensors" />
+    <meta property="article:tag" content="type" />
+    <meta property="article:tag" content="items" />
+    <meta property="article:tag" content="$ref" />
+    <meta property="article:tag" content="minItems" />
+    <meta property="article:tag" content="maxItems" />
+    <meta property="article:tag" content="$defs" />
+    <meta property="article:tag" content="format" />
+    <meta property="article:tag" content="TryGetNumericValues" />
+    <meta property="article:tag" content="Build" />
+    <meta property="article:tag" content="CreateBuilder" />
+    <meta property="og:description" content="This recipe demonstrates how to construct and manipulate fixed-size numeric arrays as tensors in .NET, including span-based construction, `TryGetNumericValues()` extraction, and integration with APIs like `System.Numerics.Tensors`." />
+    <meta property="og:image" content="/corvus-json-schema/pr-preview/pr-734/assets/images/og-corvus.png" />
+    <meta property="og:title" content="Working with Tensors - Corvus.Text.Json Examples" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://corvus-oss.org/corvus-json-schema/examples/working-with-tensors/" />
+    <title>Working with Tensors - Corvus.Text.Json Examples</title>
+    <link itemprop="url" href="https://corvus-oss.org/corvus-json-schema/examples/working-with-tensors/" />
+    <link rel="canonical" href="https://corvus-oss.org/corvus-json-schema/examples/working-with-tensors/" />
+    <link rel="sitemap" href="https://corvus-oss.org/corvus-json-schema/sitemap.xml" />
+    <!-- Styles -->
+    <link rel="stylesheet" href="/corvus-json-schema/pr-preview/pr-734/main.css" />
+    <link rel="icon" type="image/svg+xml" href="/corvus-json-schema/pr-preview/pr-734/assets/images/favicon.svg" />
+    
+</head>
+<body>
+    <a class="sr-only" href="#main-content">Skip to content</a>
+<header class="site-header">
+    <div class="site-header__inner">
+        <a class="site-header__brand" href="/corvus-json-schema/pr-preview/pr-734/index.html" aria-label="Corvus.JsonSchema home">
+            <img src="/corvus-json-schema/pr-preview/pr-734/assets/images/logo-corvus.svg" alt="" width="28" height="28" aria-hidden="true" />
+            Corvus<span style="color:var(--color-brand)">.</span>Json<span style="color:var(--color-brand)">Schema</span>
+        </a>
+        <nav class="site-header__nav-desktop" aria-label="Main navigation">
+                    <a href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html"
+                       class="site-header__link "
+                       >Getting Started</a>
+                    <a href="/corvus-json-schema/pr-preview/pr-734/getting-started-v4/index.html"
+                       class="site-header__link "
+                       >Getting Started (V4)</a>
+                    <a href="/corvus-json-schema/pr-preview/pr-734/docs/index.html"
+                       class="site-header__link "
+                       >Documentation</a>
+                    <a href="/corvus-json-schema/pr-preview/pr-734/examples/index.html"
+                       class="site-header__link is-active"
+                       aria-current=page>Examples</a>
+                    <a href="/corvus-json-schema/pr-preview/pr-734/api/index.html"
+                       class="site-header__link "
+                       >API</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/playground/"
+               class="site-header__link"
+               target="_blank" rel="noopener noreferrer"
+               title="Interactive JSON Schema playground">Playground</a>
+            <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+               class="site-header__link" target="_blank" rel="noopener noreferrer"
+               aria-label="View on GitHub">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            </a>
+        </nav>
+        <button class="site-header__menu-toggle js-toggle-menu"
+                aria-expanded="false" aria-label="Toggle menu">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+        </button>
+    </div>
+</header>
+<nav class="site-header__nav-mobile js-mobile-nav" aria-label="Mobile navigation">
+            <a href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html" class="site-header__link">Getting Started</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/getting-started-v4/index.html" class="site-header__link">Getting Started (V4)</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/docs/index.html" class="site-header__link">Documentation</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/examples/index.html" class="site-header__link">Examples</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/api/index.html" class="site-header__link">API</a>
+    <a href="/corvus-json-schema/pr-preview/pr-734/playground/" class="site-header__link" target="_blank" rel="noopener noreferrer">Playground</a>
+    <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+       class="site-header__link" target="_blank" rel="noopener noreferrer">GitHub</a>
+</nav>
+
+    <div class="page-content">
+    <div class="layout-docs container">
+    <button class="sidebar-toggle" aria-label="Toggle navigation" aria-expanded="false"></button>
+<div class="sidebar-backdrop"></div>
+<aside class="sidebar">
+    <div class="sidebar__inner">
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Getting Started</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                    <li class="sidebar__item"><a class="sidebar__link" href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html">Tutorial</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Documentation</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/parsed-json-document.html">Parsing &amp; Reading JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/json-document-builder.html">Building &amp; Mutating JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/source-generator.html">Source Generator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/code-generator.html">CLI Code Generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/validator.html">Dynamic Schema Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/migrating-from-v4-to-v5.html">Migrating from V4</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/using-copilot-for-migration.html">Copilot Migration</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/migration-analyzers.html">Migration Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/analyzers.html">Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/schema-evaluator.html">Standalone Schema Evaluator</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Examples</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/data-object.html">Simple Data Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/data-object-validation.html">Data Object Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/reusing-common-types.html">Reusing Common Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/open-versus-closed-types.html">Open Versus Closed Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/extending-a-base-type.html">Extending a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/constraining-a-base-type.html">Constraining a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/creating-a-strongly-typed-array.html">Strongly Typed Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/creating-an-array-of-higher-rank.html">Multi-Dimensional Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link is-active" href="/corvus-json-schema/pr-preview/pr-734/examples/working-with-tensors.html">Working with Tensors</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/creating-tuples.html">Creating Tuples</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/interfaces-and-mix-in-types.html">Interfaces and Mix-In Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/pattern-matching.html">Pattern Matching and Discriminated Unions</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/polymorphism-with-discriminators.html">Polymorphism with Discriminator Properties</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/string-enumerations.html">String Enumerations and Pattern Matching</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/numeric-enumerations.html">Numeric Enumerations</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/maps.html">Maps of Strings to Strongly Typed Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/mapping-input-and-output-values.html">Mapping Input and Output Values</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</aside>
+
+    <main id="main-content" class="layout-docs__main">
+        <div class="doc__content">
+            <h1>Working with Tensors</h1>
+                <div class="card__tags" style="margin-bottom:1.5rem">
+                        <span class="card__tag">recipe</span>
+                        <span class="card__tag">JSON Schema</span>
+                        <span class="card__tag">C#</span>
+                        <span class="card__tag">working</span>
+                        <span class="card__tag">tensors</span>
+                        <span class="card__tag">type</span>
+                        <span class="card__tag">items</span>
+                        <span class="card__tag">$ref</span>
+                        <span class="card__tag">minItems</span>
+                        <span class="card__tag">maxItems</span>
+                        <span class="card__tag">$defs</span>
+                        <span class="card__tag">format</span>
+                        <span class="card__tag">TryGetNumericValues</span>
+                        <span class="card__tag">Build</span>
+                        <span class="card__tag">CreateBuilder</span>
+                </div>
+<p>This recipe demonstrates how to construct and manipulate fixed-size numeric arrays as tensors in .NET, including span-based construction, <code>TryGetNumericValues()</code> extraction, and integration with APIs like <code>System.Numerics.Tensors</code>.</p>
+<h2 id="the-pattern">The Pattern</h2>
+<p><a href="/corvus-json-schema/pr-preview/pr-734/examples/creating-an-array-of-higher-rank.html">We have seen how to create arrays of higher rank with fixed size</a>.</p>
+<p>The array could contain any item type that you can define in schema. However, our previous example used a numeric type: we constrained it using the type <code>number</code> and the format <code>double</code>.</p>
+<p>Here's another example, this time of rank 3.</p>
+<p>The code generator produces:</p>
+<ul>
+<li><code>TensorRank3</code> — the 3D array type (rank 3, dimension 4, buffer size 64)</li>
+<li><code>TensorRank3.SecondRank</code> — the nested 2D array type (rank 2, dimension 4, buffer size 16)</li>
+<li><code>TensorRank3.ThirdRank</code> — the innermost 1D array type (rank 1, dimension 4, buffer size 4)</li>
+<li><code>TensorRank3.ThirdRank.ThirdRankEntity</code> — the double item type</li>
+</ul>
+<p>Fixed-size numeric arrays gain <strong>tensor operations</strong>:</p>
+<ul>
+<li><code>TryGetNumericValues(Span&lt;double&gt;, out int)</code> — extract all values into a flat buffer</li>
+<li><code>Build(ReadOnlySpan&lt;double&gt;)</code> — create a <code>Source</code> directly from a flat numeric span (preferred for construction from raw data)</li>
+<li><code>CreateBuilder(workspace, ReadOnlySpan&lt;double&gt;)</code> — single-call convenience that creates a mutable document from a span</li>
+<li><code>CreateTensor(ReadOnlySpan&lt;double&gt;)</code> on the mutable builder — reconstruct from a flat buffer inside a <code>Build</code> delegate</li>
+<li><code>Rank</code>, <code>Dimension</code>, <code>ValueBufferSize</code> — static metadata about the tensor structure</li>
+</ul>
+<blockquote>
+<p><strong>Note:</strong> <code>Build(ReadOnlySpan&lt;T&gt;)</code> and <code>CreateBuilder(workspace, ReadOnlySpan&lt;T&gt;)</code> are also available on variable-length numeric arrays — see <a href="#variable-length-numeric-arrays">Variable-length numeric arrays</a> below.</p>
+</blockquote>
+<p>We can use this in the same way, and also convert it directly to and from <code>Span&lt;TNumeric&gt;</code> for use in APIs such as <a href="https://learn.microsoft.com/en-us/dotnet/api/system.numerics.tensors">System.Numerics.Tensors</a>.</p>
+<h2 id="the-schema">The Schema</h2>
+<p>File: <code>tensor-rank-3.json</code></p>
+<pre><code class="language-json">{
+  &quot;title&quot;: &quot;A 4x4x4 tensor of JsonDouble&quot;,
+  &quot;type&quot;: &quot;array&quot;,
+  &quot;items&quot;: { &quot;$ref&quot;: &quot;#/$defs/SecondRank&quot; },
+  &quot;minItems&quot;: 4,
+  &quot;maxItems&quot;: 4,
+  &quot;$defs&quot;: {
+    &quot;SecondRank&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: { &quot;$ref&quot;: &quot;#/$defs/ThirdRank&quot; },
+      &quot;minItems&quot;: 4,
+      &quot;maxItems&quot;: 4
+    },
+    &quot;ThirdRank&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;minItems&quot;: 4,
+      &quot;maxItems&quot;: 4,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;number&quot;,
+        &quot;format&quot;: &quot;double&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<h2 id="generated-code-usage">Generated Code Usage</h2>
+<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/v5/docs/ExampleRecipes/009-WorkingWithTensors/Program.cs">Example code</a></p>
+<h3 id="parsing-and-accessing-tensor-elements">Parsing and accessing tensor elements</h3>
+<pre><code class="language-csharp">using Corvus.Text.Json;
+using WorkingWithTensors.Models;
+
+// Parse a 3D tensor from JSON
+string tensorJson = &quot;&quot;&quot;...&quot;&quot;&quot;;  // 4x4x4 array JSON
+using var parsedTensor = ParsedJsonDocument&lt;TensorRank3&gt;.Parse(tensorJson);
+TensorRank3 tensor = parsedTensor.RootElement;
+
+// Access an element of an array of rank 3
+double tensorValue = tensor[3][0][1];
+
+// Set the item at the given indices via mutable builder
+using JsonWorkspace workspace = JsonWorkspace.Create();
+using var mutableDoc = tensor.CreateBuilder(workspace);
+TensorRank3.Mutable root = mutableDoc.RootElement;
+root[3][0].SetItem(1, 3.4);
+TensorRank3 updatedTensor = mutableDoc.RootElement;
+
+// Fill a Span&lt;double&gt; with the tensor values
+Span&lt;double&gt; tensorAsSpan = stackalloc double[TensorRank3.ValueBufferSize];
+if (tensor.TryGetNumericValues(tensorAsSpan, out int written))
+{
+    // Manually format the output
+    Console.Write(&quot;All tensor values (flat): [&quot;);
+    for (int i = 0; i &lt; written; i++)
+    {
+        if (i &gt; 0) Console.Write(&quot;, &quot;);
+        Console.Write(tensorAsSpan[i]);
+    }
+    Console.WriteLine(&quot;]&quot;);
+}
+
+// Find the rank of each array (note the sub arrays of diminishing rank)
+Console.WriteLine($&quot;Rank: {TensorRank3.Rank}, {TensorRank3.SecondRank.Rank}, {TensorRank3.ThirdRank.Rank}&quot;);
+
+// Find the dimension (extent) of each particular rank of the array
+Console.WriteLine($&quot;Dimension: {TensorRank3.Dimension}, {TensorRank3.SecondRank.Dimension}, {TensorRank3.ThirdRank.Dimension}&quot;);
+</code></pre>
+<h3 id="constructing-a-tensor-from-a-flat-numeric-span">Constructing a tensor from a flat numeric span</h3>
+<p>The simplest way to create a tensor from raw numeric data is <code>CreateBuilder(workspace, span)</code> — a single call that goes directly from a <code>ReadOnlySpan&lt;T&gt;</code> to a mutable document:</p>
+<pre><code class="language-csharp">Span&lt;double&gt; flatValues = stackalloc double[TensorRank3.ValueBufferSize];
+// ... populate flatValues ...
+
+using JsonWorkspace workspace = JsonWorkspace.Create();
+using var builder = TensorRank3.CreateBuilder(workspace, flatValues);
+TensorRank3 result = builder.RootElement;
+</code></pre>
+<p>If you prefer to separate construction from materialisation (e.g., to pass the source to another method), use <code>Build()</code> + <code>CreateBuilder()</code>:</p>
+<pre><code class="language-csharp">// Two-step: span → Source → builder
+TensorRank3.Source source = TensorRank3.Build(flatValues);
+using var builder = TensorRank3.CreateBuilder(workspace, source);
+</code></pre>
+<p>If you need more control (e.g., building the tensor alongside other mutations in a single delegate), use the <code>Build</code> + <code>CreateTensor</code> pattern:</p>
+<pre><code class="language-csharp">// Delegate route
+using var builder = TensorRank3.CreateBuilder(
+    workspace,
+    TensorRank3.Build(
+        static (ref TensorRank3.Builder b) =&gt; b.CreateTensor(flatValues)));
+</code></pre>
+<p>The span must contain exactly <code>ValueBufferSize</code> elements; passing the wrong number throws <code>ArgumentException</code>.</p>
+<h3 id="variable-length-numeric-arrays">Variable-length numeric arrays</h3>
+<p>The <code>Build(ReadOnlySpan&lt;T&gt;)</code> and <code>CreateBuilder(workspace, ReadOnlySpan&lt;T&gt;)</code> overloads are not limited to fixed-size tensors — they work on <strong>any</strong> numeric array type (i.e. an array whose items have a numeric type and format). For variable-length arrays, the span can contain any number of elements:</p>
+<pre><code class="language-csharp">// Given a schema with no minItems/maxItems:
+// { &quot;type&quot;: &quot;array&quot;, &quot;items&quot;: { &quot;type&quot;: &quot;number&quot;, &quot;format&quot;: &quot;double&quot; } }
+
+using JsonWorkspace workspace = JsonWorkspace.Create();
+using var builder = ScoresArray.CreateBuilder(workspace, [1.5, 2.5, 3.5]);
+ScoresArray scores = builder.RootElement;
+// scores is [1.5, 2.5, 3.5]
+</code></pre>
+<h2 id="key-differences-from-v4">Key Differences from V4</h2>
+<h3 id="v4-corvus.json">V4 (Corvus.Json)</h3>
+<pre><code class="language-csharp">// Create a tensor from a flat span
+TensorRank3 tensor = TensorRank3.FromValues(flatValues);
+
+// Create with collection expressions
+TensorRank3 tensor = [[[1.0, 2.0, 3.0, 4.0], ...], ...];
+
+// Access elements
+double value = tensor[3][0][1];
+
+// Extract to flat buffer
+Span&lt;double&gt; buffer = stackalloc double[TensorRank3.ValueBufferSize];
+tensor.TryGetNumericValues(buffer, out int written);
+
+// Immutable set — returns a new tensor
+TensorRank3 updated = tensor.SetItem(3, tensor[3].SetItem(0, tensor[3][0].SetItem(1, 3.4)));
+</code></pre>
+<h3 id="v5-corvus.text.json">V5 (Corvus.Text.Json)</h3>
+<pre><code class="language-csharp">// Create a tensor from a flat span (preferred)
+using JsonWorkspace workspace = JsonWorkspace.Create();
+using var builder = TensorRank3.CreateBuilder(workspace, flatValues);
+TensorRank3 tensor = builder.RootElement;
+
+// Or use Build() for two-step construction
+TensorRank3.Source source = TensorRank3.Build(flatValues);
+using var builder = TensorRank3.CreateBuilder(workspace, source);
+
+// Or use the delegate pattern with CreateTensor()
+using var builder = TensorRank3.CreateBuilder(
+    workspace,
+    TensorRank3.Build(static (ref TensorRank3.Builder b) =&gt; b.CreateTensor(flatValues)));
+
+// Access elements (same chaining)
+double value = tensor[3][0][1];
+
+// Extract to flat buffer (same API)
+Span&lt;double&gt; buffer = stackalloc double[TensorRank3.ValueBufferSize];
+tensor.TryGetNumericValues(buffer, out int written);
+
+// Mutable set — in-place via workspace builder
+using var mutableDoc = tensor.CreateBuilder(workspace);
+mutableDoc.RootElement[3][0].SetItem(1, 3.4);
+</code></pre>
+<p><strong>Key differences:</strong></p>
+<ul>
+<li>V4's <code>FromValues(span)</code> becomes <code>Build(span)</code> for direct construction, or <code>CreateBuilder(workspace, span)</code> for single-call convenience</li>
+<li>V5 does not support collection expressions — parse from JSON or use <code>Build(span)</code></li>
+<li>V5 mutations are in-place via the builder pattern instead of returning new immutable copies</li>
+<li>V5 requires a <code>JsonWorkspace</code> for all construction and mutation operations</li>
+<li>Indexer chaining, <code>TryGetNumericValues()</code>, and tensor metadata (<code>Rank</code>, <code>Dimension</code>, <code>ValueBufferSize</code>) are the same in both versions</li>
+</ul>
+<h2 id="running-the-example">Running the Example</h2>
+<pre><code class="language-bash">cd docs/ExampleRecipes/009-WorkingWithTensors
+dotnet run
+</code></pre>
+<h2 id="related-patterns">Related Patterns</h2>
+<ul>
+<li><a href="/corvus-json-schema/pr-preview/pr-734/examples/creating-a-strongly-typed-array.html">007-CreatingAStronglyTypedArray</a> - Single-dimensional strongly-typed arrays</li>
+<li><a href="/corvus-json-schema/pr-preview/pr-734/examples/creating-an-array-of-higher-rank.html">008-CreatingAnArrayOfHigherRank</a> - Multi-dimensional array construction</li>
+<li><a href="/corvus-json-schema/pr-preview/pr-734/examples/creating-tuples.html">010-CreatingTuples</a> - Fixed-length heterogeneous arrays (tuples)</li>
+</ul>
+<h2 id="frequently-asked-questions">Frequently Asked Questions</h2>
+<h3 id="how-does-the-tensor-api-integrate-with-system.numerics.tensors">How does the tensor API integrate with <code>System.Numerics.Tensors</code>?</h3>
+<p>Use <code>TryGetNumericValues()</code> to extract all tensor values into a flat <code>Span&lt;double&gt;</code>, which you can then pass directly to <code>System.Numerics.Tensors</code> APIs (e.g., <code>TensorPrimitives.Sum()</code>, <code>TensorPrimitives.Multiply()</code>). To go the other direction, use <code>Build(span)</code> or <code>CreateBuilder(workspace, span)</code> to construct a tensor from a flat span after performing numeric operations.</p>
+<h3 id="is-the-span-from-trygetnumericvalues-safe-to-use-after-the-document-is-disposed">Is the span from <code>TryGetNumericValues()</code> safe to use after the document is disposed?</h3>
+<p><strong>A:</strong> Yes. <code>TryGetNumericValues()</code> <em>copies</em> the values into the <code>Span&lt;T&gt;</code> you provide, so the data has no dependency on the document once the call returns. You can safely dispose the document and continue using the buffer. The only constraint is the normal span lifetime rule: don't return a <code>stackalloc</code> span from a method.</p>
+<h3 id="whats-the-difference-between-variable-length-and-fixed-length-numeric-arrays">What's the difference between variable-length and fixed-length numeric arrays?</h3>
+<p>Fixed-length arrays (with matching <code>minItems</code>/<code>maxItems</code>) gain tensor metadata (<code>Rank</code>, <code>Dimension</code>, <code>ValueBufferSize</code>) and <code>CreateTensor()</code> on the builder. Variable-length arrays still get <code>Build(span)</code> and <code>CreateBuilder(workspace, span)</code> for construction, but the span can be any length and there is no <code>ValueBufferSize</code> constant.</p>
+<h3 id="what-happens-if-i-pass-the-wrong-number-of-elements-to-buildspan">What happens if I pass the wrong number of elements to <code>Build(span)</code>?</h3>
+<p>For fixed-size tensors, the span must contain exactly <code>ValueBufferSize</code> elements. Passing more or fewer throws <code>ArgumentException</code>. For variable-length numeric arrays, any span length is accepted.</p>
+<h3 id="why-cant-i-use-collection-expressions-to-create-tensors-in-v5">Why can't I use collection expressions to create tensors in V5?</h3>
+<p>V5 generated types do not support implicit conversions from collection expressions (e.g., <code>[[1.0, 2.0], ...]</code>). This is by design — V5 emphasizes explicit resource management through <code>JsonWorkspace</code> and the builder pattern. Use <code>Build(span)</code> or <code>CreateBuilder(workspace, span)</code> for efficient construction from raw data, or <code>ParsedJsonDocument&lt;T&gt;.Parse()</code> for construction from JSON strings.</p>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "How does the tensor API integrate with `System.Numerics.Tensors`?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Use TryGetNumericValues() to extract all tensor values into a flat Span<double>, which you can then pass directly to System.Numerics.Tensors APIs (e.g., TensorPrimitives.Sum(), TensorPrimitives.Multiply()). To go the other direction, use Build(span) or CreateBuilder(workspace, span) to construct a tensor from a flat span after performing numeric operations."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is the span from `TryGetNumericValues()` safe to use after the document is disposed?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "**A:** Yes. TryGetNumericValues() *copies* the values into the Span<T> you provide, so the data has no dependency on the document once the call returns. You can safely dispose the document and continue using the buffer. The only constraint is the normal span lifetime rule: don't return a stackalloc span from a method."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What's the difference between variable-length and fixed-length numeric arrays?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Fixed-length arrays (with matching minItems/maxItems) gain tensor metadata (Rank, Dimension, ValueBufferSize) and CreateTensor() on the builder. Variable-length arrays still get Build(span) and CreateBuilder(workspace, span) for construction, but the span can be any length and there is no ValueBufferSize constant."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What happens if I pass the wrong number of elements to `Build(span)`?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "For fixed-size tensors, the span must contain exactly ValueBufferSize elements. Passing more or fewer throws ArgumentException. For variable-length numeric arrays, any span length is accepted."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why can't I use collection expressions to create tensors in V5?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "V5 generated types do not support implicit conversions from collection expressions (e.g., [[1.0, 2.0], ...]). This is by design — V5 emphasizes explicit resource management through JsonWorkspace and the builder pattern. Use Build(span) or CreateBuilder(workspace, span) for efficient construction from raw data, or ParsedJsonDocument<T>.Parse() for construction from JSON strings."
+      }
+    }
+  ]
+}
+</script>
+        </div>
+    </main>
+</div>
+
+    </div>
+    <footer class="site-footer">
+    <div class="site-footer__inner">
+        <div class="site-footer__sponsor">
+            Sponsored by
+            <a href="https://endjin.com" target="_blank" rel="noopener noreferrer">endjin</a>
+        </div>
+        <ul class="site-footer__links" role="list">
+            <li><a class="site-footer__link" href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html">Getting Started</a></li>
+            <li><a class="site-footer__link" href="/corvus-json-schema/pr-preview/pr-734/docs/index.html">Documentation</a></li>
+            <li><a class="site-footer__link" href="/corvus-json-schema/pr-preview/pr-734/examples/index.html">Examples</a></li>
+            <li><a class="site-footer__link" href="/corvus-json-schema/pr-preview/pr-734/api/index.html">API</a></li>
+            <li><a class="site-footer__link" href="https://github.com/corvus-dotnet/Corvus.JsonSchema" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            <li><a class="site-footer__link" href="https://www.nuget.org/packages?q=Corvus.Json" target="_blank" rel="noopener noreferrer">NuGet</a></li>
+        </ul>
+        <p class="site-footer__copyright">&copy; 2026 endjin Ltd.</p>
+    </div>
+</footer>
+
+    <!-- highlight.js for syntax highlighting (CSS targets .hljs-* classes) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/csharp.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js" defer></script>
+    <script>document.addEventListener('DOMContentLoaded',()=>hljs.highlightAll())</script>
+    <script src="/corvus-json-schema/pr-preview/pr-734/assets/js/main.js" defer></script>
+    <script src="/corvus-json-schema/pr-preview/pr-734/assets/js/sidebar-search.js" defer></script>
+    
+</body>
+</html>

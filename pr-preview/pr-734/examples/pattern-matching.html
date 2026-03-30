@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1C1D21" />
+    <meta name="description" content="This recipe demonstrates how to use JSON Schema `oneOf` to create discriminated unions that support pattern matching in .NET." />
+    <meta name="keywords" content="recipe, JSON Schema, C#, pattern, matching, discriminated, unions, oneOf, type, format, $ref, $defs, items, required, properties, maximum, minLength, maxLength, Match, From" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:description" content="This recipe demonstrates how to use JSON Schema `oneOf` to create discriminated unions that support pattern matching in .NET." />
+    <meta name="twitter:image" content="/corvus-json-schema/pr-preview/pr-734/assets/images/og-corvus.png" />
+    <meta name="twitter:title" content="Pattern Matching and Discriminated Unions - Corvus.Text.Json Examples" />
+    <meta property="article:tag" content="recipe" />
+    <meta property="article:tag" content="JSON Schema" />
+    <meta property="article:tag" content="C#" />
+    <meta property="article:tag" content="pattern" />
+    <meta property="article:tag" content="matching" />
+    <meta property="article:tag" content="discriminated" />
+    <meta property="article:tag" content="unions" />
+    <meta property="article:tag" content="oneOf" />
+    <meta property="article:tag" content="type" />
+    <meta property="article:tag" content="format" />
+    <meta property="article:tag" content="$ref" />
+    <meta property="article:tag" content="$defs" />
+    <meta property="article:tag" content="items" />
+    <meta property="article:tag" content="required" />
+    <meta property="article:tag" content="properties" />
+    <meta property="article:tag" content="maximum" />
+    <meta property="article:tag" content="minLength" />
+    <meta property="article:tag" content="maxLength" />
+    <meta property="article:tag" content="Match" />
+    <meta property="article:tag" content="From" />
+    <meta property="og:description" content="This recipe demonstrates how to use JSON Schema `oneOf` to create discriminated unions that support pattern matching in .NET." />
+    <meta property="og:image" content="/corvus-json-schema/pr-preview/pr-734/assets/images/og-corvus.png" />
+    <meta property="og:title" content="Pattern Matching and Discriminated Unions - Corvus.Text.Json Examples" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://corvus-oss.org/corvus-json-schema/examples/pattern-matching/" />
+    <title>Pattern Matching and Discriminated Unions - Corvus.Text.Json Examples</title>
+    <link itemprop="url" href="https://corvus-oss.org/corvus-json-schema/examples/pattern-matching/" />
+    <link rel="canonical" href="https://corvus-oss.org/corvus-json-schema/examples/pattern-matching/" />
+    <link rel="sitemap" href="https://corvus-oss.org/corvus-json-schema/sitemap.xml" />
+    <!-- Styles -->
+    <link rel="stylesheet" href="/corvus-json-schema/pr-preview/pr-734/main.css" />
+    <link rel="icon" type="image/svg+xml" href="/corvus-json-schema/pr-preview/pr-734/assets/images/favicon.svg" />
+    
+</head>
+<body>
+    <a class="sr-only" href="#main-content">Skip to content</a>
+<header class="site-header">
+    <div class="site-header__inner">
+        <a class="site-header__brand" href="/corvus-json-schema/pr-preview/pr-734/index.html" aria-label="Corvus.JsonSchema home">
+            <img src="/corvus-json-schema/pr-preview/pr-734/assets/images/logo-corvus.svg" alt="" width="28" height="28" aria-hidden="true" />
+            Corvus<span style="color:var(--color-brand)">.</span>Json<span style="color:var(--color-brand)">Schema</span>
+        </a>
+        <nav class="site-header__nav-desktop" aria-label="Main navigation">
+                    <a href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html"
+                       class="site-header__link "
+                       >Getting Started</a>
+                    <a href="/corvus-json-schema/pr-preview/pr-734/getting-started-v4/index.html"
+                       class="site-header__link "
+                       >Getting Started (V4)</a>
+                    <a href="/corvus-json-schema/pr-preview/pr-734/docs/index.html"
+                       class="site-header__link "
+                       >Documentation</a>
+                    <a href="/corvus-json-schema/pr-preview/pr-734/examples/index.html"
+                       class="site-header__link is-active"
+                       aria-current=page>Examples</a>
+                    <a href="/corvus-json-schema/pr-preview/pr-734/api/index.html"
+                       class="site-header__link "
+                       >API</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/playground/"
+               class="site-header__link"
+               target="_blank" rel="noopener noreferrer"
+               title="Interactive JSON Schema playground">Playground</a>
+            <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+               class="site-header__link" target="_blank" rel="noopener noreferrer"
+               aria-label="View on GitHub">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            </a>
+        </nav>
+        <button class="site-header__menu-toggle js-toggle-menu"
+                aria-expanded="false" aria-label="Toggle menu">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+        </button>
+    </div>
+</header>
+<nav class="site-header__nav-mobile js-mobile-nav" aria-label="Mobile navigation">
+            <a href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html" class="site-header__link">Getting Started</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/getting-started-v4/index.html" class="site-header__link">Getting Started (V4)</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/docs/index.html" class="site-header__link">Documentation</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/examples/index.html" class="site-header__link">Examples</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/api/index.html" class="site-header__link">API</a>
+    <a href="/corvus-json-schema/pr-preview/pr-734/playground/" class="site-header__link" target="_blank" rel="noopener noreferrer">Playground</a>
+    <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+       class="site-header__link" target="_blank" rel="noopener noreferrer">GitHub</a>
+</nav>
+
+    <div class="page-content">
+    <div class="layout-docs container">
+    <button class="sidebar-toggle" aria-label="Toggle navigation" aria-expanded="false"></button>
+<div class="sidebar-backdrop"></div>
+<aside class="sidebar">
+    <div class="sidebar__inner">
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Getting Started</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                    <li class="sidebar__item"><a class="sidebar__link" href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html">Tutorial</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Documentation</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/parsed-json-document.html">Parsing &amp; Reading JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/json-document-builder.html">Building &amp; Mutating JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/source-generator.html">Source Generator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/code-generator.html">CLI Code Generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/validator.html">Dynamic Schema Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/migrating-from-v4-to-v5.html">Migrating from V4</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/using-copilot-for-migration.html">Copilot Migration</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/migration-analyzers.html">Migration Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/analyzers.html">Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/schema-evaluator.html">Standalone Schema Evaluator</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Examples</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/data-object.html">Simple Data Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/data-object-validation.html">Data Object Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/reusing-common-types.html">Reusing Common Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/open-versus-closed-types.html">Open Versus Closed Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/extending-a-base-type.html">Extending a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/constraining-a-base-type.html">Constraining a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/creating-a-strongly-typed-array.html">Strongly Typed Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/creating-an-array-of-higher-rank.html">Multi-Dimensional Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/working-with-tensors.html">Working with Tensors</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/creating-tuples.html">Creating Tuples</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/interfaces-and-mix-in-types.html">Interfaces and Mix-In Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link is-active" href="/corvus-json-schema/pr-preview/pr-734/examples/pattern-matching.html">Pattern Matching and Discriminated Unions</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/polymorphism-with-discriminators.html">Polymorphism with Discriminator Properties</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/string-enumerations.html">String Enumerations and Pattern Matching</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/numeric-enumerations.html">Numeric Enumerations</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/maps.html">Maps of Strings to Strongly Typed Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/mapping-input-and-output-values.html">Mapping Input and Output Values</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</aside>
+
+    <main id="main-content" class="layout-docs__main">
+        <div class="doc__content">
+            <h1>Pattern Matching and Discriminated Unions</h1>
+                <div class="card__tags" style="margin-bottom:1.5rem">
+                        <span class="card__tag">recipe</span>
+                        <span class="card__tag">JSON Schema</span>
+                        <span class="card__tag">C#</span>
+                        <span class="card__tag">pattern</span>
+                        <span class="card__tag">matching</span>
+                        <span class="card__tag">discriminated</span>
+                        <span class="card__tag">unions</span>
+                        <span class="card__tag">oneOf</span>
+                        <span class="card__tag">type</span>
+                        <span class="card__tag">format</span>
+                        <span class="card__tag">$ref</span>
+                        <span class="card__tag">$defs</span>
+                        <span class="card__tag">items</span>
+                        <span class="card__tag">required</span>
+                        <span class="card__tag">properties</span>
+                        <span class="card__tag">maximum</span>
+                        <span class="card__tag">minLength</span>
+                        <span class="card__tag">maxLength</span>
+                        <span class="card__tag">Match</span>
+                        <span class="card__tag">From</span>
+                </div>
+<p>This recipe demonstrates how to use JSON Schema <code>oneOf</code> to create discriminated unions that support pattern matching in .NET.</p>
+<h2 id="the-pattern">The Pattern</h2>
+<p>One of the <em>most</em> requested features in .NET is <a href="https://en.wikipedia.org/wiki/Tagged_union">sum types or discriminated unions</a>.</p>
+<p>Generally speaking, the request is for a value that can take on several different, but fixed types. There is some tag or other mechanism which uniquely discriminates between instances of the types, allowing pattern matching to dispatch the value to the correct handler for its type, from an exhaustive list.</p>
+<p>One way to achieve a form of this in C# is via inheritance - through a base class (which represents the discriminated union type) and its derived classes, which represent the different types that could be dispatched:</p>
+<pre><code class="language-csharp">public class UnionType { }
+
+public class FirstType : UnionType { }
+public class SecondType : UnionType { }
+
+string Process(UnionType type)
+{
+    return type switch
+    {
+        FirstType f =&gt; &quot;The first type&quot;,
+        SecondType s =&gt; &quot;The second type&quot;,
+        _ =&gt; &quot;I don't know this type&quot;,
+    };
+}
+
+Console.WriteLine(Process(new SneakyThirdTypeYouDidNotKnowAbout()));
+
+public class SneakyThirdTypeYouDidNotKnowAbout : UnionType { }
+</code></pre>
+<p>However, this has two issues:</p>
+<ol>
+<li><strong>It is invasive</strong> - you have to implement the base class (or interface).</li>
+<li><strong>There is no &quot;exhaustive list&quot;</strong> - our <code>Process()</code> function has no way of knowing it has dealt with all the available cases. Someone might have added another type without us looking - like <code>SneakyThirdTypeYouDidNotKnowAbout</code>.</li>
+</ol>
+<p>The good news is that we can achieve a more flexible sum type using JSON Schema, with the <code>oneOf</code> keyword.</p>
+<p>This defines a list of schemas, and asserts that an instance is valid for <em>exactly</em> one of those possible schemas.</p>
+<p>This addresses the two issues above:</p>
+<ol>
+<li><p>The schemas in the list do not <em>need</em> to have anything in common. It is just a list of arbitrary schemas. Specifically, the schemas in the union do not <em>need</em> to know that the union exists. Therefore it is not invasive in that sense. However, they <em>must</em> have something which uniquely discriminates them such that only <em>one</em> of the schemas in the <code>oneOf</code> array is valid for the instance. It is the responsibility of the person defining the <code>oneOf</code> union schema to ensure that is the case.</p>
+</li>
+<li><p>The <code>oneOf</code> keyword exhaustively lists the types in the union, so pattern matching guarantees that it will cover all valid cases.</p>
+</li>
+</ol>
+<h2 id="the-schemas">The Schemas</h2>
+<p>In our example, we are discriminating between a <code>string</code>, an <code>int32</code>, an <code>object</code> (conforming to the <code>person-open</code> schema) and an <code>array</code> of items (that also conform to the <code>person-open</code> schema).</p>
+<h3 id="discriminated-union-by-type.json">discriminated-union-by-type.json</h3>
+<pre><code class="language-json">{
+    &quot;oneOf&quot;: [
+        { &quot;type&quot;: &quot;string&quot; },
+        {
+            &quot;type&quot;: &quot;integer&quot;,
+            &quot;format&quot;: &quot;int32&quot;
+        },
+        { &quot;$ref&quot;: &quot;./person-open.json&quot; },
+        { &quot;$ref&quot;: &quot;#/$defs/people&quot; }
+    ],
+    &quot;$defs&quot;: {
+        &quot;people&quot;: {
+            &quot;type&quot;: &quot;array&quot;,
+            &quot;items&quot;: { &quot;$ref&quot;: &quot;./person-open.json&quot; }
+        }
+    }
+}
+</code></pre>
+<h3 id="person-open.json">person-open.json</h3>
+<pre><code class="language-json">{
+    &quot;title&quot;: &quot;The person schema https://schema.org/Person&quot;,
+    &quot;type&quot;: &quot;object&quot;,
+    &quot;required&quot;: [ &quot;familyName&quot;, &quot;givenName&quot;, &quot;birthDate&quot; ],
+    &quot;properties&quot;: {
+        &quot;familyName&quot;: { &quot;$ref&quot;: &quot;#/$defs/constrainedString&quot; },
+        &quot;givenName&quot;: { &quot;$ref&quot;: &quot;#/$defs/constrainedString&quot; },
+        &quot;otherNames&quot;: { &quot;$ref&quot;: &quot;#/$defs/constrainedString&quot; },
+        &quot;birthDate&quot;: {
+            &quot;type&quot;: &quot;string&quot;,
+            &quot;format&quot;: &quot;date&quot;
+        },
+        &quot;height&quot;: {
+            &quot;type&quot;: &quot;number&quot;,
+            &quot;format&quot;: &quot;double&quot;,
+            &quot;exclusiveMinimum&quot;: 0.0,
+            &quot;maximum&quot;: 3.0
+        }
+    },
+
+    &quot;$defs&quot;: {
+        &quot;constrainedString&quot;: {
+            &quot;type&quot;: &quot;string&quot;,
+            &quot;minLength&quot;: 1,
+            &quot;maxLength&quot;: 256
+        }
+    }
+}
+</code></pre>
+<p>In this example, we have an entirely heterogeneous set of schemas in our discriminated union.</p>
+<p>In the <a href="/corvus-json-schema/pr-preview/pr-734/examples/polymorphism-with-discriminators.html">next recipe (013-PolymorphismWithDiscriminators)</a>, we will look at a tagged union of schemas, discriminated by a property that indicates type, similar to that found in <a href="https://swagger.io/docs/specification/data-models/inheritance-and-polymorphism/">OpenAPI's polymorphism feature</a>, and <code>System.Text.Json</code>'s <a href="https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/polymorphism?pivots=dotnet-8-0">polymorphic serialization</a>.</p>
+<h2 id="generated-code">Generated Code</h2>
+<p>The code generator produces:</p>
+<ul>
+<li><strong><code>DiscriminatedUnionByType</code></strong> - the union type with a <code>Match()</code> method</li>
+<li><strong><code>JsonString</code></strong> - global type used for the string variant (simple types are reduced to global types)</li>
+<li><strong><code>JsonInt32</code></strong> - global type used for the int32 variant</li>
+<li><strong><code>PersonOpen</code></strong> - the object type</li>
+<li><strong><code>DiscriminatedUnionByType.People</code></strong> - the array type</li>
+</ul>
+<h2 id="pattern-matching">Pattern Matching</h2>
+<p>The <code>Match()</code> method provides exhaustive pattern matching over all possible types in the union:</p>
+<pre><code class="language-csharp">string ProcessDiscriminatedUnion(in DiscriminatedUnionByType value)
+{
+    // Pattern matching requires you to deal with all known types 
+    // and the fallback (failure) case
+    return value.Match(
+        static (in JsonString value) =&gt; $&quot;It was a string: {value}&quot;,
+        static (in JsonInt32 value) =&gt; $&quot;It was an int32: {value}&quot;,
+        static (in PersonOpen value) =&gt; $&quot;It was a person. {value.FamilyName}, {value.GivenName}&quot;,
+        static (in DiscriminatedUnionByType.People value) =&gt; $&quot;It was an array of people. {value.GetArrayLength()}&quot;,
+        static (in DiscriminatedUnionByType unknownValue) =&gt; throw new InvalidOperationException($&quot;Unexpected instance {unknownValue}&quot;));
+}
+</code></pre>
+<h3 id="creating-instances">Creating instances</h3>
+<p>Parse JSON directly into the union type:</p>
+<pre><code class="language-csharp">// Parse a person
+string personJson = &quot;&quot;&quot;
+    {
+      &quot;familyName&quot;: &quot;Brontë&quot;,
+      &quot;givenName&quot;: &quot;Anne&quot;,
+      &quot;birthDate&quot;: &quot;1820-01-17&quot;,
+      &quot;height&quot;: 1.57
+    }
+    &quot;&quot;&quot;;
+
+using var parsedPerson = ParsedJsonDocument&lt;PersonOpen&gt;.Parse(personJson);
+PersonOpen person = parsedPerson.RootElement;
+
+// Use From() to convert to the union type
+DiscriminatedUnionByType union1 = DiscriminatedUnionByType.From(person);
+
+Console.WriteLine(ProcessDiscriminatedUnion(union1));
+// Output: It was a person. Brontë, Anne
+
+// Parse an array directly as the union type
+string arrayJson = &quot;&quot;&quot;
+    [
+      {
+        &quot;familyName&quot;: &quot;Brontë&quot;,
+        &quot;givenName&quot;: &quot;Anne&quot;,
+        &quot;birthDate&quot;: &quot;1820-01-17&quot;,
+        &quot;height&quot;: 1.57
+      }
+    ]
+    &quot;&quot;&quot;;
+using var parsedArray = ParsedJsonDocument&lt;DiscriminatedUnionByType&gt;.Parse(arrayJson);
+
+Console.WriteLine(ProcessDiscriminatedUnion(parsedArray.RootElement));
+// Output: It was an array of people. 1
+</code></pre>
+<h2 id="key-differences-from-v4">Key Differences from V4</h2>
+<p>The <code>Match()</code> API and pattern matching experience are essentially the same between V4 and V5. Both versions support implicit conversion from constituent entity types:</p>
+<h3 id="v4-corvus.json">V4 (Corvus.Json)</h3>
+<pre><code class="language-csharp">// Implicit conversion from constituent types, including built-in types
+Console.WriteLine(ProcessDiscriminatedUnion(personForDiscriminatedUnion));
+Console.WriteLine(ProcessDiscriminatedUnion(&quot;Hello from the pattern matching&quot;));
+Console.WriteLine(ProcessDiscriminatedUnion(32));
+</code></pre>
+<h3 id="v5-corvus.text.json">V5 (Corvus.Text.Json)</h3>
+<pre><code class="language-csharp">// Implicit conversion from constituent entity types
+Console.WriteLine(ProcessDiscriminatedUnion(person));
+
+// For non-entity types, use From()
+DiscriminatedUnionByType union = DiscriminatedUnionByType.From(JsonAny.Parse(&quot;\&quot;Hello\&quot;&quot;));
+</code></pre>
+<p><strong>Key differences:</strong></p>
+<ul>
+<li>V5 provides implicit conversion from constituent entity types (e.g., <code>PersonOpen</code>, <code>People</code>) just as V4 did</li>
+<li>V4 additionally supported implicit conversion from .NET built-in literals (strings, integers); in V5 you use <code>From()</code> or parse for those cases</li>
+<li>The <code>Match()</code> method, handler signatures, and exhaustive matching behaviour are unchanged</li>
+</ul>
+<h2 id="running-the-example">Running the Example</h2>
+<pre><code class="language-bash">cd docs/ExampleRecipes/012-PatternMatching
+dotnet run
+</code></pre>
+<p>See <a href="/corvus-json-schema/pr-preview/pr-734/examples/polymorphism-with-discriminators.html">Recipe 013</a> for pattern matching with discriminator properties, which is the more common approach in real APIs.</p>
+<h2 id="related-patterns">Related Patterns</h2>
+<ul>
+<li><a href="/corvus-json-schema/pr-preview/pr-734/examples/interfaces-and-mix-in-types.html">011-InterfacesAndMixInTypes</a> - Composition with <code>allOf</code></li>
+<li><a href="/corvus-json-schema/pr-preview/pr-734/examples/polymorphism-with-discriminators.html">013-PolymorphismWithDiscriminators</a> - Discriminated unions with type properties</li>
+<li><a href="/corvus-json-schema/pr-preview/pr-734/examples/string-enumerations.html">014-StringEnumerations</a> - Pattern matching over string enums</li>
+</ul>
+<h2 id="frequently-asked-questions">Frequently Asked Questions</h2>
+<h3 id="q-what-happens-if-more-than-one-oneof-variant-matches">Q: What happens if more than one <code>oneOf</code> variant matches?</h3>
+<p><strong>A:</strong> Validation fails. The <code>oneOf</code> keyword requires that exactly one of the subschemas matches. If zero or more than one match, the value is invalid according to the schema. This is what makes <code>oneOf</code> suitable for discriminated unions — each value must belong to precisely one variant.</p>
+<h3 id="q-can-i-use-oneof-with-variants-of-the-same-json-type">Q: Can I use <code>oneOf</code> with variants of the same JSON type?</h3>
+<p><strong>A:</strong> Yes, but you need a way to distinguish them. If multiple variants are objects, add a discriminator property with a <code>const</code> value to each variant (see <a href="/corvus-json-schema/pr-preview/pr-734/examples/polymorphism-with-discriminators.html">Recipe 013</a>). Without a discriminator, variants of the same JSON type risk ambiguous matching, which would cause validation failures.</p>
+<h3 id="q-why-does-the-code-generator-use-oneof0entityoneof1entity-names">Q: Why does the code generator use <code>OneOf0Entity</code>/<code>OneOf1Entity</code> names?</h3>
+<p><strong>A:</strong> The <code>oneOf</code> subschemas don't have inherent names — they are anonymous entries in an array, so the code generator assigns ordinal names. With discriminator properties, variants are named by their required properties instead (e.g., <code>RequiredRadiusAndType</code>). You can always provide explicit names, either via CLI generator configuration or by adding a model type for the schema location:</p>
+<pre><code class="language-csharp">[JsonSchemaTypeGenerator(&quot;some-union-type.json#/oneOf/0&quot;)]
+public readonly partial struct MySpeciallyNamedType;
+</code></pre>
+<p>Note that simple types may be reduced to global types like <code>JsonString</code> or <code>JsonInt32</code>, in which case the explicit name will not be used.</p>
+<h3 id="q-what-is-the-defaultmatch-handler-for">Q: What is the <code>defaultMatch</code> handler for?</h3>
+<p><strong>A:</strong> The <code>defaultMatch</code> handler is called when no other variant matches. In a well-validated schema this shouldn't happen, but it provides a safety net for cases where the JSON data hasn't been validated against the schema. It follows the same pattern as a <code>default</code> case in a C# <code>switch</code> expression, ensuring exhaustive handling.</p>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Q: What happens if more than one `oneOf` variant matches?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "**A:** Validation fails. The oneOf keyword requires that exactly one of the subschemas matches. If zero or more than one match, the value is invalid according to the schema. This is what makes oneOf suitable for discriminated unions — each value must belong to precisely one variant."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Q: Can I use `oneOf` with variants of the same JSON type?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "**A:** Yes, but you need a way to distinguish them. If multiple variants are objects, add a discriminator property with a const value to each variant (see [Recipe 013](../013-PolymorphismWithDiscriminators/)). Without a discriminator, variants of the same JSON type risk ambiguous matching, which would cause validation failures."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Q: Why does the code generator use `OneOf0Entity`/`OneOf1Entity` names?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "**A:** The oneOf subschemas don't have inherent names — they are anonymous entries in an array, so the code generator assigns ordinal names. With discriminator properties, variants are named by their required properties instead (e.g., RequiredRadiusAndType). You can always provide explicit names, either via CLI generator configuration or by adding a model type for the schema location:"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Q: What is the `defaultMatch` handler for?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "**A:** The defaultMatch handler is called when no other variant matches. In a well-validated schema this shouldn't happen, but it provides a safety net for cases where the JSON data hasn't been validated against the schema. It follows the same pattern as a default case in a C# switch expression, ensuring exhaustive handling."
+      }
+    }
+  ]
+}
+</script>
+        </div>
+    </main>
+</div>
+
+    </div>
+    <footer class="site-footer">
+    <div class="site-footer__inner">
+        <div class="site-footer__sponsor">
+            Sponsored by
+            <a href="https://endjin.com" target="_blank" rel="noopener noreferrer">endjin</a>
+        </div>
+        <ul class="site-footer__links" role="list">
+            <li><a class="site-footer__link" href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html">Getting Started</a></li>
+            <li><a class="site-footer__link" href="/corvus-json-schema/pr-preview/pr-734/docs/index.html">Documentation</a></li>
+            <li><a class="site-footer__link" href="/corvus-json-schema/pr-preview/pr-734/examples/index.html">Examples</a></li>
+            <li><a class="site-footer__link" href="/corvus-json-schema/pr-preview/pr-734/api/index.html">API</a></li>
+            <li><a class="site-footer__link" href="https://github.com/corvus-dotnet/Corvus.JsonSchema" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            <li><a class="site-footer__link" href="https://www.nuget.org/packages?q=Corvus.Json" target="_blank" rel="noopener noreferrer">NuGet</a></li>
+        </ul>
+        <p class="site-footer__copyright">&copy; 2026 endjin Ltd.</p>
+    </div>
+</footer>
+
+    <!-- highlight.js for syntax highlighting (CSS targets .hljs-* classes) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/csharp.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js" defer></script>
+    <script>document.addEventListener('DOMContentLoaded',()=>hljs.highlightAll())</script>
+    <script src="/corvus-json-schema/pr-preview/pr-734/assets/js/main.js" defer></script>
+    <script src="/corvus-json-schema/pr-preview/pr-734/assets/js/sidebar-search.js" defer></script>
+    
+</body>
+</html>

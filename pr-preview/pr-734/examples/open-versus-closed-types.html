@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1C1D21" />
+    <meta name="description" content="This recipe demonstrates how to use `unevaluatedProperties` to control whether a JSON Schema object type is open (extensible) or closed (strict), and how that affects validation and mutation in generated .NET code." />
+    <meta name="keywords" content="recipe, JSON Schema, C#, open, versus, closed, types, type, required, properties, $ref, format, maximum, $defs, minLength, maxLength, unevaluatedProperties, EvaluateSchema, IsValid, From, TryGetProperty" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:description" content="This recipe demonstrates how to use `unevaluatedProperties` to control whether a JSON Schema object type is open (extensible) or closed (strict), and how that affects validation and mutation in generated .NET code." />
+    <meta name="twitter:image" content="/corvus-json-schema/pr-preview/pr-734/assets/images/og-corvus.png" />
+    <meta name="twitter:title" content="Open Versus Closed Types - Corvus.Text.Json Examples" />
+    <meta property="article:tag" content="recipe" />
+    <meta property="article:tag" content="JSON Schema" />
+    <meta property="article:tag" content="C#" />
+    <meta property="article:tag" content="open" />
+    <meta property="article:tag" content="versus" />
+    <meta property="article:tag" content="closed" />
+    <meta property="article:tag" content="types" />
+    <meta property="article:tag" content="type" />
+    <meta property="article:tag" content="required" />
+    <meta property="article:tag" content="properties" />
+    <meta property="article:tag" content="$ref" />
+    <meta property="article:tag" content="format" />
+    <meta property="article:tag" content="maximum" />
+    <meta property="article:tag" content="$defs" />
+    <meta property="article:tag" content="minLength" />
+    <meta property="article:tag" content="maxLength" />
+    <meta property="article:tag" content="unevaluatedProperties" />
+    <meta property="article:tag" content="EvaluateSchema" />
+    <meta property="article:tag" content="IsValid" />
+    <meta property="article:tag" content="From" />
+    <meta property="article:tag" content="TryGetProperty" />
+    <meta property="og:description" content="This recipe demonstrates how to use `unevaluatedProperties` to control whether a JSON Schema object type is open (extensible) or closed (strict), and how that affects validation and mutation in generated .NET code." />
+    <meta property="og:image" content="/corvus-json-schema/pr-preview/pr-734/assets/images/og-corvus.png" />
+    <meta property="og:title" content="Open Versus Closed Types - Corvus.Text.Json Examples" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://corvus-oss.org/corvus-json-schema/examples/open-versus-closed-types/" />
+    <title>Open Versus Closed Types - Corvus.Text.Json Examples</title>
+    <link itemprop="url" href="https://corvus-oss.org/corvus-json-schema/examples/open-versus-closed-types/" />
+    <link rel="canonical" href="https://corvus-oss.org/corvus-json-schema/examples/open-versus-closed-types/" />
+    <link rel="sitemap" href="https://corvus-oss.org/corvus-json-schema/sitemap.xml" />
+    <!-- Styles -->
+    <link rel="stylesheet" href="/corvus-json-schema/pr-preview/pr-734/main.css" />
+    <link rel="icon" type="image/svg+xml" href="/corvus-json-schema/pr-preview/pr-734/assets/images/favicon.svg" />
+    
+</head>
+<body>
+    <a class="sr-only" href="#main-content">Skip to content</a>
+<header class="site-header">
+    <div class="site-header__inner">
+        <a class="site-header__brand" href="/corvus-json-schema/pr-preview/pr-734/index.html" aria-label="Corvus.JsonSchema home">
+            <img src="/corvus-json-schema/pr-preview/pr-734/assets/images/logo-corvus.svg" alt="" width="28" height="28" aria-hidden="true" />
+            Corvus<span style="color:var(--color-brand)">.</span>Json<span style="color:var(--color-brand)">Schema</span>
+        </a>
+        <nav class="site-header__nav-desktop" aria-label="Main navigation">
+                    <a href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html"
+                       class="site-header__link "
+                       >Getting Started</a>
+                    <a href="/corvus-json-schema/pr-preview/pr-734/getting-started-v4/index.html"
+                       class="site-header__link "
+                       >Getting Started (V4)</a>
+                    <a href="/corvus-json-schema/pr-preview/pr-734/docs/index.html"
+                       class="site-header__link "
+                       >Documentation</a>
+                    <a href="/corvus-json-schema/pr-preview/pr-734/examples/index.html"
+                       class="site-header__link is-active"
+                       aria-current=page>Examples</a>
+                    <a href="/corvus-json-schema/pr-preview/pr-734/api/index.html"
+                       class="site-header__link "
+                       >API</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/playground/"
+               class="site-header__link"
+               target="_blank" rel="noopener noreferrer"
+               title="Interactive JSON Schema playground">Playground</a>
+            <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+               class="site-header__link" target="_blank" rel="noopener noreferrer"
+               aria-label="View on GitHub">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            </a>
+        </nav>
+        <button class="site-header__menu-toggle js-toggle-menu"
+                aria-expanded="false" aria-label="Toggle menu">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+        </button>
+    </div>
+</header>
+<nav class="site-header__nav-mobile js-mobile-nav" aria-label="Mobile navigation">
+            <a href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html" class="site-header__link">Getting Started</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/getting-started-v4/index.html" class="site-header__link">Getting Started (V4)</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/docs/index.html" class="site-header__link">Documentation</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/examples/index.html" class="site-header__link">Examples</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/api/index.html" class="site-header__link">API</a>
+    <a href="/corvus-json-schema/pr-preview/pr-734/playground/" class="site-header__link" target="_blank" rel="noopener noreferrer">Playground</a>
+    <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+       class="site-header__link" target="_blank" rel="noopener noreferrer">GitHub</a>
+</nav>
+
+    <div class="page-content">
+    <div class="layout-docs container">
+    <button class="sidebar-toggle" aria-label="Toggle navigation" aria-expanded="false"></button>
+<div class="sidebar-backdrop"></div>
+<aside class="sidebar">
+    <div class="sidebar__inner">
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Getting Started</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                    <li class="sidebar__item"><a class="sidebar__link" href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html">Tutorial</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Documentation</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/parsed-json-document.html">Parsing &amp; Reading JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/json-document-builder.html">Building &amp; Mutating JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/source-generator.html">Source Generator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/code-generator.html">CLI Code Generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/validator.html">Dynamic Schema Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/migrating-from-v4-to-v5.html">Migrating from V4</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/using-copilot-for-migration.html">Copilot Migration</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/migration-analyzers.html">Migration Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/analyzers.html">Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/schema-evaluator.html">Standalone Schema Evaluator</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Examples</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/data-object.html">Simple Data Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/data-object-validation.html">Data Object Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/reusing-common-types.html">Reusing Common Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link is-active" href="/corvus-json-schema/pr-preview/pr-734/examples/open-versus-closed-types.html">Open Versus Closed Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/extending-a-base-type.html">Extending a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/constraining-a-base-type.html">Constraining a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/creating-a-strongly-typed-array.html">Strongly Typed Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/creating-an-array-of-higher-rank.html">Multi-Dimensional Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/working-with-tensors.html">Working with Tensors</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/creating-tuples.html">Creating Tuples</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/interfaces-and-mix-in-types.html">Interfaces and Mix-In Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/pattern-matching.html">Pattern Matching and Discriminated Unions</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/polymorphism-with-discriminators.html">Polymorphism with Discriminator Properties</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/string-enumerations.html">String Enumerations and Pattern Matching</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/numeric-enumerations.html">Numeric Enumerations</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/maps.html">Maps of Strings to Strongly Typed Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/mapping-input-and-output-values.html">Mapping Input and Output Values</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</aside>
+
+    <main id="main-content" class="layout-docs__main">
+        <div class="doc__content">
+            <h1>Open Versus Closed Types</h1>
+                <div class="card__tags" style="margin-bottom:1.5rem">
+                        <span class="card__tag">recipe</span>
+                        <span class="card__tag">JSON Schema</span>
+                        <span class="card__tag">C#</span>
+                        <span class="card__tag">open</span>
+                        <span class="card__tag">versus</span>
+                        <span class="card__tag">closed</span>
+                        <span class="card__tag">types</span>
+                        <span class="card__tag">type</span>
+                        <span class="card__tag">required</span>
+                        <span class="card__tag">properties</span>
+                        <span class="card__tag">$ref</span>
+                        <span class="card__tag">format</span>
+                        <span class="card__tag">maximum</span>
+                        <span class="card__tag">$defs</span>
+                        <span class="card__tag">minLength</span>
+                        <span class="card__tag">maxLength</span>
+                        <span class="card__tag">unevaluatedProperties</span>
+                        <span class="card__tag">EvaluateSchema</span>
+                        <span class="card__tag">IsValid</span>
+                        <span class="card__tag">From</span>
+                        <span class="card__tag">TryGetProperty</span>
+                </div>
+<p>This recipe demonstrates how to use <code>unevaluatedProperties</code> to control whether a JSON Schema object type is open (extensible) or closed (strict), and how that affects validation and mutation in generated .NET code.</p>
+<h2 id="the-pattern">The Pattern</h2>
+<p><strong>Open Types</strong></p>
+<p>In this context, an open type is an <code>object</code> type that is still valid when it contains properties other than those explicitly defined in its own schema (such as those under the <code>properties</code> keyword).</p>
+<p>By default, JSON Schema assumes an open content model, meaning that unless specified otherwise, objects can have additional properties not declared in the schema.</p>
+<p>This is useful when you want your objects to be extensible or when you don't want to strictly validate every property.</p>
+<p>Allowing this extensibility is a common approach to &quot;versioning by evolution&quot; or &quot;backwards compatibility&quot; where it is intended that new versions of a schema are still accepted by old consumers that don't know about (or use) the new extensions.</p>
+<p><strong>Closed Types</strong></p>
+<p>If you want to create a <em>closed</em> type in JSON Schema, you would set <code>unevaluatedProperties</code> to <code>false</code>.</p>
+<p>This means that the object can only contain properties that are explicitly defined in the schema, and no others.</p>
+<p>This is commonly used in &quot;parallel versioning&quot; where old consumers do <em>not</em> support new versions of schema, and typically new versions have new names to avoid confusion.</p>
+<blockquote>
+<p><strong>Note:</strong> Prior to draft 2020-12, <code>unevaluatedProperties</code> was not available and you would use <code>additionalProperties</code>. The semantics are slightly different (and a little complex!), and you would generally prefer <code>unevaluatedProperties</code> today.</p>
+</blockquote>
+<h2 id="the-schemas">The Schemas</h2>
+<p>File: <code>person-open.json</code></p>
+<pre><code class="language-json">{
+  &quot;title&quot;: &quot;The person schema https://schema.org/Person&quot;,
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;required&quot;: [ &quot;familyName&quot;, &quot;givenName&quot;, &quot;birthDate&quot; ],
+  &quot;properties&quot;: {
+    &quot;familyName&quot;: { &quot;$ref&quot;: &quot;#/$defs/constrainedString&quot; },
+    &quot;givenName&quot;: { &quot;$ref&quot;: &quot;#/$defs/constrainedString&quot; },
+    &quot;otherNames&quot;: { &quot;$ref&quot;: &quot;#/$defs/constrainedString&quot; },
+    &quot;birthDate&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;format&quot;: &quot;date&quot;
+    },
+    &quot;height&quot;: {
+      &quot;type&quot;: &quot;number&quot;,
+      &quot;format&quot;: &quot;double&quot;,
+      &quot;exclusiveMinimum&quot;: 0.0,
+      &quot;maximum&quot;: 3.0
+    }
+  },
+
+  &quot;$defs&quot;: {
+    &quot;constrainedString&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;maxLength&quot;: 256
+    }
+  }
+}
+</code></pre>
+<p>This generates:</p>
+<ul>
+<li><code>PersonOpen</code> — the root object type</li>
+<li><code>PersonOpen.ConstrainedString</code> — shared string type with length constraints</li>
+<li><code>PersonOpen.HeightEntity</code> — constrained height type</li>
+</ul>
+<p>File: <code>person-closed.json</code></p>
+<pre><code class="language-json">{
+  &quot;title&quot;: &quot;The person schema https://schema.org/Person&quot;,
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;required&quot;: [ &quot;familyName&quot;, &quot;givenName&quot;, &quot;birthDate&quot; ],
+  &quot;properties&quot;: {
+    &quot;familyName&quot;: { &quot;$ref&quot;: &quot;#/$defs/constrainedString&quot; },
+    &quot;givenName&quot;: { &quot;$ref&quot;: &quot;#/$defs/constrainedString&quot; },
+    &quot;otherNames&quot;: { &quot;$ref&quot;: &quot;#/$defs/constrainedString&quot; },
+    &quot;birthDate&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;format&quot;: &quot;date&quot;
+    },
+    &quot;height&quot;: {
+      &quot;type&quot;: &quot;number&quot;,
+      &quot;format&quot;: &quot;double&quot;,
+      &quot;exclusiveMinimum&quot;: 0.0,
+      &quot;maximum&quot;: 3.0
+    }
+  },
+
+  &quot;unevaluatedProperties&quot;: false,
+
+  &quot;$defs&quot;: {
+    &quot;constrainedString&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;maxLength&quot;: 256
+    }
+  }
+}
+</code></pre>
+<p>This generates:</p>
+<ul>
+<li><code>PersonClosed</code> — the root object type with <code>unevaluatedProperties: false</code></li>
+<li><code>PersonClosed.ConstrainedString</code> — shared string type</li>
+<li><code>PersonClosed.HeightEntity</code> — constrained height type</li>
+</ul>
+<h2 id="generated-code-usage">Generated Code Usage</h2>
+<h3 id="validating-open-vs-closed-types">Validating open vs closed types</h3>
+<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/v5/docs/ExampleRecipes/004-OpenVersusClosedTypes/Program.cs">Example code</a></p>
+<pre><code class="language-csharp">using Corvus.Text.Json;
+using OpenVersusClosedTypes.Models;
+
+// A person with an additional property: &quot;jobRole&quot;.
+string extendedPersonJsonString =
+    &quot;&quot;&quot;
+    {
+        &quot;familyName&quot;: &quot;Brontë&quot;,
+        &quot;givenName&quot;: &quot;Anne&quot;,
+        &quot;birthDate&quot;: &quot;1820-01-17&quot;,
+        &quot;height&quot;: 1.57,
+        &quot;jobRole&quot;: &quot;Author&quot;
+    }
+    &quot;&quot;&quot;;
+
+using var parsedPersonOpen = ParsedJsonDocument&lt;PersonOpen&gt;.Parse(extendedPersonJsonString);
+PersonOpen personOpen = parsedPersonOpen.RootElement;
+
+// An object is, by default, open - allowing undeclared properties.
+if (personOpen.EvaluateSchema())
+{
+    Console.WriteLine(&quot;personOpen is valid&quot;);
+}
+else
+{
+    Console.WriteLine(&quot;personOpen is not valid&quot;);
+}
+
+using var parsedPersonClosed = ParsedJsonDocument&lt;PersonClosed&gt;.Parse(extendedPersonJsonString);
+PersonClosed personClosed = parsedPersonClosed.RootElement;
+
+// An object with unevaluatedProperties: false does not allow undeclared properties.
+if (personClosed.EvaluateSchema())
+{
+    Console.WriteLine(&quot;personClosed is valid&quot;);
+}
+else
+{
+    Console.WriteLine(&quot;personClosed is not valid&quot;);
+}
+</code></pre>
+<h3 id="fixing-a-closed-type-by-removing-undeclared-properties">Fixing a closed type by removing undeclared properties</h3>
+<pre><code class="language-csharp">// We can still use an invalid entity - and fix it; for instance, by removing
+// the invalid property via the open type's generic RemoveProperty method.
+using JsonWorkspace workspace = JsonWorkspace.Create();
+using var fixedDoc = personOpen.CreateBuilder(workspace);
+PersonOpen.Mutable fixedRoot = fixedDoc.RootElement;
+fixedRoot.RemoveProperty(&quot;jobRole&quot;u8);
+
+PersonClosed personFixed = PersonClosed.From(fixedDoc.RootElement);
+if (personFixed.EvaluateSchema())
+{
+    Console.WriteLine(&quot;personFixed is valid&quot;);
+}
+else
+{
+    Console.WriteLine(&quot;personFixed is not valid&quot;);
+}
+</code></pre>
+<h3 id="breaking-a-closed-type-by-adding-undeclared-properties">Breaking a closed type by adding undeclared properties</h3>
+<pre><code class="language-csharp">// Equally we can make a valid entity invalid by setting an unknown property.
+using var brokenDoc = personOpen.CreateBuilder(workspace);
+PersonOpen.Mutable brokenRoot = brokenDoc.RootElement;
+brokenRoot.SetProperty(&quot;age&quot;u8, 23);
+
+PersonClosed personBroken = PersonClosed.From(brokenDoc.RootElement);
+if (personBroken.EvaluateSchema())
+{
+    Console.WriteLine(&quot;personBroken is valid&quot;);
+}
+else
+{
+    Console.WriteLine(&quot;personBroken is not valid&quot;);
+}
+</code></pre>
+<h2 id="key-differences-from-v4">Key Differences from V4</h2>
+<h3 id="v4-corvus.json">V4 (Corvus.Json)</h3>
+<pre><code class="language-csharp">// Parse directly (no document wrapper)
+PersonOpen personOpen = PersonOpen.Parse(extendedPersonJsonString);
+
+// Validate
+bool isValid = personOpen.IsValid();
+
+// Create a new instance with a property removed (immutable transform)
+PersonOpen fixedPerson = personOpen.RemoveProperty(&quot;jobRole&quot;);
+
+// Implicit conversion between types
+PersonClosed personClosed = fixedPerson.As&lt;PersonClosed&gt;();
+</code></pre>
+<h3 id="v5-corvus.text.json">V5 (Corvus.Text.Json)</h3>
+<pre><code class="language-csharp">// Parse with document wrapper for resource management
+using var parsedPersonOpen = ParsedJsonDocument&lt;PersonOpen&gt;.Parse(extendedPersonJsonString);
+PersonOpen personOpen = parsedPersonOpen.RootElement;
+
+// Validate
+bool isValid = personOpen.EvaluateSchema();
+
+// Mutate via workspace and builder
+using JsonWorkspace workspace = JsonWorkspace.Create();
+using var fixedDoc = personOpen.CreateBuilder(workspace);
+fixedDoc.RootElement.RemoveProperty(&quot;jobRole&quot;u8);
+
+// Convert between types with From()
+PersonClosed personClosed = PersonClosed.From(fixedDoc.RootElement);
+</code></pre>
+<p><strong>Key differences:</strong></p>
+<ul>
+<li>V5 uses <code>ParsedJsonDocument&lt;T&gt;</code> for parsing with proper resource management (<code>using</code>)</li>
+<li>V5 uses <code>EvaluateSchema()</code> instead of <code>IsValid()</code> for schema validation</li>
+<li>V5 mutations use a <code>JsonWorkspace</code> and mutable builder pattern instead of immutable transforms</li>
+<li>V5 uses <code>From()</code> for explicit type conversion instead of <code>As&lt;T&gt;()</code></li>
+<li>V5 uses UTF-8 byte literals (<code>&quot;jobRole&quot;u8</code>) for zero-allocation property access</li>
+</ul>
+<h2 id="running-the-example">Running the Example</h2>
+<pre><code class="language-bash">cd docs/ExampleRecipes/004-OpenVersusClosedTypes
+dotnet run
+</code></pre>
+<h2 id="related-patterns">Related Patterns</h2>
+<ul>
+<li><a href="/corvus-json-schema/pr-preview/pr-734/examples/extending-a-base-type.html">005-ExtendingABaseType</a> - Adding properties to an open base type</li>
+<li><a href="/corvus-json-schema/pr-preview/pr-734/examples/constraining-a-base-type.html">006-ConstrainingABaseType</a> - Adding constraints to a base type</li>
+<li><a href="/corvus-json-schema/pr-preview/pr-734/examples/maps.html">016-Maps</a> - Using <code>additionalProperties</code> for map/dictionary structures</li>
+</ul>
+<h2 id="frequently-asked-questions">Frequently Asked Questions</h2>
+<h3 id="when-should-i-use-an-open-type-vs-a-closed-type">When should I use an open type vs a closed type?</h3>
+<p>Use <strong>open types</strong> when you want forwards compatibility — consumers that understand an older version of the schema will still accept documents that include properties added in newer versions. This is the default in JSON Schema and is ideal for evolving APIs. Use <strong>closed types</strong> (<code>unevaluatedProperties: false</code>) when you need strict validation — for example, when unknown properties indicate a client error, or when you use parallel versioning with distinct schema names for each version.</p>
+<h3 id="what-is-the-difference-between-unevaluatedproperties-and-additionalproperties">What is the difference between <code>unevaluatedProperties</code> and <code>additionalProperties</code>?</h3>
+<p>Both can close a type, but they differ in scope. <code>additionalProperties</code> only considers properties declared directly in the same schema's <code>properties</code> and <code>patternProperties</code> keywords. <code>unevaluatedProperties</code> (introduced in draft 2020-12) considers properties evaluated by <em>any</em> applicator keyword in the schema — including <code>allOf</code>, <code>oneOf</code>, <code>anyOf</code>, <code>if/then/else</code>, and <code>$ref</code>. This means <code>unevaluatedProperties: false</code> works correctly with composed schemas, whereas <code>additionalProperties: false</code> can accidentally reject properties declared in referenced schemas. Prefer <code>unevaluatedProperties</code> in draft 2020-12 and later.</p>
+<h3 id="can-i-still-access-undeclared-properties-on-a-closed-type">Can I still access undeclared properties on a closed type?</h3>
+<p>Yes. The generated .NET type for a closed schema still has the generic <code>TryGetProperty()</code> method, so you can read any property present in the underlying JSON. However, the document will fail <code>EvaluateSchema()</code> if it contains properties not declared in the schema. Closing a type is a <em>validation</em> concern, not a data-access concern.</p>
+<h3 id="how-does-openclosed-affect-api-versioning">How does open/closed affect API versioning?</h3>
+<p>With <strong>open types</strong>, a v2 document that adds a new <code>email</code> property is still valid against the v1 schema — older consumers simply ignore the extra field. With <strong>closed types</strong>, the v1 schema rejects the v2 document because <code>email</code> is not declared. This forces you to publish a new schema (e.g., <code>person-v2-closed.json</code>) with its own name and version, making the version boundary explicit.</p>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "When should I use an open type vs a closed type?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Use **open types** when you want forwards compatibility — consumers that understand an older version of the schema will still accept documents that include properties added in newer versions. This is the default in JSON Schema and is ideal for evolving APIs. Use **closed types** (unevaluatedProperties: false) when you need strict validation — for example, when unknown properties indicate a client error, or when you use parallel versioning with distinct schema names for each version."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is the difference between `unevaluatedProperties` and `additionalProperties`?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Both can close a type, but they differ in scope. additionalProperties only considers properties declared directly in the same schema's properties and patternProperties keywords. unevaluatedProperties (introduced in draft 2020-12) considers properties evaluated by *any* applicator keyword in the schema — including allOf, oneOf, anyOf, if/then/else, and $ref. This means unevaluatedProperties: false works correctly with composed schemas, whereas additionalProperties: false can accidentally reject properties declared in referenced schemas. Prefer unevaluatedProperties in draft 2020-12 and later."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I still access undeclared properties on a closed type?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. The generated .NET type for a closed schema still has the generic TryGetProperty() method, so you can read any property present in the underlying JSON. However, the document will fail EvaluateSchema() if it contains properties not declared in the schema. Closing a type is a *validation* concern, not a data-access concern."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How does open/closed affect API versioning?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "With **open types**, a v2 document that adds a new email property is still valid against the v1 schema — older consumers simply ignore the extra field. With **closed types**, the v1 schema rejects the v2 document because email is not declared. This forces you to publish a new schema (e.g., person-v2-closed.json) with its own name and version, making the version boundary explicit."
+      }
+    }
+  ]
+}
+</script>
+        </div>
+    </main>
+</div>
+
+    </div>
+    <footer class="site-footer">
+    <div class="site-footer__inner">
+        <div class="site-footer__sponsor">
+            Sponsored by
+            <a href="https://endjin.com" target="_blank" rel="noopener noreferrer">endjin</a>
+        </div>
+        <ul class="site-footer__links" role="list">
+            <li><a class="site-footer__link" href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html">Getting Started</a></li>
+            <li><a class="site-footer__link" href="/corvus-json-schema/pr-preview/pr-734/docs/index.html">Documentation</a></li>
+            <li><a class="site-footer__link" href="/corvus-json-schema/pr-preview/pr-734/examples/index.html">Examples</a></li>
+            <li><a class="site-footer__link" href="/corvus-json-schema/pr-preview/pr-734/api/index.html">API</a></li>
+            <li><a class="site-footer__link" href="https://github.com/corvus-dotnet/Corvus.JsonSchema" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            <li><a class="site-footer__link" href="https://www.nuget.org/packages?q=Corvus.Json" target="_blank" rel="noopener noreferrer">NuGet</a></li>
+        </ul>
+        <p class="site-footer__copyright">&copy; 2026 endjin Ltd.</p>
+    </div>
+</footer>
+
+    <!-- highlight.js for syntax highlighting (CSS targets .hljs-* classes) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/csharp.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js" defer></script>
+    <script>document.addEventListener('DOMContentLoaded',()=>hljs.highlightAll())</script>
+    <script src="/corvus-json-schema/pr-preview/pr-734/assets/js/main.js" defer></script>
+    <script src="/corvus-json-schema/pr-preview/pr-734/assets/js/sidebar-search.js" defer></script>
+    
+</body>
+</html>

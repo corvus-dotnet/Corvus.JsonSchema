@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1C1D21" />
+    <meta name="description" content="Complete reference for the Corvus.Text.Json migration analyzers &#x2014; Roslyn diagnostics that detect V4 Corvus.Json patterns and guide you to V5 equivalents, with automatic code fixes for common transformations." />
+    <meta name="keywords" content="documentation, Corvus.Text.Json" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:description" content="Complete reference for the Corvus.Text.Json migration analyzers &#x2014; Roslyn diagnostics that detect V4 Corvus.Json patterns and guide you to V5 equivalents, with automatic code fixes for common transformations." />
+    <meta name="twitter:image" content="/corvus-json-schema/pr-preview/pr-734/assets/images/og-corvus.png" />
+    <meta name="twitter:title" content="Migration Analyzers - Corvus.Text.Json" />
+    <meta property="article:tag" content="documentation" />
+    <meta property="article:tag" content="Corvus.Text.Json" />
+    <meta property="og:description" content="Complete reference for the Corvus.Text.Json migration analyzers &#x2014; Roslyn diagnostics that detect V4 Corvus.Json patterns and guide you to V5 equivalents, with automatic code fixes for common transformations." />
+    <meta property="og:image" content="/corvus-json-schema/pr-preview/pr-734/assets/images/og-corvus.png" />
+    <meta property="og:title" content="Migration Analyzers - Corvus.Text.Json" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://corvus-oss.org/corvus-json-schema/docs/migration-analyzers/" />
+    <title>Migration Analyzers - Corvus.Text.Json</title>
+    <link itemprop="url" href="https://corvus-oss.org/corvus-json-schema/docs/migration-analyzers/" />
+    <link rel="canonical" href="https://corvus-oss.org/corvus-json-schema/docs/migration-analyzers/" />
+    <link rel="sitemap" href="https://corvus-oss.org/corvus-json-schema/sitemap.xml" />
+    <!-- Styles -->
+    <link rel="stylesheet" href="/corvus-json-schema/pr-preview/pr-734/main.css" />
+    <link rel="icon" type="image/svg+xml" href="/corvus-json-schema/pr-preview/pr-734/assets/images/favicon.svg" />
+    
+</head>
+<body>
+    <a class="sr-only" href="#main-content">Skip to content</a>
+<header class="site-header">
+    <div class="site-header__inner">
+        <a class="site-header__brand" href="/corvus-json-schema/pr-preview/pr-734/index.html" aria-label="Corvus.JsonSchema home">
+            <img src="/corvus-json-schema/pr-preview/pr-734/assets/images/logo-corvus.svg" alt="" width="28" height="28" aria-hidden="true" />
+            Corvus<span style="color:var(--color-brand)">.</span>Json<span style="color:var(--color-brand)">Schema</span>
+        </a>
+        <nav class="site-header__nav-desktop" aria-label="Main navigation">
+                    <a href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html"
+                       class="site-header__link "
+                       >Getting Started</a>
+                    <a href="/corvus-json-schema/pr-preview/pr-734/getting-started-v4/index.html"
+                       class="site-header__link "
+                       >Getting Started (V4)</a>
+                    <a href="/corvus-json-schema/pr-preview/pr-734/docs/index.html"
+                       class="site-header__link is-active"
+                       aria-current=page>Documentation</a>
+                    <a href="/corvus-json-schema/pr-preview/pr-734/examples/index.html"
+                       class="site-header__link "
+                       >Examples</a>
+                    <a href="/corvus-json-schema/pr-preview/pr-734/api/index.html"
+                       class="site-header__link "
+                       >API</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/playground/"
+               class="site-header__link"
+               target="_blank" rel="noopener noreferrer"
+               title="Interactive JSON Schema playground">Playground</a>
+            <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+               class="site-header__link" target="_blank" rel="noopener noreferrer"
+               aria-label="View on GitHub">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            </a>
+        </nav>
+        <button class="site-header__menu-toggle js-toggle-menu"
+                aria-expanded="false" aria-label="Toggle menu">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+        </button>
+    </div>
+</header>
+<nav class="site-header__nav-mobile js-mobile-nav" aria-label="Mobile navigation">
+            <a href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html" class="site-header__link">Getting Started</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/getting-started-v4/index.html" class="site-header__link">Getting Started (V4)</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/docs/index.html" class="site-header__link">Documentation</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/examples/index.html" class="site-header__link">Examples</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/api/index.html" class="site-header__link">API</a>
+    <a href="/corvus-json-schema/pr-preview/pr-734/playground/" class="site-header__link" target="_blank" rel="noopener noreferrer">Playground</a>
+    <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+       class="site-header__link" target="_blank" rel="noopener noreferrer">GitHub</a>
+</nav>
+
+    <div class="page-content">
+    <div class="layout-docs container">
+    <button class="sidebar-toggle" aria-label="Toggle navigation" aria-expanded="false"></button>
+<div class="sidebar-backdrop"></div>
+<aside class="sidebar">
+    <div class="sidebar__inner">
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Getting Started</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                    <li class="sidebar__item"><a class="sidebar__link" href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html">Tutorial</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Documentation</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/parsed-json-document.html">Parsing &amp; Reading JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/json-document-builder.html">Building &amp; Mutating JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/source-generator.html">Source Generator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/code-generator.html">CLI Code Generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/validator.html">Dynamic Schema Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/migrating-from-v4-to-v5.html">Migrating from V4</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/using-copilot-for-migration.html">Copilot Migration</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link is-active" href="/corvus-json-schema/pr-preview/pr-734/docs/migration-analyzers.html">Migration Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/analyzers.html">Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/schema-evaluator.html">Standalone Schema Evaluator</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Examples</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/data-object.html">Simple Data Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/data-object-validation.html">Data Object Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/reusing-common-types.html">Reusing Common Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/open-versus-closed-types.html">Open Versus Closed Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/extending-a-base-type.html">Extending a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/constraining-a-base-type.html">Constraining a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/creating-a-strongly-typed-array.html">Strongly Typed Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/creating-an-array-of-higher-rank.html">Multi-Dimensional Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/working-with-tensors.html">Working with Tensors</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/creating-tuples.html">Creating Tuples</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/interfaces-and-mix-in-types.html">Interfaces and Mix-In Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/pattern-matching.html">Pattern Matching and Discriminated Unions</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/polymorphism-with-discriminators.html">Polymorphism with Discriminator Properties</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/string-enumerations.html">String Enumerations and Pattern Matching</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/numeric-enumerations.html">Numeric Enumerations</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/maps.html">Maps of Strings to Strongly Typed Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/mapping-input-and-output-values.html">Mapping Input and Output Values</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</aside>
+
+    <main id="main-content" class="layout-docs__main">
+        <div class="doc__content">
+            <h1>Migration Analyzers</h1>
+<p>The <code>Corvus.Text.Json.Migration.Analyzers</code> NuGet package provides Roslyn analyzers that detect V4 (<code>Corvus.Json</code>) API patterns in your code and guide you toward the equivalent V5 (<code>Corvus.Text.Json</code>) patterns. Many of the diagnostics include code fixes that transform your code toward the V5 pattern.</p>
+<blockquote>
+<p><strong>Important:</strong> Applying a code fix does not guarantee compilable code. The fixes get you closer to the correct V5 solution, but you will often need to make additional changes (e.g., introducing a <code>JsonWorkspace</code>, adjusting variable lifetimes, or updating surrounding code). Work through diagnostics steadily rather than applying them in bulk.</p>
+</blockquote>
+<h2 id="installation">Installation</h2>
+<p>Add the analyzer package to any project that references V4 <code>Corvus.Json</code> types:</p>
+<pre><code class="language-xml">&lt;PackageReference Include=&quot;Corvus.Text.Json.Migration.Analyzers&quot; Version=&quot;1.0.0&quot; PrivateAssets=&quot;all&quot; /&gt;
+</code></pre>
+<p>The analyzers run at build time and produce warnings. They do <strong>not</strong> change any runtime behavior — they only guide your migration.</p>
+<h2 id="tiers">Tiers</h2>
+<p>The analyzers are organized into two tiers:</p>
+<table>
+<thead>
+<tr>
+<th>Tier</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Tier 1: Code Fix Available</strong></td>
+<td>These diagnostics include code fixes that transform your code toward the V5 pattern. The result may not compile immediately — review and adjust surrounding code after applying each fix.</td>
+</tr>
+<tr>
+<td><strong>Tier 2: Guidance</strong></td>
+<td>These diagnostics flag patterns that require manual migration because the V5 equivalent involves structural changes (e.g., introducing a <code>JsonWorkspace</code>, converting functional mutation to imperative). The diagnostic message describes the required change.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="tier-1-code-fix-available">Tier 1: Code Fix Available</h2>
+<h3 id="cvj001-migrate-namespace">CVJ001 — Migrate namespace</h3>
+<p><strong>Severity:</strong> Warning · <strong>Code fix:</strong> ✅ Yes</p>
+<p>Detects <code>using Corvus.Json</code> directives and replaces them with the corresponding <code>Corvus.Text.Json</code> namespace.</p>
+<pre><code class="language-csharp">// Before (V4)
+using Corvus.Json;
+using Corvus.Json.Internal;
+
+// After (V5)
+using Corvus.Text.Json;
+using Corvus.Text.Json.Internal;
+</code></pre>
+<hr />
+<h3 id="cvj002-migrate-parsedvaluet-to-parsedjsondocumentt">CVJ002 — Migrate <code>ParsedValue&lt;T&gt;</code> to <code>ParsedJsonDocument&lt;T&gt;</code></h3>
+<p><strong>Severity:</strong> Warning · <strong>Code fix:</strong> ✅ Yes</p>
+<p>Detects usage of <code>ParsedValue&lt;T&gt;</code> (the V4 parsed document wrapper) and replaces it with <code>ParsedJsonDocument&lt;T&gt;</code>. Also flags <code>.Instance</code> property access, which becomes <code>.RootElement</code> in V5.</p>
+<pre><code class="language-csharp">// Before (V4)
+using ParsedValue&lt;Person&gt; parsed = ParsedValue&lt;Person&gt;.Parse(json);
+Person person = parsed.Instance;
+
+// After (V5)
+using ParsedJsonDocument&lt;Person&gt; parsed = ParsedJsonDocument&lt;Person&gt;.Parse(json);
+Person person = parsed.RootElement;
+</code></pre>
+<hr />
+<h3 id="cvj003-migrate-validation-to-evaluateschema">CVJ003 — Migrate validation to <code>EvaluateSchema()</code></h3>
+<p><strong>Severity:</strong> Warning · <strong>Code fix:</strong> ✅ Yes</p>
+<p>Detects calls to V4's <code>.IsValid()</code> and <code>.Validate(context, level)</code> methods and replaces them with V5's <code>.EvaluateSchema()</code>.</p>
+<pre><code class="language-csharp">// Before (V4)
+bool valid = person.IsValid();
+ValidationContext result = person.Validate(ValidationContext.ValidContext, ValidationLevel.Detailed);
+
+// After (V5)
+bool valid = person.EvaluateSchema();
+// For detailed results, use the collector overload:
+JsonSchemaResultsCollector collector = new();
+bool valid = person.EvaluateSchema(collector);
+</code></pre>
+<hr />
+<h3 id="cvj004-migrate-ast-to-t.from">CVJ004 — Migrate <code>As&lt;T&gt;()</code> to <code>T.From()</code></h3>
+<p><strong>Severity:</strong> Warning · <strong>Code fix:</strong> ✅ Yes</p>
+<p>Detects the V4 generic coercion method <code>value.As&lt;T&gt;()</code> and replaces it with the V5 static factory <code>T.From(value)</code>.</p>
+<pre><code class="language-csharp">// Before (V4)
+Person person = element.As&lt;Person&gt;();
+
+// After (V5)
+Person person = Person.From(element);
+</code></pre>
+<hr />
+<h3 id="cvj005-migrate.count-to.getpropertycount">CVJ005 — Migrate <code>.Count</code> to <code>.GetPropertyCount()</code></h3>
+<p><strong>Severity:</strong> Warning · <strong>Code fix:</strong> ✅ Yes</p>
+<p>Detects access to the V4 <code>.Count</code> property on JSON objects and replaces it with the V5 <code>.GetPropertyCount()</code> method.</p>
+<pre><code class="language-csharp">// Before (V4)
+int count = jsonObject.Count;
+
+// After (V5)
+int count = jsonObject.GetPropertyCount();
+</code></pre>
+<hr />
+<h3 id="cvj006-migrate-fromjson-to-from">CVJ006 — Migrate <code>FromJson()</code> to <code>From()</code></h3>
+<p><strong>Severity:</strong> Warning · <strong>Code fix:</strong> ✅ Yes</p>
+<p>Detects calls to the V4 <code>T.FromJson(element)</code> factory method and renames it to V5's <code>T.From(element)</code>.</p>
+<pre><code class="language-csharp">// Before (V4)
+Person person = Person.FromJson(jsonElement);
+
+// After (V5)
+Person person = Person.From(jsonElement);
+</code></pre>
+<hr />
+<h3 id="cvj007-migrate-v4-core-type-to-jsonelement">CVJ007 — Migrate V4 core type to <code>JsonElement</code></h3>
+<p><strong>Severity:</strong> Warning · <strong>Code fix:</strong> ✅ Yes</p>
+<p>Detects usage of V4 untyped core types (<code>JsonAny</code>, <code>JsonNull</code>) that map directly to <code>JsonElement</code> in V5.</p>
+<pre><code class="language-csharp">// Before (V4)
+JsonAny any = JsonAny.Parse(json);
+
+// After (V5)
+JsonElement any = JsonElement.Parse(json);
+</code></pre>
+<blockquote>
+<p><strong>Note:</strong> <code>JsonAny</code> always maps to <code>JsonElement</code>. For other V4 core types like <code>JsonString</code>, <code>JsonObject</code>, etc., see <a href="#cvj009-v4-typed-core-type-may-need-replacement">CVJ009</a>.</p>
+</blockquote>
+<hr />
+<h3 id="cvj008-migrate-jsondocument.parse-to-parsedjsondocumentt.parse">CVJ008 — Migrate <code>JsonDocument.Parse()</code> to <code>ParsedJsonDocument&lt;T&gt;.Parse()</code></h3>
+<p><strong>Severity:</strong> Warning · <strong>Code fix:</strong> ✅ Yes</p>
+<p>Detects usage of <code>System.Text.Json.JsonDocument.Parse()</code> and replaces it with <code>ParsedJsonDocument&lt;T&gt;.Parse()</code>. When followed by a <code>T.FromJson(doc.RootElement)</code> call, the code fix collapses both statements into a single <code>ParsedJsonDocument&lt;T&gt;.Parse()</code>.</p>
+<pre><code class="language-csharp">// Before (V4)
+using var doc = JsonDocument.Parse(json);
+Person person = Person.FromJson(doc.RootElement);
+
+// After (V5) — collapsed to a single statement
+using var doc = ParsedJsonDocument&lt;Person&gt;.Parse(json);
+Person person = doc.RootElement;
+</code></pre>
+<p>When <code>JsonDocument.Parse()</code> appears without a <code>FromJson</code> follow-up, it is replaced with <code>ParsedJsonDocument&lt;JsonElement&gt;</code>:</p>
+<pre><code class="language-csharp">// Before (V4)
+using var doc = JsonDocument.Parse(json);
+
+// After (V5)
+using var doc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(json);
+</code></pre>
+<hr />
+<h3 id="cvj011-v4-immutable-mutation-replaced-by-mutable-builder">CVJ011 — V4 immutable mutation replaced by mutable builder</h3>
+<p><strong>Severity:</strong> Warning · <strong>Code fix:</strong> ✅ Yes (structural rewrite)</p>
+<p>Detects V4's functional mutation methods that return a new immutable instance. In V5, you create a mutable builder from a <code>JsonWorkspace</code> and mutate in-place. This covers:</p>
+<ul>
+<li><strong><code>With*()</code></strong> on generated types (renamed to <code>Set*()</code> in V5)</li>
+<li><strong><code>SetProperty()</code></strong> on <code>JsonObject</code> / <code>IJsonObject&lt;T&gt;</code> types (name unchanged in V5, but called on <code>.Mutable</code>)</li>
+<li><strong><code>RemoveProperty()</code></strong> on <code>JsonObject</code> / <code>IJsonObject&lt;T&gt;</code> types (name unchanged in V5, but called on <code>.Mutable</code>)</li>
+</ul>
+<p>The code fix handles several patterns:</p>
+<p><strong><code>With*()</code> rename and unchain:</strong></p>
+<pre><code class="language-csharp">// Before (V4)
+Person updated = person.WithName(&quot;Bob&quot;).WithAge(25);
+
+// After (V5) — inside a mutable builder context
+person.SetName(&quot;Bob&quot;);
+person.SetAge(25);
+</code></pre>
+<p><strong><code>SetProperty()</code> unchain and <code>.Mutable</code> rewrite:</strong></p>
+<pre><code class="language-csharp">// Before (V4)
+JsonObject updated = person
+    .SetProperty(&quot;age&quot;, (JsonNumber)31)
+    .SetProperty(&quot;email&quot;, (JsonString)&quot;alice@example.com&quot;);
+
+// After (V5) — receiver becomes .Mutable, calls are unchained
+person.SetProperty(&quot;age&quot;, 31);
+person.SetProperty(&quot;email&quot;, &quot;alice@example.com&quot;);
+</code></pre>
+<p><strong><code>RemoveProperty()</code> on core types:</strong></p>
+<pre><code class="language-csharp">// Before (V4)
+JsonObject updated = person.RemoveProperty(&quot;temporaryField&quot;);
+
+// After (V5)
+person.RemoveProperty(&quot;temporaryField&quot;);
+</code></pre>
+<p><strong>Nested extract-mutate-reassign collapse (with CVJ021):</strong></p>
+<pre><code class="language-csharp">// Before (V4)
+Address address = person.AddressValue;
+Address updated = address.WithCity(&quot;Manchester&quot;);
+Person result = person.WithAddressValue(updated);
+
+// After (V5)
+person.AddressValue.SetCity(&quot;Manchester&quot;);
+</code></pre>
+<hr />
+<h3 id="cvj012-v4-functional-array-operations">CVJ012 — V4 functional array operations</h3>
+<p><strong>Severity:</strong> Warning · <strong>Code fix:</strong> ✅ Yes</p>
+<p>Detects all V4 functional array methods and rewrites them to V5 mutable builder equivalents. The code fix drops the assignment (since V5 mutates in-place), renames methods where needed, and rewrites the receiver variable type to <code>.Mutable</code>.</p>
+<table>
+<thead>
+<tr>
+<th>V4 Method</th>
+<th>V5 Equivalent</th>
+<th>Renamed?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Add(item)</code></td>
+<td><code>AddItem(source)</code></td>
+<td>✅ Yes</td>
+</tr>
+<tr>
+<td><code>AddRange(items)</code></td>
+<td><code>AddRange(builder)</code></td>
+<td>✅ Yes (uses builder delegate)</td>
+</tr>
+<tr>
+<td><code>Insert(idx, item)</code></td>
+<td><code>InsertItem(idx, source)</code></td>
+<td>✅ Yes</td>
+</tr>
+<tr>
+<td><code>InsertRange(idx, items)</code></td>
+<td><code>InsertRange(idx, builder)</code></td>
+<td>✅ Yes (uses builder delegate)</td>
+</tr>
+<tr>
+<td><code>SetItem(idx, val)</code></td>
+<td><code>SetItem(idx, source)</code></td>
+<td>❌ Same name</td>
+</tr>
+<tr>
+<td><code>RemoveAt(idx)</code></td>
+<td><code>RemoveAt(idx)</code></td>
+<td>❌ Same name</td>
+</tr>
+<tr>
+<td><code>Remove(val)</code></td>
+<td><code>Remove(item)</code></td>
+<td>❌ Same name</td>
+</tr>
+<tr>
+<td><code>RemoveRange(idx, count)</code></td>
+<td><code>RemoveRange(idx, count)</code></td>
+<td>❌ Same name</td>
+</tr>
+<tr>
+<td><code>Replace(old, new)</code></td>
+<td><code>Replace(old, new)</code></td>
+<td>❌ Same name</td>
+</tr>
+</tbody>
+</table>
+<pre><code class="language-csharp">// Before (V4) — renamed methods
+JsonArray updated = array.Add(newItem);
+JsonArray replaced = array.Insert(0, item);
+
+// After (V5)
+array.AddItem(newItem);
+array.InsertItem(0, item);
+</code></pre>
+<pre><code class="language-csharp">// Before (V4) — same-name methods
+JsonArray result = array.Remove(oldItem);
+JsonArray trimmed = array.RemoveRange(0, 2);
+JsonArray swapped = array.Replace(oldItem, newItem);
+
+// After (V5) — assignment dropped, receiver becomes .Mutable
+array.Remove(oldItem);
+array.RemoveRange(0, 2);
+array.Replace(oldItem, newItem);
+</code></pre>
+<hr />
+<h3 id="cvj013-v4-create-replaced-by-createbuilder-or-build">CVJ013 — V4 <code>Create()</code> replaced by <code>CreateBuilder()</code> or <code>Build()</code></h3>
+<p><strong>Severity:</strong> Warning · <strong>Code fix:</strong> ✅ Yes</p>
+<p>Detects V4's static <code>Create(...)</code> factory method for constructing objects. The code fix chooses between two V5 patterns based on how the result is used:</p>
+<ul>
+<li><strong>Top-level (used as an instance):</strong> <code>CreateBuilder(workspace, ...)</code> — the result is a mutable builder that you can call methods on.</li>
+<li><strong>Nested (used as a source value):</strong> <code>Build(...)</code> — the result is passed into another construction or argument. When the result is assigned to an explicitly typed variable, the type is rewritten to <code>Type.Source</code> (since <code>Build()</code> returns a Source, not the entity type).</li>
+</ul>
+<pre><code class="language-csharp">// Before (V4) — top-level, used as an instance
+Person person = Person.Create(name: &quot;Alice&quot;, age: 30);
+person.IsValid(); // member access → builder
+
+// After (V5)
+using JsonWorkspace workspace = JsonWorkspace.Create();
+Person person = Person.CreateBuilder(workspace, name: &quot;Alice&quot;, age: 30);
+person.EvaluateSchema();
+</code></pre>
+<pre><code class="language-csharp">// Before (V4) — nested, passed as argument
+parent.SetChild(Person.Create(name: &quot;Alice&quot;, age: 30));
+
+// After (V5) — no workspace needed
+parent.SetChild(Person.Build(name: &quot;Alice&quot;, age: 30));
+</code></pre>
+<pre><code class="language-csharp">// Before (V4) — assigned to variable, then passed as argument
+Person child = Person.Create(name: &quot;Alice&quot;, age: 30);
+parent.SetChild(child);
+
+// After (V5) — type becomes Person.Source
+Person.Source child = Person.Build(name: &quot;Alice&quot;, age: 30);
+parent.SetChild(child);
+</code></pre>
+<hr />
+<h3 id="cvj014-v4-fromitems-replaced-by-build-pattern">CVJ014 — V4 <code>FromItems()</code> replaced by <code>Build()</code> pattern</h3>
+<p><strong>Severity:</strong> Warning · <strong>Code fix:</strong> ✅ Yes</p>
+<p>Detects V4's <code>FromItems(...)</code> array factory. The code fix wraps items in <code>Build()</code> when used at the top level (inside <code>CreateBuilder</code>), or replaces with <code>Build()</code> directly when nested. Explicitly typed variables are rewritten to <code>Type.Source</code>.</p>
+<pre><code class="language-csharp">// Before (V4) — top-level
+MyArray arr = MyArray.FromItems(item1, item2, item3);
+
+// After (V5) — builder wrapping Build()
+using JsonWorkspace workspace = JsonWorkspace.Create();
+MyArray arr = MyArray.CreateBuilder(workspace, MyArray.Build(item1, item2, item3));
+</code></pre>
+<pre><code class="language-csharp">// Before (V4) — nested, passed as argument
+parent.SetItems(MyArray.FromItems(item1, item2));
+
+// After (V5)
+parent.SetItems(MyArray.Build(item1, item2));
+</code></pre>
+<hr />
+<h3 id="cvj015-v4-fromvalues-replaced-by-createbuilder">CVJ015 — V4 <code>FromValues()</code> replaced by <code>CreateBuilder()</code></h3>
+<p><strong>Severity:</strong> Warning · <strong>Code fix:</strong> ✅ Yes</p>
+<p>Detects V4's <code>FromValues(span)</code> numeric array factory. In V5, use <code>CreateBuilder(workspace, span)</code> at top level or <code>Build(span)</code> when nested. Explicitly typed variables are rewritten to <code>Type.Source</code>.</p>
+<pre><code class="language-csharp">// Before (V4)
+MyVector vec = MyVector.FromValues(stackalloc double[] { 1.0, 2.0, 3.0 });
+
+// After (V5) — top-level
+using JsonWorkspace workspace = JsonWorkspace.Create();
+MyVector vec = MyVector.CreateBuilder(workspace, stackalloc double[] { 1.0, 2.0, 3.0 });
+</code></pre>
+<pre><code class="language-csharp">// Before (V4) — nested
+parent.SetVector(MyVector.FromValues(stackalloc double[] { 1.0, 2.0 }));
+
+// After (V5)
+parent.SetVector(MyVector.Build(stackalloc double[] { 1.0, 2.0 }));
+</code></pre>
+<hr />
+<h3 id="cvj018-migrate-trygetstring-to-trygetvalue">CVJ018 — Migrate <code>TryGetString()</code> to <code>TryGetValue()</code></h3>
+<p><strong>Severity:</strong> Warning · <strong>Code fix:</strong> ✅ Yes</p>
+<p>Detects calls to V4's <code>.TryGetString(out string)</code> and renames it to V5's <code>.TryGetValue(out string)</code>.</p>
+<pre><code class="language-csharp">// Before (V4)
+if (element.TryGetString(out string value)) { ... }
+
+// After (V5)
+if (element.TryGetValue(out string value)) { ... }
+</code></pre>
+<hr />
+<h3 id="cvj021-nested-mutation-chain-can-use-deep-property-setter">CVJ021 — Nested mutation chain can use deep property setter</h3>
+<p><strong>Severity:</strong> Warning · <strong>Code fix:</strong> ✅ Yes (via CVJ011 code fix)</p>
+<p>Detects the V4 pattern of extracting a nested value, mutating it, and reassigning it back to the parent. In V5, this collapses to a single deep setter on the mutable builder because mutations are visible through the parent.</p>
+<p>This diagnostic detects all mutator types — not just <code>With*()</code>:</p>
+<ul>
+<li><strong>Object mutators:</strong> <code>With*()</code>, <code>SetProperty()</code>, <code>RemoveProperty()</code></li>
+<li><strong>Array mutators:</strong> <code>Add()</code>, <code>Insert()</code>, <code>SetItem()</code>, <code>RemoveAt()</code></li>
+</ul>
+<p><strong>Object property mutation:</strong></p>
+<pre><code class="language-csharp">// Before (V4)
+Address address = person.AddressValue;
+Address updatedAddress = address.WithCity(&quot;Manchester&quot;);
+Person updatedPerson = person.WithAddressValue(updatedAddress);
+
+// After (V5)
+person.AddressValue.SetCity(&quot;Manchester&quot;);
+</code></pre>
+<p><strong>Nested SetProperty:</strong></p>
+<pre><code class="language-csharp">// Before (V4)
+JsonObject address = root[&quot;address&quot;].As&lt;JsonObject&gt;();
+JsonObject updatedAddress = address.SetProperty(&quot;city&quot;, (JsonString)&quot;Manchester&quot;);
+JsonObject updatedRoot = root.SetProperty(&quot;address&quot;, updatedAddress.AsAny);
+
+// After (V5)
+root[&quot;address&quot;].SetProperty(&quot;city&quot;, &quot;Manchester&quot;);
+</code></pre>
+<p><strong>Nested array mutation:</strong></p>
+<pre><code class="language-csharp">// Before (V4)
+JsonArray roles = person[&quot;roles&quot;].As&lt;JsonArray&gt;();
+JsonArray updatedRoles = roles.Add((JsonString)&quot;admin&quot;);
+Person updatedPerson = person.WithRoles(updatedRoles);
+
+// After (V5)
+person.Roles.AddItem(&quot;admin&quot;);
+</code></pre>
+<hr />
+<h2 id="tier-2-guidance-diagnostics">Tier 2: Guidance Diagnostics</h2>
+<p>These diagnostics flag patterns that require manual migration. The V5 equivalents involve structural changes that cannot be automated reliably.</p>
+<h3 id="cvj009-v4-typed-core-type-may-need-replacement">CVJ009 — V4 typed core type may need replacement</h3>
+<p><strong>Severity:</strong> Warning · <strong>Code fix:</strong> ❌ No (requires project-specific knowledge)</p>
+<p>Detects usage of V4 typed core types like <code>JsonString</code>, <code>JsonNumber</code>, <code>JsonObject</code>, <code>JsonArray</code>, <code>JsonBoolean</code>, <code>JsonInteger</code>. In V5, these may map to:</p>
+<ul>
+<li><code>JsonElement</code> (if no schema-backed type is needed), or</li>
+<li>A project-local generated global type (e.g., <code>JsonString</code>, <code>JsonInt32</code>)</li>
+</ul>
+<p>The correct replacement depends on your project's generated types.</p>
+<pre><code class="language-csharp">// Before (V4)
+JsonObject obj = JsonObject.Parse(json);
+JsonString name = person.Name;
+
+// After (V5) — depends on your schema
+// Option A: Use JsonElement if no schema type exists
+JsonElement obj = JsonElement.Parse(json);
+// Option B: Use generated global type
+JsonString name = person.Name;  // project-local JsonString
+</code></pre>
+<hr />
+<h3 id="cvj010-v4-as-accessors-removed">CVJ010 — V4 <code>As*</code> accessors removed</h3>
+<p><strong>Severity:</strong> Warning · <strong>Code fix:</strong> ❌ No</p>
+<p>Detects access to V4's <code>.AsString</code>, <code>.AsNumber</code>, <code>.AsObject</code>, <code>.AsArray</code>, <code>.AsBoolean</code>, and <code>.AsAny</code> properties. These do not exist in V5. In V5, multi-core-type types emit all value accessors directly — use explicit casts or <code>TryGetValue()</code> instead.</p>
+<pre><code class="language-csharp">// Before (V4)
+string name = element.AsString;
+double value = element.AsNumber;
+
+// After (V5)
+string name = (string)element;
+// or
+element.TryGetValue(out string name);
+</code></pre>
+<hr />
+<h3 id="cvj016-v5-uses-corvus.text.json.utf8jsonwriter">CVJ016 — V5 uses <code>Corvus.Text.Json.Utf8JsonWriter</code></h3>
+<p><strong>Severity:</strong> Warning · <strong>Code fix:</strong> ❌ No</p>
+<p>Detects <code>WriteTo()</code> calls that pass a <code>System.Text.Json.Utf8JsonWriter</code>. V5 uses its own <code>Corvus.Text.Json.Utf8JsonWriter</code> type.</p>
+<pre><code class="language-csharp">// Before (V4)
+person.WriteTo(systemUtf8JsonWriter);
+
+// After (V5)
+person.WriteTo(corvusUtf8JsonWriter);
+// where corvusUtf8JsonWriter is a Corvus.Text.Json.Utf8JsonWriter
+</code></pre>
+<hr />
+<h3 id="cvj019-v4-backing-model-apis-removed">CVJ019 — V4 backing model APIs removed</h3>
+<p><strong>Severity:</strong> Warning · <strong>Code fix:</strong> ❌ No</p>
+<p>Detects access to V4's backing model properties (<code>.HasJsonElementBacking</code>, <code>.HasDotnetBacking</code>). V5 uses a single document-index model — these properties do not exist.</p>
+<pre><code class="language-csharp">// Before (V4)
+if (person.HasJsonElementBacking) { ... }
+
+// After (V5)
+// Remove — V5 always uses document-index backing.
+// If you need to check whether a value was parsed vs. constructed,
+// use other approaches specific to your use case.
+</code></pre>
+<hr />
+<h3 id="cvj025-replace-v4-package-reference">CVJ025 — Replace V4 package reference</h3>
+<p><strong>Severity:</strong> Warning · <strong>Code fix:</strong> ❌ No</p>
+<p>Fires at compilation end when V4 assembly references are detected. Guides you to replace V4 packages with their V5 equivalents.</p>
+<table>
+<thead>
+<tr>
+<th>V4 Package</th>
+<th>V5 Replacement</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Corvus.Json.ExtendedTypes</code></td>
+<td><code>Corvus.Text.Json</code></td>
+</tr>
+<tr>
+<td><code>Corvus.Json.SourceGenerator</code></td>
+<td><code>Corvus.Text.Json.SourceGenerator</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="complete-v4v5-mutator-equivalence-table">Complete V4→V5 Mutator Equivalence Table</h2>
+<p>This table lists every V4 functional mutation method and its V5 mutable builder equivalent.</p>
+<h3 id="object-mutators">Object Mutators</h3>
+<table>
+<thead>
+<tr>
+<th>V4 Method</th>
+<th>V5 Equivalent</th>
+<th>Diagnostic</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>With*()</code> (generated)</td>
+<td><code>Set*()</code> on <code>.Mutable</code></td>
+<td>CVJ011</td>
+<td>Renamed; code fix handles</td>
+</tr>
+<tr>
+<td><code>SetProperty(name, val)</code></td>
+<td><code>SetProperty(name, source)</code> on <code>.Mutable</code></td>
+<td>CVJ011</td>
+<td>Same name; assignment dropped</td>
+</tr>
+<tr>
+<td><code>RemoveProperty(name)</code></td>
+<td><code>RemoveProperty(name)</code> on <code>.Mutable</code></td>
+<td>CVJ011</td>
+<td>Same name; assignment dropped</td>
+</tr>
+</tbody>
+</table>
+<h3 id="array-mutators">Array Mutators</h3>
+<table>
+<thead>
+<tr>
+<th>V4 Method</th>
+<th>V5 Equivalent</th>
+<th>Diagnostic</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Add(item)</code></td>
+<td><code>AddItem(source)</code></td>
+<td>CVJ012</td>
+<td>Renamed</td>
+</tr>
+<tr>
+<td><code>AddRange(items)</code></td>
+<td><code>AddRange(builder)</code></td>
+<td>CVJ012</td>
+<td>Uses builder delegate pattern</td>
+</tr>
+<tr>
+<td><code>Insert(idx, item)</code></td>
+<td><code>InsertItem(idx, source)</code></td>
+<td>CVJ012</td>
+<td>Renamed</td>
+</tr>
+<tr>
+<td><code>InsertRange(idx, items)</code></td>
+<td><code>InsertRange(idx, builder)</code></td>
+<td>CVJ012</td>
+<td>Uses builder delegate pattern</td>
+</tr>
+<tr>
+<td><code>SetItem(idx, val)</code></td>
+<td><code>SetItem(idx, source)</code></td>
+<td>CVJ012</td>
+<td>Same name</td>
+</tr>
+<tr>
+<td><code>RemoveAt(idx)</code></td>
+<td><code>RemoveAt(idx)</code></td>
+<td>CVJ012</td>
+<td>Same name</td>
+</tr>
+<tr>
+<td><code>Remove(val)</code></td>
+<td><code>Remove(item)</code></td>
+<td>CVJ012</td>
+<td>Same name</td>
+</tr>
+<tr>
+<td><code>RemoveRange(idx, count)</code></td>
+<td><code>RemoveRange(idx, count)</code></td>
+<td>CVJ012</td>
+<td>Same name</td>
+</tr>
+<tr>
+<td><code>Replace(old, new)</code></td>
+<td><code>Replace(old, new)</code></td>
+<td>CVJ012</td>
+<td>Same name</td>
+</tr>
+</tbody>
+</table>
+<h3 id="v5-only-methods-no-v4-equivalent">V5-only Methods (no V4 equivalent)</h3>
+<table>
+<thead>
+<tr>
+<th>V5 Method</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>RemoveWhere(predicate)</code></td>
+<td>Remove all array elements matching a predicate</td>
+</tr>
+<tr>
+<td><code>AddRange(builder)</code></td>
+<td>Add multiple items using a builder delegate</td>
+</tr>
+<tr>
+<td><code>InsertRange(idx, builder)</code></td>
+<td>Insert multiple items at an index using a builder delegate</td>
+</tr>
+<tr>
+<td><code>AddRange(ReadOnlySpan&lt;T&gt;)</code></td>
+<td>Add numeric spans (on <code>ArrayBuilder</code>, not <code>Mutable</code>)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="suppressing-diagnostics">Suppressing Diagnostics</h2>
+<p>If a diagnostic is not relevant to your project, you can suppress it in your <code>.editorconfig</code>:</p>
+<pre><code class="language-ini">[*.cs]
+dotnet_diagnostic.CVJ010.severity = none
+</code></pre>
+<p>Or suppress individual occurrences with a pragma:</p>
+<pre><code class="language-csharp">#pragma warning disable CVJ010
+string name = element.AsString;
+#pragma warning restore CVJ010
+</code></pre>
+<hr />
+<h2 id="migration-workflow">Migration Workflow</h2>
+<p>We recommend working through diagnostics steadily, one file or one area at a time, rather than bulk-applying fixes across an entire project. Code fixes move your code toward V5 patterns, but they do not guarantee compilable output — you will typically need to adjust surrounding code after each fix (e.g., introducing a <code>JsonWorkspace</code>, updating variable types, or adapting control flow).</p>
+<ol>
+<li><strong>Install the analyzer package</strong> and build your project to see all diagnostics.</li>
+<li><strong>Work through one file at a time.</strong> Review each diagnostic, apply the code fix if available, then compile and address any remaining errors before moving on.</li>
+<li><strong>Address Tier 2 guidance manually</strong> — these require structural changes. The diagnostic messages link to the relevant section of the <a href="/corvus-json-schema/pr-preview/pr-734/docs/migrating-from-v4-to-v5.html">migration guide</a>.</li>
+<li><strong>Use <a href="/corvus-json-schema/pr-preview/pr-734/docs/using-copilot-for-migration.html">GitHub Copilot</a> as a migration partner.</strong> Point Copilot at the diagnostic warnings in a file and ask it to complete the migration. The diagnostics serve as a checklist of patterns Copilot can help transform.</li>
+<li><strong>Remove the analyzer package</strong> once migration is complete.</li>
+</ol>
+<h2 id="reserved-diagnostic-ids">Reserved Diagnostic IDs</h2>
+<p>The following IDs were previously assigned and will not be reused:</p>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CVJ017</td>
+</tr>
+<tr>
+<td>CVJ020</td>
+</tr>
+</tbody>
+</table>
+        </div>
+    </main>
+</div>
+
+    </div>
+    <footer class="site-footer">
+    <div class="site-footer__inner">
+        <div class="site-footer__sponsor">
+            Sponsored by
+            <a href="https://endjin.com" target="_blank" rel="noopener noreferrer">endjin</a>
+        </div>
+        <ul class="site-footer__links" role="list">
+            <li><a class="site-footer__link" href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html">Getting Started</a></li>
+            <li><a class="site-footer__link" href="/corvus-json-schema/pr-preview/pr-734/docs/index.html">Documentation</a></li>
+            <li><a class="site-footer__link" href="/corvus-json-schema/pr-preview/pr-734/examples/index.html">Examples</a></li>
+            <li><a class="site-footer__link" href="/corvus-json-schema/pr-preview/pr-734/api/index.html">API</a></li>
+            <li><a class="site-footer__link" href="https://github.com/corvus-dotnet/Corvus.JsonSchema" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            <li><a class="site-footer__link" href="https://www.nuget.org/packages?q=Corvus.Json" target="_blank" rel="noopener noreferrer">NuGet</a></li>
+        </ul>
+        <p class="site-footer__copyright">&copy; 2026 endjin Ltd.</p>
+    </div>
+</footer>
+
+    <!-- highlight.js for syntax highlighting (CSS targets .hljs-* classes) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/csharp.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js" defer></script>
+    <script>document.addEventListener('DOMContentLoaded',()=>hljs.highlightAll())</script>
+    <script src="/corvus-json-schema/pr-preview/pr-734/assets/js/main.js" defer></script>
+    <script src="/corvus-json-schema/pr-preview/pr-734/assets/js/sidebar-search.js" defer></script>
+    
+</body>
+</html>

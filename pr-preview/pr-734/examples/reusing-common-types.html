@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1C1D21" />
+    <meta name="description" content="This recipe demonstrates how to use JSON Schema&#x27;s `$ref` and `$defs` keywords to share type definitions across properties, reducing generated code size and enabling zero-allocation conversions between compatible property types." />
+    <meta name="keywords" content="recipe, JSON Schema, C#, reusing, common, types, type, required, properties, $ref, format, maximum, $defs, minLength, maxLength, CreateBuilder, From" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:description" content="This recipe demonstrates how to use JSON Schema&#x27;s `$ref` and `$defs` keywords to share type definitions across properties, reducing generated code size and enabling zero-allocation conversions between compatible property types." />
+    <meta name="twitter:image" content="/corvus-json-schema/pr-preview/pr-734/assets/images/og-corvus.png" />
+    <meta name="twitter:title" content="Reusing Common Types - Corvus.Text.Json Examples" />
+    <meta property="article:tag" content="recipe" />
+    <meta property="article:tag" content="JSON Schema" />
+    <meta property="article:tag" content="C#" />
+    <meta property="article:tag" content="reusing" />
+    <meta property="article:tag" content="common" />
+    <meta property="article:tag" content="types" />
+    <meta property="article:tag" content="type" />
+    <meta property="article:tag" content="required" />
+    <meta property="article:tag" content="properties" />
+    <meta property="article:tag" content="$ref" />
+    <meta property="article:tag" content="format" />
+    <meta property="article:tag" content="maximum" />
+    <meta property="article:tag" content="$defs" />
+    <meta property="article:tag" content="minLength" />
+    <meta property="article:tag" content="maxLength" />
+    <meta property="article:tag" content="CreateBuilder" />
+    <meta property="article:tag" content="From" />
+    <meta property="og:description" content="This recipe demonstrates how to use JSON Schema&#x27;s `$ref` and `$defs` keywords to share type definitions across properties, reducing generated code size and enabling zero-allocation conversions between compatible property types." />
+    <meta property="og:image" content="/corvus-json-schema/pr-preview/pr-734/assets/images/og-corvus.png" />
+    <meta property="og:title" content="Reusing Common Types - Corvus.Text.Json Examples" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://corvus-oss.org/corvus-json-schema/examples/reusing-common-types/" />
+    <title>Reusing Common Types - Corvus.Text.Json Examples</title>
+    <link itemprop="url" href="https://corvus-oss.org/corvus-json-schema/examples/reusing-common-types/" />
+    <link rel="canonical" href="https://corvus-oss.org/corvus-json-schema/examples/reusing-common-types/" />
+    <link rel="sitemap" href="https://corvus-oss.org/corvus-json-schema/sitemap.xml" />
+    <!-- Styles -->
+    <link rel="stylesheet" href="/corvus-json-schema/pr-preview/pr-734/main.css" />
+    <link rel="icon" type="image/svg+xml" href="/corvus-json-schema/pr-preview/pr-734/assets/images/favicon.svg" />
+    
+</head>
+<body>
+    <a class="sr-only" href="#main-content">Skip to content</a>
+<header class="site-header">
+    <div class="site-header__inner">
+        <a class="site-header__brand" href="/corvus-json-schema/pr-preview/pr-734/index.html" aria-label="Corvus.JsonSchema home">
+            <img src="/corvus-json-schema/pr-preview/pr-734/assets/images/logo-corvus.svg" alt="" width="28" height="28" aria-hidden="true" />
+            Corvus<span style="color:var(--color-brand)">.</span>Json<span style="color:var(--color-brand)">Schema</span>
+        </a>
+        <nav class="site-header__nav-desktop" aria-label="Main navigation">
+                    <a href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html"
+                       class="site-header__link "
+                       >Getting Started</a>
+                    <a href="/corvus-json-schema/pr-preview/pr-734/getting-started-v4/index.html"
+                       class="site-header__link "
+                       >Getting Started (V4)</a>
+                    <a href="/corvus-json-schema/pr-preview/pr-734/docs/index.html"
+                       class="site-header__link "
+                       >Documentation</a>
+                    <a href="/corvus-json-schema/pr-preview/pr-734/examples/index.html"
+                       class="site-header__link is-active"
+                       aria-current=page>Examples</a>
+                    <a href="/corvus-json-schema/pr-preview/pr-734/api/index.html"
+                       class="site-header__link "
+                       >API</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/playground/"
+               class="site-header__link"
+               target="_blank" rel="noopener noreferrer"
+               title="Interactive JSON Schema playground">Playground</a>
+            <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+               class="site-header__link" target="_blank" rel="noopener noreferrer"
+               aria-label="View on GitHub">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            </a>
+        </nav>
+        <button class="site-header__menu-toggle js-toggle-menu"
+                aria-expanded="false" aria-label="Toggle menu">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+        </button>
+    </div>
+</header>
+<nav class="site-header__nav-mobile js-mobile-nav" aria-label="Mobile navigation">
+            <a href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html" class="site-header__link">Getting Started</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/getting-started-v4/index.html" class="site-header__link">Getting Started (V4)</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/docs/index.html" class="site-header__link">Documentation</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/examples/index.html" class="site-header__link">Examples</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/api/index.html" class="site-header__link">API</a>
+    <a href="/corvus-json-schema/pr-preview/pr-734/playground/" class="site-header__link" target="_blank" rel="noopener noreferrer">Playground</a>
+    <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+       class="site-header__link" target="_blank" rel="noopener noreferrer">GitHub</a>
+</nav>
+
+    <div class="page-content">
+    <div class="layout-docs container">
+    <button class="sidebar-toggle" aria-label="Toggle navigation" aria-expanded="false"></button>
+<div class="sidebar-backdrop"></div>
+<aside class="sidebar">
+    <div class="sidebar__inner">
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Getting Started</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                    <li class="sidebar__item"><a class="sidebar__link" href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html">Tutorial</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Documentation</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/parsed-json-document.html">Parsing &amp; Reading JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/json-document-builder.html">Building &amp; Mutating JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/source-generator.html">Source Generator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/code-generator.html">CLI Code Generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/validator.html">Dynamic Schema Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/migrating-from-v4-to-v5.html">Migrating from V4</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/using-copilot-for-migration.html">Copilot Migration</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/migration-analyzers.html">Migration Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/analyzers.html">Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/schema-evaluator.html">Standalone Schema Evaluator</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Examples</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/data-object.html">Simple Data Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/data-object-validation.html">Data Object Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link is-active" href="/corvus-json-schema/pr-preview/pr-734/examples/reusing-common-types.html">Reusing Common Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/open-versus-closed-types.html">Open Versus Closed Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/extending-a-base-type.html">Extending a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/constraining-a-base-type.html">Constraining a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/creating-a-strongly-typed-array.html">Strongly Typed Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/creating-an-array-of-higher-rank.html">Multi-Dimensional Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/working-with-tensors.html">Working with Tensors</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/creating-tuples.html">Creating Tuples</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/interfaces-and-mix-in-types.html">Interfaces and Mix-In Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/pattern-matching.html">Pattern Matching and Discriminated Unions</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/polymorphism-with-discriminators.html">Polymorphism with Discriminator Properties</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/string-enumerations.html">String Enumerations and Pattern Matching</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/numeric-enumerations.html">Numeric Enumerations</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/maps.html">Maps of Strings to Strongly Typed Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/mapping-input-and-output-values.html">Mapping Input and Output Values</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</aside>
+
+    <main id="main-content" class="layout-docs__main">
+        <div class="doc__content">
+            <h1>Reusing Common Types</h1>
+                <div class="card__tags" style="margin-bottom:1.5rem">
+                        <span class="card__tag">recipe</span>
+                        <span class="card__tag">JSON Schema</span>
+                        <span class="card__tag">C#</span>
+                        <span class="card__tag">reusing</span>
+                        <span class="card__tag">common</span>
+                        <span class="card__tag">types</span>
+                        <span class="card__tag">type</span>
+                        <span class="card__tag">required</span>
+                        <span class="card__tag">properties</span>
+                        <span class="card__tag">$ref</span>
+                        <span class="card__tag">format</span>
+                        <span class="card__tag">maximum</span>
+                        <span class="card__tag">$defs</span>
+                        <span class="card__tag">minLength</span>
+                        <span class="card__tag">maxLength</span>
+                        <span class="card__tag">CreateBuilder</span>
+                        <span class="card__tag">From</span>
+                </div>
+<p>This recipe demonstrates how to use JSON Schema's <code>$ref</code> and <code>$defs</code> keywords to share type definitions across properties, reducing generated code size and enabling zero-allocation conversions between compatible property types.</p>
+<h2 id="the-pattern">The Pattern</h2>
+<p>In our <a href="/corvus-json-schema/pr-preview/pr-734/examples/data-object-validation.html">previous example</a>, we constrained all of our string properties to a string of length 1–256. Each property had its own inline definition, which created separate types: <code>GivenNameEntity</code>, <code>FamilyNameEntity</code>, and <code>OtherNamesEntity</code>.</p>
+<p>We can simplify this by re-using a reference to a common schema with the <code>$ref</code> keyword. Instead of three separate types for the string properties, the code generator produces a single type: <code>PersonCommonSchema.ConstrainedString</code>.</p>
+<p>Using <code>$ref</code> to share schema definitions provides two key advantages:</p>
+<h3 id="code-size-reduction">Code Size Reduction</h3>
+<p>Instead of generating three separate entity types (<code>GivenNameEntity</code>, <code>FamilyNameEntity</code>, <code>OtherNamesEntity</code>), the generator produces a single <code>ConstrainedString</code> type. This reduces the overall size of the generated assembly and simplifies the API surface.</p>
+<h3 id="type-compatibility-and-interoperability">Type Compatibility and Interoperability</h3>
+<p><strong>Shared schemas mean the generated value types are compatible.</strong> Because <code>GivenName</code>, <code>FamilyName</code>, and <code>OtherNames</code> all use the same <code>$ref</code>, they return the same <code>ConstrainedString</code> type. This enables:</p>
+<ul>
+<li><strong>Zero-allocation comparisons</strong>: <code>givenName.Equals(familyName)</code> compares the underlying JSON data directly</li>
+<li><strong>Zero-allocation conversions</strong>: If you have multiple schemas using the same <code>$ref</code>, their property entity types are compatible and can be converted using <code>.From()</code> without extracting to primitives</li>
+<li><strong>Shared operations</strong>: All the same methods, formatting, and validation logic apply uniformly</li>
+</ul>
+<p>This compatibility is essential for mapping between different schemas that share common sub-schemas, as demonstrated in <a href="/corvus-json-schema/pr-preview/pr-734/examples/mapping-input-and-output-values.html">Recipe 017 - Mapping Input and Output Values</a>.</p>
+<h2 id="the-schema">The Schema</h2>
+<p>File: <code>person-common-schema.json</code></p>
+<pre><code class="language-json">{
+  &quot;title&quot;: &quot;The person schema https://schema.org/Person&quot;,
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;required&quot;: [ &quot;familyName&quot;, &quot;givenName&quot;, &quot;birthDate&quot; ],
+  &quot;properties&quot;: {
+    &quot;familyName&quot;: { &quot;$ref&quot;: &quot;#/$defs/constrainedString&quot; },
+    &quot;givenName&quot;: { &quot;$ref&quot;: &quot;#/$defs/constrainedString&quot; },
+    &quot;otherNames&quot;: { &quot;$ref&quot;: &quot;#/$defs/constrainedString&quot; },
+    &quot;birthDate&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;format&quot;: &quot;date&quot;
+    },
+    &quot;height&quot;: {
+      &quot;type&quot;: &quot;number&quot;,
+      &quot;format&quot;: &quot;double&quot;,
+      &quot;exclusiveMinimum&quot;: 0.0,
+      &quot;maximum&quot;: 3.0
+    }
+  },
+
+  &quot;$defs&quot;: {
+    &quot;constrainedString&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;maxLength&quot;: 256
+    }
+  }
+}
+</code></pre>
+<p>The generated types are:</p>
+<ul>
+<li><code>PersonCommonSchema</code> — the root object type</li>
+<li><code>PersonCommonSchema.ConstrainedString</code> — the shared string type with length constraints (1–256)</li>
+<li><code>PersonCommonSchema.HeightEntity</code> — the constrained height type (<code>double</code>, <code>exclusiveMinimum: 0</code>, <code>maximum: 3.0</code>)</li>
+</ul>
+<p>The <code>GivenName</code>, <code>FamilyName</code>, and <code>OtherNames</code> properties all return the <em>same</em> <code>ConstrainedString</code> type.</p>
+<h2 id="generated-code-usage">Generated Code Usage</h2>
+<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/v5/docs/ExampleRecipes/003-ReusingCommonTypes/Program.cs">Example code</a></p>
+<h3 id="creating-an-instance-with-shared-types">Creating an instance with shared types</h3>
+<pre><code class="language-csharp">using JsonWorkspace workspace = JsonWorkspace.Create();
+using var personDoc = PersonCommonSchema.CreateBuilder(
+    workspace,
+    birthDate: new LocalDate(1820, 1, 17),
+    familyName: &quot;Brontë&quot;,
+    givenName: &quot;Anne&quot;,
+    otherNames: string.Empty,
+    height: 1.57);
+
+string json = personDoc.RootElement.ToString();
+using var parsedDoc = ParsedJsonDocument&lt;PersonCommonSchema&gt;.Parse(json);
+PersonCommonSchema personCommonSchema = parsedDoc.RootElement;
+</code></pre>
+<h3 id="working-with-the-shared-type">Working with the shared type</h3>
+<pre><code class="language-csharp">// Custom types can be converted in the same way as the primitive types on which they are based.
+PersonCommonSchema.ConstrainedString constrainedGivenName = personCommonSchema.GivenName;
+PersonCommonSchema.ConstrainedString constrainedFamilyName = personCommonSchema.FamilyName;
+string cgn = (string)constrainedGivenName;
+string cfn = (string)constrainedFamilyName;
+</code></pre>
+<h3 id="zero-allocation-comparisons">Zero-allocation comparisons</h3>
+<pre><code class="language-csharp">// Low-allocation comparisons are available in the usual way (as are all
+// the other features of JsonString).
+constrainedGivenName.Equals(constrainedFamilyName);
+constrainedGivenName.ValueEquals(&quot;Hello&quot;);
+constrainedGivenName.ValueEquals(&quot;Anne&quot;u8);
+</code></pre>
+<h2 id="key-differences-from-v4">Key Differences from V4</h2>
+<h3 id="v4-corvus.json">V4 (Corvus.Json)</h3>
+<pre><code class="language-csharp">// Create directly with static factory method
+PersonCommonSchema person = PersonCommonSchema.Create(
+    birthDate: new LocalDate(1820, 1, 17),
+    familyName: &quot;Brontë&quot;,
+    givenName: &quot;Anne&quot;,
+    otherNames: string.Empty,
+    height: 1.57);
+
+// Access shared types
+PersonCommonSchema.ConstrainedString givenName = person.GivenName;
+PersonCommonSchema.ConstrainedString familyName = person.FamilyName;
+
+// Zero-allocation comparison (same as V5)
+givenName.Equals(familyName);
+givenName.ValueEquals(&quot;Anne&quot;u8);
+</code></pre>
+<h3 id="v5-corvus.text.json">V5 (Corvus.Text.Json)</h3>
+<pre><code class="language-csharp">// Create using workspace and builder pattern
+using JsonWorkspace workspace = JsonWorkspace.Create();
+using var personDoc = PersonCommonSchema.CreateBuilder(
+    workspace,
+    birthDate: new LocalDate(1820, 1, 17),
+    familyName: &quot;Brontë&quot;,
+    givenName: &quot;Anne&quot;,
+    otherNames: string.Empty,
+    height: 1.57);
+PersonCommonSchema person = personDoc.RootElement;
+
+// Access shared types (same as V4)
+PersonCommonSchema.ConstrainedString givenName = person.GivenName;
+PersonCommonSchema.ConstrainedString familyName = person.FamilyName;
+
+// Zero-allocation comparison (same as V4)
+givenName.Equals(familyName);
+givenName.ValueEquals(&quot;Anne&quot;u8);
+</code></pre>
+<p><strong>Key differences:</strong></p>
+<ul>
+<li>V5 uses <code>CreateBuilder(workspace, prop: value, ...)</code> instead of V4's <code>Create(prop: value, ...)</code></li>
+<li>V5 requires a <code>JsonWorkspace</code> for creation — this manages pooled memory for high-performance scenarios</li>
+<li>Shared type behaviour is identical: <code>$ref</code> produces the same <code>ConstrainedString</code> type in both versions</li>
+<li><code>From()</code> conversions and zero-allocation comparisons work the same way in both versions</li>
+</ul>
+<h2 id="running-the-example">Running the Example</h2>
+<pre><code class="language-bash">cd docs/ExampleRecipes/003-ReusingCommonTypes
+dotnet run
+</code></pre>
+<h2 id="related-patterns">Related Patterns</h2>
+<ul>
+<li><a href="/corvus-json-schema/pr-preview/pr-734/examples/data-object.html">001-DataObject</a> - Simple data objects without shared types</li>
+<li><a href="/corvus-json-schema/pr-preview/pr-734/examples/extending-a-base-type.html">005-ExtendingABaseType</a> - Inheritance via <code>allOf</code> with a single base</li>
+<li><a href="/corvus-json-schema/pr-preview/pr-734/examples/mapping-input-and-output-values.html">017-MappingInputAndOutputValues</a> - Using <code>From()</code> for zero-allocation mapping between schemas</li>
+</ul>
+<h2 id="frequently-asked-questions">Frequently Asked Questions</h2>
+<h3 id="what-is-the-difference-between-using-ref-and-defining-properties-inline">What is the difference between using <code>$ref</code> and defining properties inline?</h3>
+<p>Inline definitions create a separate generated type for each property — so three string properties with identical constraints produce three distinct entity types (<code>GivenNameEntity</code>, <code>FamilyNameEntity</code>, <code>OtherNamesEntity</code>). Using <code>$ref</code> to point all three properties at the same <code>$defs</code> entry produces a single shared type (<code>ConstrainedString</code>). The shared type reduces code size and, crucially, makes the property values type-compatible so you can compare or convert between them without extracting to .NET primitives.</p>
+<h3 id="can-i-share-types-across-multiple-schema-files">Can I share types across multiple schema files?</h3>
+<p>Yes. <code>$ref</code> supports relative file paths (e.g., <code>{ &quot;$ref&quot;: &quot;./common/constrained-string.json&quot; }</code>), so you can define a shared type in one file and reference it from any number of other schema files. The code generator resolves these references at generation time. This is the recommended approach for large projects with many schemas that share common definitions.</p>
+<h3 id="are-properties-with-the-same-ref-target-truly-type-compatible">Are properties with the same <code>$ref</code> target truly type-compatible?</h3>
+<p>Yes. When two or more properties reference the same <code>$ref</code> target (whether via <code>$defs</code> in the same file or a shared external file), the code generator produces a single .NET type. All properties using that <code>$ref</code> return the same type, so you can compare them directly with <code>Equals()</code>, pass them to the same methods, and convert between entity types from different schemas using <code>From()</code> — all without allocating .NET strings or other primitives.</p>
+<h3 id="how-does-from-work-for-converting-between-compatible-entity-types">How does <code>From()</code> work for converting between compatible entity types?</h3>
+<p><code>From()</code> is a static method on generated entity types that creates a zero-allocation view over the underlying JSON data of a compatible source entity. For example, if schema A has <code>NameEntity</code> and schema B has <code>FullNameEntity</code>, and both are <code>$ref</code>-compatible strings, you can write <code>B.FullNameEntity.From(sourceA.Name)</code> to convert without extracting to a .NET <code>string</code>. This is the foundation of the mapping pattern shown in <a href="/corvus-json-schema/pr-preview/pr-734/examples/mapping-input-and-output-values.html">Recipe 017</a>.</p>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is the difference between using `$ref` and defining properties inline?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Inline definitions create a separate generated type for each property — so three string properties with identical constraints produce three distinct entity types (GivenNameEntity, FamilyNameEntity, OtherNamesEntity). Using $ref to point all three properties at the same $defs entry produces a single shared type (ConstrainedString). The shared type reduces code size and, crucially, makes the property values type-compatible so you can compare or convert between them without extracting to .NET primitives."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I share types across multiple schema files?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. $ref supports relative file paths (e.g., { \"$ref\": \"./common/constrained-string.json\" }), so you can define a shared type in one file and reference it from any number of other schema files. The code generator resolves these references at generation time. This is the recommended approach for large projects with many schemas that share common definitions."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Are properties with the same `$ref` target truly type-compatible?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. When two or more properties reference the same $ref target (whether via $defs in the same file or a shared external file), the code generator produces a single .NET type. All properties using that $ref return the same type, so you can compare them directly with Equals(), pass them to the same methods, and convert between entity types from different schemas using From() — all without allocating .NET strings or other primitives."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How does `From()` work for converting between compatible entity types?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "From() is a static method on generated entity types that creates a zero-allocation view over the underlying JSON data of a compatible source entity. For example, if schema A has NameEntity and schema B has FullNameEntity, and both are $ref-compatible strings, you can write B.FullNameEntity.From(sourceA.Name) to convert without extracting to a .NET string. This is the foundation of the mapping pattern shown in [Recipe 017](../017-MappingInputAndOutputValues/)."
+      }
+    }
+  ]
+}
+</script>
+        </div>
+    </main>
+</div>
+
+    </div>
+    <footer class="site-footer">
+    <div class="site-footer__inner">
+        <div class="site-footer__sponsor">
+            Sponsored by
+            <a href="https://endjin.com" target="_blank" rel="noopener noreferrer">endjin</a>
+        </div>
+        <ul class="site-footer__links" role="list">
+            <li><a class="site-footer__link" href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html">Getting Started</a></li>
+            <li><a class="site-footer__link" href="/corvus-json-schema/pr-preview/pr-734/docs/index.html">Documentation</a></li>
+            <li><a class="site-footer__link" href="/corvus-json-schema/pr-preview/pr-734/examples/index.html">Examples</a></li>
+            <li><a class="site-footer__link" href="/corvus-json-schema/pr-preview/pr-734/api/index.html">API</a></li>
+            <li><a class="site-footer__link" href="https://github.com/corvus-dotnet/Corvus.JsonSchema" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            <li><a class="site-footer__link" href="https://www.nuget.org/packages?q=Corvus.Json" target="_blank" rel="noopener noreferrer">NuGet</a></li>
+        </ul>
+        <p class="site-footer__copyright">&copy; 2026 endjin Ltd.</p>
+    </div>
+</footer>
+
+    <!-- highlight.js for syntax highlighting (CSS targets .hljs-* classes) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/csharp.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js" defer></script>
+    <script>document.addEventListener('DOMContentLoaded',()=>hljs.highlightAll())</script>
+    <script src="/corvus-json-schema/pr-preview/pr-734/assets/js/main.js" defer></script>
+    <script src="/corvus-json-schema/pr-preview/pr-734/assets/js/sidebar-search.js" defer></script>
+    
+</body>
+</html>

@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1C1D21" />
+    <meta name="description" content="This guide shows you how to use GitHub Copilot (in VS Code, Visual Studio, or the CLI) to assist with migrating code from Corvus.Json (V4) to Corvus.Text.Json (V5)." />
+    <meta name="keywords" content="documentation, Corvus.Text.Json" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:description" content="This guide shows you how to use GitHub Copilot (in VS Code, Visual Studio, or the CLI) to assist with migrating code from Corvus.Json (V4) to Corvus.Text.Json (V5)." />
+    <meta name="twitter:image" content="/corvus-json-schema/pr-preview/pr-734/assets/images/og-corvus.png" />
+    <meta name="twitter:title" content="Copilot Migration - Corvus.Text.Json" />
+    <meta property="article:tag" content="documentation" />
+    <meta property="article:tag" content="Corvus.Text.Json" />
+    <meta property="og:description" content="This guide shows you how to use GitHub Copilot (in VS Code, Visual Studio, or the CLI) to assist with migrating code from Corvus.Json (V4) to Corvus.Text.Json (V5)." />
+    <meta property="og:image" content="/corvus-json-schema/pr-preview/pr-734/assets/images/og-corvus.png" />
+    <meta property="og:title" content="Copilot Migration - Corvus.Text.Json" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://corvus-oss.org/corvus-json-schema/docs/using-copilot-for-migration/" />
+    <title>Copilot Migration - Corvus.Text.Json</title>
+    <link itemprop="url" href="https://corvus-oss.org/corvus-json-schema/docs/using-copilot-for-migration/" />
+    <link rel="canonical" href="https://corvus-oss.org/corvus-json-schema/docs/using-copilot-for-migration/" />
+    <link rel="sitemap" href="https://corvus-oss.org/corvus-json-schema/sitemap.xml" />
+    <!-- Styles -->
+    <link rel="stylesheet" href="/corvus-json-schema/pr-preview/pr-734/main.css" />
+    <link rel="icon" type="image/svg+xml" href="/corvus-json-schema/pr-preview/pr-734/assets/images/favicon.svg" />
+    
+</head>
+<body>
+    <a class="sr-only" href="#main-content">Skip to content</a>
+<header class="site-header">
+    <div class="site-header__inner">
+        <a class="site-header__brand" href="/corvus-json-schema/pr-preview/pr-734/index.html" aria-label="Corvus.JsonSchema home">
+            <img src="/corvus-json-schema/pr-preview/pr-734/assets/images/logo-corvus.svg" alt="" width="28" height="28" aria-hidden="true" />
+            Corvus<span style="color:var(--color-brand)">.</span>Json<span style="color:var(--color-brand)">Schema</span>
+        </a>
+        <nav class="site-header__nav-desktop" aria-label="Main navigation">
+                    <a href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html"
+                       class="site-header__link "
+                       >Getting Started</a>
+                    <a href="/corvus-json-schema/pr-preview/pr-734/getting-started-v4/index.html"
+                       class="site-header__link "
+                       >Getting Started (V4)</a>
+                    <a href="/corvus-json-schema/pr-preview/pr-734/docs/index.html"
+                       class="site-header__link is-active"
+                       aria-current=page>Documentation</a>
+                    <a href="/corvus-json-schema/pr-preview/pr-734/examples/index.html"
+                       class="site-header__link "
+                       >Examples</a>
+                    <a href="/corvus-json-schema/pr-preview/pr-734/api/index.html"
+                       class="site-header__link "
+                       >API</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/playground/"
+               class="site-header__link"
+               target="_blank" rel="noopener noreferrer"
+               title="Interactive JSON Schema playground">Playground</a>
+            <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+               class="site-header__link" target="_blank" rel="noopener noreferrer"
+               aria-label="View on GitHub">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            </a>
+        </nav>
+        <button class="site-header__menu-toggle js-toggle-menu"
+                aria-expanded="false" aria-label="Toggle menu">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+        </button>
+    </div>
+</header>
+<nav class="site-header__nav-mobile js-mobile-nav" aria-label="Mobile navigation">
+            <a href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html" class="site-header__link">Getting Started</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/getting-started-v4/index.html" class="site-header__link">Getting Started (V4)</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/docs/index.html" class="site-header__link">Documentation</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/examples/index.html" class="site-header__link">Examples</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/api/index.html" class="site-header__link">API</a>
+    <a href="/corvus-json-schema/pr-preview/pr-734/playground/" class="site-header__link" target="_blank" rel="noopener noreferrer">Playground</a>
+    <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+       class="site-header__link" target="_blank" rel="noopener noreferrer">GitHub</a>
+</nav>
+
+    <div class="page-content">
+    <div class="layout-docs container">
+    <button class="sidebar-toggle" aria-label="Toggle navigation" aria-expanded="false"></button>
+<div class="sidebar-backdrop"></div>
+<aside class="sidebar">
+    <div class="sidebar__inner">
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Getting Started</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                    <li class="sidebar__item"><a class="sidebar__link" href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html">Tutorial</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Documentation</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/parsed-json-document.html">Parsing &amp; Reading JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/json-document-builder.html">Building &amp; Mutating JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/source-generator.html">Source Generator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/code-generator.html">CLI Code Generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/validator.html">Dynamic Schema Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/migrating-from-v4-to-v5.html">Migrating from V4</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link is-active" href="/corvus-json-schema/pr-preview/pr-734/docs/using-copilot-for-migration.html">Copilot Migration</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/migration-analyzers.html">Migration Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/analyzers.html">Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/schema-evaluator.html">Standalone Schema Evaluator</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Examples</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/data-object.html">Simple Data Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/data-object-validation.html">Data Object Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/reusing-common-types.html">Reusing Common Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/open-versus-closed-types.html">Open Versus Closed Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/extending-a-base-type.html">Extending a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/constraining-a-base-type.html">Constraining a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/creating-a-strongly-typed-array.html">Strongly Typed Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/creating-an-array-of-higher-rank.html">Multi-Dimensional Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/working-with-tensors.html">Working with Tensors</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/creating-tuples.html">Creating Tuples</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/interfaces-and-mix-in-types.html">Interfaces and Mix-In Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/pattern-matching.html">Pattern Matching and Discriminated Unions</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/polymorphism-with-discriminators.html">Polymorphism with Discriminator Properties</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/string-enumerations.html">String Enumerations and Pattern Matching</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/numeric-enumerations.html">Numeric Enumerations</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/maps.html">Maps of Strings to Strongly Typed Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/mapping-input-and-output-values.html">Mapping Input and Output Values</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</aside>
+
+    <main id="main-content" class="layout-docs__main">
+        <div class="doc__content">
+            <h1>Copilot Migration</h1>
+<p>This guide shows you how to use GitHub Copilot (in VS Code, Visual Studio, or the CLI) to assist with migrating code from Corvus.Json (V4) to Corvus.Text.Json (V5).</p>
+<p>Copilot can handle the bulk of mechanical transformations — namespace changes, API renames, pattern rewrites — but you'll need to guide it and verify the results. Think of Copilot as a knowledgeable assistant that needs a clear brief and a human reviewer.</p>
+<h2 id="prerequisites">Prerequisites</h2>
+<ul>
+<li>GitHub Copilot enabled in your editor (VS Code, Visual Studio, or JetBrains)</li>
+<li>This repository cloned locally (the <code>.github/copilot-instructions.md</code> file is picked up automatically)</li>
+<li>V5 types already generated from your JSON Schema files (run the code generator first)</li>
+</ul>
+<hr />
+<h2 id="step-1-generate-your-v5-types-first">Step 1: Generate Your V5 Types First</h2>
+<p>Before migrating any code, generate the V5 types so Copilot can see the actual type names:</p>
+<pre><code class="language-bash"># Using the CLI tool
+generatejsonschematypes --rootNamespace MyApp.Models --outputPath generated/ schema.json
+
+# Or using the source generator — add the attribute and build
+# [JsonSchemaTypeGenerator(&quot;schema.json&quot;)]
+dotnet build
+</code></pre>
+<p>This matters because V5 may rename types. V4 reduced unformatted simple types to framework globals from <code>Corvus.Json.ExtendedTypes</code> (<code>Corvus.Json.JsonString</code>, <code>Corvus.Json.JsonBoolean</code>, etc.) and <code>&quot;type&quot;: &quot;number&quot;</code> + format to globals (<code>Corvus.Json.JsonInt32</code>, etc.). However, V4 did <strong>not</strong> reduce <code>&quot;type&quot;: &quot;integer&quot;</code> + format — those became custom entity types (e.g. <code>OneOf1Entity</code>). V5 generates project-local global types for <strong>all</strong> of these cases (<code>JsonString</code>, <code>JsonInt32</code>, <code>JsonBoolean</code>, etc.). So unformatted types keep the same name (different provenance), while <code>&quot;type&quot;:&quot;integer&quot;</code> + format variants get renamed from entity types to globals. Namespace references will need updating. Copilot can only suggest the right names if it can see the generated output.</p>
+<hr />
+<h2 id="step-2-understand-the-reference-documents">Step 2: Understand the Reference Documents</h2>
+<p>This repository includes three migration documents:</p>
+<table>
+<thead>
+<tr>
+<th>Document</th>
+<th>Purpose</th>
+<th>Audience</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="/corvus-json-schema/pr-preview/pr-734/docs/migrating-from-v4-to-v5.html"><code>MigratingFromV4ToV5.md</code></a></td>
+<td>Comprehensive migration guide with explanations and examples</td>
+<td>Developers</td>
+</tr>
+<tr>
+<td><a href="/corvus-json-schema/pr-preview/pr-734/docs/migration-analyzers.html"><code>MigrationAnalyzers.md</code></a></td>
+<td>Reference for all Roslyn diagnostics with before/after code examples</td>
+<td>Developers</td>
+</tr>
+<tr>
+<td><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/v5/docs/copilot/CopilotMigrationInstructions.md"><code>CopilotMigrationInstructions.md</code></a></td>
+<td>Structured transformation rules optimised for AI consumption</td>
+<td>Copilot</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>Tip:</strong> Install the <code>Corvus.Text.Json.Migration.Analyzers</code> NuGet package <em>before</em> starting your Copilot-assisted migration. The Tier 2 guidance diagnostics serve as a checklist of patterns that Copilot can help transform — just point Copilot at the warnings.</p>
+</blockquote>
+<p>You don't need to memorise any of these. <code>CopilotMigrationInstructions.md</code> is designed to be attached to Copilot prompts so it has the full context of every V4 → V5 transformation.</p>
+<hr />
+<h2 id="step-3-attach-context-when-prompting">Step 3: Attach Context When Prompting</h2>
+<p>The single most important thing you can do is <strong>give Copilot the migration instructions as context</strong>. Without them, it will guess — and frequently guess wrong.</p>
+<h3 id="in-vs-code-visual-studio-chat">In VS Code / Visual Studio Chat</h3>
+<p>Use <code>#file</code> to attach the migration instructions:</p>
+<pre><code>#file:docs/copilot/CopilotMigrationInstructions.md
+
+Migrate this file from Corvus.Json V4 to Corvus.Text.Json V5.
+Follow the transformation rules in the attached document.
+</code></pre>
+<h3 id="in-copilot-cli-ghcs">In Copilot CLI (ghcs)</h3>
+<p>Reference the file in your prompt:</p>
+<pre><code>Migrate the file src/MyService/PersonHandler.cs from Corvus.Json V4 to
+Corvus.Text.Json V5. Use the transformation rules in
+docs/copilot/CopilotMigrationInstructions.md as your reference.
+</code></pre>
+<h3 id="in-github-copilot-workspace">In GitHub Copilot Workspace</h3>
+<p>If using Copilot Workspace, include a link or paste the relevant sections of <code>CopilotMigrationInstructions.md</code> into the task description.</p>
+<hr />
+<h2 id="step-4-migrate-file-by-file">Step 4: Migrate File by File</h2>
+<p>Migration works best one file at a time. This keeps the scope manageable and makes review easier.</p>
+<h3 id="recommended-workflow">Recommended workflow</h3>
+<ol>
+<li><p><strong>Pick a file</strong> — start with simpler files (models, DTOs) before tackling files with complex mutation or validation logic.</p>
+</li>
+<li><p><strong>Ask Copilot to migrate it:</strong></p>
+<pre><code>#file:docs/copilot/CopilotMigrationInstructions.md
+#file:src/MyService/PersonHandler.cs
+
+Migrate PersonHandler.cs from Corvus.Json V4 to Corvus.Text.Json V5.
+Follow the transformation rules in CopilotMigrationInstructions.md.
+</code></pre>
+</li>
+<li><p><strong>Review the diff</strong> — Copilot handles mechanical changes well, but always check:</p>
+<ul>
+<li>Are <code>using</code> statements correctly changed to <code>using var</code> with disposal for <code>ParsedJsonDocument</code>?</li>
+<li>Did mutation code get the <code>JsonWorkspace</code> + <code>CreateBuilder</code> pattern right?</li>
+<li>Are the generated type names correct (check against your generated V5 output)?</li>
+</ul>
+</li>
+<li><p><strong>Build and test</strong> — verify the file compiles and tests pass before moving on.</p>
+</li>
+<li><p><strong>Commit</strong> — small, file-by-file commits make it easy to bisect if something goes wrong.</p>
+</li>
+</ol>
+<h3 id="example-prompts-for-common-scenarios">Example prompts for common scenarios</h3>
+<p><strong>Simple model usage (parsing, property access):</strong></p>
+<pre><code>#file:docs/copilot/CopilotMigrationInstructions.md
+#file:src/MyService/PersonHandler.cs
+
+Migrate this file from V4 to V5. It mostly does parsing and property
+access — focus on the ParsedValue → ParsedJsonDocument change and
+ensure disposal is correct.
+</code></pre>
+<p><em><em>Mutation-heavy code (With</em> → Set</em>):**</p>
+<pre><code>#file:docs/copilot/CopilotMigrationInstructions.md
+#file:src/MyService/OrderBuilder.cs
+
+Migrate this file. It uses With*() chains extensively to build up
+objects. Convert to the JsonWorkspace + CreateBuilder + Set*() pattern.
+Ensure the workspace is created in a using block.
+</code></pre>
+<p><strong>Validation code:</strong></p>
+<pre><code>#file:docs/copilot/CopilotMigrationInstructions.md
+#file:src/MyService/SchemaValidator.cs
+
+Migrate this file. It uses Validate(ValidationContext, ValidationLevel).
+Convert to EvaluateSchema() for simple boolean checks, or
+EvaluateSchema(collector) where detailed results are needed.
+</code></pre>
+<p><strong>Union/composition code (Match, TryGetAs):</strong></p>
+<pre><code>#file:docs/copilot/CopilotMigrationInstructions.md
+#file:src/MyService/ShapeProcessor.cs
+
+Migrate this file. It uses AsString, AsNumber, Match(), and TryGetAs*().
+Note: V5 emits value accessors directly on multi-core-type types, so
+AsString/AsNumber/AsBoolean are no longer needed. Check the generated V5
+types to confirm the correct Match() and TryGetAs*() type names — simple
+variants often become global types like JsonString, JsonInt32, etc.
+</code></pre>
+<hr />
+<h2 id="step-5-handle-the-tricky-parts">Step 5: Handle the Tricky Parts</h2>
+<p>Some transformations need more guidance. Here's how to handle them.</p>
+<h3 id="mutation-with-jsonworkspace">Mutation (With* → JsonWorkspace)</h3>
+<p>This is the biggest conceptual change. V4's functional <code>With*()</code> chains become imperative <code>Set*()</code> calls on a mutable builder. Tell Copilot explicitly:</p>
+<pre><code>The V4 code uses functional With*() chains:
+  var updated = person.WithName(&quot;Alice&quot;).WithAge(30);
+
+Convert this to V5's imperative pattern:
+  using var workspace = JsonWorkspace.Create();
+  using var builder = person.CreateBuilder(workspace);
+  var mutable = builder.RootElement;
+  mutable.SetName(&quot;Alice&quot;);
+  mutable.SetAge(30);
+  // Use mutable.ToString() or mutable.Freeze() to get an immutable result
+</code></pre>
+<h3 id="generated-type-names">Generated Type Names</h3>
+<p>V5's code generator uses different naming heuristics than V4. Both versions use &quot;Value&quot; and &quot;Entity&quot; suffixes for disambiguation, but V5 has different name reservations. This means some properties and types change names.</p>
+<p><strong>Always cross-reference against the actual generated output.</strong> If Copilot suggests a type name that doesn't exist, check what the generator actually produced.</p>
+<p>Common changes:</p>
+<ul>
+<li><code>CountValue</code> → <code>Count</code> (V5 doesn't reserve &quot;Count&quot;)</li>
+<li><code>Corvus.Json.JsonString</code> → project-local <code>JsonString</code> (same name, different provenance — unformatted types keep their names)</li>
+<li>V4 <code>OneOf1Entity</code> (for <code>&quot;type&quot;:&quot;integer&quot;,&quot;format&quot;:&quot;int32&quot;</code>) → project-local <code>JsonInt32</code> (V5 reduces integer + format to globals; V4 did not)</li>
+</ul>
+<h3 id="asstring-asnumber-asboolean">AsString / AsNumber / AsBoolean</h3>
+<p>These existed in V4 because multi-core-type types (e.g. a union of string and integer) didn't emit value accessors directly. V5 emits all accessors on the type, so they're no longer needed.</p>
+<p>Tell Copilot:</p>
+<pre><code>Replace v4.AsString / v4.AsNumber / v4.AsBoolean with direct access:
+- (string)v5, v5.GetString(), v5.TryGetValue(out string?)
+- (int)v5, v5.GetInt32(), v5.TryGetValue(out int)
+- (bool)v5, v5.TryGetValue(out bool)
+
+For object/array access, V5 also emits accessors directly:
+- v5.EnumerateObject(), v5.TryGetProperty(), v5.GetPropertyCount()
+- v5.EnumerateArray(), v5[index], v5.GetArrayLength()
+</code></pre>
+<h3 id="span-based-string-access">Span-Based String Access</h3>
+<p>V4's <code>TryGetValue&lt;TState&gt;(state, callback)</code> delegate pattern for accessing string content as <code>ReadOnlySpan&lt;byte&gt;</code> or <code>ReadOnlySpan&lt;char&gt;</code> doesn't exist in V5. Tell Copilot:</p>
+<pre><code>V4's TryGetValue(state, callback) span pattern becomes:
+- v5.GetUtf8String().Span  — for ReadOnlySpan&lt;byte&gt;
+- v5.GetUtf16String().Span — for ReadOnlySpan&lt;char&gt;
+</code></pre>
+<hr />
+<h2 id="step-6-batch-repetitive-changes">Step 6: Batch Repetitive Changes</h2>
+<p>For large codebases, use Copilot to handle repetitive patterns across multiple files.</p>
+<h3 id="namespace-only-changes">Namespace-only changes</h3>
+<p>If many files just need namespace updates:</p>
+<pre><code>Find all files that import Corvus.Json and update the using directives
+to Corvus.Text.Json. Also update any Corvus.Json.JsonAny references
+to Corvus.Text.Json.JsonElement.
+</code></pre>
+<h3 id="parsedvalue-parsedjsondocument">ParsedValue → ParsedJsonDocument</h3>
+<p>If many files use the parse pattern:</p>
+<pre><code>#file:docs/copilot/CopilotMigrationInstructions.md
+
+Find all usages of ParsedValue&lt;T&gt; and convert to
+ParsedJsonDocument&lt;T&gt;. Remember:
+- .Instance → .RootElement
+- ParsedJsonDocument must be disposed (add using var)
+- T.Parse(json) → ParsedJsonDocument&lt;T&gt;.Parse(json)
+</code></pre>
+<hr />
+<h2 id="step-7-verify">Step 7: Verify</h2>
+<p>After migrating a group of files:</p>
+<ol>
+<li><p><strong>Build the solution:</strong></p>
+<pre><code class="language-bash">dotnet build
+</code></pre>
+</li>
+<li><p><strong>Run tests:</strong></p>
+<pre><code class="language-bash">dotnet test --filter &quot;category!=failing&amp;category!=outerloop&quot;
+</code></pre>
+</li>
+<li><p><strong>If tests fail</strong>, give Copilot the error output:</p>
+<pre><code>#file:docs/copilot/CopilotMigrationInstructions.md
+
+I'm getting this build error after migrating to V5:
+
+error CS1061: 'Person' does not contain a definition for 'AsString'
+
+How should this be fixed?
+</code></pre>
+<p>The &quot;Common Migration Errors&quot; section at the end of <code>CopilotMigrationInstructions.md</code> covers the most frequent errors.</p>
+</li>
+</ol>
+<hr />
+<h2 id="tips-for-better-results">Tips for Better Results</h2>
+<h3 id="do">Do</h3>
+<ul>
+<li><strong>Attach <code>CopilotMigrationInstructions.md</code> every time.</strong> Copilot doesn't remember between conversations. The reference document is the single biggest factor in getting correct migrations.</li>
+<li><strong>Show Copilot the generated V5 types</strong> when migrating union/composition code. Attach the generated <code>.g.cs</code> file so it can see the actual type names.</li>
+<li><strong>Migrate incrementally</strong> — one file at a time, build between each.</li>
+<li><strong>Use specific prompts</strong> — &quot;Migrate the parsing code in lines 20-45&quot; beats &quot;Migrate this file&quot;.</li>
+<li><strong>Tell Copilot what the code does</strong> — &quot;This file handles order validation using schema validation and union matching&quot; gives Copilot context to make better decisions.</li>
+</ul>
+<h3 id="dont">Don't</h3>
+<ul>
+<li><strong>Don't trust namespace changes blindly</strong> — <code>System.Text.Json.Utf8JsonWriter</code> → <code>Corvus.Text.Json.Utf8JsonWriter</code> is a real change (different type), not just a rename.</li>
+<li><strong>Don't assume type names are the same</strong> — V5's naming heuristics differ from V4. Always verify against generated output.</li>
+<li><strong>Don't migrate the whole project in one prompt</strong> — Copilot works best with focused, file-level tasks.</li>
+<li><strong>Don't skip the build step</strong> — <code>TreatWarningsAsErrors=true</code> means even warnings will fail the build. Catch issues early.</li>
+</ul>
+<hr />
+<h2 id="quick-reference-what-copilot-handles-well-vs.what-needs-human-review">Quick Reference: What Copilot Handles Well vs. What Needs Human Review</h2>
+<table>
+<thead>
+<tr>
+<th>Transformation</th>
+<th>Copilot Reliability</th>
+<th>Human Review Needed</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Namespace changes (<code>Corvus.Json</code> → <code>Corvus.Text.Json</code>)</td>
+<td>✅ High</td>
+<td>Minimal</td>
+</tr>
+<tr>
+<td><code>ParsedValue</code> → <code>ParsedJsonDocument</code></td>
+<td>✅ High</td>
+<td>Check disposal</td>
+</tr>
+<tr>
+<td><code>.Instance</code> → <code>.RootElement</code></td>
+<td>✅ High</td>
+<td>Minimal</td>
+</tr>
+<tr>
+<td>Property access (unchanged patterns)</td>
+<td>✅ High</td>
+<td>Minimal</td>
+</tr>
+<tr>
+<td><code>With*()</code> → <code>JsonWorkspace</code> + <code>Set*()</code></td>
+<td>⚠️ Medium</td>
+<td>Verify workspace/builder lifecycle</td>
+</tr>
+<tr>
+<td><code>AsString</code>/<code>AsNumber</code> removal</td>
+<td>⚠️ Medium</td>
+<td>Verify correct accessor used</td>
+</tr>
+<tr>
+<td><code>Match()</code> / <code>TryGetAs*()</code> type names</td>
+<td>⚠️ Medium</td>
+<td>Cross-check generated types</td>
+</tr>
+<tr>
+<td>Generated property/type name changes</td>
+<td>❌ Low</td>
+<td>Must check generated output</td>
+</tr>
+<tr>
+<td>Complex validation migration</td>
+<td>⚠️ Medium</td>
+<td>Verify collector usage</td>
+</tr>
+<tr>
+<td>Tuple/tensor/numeric array creation</td>
+<td>⚠️ Medium</td>
+<td>Verify correct overload</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="copilot-suggests-v4-patterns">Copilot suggests V4 patterns</h3>
+<p>It may have been trained on V4 examples. Re-attach <code>CopilotMigrationInstructions.md</code> and be explicit:</p>
+<pre><code>Use V5 patterns only. Do NOT use With*(), ParsedValue, AsString,
+or any V4 APIs. Refer to the attached migration instructions.
+</code></pre>
+<h3 id="copilot-uses-wrong-type-names">Copilot uses wrong type names</h3>
+<p>Show it the generated types:</p>
+<pre><code>#file:generated/Person.g.cs
+
+Use the actual type names from this generated file. For example, V4's
+framework type Corvus.Json.JsonString is now a project-local JsonString,
+and V4 custom entity types like OneOf1Entity (for &quot;type&quot;:&quot;integer&quot; + format)
+become project-local globals like JsonInt32.
+</code></pre>
+<h3 id="copilot-doesnt-add-disposal">Copilot doesn't add disposal</h3>
+<p>Be explicit about the resource management pattern:</p>
+<pre><code>ParsedJsonDocument and JsonDocumentBuilder are disposable. Always use
+'using var' or a using block. JsonWorkspace must also be disposed.
+</code></pre>
+        </div>
+    </main>
+</div>
+
+    </div>
+    <footer class="site-footer">
+    <div class="site-footer__inner">
+        <div class="site-footer__sponsor">
+            Sponsored by
+            <a href="https://endjin.com" target="_blank" rel="noopener noreferrer">endjin</a>
+        </div>
+        <ul class="site-footer__links" role="list">
+            <li><a class="site-footer__link" href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html">Getting Started</a></li>
+            <li><a class="site-footer__link" href="/corvus-json-schema/pr-preview/pr-734/docs/index.html">Documentation</a></li>
+            <li><a class="site-footer__link" href="/corvus-json-schema/pr-preview/pr-734/examples/index.html">Examples</a></li>
+            <li><a class="site-footer__link" href="/corvus-json-schema/pr-preview/pr-734/api/index.html">API</a></li>
+            <li><a class="site-footer__link" href="https://github.com/corvus-dotnet/Corvus.JsonSchema" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            <li><a class="site-footer__link" href="https://www.nuget.org/packages?q=Corvus.Json" target="_blank" rel="noopener noreferrer">NuGet</a></li>
+        </ul>
+        <p class="site-footer__copyright">&copy; 2026 endjin Ltd.</p>
+    </div>
+</footer>
+
+    <!-- highlight.js for syntax highlighting (CSS targets .hljs-* classes) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/csharp.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js" defer></script>
+    <script>document.addEventListener('DOMContentLoaded',()=>hljs.highlightAll())</script>
+    <script src="/corvus-json-schema/pr-preview/pr-734/assets/js/main.js" defer></script>
+    <script src="/corvus-json-schema/pr-preview/pr-734/assets/js/sidebar-search.js" defer></script>
+    
+</body>
+</html>

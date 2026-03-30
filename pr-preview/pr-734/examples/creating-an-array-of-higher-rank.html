@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1C1D21" />
+    <meta name="description" content="This recipe demonstrates how to define multi-dimensional (higher-rank) JSON arrays in .NET by nesting array schemas, giving you strongly-typed indexers and tensor operations for fixed-size numeric arrays." />
+    <meta name="keywords" content="recipe, JSON Schema, C#, multidimensional, arrays, type, items, $ref, minItems, maxItems, $defs, format, TryGetNumericValues, Build" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:description" content="This recipe demonstrates how to define multi-dimensional (higher-rank) JSON arrays in .NET by nesting array schemas, giving you strongly-typed indexers and tensor operations for fixed-size numeric arrays." />
+    <meta name="twitter:image" content="/corvus-json-schema/pr-preview/pr-734/assets/images/og-corvus.png" />
+    <meta name="twitter:title" content="Multi-Dimensional Arrays - Corvus.Text.Json Examples" />
+    <meta property="article:tag" content="recipe" />
+    <meta property="article:tag" content="JSON Schema" />
+    <meta property="article:tag" content="C#" />
+    <meta property="article:tag" content="multidimensional" />
+    <meta property="article:tag" content="arrays" />
+    <meta property="article:tag" content="type" />
+    <meta property="article:tag" content="items" />
+    <meta property="article:tag" content="$ref" />
+    <meta property="article:tag" content="minItems" />
+    <meta property="article:tag" content="maxItems" />
+    <meta property="article:tag" content="$defs" />
+    <meta property="article:tag" content="format" />
+    <meta property="article:tag" content="TryGetNumericValues" />
+    <meta property="article:tag" content="Build" />
+    <meta property="og:description" content="This recipe demonstrates how to define multi-dimensional (higher-rank) JSON arrays in .NET by nesting array schemas, giving you strongly-typed indexers and tensor operations for fixed-size numeric arrays." />
+    <meta property="og:image" content="/corvus-json-schema/pr-preview/pr-734/assets/images/og-corvus.png" />
+    <meta property="og:title" content="Multi-Dimensional Arrays - Corvus.Text.Json Examples" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://corvus-oss.org/corvus-json-schema/examples/creating-an-array-of-higher-rank/" />
+    <title>Multi-Dimensional Arrays - Corvus.Text.Json Examples</title>
+    <link itemprop="url" href="https://corvus-oss.org/corvus-json-schema/examples/creating-an-array-of-higher-rank/" />
+    <link rel="canonical" href="https://corvus-oss.org/corvus-json-schema/examples/creating-an-array-of-higher-rank/" />
+    <link rel="sitemap" href="https://corvus-oss.org/corvus-json-schema/sitemap.xml" />
+    <!-- Styles -->
+    <link rel="stylesheet" href="/corvus-json-schema/pr-preview/pr-734/main.css" />
+    <link rel="icon" type="image/svg+xml" href="/corvus-json-schema/pr-preview/pr-734/assets/images/favicon.svg" />
+    
+</head>
+<body>
+    <a class="sr-only" href="#main-content">Skip to content</a>
+<header class="site-header">
+    <div class="site-header__inner">
+        <a class="site-header__brand" href="/corvus-json-schema/pr-preview/pr-734/index.html" aria-label="Corvus.JsonSchema home">
+            <img src="/corvus-json-schema/pr-preview/pr-734/assets/images/logo-corvus.svg" alt="" width="28" height="28" aria-hidden="true" />
+            Corvus<span style="color:var(--color-brand)">.</span>Json<span style="color:var(--color-brand)">Schema</span>
+        </a>
+        <nav class="site-header__nav-desktop" aria-label="Main navigation">
+                    <a href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html"
+                       class="site-header__link "
+                       >Getting Started</a>
+                    <a href="/corvus-json-schema/pr-preview/pr-734/getting-started-v4/index.html"
+                       class="site-header__link "
+                       >Getting Started (V4)</a>
+                    <a href="/corvus-json-schema/pr-preview/pr-734/docs/index.html"
+                       class="site-header__link "
+                       >Documentation</a>
+                    <a href="/corvus-json-schema/pr-preview/pr-734/examples/index.html"
+                       class="site-header__link is-active"
+                       aria-current=page>Examples</a>
+                    <a href="/corvus-json-schema/pr-preview/pr-734/api/index.html"
+                       class="site-header__link "
+                       >API</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/playground/"
+               class="site-header__link"
+               target="_blank" rel="noopener noreferrer"
+               title="Interactive JSON Schema playground">Playground</a>
+            <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+               class="site-header__link" target="_blank" rel="noopener noreferrer"
+               aria-label="View on GitHub">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            </a>
+        </nav>
+        <button class="site-header__menu-toggle js-toggle-menu"
+                aria-expanded="false" aria-label="Toggle menu">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+        </button>
+    </div>
+</header>
+<nav class="site-header__nav-mobile js-mobile-nav" aria-label="Mobile navigation">
+            <a href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html" class="site-header__link">Getting Started</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/getting-started-v4/index.html" class="site-header__link">Getting Started (V4)</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/docs/index.html" class="site-header__link">Documentation</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/examples/index.html" class="site-header__link">Examples</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/api/index.html" class="site-header__link">API</a>
+    <a href="/corvus-json-schema/pr-preview/pr-734/playground/" class="site-header__link" target="_blank" rel="noopener noreferrer">Playground</a>
+    <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+       class="site-header__link" target="_blank" rel="noopener noreferrer">GitHub</a>
+</nav>
+
+    <div class="page-content">
+    <div class="layout-docs container">
+    <button class="sidebar-toggle" aria-label="Toggle navigation" aria-expanded="false"></button>
+<div class="sidebar-backdrop"></div>
+<aside class="sidebar">
+    <div class="sidebar__inner">
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Getting Started</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                    <li class="sidebar__item"><a class="sidebar__link" href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html">Tutorial</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Documentation</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/parsed-json-document.html">Parsing &amp; Reading JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/json-document-builder.html">Building &amp; Mutating JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/source-generator.html">Source Generator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/code-generator.html">CLI Code Generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/validator.html">Dynamic Schema Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/migrating-from-v4-to-v5.html">Migrating from V4</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/using-copilot-for-migration.html">Copilot Migration</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/migration-analyzers.html">Migration Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/analyzers.html">Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/schema-evaluator.html">Standalone Schema Evaluator</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Examples</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/data-object.html">Simple Data Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/data-object-validation.html">Data Object Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/reusing-common-types.html">Reusing Common Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/open-versus-closed-types.html">Open Versus Closed Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/extending-a-base-type.html">Extending a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/constraining-a-base-type.html">Constraining a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/creating-a-strongly-typed-array.html">Strongly Typed Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link is-active" href="/corvus-json-schema/pr-preview/pr-734/examples/creating-an-array-of-higher-rank.html">Multi-Dimensional Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/working-with-tensors.html">Working with Tensors</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/creating-tuples.html">Creating Tuples</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/interfaces-and-mix-in-types.html">Interfaces and Mix-In Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/pattern-matching.html">Pattern Matching and Discriminated Unions</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/polymorphism-with-discriminators.html">Polymorphism with Discriminator Properties</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/string-enumerations.html">String Enumerations and Pattern Matching</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/numeric-enumerations.html">Numeric Enumerations</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/maps.html">Maps of Strings to Strongly Typed Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/mapping-input-and-output-values.html">Mapping Input and Output Values</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</aside>
+
+    <main id="main-content" class="layout-docs__main">
+        <div class="doc__content">
+            <h1>Multi-Dimensional Arrays</h1>
+                <div class="card__tags" style="margin-bottom:1.5rem">
+                        <span class="card__tag">recipe</span>
+                        <span class="card__tag">JSON Schema</span>
+                        <span class="card__tag">C#</span>
+                        <span class="card__tag">multidimensional</span>
+                        <span class="card__tag">arrays</span>
+                        <span class="card__tag">type</span>
+                        <span class="card__tag">items</span>
+                        <span class="card__tag">$ref</span>
+                        <span class="card__tag">minItems</span>
+                        <span class="card__tag">maxItems</span>
+                        <span class="card__tag">$defs</span>
+                        <span class="card__tag">format</span>
+                        <span class="card__tag">TryGetNumericValues</span>
+                        <span class="card__tag">Build</span>
+                </div>
+<p>This recipe demonstrates how to define multi-dimensional (higher-rank) JSON arrays in .NET by nesting array schemas, giving you strongly-typed indexers and tensor operations for fixed-size numeric arrays.</p>
+<h2 id="the-pattern">The Pattern</h2>
+<p>You can think of an array of rank &gt; 1 as being like an &quot;array of arrays&quot;.</p>
+<p>The rank of an array determines the number of indices you need to provide to access a value.</p>
+<p>In C#, for example, we might define an array of rank 2 like this:</p>
+<pre><code class="language-csharp">double[][] values = new double[3][4];
+</code></pre>
+<p>To retrieve a value we need to provide 2 indices:</p>
+<pre><code class="language-csharp">double value = values[1][0];
+</code></pre>
+<p>We have seen how JSON schema allows you to <a href="/corvus-json-schema/pr-preview/pr-734/examples/creating-a-strongly-typed-array.html">define an array that contains items of a particular type</a> using its <code>items</code> property.</p>
+<p>This was an array of rank 1. Only one index was required to retrieve the value.</p>
+<p>To create an array of higher rank, just like the C# example above, we define each item to itself be an array.</p>
+<p>Each array we define can be constrained with <code>minItems</code> and/or <code>maxItems</code> to ensure the dimensions are appropriate.</p>
+<p>Specifying both, and making them the same value implies an array of <em>exactly</em> that number of items.</p>
+<p>Ragged multi-dimensional arrays (where each item may be an array of a different length) can be created by <em>not</em> specifying the upper and lower limits on one of the arrays, allowing them to be any length.</p>
+<p><strong>Remember:</strong></p>
+<ul>
+<li>Specifying both <code>maxItems</code> and <code>minItems</code>, and making them the same value constrains the array to <em>exactly</em> the given length.</li>
+<li>Specifying just <code>maxItems</code> indicates that the array can contain <em>up to</em> that many items.</li>
+<li>Specifying just <code>minItems</code> indicates that the array will contain <em>at least</em> that many items.</li>
+<li>Specifying both, and making them different values gives an upper and a lower bound to the number of items.</li>
+</ul>
+<h2 id="the-schema">The Schema</h2>
+<p>File: <code>matrix-2d.json</code></p>
+<pre><code class="language-json">{
+  &quot;title&quot;: &quot;A 4x2 array of JsonDouble&quot;,
+  &quot;type&quot;: &quot;array&quot;,
+  &quot;items&quot;: { &quot;$ref&quot;: &quot;#/$defs/row&quot; },
+  &quot;minItems&quot;: 4,
+  &quot;maxItems&quot;: 4,
+  &quot;$defs&quot;: {
+    &quot;row&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;minItems&quot;: 2,
+      &quot;maxItems&quot;: 2,
+      &quot;items&quot;: { &quot;type&quot;: &quot;number&quot;, &quot;format&quot;: &quot;double&quot; }
+    }
+  }
+}
+</code></pre>
+<p>The code generator produces:</p>
+<ul>
+<li><code>Matrix2d</code> — the 2D array type (rank 2, dimension 4)</li>
+<li><code>Matrix2d.Row</code> — the nested row type (rank 1, dimension 2)</li>
+<li><code>Matrix2d.Row.RowEntity</code> — the double item type</li>
+</ul>
+<p>Fixed-size numeric arrays are recognized as <strong>tensor types</strong> and gain additional API surface:</p>
+<ul>
+<li><code>Rank</code> — the number of dimensions (2 for Matrix2d, 1 for Row)</li>
+<li><code>Dimension</code> — the fixed length at the current rank (4 for Matrix2d, 2 for Row)</li>
+<li><code>ValueBufferSize</code> — total element count for the flattened buffer (8 = 4×2)</li>
+<li><code>TryGetNumericValues(Span&lt;double&gt;, out int)</code> — extract all values into a flat buffer</li>
+</ul>
+<h2 id="generated-code-usage">Generated Code Usage</h2>
+<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/v5/docs/ExampleRecipes/008-CreatingAnArrayOfHigherRank/Program.cs">Example code</a></p>
+<h3 id="parsing-and-accessing-elements">Parsing and accessing elements</h3>
+<pre><code class="language-csharp">using Corvus.Text.Json;
+using CreatingAnArrayOfHigherRank.Models;
+
+// Create a 2D array from JSON
+string matrixJson =
+    &quot;&quot;&quot;
+    [
+        [1.3, 1.4],
+        [2.4, 3.2],
+        [9.4, 6.2],
+        [4.4, 9.4]
+    ]
+    &quot;&quot;&quot;;
+
+using var parsedMatrix = ParsedJsonDocument&lt;Matrix2d&gt;.Parse(matrixJson);
+Matrix2d matrix = parsedMatrix.RootElement;
+
+// Access an element of a 2D array
+// Can chain the indexers: matrix[2][1]
+Matrix2d.Row row2 = matrix[2];
+double value = row2[1];
+double value2 = matrix[2][1];  // same as above
+</code></pre>
+<h3 id="mutable-multi-dimensional-operations">Mutable multi-dimensional operations</h3>
+<pre><code class="language-csharp">// Set the item at the given indices via mutable builder
+using JsonWorkspace workspace = JsonWorkspace.Create();
+using var mutableDoc = matrix.CreateBuilder(workspace);
+Matrix2d.Mutable root = mutableDoc.RootElement;
+
+// To set matrix[2][1] = 3.4:
+// The indexer root[2] returns a Row.Mutable, so we can call SetItem on it
+root[2].SetItem(1, 3.4);
+
+Matrix2d updatedMatrix = mutableDoc.RootElement;
+double updatedMatrixValue = updatedMatrix[2][1];
+
+Console.WriteLine(updatedMatrix);
+</code></pre>
+<h3 id="tensor-operations">Tensor operations</h3>
+<pre><code class="language-csharp">// Tensor operations - get all numeric values at once
+Span&lt;double&gt; buffer = stackalloc double[Matrix2d.ValueBufferSize];
+if (matrix.TryGetNumericValues(buffer, out int written))
+{
+    Console.WriteLine($&quot;Rank: {Matrix2d.Rank}, Dimension: {Matrix2d.Dimension}&quot;);
+}
+</code></pre>
+<h2 id="key-differences-from-v4">Key Differences from V4</h2>
+<h3 id="v4-corvus.json">V4 (Corvus.Json)</h3>
+<pre><code class="language-csharp">// Create from nested collection expressions
+Matrix2d matrix = [[1.3, 1.4], [2.4, 3.2], [9.4, 6.2], [4.4, 9.4]];
+
+// Access elements by chaining indexers
+double value = matrix[2][1];
+
+// Immutable set — returns a new matrix
+Matrix2d updated = matrix.SetItem(2, matrix[2].SetItem(1, 3.4));
+
+// Tensor extraction
+Span&lt;double&gt; buffer = stackalloc double[Matrix2d.ValueBufferSize];
+matrix.TryGetNumericValues(buffer, out int written);
+</code></pre>
+<h3 id="v5-corvus.text.json">V5 (Corvus.Text.Json)</h3>
+<pre><code class="language-csharp">// Parse from JSON
+using var parsedMatrix = ParsedJsonDocument&lt;Matrix2d&gt;.Parse(matrixJson);
+Matrix2d matrix = parsedMatrix.RootElement;
+
+// Access elements (same chaining)
+double value = matrix[2][1];
+
+// Mutable set — in-place via workspace builder
+using JsonWorkspace workspace = JsonWorkspace.Create();
+using var mutableDoc = matrix.CreateBuilder(workspace);
+mutableDoc.RootElement[2].SetItem(1, 3.4);
+
+// Tensor extraction (same API)
+Span&lt;double&gt; buffer = stackalloc double[Matrix2d.ValueBufferSize];
+matrix.TryGetNumericValues(buffer, out int written);
+</code></pre>
+<p><strong>Key differences:</strong></p>
+<ul>
+<li>V5 does not support collection expressions for constructing multi-dimensional arrays — parse from JSON or use <code>Build(span)</code></li>
+<li>V5 mutations are in-place via the builder pattern instead of returning new immutable copies</li>
+<li>V5 requires <code>ParsedJsonDocument&lt;T&gt;.Parse()</code> with <code>using</code> for explicit lifetime management</li>
+<li>Indexer chaining and tensor extraction APIs are the same in both versions</li>
+</ul>
+<h2 id="running-the-example">Running the Example</h2>
+<pre><code class="language-bash">cd docs/ExampleRecipes/008-CreatingAnArrayOfHigherRank
+dotnet run
+</code></pre>
+<h2 id="related-patterns">Related Patterns</h2>
+<ul>
+<li><a href="/corvus-json-schema/pr-preview/pr-734/examples/creating-a-strongly-typed-array.html">007-CreatingAStronglyTypedArray</a> - Single-dimensional strongly-typed arrays</li>
+<li><a href="/corvus-json-schema/pr-preview/pr-734/examples/working-with-tensors.html">009-WorkingWithTensors</a> - Tensor construction and span-based operations</li>
+<li><a href="/corvus-json-schema/pr-preview/pr-734/examples/creating-tuples.html">010-CreatingTuples</a> - Fixed-length heterogeneous arrays (tuples)</li>
+</ul>
+<h2 id="frequently-asked-questions">Frequently Asked Questions</h2>
+<h3 id="whats-the-difference-between-rank-and-dimension">What's the difference between rank and dimension?</h3>
+<p><strong>Rank</strong> is the number of indices needed to access a scalar value (e.g., a 2D matrix has rank 2). <strong>Dimension</strong> is the length at a particular rank level (e.g., a 4×2 matrix has dimension 4 at the outer level and dimension 2 at the inner level). The static properties <code>Matrix2d.Rank</code> and <code>Matrix2d.Dimension</code> report these values.</p>
+<h3 id="can-i-create-ragged-jagged-multi-dimensional-arrays">Can I create ragged (jagged) multi-dimensional arrays?</h3>
+<p>Yes. Omit <code>minItems</code> and/or <code>maxItems</code> from the inner array schema to allow rows of different lengths. However, ragged arrays will not be recognized as tensor types, so you won't get <code>TryGetNumericValues()</code>, <code>Build(span)</code>, or <code>ValueBufferSize</code>. Only fixed-size numeric arrays gain tensor operations.</p>
+<h3 id="are-tensor-operations-available-on-all-multi-dimensional-arrays">Are tensor operations available on all multi-dimensional arrays?</h3>
+<p>No. Tensor operations (<code>TryGetNumericValues</code>, <code>Build(span)</code>, <code>Rank</code>, <code>Dimension</code>, <code>ValueBufferSize</code>) are only generated when <strong>all</strong> dimensions have matching <code>minItems</code>/<code>maxItems</code> <strong>and</strong> the innermost items have a numeric type with a <code>format</code> (e.g., <code>double</code>, <code>int32</code>). Arrays of objects or variable-length arrays don't qualify.</p>
+<h3 id="how-do-i-access-nested-elements-without-intermediate-variables">How do I access nested elements without intermediate variables?</h3>
+<p>Chain the indexers directly: <code>matrix[2][1]</code> returns the scalar value at row 2, column 1. For mutable operations, the same chaining works: <code>root[2].SetItem(1, 3.4)</code> sets the value at <code>[2][1]</code> in-place.</p>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What's the difference between rank and dimension?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "**Rank** is the number of indices needed to access a scalar value (e.g., a 2D matrix has rank 2). **Dimension** is the length at a particular rank level (e.g., a 4×2 matrix has dimension 4 at the outer level and dimension 2 at the inner level). The static properties Matrix2d.Rank and Matrix2d.Dimension report these values."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I create ragged (jagged) multi-dimensional arrays?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. Omit minItems and/or maxItems from the inner array schema to allow rows of different lengths. However, ragged arrays will not be recognized as tensor types, so you won't get TryGetNumericValues(), Build(span), or ValueBufferSize. Only fixed-size numeric arrays gain tensor operations."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Are tensor operations available on all multi-dimensional arrays?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No. Tensor operations (TryGetNumericValues, Build(span), Rank, Dimension, ValueBufferSize) are only generated when **all** dimensions have matching minItems/maxItems **and** the innermost items have a numeric type with a format (e.g., double, int32). Arrays of objects or variable-length arrays don't qualify."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I access nested elements without intermediate variables?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Chain the indexers directly: matrix[2][1] returns the scalar value at row 2, column 1. For mutable operations, the same chaining works: root[2].SetItem(1, 3.4) sets the value at [2][1] in-place."
+      }
+    }
+  ]
+}
+</script>
+        </div>
+    </main>
+</div>
+
+    </div>
+    <footer class="site-footer">
+    <div class="site-footer__inner">
+        <div class="site-footer__sponsor">
+            Sponsored by
+            <a href="https://endjin.com" target="_blank" rel="noopener noreferrer">endjin</a>
+        </div>
+        <ul class="site-footer__links" role="list">
+            <li><a class="site-footer__link" href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html">Getting Started</a></li>
+            <li><a class="site-footer__link" href="/corvus-json-schema/pr-preview/pr-734/docs/index.html">Documentation</a></li>
+            <li><a class="site-footer__link" href="/corvus-json-schema/pr-preview/pr-734/examples/index.html">Examples</a></li>
+            <li><a class="site-footer__link" href="/corvus-json-schema/pr-preview/pr-734/api/index.html">API</a></li>
+            <li><a class="site-footer__link" href="https://github.com/corvus-dotnet/Corvus.JsonSchema" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            <li><a class="site-footer__link" href="https://www.nuget.org/packages?q=Corvus.Json" target="_blank" rel="noopener noreferrer">NuGet</a></li>
+        </ul>
+        <p class="site-footer__copyright">&copy; 2026 endjin Ltd.</p>
+    </div>
+</footer>
+
+    <!-- highlight.js for syntax highlighting (CSS targets .hljs-* classes) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/csharp.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js" defer></script>
+    <script>document.addEventListener('DOMContentLoaded',()=>hljs.highlightAll())</script>
+    <script src="/corvus-json-schema/pr-preview/pr-734/assets/js/main.js" defer></script>
+    <script src="/corvus-json-schema/pr-preview/pr-734/assets/js/sidebar-search.js" defer></script>
+    
+</body>
+</html>

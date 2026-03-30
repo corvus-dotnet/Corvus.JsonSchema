@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1C1D21" />
+    <meta name="description" content="Built-in Roslyn analyzers and code fixes for Corvus.Text.Json &#x2014; CTJ001 (prefer UTF-8 literals), CTJ002 (unnecessary conversions), CTJ003 (static match lambdas), and CTJ-NAV (navigate to JSON Schema source)." />
+    <meta name="keywords" content="documentation, Corvus.Text.Json" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:description" content="Built-in Roslyn analyzers and code fixes for Corvus.Text.Json &#x2014; CTJ001 (prefer UTF-8 literals), CTJ002 (unnecessary conversions), CTJ003 (static match lambdas), and CTJ-NAV (navigate to JSON Schema source)." />
+    <meta name="twitter:image" content="/corvus-json-schema/pr-preview/pr-734/assets/images/og-corvus.png" />
+    <meta name="twitter:title" content="Analyzers - Corvus.Text.Json" />
+    <meta property="article:tag" content="documentation" />
+    <meta property="article:tag" content="Corvus.Text.Json" />
+    <meta property="og:description" content="Built-in Roslyn analyzers and code fixes for Corvus.Text.Json &#x2014; CTJ001 (prefer UTF-8 literals), CTJ002 (unnecessary conversions), CTJ003 (static match lambdas), and CTJ-NAV (navigate to JSON Schema source)." />
+    <meta property="og:image" content="/corvus-json-schema/pr-preview/pr-734/assets/images/og-corvus.png" />
+    <meta property="og:title" content="Analyzers - Corvus.Text.Json" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://corvus-oss.org/corvus-json-schema/docs/analyzers/" />
+    <title>Analyzers - Corvus.Text.Json</title>
+    <link itemprop="url" href="https://corvus-oss.org/corvus-json-schema/docs/analyzers/" />
+    <link rel="canonical" href="https://corvus-oss.org/corvus-json-schema/docs/analyzers/" />
+    <link rel="sitemap" href="https://corvus-oss.org/corvus-json-schema/sitemap.xml" />
+    <!-- Styles -->
+    <link rel="stylesheet" href="/corvus-json-schema/pr-preview/pr-734/main.css" />
+    <link rel="icon" type="image/svg+xml" href="/corvus-json-schema/pr-preview/pr-734/assets/images/favicon.svg" />
+    
+</head>
+<body>
+    <a class="sr-only" href="#main-content">Skip to content</a>
+<header class="site-header">
+    <div class="site-header__inner">
+        <a class="site-header__brand" href="/corvus-json-schema/pr-preview/pr-734/index.html" aria-label="Corvus.JsonSchema home">
+            <img src="/corvus-json-schema/pr-preview/pr-734/assets/images/logo-corvus.svg" alt="" width="28" height="28" aria-hidden="true" />
+            Corvus<span style="color:var(--color-brand)">.</span>Json<span style="color:var(--color-brand)">Schema</span>
+        </a>
+        <nav class="site-header__nav-desktop" aria-label="Main navigation">
+                    <a href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html"
+                       class="site-header__link "
+                       >Getting Started</a>
+                    <a href="/corvus-json-schema/pr-preview/pr-734/getting-started-v4/index.html"
+                       class="site-header__link "
+                       >Getting Started (V4)</a>
+                    <a href="/corvus-json-schema/pr-preview/pr-734/docs/index.html"
+                       class="site-header__link is-active"
+                       aria-current=page>Documentation</a>
+                    <a href="/corvus-json-schema/pr-preview/pr-734/examples/index.html"
+                       class="site-header__link "
+                       >Examples</a>
+                    <a href="/corvus-json-schema/pr-preview/pr-734/api/index.html"
+                       class="site-header__link "
+                       >API</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/playground/"
+               class="site-header__link"
+               target="_blank" rel="noopener noreferrer"
+               title="Interactive JSON Schema playground">Playground</a>
+            <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+               class="site-header__link" target="_blank" rel="noopener noreferrer"
+               aria-label="View on GitHub">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            </a>
+        </nav>
+        <button class="site-header__menu-toggle js-toggle-menu"
+                aria-expanded="false" aria-label="Toggle menu">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+        </button>
+    </div>
+</header>
+<nav class="site-header__nav-mobile js-mobile-nav" aria-label="Mobile navigation">
+            <a href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html" class="site-header__link">Getting Started</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/getting-started-v4/index.html" class="site-header__link">Getting Started (V4)</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/docs/index.html" class="site-header__link">Documentation</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/examples/index.html" class="site-header__link">Examples</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/api/index.html" class="site-header__link">API</a>
+    <a href="/corvus-json-schema/pr-preview/pr-734/playground/" class="site-header__link" target="_blank" rel="noopener noreferrer">Playground</a>
+    <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+       class="site-header__link" target="_blank" rel="noopener noreferrer">GitHub</a>
+</nav>
+
+    <div class="page-content">
+    <div class="layout-docs container">
+    <button class="sidebar-toggle" aria-label="Toggle navigation" aria-expanded="false"></button>
+<div class="sidebar-backdrop"></div>
+<aside class="sidebar">
+    <div class="sidebar__inner">
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Getting Started</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                    <li class="sidebar__item"><a class="sidebar__link" href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html">Tutorial</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Documentation</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/parsed-json-document.html">Parsing &amp; Reading JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/json-document-builder.html">Building &amp; Mutating JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/source-generator.html">Source Generator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/code-generator.html">CLI Code Generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/validator.html">Dynamic Schema Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/migrating-from-v4-to-v5.html">Migrating from V4</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/using-copilot-for-migration.html">Copilot Migration</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/migration-analyzers.html">Migration Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link is-active" href="/corvus-json-schema/pr-preview/pr-734/docs/analyzers.html">Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/schema-evaluator.html">Standalone Schema Evaluator</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Examples</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/data-object.html">Simple Data Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/data-object-validation.html">Data Object Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/reusing-common-types.html">Reusing Common Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/open-versus-closed-types.html">Open Versus Closed Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/extending-a-base-type.html">Extending a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/constraining-a-base-type.html">Constraining a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/creating-a-strongly-typed-array.html">Strongly Typed Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/creating-an-array-of-higher-rank.html">Multi-Dimensional Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/working-with-tensors.html">Working with Tensors</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/creating-tuples.html">Creating Tuples</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/interfaces-and-mix-in-types.html">Interfaces and Mix-In Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/pattern-matching.html">Pattern Matching and Discriminated Unions</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/polymorphism-with-discriminators.html">Polymorphism with Discriminator Properties</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/string-enumerations.html">String Enumerations and Pattern Matching</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/numeric-enumerations.html">Numeric Enumerations</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/maps.html">Maps of Strings to Strongly Typed Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/mapping-input-and-output-values.html">Mapping Input and Output Values</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</aside>
+
+    <main id="main-content" class="layout-docs__main">
+        <div class="doc__content">
+            <h1>Analyzers</h1>
+<p>The <code>Corvus.Text.Json</code> NuGet package ships with built-in Roslyn analyzers and code fixes that help you write correct, high-performance code. These are production analyzers — they run continuously and are not related to the separate V4-to-V5 migration analyzers.</p>
+<h2 id="installation">Installation</h2>
+<p>The analyzers are included in the main package. No additional installation is required:</p>
+<pre><code class="language-xml">&lt;PackageReference Include=&quot;Corvus.Text.Json&quot; Version=&quot;5.0.0&quot; /&gt;
+</code></pre>
+<p>They activate automatically at build time and in Visual Studio's live analysis.</p>
+<h2 id="diagnostics">Diagnostics</h2>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Title</th>
+<th>Severity</th>
+<th>Code Fix</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#ctj001-prefer-utf-8-string-literal">CTJ001</a></td>
+<td>Prefer UTF-8 string literal</td>
+<td>Warning</td>
+<td>✅ Yes</td>
+</tr>
+<tr>
+<td><a href="#ctj002-unnecessary-conversion-to.net-type">CTJ002</a></td>
+<td>Unnecessary conversion to .NET type</td>
+<td>Warning</td>
+<td>✅ Yes</td>
+</tr>
+<tr>
+<td><a href="#ctj003-match-lambda-should-be-static">CTJ003</a></td>
+<td>Match lambda should be static</td>
+<td>Info</td>
+<td>✅ Yes</td>
+</tr>
+<tr>
+<td><a href="#ctj004-missing-dispose-on-parsedjsondocument">CTJ004</a></td>
+<td>Missing dispose on ParsedJsonDocument</td>
+<td>Warning</td>
+<td>✅ Yes</td>
+</tr>
+<tr>
+<td><a href="#ctj005-missing-dispose-on-jsonworkspace">CTJ005</a></td>
+<td>Missing dispose on JsonWorkspace</td>
+<td>Warning</td>
+<td>✅ Yes</td>
+</tr>
+<tr>
+<td><a href="#ctj006-missing-dispose-on-jsondocumentbuilder">CTJ006</a></td>
+<td>Missing dispose on JsonDocumentBuilder</td>
+<td>Warning</td>
+<td>✅ Yes</td>
+</tr>
+<tr>
+<td><a href="#ctj007-ignored-schema-validation-result">CTJ007</a></td>
+<td>EvaluateSchema() result is discarded</td>
+<td>Warning</td>
+<td>—</td>
+</tr>
+<tr>
+<td><a href="#ctj008-prefer-non-allocating-property-name-accessors">CTJ008</a></td>
+<td>Prefer NameEquals over Name for comparisons</td>
+<td>Info</td>
+<td>✅ Yes</td>
+</tr>
+<tr>
+<td><a href="#ctj009-prefer-renting-utf8jsonwriter-from-workspace">CTJ009</a></td>
+<td>Prefer renting Utf8JsonWriter from workspace</td>
+<td>Info</td>
+<td>—</td>
+</tr>
+<tr>
+<td><a href="#ctj010-prefer-readonlymemoryspan-based-parse-overload">CTJ010</a></td>
+<td>Prefer ReadOnlyMemory/Span-based Parse</td>
+<td>Info</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<h2 id="refactorings">Refactorings</h2>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#ctj-nav-go-to-schema-definition">CTJ-NAV</a></td>
+<td>Navigate from a schema-generated type to its JSON Schema source</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="ctj001-prefer-utf-8-string-literal">CTJ001 — Prefer UTF-8 string literal</h2>
+<p><strong>Severity:</strong> Warning · <strong>Code fix:</strong> ✅ Yes · <strong>Category:</strong> Performance</p>
+<p>Many <code>Corvus.Text.Json</code> APIs offer overloads that accept <code>ReadOnlySpan&lt;byte&gt;</code> (a UTF-8 byte span) in addition to <code>string</code>. The UTF-8 overload avoids the cost of transcoding from UTF-16 to UTF-8 at runtime and allows the compiler to embed the bytes directly in the assembly.</p>
+<p>This analyzer fires when you pass a <code>string</code> literal to a method or indexer that also has a <code>ReadOnlySpan&lt;byte&gt;</code> overload.</p>
+<pre><code class="language-csharp">// Before — CTJ001 fires
+JsonElement name = element[&quot;name&quot;];
+
+// After — code fix applied
+JsonElement name = element[&quot;name&quot;u8];
+</code></pre>
+<p>The code fix appends the <code>u8</code> suffix to the string literal.</p>
+<hr />
+<h2 id="ctj002-unnecessary-conversion-to.net-type">CTJ002 — Unnecessary conversion to .NET type</h2>
+<p><strong>Severity:</strong> Warning · <strong>Code fix:</strong> ✅ Yes · <strong>Category:</strong> Performance</p>
+<p>Schema-generated types provide implicit conversions to and from common .NET types. When an explicit cast to an intermediate .NET type is used in an argument position where the original type already converts implicitly to the target parameter type, the intermediate cast is redundant and may force an unnecessary allocation or copy.</p>
+<p>This analyzer fires when a cast expression like <code>(int)element</code> is passed to a parameter that would accept the original type via an implicit conversion.</p>
+<pre><code class="language-csharp">// Before — CTJ002 fires
+// Source has an implicit conversion from JsonElement, so the (int) cast is unnecessary.
+mutable.SetProperty(&quot;age&quot;, (int)element);
+
+// After — code fix applied
+mutable.SetProperty(&quot;age&quot;, element);
+</code></pre>
+<p>The code fix removes the unnecessary cast, letting the implicit conversion handle the transformation directly.</p>
+<hr />
+<h2 id="ctj003-match-lambda-should-be-static">CTJ003 — Match lambda should be static</h2>
+<p><strong>Severity:</strong> Info · <strong>Code fix:</strong> ✅ Yes (non-capturing) · <strong>Category:</strong> Usage</p>
+<p>The <code>Match&lt;TOut&gt;</code> method on schema-generated union/oneOf types accepts lambda callbacks for each variant. If a lambda does not capture any local variables, it should be marked <code>static</code> to avoid allocating a delegate instance on every call.</p>
+<p>This analyzer inspects each lambda argument to <code>Match&lt;TOut&gt;</code> and reports:</p>
+<ul>
+<li><strong>Non-capturing lambdas</strong> — suggests adding the <code>static</code> modifier.</li>
+<li><strong>Capturing lambdas</strong> — suggests switching to <code>Match&lt;TContext, TResult&gt;</code> to pass captured state as an explicit context parameter, avoiding closure allocation.</li>
+</ul>
+<pre><code class="language-csharp">// Before — CTJ003 fires (non-capturing)
+string result = value.Match(
+    (JsonString s) =&gt; s.ToString(),
+    (JsonNumber n) =&gt; n.ToString());
+
+// After — code fix applied
+string result = value.Match(
+    static (JsonString s) =&gt; s.ToString(),
+    static (JsonNumber n) =&gt; n.ToString());
+</code></pre>
+<p>For capturing lambdas, consider the <code>Match&lt;TContext, TResult&gt;</code> overload:</p>
+<pre><code class="language-csharp">// Before — CTJ003 fires (capturing)
+string prefix = GetPrefix();
+string result = value.Match(
+    (JsonString s) =&gt; prefix + s.ToString(),    // captures 'prefix'
+    (JsonNumber n) =&gt; prefix + n.ToString());
+
+// After — manual refactoring
+string prefix = GetPrefix();
+string result = value.Match(
+    prefix,
+    static (string ctx, JsonString s) =&gt; ctx + s.ToString(),
+    static (string ctx, JsonNumber n) =&gt; ctx + n.ToString());
+</code></pre>
+<blockquote>
+<p><strong>Note:</strong> The code fix only applies the <code>static</code> modifier for non-capturing lambdas. Capturing-lambda refactoring to <code>Match&lt;TContext, TResult&gt;</code> requires manual changes.</p>
+</blockquote>
+<hr />
+<h2 id="ctj004-missing-dispose-on-parsedjsondocument">CTJ004 — Missing dispose on ParsedJsonDocument</h2>
+<p><strong>Severity:</strong> Warning · <strong>Code fix:</strong> ✅ Yes · <strong>Category:</strong> Reliability</p>
+<p><code>ParsedJsonDocument&lt;T&gt;</code> uses pooled memory from <code>ArrayPool&lt;byte&gt;</code>. Failing to dispose it leaks those buffers, increasing GC pressure and potentially exhausting the pool.</p>
+<p>This analyzer fires when a <code>ParsedJsonDocument&lt;T&gt;.Parse(...)</code> result is assigned to a local variable without <code>using</code>, or when the result is discarded entirely.</p>
+<pre><code class="language-csharp">// Before — CTJ004 fires
+var doc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(json);
+
+// After — code fix applied
+using var doc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(json);
+</code></pre>
+<p>The code fix adds the <code>using</code> keyword to the local declaration.</p>
+<p>If you need to control lifetime explicitly (e.g., returning the document from a method), call <code>Dispose()</code> in a <code>finally</code> block instead.</p>
+<hr />
+<h2 id="ctj005-missing-dispose-on-jsonworkspace">CTJ005 — Missing dispose on JsonWorkspace</h2>
+<p><strong>Severity:</strong> Warning · <strong>Code fix:</strong> ✅ Yes · <strong>Category:</strong> Reliability</p>
+<p><code>JsonWorkspace</code> manages pooled arrays of <code>IJsonDocument</code> and a writer cache. Failing to dispose it leaks these pool resources and all child document builders.</p>
+<pre><code class="language-csharp">// Before — CTJ005 fires
+var workspace = JsonWorkspace.Create();
+
+// After — code fix applied
+using var workspace = JsonWorkspace.Create();
+</code></pre>
+<hr />
+<h2 id="ctj006-missing-dispose-on-jsondocumentbuilder">CTJ006 — Missing dispose on JsonDocumentBuilder</h2>
+<p><strong>Severity:</strong> Warning · <strong>Code fix:</strong> ✅ Yes · <strong>Category:</strong> Reliability</p>
+<p><code>JsonDocumentBuilder&lt;T&gt;</code> holds mutable document state backed by pooled memory. Failing to dispose it leaks those buffers.</p>
+<pre><code class="language-csharp">// Before — CTJ006 fires
+var builder = doc.RootElement.CreateBuilder(workspace);
+
+// After — code fix applied
+using var builder = doc.RootElement.CreateBuilder(workspace);
+</code></pre>
+<hr />
+<h2 id="ctj007-ignored-schema-validation-result">CTJ007 — Ignored schema validation result</h2>
+<p><strong>Severity:</strong> Warning · <strong>Category:</strong> Usage</p>
+<p><code>EvaluateSchema()</code> returns a <code>bool</code> indicating whether validation passed. Discarding this return value means the validation call has no effect — the schema is evaluated but no action is taken based on the result.</p>
+<pre><code class="language-csharp">// Before — CTJ007 fires
+element.EvaluateSchema();
+
+// After — use the result
+if (!element.EvaluateSchema())
+{
+    // Handle validation failure
+}
+</code></pre>
+<p>This also detects discarded results on schema-generated types that implement <code>IJsonElement&lt;T&gt;</code>.</p>
+<hr />
+<h2 id="ctj008-prefer-non-allocating-property-name-accessors">CTJ008 — Prefer non-allocating property name accessors</h2>
+<p><strong>Severity:</strong> Info · <strong>Code fix:</strong> ✅ Yes · <strong>Category:</strong> Performance</p>
+<p><code>JsonProperty&lt;T&gt;.Name</code> allocates a new <code>string</code> on every access. When comparing the property name against a known literal, use <code>NameEquals()</code> instead — it performs the comparison directly on the underlying UTF-8 bytes without allocating.</p>
+<pre><code class="language-csharp">// Before — CTJ008 fires
+if (property.Name == &quot;data&quot;) { ... }
+
+// After — code fix applied
+if (property.NameEquals(&quot;data&quot;u8)) { ... }
+</code></pre>
+<p>The code fix replaces <code>==</code>/<code>!=</code> comparisons and <code>.Equals()</code> calls with <code>NameEquals(&quot;...&quot;u8)</code>. For <code>!=</code>, the result is negated: <code>!property.NameEquals(&quot;data&quot;u8)</code>.</p>
+<h3 id="alternative-non-allocating-accessors">Alternative non-allocating accessors</h3>
+<p>If you need the property name for something other than comparison, consider:</p>
+<table>
+<thead>
+<tr>
+<th>Accessor</th>
+<th>Returns</th>
+<th>Allocates?</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>property.Name</code></td>
+<td><code>string</code></td>
+<td>Yes</td>
+<td>Use only when you truly need a <code>string</code></td>
+</tr>
+<tr>
+<td><code>property.NameEquals(&quot;x&quot;u8)</code></td>
+<td><code>bool</code></td>
+<td>No</td>
+<td>Best for comparison against known values</td>
+</tr>
+<tr>
+<td><code>property.Utf8NameSpan</code></td>
+<td><code>UnescapedUtf8JsonString</code></td>
+<td>No (may rent)</td>
+<td>Unescaped UTF-8 bytes; dispose when done</td>
+</tr>
+<tr>
+<td><code>property.Utf16NameSpan</code></td>
+<td><code>UnescapedUtf16JsonString</code></td>
+<td>No (may rent)</td>
+<td>Unescaped UTF-16 chars; dispose when done</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="ctj009-prefer-renting-utf8jsonwriter-from-workspace">CTJ009 — Prefer renting Utf8JsonWriter from workspace</h2>
+<p><strong>Severity:</strong> Info · <strong>Category:</strong> Performance</p>
+<p>When a <code>JsonWorkspace</code> is in scope, you should rent a <code>Utf8JsonWriter</code> from it rather than allocating a new one. The workspace maintains a writer cache that avoids repeated allocation and provides consistent writer options.</p>
+<pre><code class="language-csharp">// Before — CTJ009 fires
+using var workspace = JsonWorkspace.Create();
+var writer = new Utf8JsonWriter(stream);  // allocates
+
+// After — use workspace rental
+using var workspace = JsonWorkspace.Create();
+var writer = workspace.RentWriter(bufferWriter);
+// ... use writer ...
+workspace.ReturnWriter(writer);
+</code></pre>
+<p>The workspace provides two rental methods:</p>
+<ul>
+<li><code>RentWriter(IBufferWriter&lt;byte&gt;)</code> — when you already have a buffer</li>
+<li><code>RentWriterAndBuffer(int defaultBufferSize, out IByteBufferWriter bufferWriter)</code> — rents both</li>
+</ul>
+<p>Always return the writer with <code>ReturnWriter()</code> or <code>ReturnWriterAndBuffer()</code> when done.</p>
+<hr />
+<h2 id="ctj010-prefer-readonlymemoryspan-based-parse-overload">CTJ010 — Prefer ReadOnlyMemory/Span-based Parse overload</h2>
+<p><strong>Severity:</strong> Info · <strong>Category:</strong> Performance</p>
+<p><code>ParsedJsonDocument&lt;T&gt;.Parse(string)</code> and <code>JsonElement.ParseValue(string)</code> allocate an internal UTF-8 copy of the input. When you already have the data as bytes, use the <code>ReadOnlyMemory&lt;byte&gt;</code> or <code>ReadOnlySpan&lt;byte&gt;</code> overload to avoid this copy.</p>
+<h3 id="encoding-roundtrip">Encoding roundtrip</h3>
+<pre><code class="language-csharp">// Before — CTJ010 fires (encoding roundtrip)
+string json = Encoding.UTF8.GetString(bytes);
+var doc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(json);
+
+// After — pass bytes directly
+var doc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(bytes.AsMemory());
+</code></pre>
+<h3 id="string-literal">String literal</h3>
+<pre><code class="language-csharp">// Before — CTJ010 fires (string literal)
+var element = JsonElement.ParseValue(&quot;{}&quot;);
+
+// After — use UTF-8 literal
+var element = JsonElement.ParseValue(&quot;{}&quot;u8);
+</code></pre>
+<h3 id="overload-preference">Overload preference</h3>
+<p>For <code>ParsedJsonDocument&lt;T&gt;</code>, prefer overloads in this order:</p>
+<ol>
+<li><code>Parse(ReadOnlyMemory&lt;byte&gt;)</code> — zero-copy; the document holds a reference directly</li>
+<li><code>Parse(ReadOnlySequence&lt;byte&gt;)</code> — for pipeline scenarios</li>
+<li><code>Parse(Stream)</code> / <code>ParseAsync(Stream)</code> — for I/O scenarios</li>
+<li><code>Parse(ReadOnlyMemory&lt;char&gt;)</code> — if you have <code>char[]</code> data</li>
+<li><code>Parse(string)</code> — least preferred; allocates internal UTF-8 copy</li>
+</ol>
+<hr />
+<h2 id="ctj-nav-go-to-schema-definition">CTJ-NAV — Go to Schema Definition</h2>
+<p><strong>Type:</strong> Code Refactoring (lightbulb action) · <strong>Category:</strong> Navigation</p>
+<p>When you place the cursor on a type, variable, property, parameter, or field that is backed by a JSON Schema, this refactoring offers to open the schema file and navigate to the exact position of the type or property definition within the schema.</p>
+<h3 id="trigger-positions">Trigger positions</h3>
+<p>The refactoring activates on:</p>
+<table>
+<thead>
+<tr>
+<th>Code construct</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Type name</td>
+<td><code>Order order = ...</code> (cursor on <code>Order</code>)</td>
+</tr>
+<tr>
+<td>Variable declaration</td>
+<td><code>Order order = ...</code> (cursor on <code>order</code>)</td>
+</tr>
+<tr>
+<td>Parameter name</td>
+<td><code>void Process(Order order)</code> (cursor on <code>order</code>)</td>
+</tr>
+<tr>
+<td>Field usage</td>
+<td><code>_order.Total</code> (cursor on <code>_order</code> or <code>Total</code>)</td>
+</tr>
+<tr>
+<td>Property access</td>
+<td><code>order.Customer</code> (cursor on <code>Customer</code>)</td>
+</tr>
+<tr>
+<td>Generic type argument</td>
+<td><code>List&lt;Order&gt;</code> (cursor on <code>Order</code>)</td>
+</tr>
+<tr>
+<td>Method invocation</td>
+<td><code>GetOrder()</code> (cursor on <code>GetOrder</code>, navigates via return type)</td>
+</tr>
+<tr>
+<td>Interface wrapper</td>
+<td><code>IJsonElement&lt;Order&gt;</code> (cursor on <code>Order</code>)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="actions-offered">Actions offered</h3>
+<p>Depending on context, one or two lightbulb actions are offered:</p>
+<table>
+<thead>
+<tr>
+<th>Action</th>
+<th>When</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Go to schema type</strong></td>
+<td>Always, when the type has a schema definition</td>
+</tr>
+<tr>
+<td><strong>Go to property declaration</strong></td>
+<td>Additionally, when the cursor is on a property whose type is itself schema-generated — navigates to the property declaration on the parent type's schema</td>
+</tr>
+</tbody>
+</table>
+<p>For example, given <code>order.Customer</code> where <code>CustomerEntity</code> has its own schema, you get both:</p>
+<ol>
+<li><strong>Go to schema type</strong> — opens the schema at <code>CustomerEntity</code>'s definition</li>
+<li><strong>Go to property declaration</strong> — opens the parent schema at <code>/properties/customer</code></li>
+</ol>
+<h3 id="schema-resolution">Schema resolution</h3>
+<p>The refactoring resolves schema files using three strategies (in order):</p>
+<ol>
+<li><strong>Attribute-based</strong> — Finds <code>[JsonSchemaTypeGenerator(&quot;path/to/schema.json&quot;)]</code> on the type or its containing types, then matches the path to an <code>AdditionalFiles</code> entry.</li>
+<li><strong><code>$id</code>-based</strong> — Reads the type's <code>SchemaLocation</code> constant (e.g., <code>&quot;https://example.com/order#/properties/total&quot;</code>), extracts the base URL, and searches <code>AdditionalFiles</code> for a schema whose <code>$id</code> matches.</li>
+<li><strong>Property fallback</strong> — If a property's type is a project-global type (e.g., <code>JsonString</code>) with no schema of its own, falls back to the containing type's schema and appends <code>/properties/{jsonPropertyName}</code>.</li>
+</ol>
+<h3 id="cursor-positioning">Cursor positioning</h3>
+<p>The refactoring resolves the JSON Pointer from the <code>SchemaLocation</code> to a precise line and column within the schema file. In Visual Studio, it uses the DTE automation model to open the file and position the cursor directly on the target property or type definition — including in single-line schema files.</p>
+<blockquote>
+<p><strong>Note:</strong> If DTE is not available (e.g., in a non-VS IDE), the action title includes the line number as a fallback hint: <code>Go to schema: order.json#/properties/total (line 28)</code>.</p>
+</blockquote>
+        </div>
+    </main>
+</div>
+
+    </div>
+    <footer class="site-footer">
+    <div class="site-footer__inner">
+        <div class="site-footer__sponsor">
+            Sponsored by
+            <a href="https://endjin.com" target="_blank" rel="noopener noreferrer">endjin</a>
+        </div>
+        <ul class="site-footer__links" role="list">
+            <li><a class="site-footer__link" href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html">Getting Started</a></li>
+            <li><a class="site-footer__link" href="/corvus-json-schema/pr-preview/pr-734/docs/index.html">Documentation</a></li>
+            <li><a class="site-footer__link" href="/corvus-json-schema/pr-preview/pr-734/examples/index.html">Examples</a></li>
+            <li><a class="site-footer__link" href="/corvus-json-schema/pr-preview/pr-734/api/index.html">API</a></li>
+            <li><a class="site-footer__link" href="https://github.com/corvus-dotnet/Corvus.JsonSchema" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            <li><a class="site-footer__link" href="https://www.nuget.org/packages?q=Corvus.Json" target="_blank" rel="noopener noreferrer">NuGet</a></li>
+        </ul>
+        <p class="site-footer__copyright">&copy; 2026 endjin Ltd.</p>
+    </div>
+</footer>
+
+    <!-- highlight.js for syntax highlighting (CSS targets .hljs-* classes) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/csharp.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js" defer></script>
+    <script>document.addEventListener('DOMContentLoaded',()=>hljs.highlightAll())</script>
+    <script src="/corvus-json-schema/pr-preview/pr-734/assets/js/main.js" defer></script>
+    <script src="/corvus-json-schema/pr-preview/pr-734/assets/js/sidebar-search.js" defer></script>
+    
+</body>
+</html>

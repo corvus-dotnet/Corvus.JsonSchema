@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1C1D21" />
+    <meta name="description" content="This recipe demonstrates how to define strongly-typed JSON arrays in .NET using JSON Schema&#x27;s `items`, `minItems`, and `maxItems` keywords, giving you compile-time type safety, IntelliSense support, and standard LINQ operators for array elements." />
+    <meta name="keywords" content="recipe, JSON Schema, C#, strongly, typed, arrays, type, items, $ref, minItems, maxItems, required, properties, format, maximum, unevaluatedProperties, $defs, minLength, maxLength, CreateBuilder, EvaluateSchema" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:description" content="This recipe demonstrates how to define strongly-typed JSON arrays in .NET using JSON Schema&#x27;s `items`, `minItems`, and `maxItems` keywords, giving you compile-time type safety, IntelliSense support, and standard LINQ operators for array elements." />
+    <meta name="twitter:image" content="/corvus-json-schema/pr-preview/pr-734/assets/images/og-corvus.png" />
+    <meta name="twitter:title" content="Strongly Typed Arrays - Corvus.Text.Json Examples" />
+    <meta property="article:tag" content="recipe" />
+    <meta property="article:tag" content="JSON Schema" />
+    <meta property="article:tag" content="C#" />
+    <meta property="article:tag" content="strongly" />
+    <meta property="article:tag" content="typed" />
+    <meta property="article:tag" content="arrays" />
+    <meta property="article:tag" content="type" />
+    <meta property="article:tag" content="items" />
+    <meta property="article:tag" content="$ref" />
+    <meta property="article:tag" content="minItems" />
+    <meta property="article:tag" content="maxItems" />
+    <meta property="article:tag" content="required" />
+    <meta property="article:tag" content="properties" />
+    <meta property="article:tag" content="format" />
+    <meta property="article:tag" content="maximum" />
+    <meta property="article:tag" content="unevaluatedProperties" />
+    <meta property="article:tag" content="$defs" />
+    <meta property="article:tag" content="minLength" />
+    <meta property="article:tag" content="maxLength" />
+    <meta property="article:tag" content="CreateBuilder" />
+    <meta property="article:tag" content="EvaluateSchema" />
+    <meta property="og:description" content="This recipe demonstrates how to define strongly-typed JSON arrays in .NET using JSON Schema&#x27;s `items`, `minItems`, and `maxItems` keywords, giving you compile-time type safety, IntelliSense support, and standard LINQ operators for array elements." />
+    <meta property="og:image" content="/corvus-json-schema/pr-preview/pr-734/assets/images/og-corvus.png" />
+    <meta property="og:title" content="Strongly Typed Arrays - Corvus.Text.Json Examples" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://corvus-oss.org/corvus-json-schema/examples/creating-a-strongly-typed-array/" />
+    <title>Strongly Typed Arrays - Corvus.Text.Json Examples</title>
+    <link itemprop="url" href="https://corvus-oss.org/corvus-json-schema/examples/creating-a-strongly-typed-array/" />
+    <link rel="canonical" href="https://corvus-oss.org/corvus-json-schema/examples/creating-a-strongly-typed-array/" />
+    <link rel="sitemap" href="https://corvus-oss.org/corvus-json-schema/sitemap.xml" />
+    <!-- Styles -->
+    <link rel="stylesheet" href="/corvus-json-schema/pr-preview/pr-734/main.css" />
+    <link rel="icon" type="image/svg+xml" href="/corvus-json-schema/pr-preview/pr-734/assets/images/favicon.svg" />
+    
+</head>
+<body>
+    <a class="sr-only" href="#main-content">Skip to content</a>
+<header class="site-header">
+    <div class="site-header__inner">
+        <a class="site-header__brand" href="/corvus-json-schema/pr-preview/pr-734/index.html" aria-label="Corvus.JsonSchema home">
+            <img src="/corvus-json-schema/pr-preview/pr-734/assets/images/logo-corvus.svg" alt="" width="28" height="28" aria-hidden="true" />
+            Corvus<span style="color:var(--color-brand)">.</span>Json<span style="color:var(--color-brand)">Schema</span>
+        </a>
+        <nav class="site-header__nav-desktop" aria-label="Main navigation">
+                    <a href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html"
+                       class="site-header__link "
+                       >Getting Started</a>
+                    <a href="/corvus-json-schema/pr-preview/pr-734/getting-started-v4/index.html"
+                       class="site-header__link "
+                       >Getting Started (V4)</a>
+                    <a href="/corvus-json-schema/pr-preview/pr-734/docs/index.html"
+                       class="site-header__link "
+                       >Documentation</a>
+                    <a href="/corvus-json-schema/pr-preview/pr-734/examples/index.html"
+                       class="site-header__link is-active"
+                       aria-current=page>Examples</a>
+                    <a href="/corvus-json-schema/pr-preview/pr-734/api/index.html"
+                       class="site-header__link "
+                       >API</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/playground/"
+               class="site-header__link"
+               target="_blank" rel="noopener noreferrer"
+               title="Interactive JSON Schema playground">Playground</a>
+            <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+               class="site-header__link" target="_blank" rel="noopener noreferrer"
+               aria-label="View on GitHub">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            </a>
+        </nav>
+        <button class="site-header__menu-toggle js-toggle-menu"
+                aria-expanded="false" aria-label="Toggle menu">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+        </button>
+    </div>
+</header>
+<nav class="site-header__nav-mobile js-mobile-nav" aria-label="Mobile navigation">
+            <a href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html" class="site-header__link">Getting Started</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/getting-started-v4/index.html" class="site-header__link">Getting Started (V4)</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/docs/index.html" class="site-header__link">Documentation</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/examples/index.html" class="site-header__link">Examples</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/api/index.html" class="site-header__link">API</a>
+    <a href="/corvus-json-schema/pr-preview/pr-734/playground/" class="site-header__link" target="_blank" rel="noopener noreferrer">Playground</a>
+    <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+       class="site-header__link" target="_blank" rel="noopener noreferrer">GitHub</a>
+</nav>
+
+    <div class="page-content">
+    <div class="layout-docs container">
+    <button class="sidebar-toggle" aria-label="Toggle navigation" aria-expanded="false"></button>
+<div class="sidebar-backdrop"></div>
+<aside class="sidebar">
+    <div class="sidebar__inner">
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Getting Started</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                    <li class="sidebar__item"><a class="sidebar__link" href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html">Tutorial</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Documentation</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/parsed-json-document.html">Parsing &amp; Reading JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/json-document-builder.html">Building &amp; Mutating JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/source-generator.html">Source Generator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/code-generator.html">CLI Code Generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/validator.html">Dynamic Schema Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/migrating-from-v4-to-v5.html">Migrating from V4</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/using-copilot-for-migration.html">Copilot Migration</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/migration-analyzers.html">Migration Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/analyzers.html">Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/schema-evaluator.html">Standalone Schema Evaluator</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Examples</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/data-object.html">Simple Data Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/data-object-validation.html">Data Object Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/reusing-common-types.html">Reusing Common Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/open-versus-closed-types.html">Open Versus Closed Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/extending-a-base-type.html">Extending a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/constraining-a-base-type.html">Constraining a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link is-active" href="/corvus-json-schema/pr-preview/pr-734/examples/creating-a-strongly-typed-array.html">Strongly Typed Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/creating-an-array-of-higher-rank.html">Multi-Dimensional Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/working-with-tensors.html">Working with Tensors</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/creating-tuples.html">Creating Tuples</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/interfaces-and-mix-in-types.html">Interfaces and Mix-In Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/pattern-matching.html">Pattern Matching and Discriminated Unions</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/polymorphism-with-discriminators.html">Polymorphism with Discriminator Properties</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/string-enumerations.html">String Enumerations and Pattern Matching</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/numeric-enumerations.html">Numeric Enumerations</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/maps.html">Maps of Strings to Strongly Typed Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/mapping-input-and-output-values.html">Mapping Input and Output Values</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</aside>
+
+    <main id="main-content" class="layout-docs__main">
+        <div class="doc__content">
+            <h1>Strongly Typed Arrays</h1>
+                <div class="card__tags" style="margin-bottom:1.5rem">
+                        <span class="card__tag">recipe</span>
+                        <span class="card__tag">JSON Schema</span>
+                        <span class="card__tag">C#</span>
+                        <span class="card__tag">strongly</span>
+                        <span class="card__tag">typed</span>
+                        <span class="card__tag">arrays</span>
+                        <span class="card__tag">type</span>
+                        <span class="card__tag">items</span>
+                        <span class="card__tag">$ref</span>
+                        <span class="card__tag">minItems</span>
+                        <span class="card__tag">maxItems</span>
+                        <span class="card__tag">required</span>
+                        <span class="card__tag">properties</span>
+                        <span class="card__tag">format</span>
+                        <span class="card__tag">maximum</span>
+                        <span class="card__tag">unevaluatedProperties</span>
+                        <span class="card__tag">$defs</span>
+                        <span class="card__tag">minLength</span>
+                        <span class="card__tag">maxLength</span>
+                        <span class="card__tag">CreateBuilder</span>
+                        <span class="card__tag">EvaluateSchema</span>
+                </div>
+<p>This recipe demonstrates how to define strongly-typed JSON arrays in .NET using JSON Schema's <code>items</code>, <code>minItems</code>, and <code>maxItems</code> keywords, giving you compile-time type safety, IntelliSense support, and standard LINQ operators for array elements.</p>
+<h2 id="the-pattern">The Pattern</h2>
+<p>JSON schema allows you define an <code>array</code> whose items are of a particular type using its <code>items</code> property.</p>
+<p>This would be an array of rank 1, with an unbounded size - you could put no items in it <code>[]</code> or any number of items <code>[1, 2, 3, ...]</code></p>
+<p>If you wish to constrain it to a particular length, then you can specify either or both of <code>minItems</code> and <code>maxItems</code>.</p>
+<ul>
+<li>Specifying just <code>maxItems</code> indicates that the array can can contain <em>up to</em> that many items.</li>
+<li>Specifying just <code>minItems</code> indicates that the array will have <em>at least</em> that many items.</li>
+<li>Specifying both, and making them the same value implies an array of <em>exactly</em> that number of items.</li>
+<li>Specifying both, and making them different values gives an upper and a lower bound to the number of items.</li>
+</ul>
+<p>In this case we are defining an array which must contain exactly 30 <code>PersonClosed</code> instances.</p>
+<p>The code generator recognizes this array pattern and generates strongly typed accessors and enumerators. This gives you compile-time type safety when accessing array elements — no casting from a generic <code>JsonElement</code> — and full IntelliSense support for the item type's properties.</p>
+<p>In addition, it implements <code>IEnumerable&lt;T&gt;</code> so that you can take advantage of standard LINQ operators if required.</p>
+<h2 id="the-schemas">The Schemas</h2>
+<p>File: <code>person-1d-array.json</code></p>
+<pre><code class="language-json">{
+  &quot;title&quot;: &quot;A 1-dimensional array of Person instances&quot;,
+  &quot;type&quot;: &quot;array&quot;,
+  &quot;items&quot;: { &quot;$ref&quot;: &quot;./person-closed.json&quot; },
+  &quot;minItems&quot;: 30,
+  &quot;maxItems&quot;: 30
+}
+</code></pre>
+<p>File: <code>person-closed.json</code></p>
+<pre><code class="language-json">{
+  &quot;title&quot;: &quot;The person schema https://schema.org/Person&quot;,
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;required&quot;: [ &quot;familyName&quot;, &quot;givenName&quot;, &quot;birthDate&quot; ],
+  &quot;properties&quot;: {
+    &quot;familyName&quot;: { &quot;$ref&quot;: &quot;#/$defs/constrainedString&quot; },
+    &quot;givenName&quot;: { &quot;$ref&quot;: &quot;#/$defs/constrainedString&quot; },
+    &quot;otherNames&quot;: { &quot;$ref&quot;: &quot;#/$defs/constrainedString&quot; },
+    &quot;birthDate&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;format&quot;: &quot;date&quot;
+    },
+    &quot;height&quot;: {
+      &quot;type&quot;: &quot;number&quot;,
+      &quot;format&quot;: &quot;double&quot;,
+      &quot;exclusiveMinimum&quot;: 0.0,
+      &quot;maximum&quot;: 3.0
+    }
+  },
+
+  &quot;unevaluatedProperties&quot;: false,
+
+  &quot;$defs&quot;: {
+    &quot;constrainedString&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;maxLength&quot;: 256
+    }
+  }
+}
+</code></pre>
+<h2 id="generated-code-usage">Generated Code Usage</h2>
+<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/v5/docs/ExampleRecipes/007-CreatingAStronglyTypedArray/Program.cs">Example code</a></p>
+<h3 id="parsing-and-accessing-array-elements">Parsing and accessing array elements</h3>
+<pre><code class="language-csharp">using Corvus.Text.Json;
+using CreatingAStronglyTypedArray.Models;
+using NodaTime;
+
+// Parse an array of 30 people from JSON
+string peopleArrayJson =
+    &quot;&quot;&quot;
+    [
+      {&quot;familyName&quot;:&quot;Smith&quot;,&quot;givenName&quot;:&quot;John&quot;,&quot;otherNames&quot;:&quot;Edward,Michael&quot;,&quot;birthDate&quot;:&quot;2004-01-01&quot;,&quot;height&quot;:1.8},
+      {&quot;familyName&quot;:&quot;Johnson&quot;,&quot;givenName&quot;:&quot;Alice&quot;,&quot;birthDate&quot;:&quot;2000-02-02&quot;,&quot;height&quot;:1.6},
+      {&quot;familyName&quot;:&quot;Williams&quot;,&quot;givenName&quot;:&quot;Robert&quot;,&quot;otherNames&quot;:&quot;James,Thomas&quot;,&quot;birthDate&quot;:&quot;1995-03-03&quot;,&quot;height&quot;:1.7}
+      // ... 27 more person objects (see Program.cs for full array)
+    ]
+    &quot;&quot;&quot;;
+
+using var parsedArray = ParsedJsonDocument&lt;Person1dArray&gt;.Parse(peopleArrayJson);
+Person1dArray peopleArray = parsedArray.RootElement;
+
+// Access strongly-typed values by array index
+PersonClosed personAtIndex0 = peopleArray[0];
+PersonClosed personAtIndex1 = peopleArray[1];
+
+if (peopleArray.EvaluateSchema())
+{
+    // The array is valid - there are 30 valid PersonClosed instances in it.
+    Console.WriteLine(&quot;original array is valid.&quot;);
+}
+</code></pre>
+<h3 id="mutable-array-operations">Mutable array operations</h3>
+<pre><code class="language-csharp">// Mutable array operations via the builder pattern.
+// The builder uses a JsonWorkspace to manage pooled memory, so a sequence of
+// mutations operates in-place rather than allocating a new document for every
+// change — much more memory-efficient than returning immutable copies.
+using JsonWorkspace workspace = JsonWorkspace.Create();
+using var mutableDoc = peopleArray.CreateBuilder(workspace);
+Person1dArray.Mutable root = mutableDoc.RootElement;
+
+// Item removed at index
+root.RemoveAt(0);
+// Remove first instance of a specific value
+root.Remove(personAtIndex1);
+
+Person1dArray updatedArray = mutableDoc.RootElement;
+if (updatedArray.EvaluateSchema())
+{
+    Console.WriteLine(&quot;Updated array is valid.&quot;);
+}
+else
+{
+    // The array is no longer valid - the length is 28
+    Console.WriteLine(&quot;Updated array is not valid.&quot;);
+}
+
+// Insert an item at an index
+root.InsertItem(0, personAtIndex1);
+// Add an item at the end
+root.AddItem(personAtIndex0);
+
+// Add multiple items at once
+root.AddRange(static (ref JsonElement.ArrayBuilder b) =&gt;
+{
+    b.AddItem(PersonClosed.Build(
+        static (ref PersonClosed.Builder pb) =&gt; pb.Create(
+            birthDate: new LocalDate(1930, 6, 12),
+            familyName: &quot;Doe&quot;u8,
+            givenName: &quot;Jane&quot;u8,
+            otherNames: &quot;Q.&quot;u8)));
+    b.AddItem(PersonClosed.Build(
+        static (ref PersonClosed.Builder pb) =&gt; pb.Create(
+            birthDate: new LocalDate(1945, 3, 8),
+            familyName: &quot;Smith&quot;u8,
+            givenName: &quot;Bob&quot;u8,
+            otherNames: &quot;R.&quot;u8)));
+});
+
+// Insert multiple items at a specific index
+root.InsertRange(2, static (ref JsonElement.ArrayBuilder b) =&gt;
+{
+    b.AddItem(PersonClosed.Build(
+        static (ref PersonClosed.Builder pb) =&gt; pb.Create(
+            birthDate: new LocalDate(1950, 9, 21),
+            familyName: &quot;Chen&quot;u8,
+            givenName: &quot;Wei&quot;u8,
+            otherNames: &quot;X.&quot;u8)));
+});
+
+updatedArray = mutableDoc.RootElement;
+if (updatedArray.EvaluateSchema())
+{
+    // The array is valid - the length is back up to 30
+    Console.WriteLine(&quot;Updated array is valid.&quot;);
+}
+</code></pre>
+<h3 id="setting-and-replacing-items">Setting and replacing items</h3>
+<pre><code class="language-csharp">// Set item at a specific index
+root.SetItem(14, PersonClosed.Build(
+    static (ref PersonClosed.Builder b) =&gt; b.Create(
+        birthDate: new LocalDate(1820, 1, 17),
+        familyName: &quot;Brontë&quot;,
+        givenName: &quot;Anne&quot;,
+        height: 1.57)));
+
+// Replace the first instance of a person by value
+root.Replace(personAtIndex0, PersonClosed.Build(
+    static (ref PersonClosed.Builder b) =&gt; b.Create(
+        birthDate: new LocalDate(1820, 1, 17),
+        familyName: &quot;Brontë&quot;,
+        givenName: &quot;Anne&quot;,
+        height: 1.57)));
+</code></pre>
+<h3 id="enumerating-items">Enumerating items</h3>
+<pre><code class="language-csharp">// Enumerate the items in the array
+updatedArray = mutableDoc.RootElement;
+foreach (PersonClosed enumeratedPerson in updatedArray.EnumerateArray())
+{
+    Console.WriteLine($&quot;{enumeratedPerson.FamilyName}, {enumeratedPerson.GivenName}&quot;);
+}
+</code></pre>
+<h2 id="key-differences-from-v4">Key Differences from V4</h2>
+<h3 id="v4-corvus.json">V4 (Corvus.Json)</h3>
+<pre><code class="language-csharp">// Parse and access array elements
+Person1dArray peopleArray = Person1dArray.Parse(peopleArrayJson);
+PersonClosed person = peopleArray[0];
+
+// Create an array from values using collection expressions
+Person1dArray array = [person1, person2, person3];
+
+// Immutable operations — each mutation returns a new copy
+Person1dArray updated = peopleArray.RemoveAt(0);
+updated = updated.InsertItem(0, newPerson);
+
+// Enumerate
+foreach (PersonClosed p in peopleArray.EnumerateArray())
+{
+    Console.WriteLine($&quot;{p.FamilyName}, {p.GivenName}&quot;);
+}
+</code></pre>
+<h3 id="v5-corvus.text.json">V5 (Corvus.Text.Json)</h3>
+<pre><code class="language-csharp">// Parse with explicit document lifetime
+using var parsedArray = ParsedJsonDocument&lt;Person1dArray&gt;.Parse(peopleArrayJson);
+Person1dArray peopleArray = parsedArray.RootElement;
+PersonClosed person = peopleArray[0];
+
+// Mutable operations via workspace builder
+using JsonWorkspace workspace = JsonWorkspace.Create();
+using var mutableDoc = peopleArray.CreateBuilder(workspace);
+Person1dArray.Mutable root = mutableDoc.RootElement;
+root.RemoveAt(0);
+root.InsertItem(0, newPerson);
+
+// Enumerate (same API)
+foreach (PersonClosed p in mutableDoc.RootElement.EnumerateArray())
+{
+    Console.WriteLine($&quot;{p.FamilyName}, {p.GivenName}&quot;);
+}
+</code></pre>
+<p><strong>Key differences:</strong></p>
+<ul>
+<li>V5 uses <code>ParsedJsonDocument&lt;T&gt;.Parse()</code> with <code>using</code> for explicit lifetime management</li>
+<li>V5 mutations are in-place via the builder pattern (<code>CreateBuilder(workspace)</code>) instead of returning new immutable copies</li>
+<li>V5 does not support collection expressions for constructing arrays — parse from JSON or use the builder</li>
+<li>V5 requires a <code>JsonWorkspace</code> for mutable operations, providing pooled memory management</li>
+<li>Enumeration and indexing APIs are the same in both versions</li>
+</ul>
+<h2 id="running-the-example">Running the Example</h2>
+<pre><code class="language-bash">cd docs/ExampleRecipes/007-CreatingAStronglyTypedArray
+dotnet run
+</code></pre>
+<h2 id="related-patterns">Related Patterns</h2>
+<ul>
+<li><a href="/corvus-json-schema/pr-preview/pr-734/examples/creating-an-array-of-higher-rank.html">008-CreatingAnArrayOfHigherRank</a> - Multi-dimensional arrays</li>
+<li><a href="/corvus-json-schema/pr-preview/pr-734/examples/working-with-tensors.html">009-WorkingWithTensors</a> - Working with tensors and numeric spans</li>
+<li><a href="/corvus-json-schema/pr-preview/pr-734/examples/creating-tuples.html">010-CreatingTuples</a> - Creating tuples with <code>prefixItems</code></li>
+</ul>
+<h2 id="frequently-asked-questions">Frequently Asked Questions</h2>
+<h3 id="whats-the-difference-between-an-array-and-a-tuple-in-json-schema">What's the difference between an array and a tuple in JSON Schema?</h3>
+<p>An <strong>array</strong> (using <code>items</code>) defines a uniform collection where every element conforms to the same schema. A <strong>tuple</strong> (using <code>prefixItems</code>) defines a fixed-length, ordered collection where each position has its own schema. Use arrays when all elements are the same type; use tuples when you need heterogeneous, positional elements — see <a href="/corvus-json-schema/pr-preview/pr-734/examples/creating-tuples.html">Recipe 010</a>.</p>
+<h3 id="how-do-i-enumerate-array-elements">How do I enumerate array elements?</h3>
+<p>Call <code>EnumerateArray()</code> to get a strongly-typed enumerator over the array elements. This works on both immutable (<code>Person1dArray</code>) and mutable (<code>Person1dArray.Mutable</code>) views. The generated type also implements <code>IEnumerable&lt;T&gt;</code>, so you can use standard LINQ operators.</p>
+<h3 id="when-should-i-use-the-mutable-builder-versus-working-with-immutable-arrays">When should I use the mutable builder versus working with immutable arrays?</h3>
+<p>Use the <strong>immutable</strong> parsed document when you only need to read and validate data — it's the most efficient path. Switch to the <strong>mutable builder</strong> (<code>CreateBuilder(workspace)</code>) when you need to add, remove, replace, or reorder elements. The builder operates in-place on pooled memory, avoiding the allocation overhead of creating a new document for each change.</p>
+<h3 id="what-do-minitems-and-maxitems-actually-enforce">What do <code>minItems</code> and <code>maxItems</code> actually enforce?</h3>
+<p>These keywords constrain the array length at <strong>validation</strong> time, not at the type level. You can always mutate an array to have fewer or more items than the schema allows — <code>EvaluateSchema()</code> will simply return <code>false</code>. Setting both to the same value (e.g., 30) means the array must contain <em>exactly</em> that many items to be valid. The code generator also uses matching <code>minItems</code>/<code>maxItems</code> to recognize fixed-size arrays for tensor operations.</p>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What's the difference between an array and a tuple in JSON Schema?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "An **array** (using items) defines a uniform collection where every element conforms to the same schema. A **tuple** (using prefixItems) defines a fixed-length, ordered collection where each position has its own schema. Use arrays when all elements are the same type; use tuples when you need heterogeneous, positional elements — see [Recipe 010](../010-CreatingTuples/)."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I enumerate array elements?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Call EnumerateArray() to get a strongly-typed enumerator over the array elements. This works on both immutable (Person1dArray) and mutable (Person1dArray.Mutable) views. The generated type also implements IEnumerable<T>, so you can use standard LINQ operators."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "When should I use the mutable builder versus working with immutable arrays?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Use the **immutable** parsed document when you only need to read and validate data — it's the most efficient path. Switch to the **mutable builder** (CreateBuilder(workspace)) when you need to add, remove, replace, or reorder elements. The builder operates in-place on pooled memory, avoiding the allocation overhead of creating a new document for each change."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What do `minItems` and `maxItems` actually enforce?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "These keywords constrain the array length at **validation** time, not at the type level. You can always mutate an array to have fewer or more items than the schema allows — EvaluateSchema() will simply return false. Setting both to the same value (e.g., 30) means the array must contain *exactly* that many items to be valid. The code generator also uses matching minItems/maxItems to recognize fixed-size arrays for tensor operations."
+      }
+    }
+  ]
+}
+</script>
+        </div>
+    </main>
+</div>
+
+    </div>
+    <footer class="site-footer">
+    <div class="site-footer__inner">
+        <div class="site-footer__sponsor">
+            Sponsored by
+            <a href="https://endjin.com" target="_blank" rel="noopener noreferrer">endjin</a>
+        </div>
+        <ul class="site-footer__links" role="list">
+            <li><a class="site-footer__link" href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html">Getting Started</a></li>
+            <li><a class="site-footer__link" href="/corvus-json-schema/pr-preview/pr-734/docs/index.html">Documentation</a></li>
+            <li><a class="site-footer__link" href="/corvus-json-schema/pr-preview/pr-734/examples/index.html">Examples</a></li>
+            <li><a class="site-footer__link" href="/corvus-json-schema/pr-preview/pr-734/api/index.html">API</a></li>
+            <li><a class="site-footer__link" href="https://github.com/corvus-dotnet/Corvus.JsonSchema" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            <li><a class="site-footer__link" href="https://www.nuget.org/packages?q=Corvus.Json" target="_blank" rel="noopener noreferrer">NuGet</a></li>
+        </ul>
+        <p class="site-footer__copyright">&copy; 2026 endjin Ltd.</p>
+    </div>
+</footer>
+
+    <!-- highlight.js for syntax highlighting (CSS targets .hljs-* classes) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/csharp.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js" defer></script>
+    <script>document.addEventListener('DOMContentLoaded',()=>hljs.highlightAll())</script>
+    <script src="/corvus-json-schema/pr-preview/pr-734/assets/js/main.js" defer></script>
+    <script src="/corvus-json-schema/pr-preview/pr-734/assets/js/sidebar-search.js" defer></script>
+    
+</body>
+</html>

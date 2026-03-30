@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1C1D21" />
+    <meta name="description" content="Parse JSON into read-only, strongly-typed models backed by pooled memory. A high-performance alternative to System.Text.Json&#x27;s JsonDocument with generic type support and zero-copy element access." />
+    <meta name="keywords" content="documentation, Corvus.Text.Json" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:description" content="Parse JSON into read-only, strongly-typed models backed by pooled memory. A high-performance alternative to System.Text.Json&#x27;s JsonDocument with generic type support and zero-copy element access." />
+    <meta name="twitter:image" content="/corvus-json-schema/pr-preview/pr-734/assets/images/og-corvus.png" />
+    <meta name="twitter:title" content="Parsing &amp; Reading JSON - Corvus.Text.Json" />
+    <meta property="article:tag" content="documentation" />
+    <meta property="article:tag" content="Corvus.Text.Json" />
+    <meta property="og:description" content="Parse JSON into read-only, strongly-typed models backed by pooled memory. A high-performance alternative to System.Text.Json&#x27;s JsonDocument with generic type support and zero-copy element access." />
+    <meta property="og:image" content="/corvus-json-schema/pr-preview/pr-734/assets/images/og-corvus.png" />
+    <meta property="og:title" content="Parsing &amp; Reading JSON - Corvus.Text.Json" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://corvus-oss.org/corvus-json-schema/docs/parsed-json-document/" />
+    <title>Parsing &amp; Reading JSON - Corvus.Text.Json</title>
+    <link itemprop="url" href="https://corvus-oss.org/corvus-json-schema/docs/parsed-json-document/" />
+    <link rel="canonical" href="https://corvus-oss.org/corvus-json-schema/docs/parsed-json-document/" />
+    <link rel="sitemap" href="https://corvus-oss.org/corvus-json-schema/sitemap.xml" />
+    <!-- Styles -->
+    <link rel="stylesheet" href="/corvus-json-schema/pr-preview/pr-734/main.css" />
+    <link rel="icon" type="image/svg+xml" href="/corvus-json-schema/pr-preview/pr-734/assets/images/favicon.svg" />
+    
+</head>
+<body>
+    <a class="sr-only" href="#main-content">Skip to content</a>
+<header class="site-header">
+    <div class="site-header__inner">
+        <a class="site-header__brand" href="/corvus-json-schema/pr-preview/pr-734/index.html" aria-label="Corvus.JsonSchema home">
+            <img src="/corvus-json-schema/pr-preview/pr-734/assets/images/logo-corvus.svg" alt="" width="28" height="28" aria-hidden="true" />
+            Corvus<span style="color:var(--color-brand)">.</span>Json<span style="color:var(--color-brand)">Schema</span>
+        </a>
+        <nav class="site-header__nav-desktop" aria-label="Main navigation">
+                    <a href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html"
+                       class="site-header__link "
+                       >Getting Started</a>
+                    <a href="/corvus-json-schema/pr-preview/pr-734/getting-started-v4/index.html"
+                       class="site-header__link "
+                       >Getting Started (V4)</a>
+                    <a href="/corvus-json-schema/pr-preview/pr-734/docs/index.html"
+                       class="site-header__link is-active"
+                       aria-current=page>Documentation</a>
+                    <a href="/corvus-json-schema/pr-preview/pr-734/examples/index.html"
+                       class="site-header__link "
+                       >Examples</a>
+                    <a href="/corvus-json-schema/pr-preview/pr-734/api/index.html"
+                       class="site-header__link "
+                       >API</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/playground/"
+               class="site-header__link"
+               target="_blank" rel="noopener noreferrer"
+               title="Interactive JSON Schema playground">Playground</a>
+            <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+               class="site-header__link" target="_blank" rel="noopener noreferrer"
+               aria-label="View on GitHub">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            </a>
+        </nav>
+        <button class="site-header__menu-toggle js-toggle-menu"
+                aria-expanded="false" aria-label="Toggle menu">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+        </button>
+    </div>
+</header>
+<nav class="site-header__nav-mobile js-mobile-nav" aria-label="Mobile navigation">
+            <a href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html" class="site-header__link">Getting Started</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/getting-started-v4/index.html" class="site-header__link">Getting Started (V4)</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/docs/index.html" class="site-header__link">Documentation</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/examples/index.html" class="site-header__link">Examples</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/api/index.html" class="site-header__link">API</a>
+    <a href="/corvus-json-schema/pr-preview/pr-734/playground/" class="site-header__link" target="_blank" rel="noopener noreferrer">Playground</a>
+    <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+       class="site-header__link" target="_blank" rel="noopener noreferrer">GitHub</a>
+</nav>
+
+    <div class="page-content">
+    <div class="layout-docs container">
+    <button class="sidebar-toggle" aria-label="Toggle navigation" aria-expanded="false"></button>
+<div class="sidebar-backdrop"></div>
+<aside class="sidebar">
+    <div class="sidebar__inner">
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Getting Started</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                    <li class="sidebar__item"><a class="sidebar__link" href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html">Tutorial</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Documentation</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link is-active" href="/corvus-json-schema/pr-preview/pr-734/docs/parsed-json-document.html">Parsing &amp; Reading JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/json-document-builder.html">Building &amp; Mutating JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/source-generator.html">Source Generator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/code-generator.html">CLI Code Generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/validator.html">Dynamic Schema Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/migrating-from-v4-to-v5.html">Migrating from V4</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/using-copilot-for-migration.html">Copilot Migration</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/migration-analyzers.html">Migration Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/analyzers.html">Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/schema-evaluator.html">Standalone Schema Evaluator</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Examples</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/data-object.html">Simple Data Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/data-object-validation.html">Data Object Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/reusing-common-types.html">Reusing Common Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/open-versus-closed-types.html">Open Versus Closed Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/extending-a-base-type.html">Extending a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/constraining-a-base-type.html">Constraining a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/creating-a-strongly-typed-array.html">Strongly Typed Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/creating-an-array-of-higher-rank.html">Multi-Dimensional Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/working-with-tensors.html">Working with Tensors</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/creating-tuples.html">Creating Tuples</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/interfaces-and-mix-in-types.html">Interfaces and Mix-In Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/pattern-matching.html">Pattern Matching and Discriminated Unions</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/polymorphism-with-discriminators.html">Polymorphism with Discriminator Properties</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/string-enumerations.html">String Enumerations and Pattern Matching</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/numeric-enumerations.html">Numeric Enumerations</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/maps.html">Maps of Strings to Strongly Typed Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/mapping-input-and-output-values.html">Mapping Input and Output Values</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</aside>
+
+    <main id="main-content" class="layout-docs__main">
+        <div class="doc__content">
+            <h1>Parsing &amp; Reading JSON</h1>
+<h2 id="overview">Overview</h2>
+<p><code>ParsedJsonDocument&lt;T&gt;</code> is a lightweight, read-only representation of a JSON value that utilizes pooled memory to minimize garbage collector impact. It provides an efficient way to parse and navigate JSON documents with minimal allocations.</p>
+<p>Built on top of <code>Corvus.Text.Json</code>, which is derived from <code>System.Text.Json</code>, <code>ParsedJsonDocument&lt;T&gt;</code> extends the functionality while maintaining a high degree of source compatibility with the familiar <code>System.Text.Json.JsonElement</code> API.</p>
+<h2 id="key-features">Key Features</h2>
+<ul>
+<li><strong>Memory Efficient</strong>: Uses pooled memory from <code>ArrayPool&lt;byte&gt;</code> to reduce GC pressure</li>
+<li><strong>Read-Only</strong>: Provides immutable access to parsed JSON data</li>
+<li><strong>Multiple Input Sources</strong>: Supports parsing from strings, byte arrays, streams, and sequences</li>
+<li><strong>IDisposable</strong>: Must be disposed to return pooled memory</li>
+<li><strong>System.Text.Json Compatible</strong>: Works with familiar <code>System.Text.Json</code> patterns</li>
+</ul>
+<h2 id="comparison-with-system.text.json">Comparison with System.Text.Json</h2>
+<p><code>ParsedJsonDocument&lt;T&gt;</code> is based on <code>System.Text.Json.JsonDocument</code> but provides several enhancements:</p>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>System.Text.Json (<code>JsonDocument</code>)</th>
+<th>Corvus.Text.Json (<code>ParsedJsonDocument&lt;T&gt;</code>)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Generic Support</strong></td>
+<td>Fixed to <code>JsonElement</code></td>
+<td>Generic over <code>IJsonElement&lt;T&gt;</code> for extensibility</td>
+</tr>
+<tr>
+<td><strong>Property Access</strong></td>
+<td>Sequential search-based property lookup</td>
+<td>Optionally uses a property map with O(1) performance for repeated access</td>
+</tr>
+<tr>
+<td><strong>Additional Types</strong></td>
+<td>Standard .NET types</td>
+<td>Includes <code>BigNumber</code>, <code>BigInteger</code>, NodaTime types (<code>LocalDate</code>, <code>OffsetTime</code>, <code>OffsetDate</code>, <code>OffsetDateTime</code>, <code>Period</code>)</td>
+</tr>
+<tr>
+<td><strong>Mutability</strong></td>
+<td>Read-only</td>
+<td>Read-only by default, with mutable variant (<code>JsonElement.Mutable</code>) available via <code>JsonDocumentBuilder</code></td>
+</tr>
+<tr>
+<td><strong>UTF-8 Support</strong></td>
+<td>Good</td>
+<td>Enhanced with direct UTF-8 property access methods</td>
+</tr>
+</tbody>
+</table>
+<h3 id="when-to-use-parsedjsondocument">When to Use ParsedJsonDocument</h3>
+<ul>
+<li>✅ When you need JSON schema support</li>
+<li>✅ When you need mutability support</li>
+<li>✅ When you want to create custom JSON element types</li>
+<li>✅ When you need extended type support (BigInteger, BigNumber, NodaTime types)</li>
+</ul>
+<h2 id="basic-usage">Basic Usage</h2>
+<h3 id="parsing-json-from-a-string">Parsing JSON from a String</h3>
+<pre><code class="language-csharp">using Corvus.Text.Json;
+
+string json = &quot;&quot;&quot;
+    {
+        &quot;name&quot;: &quot;John&quot;,
+        &quot;age&quot;: 30
+    }
+    &quot;&quot;&quot;;
+using ParsedJsonDocument&lt;JsonElement&gt; doc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(json);
+
+JsonElement root = doc.RootElement;
+string name = root.GetProperty(&quot;name&quot;u8).GetString();
+int age = root.GetProperty(&quot;age&quot;u8).GetInt32();
+
+Console.WriteLine($&quot;Name: {name}, Age: {age}&quot;);
+</code></pre>
+<h3 id="parsing-json-from-utf-8-bytes">Parsing JSON from UTF-8 Bytes</h3>
+<pre><code class="language-csharp">ReadOnlySpan&lt;byte&gt; utf8Json = &quot;&quot;&quot;
+    {
+        &quot;message&quot;: &quot;Hello, World!&quot;
+    }
+    &quot;&quot;&quot;u8;
+using ParsedJsonDocument&lt;JsonElement&gt; doc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(utf8Json.ToArray().AsMemory());
+
+JsonElement root = doc.RootElement;
+string message = root.GetProperty(&quot;message&quot;u8).GetString();
+
+Console.WriteLine(message); // Output: Hello, World!
+</code></pre>
+<h3 id="parsing-json-from-a-stream">Parsing JSON from a Stream</h3>
+<pre><code class="language-csharp">using FileStream fileStream = File.OpenRead(&quot;data.json&quot;);
+using ParsedJsonDocument&lt;JsonElement&gt; doc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(fileStream);
+
+JsonElement root = doc.RootElement;
+// Process the JSON data...
+</code></pre>
+<h3 id="async-stream-parsing">Async Stream Parsing</h3>
+<p>Asynchronous parsing is ideal for large files or network streams:</p>
+<pre><code class="language-csharp">using FileStream fileStream = File.OpenRead(&quot;large-data.json&quot;);
+using ParsedJsonDocument&lt;JsonElement&gt; doc = await ParsedJsonDocument&lt;JsonElement&gt;.ParseAsync(fileStream);
+
+JsonElement root = doc.RootElement;
+// Process the JSON data...
+</code></pre>
+<h3 id="parsing-from-memory-stream">Parsing from Memory Stream</h3>
+<pre><code class="language-csharp">ReadOnlySpan&lt;byte&gt; utf8Json = &quot;&quot;&quot;
+    {
+        &quot;message&quot;: &quot;Hello from stream&quot;
+    }
+    &quot;&quot;&quot;u8;
+using var stream = new MemoryStream(utf8Json.ToArray());
+using ParsedJsonDocument&lt;JsonElement&gt; doc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(stream);
+
+JsonElement root = doc.RootElement;
+string message = root.GetProperty(&quot;message&quot;u8).GetString();
+</code></pre>
+<h2 id="working-with-json-arrays">Working with JSON Arrays</h2>
+<pre><code class="language-csharp">string json = &quot;&quot;&quot;
+    [
+        1,
+        2,
+        3,
+        4,
+        5
+    ]
+    &quot;&quot;&quot;;
+using ParsedJsonDocument&lt;JsonElement&gt; doc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(json);
+
+JsonElement root = doc.RootElement;
+
+// Using foreach with EnumerateArray()
+foreach (JsonElement element in root.EnumerateArray())
+{
+    int value = element.GetInt32();
+    Console.WriteLine(value);
+}
+
+// Or using indexed access
+// Note that indexed access is *not* as efficient as enumeration.
+int length = root.GetArrayLength();
+for (int i = 0; i &lt; length; i++)
+{
+    int value = root[i].GetInt32();
+    Console.WriteLine(value);
+}
+</code></pre>
+<h2 id="working-with-nested-objects">Working with Nested Objects</h2>
+<pre><code class="language-csharp">string json = &quot;&quot;&quot;
+    {
+        &quot;person&quot;: {
+            &quot;name&quot;: &quot;Alice&quot;,
+            &quot;address&quot;: {
+                &quot;city&quot;: &quot;Seattle&quot;,
+                &quot;zip&quot;: &quot;98101&quot;
+            }
+        }
+    }
+    &quot;&quot;&quot;;
+
+using ParsedJsonDocument&lt;JsonElement&gt; doc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(json);
+
+JsonElement root = doc.RootElement;
+JsonElement person = root.GetProperty(&quot;person&quot;u8);
+JsonElement address = person.GetProperty(&quot;address&quot;u8);
+
+string name = person.GetProperty(&quot;name&quot;u8).GetString();
+string city = address.GetProperty(&quot;city&quot;u8).GetString();
+string zip = address.GetProperty(&quot;zip&quot;u8).GetString();
+
+Console.WriteLine($&quot;{name} lives in {city}, {zip}&quot;);
+</code></pre>
+<h2 id="getting-strongly-typed-values">Getting Strongly-Typed Values</h2>
+<p><code>JsonElement</code> provides methods to extract strongly-typed values from JSON. This is similar to System.Text.Json, but with additional types supported.</p>
+<h3 id="numeric-types">Numeric Types</h3>
+<pre><code class="language-csharp">string json = &quot;&quot;&quot;
+    {
+        &quot;byteValue&quot;: 255,
+        &quot;sbyteValue&quot;: -128,
+        &quot;shortValue&quot;: -32768,
+        &quot;ushortValue&quot;: 65535,
+        &quot;intValue&quot;: -2147483648,
+        &quot;uintValue&quot;: 4294967295,
+        &quot;longValue&quot;: -9223372036854775808,
+        &quot;ulongValue&quot;: 18446744073709551615,
+        &quot;floatValue&quot;: 3.14159,
+        &quot;doubleValue&quot;: 2.718281828459045,
+        &quot;decimalValue&quot;: 79228162514264337593543950335
+    }
+    &quot;&quot;&quot;;
+
+using ParsedJsonDocument&lt;JsonElement&gt; doc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(json);
+JsonElement root = doc.RootElement;
+
+// Integer types
+byte byteVal = root.GetProperty(&quot;byteValue&quot;u8).GetByte();
+sbyte sbyteVal = root.GetProperty(&quot;sbyteValue&quot;u8).GetSByte();
+short shortVal = root.GetProperty(&quot;shortValue&quot;u8).GetInt16();
+ushort ushortVal = root.GetProperty(&quot;ushortValue&quot;u8).GetUInt16();
+int intVal = root.GetProperty(&quot;intValue&quot;u8).GetInt32();
+uint uintVal = root.GetProperty(&quot;uintValue&quot;u8).GetUInt32();
+long longVal = root.GetProperty(&quot;longValue&quot;u8).GetInt64();
+ulong ulongVal = root.GetProperty(&quot;ulongValue&quot;u8).GetUInt64();
+
+// Floating-point types
+float floatVal = root.GetProperty(&quot;floatValue&quot;u8).GetSingle();
+double doubleVal = root.GetProperty(&quot;doubleValue&quot;u8).GetDouble();
+decimal decimalVal = root.GetProperty(&quot;decimalValue&quot;u8).GetDecimal();
+</code></pre>
+<h3 id="boolean-values">Boolean Values</h3>
+<pre><code class="language-csharp">string json = &quot;&quot;&quot;
+    {
+        &quot;isActive&quot;: true,
+        &quot;isDeleted&quot;: false
+    }
+    &quot;&quot;&quot;;
+
+using ParsedJsonDocument&lt;JsonElement&gt; doc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(json);
+JsonElement root = doc.RootElement;
+
+bool isActive = root.GetProperty(&quot;isActive&quot;u8).GetBoolean();
+bool isDeleted = root.GetProperty(&quot;isDeleted&quot;u8).GetBoolean();
+</code></pre>
+<h3 id="string-values">String Values</h3>
+<pre><code class="language-csharp">string json = &quot;&quot;&quot;
+    {
+        &quot;name&quot;: &quot;John Doe&quot;,
+        &quot;email&quot;: &quot;john.doe@example.com&quot;,
+        &quot;description&quot;: null
+    }
+    &quot;&quot;&quot;;
+
+using ParsedJsonDocument&lt;JsonElement&gt; doc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(json);
+JsonElement root = doc.RootElement;
+
+string? name = root.GetProperty(&quot;name&quot;u8).GetString();
+string? email = root.GetProperty(&quot;email&quot;u8).GetString();
+string? description = root.GetProperty(&quot;description&quot;u8).GetString(); // Returns null
+</code></pre>
+<h3 id="date-and-time-values">Date and Time Values</h3>
+<pre><code class="language-csharp">string json = &quot;&quot;&quot;
+    {
+        &quot;createdAt&quot;: &quot;2024-01-15T10:30:00Z&quot;,
+        &quot;updatedAt&quot;: &quot;2024-02-28T14:45:30.123+05:00&quot;,
+        &quot;timestamp&quot;: &quot;2024-03-01T00:00:00-08:00&quot;
+    }
+    &quot;&quot;&quot;;
+
+using ParsedJsonDocument&lt;JsonElement&gt; doc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(json);
+JsonElement root = doc.RootElement;
+
+// DateTime values
+DateTime createdAt = root.GetProperty(&quot;createdAt&quot;u8).GetDateTime();
+
+// DateTimeOffset values (preserves timezone information)
+DateTimeOffset updatedAt = root.GetProperty(&quot;updatedAt&quot;u8).GetDateTimeOffset();
+DateTimeOffset timestamp = root.GetProperty(&quot;timestamp&quot;u8).GetDateTimeOffset();
+</code></pre>
+<h3 id="guid-values">Guid Values</h3>
+<pre><code class="language-csharp">string json = &quot;&quot;&quot;
+    {
+        &quot;userId&quot;: &quot;550e8400-e29b-41d4-a716-446655440000&quot;,
+        &quot;sessionId&quot;: &quot;12345678-1234-1234-1234-123456789012&quot;
+    }
+    &quot;&quot;&quot;;
+
+using ParsedJsonDocument&lt;JsonElement&gt; doc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(json);
+JsonElement root = doc.RootElement;
+
+Guid userId = root.GetProperty(&quot;userId&quot;u8).GetGuid();
+Guid sessionId = root.GetProperty(&quot;sessionId&quot;u8).GetGuid();
+</code></pre>
+<h3 id="binary-data-base64">Binary Data (Base64)</h3>
+<pre><code class="language-csharp">string json = &quot;&quot;&quot;
+    {
+        &quot;data&quot;: &quot;SGVsbG8gV29ybGQh&quot;,
+        &quot;signature&quot;: &quot;AQIDBA==&quot;
+    }
+    &quot;&quot;&quot;;
+
+using ParsedJsonDocument&lt;JsonElement&gt; doc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(json);
+JsonElement root = doc.RootElement;
+
+// Decode base64 strings to byte arrays
+byte[] data = root.GetProperty(&quot;data&quot;u8).GetBytesFromBase64();
+byte[] signature = root.GetProperty(&quot;signature&quot;u8).GetBytesFromBase64();
+
+// data contains: &quot;Hello World!&quot; as bytes
+// signature contains: [1, 2, 3, 4]
+</code></pre>
+<h3 id="extended-numeric-types-beyond-system.text.json">Extended Numeric Types (Beyond System.Text.Json)</h3>
+<p>Corvus.Text.Json provides additional numeric types not available in System.Text.Json:</p>
+<pre><code class="language-csharp">        Console.WriteLine(&quot;--- Example 12: Extended Numeric Types (Beyond System.Text.Json) ---&quot;);
+
+        string json = &quot;&quot;&quot;
+            {
+                &quot;largeInteger&quot;: 12345678901234567890,
+                &quot;preciseNumber&quot;: 1234567890123456789.1234567890123456789,
+                &quot;bigNumberWithScale&quot;: 123456789012345678901234567890123456789E-10
+            }
+            &quot;&quot;&quot;;
+
+        using ParsedJsonDocument&lt;JsonElement&gt; doc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(json);
+        JsonElement root = doc.RootElement;
+
+        // BigInteger for large integers beyond long range
+        BigInteger largeNum = root.GetProperty(&quot;largeInteger&quot;u8).GetBigInteger();
+        // BigNumber for high-precision arithmetic
+        BigNumber preciseNum = root.GetProperty(&quot;preciseNumber&quot;u8).GetBigNumber();
+        BigNumber bigNumWithScale = root.GetProperty(&quot;bigNumberWithScale&quot;u8).GetBigNumber();
+</code></pre>
+<h3 id="nodatime-types">NodaTime Types</h3>
+<p>For applications using NodaTime, Corvus.Text.Json provides direct support:</p>
+<pre><code class="language-csharp">using NodaTime;
+
+string json = &quot;&quot;&quot;
+    {
+        &quot;localDate&quot;: &quot;2024-02-28&quot;,
+        &quot;offsetTime&quot;: &quot;14:30:00+05:00&quot;,
+        &quot;offsetDate&quot;: &quot;2024-02-28+00:00&quot;,
+        &quot;offsetDateTime&quot;: &quot;2024-02-28T14:30:00+05:00&quot;,
+        &quot;period&quot;: &quot;P1Y2M3DT4H5M6S&quot;
+    }
+    &quot;&quot;&quot;;
+
+using ParsedJsonDocument&lt;JsonElement&gt; doc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(json);
+JsonElement root = doc.RootElement;
+
+LocalDate localDate = root.GetProperty(&quot;localDate&quot;u8).GetLocalDate();
+OffsetTime offsetTime = root.GetProperty(&quot;offsetTime&quot;u8).GetOffsetTime();
+OffsetDate offsetDate = root.GetProperty(&quot;offsetDate&quot;u8).GetOffsetDate();
+OffsetDateTime offsetDateTime = root.GetProperty(&quot;offsetDateTime&quot;u8).GetOffsetDateTime();
+Period period = root.GetProperty(&quot;period&quot;u8).GetPeriod();
+</code></pre>
+<h3 id="type-checking-and-safe-conversion">Type Checking and Safe Conversion</h3>
+<p>Always check the <code>ValueKind</code> before calling Get methods to avoid exceptions:</p>
+<pre><code class="language-csharp">string json = &quot;&quot;&quot;
+    {
+        &quot;maybeNumber&quot;: &quot;not a number&quot;,
+        &quot;actualNumber&quot;: 42
+    }
+    &quot;&quot;&quot;;
+
+using ParsedJsonDocument&lt;JsonElement&gt; doc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(json);
+JsonElement root = doc.RootElement;
+
+JsonElement maybeNumber = root.GetProperty(&quot;maybeNumber&quot;u8);
+if (maybeNumber.ValueKind == JsonValueKind.Number)
+{
+    int value = maybeNumber.GetInt32(); // Safe
+}
+else
+{
+    Console.WriteLine(&quot;Not a number!&quot;); // This will execute
+}
+
+// Use TryGet methods for safer conversion
+if (root.GetProperty(&quot;actualNumber&quot;u8).TryGetInt32(out int actualValue))
+{
+    Console.WriteLine($&quot;Value: {actualValue}&quot;); // This will execute
+}
+</code></pre>
+<h2 id="enumerating-object-properties">Enumerating Object Properties</h2>
+<pre><code class="language-csharp">string json = &quot;&quot;&quot;
+    {
+        &quot;first&quot;: &quot;John&quot;,
+        &quot;last&quot;: &quot;Smith&quot;,
+        &quot;age&quot;: 30
+    }
+    &quot;&quot;&quot;;
+using ParsedJsonDocument&lt;JsonElement&gt; doc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(json);
+
+JsonElement root = doc.RootElement;
+foreach (JsonProperty&lt;JsonElement&gt; property in root.EnumerateObject())
+{
+    Console.WriteLine($&quot;{property.Name}: {property.Value}&quot;);
+}
+</code></pre>
+<h2 id="parsing-with-options">Parsing with Options</h2>
+<pre><code class="language-csharp">var options = new JsonDocumentOptions
+{
+    AllowTrailingCommas = true,
+    CommentHandling = JsonCommentHandling.Skip,
+    MaxDepth = 64
+};
+
+string json = &quot;&quot;&quot;
+    {
+        &quot;name&quot;: &quot;John&quot;, /* comment */
+    }
+    &quot;&quot;&quot;;
+using ParsedJsonDocument&lt;JsonElement&gt; doc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(json, options);
+
+JsonElement root = doc.RootElement;
+// Process the JSON data...
+</code></pre>
+<h2 id="writing-json-from-parsedjsondocument">Writing JSON from ParsedJsonDocument</h2>
+<p>After parsing a JSON document, you often need to serialize it for storage, transmission, or API responses. The <code>WriteTo</code> method provides efficient UTF-8 serialization.</p>
+<h3 id="basic-serialization-to-stream">Basic Serialization to Stream</h3>
+<pre><code class="language-csharp">string json = &quot;&quot;&quot;
+    {
+        &quot;message&quot;: &quot;Hello&quot;,
+        &quot;status&quot;: 200
+    }
+    &quot;&quot;&quot;;
+using ParsedJsonDocument&lt;JsonElement&gt; doc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(json);
+
+// Write to any stream - file, network, memory
+using var stream = new MemoryStream();
+using (var writer = new Utf8JsonWriter(
+    stream,
+    new JsonWriterOptions { Indented = true }))
+{
+    doc.WriteTo(writer);
+}
+
+string outputJson = Encoding.UTF8.GetString(stream.ToArray());
+Console.WriteLine(outputJson);
+</code></pre>
+<h3 id="serialization-options">Serialization Options</h3>
+<p>Control output formatting with <code>JsonWriterOptions</code>:</p>
+<pre><code class="language-csharp">using System.Text.Encodings.Web;
+
+string json = &quot;&quot;&quot;{&quot;name&quot;:&quot;&lt;script&gt;alert('xss')&lt;/script&gt;&quot;}&quot;&quot;&quot;;
+using ParsedJsonDocument&lt;JsonElement&gt; doc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(json);
+
+var options = new JsonWriterOptions
+{
+    Indented = true,           // Pretty-print with indentation
+    SkipValidation = false,     // Validate during write
+    Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping  // Less aggressive escaping
+};
+
+using var stream = new MemoryStream();
+using (var writer = new Utf8JsonWriter(stream, options))
+{
+    doc.WriteTo(writer);
+}
+
+string output = Encoding.UTF8.GetString(stream.ToArray());
+Console.WriteLine(output);
+</code></pre>
+<h3 id="writing-to-file">Writing to File</h3>
+<pre><code class="language-csharp">string json = &quot;&quot;&quot;
+    {
+        &quot;config&quot;: &quot;data&quot;,
+        &quot;version&quot;: &quot;1.0&quot;
+    }
+    &quot;&quot;&quot;;
+using ParsedJsonDocument&lt;JsonElement&gt; doc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(json);
+
+using FileStream fileStream = File.Create(&quot;output.json&quot;);
+using var writer = new Utf8JsonWriter(
+    fileStream,
+    new JsonWriterOptions { Indented = true });
+    
+doc.WriteTo(writer);
+// Flush happens automatically on dispose
+</code></pre>
+<h3 id="writing-to-http-response-asp.net-core">Writing to HTTP Response (ASP.NET Core)</h3>
+<p>For web APIs, write directly to the response stream for optimal performance:</p>
+<pre><code class="language-csharp">public async Task WriteJsonResponse(HttpContext context)
+{
+    // Parse or build your JSON document
+    string json = GetDataAsJson();
+    using ParsedJsonDocument&lt;JsonElement&gt; doc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(json);
+    
+    context.Response.ContentType = &quot;application/json&quot;;
+    
+    // Write directly to response body
+    await using var writer = new Utf8JsonWriter(
+        context.Response.Body,
+        new JsonWriterOptions { Indented = false });
+        
+    doc.WriteTo(writer);
+    await writer.FlushAsync();
+}
+</code></pre>
+<h3 id="getting-json-as-string">Getting JSON as String</h3>
+<p>For simpler scenarios, use <code>ToString()</code> or <code>GetRawText()</code>:</p>
+<pre><code class="language-csharp">string json = &quot;&quot;&quot;{&quot;message&quot;:&quot;Hello&quot;,&quot;value&quot;:42}&quot;&quot;&quot;;
+using ParsedJsonDocument&lt;JsonElement&gt; doc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(json);
+
+// Get formatted string representation
+string formattedJson = doc.RootElement.ToString();
+Console.WriteLine(formattedJson);
+
+// Get original raw JSON text (preserves formatting)
+string rawJson = doc.RootElement.GetRawText();
+Console.WriteLine(rawJson);
+</code></pre>
+<p><strong>Note</strong>: <code>ToString()</code> creates a new string allocation. For high-performance scenarios, prefer <code>WriteTo()</code> with a writer.</p>
+<h3 id="performance-considerations">Performance Considerations</h3>
+<ol>
+<li><strong>Use UTF-8 directly</strong>: <code>WriteTo()</code> writes UTF-8 bytes without encoding conversion</li>
+<li><strong>Stream to destination</strong>: Write directly to your target stream instead of intermediate buffers</li>
+<li><strong>Disable validation</strong>: Set <code>SkipValidation = true</code> if you trust the source data</li>
+<li><strong>Avoid ToString()</strong>: In hot paths, use <code>WriteTo()</code> instead of string conversion</li>
+<li><strong>Reuse writers</strong>: For repeated operations, consider writer pooling (see JsonDocumentBuilder docs)</li>
+</ol>
+<h3 id="performance-comparison">Performance Comparison</h3>
+<pre><code class="language-csharp">// ❌ Slower: Multiple allocations
+string jsonString = doc.RootElement.ToString();
+byte[] bytes = Encoding.UTF8.GetBytes(jsonString);
+await stream.WriteAsync(bytes);
+
+// ✅ Faster: Direct UTF-8 serialization
+using var writer = new Utf8JsonWriter(stream, new JsonWriterOptions { Indented = false });
+doc.WriteTo(writer);
+await writer.FlushAsync();
+</code></pre>
+<h2 id="common-serialization-patterns">Common Serialization Patterns</h2>
+<h3 id="api-gateway-parse-and-forward">API Gateway: Parse and Forward</h3>
+<p>A common pattern in API gateways and middleware - parse incoming JSON, optionally validate or transform it, then forward to an upstream service:</p>
+<pre><code class="language-csharp">public async Task ForwardJsonAsync(HttpContext context, string upstreamUrl)
+{
+    // Parse incoming request
+    using var requestDoc = await ParsedJsonDocument&lt;JsonElement&gt;.ParseAsync(
+        context.Request.Body);
+    
+    // Optional: validate or transform here
+    // if (!IsValid(requestDoc.RootElement)) { return BadRequest(); }
+    
+    // Forward to upstream service
+    using var httpClient = new HttpClient();
+    using var stream = new MemoryStream();
+    using (var writer = new Utf8JsonWriter(stream, new JsonWriterOptions { Indented = false }))
+    {
+        requestDoc.WriteTo(writer);
+    }
+    
+    stream.Position = 0;
+    var content = new StreamContent(stream);
+    content.Headers.ContentType = new MediaTypeHeaderValue(&quot;application/json&quot;);
+    
+    var response = await httpClient.PostAsync(upstreamUrl, content);
+    
+    // Forward response back to client
+    context.Response.StatusCode = (int)response.StatusCode;
+    await response.Content.CopyToAsync(context.Response.Body);
+}
+</code></pre>
+<h3 id="caching-serialize-for-storage">Caching: Serialize for Storage</h3>
+<p>Serialize JSON documents to byte arrays for caching in Redis, Memcached, or in-memory caches:</p>
+<pre><code class="language-csharp">public async Task CacheJsonAsync(string key, ParsedJsonDocument&lt;JsonElement&gt; doc)
+{
+    using var stream = new MemoryStream();
+    using (var writer = new Utf8JsonWriter(stream, new JsonWriterOptions { Indented = false }))
+    {
+        doc.WriteTo(writer);
+    }
+    
+    byte[] jsonBytes = stream.ToArray();
+    
+    // Store in cache with expiration
+    await _cache.SetAsync(
+        key, 
+        jsonBytes, 
+        new DistributedCacheEntryOptions 
+        { 
+            AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10) 
+        });
+}
+
+public async Task&lt;ParsedJsonDocument&lt;JsonElement&gt;?&gt; GetCachedJsonAsync(string key)
+{
+    byte[]? jsonBytes = await _cache.GetAsync(key);
+    if (jsonBytes == null)
+    {
+        return null;
+    }
+    
+    return ParsedJsonDocument&lt;JsonElement&gt;.Parse(jsonBytes.AsMemory());
+}
+</code></pre>
+<h3 id="logging-structured-json">Logging: Structured JSON</h3>
+<p>Log JSON data efficiently:</p>
+<pre><code class="language-csharp">public void LogStructuredData(ParsedJsonDocument&lt;JsonElement&gt; data, string operation)
+{
+    if (!_logger.IsEnabled(LogLevel.Information))
+    {
+        return;
+    }
+    
+    // For logging, ToString() is fine - it's already a single allocation
+    _logger.LogInformation(
+        &quot;Operation {Operation} completed with data: {Json}&quot;, 
+        operation,
+        data.RootElement.ToString());
+}
+
+// For high-volume logging where you want to avoid ToString(),
+// log the document directly and let the logger handle serialization:
+public void LogStructuredDataHighVolume(ParsedJsonDocument&lt;JsonElement&gt; data, string operation)
+{
+    if (!_logger.IsEnabled(LogLevel.Information))
+    {
+        return;
+    }
+    
+    // Pass the JsonElement directly - many structured logging systems
+    // can serialize it without intermediate string conversion
+    _logger.LogInformation(
+        &quot;Operation {Operation} completed with data: {@Data}&quot;, 
+        operation,
+        data.RootElement);
+}
+</code></pre>
+<h3 id="file-operations-batch-processing">File Operations: Batch Processing</h3>
+<p>Process multiple JSON files efficiently:</p>
+<pre><code class="language-csharp">public async Task ProcessJsonFilesAsync(string inputDirectory, string outputDirectory)
+{
+    foreach (string inputFile in Directory.GetFiles(inputDirectory, &quot;*.json&quot;))
+    {
+        // Parse with pooled memory
+        using FileStream inputStream = File.OpenRead(inputFile);
+        using ParsedJsonDocument&lt;JsonElement&gt; doc = 
+            await ParsedJsonDocument&lt;JsonElement&gt;.ParseAsync(inputStream);
+        
+        // Validate or transform
+        if (!ValidateDocument(doc.RootElement))
+        {
+            _logger.LogWarning(&quot;Skipping invalid file: {File}&quot;, inputFile);
+            continue;
+        }
+        
+        // Write to output with formatting
+        string outputFile = Path.Combine(
+            outputDirectory, 
+            Path.GetFileName(inputFile));
+        
+        using FileStream outputStream = File.Create(outputFile);
+        using var writer = new Utf8JsonWriter(
+            outputStream,
+            new JsonWriterOptions { Indented = true });
+        
+        doc.WriteTo(writer);
+        await writer.FlushAsync();
+    }
+}
+</code></pre>
+<h2 id="comparison-parsedjsondocument-vs-system.text.json.jsondocument">Comparison: ParsedJsonDocument vs System.Text.Json.JsonDocument</h2>
+<h3 id="writingserialization-comparison">Writing/Serialization Comparison</h3>
+<p>Both support similar serialization patterns with identical APIs:</p>
+<p><strong>System.Text.Json.JsonDocument</strong>:</p>
+<pre><code class="language-csharp">using System.Text.Json;
+
+string json = &quot;&quot;&quot;{&quot;message&quot;:&quot;Hello&quot;}&quot;&quot;&quot;;
+using var doc = JsonDocument.Parse(json);
+
+using var stream = new MemoryStream();
+using var writer = new Utf8JsonWriter(stream);
+doc.WriteTo(writer);
+
+string output = Encoding.UTF8.GetString(stream.ToArray());
+</code></pre>
+<p><strong>Corvus.Text.Json.ParsedJsonDocument</strong>:</p>
+<pre><code class="language-csharp">using Corvus.Text.Json;
+
+string json = &quot;&quot;&quot;{&quot;message&quot;:&quot;Hello&quot;}&quot;&quot;&quot;;
+using var doc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(json);
+
+using var stream = new MemoryStream();
+using var writer = new Utf8JsonWriter(stream);
+doc.WriteTo(writer);
+
+string output = Encoding.UTF8.GetString(stream.ToArray());
+</code></pre>
+<p><strong>Key Differences</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>Aspect</th>
+<th>System.Text.Json.JsonDocument</th>
+<th>Corvus.Text.Json.ParsedJsonDocument</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>API Compatibility</strong></td>
+<td>Standard .NET API</td>
+<td>Compatible API with extensions</td>
+</tr>
+<tr>
+<td><strong>Type System</strong></td>
+<td>Fixed to <code>JsonElement</code></td>
+<td>Generic over <code>IJsonElement&lt;T&gt;</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="when-to-choose-which">When to Choose Which</h3>
+<p><strong>Use System.Text.Json.JsonDocument when:</strong></p>
+<ul>
+<li>Standard .NET library is sufficient</li>
+</ul>
+<p><strong>Use ParsedJsonDocument when:</strong></p>
+<ul>
+<li>Need extended type support (BigNumber, NodaTime)</li>
+<li>Need JSON Schema Serialization support (<code>IJsonElement&lt;T&gt;</code>)</li>
+</ul>
+<h2 id="error-handling">Error Handling</h2>
+<h3 id="handling-write-errors">Handling Write Errors</h3>
+<pre><code class="language-csharp">public async Task WriteJsonSafelyAsync(ParsedJsonDocument&lt;JsonElement&gt; doc, string filePath)
+{
+    try
+    {
+        using var stream = new FileStream(filePath, FileMode.Create, FileAccess.Write);
+        using var writer = new Utf8JsonWriter(
+            stream,
+            new JsonWriterOptions { Indented = true });
+        
+        doc.WriteTo(writer);
+        await writer.FlushAsync();
+        
+        _logger.LogInformation(&quot;Successfully wrote JSON to {FilePath}&quot;, filePath);
+    }
+    catch (IOException ex)
+    {
+        _logger.LogError(ex, &quot;Failed to write JSON to file {FilePath}&quot;, filePath);
+        throw new ApplicationException($&quot;Could not write to {filePath}&quot;, ex);
+    }
+    catch (UnauthorizedAccessException ex)
+    {
+        _logger.LogError(ex, &quot;Access denied writing to {FilePath}&quot;, filePath);
+        throw;
+    }
+}
+</code></pre>
+<h3 id="handling-parse-and-write-pipeline">Handling Parse and Write Pipeline</h3>
+<pre><code class="language-csharp">public async Task&lt;bool&gt; TryProcessJsonAsync(Stream input, Stream output)
+{
+    ParsedJsonDocument&lt;JsonElement&gt;? doc = null;
+    try
+    {
+        // Parse
+        doc = await ParsedJsonDocument&lt;JsonElement&gt;.ParseAsync(input);
+        
+        // Validate
+        if (!IsValidDocument(doc.RootElement))
+        {
+            _logger.LogWarning(&quot;Document failed validation&quot;);
+            return false;
+        }
+        
+        // Write
+        using var writer = new Utf8JsonWriter(
+            output,
+            new JsonWriterOptions { Indented = false });
+        doc.WriteTo(writer);
+        await writer.FlushAsync();
+        
+        return true;
+    }
+    catch (JsonException ex)
+    {
+        _logger.LogError(ex, &quot;Invalid JSON format&quot;);
+        return false;
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, &quot;Unexpected error processing JSON&quot;);
+        return false;
+    }
+    finally
+    {
+        // Critical: Always dispose to return pooled memory
+        doc?.Dispose();
+    }
+}
+</code></pre>
+<h2 id="important-notes">Important Notes</h2>
+<h3 id="memory-management">Memory Management</h3>
+<p><code>ParsedJsonDocument&lt;T&gt;</code> uses pooled memory and <strong>must be disposed</strong> to return memory to the pool. Failure to dispose will result in increased GC pressure.</p>
+<pre><code class="language-csharp">// ❌ Bad - memory leak
+var doc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(json);
+// Missing dispose!
+
+// ✅ Good - proper disposal
+using var doc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(json);
+// Automatically disposed at end of scope
+
+// ✅ Also good - explicit disposal
+var doc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(json);
+try
+{
+    // Use doc
+}
+finally
+{
+    doc.Dispose();
+}
+</code></pre>
+<h3 id="data-lifetime">Data Lifetime</h3>
+<p>When parsing from <code>ReadOnlyMemory&lt;byte&gt;</code> or <code>ReadOnlySequence&lt;byte&gt;</code>, the memory must remain valid for the entire lifetime of the document. The parser does not make a copy of the input data.</p>
+<h3 id="thread-safety">Thread Safety</h3>
+<p>While <code>ParsedJsonDocument&lt;T&gt;</code> itself is thread-safe for read operations after parsing, the underlying JSON data should not be modified during the document's lifetime.</p>
+<h2 id="static-constants">Static Constants</h2>
+<p>For common literal values, use the static properties to avoid allocations:</p>
+<pre><code class="language-csharp">JsonElement nullValue = ParsedJsonDocument&lt;JsonElement&gt;.Null;
+JsonElement trueValue = ParsedJsonDocument&lt;JsonElement&gt;.True;
+JsonElement falseValue = ParsedJsonDocument&lt;JsonElement&gt;.False;
+</code></pre>
+<h2 id="error-handling-1">Error Handling</h2>
+<pre><code class="language-csharp">try
+{
+    string invalidJson = &quot;&quot;&quot;
+        {
+            invalid json
+        }
+        &quot;&quot;&quot;;
+    using var doc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(invalidJson);
+}
+catch (JsonException ex)
+{
+    Console.WriteLine($&quot;Invalid JSON: {ex.Message}&quot;);
+}
+</code></pre>
+<h2 id="performance-tips">Performance Tips</h2>
+<ol>
+<li><strong>Use async for large streams</strong>: When parsing large files or network streams, use <code>ParseAsync</code> to avoid blocking</li>
+<li><strong>Reuse streams</strong>: When parsing multiple documents, reuse stream objects when possible</li>
+<li><strong>Use UTF-8 directly</strong>: Parsing from <code>ReadOnlyMemory&lt;byte&gt;</code> is more efficient than parsing from strings</li>
+<li><strong>Dispose properly</strong>: Always dispose documents to return memory to the pool</li>
+</ol>
+        </div>
+    </main>
+</div>
+
+    </div>
+    <footer class="site-footer">
+    <div class="site-footer__inner">
+        <div class="site-footer__sponsor">
+            Sponsored by
+            <a href="https://endjin.com" target="_blank" rel="noopener noreferrer">endjin</a>
+        </div>
+        <ul class="site-footer__links" role="list">
+            <li><a class="site-footer__link" href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html">Getting Started</a></li>
+            <li><a class="site-footer__link" href="/corvus-json-schema/pr-preview/pr-734/docs/index.html">Documentation</a></li>
+            <li><a class="site-footer__link" href="/corvus-json-schema/pr-preview/pr-734/examples/index.html">Examples</a></li>
+            <li><a class="site-footer__link" href="/corvus-json-schema/pr-preview/pr-734/api/index.html">API</a></li>
+            <li><a class="site-footer__link" href="https://github.com/corvus-dotnet/Corvus.JsonSchema" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            <li><a class="site-footer__link" href="https://www.nuget.org/packages?q=Corvus.Json" target="_blank" rel="noopener noreferrer">NuGet</a></li>
+        </ul>
+        <p class="site-footer__copyright">&copy; 2026 endjin Ltd.</p>
+    </div>
+</footer>
+
+    <!-- highlight.js for syntax highlighting (CSS targets .hljs-* classes) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/csharp.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js" defer></script>
+    <script>document.addEventListener('DOMContentLoaded',()=>hljs.highlightAll())</script>
+    <script src="/corvus-json-schema/pr-preview/pr-734/assets/js/main.js" defer></script>
+    <script src="/corvus-json-schema/pr-preview/pr-734/assets/js/sidebar-search.js" defer></script>
+    
+</body>
+</html>

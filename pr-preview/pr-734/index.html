@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1C1D21" />
+    <meta name="description" content="Source-generated strongly-typed C# from JSON Schema. Pooled-memory parsing, schema validation, mutable documents, extended numeric types, and NodaTime integration." />
+    <meta name="keywords" content="JSON, .NET, JSON Schema, source generator, C#, System.Text.Json, high-performance, zero-allocation" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:description" content="Source-generated strongly-typed C# from JSON Schema with pooled-memory parsing and full draft 2020-12 validation." />
+    <meta name="twitter:image" content="/corvus-json-schema/pr-preview/pr-734/assets/images/og-corvus.png" />
+    <meta name="twitter:title" content="Corvus.Text.Json &#x2014; High-performance JSON for .NET" />
+    <meta property="article:tag" content="JSON" />
+    <meta property="article:tag" content=".NET" />
+    <meta property="article:tag" content="JSON Schema" />
+    <meta property="article:tag" content="source generator" />
+    <meta property="article:tag" content="C#" />
+    <meta property="article:tag" content="System.Text.Json" />
+    <meta property="article:tag" content="high-performance" />
+    <meta property="article:tag" content="zero-allocation" />
+    <meta property="og:description" content="Source-generated strongly-typed C# from JSON Schema with pooled-memory parsing and full draft 2020-12 validation." />
+    <meta property="og:image" content="/corvus-json-schema/pr-preview/pr-734/assets/images/og-corvus.png" />
+    <meta property="og:title" content="Corvus.Text.Json &#x2014; High-performance JSON for .NET" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://corvus-oss.org/corvus-json-schema/" />
+    <title>Corvus.Text.Json &#x2014; High-performance JSON for .NET</title>
+    <link itemprop="url" href="https://corvus-oss.org/corvus-json-schema/" />
+    <link rel="canonical" href="https://corvus-oss.org/corvus-json-schema/" />
+    <link rel="sitemap" href="https://corvus-oss.org/corvus-json-schema/sitemap.xml" />
+    <!-- Styles -->
+    <link rel="stylesheet" href="/corvus-json-schema/pr-preview/pr-734/main.css" />
+    <link rel="icon" type="image/svg+xml" href="/corvus-json-schema/pr-preview/pr-734/assets/images/favicon.svg" />
+    
+</head>
+<body>
+    <a class="sr-only" href="#main-content">Skip to content</a>
+<header class="site-header">
+    <div class="site-header__inner">
+        <a class="site-header__brand" href="/corvus-json-schema/pr-preview/pr-734/index.html" aria-label="Corvus.JsonSchema home">
+            <img src="/corvus-json-schema/pr-preview/pr-734/assets/images/logo-corvus.svg" alt="" width="28" height="28" aria-hidden="true" />
+            Corvus<span style="color:var(--color-brand)">.</span>Json<span style="color:var(--color-brand)">Schema</span>
+        </a>
+        <nav class="site-header__nav-desktop" aria-label="Main navigation">
+                    <a href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html"
+                       class="site-header__link "
+                       >Getting Started</a>
+                    <a href="/corvus-json-schema/pr-preview/pr-734/getting-started-v4/index.html"
+                       class="site-header__link "
+                       >Getting Started (V4)</a>
+                    <a href="/corvus-json-schema/pr-preview/pr-734/docs/index.html"
+                       class="site-header__link "
+                       >Documentation</a>
+                    <a href="/corvus-json-schema/pr-preview/pr-734/examples/index.html"
+                       class="site-header__link "
+                       >Examples</a>
+                    <a href="/corvus-json-schema/pr-preview/pr-734/api/index.html"
+                       class="site-header__link "
+                       >API</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/playground/"
+               class="site-header__link"
+               target="_blank" rel="noopener noreferrer"
+               title="Interactive JSON Schema playground">Playground</a>
+            <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+               class="site-header__link" target="_blank" rel="noopener noreferrer"
+               aria-label="View on GitHub">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            </a>
+        </nav>
+        <button class="site-header__menu-toggle js-toggle-menu"
+                aria-expanded="false" aria-label="Toggle menu">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+        </button>
+    </div>
+</header>
+<nav class="site-header__nav-mobile js-mobile-nav" aria-label="Mobile navigation">
+            <a href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html" class="site-header__link">Getting Started</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/getting-started-v4/index.html" class="site-header__link">Getting Started (V4)</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/docs/index.html" class="site-header__link">Documentation</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/examples/index.html" class="site-header__link">Examples</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/api/index.html" class="site-header__link">API</a>
+    <a href="/corvus-json-schema/pr-preview/pr-734/playground/" class="site-header__link" target="_blank" rel="noopener noreferrer">Playground</a>
+    <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+       class="site-header__link" target="_blank" rel="noopener noreferrer">GitHub</a>
+</nav>
+
+    <div class="page-content">
+    <!-- Hero -->
+<section id="main-content" class="hero">
+    <div class="hero__content">
+        <h1 class="hero__title">High-performance <span class="brand">JSON</span> for .NET</h1>
+        <p class="hero__subtitle">
+            Source-generated strongly-typed C# from JSON Schema. Zero-allocation parsing,
+            full validation for all drafts, mutable documents, and more.
+        </p>
+        <div class="hero__actions">
+            <a href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html" class="btn btn--primary btn--lg">Get Started</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/playground/" class="btn btn--secondary btn--lg" target="_blank" rel="noopener noreferrer">Try the Playground</a>
+            <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+               class="btn btn--secondary btn--lg" target="_blank" rel="noopener noreferrer">View on GitHub</a>
+        </div>
+    </div>
+</section>
+
+<!-- Stats -->
+<div class="container">
+    <div class="home-stats">
+        <div class="home-stats__item">
+            <div class="home-stats__value">92%</div>
+            <div class="home-stats__label">Fewer allocations</div>
+        </div>
+        <div class="home-stats__item">
+            <div class="home-stats__value">All Drafts</div>
+            <div class="home-stats__label">JSON Schema support</div>
+        </div>
+        <div class="home-stats__item">
+            <div class="home-stats__value">120B</div>
+            <div class="home-stats__label">Per-document allocation</div>
+        </div>
+        <div class="home-stats__item">
+            <div class="home-stats__value">10x+</div>
+            <div class="home-stats__label">Faster schema validation</div>
+        </div>
+    </div>
+</div>
+
+<!-- Features -->
+<section class="home-features">
+    <div class="container">
+        <div class="home-features__heading">
+            <h2 class="home-features__title">Built for performance-critical .NET</h2>
+            <p class="home-features__subtitle">Every feature designed around zero-allocation, pooled-memory JSON processing</p>
+        </div>
+        <div class="card-grid">
+            <div class="card">
+                <div class="card__icon">🔧</div>
+                <h3 class="card__title">Source Generation</h3>
+                <p class="card__body">Roslyn incremental source generator or CLI tool produces strongly-typed C# from any JSON Schema. Type-safe accessors, validation, serialization — all from a single schema file.</p>
+            </div>
+            <div class="card">
+                <div class="card__icon">📋</div>
+                <h3 class="card__title">Schema Validation</h3>
+                <p class="card__body">Full draft 4, 6, 7, 2019-09, and 2020-12 validation with <code>EvaluateSchema()</code>. Over 10x faster than other .NET validators. Detailed diagnostics for every failure.</p>
+            </div>
+            <div class="card">
+                <div class="card__icon">⚡</div>
+                <h3 class="card__title">Pooled Memory</h3>
+                <p class="card__body"><code>ParsedJsonDocument&lt;T&gt;</code> uses <code>ArrayPool&lt;byte&gt;</code> — 92% fewer allocations than <code>JsonNode</code>. Generated types are thin struct wrappers over pooled data.</p>
+            </div>
+            <div class="card">
+                <div class="card__icon">🔄</div>
+                <h3 class="card__title">Mutable Documents</h3>
+                <p class="card__body"><code>JsonDocumentBuilder&lt;T&gt;</code> with workspace-managed pooled memory. Ideal for request/response cycles and data pipelines. No per-node allocations.</p>
+            </div>
+            <div class="card">
+                <div class="card__icon">📐</div>
+                <h3 class="card__title">Extended Types</h3>
+                <p class="card__body"><code>BigNumber</code> for arbitrary-precision decimals, NodaTime integration for dates, and zero-allocation UTF-8 URI types. Beyond what <code>decimal</code> offers.</p>
+            </div>
+            <div class="card">
+                <div class="card__icon">🧩</div>
+                <h3 class="card__title">Pattern Matching</h3>
+                <p class="card__body">Type-safe <code>Match()</code> for discriminated unions, <code>allOf</code> composition with <code>From()</code> conversion, and string/numeric enumerations with exhaustive dispatch.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Code Example -->
+<section class="home-code">
+    <div class="container">
+        <div class="home-code__inner">
+            <div class="home-code__text">
+                <h2 class="home-code__title">From schema to strongly-typed C# in seconds</h2>
+                <p class="home-code__description">
+                    Define a JSON Schema, annotate a partial struct, and the source generator does the rest.
+                    You get typed properties, validation, serialization, mutation — and it all runs on pooled memory.
+                </p>
+                <a href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html" class="btn btn--primary">Get Started</a>
+            </div>
+            <div class="home-code__example">
+                <pre><code class="language-csharp">// 1. Annotate a partial struct
+[JsonSchemaTypeGenerator("Schemas/person.json")]
+public readonly partial struct Person;
+
+// 2. Parse JSON — pooled memory, zero-copy
+using var doc = ParsedJsonDocument&lt;Person&gt;.Parse(
+    """{"name":"Alice","age":30}""");
+Person person = doc.RootElement;
+
+// 3. Access typed properties
+string name = (string)person.Name;   // "Alice"
+int age = (int)person.Age;           // 30
+
+// 4. Validate against the schema
+bool valid = person.EvaluateSchema(); // true
+
+// 5. Mutate with the builder pattern
+using var ws = JsonWorkspace.Create();
+using var b = person.CreateBuilder(ws);
+Person.Mutable root = b.RootElement;
+root.SetAge(31);
+// {"name":"Alice","age":31}</code></pre>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Comparison Table -->
+<section class="section">
+    <div class="container">
+        <div class="layout-narrow">
+            <h2 style="text-align:center;margin-bottom:var(--space-lg)">How it compares</h2>
+            <div class="doc__content">
+                <table>
+                    <thead>
+                        <tr><th>Feature</th><th>System.Text.Json</th><th>Corvus.Text.Json</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Read-only Memory Model</td><td>ArrayPool-backed pooled memory</td><td>ArrayPool-backed pooled memory</td></tr>
+                        <tr><td>Mutable Documents</td><td>JsonNode (allocates per node)</td><td>Builder pattern on the same pooled memory model — no data copying in JSON pipelines</td></tr>
+                        <tr><td>Schema Validation</td><td>None built-in</td><td>Draft 4, 6, 7, 2019-09, and 2020-12 with full diagnostics. 10x+ faster than other .NET validators</td></tr>
+                        <tr><td>Code Generation</td><td>Source generation for serialization to/from fixed .NET POCOs</td><td>Source generator + CLI tool producing strongly-typed entities with composition, pattern matching, and resilience to invalid schema</td></tr>
+                        <tr><td>Date/Time Types</td><td>System.DateTime, DateTimeOffset</td><td>All .NET types (DateTime, DateOnly, TimeOnly where available) plus NodaTime (LocalDate, OffsetDateTime, Period)</td></tr>
+                        <tr><td>Numeric Precision</td><td>decimal (28 digits); Int128, UInt128, Half via custom serializers</td><td>BigNumber (arbitrary precision) plus native Int128, UInt128, and Half support where available</td></tr>
+                        <tr><td>Strings &amp; URIs</td><td>Allocates .NET strings; System.Uri for URI handling</td><td>Allocation-free access to UTF-8 and UTF-16 unescaped strings; UTF-8 Uri/Iri with display and canonical formatting without string allocation</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Packages -->
+<section class="section">
+    <div class="container">
+        <div class="home-features__heading">
+            <h2 class="home-features__title">Packages</h2>
+            <p class="home-features__subtitle">Install the runtime and source generator to get started</p>
+        </div>
+        <div class="card-grid">
+            <div class="card">
+                <h3 class="card__title">Corvus.Text.Json</h3>
+                <p class="card__body">Core runtime library. Required by all generated types.</p>
+                <pre style="margin-top:var(--space-sm)"><code class="language-bash">dotnet add package Corvus.Text.Json</code></pre>
+            </div>
+            <div class="card">
+                <h3 class="card__title">Corvus.Text.Json.SourceGenerator</h3>
+                <p class="card__body">Roslyn incremental source generator. Generates C# at build time.</p>
+                <pre style="margin-top:var(--space-sm)"><code class="language-xml">&lt;PackageReference Include="Corvus.Text.Json.SourceGenerator"&gt;
+  &lt;PrivateAssets&gt;all&lt;/PrivateAssets&gt;
+&lt;/PackageReference&gt;</code></pre>
+            </div>
+            <div class="card">
+                <h3 class="card__title"><a href="/corvus-json-schema/pr-preview/pr-734/docs/code-generator.html" style="color:inherit">Corvus.Text.Json.CodeGenerator</a></h3>
+                <p class="card__body">CLI tool for ahead-of-time code generation from JSON Schema. <a href="/corvus-json-schema/pr-preview/pr-734/docs/code-generator.html">Read the docs &rarr;</a></p>
+                <pre style="margin-top:var(--space-sm)"><code class="language-bash">dotnet tool install --global Corvus.Text.Json.CodeGenerator</code></pre>
+            </div>
+            <div class="card">
+                <h3 class="card__title"><a href="/corvus-json-schema/pr-preview/pr-734/docs/validator.html" style="color:inherit">Corvus.Text.Json.Validator</a></h3>
+                <p class="card__body">Dynamically load, compile, and validate JSON against JSON Schema at runtime. <a href="/corvus-json-schema/pr-preview/pr-734/docs/validator.html">Read the docs &rarr;</a></p>
+                <pre style="margin-top:var(--space-sm)"><code class="language-bash">dotnet add package Corvus.Text.Json.Validator</code></pre>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA -->
+<section class="home-cta">
+    <div class="container">
+        <div class="home-cta__inner">
+            <h2 class="home-cta__title">Ready to get started?</h2>
+            <p class="home-cta__description">Install the tools, define your first JSON Schema, and generate strongly-typed C# in minutes.</p>
+            <div class="home-cta__actions">
+                <a href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html" class="btn btn--primary btn--lg">Get Started</a>
+                <a href="/corvus-json-schema/pr-preview/pr-734/playground/" class="btn btn--secondary btn--lg" target="_blank" rel="noopener noreferrer">Try the Playground</a>
+                <a href="/corvus-json-schema/pr-preview/pr-734/examples/index.html" class="btn btn--secondary btn--lg">Browse Examples</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+    </div>
+    <footer class="site-footer">
+    <div class="site-footer__inner">
+        <div class="site-footer__sponsor">
+            Sponsored by
+            <a href="https://endjin.com" target="_blank" rel="noopener noreferrer">endjin</a>
+        </div>
+        <ul class="site-footer__links" role="list">
+            <li><a class="site-footer__link" href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html">Getting Started</a></li>
+            <li><a class="site-footer__link" href="/corvus-json-schema/pr-preview/pr-734/docs/index.html">Documentation</a></li>
+            <li><a class="site-footer__link" href="/corvus-json-schema/pr-preview/pr-734/examples/index.html">Examples</a></li>
+            <li><a class="site-footer__link" href="/corvus-json-schema/pr-preview/pr-734/api/index.html">API</a></li>
+            <li><a class="site-footer__link" href="https://github.com/corvus-dotnet/Corvus.JsonSchema" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            <li><a class="site-footer__link" href="https://www.nuget.org/packages?q=Corvus.Json" target="_blank" rel="noopener noreferrer">NuGet</a></li>
+        </ul>
+        <p class="site-footer__copyright">&copy; 2026 endjin Ltd.</p>
+    </div>
+</footer>
+
+    <!-- highlight.js for syntax highlighting (CSS targets .hljs-* classes) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/csharp.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js" defer></script>
+    <script>document.addEventListener('DOMContentLoaded',()=>hljs.highlightAll())</script>
+    <script src="/corvus-json-schema/pr-preview/pr-734/assets/js/main.js" defer></script>
+    <script src="/corvus-json-schema/pr-preview/pr-734/assets/js/sidebar-search.js" defer></script>
+    
+</body>
+</html>

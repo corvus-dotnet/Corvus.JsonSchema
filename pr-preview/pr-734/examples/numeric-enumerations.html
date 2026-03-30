@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1C1D21" />
+    <meta name="description" content="This recipe demonstrates how to use JSON Schema `enum` keyword with numeric values to create type-safe numeric enumerations." />
+    <meta name="keywords" content="recipe, JSON Schema, C#, numeric, enumerations, enum, oneOf, $ref, $defs, const, EvaluateSchema, Match, ConstInstance, TryGetValue" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:description" content="This recipe demonstrates how to use JSON Schema `enum` keyword with numeric values to create type-safe numeric enumerations." />
+    <meta name="twitter:image" content="/corvus-json-schema/pr-preview/pr-734/assets/images/og-corvus.png" />
+    <meta name="twitter:title" content="Numeric Enumerations - Corvus.Text.Json Examples" />
+    <meta property="article:tag" content="recipe" />
+    <meta property="article:tag" content="JSON Schema" />
+    <meta property="article:tag" content="C#" />
+    <meta property="article:tag" content="numeric" />
+    <meta property="article:tag" content="enumerations" />
+    <meta property="article:tag" content="enum" />
+    <meta property="article:tag" content="oneOf" />
+    <meta property="article:tag" content="$ref" />
+    <meta property="article:tag" content="$defs" />
+    <meta property="article:tag" content="const" />
+    <meta property="article:tag" content="EvaluateSchema" />
+    <meta property="article:tag" content="Match" />
+    <meta property="article:tag" content="ConstInstance" />
+    <meta property="article:tag" content="TryGetValue" />
+    <meta property="og:description" content="This recipe demonstrates how to use JSON Schema `enum` keyword with numeric values to create type-safe numeric enumerations." />
+    <meta property="og:image" content="/corvus-json-schema/pr-preview/pr-734/assets/images/og-corvus.png" />
+    <meta property="og:title" content="Numeric Enumerations - Corvus.Text.Json Examples" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://corvus-oss.org/corvus-json-schema/examples/numeric-enumerations/" />
+    <title>Numeric Enumerations - Corvus.Text.Json Examples</title>
+    <link itemprop="url" href="https://corvus-oss.org/corvus-json-schema/examples/numeric-enumerations/" />
+    <link rel="canonical" href="https://corvus-oss.org/corvus-json-schema/examples/numeric-enumerations/" />
+    <link rel="sitemap" href="https://corvus-oss.org/corvus-json-schema/sitemap.xml" />
+    <!-- Styles -->
+    <link rel="stylesheet" href="/corvus-json-schema/pr-preview/pr-734/main.css" />
+    <link rel="icon" type="image/svg+xml" href="/corvus-json-schema/pr-preview/pr-734/assets/images/favicon.svg" />
+    
+</head>
+<body>
+    <a class="sr-only" href="#main-content">Skip to content</a>
+<header class="site-header">
+    <div class="site-header__inner">
+        <a class="site-header__brand" href="/corvus-json-schema/pr-preview/pr-734/index.html" aria-label="Corvus.JsonSchema home">
+            <img src="/corvus-json-schema/pr-preview/pr-734/assets/images/logo-corvus.svg" alt="" width="28" height="28" aria-hidden="true" />
+            Corvus<span style="color:var(--color-brand)">.</span>Json<span style="color:var(--color-brand)">Schema</span>
+        </a>
+        <nav class="site-header__nav-desktop" aria-label="Main navigation">
+                    <a href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html"
+                       class="site-header__link "
+                       >Getting Started</a>
+                    <a href="/corvus-json-schema/pr-preview/pr-734/getting-started-v4/index.html"
+                       class="site-header__link "
+                       >Getting Started (V4)</a>
+                    <a href="/corvus-json-schema/pr-preview/pr-734/docs/index.html"
+                       class="site-header__link "
+                       >Documentation</a>
+                    <a href="/corvus-json-schema/pr-preview/pr-734/examples/index.html"
+                       class="site-header__link is-active"
+                       aria-current=page>Examples</a>
+                    <a href="/corvus-json-schema/pr-preview/pr-734/api/index.html"
+                       class="site-header__link "
+                       >API</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/playground/"
+               class="site-header__link"
+               target="_blank" rel="noopener noreferrer"
+               title="Interactive JSON Schema playground">Playground</a>
+            <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+               class="site-header__link" target="_blank" rel="noopener noreferrer"
+               aria-label="View on GitHub">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            </a>
+        </nav>
+        <button class="site-header__menu-toggle js-toggle-menu"
+                aria-expanded="false" aria-label="Toggle menu">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+        </button>
+    </div>
+</header>
+<nav class="site-header__nav-mobile js-mobile-nav" aria-label="Mobile navigation">
+            <a href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html" class="site-header__link">Getting Started</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/getting-started-v4/index.html" class="site-header__link">Getting Started (V4)</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/docs/index.html" class="site-header__link">Documentation</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/examples/index.html" class="site-header__link">Examples</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/api/index.html" class="site-header__link">API</a>
+    <a href="/corvus-json-schema/pr-preview/pr-734/playground/" class="site-header__link" target="_blank" rel="noopener noreferrer">Playground</a>
+    <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+       class="site-header__link" target="_blank" rel="noopener noreferrer">GitHub</a>
+</nav>
+
+    <div class="page-content">
+    <div class="layout-docs container">
+    <button class="sidebar-toggle" aria-label="Toggle navigation" aria-expanded="false"></button>
+<div class="sidebar-backdrop"></div>
+<aside class="sidebar">
+    <div class="sidebar__inner">
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Getting Started</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                    <li class="sidebar__item"><a class="sidebar__link" href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html">Tutorial</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Documentation</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/parsed-json-document.html">Parsing &amp; Reading JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/json-document-builder.html">Building &amp; Mutating JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/source-generator.html">Source Generator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/code-generator.html">CLI Code Generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/validator.html">Dynamic Schema Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/migrating-from-v4-to-v5.html">Migrating from V4</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/using-copilot-for-migration.html">Copilot Migration</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/migration-analyzers.html">Migration Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/analyzers.html">Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/schema-evaluator.html">Standalone Schema Evaluator</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Examples</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/data-object.html">Simple Data Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/data-object-validation.html">Data Object Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/reusing-common-types.html">Reusing Common Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/open-versus-closed-types.html">Open Versus Closed Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/extending-a-base-type.html">Extending a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/constraining-a-base-type.html">Constraining a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/creating-a-strongly-typed-array.html">Strongly Typed Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/creating-an-array-of-higher-rank.html">Multi-Dimensional Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/working-with-tensors.html">Working with Tensors</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/creating-tuples.html">Creating Tuples</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/interfaces-and-mix-in-types.html">Interfaces and Mix-In Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/pattern-matching.html">Pattern Matching and Discriminated Unions</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/polymorphism-with-discriminators.html">Polymorphism with Discriminator Properties</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/string-enumerations.html">String Enumerations and Pattern Matching</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link is-active" href="/corvus-json-schema/pr-preview/pr-734/examples/numeric-enumerations.html">Numeric Enumerations</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/maps.html">Maps of Strings to Strongly Typed Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/mapping-input-and-output-values.html">Mapping Input and Output Values</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</aside>
+
+    <main id="main-content" class="layout-docs__main">
+        <div class="doc__content">
+            <h1>Numeric Enumerations</h1>
+                <div class="card__tags" style="margin-bottom:1.5rem">
+                        <span class="card__tag">recipe</span>
+                        <span class="card__tag">JSON Schema</span>
+                        <span class="card__tag">C#</span>
+                        <span class="card__tag">numeric</span>
+                        <span class="card__tag">enumerations</span>
+                        <span class="card__tag">enum</span>
+                        <span class="card__tag">oneOf</span>
+                        <span class="card__tag">$ref</span>
+                        <span class="card__tag">$defs</span>
+                        <span class="card__tag">const</span>
+                        <span class="card__tag">EvaluateSchema</span>
+                        <span class="card__tag">Match</span>
+                        <span class="card__tag">ConstInstance</span>
+                        <span class="card__tag">TryGetValue</span>
+                </div>
+<p>This recipe demonstrates how to use JSON Schema <code>enum</code> keyword with numeric values to create type-safe numeric enumerations.</p>
+<h2 id="the-pattern">The Pattern</h2>
+<p>While string enumerations are common, sometimes you need numeric enumerations - perhaps for:</p>
+<ul>
+<li>Integration with existing systems that use numeric codes</li>
+<li>Compact wire format</li>
+<li>Bitwise operations</li>
+</ul>
+<p>JSON Schema supports numeric <code>enum</code> values just like string values.</p>
+<p>Using <code>oneOf</code> with <code>const</code> to create documented numeric enumerations provides several advantages over a simple <code>enum</code> array (<code>{&quot;enum&quot;: [1, 2, 3]}</code>), which loses documentation context. The <code>oneOf</code> + <code>const</code> pattern provides:</p>
+<ul>
+<li>Named definitions for each value</li>
+<li>Title and description for each option</li>
+<li>Better IDE support and documentation generation</li>
+</ul>
+<h2 id="the-schema">The Schema</h2>
+<p>File: <code>status.json</code></p>
+<pre><code class="language-json">{
+  &quot;oneOf&quot;: [
+    { &quot;$ref&quot;: &quot;#/$defs/Pending&quot; },
+    { &quot;$ref&quot;: &quot;#/$defs/Active&quot; },
+    { &quot;$ref&quot;: &quot;#/$defs/Complete&quot; }
+  ],
+
+  &quot;$defs&quot;: {
+    &quot;Pending&quot;: {
+      &quot;title&quot;: &quot;Pending status&quot;,
+      &quot;description&quot;: &quot;The operation is waiting to start&quot;,
+      &quot;const&quot;: 1
+    },
+    &quot;Active&quot;: {
+      &quot;title&quot;: &quot;Active status&quot;,  
+      &quot;description&quot;: &quot;The operation is currently running&quot;,
+      &quot;const&quot;: 2
+    },
+    &quot;Complete&quot;: {
+      &quot;title&quot;: &quot;Complete status&quot;,
+      &quot;description&quot;: &quot;The operation has finished&quot;,
+      &quot;const&quot;: 3
+    }
+  }
+}
+</code></pre>
+<p>This creates a numeric enumeration with three documented values. Each <code>const</code> defines a specific numeric value (1, 2, or 3), and the <code>title</code> and <code>description</code> provide context that will appear in generated documentation.</p>
+<h2 id="generated-code-usage">Generated Code Usage</h2>
+<h3 id="using-static-const-instances">Using static const instances</h3>
+<p>The generator creates a static const instance for each <code>oneOf</code> variant:</p>
+<pre><code class="language-csharp">// Use predefined const instances - zero allocation
+Status pending = Status.Pending.ConstInstance;      // value: 1
+Status active = Status.Active.ConstInstance;        // value: 2
+Status complete = Status.Complete.ConstInstance;    // value: 3
+
+Console.WriteLine($&quot;Active status: {active}&quot;);
+// Output: Active status: 2
+</code></pre>
+<p><strong>Benefits of const instances:</strong></p>
+<ul>
+<li>Zero allocation - reuses the same immutable instance</li>
+<li>Type-safe - compile-time correctness prevents invalid values</li>
+<li>Self-documenting - named instances (Pending, Active, Complete) instead of magic numbers</li>
+<li>Performance - no parsing overhead</li>
+</ul>
+<h3 id="parsing-numeric-enumeration-values">Parsing numeric enumeration values</h3>
+<p>You can also parse from JSON:</p>
+<pre><code class="language-csharp">string json = &quot;1&quot;;
+using var parsed = ParsedJsonDocument&lt;Status&gt;.Parse(json);
+Status status = parsed.RootElement;
+Console.WriteLine($&quot;Status: {status}&quot;);
+// Output: Status: 1
+</code></pre>
+<h3 id="extracting-numeric-values">Extracting numeric values</h3>
+<pre><code class="language-csharp">// Get the underlying numeric value
+if (status.TryGetValue(out int value))
+{
+    Console.WriteLine($&quot;Numeric value: {value}&quot;);
+    // Output: Numeric value: 1
+}
+</code></pre>
+<h3 id="validating-enumeration-values">Validating enumeration values</h3>
+<p>You can use <code>EvaluateSchema()</code> to check whether a parsed value matches one of the defined enum constants:</p>
+<pre><code class="language-csharp">using var invalidDoc = ParsedJsonDocument&lt;Status&gt;.Parse(&quot;99&quot;);
+Status invalid = invalidDoc.RootElement;
+Console.WriteLine($&quot;Status {invalid} is valid: {invalid.EvaluateSchema()}&quot;);
+// Output: Status 99 is valid: False
+</code></pre>
+<h3 id="pattern-matching-with-documented-variants">Pattern matching with documented variants</h3>
+<p>With the <code>oneOf</code> + <code>const</code> pattern, you get named pattern matching based on the variant types:</p>
+<pre><code class="language-csharp">string DescribeStatus(in Status status)
+{
+    return status.Match(
+        matchPending: static (in Status.Pending _) =&gt; &quot;Pending - waiting to start&quot;,
+        matchActive: static (in Status.Active _) =&gt; &quot;Active - currently running&quot;,
+        matchComplete: static (in Status.Complete _) =&gt; &quot;Complete - finished&quot;,
+        defaultMatch: static (in Status _) =&gt; &quot;Unknown status&quot;);
+}
+</code></pre>
+<p>The match parameters use the names from your <code>$defs</code> (Pending, Active, Complete), making the code self-documenting. Each variant is a distinct type, providing full type safety.</p>
+<h3 id="pattern-matching-with-context">Pattern matching with context</h3>
+<p>You can pass additional state through the match:</p>
+<pre><code class="language-csharp">string ProcessStatus(in Status status, int requestCount)
+{
+    return status.Match(
+        requestCount,  // context parameter
+        matchPending: static (in Status.Pending _, in int count) =&gt; 
+            $&quot;Queued {count} requests - system pending&quot;,
+        matchActive: static (in Status.Active _, in int count) =&gt; 
+            $&quot;Processing {count} requests on active system&quot;,
+        matchComplete: static (in Status.Complete _, in int count) =&gt; 
+            $&quot;Cannot process {count} requests - system complete&quot;,
+        defaultMatch: static (in Status _, in int count) =&gt; 
+            throw new InvalidOperationException($&quot;Unknown status cannot process {count} requests&quot;));
+}
+</code></pre>
+<h2 id="why-use-oneof-const-instead-of-enum">Why Use oneOf + const Instead of enum?</h2>
+<p>The simple <code>enum</code> approach (<code>{&quot;enum&quot;: [1, 2, 3]}</code>) works but has limitations:</p>
+<pre><code class="language-json">{
+    &quot;enum&quot;: [1, 2, 3]
+}
+</code></pre>
+<p><strong>Limitations:</strong></p>
+<ul>
+<li>No documentation for each value</li>
+<li>Generic generated names (EnumValues.NumberOne, NumberTwo, NumberThree)</li>
+<li>No semantic meaning attached to the numbers</li>
+</ul>
+<p>The <code>oneOf</code> + <code>const</code> pattern shown in this recipe provides:</p>
+<ul>
+<li>Meaningful names for each numeric value (<code>Pending</code>, <code>Active</code>, <code>Complete</code>)</li>
+<li>Rich documentation via <code>title</code> and <code>description</code></li>
+<li>Separate types for each value (Status.Pending, Status.Active, Status.Complete)</li>
+<li>Type-safe pattern matching with named parameters</li>
+<li>Prevents implicit numeric conversions, improving type safety</li>
+</ul>
+<p>For more details on this pattern, see the <a href="https://endjin.com/blog/2024/05/json-schema-patterns-dotnet-numeric-enumerations-and-pattern-matching">blog post</a>.</p>
+<h2 id="key-differences-from-v4">Key Differences from V4</h2>
+<p>The <code>oneOf</code> + <code>const</code> pattern and its <code>Match()</code> API are essentially the same between V4 and V5. Both generate variant types with <code>ConstInstance</code> properties and exhaustive pattern matching.</p>
+<h3 id="v4-corvus.json">V4 (Corvus.Json)</h3>
+<pre><code class="language-csharp">// Access constant instances
+Status pending = Status.Pending.ConstInstance;
+
+// Pattern matching
+string desc = status.Match(
+    matchPending: static (in Status.Pending _) =&gt; &quot;Pending&quot;,
+    matchActive: static (in Status.Active _) =&gt; &quot;Active&quot;,
+    matchComplete: static (in Status.Complete _) =&gt; &quot;Complete&quot;,
+    defaultMatch: static (in Status _) =&gt; &quot;Unknown&quot;);
+</code></pre>
+<h3 id="v5-corvus.text.json">V5 (Corvus.Text.Json)</h3>
+<pre><code class="language-csharp">// Access constant instances (same pattern)
+Status pending = Status.Pending.ConstInstance;
+
+// Pattern matching (same pattern)
+string desc = status.Match(
+    matchPending: static (in Status.Pending _) =&gt; &quot;Pending&quot;,
+    matchActive: static (in Status.Active _) =&gt; &quot;Active&quot;,
+    matchComplete: static (in Status.Complete _) =&gt; &quot;Complete&quot;,
+    defaultMatch: static (in Status _) =&gt; &quot;Unknown&quot;);
+</code></pre>
+<p><strong>Key differences:</strong></p>
+<ul>
+<li>The <code>Match()</code> API (including the context parameter overload), <code>ConstInstance</code> properties, and exhaustive handling work the same way in both versions</li>
+<li>V5 uses <code>ParsedJsonDocument&lt;T&gt;</code> for parsing from external JSON input</li>
+</ul>
+<h2 id="running-the-example">Running the Example</h2>
+<pre><code class="language-bash">cd docs/ExampleRecipes/015-NumericEnumerations
+dotnet run
+</code></pre>
+<h2 id="related-patterns">Related Patterns</h2>
+<ul>
+<li><a href="/corvus-json-schema/pr-preview/pr-734/examples/string-enumerations.html">014-StringEnumerations</a> - String-based enumerations</li>
+<li><a href="/corvus-json-schema/pr-preview/pr-734/examples/polymorphism-with-discriminators.html">013-PolymorphismWithDiscriminators</a> - Using <code>const</code> for discrimination</li>
+<li><a href="/corvus-json-schema/pr-preview/pr-734/examples/pattern-matching.html">012-PatternMatching</a> - Discriminated unions with <code>oneOf</code></li>
+</ul>
+<h2 id="frequently-asked-questions">Frequently Asked Questions</h2>
+<h3 id="q-why-use-oneof-const-instead-of-a-simple-enum-array">Q: Why use <code>oneOf</code> + <code>const</code> instead of a simple <code>enum</code> array?</h3>
+<p><strong>A:</strong> The <code>oneOf</code> + <code>const</code> pattern gives each numeric value a name, a <code>title</code>, and a <code>description</code> in the schema. This produces named constant instances (e.g., <code>Status.Pending.ConstInstance</code>) and descriptive match handler parameters in the generated code. A simple <code>enum</code> array like <code>[0, 1, 2]</code> provides no documentation or named access.</p>
+<h3 id="q-can-i-combine-numeric-and-string-enumerations">Q: Can I combine numeric and string enumerations?</h3>
+<p><strong>A:</strong> Each <code>oneOf</code> variant can use any <code>const</code> type, so you could technically mix them. In practice, it's better to keep enumerations homogeneous — use numeric values for status codes and bitfields, and string values for human-readable identifiers. Mixing types makes pattern matching and <code>TryGetValue()</code> extraction more complex.</p>
+<h3 id="q-how-do-i-add-a-new-enum-value-without-breaking-existing-code">Q: How do I add a new enum value without breaking existing code?</h3>
+<p><strong>A:</strong> Add a new entry to the <code>oneOf</code> array in your schema and regenerate the types. The generated <code>Match()</code> method will gain a new handler parameter, causing a compile error in every call site that hasn't been updated. This is intentional — it ensures you handle the new value everywhere rather than silently ignoring it.</p>
+<h3 id="q-are-constinstance-values-allocated-on-the-heap">Q: Are <code>ConstInstance</code> values allocated on the heap?</h3>
+<p><strong>A:</strong> No. <code>ConstInstance</code> properties return a struct-based JSON element backed by a static, pre-parsed byte buffer. There is no heap allocation when accessing them. This makes them ideal for comparisons and for constructing new instances from known values without any runtime parsing cost.</p>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Q: Why use `oneOf` + `const` instead of a simple `enum` array?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "**A:** The oneOf + const pattern gives each numeric value a name, a title, and a description in the schema. This produces named constant instances (e.g., Status.Pending.ConstInstance) and descriptive match handler parameters in the generated code. A simple enum array like [0, 1, 2] provides no documentation or named access."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Q: Can I combine numeric and string enumerations?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "**A:** Each oneOf variant can use any const type, so you could technically mix them. In practice, it's better to keep enumerations homogeneous — use numeric values for status codes and bitfields, and string values for human-readable identifiers. Mixing types makes pattern matching and TryGetValue() extraction more complex."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Q: How do I add a new enum value without breaking existing code?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "**A:** Add a new entry to the oneOf array in your schema and regenerate the types. The generated Match() method will gain a new handler parameter, causing a compile error in every call site that hasn't been updated. This is intentional — it ensures you handle the new value everywhere rather than silently ignoring it."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Q: Are `ConstInstance` values allocated on the heap?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "**A:** No. ConstInstance properties return a struct-based JSON element backed by a static, pre-parsed byte buffer. There is no heap allocation when accessing them. This makes them ideal for comparisons and for constructing new instances from known values without any runtime parsing cost."
+      }
+    }
+  ]
+}
+</script>
+        </div>
+    </main>
+</div>
+
+    </div>
+    <footer class="site-footer">
+    <div class="site-footer__inner">
+        <div class="site-footer__sponsor">
+            Sponsored by
+            <a href="https://endjin.com" target="_blank" rel="noopener noreferrer">endjin</a>
+        </div>
+        <ul class="site-footer__links" role="list">
+            <li><a class="site-footer__link" href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html">Getting Started</a></li>
+            <li><a class="site-footer__link" href="/corvus-json-schema/pr-preview/pr-734/docs/index.html">Documentation</a></li>
+            <li><a class="site-footer__link" href="/corvus-json-schema/pr-preview/pr-734/examples/index.html">Examples</a></li>
+            <li><a class="site-footer__link" href="/corvus-json-schema/pr-preview/pr-734/api/index.html">API</a></li>
+            <li><a class="site-footer__link" href="https://github.com/corvus-dotnet/Corvus.JsonSchema" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            <li><a class="site-footer__link" href="https://www.nuget.org/packages?q=Corvus.Json" target="_blank" rel="noopener noreferrer">NuGet</a></li>
+        </ul>
+        <p class="site-footer__copyright">&copy; 2026 endjin Ltd.</p>
+    </div>
+</footer>
+
+    <!-- highlight.js for syntax highlighting (CSS targets .hljs-* classes) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/csharp.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js" defer></script>
+    <script>document.addEventListener('DOMContentLoaded',()=>hljs.highlightAll())</script>
+    <script src="/corvus-json-schema/pr-preview/pr-734/assets/js/main.js" defer></script>
+    <script src="/corvus-json-schema/pr-preview/pr-734/assets/js/sidebar-search.js" defer></script>
+    
+</body>
+</html>

@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1C1D21" />
+    <meta name="description" content="Dynamically load, compile, and validate JSON documents against JSON Schema at runtime using Roslyn. Ideal for schema registries, configuration validation, and user-supplied schemas." />
+    <meta name="keywords" content="documentation, Corvus.Text.Json" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:description" content="Dynamically load, compile, and validate JSON documents against JSON Schema at runtime using Roslyn. Ideal for schema registries, configuration validation, and user-supplied schemas." />
+    <meta name="twitter:image" content="/corvus-json-schema/pr-preview/pr-734/assets/images/og-corvus.png" />
+    <meta name="twitter:title" content="Dynamic Schema Validation - Corvus.Text.Json" />
+    <meta property="article:tag" content="documentation" />
+    <meta property="article:tag" content="Corvus.Text.Json" />
+    <meta property="og:description" content="Dynamically load, compile, and validate JSON documents against JSON Schema at runtime using Roslyn. Ideal for schema registries, configuration validation, and user-supplied schemas." />
+    <meta property="og:image" content="/corvus-json-schema/pr-preview/pr-734/assets/images/og-corvus.png" />
+    <meta property="og:title" content="Dynamic Schema Validation - Corvus.Text.Json" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://corvus-oss.org/corvus-json-schema/docs/validator/" />
+    <title>Dynamic Schema Validation - Corvus.Text.Json</title>
+    <link itemprop="url" href="https://corvus-oss.org/corvus-json-schema/docs/validator/" />
+    <link rel="canonical" href="https://corvus-oss.org/corvus-json-schema/docs/validator/" />
+    <link rel="sitemap" href="https://corvus-oss.org/corvus-json-schema/sitemap.xml" />
+    <!-- Styles -->
+    <link rel="stylesheet" href="/corvus-json-schema/pr-preview/pr-734/main.css" />
+    <link rel="icon" type="image/svg+xml" href="/corvus-json-schema/pr-preview/pr-734/assets/images/favicon.svg" />
+    
+</head>
+<body>
+    <a class="sr-only" href="#main-content">Skip to content</a>
+<header class="site-header">
+    <div class="site-header__inner">
+        <a class="site-header__brand" href="/corvus-json-schema/pr-preview/pr-734/index.html" aria-label="Corvus.JsonSchema home">
+            <img src="/corvus-json-schema/pr-preview/pr-734/assets/images/logo-corvus.svg" alt="" width="28" height="28" aria-hidden="true" />
+            Corvus<span style="color:var(--color-brand)">.</span>Json<span style="color:var(--color-brand)">Schema</span>
+        </a>
+        <nav class="site-header__nav-desktop" aria-label="Main navigation">
+                    <a href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html"
+                       class="site-header__link "
+                       >Getting Started</a>
+                    <a href="/corvus-json-schema/pr-preview/pr-734/getting-started-v4/index.html"
+                       class="site-header__link "
+                       >Getting Started (V4)</a>
+                    <a href="/corvus-json-schema/pr-preview/pr-734/docs/index.html"
+                       class="site-header__link is-active"
+                       aria-current=page>Documentation</a>
+                    <a href="/corvus-json-schema/pr-preview/pr-734/examples/index.html"
+                       class="site-header__link "
+                       >Examples</a>
+                    <a href="/corvus-json-schema/pr-preview/pr-734/api/index.html"
+                       class="site-header__link "
+                       >API</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/playground/"
+               class="site-header__link"
+               target="_blank" rel="noopener noreferrer"
+               title="Interactive JSON Schema playground">Playground</a>
+            <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+               class="site-header__link" target="_blank" rel="noopener noreferrer"
+               aria-label="View on GitHub">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            </a>
+        </nav>
+        <button class="site-header__menu-toggle js-toggle-menu"
+                aria-expanded="false" aria-label="Toggle menu">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+        </button>
+    </div>
+</header>
+<nav class="site-header__nav-mobile js-mobile-nav" aria-label="Mobile navigation">
+            <a href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html" class="site-header__link">Getting Started</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/getting-started-v4/index.html" class="site-header__link">Getting Started (V4)</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/docs/index.html" class="site-header__link">Documentation</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/examples/index.html" class="site-header__link">Examples</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/api/index.html" class="site-header__link">API</a>
+    <a href="/corvus-json-schema/pr-preview/pr-734/playground/" class="site-header__link" target="_blank" rel="noopener noreferrer">Playground</a>
+    <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+       class="site-header__link" target="_blank" rel="noopener noreferrer">GitHub</a>
+</nav>
+
+    <div class="page-content">
+    <div class="layout-docs container">
+    <button class="sidebar-toggle" aria-label="Toggle navigation" aria-expanded="false"></button>
+<div class="sidebar-backdrop"></div>
+<aside class="sidebar">
+    <div class="sidebar__inner">
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Getting Started</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                    <li class="sidebar__item"><a class="sidebar__link" href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html">Tutorial</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Documentation</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/parsed-json-document.html">Parsing &amp; Reading JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/json-document-builder.html">Building &amp; Mutating JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/source-generator.html">Source Generator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/code-generator.html">CLI Code Generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link is-active" href="/corvus-json-schema/pr-preview/pr-734/docs/validator.html">Dynamic Schema Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/migrating-from-v4-to-v5.html">Migrating from V4</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/using-copilot-for-migration.html">Copilot Migration</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/migration-analyzers.html">Migration Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/analyzers.html">Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/schema-evaluator.html">Standalone Schema Evaluator</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Examples</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/data-object.html">Simple Data Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/data-object-validation.html">Data Object Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/reusing-common-types.html">Reusing Common Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/open-versus-closed-types.html">Open Versus Closed Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/extending-a-base-type.html">Extending a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/constraining-a-base-type.html">Constraining a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/creating-a-strongly-typed-array.html">Strongly Typed Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/creating-an-array-of-higher-rank.html">Multi-Dimensional Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/working-with-tensors.html">Working with Tensors</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/creating-tuples.html">Creating Tuples</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/interfaces-and-mix-in-types.html">Interfaces and Mix-In Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/pattern-matching.html">Pattern Matching and Discriminated Unions</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/polymorphism-with-discriminators.html">Polymorphism with Discriminator Properties</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/string-enumerations.html">String Enumerations and Pattern Matching</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/numeric-enumerations.html">Numeric Enumerations</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/maps.html">Maps of Strings to Strongly Typed Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/mapping-input-and-output-values.html">Mapping Input and Output Values</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</aside>
+
+    <main id="main-content" class="layout-docs__main">
+        <div class="doc__content">
+            <h1>Dynamic Schema Validation</h1>
+<h2 id="overview">Overview</h2>
+<p><code>Corvus.Text.Json.Validator</code> is a library for dynamically loading, compiling, and validating JSON documents against JSON Schema at runtime. Unlike the build-time source generator, the Validator compiles schemas on the fly using Roslyn, making it ideal for scenarios where schemas are not known at compile time — such as schema registries, configuration validation, or user-supplied schemas.</p>
+<p>It supports all major JSON Schema drafts (Draft 4, 6, 7, 2019-09, and 2020-12), plus OpenAPI 3.0 and Corvus custom vocabulary extensions.</p>
+<h2 id="key-features">Key Features</h2>
+<ul>
+<li><strong>Runtime Schema Compilation</strong>: Dynamically generates and compiles strongly-typed validators from JSON Schema using Roslyn</li>
+<li><strong>Multiple Schema Drafts</strong>: Supports Draft 4, 6, 7, 2019-09, and 2020-12 with automatic draft detection</li>
+<li><strong>Schema Caching</strong>: Compiled schemas are cached so repeated validations against the same schema are fast</li>
+<li><strong>Multiple Input Formats</strong>: Validate from strings, byte arrays, streams, <code>ReadOnlyMemory</code>, <code>ReadOnlySequence</code>, or pre-parsed <code>JsonElement</code></li>
+<li><strong>Detailed Diagnostics</strong>: Optional results collector provides hierarchical validation failures with schema locations and error messages</li>
+<li><strong>External Schema Resolution</strong>: Resolve <code>$ref</code> references via file system, HTTP, or pre-loaded additional schema files</li>
+</ul>
+<h2 id="installation">Installation</h2>
+<pre><code class="language-bash">dotnet add package Corvus.Text.Json.Validator
+</code></pre>
+<h2 id="quick-start">Quick Start</h2>
+<p>The main entry point is the <code>JsonSchema</code> struct. Load a schema, then validate JSON documents against it:</p>
+<pre><code class="language-csharp">using Corvus.Text.Json.Validator;
+
+// Load a schema from a file
+JsonSchema schema = JsonSchema.FromFile(&quot;Schemas/person.json&quot;);
+
+// Validate a JSON string
+bool isValid = schema.Validate(&quot;&quot;&quot;{&quot;name&quot;: &quot;Alice&quot;, &quot;age&quot;: 30}&quot;&quot;&quot;);
+</code></pre>
+<h2 id="loading-schemas">Loading Schemas</h2>
+<p><code>JsonSchema</code> provides several factory methods for loading schemas from different sources:</p>
+<h3 id="from-a-file">From a File</h3>
+<pre><code class="language-csharp">JsonSchema schema = JsonSchema.FromFile(&quot;path/to/schema.json&quot;);
+</code></pre>
+<p>The file's directory is used as the base for resolving relative <code>$ref</code> references. The canonical URI is extracted from the <code>$id</code> property in the schema.</p>
+<h3 id="from-a-string">From a String</h3>
+<pre><code class="language-csharp">string schemaText = &quot;&quot;&quot;
+    {
+        &quot;$schema&quot;: &quot;https://json-schema.org/draft/2020-12/schema&quot;,
+        &quot;$id&quot;: &quot;https://example.com/person&quot;,
+        &quot;type&quot;: &quot;object&quot;,
+        &quot;required&quot;: [&quot;name&quot;],
+        &quot;properties&quot;: {
+            &quot;name&quot;: { &quot;type&quot;: &quot;string&quot; },
+            &quot;age&quot;: { &quot;type&quot;: &quot;integer&quot;, &quot;minimum&quot;: 0 }
+        }
+    }
+    &quot;&quot;&quot;;
+
+JsonSchema schema = JsonSchema.FromText(schemaText);
+</code></pre>
+<p>If the schema does not contain an <code>$id</code> property, you must provide a canonical URI explicitly:</p>
+<pre><code class="language-csharp">JsonSchema schema = JsonSchema.FromText(schemaText, canonicalUri: &quot;https://example.com/person&quot;);
+</code></pre>
+<h3 id="from-a-stream">From a Stream</h3>
+<pre><code class="language-csharp">using FileStream stream = File.OpenRead(&quot;schema.json&quot;);
+JsonSchema schema = JsonSchema.FromStream(stream);
+</code></pre>
+<h3 id="from-a-uri">From a URI</h3>
+<p>Resolve a schema by its canonical URI. The schema is fetched from the file system or via HTTP, depending on the URI scheme:</p>
+<pre><code class="language-csharp">JsonSchema schema = JsonSchema.FromUri(&quot;https://example.com/schemas/person.json&quot;);
+
+// Or use the shorthand alias
+JsonSchema schema = JsonSchema.From(&quot;file:///C:/schemas/person.json&quot;);
+</code></pre>
+<h2 id="validating-documents">Validating Documents</h2>
+<p>Once you have a <code>JsonSchema</code>, call <code>Validate()</code> with the JSON document in any supported format:</p>
+<pre><code class="language-csharp">// From a string
+bool valid = schema.Validate(&quot;&quot;&quot;{&quot;name&quot;: &quot;Alice&quot;}&quot;&quot;&quot;);
+
+// From UTF-8 bytes
+ReadOnlyMemory&lt;byte&gt; utf8 = Encoding.UTF8.GetBytes(&quot;&quot;&quot;{&quot;name&quot;: &quot;Alice&quot;}&quot;&quot;&quot;);
+bool valid = schema.Validate(utf8);
+
+// From a stream (e.g., HTTP request body)
+bool valid = schema.Validate(requestStream);
+
+// From a pre-parsed JsonElement
+using var doc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(json);
+bool valid = schema.Validate(in doc.RootElement);
+</code></pre>
+<p>All overloads return <code>true</code> if the document is valid, <code>false</code> otherwise.</p>
+<h2 id="detailed-validation-results">Detailed Validation Results</h2>
+<p>For diagnostic output, pass an <code>IJsonSchemaResultsCollector</code> to <code>Validate()</code>. The collector records every validation step, including the schema location and evaluation path for failures:</p>
+<pre><code class="language-csharp">using JsonSchemaResultsCollector collector =
+    JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+
+bool valid = schema.Validate(json, collector);
+
+if (!valid)
+{
+    foreach (var result in collector.EnumerateResults())
+    {
+        if (!result.IsMatch)
+        {
+            Console.WriteLine($&quot;  Failed: {result}&quot;);
+        }
+    }
+}
+</code></pre>
+<h3 id="results-levels">Results Levels</h3>
+<table>
+<thead>
+<tr>
+<th>Level</th>
+<th>What It Collects</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Flag</code></td>
+<td>Pass/fail only — no diagnostic details</td>
+</tr>
+<tr>
+<td><code>Basic</code></td>
+<td>Failure messages without location information</td>
+</tr>
+<tr>
+<td><code>Detailed</code></td>
+<td>Failure messages with schema location and evaluation path</td>
+</tr>
+<tr>
+<td><code>Verbose</code></td>
+<td>All evaluation steps, including successful validations</td>
+</tr>
+</tbody>
+</table>
+<p>Use <code>Flag</code> for maximum performance when you only need a boolean result. Use <code>Detailed</code> or <code>Verbose</code> when diagnosing schema violations.</p>
+<h2 id="configuration-options">Configuration Options</h2>
+<p>Pass a <code>JsonSchema.Options</code> instance to any factory method to control schema compilation behaviour:</p>
+<pre><code class="language-csharp">var options = new JsonSchema.Options(
+    alwaysAssertFormat: true,
+    allowFileSystemAndHttpResolution: true,
+    fallbackVocabulary: null,
+    additionalSchemaFiles: new[]
+    {
+        new AdditionalSchemaFile(
+            canonicalUri: &quot;https://example.com/shared/address.json&quot;,
+            filePath: &quot;Schemas/address.json&quot;)
+    });
+
+JsonSchema schema = JsonSchema.FromFile(&quot;person.json&quot;, options: options);
+</code></pre>
+<h3 id="available-options">Available Options</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>alwaysAssertFormat</code></td>
+<td><code>true</code></td>
+<td>When <code>true</code>, the <code>format</code> keyword is enforced as a validation assertion. When <code>false</code>, it is treated as an annotation only (per the JSON Schema specification).</td>
+</tr>
+<tr>
+<td><code>allowFileSystemAndHttpResolution</code></td>
+<td><code>true</code></td>
+<td>Enable resolution of <code>$ref</code> references via <code>file://</code> and <code>http://</code>/<code>https://</code> URIs. Set to <code>false</code> to restrict resolution to pre-loaded schemas only.</td>
+</tr>
+<tr>
+<td><code>fallbackVocabulary</code></td>
+<td>Draft 2020-12</td>
+<td>The JSON Schema vocabulary to use when the schema does not include a <code>$schema</code> keyword.</td>
+</tr>
+<tr>
+<td><code>additionalSchemaFiles</code></td>
+<td><code>null</code></td>
+<td>Pre-load external schema files for <code>$ref</code> resolution. Each entry maps a canonical URI to a local file path.</td>
+</tr>
+<tr>
+<td><code>hostAssembly</code></td>
+<td>Entry assembly</td>
+<td>The assembly context used for resolving metadata references during dynamic compilation.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="pre-loading-referenced-schemas">Pre-loading Referenced Schemas</h2>
+<p>When your schema uses <code>$ref</code> to reference other schemas, you can pre-load them with <code>AdditionalSchemaFile</code>:</p>
+<pre><code class="language-csharp">var options = new JsonSchema.Options(
+    additionalSchemaFiles: new[]
+    {
+        new AdditionalSchemaFile(
+            &quot;https://example.com/schemas/address.json&quot;,
+            &quot;Schemas/address.json&quot;),
+        new AdditionalSchemaFile(
+            &quot;https://example.com/schemas/phone.json&quot;,
+            &quot;Schemas/phone.json&quot;)
+    });
+
+JsonSchema schema = JsonSchema.FromFile(&quot;Schemas/person.json&quot;, options: options);
+</code></pre>
+<p>This avoids network calls for referenced schemas and ensures deterministic builds. It is particularly useful in CI/CD environments where external resolution may be unreliable or disallowed.</p>
+<h2 id="schema-caching">Schema Caching</h2>
+<p>Compiled schemas are cached automatically by their canonical URI and <code>alwaysAssertFormat</code> flag. Subsequent calls to any <code>From*</code> method with the same URI return the cached validator without recompilation:</p>
+<pre><code class="language-csharp">// First call: compiles the schema (~100ms)
+JsonSchema schema1 = JsonSchema.FromFile(&quot;person.json&quot;);
+
+// Second call: returns cached validator (sub-millisecond)
+JsonSchema schema2 = JsonSchema.FromFile(&quot;person.json&quot;);
+</code></pre>
+<p>To force recompilation (for example, after updating a schema file), pass <code>refreshCache: true</code>:</p>
+<pre><code class="language-csharp">JsonSchema schema = JsonSchema.FromFile(&quot;person.json&quot;, refreshCache: true);
+</code></pre>
+<h2 id="how-it-works">How It Works</h2>
+<p>Under the hood, the Validator uses the same code generation engine as the source generator and CLI tool:</p>
+<ol>
+<li><strong>Parse</strong> the JSON Schema document</li>
+<li><strong>Resolve</strong> all <code>$ref</code> references using registered document resolvers</li>
+<li><strong>Generate</strong> C# source code for strongly-typed validators (identical output to <code>generatejsonschematypes</code>)</li>
+<li><strong>Compile</strong> the generated code using Roslyn (<code>Microsoft.CodeAnalysis.CSharp</code>) into an in-memory assembly</li>
+<li><strong>Load</strong> the compiled assembly and create a validation pipeline</li>
+<li><strong>Cache</strong> the pipeline for subsequent validations against the same schema</li>
+</ol>
+<p>This means the Validator produces the exact same validation logic as build-time source generation — the only difference is that compilation happens at runtime.</p>
+<h2 id="supported-json-schema-drafts">Supported JSON Schema Drafts</h2>
+<table>
+<thead>
+<tr>
+<th>Draft</th>
+<th><code>$schema</code> URI</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Draft 4</td>
+<td><code>http://json-schema.org/draft-04/schema</code></td>
+</tr>
+<tr>
+<td>Draft 6</td>
+<td><code>http://json-schema.org/draft-06/schema</code></td>
+</tr>
+<tr>
+<td>Draft 7</td>
+<td><code>http://json-schema.org/draft-07/schema</code></td>
+</tr>
+<tr>
+<td>Draft 2019-09</td>
+<td><code>https://json-schema.org/draft/2019-09/schema</code></td>
+</tr>
+<tr>
+<td>Draft 2020-12</td>
+<td><code>https://json-schema.org/draft/2020-12/schema</code></td>
+</tr>
+</tbody>
+</table>
+<p>The Validator also supports OpenAPI 3.0 schema vocabulary and Corvus custom extensions.</p>
+<h2 id="use-cases">Use Cases</h2>
+<ul>
+<li><strong>Schema Registry Validation</strong>: Validate messages against schemas fetched from a central registry at runtime</li>
+<li><strong>Configuration Validation</strong>: Validate user-supplied configuration files against application-defined schemas</li>
+<li><strong>API Gateway Validation</strong>: Validate HTTP request/response bodies against OpenAPI schemas</li>
+<li><strong>Testing</strong>: Validate test fixtures against schemas without pre-generating types</li>
+<li><strong>Dynamic Schema Selection</strong>: Choose schemas based on runtime conditions (e.g., document version, content type)</li>
+</ul>
+        </div>
+    </main>
+</div>
+
+    </div>
+    <footer class="site-footer">
+    <div class="site-footer__inner">
+        <div class="site-footer__sponsor">
+            Sponsored by
+            <a href="https://endjin.com" target="_blank" rel="noopener noreferrer">endjin</a>
+        </div>
+        <ul class="site-footer__links" role="list">
+            <li><a class="site-footer__link" href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html">Getting Started</a></li>
+            <li><a class="site-footer__link" href="/corvus-json-schema/pr-preview/pr-734/docs/index.html">Documentation</a></li>
+            <li><a class="site-footer__link" href="/corvus-json-schema/pr-preview/pr-734/examples/index.html">Examples</a></li>
+            <li><a class="site-footer__link" href="/corvus-json-schema/pr-preview/pr-734/api/index.html">API</a></li>
+            <li><a class="site-footer__link" href="https://github.com/corvus-dotnet/Corvus.JsonSchema" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            <li><a class="site-footer__link" href="https://www.nuget.org/packages?q=Corvus.Json" target="_blank" rel="noopener noreferrer">NuGet</a></li>
+        </ul>
+        <p class="site-footer__copyright">&copy; 2026 endjin Ltd.</p>
+    </div>
+</footer>
+
+    <!-- highlight.js for syntax highlighting (CSS targets .hljs-* classes) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/csharp.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js" defer></script>
+    <script>document.addEventListener('DOMContentLoaded',()=>hljs.highlightAll())</script>
+    <script src="/corvus-json-schema/pr-preview/pr-734/assets/js/main.js" defer></script>
+    <script src="/corvus-json-schema/pr-preview/pr-734/assets/js/sidebar-search.js" defer></script>
+    
+</body>
+</html>

@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1C1D21" />
+    <meta name="description" content="Create and modify JSON documents in-place with workspace-managed pooled memory. A builder-pattern alternative to System.Text.Json&#x27;s JsonNode, designed for request/response cycles and data pipelines." />
+    <meta name="keywords" content="documentation, Corvus.Text.Json" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:description" content="Create and modify JSON documents in-place with workspace-managed pooled memory. A builder-pattern alternative to System.Text.Json&#x27;s JsonNode, designed for request/response cycles and data pipelines." />
+    <meta name="twitter:image" content="/corvus-json-schema/pr-preview/pr-734/assets/images/og-corvus.png" />
+    <meta name="twitter:title" content="Building &amp; Mutating JSON - Corvus.Text.Json" />
+    <meta property="article:tag" content="documentation" />
+    <meta property="article:tag" content="Corvus.Text.Json" />
+    <meta property="og:description" content="Create and modify JSON documents in-place with workspace-managed pooled memory. A builder-pattern alternative to System.Text.Json&#x27;s JsonNode, designed for request/response cycles and data pipelines." />
+    <meta property="og:image" content="/corvus-json-schema/pr-preview/pr-734/assets/images/og-corvus.png" />
+    <meta property="og:title" content="Building &amp; Mutating JSON - Corvus.Text.Json" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://corvus-oss.org/corvus-json-schema/docs/json-document-builder/" />
+    <title>Building &amp; Mutating JSON - Corvus.Text.Json</title>
+    <link itemprop="url" href="https://corvus-oss.org/corvus-json-schema/docs/json-document-builder/" />
+    <link rel="canonical" href="https://corvus-oss.org/corvus-json-schema/docs/json-document-builder/" />
+    <link rel="sitemap" href="https://corvus-oss.org/corvus-json-schema/sitemap.xml" />
+    <!-- Styles -->
+    <link rel="stylesheet" href="/corvus-json-schema/pr-preview/pr-734/main.css" />
+    <link rel="icon" type="image/svg+xml" href="/corvus-json-schema/pr-preview/pr-734/assets/images/favicon.svg" />
+    
+</head>
+<body>
+    <a class="sr-only" href="#main-content">Skip to content</a>
+<header class="site-header">
+    <div class="site-header__inner">
+        <a class="site-header__brand" href="/corvus-json-schema/pr-preview/pr-734/index.html" aria-label="Corvus.JsonSchema home">
+            <img src="/corvus-json-schema/pr-preview/pr-734/assets/images/logo-corvus.svg" alt="" width="28" height="28" aria-hidden="true" />
+            Corvus<span style="color:var(--color-brand)">.</span>Json<span style="color:var(--color-brand)">Schema</span>
+        </a>
+        <nav class="site-header__nav-desktop" aria-label="Main navigation">
+                    <a href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html"
+                       class="site-header__link "
+                       >Getting Started</a>
+                    <a href="/corvus-json-schema/pr-preview/pr-734/getting-started-v4/index.html"
+                       class="site-header__link "
+                       >Getting Started (V4)</a>
+                    <a href="/corvus-json-schema/pr-preview/pr-734/docs/index.html"
+                       class="site-header__link is-active"
+                       aria-current=page>Documentation</a>
+                    <a href="/corvus-json-schema/pr-preview/pr-734/examples/index.html"
+                       class="site-header__link "
+                       >Examples</a>
+                    <a href="/corvus-json-schema/pr-preview/pr-734/api/index.html"
+                       class="site-header__link "
+                       >API</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/playground/"
+               class="site-header__link"
+               target="_blank" rel="noopener noreferrer"
+               title="Interactive JSON Schema playground">Playground</a>
+            <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+               class="site-header__link" target="_blank" rel="noopener noreferrer"
+               aria-label="View on GitHub">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            </a>
+        </nav>
+        <button class="site-header__menu-toggle js-toggle-menu"
+                aria-expanded="false" aria-label="Toggle menu">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+        </button>
+    </div>
+</header>
+<nav class="site-header__nav-mobile js-mobile-nav" aria-label="Mobile navigation">
+            <a href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html" class="site-header__link">Getting Started</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/getting-started-v4/index.html" class="site-header__link">Getting Started (V4)</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/docs/index.html" class="site-header__link">Documentation</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/examples/index.html" class="site-header__link">Examples</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/api/index.html" class="site-header__link">API</a>
+    <a href="/corvus-json-schema/pr-preview/pr-734/playground/" class="site-header__link" target="_blank" rel="noopener noreferrer">Playground</a>
+    <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+       class="site-header__link" target="_blank" rel="noopener noreferrer">GitHub</a>
+</nav>
+
+    <div class="page-content">
+    <div class="layout-docs container">
+    <button class="sidebar-toggle" aria-label="Toggle navigation" aria-expanded="false"></button>
+<div class="sidebar-backdrop"></div>
+<aside class="sidebar">
+    <div class="sidebar__inner">
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Getting Started</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                    <li class="sidebar__item"><a class="sidebar__link" href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html">Tutorial</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Documentation</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/parsed-json-document.html">Parsing &amp; Reading JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link is-active" href="/corvus-json-schema/pr-preview/pr-734/docs/json-document-builder.html">Building &amp; Mutating JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/source-generator.html">Source Generator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/code-generator.html">CLI Code Generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/validator.html">Dynamic Schema Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/migrating-from-v4-to-v5.html">Migrating from V4</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/using-copilot-for-migration.html">Copilot Migration</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/migration-analyzers.html">Migration Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/analyzers.html">Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/schema-evaluator.html">Standalone Schema Evaluator</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Examples</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/data-object.html">Simple Data Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/data-object-validation.html">Data Object Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/reusing-common-types.html">Reusing Common Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/open-versus-closed-types.html">Open Versus Closed Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/extending-a-base-type.html">Extending a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/constraining-a-base-type.html">Constraining a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/creating-a-strongly-typed-array.html">Strongly Typed Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/creating-an-array-of-higher-rank.html">Multi-Dimensional Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/working-with-tensors.html">Working with Tensors</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/creating-tuples.html">Creating Tuples</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/interfaces-and-mix-in-types.html">Interfaces and Mix-In Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/pattern-matching.html">Pattern Matching and Discriminated Unions</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/polymorphism-with-discriminators.html">Polymorphism with Discriminator Properties</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/string-enumerations.html">String Enumerations and Pattern Matching</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/numeric-enumerations.html">Numeric Enumerations</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/maps.html">Maps of Strings to Strongly Typed Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/mapping-input-and-output-values.html">Mapping Input and Output Values</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</aside>
+
+    <main id="main-content" class="layout-docs__main">
+        <div class="doc__content">
+            <h1>Building &amp; Mutating JSON</h1>
+<p>This guide shows you how to build and modify JSON documents efficiently, with minimal allocations and excellent performance.</p>
+<p>We have already looked at <a href="/corvus-json-schema/pr-preview/pr-734/docs/parsed-json-document.html"><code>ParsedJsonDocument</code></a> to see how we can parse and use <em>immutable</em> documents. Now, we will look at how we can build new documents.</p>
+<h2 id="overview">Overview</h2>
+<p><code>JsonDocumentBuilder&lt;T&gt;</code> provides a high-performance way to create and modify JSON documents in memory. Think of it as a workshop where you craft complex JSON structures using pooled resources - you borrow the tools, build your document, and return them for reuse. It works hand-in-hand with <code>JsonWorkspace</code>, which manages those pooled resources.</p>
+<p><strong>FAQ</strong>: <em>Why not just use System.Text.Json's JsonNode?</em></p>
+<p>Both approaches let you build mutable JSON, but they differ significantly:</p>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>JsonDocumentBuilder</th>
+<th>System.Text.Json.JsonNode</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Memory Strategy</td>
+<td>Pooled resources, reused</td>
+<td>Per-document allocations</td>
+</tr>
+<tr>
+<td>Performance</td>
+<td>Optimised for high-throughput</td>
+<td>General-purpose</td>
+</tr>
+<tr>
+<td>Threading</td>
+<td>Thread-affine (workspace)</td>
+<td>Thread-safe nodes</td>
+</tr>
+<tr>
+<td>API Style</td>
+<td>Builder pattern</td>
+<td>Property-based mutation</td>
+</tr>
+<tr>
+<td>Best For</td>
+<td>Request/response cycles, pipelines</td>
+<td>Long-lived documents, tree manipulation</td>
+</tr>
+</tbody>
+</table>
+<p><strong>The key difference</strong> is that <code>JsonDocumentBuilder</code> is designed for scenarios where you create a document, use it briefly (write to an HTTP response, save to a file), then dispose it. The workspace pools memory across many such operations, dramatically reducing allocations. <code>JsonNode</code> is better when you need to keep documents around, pass them across threads, or manipulate them over time.</p>
+<p>Let's get started by looking at <code>JsonWorkspace</code>.</p>
+<h2 id="understanding-the-workspace">Understanding the Workspace</h2>
+<p>A <code>JsonWorkspace</code> is your resource manager. It keeps track of reusable buffers and writers, allocating them as needed and reclaiming them when you're done.</p>
+<h3 id="creating-a-workspace">Creating a Workspace</h3>
+<pre><code class="language-csharp">using Corvus.Text.Json;
+
+// Create a workspace for building documents
+using JsonWorkspace workspace = JsonWorkspace.Create();
+
+// Use it to create one or more documents
+// ...
+</code></pre>
+<h3 id="workspace-options">Workspace Options</h3>
+<pre><code class="language-csharp">// Create with custom writer options
+var writerOptions = new JsonWriterOptions
+{
+    Indented = true,
+    SkipValidation = false
+};
+
+using JsonWorkspace workspace = JsonWorkspace.Create(
+    initialDocumentCapacity: 10,
+    options: writerOptions);
+</code></pre>
+<p>The options you configure here determine how JSON gets serialized when you write documents. This becomes crucial when using rented writers (covered in the serialization section below).</p>
+<p>Notice that you can specify the expected document capacity for the workspace. Typically, you will know exactly what this is, and be able to allocate only the resource you need.</p>
+<h3 id="disposal-semantics">Disposal Semantics</h3>
+<p>When you dispose a workspace, it returns any resources it consumed to the pool.</p>
+<pre><code class="language-csharp">using ParsedJsonDocument&lt;JsonElement&gt; sourceDoc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(&quot;&quot;&quot;{&quot;value&quot;: 42}&quot;&quot;&quot;);
+
+using JsonWorkspace workspace = JsonWorkspace.Create();
+using var builder = JsonElement.CreateBuilder(
+    workspace,
+    new JsonElement.Source((ref objectBuilder) =&gt;
+    {
+        // Using data from sourceDoc
+        objectBuilder.AddProperty(&quot;original&quot;u8, sourceDoc.RootElement.GetProperty(&quot;value&quot;));
+        objectBuilder.AddProperty(&quot;modified&quot;u8, 100);
+    }));
+</code></pre>
+<p>When the workspace disposes:</p>
+<ul>
+<li>Pooled workspaces return to the cache for reuse</li>
+<li>Mutable documents are disposed and their resources are returned.</li>
+</ul>
+<h2 id="creating-simple-documents">Creating Simple Documents</h2>
+<p>Sometimes you just need to wrap a single value in a JSON document - perhaps for an API response.</p>
+<h3 id="from-primitive-values">From Primitive Values</h3>
+<pre><code class="language-csharp">using JsonWorkspace workspace = JsonWorkspace.Create();
+
+// Create from integers - useful for IDs, counts, status codes
+using var intDoc = JsonElement.CreateBuilder(workspace, 42);
+Console.WriteLine(intDoc.RootElement.GetInt32()); // 42
+
+// Create from doubles - measurements, prices, coordinates
+using var doubleDoc = JsonElement.CreateBuilder(workspace, 3.14159);
+Console.WriteLine(doubleDoc.RootElement.GetDouble()); // 3.14159
+
+// Create from strings
+using var stringDoc = JsonElement.CreateBuilder(workspace, &quot;Hello, World!&quot;u8);
+Console.WriteLine(stringDoc.RootElement.GetString()); // Hello, World!
+
+// Create from UTF-8 byte spans
+// This is faster! No encoding conversion needed - straight UTF-8 bytes
+using var utf8Doc = JsonElement.CreateBuilder(workspace, &quot;Hello&quot;u8);
+Console.WriteLine(utf8Doc.RootElement.GetString()); // Hello
+
+// Create from booleans - flags, feature toggles, status indicators
+using var boolDoc = JsonElement.CreateBuilder(workspace, true);
+Console.WriteLine(boolDoc.RootElement.GetBoolean()); // True
+
+// Create null value - for optional fields or explicit null responses
+using var nullDoc = JsonElement.CreateBuilder(
+    workspace,
+    JsonElement.Source.Null());
+Console.WriteLine(nullDoc.RootElement.ValueKind); // Null
+</code></pre>
+<p><strong>Performance Tip</strong>: Use the <code>u8</code> suffix for string literals whenever possible. This creates UTF-8 bytes at compile time, avoiding runtime encoding overhead. You can just use UTF-16 <code>string</code> instances, but is more efficient to use the UTF-8 form.</p>
+<h2 id="creating-object-documents">Creating Object Documents</h2>
+<p>Object documents are JSON objects with key-value pairs. They're the most common structure for representing entities, configurations, and API responses. The builder pattern allows you to construct complex nested structures efficiently.</p>
+<h3 id="using-builder-delegates">Using Builder Delegates</h3>
+<p>Builder delegates provide a fluent, type-safe way to construct JSON objects. The <code>static</code> keyword helps the compiler optimize the delegate by avoiding closure allocations. Use UTF-8 string literals (with <code>u8</code> suffix) for property names to avoid the overhead of transcoding from UTF-16 <code>string</code>.</p>
+<pre><code class="language-csharp">using JsonWorkspace workspace = JsonWorkspace.Create();
+
+// Build a person object - common pattern for entity representation
+using var personDoc = JsonElement.CreateBuilder(
+    workspace,
+    new JsonElement.Source(static (ref objectBuilder) =&gt;
+    {
+        objectBuilder.AddProperty(&quot;name&quot;u8, &quot;John Smith&quot;u8);
+        objectBuilder.AddProperty(&quot;age&quot;u8, 30);
+        objectBuilder.AddProperty(&quot;isActive&quot;u8, true);
+        objectBuilder.AddProperty(&quot;email&quot;u8, &quot;john@example.com&quot;u8);
+    }));
+
+Console.WriteLine(personDoc.RootElement.ToString());
+// Output: {&quot;name&quot;:&quot;John Smith&quot;,&quot;age&quot;:30,&quot;isActive&quot;:true,&quot;email&quot;:&quot;john@example.com&quot;}
+</code></pre>
+<h3 id="nested-objects">Nested Objects</h3>
+<p>Nested objects are essential for representing hierarchical data structures like user profiles, configuration files, or complex domain models. Each level of nesting uses its own builder delegate, keeping the code organized and readable.</p>
+<pre><code class="language-csharp">using JsonWorkspace workspace = JsonWorkspace.Create();
+
+// Build a hierarchical user structure - common in REST APIs
+using var doc = JsonElement.CreateBuilder(
+    workspace,
+    new JsonElement.Source(static (ref objectBuilder) =&gt;
+    {
+        objectBuilder.AddProperty(&quot;user&quot;u8, static (ref userBuilder) =&gt;
+        {
+            userBuilder.AddProperty(&quot;id&quot;u8, 1);
+
+            // Nested profile object within user
+            userBuilder.AddProperty(&quot;profile&quot;u8, static (ref profileBuilder) =&gt;
+            {
+                profileBuilder.AddProperty(&quot;firstName&quot;u8, &quot;Jane&quot;u8);
+                profileBuilder.AddProperty(&quot;lastName&quot;u8, &quot;Doe&quot;u8);
+                profileBuilder.AddProperty(&quot;age&quot;u8, 28);
+            });
+        });
+
+        objectBuilder.AddProperty(&quot;timestamp&quot;u8, &quot;2026-02-24T11:00:00Z&quot;u8);
+    }));
+
+// Navigate through nested structure to access values
+JsonElement.Mutable root = doc.RootElement;
+JsonElement.Mutable user = root.GetProperty(&quot;user&quot;);
+JsonElement.Mutable profile = user.GetProperty(&quot;profile&quot;);
+
+string firstName = profile.GetProperty(&quot;firstName&quot;).GetString();
+Console.WriteLine($&quot;First Name: {firstName}&quot;); // Jane
+</code></pre>
+<h2 id="creating-array-documents">Creating Array Documents</h2>
+<p>Arrays are ubiquitous in JSON - lists of search results, collections of entities, tags, and more.</p>
+<h3 id="simple-arrays">Simple Arrays</h3>
+<pre><code class="language-csharp">using JsonWorkspace workspace = JsonWorkspace.Create();
+
+// A numeric array - IDs, scores, measurements, counts
+using var arrayDoc = JsonElement.CreateBuilder(
+    workspace,
+    new JsonElement.Source(static (ref arrayBuilder) =&gt;
+    {
+        arrayBuilder.AddItem(1);
+        arrayBuilder.AddItem(2);
+        arrayBuilder.AddItem(3);
+        arrayBuilder.AddItem(4);
+        arrayBuilder.AddItem(5);
+    }));
+
+Console.WriteLine(arrayDoc.RootElement.ToString());
+// Output: [1,2,3,4,5]
+</code></pre>
+<h3 id="arrays-of-strings">Arrays of Strings</h3>
+<pre><code class="language-csharp">using JsonWorkspace workspace = JsonWorkspace.Create();
+
+// String arrays - tags, categories, permissions, you name it
+using var namesDoc = JsonElement.CreateBuilder(
+    workspace,
+    new JsonElement.Source(static (ref arrayBuilder) =&gt;
+    {
+        arrayBuilder.AddItem(&quot;Alice&quot;u8);
+        arrayBuilder.AddItem(&quot;Bob&quot;u8);
+        arrayBuilder.AddItem(&quot;Charlie&quot;u8);
+    }));
+
+// Iterate through it
+foreach (JsonElement.Mutable name in namesDoc.RootElement.EnumerateArray())
+{
+    Console.WriteLine(name.GetString());
+}
+</code></pre>
+<h3 id="arrays-of-objects">Arrays of Objects</h3>
+<p>This is the pattern you see everywhere in REST APIs - collections of entities.</p>
+<pre><code class="language-csharp">using JsonWorkspace workspace = JsonWorkspace.Create();
+
+// Users array - standard API list response
+using var usersDoc = JsonElement.CreateBuilder(
+    workspace,
+    new JsonElement.Source(static (ref arrayBuilder) =&gt;
+    {
+        arrayBuilder.AddItem(static (ref userBuilder) =&gt;
+        {
+            userBuilder.AddProperty(&quot;id&quot;u8, 1);
+            userBuilder.AddProperty(&quot;name&quot;u8, &quot;Alice&quot;u8);
+        });
+
+        arrayBuilder.AddItem(static (ref userBuilder) =&gt;
+        {
+            userBuilder.AddProperty(&quot;id&quot;u8, 2);
+            userBuilder.AddProperty(&quot;name&quot;u8, &quot;Bob&quot;u8);
+        });
+
+        arrayBuilder.AddItem(static (ref userBuilder) =&gt;
+        {
+            userBuilder.AddProperty(&quot;id&quot;u8, 3);
+            userBuilder.AddProperty(&quot;name&quot;u8, &quot;Charlie&quot;u8);
+        });
+    }));
+
+Console.WriteLine(usersDoc.RootElement.ToString());
+</code></pre>
+<h2 id="working-with-existing-json">Working with Existing JSON</h2>
+<p>In many applications, you receive JSON from an API, file, or database, modify it, and send it on its way. The pattern is straightforward - parse, mutate, serialize.</p>
+<h3 id="from-parsedjsondocument">From ParsedJsonDocument</h3>
+<pre><code class="language-csharp">using JsonWorkspace workspace = JsonWorkspace.Create();
+
+// JSON from wherever - API, file, database
+string json = &quot;&quot;&quot;
+    {
+        &quot;name&quot;: &quot;Original&quot;,
+        &quot;value&quot;: 100
+    }
+    &quot;&quot;&quot;;
+
+// Parse it - gives you an immutable, read-only document
+using ParsedJsonDocument&lt;JsonElement&gt; sourceDoc =
+    ParsedJsonDocument&lt;JsonElement&gt;.Parse(json);
+
+// Make it mutable - copies data into the workspace
+using JsonDocumentBuilder&lt;JsonElement.Mutable&gt; builder =
+    sourceDoc.RootElement.CreateBuilder(workspace);
+
+// Now you can modify it (more on that below)
+JsonElement.Mutable root = builder.RootElement;
+Console.WriteLine(root.ToString());
+</code></pre>
+<h3 id="cloning-and-modifying">Cloning and Modifying</h3>
+<p>You'll often receive JSON from an API, file, or database, modify parts of it, and send it on its way. This pattern appears frequently in middleware, API gateways, and data transformation pipelines.</p>
+<pre><code class="language-csharp">using JsonWorkspace workspace = JsonWorkspace.Create();
+
+string originalJson = &quot;&quot;&quot;
+    {
+        &quot;status&quot;: &quot;pending&quot;,
+        &quot;count&quot;: 5
+    }
+    &quot;&quot;&quot;;
+
+using ParsedJsonDocument&lt;JsonElement&gt; original =
+    ParsedJsonDocument&lt;JsonElement&gt;.Parse(originalJson);
+
+using JsonDocumentBuilder&lt;JsonElement.Mutable&gt; modified =
+    original.RootElement.CreateBuilder(workspace);
+
+// Make your changes
+JsonElement.Mutable root = modified.RootElement;
+root.SetProperty(&quot;status&quot;, &quot;completed&quot;u8);
+root.SetProperty(&quot;count&quot;, 10);
+
+Console.WriteLine(modified.RootElement.ToString());
+// Output: {&quot;status&quot;:&quot;completed&quot;,&quot;count&quot;:10}
+</code></pre>
+<h2 id="building-dynamic-json">Building Dynamic JSON</h2>
+<p>Real-world JSON isn't all static strings. You've got collections from your database, computed values, user input. Here's how you mix static structure with runtime data.</p>
+<pre><code class="language-csharp">using JsonWorkspace workspace = JsonWorkspace.Create();
+
+// Runtime data - from wherever
+string[] tags = [&quot;admin&quot;, &quot;user&quot;, &quot;active&quot;];
+int[] years = [2020, 2021, 2022, 2023, 2024];
+
+using var doc = JsonElement.CreateBuilder(
+    workspace,
+    new JsonElement.Source((ref objectBuilder) =&gt;
+    {
+        // Static structure with runtime values
+        objectBuilder.AddProperty(&quot;id&quot;u8, Guid.NewGuid());
+
+        objectBuilder.AddProperty(&quot;profile&quot;u8, static (ref profileBuilder) =&gt;
+        {
+            profileBuilder.AddProperty(&quot;username&quot;u8, &quot;john.doe&quot;u8);
+            profileBuilder.AddProperty(&quot;created&quot;u8, DateTime.UtcNow);
+        });
+
+        // Dynamically add array from runtime collection
+        // Note: Cannot use 'static' when capturing variables
+        objectBuilder.AddProperty(&quot;tags&quot;u8, (ref tagsBuilder) =&gt;
+        {
+            foreach (string tag in tags)
+            {
+                tagsBuilder.AddProperty(tag);
+            }
+        });
+
+        // Another dynamic array from collection
+        objectBuilder.AddProperty(&quot;activeYears&quot;u8, (ref yearsBuilder) =&gt;
+        {
+            foreach (int year in years)
+            {
+                yearsBuilder.AddProperty(year);
+            }
+        });
+
+        objectBuilder.AddProperty(&quot;metadata&quot;u8, static (ref metaBuilder) =&gt;
+        {
+            metaBuilder.AddProperty(&quot;version&quot;u8, &quot;1.0&quot;u8);
+            metaBuilder.AddProperty(&quot;revision&quot;u8, 42);
+        });
+    }));
+
+Console.WriteLine(doc.RootElement.ToString());
+</code></pre>
+<h2 id="modifying-documents">Modifying Documents</h2>
+<p>After creating a document, you often need to update values based on business logic, user actions, or external events. The mutable API allows in-place modifications without rebuilding the entire structure.</p>
+<p><strong>Common Scenarios:</strong></p>
+<ul>
+<li>Updating status flags after processing</li>
+<li>Incrementing counters or metrics</li>
+<li>Patching API responses before forwarding</li>
+<li>Applying business rules to data</li>
+</ul>
+<h3 id="setting-properties">Setting Properties</h3>
+<p><code>SetProperty</code> updates or adds properties on JSON objects. If the property exists, it's updated; if not, it's added. This is useful for applying changes without knowing the current state.</p>
+<pre><code class="language-csharp">using JsonWorkspace workspace = JsonWorkspace.Create();
+
+using var doc = JsonElement.CreateBuilder(
+    workspace,
+    new JsonElement.Source(static (ref objectBuilder) =&gt;
+    {
+        objectBuilder.AddProperty(&quot;name&quot;u8, &quot;Initial&quot;u8);
+        objectBuilder.AddProperty(&quot;count&quot;u8, 0);
+    }));
+
+JsonElement.Mutable root = doc.RootElement;
+
+// Update existing properties
+root.SetProperty(&quot;name&quot;u8, &quot;Updated&quot;u8);
+root.SetProperty(&quot;count&quot;u8, 100);
+
+// Add new properties
+root.SetProperty(&quot;timestamp&quot;u8, DateTime.UtcNow);
+
+Console.WriteLine(root.ToString());
+</code></pre>
+<h3 id="adding-array-elements">Adding Array Elements</h3>
+<pre><code class="language-csharp">using JsonWorkspace workspace = JsonWorkspace.Create();
+
+using var doc = JsonElement.CreateBuilder(
+    workspace,
+    new JsonElement.Source(static (ref objectBuilder) =&gt;
+    {
+        objectBuilder.AddProperty(&quot;items&quot;u8, static (ref arrayBuilder) =&gt;
+        {
+            arrayBuilder.AddItem(&quot;item1&quot;u8);
+            arrayBuilder.AddItem(&quot;item2&quot;u8);
+        });
+    }));
+
+JsonElement.Mutable root = doc.RootElement;
+JsonElement.Mutable items = root.GetProperty(&quot;items&quot;);
+
+// Add more items to the array
+items.AddItem(&quot;item3&quot;u8);
+
+// Add multiple items at once
+items.AddRange(static (ref JsonElement.ArrayBuilder b) =&gt;
+{
+    b.AddItem(&quot;item4&quot;u8);
+    b.AddItem(&quot;item5&quot;u8);
+});
+
+// Insert multiple items at a specific index
+items.InsertRange(1, static (ref JsonElement.ArrayBuilder b) =&gt;
+{
+    b.AddItem(&quot;inserted1&quot;u8);
+    b.AddItem(&quot;inserted2&quot;u8);
+});
+
+// Set an item at an index
+items.SetItem(0, &quot;Replace item1&quot;u8);
+
+Console.WriteLine(root.ToString());
+</code></pre>
+<h3 id="property-indexers">Property Indexers</h3>
+<p>In addition to <code>GetProperty()</code>, mutable and immutable elements support indexed access using string, UTF-8, or UTF-16 property names:</p>
+<pre><code class="language-csharp">using var doc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(&quot;&quot;&quot;{&quot;name&quot;:&quot;Alice&quot;,&quot;age&quot;:30}&quot;&quot;&quot;);
+
+// Indexed access on immutable element
+JsonElement name = doc.RootElement[&quot;name&quot;u8];       // UTF-8 (most efficient)
+JsonElement age  = doc.RootElement[&quot;age&quot;];           // string
+
+Console.WriteLine(name.GetString()); // &quot;Alice&quot;
+Console.WriteLine(age.GetInt32());   // 30
+</code></pre>
+<p>The same indexers work on mutable elements:</p>
+<pre><code class="language-csharp">using JsonWorkspace workspace = JsonWorkspace.Create();
+using var builder = doc.RootElement.CreateBuilder(workspace);
+
+JsonElement.Mutable root = builder.RootElement;
+JsonElement.Mutable nameEl = root[&quot;name&quot;u8];
+
+Console.WriteLine(nameEl.GetString()); // &quot;Alice&quot;
+</code></pre>
+<p>UTF-8 access (<code>&quot;key&quot;u8</code>) avoids transcoding overhead and is the recommended approach in performance-critical paths.</p>
+<h2 id="serializing-documents">Serializing Documents</h2>
+<p>After building or modifying a document, you need to serialize it for storage, transmission, or API responses. The <code>WriteTo</code> method provides efficient UTF-8 serialization directly to a <code>Utf8JsonWriter</code>.</p>
+<p><strong>Use Cases:</strong></p>
+<ul>
+<li>Writing to HTTP response streams</li>
+<li>Saving to files</li>
+<li>Sending to message queues</li>
+<li>Logging structured data</li>
+</ul>
+<h3 id="basic-serialization">Basic Serialization</h3>
+<p>The simplest approach - create your own writer and write to it:</p>
+<pre><code class="language-csharp">using JsonWorkspace workspace = JsonWorkspace.Create();
+
+using var doc = JsonElement.CreateBuilder(
+    workspace,
+    new JsonElement.Source(static (ref objectBuilder) =&gt;
+    {
+        objectBuilder.AddProperty(&quot;message&quot;u8, &quot;Hello&quot;u8);
+        objectBuilder.AddProperty(&quot;status&quot;u8, 200);
+    }));
+
+// Write to a memory stream (could be any stream - file, network, etc.)
+using var stream = new MemoryStream();
+using (var writer = new Utf8JsonWriter(
+    stream,
+    new JsonWriterOptions { Indented = true }))
+{
+    // Efficiently writes UTF-8 bytes directly to the writer
+    doc.WriteTo(writer);
+}
+
+string json = Encoding.UTF8.GetString(stream.ToArray());
+Console.WriteLine(json);
+</code></pre>
+<h3 id="renting-writers-from-the-workspace">Renting Writers from the Workspace</h3>
+<p>Instead of creating a new <code>Utf8JsonWriter</code> every time, you can rent one from the workspace. The workspace maintains a pool of writers configured with your specified options.</p>
+<p><strong>Why rent instead of create?</strong></p>
+<ol>
+<li><strong>Performance</strong> - Pooled writers eliminate allocations in hot paths</li>
+<li><strong>Consistency</strong> - All writers automatically use the workspace's configured options</li>
+<li><strong>Integration</strong> - Perfect for ASP.NET Core pipelines where you're serializing to an <code>IBufferWriter</code></li>
+</ol>
+<h4 id="pattern-1-rent-writer-and-buffer-in-memory">Pattern 1: Rent Writer and Buffer (In-Memory)</h4>
+<p>The workspace provides both the writer and a buffer. Build your document, write it out, and use the bytes:</p>
+<pre><code class="language-csharp">var writerOptions = new JsonWriterOptions { Indented = false };
+using JsonWorkspace workspace = JsonWorkspace.Create(options: writerOptions);
+
+// Build your document
+using var doc = JsonElement.CreateBuilder(
+    workspace,
+    new JsonElement.Source(static (ref objectBuilder) =&gt;
+    {
+        objectBuilder.AddProperty(&quot;message&quot;u8, &quot;Hello, World!&quot;u8);
+        objectBuilder.AddProperty(&quot;timestamp&quot;u8, DateTime.UtcNow);
+        objectBuilder.AddProperty(&quot;status&quot;u8, 200);
+    }));
+
+// Rent writer + buffer
+Utf8JsonWriter writer = workspace.RentWriterAndBuffer(
+    defaultBufferSize: 1024,
+    out IByteBufferWriter bufferWriter);
+
+try
+{
+    // Write document to the rented writer
+    doc.WriteTo(writer);
+    writer.Flush();
+
+    // Get the result
+    ReadOnlySpan&lt;byte&gt; jsonBytes = bufferWriter.WrittenSpan;
+    Console.WriteLine(Encoding.UTF8.GetString(jsonBytes));
+}
+finally
+{
+    // Always return what you rent
+    workspace.ReturnWriterAndBuffer(writer, bufferWriter);
+}
+</code></pre>
+<p>This pattern is perfect for scenarios where you need the JSON bytes in memory before sending them somewhere - maybe you're computing a hash, compressing them, or storing them in a cache.</p>
+<h4 id="pattern-2-rent-writer-for-streaming-asp.net-core">Pattern 2: Rent Writer for Streaming (ASP.NET Core)</h4>
+<p>When you have your own <code>IBufferWriter&lt;byte&gt;</code> - such as ASP.NET Core's <code>PipeWriter</code> from <code>context.Response.BodyWriter</code> - rent a writer for it and write your document synchronously. This avoid intermediate buffers and copies, and writes straight to the response pipe.</p>
+<pre><code class="language-csharp">public async Task WriteApiResponse(HttpContext context)
+{
+    // Fetch data (async)
+    string userData = await FetchUserDataAsync();
+
+    // Build and write response (synchronous, within workspace scope)
+    using (JsonWorkspace workspace = JsonWorkspace.Create(
+        options: new JsonWriterOptions { Indented = false }))
+    {
+        // Build the document
+        using var doc = JsonElement.CreateBuilder(
+            workspace,
+            new JsonElement.Source((ref objectBuilder) =&gt;
+            {
+                objectBuilder.AddProperty(&quot;success&quot;u8, true);
+                objectBuilder.AddProperty(&quot;timestamp&quot;u8, DateTime.UtcNow);
+                objectBuilder.AddProperty(&quot;data&quot;u8, Encoding.UTF8.GetBytes(userData));
+            }));
+
+        // Rent writer for the response body writer
+        Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+
+        try
+        {
+            // Write directly to response pipe - zero copies!
+            doc.WriteTo(writer);
+            writer.Flush();
+        }
+        finally
+        {
+            workspace.ReturnWriter(writer);
+        }
+    } // Workspace disposed before any awaits
+
+    // Flush the pipe (async operation happens AFTER workspace disposal)
+    await context.Response.BodyWriter.FlushAsync();
+}
+</code></pre>
+<p>As always, build synchronously within the workspace scope, then perform async I/O <em>after</em> disposing the workspace. The writer writes directly to the pipe's buffer, which you flush once the workspace is safely disposed.</p>
+<h3 id="when-to-rent-writers">When to Rent Writers</h3>
+<p><strong>Rent when:</strong></p>
+<ul>
+<li>High-throughput scenarios (web APIs, message processing)</li>
+<li>You're serializing repeatedly in a loop</li>
+<li>You want zero-allocation serialization</li>
+<li>You're integrating with ASP.NET Core pipelines</li>
+</ul>
+<p><strong>Don't bother when:</strong></p>
+<ul>
+<li>One-off serialization in a CLI tool</li>
+<li>You're already allocation-bound elsewhere</li>
+<li>Simple scripts or utilities</li>
+</ul>
+<p>The rental pattern shines in hot paths where you're serializing thousands of documents per second. The workspace pools everything, and you get consistent, fast, allocation-free serialization.</p>
+<h2 id="performance-tips">Performance Tips</h2>
+<p>For optimal performance:</p>
+<ol>
+<li><strong>Workspaces can be rented for reuse</strong> - There is one backing workspace per calling thread, with many documents. This minimizes pool contention.</li>
+<li><strong>Pre-allocate capacity</strong> - When you know the document size, pass <code>estimatedMemberCount</code> to avoid resizing.</li>
+<li><strong>UTF-8 literals</strong> - Use the <code>u8</code> suffix for no encoding conversion - just UTF-8 bytes.</li>
+<li><strong>Stay native</strong> - Work with JSON Elements directly rather than constantly converting to strings.</li>
+<li><strong>Dispose promptly</strong> - Don't hold resources longer than needed.</li>
+<li><strong>Static delegates</strong> - Mark lambdas <code>static</code> when possible to avoid closures and allocations. .NET will usually find this optimization for you but if you get in the habit of marking them static, you will discover when you were inadvertently creating closures. Use context-supplying overloads to marshal data into the delegate.</li>
+</ol>
+<h2 id="common-patterns">Common Patterns</h2>
+<h3 id="building-api-responses">Building API Responses</h3>
+<p>Standard web API response - success flag, timestamp, data payload:</p>
+<pre><code class="language-csharp">using JsonWorkspace workspace = JsonWorkspace.Create();
+
+using var response = JsonElement.CreateBuilder(
+    workspace,
+    new JsonElement.Source(static (ref objectBuilder) =&gt;
+    {
+        objectBuilder.AddProperty(&quot;success&quot;u8, true);
+        objectBuilder.AddProperty(&quot;timestamp&quot;u8, DateTime.UtcNow);
+        objectBuilder.AddProperty(&quot;data&quot;u8, static (ref dataBuilder) =&gt;
+        {
+            dataBuilder.AddProperty(&quot;id&quot;u8, 12345);
+            dataBuilder.AddProperty(&quot;status&quot;u8, &quot;completed&quot;u8);
+        });
+    }));
+
+return response.RootElement.ToString();
+</code></pre>
+<h3 id="enriching-external-api-data">Enriching External API Data</h3>
+<p>A common use case in API gateways, middleware, and backend-for-frontend patterns: fetch data from an external API and augment it with additional information from databases or other services before returning to the client.</p>
+<p><strong>Scenario:</strong> You receive user data from an authentication service but need to add permissions and preferences from your database before sending to the client.</p>
+<pre><code class="language-csharp">// Parse API response from external service
+string apiResponse = &quot;&quot;&quot;
+    {
+        &quot;id&quot;: 12345,
+        &quot;username&quot;: &quot;johndoe&quot;,
+        &quot;email&quot;: &quot;john@example.com&quot;
+    }
+    &quot;&quot;&quot;;
+
+using ParsedJsonDocument&lt;JsonElement&gt; apiDoc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(apiResponse);
+JsonElement apiRoot = apiDoc.RootElement;
+
+// Get additional data from your systems
+string[] permissions = GetUserPermissions(userId);
+var preferences = GetUserPreferences(userId);
+
+// Build enriched document combining external and internal data
+using JsonWorkspace workspace = JsonWorkspace.Create();
+using var enrichedDoc = JsonElement.CreateBuilder(
+    workspace,
+    new JsonElement.Source((ref objectBuilder) =&gt;
+    {
+        // Original API data
+        objectBuilder.AddProperty(&quot;userId&quot;u8, apiRoot.GetProperty(&quot;id&quot;));
+        objectBuilder.AddProperty(&quot;username&quot;u8, apiRoot.GetProperty(&quot;username&quot;));
+
+        // Augmented data
+        objectBuilder.AddProperty(&quot;permissions&quot;u8, (ref permBuilder) =&gt;
+        {
+            foreach (string perm in permissions)
+            {
+                permBuilder.AddProperty(perm);
+            }
+        });
+
+        objectBuilder.AddProperty(&quot;preferences&quot;u8, (ref prefBuilder) =&gt;
+        {
+            prefBuilder.AddProperty(&quot;theme&quot;u8, preferences.Theme);
+            prefBuilder.AddProperty(&quot;notifications&quot;u8, preferences.NotificationsEnabled);
+        });
+    }));
+</code></pre>
+<h3 id="composing-documents-from-multiple-async-api-calls">Composing Documents from Multiple Async API Calls</h3>
+<p>A frequent pattern in modern applications involves fetching data from multiple services concurrently, then assembling the results into a single JSON document. This is common in API gateways, backend-for-frontend (BFF) layers, and orchestration services.</p>
+<p><strong>Key insight</strong>: <code>ParsedJsonDocument</code> instances are <strong>immutable and thread-safe</strong>. Unlike <code>JsonWorkspace</code>, they can safely cross async boundaries. This makes them perfect for gathering data from multiple sources asynchronously, then composing them into a new document.</p>
+<p><strong>Scenario</strong>: You're building a user profile endpoint that combines data from three microservices - user service, posts service, and analytics service. Each service call is independent, so you want to fetch them in parallel.</p>
+<pre><code class="language-csharp">public async Task&lt;string&gt; GetUserProfileAsync(int userId)
+{
+    // Step 1: Fetch data from multiple APIs concurrently
+    // ParsedJsonDocument is safe across async boundaries - these can await freely
+    Task&lt;ParsedJsonDocument&lt;JsonElement&gt;&gt; userTask =
+        FetchUserDataAsync(userId);
+    Task&lt;ParsedJsonDocument&lt;JsonElement&gt;&gt; postsTask =
+        FetchUserPostsAsync(userId);
+    Task&lt;ParsedJsonDocument&lt;JsonElement&gt;&gt; analyticsTask =
+        FetchUserAnalyticsAsync(userId);
+
+    // Wait for all APIs to complete
+    await Task.WhenAll(userTask, postsTask, analyticsTask);
+
+    using ParsedJsonDocument&lt;JsonElement&gt; userDoc = await userTask;
+    using ParsedJsonDocument&lt;JsonElement&gt; postsDoc = await postsTask;
+    using ParsedJsonDocument&lt;JsonElement&gt; analyticsDoc = await analyticsTask;
+
+    // Step 2: Create workspace and compose the final document
+    // All async work is done - workspace stays on this thread
+    string result;
+    using (JsonWorkspace workspace = JsonWorkspace.Create())
+    {
+        using var profileDoc = JsonElement.CreateBuilder(
+            workspace,
+            new JsonElement.Source((ref objectBuilder) =&gt;
+            {
+                // User info from first API
+                JsonElement user = userDoc.RootElement;
+                objectBuilder.AddProperty(&quot;userId&quot;u8, user.GetProperty(&quot;id&quot;));
+                objectBuilder.AddProperty(&quot;username&quot;u8, user.GetProperty(&quot;username&quot;));
+                objectBuilder.AddProperty(&quot;email&quot;u8, user.GetProperty(&quot;email&quot;));
+
+                // Posts from second API
+                objectBuilder.AddProperty(&quot;recentPosts&quot;u8, (ref postsBuilder) =&gt;
+                {
+                    JsonElement posts = postsDoc.RootElement.GetProperty(&quot;posts&quot;);
+                    foreach (JsonElement post in posts.EnumerateArray())
+                    {
+                        postsBuilder.AddProperty((ref postBuilder) =&gt;
+                        {
+                            postBuilder.AddProperty(&quot;id&quot;u8, post.GetProperty(&quot;id&quot;));
+                            postBuilder.AddProperty(&quot;title&quot;u8, post.GetProperty(&quot;title&quot;));
+                            postBuilder.AddProperty(&quot;publishedAt&quot;u8, post.GetProperty(&quot;publishedAt&quot;));
+                        });
+                    }
+                });
+
+                // Analytics from third API
+                objectBuilder.AddProperty(&quot;stats&quot;u8, (ref statsBuilder) =&gt;
+                {
+                    JsonElement analytics = analyticsDoc.RootElement;
+                    statsBuilder.AddProperty(&quot;totalViews&quot;u8, analytics.GetProperty(&quot;totalViews&quot;));
+                    statsBuilder.AddProperty(&quot;totalLikes&quot;u8, analytics.GetProperty(&quot;totalLikes&quot;));
+                    statsBuilder.AddProperty(&quot;followerCount&quot;u8, analytics.GetProperty(&quot;followerCount&quot;));
+                });
+
+                // Computed fields
+                objectBuilder.AddProperty(&quot;isActive&quot;u8,
+                    userDoc.RootElement.GetProperty(&quot;lastLoginAt&quot;).GetDateTime() &gt; DateTime.UtcNow.AddDays(-30));
+            }));
+
+        // Step 3: Serialize the document
+        // Note: ToString() is shown here for simplicity, but in production you'd typically
+        // use WriteTo() with a rented writer for zero-allocation serialization (see serialization examples)
+        result = profileDoc.RootElement.ToString();
+    }
+
+    return result;
+}
+
+// Helper methods to fetch from APIs
+async Task&lt;ParsedJsonDocument&lt;JsonElement&gt;&gt; FetchUserDataAsync(int userId)
+{
+    using var httpClient = new HttpClient();
+    string json = await httpClient.GetStringAsync($&quot;https://api.example.com/users/{userId}&quot;);
+    return ParsedJsonDocument&lt;JsonElement&gt;.Parse(json);
+}
+
+async Task&lt;ParsedJsonDocument&lt;JsonElement&gt;&gt; FetchUserPostsAsync(int userId)
+{
+    using var httpClient = new HttpClient();
+    string json = await httpClient.GetStringAsync($&quot;https://api.example.com/users/{userId}/posts&quot;);
+    return ParsedJsonDocument&lt;JsonElement&gt;.Parse(json);
+}
+
+async Task&lt;ParsedJsonDocument&lt;JsonElement&gt;&gt; FetchUserAnalyticsAsync(int userId)
+{
+    using var httpClient = new HttpClient();
+    string json = await httpClient.GetStringAsync($&quot;https://analytics.example.com/users/{userId}/stats&quot;);
+    return ParsedJsonDocument&lt;JsonElement&gt;.Parse(json);
+}
+</code></pre>
+<p><strong>Why this pattern works</strong>:</p>
+<ol>
+<li><strong>Parallel fetching</strong>: All three API calls happen concurrently with <code>Task.WhenAll</code>, minimizing total latency</li>
+<li><strong>Safe async boundaries</strong>: <code>ParsedJsonDocument</code> instances can be awaited and passed around freely - they're immutable</li>
+<li><strong>Efficient composition</strong>: The workspace is only created after all async work completes, staying on a single thread</li>
+<li><strong>Zero unnecessary allocations</strong>: We compose directly from the parsed documents using their native <code>JsonElement</code> properties - no string conversions or intermediate objects</li>
+</ol>
+<p>If each API call takes 100ms, sequential calls would take 300ms. With parallel fetching, you pay only ~100ms (longest call) plus composition overhead. The composition itself is allocation-efficient because you're working with the original parsed bytes, not creating intermediate .NET objects.</p>
+<h3 id="building-documents-across-async-boundaries-with-createunrented">Building Documents Across Async Boundaries with CreateUnrented</h3>
+<p>The standard <code>JsonWorkspace.Create()</code> uses thread-static storage for optimal performance. This means it's tied to the current thread and cannot cross async boundaries. If your code hits an <code>await</code>, the continuation might resume on a different thread, and accessing the workspace from that thread causes a runtime error.</p>
+<p>However, sometimes you need to partially build a document, make an async call mid-way, then continue building. For these cases, use <code>JsonWorkspace.CreateUnrented()</code>.</p>
+<p><strong>Key difference</strong>: <code>CreateUnrented()</code> allocates workspace storage without thread-static optimization. It's slightly less efficient, but can safely traverse async boundaries.</p>
+<p><strong>Scenario</strong>: You start building a document, need to fetch additional data asynchronously, then continue building:</p>
+<pre><code class="language-csharp">public async Task&lt;JsonElement&gt; BuildReportAsync()
+{
+    Console.WriteLine(&quot;Fetching initial data...&quot;);
+    string initialData = await FetchInitialDataAsync();
+    using ParsedJsonDocument&lt;JsonElement&gt; initialDoc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(initialData);
+
+    // Use CreateUnrented() - this workspace can cross async boundaries
+    using (JsonWorkspace workspace = JsonWorkspace.CreateUnrented())
+    {
+        // Start building the document
+        using var doc = JsonElement.CreateBuilder(
+            workspace,
+            new JsonElement.Source((ref objectBuilder) =&gt;
+            {
+                objectBuilder.AddProperty(&quot;initialData&quot;u8, initialDoc.RootElement.GetProperty(&quot;value&quot;));
+                objectBuilder.AddProperty(&quot;timestamp&quot;u8, DateTime.UtcNow);
+            }));
+
+        // Make an async call - workspace survives the await because it's unrented
+        string additionalData = await FetchAdditionalDataAsync();
+        using ParsedJsonDocument&lt;JsonElement&gt; additionalDoc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(additionalData);
+
+        // Continue modifying the document after the await
+        JsonElement.Mutable mutableRoot = doc.RootElement;
+        mutableRoot.SetProperty(&quot;additionalData&quot;, additionalDoc.RootElement.GetProperty(&quot;extra&quot;));
+        mutableRoot.SetProperty(&quot;completedAt&quot;, DateTime.UtcNow);
+
+        return doc.RootElement;
+    } // Workspace disposes mutable documents (doc), but NOT immutable ParsedJsonDocuments
+}
+</code></pre>
+<p><strong>When to use CreateUnrented():</strong></p>
+<ul>
+<li>Building documents in stages with async operations between stages</li>
+<li>Interactive scenarios where user input involves async I/O</li>
+<li>Complex workflows requiring async calls mid-construction</li>
+</ul>
+<p><strong>Performance trade-off</strong>: <code>CreateUnrented()</code> allocates slightly more resources than <code>Create()</code> because it doesn't use thread-static pooling. Use it only when you genuinely need to cross async boundaries during document construction.</p>
+<p><strong>Preferred pattern</strong>: If possible, gather all your data with async operations first, then use <code>Create()</code> to build the document synchronously. Reserve <code>CreateUnrented()</code> for cases where the async boundary is unavoidable during construction.</p>
+<h3 id="transforming-api-response-format">Transforming API Response Format</h3>
+<p>Convert between different API formats:</p>
+<pre><code class="language-csharp">// Legacy API format
+string legacyResponse = &quot;&quot;&quot;
+    {
+        &quot;user_id&quot;: 999,
+        &quot;user_name&quot;: &quot;alice&quot;,
+        &quot;user_role&quot;: &quot;admin&quot;
+    }
+    &quot;&quot;&quot;;
+
+using ParsedJsonDocument&lt;JsonElement&gt; legacyDoc =
+    ParsedJsonDocument&lt;JsonElement&gt;.Parse(legacyResponse);
+JsonElement legacyRoot = legacyDoc.RootElement;
+
+// Transform to modern format
+using JsonWorkspace workspace = JsonWorkspace.Create();
+using var transformedDoc = JsonElement.CreateBuilder(
+    workspace,
+    new JsonElement.Source((ref objectBuilder) =&gt;
+    {
+        // Map old fields to new structure
+        objectBuilder.AddProperty(&quot;id&quot;u8, legacyRoot.GetProperty(&quot;user_id&quot;).GetInt32());
+
+        objectBuilder.AddProperty(&quot;account&quot;u8, (ref accountBuilder) =&gt;
+        {
+            accountBuilder.AddProperty(&quot;username&quot;u8,
+                Encoding.UTF8.GetBytes(legacyRoot.GetProperty(&quot;user_name&quot;).GetString()!));
+        });
+
+        objectBuilder.AddProperty(&quot;authorization&quot;u8, (ref authBuilder) =&gt;
+        {
+            string role = legacyRoot.GetProperty(&quot;user_role&quot;).GetString()!;
+            authBuilder.AddProperty(&quot;role&quot;u8, Encoding.UTF8.GetBytes(role));
+            authBuilder.AddProperty(&quot;isAdmin&quot;u8, role == &quot;admin&quot;);
+        });
+
+        // Add modern metadata
+        objectBuilder.AddProperty(&quot;apiVersion&quot;u8, &quot;v2&quot;u8);
+    }));
+</code></pre>
+<h3 id="building-configuration">Building Configuration</h3>
+<pre><code class="language-csharp">using JsonWorkspace workspace = JsonWorkspace.Create();
+
+using var config = JsonElement.CreateBuilder(
+    workspace,
+    new JsonElement.Source(static (ref objectBuilder) =&gt;
+    {
+        objectBuilder.AddProperty(&quot;appName&quot;u8, &quot;MyApp&quot;u8);
+        objectBuilder.AddProperty(&quot;version&quot;u8, &quot;1.0.0&quot;u8);
+
+        objectBuilder.AddProperty(&quot;database&quot;u8, static (ref dbBuilder) =&gt;
+        {
+            dbBuilder.AddProperty(&quot;host&quot;u8, &quot;localhost&quot;u8);
+            dbBuilder.AddProperty(&quot;port&quot;u8, 5432);
+            dbBuilder.AddProperty(&quot;name&quot;u8, &quot;mydb&quot;u8);
+        });
+
+        objectBuilder.AddProperty(&quot;features&quot;u8, static (ref featuresBuilder) =&gt;
+        {
+            featuresBuilder.AddProperty(&quot;logging&quot;u8, true);
+            featuresBuilder.AddProperty(&quot;caching&quot;u8, true);
+            featuresBuilder.AddProperty(&quot;compression&quot;u8, false);
+        });
+    }));
+
+File.WriteAllText(&quot;config.json&quot;, config.RootElement.ToString());
+</code></pre>
+<h2 id="version-tracking-and-element-invalidation">Version Tracking and Element Invalidation</h2>
+<p>The <code>JsonElement.Mutable</code> type includes <strong>version tracking</strong> to detect when references become invalid after modifications. This is a safety feature that prevents accessing stale data.</p>
+<h3 id="understanding-version-tracking">Understanding Version Tracking</h3>
+<p>When you modify a mutable JSON document (by adding, removing, or changing elements), the document's internal version is incremented. Any <code>JsonElement.Mutable</code> references you obtained <strong>before</strong> the modification will detect this version change and throw an <code>InvalidOperationException</code> if you try to use them — with one important exception: the <strong>root element</strong> is always live.</p>
+<h3 id="the-root-element-is-always-live">The Root Element Is Always Live</h3>
+<p>The root element of a <code>JsonDocumentBuilder</code> (obtained via <code>doc.RootElement</code>) is always at index 0 in the document and is never relocated by mutations. This means a cached root reference remains valid across any number of child mutations. You can navigate from the root to different children and mutate them without refreshing the root reference.</p>
+<pre><code class="language-csharp">using JsonWorkspace workspace = JsonWorkspace.Create();
+
+using var doc = JsonElement.CreateBuilder(
+    workspace,
+    new JsonElement.Source(static (ref objectBuilder) =&gt;
+    {
+        objectBuilder.AddProperty(&quot;person&quot;u8, static (ref personBuilder) =&gt;
+        {
+            personBuilder.AddProperty(&quot;name&quot;u8, &quot;Alice&quot;u8);
+        });
+        objectBuilder.AddProperty(&quot;location&quot;u8, static (ref locBuilder) =&gt;
+        {
+            locBuilder.AddProperty(&quot;city&quot;u8, &quot;London&quot;u8);
+        });
+    }));
+
+JsonElement.Mutable root = doc.RootElement;
+
+// ✅ Navigate from root, mutate child, then navigate to another child.
+// Root is always live, so this works even though the first mutation bumped the version.
+root.GetProperty(&quot;person&quot;u8).SetProperty(&quot;name&quot;u8, &quot;Bob&quot;u8);
+root.GetProperty(&quot;location&quot;u8).SetProperty(&quot;city&quot;u8, &quot;NYC&quot;u8);
+</code></pre>
+<p>This also works when you cache intermediate children, provided you re-navigate from the root between mutations to different children:</p>
+<pre><code class="language-csharp">JsonElement.Mutable root = doc.RootElement;
+
+// Cache a child and perform multiple operations on it
+JsonElement.Mutable person = root.GetProperty(&quot;person&quot;u8);
+person.SetProperty(&quot;name&quot;u8, &quot;Bob&quot;u8);
+person.SetProperty(&quot;email&quot;u8, &quot;bob@example.com&quot;u8);  // Same element — version is updated in-place
+
+// Then navigate from root to a different child
+JsonElement.Mutable location = root.GetProperty(&quot;location&quot;u8);  // Root is still live
+location.SetProperty(&quot;city&quot;u8, &quot;NYC&quot;u8);
+</code></pre>
+<h3 id="intermediate-references-are-still-invalidated">Intermediate References Are Still Invalidated</h3>
+<p>While the root element is always live, intermediate child references behave as before: they are invalidated when a different element is mutated.</p>
+<pre><code class="language-csharp">JsonElement.Mutable root = doc.RootElement;
+
+// Cache two intermediate children
+JsonElement.Mutable person = root.GetProperty(&quot;person&quot;u8);
+JsonElement.Mutable location = root.GetProperty(&quot;location&quot;u8);
+
+// Mutate through 'person'
+person.SetProperty(&quot;name&quot;u8, &quot;Bob&quot;u8);
+
+// ❌ BAD: 'location' was obtained before the mutation and is now stale
+try
+{
+    location.SetProperty(&quot;city&quot;u8, &quot;NYC&quot;u8);  // Throws InvalidOperationException!
+}
+catch (InvalidOperationException)
+{
+    // The cached 'location' reference is invalid — re-navigate from root
+    location = root.GetProperty(&quot;location&quot;u8);  // Root is always live
+    location.SetProperty(&quot;city&quot;u8, &quot;NYC&quot;u8);    // Now it works
+}
+</code></pre>
+<h3 id="three-patterns-for-working-with-mutable-elements">Three Patterns for Working with Mutable Elements</h3>
+<table>
+<thead>
+<tr>
+<th>Pattern</th>
+<th>Valid?</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Navigate from cached root to different children</td>
+<td>✅</td>
+<td>Root is always live (index 0, never relocated)</td>
+</tr>
+<tr>
+<td>Multiple mutations on the same element</td>
+<td>✅</td>
+<td>Each mutation updates the element's version in-place</td>
+</tr>
+<tr>
+<td>Reuse a cached intermediate child after sibling mutation</td>
+<td>❌</td>
+<td>Intermediate references are invalidated by any other mutation</td>
+</tr>
+</tbody>
+</table>
+<h3 id="best-practices-for-version-tracking">Best Practices for Version Tracking</h3>
+<ol>
+<li><p><strong>Use the root element as your navigation hub</strong></p>
+<pre><code class="language-csharp">JsonElement.Mutable root = doc.RootElement;
+
+// Navigate from root for each mutation — root is always live
+root.GetProperty(&quot;field1&quot;u8).SetProperty(&quot;value&quot;u8, &quot;a&quot;u8);
+root.GetProperty(&quot;field2&quot;u8).SetProperty(&quot;value&quot;u8, &quot;b&quot;u8);
+</code></pre>
+</li>
+<li><p><strong>Perform all operations on one child before moving to another</strong></p>
+<pre><code class="language-csharp">JsonElement.Mutable numbers = root.GetProperty(&quot;numbers&quot;u8);
+numbers.SetItem(0, 100);
+numbers.SetItem(1, 200);
+
+// Re-navigate from root (always live) to get a fresh child reference
+JsonElement.Mutable tags = root.GetProperty(&quot;tags&quot;u8);
+tags.SetItem(0, &quot;updated&quot;u8);
+</code></pre>
+</li>
+<li><p><strong>Re-navigate from root if you need a child reference after a mutation</strong></p>
+<pre><code class="language-csharp">JsonElement.Mutable child = root.GetProperty(&quot;child&quot;u8);
+child.SetProperty(&quot;x&quot;u8, &quot;value&quot;u8);
+
+// 'otherChild' obtained before this point would be stale.
+// Re-navigate from root instead:
+JsonElement.Mutable otherChild = root.GetProperty(&quot;otherChild&quot;u8);
+</code></pre>
+</li>
+</ol>
+<h3 id="why-version-tracking-exists">Why Version Tracking Exists</h3>
+<p>Version tracking is a <strong>safety feature</strong> that prevents bugs caused by:</p>
+<ul>
+<li>Using stale references to data that may have been relocated in memory</li>
+<li>Accessing elements at incorrect indices after array modifications</li>
+<li>Reading properties that may have been removed or reordered</li>
+</ul>
+<p>Without version tracking, you could silently access incorrect data or crash with memory corruption. The <code>InvalidOperationException</code> is intentional and helps you write correct code. The root element exemption is safe because the root is always at index 0 and is never relocated.</p>
+<h2 id="comparison-with-system.text.json.nodes">Comparison with System.Text.Json.Nodes</h2>
+<h3 id="similar-capabilities">Similar Capabilities</h3>
+<p>Both <code>JsonDocumentBuilder</code> and <code>System.Text.Json.Nodes</code> (JsonNode, JsonObject, JsonArray) provide mutable JSON document manipulation:</p>
+<ul>
+<li><strong>Mutable Documents</strong>: Both allow in-place modification of JSON structures</li>
+<li><strong>Dynamic Construction</strong>: Both support building JSON from code</li>
+<li><strong>Property Access</strong>: Both provide ways to get/set properties and array elements</li>
+<li><strong>Type Conversions</strong>: Both can convert between JSON and .NET types</li>
+</ul>
+<h3 id="key-differences">Key Differences</h3>
+<h4 id="memory-model">1. <strong>Memory Model</strong></h4>
+<p><strong>JsonNode (System.Text.Json.Nodes)</strong>:</p>
+<ul>
+<li>Allocates individual objects for each JSON value (JsonObject, JsonArray, JsonValue)</li>
+<li>Each node is a separate heap allocation</li>
+<li>Can lead to significant GC pressure with large documents</li>
+<li>Suitable for small to medium documents or infrequent operations</li>
+<li>You can hold on to references to nodes without worrying about invalidation</li>
+</ul>
+<p><strong>JsonDocumentBuilder</strong>:</p>
+<ul>
+<li>Uses a flat, array-based representation in pooled memory</li>
+<li>All values stored in contiguous metadata arrays</li>
+<li>Minimal allocations through workspace pooling</li>
+<li>Optimized for high-throughput scenarios and large documents</li>
+<li>References to nodes are transient and only valid until the next modification (version tracking)</li>
+</ul>
+<h4 id="performance-characteristics">2. <strong>Performance Characteristics</strong></h4>
+<p><strong>JsonNode</strong>:</p>
+<pre><code class="language-csharp">// Parse and modify with JsonNode - creates many objects
+JsonNode? node = JsonNode.Parse(json);
+JsonObject nameObj = node![&quot;name&quot;]?.AsObject() ?? throw new InvalidOperationException();
+nameObj[&quot;firstName&quot;] = &quot;Matthew&quot;;  // Simple property set
+string result = nameObj.ToJsonString();
+</code></pre>
+<p><strong>JsonDocumentBuilder</strong>:</p>
+<pre><code class="language-csharp">// Parse and modify with JsonDocumentBuilder - pooled resources
+using ParsedJsonDocument&lt;JsonElement&gt; doc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(json);
+using JsonWorkspace workspace = JsonWorkspace.Create();
+using JsonDocumentBuilder&lt;JsonElement.Mutable&gt; builder = doc.RootElement.GetProperty(&quot;name&quot;).CreateBuilder(workspace);
+builder.RootElement.SetProperty(&quot;firstName&quot;, &quot;Matthew&quot;);
+string result = builder.RootElement.ToString();
+</code></pre>
+<p>Benchmark results show <code>JsonDocumentBuilder</code> with significantly lower allocations, especially for repeated operations or large documents, with a small performance overhead (which is more than compensated by the improvement if you go on to validate the document with JSON Schema).</p>
+<h4 id="api-design">3. <strong>API Design</strong></h4>
+<p><strong>JsonNode</strong>:</p>
+<ul>
+<li>Object-oriented, hierarchical tree structure</li>
+<li>Dictionary-like syntax: <code>node[&quot;property&quot;]</code></li>
+<li>Implicit type conversions</li>
+<li>More intuitive for simple scenarios</li>
+</ul>
+<p><strong>JsonDocumentBuilder</strong>:</p>
+<ul>
+<li>Struct-based, with mutable wrappers over flat arrays</li>
+<li>Explicit method calls: <code>GetProperty()</code>, <code>SetProperty()</code></li>
+<li>UTF-8 byte-oriented APIs alongside string APIs</li>
+<li>Builder patterns for construction</li>
+<li>More control over memory and encoding</li>
+</ul>
+<h4 id="interoperability">4. <strong>Interoperability</strong></h4>
+<p>We can interoperate with <code>System.Text.Json</code> using the <code>Corvus.Text.Json.Compatibility</code> library.</p>
+<p><strong>From JsonElement to JsonNode</strong>:</p>
+<pre><code class="language-csharp">using Corvus.Text.Json.Compatibility;
+using ParsedJsonDocument&lt;JsonElement&gt; doc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(json);
+JsonNode? node = doc.RootElement.AsJsonNode();
+</code></pre>
+<p><strong>From Corvus.Text.Json.JsonElement to System.Text.Json.JsonElement</strong>:</p>
+<pre><code class="language-csharp">using Corvus.Text.Json.Compatibility;
+using ParsedJsonDocument&lt;JsonElement&gt; doc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(json);
+System.Text.Json.JsonElement element = doc.RootElement.AsSTJsonElement();
+</code></pre>
+<p><strong>From System.Text.Json.JsonElement to Corvus.Text.Json.JsonElement</strong>:</p>
+<pre><code class="language-csharp">using Corvus.Text.Json.Compatibility;
+using ParsedJsonDocument&lt;JsonElement&gt; doc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(json);
+System.Text.Json.JsonElement element = doc.RootElement.FromSTJsonElement();
+</code></pre>
+<h4 id="use-case-recommendations">5. <strong>Use Case Recommendations</strong></h4>
+<p><strong>Choose JsonDocumentBuilder when</strong>:</p>
+<ul>
+<li>High-throughput scenarios (web services, message processing)</li>
+<li>Memory efficiency is critical</li>
+<li>Building or transforming JSON from external APIs</li>
+<li>Performing repeated operations where allocation costs matter</li>
+<li>Processing large JSON documents in memory</li>
+<li>You are going to go on to validate the document against JSON Schema</li>
+<li>You need to construct JSON dynamically from heterogeneous sources (databases, APIs, config) rather than serializing a single object graph</li>
+</ul>
+<p><strong>Choose JsonNode when</strong>:</p>
+<ul>
+<li>Working with small JSON documents</li>
+<li>Prioritizing code simplicity and readability</li>
+<li>Performance is not critical</li>
+<li>Making occasional modifications</li>
+<li>Integrating with APIs that expect JsonNode</li>
+</ul>
+<p><strong>Choose POCO objects with <code>System.Text.Json</code> serialization when</strong>:</p>
+<ul>
+<li>You have small, pre-existing .NET object hierarchies that already model your domain</li>
+<li>Computational speed is the priority (the serializer's code-gen path is heavily optimised)</li>
+<li>You do not need JSON Schema validation</li>
+<li>The shape of your JSON is fixed and well-known at compile time</li>
+<li>You are already using <code>JsonSerializer</code> throughout your codebase and want consistency</li>
+</ul>
+<blockquote>
+<p><strong>Tip</strong>: POCO serialization is the fastest way to produce JSON when you already have .NET objects in hand. The <code>System.Text.Json</code> source generator (<code>JsonSerializerContext</code>) can outperform any DOM-based approach for simple serialize/deserialize cycles. Reach for <code>JsonDocumentBuilder</code> or <code>JsonNode</code> when you need to <em>construct</em> or <em>transform</em> JSON dynamically, or when you need schema validation.</p>
+</blockquote>
+        </div>
+    </main>
+</div>
+
+    </div>
+    <footer class="site-footer">
+    <div class="site-footer__inner">
+        <div class="site-footer__sponsor">
+            Sponsored by
+            <a href="https://endjin.com" target="_blank" rel="noopener noreferrer">endjin</a>
+        </div>
+        <ul class="site-footer__links" role="list">
+            <li><a class="site-footer__link" href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html">Getting Started</a></li>
+            <li><a class="site-footer__link" href="/corvus-json-schema/pr-preview/pr-734/docs/index.html">Documentation</a></li>
+            <li><a class="site-footer__link" href="/corvus-json-schema/pr-preview/pr-734/examples/index.html">Examples</a></li>
+            <li><a class="site-footer__link" href="/corvus-json-schema/pr-preview/pr-734/api/index.html">API</a></li>
+            <li><a class="site-footer__link" href="https://github.com/corvus-dotnet/Corvus.JsonSchema" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            <li><a class="site-footer__link" href="https://www.nuget.org/packages?q=Corvus.Json" target="_blank" rel="noopener noreferrer">NuGet</a></li>
+        </ul>
+        <p class="site-footer__copyright">&copy; 2026 endjin Ltd.</p>
+    </div>
+</footer>
+
+    <!-- highlight.js for syntax highlighting (CSS targets .hljs-* classes) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/csharp.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js" defer></script>
+    <script>document.addEventListener('DOMContentLoaded',()=>hljs.highlightAll())</script>
+    <script src="/corvus-json-schema/pr-preview/pr-734/assets/js/main.js" defer></script>
+    <script src="/corvus-json-schema/pr-preview/pr-734/assets/js/sidebar-search.js" defer></script>
+    
+</body>
+</html>

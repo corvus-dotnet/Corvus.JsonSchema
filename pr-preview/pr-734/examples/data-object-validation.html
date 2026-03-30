@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1C1D21" />
+    <meta name="description" content="This recipe demonstrates how to validate JSON data against schema constraints using the generated types from Corvus.Text.Json, including fast boolean-only validation and detailed diagnostic output with the `JsonSchemaResultsCollector`." />
+    <meta name="keywords" content="recipe, JSON Schema, C#, data, object, validation, type, required, properties, minLength, maxLength, format, minimum, maximum, EvaluateSchema, IsValid, CreateBuilder" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:description" content="This recipe demonstrates how to validate JSON data against schema constraints using the generated types from Corvus.Text.Json, including fast boolean-only validation and detailed diagnostic output with the `JsonSchemaResultsCollector`." />
+    <meta name="twitter:image" content="/corvus-json-schema/pr-preview/pr-734/assets/images/og-corvus.png" />
+    <meta name="twitter:title" content="Data Object Validation - Corvus.Text.Json Examples" />
+    <meta property="article:tag" content="recipe" />
+    <meta property="article:tag" content="JSON Schema" />
+    <meta property="article:tag" content="C#" />
+    <meta property="article:tag" content="data" />
+    <meta property="article:tag" content="object" />
+    <meta property="article:tag" content="validation" />
+    <meta property="article:tag" content="type" />
+    <meta property="article:tag" content="required" />
+    <meta property="article:tag" content="properties" />
+    <meta property="article:tag" content="minLength" />
+    <meta property="article:tag" content="maxLength" />
+    <meta property="article:tag" content="format" />
+    <meta property="article:tag" content="minimum" />
+    <meta property="article:tag" content="maximum" />
+    <meta property="article:tag" content="EvaluateSchema" />
+    <meta property="article:tag" content="IsValid" />
+    <meta property="article:tag" content="CreateBuilder" />
+    <meta property="og:description" content="This recipe demonstrates how to validate JSON data against schema constraints using the generated types from Corvus.Text.Json, including fast boolean-only validation and detailed diagnostic output with the `JsonSchemaResultsCollector`." />
+    <meta property="og:image" content="/corvus-json-schema/pr-preview/pr-734/assets/images/og-corvus.png" />
+    <meta property="og:title" content="Data Object Validation - Corvus.Text.Json Examples" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://corvus-oss.org/corvus-json-schema/examples/data-object-validation/" />
+    <title>Data Object Validation - Corvus.Text.Json Examples</title>
+    <link itemprop="url" href="https://corvus-oss.org/corvus-json-schema/examples/data-object-validation/" />
+    <link rel="canonical" href="https://corvus-oss.org/corvus-json-schema/examples/data-object-validation/" />
+    <link rel="sitemap" href="https://corvus-oss.org/corvus-json-schema/sitemap.xml" />
+    <!-- Styles -->
+    <link rel="stylesheet" href="/corvus-json-schema/pr-preview/pr-734/main.css" />
+    <link rel="icon" type="image/svg+xml" href="/corvus-json-schema/pr-preview/pr-734/assets/images/favicon.svg" />
+    
+</head>
+<body>
+    <a class="sr-only" href="#main-content">Skip to content</a>
+<header class="site-header">
+    <div class="site-header__inner">
+        <a class="site-header__brand" href="/corvus-json-schema/pr-preview/pr-734/index.html" aria-label="Corvus.JsonSchema home">
+            <img src="/corvus-json-schema/pr-preview/pr-734/assets/images/logo-corvus.svg" alt="" width="28" height="28" aria-hidden="true" />
+            Corvus<span style="color:var(--color-brand)">.</span>Json<span style="color:var(--color-brand)">Schema</span>
+        </a>
+        <nav class="site-header__nav-desktop" aria-label="Main navigation">
+                    <a href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html"
+                       class="site-header__link "
+                       >Getting Started</a>
+                    <a href="/corvus-json-schema/pr-preview/pr-734/getting-started-v4/index.html"
+                       class="site-header__link "
+                       >Getting Started (V4)</a>
+                    <a href="/corvus-json-schema/pr-preview/pr-734/docs/index.html"
+                       class="site-header__link "
+                       >Documentation</a>
+                    <a href="/corvus-json-schema/pr-preview/pr-734/examples/index.html"
+                       class="site-header__link is-active"
+                       aria-current=page>Examples</a>
+                    <a href="/corvus-json-schema/pr-preview/pr-734/api/index.html"
+                       class="site-header__link "
+                       >API</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/playground/"
+               class="site-header__link"
+               target="_blank" rel="noopener noreferrer"
+               title="Interactive JSON Schema playground">Playground</a>
+            <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+               class="site-header__link" target="_blank" rel="noopener noreferrer"
+               aria-label="View on GitHub">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            </a>
+        </nav>
+        <button class="site-header__menu-toggle js-toggle-menu"
+                aria-expanded="false" aria-label="Toggle menu">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+        </button>
+    </div>
+</header>
+<nav class="site-header__nav-mobile js-mobile-nav" aria-label="Mobile navigation">
+            <a href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html" class="site-header__link">Getting Started</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/getting-started-v4/index.html" class="site-header__link">Getting Started (V4)</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/docs/index.html" class="site-header__link">Documentation</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/examples/index.html" class="site-header__link">Examples</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/api/index.html" class="site-header__link">API</a>
+    <a href="/corvus-json-schema/pr-preview/pr-734/playground/" class="site-header__link" target="_blank" rel="noopener noreferrer">Playground</a>
+    <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+       class="site-header__link" target="_blank" rel="noopener noreferrer">GitHub</a>
+</nav>
+
+    <div class="page-content">
+    <div class="layout-docs container">
+    <button class="sidebar-toggle" aria-label="Toggle navigation" aria-expanded="false"></button>
+<div class="sidebar-backdrop"></div>
+<aside class="sidebar">
+    <div class="sidebar__inner">
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Getting Started</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                    <li class="sidebar__item"><a class="sidebar__link" href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html">Tutorial</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Documentation</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/parsed-json-document.html">Parsing &amp; Reading JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/json-document-builder.html">Building &amp; Mutating JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/source-generator.html">Source Generator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/code-generator.html">CLI Code Generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/validator.html">Dynamic Schema Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/migrating-from-v4-to-v5.html">Migrating from V4</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/using-copilot-for-migration.html">Copilot Migration</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/migration-analyzers.html">Migration Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/analyzers.html">Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/schema-evaluator.html">Standalone Schema Evaluator</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Examples</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/data-object.html">Simple Data Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link is-active" href="/corvus-json-schema/pr-preview/pr-734/examples/data-object-validation.html">Data Object Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/reusing-common-types.html">Reusing Common Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/open-versus-closed-types.html">Open Versus Closed Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/extending-a-base-type.html">Extending a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/constraining-a-base-type.html">Constraining a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/creating-a-strongly-typed-array.html">Strongly Typed Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/creating-an-array-of-higher-rank.html">Multi-Dimensional Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/working-with-tensors.html">Working with Tensors</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/creating-tuples.html">Creating Tuples</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/interfaces-and-mix-in-types.html">Interfaces and Mix-In Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/pattern-matching.html">Pattern Matching and Discriminated Unions</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/polymorphism-with-discriminators.html">Polymorphism with Discriminator Properties</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/string-enumerations.html">String Enumerations and Pattern Matching</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/numeric-enumerations.html">Numeric Enumerations</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/maps.html">Maps of Strings to Strongly Typed Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/mapping-input-and-output-values.html">Mapping Input and Output Values</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</aside>
+
+    <main id="main-content" class="layout-docs__main">
+        <div class="doc__content">
+            <h1>Data Object Validation</h1>
+                <div class="card__tags" style="margin-bottom:1.5rem">
+                        <span class="card__tag">recipe</span>
+                        <span class="card__tag">JSON Schema</span>
+                        <span class="card__tag">C#</span>
+                        <span class="card__tag">data</span>
+                        <span class="card__tag">object</span>
+                        <span class="card__tag">validation</span>
+                        <span class="card__tag">type</span>
+                        <span class="card__tag">required</span>
+                        <span class="card__tag">properties</span>
+                        <span class="card__tag">minLength</span>
+                        <span class="card__tag">maxLength</span>
+                        <span class="card__tag">format</span>
+                        <span class="card__tag">minimum</span>
+                        <span class="card__tag">maximum</span>
+                        <span class="card__tag">EvaluateSchema</span>
+                        <span class="card__tag">IsValid</span>
+                        <span class="card__tag">CreateBuilder</span>
+                </div>
+<p>This recipe demonstrates how to validate JSON data against schema constraints using the generated types from Corvus.Text.Json, including fast boolean-only validation and detailed diagnostic output with the <code>JsonSchemaResultsCollector</code>.</p>
+<h2 id="the-pattern">The Pattern</h2>
+<p>JSON Schema lets you define structural rules constraining the shape of the JSON documents you expect to conform to that schema. The schema statically defines those rules, and a validation tool (in this case, the types generated by Corvus.Text.Json) applies them to an instance of a JSON document.</p>
+<p>If the document is valid, you know you have <em>structurally valid data</em> over which you can safely reason, based on the constraints in the schema.</p>
+<p>The rules of JSON Schema are powerful, but certainly do not support every kind of business rule you could imagine. In particular, they cannot deal with &quot;non-local&quot; context (e.g. &quot;the current time&quot;, &quot;this value somewhere else in the document&quot;, &quot;some other system state from outside the document&quot;). Schema validation operates on the document alone — it has no access to external databases, session state, the system clock, or any other runtime context.</p>
+<p>So &quot;validation&quot; is typically in two phases:</p>
+<ol>
+<li><strong>Structural validation with JSON Schema</strong> — does the data conform to the schema's type, format, and range constraints? Are the required properties present? Are the string lengths within bounds? JSON Schema handles this exhaustively.</li>
+<li><strong>Semantic validation with traditional business rules in a stateful context</strong> — does this person's age match their birth date? Is this ID unique in the database? These questions require non-local context that JSON Schema cannot access, so they must be answered in your application code.</li>
+</ol>
+<p>Essentially, you can dynamically apply your business rules to the document in some stateful context, safe in the knowledge that the document is structurally sound.</p>
+<h2 id="the-schema">The Schema</h2>
+<p>We build on the <code>Person</code> schema from <a href="/corvus-json-schema/pr-preview/pr-734/examples/data-object.html">Recipe 001</a>, adding constraints. We require <code>familyName</code>, <code>givenName</code>, and <code>birthDate</code>. String lengths are constrained to 1–256 characters. Height is constrained to a positive double with a maximum of 3.0.</p>
+<p>File: <code>person-constraints.json</code></p>
+<pre><code class="language-json">{
+  &quot;title&quot;: &quot;The person schema https://schema.org/Person&quot;,
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;required&quot;: [ &quot;familyName&quot;, &quot;givenName&quot;, &quot;birthDate&quot; ],
+  &quot;properties&quot;: {
+    &quot;familyName&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;maxLength&quot;: 256
+    },
+    &quot;givenName&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;maxLength&quot;: 256
+    },
+    &quot;otherNames&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;maxLength&quot;: 256
+    },
+    &quot;birthDate&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;format&quot;: &quot;date&quot;
+    },
+    &quot;height&quot;: {
+      &quot;type&quot;: &quot;number&quot;,
+      &quot;format&quot;: &quot;double&quot;,
+      &quot;minimum&quot;: 0.0,
+      &quot;maximum&quot;: 3.0
+    }
+  }
+}
+</code></pre>
+<p>The constraints used in this recipe — <code>required</code>, <code>minLength</code>, <code>maxLength</code>, <code>minimum</code>, <code>maximum</code>, and <code>format</code> — are the most commonly used JSON Schema keywords in practice. There are many other <a href="https://json-schema.org/understanding-json-schema/reference/type#type-specific-keywords">type-specific constraints</a> you can apply, from a regular expression <code>pattern</code> on a string, to numerous <code>format</code> values on strings or numbers such as <code>date-time</code>, <code>uint16</code>, <code>uuid</code>. It is worth getting familiar with the full set of constraints and the .NET types emitted when you use them.</p>
+<p>Custom types are generated for the constrained properties:</p>
+<ul>
+<li><code>GivenNameEntity</code> for <code>GivenName</code></li>
+<li><code>FamilyNameEntity</code> for <code>FamilyName</code></li>
+<li><code>OtherNamesEntity</code> for <code>OtherNames</code></li>
+<li><code>HeightEntity</code> for <code>Height</code></li>
+</ul>
+<p>These can be used as &quot;specialized&quot; versions of the primitive types on which they are based.</p>
+<p>Because <code>Height</code> has <code>&quot;format&quot;: &quot;double&quot;</code>, an implicit conversion to <code>double</code> is available (no explicit cast needed).</p>
+<h2 id="generated-code-usage">Generated Code Usage</h2>
+<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/v5/docs/ExampleRecipes/002-DataObjectValidation/Program.cs">Example code</a></p>
+<h3 id="creating-an-instance-with-invalid-data">Creating an instance with invalid data</h3>
+<pre><code class="language-csharp">using JsonWorkspace workspace = JsonWorkspace.Create();
+using var personDoc = PersonConstraints.CreateBuilder(
+    workspace,
+    birthDate: new LocalDate(1820, 1, 17),
+    familyName: &quot;Brontë&quot;,
+    givenName: &quot;Anne&quot;,
+    height: 1.52,
+    otherNames: string.Empty);
+PersonConstraints personConstraints = personDoc.RootElement;
+</code></pre>
+<h3 id="fast-boolean-only-validation">Fast boolean-only validation</h3>
+<pre><code class="language-csharp">// Zero-allocation boolean-only validation
+if (!personConstraints.EvaluateSchema())
+{
+    Console.WriteLine(&quot;Validation failed.&quot;);
+}
+</code></pre>
+<h3 id="detailed-validation-with-diagnostics">Detailed validation with diagnostics</h3>
+<pre><code class="language-csharp">// Use a results collector for diagnostics
+// (best used only when fast validation indicates an invalid condition)
+using JsonSchemaResultsCollector collector =
+    JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+
+personConstraints.EvaluateSchema(collector);
+
+foreach (JsonSchemaResultsCollector.Result result in collector.EnumerateResults())
+{
+    if (!result.IsMatch)
+    {
+        Console.WriteLine($&quot;  Message:  {result.GetMessageText()}&quot;);
+        Console.WriteLine($&quot;  Path:     {result.GetDocumentEvaluationLocationText()}&quot;);
+        Console.WriteLine($&quot;  Schema:   {result.GetSchemaEvaluationLocationText()}&quot;);
+    }
+}
+</code></pre>
+<h3 id="using-format-based-implicit-conversions">Using format-based implicit conversions</h3>
+<pre><code class="language-csharp">// Height has format: &quot;double&quot;, so implicit conversion to double is available
+double heightValue = personConstraints.Height;
+</code></pre>
+<h3 id="verbosity-levels">Verbosity levels</h3>
+<p>The <code>JsonSchemaResultsCollector</code> supports three levels:</p>
+<ul>
+<li><code>Basic</code> — failure messages only (lowest overhead, for production)</li>
+<li><code>Detailed</code> — failures with document path and schema location (for diagnostics)</li>
+<li><code>Verbose</code> — all events including successes (for debugging)</li>
+</ul>
+<h2 id="key-differences-from-v4">Key Differences from V4</h2>
+<h3 id="v4-corvus.json">V4 (Corvus.Json)</h3>
+<pre><code class="language-csharp">// Create directly
+PersonConstraints person = PersonConstraints.Create(
+    birthDate: new LocalDate(1820, 1, 17),
+    familyName: &quot;Brontë&quot;,
+    givenName: &quot;Anne&quot;,
+    height: 1.52,
+    otherNames: string.Empty);
+
+// Boolean-only validation
+bool isValid = person.IsValid();
+
+// Detailed validation
+ValidationContext result = person.Validate(ValidationContext.ValidContext);
+if (!result.IsValid)
+{
+    foreach (ValidationResult error in result.Results)
+    {
+        Console.WriteLine($&quot;  {error.Message} at {error.Location}&quot;);
+    }
+}
+</code></pre>
+<h3 id="v5-corvus.text.json">V5 (Corvus.Text.Json)</h3>
+<pre><code class="language-csharp">// Create using workspace and builder pattern
+using JsonWorkspace workspace = JsonWorkspace.Create();
+using var personDoc = PersonConstraints.CreateBuilder(
+    workspace,
+    birthDate: new LocalDate(1820, 1, 17),
+    familyName: &quot;Brontë&quot;,
+    givenName: &quot;Anne&quot;,
+    height: 1.52,
+    otherNames: string.Empty);
+PersonConstraints person = personDoc.RootElement;
+
+// Boolean-only validation (zero-allocation)
+bool isValid = person.EvaluateSchema();
+
+// Detailed validation with results collector
+using JsonSchemaResultsCollector collector =
+    JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+person.EvaluateSchema(collector);
+
+foreach (JsonSchemaResultsCollector.Result result in collector.EnumerateResults())
+{
+    if (!result.IsMatch)
+    {
+        Console.WriteLine($&quot;  {result.GetMessageText()} at {result.GetDocumentEvaluationLocationText()}&quot;);
+    }
+}
+</code></pre>
+<p><strong>Key differences:</strong></p>
+<ul>
+<li>V5 uses <code>EvaluateSchema()</code> instead of V4's <code>IsValid()</code> for boolean validation</li>
+<li>V5 uses <code>JsonSchemaResultsCollector</code> with configurable verbosity levels instead of V4's <code>ValidationContext</code></li>
+<li>V5 requires a <code>JsonWorkspace</code> for creation via <code>CreateBuilder(workspace, prop: value, ...)</code></li>
+<li>V5 results collector is disposable and uses <code>using</code> for deterministic cleanup</li>
+<li>Both versions support a two-phase validation pattern: fast boolean check first, detailed diagnostics only on failure</li>
+</ul>
+<h2 id="running-the-example">Running the Example</h2>
+<pre><code class="language-bash">cd docs/ExampleRecipes/002-DataObjectValidation
+dotnet run
+</code></pre>
+<h2 id="related-patterns">Related Patterns</h2>
+<ul>
+<li><a href="/corvus-json-schema/pr-preview/pr-734/examples/data-object.html">001-DataObject</a> - Simple data objects without constraints</li>
+<li><a href="/corvus-json-schema/pr-preview/pr-734/examples/open-versus-closed-types.html">004-OpenVersusClosedTypes</a> - Open vs. closed types and <code>unevaluatedProperties</code></li>
+<li><a href="/corvus-json-schema/pr-preview/pr-734/examples/constraining-a-base-type.html">006-ConstrainingABaseType</a> - Applying constraints via <code>allOf</code></li>
+</ul>
+<h2 id="frequently-asked-questions">Frequently Asked Questions</h2>
+<h3 id="how-fast-is-schema-validation-compared-to-manual-property-checks">How fast is schema validation compared to manual property checks?</h3>
+<p>The boolean-only <code>EvaluateSchema()</code> overload is optimized for the fast path: it performs zero allocations and short-circuits on the first failure. For most documents, it is comparable in cost to hand-written <code>if</code> checks. The detailed <code>EvaluateSchema(collector)</code> overload is more expensive because it must collect diagnostics for every constraint — use it only after the fast path indicates failure.</p>
+<h3 id="when-should-i-use-basic-vs.detailed-vs.verbose-results-levels">When should I use <code>Basic</code> vs. <code>Detailed</code> vs. <code>Verbose</code> results levels?</h3>
+<p>Use <code>Basic</code> in production when you only need failure messages (e.g., to return a 400 response). Use <code>Detailed</code> when diagnosing validation failures during development or in error-reporting middleware — it includes the JSON Pointer path to the failing property and the schema location of the constraint. Use <code>Verbose</code> only for debugging, as it logs every constraint evaluation including successes.</p>
+<h3 id="what-is-the-difference-between-structural-validation-and-semantic-validation">What is the difference between structural validation and semantic validation?</h3>
+<p>Structural validation (handled by JSON Schema) checks that the data conforms to type, format, and range constraints — e.g., &quot;is <code>familyName</code> a string between 1 and 256 characters?&quot; Semantic validation (handled by your application code) checks business rules that require external context — e.g., &quot;is this email address unique in the database?&quot; or &quot;is the birth date in the past?&quot; Always perform structural validation first, then apply semantic rules to structurally valid data.</p>
+<h3 id="does-corvus.text.json-validate-format-keywords-automatically">Does Corvus.Text.Json validate <code>format</code> keywords automatically?</h3>
+<p><strong>A:</strong> Yes. When a property has a <code>format</code> keyword (e.g., <code>&quot;format&quot;: &quot;date&quot;</code>, <code>&quot;format&quot;: &quot;double&quot;</code>, <code>&quot;format&quot;: &quot;uuid&quot;</code>), <code>EvaluateSchema()</code> validates that the value conforms to that format. Note that Corvus.Text.Json enables format <em>assertion</em> by default, even though the JSON Schema 2020-12 specification treats <code>format</code> as an <em>annotation</em> (not an assertion) by default. This means invalid formats will cause validation to fail out of the box. If you need the spec-compliant annotation-only behaviour, you can disable format assertion via configuration options.</p>
+<h3 id="can-i-add-custom-validation-constraints-beyond-what-json-schema-supports">Can I add custom validation constraints beyond what JSON Schema supports?</h3>
+<p>JSON Schema does not support non-local constraints (database lookups, cross-property comparisons, etc.), but you can layer your own validation on top. First call <code>EvaluateSchema()</code> to ensure structural validity, then run your custom business rules against the typed properties. This two-phase approach keeps your custom validation code simple because you can rely on the structural guarantees already established by the schema.</p>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "How fast is schema validation compared to manual property checks?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The boolean-only EvaluateSchema() overload is optimized for the fast path: it performs zero allocations and short-circuits on the first failure. For most documents, it is comparable in cost to hand-written if checks. The detailed EvaluateSchema(collector) overload is more expensive because it must collect diagnostics for every constraint — use it only after the fast path indicates failure."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "When should I use `Basic` vs. `Detailed` vs. `Verbose` results levels?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Use Basic in production when you only need failure messages (e.g., to return a 400 response). Use Detailed when diagnosing validation failures during development or in error-reporting middleware — it includes the JSON Pointer path to the failing property and the schema location of the constraint. Use Verbose only for debugging, as it logs every constraint evaluation including successes."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is the difference between structural validation and semantic validation?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Structural validation (handled by JSON Schema) checks that the data conforms to type, format, and range constraints — e.g., \"is familyName a string between 1 and 256 characters?\" Semantic validation (handled by your application code) checks business rules that require external context — e.g., \"is this email address unique in the database?\" or \"is the birth date in the past?\" Always perform structural validation first, then apply semantic rules to structurally valid data."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does Corvus.Text.Json validate `format` keywords automatically?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "**A:** Yes. When a property has a format keyword (e.g., \"format\": \"date\", \"format\": \"double\", \"format\": \"uuid\"), EvaluateSchema() validates that the value conforms to that format. Note that Corvus.Text.Json enables format *assertion* by default, even though the JSON Schema 2020-12 specification treats format as an *annotation* (not an assertion) by default. This means invalid formats will cause validation to fail out of the box. If you need the spec-compliant annotation-only behaviour, you can disable format assertion via configuration options."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I add custom validation constraints beyond what JSON Schema supports?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "JSON Schema does not support non-local constraints (database lookups, cross-property comparisons, etc.), but you can layer your own validation on top. First call EvaluateSchema() to ensure structural validity, then run your custom business rules against the typed properties. This two-phase approach keeps your custom validation code simple because you can rely on the structural guarantees already established by the schema."
+      }
+    }
+  ]
+}
+</script>
+        </div>
+    </main>
+</div>
+
+    </div>
+    <footer class="site-footer">
+    <div class="site-footer__inner">
+        <div class="site-footer__sponsor">
+            Sponsored by
+            <a href="https://endjin.com" target="_blank" rel="noopener noreferrer">endjin</a>
+        </div>
+        <ul class="site-footer__links" role="list">
+            <li><a class="site-footer__link" href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html">Getting Started</a></li>
+            <li><a class="site-footer__link" href="/corvus-json-schema/pr-preview/pr-734/docs/index.html">Documentation</a></li>
+            <li><a class="site-footer__link" href="/corvus-json-schema/pr-preview/pr-734/examples/index.html">Examples</a></li>
+            <li><a class="site-footer__link" href="/corvus-json-schema/pr-preview/pr-734/api/index.html">API</a></li>
+            <li><a class="site-footer__link" href="https://github.com/corvus-dotnet/Corvus.JsonSchema" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            <li><a class="site-footer__link" href="https://www.nuget.org/packages?q=Corvus.Json" target="_blank" rel="noopener noreferrer">NuGet</a></li>
+        </ul>
+        <p class="site-footer__copyright">&copy; 2026 endjin Ltd.</p>
+    </div>
+</footer>
+
+    <!-- highlight.js for syntax highlighting (CSS targets .hljs-* classes) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/csharp.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js" defer></script>
+    <script>document.addEventListener('DOMContentLoaded',()=>hljs.highlightAll())</script>
+    <script src="/corvus-json-schema/pr-preview/pr-734/assets/js/main.js" defer></script>
+    <script src="/corvus-json-schema/pr-preview/pr-734/assets/js/sidebar-search.js" defer></script>
+    
+</body>
+</html>

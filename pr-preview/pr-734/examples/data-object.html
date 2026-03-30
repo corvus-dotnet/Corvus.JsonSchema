@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1C1D21" />
+    <meta name="description" content="This recipe demonstrates how to define a simple data object composed of primitive values using JSON Schema, and how the Corvus.Text.Json code generator produces strongly-typed .NET types with rich property accessors, zero-allocation comparisons, and NodaTime integration." />
+    <meta name="keywords" content="recipe, JSON Schema, C#, simple, data, objects, type, properties, format, ValueEquals, TryGetValue, IsUndefined, IsNull, CreateBuilder, SetProperty" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:description" content="This recipe demonstrates how to define a simple data object composed of primitive values using JSON Schema, and how the Corvus.Text.Json code generator produces strongly-typed .NET types with rich property accessors, zero-allocation comparisons, and NodaTime integration." />
+    <meta name="twitter:image" content="/corvus-json-schema/pr-preview/pr-734/assets/images/og-corvus.png" />
+    <meta name="twitter:title" content="Simple Data Objects - Corvus.Text.Json Examples" />
+    <meta property="article:tag" content="recipe" />
+    <meta property="article:tag" content="JSON Schema" />
+    <meta property="article:tag" content="C#" />
+    <meta property="article:tag" content="simple" />
+    <meta property="article:tag" content="data" />
+    <meta property="article:tag" content="objects" />
+    <meta property="article:tag" content="type" />
+    <meta property="article:tag" content="properties" />
+    <meta property="article:tag" content="format" />
+    <meta property="article:tag" content="ValueEquals" />
+    <meta property="article:tag" content="TryGetValue" />
+    <meta property="article:tag" content="IsUndefined" />
+    <meta property="article:tag" content="IsNull" />
+    <meta property="article:tag" content="CreateBuilder" />
+    <meta property="article:tag" content="SetProperty" />
+    <meta property="og:description" content="This recipe demonstrates how to define a simple data object composed of primitive values using JSON Schema, and how the Corvus.Text.Json code generator produces strongly-typed .NET types with rich property accessors, zero-allocation comparisons, and NodaTime integration." />
+    <meta property="og:image" content="/corvus-json-schema/pr-preview/pr-734/assets/images/og-corvus.png" />
+    <meta property="og:title" content="Simple Data Objects - Corvus.Text.Json Examples" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://corvus-oss.org/corvus-json-schema/examples/data-object/" />
+    <title>Simple Data Objects - Corvus.Text.Json Examples</title>
+    <link itemprop="url" href="https://corvus-oss.org/corvus-json-schema/examples/data-object/" />
+    <link rel="canonical" href="https://corvus-oss.org/corvus-json-schema/examples/data-object/" />
+    <link rel="sitemap" href="https://corvus-oss.org/corvus-json-schema/sitemap.xml" />
+    <!-- Styles -->
+    <link rel="stylesheet" href="/corvus-json-schema/pr-preview/pr-734/main.css" />
+    <link rel="icon" type="image/svg+xml" href="/corvus-json-schema/pr-preview/pr-734/assets/images/favicon.svg" />
+    
+</head>
+<body>
+    <a class="sr-only" href="#main-content">Skip to content</a>
+<header class="site-header">
+    <div class="site-header__inner">
+        <a class="site-header__brand" href="/corvus-json-schema/pr-preview/pr-734/index.html" aria-label="Corvus.JsonSchema home">
+            <img src="/corvus-json-schema/pr-preview/pr-734/assets/images/logo-corvus.svg" alt="" width="28" height="28" aria-hidden="true" />
+            Corvus<span style="color:var(--color-brand)">.</span>Json<span style="color:var(--color-brand)">Schema</span>
+        </a>
+        <nav class="site-header__nav-desktop" aria-label="Main navigation">
+                    <a href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html"
+                       class="site-header__link "
+                       >Getting Started</a>
+                    <a href="/corvus-json-schema/pr-preview/pr-734/getting-started-v4/index.html"
+                       class="site-header__link "
+                       >Getting Started (V4)</a>
+                    <a href="/corvus-json-schema/pr-preview/pr-734/docs/index.html"
+                       class="site-header__link "
+                       >Documentation</a>
+                    <a href="/corvus-json-schema/pr-preview/pr-734/examples/index.html"
+                       class="site-header__link is-active"
+                       aria-current=page>Examples</a>
+                    <a href="/corvus-json-schema/pr-preview/pr-734/api/index.html"
+                       class="site-header__link "
+                       >API</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/playground/"
+               class="site-header__link"
+               target="_blank" rel="noopener noreferrer"
+               title="Interactive JSON Schema playground">Playground</a>
+            <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+               class="site-header__link" target="_blank" rel="noopener noreferrer"
+               aria-label="View on GitHub">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            </a>
+        </nav>
+        <button class="site-header__menu-toggle js-toggle-menu"
+                aria-expanded="false" aria-label="Toggle menu">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+        </button>
+    </div>
+</header>
+<nav class="site-header__nav-mobile js-mobile-nav" aria-label="Mobile navigation">
+            <a href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html" class="site-header__link">Getting Started</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/getting-started-v4/index.html" class="site-header__link">Getting Started (V4)</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/docs/index.html" class="site-header__link">Documentation</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/examples/index.html" class="site-header__link">Examples</a>
+            <a href="/corvus-json-schema/pr-preview/pr-734/api/index.html" class="site-header__link">API</a>
+    <a href="/corvus-json-schema/pr-preview/pr-734/playground/" class="site-header__link" target="_blank" rel="noopener noreferrer">Playground</a>
+    <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+       class="site-header__link" target="_blank" rel="noopener noreferrer">GitHub</a>
+</nav>
+
+    <div class="page-content">
+    <div class="layout-docs container">
+    <button class="sidebar-toggle" aria-label="Toggle navigation" aria-expanded="false"></button>
+<div class="sidebar-backdrop"></div>
+<aside class="sidebar">
+    <div class="sidebar__inner">
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Getting Started</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                    <li class="sidebar__item"><a class="sidebar__link" href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html">Tutorial</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Documentation</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/parsed-json-document.html">Parsing &amp; Reading JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/json-document-builder.html">Building &amp; Mutating JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/source-generator.html">Source Generator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/code-generator.html">CLI Code Generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/validator.html">Dynamic Schema Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/migrating-from-v4-to-v5.html">Migrating from V4</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/using-copilot-for-migration.html">Copilot Migration</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/migration-analyzers.html">Migration Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/analyzers.html">Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/schema-evaluator.html">Standalone Schema Evaluator</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Examples</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link is-active" href="/corvus-json-schema/pr-preview/pr-734/examples/data-object.html">Simple Data Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/data-object-validation.html">Data Object Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/reusing-common-types.html">Reusing Common Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/open-versus-closed-types.html">Open Versus Closed Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/extending-a-base-type.html">Extending a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/constraining-a-base-type.html">Constraining a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/creating-a-strongly-typed-array.html">Strongly Typed Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/creating-an-array-of-higher-rank.html">Multi-Dimensional Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/working-with-tensors.html">Working with Tensors</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/creating-tuples.html">Creating Tuples</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/interfaces-and-mix-in-types.html">Interfaces and Mix-In Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/pattern-matching.html">Pattern Matching and Discriminated Unions</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/polymorphism-with-discriminators.html">Polymorphism with Discriminator Properties</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/string-enumerations.html">String Enumerations and Pattern Matching</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/numeric-enumerations.html">Numeric Enumerations</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/maps.html">Maps of Strings to Strongly Typed Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/mapping-input-and-output-values.html">Mapping Input and Output Values</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</aside>
+
+    <main id="main-content" class="layout-docs__main">
+        <div class="doc__content">
+            <h1>Simple Data Objects</h1>
+                <div class="card__tags" style="margin-bottom:1.5rem">
+                        <span class="card__tag">recipe</span>
+                        <span class="card__tag">JSON Schema</span>
+                        <span class="card__tag">C#</span>
+                        <span class="card__tag">simple</span>
+                        <span class="card__tag">data</span>
+                        <span class="card__tag">objects</span>
+                        <span class="card__tag">type</span>
+                        <span class="card__tag">properties</span>
+                        <span class="card__tag">format</span>
+                        <span class="card__tag">ValueEquals</span>
+                        <span class="card__tag">TryGetValue</span>
+                        <span class="card__tag">IsUndefined</span>
+                        <span class="card__tag">IsNull</span>
+                        <span class="card__tag">CreateBuilder</span>
+                        <span class="card__tag">SetProperty</span>
+                </div>
+<p>This recipe demonstrates how to define a simple data object composed of primitive values using JSON Schema, and how the Corvus.Text.Json code generator produces strongly-typed .NET types with rich property accessors, zero-allocation comparisons, and NodaTime integration.</p>
+<h2 id="the-pattern">The Pattern</h2>
+<p>It is very common to define a simple data object composed of primitive values for information exchange through an API.</p>
+<p>An object is generated for the root schema, whose name is derived from the type declaration. It has .NET properties for each of the declared properties, with pascal-cased names. These can be used in much the same way as primitive .NET types like <code>string</code>, <code>double</code> and <code>NodaTime.LocalDate</code>.</p>
+<p>(Note that we use <a href="https://nodatime.org/">NodaTime</a> for our basic date/time types.)</p>
+<p>Each generated property type is more than just a raw primitive wrapper. For example, <code>Person.FamilyNameEntity</code> wraps a JSON string value with type-safe operations: <code>ValueEquals()</code> for zero-allocation comparison against <code>string</code> or <code>ReadOnlySpan&lt;byte&gt;</code>, <code>TryGetValue()</code> for safe extraction, <code>IsUndefined()</code>/<code>IsNull()</code> for presence checks, format validation (e.g. <code>BirthDateEntity</code> validates the <code>date</code> format), and implicit/explicit conversions to .NET primitives. These entity types give you a rich, validated API over the underlying JSON data while keeping allocations to a minimum.</p>
+<p>In the generated code, most of the &quot;JSON-like&quot; behaviours follow the patterns in <code>System.Text.Json</code> (e.g. parsing and writing JSON). But we try to make the accessors and usage patterns as .NET-like as possible, with implicit conversions to .NET primitives (where they do not allocate) so, by and large, everything &quot;just works&quot;.</p>
+<h2 id="the-schema">The Schema</h2>
+<p>For example, here's a subset of the Person schema from <a href="https://schema.org/Person">schema.org</a>.</p>
+<p>File: <code>person.json</code></p>
+<pre><code class="language-json">{
+    &quot;title&quot;: &quot;The person schema https://schema.org/Person&quot;,
+    &quot;type&quot;: &quot;object&quot;,
+    &quot;properties&quot;: {
+        &quot;familyName&quot;: { &quot;type&quot;: &quot;string&quot; },
+        &quot;givenName&quot;: { &quot;type&quot;: &quot;string&quot; },
+        &quot;otherNames&quot;: { &quot;type&quot;: &quot;string&quot; },
+        &quot;birthDate&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;format&quot;: &quot;date&quot; },
+        &quot;height&quot;: { &quot;type&quot;: &quot;number&quot; }
+    }
+}
+</code></pre>
+<p>The generated .NET properties are:</p>
+<ul>
+<li><code>FamilyName</code> — of type <code>Person.FamilyNameEntity</code> (a string type)</li>
+<li><code>GivenName</code> — of type <code>Person.GivenNameEntity</code> (a string type)</li>
+<li><code>OtherNames</code> — of type <code>Person.OtherNamesEntity</code> (a string type)</li>
+<li><code>BirthDate</code> — of type <code>Person.BirthDateEntity</code> (a date-formatted string type, with implicit conversion to <code>NodaTime.LocalDate</code>)</li>
+<li><code>Height</code> — of type <code>Person.HeightEntity</code> (a number type)</li>
+</ul>
+<h2 id="generated-code-usage">Generated Code Usage</h2>
+<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/v5/docs/ExampleRecipes/001-DataObject/Program.cs">Example code</a></p>
+<h3 id="creating-a-person-from.net-values">Creating a Person from .NET values</h3>
+<pre><code class="language-csharp">using JsonWorkspace workspace = JsonWorkspace.Create();
+using var personDoc = Person.CreateBuilder(
+    workspace,
+    birthDate: new LocalDate(1820, 1, 17),
+    familyName: &quot;Brontë&quot;,
+    givenName: &quot;Anne&quot;,
+    height: 1.52);
+</code></pre>
+<h3 id="serialization">Serialization</h3>
+<pre><code class="language-csharp">// Convert to JSON string (allocates)
+string jsonString = personDoc.RootElement.ToString();
+Console.WriteLine(jsonString);
+
+// Write to a Utf8JsonWriter (does not allocate)
+ArrayBufferWriter&lt;byte&gt; abw = new();
+using (Utf8JsonWriter writer = new(abw))
+{
+    personDoc.RootElement.WriteTo(writer);
+    writer.Flush();
+}
+</code></pre>
+<h3 id="parsing">Parsing</h3>
+<pre><code class="language-csharp">// From a string (produces an immutable document)
+using var parsedDoc = ParsedJsonDocument&lt;Person&gt;.Parse(jsonString);
+Person person = parsedDoc.RootElement;
+
+// From UTF-8 bytes
+using var parsedFromUtf8 = ParsedJsonDocument&lt;Person&gt;.Parse(abw.WrittenMemory);
+</code></pre>
+<h3 id="property-access">Property access</h3>
+<pre><code class="language-csharp">// Explicit cast to string (throws if null or undefined)
+string familyName = (string)person.FamilyName;
+Console.WriteLine($&quot;Family name: {familyName}&quot;);
+
+// Try to get a string value which may not be present (does not throw)
+if (person.GivenName.TryGetValue(out string? givenName))
+{
+    Console.WriteLine($&quot;Given name: {givenName}&quot;);
+}
+
+// Check if an optional property is undefined
+if (person.OtherNames.IsUndefined())
+{
+    Console.WriteLine(&quot;otherNames is not present.&quot;);
+}
+else
+{
+    Console.WriteLine(&quot;otherNames is present.&quot;);
+}
+
+// Implicit conversion to NodaTime LocalDate (does not allocate)
+LocalDate date = person.BirthDate;
+Console.WriteLine($&quot;Birth date: {date}&quot;);
+
+// Explicit conversion to double
+double heightValue = (double)person.Height;
+Console.WriteLine($&quot;Height: {heightValue}&quot;);
+</code></pre>
+<h3 id="mutation-via-builder">Mutation via builder</h3>
+<pre><code class="language-csharp">// Create a modified copy via builder
+// (start from an immutable parsed instance, then modify properties)
+using var updatedDoc = person.CreateBuilder(workspace);
+Person.Mutable root = updatedDoc.RootElement;
+root.SetBirthDate(new LocalDate(1984, 6, 3));
+Person updatedPerson = updatedDoc.RootElement;
+Console.WriteLine(updatedPerson);
+</code></pre>
+<h3 id="equality">Equality</h3>
+<pre><code class="language-csharp">if (person == updatedPerson)
+{
+    Console.WriteLine(&quot;The same person.&quot;);
+}
+else
+{
+    Console.WriteLine(&quot;Different people.&quot;);
+}
+
+if (person == parsedFromUtf8.RootElement)
+{
+    Console.WriteLine(&quot;The same person.&quot;);
+}
+else
+{
+    Console.WriteLine(&quot;Different people.&quot;);
+}
+</code></pre>
+<h3 id="string-comparison-zero-allocation">String comparison — zero-allocation</h3>
+<pre><code class="language-csharp">Console.WriteLine($&quot;GivenName ValueEquals \&quot;Hello\&quot;: {person.GivenName.ValueEquals(&quot;Hello&quot;)}&quot;);
+Console.WriteLine($&quot;GivenName ValueEquals \&quot;Anne\&quot;u8: {person.GivenName.ValueEquals(&quot;Anne&quot;u8)}&quot;);
+</code></pre>
+<h3 id="low-allocation-access-to-character-and-byte-data">Low-allocation access to character and byte data</h3>
+<pre><code class="language-csharp">// Access character data via GetUtf16String()
+using UnescapedUtf16JsonString utf16 = person.GivenName.GetUtf16String();
+ReadOnlySpan&lt;char&gt; chars = utf16.Span;
+int countA = chars.Count('A');
+int countB = chars.Count('B');
+Console.WriteLine($&quot;Character counts in GivenName: A={countA}, B={countB}&quot;);
+
+// Access UTF-8 byte data via GetUtf8String()
+using UnescapedUtf8JsonString utf8 = person.GivenName.GetUtf8String();
+ReadOnlySpan&lt;byte&gt; bytes = utf8.Span;
+int countUtf8A = bytes.Count((byte)'A');
+int countUtf8B = bytes.Count((byte)'B');
+Console.WriteLine($&quot;UTF-8 byte counts in GivenName: A={countUtf8A}, B={countUtf8B}&quot;);
+</code></pre>
+<h2 id="key-differences-from-v4">Key Differences from V4</h2>
+<h3 id="v4-corvus.json">V4 (Corvus.Json)</h3>
+<pre><code class="language-csharp">// Create directly with static factory method
+Person person = Person.Create(
+    birthDate: new LocalDate(1820, 1, 17),
+    familyName: &quot;Brontë&quot;,
+    givenName: &quot;Anne&quot;,
+    height: 1.52);
+
+// Parse from string
+Person parsed = Person.Parse(&quot;{ ... }&quot;);
+
+// Property access (same pattern)
+string familyName = (string)person.FamilyName;
+LocalDate date = person.BirthDate;
+
+// Mutation via immutable With* methods
+Person updated = person.WithBirthDate(new LocalDate(1984, 6, 3));
+</code></pre>
+<h3 id="v5-corvus.text.json">V5 (Corvus.Text.Json)</h3>
+<pre><code class="language-csharp">// Create using workspace and builder pattern
+using JsonWorkspace workspace = JsonWorkspace.Create();
+using var personDoc = Person.CreateBuilder(
+    workspace,
+    birthDate: new LocalDate(1820, 1, 17),
+    familyName: &quot;Brontë&quot;,
+    givenName: &quot;Anne&quot;,
+    height: 1.52);
+Person person = personDoc.RootElement;
+
+// Parse into immutable document wrapper
+using var parsedDoc = ParsedJsonDocument&lt;Person&gt;.Parse(jsonString);
+Person parsed = parsedDoc.RootElement;
+
+// Property access (same pattern)
+string familyName = (string)person.FamilyName;
+LocalDate date = person.BirthDate;
+
+// Mutation via mutable builder
+using var updatedDoc = person.CreateBuilder(workspace);
+Person.Mutable root = updatedDoc.RootElement;
+root.SetBirthDate(new LocalDate(1984, 6, 3));
+</code></pre>
+<p><strong>Key differences:</strong></p>
+<ul>
+<li>V5 requires a <code>JsonWorkspace</code> for creation and mutation — this manages pooled memory for high-performance scenarios</li>
+<li>V5 uses <code>CreateBuilder(workspace, prop: value, ...)</code> instead of V4's <code>Create(prop: value, ...)</code></li>
+<li>V5 wraps parsed results in <code>ParsedJsonDocument&lt;T&gt;</code> with <code>using</code> for deterministic memory management</li>
+<li>V5 mutation uses a mutable builder pattern (<code>SetProperty()</code>) instead of V4's immutable <code>WithProperty()</code> methods</li>
+<li>Property access patterns (<code>TryGetValue()</code>, <code>ValueEquals()</code>, <code>IsUndefined()</code>, implicit conversions) are the same in both versions</li>
+</ul>
+<h2 id="running-the-example">Running the Example</h2>
+<pre><code class="language-bash">cd docs/ExampleRecipes/001-DataObject
+dotnet run
+</code></pre>
+<h2 id="related-patterns">Related Patterns</h2>
+<ul>
+<li><a href="/corvus-json-schema/pr-preview/pr-734/examples/data-object-validation.html">002-DataObjectValidation</a> - Adding validation constraints to data objects</li>
+<li><a href="/corvus-json-schema/pr-preview/pr-734/examples/reusing-common-types.html">003-ReusingCommonTypes</a> - Sharing property types with <code>$ref</code> and <code>$defs</code></li>
+<li><a href="/corvus-json-schema/pr-preview/pr-734/examples/extending-a-base-type.html">005-ExtendingABaseType</a> - Inheritance via <code>allOf</code> with a single base</li>
+</ul>
+<h2 id="frequently-asked-questions">Frequently Asked Questions</h2>
+<h3 id="how-are-json-schema-property-types-mapped-to.net-types">How are JSON Schema property types mapped to .NET types?</h3>
+<p>Each property in the schema gets its own generated entity type (e.g., <code>Person.FamilyNameEntity</code> for a string property). These entity types provide implicit or explicit conversions to .NET primitives: <code>string</code> for <code>&quot;type&quot;: &quot;string&quot;</code>, <code>double</code> for <code>&quot;type&quot;: &quot;number&quot;</code>, <code>int</code> for <code>&quot;type&quot;: &quot;integer&quot;, &quot;format&quot;: &quot;int32&quot;</code>, and so on. When a <code>format</code> keyword is present (e.g., <code>&quot;format&quot;: &quot;date&quot;</code>), the entity type may also provide conversions to richer .NET types like <code>NodaTime.LocalDate</code>.</p>
+<h3 id="what-is-the-difference-between-isundefined-and-isnull">What is the difference between <code>IsUndefined()</code> and <code>IsNull()</code>?</h3>
+<p><code>IsUndefined()</code> returns <code>true</code> when a property was not present in the JSON document at all — the key is absent. <code>IsNull()</code> returns <code>true</code> when the property is present but its value is the JSON literal <code>null</code>. This distinction matters because JSON Schema treats missing properties and <code>null</code> values differently. For optional properties, always check <code>IsUndefined()</code> before accessing the value to avoid exceptions.</p>
+<h3 id="why-does-corvus.text.json-use-nodatime-instead-of-system.datetime">Why does Corvus.Text.Json use NodaTime instead of <code>System.DateTime</code>?</h3>
+<p>JSON Schema date/time formats (<code>date</code>, <code>date-time</code>, <code>time</code>) map naturally to NodaTime types (<code>LocalDate</code>, <code>OffsetDateTime</code>, <code>LocalTime</code>) because NodaTime distinguishes between dates, times, and date-times with explicit offset handling — matching the semantics of the corresponding JSON Schema formats. <code>System.DateTime</code> conflates these concepts, which can lead to subtle timezone bugs. The generated types provide implicit conversions to the appropriate NodaTime types.</p>
+<h3 id="how-does-zero-allocation-string-comparison-work-with-valueequals">How does zero-allocation string comparison work with <code>ValueEquals()</code>?</h3>
+<p><code>ValueEquals()</code> compares the underlying JSON UTF-8 bytes directly against the provided <code>string</code> or <code>ReadOnlySpan&lt;byte&gt;</code> without allocating a .NET <code>string</code> from the JSON data. This is especially useful in hot paths where you need to check property values (e.g., routing, filtering) without the cost of string allocation. Use <code>ValueEquals(&quot;value&quot;u8)</code> with a UTF-8 string literal for the best performance.</p>
+<h3 id="when-should-i-use-the-builder-pattern-vs.parsing-from-json">When should I use the builder pattern vs. parsing from JSON?</h3>
+<p>Use <code>CreateBuilder(workspace, ...)</code> when you are constructing a new instance from .NET values — for example, building a response object in an API handler. Use <code>ParsedJsonDocument&lt;T&gt;.Parse(...)</code> when you receive JSON data from an external source (HTTP request body, file, message queue). The builder pattern requires a <code>JsonWorkspace</code> for pooled memory management, while parsing produces an immutable document that owns its own memory.</p>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "How are JSON Schema property types mapped to .NET types?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Each property in the schema gets its own generated entity type (e.g., Person.FamilyNameEntity for a string property). These entity types provide implicit or explicit conversions to .NET primitives: string for \"type\": \"string\", double for \"type\": \"number\", int for \"type\": \"integer\", \"format\": \"int32\", and so on. When a format keyword is present (e.g., \"format\": \"date\"), the entity type may also provide conversions to richer .NET types like NodaTime.LocalDate."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is the difference between `IsUndefined()` and `IsNull()`?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "IsUndefined() returns true when a property was not present in the JSON document at all — the key is absent. IsNull() returns true when the property is present but its value is the JSON literal null. This distinction matters because JSON Schema treats missing properties and null values differently. For optional properties, always check IsUndefined() before accessing the value to avoid exceptions."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why does Corvus.Text.Json use NodaTime instead of `System.DateTime`?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "JSON Schema date/time formats (date, date-time, time) map naturally to NodaTime types (LocalDate, OffsetDateTime, LocalTime) because NodaTime distinguishes between dates, times, and date-times with explicit offset handling — matching the semantics of the corresponding JSON Schema formats. System.DateTime conflates these concepts, which can lead to subtle timezone bugs. The generated types provide implicit conversions to the appropriate NodaTime types."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How does zero-allocation string comparison work with `ValueEquals()`?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "ValueEquals() compares the underlying JSON UTF-8 bytes directly against the provided string or ReadOnlySpan<byte> without allocating a .NET string from the JSON data. This is especially useful in hot paths where you need to check property values (e.g., routing, filtering) without the cost of string allocation. Use ValueEquals(\"value\"u8) with a UTF-8 string literal for the best performance."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "When should I use the builder pattern vs. parsing from JSON?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Use CreateBuilder(workspace, ...) when you are constructing a new instance from .NET values — for example, building a response object in an API handler. Use ParsedJsonDocument<T>.Parse(...) when you receive JSON data from an external source (HTTP request body, file, message queue). The builder pattern requires a JsonWorkspace for pooled memory management, while parsing produces an immutable document that owns its own memory."
+      }
+    }
+  ]
+}
+</script>
+        </div>
+    </main>
+</div>
+
+    </div>
+    <footer class="site-footer">
+    <div class="site-footer__inner">
+        <div class="site-footer__sponsor">
+            Sponsored by
+            <a href="https://endjin.com" target="_blank" rel="noopener noreferrer">endjin</a>
+        </div>
+        <ul class="site-footer__links" role="list">
+            <li><a class="site-footer__link" href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html">Getting Started</a></li>
+            <li><a class="site-footer__link" href="/corvus-json-schema/pr-preview/pr-734/docs/index.html">Documentation</a></li>
+            <li><a class="site-footer__link" href="/corvus-json-schema/pr-preview/pr-734/examples/index.html">Examples</a></li>
+            <li><a class="site-footer__link" href="/corvus-json-schema/pr-preview/pr-734/api/index.html">API</a></li>
+            <li><a class="site-footer__link" href="https://github.com/corvus-dotnet/Corvus.JsonSchema" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            <li><a class="site-footer__link" href="https://www.nuget.org/packages?q=Corvus.Json" target="_blank" rel="noopener noreferrer">NuGet</a></li>
+        </ul>
+        <p class="site-footer__copyright">&copy; 2026 endjin Ltd.</p>
+    </div>
+</footer>
+
+    <!-- highlight.js for syntax highlighting (CSS targets .hljs-* classes) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/csharp.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js" defer></script>
+    <script>document.addEventListener('DOMContentLoaded',()=>hljs.highlightAll())</script>
+    <script src="/corvus-json-schema/pr-preview/pr-734/assets/js/main.js" defer></script>
+    <script src="/corvus-json-schema/pr-preview/pr-734/assets/js/sidebar-search.js" defer></script>
+    
+</body>
+</html>
