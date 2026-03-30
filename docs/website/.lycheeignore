@@ -14,13 +14,13 @@ https://api\.github\.com
 # NuGet package pages (may return 404 for pre-release versions)
 https://www\.nuget\.org/packages/.*/\d+\.\d+\.\d+-
 
-# Live site URLs (may 404 before deployment or for pages not yet published)
+# Canonical/SEO links (og:url, rel=canonical, rel=sitemap) always point to the
+# production domain, which is unreachable during local and preview builds.
 https://corvus-oss\.org
 
-# Truncated MS Docs URLs (lychee sometimes truncates long URLs during crawl)
-https://learn\.microsoft\.com/do\.\.$
-https://learn\.microsoft\.com/dotnet/ap\.\.$
-https://learn\.microsoft\.com/dotnet/api/syste\.\.$
+# GitHub source-code line-number fragments (#L42 etc.) are rendered by JavaScript;
+# lychee cannot find them in the raw HTML that GitHub returns.
+https://github\.com/corvus-dotnet/Corvus\.JsonSchema/blob/.+#L\d+
 
 # dotnet.microsoft.com returns 403 to automated crawlers
 https://dotnet\.microsoft\.com

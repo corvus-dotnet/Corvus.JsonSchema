@@ -1028,7 +1028,43 @@ public sealed class MarkdownGenerator(string outputDir, string baseUrl, string? 
             return EscapeDescriptionForTable(summary);
         }
 
-        return EscapeDescriptionForTable(summary[..197]) + "...";
+        // Find a safe truncation point that doesn't slice through a markdown link.
+        // Walk backwards from position 197 to find the last position that is outside
+        // a [...](url) construct. A simple heuristic: if the candidate cut point is
+        // between an unmatched '(' and its closing ')', or between '[' and ']', back up.
+        int cutAt = 197;
+        int openBracket = summary.LastIndexOf('[', cutAt);
+        if (openBracket >= 0)
+        {
+            // Check whether there is an unmatched '[' (i.e., we're inside a link text or URL)
+            int closeBracket = summary.IndexOf(']', openBracket);
+            if (closeBracket < 0 || closeBracket > cutAt)
+            {
+                // We're inside [...] — truncate before the '['
+                cutAt = openBracket;
+            }
+            else
+            {
+                // ']' is before cutAt — but we might be inside the (...) part
+                int openParen = summary.IndexOf('(', closeBracket);
+                if (openParen >= 0 && openParen < cutAt)
+                {
+                    int closeParen = summary.IndexOf(')', openParen);
+                    if (closeParen < 0 || closeParen > cutAt)
+                    {
+                        // We're inside ](url) — truncate before the '['
+                        cutAt = openBracket;
+                    }
+                }
+            }
+        }
+
+        if (cutAt <= 0)
+        {
+            cutAt = 197;
+        }
+
+        return EscapeDescriptionForTable(summary[..cutAt].TrimEnd()) + "...";
     }
 
     private static string EscapeYamlString(string value)
