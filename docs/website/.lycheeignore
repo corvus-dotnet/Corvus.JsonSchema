@@ -43,4 +43,10 @@ file:///.*api/corvus-
 
 # V5 internal types excluded from API docs but still cross-referenced
 file:///.*api/v5/corvus-text-json-internal-
-file:///.*api/v5/corvus-text-json-jsonelement\.html$
+file:///.*api/v5/corvus-text-json-jsonelement\.html
+
+# Blog posts that may be unpublished or return 404
+https://endjin\.com/blog/
+
+# dotnet.microsoft.com returns 403 to automated crawlers
+https://dotnet\.microsoft\.com

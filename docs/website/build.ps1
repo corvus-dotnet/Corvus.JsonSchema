@@ -767,6 +767,7 @@ $lycheeArgs = @(
     "--root-dir", $absOutputDir
     "--no-progress"
     "--exclude-path", "api[/\\]v4"
+    "--exclude-path", "playground"
     "."
 )
 
