@@ -7,6 +7,7 @@ This document explains how the Corvus.JsonSchema documentation website is built,
 - .NET 10+ SDK
 - Node.js (for SCSS compilation and search index)
 - Vellum SSG (installed automatically by `build.ps1`)
+- lychee link checker (installed automatically by `build.ps1`)
 
 Install Node dependencies once:
 
@@ -24,7 +25,7 @@ cd docs/website
 ./build.ps1
 ```
 
-This runs all 10 pipeline steps (see [Build Pipeline](#build-pipeline) below) and produces a complete site in `.output/`.
+This runs all 11 pipeline steps (see [Build Pipeline](#build-pipeline) below) and produces a complete site in `.output/`.
 
 ### Integrated build (via root build.ps1)
 
@@ -186,6 +187,34 @@ node tools/build-search-index.js --output .output/search-index.json
 
 Builds a site-wide Lunr search index. Per-version API search indices are generated in Step 2a/2b.
 
+### Step 9: Build and publish Playground (Blazor WASM)
+
+Compiles the Blazor WASM playground application and publishes it to `.output/playground/`.
+
+### Step 10: Rewrite root-relative paths
+
+When `-BasePathPrefix` is set (e.g. `/corvus-json-schema` for GitHub Pages subpath hosting), rewrites all root-relative URLs in the generated HTML and CSS files to include the prefix.
+
+### Step 11: Check for broken links (lychee)
+
+Runs the [lychee](https://github.com/lycheeverse/lychee) link checker (v0.23.0) against all files in `.output/`. Lychee is a fast, async link checker written in Rust that supports HTML, Markdown, and text files.
+
+**What it checks:**
+- Internal links between pages (including `#anchor` fragment references)
+- External URLs (HTTP/HTTPS)
+
+**Installation:** The pre-built binary is downloaded automatically from GitHub releases into `.endjin/` (alongside Vellum) on first run. It is cached between CI runs via `additionalCachePaths`.
+
+**Invocation:** The build script `cd`s into `.output/` and runs:
+
+```
+lychee --include-fragments --no-progress .
+```
+
+**Exclusions:** URL patterns to exclude are defined in `.lycheeignore` (regex, one per line). The file is copied into `.output/` before running lychee, which reads it automatically from the current working directory. Current exclusions include placeholder URLs, CDN resources (rate limiting), GitHub API, pre-release NuGet pages, and the Blazor playground (client-side only).
+
+**Exit code:** Non-zero if any broken links are found, which fails the build.
+
 ## Directory Structure
 
 ```
@@ -227,7 +256,8 @@ docs/website/
 │   ├── build-search-index.js  # Node script for Lunr search index
 │   └── PdbDiag.csx       # Diagnostic script for PDB inspection
 │
-├── .endjin/               # Vellum SSG binary (gitignored)
+├── .endjin/               # Vellum SSG + lychee binaries (gitignored)
+├── .lycheeignore          # URL patterns to exclude from link checking (regex)
 ├── .output/               # Build output (gitignored)
 └── node_modules/          # Node dependencies (gitignored)
 ```
@@ -299,3 +329,45 @@ The `/api/index.html` landing page reads this localStorage value and redirects t
 1. Edit `tools/XmlDocToMarkdown/SourceLinkResolver.cs`
 2. Use `tools/PdbDiag.csx` to inspect PDB metadata during debugging
 3. Rebuild and regenerate API pages
+
+### Link checking
+
+Step 11 of the build pipeline runs [lychee](https://github.com/lycheeverse/lychee) to check for broken links. Here's how to work with it:
+
+#### Running locally
+
+After a full build, run the link checker manually:
+
+```powershell
+cd docs/website/.output
+# Copy the ignore file into the output directory (lychee reads .lycheeignore from CWD)
+Copy-Item ..\.lycheeignore .lycheeignore
+# Run the check
+..\..\.endjin\lychee.exe --include-fragments --no-progress .
+```
+
+On first run, `build.ps1` downloads the lychee binary into `.endjin/`. If you haven't run a full build yet, install it manually:
+
+```powershell
+# Windows
+$url = "https://github.com/lycheeverse/lychee/releases/download/lychee-v0.23.0/lychee-x86_64-windows.exe"
+Invoke-WebRequest -Uri $url -OutFile docs/website/.endjin/lychee.exe -UseBasicParsing
+```
+
+#### Excluding URLs (`.lycheeignore`)
+
+Edit `docs/website/.lycheeignore` to add URL patterns that should be excluded from checking. Each line is a regex pattern. Common reasons to exclude:
+
+- **Rate-limited hosts** (CDNs, GitHub API) — these return transient errors in CI
+- **Placeholder/example URLs** — `example.com`, `localhost`
+- **Client-side-only pages** — Blazor WASM playground, SPAs with hash routing
+- **Pre-release package pages** — NuGet pages that may 404 before release
+
+#### Troubleshooting false positives
+
+If lychee reports broken links that are actually valid:
+
+1. **Transient network errors**: Re-run the build. Lychee has built-in retry logic.
+2. **Rate limiting**: Add the host pattern to `.lycheeignore`, or set `GITHUB_TOKEN` environment variable for GitHub links.
+3. **JavaScript-rendered content**: Lychee checks static HTML only. Links that only exist after JS execution should be excluded.
+4. **Anchors in generated HTML**: If an `#anchor` is reported as missing, check that the target `id` attribute exists in the generated HTML in `.output/`.
