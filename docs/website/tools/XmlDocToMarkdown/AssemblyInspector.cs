@@ -1246,10 +1246,12 @@ public sealed class AssemblyInspector(string assemblyPath)
     private static IEnumerable<string> ResolveNuGetAssemblies(string depsJsonPath)
     {
         // Parse the deps.json to find NuGet package references and resolve them
-        // from the global NuGet packages cache.
-        string nugetCache = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-            ".nuget", "packages");
+        // from the global NuGet packages cache. Respect the NUGET_PACKAGES env var
+        // (used by CI to redirect the cache) before falling back to the default location.
+        string nugetCache = Environment.GetEnvironmentVariable("NUGET_PACKAGES")
+            ?? Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                ".nuget", "packages");
 
         if (!File.Exists(depsJsonPath) || !Directory.Exists(nugetCache))
         {
