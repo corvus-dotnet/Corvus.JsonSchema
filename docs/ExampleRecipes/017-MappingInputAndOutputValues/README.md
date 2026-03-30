@@ -194,7 +194,7 @@ if (source.Id.TryGetValue(out long idValue) && source.Name.TryGetValue(out strin
 
 The `From()` and builder patterns chain naturally across multiple stages. Because all transformations share the same `JsonWorkspace`, you can build a pipeline — for example, API → Domain → Database — without extra allocation between stages. Each stage creates its builder from the previous stage's output, reusing the same workspace memory pool.
 
-In a real system with three or more representations (see [the blog post](https://endjin.com/blog/json-schema-patterns-dotnet-mapping-input-and-output-values) for a worked example with API, CRM, and database customer schemas), you would apply the same `From()` pattern at each boundary, falling back to `TryGetValue()` only at stages that genuinely transform values.
+In a real system with three or more representations (see [the blog post](https://endjin.com/blog/2024/05/json-schema-patterns-dotnet-mapping-input-and-output-values) for a worked example with API, CRM, and database customer schemas), you would apply the same `From()` pattern at each boundary, falling back to `TryGetValue()` only at stages that genuinely transform values.
 
 ## Performance Characteristics
 

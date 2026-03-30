@@ -158,17 +158,36 @@ public sealed partial class XmlDocParser(string xmlPath)
                     char memberType = cref.Length > 1 && cref[1] == ':' ? cref[0] : 'T';
                     string? url = ResolveTypeUrl(stripped);
 
-                    // Fall back to external documentation URLs
-                    url ??= ResolveExternalTypeUrl(stripped);
+                    // Fall back to external documentation URLs (pass memberType so it
+                    // can strip the member portion and return just the type URL)
+                    url ??= ResolveExternalTypeUrl(stripped, memberType);
 
                     if (memberType is 'M' or 'P' or 'F' or 'E')
                     {
-                        // Member reference — display the member name and link to type#anchor
+                        // Member reference
                         string memberName = GetMemberDisplayName(stripped);
                         if (url is not null)
                         {
-                            string anchor = GetMemberAnchor(stripped, memberType);
-                            sb.Append($"[`{memberName}`]({url}#{anchor})");
+                            if (url.StartsWith("https://", StringComparison.Ordinal))
+                            {
+                                // External type — methods/properties have separate pages,
+                                // enum fields and events are listed on the type page
+                                if (memberType is 'M' or 'P')
+                                {
+                                    string memberSlug = memberName.ToLowerInvariant();
+                                    sb.Append($"[`{memberName}`]({url}.{memberSlug})");
+                                }
+                                else
+                                {
+                                    sb.Append($"[`{memberName}`]({url})");
+                                }
+                            }
+                            else
+                            {
+                                // Local type — use fragment anchor on the type page
+                                string anchor = GetMemberAnchor(stripped, memberType);
+                                sb.Append($"[`{memberName}`]({url}#{anchor})");
+                            }
                         }
                         else
                         {
@@ -422,17 +441,29 @@ public sealed partial class XmlDocParser(string xmlPath)
     /// <summary>
     /// Returns an external documentation URL for well-known type prefixes
     /// (System.*, Microsoft.*, NodaTime.*), or <c>null</c> if not recognised.
+    /// When <paramref name="memberType"/> indicates a member reference (M, P, F, E),
+    /// the last dot-segment (the member name) is stripped so the URL points to the type page.
     /// </summary>
-    internal static string? ResolveExternalTypeUrl(string fullName)
+    internal static string? ResolveExternalTypeUrl(string fullName, char memberType = 'T')
     {
-        // Strip method parameters and generic arity for URL resolution
+        // Strip method parameters for URL resolution
         int parenIdx = fullName.IndexOf('(');
         string name = parenIdx >= 0 ? fullName[..parenIdx] : fullName;
+
+        // For member references, strip the member name to get the enclosing type
+        if (memberType is 'M' or 'P' or 'F' or 'E')
+        {
+            int lastDot = name.LastIndexOf('.');
+            if (lastDot >= 0)
+            {
+                name = name[..lastDot];
+            }
+        }
 
         if (name.StartsWith("System.", StringComparison.Ordinal) ||
             name.StartsWith("Microsoft.", StringComparison.Ordinal))
         {
-            string urlName = name.ToLowerInvariant().Replace('`', '-');
+            string urlName = name.ToLowerInvariant().Replace('`', '-').Replace('+', '.');
             return $"https://learn.microsoft.com/dotnet/api/{urlName}";
         }
 

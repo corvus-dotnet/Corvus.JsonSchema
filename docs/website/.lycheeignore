@@ -14,9 +14,6 @@ https://api\.github\.com
 # NuGet package pages (may return 404 for pre-release versions)
 https://www\.nuget\.org/packages/.*/\d+\.\d+\.\d+-
 
-# Playground (Blazor WASM, loaded client-side — not crawlable)
-/playground/
-
 # Live site URLs (may 404 before deployment or for pages not yet published)
 https://corvus-oss\.org
 
@@ -25,28 +22,10 @@ https://github\.com/corvus-dotnet/Corvus\.JsonSchema/blob/main/src/
 https://github\.com/corvus-dotnet/Corvus\.JsonSchema/blob/main/src-v4/
 https://github\.com/corvus-dotnet/Corvus\.JsonSchema/blob/main/Common/
 
-# Microsoft Docs generic interface member URLs that return 404
-# (e.g. IEquatable.Equals, IEnumerator.Current — MS docs uses IEquatable-1.Equals)
-https://learn\.microsoft\.com/dotnet/api/system\.iequatable\.equals
-https://learn\.microsoft\.com/dotnet/api/system\.collections\.generic\.ienumerator\.current
-https://learn\.microsoft\.com/dotnet/api/system\.collections\.generic\.ienumerable\.getenumerator
-https://learn\.microsoft\.com/dotnet/api/system\.collections\.immutable\.immutablelist-1\+builder
-https://learn\.microsoft\.com/dotnet/api/system\.text\.json\.jsonvaluekind\.undefined#undefined
-
 # Truncated MS Docs URLs (lychee sometimes truncates long URLs during crawl)
 https://learn\.microsoft\.com/do\.\.$
 https://learn\.microsoft\.com/dotnet/ap\.\.$
 https://learn\.microsoft\.com/dotnet/api/syste\.\.$
-
-# Unversioned API type pages (XmlDocToMarkdown cross-references missing v4/ or v5/ prefix)
-file:///.*api/corvus-
-
-# V5 internal types excluded from API docs but still cross-referenced
-file:///.*api/v5/corvus-text-json-internal-
-file:///.*api/v5/corvus-text-json-jsonelement\.html
-
-# Blog posts that may be unpublished or return 404
-https://endjin\.com/blog/
 
 # dotnet.microsoft.com returns 403 to automated crawlers
 https://dotnet\.microsoft\.com

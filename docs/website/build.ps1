@@ -765,6 +765,7 @@ $lycheeIgnore = Join-Path $here ".lycheeignore"
 $absOutputDir = (Resolve-Path $outputDir).Path
 $lycheeArgs = @(
     "--root-dir", $absOutputDir
+    "--include-fragments"
     "--no-progress"
     "--exclude-path", "api[/\\]v4"
     "--exclude-path", "playground"

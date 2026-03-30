@@ -1094,14 +1094,6 @@ public sealed class MarkdownGenerator(string outputDir, string baseUrl, string? 
 
         if (interfaceFullName is not null)
         {
-            // Strip generic arity for URL construction (e.g. "IEquatable`1" → "IEquatable")
-            string baseFullName = interfaceFullName;
-            int backtick = baseFullName.IndexOf('`');
-            if (backtick >= 0)
-            {
-                baseFullName = baseFullName[..backtick];
-            }
-
             // Try local type URL first — link to the member page
             string? localUrl = XmlDocParser.ResolveTypeUrl(interfaceFullName);
             if (localUrl is not null)
@@ -1112,11 +1104,11 @@ public sealed class MarkdownGenerator(string outputDir, string baseUrl, string? 
                 return $"[`{escaped}`]({memberUrl})";
             }
 
-            // BCL types
+            // BCL types — keep generic arity as hyphen (e.g. IEquatable`1 → iequatable-1)
             if (interfaceFullName.StartsWith("System.", StringComparison.Ordinal) ||
                 interfaceFullName.StartsWith("Microsoft.", StringComparison.Ordinal))
             {
-                string urlName = baseFullName.ToLowerInvariant();
+                string urlName = interfaceFullName.ToLowerInvariant().Replace('`', '-').Replace('+', '.');
                 string memberUrl = $"https://learn.microsoft.com/dotnet/api/{urlName}.{memberName.ToLowerInvariant()}";
                 return $"[`{escaped}`]({memberUrl})";
             }
@@ -1139,7 +1131,8 @@ public sealed class MarkdownGenerator(string outputDir, string baseUrl, string? 
     private static string GetBclTypeUrl(string fullName)
     {
         // System.Collections.Generic.List`1 → system.collections.generic.list-1
-        string urlName = fullName.ToLowerInvariant().Replace('`', '-');
+        // System.Collections.Immutable.ImmutableList`1+Builder → system.collections.immutable.immutablelist-1.builder
+        string urlName = fullName.ToLowerInvariant().Replace('`', '-').Replace('+', '.');
         return $"https://learn.microsoft.com/dotnet/api/{urlName}";
     }
 
