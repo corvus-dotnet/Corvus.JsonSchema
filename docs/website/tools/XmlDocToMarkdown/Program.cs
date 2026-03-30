@@ -281,9 +281,9 @@ if (File.Exists(pdbPath))
 {
     Console.WriteLine($"Reading PDB for source links: {pdbPath}");
 
-    // Auto-detect repo root from git
+    // Auto-detect repo root and current branch from git
     string repoRoot = RunGit("rev-parse --show-toplevel")?.Trim() ?? "";
-    string branch = "main";
+    string branch = RunGit("rev-parse --abbrev-ref HEAD")?.Trim() ?? "main";
 
     // Auto-detect repo URL from git remote if not provided
     if (repoUrl is null)

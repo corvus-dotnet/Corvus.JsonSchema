@@ -32,6 +32,7 @@ public sealed class SourceLinkResolver : IDisposable
     /// </summary>
     private readonly string _repoBaseUrl;
     private readonly string _localPathPrefix;
+    private readonly string _branch;
 
     /// <summary>
     /// SourceLink mappings parsed from the PDB: local path prefix → URL template.
@@ -59,6 +60,7 @@ public sealed class SourceLinkResolver : IDisposable
     /// </summary>
     public SourceLinkResolver(string pdbPath, string assemblyPath, string repoUrl, string branch, string repoRoot)
     {
+        _branch = branch;
         _repoBaseUrl = $"{repoUrl.TrimEnd('/')}/blob/{branch}/";
         _localPathPrefix = repoRoot.TrimEnd('\\', '/').Replace('\\', '/') + "/";
 
@@ -682,11 +684,11 @@ public sealed class SourceLinkResolver : IDisposable
     }
 
     /// <summary>
-    /// Converts a raw.githubusercontent.com URL to a github.com/blob/main URL.
+    /// Converts a raw.githubusercontent.com URL to a github.com/blob/{branch} URL.
     /// Input:  https://raw.githubusercontent.com/owner/repo/COMMITSHA/path/to/file.cs
-    /// Output: https://github.com/owner/repo/blob/main/path/to/file.cs
+    /// Output: https://github.com/owner/repo/blob/{branch}/path/to/file.cs
     /// </summary>
-    private static string ConvertToGitHubBlobUrl(string rawUrl)
+    private string ConvertToGitHubBlobUrl(string rawUrl)
     {
         // raw.githubusercontent.com/owner/repo/commit/path
         const string rawPrefix = "https://raw.githubusercontent.com/";
@@ -705,10 +707,10 @@ public sealed class SourceLinkResolver : IDisposable
 
         string owner = parts[0];
         string repo = parts[1];
-        // parts[2] = commit SHA — replace with 'main'
+        // parts[2] = commit SHA — replace with the current branch
         string filePath = parts[3];
 
-        return $"https://github.com/{owner}/{repo}/blob/main/{filePath}";
+        return $"https://github.com/{owner}/{repo}/blob/{_branch}/{filePath}";
     }
 
     // ─── Source scanning ──────────────────────────────────────────────

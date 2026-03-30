@@ -17,11 +17,6 @@ https://www\.nuget\.org/packages/.*/\d+\.\d+\.\d+-
 # Live site URLs (may 404 before deployment or for pages not yet published)
 https://corvus-oss\.org
 
-# Source-code links in API docs point to main branch; 404 until feature branch is merged
-https://github\.com/corvus-dotnet/Corvus\.JsonSchema/blob/main/src/
-https://github\.com/corvus-dotnet/Corvus\.JsonSchema/blob/main/src-v4/
-https://github\.com/corvus-dotnet/Corvus\.JsonSchema/blob/main/Common/
-
 # Truncated MS Docs URLs (lychee sometimes truncates long URLs during crawl)
 https://learn\.microsoft\.com/do\.\.$
 https://learn\.microsoft\.com/dotnet/ap\.\.$
