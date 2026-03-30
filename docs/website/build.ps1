@@ -855,14 +855,15 @@ $lycheeIgnore = Join-Path $here ".lycheeignore"
 $lycheeArgs = @(
     "--include-fragments"
     "--no-progress"
+    "."
 )
-if (Test-Path $lycheeIgnore) {
-    $lycheeArgs += "--exclude-file", $lycheeIgnore
-}
-$lycheeArgs += "."
 
 Push-Location $outputDir
 try {
+    # lychee reads .lycheeignore from CWD automatically
+    if (Test-Path $lycheeIgnore) {
+        Copy-Item $lycheeIgnore -Destination ".lycheeignore"
+    }
     & $lycheeCmd @lycheeArgs
 } finally {
     Pop-Location
