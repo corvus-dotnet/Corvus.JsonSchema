@@ -731,8 +731,10 @@ if (!(Test-Path $lycheeCmd)) {
 
 $lycheeIgnore = Join-Path $here ".lycheeignore"
 $lycheeArgs = @(
+    "--root-dir", "."
     "--include-fragments"
     "--no-progress"
+    "--exclude-path", "api/v4"
     "."
 )
 
