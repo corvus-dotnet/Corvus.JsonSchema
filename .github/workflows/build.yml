@@ -120,7 +120,10 @@ jobs:
             Solutions
             solutions
             JSON-Schema-Test-Suite
+            docs/website/.endjin
             docs/website/.output
+            **/bin
+            **/obj
           key: build-state-${{ github.run_id }}-compile
           enableCrossOsArchive: true
 
@@ -149,7 +152,10 @@ jobs:
             Solutions
             solutions
             JSON-Schema-Test-Suite
+            docs/website/.endjin
             docs/website/.output
+            **/bin
+            **/obj
           key: build-state-${{ github.run_id }}-compile
           enableCrossOsArchive: true
 
