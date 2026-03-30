@@ -16,3 +16,6 @@ https://www\.nuget\.org/packages/.*/\d+\.\d+\.\d+-
 
 # Playground (Blazor WASM, loaded client-side — not crawlable)
 /playground/
+
+# Live site URLs (may 404 before deployment or for pages not yet published)
+https://corvus-oss\.org

@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     Builds the Corvus.Text.Json documentation website.
 .DESCRIPTION
@@ -14,8 +14,8 @@
       7. Compile SCSS to CSS
       8. Build Lunr search index
       9. Build and publish Playground (Blazor WASM)
-     10. Rewrite root-relative paths for subpath hosting (when -BasePathPrefix is set)
-     11. Check for broken links (lychee)
+     10. Check for broken links (lychee)
+     11. Rewrite root-relative paths for subpath hosting (when -BasePathPrefix is set)
 .PARAMETER Preview
     Launches a local preview server after building.
 .PARAMETER ServeOnly
@@ -696,9 +696,62 @@ $playgroundSize = (Get-ChildItem $playgroundOutputDir -Recurse -File | Measure-O
 Write-Host "  Playground: $([math]::Round($playgroundSize/1MB, 1)) MB" -ForegroundColor Gray
 Write-StepDuration "Playground build" $sw
 
-# -- Step 10: Rewrite root-relative paths for subpath hosting -----------------
+# -- Step 10: Check for broken links (lychee) ---------------------------------
+# Run BEFORE path rewriting so that root-relative links (e.g. /api/index.html)
+# still map to the local .output/ directory structure.
+Write-Host "`n[10] Checking for broken links..." -ForegroundColor Cyan
+$sw = [System.Diagnostics.Stopwatch]::StartNew()
+
+$lycheeVersion = "0.23.0"
+$lycheeCmd = if ($IsWindows -or $env:OS -eq "Windows_NT") {
+    Join-Path $vellumDir "lychee.exe"
+} else {
+    Join-Path $vellumDir "lychee"
+}
+
+if (!(Test-Path $lycheeCmd)) {
+    Write-Host "  Installing lychee $lycheeVersion..." -ForegroundColor Gray
+    if ($IsWindows -or $env:OS -eq "Windows_NT") {
+        $lycheeAsset = "lychee-x86_64-windows.exe"
+        $lycheeUrl = "https://github.com/lycheeverse/lychee/releases/download/lychee-v$lycheeVersion/$lycheeAsset"
+        Invoke-WebRequest -Uri $lycheeUrl -OutFile $lycheeCmd -UseBasicParsing
+    } else {
+        $lycheeAsset = "lychee-x86_64-unknown-linux-gnu.tar.gz"
+        $lycheeUrl = "https://github.com/lycheeverse/lychee/releases/download/lychee-v$lycheeVersion/$lycheeAsset"
+        $lycheeTar = Join-Path $vellumDir $lycheeAsset
+        Invoke-WebRequest -Uri $lycheeUrl -OutFile $lycheeTar -UseBasicParsing
+        tar -xzf $lycheeTar -C $vellumDir "lychee"
+        Remove-Item $lycheeTar -Force
+        chmod +x $lycheeCmd
+    }
+    Write-Host "  lychee installed." -ForegroundColor Green
+} else {
+    Write-Host "  lychee already installed." -ForegroundColor DarkGray
+}
+
+$lycheeIgnore = Join-Path $here ".lycheeignore"
+$lycheeArgs = @(
+    "--include-fragments"
+    "--no-progress"
+    "."
+)
+
+Push-Location $outputDir
+try {
+    # lychee reads .lycheeignore from CWD automatically
+    if (Test-Path $lycheeIgnore) {
+        Copy-Item $lycheeIgnore -Destination ".lycheeignore"
+    }
+    & $lycheeCmd @lycheeArgs
+} finally {
+    Pop-Location
+}
+if ($LASTEXITCODE -ne 0) { throw "Broken links found — see output above" }
+Write-StepDuration "Link check" $sw
+
+# -- Step 11: Rewrite root-relative paths for subpath hosting -----------------
 if ($BasePathPrefix) {
-    Write-Host "`n[10/10] Rewriting paths for base prefix '$BasePathPrefix'..." -ForegroundColor Cyan
+    Write-Host "`n[11] Rewriting paths for base prefix '$BasePathPrefix'..." -ForegroundColor Cyan
     $sw = [System.Diagnostics.Stopwatch]::StartNew()
 
     # Rewrite HTML files (excluding playground which uses <base href>)
@@ -759,10 +812,10 @@ if ($BasePathPrefix) {
 
     Write-StepDuration "Path rewriting" $sw
 } else {
-    Write-Host "`n[10/10] No base path prefix - skipping path rewriting." -ForegroundColor DarkGray
+    Write-Host "`n[11] No base path prefix - skipping path rewriting." -ForegroundColor DarkGray
 }
 
-# -- Step 10b: Replace default GitHub URL with the one derived from git --------
+# -- Step 11b: Replace default GitHub URL with the one derived from git --------
 # The Razor template has a hardcoded default; if the git-derived URL differs
 # (e.g. building from a fork), rewrite all HTML references.
 $defaultGitHubUrl = "https://github.com/corvus-dotnet/Corvus.JsonSchema"
@@ -819,57 +872,6 @@ Disallow: /
     [System.IO.File]::WriteAllText((Join-Path $outputDir "robots.txt"), $robotsTxt)
     Write-Host "  Created robots.txt (noindex — local/preview build)." -ForegroundColor Gray
 }
-
-# -- Step 11: Check for broken links ------------------------------------------
-Write-Host "`n[11] Checking for broken links..." -ForegroundColor Cyan
-$sw = [System.Diagnostics.Stopwatch]::StartNew()
-
-$lycheeVersion = "0.23.0"
-$lycheeCmd = if ($IsWindows -or $env:OS -eq "Windows_NT") {
-    Join-Path $vellumDir "lychee.exe"
-} else {
-    Join-Path $vellumDir "lychee"
-}
-
-if (!(Test-Path $lycheeCmd)) {
-    Write-Host "  Installing lychee $lycheeVersion..." -ForegroundColor Gray
-    if ($IsWindows -or $env:OS -eq "Windows_NT") {
-        $lycheeAsset = "lychee-x86_64-windows.exe"
-        $lycheeUrl = "https://github.com/lycheeverse/lychee/releases/download/lychee-v$lycheeVersion/$lycheeAsset"
-        Invoke-WebRequest -Uri $lycheeUrl -OutFile $lycheeCmd -UseBasicParsing
-    } else {
-        $lycheeAsset = "lychee-x86_64-unknown-linux-gnu.tar.gz"
-        $lycheeUrl = "https://github.com/lycheeverse/lychee/releases/download/lychee-v$lycheeVersion/$lycheeAsset"
-        $lycheeTar = Join-Path $vellumDir $lycheeAsset
-        Invoke-WebRequest -Uri $lycheeUrl -OutFile $lycheeTar -UseBasicParsing
-        tar -xzf $lycheeTar -C $vellumDir "lychee"
-        Remove-Item $lycheeTar -Force
-        chmod +x $lycheeCmd
-    }
-    Write-Host "  lychee installed." -ForegroundColor Green
-} else {
-    Write-Host "  lychee already installed." -ForegroundColor DarkGray
-}
-
-$lycheeIgnore = Join-Path $here ".lycheeignore"
-$lycheeArgs = @(
-    "--include-fragments"
-    "--no-progress"
-    "."
-)
-
-Push-Location $outputDir
-try {
-    # lychee reads .lycheeignore from CWD automatically
-    if (Test-Path $lycheeIgnore) {
-        Copy-Item $lycheeIgnore -Destination ".lycheeignore"
-    }
-    & $lycheeCmd @lycheeArgs
-} finally {
-    Pop-Location
-}
-if ($LASTEXITCODE -ne 0) { throw "Broken links found — see output above" }
-Write-StepDuration "Link check" $sw
 
 Write-Host "`nBuild complete! Output: $outputDir" -ForegroundColor Green
 
