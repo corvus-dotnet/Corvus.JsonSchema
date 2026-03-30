@@ -855,10 +855,9 @@ $lycheeArgs = @(
     "--root-dir", $outputDir
     "--include-fragments"
     "--no-progress"
+    "--glob-ignore-case"
+    $outputDir
 )
-# lychee reads .lycheeignore automatically from CWD
-$htmlFiles = Get-ChildItem -Path $outputDir -Filter "*.html" -Recurse | ForEach-Object { $_.FullName }
-$lycheeArgs += $htmlFiles
 
 Push-Location $here
 try {
