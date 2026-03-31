@@ -726,11 +726,13 @@ $playgroundSize = (Get-ChildItem $playgroundOutputDir -Recurse -File | Measure-O
 Write-Host "  Playground: $([math]::Round($playgroundSize/1MB, 1)) MB" -ForegroundColor Gray
 Write-StepDuration "Playground build" $sw
 
-# Ensure GitHub Pages does not process the site with Jekyll (which ignores _-prefixed dirs like _framework, _content)
-$nojekyllPath = Join-Path $outputDir ".nojekyll"
-if (!(Test-Path $nojekyllPath)) {
-    New-Item -ItemType File -Path $nojekyllPath -Force | Out-Null
-    Write-Host "  Created .nojekyll marker file." -ForegroundColor Gray
+# Tell Jekyll to include _-prefixed directories needed by the Blazor playground.
+# We cannot use .nojekyll (which bypasses Jekyll entirely) because the resulting
+# unprocessed artifact exceeds GitHub Pages deployment limits.
+$configPath = Join-Path $outputDir "_config.yml"
+if (!(Test-Path $configPath)) {
+    Set-Content -Path $configPath -Value "include: [_framework, _content]" -NoNewline
+    Write-Host "  Created _config.yml to include _framework and _content." -ForegroundColor Gray
 }
 
 # -- Step 10: Check for broken links (lychee) ---------------------------------
