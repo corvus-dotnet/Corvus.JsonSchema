@@ -73,7 +73,7 @@
                                 @onclick:stopPropagation="true"
                                 @onclick="() => ToggleRootType(index)"
                                 title="@(file.IsRootType ? "This schema will be generated (click to unmark)" : "Click to generate types from this schema")">
-                            @(file.IsRootType ? "GENERATE" : "REFERENCE")
+                            @(file.IsRootType ? "GENERATED" : "REFERENCED")
                         </button>
                         @if (schemaFiles.Count > 1)
                         {
