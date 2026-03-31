@@ -1371,6 +1371,59 @@ public sealed partial class JsonDocumentBuilder<T> : JsonDocument, IMutableJsonD
         return CloneElement<TElement>(index);
     }
 
+    /// <inheritdoc />
+    TElement IMutableJsonDocument.FreezeElement<TElement>(int index)
+    {
+        CheckNotDisposed();
+
+        DbRow row = _parsedData.Get(index);
+
+        // If the row is from an external document, we defer to that.
+        // If the external document is immutable, we can just clone from it.
+        if (row.FromExternalDocument)
+        {
+            IJsonDocument document = _workspace.GetDocument(row.WorkspaceDocumentId);
+
+            if (document is IMutableJsonDocument mutableDocument)
+            {
+                return mutableDocument.FreezeElement<TElement>(row.LocationOrIndex);
+            }
+
+            return document.CloneElement<TElement>(row.LocationOrIndex);
+        }
+
+        // Calculate the byte size of the metadb segment for this element.
+        int byteSize = base.GetDbSizeUnsafe(index, true);
+
+        // Create a frozen builder in the same workspace, using the same
+        // mutable type parameter T to satisfy the builder's constraint.
+        JsonDocumentBuilder<T> frozen = new(_workspace);
+        int parentWorkspaceIndex = _workspace.GetDocumentIndex(frozen);
+        frozen.InitializeFrozen(this, index, byteSize, parentWorkspaceIndex);
+
+        // Construct an immutable TElement pointing to the frozen builder.
+#if NET
+        return TElement.CreateInstance(frozen, 0);
+#else
+        return JsonElementHelpers.CreateInstance<TElement>(frozen, 0);
+#endif
+    }
+
+    /// <summary>
+    /// Initializes this builder as a frozen (immutable) copy of a segment of the
+    /// source builder's metadb and value backing.
+    /// </summary>
+    /// <param name="source">The source document to freeze from.</param>
+    /// <param name="index">The starting metadb byte index in the source.</param>
+    /// <param name="byteSize">The byte size of the metadb segment to copy.</param>
+    /// <param name="parentWorkspaceIndex">The workspace index for this builder.</param>
+    internal void InitializeFrozen(JsonDocument source, int index, int byteSize, int parentWorkspaceIndex)
+    {
+        _parentWorkspaceIndex = parentWorkspaceIndex;
+        source.CopyFreezeState(this, index, byteSize);
+        _isImmutable = true;
+    }
+
     private TElement CloneElement<TElement>(int index)
         where TElement : struct, IJsonElement<TElement>
     {

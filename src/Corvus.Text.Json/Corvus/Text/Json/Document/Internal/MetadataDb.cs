@@ -862,6 +862,55 @@ public struct MetadataDb : IDisposable
     }
 
     /// <summary>
+    /// Copies a raw segment of the metadata database without adjusting location offsets.
+    /// This is used when freezing a mutable document builder, where the location offsets
+    /// point into a value backing array and must not be modified.
+    /// </summary>
+    /// <param name="startIndex">The starting index of the segment to copy.</param>
+    /// <param name="endIndex">The ending index of the segment to copy.</param>
+    /// <returns>A new MetadataDb containing the raw copied segment.</returns>
+    internal MetadataDb CopySegmentRaw(int startIndex, int endIndex)
+    {
+        Debug.Assert(
+            endIndex > startIndex,
+            $"endIndex={endIndex} was at or before startIndex={startIndex}");
+
+        AssertValidIndex(startIndex);
+        Debug.Assert(endIndex <= Length);
+
+#if DEBUG
+        DbRow start = Get(startIndex);
+        DbRow end = Get(endIndex - DbRow.Size);
+
+        if (start.TokenType == JsonTokenType.StartObject)
+        {
+            Debug.Assert(
+                end.TokenType == JsonTokenType.EndObject,
+                $"StartObject paired with {end.TokenType}");
+        }
+        else if (start.TokenType == JsonTokenType.StartArray)
+        {
+            Debug.Assert(
+                end.TokenType == JsonTokenType.EndArray,
+                $"StartArray paired with {end.TokenType}");
+        }
+        else
+        {
+            Debug.Assert(
+                startIndex + DbRow.Size == endIndex,
+                $"{start.TokenType} should have been one row");
+        }
+#endif
+
+        int length = endIndex - startIndex;
+
+        byte[] newDatabase = ArrayPool<byte>.Shared.Rent(length);
+        _data.AsSpan(startIndex, length).CopyTo(newDatabase);
+
+        return CreateRented(newDatabase, length, convertToAlloc: false);
+    }
+
+    /// <summary>
     /// Takes ownership of the internal rented backing array, clearing the current instance.
     /// </summary>
     /// <param name="rentedBacking">Returns the rented backing array that was taken ownership of.</param>

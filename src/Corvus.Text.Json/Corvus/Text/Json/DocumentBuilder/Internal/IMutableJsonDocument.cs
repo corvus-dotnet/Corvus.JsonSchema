@@ -24,6 +24,16 @@ public interface IMutableJsonDocument : IJsonDocument
     ulong Version { get; }
 
     /// <summary>
+    /// Creates a frozen (immutable) copy of the element at the specified index,
+    /// backed by a new document builder registered in the same workspace.
+    /// </summary>
+    /// <typeparam name="TElement">The immutable element type to return.</typeparam>
+    /// <param name="index">The index of the element to freeze.</param>
+    /// <returns>An immutable element that lives for the lifetime of its workspace and its associated documents.</returns>
+    TElement FreezeElement<TElement>(int index)
+        where TElement : struct, IJsonElement<TElement>;
+
+    /// <summary>
     /// Gets the array element at the specified index as a mutable JSON element.
     /// </summary>
     /// <param name="currentIndex">The current index in the document.</param>

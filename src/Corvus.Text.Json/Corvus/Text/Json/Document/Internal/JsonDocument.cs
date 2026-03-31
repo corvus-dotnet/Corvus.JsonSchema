@@ -1801,6 +1801,26 @@ public abstract partial class JsonDocument
     }
 
     /// <summary>
+    /// Copies the metadb segment and value backing from this document into a target document
+    /// for a freeze operation. The target's metadb is a raw blit of the specified segment
+    /// (no location offset adjustment), and the value backing is copied verbatim.
+    /// </summary>
+    /// <param name="target">The target document to initialize.</param>
+    /// <param name="index">The starting metadb byte index of the element to freeze.</param>
+    /// <param name="byteSize">The byte size of the metadb segment.</param>
+    internal void CopyFreezeState(JsonDocument target, int index, int byteSize)
+    {
+        target._parsedData = _parsedData.CopySegmentRaw(index, index + byteSize);
+
+        if (_valueBacking != null && _valueOffset > 0)
+        {
+            target._valueBacking = ArrayPool<byte>.Shared.Rent(_valueOffset);
+            Buffer.BlockCopy(_valueBacking, 0, target._valueBacking, 0, _valueOffset);
+            target._valueOffset = _valueOffset;
+        }
+    }
+
+    /// <summary>
     /// Disposes of the core resources used by the JSON document, including returning rented arrays to their pools.
     /// </summary>
     protected void DisposeCore()
