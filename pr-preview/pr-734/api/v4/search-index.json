@@ -24327,9 +24327,9 @@
   {
     "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v4/corvus-json-codegeneration-csharp-tuplevalidationhandler.html",
     "Title": "TupleValidationHandler",
-    "Description": "A string length validation handler.",
+    "Description": "A tuple (prefixItems) validation handler.",
     "Keywords": "TupleValidationHandler class Corvus.Json.CodeGeneration.CSharp",
-    "Body": "A string length validation handler.\r\nInstance: Gets the singleton instance of the [`TupleValidationHandler`](/api/v4/corvus-json-codegeneration-csharp-tuplevalidationhandler.html)."
+    "Body": "A tuple (prefixItems) validation handler.\r\nInstance: Gets the singleton instance of the [`TupleValidationHandler`](/api/v4/corvus-json-codegeneration-csharp-tuplevalidationhandler.html)."
   },
   {
     "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v4/corvus-json-codegeneration-csharp-tuplevalidationhandler.ctor.html",
