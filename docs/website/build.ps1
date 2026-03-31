@@ -726,6 +726,13 @@ $playgroundSize = (Get-ChildItem $playgroundOutputDir -Recurse -File | Measure-O
 Write-Host "  Playground: $([math]::Round($playgroundSize/1MB, 1)) MB" -ForegroundColor Gray
 Write-StepDuration "Playground build" $sw
 
+# Ensure GitHub Pages does not process the site with Jekyll (which ignores _-prefixed dirs like _framework, _content)
+$nojekyllPath = Join-Path $outputDir ".nojekyll"
+if (!(Test-Path $nojekyllPath)) {
+    New-Item -ItemType File -Path $nojekyllPath -Force | Out-Null
+    Write-Host "  Created .nojekyll marker file." -ForegroundColor Gray
+}
+
 # -- Step 10: Check for broken links (lychee) ---------------------------------
 # Run BEFORE path rewriting so that root-relative links (e.g. /api/index.html)
 # still map to the local .output/ directory structure.

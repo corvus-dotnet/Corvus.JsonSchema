@@ -159,6 +159,16 @@ jobs:
           key: build-state-${{ github.run_id }}-compile
           enableCrossOsArchive: true
 
+      - name: Ensure .nojekyll on gh-pages root
+        run: |
+          mkdir -p /tmp/nojekyll
+          touch /tmp/nojekyll/.nojekyll
+      - uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: gh-pages
+          folder: /tmp/nojekyll
+          clean: false
+
       - name: Deploy PR preview
         uses: rossjrw/pr-preview-action@v1
         with:

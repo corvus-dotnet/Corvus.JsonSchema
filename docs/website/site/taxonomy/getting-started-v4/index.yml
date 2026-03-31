@@ -7,7 +7,7 @@ Navigation:
   Url: /getting-started-v4/index.html
   Rank: 2
   Header:
-    Visible: True
+    Visible: False
     Link: True
   Footer:
     Visible: True

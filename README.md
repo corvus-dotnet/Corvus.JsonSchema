@@ -136,14 +136,14 @@ dotnet test Corvus.Text.Json.slnx --filter "category!=failing&category!=outerloo
 ### .NET 4.8.1 (Windows)
 It now works with .NET 4.8.1 and later by providing `netstandard2.0` packages.
 
-### .NET 8.0, 9.0 (Windows, Linux, MacOs)
-We take advantage of features in .NET 8.0 and later, by providing `net80` packages. These are supported on Windows, Linux, and MacOS.
+### .NET 8.0, 9.0, 10.0 (Windows, Linux, MacOs)
+We take advantage of features in .NET 8.0 and later, by providing `net8.0`, `net9.0`, and `net10.0` packages. These are supported on Windows, Linux, and MacOS.
 
 Note that if you are building libraries using `Corvus.Json.ExtendedTypes`, and generated schema types, you should ensure
-that you target *both* `netstandard2.0` *and* `net80` (or later) to ensure that your library can be consumed
-by the widest possible range of projects
+that you target *both* `netstandard2.0` *and* `net8.0` (or later) to ensure that your library can be consumed
+by the widest possible range of projects.
 
-If you build your library against `netstandard2.0` only, and are consumed by a `net80` or later project, you will see type load errors.
+If you build your library against `netstandard2.0` only, and are consumed by a `net8.0` or later project, you will see type load errors.
 
 ## Supported schema dialects
 
