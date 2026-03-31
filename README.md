@@ -82,8 +82,15 @@ For the source generator, add as an analyzer reference:
 
 ## Target Frameworks
 
-- .NET 10.0, 9.0, 8.0
+### V5 engine (Corvus.Text.Json)
+- .NET 10.0, 9.0
+- .NET Standard 2.0, 2.1
+
+### V4 engine (Corvus.Json)
+- .NET 10.0, 8.0
 - .NET Standard 2.0
+
+> **Note:** .NET 8.0 is not supported on the V5 engine. The V4 engine will drop .NET 8.0 support in November 2026 when it reaches end-of-life.
 
 ## Documentation
 
@@ -136,14 +143,16 @@ dotnet test Corvus.Text.Json.slnx --filter "category!=failing&category!=outerloo
 ### .NET 4.8.1 (Windows)
 It now works with .NET 4.8.1 and later by providing `netstandard2.0` packages.
 
-### .NET 8.0, 9.0, 10.0 (Windows, Linux, MacOs)
-We take advantage of features in .NET 8.0 and later, by providing `net8.0`, `net9.0`, and `net10.0` packages. These are supported on Windows, Linux, and MacOS.
+### .NET 9.0, 10.0 (Windows, Linux, MacOs)
+The V5 engine provides `net9.0` and `net10.0` packages. These are supported on Windows, Linux, and MacOS.
+
+> **Note:** .NET 8.0 is not supported on the V5 engine. If you need .NET 8.0, use the V4 engine (which will retain .NET 8.0 support until its end-of-life in November 2026).
 
 Note that if you are building libraries using `Corvus.JsonSchema`, you should ensure
-that you target *both* `netstandard2.0` *and* `net8.0` (or later) to ensure that your library can be consumed
+that you target *both* `netstandard2.0` *and* `net9.0` (or later) to ensure that your library can be consumed
 by the widest possible range of projects.
 
-If you build your library against `netstandard2.0` only, and are consumed by a `net8.0` or later project, you will see type load errors.
+If you build your library against `netstandard2.0` only, and are consumed by a `net9.0` or later project, you will see type load errors.
 
 ## Supported schema dialects
 

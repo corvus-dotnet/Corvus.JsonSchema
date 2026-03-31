@@ -33,7 +33,7 @@ The core library providing:
 - **`Utf8JsonReader`** / **`Utf8JsonWriter`** — high-performance UTF-8 JSON I/O (forked from dotnet/runtime)
 - **Format validation** — URI, date-time, email, hostname, regex, and numeric format validators
 
-Targets: `net8.0`, `net9.0`, `net10.0`, `netstandard2.0`
+Targets: `net9.0`, `net10.0`, `netstandard2.0`, `netstandard2.1`
 
 ### Code generation engine (`Corvus.Text.Json.CodeGeneration`)
 

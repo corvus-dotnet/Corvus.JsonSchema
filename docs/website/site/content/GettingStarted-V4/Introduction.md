@@ -25,4 +25,6 @@ This hands-on tutorial walks you through JSON Schema-based code generation with 
 - A shell with developer tools in the path (PowerShell, Terminal, etc.)
 - A text editor or IDE (VS Code, Visual Studio, etc.)
 
+> **Note:** .NET 8.0 support on the V4 engine will be dropped in November 2026 when .NET 8 reaches end-of-life.
+
 Some familiarity with C#, [JSON Schema](https://json-schema.org/understanding-json-schema/), and `System.Text.Json` will help, but is not required.

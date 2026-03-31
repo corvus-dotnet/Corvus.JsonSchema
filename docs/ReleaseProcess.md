@@ -57,7 +57,7 @@ Key points:
 The build workflow runs on every push and PR. It has three phases:
 
 1. **Compile** — builds the solution on Ubuntu and Windows
-2. **Test** — runs the test suite with `.NET 10.0`, `.NET 8.0`, and `.NET Framework 4.8.1`
+2. **Test** — runs the test suite with `.NET 10.0` and `.NET Framework 4.8.1`
 3. **NuGet** — packages and publishes
 
 ### NuGet source selection

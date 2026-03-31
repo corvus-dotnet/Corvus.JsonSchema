@@ -1,3 +1,5 @@
+> **Note:** This guide covers the **V4 engine** (Corvus.Json). .NET 8.0 support on V4 will be dropped in November 2026 when .NET 8 reaches end-of-life.
+
 TL;DR - this is a getting started Hands-On-Lab that walks you through our new JSON Schema-based code generation library and tools for C#. It builds on `System.Text.Json` to provide rich serialization, deserialization, composition, and validation support.
 
 ## Goals
