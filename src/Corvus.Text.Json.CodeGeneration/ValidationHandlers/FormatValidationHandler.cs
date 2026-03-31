@@ -36,7 +36,7 @@ internal sealed class FormatValidationHandler : TypeSensitiveKeywordValidationHa
     /// <inheritdoc/>
     public override CodeGenerator AppendValidationSetup(CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
-        // If we require string value validation, then we need to run the type validation after all the string value validation handlers have run, so that we can ignore the type validation if any of those handlers are present.
+        // Prepend and append child validation setup around the format validation setup.
         return generator
              .PrependChildValidationSetup(typeDeclaration, ChildHandlers, ValidationHandlerPriority)
              .AppendFormatValidationSetup()

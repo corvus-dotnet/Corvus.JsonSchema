@@ -33,7 +33,7 @@ internal sealed class TernaryIfValidationHandler : KeywordValidationHandlerBase
     /// <inheritdoc/>
     public override CodeGenerator AppendValidationSetup(CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
-        // If we require string value validation, then we need to run the type validation after all the string value validation handlers have run, so that we can ignore the type validation if any of those handlers are present.
+        // Prepend and append child validation setup around the if/then/else validation setup.
         return generator
              .PrependChildValidationSetup(typeDeclaration, ChildHandlers, ValidationHandlerPriority)
              .AppendTernaryIfValidationSetup()
@@ -109,10 +109,10 @@ file static class TernaryIfValidationHandlerExtensions
 
             if (elseType is not null)
             {
-                string formattedKeyword = SymbolDisplay.FormatLiteral(thenType.Keyword.Keyword, true);
+                string formattedKeyword = SymbolDisplay.FormatLiteral(elseType.Keyword.Keyword, true);
 
                 generator
-                    .AppendLineIndent("context.IgnoredKeyword(JsonSchemaEvaluation.ElseeWithoutIf, ", formattedKeyword, "u8);");
+                    .AppendLineIndent("context.IgnoredKeyword(JsonSchemaEvaluation.ElseWithoutIf, ", formattedKeyword, "u8);");
             }
         }
 

@@ -17,7 +17,7 @@ using Microsoft.CodeAnalysis.CSharp;
 namespace Corvus.Text.Json.CodeGeneration.ValidationHandlers.ObjectChildHandlers;
 
 /// <summary>
-/// A items validation handler.
+/// A contains validation handler.
 /// </summary>
 public class ContainsValidationHandler : IChildArrayItemValidationHandler2, IJsonSchemaClassSetup
 {

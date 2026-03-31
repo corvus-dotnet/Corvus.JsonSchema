@@ -746,7 +746,13 @@
     <value>The value matched the else subschema corresponding to a ternary if.</value>
   </data>
   <data name="JsonSchema_DidNotMatchElse" xml:space="preserve">
-    <value>The value did not match the else subschema corresponding to a ternay if.</value>
+    <value>The value did not match the else subschema corresponding to a ternary if.</value>
+  </data>
+  <data name="JsonSchema_ThenWithoutIf" xml:space="preserve">
+    <value>The then keyword was ignored because no if keyword was present.</value>
+  </data>
+  <data name="JsonSchema_ElseWithoutIf" xml:space="preserve">
+    <value>The else keyword was ignored because no if keyword was present.</value>
   </data>
   <data name="JsonSchema_ExpectedMatchPatternPropertySchema" xml:space="preserve">
     <value>The value of the property did not match the corresponding subschema when its name matched the regular expression</value>

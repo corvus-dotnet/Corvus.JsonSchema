@@ -16,7 +16,7 @@ using Microsoft.CodeAnalysis.CSharp;
 namespace Corvus.Text.Json.CodeGeneration.ValidationHandlers.ObjectChildHandlers;
 
 /// <summary>
-/// A items validation handler.
+/// A unique items validation handler.
 /// </summary>
 public class UniqueItemsValidationHandler : IChildArrayItemValidationHandler2, IJsonSchemaClassSetup
 {
