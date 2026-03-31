@@ -139,7 +139,7 @@ It now works with .NET 4.8.1 and later by providing `netstandard2.0` packages.
 ### .NET 8.0, 9.0, 10.0 (Windows, Linux, MacOs)
 We take advantage of features in .NET 8.0 and later, by providing `net8.0`, `net9.0`, and `net10.0` packages. These are supported on Windows, Linux, and MacOS.
 
-Note that if you are building libraries using `Corvus.Json.ExtendedTypes`, and generated schema types, you should ensure
+Note that if you are building libraries using `Corvus.JsonSchema`, you should ensure
 that you target *both* `netstandard2.0` *and* `net8.0` (or later) to ensure that your library can be consumed
 by the widest possible range of projects.
 
