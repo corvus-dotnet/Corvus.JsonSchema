@@ -25,10 +25,10 @@
     indexLoading = true;
     try {
       // Determine versioned search index from current URL path
-      var searchUrl = '/corvus-json-schema/pr-preview/pr-734/search-index.json';
+      var searchUrl = '/Corvus.JsonSchema/pr-preview/pr-734/search-index.json';
       var loc = window.location.pathname;
-      if (loc.indexOf('/corvus-json-schema/pr-preview/pr-734/api/v5/') === 0) searchUrl = '/corvus-json-schema/pr-preview/pr-734/api/v5/search-index.json';
-      else if (loc.indexOf('/corvus-json-schema/pr-preview/pr-734/api/v4/') === 0) searchUrl = '/corvus-json-schema/pr-preview/pr-734/api/v4/search-index.json';
+      if (loc.indexOf('/Corvus.JsonSchema/pr-preview/pr-734/api/v5/') === 0) searchUrl = '/Corvus.JsonSchema/pr-preview/pr-734/api/v5/search-index.json';
+      else if (loc.indexOf('/Corvus.JsonSchema/pr-preview/pr-734/api/v4/') === 0) searchUrl = '/Corvus.JsonSchema/pr-preview/pr-734/api/v4/search-index.json';
       var resp = await fetch(searchUrl);
       if (!resp.ok) throw new Error('HTTP ' + resp.status);
       var data = await resp.json();
@@ -41,7 +41,7 @@
             keywords: d.keywords || d.Keywords || '',
           };
         })
-        .filter(function (d) { return d.url && d.url.startsWith('/corvus-json-schema/pr-preview/pr-734/api/'); });
+        .filter(function (d) { return d.url && d.url.startsWith('/Corvus.JsonSchema/pr-preview/pr-734/api/'); });
     } catch (e) {
       console.warn('[sidebar-search] Failed to load search index:', e);
     } finally {

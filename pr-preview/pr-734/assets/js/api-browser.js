@@ -36,7 +36,7 @@
     indexLoading = true;
     try {
       var searchIndexUrl = input ? input.getAttribute('data-search-index') : null;
-      if (!searchIndexUrl) searchIndexUrl = '/corvus-json-schema/pr-preview/pr-734/search-index.json';
+      if (!searchIndexUrl) searchIndexUrl = '/Corvus.JsonSchema/pr-preview/pr-734/search-index.json';
       var resp = await fetch(searchIndexUrl);
       if (!resp.ok) throw new Error('HTTP ' + resp.status);
       var data = await resp.json();
@@ -49,7 +49,7 @@
             keywords: d.keywords || d.Keywords || '',
           };
         })
-        .filter(function (d) { return d.url && d.url.startsWith('/corvus-json-schema/pr-preview/pr-734/api/'); });
+        .filter(function (d) { return d.url && d.url.startsWith('/Corvus.JsonSchema/pr-preview/pr-734/api/'); });
     } catch (e) {
       console.warn('[api-browser] Failed to load search index:', e);
     } finally {

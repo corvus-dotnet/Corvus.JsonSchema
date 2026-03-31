@@ -9,7 +9,7 @@
     <meta name="robots" content="noindex, nofollow" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:description" content="This recipe demonstrates how to efficiently convert between different schema representations of similar entities - a common pattern in layered architectures where data transforms between API, domain, and persistence layers." />
-    <meta name="twitter:image" content="/corvus-json-schema/pr-preview/pr-734/assets/images/og-corvus.png" />
+    <meta name="twitter:image" content="/Corvus.JsonSchema/pr-preview/pr-734/assets/images/og-corvus.png" />
     <meta name="twitter:title" content="Mapping Input and Output Values - Corvus.Text.Json Examples" />
     <meta property="article:tag" content="recipe" />
     <meta property="article:tag" content="JSON Schema" />
@@ -28,7 +28,7 @@
     <meta property="article:tag" content="CreateBuilder" />
     <meta property="article:tag" content="TryGetValue" />
     <meta property="og:description" content="This recipe demonstrates how to efficiently convert between different schema representations of similar entities - a common pattern in layered architectures where data transforms between API, domain, and persistence layers." />
-    <meta property="og:image" content="/corvus-json-schema/pr-preview/pr-734/assets/images/og-corvus.png" />
+    <meta property="og:image" content="/Corvus.JsonSchema/pr-preview/pr-734/assets/images/og-corvus.png" />
     <meta property="og:title" content="Mapping Input and Output Values - Corvus.Text.Json Examples" />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://corvus-oss.org/corvus-json-schema/examples/mapping-input-and-output-values/" />
@@ -37,35 +37,35 @@
     <link rel="canonical" href="https://corvus-oss.org/corvus-json-schema/examples/mapping-input-and-output-values/" />
     <link rel="sitemap" href="https://corvus-oss.org/corvus-json-schema/sitemap.xml" />
     <!-- Styles -->
-    <link rel="stylesheet" href="/corvus-json-schema/pr-preview/pr-734/main.css" />
-    <link rel="icon" type="image/svg+xml" href="/corvus-json-schema/pr-preview/pr-734/assets/images/favicon.svg" />
+    <link rel="stylesheet" href="/Corvus.JsonSchema/pr-preview/pr-734/main.css" />
+    <link rel="icon" type="image/svg+xml" href="/Corvus.JsonSchema/pr-preview/pr-734/assets/images/favicon.svg" />
     
 </head>
 <body>
     <a class="sr-only" href="#main-content">Skip to content</a>
 <header class="site-header">
     <div class="site-header__inner">
-        <a class="site-header__brand" href="/corvus-json-schema/pr-preview/pr-734/index.html" aria-label="Corvus.JsonSchema home">
-            <img src="/corvus-json-schema/pr-preview/pr-734/assets/images/logo-corvus.svg" alt="" width="28" height="28" aria-hidden="true" />
+        <a class="site-header__brand" href="/Corvus.JsonSchema/pr-preview/pr-734/index.html" aria-label="Corvus.JsonSchema home">
+            <img src="/Corvus.JsonSchema/pr-preview/pr-734/assets/images/logo-corvus.svg" alt="" width="28" height="28" aria-hidden="true" />
             Corvus<span style="color:var(--color-brand)">.</span>Json<span style="color:var(--color-brand)">Schema</span>
         </a>
         <nav class="site-header__nav-desktop" aria-label="Main navigation">
-                    <a href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html"
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-734/getting-started/index.html"
                        class="site-header__link "
                        >Getting Started</a>
-                    <a href="/corvus-json-schema/pr-preview/pr-734/getting-started-v4/index.html"
-                       class="site-header__link "
-                       >Getting Started (V4)</a>
-                    <a href="/corvus-json-schema/pr-preview/pr-734/docs/index.html"
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-734/docs/index.html"
                        class="site-header__link "
                        >Documentation</a>
-                    <a href="/corvus-json-schema/pr-preview/pr-734/examples/index.html"
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-734/getting-started-v4/index.html"
+                       class="site-header__link "
+                       >Getting Started (V4)</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-734/examples/index.html"
                        class="site-header__link is-active"
                        aria-current=page>Examples</a>
-                    <a href="/corvus-json-schema/pr-preview/pr-734/api/index.html"
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/index.html"
                        class="site-header__link "
                        >API</a>
-            <a href="/corvus-json-schema/pr-preview/pr-734/playground/"
+            <a href="/Corvus.JsonSchema/pr-preview/pr-734/playground/"
                class="site-header__link"
                target="_blank" rel="noopener noreferrer"
                title="Interactive JSON Schema playground">Playground</a>
@@ -85,12 +85,12 @@
     </div>
 </header>
 <nav class="site-header__nav-mobile js-mobile-nav" aria-label="Mobile navigation">
-            <a href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html" class="site-header__link">Getting Started</a>
-            <a href="/corvus-json-schema/pr-preview/pr-734/getting-started-v4/index.html" class="site-header__link">Getting Started (V4)</a>
-            <a href="/corvus-json-schema/pr-preview/pr-734/docs/index.html" class="site-header__link">Documentation</a>
-            <a href="/corvus-json-schema/pr-preview/pr-734/examples/index.html" class="site-header__link">Examples</a>
-            <a href="/corvus-json-schema/pr-preview/pr-734/api/index.html" class="site-header__link">API</a>
-    <a href="/corvus-json-schema/pr-preview/pr-734/playground/" class="site-header__link" target="_blank" rel="noopener noreferrer">Playground</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-734/getting-started/index.html" class="site-header__link">Getting Started</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-734/docs/index.html" class="site-header__link">Documentation</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-734/getting-started-v4/index.html" class="site-header__link">Getting Started (V4)</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-734/examples/index.html" class="site-header__link">Examples</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/index.html" class="site-header__link">API</a>
+    <a href="/Corvus.JsonSchema/pr-preview/pr-734/playground/" class="site-header__link" target="_blank" rel="noopener noreferrer">Playground</a>
     <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
        class="site-header__link" target="_blank" rel="noopener noreferrer">GitHub</a>
 </nav>
@@ -105,7 +105,7 @@
             <button class="sidebar__heading">Getting Started</button>
             <div class="sidebar__body">
                 <ul class="sidebar__list">
-                    <li class="sidebar__item"><a class="sidebar__link" href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html">Tutorial</a></li>
+                    <li class="sidebar__item"><a class="sidebar__link" href="/Corvus.JsonSchema/pr-preview/pr-734/getting-started/index.html">Tutorial</a></li>
                 </ul>
             </div>
         </div>
@@ -114,34 +114,34 @@
             <div class="sidebar__body">
                 <ul class="sidebar__list">
                             <li class="sidebar__item">
-                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/parsed-json-document.html">Parsing &amp; Reading JSON</a>
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/parsed-json-document.html">Parsing &amp; Reading JSON</a>
                             </li>
                             <li class="sidebar__item">
-                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/json-document-builder.html">Building &amp; Mutating JSON</a>
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/json-document-builder.html">Building &amp; Mutating JSON</a>
                             </li>
                             <li class="sidebar__item">
-                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/source-generator.html">Source Generator</a>
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/source-generator.html">Source Generator</a>
                             </li>
                             <li class="sidebar__item">
-                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/code-generator.html">CLI Code Generation</a>
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/code-generator.html">CLI Code Generation</a>
                             </li>
                             <li class="sidebar__item">
-                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/validator.html">Dynamic Schema Validation</a>
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/validator.html">Dynamic Schema Validation</a>
                             </li>
                             <li class="sidebar__item">
-                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/migrating-from-v4-to-v5.html">Migrating from V4</a>
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/migrating-from-v4-to-v5.html">Migrating from V4</a>
                             </li>
                             <li class="sidebar__item">
-                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/using-copilot-for-migration.html">Copilot Migration</a>
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/using-copilot-for-migration.html">Copilot Migration</a>
                             </li>
                             <li class="sidebar__item">
-                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/migration-analyzers.html">Migration Analyzers</a>
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/migration-analyzers.html">Migration Analyzers</a>
                             </li>
                             <li class="sidebar__item">
-                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/analyzers.html">Analyzers</a>
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/analyzers.html">Analyzers</a>
                             </li>
                             <li class="sidebar__item">
-                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/docs/schema-evaluator.html">Standalone Schema Evaluator</a>
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/schema-evaluator.html">Standalone Schema Evaluator</a>
                             </li>
                 </ul>
             </div>
@@ -151,55 +151,55 @@
             <div class="sidebar__body">
                 <ul class="sidebar__list">
                             <li class="sidebar__item">
-                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/data-object.html">Simple Data Objects</a>
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/data-object.html">Simple Data Objects</a>
                             </li>
                             <li class="sidebar__item">
-                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/data-object-validation.html">Data Object Validation</a>
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/data-object-validation.html">Data Object Validation</a>
                             </li>
                             <li class="sidebar__item">
-                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/reusing-common-types.html">Reusing Common Types</a>
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/reusing-common-types.html">Reusing Common Types</a>
                             </li>
                             <li class="sidebar__item">
-                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/open-versus-closed-types.html">Open Versus Closed Types</a>
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/open-versus-closed-types.html">Open Versus Closed Types</a>
                             </li>
                             <li class="sidebar__item">
-                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/extending-a-base-type.html">Extending a Base Type</a>
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/extending-a-base-type.html">Extending a Base Type</a>
                             </li>
                             <li class="sidebar__item">
-                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/constraining-a-base-type.html">Constraining a Base Type</a>
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/constraining-a-base-type.html">Constraining a Base Type</a>
                             </li>
                             <li class="sidebar__item">
-                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/creating-a-strongly-typed-array.html">Strongly Typed Arrays</a>
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/creating-a-strongly-typed-array.html">Strongly Typed Arrays</a>
                             </li>
                             <li class="sidebar__item">
-                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/creating-an-array-of-higher-rank.html">Multi-Dimensional Arrays</a>
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/creating-an-array-of-higher-rank.html">Multi-Dimensional Arrays</a>
                             </li>
                             <li class="sidebar__item">
-                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/working-with-tensors.html">Working with Tensors</a>
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/working-with-tensors.html">Working with Tensors</a>
                             </li>
                             <li class="sidebar__item">
-                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/creating-tuples.html">Creating Tuples</a>
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/creating-tuples.html">Creating Tuples</a>
                             </li>
                             <li class="sidebar__item">
-                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/interfaces-and-mix-in-types.html">Interfaces and Mix-In Types</a>
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/interfaces-and-mix-in-types.html">Interfaces and Mix-In Types</a>
                             </li>
                             <li class="sidebar__item">
-                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/pattern-matching.html">Pattern Matching and Discriminated Unions</a>
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/pattern-matching.html">Pattern Matching and Discriminated Unions</a>
                             </li>
                             <li class="sidebar__item">
-                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/polymorphism-with-discriminators.html">Polymorphism with Discriminator Properties</a>
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/polymorphism-with-discriminators.html">Polymorphism with Discriminator Properties</a>
                             </li>
                             <li class="sidebar__item">
-                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/string-enumerations.html">String Enumerations and Pattern Matching</a>
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/string-enumerations.html">String Enumerations and Pattern Matching</a>
                             </li>
                             <li class="sidebar__item">
-                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/numeric-enumerations.html">Numeric Enumerations</a>
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/numeric-enumerations.html">Numeric Enumerations</a>
                             </li>
                             <li class="sidebar__item">
-                                <a class="sidebar__link " href="/corvus-json-schema/pr-preview/pr-734/examples/maps.html">Maps of Strings to Strongly Typed Values</a>
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/maps.html">Maps of Strings to Strongly Typed Values</a>
                             </li>
                             <li class="sidebar__item">
-                                <a class="sidebar__link is-active" href="/corvus-json-schema/pr-preview/pr-734/examples/mapping-input-and-output-values.html">Mapping Input and Output Values</a>
+                                <a class="sidebar__link is-active" href="/Corvus.JsonSchema/pr-preview/pr-734/examples/mapping-input-and-output-values.html">Mapping Input and Output Values</a>
                             </li>
                 </ul>
             </div>
@@ -431,10 +431,10 @@ dotnet run
 </code></pre>
 <h2 id="related-patterns">Related Patterns</h2>
 <ul>
-<li><a href="/corvus-json-schema/pr-preview/pr-734/examples/data-object.html">001-DataObject</a> - Creating and manipulating data objects</li>
-<li><a href="/corvus-json-schema/pr-preview/pr-734/examples/open-versus-closed-types.html">004-OpenVersusClosedTypes</a> - Mutable operations on open types</li>
-<li><a href="/corvus-json-schema/pr-preview/pr-734/examples/maps.html">016-Maps</a> - Working with dynamic property sets</li>
-<li><a href="/corvus-json-schema/pr-preview/pr-734/examples/interfaces-and-mix-in-types.html">011-InterfacesAndMixInTypes</a> - Type composition with <code>allOf</code></li>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-734/examples/data-object.html">001-DataObject</a> - Creating and manipulating data objects</li>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-734/examples/open-versus-closed-types.html">004-OpenVersusClosedTypes</a> - Mutable operations on open types</li>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-734/examples/maps.html">016-Maps</a> - Working with dynamic property sets</li>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-734/examples/interfaces-and-mix-in-types.html">011-InterfacesAndMixInTypes</a> - Type composition with <code>allOf</code></li>
 </ul>
 <h2 id="real-world-scenarios">Real-World Scenarios</h2>
 <p>This pattern is especially useful for:</p>
@@ -506,10 +506,10 @@ dotnet run
             <a href="https://endjin.com" target="_blank" rel="noopener noreferrer">endjin</a>
         </div>
         <ul class="site-footer__links" role="list">
-            <li><a class="site-footer__link" href="/corvus-json-schema/pr-preview/pr-734/getting-started/index.html">Getting Started</a></li>
-            <li><a class="site-footer__link" href="/corvus-json-schema/pr-preview/pr-734/docs/index.html">Documentation</a></li>
-            <li><a class="site-footer__link" href="/corvus-json-schema/pr-preview/pr-734/examples/index.html">Examples</a></li>
-            <li><a class="site-footer__link" href="/corvus-json-schema/pr-preview/pr-734/api/index.html">API</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-734/getting-started/index.html">Getting Started</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-734/docs/index.html">Documentation</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-734/examples/index.html">Examples</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-734/api/index.html">API</a></li>
             <li><a class="site-footer__link" href="https://github.com/corvus-dotnet/Corvus.JsonSchema" target="_blank" rel="noopener noreferrer">GitHub</a></li>
             <li><a class="site-footer__link" href="https://www.nuget.org/packages?q=Corvus.Json" target="_blank" rel="noopener noreferrer">NuGet</a></li>
         </ul>
@@ -524,8 +524,8 @@ dotnet run
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js" defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js" defer></script>
     <script>document.addEventListener('DOMContentLoaded',()=>hljs.highlightAll())</script>
-    <script src="/corvus-json-schema/pr-preview/pr-734/assets/js/main.js" defer></script>
-    <script src="/corvus-json-schema/pr-preview/pr-734/assets/js/sidebar-search.js" defer></script>
+    <script src="/Corvus.JsonSchema/pr-preview/pr-734/assets/js/main.js" defer></script>
+    <script src="/Corvus.JsonSchema/pr-preview/pr-734/assets/js/sidebar-search.js" defer></script>
     
 </body>
 </html>
