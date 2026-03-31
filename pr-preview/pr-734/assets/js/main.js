@@ -43,28 +43,108 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Sidebar collapsible sections (namespace headings)
-  document.querySelectorAll('.sidebar__heading').forEach((toggle) => {
-    toggle.addEventListener('click', () => {
-      const section = toggle.closest('.sidebar__section');
-      const body = section?.querySelector('.sidebar__body');
-      if (body) {
-        body.classList.toggle('is-collapsed');
-        toggle.classList.toggle('is-collapsed');
-      }
+  // ── Sidebar initialisation (runs after content is available) ────────────
+  function initSidebarBehavior() {
+    // Sidebar collapsible sections (namespace headings)
+    document.querySelectorAll('.sidebar__heading').forEach((toggle) => {
+      toggle.addEventListener('click', () => {
+        const section = toggle.closest('.sidebar__section');
+        const body = section?.querySelector('.sidebar__body');
+        if (body) {
+          body.classList.toggle('is-collapsed');
+          toggle.classList.toggle('is-collapsed');
+        }
+      });
     });
-  });
 
-  // Sidebar collapsible member categories
-  document.querySelectorAll('.sidebar__cat-toggle').forEach((toggle) => {
-    toggle.addEventListener('click', () => {
-      const body = toggle.nextElementSibling;
-      if (body && body.classList.contains('sidebar__cat-body')) {
-        body.classList.toggle('is-collapsed');
-        toggle.classList.toggle('is-collapsed');
+    // Sidebar collapsible member categories
+    document.querySelectorAll('.sidebar__cat-toggle').forEach((toggle) => {
+      toggle.addEventListener('click', () => {
+        const body = toggle.nextElementSibling;
+        if (body && body.classList.contains('sidebar__cat-body')) {
+          body.classList.toggle('is-collapsed');
+          toggle.classList.toggle('is-collapsed');
+        }
+      });
+    });
+
+    // Mark active sidebar link and expand its parent section
+    const currentPath = window.location.pathname;
+    document.querySelectorAll('.sidebar__link').forEach((link) => {
+      if (link.getAttribute('href') === currentPath) {
+        link.classList.add('is-active');
+
+        // Expand the parent namespace section
+        const section = link.closest('.sidebar__section');
+        if (section) {
+          const heading = section.querySelector('.sidebar__heading');
+          const body = section.querySelector('.sidebar__body');
+          if (heading) heading.classList.remove('is-collapsed');
+          if (body) body.classList.remove('is-collapsed');
+        }
+
+        // If this is a type link, expand its member sub-tree
+        const typeItem = link.closest('.sidebar__item');
+        const memberTree = typeItem?.querySelector('.sidebar__members');
+        if (memberTree) {
+          memberTree.removeAttribute('hidden');
+          memberTree.querySelectorAll('.sidebar__cat-toggle.is-collapsed').forEach((toggle) => {
+            toggle.classList.remove('is-collapsed');
+            const catBody = toggle.nextElementSibling;
+            if (catBody) catBody.classList.remove('is-collapsed');
+          });
+        }
+
+        // If this is a member link, also expand the parent type's member tree
+        if (link.classList.contains('sidebar__link--member')) {
+          const parentTypeItem = link.closest('.sidebar__item')?.parentElement?.closest('.sidebar__item');
+          if (parentTypeItem) {
+            const parentTypeLink = parentTypeItem.querySelector(':scope > .sidebar__link--type');
+            if (parentTypeLink) parentTypeLink.classList.add('is-current');
+            const parentMemberTree = parentTypeItem.querySelector(':scope > .sidebar__members');
+            if (parentMemberTree) {
+              parentMemberTree.removeAttribute('hidden');
+              // Expand the category containing the active member
+              const activeCat = link.closest('.sidebar__cat-section');
+              if (activeCat) {
+                const catToggle = activeCat.querySelector('.sidebar__cat-toggle');
+                const catBody = activeCat.querySelector('.sidebar__cat-body');
+                if (catToggle) catToggle.classList.remove('is-collapsed');
+                if (catBody) catBody.classList.remove('is-collapsed');
+              }
+            }
+          }
+        }
+
+        // Scroll into view
+        requestAnimationFrame(() => {
+          link.scrollIntoView({ block: 'center', behavior: 'instant' });
+        });
       }
     });
-  });
+  }
+
+  // ── Dynamic sidebar loading ───────────────────────────────────────────
+  const sidebarInner = document.querySelector('.sidebar__inner[data-sidebar-url]');
+  if (sidebarInner) {
+    const url = sidebarInner.getAttribute('data-sidebar-url');
+    fetch(url)
+      .then((resp) => {
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        return resp.text();
+      })
+      .then((html) => {
+        sidebarInner.innerHTML = html;
+        initSidebarBehavior();
+      })
+      .catch((err) => {
+        console.warn('[sidebar] Failed to load sidebar:', err);
+        sidebarInner.innerHTML = '<p style="padding:1rem;color:var(--color-muted)">Navigation unavailable</p>';
+      });
+  } else {
+    // Static sidebar (non-API pages) — init immediately
+    initSidebarBehavior();
+  }
 
   // ── Footer-aware sidebar height ─────────────────────────────────────────
   // When the footer scrolls into view, shrink the sidebar so it doesn't
@@ -128,61 +208,6 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
     wrapper.appendChild(button);
-  });
-
-  // Mark active sidebar link and expand its parent section
-  const currentPath = window.location.pathname;
-  document.querySelectorAll('.sidebar__link').forEach((link) => {
-    if (link.getAttribute('href') === currentPath) {
-      link.classList.add('is-active');
-
-      // Expand the parent namespace section
-      const section = link.closest('.sidebar__section');
-      if (section) {
-        const heading = section.querySelector('.sidebar__heading');
-        const body = section.querySelector('.sidebar__body');
-        if (heading) heading.classList.remove('is-collapsed');
-        if (body) body.classList.remove('is-collapsed');
-      }
-
-      // If this is a type link, expand its member sub-tree
-      const typeItem = link.closest('.sidebar__item');
-      const memberTree = typeItem?.querySelector('.sidebar__members');
-      if (memberTree) {
-        memberTree.removeAttribute('hidden');
-        memberTree.querySelectorAll('.sidebar__cat-toggle.is-collapsed').forEach((toggle) => {
-          toggle.classList.remove('is-collapsed');
-          const catBody = toggle.nextElementSibling;
-          if (catBody) catBody.classList.remove('is-collapsed');
-        });
-      }
-
-      // If this is a member link, also expand the parent type's member tree
-      if (link.classList.contains('sidebar__link--member')) {
-        const parentTypeItem = link.closest('.sidebar__item')?.parentElement?.closest('.sidebar__item');
-        if (parentTypeItem) {
-          const parentTypeLink = parentTypeItem.querySelector(':scope > .sidebar__link--type');
-          if (parentTypeLink) parentTypeLink.classList.add('is-current');
-          const parentMemberTree = parentTypeItem.querySelector(':scope > .sidebar__members');
-          if (parentMemberTree) {
-            parentMemberTree.removeAttribute('hidden');
-            // Expand the category containing the active member
-            const activeCat = link.closest('.sidebar__cat-section');
-            if (activeCat) {
-              const catToggle = activeCat.querySelector('.sidebar__cat-toggle');
-              const catBody = activeCat.querySelector('.sidebar__cat-body');
-              if (catToggle) catToggle.classList.remove('is-collapsed');
-              if (catBody) catBody.classList.remove('is-collapsed');
-            }
-          }
-        }
-      }
-
-      // Scroll into view
-      requestAnimationFrame(() => {
-        link.scrollIntoView({ block: 'center', behavior: 'instant' });
-      });
-    }
   });
 
   // ── On-page TOC in sidebar ──────────────────────────────────────────────
