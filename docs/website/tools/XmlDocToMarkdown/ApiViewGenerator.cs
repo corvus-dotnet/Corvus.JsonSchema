@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Web;
 
 namespace XmlDocToMarkdown;
@@ -82,7 +83,7 @@ internal static class ApiViewGenerator
 
             sb.AppendLine($"                <a class=\"card card--link\" href=\"{baseUrl}/{nsSlug}.html\">");
             sb.AppendLine($"                    <h3 class=\"card__title\">{HttpUtility.HtmlEncode(ns).Replace(".", ".&#8203;")}</h3>");
-            sb.AppendLine($"                    <p class=\"card__body\">{HttpUtility.HtmlEncode(description)}</p>");
+            sb.AppendLine($"                    <p class=\"card__body\">{InlineMarkdownToHtml(description)}</p>");
             sb.AppendLine($"                    <div class=\"card__meta\"><span class=\"card__tag\">{typeCount} type{(typeCount == 1 ? "" : "s")}</span></div>");
             sb.AppendLine("                </a>");
         }
@@ -170,5 +171,28 @@ internal static class ApiViewGenerator
 
         // Fallback for unknown namespaces
         return $"Types in the {ns} namespace";
+    }
+
+    /// <summary>
+    /// Converts inline markdown (links and backtick code) to HTML, encoding all other text.
+    /// </summary>
+    internal static string InlineMarkdownToHtml(string markdown)
+    {
+        // First HTML-encode the whole string, then selectively convert markdown constructs.
+        string encoded = HttpUtility.HtmlEncode(markdown);
+
+        // Convert markdown links [text](url) — the brackets and parens are now HTML-encoded.
+        encoded = Regex.Replace(
+            encoded,
+            @"\[(?<text>[^\]]+)\]\((?<url>[^)]+)\)",
+            m => $"<a href=\"{m.Groups["url"].Value}\">{m.Groups["text"].Value}</a>");
+
+        // Convert inline code `text` to <code> elements.
+        encoded = Regex.Replace(
+            encoded,
+            @"`(?<code>[^`]+)`",
+            m => $"<code>{m.Groups["code"].Value}</code>");
+
+        return encoded;
     }
 }
