@@ -240,7 +240,7 @@
 <tr>
 <td><strong>Target frameworks</strong></td>
 <td>net8.0, netstandard2.0</td>
-<td>net8.0, net9.0, net10.0, netstandard2.0</td>
+<td>net9.0, net10.0, netstandard2.0, netstandard2.1</td>
 </tr>
 </tbody>
 </table>
@@ -563,7 +563,7 @@ v5.WriteTo(corvusWriter);         // Corvus.Text.Json.Utf8JsonWriter (not System
 </blockquote>
 <hr />
 <h2 id="formatting-iformattable-ispanformattable-iutf8spanformattable">Formatting (<code>IFormattable</code>, <code>ISpanFormattable</code>, <code>IUtf8SpanFormattable</code>)</h2>
-<p>V5 generated types implement <code>IFormattable</code>, <code>ISpanFormattable</code> (.NET 8+), and <code>IUtf8SpanFormattable</code> (.NET 8+). V4 types do not implement any of these interfaces.</p>
+<p>V5 generated types implement <code>IFormattable</code>, <code>ISpanFormattable</code> (.NET 9+), and <code>IUtf8SpanFormattable</code> (.NET 9+). V4 types do not implement any of these interfaces.</p>
 <p>This means V5 types can be used directly with <code>string.Format</code>, interpolated strings with custom format specifiers, and zero-allocation <code>TryFormat</code> to <code>Span&lt;char&gt;</code> or <code>Span&lt;byte&gt;</code> buffers:</p>
 <pre><code class="language-csharp">// V5 — IFormattable: ToString with format string and culture
 string formatted = v5.DateOfBirth.ToString(&quot;d&quot;, CultureInfo.InvariantCulture); // &quot;03/15/2024&quot;
@@ -573,14 +573,14 @@ string iso = v5.DateOfBirth.ToString(&quot;o&quot;, null);                      
 string currency = v5.Age.ToString(&quot;C0&quot;, CultureInfo.InvariantCulture);         // &quot;¤30&quot;
 string grouped = v5.Age.ToString(&quot;N0&quot;, CultureInfo.InvariantCulture);          // &quot;30&quot;
 </code></pre>
-<pre><code class="language-csharp">// V5 — ISpanFormattable: zero-allocation formatting to char buffer (.NET 8+)
+<pre><code class="language-csharp">// V5 — ISpanFormattable: zero-allocation formatting to char buffer (.NET 9+)
 Span&lt;char&gt; charBuffer = stackalloc char[64];
 if (v5.Age.TryFormat(charBuffer, out int charsWritten, &quot;N0&quot;, CultureInfo.InvariantCulture))
 {
     ReadOnlySpan&lt;char&gt; result = charBuffer[..charsWritten];
 }
 
-// V5 — IUtf8SpanFormattable: zero-allocation formatting to UTF-8 byte buffer (.NET 8+)
+// V5 — IUtf8SpanFormattable: zero-allocation formatting to UTF-8 byte buffer (.NET 9+)
 Span&lt;byte&gt; utf8Buffer = stackalloc byte[64];
 if (v5.Age.TryFormat(utf8Buffer, out int bytesWritten, &quot;N0&quot;, CultureInfo.InvariantCulture))
 {
