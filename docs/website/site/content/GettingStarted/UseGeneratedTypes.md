@@ -209,7 +209,7 @@ This is the most concise approach and works for all value types.
 string familyName = (string)person.Name.FamilyName;
 ```
 
-> **Tip:** You can opt in to implicit `string` conversion via the `--optionalStringImplicit` flag on the CLI tool, or the `CorvusJsonSchemaOptionalStringImplicit` MSBuild property in your `.csproj` for the source generator. This trades allocation safety for convenience — use it when you know you need the string and are not in a hot path.
+> **Tip:** You can opt in to implicit `string` conversion via the `--useImplicitOperatorString` flag on the CLI tool, or the `CorvusTextJsonUseImplicitOperatorString` MSBuild property in your `.csproj` for the source generator. This trades allocation safety for convenience — use it when you know you need the string and are not in a hot path.
 
 ### TryGetValue
 
@@ -237,7 +237,7 @@ using UnescapedUtf16JsonString utf16Name = person.Name.FamilyName.GetUtf16String
 ReadOnlySpan<char> chars = utf16Name.Span;
 ```
 
-`GetUtf8String()` gives you the raw UTF-8 bytes without allocating a `string`. `GetUtf16String()` gives you a `char` span — useful when you need to interop with APIs that expect `ReadOnlySpan<char>` without paying for a `string` allocation. Both return disposable types that must be disposed to return their buffers to the pool.
+`GetUtf8String()` gives you the unescaped UTF-8 bytes without allocating a `string`. `GetUtf16String()` gives you a `char` span — useful when you need to interop with APIs that expect `ReadOnlySpan<char>` without paying for a `string` allocation. Both return disposable types that must be disposed to return their buffers to the pool.
 
 ## Values, Null, and Undefined
 
