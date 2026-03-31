@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- dotnet-coverage settings: filter coverage to core library assemblies only.
+     Passed via dotnet-coverage collect -s coverage.settings.xml -->
+<Configuration>
+  <CodeCoverage>
+    <ModulePaths>
+      <Include>
+        <ModulePath>.*Corvus\.Json\.CodeGeneration\.dll$</ModulePath>
+        <ModulePath>.*Corvus\.Json\.CodeGeneration\.CSharp\.dll$</ModulePath>
+        <ModulePath>.*Corvus\.Json\.ExtendedTypes\.dll$</ModulePath>
+        <ModulePath>.*Corvus\.Json\.JsonReference\.dll$</ModulePath>
+        <ModulePath>.*Corvus\.Text\.Json\.dll$</ModulePath>
+        <ModulePath>.*Corvus\.Text\.Json\.Validator\.dll$</ModulePath>
+        <ModulePath>.*Corvus\.Text\.Json\.CodeGeneration\.dll$</ModulePath>
+      </Include>
+    </ModulePaths>
+  </CodeCoverage>
+</Configuration>

@@ -178,7 +178,12 @@ $AdditionalTestArgs = @(
 )
 
 # Collect code coverage only for the core library assemblies.
-$IncludeFilesInCodeCoverage = "Corvus.Json.CodeGeneration.dll;Corvus.Json.CodeGeneration.CSharp.dll;Corvus.Json.ExtendedTypes.dll;Corvus.Json.JsonReference.dll;Corvus.Text.Json.dll;Corvus.Text.Json.Validator.dll;Corvus.Text.Json.CodeGeneration.dll"
+# The Endjin build module's $IncludeFilesInCodeCoverage passes bare DLL names via
+# --include-files, which only controls static instrumentation. On Linux (CI), dynamic
+# instrumentation is used and the filter is ignored. Instead, we use a settings XML
+# file with <ModulePaths> filters that work with both instrumentation modes.
+$CoverageSettingsFile = Join-Path $here "dotnet-coverage.settings.xml"
+$IncludeFilesInCodeCoverage = $null
 
 $CreateGitHubRelease = $true
 $PublishNuGetPackagesAsGitHubReleaseArtefacts = $true
@@ -187,6 +192,92 @@ $PublishNuGetPackagesAsGitHubReleaseArtefacts = $true
 # Synopsis: Build, Test and Package
 task . FullBuild
 
+
+# Override the module's RunTestsWithDotNetCoverage task to inject -s (settings)
+# for the coverage.settings.xml file. The module's --include-files only controls
+# static instrumentation; the settings file's <ModulePaths> filters work with both
+# static and dynamic instrumentation.
+task RunTestsWithDotNetCoverage -If {!$SkipTest -and $SolutionToBuild -and !$UseCoverlet} {
+    if ($DotNetTestLoggers.Count -eq 0 -and $DotNetTestLogger -eq $_defaultDotNetTestLogger) {
+        if ($script:IsAzureDevOps) {
+            Write-Build Green "Configuring Azure Pipelines test logger"
+            $DotNetTestLogger = "AzurePipelines"
+        }
+        elseif ($script:IsGitHubActions) {
+            Write-Build Green "Configuring GitHub Actions test logger"
+            $DotNetTestLogger = "GitHubActions"
+        }
+    }
+
+    $moduleDir = (Get-Module Endjin.RecommendedPractices.Build).ModuleBase
+    Write-Build Magenta "ModuleDir: $moduleDir"
+
+    $dotnetTestArgs = @(
+        "--configuration", $Configuration
+        "--no-build"
+        "--no-restore"
+        "--verbosity", $LogLevel
+        "--test-adapter-path", "$moduleDir/bin"
+        ($DotNetTestFileLoggerProps ? $DotNetTestFileLoggerProps : "/fl")
+    )
+
+    if ($DotNetTestLoggers.Count -gt 0) {
+        $DotNetTestLoggers | ForEach-Object {
+            $dotnetTestArgs += @("--logger", $_)
+        }
+    }
+    else {
+        $dotnetTestArgs += @("--logger", $DotNetTestLogger)
+    }
+
+    if ($TargetFrameworkMoniker) {
+        $dotnetTestArgs += @("--framework", $TargetFrameworkMoniker)
+    }
+
+    if ($AdditionalTestArgs) {
+        $dotnetTestArgs += $AdditionalTestArgs
+    }
+
+    Install-DotNetTool -Name "dotnet-coverage" -Global
+
+    $coverageOutput = "coverage{0}.cobertura.xml" -f ($TargetFrameworkMoniker ? ".$TargetFrameworkMoniker" : "")
+
+    $dotnetCoverageArgs = @(
+        "collect"
+        "-o", $coverageOutput
+        "-f", "cobertura"
+    )
+    if ($CoverageSettingsFile -and (Test-Path $CoverageSettingsFile)) {
+        $dotnetCoverageArgs += @("-s", $CoverageSettingsFile)
+        Write-Build Magenta "Using coverage settings: $CoverageSettingsFile"
+    }
+    if ($IncludeFilesInCodeCoverage) {
+        $dotnetCoverageArgs += @("--include-files", $IncludeFilesInCodeCoverage)
+    }
+    Write-Build Magenta "CmdLine: dotnet-coverage $dotnetCoverageArgs dotnet test $SolutionToBuild $dotnetTestArgs"
+
+    try {
+        exec {
+            dotnet-coverage @dotnetCoverageArgs dotnet test $SolutionToBuild @dotnetTestArgs
+        }
+    }
+    finally {
+        if ((Test-Path $DotNetTestLogFile) -and $IsAzureDevOps) {
+            Write-Host "##vso[artifact.upload artifactname=logs]$((Resolve-Path $DotNetTestLogFile).Path)"
+        }
+
+        if (!$SkipTestReport) {
+            if ($GenerateTestReport) {
+                Write-Build White "Generating additional test reports: $TestReportTypes"
+                _GenerateTestReport
+            }
+            if ($GenerateMarkdownCodeCoverageSummary) {
+                Write-Build White "Generating Markdown code coverage summary"
+                _GenerateCodeCoverageMarkdownReport
+            }
+        }
+    }
+}
 
 # build extensibility tasks
 task RunFirst {}
