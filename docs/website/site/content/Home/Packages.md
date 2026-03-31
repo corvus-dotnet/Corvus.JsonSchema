@@ -6,7 +6,7 @@ Title: "NuGet Packages"
 ---
 ### Corvus.Text.Json
 
-Core runtime library. Required by all generated types. See the [Getting Started](/getting-started/setup.html) guide.
+Core runtime library. Required by all generated types. See the [Getting Started](/getting-started/index.html) guide.
 
 ```bash
 dotnet add package Corvus.Text.Json
