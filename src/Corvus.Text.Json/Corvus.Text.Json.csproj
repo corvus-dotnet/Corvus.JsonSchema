@@ -3,7 +3,7 @@
   <Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
 
   <PropertyGroup>
-    <TargetFrameworks>net8.0;net9.0;net10.0;netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>net9.0;net10.0;netstandard2.0;netstandard2.1</TargetFrameworks>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <!-- Use root .editorconfig, not the package's auto-generated one -->
     <EndjinDisableCreateEditorConfig>true</EndjinDisableCreateEditorConfig>
@@ -68,26 +68,27 @@
   </ItemGroup>
 
   <!-- Adds System.Reflection.Emit.Lightweight to non .NETCoreApp builds. -->
-  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'netstandard2.1'">
     <PackageReference Include="System.Reflection.Emit.Lightweight" Version="4.7.0" />
   </ItemGroup>
   
   <!-- Adds Nullable annotation attributes to C# non .NETCoreApp builds. -->
-  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'netstandard2.1'">
     <Compile Include="$(CoreLibSharedDir)System\Diagnostics\CodeAnalysis\NullableAttributes.cs" Link="System\Diagnostics\CodeAnalysis\NullableAttributes.cs" />
   </ItemGroup>
 
   <!-- Adds polyfills on non-.NETCoreApp builds -->
-  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'netstandard2.1'">
     <Compile Include="$(CoreLibSharedDir)System\Runtime\CompilerServices\CallerArgumentExpressionAttribute.cs" />
     <Compile Include="$(LibrariesProjectRoot)\Common\src\System\ExceptionPolyfills.cs" Link="System\ExceptionPolyfills.cs" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'netstandard2.1'">
     <Compile Include="$(CoreLibSharedDir)System\Runtime\Versioning\PlatformAttributes.cs" Link="System\Runtime\Versioning\PlatformAttributes.cs" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+  <!-- HashCode polyfills: needed for all netstandard builds (not part of netstandard API surface) -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'netstandard2.1'">
     <Compile Include="$(CoreLibSharedDir)System\Marvin.cs" Link="System\Marvin.cs" />
     <Compile Include="$(CoreLibSharedDir)System\Marvin.OrdinalIgnoreCase.cs" Link="System\Marvin.OrdinalIgnoreCase.cs" />
     <Compile Include="Corvus\Text\Json\Document\Internal\HashCode.NetStandard.cs" />
@@ -95,7 +96,7 @@
 
   <!-- Adds ObsoleteAttribute to projects that need to apply downlevel Obsoletions with DiagnosticId and UrlFormat -->
   <Choose>
-    <When Condition="'$(TargetFramework)' == 'netstandard2.0'">
+    <When Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'netstandard2.1'">
       <ItemGroup>
         <Compile Include="$(CoreLibSharedDir)System\ObsoleteAttribute.cs" Link="System\ObsoleteAttribute.cs" />
       </ItemGroup>
@@ -106,16 +107,25 @@
     </When>
   </Choose>
 
+  <!-- Index, Range polyfills: only needed for netstandard2.0 (provided by Microsoft.Bcl.Memory on netstandard2.1) -->
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
     <Compile Include="$(CoreLibSharedDir)System\Index.cs" Link="System\Index.cs" />
     <Compile Include="$(CoreLibSharedDir)System\Range.cs" Link="System\Range.cs" />
+  </ItemGroup>
+
+  <!-- HashHelpers, BitConverter polyfills: needed for all netstandard builds -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'netstandard2.1'">
     <Compile Include="$(CoreLibSharedDir)System\Numerics\Hashing\HashHelpers.cs" Link="System\Numerics\Hashing\HashHelpers.cs" />
-    <Compile Include="Corvus\Text\Json\JsonSchema\Internal\Ascii.cs" />
     <Compile Include="Corvus\BitConverterPolyfills.cs" />
+  </ItemGroup>
+
+  <!-- Ascii polyfills: needed for all netstandard builds (System.Text.Ascii is .NET 8+) -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'netstandard2.1'">
+    <Compile Include="Corvus\Text\Json\JsonSchema\Internal\Ascii.cs" />
   </ItemGroup>
   
   <PropertyGroup>
-    <NoWarn Condition="'$(TargetFramework)' == 'netstandard2.0'">$(NoWarn);nullable</NoWarn>
+    <NoWarn Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'netstandard2.1'">$(NoWarn);nullable</NoWarn>
   </PropertyGroup>
   
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net9.0|AnyCPU'">
@@ -126,11 +136,11 @@
     <WarningLevel>9999</WarningLevel>
   </PropertyGroup>
   
-  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net8.0|AnyCPU'">
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|netstandard2.1|AnyCPU'">
     <WarningLevel>9999</WarningLevel>
   </PropertyGroup>
   
-  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net8.0|AnyCPU'">
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|netstandard2.1|AnyCPU'">
     <WarningLevel>9999</WarningLevel>
   </PropertyGroup>
   
@@ -372,7 +382,7 @@
     <Compile Include="Corvus\SR$(DefaultLanguageSourceExtension)" Visible="true" Link="Resources/Common/SR$(DefaultLanguageSourceExtension)" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'netstandard2.1'">
     <Compile Include="$(CoreLibSharedDir)System\Runtime\CompilerServices\IsExternalInit.cs" />
     <Compile Include="$(CoreLibSharedDir)System\Runtime\Versioning\RequiresPreviewFeaturesAttribute.cs" />
     <Compile Include="$(CoreLibSharedDir)System\Diagnostics\CodeAnalysis\DynamicDependencyAttribute.cs" />
@@ -384,20 +394,25 @@
     <Compile Include="$(CoreLibSharedDir)System\Reflection\NullabilityInfoContext.cs" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'net8.0' or '$(TargetFramework)' == 'net9.0' or '$(TargetFramework)' == 'net10.0'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'net9.0' or '$(TargetFramework)' == 'net10.0'">
     <Compile Include="Corvus\Text\Json\Reader\JsonReaderHelper.net8.cs" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+  <!-- Polyfills needed by all netstandard builds (.NET 5+/7+ APIs) -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'netstandard2.1'">
     <Compile Include="$(CommonPath)System\IO\StreamExtensions.netstandard.cs" Link="Common\System\IO\StreamExtensions.netstandard.cs" />
-    <Compile Include="$(CommonPath)System\Buffers\ArrayBufferWriter.cs" Link="Common\System\Buffers\ArrayBufferWriter.cs" />
     <Compile Include="$(CoreLibSharedDir)System\Diagnostics\CodeAnalysis\StringSyntaxAttribute.cs" />
     <Compile Include="$(CoreLibSharedDir)System\Diagnostics\CodeAnalysis\RequiresDynamicCodeAttribute.cs" />
     <Compile Include="Corvus\Text\Json\Reader\JsonReaderHelper.netstandard.cs" />
   </ItemGroup>
 
-  <!-- Polyfills for working with Unicode -->
-  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+  <!-- ArrayBufferWriter polyfill: needed for all netstandard builds -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'netstandard2.1'">
+    <Compile Include="$(CommonPath)System\Buffers\ArrayBufferWriter.cs" Link="Common\System\Buffers\ArrayBufferWriter.cs" />
+  </ItemGroup>
+
+  <!-- Unicode polyfills: needed for all netstandard builds (Rune is .NET Core 3.0+, not in netstandard) -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'netstandard2.1'">
     <Compile Include="$(CoreLibSharedDir)System\Text\Rune.cs" Link="System\Text\Rune.cs" />
     <Compile Include="$(CoreLibSharedDir)System\Text\UnicodeDebug.cs" Link="System\Text\UnicodeDebug.cs" />
     <Compile Include="$(CoreLibSharedDir)System\Text\UnicodeUtility.cs" Link="System\Text\UnicodeUtility.cs" />
@@ -416,13 +431,13 @@
     <PackageReference Include="NodaTime" Version="3.3.1" />
   </ItemGroup>
 
-  <!-- Only include these packages for netstandard2.0 and net8.0 as they're included in .NET 9+ runtime -->
-  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'net8.0'">
+  <!-- Only include these packages for netstandard builds as they're included in .NET 9+ runtime -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'netstandard2.1'">
     <PackageReference Include="System.Text.Encodings.Web" Version="10.0.4" />
     <PackageReference Include="System.IO.Pipelines" Version="10.0.4" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'netstandard2.1'">
     <PackageReference Include="System.Buffers" Version="4.6.1" />
     <PackageReference Include="System.Memory" Version="4.6.3" />
     <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.6.3" />

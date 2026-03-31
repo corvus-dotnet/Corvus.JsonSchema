@@ -39,6 +39,7 @@ public sealed class TypeInfo
     public bool IsAbstract { get; set; }
     public bool IsSealed { get; set; }
     public bool AvailableOnNetStandard20 { get; set; } = true;
+    public bool AvailableOnNetStandard21 { get; set; } = true;
 }
 
 /// <summary>
@@ -82,6 +83,7 @@ public sealed class MemberInfo
     /// </summary>
     public string GroupKey { get; set; } = string.Empty;
     public bool AvailableOnNetStandard20 { get; set; } = true;
+    public bool AvailableOnNetStandard21 { get; set; } = true;
 }
 
 public sealed class ParameterInfo

@@ -1,9 +1,10 @@
 using XmlDocToMarkdown;
 
-// Collect multiple --xml/--assembly/--ns20-assembly sets (paired positionally)
+// Collect multiple --xml/--assembly/--ns20-assembly/--ns21-assembly sets (paired positionally)
 List<string> xmlPaths = [];
 List<string> assemblyPaths = [];
 List<string?> ns20AssemblyPaths = [];
+List<string?> ns21AssemblyPaths = [];
 
 string? outputPath = null;
 string? taxonomyOutputPath = null;
@@ -25,10 +26,15 @@ for (int i = 0; i < args.Length - 1; i++)
     {
         case "--xml":
             xmlPaths.Add(args[++i]);
-            // Ensure ns20 list stays aligned (placeholder for this pair)
+            // Ensure ns20/ns21 lists stay aligned (placeholder for this pair)
             while (ns20AssemblyPaths.Count < xmlPaths.Count)
             {
                 ns20AssemblyPaths.Add(null);
+            }
+
+            while (ns21AssemblyPaths.Count < xmlPaths.Count)
+            {
+                ns21AssemblyPaths.Add(null);
             }
 
             break;
@@ -68,6 +74,18 @@ for (int i = 0; i < args.Length - 1; i++)
             }
 
             break;
+        case "--ns21-assembly":
+            // Apply to the most recent --xml pair
+            if (ns21AssemblyPaths.Count > 0)
+            {
+                ns21AssemblyPaths[^1] = args[++i];
+            }
+            else
+            {
+                ns21AssemblyPaths.Add(args[++i]);
+            }
+
+            break;
         case "--api-base-url":
             apiBaseUrl = args[++i];
             break;
@@ -100,6 +118,7 @@ if (xmlPaths.Count == 0 || assemblyPaths.Count == 0)
     Console.Error.WriteLine("  --xml                  Path to an XML documentation file (repeatable for multi-assembly)");
     Console.Error.WriteLine("  --assembly             Path to the compiled DLL (repeatable, paired with --xml)");
     Console.Error.WriteLine("  --ns20-assembly        (Optional) netstandard2.0 build of the preceding assembly");
+    Console.Error.WriteLine("  --ns21-assembly        (Optional) netstandard2.1 build of the preceding assembly");
     Console.Error.WriteLine("  --output               Output directory for generated markdown files");
     Console.Error.WriteLine("  --taxonomy-output      Output directory for generated taxonomy YAML files");
     Console.Error.WriteLine("  --api-views-dir        (Optional) Directory for the generated API index view");
@@ -119,10 +138,15 @@ if (xmlPaths.Count != assemblyPaths.Count)
     return 1;
 }
 
-// Pad ns20 list to match
+// Pad ns20/ns21 lists to match
 while (ns20AssemblyPaths.Count < xmlPaths.Count)
 {
     ns20AssemblyPaths.Add(null);
+}
+
+while (ns21AssemblyPaths.Count < xmlPaths.Count)
+{
+    ns21AssemblyPaths.Add(null);
 }
 
 // Validate all files exist
@@ -269,6 +293,46 @@ if (hasNs20)
             if (!combinedNs20Keys.Contains(m.XmlDocKey))
             {
                 m.AvailableOnNetStandard20 = false;
+            }
+        }
+    }
+}
+
+// Scan netstandard2.1 assemblies to determine TFM-specific member availability
+HashSet<string> combinedNs21Keys = new(StringComparer.Ordinal);
+bool hasNs21 = false;
+for (int i = 0; i < ns21AssemblyPaths.Count; i++)
+{
+    string? ns21Path = ns21AssemblyPaths[i];
+    if (ns21Path is not null && File.Exists(ns21Path))
+    {
+        Console.WriteLine($"Scanning netstandard2.1 assembly [{i + 1}]: {ns21Path}");
+        HashSet<string> partialKeys = AssemblyInspector.ScanMemberKeys(ns21Path);
+        Console.WriteLine($"  Found {partialKeys.Count} members.");
+        combinedNs21Keys.UnionWith(partialKeys);
+        hasNs21 = true;
+    }
+}
+
+if (hasNs21)
+{
+    Console.WriteLine($"  Combined netstandard2.1 member set: {combinedNs21Keys.Count} entries.");
+
+    // Mark types and members not present in any ns2.1 assembly
+    foreach (TypeInfo typeInfo in allTypes)
+    {
+        if (!combinedNs21Keys.Contains($"T:{typeInfo.FullName}"))
+        {
+            typeInfo.AvailableOnNetStandard21 = false;
+        }
+
+        foreach (MemberInfo m in typeInfo.Constructors.Concat(typeInfo.Properties)
+            .Concat(typeInfo.Methods).Concat(typeInfo.Operators)
+            .Concat(typeInfo.Fields).Concat(typeInfo.Events))
+        {
+            if (!combinedNs21Keys.Contains(m.XmlDocKey))
+            {
+                m.AvailableOnNetStandard21 = false;
             }
         }
     }

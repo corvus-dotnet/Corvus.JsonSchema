@@ -87,6 +87,7 @@ if (-not $canonicalRepoUrl) {
 $v5XmlPath = Join-Path $repoRoot "src\Corvus.Text.Json\bin\Release\net10.0\Corvus.Text.Json.xml"
 $v5AssemblyPath = Join-Path $repoRoot "src\Corvus.Text.Json\bin\Release\net10.0\Corvus.Text.Json.dll"
 $v5Ns20AssemblyPath = Join-Path $repoRoot "src\Corvus.Text.Json\bin\Release\netstandard2.0\Corvus.Text.Json.dll"
+$v5Ns21AssemblyPath = Join-Path $repoRoot "src\Corvus.Text.Json\bin\Release\netstandard2.1\Corvus.Text.Json.dll"
 $v5ApiContentDir = Join-Path $siteDir "content\Api-v5"
 $v5ApiTaxonomyDir = Join-Path $siteDir "taxonomy\api-v5"
 $v5ApiViewsDir = Join-Path $siteDir "theme\corvus\views\api\v5"
@@ -205,6 +206,8 @@ if ($SkipDotNetBuild) {
     if ($LASTEXITCODE -ne 0) { throw "Failed to build Corvus.Text.Json (net10.0)" }
     & dotnet build $mainProject -c Release -f netstandard2.0 --no-incremental -v q
     if ($LASTEXITCODE -ne 0) { throw "Failed to build Corvus.Text.Json (netstandard2.0)" }
+    & dotnet build $mainProject -c Release -f netstandard2.1 --no-incremental -v q
+    if ($LASTEXITCODE -ne 0) { throw "Failed to build Corvus.Text.Json (netstandard2.1)" }
     Write-StepDuration "V5 build" $sw
 
     # -- Step 1b: Build V4 libraries ---------------------------------------------
@@ -234,6 +237,7 @@ $sw = [System.Diagnostics.Stopwatch]::StartNew()
     --xml $v5XmlPath `
     --assembly $v5AssemblyPath `
     --ns20-assembly $v5Ns20AssemblyPath `
+    --ns21-assembly $v5Ns21AssemblyPath `
     --output $v5ApiContentDir `
     --taxonomy-output $v5ApiTaxonomyDir `
     --api-views-dir $v5ApiViewsDir `

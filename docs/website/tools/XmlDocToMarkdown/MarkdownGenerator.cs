@@ -530,7 +530,7 @@ public sealed class MarkdownGenerator(string outputDir, string baseUrl, string? 
             sb.AppendLine();
         }
 
-        WriteAppliesTo(sb, type.AvailableOnNetStandard20);
+        WriteAppliesTo(sb, type.AvailableOnNetStandard20, type.AvailableOnNetStandard21);
     }
 
     /// <summary>
@@ -573,7 +573,7 @@ public sealed class MarkdownGenerator(string outputDir, string baseUrl, string? 
         {
             WriteMemberDetail(sb, members[0], 2, useSignatureHeading: true, memberExampleMarkdown: memberExampleMarkdown);
 
-            WriteAppliesTo(sb, members[0].AvailableOnNetStandard20);
+            WriteAppliesTo(sb, members[0].AvailableOnNetStandard20, members[0].AvailableOnNetStandard21);
             return;
         }
 
@@ -596,7 +596,7 @@ public sealed class MarkdownGenerator(string outputDir, string baseUrl, string? 
             string? srcUrl = sourceResolver?.GetMemberSourceUrl(member.XmlDocKey);
             WriteMemberDetail(sb, member, 2, useSignatureHeading: true, sourceUrl: srcUrl);
 
-            WriteAppliesTo(sb, member.AvailableOnNetStandard20);
+            WriteAppliesTo(sb, member.AvailableOnNetStandard20, member.AvailableOnNetStandard21);
 
             sb.AppendLine("---");
             sb.AppendLine();
@@ -615,14 +615,22 @@ public sealed class MarkdownGenerator(string outputDir, string baseUrl, string? 
     /// <summary>
     /// Writes the "Applies To" section showing the target frameworks.
     /// </summary>
-    private static void WriteAppliesTo(StringBuilder sb, bool availableOnNetStandard20 = true)
+    private static void WriteAppliesTo(StringBuilder sb, bool availableOnNetStandard20 = true, bool availableOnNetStandard21 = true)
     {
         sb.AppendLine("## Applies To");
         sb.AppendLine();
         sb.AppendLine("| Product | Versions |");
         sb.AppendLine("|---------|----------|");
-        sb.AppendLine("| .NET | 8, 9, 10 |");
-        if (availableOnNetStandard20)
+        sb.AppendLine("| .NET | 9, 10 |");
+        if (availableOnNetStandard20 && availableOnNetStandard21)
+        {
+            sb.AppendLine("| .NET Standard | 2.0, 2.1 |");
+        }
+        else if (availableOnNetStandard21)
+        {
+            sb.AppendLine("| .NET Standard | 2.1 |");
+        }
+        else if (availableOnNetStandard20)
         {
             sb.AppendLine("| .NET Standard | 2.0 |");
         }
