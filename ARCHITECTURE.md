@@ -6,18 +6,18 @@ This document provides a high-level overview of the Corvus.JsonSchema system arc
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                    User Applications                     │
+│                    User Applications                    │
 ├──────────────┬──────────────┬───────────────────────────┤
 │  CLI Tool    │  Source      │  Validator                │
 │  (codegen)   │  Generator   │  (runtime)                │
 ├──────────────┴──────────────┴───────────────────────────┤
-│              Code Generation Engine                      │
-│  (Keywords, Vocabularies, TypeDeclaration, Reduction)    │
+│              Code Generation Engine                     │
+│  (Keywords, Vocabularies, TypeDeclaration, Reduction)   │
 ├─────────────────────────────────────────────────────────┤
-│              Runtime Library                              │
-│  (ParsedJsonDocument, JsonDocumentBuilder, Evaluation)   │
+│              Runtime Library                            │
+│  (ParsedJsonDocument, JsonDocumentBuilder, Evaluation)  │
 ├─────────────────────────────────────────────────────────┤
-│              System.Text.Json (BCL)                      │
+│              System.Text.Json (BCL)                     │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -170,15 +170,15 @@ finally { if (rentedArray != null) ArrayPool<byte>.Shared.Return(rentedArray); }
 
 | Topic | Document |
 |-------|----------|
-| Code generation patterns | [CodeGenerationPatternDiscovery.md](CodeGenerationPatternDiscovery.md) |
-| Standalone evaluator | [StandaloneEvaluatorInternals.md](StandaloneEvaluatorInternals.md) |
-| Validation handlers | [ValidationHandlerGuide.md](ValidationHandlerGuide.md) |
-| Annotation system | [AnnotationSystem.md](AnnotationSystem.md) |
-| Adding keywords | [AddingKeywords.md](AddingKeywords.md) |
-| Numeric types | [NumericTypes.md](NumericTypes.md) |
-| Benchmarks | [BenchmarkGuide.md](BenchmarkGuide.md) |
-| Migration from V4 | [MigratingFromV4ToV5.md](MigratingFromV4ToV5.md) |
-| Parsed documents | [ParsedJsonDocument.md](ParsedJsonDocument.md) |
-| Mutable documents | [JsonDocumentBuilder.md](JsonDocumentBuilder.md) |
-| Schema evaluator | [SchemaEvaluator.md](SchemaEvaluator.md) |
-| Release process | [ReleaseProcess.md](ReleaseProcess.md) |
+| Code generation patterns | [CodeGenerationPatternDiscovery.md](docs/CodeGenerationPatternDiscovery.md) |
+| Standalone evaluator | [StandaloneEvaluatorInternals.md](docs/StandaloneEvaluatorInternals.md) |
+| Validation handlers | [ValidationHandlerGuide.md](docs/ValidationHandlerGuide.md) |
+| Annotation system | [AnnotationSystem.md](docs/AnnotationSystem.md) |
+| Adding keywords | [AddingKeywords.md](docs/AddingKeywords.md) |
+| Numeric types | [NumericTypes.md](docs/NumericTypes.md) |
+| Benchmarks | [BenchmarkGuide.md](docs/BenchmarkGuide.md) |
+| Migration from V4 | [MigratingFromV4ToV5.md](docs/MigratingFromV4ToV5.md) |
+| Parsed documents | [ParsedJsonDocument.md](docs/ParsedJsonDocument.md) |
+| Mutable documents | [JsonDocumentBuilder.md](docs/JsonDocumentBuilder.md) |
+| Schema evaluator | [SchemaEvaluator.md](docs/SchemaEvaluator.md) |
+| Release process | [ReleaseProcess.md](docs/ReleaseProcess.md) |
