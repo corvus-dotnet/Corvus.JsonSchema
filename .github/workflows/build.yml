@@ -107,7 +107,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: github-pages
-      url: https://corvus-oss.org/corvus-json-schema/
+      url: https://corvus-oss.org/Corvus.JsonSchema/
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -159,26 +159,26 @@ jobs:
           key: build-state-${{ github.run_id }}-compile
           enableCrossOsArchive: true
 
-      - name: Ensure .nojekyll on gh-pages root
+      - name: Ensure Jekyll config on gh-pages
         run: |
-          mkdir -p /tmp/nojekyll
-          touch /tmp/nojekyll/.nojekyll
-      - uses: JamesIves/github-pages-deploy-action@v4
-        with:
-          branch: gh-pages
-          folder: /tmp/nojekyll
-          clean: false
+          if ! git fetch origin gh-pages 2>/dev/null || \
+             ! git show origin/gh-pages:_config.yml >/dev/null 2>&1; then
+            git fetch origin gh-pages:gh-pages 2>/dev/null || git checkout --orphan gh-pages
+            git worktree add /tmp/gh-pages gh-pages
+            cd /tmp/gh-pages
+            rm -f .nojekyll
+            echo -n 'include: [_framework, _content]' > _config.yml
+            git add -A
+            git -c user.name="github-actions[bot]" -c user.email="github-actions[bot]@users.noreply.github.com" \
+              commit --amend --no-edit
+            git push origin gh-pages --force-with-lease
+            cd -
+            git worktree remove /tmp/gh-pages
+          fi
 
       - name: Deploy PR preview
         uses: rossjrw/pr-preview-action@v1
         with:
           source-dir: docs/website/.output
           umbrella-dir: pr-preview
-
-      - name: Comment preview link on PR
-        uses: marocchino/sticky-pull-request-comment@v2
-        with:
-          header: docs-preview
-          message: |
-            📖 **Documentation preview** deployed to:
-            https://corvus-oss.org/Corvus.JsonSchema/pr-preview/pr-${{ github.event.pull_request.number }}/
+          pages-base-url: corvus-oss.org/Corvus.JsonSchema
