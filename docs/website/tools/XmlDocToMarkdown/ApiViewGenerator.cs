@@ -113,19 +113,31 @@ internal static class ApiViewGenerator
     }
 
     /// <summary>
-    /// Generates the sidebar Razor partial containing the hierarchical API sidebar tree.
-    /// The output filename is controlled by <paramref name="sidebarPartialName"/>.
+    /// Generates both the sidebar Razor partial (a lightweight placeholder that
+    /// loads its content dynamically) and a static <c>sidebar.html</c> fragment
+    /// containing the full namespace tree. This avoids duplicating the ~1.5 MB+
+    /// sidebar HTML across thousands of per-type API pages.
     /// </summary>
     public static void GenerateApiSidebar(
         string sharedViewsDir,
         Dictionary<string, NamespaceInfo> namespaces,
         string baseUrl,
+        string? contentOutputDir = null,
         string sidebarPartialName = "_ApiSidebar")
     {
-        StringBuilder sb = new();
+        // Write the shared sidebar fragment (full namespace tree, no active state)
+        if (contentOutputDir is not null)
+        {
+            StringBuilder contentSb = new();
+            SidebarBuilder.AppendSidebarContent(contentSb, namespaces, baseUrl);
+            string fragmentPath = Path.Combine(contentOutputDir, "sidebar.html");
+            File.WriteAllText(fragmentPath, contentSb.ToString());
+            Console.WriteLine($"  Written: {fragmentPath}");
+        }
 
-        // Sidebar with no active state — JS sets active link based on URL
-        SidebarBuilder.AppendSidebar(sb, namespaces, currentNsSlug: null, currentTypeFileBase: null, baseUrl);
+        // Write a lightweight Razor partial with a data attribute for JS loading
+        StringBuilder sb = new();
+        SidebarBuilder.AppendSidebarPlaceholder(sb, "sidebar.html");
 
         string outputPath = Path.Combine(sharedViewsDir, sidebarPartialName + ".cshtml");
         File.WriteAllText(outputPath, sb.ToString());

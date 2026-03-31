@@ -11,6 +11,76 @@ namespace XmlDocToMarkdown;
 internal static class SidebarBuilder
 {
     /// <summary>
+    /// Appends a lightweight sidebar placeholder to <paramref name="sb"/>.
+    /// The placeholder contains the mobile toggle, backdrop, sidebar shell,
+    /// and search box, but the namespace tree is loaded dynamically via
+    /// JavaScript from a shared <c>sidebar.html</c> fragment.
+    /// </summary>
+    public static void AppendSidebarPlaceholder(
+        StringBuilder sb,
+        string sidebarFragmentUrl = "sidebar.html")
+    {
+        // Mobile toggle button and backdrop — matches the docs page structure
+        sb.AppendLine("    <button class=\"sidebar-toggle\" aria-label=\"Toggle navigation\" aria-expanded=\"false\"></button>");
+        sb.AppendLine("    <div class=\"sidebar-backdrop\"></div>");
+        sb.AppendLine("    <aside class=\"sidebar\" data-has-member-nav>");
+
+        // Search box — sits above the scrollable tree
+        sb.AppendLine("        <div class=\"sidebar-search\">");
+        sb.AppendLine("            <svg class=\"sidebar-search__icon\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 16 16\" fill=\"currentColor\"><path d=\"M11.5 7a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Zm-.82 4.74a6 6 0 1 1 1.06-1.06l3.04 3.04a.75.75 0 1 1-1.06 1.06l-3.04-3.04Z\"/></svg>");
+        sb.AppendLine("            <input id=\"sidebar-search-input\" class=\"sidebar-search__input\" type=\"search\" placeholder=\"Search\" autocomplete=\"off\" />");
+        sb.AppendLine("            <div id=\"sidebar-search-dropdown\" class=\"sidebar-search__dropdown\" hidden></div>");
+        sb.AppendLine("        </div>");
+
+        sb.AppendLine($"        <div class=\"sidebar__inner\" data-sidebar-url=\"{sidebarFragmentUrl}\">");
+        sb.AppendLine("        </div>");
+        sb.AppendLine("    </aside>");
+    }
+
+    /// <summary>
+    /// Appends the namespace tree content (without outer wrapper) to
+    /// <paramref name="sb"/>. Used to generate the shared <c>sidebar.html</c>
+    /// fragment that is loaded dynamically by all API pages.
+    /// </summary>
+    public static void AppendSidebarContent(
+        StringBuilder sb,
+        Dictionary<string, NamespaceInfo> namespaces,
+        string baseUrl)
+    {
+        foreach (KeyValuePair<string, NamespaceInfo> kvp in namespaces.OrderBy(n => n.Key))
+        {
+            string ns = kvp.Key;
+            string nsSlug = MarkdownGenerator.NamespaceToFileName(ns);
+
+            sb.AppendLine("            <div class=\"sidebar__section\">");
+            sb.AppendLine($"                <button class=\"sidebar__heading is-collapsed\">{HtmlEncode(ns)}</button>");
+            sb.AppendLine($"                <div class=\"sidebar__body is-collapsed\">");
+            sb.AppendLine("                    <ul class=\"sidebar__list\">");
+
+            // Namespace overview link
+            sb.AppendLine($"                        <li class=\"sidebar__item\"><a class=\"sidebar__link\" href=\"{baseUrl}/{nsSlug}.html\"><strong>Overview</strong></a></li>");
+
+            // Type links with member trees (all collapsed — JS sets active state)
+            foreach (TypeInfo type in kvp.Value.Types.OrderBy(t => t.Name))
+            {
+                string typeSlug = MarkdownGenerator.TypeToSlug(type.Name);
+                string fileBase = $"{nsSlug}-{typeSlug}";
+
+                sb.AppendLine($"                        <li class=\"sidebar__item\">");
+                sb.AppendLine($"                            <a class=\"sidebar__link sidebar__link--type\" href=\"{baseUrl}/{fileBase}.html\">{HtmlEncodeWithBreaks(type.Name)}</a>");
+
+                AppendMemberTree(sb, type, nsSlug, typeSlug, baseUrl, currentMemberFileBase: null, collapsed: true);
+
+                sb.AppendLine($"                        </li>");
+            }
+
+            sb.AppendLine("                    </ul>");
+            sb.AppendLine("                </div>");
+            sb.AppendLine("            </div>");
+        }
+    }
+
+    /// <summary>
     /// Appends the full hierarchical sidebar markup to <paramref name="sb"/>.
     /// Each namespace becomes a collapsible section; types are listed beneath
     /// the namespace. The active type expands to show its members grouped by

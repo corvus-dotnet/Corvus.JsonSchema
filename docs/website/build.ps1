@@ -666,8 +666,8 @@ $cssOutputPath = Join-Path $outputDir "main.css"
 if ($LASTEXITCODE -ne 0) { throw "SCSS compilation failed" }
 Write-StepDuration "SCSS compilation" $sw
 
-# -- Step 7b: Copy per-version API search indices ----------------------------
-Write-Host "`n[7b/10] Copying API search indices..." -ForegroundColor Cyan
+# -- Step 7b: Copy per-version API search indices and sidebar fragments -------
+Write-Host "`n[7b/10] Copying API search indices and sidebar fragments..." -ForegroundColor Cyan
 $v5SearchSrc = Join-Path $v5ApiContentDir "search-index.json"
 $v4SearchSrc = Join-Path $v4ApiContentDir "search-index.json"
 $v5SearchDst = Join-Path $outputDir "api\v5\search-index.json"
@@ -680,6 +680,20 @@ if (Test-Path $v4SearchSrc) {
     Copy-Item $v4SearchSrc $v4SearchDst -Force
     Write-Host "  V4: $([math]::Round((Get-Item $v4SearchDst).Length/1024,1)) KB"
 } else { Write-Warning "  V4 search index not found at $v4SearchSrc" }
+
+# Copy sidebar fragments (loaded dynamically by JS to avoid duplicating ~1.5 MB per page)
+$v5SidebarSrc = Join-Path $v5ApiContentDir "sidebar.html"
+$v4SidebarSrc = Join-Path $v4ApiContentDir "sidebar.html"
+$v5SidebarDst = Join-Path $outputDir "api\v5\sidebar.html"
+$v4SidebarDst = Join-Path $outputDir "api\v4\sidebar.html"
+if (Test-Path $v5SidebarSrc) {
+    Copy-Item $v5SidebarSrc $v5SidebarDst -Force
+    Write-Host "  V5 sidebar: $([math]::Round((Get-Item $v5SidebarDst).Length/1024,1)) KB"
+} else { Write-Warning "  V5 sidebar fragment not found at $v5SidebarSrc" }
+if (Test-Path $v4SidebarSrc) {
+    Copy-Item $v4SidebarSrc $v4SidebarDst -Force
+    Write-Host "  V4 sidebar: $([math]::Round((Get-Item $v4SidebarDst).Length/1024,1)) KB"
+} else { Write-Warning "  V4 sidebar fragment not found at $v4SidebarSrc" }
 
 # -- Step 8: Build search index ----------------------------------------------
 Write-Host "`n[8/10] Building search index..." -ForegroundColor Cyan

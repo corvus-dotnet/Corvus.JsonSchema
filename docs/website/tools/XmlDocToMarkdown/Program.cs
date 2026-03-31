@@ -379,7 +379,7 @@ if (sharedViewsDir is not null)
 {
     Console.WriteLine($"Generating API sidebar partial to: {sharedViewsDir}");
     Directory.CreateDirectory(sharedViewsDir);
-    ApiViewGenerator.GenerateApiSidebar(sharedViewsDir, namespaces, resolvedBaseUrl, resolvedSidebarName);
+    ApiViewGenerator.GenerateApiSidebar(sharedViewsDir, namespaces, resolvedBaseUrl, outputPath, resolvedSidebarName);
 }
 
 if (outputPath is not null)
