@@ -52,6 +52,12 @@ Two code-gen mechanisms are used together:
 1. **Roslyn `IIncrementalGenerator`** (`src/Corvus.Text.Json.SourceGenerator/`) — triggered at build time via `JsonSchemaTypeGeneratorAttribute`. `EmitCompilerGeneratedFiles=true` writes output to `obj/` for inspection.
 2. **CLI tool** (`src/Corvus.Json.CodeGenerator/`) — `generatejsonschematypes` generates C# from JSON Schema for use outside the build pipeline (e.g., the `tests/Corvus.Text.Json.Tests.GeneratedModels/` project).
 
+**IMPORTANT:** When writing documentation, examples, or instructions that reference Source Generator attributes or CLI tool options, always verify the exact parameter names and types by checking the source code:
+- **Source Generator attribute:** `src/Corvus.Text.Json.SourceGenerator/IncrementalSourceGenerator.cs` — the `JsonSchemaTypeGeneratorAttribute` is emitted by the generator and defines: `Location` (string, required), `RebaseToRootPath` (bool), `EmitEvaluator` (bool).
+- **CLI tool options:** `src/Corvus.Json.CodeGenerator/GenerateCommand.cs` — defines all command-line settings including `--assertFormat` (bool, default true), `--rootNamespace`, `--outputPath`, `--outputRootTypeName`, `--engine`, `--codeGenerationMode`, etc.
+
+Do **not** invent or hallucinate option names. If unsure, read the source files above before writing.
+
 ### netstandard2.0 compatibility
 
 The main library targets `net9.0;net10.0;netstandard2.0;netstandard2.1`. On `netstandard2.0`, polyfill source files are linked directly from `System.Private.CoreLib/src/` (nullable attributes, `CallerArgumentExpressionAttribute`, `Index`/`Range`, etc.). Conditional `<ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'>` blocks in the `.csproj` control this. Do not add package polyfills for things already covered by these linked files.

@@ -42,6 +42,11 @@ public static partial class SampleRegistry
                 ["target.json"] = "TargetType",
                 ["crm.json"] = "CrmType",
             }),
+        new("018", "CreatingAndMutatingObjects", "Creating & Mutating Objects"),
+        new("019", "CloneAndFreeze", "Clone & Freeze"),
+        new("020", "ConditionalSchemas", "Conditional Schemas"),
+        new("021", "DefaultValues", "Default Values"),
+        new("022", "FormatValidation", "Format Validation"),
     ];
 
     /// <summary>
