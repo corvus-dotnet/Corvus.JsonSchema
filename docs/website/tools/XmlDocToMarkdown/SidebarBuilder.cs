@@ -53,7 +53,7 @@ internal static class SidebarBuilder
             string nsSlug = MarkdownGenerator.NamespaceToFileName(ns);
 
             sb.AppendLine("            <div class=\"sidebar__section\">");
-            sb.AppendLine($"                <button class=\"sidebar__heading is-collapsed\">{HtmlEncode(ns)}</button>");
+            sb.AppendLine($"                <button class=\"sidebar__heading is-collapsed\">{HtmlEncodeWithBreaks(ns)}</button>");
             sb.AppendLine($"                <div class=\"sidebar__body is-collapsed\">");
             sb.AppendLine("                    <ul class=\"sidebar__list\">");
 
@@ -115,7 +115,7 @@ internal static class SidebarBuilder
             bool isCurrentNs = nsSlug == currentNsSlug;
 
             sb.AppendLine("            <div class=\"sidebar__section\">");
-            sb.AppendLine($"                <button class=\"sidebar__heading{(isCurrentNs ? "" : " is-collapsed")}\">{HtmlEncode(ns)}</button>");
+            sb.AppendLine($"                <button class=\"sidebar__heading{(isCurrentNs ? "" : " is-collapsed")}\">{HtmlEncodeWithBreaks(ns)}</button>");
             sb.AppendLine($"                <div class=\"sidebar__body{(isCurrentNs ? "" : " is-collapsed")}\">");
             sb.AppendLine("                    <ul class=\"sidebar__list\">");
 

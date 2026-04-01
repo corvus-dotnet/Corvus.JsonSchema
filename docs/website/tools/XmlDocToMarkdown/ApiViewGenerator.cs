@@ -83,7 +83,7 @@ internal static class ApiViewGenerator
 
             sb.AppendLine($"                <a class=\"card card--link\" href=\"{baseUrl}/{nsSlug}.html\">");
             sb.AppendLine($"                    <h3 class=\"card__title\">{HttpUtility.HtmlEncode(ns).Replace(".", ".&#8203;")}</h3>");
-            sb.AppendLine($"                    <p class=\"card__body\">{InlineMarkdownToHtml(description)}</p>");
+            sb.AppendLine($"                    <p class=\"card__body\">{InlineMarkdownToHtml(description, allowLinks: false)}</p>");
             sb.AppendLine($"                    <div class=\"card__meta\"><span class=\"card__tag\">{typeCount} type{(typeCount == 1 ? "" : "s")}</span></div>");
             sb.AppendLine("                </a>");
         }
@@ -178,14 +178,36 @@ internal static class ApiViewGenerator
     /// </summary>
     internal static string InlineMarkdownToHtml(string markdown)
     {
+        return InlineMarkdownToHtml(markdown, allowLinks: true);
+    }
+
+    /// <summary>
+    /// Converts inline markdown (links and backtick code) to HTML, encoding all other text.
+    /// When <paramref name="allowLinks"/> is <see langword="false"/>, markdown links are
+    /// rendered as their text content only (no <c>&lt;a&gt;</c> tags), which is safe for use
+    /// inside an existing anchor element.
+    /// </summary>
+    internal static string InlineMarkdownToHtml(string markdown, bool allowLinks)
+    {
         // First HTML-encode the whole string, then selectively convert markdown constructs.
         string encoded = HttpUtility.HtmlEncode(markdown);
 
         // Convert markdown links [text](url) — the brackets and parens are now HTML-encoded.
-        encoded = Regex.Replace(
-            encoded,
-            @"\[(?<text>[^\]]+)\]\((?<url>[^)]+)\)",
-            m => $"<a href=\"{m.Groups["url"].Value}\">{m.Groups["text"].Value}</a>");
+        if (allowLinks)
+        {
+            encoded = Regex.Replace(
+                encoded,
+                @"\[(?<text>[^\]]+)\]\((?<url>[^)]+)\)",
+                m => $"<a href=\"{m.Groups["url"].Value}\">{m.Groups["text"].Value}</a>");
+        }
+        else
+        {
+            // Strip links to plain text (safe inside an outer <a> tag).
+            encoded = Regex.Replace(
+                encoded,
+                @"\[(?<text>[^\]]+)\]\((?<url>[^)]+)\)",
+                m => m.Groups["text"].Value);
+        }
 
         // Convert inline code `text` to <code> elements.
         encoded = Regex.Replace(
