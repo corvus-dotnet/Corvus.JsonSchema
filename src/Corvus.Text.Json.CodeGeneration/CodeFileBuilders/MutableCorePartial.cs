@@ -1,4 +1,4 @@
-﻿// <copyright file="MutableCorePartial.cs" company="Endjin Limited">
+// <copyright file="MutableCorePartial.cs" company="Endjin Limited">
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 // <licensing>
@@ -108,6 +108,7 @@ public sealed class MutableCorePartial : ICodeFileBuilder
                             .AppendArrayMutators(typeDeclaration)
                             .AppendObjectMutators(typeDeclaration)
                             .AppendIJsonElementExplicitImplementation()
+                            .AppendMutableCloneAndFreezeMethods(typeDeclaration)
                             .AppendMatchMethods(typeDeclaration, forMutable: true)
                             .AppendTryGetAsCompositionTypeMethods(typeDeclaration, forMutable: true)
                         .EndClassStructOrEnumDeclaration()

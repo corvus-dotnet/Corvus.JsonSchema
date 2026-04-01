@@ -2265,6 +2265,37 @@ public readonly partial struct JsonElement
         return _parent.CloneElement(_idx);
     }
 
+    /// <summary>
+    /// Creates a frozen (immutable) copy of this element if it is backed by a mutable document,
+    /// or returns this instance if it is already immutable.
+    /// </summary>
+    /// <returns>
+    /// An immutable <see cref="JsonElement"/> that lives for the lifetime of its
+    /// workspace and its associated documents.
+    /// </returns>
+    /// <remarks>
+    /// <para>
+    /// Unlike <see cref="Clone()"/>, which serializes the element and re-parses it
+    /// into a standalone heap-allocated document, <c>Freeze()</c> performs a cheap
+    /// blit of the metadata and value backing arrays. The resulting element is
+    /// immutable but is only valid for the lifetime of the workspace.
+    /// </para>
+    /// <para>
+    /// If this instance is already backed by an immutable document, it is returned as-is.
+    /// </para>
+    /// </remarks>
+    public JsonElement Freeze()
+    {
+        CheckValidInstance();
+
+        if (_parent is IMutableJsonDocument mutable)
+        {
+            return mutable.FreezeElement<JsonElement>(_idx);
+        }
+
+        return this;
+    }
+
     private void CheckValidInstance()
     {
         if (_parent == null)

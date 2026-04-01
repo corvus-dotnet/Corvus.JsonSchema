@@ -126,7 +126,7 @@ Rules to follow:
 ## Key Conventions
 
 - **No glob `<Compile>` items** — every source file must be explicitly listed in the `.csproj`. Adding a new `.cs` file requires a corresponding `<Compile Include="..." />` entry.
-- **`LangVersion=preview`** — preview C# language features are intentionally used.
+- **`LangVersion=preview`** — preview C# language features are intentionally used. Prefer raw string literals (`"""`) for JSON and multi-line strings to avoid escape sequences. Use UTF-8 string literals (`"..."u8`) where a `ReadOnlySpan<byte>` is needed.
 - **`AllowUnsafeBlocks=true`** — unsafe pointer arithmetic is used in numeric and UTF-8 hot paths; this is expected.
 - **Nullable annotations** — enabled in all library projects (`Nullable=enable`), disabled in test projects. Public APIs must have complete XML doc comments; `CS1591` is treated as an error in test projects.
 - **Shared source via `Common/`** — files in `Common/src/` and `Common/tests/` are shared across projects via `<Compile Include="$(CommonPath)..." Link="..." />`. Do not duplicate these; link them instead.

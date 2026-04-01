@@ -935,4 +935,16 @@ public struct MetadataDb : IDisposable
         Debug.Assert(Length <= destination.Length - targetIndex);
         Buffer.BlockCopy(_data, 0, destination._data, targetIndex, Length);
     }
+
+    /// <summary>
+    /// Sets the location field of the row at the specified byte index.
+    /// </summary>
+    /// <param name="rowIndex">The byte index of the row.</param>
+    /// <param name="newLocation">The new location value to write.</param>
+    internal void SetRowLocation(int rowIndex, int newLocation)
+    {
+        Debug.Assert((uint)rowIndex < (uint)Length);
+        uint value = (uint)newLocation;
+        MemoryMarshal.Write(_data.AsSpan(rowIndex), ref value);
+    }
 }

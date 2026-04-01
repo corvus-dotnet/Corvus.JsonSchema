@@ -1801,9 +1801,9 @@ public abstract partial class JsonDocument
     }
 
     /// <summary>
-    /// Copies the metadb segment and value backing from this document into a target document
-    /// for a freeze operation. The target's metadb is a raw blit of the specified segment
-    /// (no location offset adjustment), and the value backing is copied verbatim.
+    /// Copies the metadb segment and only the referenced value backing from this document
+    /// into a target document for a freeze operation. Uses a single forward pass to copy
+    /// each local value row's backing data and adjust its offset.
     /// </summary>
     /// <param name="target">The target document to initialize.</param>
     /// <param name="index">The starting metadb byte index of the element to freeze.</param>
@@ -1812,11 +1812,41 @@ public abstract partial class JsonDocument
     {
         target._parsedData = _parsedData.CopySegmentRaw(index, index + byteSize);
 
-        if (_valueBacking != null && _valueOffset > 0)
+        if (_valueBacking == null || _valueOffset <= 0)
         {
-            target._valueBacking = ArrayPool<byte>.Shared.Rent(_valueOffset);
-            Buffer.BlockCopy(_valueBacking, 0, target._valueBacking, 0, _valueOffset);
-            target._valueOffset = _valueOffset;
+            return;
+        }
+
+        // Single forward pass: for each local String/Number/PropertyName row,
+        // copy its backing bytes and rewrite its offset.
+        byte[]? targetBacking = null;
+        int writeOffset = 0;
+
+        for (int i = 0; i < byteSize; i += DbRow.Size)
+        {
+            DbRow row = target._parsedData.Get(i);
+            if (!row.FromExternalDocument && row.TokenType is JsonTokenType.String or JsonTokenType.Number or JsonTokenType.PropertyName)
+            {
+                int loc = row.LocationOrIndex;
+
+                // Read the stored size from the 4-byte header in _valueBacking.
+                // Format: [4-byte header: length<<4 | type][value data of 'length' bytes]
+                uint header = BitConverter.ToUInt32(_valueBacking, loc);
+                int storedSize = 4 + (int)(header >> 4);
+
+                targetBacking ??= ArrayPool<byte>.Shared.Rent(_valueOffset);
+
+                Buffer.BlockCopy(_valueBacking, loc, targetBacking, writeOffset, storedSize);
+                target._parsedData.SetRowLocation(i, writeOffset);
+
+                writeOffset += storedSize;
+            }
+        }
+
+        if (targetBacking != null)
+        {
+            target._valueBacking = targetBacking;
+            target._valueOffset = writeOffset;
         }
     }
 

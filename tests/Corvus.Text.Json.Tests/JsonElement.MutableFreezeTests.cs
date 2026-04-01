@@ -1,7 +1,6 @@
 // Derived from code licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licensed this code under the MIT license.
 
-using System.Reflection;
 using Corvus.Text.Json.Internal;
 using Xunit;
 
@@ -13,26 +12,28 @@ public static class JsonElementMutableFreezeTests
     public static void FreezeAtInnerArray()
     {
         FreezeAtInner(
-            @"[
-{
-  ""this"":
-  [
-    {
-      ""object"": 0,
+            """
+            [
+            {
+              "this":
+              [
+                {
+                  "object": 0,
 
-      ""has"": [ ""whitespace"" ]
-    }
-  ]
-},
+                  "has": [ "whitespace" ]
+                }
+              ]
+            },
 
-5
+            5
 
-,
+            ,
 
-false,
+            false,
 
-null
-]",
+            null
+            ]
+            """,
             JsonValueKind.Array);
     }
 
@@ -58,16 +59,18 @@ null
     public static void FreezeAtInnerObject()
     {
         FreezeAtInner(
-            @"{
-  ""this"":
-  [
-    {
-      ""object"": 0,
+            """
+            {
+              "this":
+              [
+                {
+                  "object": 0,
 
-      ""has"": [ ""whitespace"" ]
-    }
-  ]
-}",
+                  "has": [ "whitespace" ]
+                }
+              ]
+            }
+            """,
             JsonValueKind.Object);
     }
 
@@ -244,9 +247,179 @@ null
         Assert.Equal(123, frozen.GetProperty("number").GetInt32());
     }
 
+    [Fact]
+    public static void FreezeImmutableElementReturnsThis()
+    {
+        using var parsedDoc = ParsedJsonDocument<JsonElement>.Parse("""{"a":1}""");
+        JsonElement original = parsedDoc.RootElement;
+
+        JsonElement frozen = original.Freeze();
+
+        // Already immutable, so Freeze() returns the same instance.
+        Assert.Equal(original.GetRawText(), frozen.GetRawText());
+        Assert.Same(SniffParentDocument(original), SniffParentDocument(frozen));
+    }
+
+    [Fact]
+    public static void FreezeImmutableClonedElementReturnsThis()
+    {
+        using var parsedDoc = ParsedJsonDocument<JsonElement>.Parse("""{"x":"y"}""");
+
+        // Clone produces an immutable element backed by a non-disposable document.
+        JsonElement cloned = parsedDoc.RootElement.Clone();
+        JsonElement frozen = cloned.Freeze();
+
+        Assert.Equal(cloned.GetRawText(), frozen.GetRawText());
+        Assert.Same(SniffParentDocument(cloned), SniffParentDocument(frozen));
+    }
+
+    [Fact]
+    public static void FreezeCrossDocumentObjectProperty()
+    {
+        // Assign a property value from one mutable document into another,
+        // then freeze the target.
+        using var workspace = JsonWorkspace.Create();
+
+        using var srcParsed = ParsedJsonDocument<JsonElement>.Parse(
+            """{"payload":{"inner":"sourceValue","count":99}}""");
+        using JsonDocumentBuilder<JsonElement.Mutable> srcDoc =
+            srcParsed.RootElement.CreateBuilder(workspace);
+
+        using var tgtParsed = ParsedJsonDocument<JsonElement>.Parse("""{"target":null}""");
+        using JsonDocumentBuilder<JsonElement.Mutable> tgtDoc =
+            tgtParsed.RootElement.CreateBuilder(workspace);
+
+        // Copy the "payload" object from src into tgt as "target".
+        JsonElement.Mutable payload = srcDoc.RootElement.GetProperty("payload");
+        tgtDoc.RootElement.SetProperty("target", payload);
+
+        JsonElement frozen = tgtDoc.RootElement.Freeze();
+
+        Assert.Equal("sourceValue", frozen.GetProperty("target").GetProperty("inner").GetString());
+        Assert.Equal(99, frozen.GetProperty("target").GetProperty("count").GetInt32());
+    }
+
+    [Fact]
+    public static void FreezeCrossDocumentArrayItem()
+    {
+        // Assign an array item from one mutable document into another,
+        // then freeze the target.
+        using var workspace = JsonWorkspace.Create();
+
+        using var srcParsed = ParsedJsonDocument<JsonElement>.Parse("""[{"key":"val"}]""");
+        using JsonDocumentBuilder<JsonElement.Mutable> srcDoc =
+            srcParsed.RootElement.CreateBuilder(workspace);
+
+        using var tgtParsed = ParsedJsonDocument<JsonElement>.Parse("[null]");
+        using JsonDocumentBuilder<JsonElement.Mutable> tgtDoc =
+            tgtParsed.RootElement.CreateBuilder(workspace);
+
+        // Copy the object at index 0 from src into tgt at index 0.
+        tgtDoc.RootElement.SetItem(0, srcDoc.RootElement[0]);
+
+        JsonElement frozen = tgtDoc.RootElement.Freeze();
+
+        Assert.Equal("val", frozen[0].GetProperty("key").GetString());
+    }
+
+    [Fact]
+    public static void FreezeTwoLevelDeepCrossDocumentAssignment()
+    {
+        // Three mutable documents: A -> B -> C.
+        // Assign a value from A into B, then assign that value from B into C,
+        // then freeze C and verify the deeply-transferred value.
+        using var workspace = JsonWorkspace.Create();
+
+        using var parsedA = ParsedJsonDocument<JsonElement>.Parse(
+            """{"a":{"nested":{"deep":"fromA"}}}""");
+        using JsonDocumentBuilder<JsonElement.Mutable> docA =
+            parsedA.RootElement.CreateBuilder(workspace);
+
+        using var parsedB = ParsedJsonDocument<JsonElement>.Parse("""{"b":null}""");
+        using JsonDocumentBuilder<JsonElement.Mutable> docB =
+            parsedB.RootElement.CreateBuilder(workspace);
+
+        using var parsedC = ParsedJsonDocument<JsonElement>.Parse("""{"c":null}""");
+        using JsonDocumentBuilder<JsonElement.Mutable> docC =
+            parsedC.RootElement.CreateBuilder(workspace);
+
+        // Level 1: assign A's nested object into B.
+        docB.RootElement.SetProperty("b", docA.RootElement.GetProperty("a"));
+
+        // Level 2: assign B's "b" (which came from A) into C.
+        docC.RootElement.SetProperty("c", docB.RootElement.GetProperty("b"));
+
+        JsonElement frozen = docC.RootElement.Freeze();
+
+        Assert.Equal("fromA", frozen.GetProperty("c").GetProperty("nested").GetProperty("deep").GetString());
+    }
+
+    [Fact]
+    public static void FreezeTwoLevelDeepCrossDocumentArrayAssignment()
+    {
+        // Three mutable documents with arrays: A -> B -> C.
+        using var workspace = JsonWorkspace.Create();
+
+        using var parsedA = ParsedJsonDocument<JsonElement>.Parse("""[[1, 2, 3]]""");
+        using JsonDocumentBuilder<JsonElement.Mutable> docA =
+            parsedA.RootElement.CreateBuilder(workspace);
+
+        using var parsedB = ParsedJsonDocument<JsonElement>.Parse("[null]");
+        using JsonDocumentBuilder<JsonElement.Mutable> docB =
+            parsedB.RootElement.CreateBuilder(workspace);
+
+        using var parsedC = ParsedJsonDocument<JsonElement>.Parse("[null]");
+        using JsonDocumentBuilder<JsonElement.Mutable> docC =
+            parsedC.RootElement.CreateBuilder(workspace);
+
+        // Level 1: assign A[0] (the inner array) into B[0].
+        docB.RootElement.SetItem(0, docA.RootElement[0]);
+
+        // Level 2: assign B[0] (which came from A) into C[0].
+        docC.RootElement.SetItem(0, docB.RootElement[0]);
+
+        JsonElement frozen = docC.RootElement.Freeze();
+
+        Assert.Equal(1, frozen[0][0].GetInt32());
+        Assert.Equal(2, frozen[0][1].GetInt32());
+        Assert.Equal(3, frozen[0][2].GetInt32());
+    }
+
+    [Fact]
+    public static void FreezeMixedCrossDocumentObjectAndArrayAssignment()
+    {
+        // Assign an object property from A into B's array, then assign
+        // that array element from B into C's property, then freeze.
+        using var workspace = JsonWorkspace.Create();
+
+        using var parsedA = ParsedJsonDocument<JsonElement>.Parse(
+            """{"data":{"x":42,"y":"hello"}}""");
+        using JsonDocumentBuilder<JsonElement.Mutable> docA =
+            parsedA.RootElement.CreateBuilder(workspace);
+
+        using var parsedB = ParsedJsonDocument<JsonElement>.Parse("[null, null]");
+        using JsonDocumentBuilder<JsonElement.Mutable> docB =
+            parsedB.RootElement.CreateBuilder(workspace);
+
+        using var parsedC = ParsedJsonDocument<JsonElement>.Parse("""{"result":null}""");
+        using JsonDocumentBuilder<JsonElement.Mutable> docC =
+            parsedC.RootElement.CreateBuilder(workspace);
+
+        // A's object -> B's array item.
+        docB.RootElement.SetItem(0, docA.RootElement.GetProperty("data"));
+
+        // B's array item (from A) -> C's property.
+        docC.RootElement.SetProperty("result", docB.RootElement[0]);
+
+        JsonElement frozen = docC.RootElement.Freeze();
+
+        Assert.Equal(42, frozen.GetProperty("result").GetProperty("x").GetInt32());
+        Assert.Equal("hello", frozen.GetProperty("result").GetProperty("y").GetString());
+    }
+
     private static void FreezeAtInner(string innerJson, JsonValueKind valueType)
     {
-        string json = $"{{ \"obj\": [ {{ \"not target\": true, \"target\": {innerJson} }}, 5 ] }}";
+        string json = $$"""{"obj":[{"not target":true,"target":{{innerJson}}}  ,5]}""";
 
         using var workspace = JsonWorkspace.Create();
         using var parsedDoc = ParsedJsonDocument<JsonElement>.Parse(json);
@@ -263,10 +436,9 @@ null
         Assert.Equal(cloned.GetRawText(), frozen.GetRawText());
     }
 
-    private static IJsonDocument SniffParentDocument(JsonElement element)
+    private static IJsonDocument SniffParentDocument<TElement>(TElement element)
+        where TElement : struct, IJsonElement<TElement>
     {
-        return (IJsonDocument)typeof(JsonElement)
-            .GetField("_parent", BindingFlags.Instance | BindingFlags.NonPublic)!
-            .GetValue(element)!;
+        return element.ParentDocument;
     }
 }

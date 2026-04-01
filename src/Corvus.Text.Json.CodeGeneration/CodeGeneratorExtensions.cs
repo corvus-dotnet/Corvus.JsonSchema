@@ -1434,10 +1434,14 @@ internal static partial class CodeGeneratorExtensions
     {
         generator
             .ReserveName("CheckValidInstance")
-            .AppendSeparatorLine()
+            .AppendSeparatorLine();
+
+        string readonlyModifier = forMutable ? "readonly " : string.Empty;
+
+        generator
             .AppendBlockIndent(
-            """
-            private void CheckValidInstance()
+            $$"""
+            private {{readonlyModifier}}void CheckValidInstance()
             {
                 if (_parent == null)
                 {

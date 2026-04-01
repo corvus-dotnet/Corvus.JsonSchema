@@ -167,6 +167,7 @@
     <Compile Include="$(CorvusTextJsonCodeGenerationPath)CodeGeneratorExtensions.Number.cs" LinkBase="Corvus.Text.Json.CodeGeneration" />
     <Compile Include="$(CorvusTextJsonCodeGenerationPath)CodeGeneratorExtensions.JsonSchema.cs" LinkBase="Corvus.Text.Json.CodeGeneration" />
     <Compile Include="$(CorvusTextJsonCodeGenerationPath)CodeGeneratorExtensions.Array.cs" LinkBase="Corvus.Text.Json.CodeGeneration" />
+    <Compile Include="$(CorvusTextJsonCodeGenerationPath)CodeGeneratorExtensions.CloneAndFreeze.cs" LinkBase="Corvus.Text.Json.CodeGeneration" />
     <Compile Include="$(CorvusTextJsonCodeGenerationPath)CodeGeneratorExtensions.Object.cs" LinkBase="Corvus.Text.Json.CodeGeneration" />
     <Compile Include="$(CorvusTextJsonCodeGenerationPath)CodeGeneratorExtensions.Builder.cs" LinkBase="Corvus.Text.Json.CodeGeneration" />
     <Compile Include="$(CorvusTextJsonCodeGenerationPath)CodeGeneratorExtensions.Operators.cs" LinkBase="Corvus.Text.Json.CodeGeneration" />

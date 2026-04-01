@@ -1378,8 +1378,10 @@ public sealed partial class JsonDocumentBuilder<T> : JsonDocument, IMutableJsonD
 
         DbRow row = _parsedData.Get(index);
 
-        // If the row is from an external document, we defer to that.
-        // If the external document is immutable, we can just clone from it.
+        // If the row is from an external mutable document, we must recursively
+        // freeze to preserve immutability. External references to immutable
+        // documents are safe to copy as-is — they will continue to defer to
+        // the immutable document via the workspace.
         if (row.FromExternalDocument)
         {
             IJsonDocument document = _workspace.GetDocument(row.WorkspaceDocumentId);
@@ -1388,12 +1390,9 @@ public sealed partial class JsonDocumentBuilder<T> : JsonDocument, IMutableJsonD
             {
                 return mutableDocument.FreezeElement<TElement>(row.LocationOrIndex);
             }
-
-            return document.CloneElement<TElement>(row.LocationOrIndex);
         }
 
-        // Calculate the byte size of the metadb segment for this element.
-        int byteSize = base.GetDbSizeUnsafe(index, true);
+        int byteSize = GetDbSizeUnsafe(index, true);
 
         // Create a frozen builder in the same workspace, using the same
         // mutable type parameter T to satisfy the builder's constraint.

@@ -42,6 +42,7 @@
     <Compile Include="CodeGeneratorExtensions.Number.cs" />
     <Compile Include="CodeGeneratorExtensions.JsonSchema.cs" />
     <Compile Include="CodeGeneratorExtensions.Array.cs" />
+    <Compile Include="CodeGeneratorExtensions.CloneAndFreeze.cs" />
     <Compile Include="CodeGeneratorExtensions.Object.cs" />
     <Compile Include="CodeGeneratorExtensions.Builder.cs" />
     <Compile Include="CodeGeneratorExtensions.Operators.cs" />

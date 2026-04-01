@@ -103,6 +103,8 @@ public sealed class CorePartial : ICodeFileBuilder
                         .AppendCreateInstance(typeDeclaration)
                         .AppendDebuggerDisplayProperty(typeDeclaration)
                         .AppendIJsonElementExplicitImplementation()
+                        .AppendCloneMethod(typeDeclaration)
+                        .AppendFreezeMethod(typeDeclaration)
                         .AppendTryGetAsCompositionTypeMethods(typeDeclaration)
                         .AppendMatchMethods(typeDeclaration)
                         .AppendJsonPropertyNames(typeDeclaration)
