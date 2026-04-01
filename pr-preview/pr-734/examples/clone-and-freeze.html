@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1C1D21" />
+    <meta name="description" content="This recipe demonstrates the two ways to obtain an immutable snapshot from a mutable document: **Clone** and **Freeze**." />
+    <meta name="keywords" content="recipe, JSON Schema, C#, clone, freeze, type, required, properties, items, format, Clone" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:description" content="This recipe demonstrates the two ways to obtain an immutable snapshot from a mutable document: **Clone** and **Freeze**." />
+    <meta name="twitter:image" content="/Corvus.JsonSchema/pr-preview/pr-734/assets/images/og-corvus.png" />
+    <meta name="twitter:title" content="Clone and Freeze - Corvus.Text.Json Examples" />
+    <meta property="article:tag" content="recipe" />
+    <meta property="article:tag" content="JSON Schema" />
+    <meta property="article:tag" content="C#" />
+    <meta property="article:tag" content="clone" />
+    <meta property="article:tag" content="freeze" />
+    <meta property="article:tag" content="type" />
+    <meta property="article:tag" content="required" />
+    <meta property="article:tag" content="properties" />
+    <meta property="article:tag" content="items" />
+    <meta property="article:tag" content="format" />
+    <meta property="article:tag" content="Clone" />
+    <meta property="og:description" content="This recipe demonstrates the two ways to obtain an immutable snapshot from a mutable document: **Clone** and **Freeze**." />
+    <meta property="og:image" content="/Corvus.JsonSchema/pr-preview/pr-734/assets/images/og-corvus.png" />
+    <meta property="og:title" content="Clone and Freeze - Corvus.Text.Json Examples" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://corvus-oss.org/corvus-json-schema/examples/clone-and-freeze/" />
+    <title>Clone and Freeze - Corvus.Text.Json Examples</title>
+    <link itemprop="url" href="https://corvus-oss.org/corvus-json-schema/examples/clone-and-freeze/" />
+    <link rel="canonical" href="https://corvus-oss.org/corvus-json-schema/examples/clone-and-freeze/" />
+    <link rel="sitemap" href="https://corvus-oss.org/corvus-json-schema/sitemap.xml" />
+    <!-- Styles -->
+    <link rel="stylesheet" href="/Corvus.JsonSchema/pr-preview/pr-734/main.css" />
+    <link rel="icon" type="image/svg+xml" href="/Corvus.JsonSchema/pr-preview/pr-734/assets/images/favicon.svg" />
+    
+</head>
+<body>
+    <a class="sr-only" href="#main-content">Skip to content</a>
+<header class="site-header">
+    <div class="site-header__inner">
+        <a class="site-header__brand" href="/Corvus.JsonSchema/pr-preview/pr-734/index.html" aria-label="Corvus.JsonSchema home">
+            <img src="/Corvus.JsonSchema/pr-preview/pr-734/assets/images/logo-corvus.svg" alt="" width="28" height="28" aria-hidden="true" />
+            Corvus<span style="color:var(--color-brand)">.</span>Json<span style="color:var(--color-brand)">Schema</span>
+        </a>
+        <nav class="site-header__nav-desktop" aria-label="Main navigation">
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-734/getting-started/index.html"
+                       class="site-header__link "
+                       >Getting Started</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-734/docs/index.html"
+                       class="site-header__link "
+                       >Documentation</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-734/examples/index.html"
+                       class="site-header__link is-active"
+                       aria-current=page>Examples</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/index.html"
+                       class="site-header__link "
+                       >API</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-734/playground/"
+               class="site-header__link"
+               target="_blank" rel="noopener noreferrer"
+               title="Interactive JSON Schema playground">Playground</a>
+            <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+               class="site-header__link" target="_blank" rel="noopener noreferrer"
+               aria-label="View on GitHub">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            </a>
+        </nav>
+        <button class="site-header__menu-toggle js-toggle-menu"
+                aria-expanded="false" aria-label="Toggle menu">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+        </button>
+    </div>
+</header>
+<nav class="site-header__nav-mobile js-mobile-nav" aria-label="Mobile navigation">
+            <a href="/Corvus.JsonSchema/pr-preview/pr-734/getting-started/index.html" class="site-header__link">Getting Started</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-734/docs/index.html" class="site-header__link">Documentation</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-734/examples/index.html" class="site-header__link">Examples</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/index.html" class="site-header__link">API</a>
+    <a href="/Corvus.JsonSchema/pr-preview/pr-734/playground/" class="site-header__link" target="_blank" rel="noopener noreferrer">Playground</a>
+    <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+       class="site-header__link" target="_blank" rel="noopener noreferrer">GitHub</a>
+</nav>
+
+    <div class="page-content">
+    <div class="layout-docs container">
+    <button class="sidebar-toggle" aria-label="Toggle navigation" aria-expanded="false"></button>
+<div class="sidebar-backdrop"></div>
+<aside class="sidebar">
+    <div class="sidebar__inner">
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Getting Started</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                    <li class="sidebar__item"><a class="sidebar__link" href="/Corvus.JsonSchema/pr-preview/pr-734/getting-started/index.html">Tutorial</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Documentation</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/parsed-json-document.html">Parsing &amp; Reading JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/json-document-builder.html">Building &amp; Mutating JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/source-generator.html">Source Generator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/code-generator.html">CLI Code Generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/validator.html">Dynamic Schema Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/migrating-from-v4-to-v5.html">Migrating from V4</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/using-copilot-for-migration.html">Copilot Migration</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/migration-analyzers.html">Migration Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/analyzers.html">Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/schema-evaluator.html">Standalone Schema Evaluator</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Examples</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/data-object.html">Simple Data Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/data-object-validation.html">Data Object Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/reusing-common-types.html">Reusing Common Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/open-versus-closed-types.html">Open Versus Closed Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/extending-a-base-type.html">Extending a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/constraining-a-base-type.html">Constraining a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/creating-a-strongly-typed-array.html">Strongly Typed Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/creating-an-array-of-higher-rank.html">Multi-Dimensional Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/working-with-tensors.html">Working with Tensors</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/creating-tuples.html">Creating Tuples</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/interfaces-and-mix-in-types.html">Interfaces and Mix-In Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/pattern-matching.html">Pattern Matching and Discriminated Unions</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/polymorphism-with-discriminators.html">Polymorphism with Discriminator Properties</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/string-enumerations.html">String Enumerations and Pattern Matching</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/numeric-enumerations.html">Numeric Enumerations</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/maps.html">Maps of Strings to Strongly Typed Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/mapping-input-and-output-values.html">Mapping Input and Output Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/creating-and-mutating-objects.html">Creating and Mutating Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link is-active" href="/Corvus.JsonSchema/pr-preview/pr-734/examples/clone-and-freeze.html">Clone and Freeze</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/conditional-schemas.html">Conditional Schemas</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/default-values.html">Default Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/format-validation.html">Format Validation</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</aside>
+
+    <main id="main-content" class="layout-docs__main">
+        <div class="doc__content">
+            <h1>Clone and Freeze</h1>
+                <div class="card__tags" style="margin-bottom:1.5rem">
+                        <span class="card__tag">recipe</span>
+                        <span class="card__tag">JSON Schema</span>
+                        <span class="card__tag">C#</span>
+                        <span class="card__tag">clone</span>
+                        <span class="card__tag">freeze</span>
+                        <span class="card__tag">type</span>
+                        <span class="card__tag">required</span>
+                        <span class="card__tag">properties</span>
+                        <span class="card__tag">items</span>
+                        <span class="card__tag">format</span>
+                        <span class="card__tag">Clone</span>
+                </div>
+<p>This recipe demonstrates the two ways to obtain an immutable snapshot from a mutable document: <strong>Clone</strong> and <strong>Freeze</strong>. Both return a strongly-typed immutable element, but they differ in cost and lifetime.</p>
+<ul>
+<li><strong>Clone()</strong> — serializes the element and re-parses it into a standalone, heap-allocated document. The result can outlive the workspace and the original builder.</li>
+<li><strong>Freeze()</strong> — performs a cheap blit of the metadata and value backing arrays. The result is immutable but only valid for the lifetime of the workspace.</li>
+</ul>
+<h2 id="the-schema">The Schema</h2>
+<p>File: <code>order.json</code></p>
+<pre><code class="language-json">{
+    &quot;title&quot;: &quot;Order&quot;,
+    &quot;type&quot;: &quot;object&quot;,
+    &quot;required&quot;: [&quot;orderId&quot;, &quot;customer&quot;],
+    &quot;properties&quot;: {
+        &quot;orderId&quot;: { &quot;type&quot;: &quot;string&quot; },
+        &quot;customer&quot;: { &quot;type&quot;: &quot;string&quot; },
+        &quot;items&quot;: {
+            &quot;type&quot;: &quot;array&quot;,
+            &quot;items&quot;: {
+                &quot;type&quot;: &quot;object&quot;,
+                &quot;required&quot;: [&quot;product&quot;, &quot;quantity&quot;],
+                &quot;properties&quot;: {
+                    &quot;product&quot;: { &quot;type&quot;: &quot;string&quot; },
+                    &quot;quantity&quot;: { &quot;type&quot;: &quot;integer&quot;, &quot;format&quot;: &quot;int32&quot; },
+                    &quot;price&quot;: { &quot;type&quot;: &quot;number&quot; }
+                }
+            }
+        },
+        &quot;notes&quot;: { &quot;type&quot;: &quot;string&quot; }
+    }
+}
+</code></pre>
+<p>The generated types include:</p>
+<ul>
+<li><code>Order</code> — the root object type</li>
+<li><code>Order.RequiredProductAndQuantityArray</code> — the strongly-typed array of line items</li>
+<li><code>Order.RequiredProductAndQuantityArray.RequiredProductAndQuantity</code> — an individual line item</li>
+</ul>
+<h2 id="generated-code-usage">Generated Code Usage</h2>
+<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/v5/docs/ExampleRecipes/019-CloneAndFreeze/Program.cs">Example code</a></p>
+<h3 id="parse-and-create-a-mutable-builder">Parse and create a mutable builder</h3>
+<pre><code class="language-csharp">string orderJson =
+    &quot;&quot;&quot;
+    {
+        &quot;orderId&quot;: &quot;ORD-001&quot;,
+        &quot;customer&quot;: &quot;Alice Smith&quot;,
+        &quot;items&quot;: [
+            { &quot;product&quot;: &quot;Widget&quot;, &quot;quantity&quot;: 3, &quot;price&quot;: 9.99 },
+            { &quot;product&quot;: &quot;Gadget&quot;, &quot;quantity&quot;: 1, &quot;price&quot;: 24.50 }
+        ],
+        &quot;notes&quot;: &quot;Handle with care&quot;
+    }
+    &quot;&quot;&quot;;
+
+using JsonWorkspace workspace = JsonWorkspace.Create();
+using var parsedOrder = ParsedJsonDocument&lt;Order&gt;.Parse(orderJson);
+using var builder = parsedOrder.RootElement.CreateBuilder(workspace);
+Order.Mutable root = builder.RootElement;
+</code></pre>
+<h3 id="clone-standalone-copy">Clone — standalone copy</h3>
+<p><code>Clone()</code> serializes the mutable element and re-parses it into an independent heap-allocated document. The cloned value can be stored, returned from methods, or cached — it has no dependency on the workspace.</p>
+<pre><code class="language-csharp">Order cloned = root.Clone();
+Console.WriteLine(cloned);
+Console.WriteLine($&quot;  Customer: {cloned.Customer}&quot;);
+</code></pre>
+<h3 id="freeze-workspace-scoped-snapshot">Freeze — workspace-scoped snapshot</h3>
+<p><code>Freeze()</code> performs a cheap blit of the internal metadata and value arrays. The frozen value is immutable but only valid while the workspace is alive.</p>
+<pre><code class="language-csharp">Order frozen = root.Freeze();
+Console.WriteLine(frozen);
+Console.WriteLine($&quot;  Customer: {frozen.Customer}&quot;);
+</code></pre>
+<h3 id="freeze-a-nested-element">Freeze a nested element</h3>
+<p>You can freeze any element in the tree, not just the root. Here we freeze just the first line item:</p>
+<pre><code class="language-csharp">Order.RequiredProductAndQuantityArray.RequiredProductAndQuantity firstItem =
+    root.Items[0].Freeze();
+
+Console.WriteLine(firstItem);
+Console.WriteLine($&quot;  Product: {firstItem.Product}, Quantity: {firstItem.Quantity}&quot;);
+</code></pre>
+<h3 id="snapshot-before-and-after-mutation">Snapshot before and after mutation</h3>
+<p>Freeze is ideal for capturing point-in-time snapshots of a document that is still being mutated:</p>
+<pre><code class="language-csharp">Order snapshotBefore = root.Freeze();
+
+root.SetNotes(&quot;URGENT — ship by Friday&quot;);
+
+Order snapshotAfter = root.Freeze();
+
+Console.WriteLine($&quot;Before: notes = {snapshotBefore.Notes}&quot;);
+Console.WriteLine($&quot;After:  notes = {snapshotAfter.Notes}&quot;);
+Console.WriteLine($&quot;Snapshots equal? {snapshotBefore == snapshotAfter}&quot;);
+// Output: Snapshots equal? False
+</code></pre>
+<h3 id="cross-document-freeze">Cross-document freeze</h3>
+<p>Elements from different documents can be combined in a single builder. Here we take a line item from order 1 and add it to order 2, then freeze the result:</p>
+<pre><code class="language-csharp">using var parsedOrder2 = ParsedJsonDocument&lt;Order&gt;.Parse(secondOrderJson);
+using var builder2 = parsedOrder2.RootElement.CreateBuilder(workspace);
+Order.Mutable root2 = builder2.RootElement;
+
+// Add the first item from order 1 into order 2's items array
+root2.Items.AddItem(parsedOrder.RootElement.Items[0]);
+
+Order frozenOrder2 = root2.Freeze();
+Console.WriteLine(frozenOrder2);
+</code></pre>
+<h2 id="clone-vs-freeze-comparison">Clone vs Freeze — Comparison</h2>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Clone</th>
+<th>Freeze</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Cost</strong></td>
+<td>Serializes and re-parses (allocates)</td>
+<td>Cheap blit of backing arrays</td>
+</tr>
+<tr>
+<td><strong>Lifetime</strong></td>
+<td>Independent — outlives workspace</td>
+<td>Workspace-scoped</td>
+</tr>
+<tr>
+<td><strong>Use when</strong></td>
+<td>The snapshot must be stored, cached, or returned beyond the workspace scope</td>
+<td>You need a temporary immutable view during a processing pipeline</td>
+</tr>
+</tbody>
+</table>
+<p>Both methods return the strongly-typed immutable element (e.g., <code>Order</code>, not <code>JsonElement</code>), so you retain full access to generated properties and schema validation. If the element is already immutable (e.g., from a <code>ParsedJsonDocument</code>), both methods return the same instance without additional work.</p>
+<h2 id="running-the-example">Running the Example</h2>
+<pre><code class="language-bash">cd docs/ExampleRecipes/019-CloneAndFreeze
+dotnet run
+</code></pre>
+<h2 id="related-patterns">Related Patterns</h2>
+<ul>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-734/examples/data-object.html">001-DataObject</a> - Creating and manipulating data objects</li>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-734/examples/creating-a-strongly-typed-array.html">007-CreatingAStronglyTypedArray</a> - Mutable array operations (add, remove, insert, replace)</li>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-734/examples/maps.html">016-Maps</a> - Mutable object operations (set, remove properties)</li>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-734/examples/mapping-input-and-output-values.html">017-MappingInputAndOutputValues</a> - Zero-allocation mapping between types</li>
+</ul>
+        </div>
+    </main>
+</div>
+
+    </div>
+    <footer class="site-footer">
+    <div class="site-footer__inner">
+        <div class="site-footer__sponsor">
+            Sponsored by
+            <a href="https://endjin.com" target="_blank" rel="noopener noreferrer">endjin</a>
+        </div>
+        <ul class="site-footer__links" role="list">
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-734/getting-started/index.html">Getting Started</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-734/docs/index.html">Documentation</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-734/examples/index.html">Examples</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-734/api/index.html">API</a></li>
+            <li><a class="site-footer__link" href="https://github.com/corvus-dotnet/Corvus.JsonSchema" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            <li><a class="site-footer__link" href="https://www.nuget.org/packages?q=Corvus.Json" target="_blank" rel="noopener noreferrer">NuGet</a></li>
+        </ul>
+        <p class="site-footer__copyright">&copy; 2026 endjin Ltd.</p>
+    </div>
+</footer>
+
+    <!-- highlight.js for syntax highlighting (CSS targets .hljs-* classes) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/csharp.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js" defer></script>
+    <script>document.addEventListener('DOMContentLoaded',()=>hljs.highlightAll())</script>
+    <script src="/Corvus.JsonSchema/pr-preview/pr-734/assets/js/main.js" defer></script>
+    <script src="/Corvus.JsonSchema/pr-preview/pr-734/assets/js/sidebar-search.js" defer></script>
+    
+</body>
+</html>
