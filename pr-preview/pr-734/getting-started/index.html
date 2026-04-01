@@ -639,7 +639,7 @@ bool isActive = person.IsActive;
 <pre><code class="language-csharp">string familyName = (string)person.Name.FamilyName;
 </code></pre>
 <blockquote>
-<p><strong>Tip:</strong> You can opt in to implicit <code>string</code> conversion via the <code>--optionalStringImplicit</code> flag on the CLI tool, or the <code>CorvusJsonSchemaOptionalStringImplicit</code> MSBuild property in your <code>.csproj</code> for the source generator. This trades allocation safety for convenience — use it when you know you need the string and are not in a hot path.</p>
+<p><strong>Tip:</strong> You can opt in to implicit <code>string</code> conversion via the <code>--useImplicitOperatorString</code> flag on the CLI tool, or the <code>CorvusTextJsonUseImplicitOperatorString</code> MSBuild property in your <code>.csproj</code> for the source generator. This trades allocation safety for convenience — use it when you know you need the string and are not in a hot path.</p>
 </blockquote>
 <h3 id="trygetvalue">TryGetValue</h3>
 <p>A safe, non-throwing alternative that returns <code>false</code> if the value is absent or cannot be converted:</p>
@@ -659,7 +659,7 @@ ReadOnlySpan&lt;byte&gt; bytes = utf8Name.Span;
 using UnescapedUtf16JsonString utf16Name = person.Name.FamilyName.GetUtf16String();
 ReadOnlySpan&lt;char&gt; chars = utf16Name.Span;
 </code></pre>
-<p><code>GetUtf8String()</code> gives you the raw UTF-8 bytes without allocating a <code>string</code>. <code>GetUtf16String()</code> gives you a <code>char</code> span — useful when you need to interop with APIs that expect <code>ReadOnlySpan&lt;char&gt;</code> without paying for a <code>string</code> allocation. Both return disposable types that must be disposed to return their buffers to the pool.</p>
+<p><code>GetUtf8String()</code> gives you the unescaped UTF-8 bytes without allocating a <code>string</code>. <code>GetUtf16String()</code> gives you a <code>char</code> span — useful when you need to interop with APIs that expect <code>ReadOnlySpan&lt;char&gt;</code> without paying for a <code>string</code> allocation. Both return disposable types that must be disposed to return their buffers to the pool.</p>
 <h2 id="values-null-and-undefined">Values, Null, and Undefined</h2>
 <p>JSON values exist in three states:</p>
 <pre><code class="language-json">{ &quot;foo&quot;: 3.14 }   // Present with a value
@@ -916,8 +916,69 @@ root.Hobbies.InsertRange(1, static (ref JsonElement.ArrayBuilder b) =&gt;
 <li>Create a <code>JsonDocumentBuilder&lt;T.Mutable&gt;</code> via <code>.CreateBuilder(workspace)</code></li>
 <li>Get the <code>Mutable</code> root element from the builder</li>
 <li>Call <code>Set*()</code> / <code>Remove*()</code> methods on the mutable element</li>
-<li>Serialize via <code>root.WriteTo(writer)</code>, <code>root.ToString()</code>, or convert to immutable via <code>.Clone()</code></li>
+<li>Convert to immutable via <code>.Clone()</code> or <code>.Freeze()</code>, or serialize via <code>root.WriteTo(writer)</code> or <code>root.ToString()</code></li>
 </ol>
+<h2 id="converting-to-immutable-clone-and-freeze">Converting to immutable: Clone() and Freeze()</h2>
+<p>After building or mutating a document, you may need an immutable snapshot. There are two ways to do this, each with different trade-offs. Both can be called on any element — root or nested — and both return the strongly-typed immutable form (e.g., <code>Person</code> from <code>Person.Mutable</code>), not <code>JsonElement</code>.</p>
+<h3 id="clone">Clone()</h3>
+<p><code>Clone()</code> allocates new backing storage on the heap. The result is completely independent — it outlives the workspace and the source document, and will be cleaned up by garbage collection when it goes out of scope:</p>
+<pre><code class="language-csharp">using JsonWorkspace workspace = JsonWorkspace.Create();
+using var doc = ParsedJsonDocument&lt;Person&gt;.Parse(json);
+using var builder = doc.RootElement.CreateBuilder(workspace);
+
+builder.RootElement.SetAge(31);
+
+// Clone produces a standalone immutable value
+Person snapshot = builder.RootElement.Clone();
+
+// snapshot is valid even after the workspace is disposed
+</code></pre>
+<p>Use <code>Clone()</code> when you need a value to escape the scope of the workspace — for example, returning a result from a method, storing it in a cache, or passing it to another thread.</p>
+<h3 id="freeze">Freeze()</h3>
+<p><code>Freeze()</code> creates a cheap immutable copy within the same workspace. It copies only the metadata and value backing arrays — no JSON serialization or re-parsing occurs. You can freeze any element, not just the root:</p>
+<pre><code class="language-csharp">using JsonWorkspace workspace = JsonWorkspace.Create();
+using var doc = ParsedJsonDocument&lt;Person&gt;.Parse(json);
+using var builder = doc.RootElement.CreateBuilder(workspace);
+
+builder.RootElement.SetAge(31);
+
+// Freeze the root element
+Person frozen = builder.RootElement.Freeze();
+
+// Or freeze a nested element to get a standalone immutable snapshot of just that subtree
+Person.PersonNameEntity frozenName = builder.RootElement.Name.Freeze();
+
+// Both are valid for the lifetime of the workspace
+</code></pre>
+<p>Use <code>Freeze()</code> when you need an immutable reference that stays within the workspace lifetime — for example, caching intermediate results while building a complex document, or taking a snapshot before further mutations.</p>
+<p><code>Freeze()</code> also works on immutable elements: if the element is already backed by an immutable document, it returns the same instance without any copying.</p>
+<h3 id="choosing-between-clone-and-freeze">Choosing between Clone() and Freeze()</h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Clone()</th>
+<th>Freeze()</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Cost</strong></td>
+<td>O(JSON size) — heap allocation</td>
+<td>O(metadata size) — cheap blit</td>
+</tr>
+<tr>
+<td><strong>Lifetime</strong></td>
+<td>Standalone — outlives the workspace</td>
+<td>Workspace-scoped</td>
+</tr>
+<tr>
+<td><strong>Use when</strong></td>
+<td>Value must escape the workspace</td>
+<td>Value stays within the workspace</td>
+</tr>
+</tbody>
+</table>
 <h2 id="serialization">Serialization</h2>
 <p>Any generated type — whether parsed, built from scratch, or mutated — can be written back to JSON. The simplest approach allocates a <code>string</code>:</p>
 <pre><code class="language-csharp">// To a JSON string (allocates)
