@@ -15,6 +15,11 @@ on:
         required: false
         default: false
         type: boolean
+      forcePublicNugetDestination:
+        description: When true the NuGet Publish destination will always be set to nuget.org. (Force publishing normally publishes to GitHub Packages, if not tagged version)
+        required: false
+        default: false
+        type: boolean
       skipCleanup:
         description: When true the pipeline clean-up stage will not be run. For example, the cache used between pipeline stages will be retained.
         required: false
@@ -48,12 +53,13 @@ jobs:
       id: prepareEnvVarsAndSecrets
       with:
         environmentVariablesYaml: |
-          BUILDVAR_NuGetPublishSource: "${{ startsWith(github.ref, 'refs/tags/') && 'https://api.nuget.org/v3/index.json' || format('https://nuget.pkg.github.com/{0}/index.json', github.repository_owner) }}"
+          ZF_NUGET_PUBLISH_SOURCE: ${{ (startsWith(github.ref, 'refs/tags/') || github.event.inputs.forcePublicNugetDestination == 'true') && 'https://api.nuget.org/v3/index.json' || format('https://nuget.pkg.github.com/{0}/index.json', github.repository_owner) }}
           BUILDVAR_BuildWebsite: "${{ (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'pull_request' }}"
           BUILDVAR_IsPreviewDeployment: "${{ github.event_name == 'pull_request' }}"
           BUILDVAR_BasePathPrefix: "${{ github.event_name == 'pull_request' && format('/{0}/pr-preview/pr-{1}', github.event.repository.name, github.event.pull_request.number) || format('/{0}', github.event.repository.name) }}"
         secretsYaml: |
           NUGET_API_KEY: "${{ startsWith(github.ref, 'refs/tags/') && secrets.NUGET_APIKEY || secrets.BUILD_PUBLISHER_PAT }}"
+          # TODO: Review approach to enable Vellum to be downloaded
           GH_TOKEN: "${{ secrets.ENDJIN_PACKAGES_TOKEN }}"
         secretsEncryptionKey: ${{ secrets.SHARED_WORKFLOW_KEY }}
 
