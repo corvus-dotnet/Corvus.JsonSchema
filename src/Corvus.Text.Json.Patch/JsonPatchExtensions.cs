@@ -21,7 +21,7 @@ public static class JsonPatchExtensions
     /// <param name="target">The mutable root element to patch.</param>
     /// <param name="patch">The patch document to apply.</param>
     /// <returns><see langword="true"/> if all operations were applied successfully; otherwise, <see langword="false"/>.</returns>
-    public static bool TryApplyPatch(ref JsonElement.Mutable target, in JsonPatchDocument patch)
+    public static bool TryApplyPatch(this ref JsonElement.Mutable target, in JsonPatchDocument patch)
     {
         foreach (JsonPatchDocument.PatchOperation operation in patch.EnumerateArray())
         {
@@ -74,6 +74,216 @@ public static class JsonPatchExtensions
         }
 
         return true;
+    }
+
+    /// <summary>
+    /// Begins building a JSON Patch document that can be applied to the target.
+    /// </summary>
+    /// <param name="target">The mutable root element.</param>
+    /// <returns>A new <see cref="PatchBuilder"/> for fluent patch construction.</returns>
+    public static PatchBuilder BeginPatch(this in JsonElement.Mutable target)
+    {
+        return new PatchBuilder(true);
+    }
+
+    /// <summary>
+    /// Tries to add a value at the specified JSON Pointer path.
+    /// </summary>
+    /// <param name="target">The mutable root element.</param>
+    /// <param name="path">The JSON Pointer path (e.g. <c>/foo/bar</c>).</param>
+    /// <param name="value">The value to add.</param>
+    /// <returns><see langword="true"/> if the add operation was applied successfully; otherwise, <see langword="false"/>.</returns>
+    public static bool TryAdd(this ref JsonElement.Mutable target, ReadOnlySpan<byte> path, in JsonElement.Source value)
+    {
+        if (path.Length == 0)
+        {
+            ReplaceRoot(ref target, in value);
+            return true;
+        }
+
+        return TryAddValueFromSpan(ref target, path, in value);
+    }
+
+    /// <summary>
+    /// Tries to remove the value at the specified JSON Pointer path.
+    /// </summary>
+    /// <param name="target">The mutable root element.</param>
+    /// <param name="path">The JSON Pointer path (e.g. <c>/foo/bar</c>).</param>
+    /// <returns><see langword="true"/> if the remove operation was applied successfully; otherwise, <see langword="false"/>.</returns>
+    public static bool TryRemove(this ref JsonElement.Mutable target, ReadOnlySpan<byte> path)
+    {
+        if (path.Length == 0)
+        {
+            return false;
+        }
+
+        if (!TryResolveParent(ref target, path, out JsonElement.Mutable parent, out byte[] lastSegment))
+        {
+            return false;
+        }
+
+        if (parent.ValueKind == JsonValueKind.Array)
+        {
+            if (!TryParseArrayIndex(lastSegment, out int index))
+            {
+                return false;
+            }
+
+            if (index < 0 || index >= parent.GetArrayLength())
+            {
+                return false;
+            }
+
+            parent.RemoveAt(index);
+            return true;
+        }
+
+        if (parent.ValueKind == JsonValueKind.Object)
+        {
+            return parent.RemoveProperty((ReadOnlySpan<byte>)lastSegment);
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Tries to replace the value at the specified JSON Pointer path.
+    /// </summary>
+    /// <param name="target">The mutable root element.</param>
+    /// <param name="path">The JSON Pointer path (e.g. <c>/foo/bar</c>).</param>
+    /// <param name="value">The replacement value.</param>
+    /// <returns><see langword="true"/> if the replace operation was applied successfully; otherwise, <see langword="false"/>.</returns>
+    public static bool TryReplace(this ref JsonElement.Mutable target, ReadOnlySpan<byte> path, in JsonElement.Source value)
+    {
+        if (path.Length == 0)
+        {
+            ReplaceRoot(ref target, in value);
+            return true;
+        }
+
+        if (!TryResolveParent(ref target, path, out JsonElement.Mutable parent, out byte[] lastSegment))
+        {
+            return false;
+        }
+
+        if (parent.ValueKind == JsonValueKind.Array)
+        {
+            if (!TryParseArrayIndex(lastSegment, out int index))
+            {
+                return false;
+            }
+
+            if (index < 0 || index >= parent.GetArrayLength())
+            {
+                return false;
+            }
+
+            parent.SetItem(index, in value);
+            return true;
+        }
+
+        if (parent.ValueKind == JsonValueKind.Object)
+        {
+            if (!parent.TryGetProperty((ReadOnlySpan<byte>)lastSegment, out _))
+            {
+                return false;
+            }
+
+            parent.SetProperty((ReadOnlySpan<byte>)lastSegment, in value);
+            return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Tries to move a value from one location to another.
+    /// </summary>
+    /// <param name="target">The mutable root element.</param>
+    /// <param name="from">The source JSON Pointer path.</param>
+    /// <param name="path">The destination JSON Pointer path.</param>
+    /// <returns><see langword="true"/> if the move operation was applied successfully; otherwise, <see langword="false"/>.</returns>
+    public static bool TryMove(this ref JsonElement.Mutable target, ReadOnlySpan<byte> from, ReadOnlySpan<byte> path)
+    {
+        if (from.Length == 0)
+        {
+            return false;
+        }
+
+        if (!TryResolvePointer(ref target, from, out JsonElement.Mutable sourceValue))
+        {
+            return false;
+        }
+
+        JsonElement cloned = sourceValue.Clone();
+
+        if (!TryResolveParent(ref target, from, out JsonElement.Mutable fromParent, out byte[] fromSegment))
+        {
+            return false;
+        }
+
+        if (fromParent.ValueKind == JsonValueKind.Array)
+        {
+            if (!TryParseArrayIndex(fromSegment, out int fromIndex))
+            {
+                return false;
+            }
+
+            if (fromIndex < 0 || fromIndex >= fromParent.GetArrayLength())
+            {
+                return false;
+            }
+
+            fromParent.RemoveAt(fromIndex);
+        }
+        else if (fromParent.ValueKind == JsonValueKind.Object)
+        {
+            if (!fromParent.RemoveProperty((ReadOnlySpan<byte>)fromSegment))
+            {
+                return false;
+            }
+        }
+        else
+        {
+            return false;
+        }
+
+        return TryAddValue(ref target, path, cloned);
+    }
+
+    /// <summary>
+    /// Tries to copy a value from one location to another.
+    /// </summary>
+    /// <param name="target">The mutable root element.</param>
+    /// <param name="from">The source JSON Pointer path.</param>
+    /// <param name="path">The destination JSON Pointer path.</param>
+    /// <returns><see langword="true"/> if the copy operation was applied successfully; otherwise, <see langword="false"/>.</returns>
+    public static bool TryCopy(this ref JsonElement.Mutable target, ReadOnlySpan<byte> from, ReadOnlySpan<byte> path)
+    {
+        if (!TryResolvePointer(ref target, from, out JsonElement.Mutable sourceValue))
+        {
+            return false;
+        }
+
+        JsonElement cloned = sourceValue.Clone();
+        return TryAddValue(ref target, path, cloned);
+    }
+
+    /// <summary>
+    /// Tests whether the value at the specified JSON Pointer path equals the expected value.
+    /// </summary>
+    /// <param name="target">The mutable root element.</param>
+    /// <param name="path">The JSON Pointer path (e.g. <c>/foo/bar</c>).</param>
+    /// <param name="expected">The expected value.</param>
+    /// <returns><see langword="true"/> if the value at the path equals the expected value; otherwise, <see langword="false"/>.</returns>
+    public static bool TryTest(this ref JsonElement.Mutable target, ReadOnlySpan<byte> path, in JsonElement expected)
+    {
+        if (!TryResolvePointer(ref target, path, out JsonElement.Mutable resolved))
+        {
+            return false;
+        }
+
+        return resolved.Equals(expected);
     }
 
     private static bool TryApplyAdd(ref JsonElement.Mutable target, in JsonPatchDocument.AddOperation op)
@@ -296,7 +506,17 @@ public static class JsonPatchExtensions
     private static bool TryAddValue(ref JsonElement.Mutable target, byte[] pathUtf8, in JsonElement value)
     {
         JsonElement.Source source = value;
+        return TryAddValueFromSpan(ref target, (ReadOnlySpan<byte>)pathUtf8, in source);
+    }
 
+    private static bool TryAddValue(ref JsonElement.Mutable target, ReadOnlySpan<byte> pathUtf8, in JsonElement value)
+    {
+        JsonElement.Source source = value;
+        return TryAddValueFromSpan(ref target, pathUtf8, in source);
+    }
+
+    private static bool TryAddValueFromSpan(ref JsonElement.Mutable target, ReadOnlySpan<byte> pathUtf8, in JsonElement.Source source)
+    {
         if (pathUtf8.Length == 0)
         {
             ReplaceRoot(ref target, in source);

@@ -1232,6 +1232,63 @@ public readonly partial struct JsonElement
                     break;
             }
         }
+
+        /// <summary>
+        /// Writes the source value to a <see cref="Utf8JsonWriter"/>.
+        /// </summary>
+        /// <param name="writer">The writer to write the value to.</param>
+        public void WriteTo(Utf8JsonWriter writer)
+        {
+            switch (_kind)
+            {
+                case Kind.JsonElement:
+                    _jsonElement.WriteTo(writer);
+                    break;
+
+                case Kind.Null:
+                    writer.WriteNullValue();
+                    break;
+
+                case Kind.True:
+                    writer.WriteBooleanValue(true);
+                    break;
+
+                case Kind.False:
+                    writer.WriteBooleanValue(false);
+                    break;
+
+                case Kind.NumericSimpleType:
+                    writer.WriteRawValue(_simpleTypeBacking.Span(), skipInputValidation: true);
+                    break;
+
+                case Kind.FormattedNumber:
+                    writer.WriteRawValue(_utf8Backing, skipInputValidation: true);
+                    break;
+
+                case Kind.StringSimpleType:
+                    writer.WriteStringValue(_simpleTypeBacking.Span());
+                    break;
+
+                case Kind.RawUtf8StringRequiresUnescaping:
+                case Kind.RawUtf8StringNotRequiresUnescaping:
+                case Kind.Utf8String:
+                    writer.WriteStringValue(_utf8Backing);
+                    break;
+
+                case Kind.Utf16String:
+                    writer.WriteStringValue(_utf16Backing);
+                    break;
+
+                case Kind.JsonArrayBuilderInstance:
+                case Kind.JsonObjectBuilderInstance:
+                    ThrowHelper.ThrowInvalidOperationException(SR.CannotWriteBuilderToWriter);
+                    break;
+
+                default:
+                    Debug.Fail("Unrecognized kind.");
+                    break;
+            }
+        }
     }
 
     public readonly ref struct Source<TContext>

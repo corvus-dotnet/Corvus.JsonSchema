@@ -466,6 +466,10 @@
     <value>You cannot create a mutable copy of a mutable document. Consider calling Freeze() on the source document.</value>
   </data>
 
+  <data name="CannotWriteBuilderToWriter" xml:space="preserve">
+    <value>Cannot write an array or object builder source directly to a Utf8JsonWriter. Use a JsonElement or primitive value instead.</value>
+  </data>
+
   <data name="JsonPointer_Expected_Digit_After_Escape_Character_Found_End" xml:space="preserve">
     <value>Expected to find 0, 1 or 2 after '~' in the component, but found the end of the component.</value>
   </data>
