@@ -351,50 +351,338 @@ public sealed partial class JsonDocumentBuilder<T> : JsonDocument, IMutableJsonD
     }
 
     /// <inheritdoc />
-    int IMutableJsonDocument.SnapshotElementRows(int sourceIndex, out byte[] rentedBuffer)
+    void IMutableJsonDocument.CopyValueToProperty(int srcValueIndex, int dstObjectIndex, ReadOnlySpan<byte> propertyName)
     {
-        CheckNotDisposed();
-        int byteLength = GetDbSizeUnsafe(sourceIndex, true);
-        rentedBuffer = ArrayPool<byte>.Shared.Rent(byteLength);
-        _parsedData.CopyRowsTo(sourceIndex, byteLength, rentedBuffer);
-        return byteLength;
+        CheckNotImmutable();
+
+        var srcElement = new JsonElement(this, srcValueIndex);
+        var cvb = ComplexValueBuilder.Create(this, 1);
+
+        if (TryGetNamedPropertyValueIndexUnsafe(dstObjectIndex, propertyName, out int existingValueIndex))
+        {
+            // Replace existing property value.
+            cvb.AddItem(srcElement);
+            int existingByteLength = GetDbSizeUnsafe(existingValueIndex, true);
+            _version++;
+            cvb.OverwriteAndDispose(dstObjectIndex, existingValueIndex, existingValueIndex + existingByteLength, 1, ref _parsedData);
+        }
+        else
+        {
+            // Insert new property at object end.
+            cvb.AddProperty(propertyName, srcElement);
+            int endIndex = dstObjectIndex + GetDbSizeUnsafe(dstObjectIndex, false);
+            _version++;
+            cvb.InsertAndDispose(dstObjectIndex, endIndex, ref _parsedData);
+        }
     }
 
     /// <inheritdoc />
-    void IMutableJsonDocument.InsertSnapshotRows(int containerIndex, int insertionIndex, byte[] rowData, int rowDataLength, int rowCount, int memberCount)
+    void IMutableJsonDocument.CopyValueToArrayIndex(int srcValueIndex, int dstArrayIndex, int itemIndex)
     {
         CheckNotImmutable();
+
+        var srcElement = new JsonElement(this, srcValueIndex);
+        var cvb = ComplexValueBuilder.Create(this, 1);
+        cvb.AddItem(srcElement);
+
+        int insertionIndex;
+        if (itemIndex == GetArrayLengthUnsafe(dstArrayIndex))
+        {
+            insertionIndex = dstArrayIndex + GetDbSizeUnsafe(dstArrayIndex, false);
+        }
+        else
+        {
+            insertionIndex = GetArrayIndexElementUnsafe(dstArrayIndex, itemIndex);
+        }
+
         _version++;
-        _parsedData.InsertRowsInComplexObject(this, containerIndex, insertionIndex, rowCount, memberCount);
-        _parsedData.WriteFromBuffer(rowData, rowDataLength, insertionIndex);
+        cvb.InsertAndDispose(dstArrayIndex, insertionIndex, ref _parsedData);
     }
 
     /// <inheritdoc />
-    void IMutableJsonDocument.ReplaceWithSnapshotRows(int containerIndex, int startIndex, int endIndex, int memberCountToReplace, byte[] rowData, int rowDataLength, int rowCount, int memberCount)
+    void IMutableJsonDocument.CopyValueToArrayEnd(int srcValueIndex, int dstArrayIndex)
     {
         CheckNotImmutable();
+
+        var srcElement = new JsonElement(this, srcValueIndex);
+        var cvb = ComplexValueBuilder.Create(this, 1);
+        cvb.AddItem(srcElement);
+
+        int endIndex = dstArrayIndex + GetDbSizeUnsafe(dstArrayIndex, false);
         _version++;
-        _parsedData.ReplaceRowsInComplexObject(this, containerIndex, startIndex, endIndex, memberCountToReplace, rowCount, memberCount);
-        _parsedData.WriteFromBuffer(rowData, rowDataLength, startIndex);
+        cvb.InsertAndDispose(dstArrayIndex, endIndex, ref _parsedData);
     }
 
     /// <inheritdoc />
-    void IMutableJsonDocument.InsertSnapshotWithPropertyName(int containerIndex, int insertionIndex, ReadOnlySpan<byte> propertyName, byte[] rowData, int rowDataLength, int rowCount)
+    bool IMutableJsonDocument.MovePropertyToProperty(int srcObjectIndex, ReadOnlySpan<byte> srcPropertyName, int dstObjectIndex, ReadOnlySpan<byte> dstPropertyName)
     {
         CheckNotImmutable();
+
+        if (!TryGetNamedPropertyValueIndexUnsafe(srcObjectIndex, srcPropertyName, out int srcValueIndex))
+        {
+            return false;
+        }
+
+        // Same object, same property name is a no-op.
+        if (srcObjectIndex == dstObjectIndex && srcPropertyName.SequenceEqual(dstPropertyName))
+        {
+            return true;
+        }
+
+        // Capture source value into CVB before any mutations.
+        var srcElement = new JsonElement(this, srcValueIndex);
+        int srcValueByteLength = GetDbSizeUnsafe(srcValueIndex, true);
+        int srcRemoveStart = srcValueIndex - DbRow.Size; // Include PropertyName row
+        int srcRemoveEnd = srcValueIndex + srcValueByteLength;
+        int removeByteLength = srcRemoveEnd - srcRemoveStart;
+
+        // Check destination before mutating, so we know whether to replace or insert.
+        bool destExists = TryGetNamedPropertyValueIndexUnsafe(dstObjectIndex, dstPropertyName, out _);
+
+        var cvb = ComplexValueBuilder.Create(this, 1);
+        if (destExists)
+        {
+            cvb.AddItem(srcElement);
+        }
+        else
+        {
+            cvb.AddProperty(dstPropertyName, srcElement);
+        }
+
         _version++;
 
-        // Store the property name in the value buffer and create a PropertyName row.
-        int nameLocation = EscapeAndStoreRawStringValue(propertyName, out bool requiredEscaping, _workspace.Options.Encoder);
-        var nameRow = new DbRow(JsonTokenType.PropertyName, nameLocation, requiredEscaping ? -1 : 1);
+        // Remove source property.
+        _parsedData.ReplaceRowsInComplexObject(this, srcObjectIndex, srcRemoveStart, srcRemoveEnd, 1, 0, 0);
 
-        // Insert gap for PropertyName row + value rows.
-        int totalRowCount = 1 + rowCount;
-        _parsedData.InsertRowsInComplexObject(this, containerIndex, insertionIndex, totalRowCount, 1);
+        // Adjust destination object index for the removal.
+        int adjustedDstObjectIndex = dstObjectIndex;
+        if (srcRemoveStart < dstObjectIndex)
+        {
+            adjustedDstObjectIndex -= removeByteLength;
+        }
 
-        // Write the PropertyName row, then the value rows.
-        _parsedData.WriteRow(insertionIndex, nameRow);
-        _parsedData.WriteFromBuffer(rowData, rowDataLength, insertionIndex + DbRow.Size);
+        if (destExists)
+        {
+            // Re-resolve existing property at adjusted position.
+            TryGetNamedPropertyValueIndexUnsafe(adjustedDstObjectIndex, dstPropertyName, out int existingValueIndex);
+            int existingByteLength = GetDbSizeUnsafe(existingValueIndex, true);
+            cvb.OverwriteAndDispose(adjustedDstObjectIndex, existingValueIndex, existingValueIndex + existingByteLength, 1, ref _parsedData);
+        }
+        else
+        {
+            int endIndex = adjustedDstObjectIndex + GetDbSizeUnsafe(adjustedDstObjectIndex, false);
+            cvb.InsertAndDispose(adjustedDstObjectIndex, endIndex, ref _parsedData);
+        }
+
+        return true;
+    }
+
+    /// <inheritdoc />
+    bool IMutableJsonDocument.MovePropertyToArray(int srcObjectIndex, ReadOnlySpan<byte> srcPropertyName, int dstArrayIndex, int destIndex)
+    {
+        CheckNotImmutable();
+
+        if (!TryGetNamedPropertyValueIndexUnsafe(srcObjectIndex, srcPropertyName, out int srcValueIndex))
+        {
+            return false;
+        }
+
+        // Capture source value into CVB before any mutations.
+        var srcElement = new JsonElement(this, srcValueIndex);
+        var cvb = ComplexValueBuilder.Create(this, 1);
+        cvb.AddItem(srcElement);
+
+        int srcValueByteLength = GetDbSizeUnsafe(srcValueIndex, true);
+        int srcRemoveStart = srcValueIndex - DbRow.Size;
+        int srcRemoveEnd = srcValueIndex + srcValueByteLength;
+        int removeByteLength = srcRemoveEnd - srcRemoveStart;
+
+        _version++;
+
+        // Remove source property.
+        _parsedData.ReplaceRowsInComplexObject(this, srcObjectIndex, srcRemoveStart, srcRemoveEnd, 1, 0, 0);
+
+        // Adjust destination array index for the removal.
+        int adjustedDstArrayIndex = dstArrayIndex;
+        if (srcRemoveStart < dstArrayIndex)
+        {
+            adjustedDstArrayIndex -= removeByteLength;
+        }
+
+        // Find insertion point in the post-removal array.
+        int insertionIndex;
+        if (destIndex == GetArrayLengthUnsafe(adjustedDstArrayIndex))
+        {
+            insertionIndex = adjustedDstArrayIndex + GetDbSizeUnsafe(adjustedDstArrayIndex, false);
+        }
+        else
+        {
+            insertionIndex = GetArrayIndexElementUnsafe(adjustedDstArrayIndex, destIndex);
+        }
+
+        cvb.InsertAndDispose(adjustedDstArrayIndex, insertionIndex, ref _parsedData);
+        return true;
+    }
+
+    /// <inheritdoc />
+    bool IMutableJsonDocument.MovePropertyToArrayEnd(int srcObjectIndex, ReadOnlySpan<byte> srcPropertyName, int dstArrayIndex)
+    {
+        CheckNotImmutable();
+
+        if (!TryGetNamedPropertyValueIndexUnsafe(srcObjectIndex, srcPropertyName, out int srcValueIndex))
+        {
+            return false;
+        }
+
+        // Capture source value into CVB before any mutations.
+        var srcElement = new JsonElement(this, srcValueIndex);
+        var cvb = ComplexValueBuilder.Create(this, 1);
+        cvb.AddItem(srcElement);
+
+        int srcValueByteLength = GetDbSizeUnsafe(srcValueIndex, true);
+        int srcRemoveStart = srcValueIndex - DbRow.Size;
+        int srcRemoveEnd = srcValueIndex + srcValueByteLength;
+        int removeByteLength = srcRemoveEnd - srcRemoveStart;
+
+        _version++;
+
+        // Remove source property.
+        _parsedData.ReplaceRowsInComplexObject(this, srcObjectIndex, srcRemoveStart, srcRemoveEnd, 1, 0, 0);
+
+        // Adjust destination array index for the removal.
+        int adjustedDstArrayIndex = dstArrayIndex;
+        if (srcRemoveStart < dstArrayIndex)
+        {
+            adjustedDstArrayIndex -= removeByteLength;
+        }
+
+        int endIndex = adjustedDstArrayIndex + GetDbSizeUnsafe(adjustedDstArrayIndex, false);
+        cvb.InsertAndDispose(adjustedDstArrayIndex, endIndex, ref _parsedData);
+        return true;
+    }
+
+    /// <inheritdoc />
+    void IMutableJsonDocument.MoveItemToArray(int srcArrayIndex, int srcIndex, int dstArrayIndex, int destIndex)
+    {
+        CheckNotImmutable();
+
+        // Resolve source item position.
+        int srcValueIndex = GetArrayIndexElementUnsafe(srcArrayIndex, srcIndex);
+
+        // Capture source value into CVB before any mutations.
+        var srcElement = new JsonElement(this, srcValueIndex);
+        var cvb = ComplexValueBuilder.Create(this, 1);
+        cvb.AddItem(srcElement);
+
+        int srcValueByteLength = GetDbSizeUnsafe(srcValueIndex, true);
+
+        _version++;
+
+        // Remove source item (no PropertyName row for array items).
+        _parsedData.ReplaceRowsInComplexObject(this, srcArrayIndex, srcValueIndex, srcValueIndex + srcValueByteLength, 1, 0, 0);
+
+        // Adjust destination array index for the removal.
+        int adjustedDstArrayIndex = dstArrayIndex;
+        if (srcValueIndex < dstArrayIndex)
+        {
+            adjustedDstArrayIndex -= srcValueByteLength;
+        }
+
+        // destIndex uses post-removal semantics, which is naturally correct
+        // since we already removed the source.
+        int insertionIndex;
+        if (destIndex == GetArrayLengthUnsafe(adjustedDstArrayIndex))
+        {
+            insertionIndex = adjustedDstArrayIndex + GetDbSizeUnsafe(adjustedDstArrayIndex, false);
+        }
+        else
+        {
+            insertionIndex = GetArrayIndexElementUnsafe(adjustedDstArrayIndex, destIndex);
+        }
+
+        cvb.InsertAndDispose(adjustedDstArrayIndex, insertionIndex, ref _parsedData);
+    }
+
+    /// <inheritdoc />
+    void IMutableJsonDocument.MoveItemToArrayEnd(int srcArrayIndex, int srcIndex, int dstArrayIndex)
+    {
+        CheckNotImmutable();
+
+        // Resolve source item position.
+        int srcValueIndex = GetArrayIndexElementUnsafe(srcArrayIndex, srcIndex);
+
+        // Capture source value into CVB before any mutations.
+        var srcElement = new JsonElement(this, srcValueIndex);
+        var cvb = ComplexValueBuilder.Create(this, 1);
+        cvb.AddItem(srcElement);
+
+        int srcValueByteLength = GetDbSizeUnsafe(srcValueIndex, true);
+
+        _version++;
+
+        // Remove source item.
+        _parsedData.ReplaceRowsInComplexObject(this, srcArrayIndex, srcValueIndex, srcValueIndex + srcValueByteLength, 1, 0, 0);
+
+        // Adjust destination array index for the removal.
+        int adjustedDstArrayIndex = dstArrayIndex;
+        if (srcValueIndex < dstArrayIndex)
+        {
+            adjustedDstArrayIndex -= srcValueByteLength;
+        }
+
+        int endIndex = adjustedDstArrayIndex + GetDbSizeUnsafe(adjustedDstArrayIndex, false);
+        cvb.InsertAndDispose(adjustedDstArrayIndex, endIndex, ref _parsedData);
+    }
+
+    /// <inheritdoc />
+    void IMutableJsonDocument.MoveItemToProperty(int srcArrayIndex, int srcIndex, int dstObjectIndex, ReadOnlySpan<byte> destPropertyName)
+    {
+        CheckNotImmutable();
+
+        // Resolve source item position.
+        int srcValueIndex = GetArrayIndexElementUnsafe(srcArrayIndex, srcIndex);
+
+        // Capture source value into CVB before any mutations.
+        var srcElement = new JsonElement(this, srcValueIndex);
+        int srcValueByteLength = GetDbSizeUnsafe(srcValueIndex, true);
+
+        // Check destination before mutating.
+        bool destExists = TryGetNamedPropertyValueIndexUnsafe(dstObjectIndex, destPropertyName, out _);
+
+        var cvb = ComplexValueBuilder.Create(this, 1);
+        if (destExists)
+        {
+            cvb.AddItem(srcElement);
+        }
+        else
+        {
+            cvb.AddProperty(destPropertyName, srcElement);
+        }
+
+        _version++;
+
+        // Remove source item.
+        _parsedData.ReplaceRowsInComplexObject(this, srcArrayIndex, srcValueIndex, srcValueIndex + srcValueByteLength, 1, 0, 0);
+
+        // Adjust destination object index for the removal.
+        int adjustedDstObjectIndex = dstObjectIndex;
+        if (srcValueIndex < dstObjectIndex)
+        {
+            adjustedDstObjectIndex -= srcValueByteLength;
+        }
+
+        if (destExists)
+        {
+            // Re-resolve existing property at adjusted position.
+            TryGetNamedPropertyValueIndexUnsafe(adjustedDstObjectIndex, destPropertyName, out int existingValueIndex);
+            int existingByteLength = GetDbSizeUnsafe(existingValueIndex, true);
+            cvb.OverwriteAndDispose(adjustedDstObjectIndex, existingValueIndex, existingValueIndex + existingByteLength, 1, ref _parsedData);
+        }
+        else
+        {
+            int endIndex = adjustedDstObjectIndex + GetDbSizeUnsafe(adjustedDstObjectIndex, false);
+            cvb.InsertAndDispose(adjustedDstObjectIndex, endIndex, ref _parsedData);
+        }
     }
 
     private RawUtf8JsonString GetRawValueUnsafe(int index, bool includeQuotes)

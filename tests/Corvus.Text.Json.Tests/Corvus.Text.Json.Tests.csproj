@@ -99,6 +99,7 @@
     <Compile Include="JsonElement.MutableDynamicWriteTests.cs" />
     <Compile Include="JsonElement.MutableApplyTests.cs" />
     <Compile Include="JsonElement.MutableCloneTests.cs" />
+    <Compile Include="JsonElement.MutableCopyMoveTests.cs" />
     <Compile Include="JsonElement.MutableFreezeTests.cs" />
     <Compile Include="JsonElement.MutableRemoveWhereTests.cs" />
     <Compile Include="JsonElementHelpersDateTimeTests.cs" />

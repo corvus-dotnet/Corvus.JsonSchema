@@ -951,42 +951,4 @@ public struct MetadataDb : IDisposable
         uint value = (uint)newLocation;
         MemoryMarshal.Write(_data.AsSpan(rowIndex), ref value);
     }
-
-    /// <summary>
-    /// Copies a range of rows from this metadata database to a destination buffer.
-    /// </summary>
-    /// <param name="sourceIndex">The byte index of the first row to copy.</param>
-    /// <param name="byteLength">The number of bytes to copy.</param>
-    /// <param name="destination">The destination buffer.</param>
-    internal void CopyRowsTo(int sourceIndex, int byteLength, byte[] destination)
-    {
-        Debug.Assert(sourceIndex >= 0);
-        Debug.Assert(sourceIndex + byteLength <= Length);
-        Buffer.BlockCopy(_data, sourceIndex, destination, 0, byteLength);
-    }
-
-    /// <summary>
-    /// Writes rows from a buffer into this metadata database at the specified index.
-    /// </summary>
-    /// <param name="source">The source buffer containing row data.</param>
-    /// <param name="sourceLength">The number of bytes to copy from the source buffer.</param>
-    /// <param name="destIndex">The byte index in this database where writing should begin.</param>
-    internal void WriteFromBuffer(byte[] source, int sourceLength, int destIndex)
-    {
-        Debug.Assert(destIndex >= 0);
-        Debug.Assert(destIndex + sourceLength <= _data.Length);
-        Buffer.BlockCopy(source, 0, _data, destIndex, sourceLength);
-    }
-
-    /// <summary>
-    /// Writes a single <see cref="DbRow"/> at the specified byte index in this metadata database.
-    /// </summary>
-    /// <param name="destIndex">The byte index where the row should be written.</param>
-    /// <param name="row">The row to write.</param>
-    internal void WriteRow(int destIndex, DbRow row)
-    {
-        Debug.Assert(destIndex >= 0);
-        Debug.Assert(destIndex + DbRow.Size <= _data.Length);
-        MemoryMarshal.Write(_data.AsSpan(destIndex), ref row);
-    }
 }

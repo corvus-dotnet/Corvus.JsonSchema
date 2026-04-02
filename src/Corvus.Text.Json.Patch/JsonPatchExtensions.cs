@@ -722,63 +722,111 @@ public static class JsonPatchExtensions
                 ReadOnlySpan<byte> fromUtf8 = utf8From.Span;
                 ReadOnlySpan<byte> pathUtf8 = utf8Path.Span;
 
-                // Resolve the source value.
-                if (!TryResolvePointer(ref target, fromUtf8, out JsonElement.Mutable sourceValue))
+                // Cannot move root.
+                if (fromUtf8.Length == 0)
                 {
                     return false;
                 }
 
-                // Snapshot the source element's MetadataDb rows before removal.
-                JsonElement.Mutable.ElementRowSnapshot snapshot = sourceValue.Snapshot();
-                try
+                // Cannot move to root (would need full doc replacement).
+                if (pathUtf8.Length == 0)
                 {
-                    // Remove from source location.
-                    if (fromUtf8.Length == 0)
-                    {
-                        return false;
-                    }
-
-                    Span<byte> segBuf = stackalloc byte[StackallocByteThreshold];
-                    if (!TryResolveParent(ref target, fromUtf8, out JsonElement.Mutable fromParent, segBuf, out int segLen))
-                    {
-                        return false;
-                    }
-
-                    ReadOnlySpan<byte> fromSegment = segBuf.Slice(0, segLen);
-
-                    if (fromParent.ValueKind == JsonValueKind.Array)
-                    {
-                        if (!TryParseArrayIndex(fromSegment, out int fromIndex))
-                        {
-                            return false;
-                        }
-
-                        if (fromIndex < 0 || fromIndex >= fromParent.GetArrayLength())
-                        {
-                            return false;
-                        }
-
-                        fromParent.RemoveAt(fromIndex);
-                    }
-                    else if (fromParent.ValueKind == JsonValueKind.Object)
-                    {
-                        if (!fromParent.RemoveProperty(fromSegment))
-                        {
-                            return false;
-                        }
-                    }
-                    else
-                    {
-                        return false;
-                    }
-
-                    // Add to destination using the snapshot (no reallocation needed since we just freed space).
-                    return TryInsertSnapshotFromSpan(ref target, pathUtf8, in snapshot);
+                    return false;
                 }
-                finally
+
+                // Resolve source parent and last segment.
+                Span<byte> fromSegBuf = stackalloc byte[StackallocByteThreshold];
+                if (!TryResolveParent(ref target, fromUtf8, out JsonElement.Mutable fromParent, fromSegBuf, out int fromSegLen))
                 {
-                    snapshot.Dispose();
+                    return false;
                 }
+
+                ReadOnlySpan<byte> fromSegment = fromSegBuf.Slice(0, fromSegLen);
+
+                // Resolve dest parent and last segment.
+                Span<byte> destSegBuf = stackalloc byte[StackallocByteThreshold];
+                if (!TryResolveParent(ref target, pathUtf8, out JsonElement.Mutable destParent, destSegBuf, out int destSegLen))
+                {
+                    return false;
+                }
+
+                ReadOnlySpan<byte> destSegment = destSegBuf.Slice(0, destSegLen);
+
+                // Dispatch based on source and destination container types.
+                if (fromParent.ValueKind == JsonValueKind.Array)
+                {
+                    if (!TryParseArrayIndex(fromSegment, out int fromIndex))
+                    {
+                        return false;
+                    }
+
+                    if (fromIndex < 0 || fromIndex >= fromParent.GetArrayLength())
+                    {
+                        return false;
+                    }
+
+                    if (destParent.ValueKind == JsonValueKind.Array)
+                    {
+                        if (IsAppendToken(destSegment))
+                        {
+                            fromParent.MoveItemToArrayEnd(fromIndex, in destParent);
+                            return true;
+                        }
+
+                        if (!TryParseArrayIndex(destSegment, out int destIndex))
+                        {
+                            return false;
+                        }
+
+                        if (destIndex < 0 || destIndex > destParent.GetArrayLength())
+                        {
+                            return false;
+                        }
+
+                        fromParent.MoveItemToArray(fromIndex, in destParent, destIndex);
+                        return true;
+                    }
+
+                    if (destParent.ValueKind == JsonValueKind.Object)
+                    {
+                        fromParent.MoveItemToProperty(fromIndex, in destParent, destSegment);
+                        return true;
+                    }
+
+                    return false;
+                }
+
+                if (fromParent.ValueKind == JsonValueKind.Object)
+                {
+                    if (destParent.ValueKind == JsonValueKind.Array)
+                    {
+                        if (IsAppendToken(destSegment))
+                        {
+                            return fromParent.MovePropertyToArrayEnd(fromSegment, in destParent);
+                        }
+
+                        if (!TryParseArrayIndex(destSegment, out int destIndex))
+                        {
+                            return false;
+                        }
+
+                        if (destIndex < 0 || destIndex > destParent.GetArrayLength())
+                        {
+                            return false;
+                        }
+
+                        return fromParent.MovePropertyToArray(fromSegment, in destParent, destIndex);
+                    }
+
+                    if (destParent.ValueKind == JsonValueKind.Object)
+                    {
+                        return fromParent.MovePropertyToProperty(fromSegment, in destParent, destSegment);
+                    }
+
+                    return false;
+                }
+
+                return false;
             }
             finally
             {
@@ -930,53 +978,6 @@ public static class JsonPatchExtensions
         if (parent.ValueKind == JsonValueKind.Object)
         {
             parent.CopyPropertyFrom(lastSegment, in source);
-            return true;
-        }
-
-        return false;
-    }
-
-    private static bool TryInsertSnapshotFromSpan(ref JsonElement.Mutable target, ReadOnlySpan<byte> pathUtf8, in JsonElement.Mutable.ElementRowSnapshot snapshot)
-    {
-        if (pathUtf8.Length == 0)
-        {
-            // Cannot move to root — would require replacing the entire document with snapshot data.
-            return false;
-        }
-
-        Span<byte> segBuf = stackalloc byte[StackallocByteThreshold];
-        if (!TryResolveParent(ref target, pathUtf8, out JsonElement.Mutable parent, segBuf, out int segLen))
-        {
-            return false;
-        }
-
-        ReadOnlySpan<byte> lastSegment = segBuf.Slice(0, segLen);
-
-        if (parent.ValueKind == JsonValueKind.Array)
-        {
-            if (IsAppendToken(lastSegment))
-            {
-                parent.AddItemFromSnapshot(in snapshot);
-                return true;
-            }
-
-            if (!TryParseArrayIndex(lastSegment, out int index))
-            {
-                return false;
-            }
-
-            if (index < 0 || index > parent.GetArrayLength())
-            {
-                return false;
-            }
-
-            parent.InsertItemFromSnapshot(index, in snapshot);
-            return true;
-        }
-
-        if (parent.ValueKind == JsonValueKind.Object)
-        {
-            parent.SetPropertyFromSnapshot(lastSegment, in snapshot);
             return true;
         }
 

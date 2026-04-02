@@ -368,45 +368,84 @@ public interface IMutableJsonDocument : IJsonDocument
     void OverwriteAndDispose(int complexObjectStartIndex, int startIndex, int endIndex, int membersToOverwrite, ref ComplexValueBuilder cvb);
 
     /// <summary>
-    /// Copies a snapshot of the element rows at the given index into a rented buffer.
+    /// Copies a value and sets it as a property on a destination object.
+    /// If the property already exists, it is replaced.
     /// </summary>
-    /// <param name="sourceIndex">The index of the element to snapshot.</param>
-    /// <param name="rentedBuffer">The rented buffer containing the row data. The caller must return it to <see cref="ArrayPool{T}"/>.</param>
-    /// <returns>The byte length of the snapshot data in the buffer.</returns>
-    int SnapshotElementRows(int sourceIndex, out byte[] rentedBuffer);
+    /// <param name="srcValueIndex">The byte index of the source value.</param>
+    /// <param name="dstObjectIndex">The start index of the destination object.</param>
+    /// <param name="propertyName">The UTF-8 property name for the destination property.</param>
+    void CopyValueToProperty(int srcValueIndex, int dstObjectIndex, ReadOnlySpan<byte> propertyName);
 
     /// <summary>
-    /// Inserts rows from a snapshot buffer at the given position in a container.
+    /// Copies a value and inserts it as an array item at the specified index.
     /// </summary>
-    /// <param name="containerIndex">The start index of the containing object or array.</param>
-    /// <param name="insertionIndex">The index at which to insert the rows.</param>
-    /// <param name="rowData">The buffer containing the row data to insert.</param>
-    /// <param name="rowDataLength">The byte length of valid data in the buffer.</param>
-    /// <param name="rowCount">The number of rows to insert.</param>
-    /// <param name="memberCount">The number of logical members being inserted.</param>
-    void InsertSnapshotRows(int containerIndex, int insertionIndex, byte[] rowData, int rowDataLength, int rowCount, int memberCount);
+    /// <param name="srcValueIndex">The byte index of the source value.</param>
+    /// <param name="dstArrayIndex">The start index of the destination array.</param>
+    /// <param name="itemIndex">The zero-based index at which to insert the item.</param>
+    void CopyValueToArrayIndex(int srcValueIndex, int dstArrayIndex, int itemIndex);
 
     /// <summary>
-    /// Replaces a range of rows in a container with rows from a snapshot buffer.
+    /// Copies a value and appends it at the end of a destination array.
     /// </summary>
-    /// <param name="containerIndex">The start index of the containing object or array.</param>
-    /// <param name="startIndex">The start index of the range to replace.</param>
-    /// <param name="endIndex">The end index of the range to replace.</param>
-    /// <param name="memberCountToReplace">The number of members being replaced.</param>
-    /// <param name="rowData">The buffer containing the replacement row data.</param>
-    /// <param name="rowDataLength">The byte length of valid data in the buffer.</param>
-    /// <param name="rowCount">The number of rows being inserted.</param>
-    /// <param name="memberCount">The number of logical members being inserted.</param>
-    void ReplaceWithSnapshotRows(int containerIndex, int startIndex, int endIndex, int memberCountToReplace, byte[] rowData, int rowDataLength, int rowCount, int memberCount);
+    /// <param name="srcValueIndex">The byte index of the source value.</param>
+    /// <param name="dstArrayIndex">The start index of the destination array.</param>
+    void CopyValueToArrayEnd(int srcValueIndex, int dstArrayIndex);
 
     /// <summary>
-    /// Inserts rows from a snapshot buffer with a new property name row at the given position in an object.
+    /// Moves a property from a source object to a destination object as a new property.
+    /// Handles removing existing destination properties and same-property no-ops.
     /// </summary>
-    /// <param name="containerIndex">The start index of the containing object.</param>
-    /// <param name="insertionIndex">The index at which to insert the rows.</param>
-    /// <param name="propertyName">The UTF-8 property name for the new property.</param>
-    /// <param name="rowData">The buffer containing the value row data to insert.</param>
-    /// <param name="rowDataLength">The byte length of valid data in the buffer.</param>
-    /// <param name="rowCount">The number of value rows being inserted (excluding the property name row).</param>
-    void InsertSnapshotWithPropertyName(int containerIndex, int insertionIndex, ReadOnlySpan<byte> propertyName, byte[] rowData, int rowDataLength, int rowCount);
+    /// <param name="srcObjectIndex">The start index of the source object.</param>
+    /// <param name="srcPropertyName">The UTF-8 name of the source property.</param>
+    /// <param name="dstObjectIndex">The start index of the destination object.</param>
+    /// <param name="dstPropertyName">The UTF-8 name for the destination property.</param>
+    /// <returns><see langword="true"/> if the property was found and moved; otherwise, <see langword="false"/>.</returns>
+    bool MovePropertyToProperty(int srcObjectIndex, ReadOnlySpan<byte> srcPropertyName, int dstObjectIndex, ReadOnlySpan<byte> dstPropertyName);
+
+    /// <summary>
+    /// Moves a property from a source object into a destination array at the specified index.
+    /// </summary>
+    /// <param name="srcObjectIndex">The start index of the source object.</param>
+    /// <param name="srcPropertyName">The UTF-8 name of the source property.</param>
+    /// <param name="dstArrayIndex">The start index of the destination array.</param>
+    /// <param name="destIndex">The zero-based index at which to insert in the destination array.</param>
+    /// <returns><see langword="true"/> if the property was found and moved; otherwise, <see langword="false"/>.</returns>
+    bool MovePropertyToArray(int srcObjectIndex, ReadOnlySpan<byte> srcPropertyName, int dstArrayIndex, int destIndex);
+
+    /// <summary>
+    /// Moves a property from a source object to the end of a destination array.
+    /// </summary>
+    /// <param name="srcObjectIndex">The start index of the source object.</param>
+    /// <param name="srcPropertyName">The UTF-8 name of the source property.</param>
+    /// <param name="dstArrayIndex">The start index of the destination array.</param>
+    /// <returns><see langword="true"/> if the property was found and moved; otherwise, <see langword="false"/>.</returns>
+    bool MovePropertyToArrayEnd(int srcObjectIndex, ReadOnlySpan<byte> srcPropertyName, int dstArrayIndex);
+
+    /// <summary>
+    /// Moves an array item from a source array into a destination array at the specified index.
+    /// Handles same-array moves with post-removal index semantics.
+    /// </summary>
+    /// <param name="srcArrayIndex">The start index of the source array.</param>
+    /// <param name="srcIndex">The zero-based index of the source item.</param>
+    /// <param name="dstArrayIndex">The start index of the destination array.</param>
+    /// <param name="destIndex">The zero-based index at which to insert in the destination array (post-removal semantics for same-array moves).</param>
+    void MoveItemToArray(int srcArrayIndex, int srcIndex, int dstArrayIndex, int destIndex);
+
+    /// <summary>
+    /// Moves an array item from a source array to the end of a destination array.
+    /// </summary>
+    /// <param name="srcArrayIndex">The start index of the source array.</param>
+    /// <param name="srcIndex">The zero-based index of the source item.</param>
+    /// <param name="dstArrayIndex">The start index of the destination array.</param>
+    void MoveItemToArrayEnd(int srcArrayIndex, int srcIndex, int dstArrayIndex);
+
+    /// <summary>
+    /// Moves an array item from a source array to a destination object as a new property.
+    /// Handles removing existing destination properties.
+    /// </summary>
+    /// <param name="srcArrayIndex">The start index of the source array.</param>
+    /// <param name="srcIndex">The zero-based index of the source item.</param>
+    /// <param name="dstObjectIndex">The start index of the destination object.</param>
+    /// <param name="destPropertyName">The UTF-8 name for the destination property.</param>
+    void MoveItemToProperty(int srcArrayIndex, int srcIndex, int dstObjectIndex, ReadOnlySpan<byte> destPropertyName);
 }
