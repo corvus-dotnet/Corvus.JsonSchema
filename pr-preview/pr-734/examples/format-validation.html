@@ -242,8 +242,8 @@
 <p>In JSON Schema Draft 2020-12, the <code>format</code> keyword is an <em>annotation</em> by default — it describes the expected format but does not cause validation to fail if the value doesn't match. Corvus.Text.Json overrides this default and <strong>enables format assertion</strong> for all schema drafts, so <code>format</code> is validated by default.</p>
 <p>If you need the standard annotation-only behaviour, you can disable format assertion via code generation options:</p>
 <ul>
-<li><strong>Source Generator:</strong> set <code>FormatAssertionDisabled</code> in the <code>JsonSchemaTypeGeneratorAttribute</code></li>
-<li><strong>CLI tool (<code>generatejsonschematypes</code>):</strong> pass the <code>--disableFormatAssertion</code> flag</li>
+<li><strong>Source Generator:</strong> set <code>&lt;CorvusTextJsonAlwaysAssertFormat&gt;false&lt;/CorvusTextJsonAlwaysAssertFormat&gt;</code> in the <code>.csproj</code> file.</li>
+<li><strong>CLI tool (<code>generatejsonschematypes</code>):</strong> pass the <code>--assertFormat false</code> flag</li>
 </ul>
 <h2 id="format-mapping">Format Mapping</h2>
 <table>
