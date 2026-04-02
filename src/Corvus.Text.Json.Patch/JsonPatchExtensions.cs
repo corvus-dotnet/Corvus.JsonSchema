@@ -769,7 +769,7 @@ public static class JsonPatchExtensions
                     {
                         if (IsAppendToken(destSegment))
                         {
-                            fromParent.MoveItemToArrayEnd(fromIndex, in destParent);
+                            GetMutableDoc(in fromParent).MoveItemToArrayEnd(GetDocIndex(in fromParent), fromIndex, GetDocIndex(in destParent));
                             return true;
                         }
 
@@ -783,13 +783,13 @@ public static class JsonPatchExtensions
                             return false;
                         }
 
-                        fromParent.MoveItemToArray(fromIndex, in destParent, destIndex);
+                        GetMutableDoc(in fromParent).MoveItemToArray(GetDocIndex(in fromParent), fromIndex, GetDocIndex(in destParent), destIndex);
                         return true;
                     }
 
                     if (destParent.ValueKind == JsonValueKind.Object)
                     {
-                        fromParent.MoveItemToProperty(fromIndex, in destParent, destSegment);
+                        GetMutableDoc(in fromParent).MoveItemToProperty(GetDocIndex(in fromParent), fromIndex, GetDocIndex(in destParent), destSegment);
                         return true;
                     }
 
@@ -802,7 +802,7 @@ public static class JsonPatchExtensions
                     {
                         if (IsAppendToken(destSegment))
                         {
-                            return fromParent.MovePropertyToArrayEnd(fromSegment, in destParent);
+                            return GetMutableDoc(in fromParent).MovePropertyToArrayEnd(GetDocIndex(in fromParent), fromSegment, GetDocIndex(in destParent));
                         }
 
                         if (!TryParseArrayIndex(destSegment, out int destIndex))
@@ -815,12 +815,12 @@ public static class JsonPatchExtensions
                             return false;
                         }
 
-                        return fromParent.MovePropertyToArray(fromSegment, in destParent, destIndex);
+                        return GetMutableDoc(in fromParent).MovePropertyToArray(GetDocIndex(in fromParent), fromSegment, GetDocIndex(in destParent), destIndex);
                     }
 
                     if (destParent.ValueKind == JsonValueKind.Object)
                     {
-                        return fromParent.MovePropertyToProperty(fromSegment, in destParent, destSegment);
+                        return GetMutableDoc(in fromParent).MovePropertyToProperty(GetDocIndex(in fromParent), fromSegment, GetDocIndex(in destParent), destSegment);
                     }
 
                     return false;
@@ -957,7 +957,7 @@ public static class JsonPatchExtensions
         {
             if (IsAppendToken(lastSegment))
             {
-                parent.CopyItemAppendFrom(in source);
+                GetMutableDoc(in parent).CopyValueToArrayEnd(GetDocIndex(in source), GetDocIndex(in parent));
                 return true;
             }
 
@@ -971,13 +971,13 @@ public static class JsonPatchExtensions
                 return false;
             }
 
-            parent.CopyItemFrom(index, in source);
+            GetMutableDoc(in parent).CopyValueToArrayIndex(GetDocIndex(in source), GetDocIndex(in parent), index);
             return true;
         }
 
         if (parent.ValueKind == JsonValueKind.Object)
         {
-            parent.CopyPropertyFrom(lastSegment, in source);
+            GetMutableDoc(in parent).CopyValueToProperty(GetDocIndex(in source), GetDocIndex(in parent), lastSegment);
             return true;
         }
 
@@ -994,6 +994,18 @@ public static class JsonPatchExtensions
         where T : struct, IJsonElement<T>
     {
         return element.ParentDocument;
+    }
+
+    private static IMutableJsonDocument GetMutableDoc<T>(in T element)
+        where T : struct, IJsonElement<T>
+    {
+        return (IMutableJsonDocument)element.ParentDocument;
+    }
+
+    private static int GetDocIndex<T>(in T element)
+        where T : struct, IJsonElement<T>
+    {
+        return element.ParentDocumentIndex;
     }
 
     private static bool TryResolvePointer(ref JsonElement.Mutable root, ReadOnlySpan<byte> pointerUtf8, out JsonElement.Mutable result)
