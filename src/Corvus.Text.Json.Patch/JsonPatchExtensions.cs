@@ -728,15 +728,10 @@ public static class JsonPatchExtensions
                     return false;
                 }
 
-                // Cache the source value into a rented buffer before removal invalidates it.
-                IMutableJsonDocument mutableDoc = (IMutableJsonDocument)GetParentDocument(in target);
-                Utf8JsonWriter writer = mutableDoc.Workspace.RentWriterAndBuffer(256, out IByteBufferWriter bufferWriter);
+                // Snapshot the source element's MetadataDb rows before removal.
+                JsonElement.Mutable.ElementRowSnapshot snapshot = sourceValue.Snapshot();
                 try
                 {
-                    sourceValue.WriteTo(writer);
-                    writer.Flush();
-                    ReadOnlySpan<byte> cachedValue = bufferWriter.WrittenSpan;
-
                     // Remove from source location.
                     if (fromUtf8.Length == 0)
                     {
@@ -777,13 +772,12 @@ public static class JsonPatchExtensions
                         return false;
                     }
 
-                    // Add to destination using the cached value.
-                    JsonElement.Source source = JsonElement.ParseValue(cachedValue);
-                    return TryAddValueFromSpan(ref target, pathUtf8, in source);
+                    // Add to destination using the snapshot (no reallocation needed since we just freed space).
+                    return TryInsertSnapshotFromSpan(ref target, pathUtf8, in snapshot);
                 }
                 finally
                 {
-                    mutableDoc.Workspace.ReturnWriterAndBuffer(writer, bufferWriter);
+                    snapshot.Dispose();
                 }
             }
             finally
@@ -813,8 +807,7 @@ public static class JsonPatchExtensions
                     return false;
                 }
 
-                JsonElement.Source source = sourceValue;
-                return TryAddValueFromSpan(ref target, pathUtf8, in source);
+                return TryCopyValueFromSpan(ref target, pathUtf8, in sourceValue);
             }
             finally
             {
@@ -888,6 +881,102 @@ public static class JsonPatchExtensions
         if (parent.ValueKind == JsonValueKind.Object)
         {
             parent.SetProperty(lastSegment, in source);
+            return true;
+        }
+
+        return false;
+    }
+
+    private static bool TryCopyValueFromSpan(ref JsonElement.Mutable target, ReadOnlySpan<byte> pathUtf8, in JsonElement.Mutable source)
+    {
+        if (pathUtf8.Length == 0)
+        {
+            // Replace root — fall back to Source path since we're replacing the entire document.
+            JsonElement.Source sourceValue = source;
+            ReplaceRoot(ref target, in sourceValue);
+            return true;
+        }
+
+        Span<byte> segBuf = stackalloc byte[StackallocByteThreshold];
+        if (!TryResolveParent(ref target, pathUtf8, out JsonElement.Mutable parent, segBuf, out int segLen))
+        {
+            return false;
+        }
+
+        ReadOnlySpan<byte> lastSegment = segBuf.Slice(0, segLen);
+
+        if (parent.ValueKind == JsonValueKind.Array)
+        {
+            if (IsAppendToken(lastSegment))
+            {
+                parent.CopyItemAppendFrom(in source);
+                return true;
+            }
+
+            if (!TryParseArrayIndex(lastSegment, out int index))
+            {
+                return false;
+            }
+
+            if (index < 0 || index > parent.GetArrayLength())
+            {
+                return false;
+            }
+
+            parent.CopyItemFrom(index, in source);
+            return true;
+        }
+
+        if (parent.ValueKind == JsonValueKind.Object)
+        {
+            parent.CopyPropertyFrom(lastSegment, in source);
+            return true;
+        }
+
+        return false;
+    }
+
+    private static bool TryInsertSnapshotFromSpan(ref JsonElement.Mutable target, ReadOnlySpan<byte> pathUtf8, in JsonElement.Mutable.ElementRowSnapshot snapshot)
+    {
+        if (pathUtf8.Length == 0)
+        {
+            // Cannot move to root — would require replacing the entire document with snapshot data.
+            return false;
+        }
+
+        Span<byte> segBuf = stackalloc byte[StackallocByteThreshold];
+        if (!TryResolveParent(ref target, pathUtf8, out JsonElement.Mutable parent, segBuf, out int segLen))
+        {
+            return false;
+        }
+
+        ReadOnlySpan<byte> lastSegment = segBuf.Slice(0, segLen);
+
+        if (parent.ValueKind == JsonValueKind.Array)
+        {
+            if (IsAppendToken(lastSegment))
+            {
+                parent.AddItemFromSnapshot(in snapshot);
+                return true;
+            }
+
+            if (!TryParseArrayIndex(lastSegment, out int index))
+            {
+                return false;
+            }
+
+            if (index < 0 || index > parent.GetArrayLength())
+            {
+                return false;
+            }
+
+            parent.InsertItemFromSnapshot(index, in snapshot);
+            return true;
+        }
+
+        if (parent.ValueKind == JsonValueKind.Object)
+        {
+            parent.SetPropertyFromSnapshot(lastSegment, in snapshot);
             return true;
         }
 

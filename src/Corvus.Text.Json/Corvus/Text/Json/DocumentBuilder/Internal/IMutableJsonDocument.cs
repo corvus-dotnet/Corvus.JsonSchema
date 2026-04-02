@@ -366,4 +366,47 @@ public interface IMutableJsonDocument : IJsonDocument
     /// <param name="membersToOverwrite">The number of members to overwrite.</param>
     /// <param name="cvb">The <see cref="ComplexValueBuilder"/> to overwrite and dispose.</param>
     void OverwriteAndDispose(int complexObjectStartIndex, int startIndex, int endIndex, int membersToOverwrite, ref ComplexValueBuilder cvb);
+
+    /// <summary>
+    /// Copies a snapshot of the element rows at the given index into a rented buffer.
+    /// </summary>
+    /// <param name="sourceIndex">The index of the element to snapshot.</param>
+    /// <param name="rentedBuffer">The rented buffer containing the row data. The caller must return it to <see cref="ArrayPool{T}"/>.</param>
+    /// <returns>The byte length of the snapshot data in the buffer.</returns>
+    int SnapshotElementRows(int sourceIndex, out byte[] rentedBuffer);
+
+    /// <summary>
+    /// Inserts rows from a snapshot buffer at the given position in a container.
+    /// </summary>
+    /// <param name="containerIndex">The start index of the containing object or array.</param>
+    /// <param name="insertionIndex">The index at which to insert the rows.</param>
+    /// <param name="rowData">The buffer containing the row data to insert.</param>
+    /// <param name="rowDataLength">The byte length of valid data in the buffer.</param>
+    /// <param name="rowCount">The number of rows to insert.</param>
+    /// <param name="memberCount">The number of logical members being inserted.</param>
+    void InsertSnapshotRows(int containerIndex, int insertionIndex, byte[] rowData, int rowDataLength, int rowCount, int memberCount);
+
+    /// <summary>
+    /// Replaces a range of rows in a container with rows from a snapshot buffer.
+    /// </summary>
+    /// <param name="containerIndex">The start index of the containing object or array.</param>
+    /// <param name="startIndex">The start index of the range to replace.</param>
+    /// <param name="endIndex">The end index of the range to replace.</param>
+    /// <param name="memberCountToReplace">The number of members being replaced.</param>
+    /// <param name="rowData">The buffer containing the replacement row data.</param>
+    /// <param name="rowDataLength">The byte length of valid data in the buffer.</param>
+    /// <param name="rowCount">The number of rows being inserted.</param>
+    /// <param name="memberCount">The number of logical members being inserted.</param>
+    void ReplaceWithSnapshotRows(int containerIndex, int startIndex, int endIndex, int memberCountToReplace, byte[] rowData, int rowDataLength, int rowCount, int memberCount);
+
+    /// <summary>
+    /// Inserts rows from a snapshot buffer with a new property name row at the given position in an object.
+    /// </summary>
+    /// <param name="containerIndex">The start index of the containing object.</param>
+    /// <param name="insertionIndex">The index at which to insert the rows.</param>
+    /// <param name="propertyName">The UTF-8 property name for the new property.</param>
+    /// <param name="rowData">The buffer containing the value row data to insert.</param>
+    /// <param name="rowDataLength">The byte length of valid data in the buffer.</param>
+    /// <param name="rowCount">The number of value rows being inserted (excluding the property name row).</param>
+    void InsertSnapshotWithPropertyName(int containerIndex, int insertionIndex, ReadOnlySpan<byte> propertyName, byte[] rowData, int rowDataLength, int rowCount);
 }

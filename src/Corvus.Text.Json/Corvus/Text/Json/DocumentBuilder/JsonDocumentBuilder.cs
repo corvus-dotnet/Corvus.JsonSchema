@@ -350,6 +350,53 @@ public sealed partial class JsonDocumentBuilder<T> : JsonDocument, IMutableJsonD
         _parsedData.ReplaceRowsInComplexObject(this, complexObjectStartIndex, startIndex, endIndex, membersToRemove, 0, 0);
     }
 
+    /// <inheritdoc />
+    int IMutableJsonDocument.SnapshotElementRows(int sourceIndex, out byte[] rentedBuffer)
+    {
+        CheckNotDisposed();
+        int byteLength = GetDbSizeUnsafe(sourceIndex, true);
+        rentedBuffer = ArrayPool<byte>.Shared.Rent(byteLength);
+        _parsedData.CopyRowsTo(sourceIndex, byteLength, rentedBuffer);
+        return byteLength;
+    }
+
+    /// <inheritdoc />
+    void IMutableJsonDocument.InsertSnapshotRows(int containerIndex, int insertionIndex, byte[] rowData, int rowDataLength, int rowCount, int memberCount)
+    {
+        CheckNotImmutable();
+        _version++;
+        _parsedData.InsertRowsInComplexObject(this, containerIndex, insertionIndex, rowCount, memberCount);
+        _parsedData.WriteFromBuffer(rowData, rowDataLength, insertionIndex);
+    }
+
+    /// <inheritdoc />
+    void IMutableJsonDocument.ReplaceWithSnapshotRows(int containerIndex, int startIndex, int endIndex, int memberCountToReplace, byte[] rowData, int rowDataLength, int rowCount, int memberCount)
+    {
+        CheckNotImmutable();
+        _version++;
+        _parsedData.ReplaceRowsInComplexObject(this, containerIndex, startIndex, endIndex, memberCountToReplace, rowCount, memberCount);
+        _parsedData.WriteFromBuffer(rowData, rowDataLength, startIndex);
+    }
+
+    /// <inheritdoc />
+    void IMutableJsonDocument.InsertSnapshotWithPropertyName(int containerIndex, int insertionIndex, ReadOnlySpan<byte> propertyName, byte[] rowData, int rowDataLength, int rowCount)
+    {
+        CheckNotImmutable();
+        _version++;
+
+        // Store the property name in the value buffer and create a PropertyName row.
+        int nameLocation = EscapeAndStoreRawStringValue(propertyName, out bool requiredEscaping, _workspace.Options.Encoder);
+        var nameRow = new DbRow(JsonTokenType.PropertyName, nameLocation, requiredEscaping ? -1 : 1);
+
+        // Insert gap for PropertyName row + value rows.
+        int totalRowCount = 1 + rowCount;
+        _parsedData.InsertRowsInComplexObject(this, containerIndex, insertionIndex, totalRowCount, 1);
+
+        // Write the PropertyName row, then the value rows.
+        _parsedData.WriteRow(insertionIndex, nameRow);
+        _parsedData.WriteFromBuffer(rowData, rowDataLength, insertionIndex + DbRow.Size);
+    }
+
     private RawUtf8JsonString GetRawValueUnsafe(int index, bool includeQuotes)
     {
         DbRow row = _parsedData.Get(index);

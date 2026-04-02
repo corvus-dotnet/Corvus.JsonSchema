@@ -6190,6 +6190,259 @@ public readonly partial struct JsonElement
         /// <returns>True if the schema evaluation passes; otherwise, false.</returns>
         public readonly bool EvaluateSchema(IJsonSchemaResultsCollector? resultsCollector = null) => JsonSchema.Evaluate(_parent, _idx, resultsCollector);
 
+        /// <summary>
+        /// Captures the MetadataDb rows for this element into a rented buffer.
+        /// Use this to preserve an element's row data before removing it,
+        /// so the rows can be reinserted at a new location (e.g., for move operations).
+        /// </summary>
+        /// <returns>An <see cref="ElementRowSnapshot"/> that must be disposed after use.</returns>
+        /// <exception cref="InvalidOperationException">
+        /// The element reference is stale due to document mutations,
+        /// or the parent document has been disposed.
+        /// </exception>
+        public ElementRowSnapshot Snapshot()
+        {
+            CheckValidInstance();
+            int byteLength = _parent.SnapshotElementRows(_idx, out byte[] rented);
+            return new ElementRowSnapshot(rented, byteLength, byteLength / DbRow.Size);
+        }
+
+        /// <summary>
+        /// Sets a property value by copying MetadataDb rows directly from another element
+        /// in the same document. This avoids serialization and is more efficient than
+        /// <see cref="SetProperty(ReadOnlySpan{byte}, in Source, int)"/> for same-document copies.
+        /// </summary>
+        /// <param name="propertyName">The name of the property to set.</param>
+        /// <param name="source">The source element whose value will be copied. Must be from the same document.</param>
+        /// <exception cref="InvalidOperationException">
+        /// This element's <see cref="ValueKind"/> is not <see cref="JsonValueKind.Object"/>,
+        /// or the element reference is stale due to document mutations,
+        /// or the source is not from the same document.
+        /// </exception>
+        public void CopyPropertyFrom(ReadOnlySpan<byte> propertyName, in Mutable source)
+        {
+            CheckValidInstance();
+
+            int sourceByteLength = _parent.GetDbSize(source._idx, true);
+            int sourceRowCount = sourceByteLength / DbRow.Size;
+
+            // Snapshot the source rows — required because the destination could be
+            // inside the source range (e.g. copying an object into itself as a child).
+            int snapshotLength = _parent.SnapshotElementRows(source._idx, out byte[] snapshot);
+            try
+            {
+                if (_parent.TryGetNamedPropertyValue(_idx, propertyName, out JsonElement existing))
+                {
+                    // Replace existing property value.
+                    int existingByteLength = existing._parent.GetDbSize(existing._idx, true);
+                    _parent.ReplaceWithSnapshotRows(
+                        _idx,
+                        existing._idx,
+                        existing._idx + existingByteLength,
+                        1,
+                        snapshot, snapshotLength, sourceRowCount, 1);
+                }
+                else
+                {
+                    // New property — insert PropertyName row + value rows.
+                    int endIndex = _idx + _parent.GetDbSize(_idx, false);
+                    _parent.InsertSnapshotWithPropertyName(
+                        _idx, endIndex,
+                        propertyName,
+                        snapshot, snapshotLength, sourceRowCount);
+                }
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(snapshot);
+            }
+
+            _documentVersion = _parent.Version;
+        }
+
+        /// <summary>
+        /// Inserts an array item by copying MetadataDb rows directly from another element
+        /// in the same document. This avoids serialization and is more efficient than
+        /// <see cref="InsertItem(int, in Source, int)"/> for same-document copies.
+        /// </summary>
+        /// <param name="itemIndex">The zero-based index at which to insert the item.</param>
+        /// <param name="source">The source element whose value will be copied. Must be from the same document.</param>
+        /// <exception cref="InvalidOperationException">
+        /// This element's <see cref="ValueKind"/> is not <see cref="JsonValueKind.Array"/>,
+        /// or the element reference is stale due to document mutations.
+        /// </exception>
+        public void CopyItemFrom(int itemIndex, in Mutable source)
+        {
+            CheckValidInstance();
+
+            int sourceByteLength = _parent.GetDbSize(source._idx, true);
+            int sourceRowCount = sourceByteLength / DbRow.Size;
+
+            int snapshotLength = _parent.SnapshotElementRows(source._idx, out byte[] snapshot);
+            try
+            {
+                int insertionIndex = _parent.GetArrayInsertionIndex(_idx, itemIndex);
+                _parent.InsertSnapshotRows(_idx, insertionIndex, snapshot, snapshotLength, sourceRowCount, 1);
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(snapshot);
+            }
+
+            _documentVersion = _parent.Version;
+        }
+
+        /// <summary>
+        /// Appends an array item by copying MetadataDb rows directly from another element
+        /// in the same document. This avoids serialization and is more efficient than
+        /// <see cref="AddItem(in Source, int)"/> for same-document copies.
+        /// </summary>
+        /// <param name="source">The source element whose value will be copied. Must be from the same document.</param>
+        /// <exception cref="InvalidOperationException">
+        /// This element's <see cref="ValueKind"/> is not <see cref="JsonValueKind.Array"/>,
+        /// or the element reference is stale due to document mutations.
+        /// </exception>
+        public void CopyItemAppendFrom(in Mutable source)
+        {
+            CheckValidInstance();
+
+            int sourceByteLength = _parent.GetDbSize(source._idx, true);
+            int sourceRowCount = sourceByteLength / DbRow.Size;
+
+            int snapshotLength = _parent.SnapshotElementRows(source._idx, out byte[] snapshot);
+            try
+            {
+                int endIndex = _idx + _parent.GetDbSize(_idx, false);
+                _parent.InsertSnapshotRows(_idx, endIndex, snapshot, snapshotLength, sourceRowCount, 1);
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(snapshot);
+            }
+
+            _documentVersion = _parent.Version;
+        }
+
+        /// <summary>
+        /// Sets a property value from a previously captured <see cref="ElementRowSnapshot"/>.
+        /// Use this after removing the source element for move operations.
+        /// </summary>
+        /// <param name="propertyName">The name of the property to set.</param>
+        /// <param name="snapshot">The snapshot containing the value's row data.</param>
+        /// <exception cref="InvalidOperationException">
+        /// This element's <see cref="ValueKind"/> is not <see cref="JsonValueKind.Object"/>,
+        /// or the element reference is stale due to document mutations.
+        /// </exception>
+        public void SetPropertyFromSnapshot(ReadOnlySpan<byte> propertyName, in ElementRowSnapshot snapshot)
+        {
+            CheckValidInstance();
+
+            if (_parent.TryGetNamedPropertyValue(_idx, propertyName, out JsonElement existing))
+            {
+                int existingByteLength = existing._parent.GetDbSize(existing._idx, true);
+                _parent.ReplaceWithSnapshotRows(
+                    _idx,
+                    existing._idx,
+                    existing._idx + existingByteLength,
+                    1,
+                    snapshot.Buffer, snapshot.ByteLength, snapshot.RowCount, 1);
+            }
+            else
+            {
+                int endIndex = _idx + _parent.GetDbSize(_idx, false);
+                _parent.InsertSnapshotWithPropertyName(
+                    _idx, endIndex,
+                    propertyName,
+                    snapshot.Buffer, snapshot.ByteLength, snapshot.RowCount);
+            }
+
+            _documentVersion = _parent.Version;
+        }
+
+        /// <summary>
+        /// Inserts an array item from a previously captured <see cref="ElementRowSnapshot"/>.
+        /// Use this after removing the source element for move operations.
+        /// </summary>
+        /// <param name="itemIndex">The zero-based index at which to insert the item.</param>
+        /// <param name="snapshot">The snapshot containing the value's row data.</param>
+        /// <exception cref="InvalidOperationException">
+        /// This element's <see cref="ValueKind"/> is not <see cref="JsonValueKind.Array"/>,
+        /// or the element reference is stale due to document mutations.
+        /// </exception>
+        public void InsertItemFromSnapshot(int itemIndex, in ElementRowSnapshot snapshot)
+        {
+            CheckValidInstance();
+
+            int insertionIndex = _parent.GetArrayInsertionIndex(_idx, itemIndex);
+            _parent.InsertSnapshotRows(_idx, insertionIndex, snapshot.Buffer, snapshot.ByteLength, snapshot.RowCount, 1);
+            _documentVersion = _parent.Version;
+        }
+
+        /// <summary>
+        /// Appends an array item from a previously captured <see cref="ElementRowSnapshot"/>.
+        /// Use this after removing the source element for move operations.
+        /// </summary>
+        /// <param name="snapshot">The snapshot containing the value's row data.</param>
+        /// <exception cref="InvalidOperationException">
+        /// This element's <see cref="ValueKind"/> is not <see cref="JsonValueKind.Array"/>,
+        /// or the element reference is stale due to document mutations.
+        /// </exception>
+        public void AddItemFromSnapshot(in ElementRowSnapshot snapshot)
+        {
+            CheckValidInstance();
+
+            int endIndex = _idx + _parent.GetDbSize(_idx, false);
+            _parent.InsertSnapshotRows(_idx, endIndex, snapshot.Buffer, snapshot.ByteLength, snapshot.RowCount, 1);
+            _documentVersion = _parent.Version;
+        }
+
+        /// <summary>
+        /// A snapshot of an element's MetadataDb rows, suitable for reinsertion
+        /// after the original element has been removed (e.g., for move operations).
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// This type captures the raw row data from the document's metadata database.
+        /// The snapshot can be inserted at a new location using methods such as
+        /// <see cref="SetPropertyFromSnapshot"/>, <see cref="InsertItemFromSnapshot"/>,
+        /// or <see cref="AddItemFromSnapshot"/>.
+        /// </para>
+        /// <para>
+        /// The snapshot uses a rented buffer from <see cref="ArrayPool{T}"/> and must
+        /// be disposed when no longer needed to return the buffer to the pool.
+        /// </para>
+        /// </remarks>
+        public ref struct ElementRowSnapshot : IDisposable
+        {
+            private byte[]? _rentedBuffer;
+            private readonly int _byteLength;
+            private readonly int _rowCount;
+
+            internal ElementRowSnapshot(byte[] rentedBuffer, int byteLength, int rowCount)
+            {
+                _rentedBuffer = rentedBuffer;
+                _byteLength = byteLength;
+                _rowCount = rowCount;
+            }
+
+            internal readonly byte[] Buffer => _rentedBuffer!;
+
+            internal readonly int ByteLength => _byteLength;
+
+            internal readonly int RowCount => _rowCount;
+
+            /// <inheritdoc />
+            public void Dispose()
+            {
+                byte[]? buffer = _rentedBuffer;
+                if (buffer != null)
+                {
+                    _rentedBuffer = null;
+                    ArrayPool<byte>.Shared.Return(buffer);
+                }
+            }
+        }
+
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private readonly string DebuggerDisplay => $"JsonElement.Mutable: ValueKind = {ValueKind} : \"{ToString()}\"";
 
