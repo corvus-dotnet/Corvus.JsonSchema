@@ -117,6 +117,117 @@ public sealed partial class JsonDocumentBuilder<T> : JsonDocument, IMutableJsonD
         }
     }
 
+    /// <summary>
+    /// Creates a snapshot of this builder's current state. The snapshot can be used to
+    /// cheaply restore the builder to this state via <see cref="Restore"/>
+    /// without re-traversing the source document.
+    /// </summary>
+    /// <returns>
+    /// A <see cref="JsonDocumentBuilderSnapshot{T}"/> that holds rented copies of this
+    /// builder's backing data. The caller must dispose the snapshot when it is no longer needed.
+    /// </returns>
+    public JsonDocumentBuilderSnapshot<T> CreateSnapshot()
+    {
+        CheckNotDisposed();
+
+        // Snapshot the metadata
+        int metadataLength = _parsedData.Length;
+        byte[] metadataBytes = ArrayPool<byte>.Shared.Rent(metadataLength);
+        _parsedData.CopyDataTo(metadataBytes);
+
+        // Snapshot the value backing
+        byte[]? valueBacking = null;
+        if (_valueBacking is not null && _valueOffset > 0)
+        {
+            valueBacking = ArrayPool<byte>.Shared.Rent(_valueOffset);
+            Buffer.BlockCopy(_valueBacking, 0, valueBacking, 0, _valueOffset);
+        }
+
+        // Snapshot the property map
+        byte[]? propertyMapBacking = null;
+        if (_propertyMapBacking is not null && _propertyMapOffset > 0)
+        {
+            propertyMapBacking = ArrayPool<byte>.Shared.Rent(_propertyMapOffset);
+            Buffer.BlockCopy(_propertyMapBacking, 0, propertyMapBacking, 0, _propertyMapOffset);
+        }
+
+        // Snapshot the buckets
+        int[]? bucketsBacking = null;
+        if (_bucketsBacking is not null && _bucketOffset > 0)
+        {
+            bucketsBacking = ArrayPool<int>.Shared.Rent(_bucketOffset);
+            Buffer.BlockCopy(_bucketsBacking, 0, bucketsBacking, 0, _bucketOffset * sizeof(int));
+        }
+
+        // Snapshot the entries
+        byte[]? entriesBacking = null;
+        if (_entriesBacking is not null && _entryOffset > 0)
+        {
+            entriesBacking = ArrayPool<byte>.Shared.Rent(_entryOffset);
+            Buffer.BlockCopy(_entriesBacking, 0, entriesBacking, 0, _entryOffset);
+        }
+
+        return new JsonDocumentBuilderSnapshot<T>(
+            metadataBytes,
+            metadataLength,
+            valueBacking,
+            _valueOffset,
+            propertyMapBacking,
+            _propertyMapOffset,
+            bucketsBacking,
+            _bucketOffset,
+            entriesBacking,
+            _entryOffset);
+    }
+
+    /// <summary>
+    /// Restores this builder to the state captured in <paramref name="snapshot"/>.
+    /// The existing backing buffers are reused (they can only grow, never shrink),
+    /// so this is a pure memcpy with no allocations.
+    /// </summary>
+    /// <param name="snapshot">The snapshot to restore from.</param>
+    /// <returns>This builder instance.</returns>
+    public JsonDocumentBuilder<T> Restore(JsonDocumentBuilderSnapshot<T> snapshot)
+    {
+        CheckNotDisposed();
+
+        // Restore metadata into the existing buffer
+        _parsedData.RestoreFrom(snapshot.MetadataBytes, snapshot.MetadataLength);
+
+        // Restore value backing
+        _valueOffset = snapshot.ValueOffset;
+        if (snapshot.ValueBacking is not null && snapshot.ValueOffset > 0)
+        {
+            Buffer.BlockCopy(snapshot.ValueBacking, 0, _valueBacking!, 0, snapshot.ValueOffset);
+        }
+
+        // Restore property map
+        _propertyMapOffset = snapshot.PropertyMapOffset;
+        if (snapshot.PropertyMapBacking is not null && snapshot.PropertyMapOffset > 0)
+        {
+            Buffer.BlockCopy(snapshot.PropertyMapBacking, 0, _propertyMapBacking!, 0, snapshot.PropertyMapOffset);
+        }
+
+        // Restore buckets
+        _bucketOffset = snapshot.BucketOffset;
+        if (snapshot.BucketsBacking is not null && snapshot.BucketOffset > 0)
+        {
+            Buffer.BlockCopy(snapshot.BucketsBacking, 0, _bucketsBacking!, 0, snapshot.BucketOffset * sizeof(int));
+        }
+
+        // Restore entries
+        _entryOffset = snapshot.EntryOffset;
+        if (snapshot.EntriesBacking is not null && snapshot.EntryOffset > 0)
+        {
+            Buffer.BlockCopy(snapshot.EntriesBacking, 0, _entriesBacking!, 0, snapshot.EntryOffset);
+        }
+
+        // Invalidate any stale element references
+        _version++;
+
+        return this;
+    }
+
     /// <inheritdoc />
     public void Dispose()
     {

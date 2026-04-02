@@ -36,13 +36,10 @@ public class PatchAddBenchmark : PatchBenchmarkBase
     }
 
     /// <summary>
-    /// V5 builder creation only — measures the overhead of creating a mutable copy.
+    /// Global cleanup.
     /// </summary>
-    [Benchmark]
-    public void CreateV5BuilderOnly()
-    {
-        using var builder = this.CreateV5Builder();
-    }
+    [GlobalCleanup]
+    public void GlobalCleanup() => this.GlobalCleanupV5();
 
     /// <summary>
     /// Patch using Corvus V5.
@@ -50,8 +47,7 @@ public class PatchAddBenchmark : PatchBenchmarkBase
     [Benchmark]
     public bool PatchCorvusV5()
     {
-        using var builder = this.CreateV5Builder();
-        JsonElement.Mutable target = builder.RootElement;
+        JsonElement.Mutable target = this.RestoreV5Builder();
         return target.TryApplyPatch(in this.v5Patch);
     }
 

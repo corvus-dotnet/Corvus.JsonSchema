@@ -930,6 +930,29 @@ public struct MetadataDb : IDisposable
     }
 
     /// <summary>
+    /// Copies the metadata bytes into a rented destination array.
+    /// </summary>
+    /// <param name="destination">The destination array (must be at least <see cref="Length"/> bytes).</param>
+    internal void CopyDataTo(byte[] destination)
+    {
+        Debug.Assert(destination.Length >= Length);
+        Buffer.BlockCopy(_data, 0, destination, 0, Length);
+    }
+
+    /// <summary>
+    /// Restores the metadata from a source buffer. The existing backing array must be
+    /// at least <paramref name="length"/> bytes (it can only grow, never shrink).
+    /// </summary>
+    /// <param name="source">The source buffer to copy from.</param>
+    /// <param name="length">The number of bytes to copy.</param>
+    internal void RestoreFrom(byte[] source, int length)
+    {
+        Debug.Assert(_data != null && _data.Length >= length);
+        Buffer.BlockCopy(source, 0, _data, 0, length);
+        Length = length;
+    }
+
+    /// <summary>
     /// Overwrites data in the destination metadata database starting at the specified target index.
     /// </summary>
     /// <param name="destination">The destination metadata database to write to.</param>

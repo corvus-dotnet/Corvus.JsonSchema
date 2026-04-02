@@ -200,6 +200,7 @@
     <Compile Include="Corvus\Text\Json\DocumentBuilder\JsonElement.ArrayBuilder.cs" />
     <Compile Include="Corvus\Text\Json\DocumentBuilder\JsonElement.ObjectBuilder.cs" />
     <Compile Include="Corvus\Text\Json\DocumentBuilder\JsonDocumentBuilder.cs" />
+    <Compile Include="Corvus\Text\Json\DocumentBuilder\JsonDocumentBuilderSnapshot.cs" />
     <Compile Include="Corvus\Text\Json\DocumentBuilder\JsonElement.Mutable.cs" />
     <Compile Include="Corvus\Text\Json\DocumentBuilder\JsonPredicate.cs" />
     <Compile Include="Corvus\Text\Json\DocumentBuilder\JsonWorkspace.cs" />

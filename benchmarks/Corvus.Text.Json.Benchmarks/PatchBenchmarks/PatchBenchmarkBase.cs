@@ -15,8 +15,10 @@ namespace Corvus.Text.Json.Benchmarks.PatchBenchmarks;
 public class PatchBenchmarkBase
 {
     private System.Text.Json.Nodes.JsonNode? node;
-    private JsonWorkspace? workspace;
     private string? inputJsonString;
+    private JsonWorkspace? workspace;
+    private JsonDocumentBuilder<JsonElement.Mutable>? builder;
+    private JsonDocumentBuilderSnapshot<JsonElement.Mutable>? snapshot;
 
     /// <summary>
     /// Gets the V4 JsonAny for the benchmark.
@@ -61,7 +63,7 @@ public class PatchBenchmarkBase
         this.node = System.Text.Json.Nodes.JsonNode.Parse(jsonString);
         this.V4Any = Corvus.Json.JsonAny.Parse(jsonString);
         this.V5Parsed = ParsedJsonDocument<JsonElement>.Parse(jsonString);
-        this.workspace = JsonWorkspace.Create();
+        this.SetupV5BuilderAndSnapshot();
     }
 
     /// <summary>
@@ -78,15 +80,27 @@ public class PatchBenchmarkBase
         this.V4Any = Corvus.Json.JsonAny.Parse(stream2);
 
         this.V5Parsed = ParsedJsonDocument<JsonElement>.Parse(File.ReadAllBytes(filePath));
-        this.workspace = JsonWorkspace.Create();
+        this.SetupV5BuilderAndSnapshot();
     }
 
     /// <summary>
-    /// Creates a fresh V5 mutable builder from the pre-parsed immutable document.
+    /// Cleans up the V5 builder, snapshot, and workspace.
     /// </summary>
-    protected JsonDocumentBuilder<JsonElement.Mutable> CreateV5Builder()
+    protected void GlobalCleanupV5()
     {
-        return this.V5Parsed!.RootElement.CreateBuilder(this.workspace!);
+        this.snapshot?.Dispose();
+        this.builder?.Dispose();
+        this.workspace?.Dispose();
+    }
+
+    /// <summary>
+    /// Restores the V5 builder to its initial state from the snapshot.
+    /// This is a pure memcpy with zero allocations.
+    /// </summary>
+    protected JsonElement.Mutable RestoreV5Builder()
+    {
+        this.builder!.Restore(this.snapshot!);
+        return this.builder.RootElement;
     }
 
     /// <summary>
@@ -105,5 +119,12 @@ public class PatchBenchmarkBase
     protected System.Text.Json.Nodes.JsonNode? ParseFreshNode()
     {
         return System.Text.Json.Nodes.JsonNode.Parse(this.inputJsonString!);
+    }
+
+    private void SetupV5BuilderAndSnapshot()
+    {
+        this.workspace = JsonWorkspace.CreateUnrented();
+        this.builder = this.V5Parsed!.RootElement.CreateBuilder(this.workspace);
+        this.snapshot = this.builder.CreateSnapshot();
     }
 }
