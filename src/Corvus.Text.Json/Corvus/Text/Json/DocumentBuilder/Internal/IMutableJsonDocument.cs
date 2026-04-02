@@ -343,6 +343,13 @@ public interface IMutableJsonDocument : IJsonDocument
     void SetAndDispose(ref ComplexValueBuilder cvb);
 
     /// <summary>
+    /// Replaces the root value of an already-initialized document, disposing the old value
+    /// and the provided <see cref="ComplexValueBuilder"/>.
+    /// </summary>
+    /// <param name="cvb">The <see cref="ComplexValueBuilder"/> containing the replacement root value.</param>
+    void ReplaceRootAndDispose(ref ComplexValueBuilder cvb);
+
+    /// <summary>
     /// Inserts a value into the document and disposes the provided <see cref="ComplexValueBuilder"/>.
     /// </summary>
     /// <param name="complexObjectStartIndex">The start index of the complex object.</param>

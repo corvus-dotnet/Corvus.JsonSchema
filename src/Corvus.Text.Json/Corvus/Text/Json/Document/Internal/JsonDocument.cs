@@ -1626,11 +1626,6 @@ public abstract partial class JsonDocument
 
                 startRun = index;
 
-                if (index >= jsonPointerUtf8.Length)
-                {
-                    break;
-                }
-
                 while (index < jsonPointerUtf8.Length && jsonPointerUtf8[index] != (byte)'/')
                 {
                     ++index;
@@ -1658,22 +1653,19 @@ public abstract partial class JsonDocument
                 }
                 else if (currentTokenType == JsonTokenType.StartArray)
                 {
-                    if (Utf8Parser.TryParse(component, out int targetArrayIndex, out int bytesConsumed))
-                    {
-                        index += bytesConsumed;
-                        if (targetArrayIndex >= GetArrayLengthUnsafe(currentRowIndex))
-                        {
-                            resultIndex = -1;
-                            return false;
-                        }
-
-                        currentRowIndex = GetArrayIndexElementUnsafe(currentRowIndex, targetArrayIndex);
-                    }
-                    else
+                    if (!IsValidRfc6901ArrayIndex(component, out int targetArrayIndex))
                     {
                         resultIndex = -1;
                         return false;
                     }
+
+                    if (targetArrayIndex >= GetArrayLengthUnsafe(currentRowIndex))
+                    {
+                        resultIndex = -1;
+                        return false;
+                    }
+
+                    currentRowIndex = GetArrayIndexElementUnsafe(currentRowIndex, targetArrayIndex);
                 }
             }
 
@@ -1687,6 +1679,35 @@ public abstract partial class JsonDocument
                 ArrayPool<byte>.Shared.Return(dcb);
             }
         }
+    }
+
+    /// <summary>
+    /// Validates that a decoded JSON Pointer segment is a valid RFC 6901 array index
+    /// and parses it.
+    /// </summary>
+    /// <param name="segment">The decoded pointer segment.</param>
+    /// <param name="arrayIndex">The parsed array index when valid.</param>
+    /// <returns><see langword="true"/> if the segment is a valid non-negative integer
+    /// with no leading zeros and all bytes consumed; otherwise, <see langword="false"/>.</returns>
+    private static bool IsValidRfc6901ArrayIndex(ReadOnlySpan<byte> segment, out int arrayIndex)
+    {
+        arrayIndex = -1;
+
+        if (segment.Length == 0)
+        {
+            return false;
+        }
+
+        // Leading zeros are invalid per RFC 6901 (except "0" itself).
+        if (segment.Length > 1 && segment[0] == (byte)'0')
+        {
+            return false;
+        }
+
+        // All bytes must be consumed to reject inputs like "1e0".
+        return Utf8Parser.TryParse(segment, out arrayIndex, out int bytesConsumed)
+            && bytesConsumed == segment.Length
+            && arrayIndex >= 0;
     }
 
     /// <summary>

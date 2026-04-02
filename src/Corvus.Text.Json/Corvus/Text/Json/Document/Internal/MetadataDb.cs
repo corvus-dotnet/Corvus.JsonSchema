@@ -473,7 +473,11 @@ public struct MetadataDb : IDisposable
             Debug.Assert(MaxArrayLength == Array.MaxLength);
 #endif
 
+            int requiredCapacity = Length + lengthToInsert;
             int newCapacity = toReturn.Length * 2;
+
+            // Ensure the new capacity is at least large enough for the required data
+            if (newCapacity < requiredCapacity) newCapacity = requiredCapacity;
 
             // Note that this check works even when newCapacity overflowed thanks to the (uint) cast
             if ((uint)newCapacity > MaxArrayLength) newCapacity = MaxArrayLength;

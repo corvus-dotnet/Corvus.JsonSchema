@@ -309,6 +309,17 @@ public sealed partial class JsonDocumentBuilder<T> : JsonDocument, IMutableJsonD
 
     /// <inheritdoc />
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    void IMutableJsonDocument.ReplaceRootAndDispose(ref ComplexValueBuilder cvb)
+    {
+        CheckNotImmutable();
+        _version++;
+        _parsedData.Dispose();
+        _parsedData = default;
+        cvb.SetAndDispose(ref _parsedData);
+    }
+
+    /// <inheritdoc />
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void IMutableJsonDocument.OverwriteAndDispose(int complexObjectStartIndex, int startIndex, int endIndex, int memberCountToReplace, ref ComplexValueBuilder cvb)
     {
         CheckNotImmutable();

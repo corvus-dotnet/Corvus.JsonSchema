@@ -58,6 +58,7 @@
     <Project Path="tests/Corvus.Text.Json.Analyzers.Tests/Corvus.Text.Json.Analyzers.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.CodeGenerator.Tests/Corvus.Text.Json.CodeGenerator.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.Migration.Analyzers.Tests/Corvus.Text.Json.Migration.Analyzers.Tests.csproj" />
+    <Project Path="tests/Corvus.Text.Json.Patch.Tests/Corvus.Text.Json.Patch.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.Tests.GeneratedModels.OptionalAsNullable/Corvus.Text.Json.Tests.GeneratedModels.OptionalAsNullable.csproj" />
     <Project Path="tests/Corvus.Text.Json.Tests.GeneratedModels/Corvus.Text.Json.Tests.GeneratedModels.csproj" />
     <Project Path="tests/Corvus.Text.Json.Tests.MigrationModels.V4/Corvus.Text.Json.Tests.MigrationModels.V4.csproj" />
@@ -70,6 +71,7 @@
     <Project Path="src/Corvus.Text.Json.CodeGeneration/Corvus.Text.Json.CodeGeneration.csproj" />
     <Project Path="src/Corvus.Text.Json.Compatibility/Corvus.Text.Json.Compatibility.csproj" />
     <Project Path="src/Corvus.Text.Json.Migration.Analyzers/Corvus.Text.Json.Migration.Analyzers.csproj" />
+    <Project Path="src/Corvus.Text.Json.Patch/Corvus.Text.Json.Patch.csproj" />
     <Project Path="src/Corvus.Text.Json.SourceGenerator/Corvus.Text.Json.SourceGenerator.csproj" />
     <Project Path="src/Corvus.Text.Json.Validator/Corvus.Text.Json.Validator.csproj" />
     <Project Path="src/Corvus.Text.Json/Corvus.Text.Json.csproj" />
