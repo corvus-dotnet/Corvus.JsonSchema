@@ -4,6 +4,7 @@
 
 using System.Buffers;
 using System.Buffers.Text;
+using System.Text;
 using Corvus.Text.Json.Internal;
 
 namespace Corvus.Text.Json.Patch;
@@ -105,6 +106,46 @@ public static class JsonPatchExtensions
     }
 
     /// <summary>
+    /// Tries to add a value at the specified JSON Pointer path.
+    /// </summary>
+    /// <param name="target">The mutable root element.</param>
+    /// <param name="path">The JSON Pointer path (e.g. <c>/foo/bar</c>).</param>
+    /// <param name="value">The value to add.</param>
+    /// <returns><see langword="true"/> if the add operation was applied successfully; otherwise, <see langword="false"/>.</returns>
+    public static bool TryAdd(this ref JsonElement.Mutable target, ReadOnlySpan<char> path, in JsonElement.Source value)
+    {
+        byte[]? rented = null;
+        int byteCount = GetUtf8ByteCount(path);
+        Span<byte> utf8Path = byteCount <= StackallocByteThreshold
+            ? stackalloc byte[StackallocByteThreshold]
+            : (rented = ArrayPool<byte>.Shared.Rent(byteCount));
+        try
+        {
+            int written = GetUtf8Bytes(path, utf8Path);
+            return TryAdd(ref target, utf8Path.Slice(0, written), in value);
+        }
+        finally
+        {
+            if (rented != null)
+            {
+                ArrayPool<byte>.Shared.Return(rented);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Tries to add a value at the specified JSON Pointer path.
+    /// </summary>
+    /// <param name="target">The mutable root element.</param>
+    /// <param name="path">The JSON Pointer path (e.g. <c>/foo/bar</c>).</param>
+    /// <param name="value">The value to add.</param>
+    /// <returns><see langword="true"/> if the add operation was applied successfully; otherwise, <see langword="false"/>.</returns>
+    public static bool TryAdd(this ref JsonElement.Mutable target, string path, in JsonElement.Source value)
+    {
+        return TryAdd(ref target, path.AsSpan(), in value);
+    }
+
+    /// <summary>
     /// Tries to remove the value at the specified JSON Pointer path.
     /// </summary>
     /// <param name="target">The mutable root element.</param>
@@ -117,10 +158,13 @@ public static class JsonPatchExtensions
             return false;
         }
 
-        if (!TryResolveParent(ref target, path, out JsonElement.Mutable parent, out byte[] lastSegment))
+        Span<byte> segBuf = stackalloc byte[StackallocByteThreshold];
+        if (!TryResolveParent(ref target, path, out JsonElement.Mutable parent, segBuf, out int segLen))
         {
             return false;
         }
+
+        ReadOnlySpan<byte> lastSegment = segBuf.Slice(0, segLen);
 
         if (parent.ValueKind == JsonValueKind.Array)
         {
@@ -140,10 +184,48 @@ public static class JsonPatchExtensions
 
         if (parent.ValueKind == JsonValueKind.Object)
         {
-            return parent.RemoveProperty((ReadOnlySpan<byte>)lastSegment);
+            return parent.RemoveProperty(lastSegment);
         }
 
         return false;
+    }
+
+    /// <summary>
+    /// Tries to remove the value at the specified JSON Pointer path.
+    /// </summary>
+    /// <param name="target">The mutable root element.</param>
+    /// <param name="path">The JSON Pointer path (e.g. <c>/foo/bar</c>).</param>
+    /// <returns><see langword="true"/> if the remove operation was applied successfully; otherwise, <see langword="false"/>.</returns>
+    public static bool TryRemove(this ref JsonElement.Mutable target, ReadOnlySpan<char> path)
+    {
+        byte[]? rented = null;
+        int byteCount = GetUtf8ByteCount(path);
+        Span<byte> utf8Path = byteCount <= StackallocByteThreshold
+            ? stackalloc byte[StackallocByteThreshold]
+            : (rented = ArrayPool<byte>.Shared.Rent(byteCount));
+        try
+        {
+            int written = GetUtf8Bytes(path, utf8Path);
+            return TryRemove(ref target, utf8Path.Slice(0, written));
+        }
+        finally
+        {
+            if (rented != null)
+            {
+                ArrayPool<byte>.Shared.Return(rented);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Tries to remove the value at the specified JSON Pointer path.
+    /// </summary>
+    /// <param name="target">The mutable root element.</param>
+    /// <param name="path">The JSON Pointer path (e.g. <c>/foo/bar</c>).</param>
+    /// <returns><see langword="true"/> if the remove operation was applied successfully; otherwise, <see langword="false"/>.</returns>
+    public static bool TryRemove(this ref JsonElement.Mutable target, string path)
+    {
+        return TryRemove(ref target, path.AsSpan());
     }
 
     /// <summary>
@@ -161,10 +243,13 @@ public static class JsonPatchExtensions
             return true;
         }
 
-        if (!TryResolveParent(ref target, path, out JsonElement.Mutable parent, out byte[] lastSegment))
+        Span<byte> segBuf = stackalloc byte[StackallocByteThreshold];
+        if (!TryResolveParent(ref target, path, out JsonElement.Mutable parent, segBuf, out int segLen))
         {
             return false;
         }
+
+        ReadOnlySpan<byte> lastSegment = segBuf.Slice(0, segLen);
 
         if (parent.ValueKind == JsonValueKind.Array)
         {
@@ -184,16 +269,56 @@ public static class JsonPatchExtensions
 
         if (parent.ValueKind == JsonValueKind.Object)
         {
-            if (!parent.TryGetProperty((ReadOnlySpan<byte>)lastSegment, out _))
+            if (!parent.TryGetProperty(lastSegment, out _))
             {
                 return false;
             }
 
-            parent.SetProperty((ReadOnlySpan<byte>)lastSegment, in value);
+            parent.SetProperty(lastSegment, in value);
             return true;
         }
 
         return false;
+    }
+
+    /// <summary>
+    /// Tries to replace the value at the specified JSON Pointer path.
+    /// </summary>
+    /// <param name="target">The mutable root element.</param>
+    /// <param name="path">The JSON Pointer path (e.g. <c>/foo/bar</c>).</param>
+    /// <param name="value">The replacement value.</param>
+    /// <returns><see langword="true"/> if the replace operation was applied successfully; otherwise, <see langword="false"/>.</returns>
+    public static bool TryReplace(this ref JsonElement.Mutable target, ReadOnlySpan<char> path, in JsonElement.Source value)
+    {
+        byte[]? rented = null;
+        int byteCount = GetUtf8ByteCount(path);
+        Span<byte> utf8Path = byteCount <= StackallocByteThreshold
+            ? stackalloc byte[StackallocByteThreshold]
+            : (rented = ArrayPool<byte>.Shared.Rent(byteCount));
+        try
+        {
+            int written = GetUtf8Bytes(path, utf8Path);
+            return TryReplace(ref target, utf8Path.Slice(0, written), in value);
+        }
+        finally
+        {
+            if (rented != null)
+            {
+                ArrayPool<byte>.Shared.Return(rented);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Tries to replace the value at the specified JSON Pointer path.
+    /// </summary>
+    /// <param name="target">The mutable root element.</param>
+    /// <param name="path">The JSON Pointer path (e.g. <c>/foo/bar</c>).</param>
+    /// <param name="value">The replacement value.</param>
+    /// <returns><see langword="true"/> if the replace operation was applied successfully; otherwise, <see langword="false"/>.</returns>
+    public static bool TryReplace(this ref JsonElement.Mutable target, string path, in JsonElement.Source value)
+    {
+        return TryReplace(ref target, path.AsSpan(), in value);
     }
 
     /// <summary>
@@ -215,40 +340,115 @@ public static class JsonPatchExtensions
             return false;
         }
 
-        JsonElement cloned = sourceValue.Clone();
-
-        if (!TryResolveParent(ref target, from, out JsonElement.Mutable fromParent, out byte[] fromSegment))
+        // Cache the source value into a rented buffer before removal invalidates it.
+        IMutableJsonDocument mutableDoc = (IMutableJsonDocument)GetParentDocument(in target);
+        Utf8JsonWriter writer = mutableDoc.Workspace.RentWriterAndBuffer(256, out IByteBufferWriter bufferWriter);
+        try
         {
-            return false;
-        }
+            sourceValue.WriteTo(writer);
+            writer.Flush();
+            ReadOnlySpan<byte> cachedValue = bufferWriter.WrittenSpan;
 
-        if (fromParent.ValueKind == JsonValueKind.Array)
-        {
-            if (!TryParseArrayIndex(fromSegment, out int fromIndex))
+            // Remove from source location.
+            Span<byte> segBuf = stackalloc byte[StackallocByteThreshold];
+            if (!TryResolveParent(ref target, from, out JsonElement.Mutable fromParent, segBuf, out int segLen))
             {
                 return false;
             }
 
-            if (fromIndex < 0 || fromIndex >= fromParent.GetArrayLength())
+            ReadOnlySpan<byte> fromSegment = segBuf.Slice(0, segLen);
+
+            if (fromParent.ValueKind == JsonValueKind.Array)
+            {
+                if (!TryParseArrayIndex(fromSegment, out int fromIndex))
+                {
+                    return false;
+                }
+
+                if (fromIndex < 0 || fromIndex >= fromParent.GetArrayLength())
+                {
+                    return false;
+                }
+
+                fromParent.RemoveAt(fromIndex);
+            }
+            else if (fromParent.ValueKind == JsonValueKind.Object)
+            {
+                if (!fromParent.RemoveProperty(fromSegment))
+                {
+                    return false;
+                }
+            }
+            else
             {
                 return false;
             }
 
-            fromParent.RemoveAt(fromIndex);
+            // Add to destination using the cached value.
+            JsonElement.Source source = JsonElement.ParseValue(cachedValue);
+            return TryAddValueFromSpan(ref target, path, in source);
         }
-        else if (fromParent.ValueKind == JsonValueKind.Object)
+        finally
         {
-            if (!fromParent.RemoveProperty((ReadOnlySpan<byte>)fromSegment))
+            mutableDoc.Workspace.ReturnWriterAndBuffer(writer, bufferWriter);
+        }
+    }
+
+    /// <summary>
+    /// Tries to move a value from one location to another.
+    /// </summary>
+    /// <param name="target">The mutable root element.</param>
+    /// <param name="from">The source JSON Pointer path.</param>
+    /// <param name="path">The destination JSON Pointer path.</param>
+    /// <returns><see langword="true"/> if the move operation was applied successfully; otherwise, <see langword="false"/>.</returns>
+    public static bool TryMove(this ref JsonElement.Mutable target, ReadOnlySpan<char> from, ReadOnlySpan<char> path)
+    {
+        byte[]? rentedFrom = null;
+        int fromByteCount = GetUtf8ByteCount(from);
+        Span<byte> utf8From = fromByteCount <= StackallocByteThreshold
+            ? stackalloc byte[StackallocByteThreshold]
+            : (rentedFrom = ArrayPool<byte>.Shared.Rent(fromByteCount));
+        try
+        {
+            int fromWritten = GetUtf8Bytes(from, utf8From);
+
+            byte[]? rentedPath = null;
+            int pathByteCount = GetUtf8ByteCount(path);
+            Span<byte> utf8Path = pathByteCount <= StackallocByteThreshold
+                ? stackalloc byte[StackallocByteThreshold]
+                : (rentedPath = ArrayPool<byte>.Shared.Rent(pathByteCount));
+            try
             {
-                return false;
+                int pathWritten = GetUtf8Bytes(path, utf8Path);
+                return TryMove(ref target, utf8From.Slice(0, fromWritten), utf8Path.Slice(0, pathWritten));
+            }
+            finally
+            {
+                if (rentedPath != null)
+                {
+                    ArrayPool<byte>.Shared.Return(rentedPath);
+                }
             }
         }
-        else
+        finally
         {
-            return false;
+            if (rentedFrom != null)
+            {
+                ArrayPool<byte>.Shared.Return(rentedFrom);
+            }
         }
+    }
 
-        return TryAddValue(ref target, path, cloned);
+    /// <summary>
+    /// Tries to move a value from one location to another.
+    /// </summary>
+    /// <param name="target">The mutable root element.</param>
+    /// <param name="from">The source JSON Pointer path.</param>
+    /// <param name="path">The destination JSON Pointer path.</param>
+    /// <returns><see langword="true"/> if the move operation was applied successfully; otherwise, <see langword="false"/>.</returns>
+    public static bool TryMove(this ref JsonElement.Mutable target, string from, string path)
+    {
+        return TryMove(ref target, from.AsSpan(), path.AsSpan());
     }
 
     /// <summary>
@@ -265,8 +465,65 @@ public static class JsonPatchExtensions
             return false;
         }
 
-        JsonElement cloned = sourceValue.Clone();
-        return TryAddValue(ref target, path, cloned);
+        JsonElement.Source source = sourceValue;
+        return TryAddValueFromSpan(ref target, path, in source);
+    }
+
+    /// <summary>
+    /// Tries to copy a value from one location to another.
+    /// </summary>
+    /// <param name="target">The mutable root element.</param>
+    /// <param name="from">The source JSON Pointer path.</param>
+    /// <param name="path">The destination JSON Pointer path.</param>
+    /// <returns><see langword="true"/> if the copy operation was applied successfully; otherwise, <see langword="false"/>.</returns>
+    public static bool TryCopy(this ref JsonElement.Mutable target, ReadOnlySpan<char> from, ReadOnlySpan<char> path)
+    {
+        byte[]? rentedFrom = null;
+        int fromByteCount = GetUtf8ByteCount(from);
+        Span<byte> utf8From = fromByteCount <= StackallocByteThreshold
+            ? stackalloc byte[StackallocByteThreshold]
+            : (rentedFrom = ArrayPool<byte>.Shared.Rent(fromByteCount));
+        try
+        {
+            int fromWritten = GetUtf8Bytes(from, utf8From);
+
+            byte[]? rentedPath = null;
+            int pathByteCount = GetUtf8ByteCount(path);
+            Span<byte> utf8Path = pathByteCount <= StackallocByteThreshold
+                ? stackalloc byte[StackallocByteThreshold]
+                : (rentedPath = ArrayPool<byte>.Shared.Rent(pathByteCount));
+            try
+            {
+                int pathWritten = GetUtf8Bytes(path, utf8Path);
+                return TryCopy(ref target, utf8From.Slice(0, fromWritten), utf8Path.Slice(0, pathWritten));
+            }
+            finally
+            {
+                if (rentedPath != null)
+                {
+                    ArrayPool<byte>.Shared.Return(rentedPath);
+                }
+            }
+        }
+        finally
+        {
+            if (rentedFrom != null)
+            {
+                ArrayPool<byte>.Shared.Return(rentedFrom);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Tries to copy a value from one location to another.
+    /// </summary>
+    /// <param name="target">The mutable root element.</param>
+    /// <param name="from">The source JSON Pointer path.</param>
+    /// <param name="path">The destination JSON Pointer path.</param>
+    /// <returns><see langword="true"/> if the copy operation was applied successfully; otherwise, <see langword="false"/>.</returns>
+    public static bool TryCopy(this ref JsonElement.Mutable target, string from, string path)
+    {
+        return TryCopy(ref target, from.AsSpan(), path.AsSpan());
     }
 
     /// <summary>
@@ -286,233 +543,308 @@ public static class JsonPatchExtensions
         return resolved.Equals(expected);
     }
 
+    /// <summary>
+    /// Tests whether the value at the specified JSON Pointer path equals the expected value.
+    /// </summary>
+    /// <param name="target">The mutable root element.</param>
+    /// <param name="path">The JSON Pointer path (e.g. <c>/foo/bar</c>).</param>
+    /// <param name="expected">The expected value.</param>
+    /// <returns><see langword="true"/> if the value at the path equals the expected value; otherwise, <see langword="false"/>.</returns>
+    public static bool TryTest(this ref JsonElement.Mutable target, ReadOnlySpan<char> path, in JsonElement expected)
+    {
+        byte[]? rented = null;
+        int byteCount = GetUtf8ByteCount(path);
+        Span<byte> utf8Path = byteCount <= StackallocByteThreshold
+            ? stackalloc byte[StackallocByteThreshold]
+            : (rented = ArrayPool<byte>.Shared.Rent(byteCount));
+        try
+        {
+            int written = GetUtf8Bytes(path, utf8Path);
+            return TryTest(ref target, utf8Path.Slice(0, written), in expected);
+        }
+        finally
+        {
+            if (rented != null)
+            {
+                ArrayPool<byte>.Shared.Return(rented);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Tests whether the value at the specified JSON Pointer path equals the expected value.
+    /// </summary>
+    /// <param name="target">The mutable root element.</param>
+    /// <param name="path">The JSON Pointer path (e.g. <c>/foo/bar</c>).</param>
+    /// <param name="expected">The expected value.</param>
+    /// <returns><see langword="true"/> if the value at the path equals the expected value; otherwise, <see langword="false"/>.</returns>
+    public static bool TryTest(this ref JsonElement.Mutable target, string path, in JsonElement expected)
+    {
+        return TryTest(ref target, path.AsSpan(), in expected);
+    }
+
     private static bool TryApplyAdd(ref JsonElement.Mutable target, in JsonPatchDocument.AddOperation op)
     {
-        byte[] pathUtf8 = GetPathUtf8Bytes(op.Path);
-        JsonElement.Source value = op.Value;
-
-        if (pathUtf8.Length == 0)
+        UnescapedUtf8JsonString utf8Path = GetPathUtf8String(op.Path);
+        try
         {
-            ReplaceRoot(ref target, in value);
-            return true;
-        }
+            ReadOnlySpan<byte> pathUtf8 = utf8Path.Span;
+            JsonElement.Source value = op.Value;
 
-        if (!TryResolveParent(ref target, pathUtf8, out JsonElement.Mutable parent, out byte[] lastSegment))
-        {
-            return false;
-        }
-
-        if (parent.ValueKind == JsonValueKind.Array)
-        {
-            if (IsAppendToken(lastSegment))
+            if (pathUtf8.Length == 0)
             {
-                parent.AddItem(in value);
+                ReplaceRoot(ref target, in value);
                 return true;
             }
 
-            if (!TryParseArrayIndex(lastSegment, out int index))
-            {
-                return false;
-            }
-
-            if (index < 0 || index > parent.GetArrayLength())
-            {
-                return false;
-            }
-
-            parent.InsertItem(index, in value);
-            return true;
+            return TryAddValueFromSpan(ref target, pathUtf8, in value);
         }
-
-        if (parent.ValueKind == JsonValueKind.Object)
+        finally
         {
-            parent.SetProperty((ReadOnlySpan<byte>)lastSegment, in value);
-            return true;
+            utf8Path.Dispose();
         }
-
-        return false;
     }
 
     private static bool TryApplyRemove(ref JsonElement.Mutable target, in JsonPatchDocument.RemoveOperation op)
     {
-        byte[] pathUtf8 = GetPathUtf8Bytes(op.Path);
-
-        if (pathUtf8.Length == 0)
+        UnescapedUtf8JsonString utf8Path = GetPathUtf8String(op.Path);
+        try
         {
-            // Cannot remove the root.
-            return false;
-        }
+            ReadOnlySpan<byte> pathUtf8 = utf8Path.Span;
 
-        if (!TryResolveParent(ref target, pathUtf8, out JsonElement.Mutable parent, out byte[] lastSegment))
-        {
-            return false;
-        }
-
-        if (parent.ValueKind == JsonValueKind.Array)
-        {
-            if (!TryParseArrayIndex(lastSegment, out int index))
+            if (pathUtf8.Length == 0)
             {
                 return false;
             }
 
-            if (index < 0 || index >= parent.GetArrayLength())
+            Span<byte> segBuf = stackalloc byte[StackallocByteThreshold];
+            if (!TryResolveParent(ref target, pathUtf8, out JsonElement.Mutable parent, segBuf, out int segLen))
             {
                 return false;
             }
 
-            parent.RemoveAt(index);
-            return true;
-        }
+            ReadOnlySpan<byte> lastSegment = segBuf.Slice(0, segLen);
 
-        if (parent.ValueKind == JsonValueKind.Object)
+            if (parent.ValueKind == JsonValueKind.Array)
+            {
+                if (!TryParseArrayIndex(lastSegment, out int index))
+                {
+                    return false;
+                }
+
+                if (index < 0 || index >= parent.GetArrayLength())
+                {
+                    return false;
+                }
+
+                parent.RemoveAt(index);
+                return true;
+            }
+
+            if (parent.ValueKind == JsonValueKind.Object)
+            {
+                return parent.RemoveProperty(lastSegment);
+            }
+
+            return false;
+        }
+        finally
         {
-            return parent.RemoveProperty((ReadOnlySpan<byte>)lastSegment);
+            utf8Path.Dispose();
         }
-
-        return false;
     }
 
     private static bool TryApplyReplace(ref JsonElement.Mutable target, in JsonPatchDocument.ReplaceOperation op)
     {
-        byte[] pathUtf8 = GetPathUtf8Bytes(op.Path);
-        JsonElement.Source value = op.Value;
-
-        if (pathUtf8.Length == 0)
+        UnescapedUtf8JsonString utf8Path = GetPathUtf8String(op.Path);
+        try
         {
-            ReplaceRoot(ref target, in value);
-            return true;
-        }
+            ReadOnlySpan<byte> pathUtf8 = utf8Path.Span;
+            JsonElement.Source value = op.Value;
 
-        if (!TryResolveParent(ref target, pathUtf8, out JsonElement.Mutable parent, out byte[] lastSegment))
-        {
+            if (pathUtf8.Length == 0)
+            {
+                ReplaceRoot(ref target, in value);
+                return true;
+            }
+
+            Span<byte> segBuf = stackalloc byte[StackallocByteThreshold];
+            if (!TryResolveParent(ref target, pathUtf8, out JsonElement.Mutable parent, segBuf, out int segLen))
+            {
+                return false;
+            }
+
+            ReadOnlySpan<byte> lastSegment = segBuf.Slice(0, segLen);
+
+            if (parent.ValueKind == JsonValueKind.Array)
+            {
+                if (!TryParseArrayIndex(lastSegment, out int index))
+                {
+                    return false;
+                }
+
+                if (index < 0 || index >= parent.GetArrayLength())
+                {
+                    return false;
+                }
+
+                parent.SetItem(index, in value);
+                return true;
+            }
+
+            if (parent.ValueKind == JsonValueKind.Object)
+            {
+                if (!parent.TryGetProperty(lastSegment, out _))
+                {
+                    return false;
+                }
+
+                parent.SetProperty(lastSegment, in value);
+                return true;
+            }
+
             return false;
         }
-
-        if (parent.ValueKind == JsonValueKind.Array)
+        finally
         {
-            if (!TryParseArrayIndex(lastSegment, out int index))
-            {
-                return false;
-            }
-
-            if (index < 0 || index >= parent.GetArrayLength())
-            {
-                return false;
-            }
-
-            parent.SetItem(index, in value);
-            return true;
+            utf8Path.Dispose();
         }
-
-        if (parent.ValueKind == JsonValueKind.Object)
-        {
-            // Replace requires the property to already exist.
-            if (!parent.TryGetProperty((ReadOnlySpan<byte>)lastSegment, out _))
-            {
-                return false;
-            }
-
-            parent.SetProperty((ReadOnlySpan<byte>)lastSegment, in value);
-            return true;
-        }
-
-        return false;
     }
 
     private static bool TryApplyMove(ref JsonElement.Mutable target, in JsonPatchDocument.MoveOperation op)
     {
-        byte[] fromUtf8 = GetPathUtf8Bytes(op.FromValue);
-        byte[] pathUtf8 = GetPathUtf8Bytes(op.Path);
-
-        // Resolve the source value.
-        if (!TryResolvePointer(ref target, fromUtf8, out JsonElement.Mutable sourceValue))
+        UnescapedUtf8JsonString utf8From = GetPathUtf8String(op.FromValue);
+        try
         {
-            return false;
-        }
-
-        // Clone the value before removing the source (removal invalidates the element).
-        JsonElement cloned = sourceValue.Clone();
-
-        // Remove from source location.
-        if (fromUtf8.Length == 0)
-        {
-            return false;
-        }
-
-        if (!TryResolveParent(ref target, fromUtf8, out JsonElement.Mutable fromParent, out byte[] fromSegment))
-        {
-            return false;
-        }
-
-        if (fromParent.ValueKind == JsonValueKind.Array)
-        {
-            if (!TryParseArrayIndex(fromSegment, out int fromIndex))
+            UnescapedUtf8JsonString utf8Path = GetPathUtf8String(op.Path);
+            try
             {
-                return false;
-            }
+                ReadOnlySpan<byte> fromUtf8 = utf8From.Span;
+                ReadOnlySpan<byte> pathUtf8 = utf8Path.Span;
 
-            if (fromIndex < 0 || fromIndex >= fromParent.GetArrayLength())
+                // Resolve the source value.
+                if (!TryResolvePointer(ref target, fromUtf8, out JsonElement.Mutable sourceValue))
+                {
+                    return false;
+                }
+
+                // Cache the source value into a rented buffer before removal invalidates it.
+                IMutableJsonDocument mutableDoc = (IMutableJsonDocument)GetParentDocument(in target);
+                Utf8JsonWriter writer = mutableDoc.Workspace.RentWriterAndBuffer(256, out IByteBufferWriter bufferWriter);
+                try
+                {
+                    sourceValue.WriteTo(writer);
+                    writer.Flush();
+                    ReadOnlySpan<byte> cachedValue = bufferWriter.WrittenSpan;
+
+                    // Remove from source location.
+                    if (fromUtf8.Length == 0)
+                    {
+                        return false;
+                    }
+
+                    Span<byte> segBuf = stackalloc byte[StackallocByteThreshold];
+                    if (!TryResolveParent(ref target, fromUtf8, out JsonElement.Mutable fromParent, segBuf, out int segLen))
+                    {
+                        return false;
+                    }
+
+                    ReadOnlySpan<byte> fromSegment = segBuf.Slice(0, segLen);
+
+                    if (fromParent.ValueKind == JsonValueKind.Array)
+                    {
+                        if (!TryParseArrayIndex(fromSegment, out int fromIndex))
+                        {
+                            return false;
+                        }
+
+                        if (fromIndex < 0 || fromIndex >= fromParent.GetArrayLength())
+                        {
+                            return false;
+                        }
+
+                        fromParent.RemoveAt(fromIndex);
+                    }
+                    else if (fromParent.ValueKind == JsonValueKind.Object)
+                    {
+                        if (!fromParent.RemoveProperty(fromSegment))
+                        {
+                            return false;
+                        }
+                    }
+                    else
+                    {
+                        return false;
+                    }
+
+                    // Add to destination using the cached value.
+                    JsonElement.Source source = JsonElement.ParseValue(cachedValue);
+                    return TryAddValueFromSpan(ref target, pathUtf8, in source);
+                }
+                finally
+                {
+                    mutableDoc.Workspace.ReturnWriterAndBuffer(writer, bufferWriter);
+                }
+            }
+            finally
             {
-                return false;
-            }
-
-            fromParent.RemoveAt(fromIndex);
-        }
-        else if (fromParent.ValueKind == JsonValueKind.Object)
-        {
-            if (!fromParent.RemoveProperty((ReadOnlySpan<byte>)fromSegment))
-            {
-                return false;
+                utf8Path.Dispose();
             }
         }
-        else
+        finally
         {
-            return false;
+            utf8From.Dispose();
         }
-
-        // Add to destination (same logic as add).
-        return TryAddValue(ref target, pathUtf8, cloned);
     }
 
     private static bool TryApplyCopy(ref JsonElement.Mutable target, in JsonPatchDocument.CopyOperation op)
     {
-        byte[] fromUtf8 = GetPathUtf8Bytes(op.FromValue);
-        byte[] pathUtf8 = GetPathUtf8Bytes(op.Path);
-
-        // Resolve the source value and clone it.
-        if (!TryResolvePointer(ref target, fromUtf8, out JsonElement.Mutable sourceValue))
+        UnescapedUtf8JsonString utf8From = GetPathUtf8String(op.FromValue);
+        try
         {
-            return false;
+            UnescapedUtf8JsonString utf8Path = GetPathUtf8String(op.Path);
+            try
+            {
+                ReadOnlySpan<byte> fromUtf8 = utf8From.Span;
+                ReadOnlySpan<byte> pathUtf8 = utf8Path.Span;
+
+                if (!TryResolvePointer(ref target, fromUtf8, out JsonElement.Mutable sourceValue))
+                {
+                    return false;
+                }
+
+                JsonElement.Source source = sourceValue;
+                return TryAddValueFromSpan(ref target, pathUtf8, in source);
+            }
+            finally
+            {
+                utf8Path.Dispose();
+            }
         }
-
-        JsonElement cloned = sourceValue.Clone();
-
-        // Add the cloned value to the destination (same logic as add).
-        return TryAddValue(ref target, pathUtf8, cloned);
+        finally
+        {
+            utf8From.Dispose();
+        }
     }
 
     private static bool TryApplyTest(ref JsonElement.Mutable target, in JsonPatchDocument.TestOperation op)
     {
-        byte[] pathUtf8 = GetPathUtf8Bytes(op.Path);
-
-        if (!TryResolvePointer(ref target, pathUtf8, out JsonElement.Mutable resolved))
+        UnescapedUtf8JsonString utf8Path = GetPathUtf8String(op.Path);
+        try
         {
-            return false;
+            ReadOnlySpan<byte> pathUtf8 = utf8Path.Span;
+
+            if (!TryResolvePointer(ref target, pathUtf8, out JsonElement.Mutable resolved))
+            {
+                return false;
+            }
+
+            return resolved.Equals(op.Value);
         }
-
-        return resolved.Equals(op.Value);
-    }
-
-    private static bool TryAddValue(ref JsonElement.Mutable target, byte[] pathUtf8, in JsonElement value)
-    {
-        JsonElement.Source source = value;
-        return TryAddValueFromSpan(ref target, (ReadOnlySpan<byte>)pathUtf8, in source);
-    }
-
-    private static bool TryAddValue(ref JsonElement.Mutable target, ReadOnlySpan<byte> pathUtf8, in JsonElement value)
-    {
-        JsonElement.Source source = value;
-        return TryAddValueFromSpan(ref target, pathUtf8, in source);
+        finally
+        {
+            utf8Path.Dispose();
+        }
     }
 
     private static bool TryAddValueFromSpan(ref JsonElement.Mutable target, ReadOnlySpan<byte> pathUtf8, in JsonElement.Source source)
@@ -523,10 +855,13 @@ public static class JsonPatchExtensions
             return true;
         }
 
-        if (!TryResolveParent(ref target, pathUtf8, out JsonElement.Mutable parent, out byte[] lastSegment))
+        Span<byte> segBuf = stackalloc byte[StackallocByteThreshold];
+        if (!TryResolveParent(ref target, pathUtf8, out JsonElement.Mutable parent, segBuf, out int segLen))
         {
             return false;
         }
+
+        ReadOnlySpan<byte> lastSegment = segBuf.Slice(0, segLen);
 
         if (parent.ValueKind == JsonValueKind.Array)
         {
@@ -552,25 +887,17 @@ public static class JsonPatchExtensions
 
         if (parent.ValueKind == JsonValueKind.Object)
         {
-            parent.SetProperty((ReadOnlySpan<byte>)lastSegment, in source);
+            parent.SetProperty(lastSegment, in source);
             return true;
         }
 
         return false;
     }
 
-    private static byte[] GetPathUtf8Bytes<TPath>(in TPath path)
+    private static UnescapedUtf8JsonString GetPathUtf8String<TPath>(in TPath path)
         where TPath : struct, IJsonElement<TPath>
     {
-        UnescapedUtf8JsonString utf8 = path.ParentDocument.GetUtf8JsonString(path.ParentDocumentIndex, JsonTokenType.String);
-        try
-        {
-            return utf8.Span.ToArray();
-        }
-        finally
-        {
-            utf8.Dispose();
-        }
+        return path.ParentDocument.GetUtf8JsonString(path.ParentDocumentIndex, JsonTokenType.String);
     }
 
     private static IJsonDocument GetParentDocument<T>(in T element)
@@ -600,10 +927,11 @@ public static class JsonPatchExtensions
         ref JsonElement.Mutable root,
         ReadOnlySpan<byte> pointerUtf8,
         out JsonElement.Mutable parent,
-        out byte[] lastSegment)
+        Span<byte> lastSegmentBuffer,
+        out int lastSegmentLength)
     {
         parent = default;
-        lastSegment = Array.Empty<byte>();
+        lastSegmentLength = 0;
 
         int lastSlash = pointerUtf8.LastIndexOf((byte)'/');
         if (lastSlash < 0)
@@ -614,26 +942,7 @@ public static class JsonPatchExtensions
         ReadOnlySpan<byte> parentPath = pointerUtf8.Slice(0, lastSlash);
         ReadOnlySpan<byte> encodedLastSegment = pointerUtf8.Slice(lastSlash + 1);
 
-        // Decode the last segment.
-        byte[]? rentedBuffer = null;
-        int segmentLength = encodedLastSegment.Length;
-
-        Span<byte> decodedBuffer = segmentLength <= StackallocByteThreshold
-            ? stackalloc byte[StackallocByteThreshold]
-            : (rentedBuffer = ArrayPool<byte>.Shared.Rent(segmentLength));
-
-        try
-        {
-            int decodedLength = Utf8JsonPointer.DecodeSegment(encodedLastSegment, decodedBuffer);
-            lastSegment = decodedBuffer.Slice(0, decodedLength).ToArray();
-        }
-        finally
-        {
-            if (rentedBuffer is not null)
-            {
-                ArrayPool<byte>.Shared.Return(rentedBuffer);
-            }
-        }
+        lastSegmentLength = Utf8JsonPointer.DecodeSegment(encodedLastSegment, lastSegmentBuffer);
 
         // Resolve the parent.
         if (parentPath.Length == 0)
@@ -680,5 +989,46 @@ public static class JsonPatchExtensions
         return Utf8Parser.TryParse(segment, out index, out int bytesConsumed)
             && bytesConsumed == segment.Length
             && index >= 0;
+    }
+
+    private static int GetUtf8ByteCount(ReadOnlySpan<char> chars)
+    {
+#if NET
+        return Encoding.UTF8.GetByteCount(chars);
+#else
+        if (chars.IsEmpty)
+        {
+            return 0;
+        }
+
+        unsafe
+        {
+            fixed (char* ptr = chars)
+            {
+                return Encoding.UTF8.GetByteCount(ptr, chars.Length);
+            }
+        }
+#endif
+    }
+
+    private static int GetUtf8Bytes(ReadOnlySpan<char> chars, Span<byte> destination)
+    {
+#if NET
+        return Encoding.UTF8.GetBytes(chars, destination);
+#else
+        if (chars.IsEmpty)
+        {
+            return 0;
+        }
+
+        unsafe
+        {
+            fixed (char* srcPtr = chars)
+            fixed (byte* destPtr = destination)
+            {
+                return Encoding.UTF8.GetBytes(srcPtr, chars.Length, destPtr, destination.Length);
+            }
+        }
+#endif
     }
 }
