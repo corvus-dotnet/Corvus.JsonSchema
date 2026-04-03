@@ -964,6 +964,38 @@ public struct MetadataDb : IDisposable
     }
 
     /// <summary>
+    /// Writes a <see cref="DbRow"/> at the specified byte index.
+    /// </summary>
+    /// <param name="byteIndex">The byte index at which to write the row.</param>
+    /// <param name="row">The row to write.</param>
+    /// <remarks>
+    /// The caller is responsible for ensuring that the space at <paramref name="byteIndex"/>
+    /// has already been allocated (e.g. via <see cref="InsertRowsInComplexObject"/>).
+    /// </remarks>
+    internal void WriteRowAt(int byteIndex, DbRow row)
+    {
+        Debug.Assert((uint)byteIndex <= (uint)(Length - DbRow.Size));
+        MemoryMarshal.Write(_data.AsSpan(byteIndex), ref row);
+    }
+
+    /// <summary>
+    /// Copies a range of rows within this metadata database.
+    /// </summary>
+    /// <param name="srcByteIndex">The source byte index to copy from.</param>
+    /// <param name="dstByteIndex">The destination byte index to copy to.</param>
+    /// <param name="byteCount">The number of bytes to copy.</param>
+    /// <remarks>
+    /// The caller must ensure that source and destination regions do not overlap.
+    /// Both regions must be within the allocated <see cref="Length"/>.
+    /// </remarks>
+    internal void CopyRowRange(int srcByteIndex, int dstByteIndex, int byteCount)
+    {
+        Debug.Assert((uint)(srcByteIndex + byteCount) <= (uint)Length);
+        Debug.Assert((uint)(dstByteIndex + byteCount) <= (uint)Length);
+        Buffer.BlockCopy(_data!, srcByteIndex, _data!, dstByteIndex, byteCount);
+    }
+
+    /// <summary>
     /// Sets the location field of the row at the specified byte index.
     /// </summary>
     /// <param name="rowIndex">The byte index of the row.</param>

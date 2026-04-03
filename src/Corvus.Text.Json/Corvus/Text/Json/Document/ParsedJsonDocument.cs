@@ -1841,6 +1841,15 @@ public sealed partial class ParsedJsonDocument<T> : JsonDocument, IJsonDocument,
     }
 
     /// <inheritdoc />
+    int IJsonDocument.WriteElementToMetadataDb(int index, JsonWorkspace workspace, ref MetadataDb db, int writePosition)
+    {
+        CheckNotDisposed();
+
+        int workspaceDocumentIndex = workspace.GetDocumentIndex(this);
+        return WriteElement(index, ref db, workspaceDocumentIndex, writePosition);
+    }
+
+    /// <inheritdoc />
     int IJsonDocument.GetHashCode(int index)
     {
         CheckNotDisposed();
@@ -1891,6 +1900,52 @@ public sealed partial class ParsedJsonDocument<T> : JsonDocument, IJsonDocument,
         complexObjectRow = _parsedData.Get(endIndex);
         int entityLength = complexObjectRow.HasPropertyMap ? GetLengthOfEndToken(complexObjectRow.SizeOrLengthOrPropertyMapIndex) : complexObjectRow.RawSizeOrLength;
         db.AppendExternal(complexObjectRow.TokenType, index, entityLength, complexObjectRow.NumberOfRows);
+        return count;
+    }
+
+    private int WriteElement(int index, ref MetadataDb db, int workspaceDocumentIndex, int writePosition)
+    {
+        switch (_parsedData.GetJsonTokenType(index))
+        {
+            case JsonTokenType.True:
+            case JsonTokenType.False:
+            case JsonTokenType.Null:
+            case JsonTokenType.Number:
+            case JsonTokenType.String:
+            case JsonTokenType.PropertyName:
+                DbRow row = _parsedData.Get(index);
+                db.WriteRowAt(writePosition, new DbRow(row.TokenType, index, row.RawSizeOrLength, workspaceDocumentIndex));
+                return 1;
+
+            case JsonTokenType.StartObject:
+            case JsonTokenType.StartArray:
+                return WriteComplexObject(index, ref db, workspaceDocumentIndex, writePosition);
+        }
+
+        Debug.Fail($"Unexpected encounter with JsonTokenType {_parsedData.GetJsonTokenType(index)}");
+        return -1;
+    }
+
+    private int WriteComplexObject(int index, ref MetadataDb db, int workspaceDocumentIndex, int writePosition)
+    {
+        int count = 2;
+        DbRow complexObjectRow = _parsedData.Get(index);
+        db.WriteRowAt(writePosition, new DbRow(complexObjectRow.TokenType, index, complexObjectRow.RawSizeOrLength, workspaceDocumentIndex));
+
+        int endIndex = index + GetDbSizeUnsafe(index, false);
+        int currentWritePos = writePosition + DbRow.Size;
+
+        for (int i = index + DbRow.Size; i < endIndex; i += DbRow.Size)
+        {
+            int rowsWritten = WriteElement(i, ref db, workspaceDocumentIndex, currentWritePos);
+            count += rowsWritten;
+            currentWritePos += rowsWritten * DbRow.Size;
+            i += (rowsWritten - 1) * DbRow.Size;
+        }
+
+        complexObjectRow = _parsedData.Get(endIndex);
+        int entityLength = complexObjectRow.HasPropertyMap ? GetLengthOfEndToken(complexObjectRow.SizeOrLengthOrPropertyMapIndex) : complexObjectRow.RawSizeOrLength;
+        db.WriteRowAt(currentWritePos, new DbRow(complexObjectRow.TokenType, index, entityLength, complexObjectRow.NumberOfRows));
         return count;
     }
 }

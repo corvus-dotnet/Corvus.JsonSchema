@@ -368,6 +368,73 @@ public interface IMutableJsonDocument : IJsonDocument
     void OverwriteAndDispose(int complexObjectStartIndex, int startIndex, int endIndex, int membersToOverwrite, ref ComplexValueBuilder cvb);
 
     /// <summary>
+    /// Inserts a single simple value row directly into a complex object, bypassing <see cref="ComplexValueBuilder"/>.
+    /// </summary>
+    /// <param name="complexObjectStartIndex">The start index of the complex object.</param>
+    /// <param name="targetIndex">The index at which to insert.</param>
+    /// <param name="memberCount">The number of members to insert.</param>
+    /// <param name="tokenType">The token type of the value.</param>
+    /// <param name="location">The value location in the document's backing store.</param>
+    /// <param name="sizeOrLength">The size/length/unescaping flag for the value row.</param>
+    void InsertSimpleValue(int complexObjectStartIndex, int targetIndex, int memberCount, JsonTokenType tokenType, int location, int sizeOrLength);
+
+    /// <summary>
+    /// Overwrites a range with a single simple value row directly, bypassing <see cref="ComplexValueBuilder"/>.
+    /// </summary>
+    /// <param name="complexObjectStartIndex">The start index of the complex object.</param>
+    /// <param name="startIndex">The start index of the range to overwrite.</param>
+    /// <param name="endIndex">The end index of the range to overwrite.</param>
+    /// <param name="memberCountToReplace">The number of members to replace.</param>
+    /// <param name="tokenType">The token type of the replacement value.</param>
+    /// <param name="location">The value location in the document's backing store.</param>
+    /// <param name="sizeOrLength">The size/length/unescaping flag for the value row.</param>
+    void OverwriteSimpleValue(int complexObjectStartIndex, int startIndex, int endIndex, int memberCountToReplace, JsonTokenType tokenType, int location, int sizeOrLength);
+
+    /// <summary>
+    /// Inserts a property name and a single simple value row directly, bypassing <see cref="ComplexValueBuilder"/>.
+    /// </summary>
+    /// <param name="complexObjectStartIndex">The start index of the complex object.</param>
+    /// <param name="targetIndex">The index at which to insert.</param>
+    /// <param name="memberCount">The number of members to insert.</param>
+    /// <param name="propertyName">The UTF-8 property name to escape and store.</param>
+    /// <param name="valueTokenType">The token type of the value.</param>
+    /// <param name="valueLocation">The value location in the document's backing store.</param>
+    /// <param name="valueSizeOrLength">The size/length/unescaping flag for the value row.</param>
+    void InsertSimpleProperty(int complexObjectStartIndex, int targetIndex, int memberCount, ReadOnlySpan<byte> propertyName, JsonTokenType valueTokenType, int valueLocation, int valueSizeOrLength);
+
+    /// <summary>
+    /// Inserts element rows from a source document directly, bypassing <see cref="ComplexValueBuilder"/>.
+    /// </summary>
+    /// <param name="complexObjectStartIndex">The start index of the complex object.</param>
+    /// <param name="targetIndex">The index at which to insert.</param>
+    /// <param name="memberCount">The number of members to insert.</param>
+    /// <param name="sourceDocument">The source document containing the element.</param>
+    /// <param name="sourceIndex">The index of the element in the source document.</param>
+    void InsertFromDocument(int complexObjectStartIndex, int targetIndex, int memberCount, IJsonDocument sourceDocument, int sourceIndex);
+
+    /// <summary>
+    /// Overwrites a range with element rows from a source document, bypassing <see cref="ComplexValueBuilder"/>.
+    /// </summary>
+    /// <param name="complexObjectStartIndex">The start index of the complex object.</param>
+    /// <param name="startIndex">The start index of the range to overwrite.</param>
+    /// <param name="endIndex">The end index of the range to overwrite.</param>
+    /// <param name="memberCountToReplace">The number of members to replace.</param>
+    /// <param name="sourceDocument">The source document containing the element.</param>
+    /// <param name="sourceIndex">The index of the element in the source document.</param>
+    void OverwriteFromDocument(int complexObjectStartIndex, int startIndex, int endIndex, int memberCountToReplace, IJsonDocument sourceDocument, int sourceIndex);
+
+    /// <summary>
+    /// Inserts a property name row followed by element rows from a source document, bypassing <see cref="ComplexValueBuilder"/>.
+    /// </summary>
+    /// <param name="complexObjectStartIndex">The start index of the complex object.</param>
+    /// <param name="targetIndex">The index at which to insert.</param>
+    /// <param name="memberCount">The number of members to insert.</param>
+    /// <param name="propertyName">The UTF-8 property name to escape and store.</param>
+    /// <param name="sourceDocument">The source document containing the value element.</param>
+    /// <param name="sourceIndex">The index of the value element in the source document.</param>
+    void InsertPropertyFromDocument(int complexObjectStartIndex, int targetIndex, int memberCount, ReadOnlySpan<byte> propertyName, IJsonDocument sourceDocument, int sourceIndex);
+
+    /// <summary>
     /// Copies a value and sets it as a property on a destination object.
     /// If the property already exists, it is replaced.
     /// </summary>

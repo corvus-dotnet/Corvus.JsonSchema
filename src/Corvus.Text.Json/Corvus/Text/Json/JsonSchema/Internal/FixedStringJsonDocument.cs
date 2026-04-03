@@ -63,6 +63,8 @@ public sealed class FixedStringJsonDocument<T> : IJsonDocument
 
     void IJsonDocument.AppendElementToMetadataDb(int index, JsonWorkspace workspace, ref MetadataDb db) { throw new NotSupportedException(); }
 
+    int IJsonDocument.WriteElementToMetadataDb(int index, JsonWorkspace workspace, ref MetadataDb db, int writePosition) { throw new NotSupportedException(); }
+
     int IJsonDocument.BuildRentedMetadataDb(int parentDocumentIndex, JsonWorkspace workspace, out byte[] rentedBacking) { throw new NotSupportedException(); }
 
     JsonElement IJsonDocument.CloneElement(int index) => new(this, 0);
