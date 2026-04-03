@@ -35,6 +35,11 @@
     <ProjectReference Include="..\..\..\..\src\Corvus.Text.Json\Corvus.Text.Json.csproj" />
   </ItemGroup>
 
+  <!-- V5 Patch library (JSON Patch support) -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\src\Corvus.Text.Json.Patch\Corvus.Text.Json.Patch.csproj" />
+  </ItemGroup>
+
   <!-- Vocabulary analyzers (needed to register schema dialects) -->
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\src-v4\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.201909.csproj" />
@@ -83,7 +88,10 @@
     <TrimmerRootAssembly Include="System.ComponentModel" />
     <TrimmerRootAssembly Include="System.Runtime.InteropServices" />
     <TrimmerRootAssembly Include="netstandard" />
+    <TrimmerRootAssembly Include="System.Private.Uri" />
+    <TrimmerRootAssembly Include="System.Text.RegularExpressions" />
     <TrimmerRootAssembly Include="Corvus.Text.Json" />
+    <TrimmerRootAssembly Include="Corvus.Text.Json.Patch" />
     <TrimmerRootAssembly Include="Microsoft.CodeAnalysis" />
     <TrimmerRootAssembly Include="Microsoft.CodeAnalysis.CSharp" />
     <TrimmerRootAssembly Include="Microsoft.CodeAnalysis.Features" />

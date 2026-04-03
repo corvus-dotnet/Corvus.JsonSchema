@@ -33,14 +33,21 @@ public class WorkspaceService
         "System.ComponentModel",
         "System.Numerics.Vectors",
         "System.Runtime.Numerics",
+        "System.Private.Uri",
         "netstandard",
 
         // JSON support
         "System.Text.Json",
         "System.Text.Encodings.Web",
 
+        // Regex support (used by pattern-validated generated types)
+        "System.Text.RegularExpressions",
+
         // Corvus.Text.Json runtime (what generated types reference)
         "Corvus.Text.Json",
+
+        // Corvus.Text.Json.Patch (JSON Patch recipe)
+        "Corvus.Text.Json.Patch",
 
         // NodaTime (used by date/time format types)
         "NodaTime",
@@ -55,6 +62,7 @@ public class WorkspaceService
         global using System.Collections.Generic;
         global using System.Linq;
         global using Corvus.Text.Json;
+        global using Corvus.Text.Json.Patch;
         """;
 
     public WorkspaceService(HttpClient httpClient)

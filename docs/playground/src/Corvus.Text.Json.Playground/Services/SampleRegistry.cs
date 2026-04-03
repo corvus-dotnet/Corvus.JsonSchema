@@ -47,6 +47,7 @@ public static partial class SampleRegistry
         new("020", "ConditionalSchemas", "Conditional Schemas"),
         new("021", "DefaultValues", "Default Values"),
         new("022", "FormatValidation", "Format Validation"),
+        new("023", "JsonPatch", "JSON Patch"),
     ];
 
     /// <summary>
