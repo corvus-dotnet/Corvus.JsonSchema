@@ -49,6 +49,7 @@
     <Project Path="benchmarks/Corvus.Numerics.Benchmarks/Corvus.Numerics.Benchmarks.csproj" />
     <Project Path="benchmarks/Corvus.Text.Json.BenchmarkModels/Corvus.Text.Json.BenchmarkModels.csproj" />
     <Project Path="benchmarks/Corvus.Text.Json.Benchmarks/Corvus.Text.Json.Benchmarks.csproj" />
+    <Project Path="benchmarks/Corvus.Text.Json.Benchmarks.Validation/Corvus.Text.Json.Benchmarks.Validation.csproj" />
     <Project Path="benchmarks/Corvus.Text.Json.ClassicBenchmarkModels/Corvus.Text.Json.ClassicBenchmarkModels.csproj" />
     <Project Path="benchmarks/Corvus.Text.Json.CodeGeneration.Benchmarks/Corvus.Text.Json.CodeGeneration.Benchmarks.csproj" />
     <Project Path="benchmarks/Corvus.Text.Json.Validator.Benchmarks/Corvus.Text.Json.Validator.Benchmarks.csproj" />
