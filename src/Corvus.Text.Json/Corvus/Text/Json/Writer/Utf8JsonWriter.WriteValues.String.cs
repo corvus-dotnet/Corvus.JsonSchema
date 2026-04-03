@@ -109,6 +109,31 @@ public sealed partial class Utf8JsonWriter
     }
 
     /// <summary>
+    /// Writes the pre-escaped UTF-8 text value (as a JSON string).
+    /// The caller guarantees the value is already properly escaped for the default encoder.
+    /// </summary>
+    /// <param name="utf8Value">The pre-escaped UTF-8 encoded value to write.</param>
+    /// <exception cref="ArgumentException">
+    /// Thrown when the specified value is too large.
+    /// </exception>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown if this would result in invalid JSON being written (while validation is enabled).
+    /// </exception>
+    /// <remarks>
+    /// The value is NOT escaped before writing. The caller must ensure the value
+    /// has been properly escaped using <see cref="System.Text.Encodings.Web.JavaScriptEncoder.Default"/>.
+    /// </remarks>
+    public void WriteRawStringValue(ReadOnlySpan<byte> utf8Value)
+    {
+        JsonWriterHelper.ValidateValue(utf8Value);
+
+        WriteStringByOptions(utf8Value);
+
+        SetFlagToAddListSeparatorBeforeNextItem();
+        _tokenType = JsonTokenType.String;
+    }
+
+    /// <summary>
     /// Writes a number as a JSON string. The string value is not escaped.
     /// </summary>
     /// <param name="utf8Value"></param>

@@ -2293,7 +2293,7 @@ public static class JsonDocumentBuilderCreateDynamicTests
             Assert.Equal("null", property.Name);
             Assert.Equal("null", property.Value.GetRawText());
             Assert.Equal(string.Empty, property.Value.ToString());
-            Assert.Equal("\"n\\u0075ll\":null", property.ToString());
+            Assert.Equal("\"null\":null", property.ToString());
 
             Assert.True(enumerator.MoveNext(), "Move to multiLineArray property");
             property = enumerator.Current;
@@ -4391,7 +4391,8 @@ public static class ParsedDocumentExtensions
             {
                 foreach (JsonProperty<JsonElement> property in source.EnumerateObject())
                 {
-                    BuildProperty(property.RawNameSpan, property.Value, ref objectBuilder, property.NameIsEscaped);
+                    using UnescapedUtf8JsonString nameSpan = property.Utf8NameSpan;
+                    BuildProperty(nameSpan.Span, property.Value, ref objectBuilder);
                 }
             }));
         }
@@ -4428,52 +4429,51 @@ public static class ParsedDocumentExtensions
 
         throw new InvalidOperationException($"Unsupported value kind {source.ValueKind}");
 
-        static void BuildProperty(ReadOnlySpan<byte> propertyName, JsonElement propertyValue, ref JsonElement.ObjectBuilder builder, bool nameRequiresUnescaping)
+        static void BuildProperty(ReadOnlySpan<byte> unescapedPropertyName, JsonElement propertyValue, ref JsonElement.ObjectBuilder builder)
         {
             switch (propertyValue.ValueKind)
             {
                 case JsonValueKind.Object:
-                    builder.AddProperty(propertyName, (ref objectBuilder) =>
+                    builder.AddProperty(unescapedPropertyName, (ref objectBuilder) =>
                     {
                         foreach (JsonProperty<JsonElement> property in propertyValue.EnumerateObject())
                         {
-                            BuildProperty(property.RawNameSpan, property.Value, ref objectBuilder, property.NameIsEscaped);
+                            using UnescapedUtf8JsonString nameSpan = property.Utf8NameSpan;
+                            BuildProperty(nameSpan.Span, property.Value, ref objectBuilder);
                         }
                     },
-                    escapeName: false,
-                    nameRequiresUnescaping: nameRequiresUnescaping);
+                    escapeName: true);
                     break;
 
                 case JsonValueKind.Array:
-                    builder.AddProperty(propertyName, (ref arrayBuilder) =>
+                    builder.AddProperty(unescapedPropertyName, (ref arrayBuilder) =>
                     {
                         foreach (JsonElement value in propertyValue.EnumerateArray())
                         {
                             BuildItem(value, ref arrayBuilder);
                         }
                     },
-                    escapeName: false,
-                    nameRequiresUnescaping: nameRequiresUnescaping);
+                    escapeName: true);
                     break;
 
                 case JsonValueKind.String:
-                    builder.AddRawString(propertyName, propertyValue.ValueSpan, propertyValue.ValueIsEscaped, escapeName: false, nameRequiresUnescaping: nameRequiresUnescaping);
+                    builder.AddRawString(unescapedPropertyName, propertyValue.ValueSpan, propertyValue.ValueIsEscaped, escapeName: true);
                     break;
 
                 case JsonValueKind.Number:
-                    builder.AddFormattedNumber(propertyName, propertyValue.ValueSpan, escapeName: false, nameRequiresUnescaping: nameRequiresUnescaping);
+                    builder.AddFormattedNumber(unescapedPropertyName, propertyValue.ValueSpan, escapeName: true);
                     break;
 
                 case JsonValueKind.True:
-                    builder.AddProperty(propertyName, true, escapeName: false, nameRequiresUnescaping: nameRequiresUnescaping);
+                    builder.AddProperty(unescapedPropertyName, true, escapeName: true);
                     break;
 
                 case JsonValueKind.False:
-                    builder.AddProperty(propertyName, false, escapeName: false, nameRequiresUnescaping: nameRequiresUnescaping);
+                    builder.AddProperty(unescapedPropertyName, false, escapeName: true);
                     break;
 
                 case JsonValueKind.Null:
-                    builder.AddPropertyNull(propertyName, escapeName: false, nameRequiresUnescaping: nameRequiresUnescaping);
+                    builder.AddPropertyNull(unescapedPropertyName, escapeName: true);
                     break;
 
                 default:
@@ -4490,7 +4490,8 @@ public static class ParsedDocumentExtensions
                     {
                         foreach (JsonProperty<JsonElement> property in value.EnumerateObject())
                         {
-                            BuildProperty(property.RawNameSpan, property.Value, ref objectBuilder, property.NameIsEscaped);
+                            using UnescapedUtf8JsonString nameSpan = property.Utf8NameSpan;
+                            BuildProperty(nameSpan.Span, property.Value, ref objectBuilder);
                         }
                     });
                     break;

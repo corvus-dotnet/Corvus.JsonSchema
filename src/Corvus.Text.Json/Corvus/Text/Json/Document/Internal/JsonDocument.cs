@@ -1285,8 +1285,10 @@ public abstract partial class JsonDocument
         }
 
         // Shift it and OR in the value type.
+        // The result is always normalized for JavaScriptEncoder.Default because
+        // we either verified no escaping was needed, or we applied the escaping.
         length <<= 4;
-        length |= (uint)DynamicValueType.QuotedUtf8String;
+        length |= (uint)DynamicValueType.NormalizedQuotedUtf8String;
 
         BitConverter.TryWriteBytes(_valueBacking.AsSpan(offset), length);
         _valueOffset = index;
@@ -1348,8 +1350,10 @@ public abstract partial class JsonDocument
         }
 
         // Shift it and OR in the value type.
+        // The result is always normalized for JavaScriptEncoder.Default because
+        // we either verified no escaping was needed, or we applied the escaping.
         length <<= 4;
-        length |= (uint)DynamicValueType.QuotedUtf8String;
+        length |= (uint)DynamicValueType.NormalizedQuotedUtf8String;
 
         BitConverter.TryWriteBytes(_valueBacking.AsSpan(offset), length);
         _valueOffset = index;
@@ -1358,8 +1362,9 @@ public abstract partial class JsonDocument
 
     /// <summary>
     /// Stores a raw escaped string value in the dynamic value buffer and returns its offset.
+    /// The string is assumed to be normalized for <see cref="System.Text.Encodings.Web.JavaScriptEncoder.Default"/>.
     /// </summary>
-    /// <param name="escapedString">The already-escaped string to store.</param>
+    /// <param name="escapedString">The already-escaped string to store. Must be normalized for <see cref="System.Text.Encodings.Web.JavaScriptEncoder.Default"/>.</param>
     /// <returns>The offset of the stored value in the value buffer.</returns>
     protected int StoreRawStringValue(ReadOnlySpan<byte> escapedString)
     {
@@ -1380,7 +1385,7 @@ public abstract partial class JsonDocument
 
         // Shift it and OR in the value type.
         length <<= 4;
-        length |= (uint)DynamicValueType.QuotedUtf8String;
+        length |= (uint)DynamicValueType.NormalizedQuotedUtf8String;
 
         BitConverter.TryWriteBytes(_valueBacking.AsSpan(offset), length);
         int index = offset + 4;
@@ -1453,13 +1458,13 @@ public abstract partial class JsonDocument
         uint length = BitConverter.ToUInt32(_valueBacking!, offset);
 
         var valueType = (DynamicValueType)(length & 0xF);
-        Debug.Assert(valueType is DynamicValueType.QuotedUtf8String or DynamicValueType.Number or DynamicValueType.Boolean or DynamicValueType.Null, $"Expected simple value at {offset}");
+        Debug.Assert(valueType is DynamicValueType.QuotedUtf8String or DynamicValueType.NormalizedQuotedUtf8String or DynamicValueType.Number or DynamicValueType.Boolean or DynamicValueType.Null, $"Expected simple value at {offset}");
 
         length >>= 4;
 
         int start;
 
-        if (!includeQuotes && valueType == DynamicValueType.QuotedUtf8String)
+        if (!includeQuotes && valueType is DynamicValueType.QuotedUtf8String or DynamicValueType.NormalizedQuotedUtf8String)
         {
             start = offset + 5;
             length -= 2;
@@ -1483,13 +1488,13 @@ public abstract partial class JsonDocument
         uint length = BitConverter.ToUInt32(_valueBacking!, offset);
 
         var valueType = (DynamicValueType)(length & 0xF);
-        Debug.Assert(valueType is DynamicValueType.QuotedUtf8String or DynamicValueType.Number or DynamicValueType.Boolean or DynamicValueType.Null, $"Expected simple value at {offset}");
+        Debug.Assert(valueType is DynamicValueType.QuotedUtf8String or DynamicValueType.NormalizedQuotedUtf8String or DynamicValueType.Number or DynamicValueType.Boolean or DynamicValueType.Null, $"Expected simple value at {offset}");
 
         length >>= 4;
 
         int start;
 
-        if (valueType == DynamicValueType.QuotedUtf8String)
+        if (valueType is DynamicValueType.QuotedUtf8String or DynamicValueType.NormalizedQuotedUtf8String)
         {
             start = offset + 5;
             length -= 2;

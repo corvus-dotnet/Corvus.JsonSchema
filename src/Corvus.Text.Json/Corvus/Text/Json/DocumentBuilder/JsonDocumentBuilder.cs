@@ -2234,6 +2234,23 @@ public sealed partial class JsonDocumentBuilder<T> : JsonDocument, IMutableJsonD
                         using UnescapedUtf8JsonString unescaped = GetUtf8JsonStringUnsafe(i, JsonTokenType.PropertyName);
                         writer.WritePropertyName(unescaped.Span);
                     }
+                    else if (!row.FromExternalDocument && row.LocationOrIndex >= _rawJsonLength)
+                    {
+                        // DynamicValue — read header once to check type and extract value.
+                        int offset = row.LocationOrIndex;
+                        uint header = BitConverter.ToUInt32(_valueBacking!, offset);
+                        int length = (int)(header >> 4) - 2; // exclude quotes
+                        ReadOnlySpan<byte> name = _valueBacking.AsSpan(offset + 5, length);
+
+                        if ((DynamicValueType)(header & 0xF) == DynamicValueType.NormalizedQuotedUtf8String)
+                        {
+                            writer.WriteRawPropertyName(name);
+                        }
+                        else
+                        {
+                            writer.WritePropertyName(name);
+                        }
+                    }
                     else
                     {
                         writer.WritePropertyName(GetRawSimpleValueUnsafe(i, false).Span);

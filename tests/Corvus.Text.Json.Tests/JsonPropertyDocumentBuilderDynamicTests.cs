@@ -119,10 +119,10 @@ public static class JsonPropertyDocumentBuilderDynamicTests
     }
 
     [Theory]
-    [InlineData("conne\\u0063tionId", "conne\\u0063tionId")]
+    [InlineData("conne\\u0063tionId", "connectionId")]
     [InlineData("connectionId", "connectionId")]
     [InlineData("123", "123")]
-    [InlineData("My name is \\\"Ahson\\\"", "My name is \\\"Ahson\\\"")]
+    [InlineData("My name is \\\"Ahson\\\"", "My name is \\u0022Ahson\\u0022")]
     public static void JsonMarshal_GetRawUtf8PropertyName_UseGoodMatches_True(string propertyName, string otherText)
     {
         string jsonString = $"{{ \"{propertyName}\" : \"itsValue\" }}";
