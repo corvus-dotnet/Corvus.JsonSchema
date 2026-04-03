@@ -99,7 +99,7 @@ Console.WriteLine(root.ToString());
 > using var builder = JsonDocumentBuilder<Person.Mutable>.Parse(workspace, json);
 > ```
 >
-> This avoids the intermediate document allocation and second pass over the data. See [Building & Mutating JSON](../../JsonDocumentBuilder.md#direct-parse-to-builder-recommended) for details.
+> This avoids the intermediate document allocation and second pass over the data. See [Building & Mutating JSON](/docs/json-document-builder.html#direct-parse-to-builder-recommended) for details.
 
 ### Version tracking
 
