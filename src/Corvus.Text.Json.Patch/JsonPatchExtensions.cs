@@ -5,6 +5,7 @@
 using System.Buffers;
 using System.Buffers.Text;
 using System.Text;
+using Corvus.Runtime.InteropServices;
 using Corvus.Text.Json.Internal;
 
 namespace Corvus.Text.Json.Patch;
@@ -22,55 +23,81 @@ public static class JsonPatchExtensions
     /// <param name="target">The mutable root element to patch.</param>
     /// <param name="patch">The patch document to apply.</param>
     /// <returns><see langword="true"/> if all operations were applied successfully; otherwise, <see langword="false"/>.</returns>
+    /// <remarks>
+    /// The patch document is assumed to be a valid RFC 6902 JSON Patch array.
+    /// No schema validation is performed on the individual operations; only the
+    /// <c>op</c> field is inspected to dispatch to the correct handler.
+    /// </remarks>
     public static bool TryApplyPatch(this ref JsonElement.Mutable target, in JsonPatchDocument patch)
     {
         foreach (JsonPatchDocument.PatchOperation operation in patch.EnumerateArray())
         {
-            if (operation.TryGetAsAddOperation(out JsonPatchDocument.AddOperation addOp))
-            {
-                if (!TryApplyAdd(ref target, in addOp))
-                {
-                    return false;
-                }
-            }
-            else if (operation.TryGetAsRemoveOperation(out JsonPatchDocument.RemoveOperation removeOp))
-            {
-                if (!TryApplyRemove(ref target, in removeOp))
-                {
-                    return false;
-                }
-            }
-            else if (operation.TryGetAsReplaceOperation(out JsonPatchDocument.ReplaceOperation replaceOp))
-            {
-                if (!TryApplyReplace(ref target, in replaceOp))
-                {
-                    return false;
-                }
-            }
-            else if (operation.TryGetAsMoveOperation(out JsonPatchDocument.MoveOperation moveOp))
-            {
-                if (!TryApplyMove(ref target, in moveOp))
-                {
-                    return false;
-                }
-            }
-            else if (operation.TryGetAsCopyOperation(out JsonPatchDocument.CopyOperation copyOp))
-            {
-                if (!TryApplyCopy(ref target, in copyOp))
-                {
-                    return false;
-                }
-            }
-            else if (operation.TryGetAsTestOperation(out JsonPatchDocument.TestOperation testOp))
-            {
-                if (!TryApplyTest(ref target, in testOp))
-                {
-                    return false;
-                }
-            }
-            else
+            // Fast dispatch: read the raw UTF-8 bytes of the "op" value directly,
+            // bypassing schema validation. We assume the patch is a valid document.
+            using RawUtf8JsonString rawOp = JsonMarshal.GetRawUtf8Value(operation.Op);
+            ReadOnlySpan<byte> opBytes = rawOp.Span;
+
+            if (opBytes.Length < 5)
             {
                 return false;
+            }
+
+            // Dispatch on first value byte (index 1, after opening quote).
+            // Disambiguate remove/replace on third value byte (index 3).
+            switch (opBytes[1])
+            {
+                case (byte)'a': // add
+                    if (!TryApplyAdd(ref target, JsonPatchDocument.AddOperation.From(in operation)))
+                    {
+                        return false;
+                    }
+
+                    break;
+
+                case (byte)'r': // remove or replace
+                    if (opBytes[3] == (byte)'m')
+                    {
+                        if (!TryApplyRemove(ref target, JsonPatchDocument.RemoveOperation.From(in operation)))
+                        {
+                            return false;
+                        }
+                    }
+                    else
+                    {
+                        if (!TryApplyReplace(ref target, JsonPatchDocument.ReplaceOperation.From(in operation)))
+                        {
+                            return false;
+                        }
+                    }
+
+                    break;
+
+                case (byte)'m': // move
+                    if (!TryApplyMove(ref target, JsonPatchDocument.MoveOperation.From(in operation)))
+                    {
+                        return false;
+                    }
+
+                    break;
+
+                case (byte)'c': // copy
+                    if (!TryApplyCopy(ref target, JsonPatchDocument.CopyOperation.From(in operation)))
+                    {
+                        return false;
+                    }
+
+                    break;
+
+                case (byte)'t': // test
+                    if (!TryApplyTest(ref target, JsonPatchDocument.TestOperation.From(in operation)))
+                    {
+                        return false;
+                    }
+
+                    break;
+
+                default:
+                    return false;
             }
         }
 

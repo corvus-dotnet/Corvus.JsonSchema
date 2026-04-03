@@ -5411,15 +5411,30 @@ public readonly partial struct JsonElement
                 return;
             }
 
-            var cvb = ComplexValueBuilder.Create(_parent, estimatedMemberCount);
-            source.AddAsItem(ref cvb);
             int arrayLength = GetArrayLength();
+
             if (itemIndex == arrayLength)
             {
-                _parent.InsertAndDispose(_idx, _idx + _parent.GetDbSize(_idx, false), ref cvb);
+                // Append at end — delegate to InsertItem which already has 3-tier dispatch.
+                InsertItem(itemIndex, in source, estimatedMemberCount);
+                return;
+            }
+
+            // Replace existing element.
+            if (source.TryGetSimpleValueComponents(_parent, out JsonTokenType tokenType, out int location, out int sizeOrLength))
+            {
+                Mutable element = _parent.GetArrayIndexElement(_idx, itemIndex);
+                _parent.OverwriteSimpleValue(_idx, element._idx, element._idx + element._parent.GetDbSize(element._idx, true), 1, tokenType, location, sizeOrLength);
+            }
+            else if (source.TryGetSourceDocument(out IJsonDocument sourceDocument, out int sourceIndex))
+            {
+                Mutable element = _parent.GetArrayIndexElement(_idx, itemIndex);
+                _parent.OverwriteFromDocument(_idx, element._idx, element._idx + element._parent.GetDbSize(element._idx, true), 1, sourceDocument, sourceIndex);
             }
             else
             {
+                var cvb = ComplexValueBuilder.Create(_parent, estimatedMemberCount);
+                source.AddAsItem(ref cvb);
                 Mutable element = _parent.GetArrayIndexElement(_idx, itemIndex);
                 _parent.OverwriteAndDispose(_idx, element._idx, element._idx + element._parent.GetDbSize(element._idx, true), 1, ref cvb);
             }
