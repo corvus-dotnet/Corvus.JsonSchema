@@ -30,6 +30,11 @@ public sealed partial class JsonDocumentBuilder<T> : JsonDocument, IMutableJsonD
 
     private int _parentWorkspaceIndex = -1;
 
+    // When > 0, _valueBacking[0.._rawJsonLength) contains the raw UTF-8 JSON input bytes.
+    // MetadataDb rows created by ParseTokens store offsets into this region (ParsedJsonDocument-style).
+    // Mutated values go into _valueBacking at _valueOffset (>= _rawJsonLength) using DynamicValue headers.
+    private int _rawJsonLength;
+
     private ulong _version = 0;
 
     internal JsonDocumentBuilder(JsonWorkspace workspace)
@@ -976,7 +981,13 @@ public sealed partial class JsonDocumentBuilder<T> : JsonDocument, IMutableJsonD
         // a local dynamic value.
         if (row.IsSimpleValue)
         {
-            return new(ReadRawSimpleDynamicValue(row.LocationOrIndex, includeQuotes));
+            int offset = row.LocationOrIndex;
+            if (offset < _rawJsonLength)
+            {
+                return new(ReadRawJsonBackingValue(offset, row.SizeOrLengthOrPropertyMapIndex, row.TokenType, includeQuotes));
+            }
+
+            return new(ReadRawSimpleDynamicValue(offset, includeQuotes));
         }
 
         // We have a complex value and it is not a simple slice of a parent
@@ -1062,7 +1073,13 @@ public sealed partial class JsonDocumentBuilder<T> : JsonDocument, IMutableJsonD
             return document.GetRawSimpleValue(row.LocationOrIndex, includeQuotes);
         }
 
-        return ReadRawSimpleDynamicValue(row.LocationOrIndex, includeQuotes);
+        int offset = row.LocationOrIndex;
+        if (offset < _rawJsonLength)
+        {
+            return ReadRawJsonBackingValue(offset, row.SizeOrLengthOrPropertyMapIndex, row.TokenType, includeQuotes);
+        }
+
+        return ReadRawSimpleDynamicValue(offset, includeQuotes);
     }
 
     /// <summary>
@@ -1083,7 +1100,38 @@ public sealed partial class JsonDocumentBuilder<T> : JsonDocument, IMutableJsonD
             return document.GetRawSimpleValue(row.LocationOrIndex);
         }
 
-        return ReadRawSimpleDynamicValue(row.LocationOrIndex);
+        int offset = row.LocationOrIndex;
+        if (offset < _rawJsonLength)
+        {
+            // No-includeQuotes overload: return content without quotes (same as ParsedJsonDocument convention).
+            return _valueBacking.AsMemory(offset, row.SizeOrLengthOrPropertyMapIndex);
+        }
+
+        return ReadRawSimpleDynamicValue(offset);
+    }
+
+    /// <summary>
+    /// Reads a simple value directly from the raw JSON backing region of <c>_valueBacking</c>.
+    /// </summary>
+    /// <remarks>
+    /// When a builder is created via <see cref="Parse(JsonWorkspace, ReadOnlyMemory{byte}, JsonDocumentOptions)"/>,
+    /// the raw UTF-8 JSON bytes occupy <c>_valueBacking[0.._rawJsonLength)</c> and MetadataDb rows store
+    /// offsets into that region (ParsedJsonDocument-style). This method reads values directly from those
+    /// raw bytes, avoiding the DynamicValue header overhead.
+    /// </remarks>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private ReadOnlyMemory<byte> ReadRawJsonBackingValue(int offset, int length, JsonTokenType tokenType, bool includeQuotes)
+    {
+        // length must have the HasComplexChildren sign bit masked off.
+        Debug.Assert(length >= 0);
+
+        if (includeQuotes && (tokenType == JsonTokenType.String || tokenType == JsonTokenType.PropertyName))
+        {
+            // offset points past the opening quote; step back 1 byte to include both quotes.
+            return _valueBacking.AsMemory(offset - 1, length + 2);
+        }
+
+        return _valueBacking.AsMemory(offset, length);
     }
 
     /// <inheritdoc />

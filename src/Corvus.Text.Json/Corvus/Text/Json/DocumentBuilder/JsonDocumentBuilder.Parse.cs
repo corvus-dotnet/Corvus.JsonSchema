@@ -26,10 +26,11 @@ public sealed partial class JsonDocumentBuilder<T>
     /// <remarks>
     /// <para>
     /// Unlike the two-step <c>ParsedJsonDocument.Parse → workspace.CreateBuilder</c> workflow,
-    /// this method performs a single pass over the input, writing token values directly into the
-    /// builder's internal value buffer. This eliminates the intermediate parsed document and the
-    /// O(N) tree walk that <c>BuildRentedMetadataDb</c> performs to convert a parsed document
-    /// into builder rows.
+    /// this method performs a single pass over the input, storing the raw UTF-8 bytes directly
+    /// as the builder's value backing. MetadataDb rows reference offsets into the raw bytes
+    /// (the same convention as <see cref="ParsedJsonDocument{T}"/>), so no per-value copies
+    /// or DynamicValue headers are needed during parsing. Subsequent mutations append
+    /// DynamicValue entries after the raw region.
     /// </para>
     /// <para>
     /// The returned builder must be disposed when no longer needed.
@@ -53,7 +54,10 @@ public sealed partial class JsonDocumentBuilder<T>
         ReadOnlyMemory<byte> utf8Json,
         JsonDocumentOptions options = default)
     {
-        return ParseCore(workspace, utf8Json.Span, options.GetReaderOptions());
+        ReadOnlySpan<byte> span = utf8Json.Span;
+        byte[] buffer = ArrayPool<byte>.Shared.Rent(Math.Max(256, span.Length));
+        span.CopyTo(buffer);
+        return ParseCore(workspace, buffer, span.Length, options.GetReaderOptions());
     }
 
     /// <summary>
@@ -83,20 +87,23 @@ public sealed partial class JsonDocumentBuilder<T>
     {
         ReadOnlySpan<char> jsonChars = json.Span;
         int expectedByteCount = JsonReaderHelper.GetUtf8ByteCount(jsonChars);
-        byte[] utf8Bytes = ArrayPool<byte>.Shared.Rent(expectedByteCount);
+        byte[] utf8Bytes = ArrayPool<byte>.Shared.Rent(Math.Max(256, expectedByteCount));
 
+        int actualByteCount;
         try
         {
-            int actualByteCount = JsonReaderHelper.GetUtf8FromText(jsonChars, utf8Bytes);
+            actualByteCount = JsonReaderHelper.GetUtf8FromText(jsonChars, utf8Bytes);
             Debug.Assert(expectedByteCount == actualByteCount);
-
-            return ParseCore(workspace, utf8Bytes.AsSpan(0, actualByteCount), options.GetReaderOptions());
         }
-        finally
+        catch
         {
             utf8Bytes.AsSpan(0, expectedByteCount).Clear();
             ArrayPool<byte>.Shared.Return(utf8Bytes);
+            throw;
         }
+
+        // Ownership of utf8Bytes transfers to ParseCore (becomes _valueBacking).
+        return ParseCore(workspace, utf8Bytes, actualByteCount, options.GetReaderOptions());
     }
 
     /// <summary>
@@ -152,15 +159,8 @@ public sealed partial class JsonDocumentBuilder<T>
         ArraySegment<byte> drained = ReadStreamToEnd(utf8Json);
         Debug.Assert(drained.Array != null);
 
-        try
-        {
-            return ParseCore(workspace, drained.AsSpan(), options.GetReaderOptions());
-        }
-        finally
-        {
-            drained.AsSpan().Clear();
-            ArrayPool<byte>.Shared.Return(drained.Array!);
-        }
+        // Ownership of drained.Array transfers to ParseCore (becomes _valueBacking).
+        return ParseCore(workspace, drained.Array!, drained.Count, options.GetReaderOptions());
     }
 
     /// <summary>
@@ -322,36 +322,47 @@ public sealed partial class JsonDocumentBuilder<T>
         }
 
         int length = valueSpan.IsEmpty ? checked((int)valueSequence.Length) : valueSpan.Length;
-        byte[] rented = ArrayPool<byte>.Shared.Rent(length);
-        Span<byte> rentedSpan = rented.AsSpan(0, length);
+        byte[] rented = ArrayPool<byte>.Shared.Rent(Math.Max(256, length));
 
         try
         {
             if (valueSpan.IsEmpty)
             {
-                valueSequence.CopyTo(rentedSpan);
+                valueSequence.CopyTo(rented);
             }
             else
             {
-                valueSpan.CopyTo(rentedSpan);
+                valueSpan.CopyTo(rented);
             }
-
-            return ParseCore(workspace, rentedSpan, reader.CurrentState.Options);
         }
-        finally
+        catch
         {
-            rentedSpan.Clear();
+            rented.AsSpan(0, length).Clear();
             ArrayPool<byte>.Shared.Return(rented);
+            throw;
         }
+
+        // Ownership of rented transfers to ParseCore (becomes _valueBacking).
+        return ParseCore(workspace, rented, length, reader.CurrentState.Options);
     }
 
     /// <summary>
     /// Creates a builder, registers it in the workspace, and runs the core parse loop
-    /// to populate MetadataDb and value backing directly from the JSON tokens.
+    /// to populate MetadataDb with raw-offset rows. The provided buffer becomes the
+    /// builder's <c>_valueBacking</c> (ownership is transferred to the builder).
     /// </summary>
+    /// <param name="workspace">The workspace that will own this builder.</param>
+    /// <param name="utf8JsonBuffer">
+    /// A rented buffer containing the raw UTF-8 JSON at <c>[0..rawLength)</c>.
+    /// Ownership transfers to the returned builder; the caller must not return it to the pool.
+    /// </param>
+    /// <param name="rawLength">The number of valid JSON bytes in <paramref name="utf8JsonBuffer"/>.</param>
+    /// <param name="readerOptions">Reader options for the <see cref="Utf8JsonReader"/>.</param>
+    /// <returns>A populated <see cref="JsonDocumentBuilder{T}"/>.</returns>
     private static JsonDocumentBuilder<T> ParseCore(
         JsonWorkspace workspace,
-        ReadOnlySpan<byte> utf8JsonSpan,
+        byte[] utf8JsonBuffer,
+        int rawLength,
         JsonReaderOptions readerOptions)
     {
         JsonDocumentBuilder<T> result = new(workspace);
@@ -359,18 +370,21 @@ public sealed partial class JsonDocumentBuilder<T>
         result._parentWorkspaceIndex = parentWorkspaceIndex;
 
         // Initialize MetadataDb with the same size heuristic as ParsedJsonDocument.
-        result._parsedData = MetadataDb.CreateRented(utf8JsonSpan.Length, convertToAlloc: false);
+        result._parsedData = MetadataDb.CreateRented(rawLength, convertToAlloc: false);
 
-        // Initialize value backing — the JSON length is a reasonable estimate since
-        // simple values are generally shorter than the raw JSON (minus structural characters),
-        // though the 4-byte DynamicValue headers add per-value overhead.
-        result._valueBacking = ArrayPool<byte>.Shared.Rent(Math.Max(256, utf8JsonSpan.Length));
+        // The rented buffer already contains the raw JSON at [0..rawLength).
+        // Use it directly as _valueBacking — no separate buffer allocation needed.
+        // Subsequent mutations will append DynamicValue entries at _valueOffset (>= rawLength),
+        // growing the buffer via Enlarge() if needed.
+        result._valueBacking = utf8JsonBuffer;
+        result._rawJsonLength = rawLength;
+        result._valueOffset = rawLength;
 
         var stack = new StackRowStack(JsonDocumentOptions.DefaultMaxDepth * StackRow.Size);
 
         try
         {
-            result.ParseTokens(utf8JsonSpan, readerOptions, ref stack);
+            result.ParseTokens(utf8JsonBuffer.AsSpan(0, rawLength), readerOptions, ref stack);
         }
         catch
         {
@@ -387,15 +401,15 @@ public sealed partial class JsonDocumentBuilder<T>
 
     /// <summary>
     /// The core parse loop. Reads tokens from the <see cref="Utf8JsonReader"/> and populates
-    /// <see cref="JsonDocument._parsedData"/> with local-reference rows and stores all simple
-    /// values in <see cref="JsonDocument._valueBacking"/> using the DynamicValue header format.
+    /// <see cref="JsonDocument._parsedData"/> with local-reference rows whose offsets point
+    /// directly into the raw JSON bytes in <see cref="JsonDocument._valueBacking"/>.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// This is structurally identical to <c>ParsedJsonDocument.Parse(ReadOnlySpan, ...)</c>
-    /// but instead of recording byte offsets into the original JSON buffer, it copies each
-    /// token's value into <c>_valueBacking</c> via the existing <c>StoreRaw*</c> helpers
-    /// and records the <c>_valueBacking</c> offset in the MetadataDb row.
+    /// This is structurally identical to <c>ParsedJsonDocument.Parse(ReadOnlySpan, ...)</c>.
+    /// The raw JSON bytes have already been copied into <c>_valueBacking[0.._rawJsonLength)</c>,
+    /// so token offsets from <see cref="Utf8JsonReader.TokenStartIndex"/> reference the correct
+    /// positions directly. No per-value copying or DynamicValue headers are needed.
     /// </para>
     /// <para>
     /// Container rows (StartObject, EndObject, StartArray, EndArray) do not store values;
@@ -421,6 +435,11 @@ public sealed partial class JsonDocumentBuilder<T>
         {
             JsonTokenType tokenType = reader.TokenType;
 
+            // Since the input payload is contained within a Span,
+            // token start index can never be larger than int.MaxValue.
+            Debug.Assert(reader.TokenStartIndex <= int.MaxValue);
+            int tokenStart = (int)reader.TokenStartIndex;
+
             if (tokenType == JsonTokenType.StartObject)
             {
                 if (inArray)
@@ -429,7 +448,7 @@ public sealed partial class JsonDocumentBuilder<T>
                 }
 
                 numberOfRowsForValues++;
-                _parsedData.Append(tokenType, 0, DbRow.UnknownSize);
+                _parsedData.Append(tokenType, tokenStart, DbRow.UnknownSize);
                 var row = new StackRow(arrayItemsOrPropertyCount, numberOfRowsForMembers + 1);
                 stack.Push(row);
                 arrayItemsOrPropertyCount = 0;
@@ -444,7 +463,7 @@ public sealed partial class JsonDocumentBuilder<T>
                 _parsedData.SetLength(rowIndex, arrayItemsOrPropertyCount);
 
                 int newRowIndex = _parsedData.Length;
-                _parsedData.Append(tokenType, 0, reader.ValueSpan.Length);
+                _parsedData.Append(tokenType, tokenStart, reader.ValueSpan.Length);
                 _parsedData.SetNumberOfRows(rowIndex, numberOfRowsForMembers);
                 _parsedData.SetNumberOfRows(newRowIndex, numberOfRowsForMembers);
 
@@ -460,7 +479,7 @@ public sealed partial class JsonDocumentBuilder<T>
                 }
 
                 numberOfRowsForMembers++;
-                _parsedData.Append(tokenType, 0, DbRow.UnknownSize);
+                _parsedData.Append(tokenType, tokenStart, DbRow.UnknownSize);
                 var row = new StackRow(arrayItemsOrPropertyCount, numberOfRowsForValues + 1);
                 stack.Push(row);
                 arrayItemsOrPropertyCount = 0;
@@ -481,7 +500,7 @@ public sealed partial class JsonDocumentBuilder<T>
                 }
 
                 int newRowIndex = _parsedData.Length;
-                _parsedData.Append(tokenType, 0, reader.ValueSpan.Length);
+                _parsedData.Append(tokenType, tokenStart, reader.ValueSpan.Length);
                 _parsedData.SetNumberOfRows(newRowIndex, numberOfRowsForValues);
 
                 StackRow row = stack.Pop();
@@ -494,10 +513,10 @@ public sealed partial class JsonDocumentBuilder<T>
                 numberOfRowsForMembers++;
                 arrayItemsOrPropertyCount++;
 
-                // Store the raw escaped property name in _valueBacking with quotes.
-                // reader.ValueSpan returns the content between the quotes.
-                int valueOffset = StoreRawStringValue(reader.ValueSpan);
-                _parsedData.Append(tokenType, valueOffset, reader.ValueSpan.Length);
+                // Adding 1 to skip the start quote will never overflow.
+                Debug.Assert(tokenStart < int.MaxValue);
+
+                _parsedData.Append(tokenType, tokenStart + 1, reader.ValueSpan.Length);
 
                 if (reader.ValueIsEscaped)
                 {
@@ -519,34 +538,19 @@ public sealed partial class JsonDocumentBuilder<T>
 
                 if (tokenType == JsonTokenType.String)
                 {
-                    int valueOffset = StoreRawStringValue(reader.ValueSpan);
-                    _parsedData.Append(tokenType, valueOffset, reader.ValueSpan.Length);
+                    // Adding 1 to skip the start quote will never overflow.
+                    Debug.Assert(tokenStart < int.MaxValue);
+
+                    _parsedData.Append(tokenType, tokenStart + 1, reader.ValueSpan.Length);
 
                     if (reader.ValueIsEscaped)
                     {
                         _parsedData.SetHasComplexChildren(_parsedData.Length - DbRow.Size);
                     }
                 }
-                else if (tokenType == JsonTokenType.Number)
-                {
-                    int valueOffset = StoreRawNumberValue(reader.ValueSpan);
-                    _parsedData.Append(tokenType, valueOffset, reader.ValueSpan.Length);
-                }
-                else if (tokenType == JsonTokenType.True)
-                {
-                    int valueOffset = StoreBooleanValue(true);
-                    _parsedData.Append(tokenType, valueOffset, JsonConstants.TrueValue.Length);
-                }
-                else if (tokenType == JsonTokenType.False)
-                {
-                    int valueOffset = StoreBooleanValue(false);
-                    _parsedData.Append(tokenType, valueOffset, JsonConstants.FalseValue.Length);
-                }
                 else
                 {
-                    Debug.Assert(tokenType == JsonTokenType.Null);
-                    int valueOffset = StoreNullValue();
-                    _parsedData.Append(tokenType, valueOffset, JsonConstants.NullValue.Length);
+                    _parsedData.Append(tokenType, tokenStart, reader.ValueSpan.Length);
                 }
             }
 
