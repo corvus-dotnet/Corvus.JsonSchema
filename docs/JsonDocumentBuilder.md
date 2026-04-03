@@ -311,7 +311,7 @@ using var fromReader = JsonDocumentBuilder<JsonElement.Mutable>.ParseValue(
 
 ### From ParsedJsonDocument
 
-If you need the immutable document for other purposes (e.g., validation, read-only queries) before building, use the two-step approach.
+If you want to retain an immutable copy of the original document (e.g., for comparison, read-only queries, or auditing) alongside the mutable builder, use the two-step approach.
 
 ```csharp
 using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -364,7 +364,7 @@ Console.WriteLine(builder.RootElement.ToString());
 
 **When to use which approach:**
 - **`JsonDocumentBuilder<T>.Parse()`** — when you intend to mutate the document. Single pass, best performance.
-- **`ParsedJsonDocument<T>.Parse()` → `CreateBuilder()`** — when you need the immutable document for other purposes (e.g., validation) before building.
+- **`ParsedJsonDocument<T>.Parse()` → `CreateBuilder()`** — when you want to retain an immutable copy of the original (e.g., for comparison or auditing).
 
 ## Building Dynamic JSON
 

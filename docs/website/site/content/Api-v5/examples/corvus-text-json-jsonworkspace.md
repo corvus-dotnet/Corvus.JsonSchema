@@ -11,7 +11,7 @@ Person.Mutable root = builder.RootElement;
 root.SetAge(31);
 ```
 
-You can also create a builder from an existing `ParsedJsonDocument` if you need the immutable document for other purposes:
+You can also create a builder from an existing `ParsedJsonDocument` if you want to retain an immutable copy of the original (e.g., for comparison or auditing):
 
 ```csharp
 using ParsedJsonDocument<Person> doc =

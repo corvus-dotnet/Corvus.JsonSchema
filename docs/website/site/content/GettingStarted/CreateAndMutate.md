@@ -93,7 +93,7 @@ Console.WriteLine(root.ToString());
 // {"name":{"familyName":"Oldroyd","givenName":"Michael"},"age":31,"email":"michael@example.com"}
 ```
 
-> **Tip:** If you don't need the immutable `ParsedJsonDocument` for anything else (e.g., validation), you can parse directly into the builder for better performance:
+> **Tip:** If you don't need to retain an immutable copy of the original document (e.g., for comparison or auditing), you can parse directly into the builder for better performance:
 >
 > ```csharp
 > using var builder = JsonDocumentBuilder<Person.Mutable>.Parse(workspace, json);
