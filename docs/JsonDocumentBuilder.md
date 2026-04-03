@@ -323,6 +323,51 @@ Console.WriteLine(modified.RootElement.ToString());
 // Output: {"status":"completed","count":10}
 ```
 
+### Direct Parse to Builder (Recommended)
+
+If you know you'll be modifying the JSON, you can parse directly into a mutable builder, skipping the intermediate `ParsedJsonDocument` entirely. This avoids a second pass over the data and reduces allocations.
+
+```csharp
+using JsonWorkspace workspace = JsonWorkspace.Create();
+
+// Parse directly into a mutable builder — single pass, no intermediate document
+using JsonDocumentBuilder<JsonElement.Mutable> builder =
+    JsonDocumentBuilder<JsonElement.Mutable>.Parse(
+        workspace,
+        """{"status":"pending","count":5}""");
+
+JsonElement.Mutable root = builder.RootElement;
+root.SetProperty("status", "completed"u8);
+root.SetProperty("count", 10);
+
+Console.WriteLine(builder.RootElement.ToString());
+// Output: {"status":"completed","count":10}
+```
+
+All the same `Parse` overloads are available — from UTF-8 bytes, strings, streams, or a `Utf8JsonReader`:
+
+```csharp
+// From UTF-8 bytes (fastest — no transcoding)
+using var fromBytes = JsonDocumentBuilder<JsonElement.Mutable>.Parse(
+    workspace, utf8Data);
+
+// From a string
+using var fromString = JsonDocumentBuilder<JsonElement.Mutable>.Parse(
+    workspace, jsonString);
+
+// From a stream (handles BOM detection)
+using var fromStream = JsonDocumentBuilder<JsonElement.Mutable>.Parse(
+    workspace, httpResponseStream);
+
+// From a Utf8JsonReader (parse a single value)
+using var fromReader = JsonDocumentBuilder<JsonElement.Mutable>.ParseValue(
+    workspace, ref reader);
+```
+
+**When to use which approach:**
+- **`JsonDocumentBuilder<T>.Parse()`** — when you intend to mutate the document. Single pass, best performance.
+- **`ParsedJsonDocument<T>.Parse()` → `CreateBuilder()`** — when you need the immutable document for other purposes (e.g., validation) before building.
+
 ## Building Dynamic JSON
 
 Real-world JSON isn't all static strings. You've got collections from your database, computed values, user input. Here's how you mix static structure with runtime data.
