@@ -266,71 +266,16 @@ Console.WriteLine(usersDoc.RootElement.ToString());
 
 ## Working with Existing JSON
 
-In many applications, you receive JSON from an API, file, or database, modify it, and send it on its way. The pattern is straightforward - parse, mutate, serialize.
-
-### From ParsedJsonDocument
-
-```csharp
-using JsonWorkspace workspace = JsonWorkspace.Create();
-
-// JSON from wherever - API, file, database
-string json = """
-    {
-        "name": "Original",
-        "value": 100
-    }
-    """;
-
-// Parse it - gives you an immutable, read-only document
-using ParsedJsonDocument<JsonElement> sourceDoc =
-    ParsedJsonDocument<JsonElement>.Parse(json);
-
-// Make it mutable - copies data into the workspace
-using JsonDocumentBuilder<JsonElement.Mutable> builder =
-    sourceDoc.RootElement.CreateBuilder(workspace);
-
-// Now you can modify it (more on that below)
-JsonElement.Mutable root = builder.RootElement;
-Console.WriteLine(root.ToString());
-```
-
-### Cloning and Modifying
-
-You'll often receive JSON from an API, file, or database, modify parts of it, and send it on its way. This pattern appears frequently in middleware, API gateways, and data transformation pipelines.
-
-```csharp
-using JsonWorkspace workspace = JsonWorkspace.Create();
-
-string originalJson = """
-    {
-        "status": "pending",
-        "count": 5
-    }
-    """;
-
-using ParsedJsonDocument<JsonElement> original =
-    ParsedJsonDocument<JsonElement>.Parse(originalJson);
-
-using JsonDocumentBuilder<JsonElement.Mutable> modified =
-    original.RootElement.CreateBuilder(workspace);
-
-// Make your changes
-JsonElement.Mutable root = modified.RootElement;
-root.SetProperty("status", "completed"u8);
-root.SetProperty("count", 10);
-
-Console.WriteLine(modified.RootElement.ToString());
-// Output: {"status":"completed","count":10}
-```
+In many applications, you receive JSON from an API, file, or database, modify it, and send it on its way. The pattern is straightforward — parse, mutate, serialize.
 
 ### Direct Parse to Builder (Recommended)
 
-If you know you'll be modifying the JSON, you can parse directly into a mutable builder, skipping the intermediate `ParsedJsonDocument` entirely. This avoids a second pass over the data and reduces allocations.
+If you know you'll be modifying the JSON, parse directly into a mutable builder. This is the fastest approach — a single pass over the input, no intermediate document, and no per-value copies. The raw UTF-8 bytes become the builder's backing store, and mutations append on top.
 
 ```csharp
 using JsonWorkspace workspace = JsonWorkspace.Create();
 
-// Parse directly into a mutable builder — single pass, no intermediate document
+// Parse directly into a mutable builder — single pass, zero copy
 using JsonDocumentBuilder<JsonElement.Mutable> builder =
     JsonDocumentBuilder<JsonElement.Mutable>.Parse(
         workspace,
@@ -362,6 +307,59 @@ using var fromStream = JsonDocumentBuilder<JsonElement.Mutable>.Parse(
 // From a Utf8JsonReader (parse a single value)
 using var fromReader = JsonDocumentBuilder<JsonElement.Mutable>.ParseValue(
     workspace, ref reader);
+```
+
+### From ParsedJsonDocument
+
+If you need the immutable document for other purposes (e.g., validation, read-only queries) before building, use the two-step approach.
+
+```csharp
+using JsonWorkspace workspace = JsonWorkspace.Create();
+
+string json = """
+    {
+        "name": "Original",
+        "value": 100
+    }
+    """;
+
+// Parse into a read-only document first
+using ParsedJsonDocument<JsonElement> sourceDoc =
+    ParsedJsonDocument<JsonElement>.Parse(json);
+
+// Then convert to a mutable builder
+using JsonDocumentBuilder<JsonElement.Mutable> builder =
+    sourceDoc.RootElement.CreateBuilder(workspace);
+
+JsonElement.Mutable root = builder.RootElement;
+Console.WriteLine(root.ToString());
+```
+
+### Cloning and Modifying
+
+You can also parse-and-modify in a single flow. This pattern appears frequently in middleware, API gateways, and data transformation pipelines.
+
+```csharp
+using JsonWorkspace workspace = JsonWorkspace.Create();
+
+using JsonDocumentBuilder<JsonElement.Mutable> builder =
+    JsonDocumentBuilder<JsonElement.Mutable>.Parse(
+        workspace,
+        """
+        {
+            "status": "pending",
+            "count": 5,
+            "timestamp": "2024-01-15T10:30:00Z"
+        }
+        """);
+
+// Modify selected properties, leave the rest untouched
+JsonElement.Mutable root = builder.RootElement;
+root.SetProperty("status", "completed"u8);
+root.SetProperty("count", 10);
+
+Console.WriteLine(builder.RootElement.ToString());
+// Output: {"status":"completed","count":10,"timestamp":"2024-01-15T10:30:00Z"}
 ```
 
 **When to use which approach:**

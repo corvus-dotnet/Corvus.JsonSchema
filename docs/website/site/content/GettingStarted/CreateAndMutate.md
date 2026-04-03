@@ -93,6 +93,14 @@ Console.WriteLine(root.ToString());
 // {"name":{"familyName":"Oldroyd","givenName":"Michael"},"age":31,"email":"michael@example.com"}
 ```
 
+> **Tip:** If you don't need the immutable `ParsedJsonDocument` for anything else (e.g., validation), you can parse directly into the builder for better performance:
+>
+> ```csharp
+> using var builder = JsonDocumentBuilder<Person.Mutable>.Parse(workspace, json);
+> ```
+>
+> This avoids the intermediate document allocation and second pass over the data. See [Building & Mutating JSON](../../JsonDocumentBuilder.md#direct-parse-to-builder-recommended) for details.
+
 ### Version tracking
 
 The builder tracks a version number, and every `Mutable` element reference records the version at which it was obtained. If the document structure changes after you captured a reference, attempting to use that stale reference throws an `InvalidOperationException`.
