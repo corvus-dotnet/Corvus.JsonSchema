@@ -694,13 +694,7 @@ public static class JsonPatchExtensions
 
             if (parent.ValueKind == JsonValueKind.Object)
             {
-                if (!parent.TryGetProperty(lastSegment, out _))
-                {
-                    return false;
-                }
-
-                parent.SetProperty(lastSegment, in value);
-                return true;
+                return parent.TryReplaceProperty(lastSegment, in value);
             }
 
             return false;

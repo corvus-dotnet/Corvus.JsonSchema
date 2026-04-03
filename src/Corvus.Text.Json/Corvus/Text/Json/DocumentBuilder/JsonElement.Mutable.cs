@@ -4641,6 +4641,49 @@ public readonly partial struct JsonElement
         }
 
         /// <summary>
+        /// Replaces the value of an existing property on this JSON object.
+        /// </summary>
+        /// <param name="propertyName">The UTF-8 encoded name of the property to replace.</param>
+        /// <param name="source">The new value for the property.</param>
+        /// <param name="estimatedMemberCount">An estimate of the number of members for the CVB fallback path.</param>
+        /// <returns><see langword="true"/> if the property was found and replaced; otherwise, <see langword="false"/>.</returns>
+        /// <remarks>
+        /// Unlike <see cref="SetProperty(ReadOnlySpan{byte}, in Source, int)"/>, this method does not
+        /// insert a new property if the named property does not already exist.
+        /// </remarks>
+        public bool TryReplaceProperty(ReadOnlySpan<byte> propertyName, in Source source, int estimatedMemberCount = 30)
+        {
+            CheckValidInstance();
+
+            bool result;
+
+            if (source.TryGetSimpleValueComponents(_parent, out JsonTokenType tokenType, out int location, out int sizeOrLength))
+            {
+                result = _parent.TryReplacePropertyValue(_idx, propertyName, tokenType, location, sizeOrLength);
+            }
+            else if (source.TryGetSourceDocument(out IJsonDocument sourceDocument, out int sourceIndex))
+            {
+                result = _parent.TryReplacePropertyFromDocument(_idx, propertyName, sourceDocument, sourceIndex);
+            }
+            else
+            {
+                // CVB fallback: single lookup, then overwrite.
+                if (!_parent.TryGetNamedPropertyValue(_idx, propertyName, out JsonElement existing))
+                {
+                    return false;
+                }
+
+                var cvb = ComplexValueBuilder.Create(_parent, estimatedMemberCount);
+                source.AddAsItem(ref cvb);
+                _parent.OverwriteAndDispose(_idx, existing._idx, existing._idx + existing._parent.GetDbSize(existing._idx, true), 1, ref cvb);
+                result = true;
+            }
+
+            _documentVersion = _parent.Version;
+            return result;
+        }
+
+        /// <summary>
         /// Sets a JSON object property on this element using a JsonObjectBuilder.Build delegate.
         /// </summary>
         /// <param name="propertyName">The name of the property to set.</param>

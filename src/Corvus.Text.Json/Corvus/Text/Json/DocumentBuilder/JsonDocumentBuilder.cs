@@ -501,6 +501,41 @@ public sealed partial class JsonDocumentBuilder<T> : JsonDocument, IMutableJsonD
         sourceDocument.WriteElementToMetadataDb(sourceIndex, _workspace, ref _parsedData, targetIndex + DbRow.Size);
     }
 
+    /// <inheritdoc />
+    bool IMutableJsonDocument.TryReplacePropertyValue(int objectIndex, ReadOnlySpan<byte> propertyName, JsonTokenType tokenType, int location, int sizeOrLength)
+    {
+        CheckNotImmutable();
+
+        if (!TryGetNamedPropertyValueIndexUnsafe(objectIndex, propertyName, out int existingValueIndex))
+        {
+            return false;
+        }
+
+        int existingDbSize = GetDbSizeUnsafe(existingValueIndex, true);
+        _version++;
+        _parsedData.ReplaceRowsInComplexObject(this, objectIndex, existingValueIndex, existingValueIndex + existingDbSize, 1, 1, 1);
+        _parsedData.WriteRowAt(existingValueIndex, new DbRow(tokenType, location, sizeOrLength));
+        return true;
+    }
+
+    /// <inheritdoc />
+    bool IMutableJsonDocument.TryReplacePropertyFromDocument(int objectIndex, ReadOnlySpan<byte> propertyName, IJsonDocument sourceDocument, int sourceIndex)
+    {
+        CheckNotImmutable();
+
+        if (!TryGetNamedPropertyValueIndexUnsafe(objectIndex, propertyName, out int existingValueIndex))
+        {
+            return false;
+        }
+
+        int existingDbSize = GetDbSizeUnsafe(existingValueIndex, true);
+        int srcRowCount = sourceDocument.GetDbSize(sourceIndex, true) / DbRow.Size;
+        _version++;
+        _parsedData.ReplaceRowsInComplexObject(this, objectIndex, existingValueIndex, existingValueIndex + existingDbSize, 1, srcRowCount, 1);
+        sourceDocument.WriteElementToMetadataDb(sourceIndex, _workspace, ref _parsedData, existingValueIndex);
+        return true;
+    }
+
     /// <summary>
     /// Removes a range of values from the document.
     /// </summary>

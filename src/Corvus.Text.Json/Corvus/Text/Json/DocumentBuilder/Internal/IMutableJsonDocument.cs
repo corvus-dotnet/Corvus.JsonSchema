@@ -435,6 +435,27 @@ public interface IMutableJsonDocument : IJsonDocument
     void InsertPropertyFromDocument(int complexObjectStartIndex, int targetIndex, int memberCount, ReadOnlySpan<byte> propertyName, IJsonDocument sourceDocument, int sourceIndex);
 
     /// <summary>
+    /// Replaces an existing property value with a simple scalar value.
+    /// </summary>
+    /// <param name="objectIndex">The start index of the object.</param>
+    /// <param name="propertyName">The UTF-8 property name to find.</param>
+    /// <param name="tokenType">The token type of the replacement value.</param>
+    /// <param name="location">The value location in the document's backing store.</param>
+    /// <param name="sizeOrLength">The size/length/unescaping flag for the value row.</param>
+    /// <returns><see langword="true"/> if the property was found and replaced; otherwise, <see langword="false"/>.</returns>
+    bool TryReplacePropertyValue(int objectIndex, ReadOnlySpan<byte> propertyName, JsonTokenType tokenType, int location, int sizeOrLength);
+
+    /// <summary>
+    /// Replaces an existing property value with element rows from a source document.
+    /// </summary>
+    /// <param name="objectIndex">The start index of the object.</param>
+    /// <param name="propertyName">The UTF-8 property name to find.</param>
+    /// <param name="sourceDocument">The source document containing the element.</param>
+    /// <param name="sourceIndex">The index of the element in the source document.</param>
+    /// <returns><see langword="true"/> if the property was found and replaced; otherwise, <see langword="false"/>.</returns>
+    bool TryReplacePropertyFromDocument(int objectIndex, ReadOnlySpan<byte> propertyName, IJsonDocument sourceDocument, int sourceIndex);
+
+    /// <summary>
     /// Copies a value and sets it as a property on a destination object.
     /// If the property already exists, it is replaced.
     /// </summary>
