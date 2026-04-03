@@ -68,4 +68,7 @@
   <Folder Name="/022-FormatValidation/">
     <Project Path="022-FormatValidation\FormatValidation.csproj" />
   </Folder>
+  <Folder Name="/023-JsonPatch/">
+    <Project Path="023-JsonPatch\JsonPatch.csproj" />
+  </Folder>
 </Solution>
