@@ -238,6 +238,4 @@ When `TryApplyPatch` returns `false`, the document may be in a partially-modifie
 
 ## See Also
 
-- [Creating and Mutating Objects](../ExampleRecipes/018-CreatingAndMutatingObjects/) — Mutable document lifecycle
-- [JSON Patch Recipe](../ExampleRecipes/023-JsonPatch/) — Complete runnable example
 - [JsonDocumentBuilder](JsonDocumentBuilder.md) — Mutable document builder with snapshot/restore
