@@ -80,6 +80,8 @@ public class JsonPatchTests
 
         JsonPatchDocument patch = JsonPatchDocument.ParseValue(patchJson);
 
+        Assert.True(patch.EvaluateSchema(), "The patch document must be a valid RFC 6902 JSON Patch array.");
+
         bool result = JsonPatchExtensions.TryApplyPatch(ref root, in patch);
 
         Assert.True(result, "Patch application should succeed.");
@@ -93,6 +95,16 @@ public class JsonPatchTests
 
     private static void RunErrorTest(string docJson, string patchJson)
     {
+        JsonPatchDocument patch = JsonPatchDocument.ParseValue(patchJson);
+
+        // If the patch document itself is structurally invalid, verify that
+        // schema validation catches it. Behaviour for invalid documents is
+        // undefined, so we don't attempt to apply them.
+        if (!patch.EvaluateSchema())
+        {
+            return;
+        }
+
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> sourceDoc =
             ParsedJsonDocument<JsonElement>.Parse(docJson);
@@ -101,8 +113,6 @@ public class JsonPatchTests
             sourceDoc.RootElement.CreateBuilder(workspace);
 
         JsonElement.Mutable root = builder.RootElement;
-
-        JsonPatchDocument patch = JsonPatchDocument.ParseValue(patchJson);
 
         bool result = JsonPatchExtensions.TryApplyPatch(ref root, in patch);
 
@@ -123,12 +133,12 @@ public class JsonPatchTests
                 continue;
             }
 
-            bool hasExpected = testCase.TryGetProperty("expected", out System.Text.Json.JsonElement expected);
-            bool hasError = testCase.TryGetProperty("error", out _);
-
             string comment = testCase.TryGetProperty("comment", out System.Text.Json.JsonElement commentElem)
                 ? commentElem.GetString() ?? $"Test #{currentIndex}"
                 : $"Test #{currentIndex}";
+
+            bool hasExpected = testCase.TryGetProperty("expected", out System.Text.Json.JsonElement expected);
+            bool hasError = testCase.TryGetProperty("error", out _);
 
             string docJson = testCase.GetProperty("doc").GetRawText();
             string patchJson = testCase.GetProperty("patch").GetRawText();

@@ -4,6 +4,7 @@
 
 using System.Buffers;
 using System.Buffers.Text;
+using System.Diagnostics;
 using System.Text;
 using Corvus.Runtime.InteropServices;
 using Corvus.Text.Json.Internal;
@@ -30,6 +31,8 @@ public static class JsonPatchExtensions
     /// </remarks>
     public static bool TryApplyPatch(this ref JsonElement.Mutable target, in JsonPatchDocument patch)
     {
+        Debug.Assert(patch.EvaluateSchema(), "The patch document must be a valid RFC 6902 JSON Patch array.");
+
         foreach (JsonPatchDocument.PatchOperation operation in patch.EnumerateArray())
         {
             // Fast dispatch: read the raw UTF-8 bytes of the "op" value directly,
