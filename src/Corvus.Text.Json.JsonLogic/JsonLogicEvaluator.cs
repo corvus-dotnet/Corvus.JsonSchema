@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Collections.Concurrent;
 using Corvus.Text.Json.JsonLogic.Operators;
 
 namespace Corvus.Text.Json.JsonLogic;
@@ -12,8 +13,8 @@ namespace Corvus.Text.Json.JsonLogic;
 /// <remarks>
 /// <para>
 /// The evaluator compiles rules into bytecode on first use, then caches the
-/// compiled form keyed by the rule's UTF-8 content hash (XxHash128).
-/// Subsequent evaluations of the same rule are zero-allocation on the hot path.
+/// compiled form keyed by the rule's raw JSON text.
+/// Subsequent evaluations of the same rule skip compilation entirely.
 /// </para>
 /// <para>
 /// Custom operators can be registered via <see cref="WithOperator(IJsonLogicOperator)"/>.
@@ -28,6 +29,7 @@ public sealed class JsonLogicEvaluator
     public static readonly JsonLogicEvaluator Default = new(BuiltInOperators.CreateAll());
 
     private readonly Dictionary<string, IJsonLogicOperator> operators;
+    private readonly ConcurrentDictionary<string, CompiledRule> cache = new();
 
     private JsonLogicEvaluator(Dictionary<string, IJsonLogicOperator> operators)
     {
@@ -72,12 +74,37 @@ public sealed class JsonLogicEvaluator
     /// <returns>The result of the evaluation as a <see cref="JsonElement"/>.</returns>
     /// <remarks>
     /// The rule is compiled to bytecode on first use, then cached.
-    /// Subsequent calls with the same rule content are zero-allocation.
+    /// Subsequent calls with the same rule content skip compilation.
     /// </remarks>
     public JsonElement Evaluate(in JsonLogicRule rule, in JsonElement data)
     {
+        CompiledRule compiled = this.GetOrCompile(rule);
+        return JsonLogicVM.Execute(compiled, data);
+    }
+
+    /// <summary>
+    /// Clears the compiled rule cache.
+    /// </summary>
+    /// <remarks>
+    /// Call this if operator registrations have changed or to free memory.
+    /// </remarks>
+    public void ClearCache()
+    {
+        this.cache.Clear();
+    }
+
+    private CompiledRule GetOrCompile(in JsonLogicRule rule)
+    {
+        string key = rule.Rule.GetRawText();
+
+        if (this.cache.TryGetValue(key, out CompiledRule existing))
+        {
+            return existing;
+        }
+
         JsonLogicCompiler compiler = new(this.operators);
         CompiledRule compiled = compiler.Compile(rule.Rule);
-        return JsonLogicVM.Execute(compiled, data);
+        this.cache.TryAdd(key, compiled);
+        return compiled;
     }
 }
