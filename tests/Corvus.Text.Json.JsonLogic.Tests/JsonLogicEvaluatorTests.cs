@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Reflection;
+using System.Text;
 using Corvus.Text.Json.JsonLogic;
 using Xunit;
 
@@ -26,12 +27,20 @@ public class JsonLogicEvaluatorTests
     {
         _ = index;
 
-        // TODO: Phase 2 — implement evaluation and assert results
-        // For now, just verify we can parse the test vectors
-        // and that the test infrastructure is working.
-        Assert.NotNull(rule);
-        Assert.NotNull(data);
-        Assert.NotNull(expected);
+        // Parse the rule and data as Corvus JsonElements
+        byte[] ruleUtf8 = Encoding.UTF8.GetBytes(rule);
+        byte[] dataUtf8 = Encoding.UTF8.GetBytes(data);
+
+        Corvus.Text.Json.JsonElement ruleElement = Corvus.Text.Json.JsonElement.ParseValue(ruleUtf8);
+        Corvus.Text.Json.JsonElement dataElement = Corvus.Text.Json.JsonElement.ParseValue(dataUtf8);
+
+        JsonLogicRule logicRule = new(ruleElement);
+        Corvus.Text.Json.JsonElement result = JsonLogicEvaluator.Default.Evaluate(logicRule, dataElement);
+
+        // Compare using normalized JSON text
+        string expectedText = NormalizeJson(expected);
+        string actualText = NormalizeJson(GetRawText(result));
+        Assert.Equal(expectedText, actualText);
     }
 
     /// <summary>
@@ -65,5 +74,28 @@ public class JsonLogicEvaluatorTests
                 index++;
             }
         }
+    }
+
+    private static string GetRawText(Corvus.Text.Json.JsonElement element)
+    {
+        if (element.IsNullOrUndefined())
+        {
+            return "null";
+        }
+
+        return element.GetRawText();
+    }
+
+    private static string NormalizeJson(string json)
+    {
+        // Normalize by re-serializing without indentation to get consistent compact formatting
+        using var doc = System.Text.Json.JsonDocument.Parse(json);
+        using var ms = new MemoryStream();
+        using (var writer = new System.Text.Json.Utf8JsonWriter(ms, new System.Text.Json.JsonWriterOptions { Indented = false }))
+        {
+            doc.RootElement.WriteTo(writer);
+        }
+
+        return Encoding.UTF8.GetString(ms.ToArray());
     }
 }

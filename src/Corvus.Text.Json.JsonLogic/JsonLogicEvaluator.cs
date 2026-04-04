@@ -2,6 +2,8 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using Corvus.Text.Json.JsonLogic.Operators;
+
 namespace Corvus.Text.Json.JsonLogic;
 
 /// <summary>
@@ -23,7 +25,7 @@ public sealed class JsonLogicEvaluator
     /// <summary>
     /// Gets a default evaluator with all standard built-in operators.
     /// </summary>
-    public static readonly JsonLogicEvaluator Default = new(new Dictionary<string, IJsonLogicOperator>());
+    public static readonly JsonLogicEvaluator Default = new(BuiltInOperators.CreateAll());
 
     private readonly Dictionary<string, IJsonLogicOperator> operators;
 
@@ -74,7 +76,8 @@ public sealed class JsonLogicEvaluator
     /// </remarks>
     public JsonElement Evaluate(in JsonLogicRule rule, in JsonElement data)
     {
-        // TODO: Phase 2 — compile and evaluate via bytecode VM
-        throw new NotImplementedException();
+        JsonLogicCompiler compiler = new(this.operators);
+        CompiledRule compiled = compiler.Compile(rule.Rule);
+        return JsonLogicVM.Execute(compiled, data);
     }
 }

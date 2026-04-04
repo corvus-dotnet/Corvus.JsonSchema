@@ -20,6 +20,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="..\Common\JsonConstants.cs" Link="Common\JsonConstants.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Corvus.Text.Json\Corvus.Text.Json.csproj" />
   </ItemGroup>
 

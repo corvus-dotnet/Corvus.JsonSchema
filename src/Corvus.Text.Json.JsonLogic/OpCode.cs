@@ -23,6 +23,16 @@ public enum OpCode : byte
     PushData,
 
     /// <summary>
+    /// Pop and discard the top of the stack.
+    /// </summary>
+    Pop,
+
+    /// <summary>
+    /// Duplicate the top of the stack.
+    /// </summary>
+    Dup,
+
+    /// <summary>
     /// Lookup a variable by dot-path from the constant pool.
     /// Operand: constant pool index of the path string.
     /// </summary>
@@ -33,6 +43,17 @@ public enum OpCode : byte
     /// The default is on the stack; operand is the path constant pool index.
     /// </summary>
     VarWithDefault,
+
+    /// <summary>
+    /// Lookup a variable where the path was computed at runtime (on the stack).
+    /// </summary>
+    VarDynamic,
+
+    /// <summary>
+    /// Lookup a variable where the path was computed at runtime, with a default value.
+    /// Stack: [path, default] (default on top).
+    /// </summary>
+    VarDynamicWithDefault,
 
     // Logic
 
@@ -181,16 +202,10 @@ public enum OpCode : byte
     Substr,
 
     /// <summary>
-    /// String contains check (in for strings).
+    /// Membership/substring check. If the haystack is a string, checks substring;
+    /// if the haystack is an array, checks membership.
     /// </summary>
-    InString,
-
-    // Array
-
-    /// <summary>
-    /// Array membership check (in for arrays).
-    /// </summary>
-    InArray,
+    In,
 
     /// <summary>
     /// Merge arrays. Operand: count.
@@ -256,6 +271,12 @@ public enum OpCode : byte
     /// Log the top of stack (side-effect).
     /// </summary>
     Log,
+
+    /// <summary>
+    /// Collect N values from the stack into an array (no flattening).
+    /// Operand: count.
+    /// </summary>
+    BuildArray,
 
     /// <summary>
     /// Return the top of stack as the result.
