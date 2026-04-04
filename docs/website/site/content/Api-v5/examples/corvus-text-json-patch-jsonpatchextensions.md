@@ -19,6 +19,7 @@ JsonPatchDocument patch = root.BeginPatch()
     .Remove("/age"u8)
     .GetPatchAndDispose();
 
+// Use TryApplyPatch directly — the patch was built locally so it's known to be valid.
 bool success = root.TryApplyPatch(in patch);
 // root is now: {"name":"Bob","tags":["user","admin"],"email":"bob@example.com"}
 ```
@@ -51,6 +52,8 @@ bool applied = root.TryApplyPatch(in guardedPatch);
 
 ### Parsing a patch from JSON
 
+When you receive a patch document from an external source and have not already validated it, use `TryValidateAndApplyPatch` to validate the document against its JSON Schema before applying:
+
 ```csharp
 JsonPatchDocument patch = JsonPatchDocument.ParseValue(
     """
@@ -60,5 +63,6 @@ JsonPatchDocument patch = JsonPatchDocument.ParseValue(
     ]
     """u8);
 
-root.TryApplyPatch(in patch);
+// Validates the patch schema first, then applies if valid.
+root.TryValidateAndApplyPatch(in patch);
 ```

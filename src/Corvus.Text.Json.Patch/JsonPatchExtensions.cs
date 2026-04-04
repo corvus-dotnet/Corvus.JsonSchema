@@ -19,15 +19,53 @@ public static class JsonPatchExtensions
     private const int StackallocByteThreshold = 256;
 
     /// <summary>
+    /// Validates an RFC 6902 JSON Patch document against its schema, and if valid,
+    /// tries to apply it to a mutable JSON element.
+    /// </summary>
+    /// <param name="target">The mutable root element to patch.</param>
+    /// <param name="patch">The patch document to validate and apply.</param>
+    /// <returns><see langword="true"/> if the patch document is valid and all operations
+    /// were applied successfully; otherwise, <see langword="false"/>.</returns>
+    /// <remarks>
+    /// <para>
+    /// Use this method when you have received a patch document from an external source
+    /// (e.g. an HTTP request body) and have not already validated it. It calls
+    /// <see cref="JsonPatchDocument.EvaluateSchema"/> before applying the patch.
+    /// </para>
+    /// <para>
+    /// If you have constructed the patch locally (e.g. via <see cref="PatchBuilder"/>)
+    /// or have already validated it as part of request processing, you can call
+    /// <see cref="TryApplyPatch"/> directly to avoid the cost of redundant validation.
+    /// </para>
+    /// </remarks>
+    public static bool TryValidateAndApplyPatch(this ref JsonElement.Mutable target, in JsonPatchDocument patch)
+    {
+        if (!patch.EvaluateSchema())
+        {
+            return false;
+        }
+
+        return TryApplyPatch(ref target, in patch);
+    }
+
+    /// <summary>
     /// Tries to apply an RFC 6902 JSON Patch document to a mutable JSON element.
     /// </summary>
     /// <param name="target">The mutable root element to patch.</param>
     /// <param name="patch">The patch document to apply.</param>
     /// <returns><see langword="true"/> if all operations were applied successfully; otherwise, <see langword="false"/>.</returns>
     /// <remarks>
+    /// <para>
     /// The patch document is assumed to be a valid RFC 6902 JSON Patch array.
-    /// No schema validation is performed on the individual operations; only the
-    /// <c>op</c> field is inspected to dispatch to the correct handler.
+    /// No schema validation is performed; behaviour for invalid documents is undefined.
+    /// A <see cref="Debug.Assert(bool)"/> verifies validity in debug builds.
+    /// </para>
+    /// <para>
+    /// Use this method when the patch was constructed locally (e.g. via <see cref="PatchBuilder"/>)
+    /// or has already been validated as part of request processing.
+    /// If the patch comes from an untrusted source and has not been validated,
+    /// use <see cref="TryValidateAndApplyPatch"/> instead.
+    /// </para>
     /// </remarks>
     public static bool TryApplyPatch(this ref JsonElement.Mutable target, in JsonPatchDocument patch)
     {

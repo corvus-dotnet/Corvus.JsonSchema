@@ -142,6 +142,6 @@ JsonPatchDocument parsedPatch = JsonPatchDocument.ParseValue(
     ]
     """u8);
 
-success = root.TryApplyPatch(in parsedPatch);
+success = root.TryValidateAndApplyPatch(in parsedPatch);
 Console.WriteLine($"Parsed patch applied: {success}");
 Console.WriteLine(builder.RootElement);

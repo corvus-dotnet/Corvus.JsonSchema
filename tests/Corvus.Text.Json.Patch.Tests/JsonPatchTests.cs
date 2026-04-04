@@ -80,11 +80,9 @@ public class JsonPatchTests
 
         JsonPatchDocument patch = JsonPatchDocument.ParseValue(patchJson);
 
-        Assert.True(patch.EvaluateSchema(), "The patch document must be a valid RFC 6902 JSON Patch array.");
+        bool result = JsonPatchExtensions.TryValidateAndApplyPatch(ref root, in patch);
 
-        bool result = JsonPatchExtensions.TryApplyPatch(ref root, in patch);
-
-        Assert.True(result, "Patch application should succeed.");
+        Assert.True(result, "Patch validation and application should succeed.");
 
         // Compare the result with the expected output.
         JsonElement expected = JsonElement.ParseValue(expectedJson);
@@ -95,16 +93,6 @@ public class JsonPatchTests
 
     private static void RunErrorTest(string docJson, string patchJson)
     {
-        JsonPatchDocument patch = JsonPatchDocument.ParseValue(patchJson);
-
-        // If the patch document itself is structurally invalid, verify that
-        // schema validation catches it. Behaviour for invalid documents is
-        // undefined, so we don't attempt to apply them.
-        if (!patch.EvaluateSchema())
-        {
-            return;
-        }
-
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> sourceDoc =
             ParsedJsonDocument<JsonElement>.Parse(docJson);
@@ -114,9 +102,11 @@ public class JsonPatchTests
 
         JsonElement.Mutable root = builder.RootElement;
 
-        bool result = JsonPatchExtensions.TryApplyPatch(ref root, in patch);
+        JsonPatchDocument patch = JsonPatchDocument.ParseValue(patchJson);
 
-        Assert.False(result, "Patch application should fail.");
+        bool result = JsonPatchExtensions.TryValidateAndApplyPatch(ref root, in patch);
+
+        Assert.False(result, "Patch validation or application should fail.");
     }
 
     private static IEnumerable<object[]> GetTestCases(JsonDocument document, bool expectSuccess)

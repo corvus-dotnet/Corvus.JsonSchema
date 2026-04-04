@@ -52,7 +52,9 @@ Console.WriteLine(builder.RootElement); // {"name":"Bob","email":"bob@example.co
 
 ## Applying a Patch Document
 
-The `TryApplyPatch` extension method applies an entire `JsonPatchDocument` to a mutable element. Operations are applied in order; if any operation fails, processing stops immediately and the method returns `false`.
+### Validated application
+
+If you have received a patch document from an external source (e.g. an HTTP request body, a file, or user input) and have not already validated it, use `TryValidateAndApplyPatch`. This validates the patch against its JSON Schema before applying it, returning `false` if the document is structurally invalid:
 
 ```csharp
 JsonPatchDocument patch = JsonPatchDocument.ParseValue(
@@ -63,10 +65,23 @@ JsonPatchDocument patch = JsonPatchDocument.ParseValue(
     ]
     """u8);
 
+bool success = root.TryValidateAndApplyPatch(in patch);
+```
+
+### Direct application (skip validation)
+
+If you constructed the patch locally via `PatchBuilder`, or have already validated it as part of request processing, you can call `TryApplyPatch` directly to avoid the cost of redundant schema validation:
+
+```csharp
+JsonPatchDocument patch = root.BeginPatch()
+    .Replace("/name"u8, "Charlie")
+    .Add("/active"u8, true)
+    .GetPatchAndDispose();
+
 bool success = root.TryApplyPatch(in patch);
 ```
 
-The patch document is assumed to be a valid RFC 6902 JSON array. No schema validation is performed on the individual operations during application — only the `op` field is inspected to dispatch to the correct handler.
+> **Note:** `TryApplyPatch` assumes the patch is a valid RFC 6902 document. Behaviour for invalid documents is undefined. A `Debug.Assert` verifies validity in debug builds.
 
 > **Note:** If an operation fails partway through, earlier operations in the patch will already have been applied. The document is left in a partially-patched state. If you need atomic all-or-nothing semantics, take a snapshot before applying (see [JsonDocumentBuilder](JsonDocumentBuilder.md) for snapshot/restore).
 
