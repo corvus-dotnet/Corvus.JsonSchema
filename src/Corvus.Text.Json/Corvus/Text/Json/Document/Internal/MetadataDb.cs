@@ -296,8 +296,7 @@ public struct MetadataDb : IDisposable
             Enlarge();
         }
 
-        var row = new DbRow(tokenType, startLocation, length);
-        MemoryMarshal.Write(_data.AsSpan(Length), ref row);
+        Unsafe.WriteUnaligned(ref _data[Length], new DbRow(tokenType, startLocation, length));
         Length += DbRow.Size;
     }
 
@@ -317,8 +316,7 @@ public struct MetadataDb : IDisposable
             Enlarge();
         }
 
-        var row = new DbRow(tokenType, location, requiresUnescapingOrHasExponent ? -1 : 1);
-        MemoryMarshal.Write(_data.AsSpan(Length), ref row);
+        Unsafe.WriteUnaligned(ref _data[Length], new DbRow(tokenType, location, requiresUnescapingOrHasExponent ? -1 : 1));
         Length += DbRow.Size;
     }
 
@@ -590,8 +588,7 @@ public struct MetadataDb : IDisposable
             Enlarge();
         }
 
-        var row = new DbRow(tokenType, externalIndex, sizeOrLength, workspaceDocumentIndexOrNumberOfRows);
-        MemoryMarshal.Write(_data.AsSpan(Length), ref row);
+        Unsafe.WriteUnaligned(ref _data[Length], new DbRow(tokenType, externalIndex, sizeOrLength, workspaceDocumentIndexOrNumberOfRows));
         Length += DbRow.Size;
     }
 
@@ -623,7 +620,7 @@ public struct MetadataDb : IDisposable
         if (newCapacity == toReturn.Length) newCapacity = int.MaxValue;
 
         _data = ArrayPool<byte>.Shared.Rent(newCapacity);
-        Buffer.BlockCopy(toReturn, 0, _data, 0, toReturn.Length);
+        Buffer.BlockCopy(toReturn, 0, _data, 0, Length);
 
         // The data in this rented buffer only conveys the positions and
         // lengths of tokens in a document, but no content; so it does not
