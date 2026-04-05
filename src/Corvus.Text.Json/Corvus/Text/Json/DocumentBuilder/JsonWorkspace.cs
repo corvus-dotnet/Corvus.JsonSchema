@@ -262,7 +262,7 @@ public class JsonWorkspace : IDisposable
     {
         foreach (IJsonDocument document in _documents.AsSpan(0, _length))
         {
-            if (document is IMutableJsonDocument)
+            if (document is IWorkspaceManagedDocument)
             {
                 document.Dispose();
             }

@@ -22,7 +22,7 @@ internal static partial class BuiltInOperators
 
             // Check for empty string or null — means return entire data
             if (pathArg.IsNullOrUndefined()
-                || (pathArg.ValueKind == JsonValueKind.String && pathArg.GetString()?.Length == 0))
+                || (pathArg.ValueKind == JsonValueKind.String && JsonLogicHelpers.IsEmptyString(pathArg)))
             {
                 context.EmitOpCode(OpCode.PushData);
                 return;

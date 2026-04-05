@@ -30,6 +30,8 @@ public sealed class JsonLogicEvaluator
 
     private readonly Dictionary<string, IJsonLogicOperator> operators;
     private readonly ConcurrentDictionary<string, CompiledRule> cache = new();
+    private JsonElement _lastRule;
+    private CompiledRule _lastCompiled;
 
     private JsonLogicEvaluator(Dictionary<string, IJsonLogicOperator> operators)
     {
@@ -96,16 +98,26 @@ public sealed class JsonLogicEvaluator
 
     private CompiledRule GetOrCompile(in JsonLogicRule rule)
     {
+        // Fast path: same rule element as last call (zero allocation)
+        if (_lastCompiled.Bytecode is not null && rule.Rule.Equals(_lastRule))
+        {
+            return _lastCompiled;
+        }
+
         string key = rule.Rule.GetRawText();
 
         if (this.cache.TryGetValue(key, out CompiledRule existing))
         {
+            _lastRule = rule.Rule;
+            _lastCompiled = existing;
             return existing;
         }
 
         JsonLogicCompiler compiler = new(this.operators);
         CompiledRule compiled = compiler.Compile(rule.Rule);
         this.cache.TryAdd(key, compiled);
+        _lastRule = rule.Rule;
+        _lastCompiled = compiled;
         return compiled;
     }
 }

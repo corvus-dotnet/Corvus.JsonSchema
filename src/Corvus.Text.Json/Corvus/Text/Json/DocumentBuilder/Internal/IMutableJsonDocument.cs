@@ -16,7 +16,7 @@ namespace Corvus.Text.Json.Internal;
 /// Represents a mutable JSON document that supports editing and value storage operations.
 /// </summary>
 [CLSCompliant(false)]
-public interface IMutableJsonDocument : IJsonDocument
+public interface IMutableJsonDocument : IWorkspaceManagedDocument
 {
     /// <summary>
     /// Gets the version of the document.

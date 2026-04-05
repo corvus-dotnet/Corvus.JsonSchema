@@ -45,7 +45,7 @@ internal static class JsonLogicHelpers
             JsonValueKind.False => false,
             JsonValueKind.True => true,
             JsonValueKind.Number => !IsZero(value),
-            JsonValueKind.String => value.GetString()!.Length > 0,
+            JsonValueKind.String => !IsEmptyString(value),
             JsonValueKind.Array => value.GetArrayLength() > 0,
             JsonValueKind.Object => true,
             _ => false,
@@ -254,6 +254,19 @@ internal static class JsonLogicHelpers
     {
         using RawUtf8JsonString raw = JsonMarshal.GetRawUtf8Value(value);
         return JsonElementHelpers.AreEqualJsonNumbers(raw.Span, "0"u8);
+    }
+
+    /// <summary>
+    /// Determines whether a string <see cref="JsonElement"/> is the empty string.
+    /// Checks the raw UTF-8 length (including quotes) — empty string is exactly <c>""</c> (2 bytes).
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool IsEmptyString(in JsonElement value)
+    {
+        using RawUtf8JsonString raw = JsonMarshal.GetRawUtf8Value(value);
+
+        // Raw value includes quotes: "" is 2 bytes
+        return raw.Span.Length <= 2;
     }
 
     /// <summary>

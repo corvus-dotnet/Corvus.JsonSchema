@@ -918,59 +918,49 @@ internal static class JsonLogicVM
             return data;
         }
 
-        string? path;
         if (pathElement.ValueKind == JsonValueKind.Number)
         {
-            // Numeric path — array index access
-            path = JsonLogicHelpers.CoerceToString(pathElement);
-        }
-        else if (pathElement.ValueKind == JsonValueKind.String)
-        {
-            path = pathElement.GetString();
-        }
-        else
-        {
-            return JsonLogicHelpers.NullElement();
+            // Numeric path — array index access. Get raw UTF-8 bytes (unquoted).
+            using RawUtf8JsonString raw = JsonMarshal.GetRawUtf8Value(pathElement);
+            return WalkPathUtf8(data, raw.Span);
         }
 
-        if (string.IsNullOrEmpty(path))
+        if (pathElement.ValueKind == JsonValueKind.String)
         {
-            return data;
+            // Get raw UTF-8 including quotes, slice off quotes for unquoted content
+            using RawUtf8JsonString raw = JsonMarshal.GetRawUtf8Value(pathElement);
+            ReadOnlySpan<byte> quoted = raw.Span;
+
+            // Empty string "" (2 bytes) means return entire data
+            if (quoted.Length <= 2)
+            {
+                return data;
+            }
+
+            return WalkPathUtf8(data, quoted.Slice(1, quoted.Length - 2));
         }
 
-        return WalkPath(data, path!);
+        return JsonLogicHelpers.NullElement();
     }
 
-    private static JsonElement WalkPath(JsonElement current, string path)
+    private static JsonElement WalkPathUtf8(JsonElement current, ReadOnlySpan<byte> path)
     {
-        ReadOnlySpan<char> remaining = path.AsSpan();
-
-        while (remaining.Length > 0)
+        while (path.Length > 0)
         {
             if (current.IsNullOrUndefined())
             {
                 return JsonLogicHelpers.NullElement();
             }
 
-            int dotIndex = remaining.IndexOf('.');
-            ReadOnlySpan<char> segment = dotIndex >= 0 ? remaining.Slice(0, dotIndex) : remaining;
-            remaining = dotIndex >= 0 ? remaining.Slice(dotIndex + 1) : ReadOnlySpan<char>.Empty;
+            int dotIndex = path.IndexOf((byte)'.');
+            ReadOnlySpan<byte> segment = dotIndex >= 0 ? path.Slice(0, dotIndex) : path;
+            path = dotIndex >= 0 ? path.Slice(dotIndex + 1) : ReadOnlySpan<byte>.Empty;
 
             if (current.ValueKind == JsonValueKind.Array)
             {
-                if (int.TryParse(segment.ToString(), out int index) && index >= 0 && index < current.GetArrayLength())
+                if (TryParseIndexUtf8(segment, out int index) && index >= 0 && index < current.GetArrayLength())
                 {
-                    int j = 0;
-                    foreach (JsonElement item in current.EnumerateArray())
-                    {
-                        if (j == index)
-                        {
-                            current = item;
-                            break;
-                        }
-
-                        j++;
-                    }
+                    current = current[index];
                 }
                 else
                 {
@@ -995,6 +985,28 @@ internal static class JsonLogicVM
         }
 
         return current;
+    }
+
+    private static bool TryParseIndexUtf8(ReadOnlySpan<byte> utf8, out int value)
+    {
+        value = 0;
+        if (utf8.Length == 0 || utf8.Length > 10)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < utf8.Length; i++)
+        {
+            byte b = utf8[i];
+            if (b < (byte)'0' || b > (byte)'9')
+            {
+                return false;
+            }
+
+            value = (value * 10) + (b - '0');
+        }
+
+        return true;
     }
 
     private static bool CoercingEquals(in JsonElement left, in JsonElement right)
@@ -1064,11 +1076,18 @@ internal static class JsonLogicVM
         return left.ValueKind switch
         {
             JsonValueKind.Number => JsonLogicHelpers.AreNumbersEqual(left, right),
-            JsonValueKind.String => left.GetString() == right.GetString(),
+            JsonValueKind.String => RawUtf8Equals(left, right),
             JsonValueKind.True or JsonValueKind.False => true, // Same ValueKind already
             JsonValueKind.Null => true,
             _ => false,
         };
+    }
+
+    private static bool RawUtf8Equals(in JsonElement left, in JsonElement right)
+    {
+        using RawUtf8JsonString leftRaw = JsonMarshal.GetRawUtf8Value(left);
+        using RawUtf8JsonString rightRaw = JsonMarshal.GetRawUtf8Value(right);
+        return leftRaw.Span.SequenceEqual(rightRaw.Span);
     }
 
     private static int CompareCoerced(in JsonElement left, in JsonElement right)
@@ -1137,49 +1156,102 @@ internal static class JsonLogicVM
         }
 
         bool negative = sig.Sign < 0;
-        string digits = System.Numerics.BigInteger.Abs(sig).ToString();
+        System.Numerics.BigInteger absSig = System.Numerics.BigInteger.Abs(sig);
 
-        string result;
-        if (exp >= 0)
+        // Format digits directly to a UTF-8 buffer on the stack
+        // Max BigInteger digits we'd see in JSON numbers is ~300 chars
+        byte[]? rentedArray = null;
+        Span<byte> buffer = 320 <= JsonConstants.StackallocByteThreshold
+            ? stackalloc byte[JsonConstants.StackallocByteThreshold]
+            : stackalloc byte[320];
+
+        // Write digits to a temp area, then compose the final number
+        Span<byte> digitsBuf = stackalloc byte[128];
+        int digitLen = 0;
+
+#if NET
+        if (absSig.TryFormat(digitsBuf, out digitLen))
         {
-            result = digits + new string('0', exp);
+            // Digits fit in stackalloc
         }
         else
+#endif
         {
-            int decimalPosition = digits.Length + exp;
-            if (decimalPosition <= 0)
+            // Fallback: use ToString for very large numbers (rare for JsonLogic)
+            string digitsStr = absSig.ToString();
+            digitLen = digitsStr.Length;
+            if (digitLen > digitsBuf.Length)
             {
-                result = "0." + new string('0', -decimalPosition) + digits;
+                rentedArray = ArrayPool<byte>.Shared.Rent(digitLen + 64);
+                buffer = rentedArray;
+                digitsBuf = buffer.Slice(0, digitLen);
             }
-            else
+
+            for (int i = 0; i < digitsStr.Length; i++)
             {
-                result = digits.Substring(0, decimalPosition) + "." + digits.Substring(decimalPosition);
+                digitsBuf[i] = (byte)digitsStr[i];
             }
-
-            result = result.TrimEnd('0').TrimEnd('.');
         }
-
-        if (negative)
-        {
-            result = "-" + result;
-        }
-
-        int maxByteCount = Encoding.UTF8.GetMaxByteCount(result.Length);
-        byte[]? rentedArray = null;
-        Span<byte> buffer = maxByteCount <= JsonConstants.StackallocByteThreshold
-            ? stackalloc byte[JsonConstants.StackallocByteThreshold]
-            : (rentedArray = ArrayPool<byte>.Shared.Rent(maxByteCount));
 
         try
         {
-#if NET
-            int bytesWritten = Encoding.UTF8.GetBytes(result, buffer);
-#else
-            byte[] temp = Encoding.UTF8.GetBytes(result);
-            temp.CopyTo(buffer);
-            int bytesWritten = temp.Length;
-#endif
-            return JsonLogicHelpers.NumberFromSpan(buffer.Slice(0, bytesWritten));
+            ReadOnlySpan<byte> digits = digitsBuf.Slice(0, digitLen);
+            int pos = 0;
+
+            if (negative)
+            {
+                buffer[pos++] = (byte)'-';
+            }
+
+            if (exp >= 0)
+            {
+                // Integer: digits followed by exp zeros
+                digits.CopyTo(buffer.Slice(pos));
+                pos += digitLen;
+                for (int i = 0; i < exp; i++)
+                {
+                    buffer[pos++] = (byte)'0';
+                }
+            }
+            else
+            {
+                int decimalPosition = digitLen + exp;
+                if (decimalPosition <= 0)
+                {
+                    // 0.000...digits
+                    buffer[pos++] = (byte)'0';
+                    buffer[pos++] = (byte)'.';
+                    for (int i = 0; i < -decimalPosition; i++)
+                    {
+                        buffer[pos++] = (byte)'0';
+                    }
+
+                    digits.CopyTo(buffer.Slice(pos));
+                    pos += digitLen;
+                }
+                else
+                {
+                    // digits[0..decPos].digits[decPos..]
+                    digits.Slice(0, decimalPosition).CopyTo(buffer.Slice(pos));
+                    pos += decimalPosition;
+                    buffer[pos++] = (byte)'.';
+                    digits.Slice(decimalPosition).CopyTo(buffer.Slice(pos));
+                    pos += digitLen - decimalPosition;
+                }
+
+                // Trim trailing zeros and trailing dot
+                while (pos > 0 && buffer[pos - 1] == (byte)'0')
+                {
+                    pos--;
+                }
+
+                if (pos > 0 && buffer[pos - 1] == (byte)'.')
+                {
+                    pos--;
+                }
+            }
+
+            return JsonLogicHelpers.NumberFromSpan(buffer.Slice(0, pos));
         }
         finally
         {
@@ -1475,9 +1547,53 @@ internal static class JsonLogicVM
     {
         if (haystack.ValueKind == JsonValueKind.String)
         {
-            string? haystackStr = haystack.GetString();
+            // Use raw UTF-8 span search instead of GetString()
+            using RawUtf8JsonString haystackRaw = JsonMarshal.GetRawUtf8Value(haystack);
+            ReadOnlySpan<byte> haystackSpan = haystackRaw.Span;
+
+            if (needle.ValueKind == JsonValueKind.String)
+            {
+                using RawUtf8JsonString needleRaw = JsonMarshal.GetRawUtf8Value(needle);
+                ReadOnlySpan<byte> needleSpan = needleRaw.Span;
+
+                // Both include quotes — slice them off for substring search
+                return haystackSpan.Slice(1, haystackSpan.Length - 2)
+                    .IndexOf(needleSpan.Slice(1, needleSpan.Length - 2)) >= 0;
+            }
+
+            // Non-string needle coerced to string — fall back to string-based for coercion
             string? needleStr = JsonLogicHelpers.CoerceToString(needle);
-            return haystackStr != null && needleStr != null && haystackStr.Contains(needleStr);
+            if (needleStr is null)
+            {
+                return false;
+            }
+
+            // Compare coerced needle against unquoted haystack
+            ReadOnlySpan<byte> unquotedHaystack = haystackSpan.Slice(1, haystackSpan.Length - 2);
+            int maxByteCount = Encoding.UTF8.GetMaxByteCount(needleStr.Length);
+            byte[]? rentedArray = null;
+            Span<byte> needleUtf8 = maxByteCount <= JsonConstants.StackallocByteThreshold
+                ? stackalloc byte[JsonConstants.StackallocByteThreshold]
+                : (rentedArray = ArrayPool<byte>.Shared.Rent(maxByteCount));
+
+            try
+            {
+#if NET
+                int bytesWritten = Encoding.UTF8.GetBytes(needleStr, needleUtf8);
+#else
+                byte[] temp = Encoding.UTF8.GetBytes(needleStr);
+                temp.CopyTo(needleUtf8);
+                int bytesWritten = temp.Length;
+#endif
+                return unquotedHaystack.IndexOf(needleUtf8.Slice(0, bytesWritten)) >= 0;
+            }
+            finally
+            {
+                if (rentedArray != null)
+                {
+                    ArrayPool<byte>.Shared.Return(rentedArray);
+                }
+            }
         }
 
         if (haystack.ValueKind == JsonValueKind.Array)

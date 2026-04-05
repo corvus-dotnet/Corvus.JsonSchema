@@ -30,7 +30,7 @@ namespace Corvus.Text.Json.Internal;
 /// </para>
 /// </remarks>
 [CLSCompliant(false)]
-public sealed class FixedJsonValueDocument<T> : IJsonDocument
+public sealed class FixedJsonValueDocument<T> : IJsonDocument, IWorkspaceManagedDocument
     where T : struct, IJsonElement<T>
 {
     private byte[]? _rentedBuffer;
@@ -1000,17 +1000,18 @@ public sealed class FixedJsonValueDocument<T> : IJsonDocument
         /// </summary>
         public static void ReturnDocument(FixedJsonValueDocument<T> document)
         {
+            // Always return rented buffer to ArrayPool, even for overflow documents
+            document.ResetAllStateForCacheReuse();
+
             ThreadLocalState? state = t_threadLocalState;
 
             if (state is { RentedCount: > 0 })
             {
-                // Only return if it belongs to our pool
+                // Only return to pool if it belongs to our pool
                 for (int i = state.RentedCount - 1; i >= 0; i--)
                 {
                     if (ReferenceEquals(state.Documents[i], document))
                     {
-                        document.ResetAllStateForCacheReuse();
-
                         // Swap with last rented to maintain compact rented region
                         if (i < state.RentedCount - 1)
                         {
@@ -1023,9 +1024,6 @@ public sealed class FixedJsonValueDocument<T> : IJsonDocument
                     }
                 }
             }
-
-            // Not from our pool — just let GC handle it
-            document.ResetAllStateForCacheReuse();
         }
 
         private sealed class ThreadLocalState
