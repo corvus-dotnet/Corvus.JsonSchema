@@ -332,61 +332,34 @@ internal static class JsonLogicHelpers
     }
 
     /// <summary>
-    /// Coerces a string JsonElement to a number without going through any .NET numeric type.
-    /// Validates the string content as a JSON number using <see cref="JsonElementHelpers.TryParseNumber"/>
-    /// and creates a <see cref="JsonElement"/> via the pooled document.
+    /// Coerces a string JsonElement to a number without going through any .NET string type.
+    /// Reads the raw UTF-8 content directly, validates it as a JSON number using
+    /// <see cref="JsonElementHelpers.TryParseNumber"/>, and creates a <see cref="JsonElement"/>
+    /// via the pooled document.
     /// </summary>
     private static bool TryCoerceStringToNumber(in JsonElement value, out JsonElement result)
     {
-        string? s = value.GetString();
-        if (s is null || s.Length == 0)
+        using RawUtf8JsonString raw = JsonMarshal.GetRawUtf8Value(value);
+        ReadOnlySpan<byte> quoted = raw.Span;
+
+        // Raw string value includes quotes: "" is 2 bytes = empty string → 0
+        if (quoted.Length <= 2)
         {
             result = ZeroElement;
             return true;
         }
 
-        // JSON numbers are always ASCII (digits, '.', 'e', 'E', '+', '-'),
-        // so we can do a simple 1:1 char-to-byte copy. Any non-ASCII character
-        // means the string is not a valid JSON number.
-        byte[]? rentedArray = null;
-        Span<byte> utf8Buffer = s.Length <= JsonConstants.StackallocByteThreshold
-            ? stackalloc byte[JsonConstants.StackallocByteThreshold]
-            : (rentedArray = ArrayPool<byte>.Shared.Rent(s.Length));
+        // Slice off quotes to get unescaped content
+        ReadOnlySpan<byte> content = quoted.Slice(1, quoted.Length - 2);
 
-        try
+        if (JsonElementHelpers.TryParseNumber(content, out _, out _, out _, out _))
         {
-            for (int i = 0; i < s.Length; i++)
-            {
-                char c = s[i];
-                if (c > 127)
-                {
-                    result = default;
-                    return false;
-                }
-
-                utf8Buffer[i] = (byte)c;
-            }
-
-            ReadOnlySpan<byte> utf8 = utf8Buffer.Slice(0, s.Length);
-
-            if (JsonElementHelpers.TryParseNumber(utf8, out _, out _, out _, out _))
-            {
-                // Copy to a stable array for the pooled document
-                byte[] stable = utf8.ToArray();
-                result = NumberFromUtf8(stable);
-                return true;
-            }
-
-            result = default;
-            return false;
+            result = NumberFromSpan(content);
+            return true;
         }
-        finally
-        {
-            if (rentedArray != null)
-            {
-                ArrayPool<byte>.Shared.Return(rentedArray);
-            }
-        }
+
+        result = default;
+        return false;
     }
 
     private static string GetNumberString(in JsonElement value)
