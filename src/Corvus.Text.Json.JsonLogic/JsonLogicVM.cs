@@ -397,18 +397,14 @@ internal static class JsonLogicVM
 
                             if (arr.ValueKind == JsonValueKind.Array)
                             {
-                                // Reuse one builder across all iterations — SetProperty updates in-place,
-                                // and the implicit Mutable→JsonElement conversion is a live reference.
                                 using JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateObjectBuilder(workspace, 2);
                                 JsonElement.Mutable root = doc.RootElement;
-                                root.SetProperty("current", default(JsonElement));
-                                root.SetProperty("accumulator", initialAcc);
 
                                 foreach (JsonElement item in arr.EnumerateArray())
                                 {
                                     root.SetProperty("current", item);
                                     root.SetProperty("accumulator", accumulator);
-                                    currentData = root; // implicit Mutable→JsonElement: live reference
+                                    currentData = root;
                                     sp = ExecuteBody(bytecode, constants, stack, ref sp, bodyStart, bodyLen, currentData, workspace);
                                     accumulator = stack[--sp];
                                 }
@@ -1122,8 +1118,7 @@ internal static class JsonLogicVM
         Span<byte> buffer = stackalloc byte[32];
         if (Utf8Formatter.TryFormat(value, buffer, out int bytesWritten))
         {
-            byte[] stable = buffer.Slice(0, bytesWritten).ToArray();
-            return ParsedJsonDocument<JsonElement>.NumberConstant(stable);
+            return JsonLogicHelpers.NumberFromSpan(buffer.Slice(0, bytesWritten));
         }
 
         // Fallback should not happen for finite doubles
@@ -1168,9 +1163,30 @@ internal static class JsonLogicVM
             result = "-" + result;
         }
 
-        // Use ParsedJsonDocument for builder compatibility
-        byte[] utf8 = Encoding.UTF8.GetBytes(result);
-        return ParsedJsonDocument<JsonElement>.NumberConstant(utf8);
+        int maxByteCount = Encoding.UTF8.GetMaxByteCount(result.Length);
+        byte[]? rentedArray = null;
+        Span<byte> buffer = maxByteCount <= JsonConstants.StackallocByteThreshold
+            ? stackalloc byte[JsonConstants.StackallocByteThreshold]
+            : (rentedArray = ArrayPool<byte>.Shared.Rent(maxByteCount));
+
+        try
+        {
+#if NET
+            int bytesWritten = Encoding.UTF8.GetBytes(result, buffer);
+#else
+            byte[] temp = Encoding.UTF8.GetBytes(result);
+            temp.CopyTo(buffer);
+            int bytesWritten = temp.Length;
+#endif
+            return JsonLogicHelpers.NumberFromSpan(buffer.Slice(0, bytesWritten));
+        }
+        finally
+        {
+            if (rentedArray is not null)
+            {
+                ArrayPool<byte>.Shared.Return(rentedArray);
+            }
+        }
     }
 
     private static JsonElement ArithmeticAdd(JsonElement[] stack, int sp, int count)

@@ -188,6 +188,18 @@ internal static class JsonLogicHelpers
     }
 
     /// <summary>
+    /// Creates a <see cref="JsonElement"/> wrapping a number from a UTF-8 span,
+    /// copying into a rented buffer (zero heap allocation on the hot path).
+    /// </summary>
+    /// <param name="utf8NumberBytes">The raw UTF-8 number bytes.</param>
+    /// <returns>A <see cref="JsonElement"/> backed by a pooled document with a rented buffer.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static JsonElement NumberFromSpan(ReadOnlySpan<byte> utf8NumberBytes)
+    {
+        return FixedJsonValueDocument<JsonElement>.ForNumberFromSpan(utf8NumberBytes).RootElement;
+    }
+
+    /// <summary>
     /// Creates a <see cref="JsonElement"/> wrapping a quoted string from raw UTF-8 bytes.
     /// Uses the pooled <see cref="FixedJsonValueDocument{T}"/>.
     /// </summary>

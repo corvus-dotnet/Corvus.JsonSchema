@@ -33,6 +33,7 @@ namespace Corvus.Text.Json.Internal;
 public sealed class FixedJsonValueDocument<T> : IJsonDocument
     where T : struct, IJsonElement<T>
 {
+    private byte[]? _rentedBuffer;
     private ReadOnlyMemory<byte> _rawValue;
     private JsonTokenType _tokenType;
 
@@ -68,6 +69,30 @@ public sealed class FixedJsonValueDocument<T> : IJsonDocument
         return Pool.Rent(rawQuotedUtf8String, JsonTokenType.String);
     }
 
+    /// <summary>
+    /// Creates a <see cref="FixedJsonValueDocument{T}"/> for a number value from a span,
+    /// copying the data into the document's internal buffer (zero heap allocation).
+    /// </summary>
+    /// <param name="rawUtf8Number">The raw UTF-8 number bytes (unquoted). Must be &lt;= 64 bytes.</param>
+    /// <returns>A pooled document instance wrapping the number value.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static FixedJsonValueDocument<T> ForNumberFromSpan(ReadOnlySpan<byte> rawUtf8Number)
+    {
+        return Pool.RentFromSpan(rawUtf8Number, JsonTokenType.Number);
+    }
+
+    /// <summary>
+    /// Creates a <see cref="FixedJsonValueDocument{T}"/> for a string value from a span,
+    /// copying the data into the document's internal buffer (zero heap allocation).
+    /// </summary>
+    /// <param name="rawQuotedUtf8String">The raw UTF-8 string bytes (including surrounding quotes). Must be &lt;= 64 bytes.</param>
+    /// <returns>A pooled document instance wrapping the string value.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static FixedJsonValueDocument<T> ForStringFromSpan(ReadOnlySpan<byte> rawQuotedUtf8String)
+    {
+        return Pool.RentFromSpan(rawQuotedUtf8String, JsonTokenType.String);
+    }
+
 #if NET
     /// <summary>
     /// Gets the root element of the document.
@@ -80,11 +105,28 @@ public sealed class FixedJsonValueDocument<T> : IJsonDocument
     public T RootElement => JsonElementHelpers.CreateInstance<T>(this, 0);
 #endif
 
-    void IJsonDocument.AppendElementToMetadataDb(int index, JsonWorkspace workspace, ref MetadataDb db) { throw new NotSupportedException(); }
+    void IJsonDocument.AppendElementToMetadataDb(int index, JsonWorkspace workspace, ref MetadataDb db)
+    {
+        Debug.Assert(index == 0);
+        int workspaceDocumentIndex = workspace.GetDocumentIndex(this);
+        db.AppendExternal(_tokenType, 0, _rawValue.Length, workspaceDocumentIndex);
+    }
 
-    int IJsonDocument.WriteElementToMetadataDb(int index, JsonWorkspace workspace, ref MetadataDb db, int writePosition) { throw new NotSupportedException(); }
+    int IJsonDocument.WriteElementToMetadataDb(int index, JsonWorkspace workspace, ref MetadataDb db, int writePosition)
+    {
+        Debug.Assert(index == 0);
+        int workspaceDocumentIndex = workspace.GetDocumentIndex(this);
+        db.WriteRowAt(writePosition, new DbRow(_tokenType, 0, _rawValue.Length, workspaceDocumentIndex));
+        return 1;
+    }
 
-    int IJsonDocument.BuildRentedMetadataDb(int parentDocumentIndex, JsonWorkspace workspace, out byte[] rentedBacking) { throw new NotSupportedException(); }
+    int IJsonDocument.BuildRentedMetadataDb(int parentDocumentIndex, JsonWorkspace workspace, out byte[] rentedBacking)
+    {
+        var db = MetadataDb.CreateRented(DbRow.Size, false);
+        int workspaceDocumentIndex = workspace.GetDocumentIndex(this);
+        db.AppendExternal(_tokenType, 0, _rawValue.Length, workspaceDocumentIndex);
+        return db.TakeOwnership(out rentedBacking);
+    }
 
     JsonElement IJsonDocument.CloneElement(int index) => new(this, 0);
 
@@ -136,7 +178,7 @@ public sealed class FixedJsonValueDocument<T> : IJsonDocument
     int IJsonDocument.GetDbSize(int index, bool includeEndElement)
     {
         Debug.Assert(index == 0);
-        return 1;
+        return DbRow.Size;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -882,6 +924,12 @@ public sealed class FixedJsonValueDocument<T> : IJsonDocument
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void ResetAllStateForCacheReuse()
     {
+        if (_rentedBuffer is not null)
+        {
+            ArrayPool<byte>.Shared.Return(_rentedBuffer);
+            _rentedBuffer = null;
+        }
+
         _rawValue = ReadOnlyMemory<byte>.Empty;
     }
 
@@ -918,6 +966,33 @@ public sealed class FixedJsonValueDocument<T> : IJsonDocument
 
             // Pool exhausted — allocate a new instance
             return new FixedJsonValueDocument<T>(rawValue, tokenType);
+        }
+
+        /// <summary>
+        /// Rents a document from the pool, copying span data into a rented buffer.
+        /// The buffer is returned to <see cref="ArrayPool{T}"/> when the document is disposed.
+        /// </summary>
+        public static FixedJsonValueDocument<T> RentFromSpan(ReadOnlySpan<byte> rawValue, JsonTokenType tokenType)
+        {
+            ThreadLocalState state = t_threadLocalState ??= new();
+
+            FixedJsonValueDocument<T> document;
+            if (state.RentedCount < PoolSize)
+            {
+                document = state.Documents[state.RentedCount];
+                state.RentedCount++;
+            }
+            else
+            {
+                document = new FixedJsonValueDocument<T>(ReadOnlyMemory<byte>.Empty, JsonTokenType.None);
+            }
+
+            byte[] buffer = ArrayPool<byte>.Shared.Rent(rawValue.Length);
+            rawValue.CopyTo(buffer);
+            document._rentedBuffer = buffer;
+            document._rawValue = new ReadOnlyMemory<byte>(buffer, 0, rawValue.Length);
+            document._tokenType = tokenType;
+            return document;
         }
 
         /// <summary>
