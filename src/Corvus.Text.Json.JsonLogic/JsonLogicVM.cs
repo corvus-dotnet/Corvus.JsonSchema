@@ -311,7 +311,7 @@ internal static class JsonLogicVM
 
                             if (arr.ValueKind == JsonValueKind.Array && arr.GetArrayLength() > 0)
                             {
-                                using JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateArrayBuilder(workspace, arr.GetArrayLength());
+                                JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateArrayBuilder(workspace, arr.GetArrayLength());
                                 JsonElement.Mutable root = doc.RootElement;
 
                                 foreach (JsonElement item in arr.EnumerateArray())
@@ -322,7 +322,7 @@ internal static class JsonLogicVM
                                 }
 
                                 currentData = savedData;
-                                stack[sp++] = root.Clone();
+                                stack[sp++] = root;
                             }
                             else
                             {
@@ -352,7 +352,7 @@ internal static class JsonLogicVM
 
                             if (arr.ValueKind == JsonValueKind.Array && arr.GetArrayLength() > 0)
                             {
-                                using JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateArrayBuilder(workspace, arr.GetArrayLength());
+                                JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateArrayBuilder(workspace, arr.GetArrayLength());
                                 JsonElement.Mutable root = doc.RootElement;
 
                                 foreach (JsonElement item in arr.EnumerateArray())
@@ -367,7 +367,7 @@ internal static class JsonLogicVM
                                 }
 
                                 currentData = savedData;
-                                stack[sp++] = root.Clone();
+                                stack[sp++] = root;
                             }
                             else
                             {
@@ -570,7 +570,7 @@ internal static class JsonLogicVM
                     case OpCode.Return:
                         {
                             JsonElement result = sp > 0 ? stack[--sp] : JsonLogicHelpers.NullElement();
-                            return result;
+                            return result.Clone();
                         }
 
                     default:
@@ -578,7 +578,8 @@ internal static class JsonLogicVM
                 }
             }
 
-            return sp > 0 ? stack[--sp] : JsonLogicHelpers.NullElement();
+            JsonElement finalResult = sp > 0 ? stack[--sp] : JsonLogicHelpers.NullElement();
+            return finalResult.Clone();
         }
         finally
         {
@@ -1495,38 +1496,49 @@ internal static class JsonLogicVM
 
     private static JsonElement MergeArrays(JsonElement[] stack, int sp, int count, JsonWorkspace workspace)
     {
-        List<JsonElement> merged = new();
+        JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateArrayBuilder(workspace, count * 2);
+        JsonElement.Mutable root = doc.RootElement;
 
         for (int i = sp - count; i < sp; i++)
         {
             JsonElement val = stack[i];
             if (val.ValueKind == JsonValueKind.Array)
             {
-                merged.AddRange(val.EnumerateArray());
+                foreach (JsonElement item in val.EnumerateArray())
+                {
+                    root.AddItem(item);
+                }
             }
             else
             {
-                merged.Add(val);
+                root.AddItem(val);
             }
         }
 
-        return BuildJsonArray(merged, workspace);
+        return root;
     }
 
     private static JsonElement CollectArray(JsonElement[] stack, int sp, int count, JsonWorkspace workspace)
     {
-        List<JsonElement> items = new(count);
-        for (int i = sp - count; i < sp; i++)
+        if (count == 0)
         {
-            items.Add(stack[i]);
+            return JsonLogicHelpers.EmptyArray();
         }
 
-        return BuildJsonArray(items, workspace);
+        JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateArrayBuilder(workspace, count);
+        JsonElement.Mutable root = doc.RootElement;
+        for (int i = sp - count; i < sp; i++)
+        {
+            root.AddItem(stack[i]);
+        }
+
+        return root;
     }
 
     private static JsonElement CheckMissing(JsonElement[] stack, int sp, int count, in JsonElement data, JsonWorkspace workspace)
     {
-        List<JsonElement> missing = new();
+        JsonElement.Mutable root = default;
+        bool hasItems = false;
 
         for (int i = sp - count; i < sp; i++)
         {
@@ -1539,7 +1551,13 @@ internal static class JsonLogicVM
                 {
                     if (ResolveVar(data, subPath).IsNullOrUndefined())
                     {
-                        missing.Add(subPath);
+                        if (!hasItems)
+                        {
+                            root = JsonElement.CreateArrayBuilder(workspace, 4).RootElement;
+                            hasItems = true;
+                        }
+
+                        root.AddItem(subPath);
                     }
                 }
             }
@@ -1547,12 +1565,18 @@ internal static class JsonLogicVM
             {
                 if (ResolveVar(data, pathElement).IsNullOrUndefined())
                 {
-                    missing.Add(pathElement);
+                    if (!hasItems)
+                    {
+                        root = JsonElement.CreateArrayBuilder(workspace, 4).RootElement;
+                        hasItems = true;
+                    }
+
+                    root.AddItem(pathElement);
                 }
             }
         }
 
-        return BuildJsonArray(missing, workspace);
+        return hasItems ? (JsonElement)root : JsonLogicHelpers.EmptyArray();
     }
 
     private static JsonElement CheckMissingSome(in JsonElement needed, in JsonElement paths, in JsonElement data, JsonWorkspace workspace)
@@ -1564,44 +1588,35 @@ internal static class JsonLogicVM
             neededCount = (int)(long)bn;
         }
 
-        List<JsonElement> allPaths = new();
-        List<JsonElement> missing = new();
+        int totalCount = 0;
+        JsonElement.Mutable root = default;
+        bool hasItems = false;
 
         if (paths.ValueKind == JsonValueKind.Array)
         {
             foreach (JsonElement p in paths.EnumerateArray())
             {
-                allPaths.Add(p);
+                totalCount++;
                 if (ResolveVar(data, p).IsNullOrUndefined())
                 {
-                    missing.Add(p);
+                    if (!hasItems)
+                    {
+                        root = JsonElement.CreateArrayBuilder(workspace, 4).RootElement;
+                        hasItems = true;
+                    }
+
+                    root.AddItem(p);
                 }
             }
         }
 
-        int present = allPaths.Count - missing.Count;
+        int missingCount = hasItems ? root.GetArrayLength() : 0;
+        int present = totalCount - missingCount;
         if (present >= neededCount)
         {
             return JsonLogicHelpers.EmptyArray();
         }
 
-        return BuildJsonArray(missing, workspace);
-    }
-
-    private static JsonElement BuildJsonArray(List<JsonElement> items, JsonWorkspace workspace)
-    {
-        if (items.Count == 0)
-        {
-            return JsonLogicHelpers.EmptyArray();
-        }
-
-        using JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateArrayBuilder(workspace, items.Count);
-        JsonElement.Mutable root = doc.RootElement;
-        foreach (JsonElement item in items)
-        {
-            root.AddItem(item);
-        }
-
-        return root.Clone();
+        return hasItems ? (JsonElement)root : JsonLogicHelpers.EmptyArray();
     }
 }
