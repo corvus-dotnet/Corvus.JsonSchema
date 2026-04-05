@@ -222,6 +222,7 @@
     <Compile Include="Corvus\Text\Json\Internal\JsonElementHelpers.ParseValue.cs" />
     <Compile Include="Corvus\Text\Json\Internal\JsonElementHelpers.String.cs" />
     <Compile Include="Corvus\Text\Json\JsonSchema\Internal\FixedStringJsonDocument.cs" />
+    <Compile Include="Corvus\Text\Json\JsonSchema\Internal\FixedJsonValueDocument.cs" />
     <Compile Include="Corvus\Text\Json\JsonSchema\Internal\UniqueItemsHashSet.cs" />
     <Compile Include="Corvus\Text\Json\JsonSchema\Internal\PropertySchemaMatchers.cs" />
     <Compile Include="Corvus\Text\Json\JsonSchema\Internal\MatchIndex.cs" />

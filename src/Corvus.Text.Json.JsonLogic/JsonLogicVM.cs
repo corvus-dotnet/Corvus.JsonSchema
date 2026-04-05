@@ -3,9 +3,11 @@
 // </copyright>
 
 using System.Buffers;
+using System.Buffers.Text;
 using System.Text;
 using Corvus.Numerics;
 using Corvus.Runtime.InteropServices;
+using Corvus.Text.Json.Internal;
 
 namespace Corvus.Text.Json.JsonLogic;
 
@@ -14,7 +16,7 @@ namespace Corvus.Text.Json.JsonLogic;
 /// </summary>
 internal static class JsonLogicVM
 {
-    internal static JsonElement Execute(in CompiledRule rule, in JsonElement data)
+    internal static JsonElement Execute(in CompiledRule rule, in JsonElement data, JsonWorkspace workspace)
     {
         byte[] bytecode = rule.Bytecode;
         JsonElement[] constants = rule.Constants;
@@ -293,7 +295,7 @@ internal static class JsonLogicVM
                         {
                             int count = ReadInt32(bytecode, pc);
                             pc += 4;
-                            stack[sp - count] = MergeArrays(stack, sp, count);
+                            stack[sp - count] = MergeArrays(stack, sp, count, workspace);
                             sp = sp - count + 1;
                             break;
                         }
@@ -306,20 +308,28 @@ internal static class JsonLogicVM
 
                             JsonElement arr = stack[--sp];
                             JsonElement savedData = currentData;
-                            var results = new List<JsonElement>();
 
-                            if (arr.ValueKind == JsonValueKind.Array)
+                            if (arr.ValueKind == JsonValueKind.Array && arr.GetArrayLength() > 0)
                             {
+                                using JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateArrayBuilder(workspace, arr.GetArrayLength());
+                                JsonElement.Mutable root = doc.RootElement;
+
                                 foreach (JsonElement item in arr.EnumerateArray())
                                 {
                                     currentData = item;
-                                    sp = ExecuteBody(bytecode, constants, stack, ref sp, bodyStart, bodyLen, currentData);
-                                    results.Add(stack[--sp]);
+                                    sp = ExecuteBody(bytecode, constants, stack, ref sp, bodyStart, bodyLen, currentData, workspace);
+                                    root.AddItem(stack[--sp]);
                                 }
+
+                                currentData = savedData;
+                                stack[sp++] = root.Clone();
+                            }
+                            else
+                            {
+                                currentData = savedData;
+                                stack[sp++] = JsonLogicHelpers.EmptyArray();
                             }
 
-                            currentData = savedData;
-                            stack[sp++] = BuildJsonArray(results);
                             pc = bodyStart + bodyLen;
 
                             // Skip past LoopEnd
@@ -339,24 +349,32 @@ internal static class JsonLogicVM
 
                             JsonElement arr = stack[--sp];
                             JsonElement savedData = currentData;
-                            var results = new List<JsonElement>();
 
-                            if (arr.ValueKind == JsonValueKind.Array)
+                            if (arr.ValueKind == JsonValueKind.Array && arr.GetArrayLength() > 0)
                             {
+                                using JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateArrayBuilder(workspace, arr.GetArrayLength());
+                                JsonElement.Mutable root = doc.RootElement;
+
                                 foreach (JsonElement item in arr.EnumerateArray())
                                 {
                                     currentData = item;
-                                    sp = ExecuteBody(bytecode, constants, stack, ref sp, bodyStart, bodyLen, currentData);
+                                    sp = ExecuteBody(bytecode, constants, stack, ref sp, bodyStart, bodyLen, currentData, workspace);
                                     JsonElement result = stack[--sp];
                                     if (JsonLogicHelpers.IsTruthy(result))
                                     {
-                                        results.Add(item);
+                                        root.AddItem(item);
                                     }
                                 }
+
+                                currentData = savedData;
+                                stack[sp++] = root.Clone();
+                            }
+                            else
+                            {
+                                currentData = savedData;
+                                stack[sp++] = JsonLogicHelpers.EmptyArray();
                             }
 
-                            currentData = savedData;
-                            stack[sp++] = BuildJsonArray(results);
                             pc = bodyStart + bodyLen;
                             if (pc < bytecode.Length && (OpCode)bytecode[pc] == OpCode.LoopEnd)
                             {
@@ -379,11 +397,19 @@ internal static class JsonLogicVM
 
                             if (arr.ValueKind == JsonValueKind.Array)
                             {
+                                // Reuse one builder across all iterations — SetProperty updates in-place,
+                                // and the implicit Mutable→JsonElement conversion is a live reference.
+                                using JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateObjectBuilder(workspace, 2);
+                                JsonElement.Mutable root = doc.RootElement;
+                                root.SetProperty("current", default(JsonElement));
+                                root.SetProperty("accumulator", initialAcc);
+
                                 foreach (JsonElement item in arr.EnumerateArray())
                                 {
-                                    // Build {"current": item, "accumulator": acc}
-                                    currentData = BuildReduceContext(item, accumulator);
-                                    sp = ExecuteBody(bytecode, constants, stack, ref sp, bodyStart, bodyLen, currentData);
+                                    root.SetProperty("current", item);
+                                    root.SetProperty("accumulator", accumulator);
+                                    currentData = root; // implicit Mutable→JsonElement: live reference
+                                    sp = ExecuteBody(bytecode, constants, stack, ref sp, bodyStart, bodyLen, currentData, workspace);
                                     accumulator = stack[--sp];
                                 }
                             }
@@ -414,7 +440,7 @@ internal static class JsonLogicVM
                                 foreach (JsonElement item in arr.EnumerateArray())
                                 {
                                     currentData = item;
-                                    sp = ExecuteBody(bytecode, constants, stack, ref sp, bodyStart, bodyLen, currentData);
+                                    sp = ExecuteBody(bytecode, constants, stack, ref sp, bodyStart, bodyLen, currentData, workspace);
                                     if (!JsonLogicHelpers.IsTruthy(stack[--sp]))
                                     {
                                         result = false;
@@ -454,7 +480,7 @@ internal static class JsonLogicVM
                                 foreach (JsonElement item in arr.EnumerateArray())
                                 {
                                     currentData = item;
-                                    sp = ExecuteBody(bytecode, constants, stack, ref sp, bodyStart, bodyLen, currentData);
+                                    sp = ExecuteBody(bytecode, constants, stack, ref sp, bodyStart, bodyLen, currentData, workspace);
                                     if (JsonLogicHelpers.IsTruthy(stack[--sp]))
                                     {
                                         result = false;
@@ -489,7 +515,7 @@ internal static class JsonLogicVM
                                 foreach (JsonElement item in arr.EnumerateArray())
                                 {
                                     currentData = item;
-                                    sp = ExecuteBody(bytecode, constants, stack, ref sp, bodyStart, bodyLen, currentData);
+                                    sp = ExecuteBody(bytecode, constants, stack, ref sp, bodyStart, bodyLen, currentData, workspace);
                                     if (JsonLogicHelpers.IsTruthy(stack[--sp]))
                                     {
                                         result = true;
@@ -518,7 +544,7 @@ internal static class JsonLogicVM
                         {
                             int count = ReadInt32(bytecode, pc);
                             pc += 4;
-                            stack[sp - count] = CheckMissing(stack, sp, count, currentData);
+                            stack[sp - count] = CheckMissing(stack, sp, count, currentData, workspace);
                             sp = sp - count + 1;
                             break;
                         }
@@ -527,7 +553,7 @@ internal static class JsonLogicVM
                         {
                             JsonElement paths = stack[--sp];
                             JsonElement needed = stack[--sp];
-                            stack[sp++] = CheckMissingSome(needed, paths, currentData);
+                            stack[sp++] = CheckMissingSome(needed, paths, currentData, workspace);
                             break;
                         }
 
@@ -535,7 +561,7 @@ internal static class JsonLogicVM
                         {
                             int count = ReadInt32(bytecode, pc);
                             pc += 4;
-                            stack[sp - count] = CollectArray(stack, sp, count);
+                            stack[sp - count] = CollectArray(stack, sp, count, workspace);
                             sp = sp - count + 1;
                             break;
                         }
@@ -571,7 +597,8 @@ internal static class JsonLogicVM
         ref int sp,
         int bodyStart,
         int bodyLen,
-        JsonElement currentData)
+        JsonElement currentData,
+        JsonWorkspace workspace)
     {
         int pc = bodyStart;
         int bodyEnd = bodyStart + bodyLen;
@@ -841,7 +868,7 @@ internal static class JsonLogicVM
                     {
                         int count = ReadInt32(bytecode, pc);
                         pc += 4;
-                        stack[sp - count] = CollectArray(stack, sp, count);
+                        stack[sp - count] = CollectArray(stack, sp, count, workspace);
                         sp = sp - count + 1;
                         break;
                     }
@@ -919,20 +946,22 @@ internal static class JsonLogicVM
 
     private static JsonElement WalkPath(JsonElement current, string path)
     {
-        string[] segments = path.Split('.');
+        ReadOnlySpan<char> remaining = path.AsSpan();
 
-        for (int i = 0; i < segments.Length; i++)
+        while (remaining.Length > 0)
         {
             if (current.IsNullOrUndefined())
             {
                 return JsonLogicHelpers.NullElement();
             }
 
-            string segment = segments[i];
+            int dotIndex = remaining.IndexOf('.');
+            ReadOnlySpan<char> segment = dotIndex >= 0 ? remaining.Slice(0, dotIndex) : remaining;
+            remaining = dotIndex >= 0 ? remaining.Slice(dotIndex + 1) : ReadOnlySpan<char>.Empty;
 
             if (current.ValueKind == JsonValueKind.Array)
             {
-                if (int.TryParse(segment, out int index) && index >= 0 && index < current.GetArrayLength())
+                if (int.TryParse(segment.ToString(), out int index) && index >= 0 && index < current.GetArrayLength())
                 {
                     int j = 0;
                     foreach (JsonElement item in current.EnumerateArray())
@@ -1007,16 +1036,16 @@ internal static class JsonLogicVM
         if (left.ValueKind == JsonValueKind.True || left.ValueKind == JsonValueKind.False)
         {
             JsonElement leftNum = left.ValueKind == JsonValueKind.True
-                ? JsonElement.ParseValue("1"u8)
-                : JsonElement.ParseValue("0"u8);
+                ? JsonLogicHelpers.One()
+                : JsonLogicHelpers.Zero();
             return CoercingEquals(leftNum, right);
         }
 
         if (right.ValueKind == JsonValueKind.True || right.ValueKind == JsonValueKind.False)
         {
             JsonElement rightNum = right.ValueKind == JsonValueKind.True
-                ? JsonElement.ParseValue("1"u8)
-                : JsonElement.ParseValue("0"u8);
+                ? JsonLogicHelpers.One()
+                : JsonLogicHelpers.Zero();
             return CoercingEquals(left, rightNum);
         }
 
@@ -1060,6 +1089,20 @@ internal static class JsonLogicVM
         return string.CompareOrdinal(leftStr, rightStr);
     }
 
+    private static bool TryCoerceToDouble(in JsonElement value, out double result)
+    {
+        if (JsonLogicHelpers.TryCoerceToNumber(value, out JsonElement numElement))
+        {
+            if (numElement.TryGetDouble(out result))
+            {
+                return true;
+            }
+        }
+
+        result = 0;
+        return false;
+    }
+
     private static BigNumber CoerceToBigNumber(in JsonElement value)
     {
         if (JsonLogicHelpers.TryCoerceToNumber(value, out JsonElement numElement))
@@ -1074,16 +1117,27 @@ internal static class JsonLogicVM
         return BigNumber.Zero;
     }
 
+    private static JsonElement DoubleToElement(double value)
+    {
+        Span<byte> buffer = stackalloc byte[32];
+        if (Utf8Formatter.TryFormat(value, buffer, out int bytesWritten))
+        {
+            byte[] stable = buffer.Slice(0, bytesWritten).ToArray();
+            return ParsedJsonDocument<JsonElement>.NumberConstant(stable);
+        }
+
+        // Fallback should not happen for finite doubles
+        return JsonLogicHelpers.Zero();
+    }
+
     private static JsonElement BigNumberToElement(BigNumber value)
     {
-        // Format the BigNumber as decimal notation (not scientific).
-        // BigNumber = Significand × 10^Exponent
         System.Numerics.BigInteger sig = value.Significand;
         int exp = value.Exponent;
 
         if (sig.IsZero)
         {
-            return JsonElement.ParseValue("0"u8);
+            return JsonLogicHelpers.Zero();
         }
 
         bool negative = sig.Sign < 0;
@@ -1092,7 +1146,6 @@ internal static class JsonLogicVM
         string result;
         if (exp >= 0)
         {
-            // Integer: append zeros
             result = digits + new string('0', exp);
         }
         else
@@ -1100,16 +1153,13 @@ internal static class JsonLogicVM
             int decimalPosition = digits.Length + exp;
             if (decimalPosition <= 0)
             {
-                // Need leading zeros: 0.00...digits
                 result = "0." + new string('0', -decimalPosition) + digits;
             }
             else
             {
-                // Insert decimal point within digits
                 result = digits.Substring(0, decimalPosition) + "." + digits.Substring(decimalPosition);
             }
 
-            // Trim trailing zeros after decimal point
             result = result.TrimEnd('0').TrimEnd('.');
         }
 
@@ -1118,15 +1168,16 @@ internal static class JsonLogicVM
             result = "-" + result;
         }
 
+        // Use ParsedJsonDocument for builder compatibility
         byte[] utf8 = Encoding.UTF8.GetBytes(result);
-        return JsonElement.ParseValue(utf8);
+        return ParsedJsonDocument<JsonElement>.NumberConstant(utf8);
     }
 
     private static JsonElement ArithmeticAdd(JsonElement[] stack, int sp, int count)
     {
         if (count == 0)
         {
-            return JsonElement.ParseValue("0"u8);
+            return JsonLogicHelpers.Zero();
         }
 
         // Unary + coerces to number
@@ -1137,55 +1188,122 @@ internal static class JsonLogicVM
                 return numResult;
             }
 
-            return JsonElement.ParseValue("0"u8);
+            return JsonLogicHelpers.Zero();
         }
 
-        BigNumber sum = BigNumber.Zero;
+        // Fast path: try double arithmetic
+        double sum = 0;
+        bool allDouble = true;
         for (int i = sp - count; i < sp; i++)
         {
-            sum += CoerceToBigNumber(stack[i]);
+            if (!TryCoerceToDouble(stack[i], out double d))
+            {
+                allDouble = false;
+                break;
+            }
+
+            sum += d;
         }
 
-        return BigNumberToElement(sum);
+        if (allDouble)
+        {
+            return DoubleToElement(sum);
+        }
+
+        // Slow path: BigNumber
+        BigNumber bigSum = BigNumber.Zero;
+        for (int i = sp - count; i < sp; i++)
+        {
+            bigSum += CoerceToBigNumber(stack[i]);
+        }
+
+        return BigNumberToElement(bigSum);
     }
 
     private static JsonElement ArithmeticSub(JsonElement[] stack, int sp, int count)
     {
         if (count == 1)
         {
-            // Unary negation
+            // Fast path: try double negation
+            if (TryCoerceToDouble(stack[sp - 1], out double d))
+            {
+                return DoubleToElement(-d);
+            }
+
+            // Slow path: BigNumber negation
             BigNumber val = CoerceToBigNumber(stack[sp - 1]);
             return BigNumberToElement(-val);
         }
 
         if (count == 2)
         {
+            // Fast path: try double subtraction
+            if (TryCoerceToDouble(stack[sp - 2], out double dLeft)
+                && TryCoerceToDouble(stack[sp - 1], out double dRight))
+            {
+                return DoubleToElement(dLeft - dRight);
+            }
+
+            // Slow path: BigNumber subtraction
             BigNumber left = CoerceToBigNumber(stack[sp - 2]);
             BigNumber right = CoerceToBigNumber(stack[sp - 1]);
             return BigNumberToElement(left - right);
         }
 
-        return JsonElement.ParseValue("0"u8);
+        return JsonLogicHelpers.Zero();
     }
 
     private static JsonElement ArithmeticMul(JsonElement[] stack, int sp, int count)
     {
         if (count == 0)
         {
-            return JsonElement.ParseValue("0"u8);
+            return JsonLogicHelpers.Zero();
         }
 
-        BigNumber product = BigNumber.One;
+        // Fast path: try double arithmetic
+        double product = 1;
+        bool allDouble = true;
         for (int i = sp - count; i < sp; i++)
         {
-            product *= CoerceToBigNumber(stack[i]);
+            if (!TryCoerceToDouble(stack[i], out double d))
+            {
+                allDouble = false;
+                break;
+            }
+
+            product *= d;
         }
 
-        return BigNumberToElement(product);
+        if (allDouble)
+        {
+            return DoubleToElement(product);
+        }
+
+        // Slow path: BigNumber
+        BigNumber bigProduct = BigNumber.One;
+        for (int i = sp - count; i < sp; i++)
+        {
+            bigProduct *= CoerceToBigNumber(stack[i]);
+        }
+
+        return BigNumberToElement(bigProduct);
     }
 
     private static JsonElement ArithmeticDiv(in JsonElement left, in JsonElement right)
     {
+        // Fast path: try double division
+        if (TryCoerceToDouble(left, out double dLeft)
+            && TryCoerceToDouble(right, out double dRight))
+        {
+            if (dRight == 0)
+            {
+                return JsonLogicHelpers.NullElement();
+            }
+
+            return DoubleToElement(dLeft / dRight);
+        }
+
+        // Slow path: BigNumber division
         BigNumber l = CoerceToBigNumber(left);
         BigNumber r = CoerceToBigNumber(right);
 
@@ -1199,6 +1317,19 @@ internal static class JsonLogicVM
 
     private static JsonElement ArithmeticMod(in JsonElement left, in JsonElement right)
     {
+        // Fast path: try double modulo
+        if (TryCoerceToDouble(left, out double dLeft)
+            && TryCoerceToDouble(right, out double dRight))
+        {
+            if (dRight == 0)
+            {
+                return JsonLogicHelpers.NullElement();
+            }
+
+            return DoubleToElement(dLeft % dRight);
+        }
+
+        // Slow path: BigNumber modulo
         BigNumber l = CoerceToBigNumber(left);
         BigNumber r = CoerceToBigNumber(right);
 
@@ -1264,7 +1395,7 @@ internal static class JsonLogicVM
     {
         if (count == 0)
         {
-            return JsonElement.ParseValue("\"\""u8);
+            return JsonLogicHelpers.EmptyString();
         }
 
         StringBuilder sb = new();
@@ -1282,7 +1413,7 @@ internal static class JsonLogicVM
         string? str = JsonLogicHelpers.CoerceToString(stack[sp - argCount]);
         if (str is null)
         {
-            return JsonElement.ParseValue("\"\""u8);
+            return JsonLogicHelpers.EmptyString();
         }
 
         // Get start position
@@ -1297,7 +1428,7 @@ internal static class JsonLogicVM
 
         if (start >= str.Length)
         {
-            return JsonElement.ParseValue("\"\""u8);
+            return JsonLogicHelpers.EmptyString();
         }
 
         if (argCount == 3)
@@ -1314,7 +1445,7 @@ internal static class JsonLogicVM
             length = Math.Min(length, str.Length - start);
             if (length <= 0)
             {
-                return JsonElement.ParseValue("\"\""u8);
+                return JsonLogicHelpers.EmptyString();
             }
 
             return JsonLogicHelpers.StringToElement(str.Substring(start, length));
@@ -1346,7 +1477,7 @@ internal static class JsonLogicVM
         return false;
     }
 
-    private static JsonElement MergeArrays(JsonElement[] stack, int sp, int count)
+    private static JsonElement MergeArrays(JsonElement[] stack, int sp, int count, JsonWorkspace workspace)
     {
         List<JsonElement> merged = new();
 
@@ -1363,10 +1494,10 @@ internal static class JsonLogicVM
             }
         }
 
-        return BuildJsonArray(merged);
+        return BuildJsonArray(merged, workspace);
     }
 
-    private static JsonElement CollectArray(JsonElement[] stack, int sp, int count)
+    private static JsonElement CollectArray(JsonElement[] stack, int sp, int count, JsonWorkspace workspace)
     {
         List<JsonElement> items = new(count);
         for (int i = sp - count; i < sp; i++)
@@ -1374,10 +1505,10 @@ internal static class JsonLogicVM
             items.Add(stack[i]);
         }
 
-        return BuildJsonArray(items);
+        return BuildJsonArray(items, workspace);
     }
 
-    private static JsonElement CheckMissing(JsonElement[] stack, int sp, int count, in JsonElement data)
+    private static JsonElement CheckMissing(JsonElement[] stack, int sp, int count, in JsonElement data, JsonWorkspace workspace)
     {
         List<JsonElement> missing = new();
 
@@ -1405,10 +1536,10 @@ internal static class JsonLogicVM
             }
         }
 
-        return BuildJsonArray(missing);
+        return BuildJsonArray(missing, workspace);
     }
 
-    private static JsonElement CheckMissingSome(in JsonElement needed, in JsonElement paths, in JsonElement data)
+    private static JsonElement CheckMissingSome(in JsonElement needed, in JsonElement paths, in JsonElement data, JsonWorkspace workspace)
     {
         int neededCount = 0;
         if (needed.ValueKind == JsonValueKind.Number)
@@ -1435,102 +1566,26 @@ internal static class JsonLogicVM
         int present = allPaths.Count - missing.Count;
         if (present >= neededCount)
         {
-            return BuildJsonArray(new List<JsonElement>());
+            return JsonLogicHelpers.EmptyArray();
         }
 
-        return BuildJsonArray(missing);
+        return BuildJsonArray(missing, workspace);
     }
 
-    private static JsonElement BuildJsonArray(List<JsonElement> items)
+    private static JsonElement BuildJsonArray(List<JsonElement> items, JsonWorkspace workspace)
     {
         if (items.Count == 0)
         {
-            return JsonElement.ParseValue("[]"u8);
+            return JsonLogicHelpers.EmptyArray();
         }
 
-        using MemoryStream ms = new();
-        using Utf8JsonWriter writer = new(ms);
-        writer.WriteStartArray();
+        using JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateArrayBuilder(workspace, items.Count);
+        JsonElement.Mutable root = doc.RootElement;
         foreach (JsonElement item in items)
         {
-            WriteElement(writer, item);
+            root.AddItem(item);
         }
 
-        writer.WriteEndArray();
-        writer.Flush();
-
-        return JsonElement.ParseValue(ms.ToArray());
-    }
-
-    private static JsonElement BuildReduceContext(in JsonElement current, in JsonElement accumulator)
-    {
-        using MemoryStream ms = new();
-        using Utf8JsonWriter writer = new(ms);
-        writer.WriteStartObject();
-        writer.WritePropertyName("current");
-        WriteElement(writer, current);
-        writer.WritePropertyName("accumulator");
-        WriteElement(writer, accumulator);
-        writer.WriteEndObject();
-        writer.Flush();
-
-        return JsonElement.ParseValue(ms.ToArray());
-    }
-
-    private static void WriteElement(Utf8JsonWriter writer, in JsonElement element)
-    {
-        if (element.IsNullOrUndefined())
-        {
-            writer.WriteNullValue();
-            return;
-        }
-
-        switch (element.ValueKind)
-        {
-            case JsonValueKind.Object:
-                writer.WriteStartObject();
-                foreach (JsonProperty<JsonElement> prop in element.EnumerateObject())
-                {
-                    writer.WritePropertyName(prop.Name);
-                    WriteElement(writer, prop.Value);
-                }
-
-                writer.WriteEndObject();
-                break;
-
-            case JsonValueKind.Array:
-                writer.WriteStartArray();
-                foreach (JsonElement item in element.EnumerateArray())
-                {
-                    WriteElement(writer, item);
-                }
-
-                writer.WriteEndArray();
-                break;
-
-            case JsonValueKind.String:
-                writer.WriteStringValue(element.GetString());
-                break;
-
-            case JsonValueKind.Number:
-                using (RawUtf8JsonString raw = JsonMarshal.GetRawUtf8Value(element))
-                {
-                    writer.WriteRawValue(raw.Span);
-                }
-
-                break;
-
-            case JsonValueKind.True:
-                writer.WriteBooleanValue(true);
-                break;
-
-            case JsonValueKind.False:
-                writer.WriteBooleanValue(false);
-                break;
-
-            case JsonValueKind.Null:
-                writer.WriteNullValue();
-                break;
-        }
+        return root.Clone();
     }
 }

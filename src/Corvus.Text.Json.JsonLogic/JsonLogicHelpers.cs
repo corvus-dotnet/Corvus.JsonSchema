@@ -14,6 +14,14 @@ namespace Corvus.Text.Json.JsonLogic;
 /// </summary>
 internal static class JsonLogicHelpers
 {
+    private static readonly JsonElement TrueElement = ParsedJsonDocument<JsonElement>.True;
+    private static readonly JsonElement FalseElement = ParsedJsonDocument<JsonElement>.False;
+    private static readonly JsonElement NullElementValue = ParsedJsonDocument<JsonElement>.Null;
+    private static readonly JsonElement ZeroElement = ParsedJsonDocument<JsonElement>.NumberConstant("0"u8.ToArray());
+    private static readonly JsonElement OneElement = ParsedJsonDocument<JsonElement>.NumberConstant("1"u8.ToArray());
+    private static readonly JsonElement EmptyStringElement = ParsedJsonDocument<JsonElement>.StringConstant("\"\""u8.ToArray());
+    private static readonly JsonElement EmptyArrayElement = JsonElement.ParseValue("[]"u8);
+
     /// <summary>
     /// Determines whether a <see cref="JsonElement"/> is truthy per JsonLogic semantics.
     /// </summary>
@@ -50,9 +58,7 @@ internal static class JsonLogicHelpers
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static JsonElement BooleanElement(bool value)
     {
-        return value
-            ? JsonElement.ParseValue("true"u8)
-            : JsonElement.ParseValue("false"u8);
+        return value ? TrueElement : FalseElement;
     }
 
     /// <summary>
@@ -61,7 +67,43 @@ internal static class JsonLogicHelpers
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static JsonElement NullElement()
     {
-        return JsonElement.ParseValue("null"u8);
+        return NullElementValue;
+    }
+
+    /// <summary>
+    /// Gets a JsonElement representing zero.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static JsonElement Zero()
+    {
+        return ZeroElement;
+    }
+
+    /// <summary>
+    /// Gets a JsonElement representing one.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static JsonElement One()
+    {
+        return OneElement;
+    }
+
+    /// <summary>
+    /// Gets a JsonElement representing an empty string.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static JsonElement EmptyString()
+    {
+        return EmptyStringElement;
+    }
+
+    /// <summary>
+    /// Gets a JsonElement representing an empty array.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static JsonElement EmptyArray()
+    {
+        return EmptyArrayElement;
     }
 
     /// <summary>
@@ -85,17 +127,17 @@ internal static class JsonLogicHelpers
 
         if (value.IsNullOrUndefined())
         {
-            result = JsonElement.ParseValue("0"u8);
+            result = ZeroElement;
             return true;
         }
 
         switch (value.ValueKind)
         {
             case JsonValueKind.True:
-                result = JsonElement.ParseValue("1"u8);
+                result = OneElement;
                 return true;
             case JsonValueKind.False:
-                result = JsonElement.ParseValue("0"u8);
+                result = ZeroElement;
                 return true;
             case JsonValueKind.String:
                 return TryCoerceStringToNumber(value, out result);
@@ -134,6 +176,65 @@ internal static class JsonLogicHelpers
     }
 
     /// <summary>
+    /// Creates a <see cref="JsonElement"/> wrapping a number from raw UTF-8 bytes.
+    /// Uses the pooled <see cref="FixedJsonValueDocument{T}"/>.
+    /// </summary>
+    /// <param name="utf8NumberBytes">The raw UTF-8 number bytes (must be heap-allocated or pinned).</param>
+    /// <returns>A <see cref="JsonElement"/> backed by a pooled document.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static JsonElement NumberFromUtf8(ReadOnlyMemory<byte> utf8NumberBytes)
+    {
+        return FixedJsonValueDocument<JsonElement>.ForNumber(utf8NumberBytes).RootElement;
+    }
+
+    /// <summary>
+    /// Creates a <see cref="JsonElement"/> wrapping a quoted string from raw UTF-8 bytes.
+    /// Uses the pooled <see cref="FixedJsonValueDocument{T}"/>.
+    /// </summary>
+    /// <param name="quotedUtf8StringBytes">The raw UTF-8 string bytes including surrounding quotes.</param>
+    /// <returns>A <see cref="JsonElement"/> backed by a pooled document.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static JsonElement StringFromQuotedUtf8(ReadOnlyMemory<byte> quotedUtf8StringBytes)
+    {
+        return FixedJsonValueDocument<JsonElement>.ForString(quotedUtf8StringBytes).RootElement;
+    }
+
+    /// <summary>
+    /// Coerces a <see cref="JsonElement"/> to its string representation.
+    /// </summary>
+    public static string CoerceToString(in JsonElement value)
+    {
+        if (value.IsNullOrUndefined())
+        {
+            return "null";
+        }
+
+        return value.ValueKind switch
+        {
+            JsonValueKind.String => value.GetString() ?? string.Empty,
+            JsonValueKind.Number => GetNumberString(value),
+            JsonValueKind.True => "true",
+            JsonValueKind.False => "false",
+            JsonValueKind.Null => "null",
+            _ => string.Empty,
+        };
+    }
+
+    /// <summary>
+    /// Creates a <see cref="JsonElement"/> from a string value using the pooled document.
+    /// </summary>
+    public static JsonElement StringToElement(string value)
+    {
+        // Build quoted UTF-8: "value"
+        byte[] utf8Value = System.Text.Encoding.UTF8.GetBytes(value);
+        byte[] quoted = new byte[utf8Value.Length + 2];
+        quoted[0] = (byte)'"';
+        Buffer.BlockCopy(utf8Value, 0, quoted, 1, utf8Value.Length);
+        quoted[quoted.Length - 1] = (byte)'"';
+        return StringFromQuotedUtf8(quoted);
+    }
+
+    /// <summary>
     /// Determines whether a numeric <see cref="JsonElement"/> is zero.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -146,14 +247,14 @@ internal static class JsonLogicHelpers
     /// <summary>
     /// Coerces a string JsonElement to a number without going through any .NET numeric type.
     /// Validates the string content as a JSON number using <see cref="JsonElementHelpers.TryParseNumber"/>
-    /// and parses it directly as a <see cref="JsonElement"/>.
+    /// and creates a <see cref="JsonElement"/> via the pooled document.
     /// </summary>
     private static bool TryCoerceStringToNumber(in JsonElement value, out JsonElement result)
     {
         string? s = value.GetString();
         if (s is null || s.Length == 0)
         {
-            result = JsonElement.ParseValue("0"u8);
+            result = ZeroElement;
             return true;
         }
 
@@ -183,7 +284,9 @@ internal static class JsonLogicHelpers
 
             if (JsonElementHelpers.TryParseNumber(utf8, out _, out _, out _, out _))
             {
-                result = JsonElement.ParseValue(utf8);
+                // Copy to a stable array for the pooled document
+                byte[] stable = utf8.ToArray();
+                result = NumberFromUtf8(stable);
                 return true;
             }
 
@@ -197,39 +300,6 @@ internal static class JsonLogicHelpers
                 ArrayPool<byte>.Shared.Return(rentedArray);
             }
         }
-    }
-
-    /// <summary>
-    /// Coerces a <see cref="JsonElement"/> to its string representation.
-    /// </summary>
-    public static string CoerceToString(in JsonElement value)
-    {
-        if (value.IsNullOrUndefined())
-        {
-            return "null";
-        }
-
-        return value.ValueKind switch
-        {
-            JsonValueKind.String => value.GetString() ?? string.Empty,
-            JsonValueKind.Number => GetNumberString(value),
-            JsonValueKind.True => "true",
-            JsonValueKind.False => "false",
-            JsonValueKind.Null => "null",
-            _ => string.Empty,
-        };
-    }
-
-    /// <summary>
-    /// Creates a <see cref="JsonElement"/> from a string value.
-    /// </summary>
-    public static JsonElement StringToElement(string value)
-    {
-        using MemoryStream ms = new();
-        using Utf8JsonWriter writer = new(ms);
-        writer.WriteStringValue(value);
-        writer.Flush();
-        return JsonElement.ParseValue(ms.ToArray());
     }
 
     private static string GetNumberString(in JsonElement value)

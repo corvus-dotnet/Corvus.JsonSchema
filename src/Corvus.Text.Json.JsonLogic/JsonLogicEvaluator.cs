@@ -79,7 +79,8 @@ public sealed class JsonLogicEvaluator
     public JsonElement Evaluate(in JsonLogicRule rule, in JsonElement data)
     {
         CompiledRule compiled = this.GetOrCompile(rule);
-        return JsonLogicVM.Execute(compiled, data);
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        return JsonLogicVM.Execute(compiled, data, workspace);
     }
 
     /// <summary>
