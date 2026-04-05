@@ -120,6 +120,14 @@ internal static class JsonLogicHelpers
     /// </remarks>
     public static bool TryCoerceToNumber(in JsonElement value, out JsonElement result)
     {
+        return TryCoerceToNumber(value, null, out result);
+    }
+
+    /// <summary>
+    /// Coerces a <see cref="JsonElement"/> to a number, registering any created documents in the workspace.
+    /// </summary>
+    public static bool TryCoerceToNumber(in JsonElement value, JsonWorkspace? workspace, out JsonElement result)
+    {
         if (value.ValueKind == JsonValueKind.Number)
         {
             result = value;
@@ -141,7 +149,7 @@ internal static class JsonLogicHelpers
                 result = ZeroElement;
                 return true;
             case JsonValueKind.String:
-                return TryCoerceStringToNumber(value, out result);
+                return TryCoerceStringToNumber(value, workspace, out result);
             default:
                 result = default;
                 return false;
@@ -201,6 +209,21 @@ internal static class JsonLogicHelpers
     }
 
     /// <summary>
+    /// Creates a <see cref="JsonElement"/> wrapping a number from a UTF-8 span and registers
+    /// the backing document in the workspace for proper lifecycle management.
+    /// </summary>
+    /// <param name="utf8NumberBytes">The raw UTF-8 number bytes.</param>
+    /// <param name="workspace">The workspace to register the document in.</param>
+    /// <returns>A <see cref="JsonElement"/> backed by a pooled document with a rented buffer.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static JsonElement NumberFromSpan(ReadOnlySpan<byte> utf8NumberBytes, JsonWorkspace workspace)
+    {
+        FixedJsonValueDocument<JsonElement> doc = FixedJsonValueDocument<JsonElement>.ForNumberFromSpan(utf8NumberBytes);
+        workspace.RegisterDocument(doc);
+        return doc.RootElement;
+    }
+
+    /// <summary>
     /// Creates a <see cref="JsonElement"/> wrapping a quoted string from raw UTF-8 bytes.
     /// Uses the pooled <see cref="FixedJsonValueDocument{T}"/>.
     /// </summary>
@@ -222,6 +245,21 @@ internal static class JsonLogicHelpers
     public static JsonElement StringFromQuotedUtf8Span(ReadOnlySpan<byte> quotedUtf8StringBytes)
     {
         return FixedJsonValueDocument<JsonElement>.ForStringFromSpan(quotedUtf8StringBytes).RootElement;
+    }
+
+    /// <summary>
+    /// Creates a <see cref="JsonElement"/> wrapping a quoted string from a UTF-8 span and registers
+    /// the backing document in the workspace for proper lifecycle management.
+    /// </summary>
+    /// <param name="quotedUtf8StringBytes">The raw UTF-8 string bytes including surrounding quotes.</param>
+    /// <param name="workspace">The workspace to register the document in.</param>
+    /// <returns>A <see cref="JsonElement"/> backed by a pooled document with a rented buffer.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static JsonElement StringFromQuotedUtf8Span(ReadOnlySpan<byte> quotedUtf8StringBytes, JsonWorkspace workspace)
+    {
+        FixedJsonValueDocument<JsonElement> doc = FixedJsonValueDocument<JsonElement>.ForStringFromSpan(quotedUtf8StringBytes);
+        workspace.RegisterDocument(doc);
+        return doc.RootElement;
     }
 
     /// <summary>
@@ -337,7 +375,7 @@ internal static class JsonLogicHelpers
     /// <see cref="JsonElementHelpers.TryParseNumber"/>, and creates a <see cref="JsonElement"/>
     /// via the pooled document.
     /// </summary>
-    private static bool TryCoerceStringToNumber(in JsonElement value, out JsonElement result)
+    private static bool TryCoerceStringToNumber(in JsonElement value, JsonWorkspace? workspace, out JsonElement result)
     {
         using RawUtf8JsonString raw = JsonMarshal.GetRawUtf8Value(value);
         ReadOnlySpan<byte> quoted = raw.Span;
@@ -354,7 +392,7 @@ internal static class JsonLogicHelpers
 
         if (JsonElementHelpers.TryParseNumber(content, out _, out _, out _, out _))
         {
-            result = NumberFromSpan(content);
+            result = workspace is not null ? NumberFromSpan(content, workspace) : NumberFromSpan(content);
             return true;
         }
 

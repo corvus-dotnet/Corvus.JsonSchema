@@ -162,6 +162,18 @@ public class JsonWorkspace : IDisposable
     }
 
     /// <summary>
+    /// Registers a workspace-managed document so that it will be disposed when the workspace is
+    /// disposed or reset. Use this for pooled documents (e.g., <c>FixedJsonValueDocument</c>)
+    /// that are created outside of a builder but must participate in workspace lifecycle management.
+    /// </summary>
+    /// <param name="document">The document to register.</param>
+    [CLSCompliant(false)]
+    public void RegisterDocument(IWorkspaceManagedDocument document)
+    {
+        GetDocumentIndex(document);
+    }
+
+    /// <summary>
     /// Creates a document builder for building mutable JSON documents from an existing element.
     /// </summary>
     /// <typeparam name="TElement">The type of the source JSON element.</typeparam>

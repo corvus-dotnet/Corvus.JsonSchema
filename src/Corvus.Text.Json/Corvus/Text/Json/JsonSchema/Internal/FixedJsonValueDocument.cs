@@ -128,15 +128,11 @@ public sealed class FixedJsonValueDocument<T> : IJsonDocument, IWorkspaceManaged
         return db.TakeOwnership(out rentedBacking);
     }
 
-    JsonElement IJsonDocument.CloneElement(int index) => new(this, 0);
+    JsonElement IJsonDocument.CloneElement(int index) => JsonElement.ParseValue(_rawValue.Span);
 
     TElement IJsonDocument.CloneElement<TElement>(int index)
     {
-#if NET
-        return TElement.CreateInstance(this, 0);
-#else
-        return JsonElementHelpers.CreateInstance<TElement>(this, 0);
-#endif
+        return JsonElementHelpers.ParseValue<TElement>(_rawValue.Span);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
