@@ -5,6 +5,7 @@
 using System.Buffers;
 using System.Runtime.CompilerServices;
 using Corvus.Runtime.InteropServices;
+using Corvus.Text;
 using Corvus.Text.Json.Internal;
 
 namespace Corvus.Text.Json.JsonLogic;
@@ -209,6 +210,67 @@ internal static class JsonLogicHelpers
     public static JsonElement StringFromQuotedUtf8(ReadOnlyMemory<byte> quotedUtf8StringBytes)
     {
         return FixedJsonValueDocument<JsonElement>.ForString(quotedUtf8StringBytes).RootElement;
+    }
+
+    /// <summary>
+    /// Creates a <see cref="JsonElement"/> wrapping a quoted string from a UTF-8 span,
+    /// copying the data into a pooled document's rented buffer.
+    /// </summary>
+    /// <param name="quotedUtf8StringBytes">The raw UTF-8 string bytes including surrounding quotes.</param>
+    /// <returns>A <see cref="JsonElement"/> backed by a pooled document with a rented buffer.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static JsonElement StringFromQuotedUtf8Span(ReadOnlySpan<byte> quotedUtf8StringBytes)
+    {
+        return FixedJsonValueDocument<JsonElement>.ForStringFromSpan(quotedUtf8StringBytes).RootElement;
+    }
+
+    /// <summary>
+    /// Appends the UTF-8 string coercion of a <see cref="JsonElement"/> directly to a
+    /// <see cref="Utf8ValueStringBuilder"/>, with zero string allocation.
+    /// For strings, copies raw UTF-8 content (excluding quotes). For numbers, copies
+    /// raw UTF-8 digits. For booleans/null, appends the literal text.
+    /// </summary>
+    public static void AppendCoercedUtf8(ref Utf8ValueStringBuilder builder, in JsonElement value)
+    {
+        if (value.IsNullOrUndefined())
+        {
+            builder.Append("null"u8);
+            return;
+        }
+
+        switch (value.ValueKind)
+        {
+            case JsonValueKind.String:
+            {
+                using RawUtf8JsonString raw = JsonMarshal.GetRawUtf8Value(value);
+                ReadOnlySpan<byte> span = raw.Span;
+
+                // Raw includes quotes; slice them off to get unescaped content
+                if (span.Length > 2)
+                {
+                    builder.Append(span.Slice(1, span.Length - 2));
+                }
+
+                break;
+            }
+
+            case JsonValueKind.Number:
+            {
+                using RawUtf8JsonString raw = JsonMarshal.GetRawUtf8Value(value);
+                builder.Append(raw.Span);
+                break;
+            }
+
+            case JsonValueKind.True:
+                builder.Append("true"u8);
+                break;
+            case JsonValueKind.False:
+                builder.Append("false"u8);
+                break;
+            case JsonValueKind.Null:
+                builder.Append("null"u8);
+                break;
+        }
     }
 
     /// <summary>

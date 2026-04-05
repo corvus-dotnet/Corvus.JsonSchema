@@ -7,6 +7,7 @@ using System.Buffers.Text;
 using System.Text;
 using Corvus.Numerics;
 using Corvus.Runtime.InteropServices;
+using Corvus.Text;
 using Corvus.Text.Json.Internal;
 
 namespace Corvus.Text.Json.JsonLogic;
@@ -1487,14 +1488,26 @@ internal static class JsonLogicVM
             return JsonLogicHelpers.EmptyString();
         }
 
-        StringBuilder sb = new();
-        for (int i = sp - count; i < sp; i++)
+        Utf8ValueStringBuilder builder = new(stackalloc byte[JsonConstants.StackallocByteThreshold]);
+        try
         {
-            sb.Append(JsonLogicHelpers.CoerceToString(stack[i]));
-        }
+            // Opening quote for the JSON string value
+            builder.Append((byte)'"');
 
-        string result = sb.ToString();
-        return JsonLogicHelpers.StringToElement(result);
+            for (int i = sp - count; i < sp; i++)
+            {
+                JsonLogicHelpers.AppendCoercedUtf8(ref builder, stack[i]);
+            }
+
+            // Closing quote
+            builder.Append((byte)'"');
+
+            return JsonLogicHelpers.StringFromQuotedUtf8Span(builder.AsSpan());
+        }
+        finally
+        {
+            builder.Dispose();
+        }
     }
 
     private static JsonElement StringSubstr(JsonElement[] stack, int sp, int argCount)

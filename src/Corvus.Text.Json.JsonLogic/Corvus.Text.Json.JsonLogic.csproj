@@ -11,7 +11,7 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <!-- Only upgrade NuGetAudit warnings to errors for official builds. -->
     <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1901;NU1902;NU1903;NU1904</WarningsNotAsErrors>
-    <NoWarn>$(NoWarn);CS1591;NU1504;CS8500;CS8969;IDE0065;IDE0290;IDE0079;IDE0130;CS1572;CS1573</NoWarn>
+    <NoWarn>$(NoWarn);CS1591;NU1504;CS8500;CS8969;IDE0065;IDE0290;IDE0079;IDE0130;CS1572;CS1573;CS1574;CS1584;CS1658</NoWarn>
     <NoWarn Condition="$(TargetFrameworks.Contains('netstandard'))">$(NoWarn);CA1510;CA1511;CA1512;CA1513;CA1845;CA1846;CA1847</NoWarn>
     <EndjinDisableCreateEditorConfig>true</EndjinDisableCreateEditorConfig>
     <IsPackable>true</IsPackable>
@@ -19,8 +19,13 @@
     <Description>JsonLogic rule engine for Corvus.Text.Json, with zero-allocation bytecode VM evaluation, pluggable operators, and compile-time constant folding.</Description>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <CommonPath>..\..\Common\src\</CommonPath>
+  </PropertyGroup>
+
   <ItemGroup>
     <Compile Include="..\Common\JsonConstants.cs" Link="Common\JsonConstants.cs" />
+    <Compile Include="$(CommonPath)System\Text\Utf8ValueStringBuilder.cs" Link="Common\Utf8ValueStringBuilder.cs" />
   </ItemGroup>
 
   <ItemGroup>
