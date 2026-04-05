@@ -17,7 +17,7 @@ namespace Corvus.Text.Json.JsonLogic;
 /// </summary>
 internal static class JsonLogicVM
 {
-    internal static JsonElement Execute(in CompiledRule rule, in JsonElement data, JsonWorkspace workspace)
+    internal static JsonElement Execute(in CompiledRule rule, in JsonElement data, JsonWorkspace workspace, bool cloneResult)
     {
         byte[] bytecode = rule.Bytecode;
         JsonElement[] constants = rule.Constants;
@@ -571,7 +571,7 @@ internal static class JsonLogicVM
                     case OpCode.Return:
                         {
                             JsonElement result = sp > 0 ? stack[--sp] : JsonLogicHelpers.NullElement();
-                            return result.Clone();
+                            return cloneResult ? result.Clone() : result;
                         }
 
                     default:
@@ -580,7 +580,7 @@ internal static class JsonLogicVM
             }
 
             JsonElement finalResult = sp > 0 ? stack[--sp] : JsonLogicHelpers.NullElement();
-            return finalResult.Clone();
+            return cloneResult ? finalResult.Clone() : finalResult;
         }
         finally
         {

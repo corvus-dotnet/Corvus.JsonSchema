@@ -138,6 +138,30 @@ public class JsonWorkspace : IDisposable
 #pragma warning restore CA1816 // Dispose methods should call SuppressFinalize
 
     /// <summary>
+    /// Resets the workspace for reuse, disposing all workspace-managed documents
+    /// and clearing the document tracking state. The backing array is retained
+    /// so subsequent evaluations avoid re-allocation.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Any <see cref="JsonElement"/> instances that reference documents in this
+    /// workspace become invalid after this call. The caller must not use them.
+    /// </para>
+    /// </remarks>
+    public void Reset()
+    {
+        DisposeMutable();
+
+        if (_length > 0)
+        {
+            Array.Clear(_documents, 0, _length);
+        }
+
+        _documentIndices.Clear();
+        _length = 0;
+    }
+
+    /// <summary>
     /// Creates a document builder for building mutable JSON documents from an existing element.
     /// </summary>
     /// <typeparam name="TElement">The type of the source JSON element.</typeparam>

@@ -39,8 +39,9 @@ public class BenchmarkLogicShortCircuit : JsonLogicBenchmarkBase
     /// Evaluate using Corvus JsonLogic.
     /// </summary>
     [Benchmark]
-    public CorvusJsonElement CorvusJsonLogic()
+    public void CorvusJsonLogic()
     {
-        return JsonLogicEvaluator.Default.Evaluate(this.CorvusLogicRule, this.CorvusData);
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        JsonLogicEvaluator.Default.Evaluate(this.CorvusLogicRule, this.CorvusData, workspace);
     }
 }
