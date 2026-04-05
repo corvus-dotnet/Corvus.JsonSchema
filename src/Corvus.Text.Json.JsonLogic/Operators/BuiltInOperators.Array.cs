@@ -111,6 +111,12 @@ internal static partial class BuiltInOperators
                 return;
             }
 
+            // Detect reduce(map(...)) or reduce(filter(...)) and emit fused opcode
+            if (TryCompileFused(args, context))
+            {
+                return;
+            }
+
             // Compile array expression
             context.CompileExpression(args[0]);
 
@@ -128,6 +134,59 @@ internal static partial class BuiltInOperators
 
             // Emit LoopEnd marker
             context.EmitOpCode(OpCode.LoopEnd);
+        }
+
+        private static bool TryCompileFused(ReadOnlySpan<JsonElement> args, IJsonLogicCompilationContext context)
+        {
+            JsonElement arrayExpr = args[0];
+            if (arrayExpr.ValueKind != JsonValueKind.Object)
+            {
+                return false;
+            }
+
+            // Detect {"map": [arrayExpr, mapBody]} as the array argument to reduce
+            OpCode fusedOp;
+            if (arrayExpr.TryGetProperty("map"u8, out JsonElement innerArgs) && innerArgs.ValueKind == JsonValueKind.Array && innerArgs.GetArrayLength() >= 2)
+            {
+                fusedOp = OpCode.MapReduceBegin;
+            }
+            else if (arrayExpr.TryGetProperty("filter"u8, out innerArgs) && innerArgs.ValueKind == JsonValueKind.Array && innerArgs.GetArrayLength() >= 2)
+            {
+                fusedOp = OpCode.FilterReduceBegin;
+            }
+            else
+            {
+                return false;
+            }
+
+            // Compile the shared array expression (from the inner map/filter)
+            context.CompileExpression(innerArgs[0]);
+
+            // Compile the initial accumulator
+            context.CompileExpression(args[2]);
+
+            // Emit fused opcode with placeholder for first body length
+            int firstBodyPos = context.EmitJumpPlaceholder(fusedOp);
+
+            // Compile the map/filter body
+            context.CompileExpression(innerArgs[1]);
+
+            // Patch first body length
+            context.PatchJump(firstBodyPos);
+
+            // Emit placeholder for reduce body length
+            int reduceBodyPos = context.EmitOperandPlaceholder();
+
+            // Compile the reduce body
+            context.CompileExpression(args[1]);
+
+            // Patch reduce body length
+            context.PatchJump(reduceBodyPos);
+
+            // Emit LoopEnd marker
+            context.EmitOpCode(OpCode.LoopEnd);
+
+            return true;
         }
     }
 }

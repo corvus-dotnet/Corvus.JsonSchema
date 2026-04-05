@@ -249,6 +249,22 @@ public enum OpCode : byte
     SomeBegin,
 
     /// <summary>
+    /// Fused map-reduce loop. Iterates the input array once, applying the map body
+    /// to each element and immediately feeding the result to the reduce body.
+    /// No intermediate array is materialised.
+    /// Operand: map body length. The reduce body length follows the map body bytes.
+    /// </summary>
+    MapReduceBegin,
+
+    /// <summary>
+    /// Fused filter-reduce loop. Iterates the input array once, applying the filter body
+    /// to each element and only feeding elements that pass to the reduce body.
+    /// No intermediate array is materialised.
+    /// Operand: filter body length. The reduce body length follows the filter body bytes.
+    /// </summary>
+    FilterReduceBegin,
+
+    /// <summary>
     /// End of a loop body.
     /// </summary>
     LoopEnd,

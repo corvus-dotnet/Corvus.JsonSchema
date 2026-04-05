@@ -422,6 +422,18 @@ internal static class JsonLogicVM
                             break;
                         }
 
+                    case OpCode.MapReduceBegin:
+                        {
+                            sp = ExecuteMapReduceFused(bytecode, constants, stack, sp, ref pc, ref currentData, workspace);
+                            break;
+                        }
+
+                    case OpCode.FilterReduceBegin:
+                        {
+                            sp = ExecuteFilterReduceFused(bytecode, constants, stack, sp, ref pc, ref currentData, workspace);
+                            break;
+                        }
+
                     case OpCode.AllBegin:
                         {
                             int bodyLen = ReadInt32(bytecode, pc);
@@ -901,9 +913,121 @@ internal static class JsonLogicVM
             OpCode.Cat or OpCode.Substr or OpCode.Merge or OpCode.Missing or
             OpCode.BuildArray or
             OpCode.MapBegin or OpCode.FilterBegin or OpCode.ReduceBegin or
+            OpCode.MapReduceBegin or OpCode.FilterReduceBegin or
             OpCode.AllBegin or OpCode.NoneBegin or OpCode.SomeBegin => true,
             _ => false,
         };
+    }
+
+    private static int ExecuteMapReduceFused(
+        byte[] bytecode,
+        JsonElement[] constants,
+        JsonElement[] stack,
+        int sp,
+        ref int pc,
+        ref JsonElement currentData,
+        JsonWorkspace workspace)
+    {
+        // Bytecode layout: MapReduceBegin <mapBodyLen:4> [map body] <reduceBodyLen:4> [reduce body] LoopEnd
+        int mapBodyLen = ReadInt32(bytecode, pc);
+        pc += 4;
+        int mapBodyStart = pc;
+
+        int reduceBodyLen = ReadInt32(bytecode, mapBodyStart + mapBodyLen);
+        int reduceBodyStart = mapBodyStart + mapBodyLen + 4;
+
+        JsonElement initialAcc = stack[--sp];
+        JsonElement arr = stack[--sp];
+        JsonElement savedData = currentData;
+        JsonElement accumulator = initialAcc;
+
+        if (arr.ValueKind == JsonValueKind.Array)
+        {
+            using JsonDocumentBuilder<JsonElement.Mutable> ctx = JsonElement.CreateObjectBuilder(workspace, 2);
+            JsonElement.Mutable root = ctx.RootElement;
+
+            foreach (JsonElement item in arr.EnumerateArray())
+            {
+                // Execute map body with item as data context
+                currentData = item;
+                sp = ExecuteBody(bytecode, constants, stack, ref sp, mapBodyStart, mapBodyLen, currentData, workspace);
+                JsonElement mapped = stack[--sp];
+
+                // Execute reduce body with {current: mapped, accumulator: acc}
+                root.SetProperty("current", mapped);
+                root.SetProperty("accumulator", accumulator);
+                currentData = root;
+                sp = ExecuteBody(bytecode, constants, stack, ref sp, reduceBodyStart, reduceBodyLen, currentData, workspace);
+                accumulator = stack[--sp];
+            }
+        }
+
+        currentData = savedData;
+        stack[sp++] = accumulator;
+        pc = reduceBodyStart + reduceBodyLen;
+        if (pc < bytecode.Length && (OpCode)bytecode[pc] == OpCode.LoopEnd)
+        {
+            pc++;
+        }
+
+        return sp;
+    }
+
+    private static int ExecuteFilterReduceFused(
+        byte[] bytecode,
+        JsonElement[] constants,
+        JsonElement[] stack,
+        int sp,
+        ref int pc,
+        ref JsonElement currentData,
+        JsonWorkspace workspace)
+    {
+        // Bytecode layout: FilterReduceBegin <filterBodyLen:4> [filter body] <reduceBodyLen:4> [reduce body] LoopEnd
+        int filterBodyLen = ReadInt32(bytecode, pc);
+        pc += 4;
+        int filterBodyStart = pc;
+
+        int reduceBodyLen = ReadInt32(bytecode, filterBodyStart + filterBodyLen);
+        int reduceBodyStart = filterBodyStart + filterBodyLen + 4;
+
+        JsonElement initialAcc = stack[--sp];
+        JsonElement arr = stack[--sp];
+        JsonElement savedData = currentData;
+        JsonElement accumulator = initialAcc;
+
+        if (arr.ValueKind == JsonValueKind.Array)
+        {
+            using JsonDocumentBuilder<JsonElement.Mutable> ctx = JsonElement.CreateObjectBuilder(workspace, 2);
+            JsonElement.Mutable root = ctx.RootElement;
+
+            foreach (JsonElement item in arr.EnumerateArray())
+            {
+                // Execute filter body with item as data context
+                currentData = item;
+                sp = ExecuteBody(bytecode, constants, stack, ref sp, filterBodyStart, filterBodyLen, currentData, workspace);
+                JsonElement filterResult = stack[--sp];
+
+                if (JsonLogicHelpers.IsTruthy(filterResult))
+                {
+                    // Execute reduce body with {current: item, accumulator: acc}
+                    root.SetProperty("current", item);
+                    root.SetProperty("accumulator", accumulator);
+                    currentData = root;
+                    sp = ExecuteBody(bytecode, constants, stack, ref sp, reduceBodyStart, reduceBodyLen, currentData, workspace);
+                    accumulator = stack[--sp];
+                }
+            }
+        }
+
+        currentData = savedData;
+        stack[sp++] = accumulator;
+        pc = reduceBodyStart + reduceBodyLen;
+        if (pc < bytecode.Length && (OpCode)bytecode[pc] == OpCode.LoopEnd)
+        {
+            pc++;
+        }
+
+        return sp;
     }
 
     private static int ReadInt32(byte[] bytecode, int offset)

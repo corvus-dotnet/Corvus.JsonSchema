@@ -102,6 +102,17 @@ internal sealed class JsonLogicCompiler : IJsonLogicCompilationContext
     }
 
     /// <inheritdoc/>
+    public int EmitOperandPlaceholder()
+    {
+        int pos = this.bytecode.Count;
+        this.bytecode.Add(0);
+        this.bytecode.Add(0);
+        this.bytecode.Add(0);
+        this.bytecode.Add(0);
+        return pos;
+    }
+
+    /// <inheritdoc/>
     public void PatchJump(int placeholderPosition)
     {
         int offset = this.bytecode.Count - (placeholderPosition + 4);

@@ -49,6 +49,15 @@ public interface IJsonLogicCompilationContext
     int EmitJumpPlaceholder(OpCode op);
 
     /// <summary>
+    /// Reserves 4 bytes for an operand that will be patched later,
+    /// without emitting an opcode byte. Used for multi-operand instructions
+    /// where the first operand uses <see cref="EmitJumpPlaceholder"/> and
+    /// subsequent operands need additional placeholders.
+    /// </summary>
+    /// <returns>The position of the operand placeholder, for use with <see cref="PatchJump"/>.</returns>
+    int EmitOperandPlaceholder();
+
+    /// <summary>
     /// Patches a previously emitted jump placeholder with the correct offset.
     /// </summary>
     /// <param name="placeholderPosition">
