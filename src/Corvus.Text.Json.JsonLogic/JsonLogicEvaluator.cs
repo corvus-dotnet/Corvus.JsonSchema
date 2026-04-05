@@ -30,8 +30,11 @@ public sealed class JsonLogicEvaluator
 
     private readonly Dictionary<string, IJsonLogicOperator> operators;
     private readonly ConcurrentDictionary<string, CompiledRule> cache = new();
+    private readonly ConcurrentDictionary<string, FunctionalEvaluator.RuleEvaluator> functionalCache = new();
     private JsonElement _lastRule;
     private CompiledRule _lastCompiled;
+    private FunctionalEvaluator.RuleEvaluator? _lastFunctional;
+    private JsonElement _lastFunctionalRule;
 
     private JsonLogicEvaluator(Dictionary<string, IJsonLogicOperator> operators)
     {
@@ -129,6 +132,16 @@ public sealed class JsonLogicEvaluator
     public void ClearCache()
     {
         this.cache.Clear();
+        this.functionalCache.Clear();
+    }
+
+    /// <summary>
+    /// Evaluates a JsonLogic rule using the functional (delegate-tree) evaluator.
+    /// </summary>
+    public JsonElement EvaluateFunctional(in JsonLogicRule rule, in JsonElement data, JsonWorkspace workspace)
+    {
+        FunctionalEvaluator.RuleEvaluator evaluator = this.GetOrCompileFunctional(rule);
+        return FunctionalEvaluator.Execute(evaluator, data, workspace, cloneResult: false);
     }
 
     private CompiledRule GetOrCompile(in JsonLogicRule rule)
@@ -153,6 +166,30 @@ public sealed class JsonLogicEvaluator
         this.cache.TryAdd(key, compiled);
         _lastRule = rule.Rule;
         _lastCompiled = compiled;
+        return compiled;
+    }
+
+    private FunctionalEvaluator.RuleEvaluator GetOrCompileFunctional(in JsonLogicRule rule)
+    {
+        // Fast path: same rule element as last call
+        if (_lastFunctional is not null && rule.Rule.Equals(_lastFunctionalRule))
+        {
+            return _lastFunctional;
+        }
+
+        string key = rule.Rule.GetRawText();
+
+        if (this.functionalCache.TryGetValue(key, out FunctionalEvaluator.RuleEvaluator? existing))
+        {
+            _lastFunctionalRule = rule.Rule;
+            _lastFunctional = existing;
+            return existing;
+        }
+
+        FunctionalEvaluator.RuleEvaluator compiled = FunctionalEvaluator.Compile(rule.Rule, this.operators);
+        this.functionalCache.TryAdd(key, compiled);
+        _lastFunctionalRule = rule.Rule;
+        _lastFunctional = compiled;
         return compiled;
     }
 }

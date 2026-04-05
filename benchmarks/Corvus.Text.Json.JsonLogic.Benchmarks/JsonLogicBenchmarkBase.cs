@@ -53,7 +53,11 @@ public abstract class JsonLogicBenchmarkBase
         this.corvusData = CorvusJsonElement.ParseValue(Encoding.UTF8.GetBytes(dataJson));
         this.corvusLogicRule = new JsonLogicRule(corvusRule);
 
-        // Pre-warm the Corvus compilation cache so benchmarks measure evaluation only
+        // Pre-warm both Corvus compilation caches so benchmarks measure evaluation only
         JsonLogicEvaluator.Default.Evaluate(this.corvusLogicRule, this.corvusData);
+        using (JsonWorkspace w = JsonWorkspace.Create())
+        {
+            JsonLogicEvaluator.Default.EvaluateFunctional(this.corvusLogicRule, this.corvusData, w);
+        }
     }
 }

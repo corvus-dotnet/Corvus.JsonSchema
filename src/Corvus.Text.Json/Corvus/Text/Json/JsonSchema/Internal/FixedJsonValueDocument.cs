@@ -993,6 +993,31 @@ public sealed class FixedJsonValueDocument<T> : IJsonDocument, IWorkspaceManaged
         }
 
         /// <summary>
+        /// Rents a document from the pool using a caller-provided buffer that was already
+        /// rented from <see cref="ArrayPool{T}"/>. The document takes ownership of the buffer
+        /// and will return it to the pool when disposed.
+        /// </summary>
+        public static FixedJsonValueDocument<T> RentWithOwnedBuffer(byte[] ownedBuffer, int length, JsonTokenType tokenType)
+        {
+            ThreadLocalState state = t_threadLocalState ??= new();
+
+            FixedJsonValueDocument<T> document;
+            if (state.AvailableCount > 0)
+            {
+                document = state.Available[--state.AvailableCount];
+            }
+            else
+            {
+                document = new FixedJsonValueDocument<T>(ReadOnlyMemory<byte>.Empty, JsonTokenType.None);
+            }
+
+            document._rentedBuffer = ownedBuffer;
+            document._rawValue = new ReadOnlyMemory<byte>(ownedBuffer, 0, length);
+            document._tokenType = tokenType;
+            return document;
+        }
+
+        /// <summary>
         /// Returns a document to the thread-local pool for reuse.
         /// </summary>
         public static void ReturnDocument(FixedJsonValueDocument<T> document)
