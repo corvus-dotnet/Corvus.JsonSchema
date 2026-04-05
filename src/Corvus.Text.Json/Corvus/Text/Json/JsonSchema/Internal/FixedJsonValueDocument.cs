@@ -944,7 +944,7 @@ public sealed class FixedJsonValueDocument<T> : IJsonDocument, IWorkspaceManaged
     /// </summary>
     private static class Pool
     {
-        private const int PoolSize = 8;
+        private const int InitialPoolSize = 8;
 
         [ThreadStatic]
         private static ThreadLocalState? t_threadLocalState;
@@ -956,16 +956,18 @@ public sealed class FixedJsonValueDocument<T> : IJsonDocument, IWorkspaceManaged
         {
             ThreadLocalState state = t_threadLocalState ??= new();
 
-            if (state.RentedCount < PoolSize)
+            FixedJsonValueDocument<T> document;
+            if (state.AvailableCount > 0)
             {
-                FixedJsonValueDocument<T> document = state.Documents[state.RentedCount];
+                document = state.Available[--state.AvailableCount];
                 document.Reset(rawValue, tokenType);
-                state.RentedCount++;
-                return document;
+            }
+            else
+            {
+                document = new FixedJsonValueDocument<T>(rawValue, tokenType);
             }
 
-            // Pool exhausted — allocate a new instance
-            return new FixedJsonValueDocument<T>(rawValue, tokenType);
+            return document;
         }
 
         /// <summary>
@@ -977,10 +979,9 @@ public sealed class FixedJsonValueDocument<T> : IJsonDocument, IWorkspaceManaged
             ThreadLocalState state = t_threadLocalState ??= new();
 
             FixedJsonValueDocument<T> document;
-            if (state.RentedCount < PoolSize)
+            if (state.AvailableCount > 0)
             {
-                document = state.Documents[state.RentedCount];
-                state.RentedCount++;
+                document = state.Available[--state.AvailableCount];
             }
             else
             {
@@ -1000,44 +1001,36 @@ public sealed class FixedJsonValueDocument<T> : IJsonDocument, IWorkspaceManaged
         /// </summary>
         public static void ReturnDocument(FixedJsonValueDocument<T> document)
         {
-            // Always return rented buffer to ArrayPool, even for overflow documents
+            // Always return rented buffer to ArrayPool
             document.ResetAllStateForCacheReuse();
 
-            ThreadLocalState? state = t_threadLocalState;
+            ThreadLocalState state = t_threadLocalState ??= new();
 
-            if (state is { RentedCount: > 0 })
+            // Grow if the available stack is full
+            if (state.AvailableCount == state.Available.Length)
             {
-                // Only return to pool if it belongs to our pool
-                for (int i = state.RentedCount - 1; i >= 0; i--)
-                {
-                    if (ReferenceEquals(state.Documents[i], document))
-                    {
-                        // Swap with last rented to maintain compact rented region
-                        if (i < state.RentedCount - 1)
-                        {
-                            state.Documents[i] = state.Documents[state.RentedCount - 1];
-                            state.Documents[state.RentedCount - 1] = document;
-                        }
-
-                        state.RentedCount--;
-                        return;
-                    }
-                }
+                var newArray = new FixedJsonValueDocument<T>[state.Available.Length * 2];
+                Array.Copy(state.Available, newArray, state.Available.Length);
+                state.Available = newArray;
             }
+
+            state.Available[state.AvailableCount++] = document;
         }
 
         private sealed class ThreadLocalState
         {
-            public readonly FixedJsonValueDocument<T>[] Documents;
-            public int RentedCount;
+            public FixedJsonValueDocument<T>[] Available;
+            public int AvailableCount;
 
             public ThreadLocalState()
             {
-                Documents = new FixedJsonValueDocument<T>[PoolSize];
-                for (int i = 0; i < PoolSize; i++)
+                Available = new FixedJsonValueDocument<T>[InitialPoolSize];
+                for (int i = 0; i < InitialPoolSize; i++)
                 {
-                    Documents[i] = CreateEmptyInstanceForCaching();
+                    Available[i] = CreateEmptyInstanceForCaching();
                 }
+
+                AvailableCount = InitialPoolSize;
             }
         }
     }
