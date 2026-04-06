@@ -659,7 +659,6 @@ internal static class FunctionalCompiler
 
     private static ExpressionEvaluator CompileFunctionCall(FunctionCallNode func)
     {
-        var procedure = Compile(func.Procedure);
         var args = func.Arguments.Select(Compile).ToArray();
 
         // Check for built-in functions by name
@@ -672,22 +671,25 @@ internal static class FunctionalCompiler
             }
         }
 
+        var procedure = Compile(func.Procedure);
+
         // Generic function call (user-defined / lambda)
         return (in JsonElement input, Environment env) =>
         {
             var funcResult = procedure(input, env);
-            if (funcResult.IsUndefined)
+
+            if (funcResult.IsLambda)
             {
-                throw new JsonataException("T1005", "Attempted to invoke a non-function", func.Position);
+                var evaluatedArgs = new Sequence[args.Length];
+                for (int i = 0; i < args.Length; i++)
+                {
+                    evaluatedArgs[i] = args[i](input, env);
+                }
+
+                return funcResult.Lambda!.Invoke(evaluatedArgs, input, env);
             }
 
-            // Lambda call handling is done through the environment
-            if (env.TryLookup("__lambda__" + func.Procedure.Position, out var lambda))
-            {
-                // TODO: Lambda invocation
-            }
-
-            return Sequence.Undefined;
+            throw new JsonataException("T1005", "Attempted to invoke a non-function", func.Position);
         };
     }
 
@@ -698,13 +700,7 @@ internal static class FunctionalCompiler
 
         return (in JsonElement input, Environment env) =>
         {
-            // Capture the defining environment for closure
-            var definingEnv = env;
-
-            // Return a function reference — represented as a special binding
-            // For now, store the lambda information in the environment
-            // This will be invoked when used in a function call context
-            return Sequence.Undefined; // TODO: Function values
+            return new Sequence(new LambdaValue(body, paramNames, env));
         };
     }
 
@@ -734,11 +730,17 @@ internal static class FunctionalCompiler
 
         return (in JsonElement input, Environment env) =>
         {
-            // ~> chains: evaluate LHS, pass as first arg to RHS
             var lhsResult = lhsEval(input, env);
+            var rhsResult = rhsEval(input, env);
 
-            // TODO: Full function application semantics
-            return rhsEval(input, env);
+            // ~> chains: evaluate LHS, pass as first arg to RHS function
+            if (rhsResult.IsLambda)
+            {
+                var args = new[] { lhsResult };
+                return rhsResult.Lambda!.Invoke(args, input, env);
+            }
+
+            return Sequence.Undefined;
         };
     }
 

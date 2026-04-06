@@ -590,4 +590,253 @@ public class EvaluatorTests
         var result = Evaluator.EvaluateToString("Account.Order.Product.Price", data);
         Assert.NotNull(result);
     }
+
+    // --- Phase 3: Higher-order function tests ---
+    [Fact]
+    public void MapFunction()
+    {
+        var result = Evaluator.EvaluateToString("""$map([1,2,3], function($v) { $v * 2 })""", "{}");
+        Assert.Equal("[2,4,6]", result);
+    }
+
+    [Fact]
+    public void MapWithIndex()
+    {
+        var result = Evaluator.EvaluateToString("""$map(["a","b","c"], function($v, $i) { $i })""", "{}");
+        Assert.Equal("[0,1,2]", result);
+    }
+
+    [Fact]
+    public void FilterFunction()
+    {
+        var result = Evaluator.EvaluateToString("""$filter([1,2,3,4,5], function($v) { $v > 2 })""", "{}");
+        Assert.Equal("[3,4,5]", result);
+    }
+
+    [Fact]
+    public void ReduceFunction()
+    {
+        var result = Evaluator.EvaluateToString("""$reduce([1,2,3,4], function($acc, $v) { $acc + $v })""", "{}");
+        Assert.Equal("10", result);
+    }
+
+    [Fact]
+    public void ReduceWithInit()
+    {
+        var result = Evaluator.EvaluateToString("""$reduce([1,2,3], function($acc, $v) { $acc + $v }, 10)""", "{}");
+        Assert.Equal("16", result);
+    }
+
+    [Fact]
+    public void EachFunction()
+    {
+        var result = Evaluator.EvaluateToString("""$each({"a": 1, "b": 2}, function($v, $k) { $v })""", "{}");
+        Assert.Equal("[1,2]", result);
+    }
+
+    [Fact]
+    public void MergeFunction()
+    {
+        var result = Evaluator.EvaluateToString("""$merge([{"a":1},{"b":2}])""", "{}");
+        Assert.Equal("""{"a":1,"b":2}""", result);
+    }
+
+    [Fact]
+    public void SpreadFunction()
+    {
+        var result = Evaluator.EvaluateToString("""$spread({"a":1,"b":2})""", "{}");
+        Assert.Equal("""[{"a":1},{"b":2}]""", result);
+    }
+
+    [Fact]
+    public void SortFunctionDefault()
+    {
+        var result = Evaluator.EvaluateToString("""$sort([3,1,2])""", "{}");
+        Assert.Equal("[1,2,3]", result);
+    }
+
+    [Fact]
+    public void SortFunctionWithComparator()
+    {
+        var result = Evaluator.EvaluateToString("""$sort([1,3,2], function($a, $b) { $b - $a })""", "{}");
+        Assert.Equal("[3,2,1]", result);
+    }
+
+    [Fact]
+    public void DistinctFunction()
+    {
+        var result = Evaluator.EvaluateToString("""$distinct([1,2,2,3,3,3])""", "{}");
+        Assert.Equal("[1,2,3]", result);
+    }
+
+    [Fact]
+    public void SingleFunction()
+    {
+        var result = Evaluator.EvaluateToString("""$single([42])""", "{}");
+        Assert.Equal("42", result);
+    }
+
+    [Fact]
+    public void SingleWithPredicate()
+    {
+        var result = Evaluator.EvaluateToString("""$single([1,2,3], function($v) { $v = 2 })""", "{}");
+        Assert.Equal("2", result);
+    }
+
+    [Fact]
+    public void SiftFunction()
+    {
+        var result = Evaluator.EvaluateToString("""$sift({"a":1,"b":2,"c":3}, function($v) { $v > 1 })""", "{}");
+        Assert.Equal("""{"b":2,"c":3}""", result);
+    }
+
+    // --- Lambda, closure, pipe tests ---
+    [Fact]
+    public void LambdaInvocation()
+    {
+        var result = Evaluator.EvaluateToString("""($f := function($x) { $x + 1 }; $f(5))""", "{}");
+        Assert.Equal("6", result);
+    }
+
+    [Fact]
+    public void ClosureCapture()
+    {
+        var result = Evaluator.EvaluateToString("""($y := 10; $f := function($x) { $x + $y }; $f(5))""", "{}");
+        Assert.Equal("15", result);
+    }
+
+    [Fact]
+    public void PipeOperator()
+    {
+        var result = Evaluator.EvaluateToString("""($double := function($x) { $x * 2 }; 5 ~> $double)""", "{}");
+        Assert.Equal("10", result);
+    }
+
+    // --- String function tests ---
+    [Fact]
+    public void PadRight()
+    {
+        var result = Evaluator.EvaluateToString("""$pad("hi", 5)""", "{}");
+        Assert.Equal("\"hi   \"", result);
+    }
+
+    [Fact]
+    public void PadLeft()
+    {
+        var result = Evaluator.EvaluateToString("""$pad("hi", -5, "*")""", "{}");
+        Assert.Equal("\"***hi\"", result);
+    }
+
+    [Fact]
+    public void ReplaceFunction()
+    {
+        var result = Evaluator.EvaluateToString("""$replace("hello world", "world", "there")""", "{}");
+        Assert.Equal("\"hello there\"", result);
+    }
+
+    [Fact]
+    public void ReplaceWithLimit()
+    {
+        var result = Evaluator.EvaluateToString("""$replace("aaa", "a", "b", 2)""", "{}");
+        Assert.Equal("\"bba\"", result);
+    }
+
+    // --- Encoding function tests ---
+    [Fact]
+    public void Base64Encode()
+    {
+        var result = Evaluator.EvaluateToString("""$base64encode("hello")""", "{}");
+        Assert.Equal("\"aGVsbG8=\"", result);
+    }
+
+    [Fact]
+    public void Base64Decode()
+    {
+        var result = Evaluator.EvaluateToString("""$base64decode("aGVsbG8=")""", "{}");
+        Assert.Equal("\"hello\"", result);
+    }
+
+    [Fact]
+    public void EncodeUrlComponent()
+    {
+        var result = Evaluator.EvaluateToString("""$encodeUrlComponent("hello world")""", "{}");
+        Assert.Equal("\"hello%20world\"", result);
+    }
+
+    [Fact]
+    public void DecodeUrlComponent()
+    {
+        var result = Evaluator.EvaluateToString("""$decodeUrlComponent("hello%20world")""", "{}");
+        Assert.Equal("\"hello world\"", result);
+    }
+
+    // --- Misc function tests ---
+    [Fact]
+    public void ShuffleDoesNotCrash()
+    {
+        var result = Evaluator.EvaluateToString("""$shuffle([1,2,3])""", "{}");
+        Assert.NotNull(result);
+        Assert.StartsWith("[", result);
+    }
+
+    [Fact]
+    public void ZipFunction()
+    {
+        var result = Evaluator.EvaluateToString("""$zip([1,2],[3,4])""", "{}");
+        Assert.Equal("[[1,3],[2,4]]", result);
+    }
+
+    [Fact]
+    public void ErrorFunctionThrows()
+    {
+        var ex = Assert.Throws<JsonataException>(() => Evaluator.EvaluateToString("""$error("boom")""", "{}"));
+        Assert.Contains("boom", ex.Message);
+    }
+
+    [Fact]
+    public void AssertPassesOnTrue()
+    {
+        // $assert returns undefined (no output) on success
+        var result = Evaluator.EvaluateToString("""$assert(true)""", "{}");
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public void AssertFailsOnFalse()
+    {
+        var ex = Assert.Throws<JsonataException>(() => Evaluator.EvaluateToString("""$assert(false, "nope")""", "{}"));
+        Assert.Contains("nope", ex.Message);
+    }
+
+    [Fact]
+    public void EvalFunction()
+    {
+        var result = Evaluator.EvaluateToString("""$eval("1 + 2")""", "{}");
+        Assert.Equal("3", result);
+    }
+
+    [Fact]
+    public void FormatBase()
+    {
+        var result = Evaluator.EvaluateToString("""$formatBase(255, 16)""", "{}");
+        Assert.Equal("\"ff\"", result);
+    }
+
+    [Fact]
+    public void NowReturnsString()
+    {
+        var result = Evaluator.EvaluateToString("""$now()""", "{}");
+        Assert.NotNull(result);
+        Assert.StartsWith("\"", result);
+    }
+
+    [Fact]
+    public void MillisReturnsNumber()
+    {
+        var result = Evaluator.EvaluateToString("""$millis()""", "{}");
+        Assert.NotNull(result);
+        // Should be a large number (Unix timestamp in ms)
+        Assert.True(double.TryParse(result, out double ms));
+        Assert.True(ms > 1_000_000_000_000);
+    }
 }

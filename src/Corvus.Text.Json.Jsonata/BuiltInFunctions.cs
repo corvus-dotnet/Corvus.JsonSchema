@@ -65,6 +65,29 @@ internal static class BuiltInFunctions
             "lookup" => CompileLookup,
             "distinct" => CompileDistinct,
             "flatten" => CompileFlatten,
+            "single" => CompileSingle,
+            "sift" => CompileSift,
+            "pad" => CompilePad,
+            "match" => CompileMatch,
+            "replace" => CompileReplace,
+            "base64encode" => CompileBase64Encode,
+            "base64decode" => CompileBase64Decode,
+            "encodeUrlComponent" => CompileEncodeUrlComponent,
+            "decodeUrlComponent" => CompileDecodeUrlComponent,
+            "encodeUrl" => CompileEncodeUrl,
+            "decodeUrl" => CompileDecodeUrl,
+            "random" => CompileRandom,
+            "formatNumber" => CompileFormatNumber,
+            "formatBase" => CompileFormatBase,
+            "shuffle" => CompileShuffle,
+            "zip" => CompileZip,
+            "error" => CompileError,
+            "assert" => CompileAssert,
+            "now" => CompileNow,
+            "millis" => CompileMillis,
+            "fromMillis" => CompileFromMillis,
+            "toMillis" => CompileToMillis,
+            "eval" => CompileEval,
             _ => null,
         };
     }
@@ -835,8 +858,81 @@ internal static class BuiltInFunctions
 
     private static ExpressionEvaluator CompileSortFunc(ExpressionEvaluator[] args)
     {
-        // TODO: Full sort with comparator
-        return static (in JsonElement input, Environment env) => new Sequence(input);
+        if (args.Length < 1 || args.Length > 2)
+        {
+            throw new JsonataException("T0410", "$sort expects 1-2 arguments", 0);
+        }
+
+        var arrArg = args[0];
+        var funcArg = args.Length > 1 ? args[1] : null;
+
+        return (in JsonElement input, Environment env) =>
+        {
+            var seq = arrArg(input, env);
+            if (seq.IsUndefined)
+            {
+                return Sequence.Undefined;
+            }
+
+            var arr = seq.FirstOrDefault;
+            if (arr.ValueKind != JsonValueKind.Array)
+            {
+                return seq;
+            }
+
+            var elements = new List<JsonElement>();
+            elements.AddRange(arr.EnumerateArray());
+
+            if (funcArg is not null)
+            {
+                var funcSeq = funcArg(input, env);
+                if (funcSeq.IsLambda)
+                {
+                    var lambda = funcSeq.Lambda!;
+                    var sortInput = input;
+                    elements.Sort((a, b) =>
+                    {
+                        var aSeq = new Sequence(a);
+                        var bSeq = new Sequence(b);
+                        var result = lambda.Invoke(new[] { aSeq, bSeq }, sortInput, env);
+                        if (result.IsSingleton && FunctionalCompiler.TryCoerceToNumber(result.FirstOrDefault, out double num))
+                        {
+                            return num < 0 ? -1 : (num > 0 ? 1 : 0);
+                        }
+
+                        return 0;
+                    });
+                }
+            }
+            else
+            {
+                elements.Sort((a, b) =>
+                {
+                    if (FunctionalCompiler.TryCoerceToNumber(a, out double na) && FunctionalCompiler.TryCoerceToNumber(b, out double nb))
+                    {
+                        return na.CompareTo(nb);
+                    }
+
+                    return string.CompareOrdinal(
+                        FunctionalCompiler.CoerceElementToString(a),
+                        FunctionalCompiler.CoerceElementToString(b));
+                });
+            }
+
+            using var ms = new MemoryStream(256);
+            using var writer = new Utf8JsonWriter(ms);
+            writer.WriteStartArray();
+            foreach (var elem in elements)
+            {
+                elem.WriteTo(writer);
+            }
+
+            writer.WriteEndArray();
+            writer.Flush();
+            ms.Position = 0;
+            using var doc = JsonDocument.Parse(ms);
+            return new Sequence(doc.RootElement.Clone());
+        };
     }
 
     private static ExpressionEvaluator CompileReverse(ExpressionEvaluator[] args)
@@ -880,8 +976,45 @@ internal static class BuiltInFunctions
 
     private static ExpressionEvaluator CompileDistinct(ExpressionEvaluator[] args)
     {
-        // TODO: Full distinct implementation
-        return args.Length > 0 ? args[0] : static (in JsonElement input, Environment env) => Sequence.Undefined;
+        if (args.Length != 1)
+        {
+            throw new JsonataException("T0410", "$distinct expects 1 argument", 0);
+        }
+
+        var arg = args[0];
+        return (in JsonElement input, Environment env) =>
+        {
+            var seq = arg(input, env);
+            if (seq.IsUndefined)
+            {
+                return Sequence.Undefined;
+            }
+
+            var arr = seq.FirstOrDefault;
+            if (arr.ValueKind != JsonValueKind.Array)
+            {
+                return seq;
+            }
+
+            using var ms = new MemoryStream(256);
+            using var writer = new Utf8JsonWriter(ms);
+            writer.WriteStartArray();
+            var seen = new HashSet<string>();
+            foreach (var item in arr.EnumerateArray())
+            {
+                var raw = item.GetRawText();
+                if (seen.Add(raw))
+                {
+                    item.WriteTo(writer);
+                }
+            }
+
+            writer.WriteEndArray();
+            writer.Flush();
+            ms.Position = 0;
+            using var doc = JsonDocument.Parse(ms);
+            return new Sequence(doc.RootElement.Clone());
+        };
     }
 
     private static ExpressionEvaluator CompileFlatten(ExpressionEvaluator[] args)
@@ -936,38 +1069,338 @@ internal static class BuiltInFunctions
     // --- Higher-order functions (stubs) ---
     private static ExpressionEvaluator CompileMap(ExpressionEvaluator[] args)
     {
-        // TODO: Full map implementation with lambda invocation
-        return args.Length > 0 ? args[0] : static (in JsonElement input, Environment env) => Sequence.Undefined;
+        if (args.Length != 2)
+        {
+            throw new JsonataException("T0410", "$map expects 2 arguments", 0);
+        }
+
+        var arrArg = args[0];
+        var funcArg = args[1];
+
+        return (in JsonElement input, Environment env) =>
+        {
+            var seq = arrArg(input, env);
+            var funcSeq = funcArg(input, env);
+
+            if (seq.IsUndefined || !funcSeq.IsLambda)
+            {
+                return Sequence.Undefined;
+            }
+
+            var lambda = funcSeq.Lambda!;
+            var builder = default(SequenceBuilder);
+
+            if (seq.IsSingleton && seq.FirstOrDefault.ValueKind == JsonValueKind.Array)
+            {
+                var arr = seq.FirstOrDefault;
+                int len = arr.GetArrayLength();
+                for (int i = 0; i < len; i++)
+                {
+                    var elemSeq = new Sequence(arr[i]);
+                    var idxSeq = new Sequence(FunctionalCompiler.CreateNumberElement(i));
+                    var result = lambda.Invoke(new[] { elemSeq, idxSeq, seq }, arr[i], env);
+                    builder.AddRange(result);
+                }
+            }
+            else
+            {
+                for (int i = 0; i < seq.Count; i++)
+                {
+                    var elemSeq = new Sequence(seq[i]);
+                    var idxSeq = new Sequence(FunctionalCompiler.CreateNumberElement(i));
+                    var result = lambda.Invoke(new[] { elemSeq, idxSeq, seq }, seq[i], env);
+                    builder.AddRange(result);
+                }
+            }
+
+            // Materialize builder as JSON array
+            using var ms = new MemoryStream(256);
+            using var writer = new Utf8JsonWriter(ms);
+            writer.WriteStartArray();
+            var built = builder.ToSequence();
+            for (int i = 0; i < built.Count; i++)
+            {
+                built[i].WriteTo(writer);
+            }
+
+            writer.WriteEndArray();
+            writer.Flush();
+            ms.Position = 0;
+            using var doc = JsonDocument.Parse(ms);
+            return new Sequence(doc.RootElement.Clone());
+        };
     }
 
     private static ExpressionEvaluator CompileFilterFunc(ExpressionEvaluator[] args)
     {
-        // TODO: Full filter implementation with lambda invocation
-        return args.Length > 0 ? args[0] : static (in JsonElement input, Environment env) => Sequence.Undefined;
+        if (args.Length != 2)
+        {
+            throw new JsonataException("T0410", "$filter expects 2 arguments", 0);
+        }
+
+        var arrArg = args[0];
+        var funcArg = args[1];
+
+        return (in JsonElement input, Environment env) =>
+        {
+            var seq = arrArg(input, env);
+            var funcSeq = funcArg(input, env);
+
+            if (seq.IsUndefined || !funcSeq.IsLambda)
+            {
+                return Sequence.Undefined;
+            }
+
+            var lambda = funcSeq.Lambda!;
+            using var ms = new MemoryStream(256);
+            using var writer = new Utf8JsonWriter(ms);
+            writer.WriteStartArray();
+
+            if (seq.IsSingleton && seq.FirstOrDefault.ValueKind == JsonValueKind.Array)
+            {
+                var arr = seq.FirstOrDefault;
+                int len = arr.GetArrayLength();
+                for (int i = 0; i < len; i++)
+                {
+                    var elemSeq = new Sequence(arr[i]);
+                    var idxSeq = new Sequence(FunctionalCompiler.CreateNumberElement(i));
+                    var result = lambda.Invoke(new[] { elemSeq, idxSeq, seq }, arr[i], env);
+                    if (FunctionalCompiler.IsTruthy(result))
+                    {
+                        arr[i].WriteTo(writer);
+                    }
+                }
+            }
+            else
+            {
+                for (int i = 0; i < seq.Count; i++)
+                {
+                    var elemSeq = new Sequence(seq[i]);
+                    var idxSeq = new Sequence(FunctionalCompiler.CreateNumberElement(i));
+                    var result = lambda.Invoke(new[] { elemSeq, idxSeq, seq }, seq[i], env);
+                    if (FunctionalCompiler.IsTruthy(result))
+                    {
+                        seq[i].WriteTo(writer);
+                    }
+                }
+            }
+
+            writer.WriteEndArray();
+            writer.Flush();
+            ms.Position = 0;
+            using var doc = JsonDocument.Parse(ms);
+            return new Sequence(doc.RootElement.Clone());
+        };
     }
 
     private static ExpressionEvaluator CompileReduce(ExpressionEvaluator[] args)
     {
-        // TODO: Full reduce implementation
-        return static (in JsonElement input, Environment env) => Sequence.Undefined;
+        if (args.Length < 2 || args.Length > 3)
+        {
+            throw new JsonataException("T0410", "$reduce expects 2-3 arguments", 0);
+        }
+
+        var arrArg = args[0];
+        var funcArg = args[1];
+        var initArg = args.Length > 2 ? args[2] : null;
+
+        return (in JsonElement input, Environment env) =>
+        {
+            var seq = arrArg(input, env);
+            var funcSeq = funcArg(input, env);
+
+            if (seq.IsUndefined || !funcSeq.IsLambda)
+            {
+                return Sequence.Undefined;
+            }
+
+            var lambda = funcSeq.Lambda!;
+
+            // Collect array elements
+            var elements = new List<JsonElement>();
+            if (seq.IsSingleton && seq.FirstOrDefault.ValueKind == JsonValueKind.Array)
+            {
+                elements.AddRange(seq.FirstOrDefault.EnumerateArray());
+            }
+            else
+            {
+                for (int i = 0; i < seq.Count; i++)
+                {
+                    elements.Add(seq[i]);
+                }
+            }
+
+            if (elements.Count == 0)
+            {
+                return Sequence.Undefined;
+            }
+
+            Sequence accumulator;
+            int startIdx;
+            if (initArg is not null)
+            {
+                accumulator = initArg(input, env);
+                startIdx = 0;
+            }
+            else
+            {
+                accumulator = new Sequence(elements[0]);
+                startIdx = 1;
+            }
+
+            for (int i = startIdx; i < elements.Count; i++)
+            {
+                var elemSeq = new Sequence(elements[i]);
+                var idxSeq = new Sequence(FunctionalCompiler.CreateNumberElement(i));
+                accumulator = lambda.Invoke(new[] { accumulator, elemSeq, idxSeq }, input, env);
+            }
+
+            return accumulator;
+        };
     }
 
     private static ExpressionEvaluator CompileEach(ExpressionEvaluator[] args)
     {
-        // TODO: Full each implementation
-        return static (in JsonElement input, Environment env) => Sequence.Undefined;
+        if (args.Length != 2)
+        {
+            throw new JsonataException("T0410", "$each expects 2 arguments", 0);
+        }
+
+        var objArg = args[0];
+        var funcArg = args[1];
+
+        return (in JsonElement input, Environment env) =>
+        {
+            var seq = objArg(input, env);
+            var funcSeq = funcArg(input, env);
+
+            if (seq.IsUndefined || !funcSeq.IsLambda)
+            {
+                return Sequence.Undefined;
+            }
+
+            var obj = seq.FirstOrDefault;
+            if (obj.ValueKind != JsonValueKind.Object)
+            {
+                return Sequence.Undefined;
+            }
+
+            var lambda = funcSeq.Lambda!;
+            using var ms = new MemoryStream(256);
+            using var writer = new Utf8JsonWriter(ms);
+            writer.WriteStartArray();
+
+            foreach (var prop in obj.EnumerateObject())
+            {
+                var valSeq = new Sequence(prop.Value);
+                var keySeq = new Sequence(FunctionalCompiler.CreateStringElement(prop.Name));
+                var result = lambda.Invoke(new[] { valSeq, keySeq }, input, env);
+                if (!result.IsUndefined)
+                {
+                    if (result.IsSingleton)
+                    {
+                        result.FirstOrDefault.WriteTo(writer);
+                    }
+                    else
+                    {
+                        for (int i = 0; i < result.Count; i++)
+                        {
+                            result[i].WriteTo(writer);
+                        }
+                    }
+                }
+            }
+
+            writer.WriteEndArray();
+            writer.Flush();
+            ms.Position = 0;
+            using var doc = JsonDocument.Parse(ms);
+            return new Sequence(doc.RootElement.Clone());
+        };
     }
 
     private static ExpressionEvaluator CompileMerge(ExpressionEvaluator[] args)
     {
-        // TODO: Full merge implementation
-        return args.Length > 0 ? args[0] : static (in JsonElement input, Environment env) => Sequence.Undefined;
+        if (args.Length != 1)
+        {
+            throw new JsonataException("T0410", "$merge expects 1 argument", 0);
+        }
+
+        var arg = args[0];
+        return (in JsonElement input, Environment env) =>
+        {
+            var seq = arg(input, env);
+            if (seq.IsUndefined)
+            {
+                return Sequence.Undefined;
+            }
+
+            using var ms = new MemoryStream(256);
+            using var writer = new Utf8JsonWriter(ms);
+            writer.WriteStartObject();
+
+            if (seq.IsSingleton && seq.FirstOrDefault.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var item in seq.FirstOrDefault.EnumerateArray())
+                {
+                    if (item.ValueKind == JsonValueKind.Object)
+                    {
+                        foreach (var prop in item.EnumerateObject())
+                        {
+                            writer.WritePropertyName(prop.Name);
+                            prop.Value.WriteTo(writer);
+                        }
+                    }
+                }
+            }
+
+            writer.WriteEndObject();
+            writer.Flush();
+            ms.Position = 0;
+            using var doc = JsonDocument.Parse(ms);
+            return new Sequence(doc.RootElement.Clone());
+        };
     }
 
     private static ExpressionEvaluator CompileSpread(ExpressionEvaluator[] args)
     {
-        // TODO: Full spread implementation
-        return args.Length > 0 ? args[0] : static (in JsonElement input, Environment env) => Sequence.Undefined;
+        if (args.Length != 1)
+        {
+            throw new JsonataException("T0410", "$spread expects 1 argument", 0);
+        }
+
+        var arg = args[0];
+        return (in JsonElement input, Environment env) =>
+        {
+            var seq = arg(input, env);
+            if (seq.IsUndefined)
+            {
+                return Sequence.Undefined;
+            }
+
+            var obj = seq.FirstOrDefault;
+            if (obj.ValueKind != JsonValueKind.Object)
+            {
+                return Sequence.Undefined;
+            }
+
+            using var ms = new MemoryStream(256);
+            using var writer = new Utf8JsonWriter(ms);
+            writer.WriteStartArray();
+            foreach (var prop in obj.EnumerateObject())
+            {
+                writer.WriteStartObject();
+                writer.WritePropertyName(prop.Name);
+                prop.Value.WriteTo(writer);
+                writer.WriteEndObject();
+            }
+
+            writer.WriteEndArray();
+            writer.Flush();
+            ms.Position = 0;
+            using var doc = JsonDocument.Parse(ms);
+            return new Sequence(doc.RootElement.Clone());
+        };
     }
 
     private static ExpressionEvaluator CompileLookup(ExpressionEvaluator[] args)
@@ -1003,6 +1436,690 @@ internal static class BuiltInFunctions
             }
 
             return Sequence.Undefined;
+        };
+    }
+
+    // --- Thread-safe random for netstandard2.0/net481 compatibility ---
+    [ThreadStatic]
+    private static Random? t_random;
+
+    private static Random ThreadRandom => t_random ??= new Random();
+
+    // --- Higher-order: single, sift ---
+    private static ExpressionEvaluator CompileSingle(ExpressionEvaluator[] args)
+    {
+        if (args.Length < 1 || args.Length > 2)
+        {
+            throw new JsonataException("T0410", "$single expects 1-2 arguments", 0);
+        }
+
+        var arrArg = args[0];
+        var funcArg = args.Length > 1 ? args[1] : null;
+
+        return (in JsonElement input, Environment env) =>
+        {
+            var seq = arrArg(input, env);
+            if (seq.IsUndefined)
+            {
+                return Sequence.Undefined;
+            }
+
+            var elements = new List<JsonElement>();
+            if (seq.IsSingleton && seq.FirstOrDefault.ValueKind == JsonValueKind.Array)
+            {
+                elements.AddRange(seq.FirstOrDefault.EnumerateArray());
+            }
+            else
+            {
+                for (int i = 0; i < seq.Count; i++)
+                {
+                    elements.Add(seq[i]);
+                }
+            }
+
+            if (funcArg is null)
+            {
+                if (elements.Count != 1)
+                {
+                    throw new JsonataException("D3138", "$single: expected single match", 0);
+                }
+
+                return new Sequence(elements[0]);
+            }
+
+            var funcSeq = funcArg(input, env);
+            if (!funcSeq.IsLambda)
+            {
+                return Sequence.Undefined;
+            }
+
+            var lambda = funcSeq.Lambda!;
+            JsonElement? match = null;
+            for (int i = 0; i < elements.Count; i++)
+            {
+                var result = lambda.Invoke(
+                    new[] { new Sequence(elements[i]), new Sequence(FunctionalCompiler.CreateNumberElement(i)) },
+                    elements[i],
+                    env);
+                if (FunctionalCompiler.IsTruthy(result))
+                {
+                    if (match.HasValue)
+                    {
+                        throw new JsonataException("D3138", "$single: expected single match", 0);
+                    }
+
+                    match = elements[i];
+                }
+            }
+
+            return match.HasValue ? new Sequence(match.Value) : Sequence.Undefined;
+        };
+    }
+
+    private static ExpressionEvaluator CompileSift(ExpressionEvaluator[] args)
+    {
+        if (args.Length != 2)
+        {
+            throw new JsonataException("T0410", "$sift expects 2 arguments", 0);
+        }
+
+        var objArg = args[0];
+        var funcArg = args[1];
+
+        return (in JsonElement input, Environment env) =>
+        {
+            var seq = objArg(input, env);
+            var funcSeq = funcArg(input, env);
+            if (seq.IsUndefined || !funcSeq.IsLambda)
+            {
+                return Sequence.Undefined;
+            }
+
+            var obj = seq.FirstOrDefault;
+            if (obj.ValueKind != JsonValueKind.Object)
+            {
+                return Sequence.Undefined;
+            }
+
+            var lambda = funcSeq.Lambda!;
+            using var ms = new MemoryStream(256);
+            using var writer = new Utf8JsonWriter(ms);
+            writer.WriteStartObject();
+            foreach (var prop in obj.EnumerateObject())
+            {
+                var valSeq = new Sequence(prop.Value);
+                var keySeq = new Sequence(FunctionalCompiler.CreateStringElement(prop.Name));
+                var result = lambda.Invoke(new[] { valSeq, keySeq }, input, env);
+                if (FunctionalCompiler.IsTruthy(result))
+                {
+                    writer.WritePropertyName(prop.Name);
+                    prop.Value.WriteTo(writer);
+                }
+            }
+
+            writer.WriteEndObject();
+            writer.Flush();
+            ms.Position = 0;
+            using var doc = JsonDocument.Parse(ms);
+            return new Sequence(doc.RootElement.Clone());
+        };
+    }
+
+    // --- String functions: pad, match, replace ---
+    private static ExpressionEvaluator CompilePad(ExpressionEvaluator[] args)
+    {
+        if (args.Length < 2 || args.Length > 3)
+        {
+            throw new JsonataException("T0410", "$pad expects 2-3 arguments", 0);
+        }
+
+        var strArg = args[0];
+        var widthArg = args[1];
+        var charArg = args.Length > 2 ? args[2] : null;
+
+        return (in JsonElement input, Environment env) =>
+        {
+            var strSeq = strArg(input, env);
+            var widthSeq = widthArg(input, env);
+            if (strSeq.IsUndefined || widthSeq.IsUndefined)
+            {
+                return Sequence.Undefined;
+            }
+
+            string str = FunctionalCompiler.CoerceElementToString(strSeq.FirstOrDefault);
+            if (!FunctionalCompiler.TryCoerceToNumber(widthSeq.FirstOrDefault, out double widthNum))
+            {
+                return Sequence.Undefined;
+            }
+
+            int width = (int)widthNum;
+            char padChar = ' ';
+            if (charArg is not null)
+            {
+                var charSeq = charArg(input, env);
+                if (!charSeq.IsUndefined)
+                {
+                    string charStr = FunctionalCompiler.CoerceElementToString(charSeq.FirstOrDefault);
+                    if (charStr.Length > 0)
+                    {
+                        padChar = charStr[0];
+                    }
+                }
+            }
+
+            string result = width > 0
+                ? str.PadRight(Math.Abs(width), padChar)
+                : str.PadLeft(Math.Abs(width), padChar);
+            return new Sequence(FunctionalCompiler.CreateStringElement(result));
+        };
+    }
+
+    private static ExpressionEvaluator CompileMatch(ExpressionEvaluator[] args)
+    {
+        // Simplified: without regex support, just return undefined
+        return static (in JsonElement input, Environment env) => Sequence.Undefined;
+    }
+
+    private static ExpressionEvaluator CompileReplace(ExpressionEvaluator[] args)
+    {
+        if (args.Length < 3)
+        {
+            throw new JsonataException("T0410", "$replace expects 3+ arguments", 0);
+        }
+
+        var strArg = args[0];
+        var patternArg = args[1];
+        var replacementArg = args[2];
+        var limitArg = args.Length > 3 ? args[3] : null;
+
+        return (in JsonElement input, Environment env) =>
+        {
+            var strSeq = strArg(input, env);
+            var patSeq = patternArg(input, env);
+            var repSeq = replacementArg(input, env);
+            if (strSeq.IsUndefined || patSeq.IsUndefined || repSeq.IsUndefined)
+            {
+                return Sequence.Undefined;
+            }
+
+            string str = FunctionalCompiler.CoerceElementToString(strSeq.FirstOrDefault);
+            string pattern = FunctionalCompiler.CoerceElementToString(patSeq.FirstOrDefault);
+            string replacement = FunctionalCompiler.CoerceElementToString(repSeq.FirstOrDefault);
+            int limit = int.MaxValue;
+            if (limitArg is not null)
+            {
+                var limSeq = limitArg(input, env);
+                if (!limSeq.IsUndefined && FunctionalCompiler.TryCoerceToNumber(limSeq.FirstOrDefault, out double n))
+                {
+                    limit = (int)n;
+                }
+            }
+
+            // Simple string replacement (not regex)
+            int count = 0;
+            int idx;
+            while (count < limit && (idx = str.IndexOf(pattern, StringComparison.Ordinal)) >= 0)
+            {
+                str = str.Substring(0, idx) + replacement + str.Substring(idx + pattern.Length);
+                count++;
+            }
+
+            return new Sequence(FunctionalCompiler.CreateStringElement(str));
+        };
+    }
+
+    // --- Encoding functions ---
+    private static ExpressionEvaluator CompileBase64Encode(ExpressionEvaluator[] args)
+    {
+        if (args.Length != 1)
+        {
+            throw new JsonataException("T0410", "$base64encode expects 1 argument", 0);
+        }
+
+        var arg = args[0];
+        return (in JsonElement input, Environment env) =>
+        {
+            var seq = arg(input, env);
+            if (seq.IsUndefined)
+            {
+                return Sequence.Undefined;
+            }
+
+            string str = FunctionalCompiler.CoerceElementToString(seq.FirstOrDefault);
+            return new Sequence(FunctionalCompiler.CreateStringElement(
+                Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(str))));
+        };
+    }
+
+    private static ExpressionEvaluator CompileBase64Decode(ExpressionEvaluator[] args)
+    {
+        if (args.Length != 1)
+        {
+            throw new JsonataException("T0410", "$base64decode expects 1 argument", 0);
+        }
+
+        var arg = args[0];
+        return (in JsonElement input, Environment env) =>
+        {
+            var seq = arg(input, env);
+            if (seq.IsUndefined)
+            {
+                return Sequence.Undefined;
+            }
+
+            string str = FunctionalCompiler.CoerceElementToString(seq.FirstOrDefault);
+            return new Sequence(FunctionalCompiler.CreateStringElement(
+                System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(str))));
+        };
+    }
+
+    private static ExpressionEvaluator CompileEncodeUrlComponent(ExpressionEvaluator[] args)
+    {
+        if (args.Length != 1)
+        {
+            throw new JsonataException("T0410", "$encodeUrlComponent expects 1 argument", 0);
+        }
+
+        var arg = args[0];
+        return (in JsonElement input, Environment env) =>
+        {
+            var seq = arg(input, env);
+            if (seq.IsUndefined)
+            {
+                return Sequence.Undefined;
+            }
+
+            string str = FunctionalCompiler.CoerceElementToString(seq.FirstOrDefault);
+            return new Sequence(FunctionalCompiler.CreateStringElement(Uri.EscapeDataString(str)));
+        };
+    }
+
+    private static ExpressionEvaluator CompileDecodeUrlComponent(ExpressionEvaluator[] args)
+    {
+        if (args.Length != 1)
+        {
+            throw new JsonataException("T0410", "$decodeUrlComponent expects 1 argument", 0);
+        }
+
+        var arg = args[0];
+        return (in JsonElement input, Environment env) =>
+        {
+            var seq = arg(input, env);
+            if (seq.IsUndefined)
+            {
+                return Sequence.Undefined;
+            }
+
+            string str = FunctionalCompiler.CoerceElementToString(seq.FirstOrDefault);
+            return new Sequence(FunctionalCompiler.CreateStringElement(Uri.UnescapeDataString(str)));
+        };
+    }
+
+#pragma warning disable SYSLIB0013 // Uri.EscapeUriString is obsolete
+    private static ExpressionEvaluator CompileEncodeUrl(ExpressionEvaluator[] args)
+    {
+        if (args.Length != 1)
+        {
+            throw new JsonataException("T0410", "$encodeUrl expects 1 argument", 0);
+        }
+
+        var arg = args[0];
+        return (in JsonElement input, Environment env) =>
+        {
+            var seq = arg(input, env);
+            if (seq.IsUndefined)
+            {
+                return Sequence.Undefined;
+            }
+
+            string str = FunctionalCompiler.CoerceElementToString(seq.FirstOrDefault);
+            return new Sequence(FunctionalCompiler.CreateStringElement(Uri.EscapeUriString(str)));
+        };
+    }
+#pragma warning restore SYSLIB0013
+
+    private static ExpressionEvaluator CompileDecodeUrl(ExpressionEvaluator[] args)
+    {
+        if (args.Length != 1)
+        {
+            throw new JsonataException("T0410", "$decodeUrl expects 1 argument", 0);
+        }
+
+        var arg = args[0];
+        return (in JsonElement input, Environment env) =>
+        {
+            var seq = arg(input, env);
+            if (seq.IsUndefined)
+            {
+                return Sequence.Undefined;
+            }
+
+            string str = FunctionalCompiler.CoerceElementToString(seq.FirstOrDefault);
+            return new Sequence(FunctionalCompiler.CreateStringElement(Uri.UnescapeDataString(str)));
+        };
+    }
+
+    // --- Numeric functions: random, formatNumber, formatBase ---
+    private static ExpressionEvaluator CompileRandom(ExpressionEvaluator[] args)
+    {
+        return static (in JsonElement input, Environment env) =>
+        {
+            return new Sequence(FunctionalCompiler.CreateNumberElement(ThreadRandom.NextDouble()));
+        };
+    }
+
+    private static ExpressionEvaluator CompileFormatNumber(ExpressionEvaluator[] args)
+    {
+        if (args.Length != 2)
+        {
+            throw new JsonataException("T0410", "$formatNumber expects 2 arguments", 0);
+        }
+
+        var numArg = args[0];
+        var picArg = args[1];
+        return (in JsonElement input, Environment env) =>
+        {
+            var numSeq = numArg(input, env);
+            var picSeq = picArg(input, env);
+            if (numSeq.IsUndefined || picSeq.IsUndefined)
+            {
+                return Sequence.Undefined;
+            }
+
+            if (!FunctionalCompiler.TryCoerceToNumber(numSeq.FirstOrDefault, out double num))
+            {
+                return Sequence.Undefined;
+            }
+
+            string picture = FunctionalCompiler.CoerceElementToString(picSeq.FirstOrDefault);
+            return new Sequence(FunctionalCompiler.CreateStringElement(
+                num.ToString(picture, CultureInfo.InvariantCulture)));
+        };
+    }
+
+    private static ExpressionEvaluator CompileFormatBase(ExpressionEvaluator[] args)
+    {
+        if (args.Length != 2)
+        {
+            throw new JsonataException("T0410", "$formatBase expects 2 arguments", 0);
+        }
+
+        var numArg = args[0];
+        var radixArg = args[1];
+        return (in JsonElement input, Environment env) =>
+        {
+            var numSeq = numArg(input, env);
+            var radixSeq = radixArg(input, env);
+            if (numSeq.IsUndefined || radixSeq.IsUndefined)
+            {
+                return Sequence.Undefined;
+            }
+
+            if (!FunctionalCompiler.TryCoerceToNumber(numSeq.FirstOrDefault, out double num))
+            {
+                return Sequence.Undefined;
+            }
+
+            if (!FunctionalCompiler.TryCoerceToNumber(radixSeq.FirstOrDefault, out double radix))
+            {
+                return Sequence.Undefined;
+            }
+
+            string result = Convert.ToString((long)num, (int)radix);
+            return new Sequence(FunctionalCompiler.CreateStringElement(result));
+        };
+    }
+
+    // --- Array functions: shuffle, zip ---
+    private static ExpressionEvaluator CompileShuffle(ExpressionEvaluator[] args)
+    {
+        if (args.Length != 1)
+        {
+            throw new JsonataException("T0410", "$shuffle expects 1 argument", 0);
+        }
+
+        var arg = args[0];
+        return (in JsonElement input, Environment env) =>
+        {
+            var seq = arg(input, env);
+            if (seq.IsUndefined)
+            {
+                return Sequence.Undefined;
+            }
+
+            var arr = seq.FirstOrDefault;
+            if (arr.ValueKind != JsonValueKind.Array)
+            {
+                return seq;
+            }
+
+            var elements = new List<JsonElement>();
+            elements.AddRange(arr.EnumerateArray());
+
+            // Fisher-Yates shuffle
+            for (int i = elements.Count - 1; i > 0; i--)
+            {
+                int j = ThreadRandom.Next(i + 1);
+                (elements[i], elements[j]) = (elements[j], elements[i]);
+            }
+
+            using var ms = new MemoryStream(256);
+            using var writer = new Utf8JsonWriter(ms);
+            writer.WriteStartArray();
+            foreach (var elem in elements)
+            {
+                elem.WriteTo(writer);
+            }
+
+            writer.WriteEndArray();
+            writer.Flush();
+            ms.Position = 0;
+            using var doc = JsonDocument.Parse(ms);
+            return new Sequence(doc.RootElement.Clone());
+        };
+    }
+
+    private static ExpressionEvaluator CompileZip(ExpressionEvaluator[] args)
+    {
+        return (in JsonElement input, Environment env) =>
+        {
+            var arrays = new List<List<JsonElement>>();
+            foreach (var arg in args)
+            {
+                var seq = arg(input, env);
+                var list = new List<JsonElement>();
+                if (seq.IsSingleton && seq.FirstOrDefault.ValueKind == JsonValueKind.Array)
+                {
+                    list.AddRange(seq.FirstOrDefault.EnumerateArray());
+                }
+
+                arrays.Add(list);
+            }
+
+            if (arrays.Count == 0)
+            {
+                return Sequence.Undefined;
+            }
+
+            int minLen = int.MaxValue;
+            foreach (var a in arrays)
+            {
+                if (a.Count < minLen)
+                {
+                    minLen = a.Count;
+                }
+            }
+
+            if (minLen == int.MaxValue)
+            {
+                minLen = 0;
+            }
+
+            using var ms = new MemoryStream(256);
+            using var writer = new Utf8JsonWriter(ms);
+            writer.WriteStartArray();
+            for (int i = 0; i < minLen; i++)
+            {
+                writer.WriteStartArray();
+                foreach (var a in arrays)
+                {
+                    a[i].WriteTo(writer);
+                }
+
+                writer.WriteEndArray();
+            }
+
+            writer.WriteEndArray();
+            writer.Flush();
+            ms.Position = 0;
+            using var doc = JsonDocument.Parse(ms);
+            return new Sequence(doc.RootElement.Clone());
+        };
+    }
+
+    // --- Misc functions: error, assert, now, millis, fromMillis, toMillis, eval ---
+    private static ExpressionEvaluator CompileError(ExpressionEvaluator[] args)
+    {
+        var msgArg = args.Length > 0 ? args[0] : null;
+        return (in JsonElement input, Environment env) =>
+        {
+            string message = "An error occurred";
+            if (msgArg is not null)
+            {
+                var msgSeq = msgArg(input, env);
+                if (!msgSeq.IsUndefined)
+                {
+                    message = FunctionalCompiler.CoerceElementToString(msgSeq.FirstOrDefault);
+                }
+            }
+
+            throw new JsonataException("D3001", message, 0);
+        };
+    }
+
+    private static ExpressionEvaluator CompileAssert(ExpressionEvaluator[] args)
+    {
+        if (args.Length < 1 || args.Length > 2)
+        {
+            throw new JsonataException("T0410", "$assert expects 1-2 arguments", 0);
+        }
+
+        var condArg = args[0];
+        var msgArg = args.Length > 1 ? args[1] : null;
+        return (in JsonElement input, Environment env) =>
+        {
+            var cond = condArg(input, env);
+            if (!FunctionalCompiler.IsTruthy(cond))
+            {
+                string message = "Assertion failed";
+                if (msgArg is not null)
+                {
+                    var msgSeq = msgArg(input, env);
+                    if (!msgSeq.IsUndefined)
+                    {
+                        message = FunctionalCompiler.CoerceElementToString(msgSeq.FirstOrDefault);
+                    }
+                }
+
+                throw new JsonataException("D3141", message, 0);
+            }
+
+            return Sequence.Undefined;
+        };
+    }
+
+    private static ExpressionEvaluator CompileNow(ExpressionEvaluator[] args)
+    {
+        return static (in JsonElement input, Environment env) =>
+        {
+            return new Sequence(FunctionalCompiler.CreateStringElement(
+                DateTimeOffset.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ", CultureInfo.InvariantCulture)));
+        };
+    }
+
+    private static ExpressionEvaluator CompileMillis(ExpressionEvaluator[] args)
+    {
+        return static (in JsonElement input, Environment env) =>
+        {
+            return new Sequence(FunctionalCompiler.CreateNumberElement(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()));
+        };
+    }
+
+    private static ExpressionEvaluator CompileFromMillis(ExpressionEvaluator[] args)
+    {
+        if (args.Length < 1)
+        {
+            throw new JsonataException("T0410", "$fromMillis expects at least 1 argument", 0);
+        }
+
+        var msArg = args[0];
+        return (in JsonElement input, Environment env) =>
+        {
+            var msSeq = msArg(input, env);
+            if (msSeq.IsUndefined)
+            {
+                return Sequence.Undefined;
+            }
+
+            if (!FunctionalCompiler.TryCoerceToNumber(msSeq.FirstOrDefault, out double millisVal))
+            {
+                return Sequence.Undefined;
+            }
+
+            var dt = DateTimeOffset.FromUnixTimeMilliseconds((long)millisVal);
+            return new Sequence(FunctionalCompiler.CreateStringElement(
+                dt.ToString("yyyy-MM-ddTHH:mm:ss.fffZ", CultureInfo.InvariantCulture)));
+        };
+    }
+
+    private static ExpressionEvaluator CompileToMillis(ExpressionEvaluator[] args)
+    {
+        if (args.Length < 1)
+        {
+            throw new JsonataException("T0410", "$toMillis expects at least 1 argument", 0);
+        }
+
+        var strArg = args[0];
+        return (in JsonElement input, Environment env) =>
+        {
+            var strSeq = strArg(input, env);
+            if (strSeq.IsUndefined)
+            {
+                return Sequence.Undefined;
+            }
+
+            string str = FunctionalCompiler.CoerceElementToString(strSeq.FirstOrDefault);
+            if (DateTimeOffset.TryParse(str, CultureInfo.InvariantCulture, DateTimeStyles.None, out var dt))
+            {
+                return new Sequence(FunctionalCompiler.CreateNumberElement(dt.ToUnixTimeMilliseconds()));
+            }
+
+            return Sequence.Undefined;
+        };
+    }
+
+    private static ExpressionEvaluator CompileEval(ExpressionEvaluator[] args)
+    {
+        if (args.Length != 1)
+        {
+            throw new JsonataException("T0410", "$eval expects 1 argument", 0);
+        }
+
+        var exprArg = args[0];
+        return (in JsonElement input, Environment env) =>
+        {
+            var exprSeq = exprArg(input, env);
+            if (exprSeq.IsUndefined)
+            {
+                return Sequence.Undefined;
+            }
+
+            string expr = FunctionalCompiler.CoerceElementToString(exprSeq.FirstOrDefault);
+
+            // Parse and compile on the fly
+            var ast = Parser.Parse(expr);
+            var compiled = FunctionalCompiler.Compile(ast);
+            return compiled(input, env);
         };
     }
 

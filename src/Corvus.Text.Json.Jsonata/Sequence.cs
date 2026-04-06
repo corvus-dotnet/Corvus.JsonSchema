@@ -35,6 +35,7 @@ internal readonly struct Sequence
     private readonly JsonElement singleValue;
     private readonly JsonElement[]? multiValues;
     private readonly int count;
+    private readonly LambdaValue? lambda;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Sequence"/> struct with a single value.
@@ -45,6 +46,7 @@ internal readonly struct Sequence
         this.singleValue = value;
         this.multiValues = null;
         this.count = 1;
+        this.lambda = null;
     }
 
     /// <summary>
@@ -57,6 +59,8 @@ internal readonly struct Sequence
     {
         Debug.Assert(count >= 0, "Count must be non-negative");
         Debug.Assert(values.Length >= count, "Array must be large enough for count");
+
+        this.lambda = null;
 
         if (count == 0)
         {
@@ -74,6 +78,19 @@ internal readonly struct Sequence
             this.multiValues = values;
             this.count = count;
         }
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="Sequence"/> struct wrapping a lambda value.
+    /// </summary>
+    /// <param name="lambda">The lambda (function) value.</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public Sequence(LambdaValue lambda)
+    {
+        this.lambda = lambda;
+        this.count = 0;
+        this.singleValue = default;
+        this.multiValues = null;
     }
 
     /// <summary>Gets the number of values in the sequence.</summary>
@@ -95,6 +112,20 @@ internal readonly struct Sequence
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get => this.count == 1;
+    }
+
+    /// <summary>Gets a value indicating whether this sequence holds a lambda (function) value.</summary>
+    public bool IsLambda
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => this.lambda is not null;
+    }
+
+    /// <summary>Gets the lambda value, or <c>null</c> if this is not a lambda.</summary>
+    public LambdaValue? Lambda
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => this.lambda;
     }
 
     /// <summary>
