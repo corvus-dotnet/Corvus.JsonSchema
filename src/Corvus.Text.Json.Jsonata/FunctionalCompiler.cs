@@ -275,6 +275,7 @@ internal static class FunctionalCompiler
         var focusVars = new string?[path.Steps.Count];
         var indexVars = new string?[path.Steps.Count];
         var isPropertyStep = new bool[path.Steps.Count];
+        (ExpressionEvaluator Key, ExpressionEvaluator Value)[]? groupByPairs = null;
 
         for (int i = 0; i < path.Steps.Count; i++)
         {
@@ -308,6 +309,28 @@ internal static class FunctionalCompiler
 
                 focusVars[i] = annotations.Focus;
                 indexVars[i] = annotations.Index;
+
+                if (annotations.Group is not null)
+                {
+                    var group = annotations.Group;
+                    groupByPairs = new (ExpressionEvaluator, ExpressionEvaluator)[group.Pairs.Count];
+                    for (int g = 0; g < group.Pairs.Count; g++)
+                    {
+                        groupByPairs[g] = (Compile(group.Pairs[g].Key), Compile(group.Pairs[g].Value));
+                    }
+                }
+            }
+        }
+
+        // Also check the path node's own annotations (group-by may be attached to the path itself)
+        var pathAnnotations = GetStepAnnotations(path);
+        if (pathAnnotations?.Group is not null && groupByPairs is null)
+        {
+            var group = pathAnnotations.Group;
+            groupByPairs = new (ExpressionEvaluator, ExpressionEvaluator)[group.Pairs.Count];
+            for (int g = 0; g < group.Pairs.Count; g++)
+            {
+                groupByPairs[g] = (Compile(group.Pairs[g].Key), Compile(group.Pairs[g].Value));
             }
         }
 
@@ -411,8 +434,135 @@ internal static class FunctionalCompiler
                 }
             }
 
+            // Apply group-by if present
+            if (groupByPairs is not null)
+            {
+                current = ApplyGroupBy(current, groupByPairs, env);
+            }
+
             return current;
         };
+    }
+
+    private static Sequence ApplyGroupBy(
+        Sequence current,
+        (ExpressionEvaluator Key, ExpressionEvaluator Value)[] pairs,
+        Environment env)
+    {
+        if (current.IsUndefined)
+        {
+            return Sequence.Undefined;
+        }
+
+        // Collect all elements to iterate — flatten arrays in the sequence
+        var elements = new List<JsonElement>();
+        for (int i = 0; i < current.Count; i++)
+        {
+            var el = current[i];
+            if (el.ValueKind == JsonValueKind.Array)
+            {
+                elements.AddRange(el.EnumerateArray());
+            }
+            else
+            {
+                elements.Add(el);
+            }
+        }
+
+        // Build grouped result: ordered dictionary of key → list of values
+        var groupKeys = new List<string>();
+        var groupValues = new Dictionary<string, List<JsonElement>>();
+
+        foreach (var element in elements)
+        {
+            foreach (var (keyEval, valueEval) in pairs)
+            {
+                var keySeq = keyEval(element, env);
+                var valSeq = valueEval(element, env);
+
+                if (keySeq.IsUndefined)
+                {
+                    continue;
+                }
+
+                string keyStr;
+                if (keySeq.FirstOrDefault.ValueKind == JsonValueKind.String)
+                {
+                    keyStr = keySeq.FirstOrDefault.GetString()!;
+                }
+                else if (keySeq.FirstOrDefault.ValueKind == JsonValueKind.Number)
+                {
+                    throw new JsonataException("T1003", "Key in object structure must evaluate to a string; got: number", 0);
+                }
+                else
+                {
+                    keyStr = CoerceElementToString(keySeq.FirstOrDefault);
+                }
+
+                if (!groupValues.TryGetValue(keyStr, out var valueList))
+                {
+                    valueList = [];
+                    groupValues[keyStr] = valueList;
+                    groupKeys.Add(keyStr);
+                }
+
+                // Collect values — if value is array, add individual elements
+                if (valSeq.IsUndefined)
+                {
+                    // Skip undefined values
+                }
+                else if (valSeq.Count > 1)
+                {
+                    for (int i = 0; i < valSeq.Count; i++)
+                    {
+                        valueList.Add(valSeq[i]);
+                    }
+                }
+                else
+                {
+                    var val = valSeq.FirstOrDefault;
+                    if (val.ValueKind == JsonValueKind.Array)
+                    {
+                        valueList.AddRange(val.EnumerateArray());
+                    }
+                    else
+                    {
+                        valueList.Add(val);
+                    }
+                }
+            }
+        }
+
+        // Build the result object
+        using var ms = new MemoryStream(256);
+        using var writer = new Utf8JsonWriter(ms);
+        writer.WriteStartObject();
+
+        foreach (var key in groupKeys)
+        {
+            writer.WritePropertyName(key);
+            var values = groupValues[key];
+            if (values.Count == 1)
+            {
+                values[0].WriteTo(writer);
+            }
+            else
+            {
+                writer.WriteStartArray();
+                foreach (var v in values)
+                {
+                    v.WriteTo(writer);
+                }
+
+                writer.WriteEndArray();
+            }
+        }
+
+        writer.WriteEndObject();
+        writer.Flush();
+        ms.Position = 0;
+        using var doc = JsonDocument.Parse(ms);
+        return new Sequence(doc.RootElement.Clone());
     }
 
     private static Sequence ApplyStages(Sequence current, ExpressionEvaluator[] stageEvaluators, Environment env)
@@ -612,11 +762,7 @@ internal static class FunctionalCompiler
             var left = lhs(input, env);
             var right = rhs(input, env);
 
-            if (left.IsUndefined && right.IsUndefined)
-            {
-                return new Sequence(CreateBoolElement(true));
-            }
-
+            // undefined = undefined → false (undefined is not equal to anything, even itself)
             if (left.IsUndefined || right.IsUndefined)
             {
                 return new Sequence(CreateBoolElement(false));
@@ -653,32 +799,53 @@ internal static class FunctionalCompiler
             var left = lhs(input, env);
             var right = rhs(input, env);
 
+            // Check for invalid types BEFORE undefined check — boolean/null in comparison is always an error
+            if (!left.IsUndefined)
+            {
+                var l = left.FirstOrDefault;
+                if (l.ValueKind is JsonValueKind.True or JsonValueKind.False or JsonValueKind.Null
+                    or JsonValueKind.Array or JsonValueKind.Object)
+                {
+                    throw new JsonataException("T2010", "The expressions either side of operator must be both numbers or both strings", 0);
+                }
+            }
+
+            if (!right.IsUndefined)
+            {
+                var r = right.FirstOrDefault;
+                if (r.ValueKind is JsonValueKind.True or JsonValueKind.False or JsonValueKind.Null
+                    or JsonValueKind.Array or JsonValueKind.Object)
+                {
+                    throw new JsonataException("T2010", "The expressions either side of operator must be both numbers or both strings", 0);
+                }
+            }
+
             if (left.IsUndefined || right.IsUndefined)
             {
                 return Sequence.Undefined;
             }
 
-            var l = left.FirstOrDefault;
-            var r = right.FirstOrDefault;
+            var lv = left.FirstOrDefault;
+            var rv = right.FirstOrDefault;
 
             // String comparison
-            if (l.ValueKind == JsonValueKind.String && r.ValueKind == JsonValueKind.String)
+            if (lv.ValueKind == JsonValueKind.String && rv.ValueKind == JsonValueKind.String)
             {
-                int result = string.CompareOrdinal(l.GetString(), r.GetString());
+                int result = string.CompareOrdinal(lv.GetString(), rv.GetString());
                 return new Sequence(CreateBoolElement(cmp(result, 0)));
             }
 
-            // Numeric comparison — both must be numbers (not booleans/nulls)
-            if (l.ValueKind == JsonValueKind.Number && r.ValueKind == JsonValueKind.Number)
+            // Numeric comparison — both must be numbers
+            if (lv.ValueKind == JsonValueKind.Number && rv.ValueKind == JsonValueKind.Number)
             {
-                if (TryCoerceToNumber(l, out double leftNum) && TryCoerceToNumber(r, out double rightNum))
+                if (TryCoerceToNumber(lv, out double leftNum) && TryCoerceToNumber(rv, out double rightNum))
                 {
                     return new Sequence(CreateBoolElement(cmp(leftNum, rightNum)));
                 }
             }
 
-            // Type mismatch: reject cross-type comparisons
-            throw new JsonataException("T2010", "The expressions either side of operator '<' must be both numbers or both strings", 0);
+            // Type mismatch (e.g. string vs number)
+            throw new JsonataException("T2009", "The values either side of the operator must be of the same data type", 0);
         };
     }
 
@@ -763,36 +930,32 @@ internal static class FunctionalCompiler
             var left = lhs(input, env);
             var right = rhs(input, env);
 
-            if (left.IsUndefined || right.IsUndefined)
+            // Type validation first — even if undefined, the other operand's type matters
+            if (!left.IsUndefined)
             {
-                return Sequence.Undefined;
-            }
-
-            var leftElem = left.FirstOrDefault;
-            var rightElem = right.FirstOrDefault;
-
-            // Type validation: operands must be numeric
-            if (leftElem.ValueKind != JsonValueKind.Number)
-            {
-                if (!TryCoerceToNumber(leftElem, out _))
+                var leftElem = left.FirstOrDefault;
+                if (leftElem.ValueKind != JsonValueKind.Number)
                 {
                     throw new JsonataException("T2003", "The left side of the range operator (..) must evaluate to an integer", 0);
                 }
             }
 
-            if (rightElem.ValueKind != JsonValueKind.Number)
+            if (!right.IsUndefined)
             {
-                if (!TryCoerceToNumber(rightElem, out _))
+                var rightElem = right.FirstOrDefault;
+                if (rightElem.ValueKind != JsonValueKind.Number)
                 {
                     throw new JsonataException("T2004", "The right side of the range operator (..) must evaluate to an integer", 0);
                 }
             }
 
-            if (!TryCoerceToNumber(leftElem, out double start)
-                || !TryCoerceToNumber(rightElem, out double end))
+            if (left.IsUndefined || right.IsUndefined)
             {
                 return Sequence.Undefined;
             }
+
+            double start = left.FirstOrDefault.GetDouble();
+            double end = right.FirstOrDefault.GetDouble();
 
             // Must be integer values
             if (start != Math.Floor(start))
@@ -934,13 +1097,16 @@ internal static class FunctionalCompiler
                 }
 
                 string keyStr = CoerceToString(keyResult);
-                writer.WritePropertyName(keyStr);
 
                 if (valueResult.IsUndefined)
                 {
-                    writer.WriteNullValue();
+                    // Skip undefined values — they don't produce a key in the output
+                    continue;
                 }
-                else if (valueResult.IsSingleton)
+
+                writer.WritePropertyName(keyStr);
+
+                if (valueResult.IsSingleton)
                 {
                     valueResult.FirstOrDefault.WriteTo(writer);
                 }
@@ -1518,7 +1684,57 @@ internal static class FunctionalCompiler
                 value = 0;
                 return true;
             case JsonValueKind.String:
-                return double.TryParse(element.GetString(), NumberStyles.Float, CultureInfo.InvariantCulture, out value);
+                string? s = element.GetString();
+                if (s is null)
+                {
+                    value = 0;
+                    return false;
+                }
+
+                // Hex prefix: 0x or 0X
+                if (s.Length > 2 && s[0] == '0' && (s[1] == 'x' || s[1] == 'X'))
+                {
+                    if (long.TryParse(s.Substring(2), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out long hex))
+                    {
+                        value = hex;
+                        return true;
+                    }
+
+                    value = 0;
+                    return false;
+                }
+
+                // Binary prefix: 0b or 0B
+                if (s.Length > 2 && s[0] == '0' && (s[1] == 'b' || s[1] == 'B'))
+                {
+                    try
+                    {
+                        value = Convert.ToInt64(s.Substring(2), 2);
+                        return true;
+                    }
+                    catch
+                    {
+                        value = 0;
+                        return false;
+                    }
+                }
+
+                // Octal prefix: 0o or 0O
+                if (s.Length > 2 && s[0] == '0' && (s[1] == 'o' || s[1] == 'O'))
+                {
+                    try
+                    {
+                        value = Convert.ToInt64(s.Substring(2), 8);
+                        return true;
+                    }
+                    catch
+                    {
+                        value = 0;
+                        return false;
+                    }
+                }
+
+                return double.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out value);
             default:
                 value = 0;
                 return false;
@@ -1644,12 +1860,6 @@ internal static class FunctionalCompiler
     {
         if (a.ValueKind != b.ValueKind)
         {
-            // Cross-type numeric comparison
-            if (TryCoerceToNumber(a, out double na) && TryCoerceToNumber(b, out double nb))
-            {
-                return na == nb;
-            }
-
             return false;
         }
 
@@ -1658,8 +1868,73 @@ internal static class FunctionalCompiler
             JsonValueKind.Number => a.GetDouble() == b.GetDouble(),
             JsonValueKind.String => a.GetString() == b.GetString(),
             JsonValueKind.True or JsonValueKind.False or JsonValueKind.Null => true,
+            JsonValueKind.Array => ArrayDeepEquals(a, b),
+            JsonValueKind.Object => ObjectDeepEquals(a, b),
             _ => a.GetRawText() == b.GetRawText(),
         };
+    }
+
+    private static bool ArrayDeepEquals(JsonElement a, JsonElement b)
+    {
+        int lenA = a.GetArrayLength();
+        int lenB = b.GetArrayLength();
+        if (lenA != lenB)
+        {
+            return false;
+        }
+
+        var enumA = a.EnumerateArray();
+        var enumB = b.EnumerateArray();
+        using var eA = enumA.GetEnumerator();
+        using var eB = enumB.GetEnumerator();
+        while (eA.MoveNext() && eB.MoveNext())
+        {
+            if (!JsonElementEquals(eA.Current, eB.Current))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static bool ObjectDeepEquals(JsonElement a, JsonElement b)
+    {
+        // Count properties
+        int countA = 0;
+        foreach (var propA0 in a.EnumerateObject())
+        {
+            _ = propA0;
+            countA++;
+        }
+
+        int countB = 0;
+        foreach (var propB0 in b.EnumerateObject())
+        {
+            _ = propB0;
+            countB++;
+        }
+
+        if (countA != countB)
+        {
+            return false;
+        }
+
+        // For each property in a, find matching property in b (order-independent)
+        foreach (var propA in a.EnumerateObject())
+        {
+            if (!b.TryGetProperty(propA.Name, out JsonElement propB))
+            {
+                return false;
+            }
+
+            if (!JsonElementEquals(propA.Value, propB))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     internal static JsonElement CreateNumberElement(double value)

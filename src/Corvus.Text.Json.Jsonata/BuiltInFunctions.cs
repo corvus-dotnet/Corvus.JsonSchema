@@ -322,6 +322,7 @@ internal static class BuiltInFunctions
         using var writer = new Utf8JsonWriter(ms, new JsonWriterOptions
         {
             Indented = prettyPrint,
+            NewLine = "\n",
             Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
         });
 
@@ -397,7 +398,7 @@ internal static class BuiltInFunctions
             var element = seq.FirstOrDefault;
 
             // Reject types that cannot be converted to number
-            if (element.ValueKind is JsonValueKind.Array or JsonValueKind.Object)
+            if (element.ValueKind is JsonValueKind.Array or JsonValueKind.Object or JsonValueKind.Null)
             {
                 throw new JsonataException("T0410", "Argument 1 of function $number is not of the correct type", 0);
             }
@@ -409,12 +410,25 @@ internal static class BuiltInFunctions
 
             if (FunctionalCompiler.TryCoerceToNumber(element, out double num))
             {
+                // Overflow to Infinity should be an error
+                if (double.IsInfinity(num))
+                {
+                    throw new JsonataException("D3030", "Unable to cast value to a number", 0);
+                }
+
                 return new Sequence(FunctionalCompiler.CreateNumberElement(num));
             }
 
             // String that can't be parsed as a number
             if (element.ValueKind == JsonValueKind.String)
             {
+                // Check for overflow case
+                string? s = element.GetString();
+                if (s is not null && double.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out double overflowCheck) && double.IsInfinity(overflowCheck))
+                {
+                    throw new JsonataException("D3030", "Unable to cast value to a number", 0);
+                }
+
                 throw new JsonataException("D3030", "Unable to cast value to a number", 0);
             }
 
@@ -1122,14 +1136,25 @@ internal static class BuiltInFunctions
                 return Sequence.Undefined;
             }
 
-            var arr = seq.FirstOrDefault;
-            if (arr.ValueKind != JsonValueKind.Array)
-            {
-                return seq;
-            }
-
+            // Collect elements from array, sequence, or wrap singleton
             var elements = new List<JsonElement>();
-            elements.AddRange(arr.EnumerateArray());
+            var arr = seq.FirstOrDefault;
+            if (arr.ValueKind == JsonValueKind.Array)
+            {
+                elements.AddRange(arr.EnumerateArray());
+            }
+            else if (seq.Count > 1)
+            {
+                for (int i = 0; i < seq.Count; i++)
+                {
+                    elements.Add(seq[i]);
+                }
+            }
+            else
+            {
+                // Singleton value — wrap in array
+                elements.Add(arr);
+            }
 
             if (funcArg is not null)
             {
@@ -1142,8 +1167,26 @@ internal static class BuiltInFunctions
                     {
                         var aSeq = new Sequence(a);
                         var bSeq = new Sequence(b);
-                        var result = lambda.Invoke(new[] { aSeq, bSeq }, sortInput, env);
-                        if (result.IsSingleton && FunctionalCompiler.TryCoerceToNumber(result.FirstOrDefault, out double num))
+                        var result = lambda.Invoke([aSeq, bSeq], sortInput, env);
+                        if (result.IsUndefined)
+                        {
+                            return 0;
+                        }
+
+                        var el = result.FirstOrDefault;
+
+                        // Boolean comparator: true means a < b (a should come before b)
+                        if (el.ValueKind == JsonValueKind.True)
+                        {
+                            return -1;
+                        }
+
+                        if (el.ValueKind == JsonValueKind.False)
+                        {
+                            return 1;
+                        }
+
+                        if (FunctionalCompiler.TryCoerceToNumber(el, out double num))
                         {
                             return num < 0 ? -1 : (num > 0 ? 1 : 0);
                         }
@@ -1154,11 +1197,27 @@ internal static class BuiltInFunctions
             }
             else
             {
+                // Default sort: check types are homogeneous
+                bool hasObjects = false;
+                foreach (var el in elements)
+                {
+                    if (el.ValueKind is JsonValueKind.Object or JsonValueKind.Array)
+                    {
+                        hasObjects = true;
+                        break;
+                    }
+                }
+
+                if (hasObjects)
+                {
+                    throw new JsonataException("D3070", "The single argument form of the $sort function can only be used on an array of strings or an array of numbers", 0);
+                }
+
                 elements.Sort((a, b) =>
                 {
-                    if (FunctionalCompiler.TryCoerceToNumber(a, out double na) && FunctionalCompiler.TryCoerceToNumber(b, out double nb))
+                    if (a.ValueKind == JsonValueKind.Number && b.ValueKind == JsonValueKind.Number)
                     {
-                        return na.CompareTo(nb);
+                        return a.GetDouble().CompareTo(b.GetDouble());
                     }
 
                     return string.CompareOrdinal(
@@ -1167,19 +1226,7 @@ internal static class BuiltInFunctions
                 });
             }
 
-            using var ms = new MemoryStream(256);
-            using var writer = new Utf8JsonWriter(ms);
-            writer.WriteStartArray();
-            foreach (var elem in elements)
-            {
-                elem.WriteTo(writer);
-            }
-
-            writer.WriteEndArray();
-            writer.Flush();
-            ms.Position = 0;
-            using var doc = JsonDocument.Parse(ms);
-            return new Sequence(doc.RootElement.Clone());
+            return new Sequence(FunctionalCompiler.CreateJsonArrayElement(elements));
         };
     }
 
