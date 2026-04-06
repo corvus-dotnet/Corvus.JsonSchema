@@ -286,9 +286,28 @@ internal static class BuiltInFunctions
                 return Sequence.Undefined;
             }
 
-            if (FunctionalCompiler.TryCoerceToNumber(seq.FirstOrDefault, out double num))
+            var element = seq.FirstOrDefault;
+
+            // Reject types that cannot be converted to number
+            if (element.ValueKind is JsonValueKind.Array or JsonValueKind.Object)
+            {
+                throw new JsonataException("T0410", "Argument 1 of function $number is not of the correct type", 0);
+            }
+
+            if (seq.IsLambda)
+            {
+                throw new JsonataException("T0410", "Argument 1 of function $number is not of the correct type", 0);
+            }
+
+            if (FunctionalCompiler.TryCoerceToNumber(element, out double num))
             {
                 return new Sequence(FunctionalCompiler.CreateNumberElement(num));
+            }
+
+            // String that can't be parsed as a number
+            if (element.ValueKind == JsonValueKind.String)
+            {
+                throw new JsonataException("D3030", "Unable to cast value to a number", 0);
             }
 
             return Sequence.Undefined;

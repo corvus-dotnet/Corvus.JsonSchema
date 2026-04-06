@@ -369,7 +369,21 @@ internal static class FunctionalCompiler
                             stepResult = step(element, env);
                         }
 
-                        builder.AddRange(stepResult);
+                        // Auto-flatten: when a property step returns a single array element
+                        // in a multi-context traversal, expand it into individual elements.
+                        // This gives JSONata's one-level-deep flattening semantics.
+                        if (isPropertyStep[stepIdx] && stepResult.IsSingleton
+                            && stepResult.FirstOrDefault.ValueKind == JsonValueKind.Array)
+                        {
+                            foreach (var item in stepResult.FirstOrDefault.EnumerateArray())
+                            {
+                                builder.Add(item);
+                            }
+                        }
+                        else
+                        {
+                            builder.AddRange(stepResult);
+                        }
                     }
 
                     current = builder.ToSequence();
@@ -636,13 +650,17 @@ internal static class FunctionalCompiler
                 return new Sequence(CreateBoolElement(cmp(result, 0)));
             }
 
-            // Numeric comparison
-            if (TryCoerceToNumber(l, out double leftNum) && TryCoerceToNumber(r, out double rightNum))
+            // Numeric comparison — both must be numbers (not booleans/nulls)
+            if (l.ValueKind == JsonValueKind.Number && r.ValueKind == JsonValueKind.Number)
             {
-                return new Sequence(CreateBoolElement(cmp(leftNum, rightNum)));
+                if (TryCoerceToNumber(l, out double leftNum) && TryCoerceToNumber(r, out double rightNum))
+                {
+                    return new Sequence(CreateBoolElement(cmp(leftNum, rightNum)));
+                }
             }
 
-            return Sequence.Undefined;
+            // Type mismatch: reject cross-type comparisons
+            throw new JsonataException("T2010", "The expressions either side of operator '<' must be both numbers or both strings", 0);
         };
     }
 
@@ -732,18 +750,55 @@ internal static class FunctionalCompiler
                 return Sequence.Undefined;
             }
 
-            if (!TryCoerceToNumber(left.FirstOrDefault, out double start)
-                || !TryCoerceToNumber(right.FirstOrDefault, out double end))
+            var leftElem = left.FirstOrDefault;
+            var rightElem = right.FirstOrDefault;
+
+            // Type validation: operands must be numeric
+            if (leftElem.ValueKind != JsonValueKind.Number)
+            {
+                if (!TryCoerceToNumber(leftElem, out _))
+                {
+                    throw new JsonataException("T2003", "The left side of the range operator (..) must evaluate to an integer", 0);
+                }
+            }
+
+            if (rightElem.ValueKind != JsonValueKind.Number)
+            {
+                if (!TryCoerceToNumber(rightElem, out _))
+                {
+                    throw new JsonataException("T2004", "The right side of the range operator (..) must evaluate to an integer", 0);
+                }
+            }
+
+            if (!TryCoerceToNumber(leftElem, out double start)
+                || !TryCoerceToNumber(rightElem, out double end))
             {
                 return Sequence.Undefined;
             }
 
-            int iStart = (int)Math.Floor(start);
-            int iEnd = (int)Math.Floor(end);
+            // Must be integer values
+            if (start != Math.Floor(start))
+            {
+                throw new JsonataException("T2003", "The left side of the range operator (..) must evaluate to an integer", 0);
+            }
+
+            if (end != Math.Floor(end))
+            {
+                throw new JsonataException("T2004", "The right side of the range operator (..) must evaluate to an integer", 0);
+            }
+
+            int iStart = (int)start;
+            int iEnd = (int)end;
 
             if (iStart > iEnd)
             {
                 return Sequence.Undefined;
+            }
+
+            // Guard against excessively large ranges
+            if ((long)iEnd - (long)iStart > 10_000_000)
+            {
+                throw new JsonataException("D2014", "Range expression generates too many results", 0);
             }
 
             var builder = default(SequenceBuilder);
@@ -1110,20 +1165,15 @@ internal static class FunctionalCompiler
                 return 0;
             });
 
-            // Build result array
-            using var ms = new MemoryStream(256);
-            using var writer = new Utf8JsonWriter(ms);
-            writer.WriteStartArray();
+            // Build result as a multi-value sequence (not a JSON array)
+            // so subsequent path steps can iterate over individual elements
+            var builder = default(SequenceBuilder);
             for (int i = 0; i < elements.Count; i++)
             {
-                elements[i].WriteTo(writer);
+                builder.Add(elements[i]);
             }
 
-            writer.WriteEndArray();
-            writer.Flush();
-            ms.Position = 0;
-            using var doc = JsonDocument.Parse(ms);
-            return new Sequence(doc.RootElement.Clone());
+            return builder.ToSequence();
         };
     }
 
