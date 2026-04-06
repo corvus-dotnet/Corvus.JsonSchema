@@ -4,7 +4,7 @@
 
 `Corvus.Text.Json.JsonLogic` implements [JsonLogic](https://jsonlogic.com/) for the Corvus.Text.Json document model — a safe, side-effect-free rule engine that evaluates JSON-encoded logic rules against JSON data.
 
-[JsonLogic](https://jsonlogic.com/) is a standard for expressing business rules as JSON. Rules are portable, storable in databases, and safely evaluated without allowing arbitrary code execution. The Corvus implementation passes the full [official test suite](https://jsonlogic.com/tests.html) and adds support for extended numeric types (`BigNumber`) via custom operators.
+[JsonLogic](https://jsonlogic.com/) is a standard for expressing business rules as JSON. Rules are portable, storable in databases, and safely evaluated without allowing arbitrary code execution. The Corvus implementation passes the full [official test suite](https://jsonlogic.com/tests.json) and adds support for extended numeric types (`BigNumber`) via custom operators.
 
 Three evaluation modes are available:
 
