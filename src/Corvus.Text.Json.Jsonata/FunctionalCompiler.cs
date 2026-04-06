@@ -166,6 +166,13 @@ internal static class FunctionalCompiler
                 return value;
             }
 
+            // Check if this is a built-in function reference (e.g. $uppercase used as a value)
+            var builtIn = BuiltInFunctions.TryGetCompiler(name);
+            if (builtIn is not null)
+            {
+                return new Sequence(CreateBuiltInLambda(builtIn));
+            }
+
             return Sequence.Undefined;
         };
     }
@@ -1398,6 +1405,43 @@ internal static class FunctionalCompiler
     internal static JsonElement CreateNullElement()
     {
         return NullElement;
+    }
+
+    /// <summary>
+    /// Creates a <see cref="LambdaValue"/> that wraps a built-in function compiler.
+    /// When invoked, it compiles the built-in with the provided args as constant evaluators.
+    /// Extra args are truncated to match the built-in's expected arity.
+    /// </summary>
+    internal static LambdaValue CreateBuiltInLambda(Func<ExpressionEvaluator[], ExpressionEvaluator> compiler)
+    {
+        return new LambdaValue(
+            (args, input, env) =>
+            {
+                // Try invoking with decreasing arg counts to handle HOF over-arity
+                // (e.g. $map passes (value, index, array) but $boolean expects 1 arg)
+                for (int tryCount = args.Length; tryCount >= 0; tryCount--)
+                {
+                    var argEvals = new ExpressionEvaluator[tryCount];
+                    for (int i = 0; i < tryCount; i++)
+                    {
+                        var argValue = args[i];
+                        argEvals[i] = (in JsonElement _, Environment __) => argValue;
+                    }
+
+                    try
+                    {
+                        var evaluator = compiler(argEvals);
+                        return evaluator(input, env);
+                    }
+                    catch (JsonataException ex) when (ex.Code == "T0410" && tryCount > 0)
+                    {
+                        // Wrong arity — try with fewer args
+                    }
+                }
+
+                throw new JsonataException("T0410", "Unable to invoke built-in function", 0);
+            },
+            paramCount: 0);
     }
 
     internal static JsonElement CreateJsonArrayElement(IReadOnlyList<JsonElement> items)
