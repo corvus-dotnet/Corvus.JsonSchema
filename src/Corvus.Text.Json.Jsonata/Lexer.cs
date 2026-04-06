@@ -284,7 +284,8 @@ internal struct Lexer
             }
         }
 
-        if (i < this.source.Length && this.source[i] == '.')
+        if (i < this.source.Length && this.source[i] == '.'
+            && (i + 1 >= this.source.Length || this.source[i + 1] != '.'))
         {
             i++;
             int fracStart = i;
