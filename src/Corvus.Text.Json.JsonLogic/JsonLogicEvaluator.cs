@@ -23,12 +23,27 @@ public sealed class JsonLogicEvaluator
     /// </summary>
     public static readonly JsonLogicEvaluator Default = new();
 
-    private readonly ConcurrentDictionary<string, FunctionalEvaluator.RuleEvaluator> cache = new();
-    private FunctionalEvaluator.RuleEvaluator? _lastCompiled;
+    private readonly ConcurrentDictionary<string, RuleEvaluator> cache = new();
+    private readonly IReadOnlyDictionary<string, IOperatorCompiler>? customOperators;
+    private RuleEvaluator? _lastCompiled;
     private JsonElement _lastRule;
 
     private JsonLogicEvaluator()
     {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JsonLogicEvaluator"/> class
+    /// with the specified custom operator compilers.
+    /// </summary>
+    /// <param name="customOperators">
+    /// A dictionary mapping operator names to their compilers.
+    /// Custom operators are checked <b>before</b> the built-in operators,
+    /// so they can override standard behaviour.
+    /// </param>
+    public JsonLogicEvaluator(IReadOnlyDictionary<string, IOperatorCompiler> customOperators)
+    {
+        this.customOperators = customOperators ?? throw new ArgumentNullException(nameof(customOperators));
     }
 
     /// <summary>
@@ -50,7 +65,7 @@ public sealed class JsonLogicEvaluator
     /// </remarks>
     public JsonElement Evaluate(in JsonLogicRule rule, in JsonElement data)
     {
-        FunctionalEvaluator.RuleEvaluator evaluator = this.GetOrCompile(rule);
+        RuleEvaluator evaluator = this.GetOrCompile(rule);
         using JsonWorkspace workspace = JsonWorkspace.Create();
         return FunctionalEvaluator.Execute(evaluator, data, workspace, cloneResult: true);
     }
@@ -79,7 +94,7 @@ public sealed class JsonLogicEvaluator
     /// </remarks>
     public JsonElement Evaluate(in JsonLogicRule rule, in JsonElement data, JsonWorkspace workspace)
     {
-        FunctionalEvaluator.RuleEvaluator evaluator = this.GetOrCompile(rule);
+        RuleEvaluator evaluator = this.GetOrCompile(rule);
         return FunctionalEvaluator.Execute(evaluator, data, workspace, cloneResult: false);
     }
 
@@ -94,24 +109,36 @@ public sealed class JsonLogicEvaluator
         this.cache.Clear();
     }
 
-    private FunctionalEvaluator.RuleEvaluator GetOrCompile(in JsonLogicRule rule)
+    private RuleEvaluator GetOrCompile(in JsonLogicRule rule)
     {
-        // Fast path: same rule element as last call (zero allocation)
-        if (_lastCompiled is not null && rule.Rule.Equals(_lastRule))
+        // Fast path: same rule element as last call (zero allocation).
+        // The cached element may outlive the document that owned it,
+        // so guard against ObjectDisposedException.
+        if (_lastCompiled is not null)
         {
-            return _lastCompiled;
+            try
+            {
+                if (rule.Rule.Equals(_lastRule))
+                {
+                    return _lastCompiled;
+                }
+            }
+            catch (ObjectDisposedException)
+            {
+                _lastCompiled = null;
+            }
         }
 
         string key = rule.Rule.GetRawText();
 
-        if (this.cache.TryGetValue(key, out FunctionalEvaluator.RuleEvaluator? existing))
+        if (this.cache.TryGetValue(key, out RuleEvaluator? existing))
         {
             _lastRule = rule.Rule;
             _lastCompiled = existing;
             return existing;
         }
 
-        FunctionalEvaluator.RuleEvaluator compiled = FunctionalEvaluator.Compile(rule.Rule);
+        RuleEvaluator compiled = FunctionalEvaluator.Compile(rule.Rule, this.customOperators);
         this.cache.TryAdd(key, compiled);
         _lastRule = rule.Rule;
         _lastCompiled = compiled;

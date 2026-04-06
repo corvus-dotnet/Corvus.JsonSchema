@@ -19,14 +19,8 @@ namespace Corvus.Text.Json.JsonLogic;
 /// </summary>
 internal static class FunctionalEvaluator
 {
-    /// <summary>
-    /// The compiled delegate type. Each rule compiles to a single delegate that
-    /// evaluates the rule against the provided data and workspace.
-    /// </summary>
-    /// <param name="data">The current data context.</param>
-    /// <param name="workspace">The workspace for intermediate document allocation.</param>
-    /// <returns>The evaluation result.</returns>
-    internal delegate EvalResult RuleEvaluator(in JsonElement data, JsonWorkspace workspace);
+    [ThreadStatic]
+    private static IReadOnlyDictionary<string, IOperatorCompiler>? t_customOperators;
 
     [ThreadStatic]
     private static ReduceContext? t_reduceContext;
@@ -47,6 +41,28 @@ internal static class FunctionalEvaluator
     internal static RuleEvaluator Compile(in JsonElement rule)
     {
         return CompileExpression(rule);
+    }
+
+    /// <summary>
+    /// Compiles a JsonLogic rule JSON element into a delegate tree,
+    /// with custom operator support.
+    /// </summary>
+    internal static RuleEvaluator Compile(in JsonElement rule, IReadOnlyDictionary<string, IOperatorCompiler>? customOperators)
+    {
+        if (customOperators is null || customOperators.Count == 0)
+        {
+            return CompileExpression(rule);
+        }
+
+        t_customOperators = customOperators;
+        try
+        {
+            return CompileExpression(rule);
+        }
+        finally
+        {
+            t_customOperators = null;
+        }
     }
 
     private static RuleEvaluator CompileExpression(in JsonElement rule)
@@ -118,6 +134,13 @@ internal static class FunctionalEvaluator
             JsonElement args = property.Value;
 
             RuleEvaluator[] operands = CompileArgs(args);
+
+            // Check custom operators first — allows overriding built-in operators
+            if (t_customOperators is not null &&
+                t_customOperators.TryGetValue(opName, out IOperatorCompiler? compiler))
+            {
+                return compiler.Compile(operands);
+            }
 
             return opName switch
             {

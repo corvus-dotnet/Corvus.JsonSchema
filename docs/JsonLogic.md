@@ -16,19 +16,6 @@ Three evaluation modes are available:
 
 The source generator and CLI tool produce optimized static C# that eliminates delegate dispatch and can constant-fold literal expressions. Benchmarks show generated code is **60–95% faster** than interpreted evaluation and **60–95% faster** than JsonEverything.
 
-## Table of Contents
-
-- [Installation](#installation)
-- [Interpreted evaluation](#interpreted-evaluation)
-- [Source generator](#source-generator)
-- [CLI code generation](#cli-code-generation)
-- [Supported operators](#supported-operators)
-- [Extended operators](#extended-operators)
-- [Runtime custom operators (IOperatorCompiler)](#runtime-custom-operators-ioperatorcompiler)
-- [Custom operator templates (.jlops)](#custom-operator-templates-jlops)
-- [Workspace and memory management](#workspace-and-memory-management)
-- [Comparison with other libraries](#comparison-with-other-libraries)
-
 ## Installation
 
 ### Interpreted mode (runtime evaluation)

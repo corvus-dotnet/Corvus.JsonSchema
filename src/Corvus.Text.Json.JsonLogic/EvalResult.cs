@@ -14,7 +14,7 @@ namespace Corvus.Text.Json.JsonLogic;
 /// Arithmetic operations store results as native doubles, avoiding the
 /// double → UTF-8 → FixedJsonValueDocument → JsonElement round-trip.
 /// </summary>
-internal readonly struct EvalResult
+public readonly struct EvalResult
 {
     private readonly JsonElement _element;
     private readonly double _doubleValue;
