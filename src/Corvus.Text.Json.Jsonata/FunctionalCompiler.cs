@@ -3,7 +3,9 @@
 // </copyright>
 
 using System.Globalization;
+using System.IO;
 using System.Runtime.CompilerServices;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Corvus.Text.Json.Jsonata.Ast;
@@ -18,6 +20,12 @@ namespace Corvus.Text.Json.Jsonata;
 /// </summary>
 internal static class FunctionalCompiler
 {
+    // Use relaxed escaping so characters like > and < are not HTML-encoded.
+    private static readonly JsonWriterOptions RelaxedWriterOptions = new()
+    {
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+    };
+
     // Pre-cached constant elements
     private static readonly JsonElement TrueElement = CreateConstantElement(w => w.WriteBooleanValue(true));
     private static readonly JsonElement FalseElement = CreateConstantElement(w => w.WriteBooleanValue(false));
@@ -579,12 +587,15 @@ internal static class FunctionalCompiler
                 return Sequence.Undefined;
             }
 
-            if (!TryCoerceToNumber(left.FirstOrDefault, out double leftNum))
+            var leftEl = left.FirstOrDefault;
+            var rightEl = right.FirstOrDefault;
+
+            if (leftEl.ValueKind == JsonValueKind.Null || !TryCoerceToNumber(leftEl, out double leftNum))
             {
                 throw new JsonataException("T2001", "The left side of the arithmetic expression is not a number", 0);
             }
 
-            if (!TryCoerceToNumber(right.FirstOrDefault, out double rightNum))
+            if (rightEl.ValueKind == JsonValueKind.Null || !TryCoerceToNumber(rightEl, out double rightNum))
             {
                 throw new JsonataException("T2002", "The right side of the arithmetic expression is not a number", 0);
             }
@@ -836,7 +847,7 @@ internal static class FunctionalCompiler
                     return new Sequence(CreateNumberElement(-num));
                 }
 
-                return Sequence.Undefined;
+                throw new JsonataException("D1002", "Cannot negate a non-numeric value", unary.Position);
             };
         }
 
@@ -985,7 +996,7 @@ internal static class FunctionalCompiler
                 return funcResult.Lambda!.Invoke(evaluatedArgs, input, env);
             }
 
-            throw new JsonataException("T1005", "Attempted to invoke a non-function", func.Position);
+            throw new JsonataException("T1006", "Attempted to invoke a non-function", func.Position);
         };
     }
 
@@ -1062,6 +1073,25 @@ internal static class FunctionalCompiler
                 }
 
                 return Sequence.Undefined;
+            };
+        }
+
+        // Transform: LHS ~> |pattern|update,delete|
+        if (apply.Rhs is TransformNode transformNode)
+        {
+            var patternEval = Compile(transformNode.Pattern);
+            var updateEval = Compile(transformNode.Update);
+            ExpressionEvaluator? deleteEval = transformNode.Delete is not null ? Compile(transformNode.Delete) : null;
+
+            return (in JsonElement input, Environment env) =>
+            {
+                var lhsResult = lhsEval(input, env);
+                if (lhsResult.IsUndefined)
+                {
+                    return Sequence.Undefined;
+                }
+
+                return ApplyTransform(lhsResult, patternEval, updateEval, deleteEval, env);
             };
         }
 
@@ -1219,8 +1249,220 @@ internal static class FunctionalCompiler
 
     private static ExpressionEvaluator CompileTransform(TransformNode transform)
     {
-        // TODO: Full transform implementation
-        return static (in JsonElement input, Environment env) => new Sequence(input);
+        var patternEval = Compile(transform.Pattern);
+        var updateEval = Compile(transform.Update);
+        ExpressionEvaluator? deleteEval = transform.Delete is not null ? Compile(transform.Delete) : null;
+
+        return (in JsonElement input, Environment env) =>
+        {
+            var inputSeq = new Sequence(input);
+            return ApplyTransform(inputSeq, patternEval, updateEval, deleteEval, env);
+        };
+    }
+
+    private static Sequence ApplyTransform(
+        Sequence inputSeq,
+        ExpressionEvaluator patternEval,
+        ExpressionEvaluator updateEval,
+        ExpressionEvaluator? deleteEval,
+        Environment env)
+    {
+        // Collect all matched items by evaluating pattern against each input element
+        var matchTexts = new HashSet<string>();
+        for (int i = 0; i < inputSeq.Count; i++)
+        {
+            var element = inputSeq[i];
+            var matches = patternEval(element, env);
+            for (int j = 0; j < matches.Count; j++)
+            {
+                CollectMatchTexts(matches[j], matchTexts);
+            }
+        }
+
+        if (inputSeq.IsSingleton)
+        {
+            var transformed = TransformElement(inputSeq.FirstOrDefault, matchTexts, updateEval, deleteEval, env);
+            return new Sequence(transformed);
+        }
+
+        var results = new List<JsonElement>();
+        for (int i = 0; i < inputSeq.Count; i++)
+        {
+            results.Add(TransformElement(inputSeq[i], matchTexts, updateEval, deleteEval, env));
+        }
+
+        return new Sequence(CreateJsonArrayElement(results));
+    }
+
+    private static void CollectMatchTexts(JsonElement element, HashSet<string> matchTexts)
+    {
+        if (element.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var item in element.EnumerateArray())
+            {
+                CollectMatchTexts(item, matchTexts);
+            }
+        }
+        else
+        {
+            matchTexts.Add(element.GetRawText());
+        }
+    }
+
+    private static JsonElement TransformElement(
+        JsonElement element,
+        HashSet<string> matchTexts,
+        ExpressionEvaluator updateEval,
+        ExpressionEvaluator? deleteEval,
+        Environment env)
+    {
+        if (element.ValueKind == JsonValueKind.Object)
+        {
+            bool isMatch = matchTexts.Contains(element.GetRawText());
+
+            using var ms = new MemoryStream(256);
+            using var writer = new Utf8JsonWriter(ms);
+            writer.WriteStartObject();
+
+            if (isMatch)
+            {
+                // Evaluate update expression in the context of the matched object
+                var updateResult = updateEval(element, env);
+                JsonElement? updateObj = null;
+                if (!updateResult.IsUndefined)
+                {
+                    var first = updateResult.FirstOrDefault;
+                    if (first.ValueKind != JsonValueKind.Object)
+                    {
+                        throw new JsonataException("T2011", "The literal value of the right side of the Transform expression must be an object", 0);
+                    }
+
+                    updateObj = first;
+                }
+
+                // Evaluate delete expression
+                HashSet<string>? deleteProps = null;
+                if (deleteEval is not null)
+                {
+                    deleteProps = new HashSet<string>();
+                    var deleteResult = deleteEval(element, env);
+                    if (!deleteResult.IsUndefined)
+                    {
+                        var first = deleteResult.FirstOrDefault;
+                        if (first.ValueKind == JsonValueKind.Array)
+                        {
+                            foreach (var d in first.EnumerateArray())
+                            {
+                                if (d.ValueKind == JsonValueKind.String)
+                                {
+                                    deleteProps.Add(d.GetString()!);
+                                }
+                            }
+                        }
+                        else if (first.ValueKind == JsonValueKind.String)
+                        {
+                            deleteProps.Add(first.GetString()!);
+                        }
+                        else
+                        {
+                            throw new JsonataException("T2012", "The delete clause of the Transform expression must evaluate to a string or array of strings", 0);
+                        }
+                    }
+                }
+
+                // Build a set of property names that exist in the update
+                var updatePropNames = new HashSet<string>();
+                if (updateObj.HasValue)
+                {
+                    foreach (var prop in updateObj.Value.EnumerateObject())
+                    {
+                        updatePropNames.Add(prop.Name);
+                    }
+                }
+
+                // Write original properties: skip deleted, override with update values
+                foreach (var prop in element.EnumerateObject())
+                {
+                    if (deleteProps?.Contains(prop.Name) == true)
+                    {
+                        continue;
+                    }
+
+                    writer.WritePropertyName(prop.Name);
+
+                    if (updatePropNames.Contains(prop.Name))
+                    {
+                        // Property is overridden by update — use the update value
+                        if (updateObj!.Value.TryGetProperty(prop.Name, out var updateValue))
+                        {
+                            updateValue.WriteTo(writer);
+                        }
+                    }
+                    else
+                    {
+                        // Recursively transform the property value
+                        TransformElement(prop.Value, matchTexts, updateEval, deleteEval, env).WriteTo(writer);
+                    }
+                }
+
+                // Add new properties from update that weren't in the original
+                if (updateObj.HasValue)
+                {
+                    foreach (var prop in updateObj.Value.EnumerateObject())
+                    {
+                        bool alreadyExists = false;
+                        foreach (var orig in element.EnumerateObject())
+                        {
+                            if (orig.Name == prop.Name)
+                            {
+                                alreadyExists = true;
+                                break;
+                            }
+                        }
+
+                        if (!alreadyExists)
+                        {
+                            writer.WritePropertyName(prop.Name);
+                            prop.Value.WriteTo(writer);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                // Not a match — recursively transform children
+                foreach (var prop in element.EnumerateObject())
+                {
+                    writer.WritePropertyName(prop.Name);
+                    TransformElement(prop.Value, matchTexts, updateEval, deleteEval, env).WriteTo(writer);
+                }
+            }
+
+            writer.WriteEndObject();
+            writer.Flush();
+            ms.Position = 0;
+            using var doc = JsonDocument.Parse(ms);
+            return doc.RootElement.Clone();
+        }
+
+        if (element.ValueKind == JsonValueKind.Array)
+        {
+            using var ms = new MemoryStream(256);
+            using var writer = new Utf8JsonWriter(ms);
+            writer.WriteStartArray();
+            foreach (var item in element.EnumerateArray())
+            {
+                TransformElement(item, matchTexts, updateEval, deleteEval, env).WriteTo(writer);
+            }
+
+            writer.WriteEndArray();
+            writer.Flush();
+            ms.Position = 0;
+            using var doc = JsonDocument.Parse(ms);
+            return doc.RootElement.Clone();
+        }
+
+        return element;
     }
 
     private static ExpressionEvaluator CompileRegex(RegexNode regex)
@@ -1377,9 +1619,15 @@ internal static class FunctionalCompiler
 
     internal static JsonElement CreateNumberElement(double value)
     {
+        if (double.IsNaN(value) || double.IsInfinity(value))
+        {
+            throw new JsonataException("D3001", "A string cannot be generated from this value", 0);
+        }
+
         using var ms = new MemoryStream(32);
         using var writer = new Utf8JsonWriter(ms);
         writer.WriteNumberValue(value);
+
         writer.Flush();
         ms.Position = 0;
         using var doc = JsonDocument.Parse(ms);
@@ -1389,7 +1637,7 @@ internal static class FunctionalCompiler
     internal static JsonElement CreateStringElement(string value)
     {
         using var ms = new MemoryStream(value.Length + 32);
-        using var writer = new Utf8JsonWriter(ms);
+        using var writer = new Utf8JsonWriter(ms, RelaxedWriterOptions);
         writer.WriteStringValue(value);
         writer.Flush();
         ms.Position = 0;
@@ -1464,7 +1712,7 @@ internal static class FunctionalCompiler
     internal static JsonElement CreateMatchObject(string match, int index, IReadOnlyList<string> groups)
     {
         using var ms = new MemoryStream(256);
-        using var writer = new Utf8JsonWriter(ms);
+        using var writer = new Utf8JsonWriter(ms, RelaxedWriterOptions);
         writer.WriteStartObject();
         writer.WriteString("match", match);
         writer.WriteNumber("index", index);
