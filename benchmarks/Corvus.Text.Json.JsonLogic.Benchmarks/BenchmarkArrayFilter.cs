@@ -41,4 +41,14 @@ public class BenchmarkArrayFilter : JsonLogicBenchmarkBase
         using JsonWorkspace workspace = JsonWorkspace.Create();
         JsonLogicEvaluator.Default.Evaluate(this.CorvusLogicRule, this.CorvusData, workspace);
     }
+
+    /// <summary>
+    /// Evaluate using Corvus code-generated evaluator.
+    /// </summary>
+    [Benchmark]
+    public void CorvusCodeGen()
+    {
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        ArrayFilterCodeGen.Evaluate(this.CorvusData, workspace);
+    }
 }

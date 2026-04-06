@@ -13,7 +13,7 @@ namespace Corvus.Text.Json.JsonLogic;
 /// <summary>
 /// Helper methods for JsonLogic truthy/falsy semantics and type coercion.
 /// </summary>
-internal static class JsonLogicHelpers
+public static class JsonLogicHelpers
 {
     private static readonly JsonElement TrueElement = ParsedJsonDocument<JsonElement>.True;
     private static readonly JsonElement FalseElement = ParsedJsonDocument<JsonElement>.False;
@@ -268,7 +268,7 @@ internal static class JsonLogicHelpers
     /// For strings, copies raw UTF-8 content (excluding quotes). For numbers, copies
     /// raw UTF-8 digits. For booleans/null, appends the literal text.
     /// </summary>
-    public static void AppendCoercedUtf8(ref Utf8ValueStringBuilder builder, in JsonElement value)
+    internal static void AppendCoercedUtf8(ref Utf8ValueStringBuilder builder, in JsonElement value)
     {
         if (value.IsNullOrUndefined())
         {

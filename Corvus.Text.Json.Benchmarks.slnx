@@ -55,6 +55,7 @@
     <Project Path="benchmarks/Corvus.Text.Json.Validator.Benchmarks/Corvus.Text.Json.Validator.Benchmarks.csproj" />
     <Project Path="BenchmarkSandbox/BenchmarkSandbox.csproj" />
     <Project Path="benchmarks/Corvus.Text.Json.JsonLogic.Benchmarks/Corvus.Text.Json.JsonLogic.Benchmarks.csproj" />
+    <Project Path="src/Corvus.Text.Json.JsonLogic.CodeGeneration/Corvus.Text.Json.JsonLogic.CodeGeneration.csproj" />
   </Folder>
 
   <Folder Name="/.sandbox/">

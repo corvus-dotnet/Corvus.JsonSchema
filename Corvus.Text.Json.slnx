@@ -74,6 +74,7 @@
     <Project Path="src/Corvus.Text.Json.Migration.Analyzers/Corvus.Text.Json.Migration.Analyzers.csproj" />
     <Project Path="src/Corvus.Text.Json.Patch/Corvus.Text.Json.Patch.csproj" />
     <Project Path="src/Corvus.Text.Json.JsonLogic/Corvus.Text.Json.JsonLogic.csproj" />
+    <Project Path="src/Corvus.Text.Json.JsonLogic.CodeGeneration/Corvus.Text.Json.JsonLogic.CodeGeneration.csproj" />
     <Project Path="src/Corvus.Text.Json.SourceGenerator/Corvus.Text.Json.SourceGenerator.csproj" />
     <Project Path="src/Corvus.Text.Json.Validator/Corvus.Text.Json.Validator.csproj" />
     <Project Path="src/Corvus.Text.Json/Corvus.Text.Json.csproj" />
