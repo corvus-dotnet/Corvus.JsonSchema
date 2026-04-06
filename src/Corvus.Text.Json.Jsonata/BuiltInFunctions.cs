@@ -304,6 +304,11 @@ internal static class BuiltInFunctions
         return (in JsonElement input, Environment env) =>
         {
             var seq = arg(input, env);
+            if (seq.IsUndefined)
+            {
+                return Sequence.Undefined;
+            }
+
             return new Sequence(FunctionalCompiler.CreateBoolElement(FunctionalCompiler.IsTruthy(seq)));
         };
     }
@@ -387,13 +392,14 @@ internal static class BuiltInFunctions
             }
 
             var el = seq.FirstOrDefault;
-            if (el.ValueKind != JsonValueKind.String)
+            if (el.ValueKind == JsonValueKind.String)
             {
-                return Sequence.Undefined;
+                int len = el.GetString()?.Length ?? 0;
+                return new Sequence(FunctionalCompiler.CreateNumberElement(len));
             }
 
-            int len = el.GetString()?.Length ?? 0;
-            return new Sequence(FunctionalCompiler.CreateNumberElement(len));
+            // $length on non-string should throw type error
+            throw new JsonataException("T0410", "$length expects a string argument", 0);
         };
     }
 
@@ -712,7 +718,17 @@ internal static class BuiltInFunctions
                 }
             }
 
-            double result = Math.Round(num, Math.Max(0, Math.Min(precision, 15)), MidpointRounding.AwayFromZero);
+            double result;
+            if (precision < 0)
+            {
+                double factor = Math.Pow(10, -precision);
+                result = Math.Round(num / factor, MidpointRounding.ToEven) * factor;
+            }
+            else
+            {
+                result = Math.Round(num, Math.Min(precision, 15), MidpointRounding.ToEven);
+            }
+
             return new Sequence(FunctionalCompiler.CreateNumberElement(result));
         };
     }
@@ -1989,11 +2005,17 @@ internal static class BuiltInFunctions
                 var msgSeq = msgArg(input, env);
                 if (!msgSeq.IsUndefined)
                 {
-                    message = FunctionalCompiler.CoerceElementToString(msgSeq.FirstOrDefault);
+                    var el = msgSeq.FirstOrDefault;
+                    if (el.ValueKind != JsonValueKind.String)
+                    {
+                        throw new JsonataException("T0410", "$error expects a string argument", 0);
+                    }
+
+                    message = el.GetString() ?? message;
                 }
             }
 
-            throw new JsonataException("D3001", message, 0);
+            throw new JsonataException("D3137", message, 0);
         };
     }
 
@@ -2114,7 +2136,13 @@ internal static class BuiltInFunctions
                 return Sequence.Undefined;
             }
 
-            string expr = FunctionalCompiler.CoerceElementToString(exprSeq.FirstOrDefault);
+            var el = exprSeq.FirstOrDefault;
+            if (el.ValueKind != JsonValueKind.String)
+            {
+                throw new JsonataException("T0410", "$eval expects a string argument", 0);
+            }
+
+            string expr = el.GetString() ?? string.Empty;
 
             // Parse and compile on the fly
             var ast = Parser.Parse(expr);

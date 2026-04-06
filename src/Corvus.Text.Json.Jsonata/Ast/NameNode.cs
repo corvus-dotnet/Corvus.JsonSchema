@@ -14,7 +14,4 @@ internal sealed class NameNode : JsonataNode
 
     /// <summary>Gets or sets the field name.</summary>
     public string Value { get; set; } = string.Empty;
-
-    /// <summary>Gets or sets the step annotations (predicates, group-by, focus/index bindings).</summary>
-    public StepAnnotations? Annotations { get; set; }
 }

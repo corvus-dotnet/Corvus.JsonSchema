@@ -20,4 +20,7 @@ internal abstract class JsonataNode
 
     /// <summary>Gets or sets the list of parent-seeking slots propagated during AST post-processing.</summary>
     public List<ParentSlot>? SeekingParent { get; set; }
+
+    /// <summary>Gets or sets the step annotations (predicates, group-by, focus/index bindings).</summary>
+    public StepAnnotations? Annotations { get; set; }
 }

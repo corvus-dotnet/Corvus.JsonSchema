@@ -24,8 +24,10 @@ internal sealed class Parser
     {
         ["."] = 75,
         ["["] = 80,
+        ["]"] = 0,
         ["{"] = 70,
         ["("] = 80,
+        [")"] = 0,
         ["@"] = 80,
         ["#"] = 80,
         ["?"] = 20,
@@ -1370,28 +1372,12 @@ internal sealed class Parser
 
     private static StepAnnotations GetOrCreateAnnotations(JsonataNode node)
     {
-        switch (node)
-        {
-            case NameNode name:
-                name.Annotations ??= new StepAnnotations();
-                return name.Annotations;
-            case WildcardNode wildcard:
-                wildcard.Annotations ??= new StepAnnotations();
-                return wildcard.Annotations;
-            default:
-                // For other node types that can appear as steps, we need a way to attach annotations.
-                // This shouldn't happen for well-formed expressions.
-                throw new InvalidOperationException($"Cannot attach annotations to {node.Type}");
-        }
+        node.Annotations ??= new StepAnnotations();
+        return node.Annotations;
     }
 
     private static StepAnnotations? GetAnnotations(JsonataNode node)
     {
-        return node switch
-        {
-            NameNode name => name.Annotations,
-            WildcardNode wildcard => wildcard.Annotations,
-            _ => null,
-        };
+        return node.Annotations;
     }
 }

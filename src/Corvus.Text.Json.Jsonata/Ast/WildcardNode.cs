@@ -12,7 +12,4 @@ internal sealed class WildcardNode : JsonataNode
 {
     /// <inheritdoc/>
     public override NodeType Type => NodeType.Wildcard;
-
-    /// <summary>Gets or sets the step annotations (predicates, group-by, focus/index bindings).</summary>
-    public StepAnnotations? Annotations { get; set; }
 }
