@@ -28,6 +28,9 @@ internal static class FunctionalEvaluator
     /// <returns>The evaluation result.</returns>
     internal delegate EvalResult RuleEvaluator(in JsonElement data, JsonWorkspace workspace);
 
+    [ThreadStatic]
+    private static ReduceContext? t_reduceContext;
+
     /// <summary>
     /// Evaluates a pre-compiled rule delegate against data.
     /// </summary>
@@ -198,6 +201,31 @@ internal static class FunctionalEvaluator
         else
         {
             pathArg = args;
+        }
+
+        // ReduceContext interception: when compiling a reduce body, intercept
+        // "current" and "accumulator" var lookups to read directly from the
+        // captured ReduceContext, avoiding JSON object construction entirely.
+        if (t_reduceContext is ReduceContext reduceCtx
+            && pathArg.ValueKind == JsonValueKind.String
+            && !pathArg.IsNullOrUndefined()
+            && !JsonLogicHelpers.IsEmptyString(pathArg))
+        {
+            byte[][] segs = PrecomputePathSegments(pathArg);
+            if (segs.Length == 1)
+            {
+                if (segs[0].AsSpan().SequenceEqual("current"u8))
+                {
+                    ReduceContext captured = reduceCtx;
+                    return (in JsonElement data, JsonWorkspace workspace) => captured.Current;
+                }
+
+                if (segs[0].AsSpan().SequenceEqual("accumulator"u8))
+                {
+                    ReduceContext captured = reduceCtx;
+                    return (in JsonElement data, JsonWorkspace workspace) => captured.Accumulator;
+                }
+            }
         }
 
         // Empty path or null: return entire data
@@ -1322,6 +1350,115 @@ internal static class FunctionalEvaluator
 
     private static RuleEvaluator CompileReduce(in JsonElement args, Dictionary<string, IJsonLogicOperator>? operators)
     {
+        if (args.ValueKind != JsonValueKind.Array || args.GetArrayLength() < 3)
+        {
+            return static (in JsonElement data, JsonWorkspace workspace) =>
+                EvalResult.FromElement(JsonLogicHelpers.NullElement());
+        }
+
+        JsonElement arrayArgRule = args[0];
+        JsonElement bodyRule = args[1];
+        JsonElement initRule = args[2];
+
+        // Check if the reduce body only references "current" and "accumulator".
+        // When true, we can avoid constructing a JSON object for the data context
+        // and instead pass EvalResult values directly through a captured ReduceContext.
+        bool canOptimize = BodyUsesOnlyReduceVars(bodyRule);
+
+        if (canOptimize)
+        {
+            // Check for map-reduce fusion: reduce(map(arr, mapBody), reduceBody, init)
+            // Fuses into a single loop, eliminating the intermediate array entirely.
+            if (TryGetMapArgs(arrayArgRule, out JsonElement mapArrayRule, out JsonElement mapBodyRule))
+            {
+                return CompileFusedMapReduce(mapArrayRule, mapBodyRule, bodyRule, initRule, operators);
+            }
+
+            return CompileOptimizedReduce(arrayArgRule, bodyRule, initRule, operators);
+        }
+
+        // Fallback: use JSON object context (handles var "", dotted paths, etc.)
+        return CompileFallbackReduce(args, operators);
+    }
+
+    private static RuleEvaluator CompileOptimizedReduce(
+        in JsonElement arrayArgRule,
+        in JsonElement bodyRule,
+        in JsonElement initRule,
+        Dictionary<string, IJsonLogicOperator>? operators)
+    {
+        RuleEvaluator arrayExpr = CompileExpression(arrayArgRule, operators);
+        RuleEvaluator initExpr = CompileExpression(initRule, operators);
+
+        ReduceContext ctx = new();
+        ReduceContext? saved = t_reduceContext;
+        t_reduceContext = ctx;
+        RuleEvaluator bodyExpr = CompileExpression(bodyRule, operators);
+        t_reduceContext = saved;
+
+        return (in JsonElement data, JsonWorkspace workspace) =>
+        {
+            JsonElement arr = arrayExpr(data, workspace).AsElement(workspace);
+            EvalResult accumulator = initExpr(data, workspace);
+
+            if (arr.ValueKind != JsonValueKind.Array || arr.GetArrayLength() == 0)
+            {
+                return accumulator;
+            }
+
+            foreach (JsonElement item in arr.EnumerateArray())
+            {
+                ctx.Current = EvalResult.FromElement(item);
+                ctx.Accumulator = accumulator;
+                accumulator = bodyExpr(data, workspace);
+            }
+
+            return accumulator;
+        };
+    }
+
+    private static RuleEvaluator CompileFusedMapReduce(
+        in JsonElement mapArrayRule,
+        in JsonElement mapBodyRule,
+        in JsonElement reduceBodyRule,
+        in JsonElement initRule,
+        Dictionary<string, IJsonLogicOperator>? operators)
+    {
+        RuleEvaluator arrayExpr = CompileExpression(mapArrayRule, operators);
+        RuleEvaluator mapBody = CompileExpression(mapBodyRule, operators);
+        RuleEvaluator initExpr = CompileExpression(initRule, operators);
+
+        ReduceContext ctx = new();
+        ReduceContext? saved = t_reduceContext;
+        t_reduceContext = ctx;
+        RuleEvaluator reduceBody = CompileExpression(reduceBodyRule, operators);
+        t_reduceContext = saved;
+
+        return (in JsonElement data, JsonWorkspace workspace) =>
+        {
+            JsonElement arr = arrayExpr(data, workspace).AsElement(workspace);
+            EvalResult accumulator = initExpr(data, workspace);
+
+            if (arr.ValueKind != JsonValueKind.Array || arr.GetArrayLength() == 0)
+            {
+                return accumulator;
+            }
+
+            foreach (JsonElement item in arr.EnumerateArray())
+            {
+                // Apply map body, then feed directly into reduce — no intermediate array.
+                EvalResult mapped = mapBody(item, workspace);
+                ctx.Current = mapped;
+                ctx.Accumulator = accumulator;
+                accumulator = reduceBody(data, workspace);
+            }
+
+            return accumulator;
+        };
+    }
+
+    private static RuleEvaluator CompileFallbackReduce(in JsonElement args, Dictionary<string, IJsonLogicOperator>? operators)
+    {
         RuleEvaluator[] compiled = CompileArgs(args, operators);
         if (compiled.Length < 3)
         {
@@ -1779,5 +1916,122 @@ internal static class FunctionalEvaluator
         }
 
         return JsonLogicHelpers.Zero();
+    }
+
+    // ─── REDUCE OPTIMIZATION HELPERS ────────────────────────────────
+
+    /// <summary>
+    /// Mutable context passed to a reduce body's compiled var closures.
+    /// Set before each iteration; read by the closures for "current"/"accumulator".
+    /// </summary>
+    private sealed class ReduceContext
+    {
+        public EvalResult Current;
+        public EvalResult Accumulator;
+    }
+
+    /// <summary>
+    /// Checks whether a reduce body rule only references var "current" and
+    /// var "accumulator" (no other vars, no var "", no dotted paths).
+    /// When true, the ReduceContext optimization can be safely applied.
+    /// </summary>
+    private static bool BodyUsesOnlyReduceVars(in JsonElement rule)
+    {
+        if (rule.ValueKind == JsonValueKind.Object && rule.GetPropertyCount() > 0)
+        {
+            foreach (JsonProperty<JsonElement> prop in rule.EnumerateObject())
+            {
+                if (prop.Name == "var")
+                {
+                    return IsReduceVarPath(prop.Value);
+                }
+
+                // Non-var operator: recurse into its arguments
+                return BodyUsesOnlyReduceVars(prop.Value);
+            }
+        }
+
+        if (rule.ValueKind == JsonValueKind.Array)
+        {
+            foreach (JsonElement item in rule.EnumerateArray())
+            {
+                if (!BodyUsesOnlyReduceVars(item))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        // Literals are always safe
+        return true;
+    }
+
+    private static bool IsReduceVarPath(in JsonElement args)
+    {
+        JsonElement pathArg = args;
+        if (args.ValueKind == JsonValueKind.Array)
+        {
+            if (args.GetArrayLength() == 0)
+            {
+                return false;
+            }
+
+            pathArg = args[0];
+        }
+
+        if (pathArg.ValueKind != JsonValueKind.String)
+        {
+            return false;
+        }
+
+        if (JsonLogicHelpers.IsEmptyString(pathArg))
+        {
+            return false;
+        }
+
+        byte[][] segments = PrecomputePathSegments(pathArg);
+        if (segments.Length != 1)
+        {
+            return false;
+        }
+
+        ReadOnlySpan<byte> seg = segments[0];
+        return seg.SequenceEqual("current"u8) || seg.SequenceEqual("accumulator"u8);
+    }
+
+    /// <summary>
+    /// Checks whether a rule element is a {"map":[arrayExpr, bodyExpr]} and extracts the args.
+    /// </summary>
+    private static bool TryGetMapArgs(in JsonElement rule, out JsonElement arrayArg, out JsonElement bodyArg)
+    {
+        arrayArg = default;
+        bodyArg = default;
+
+        if (rule.ValueKind != JsonValueKind.Object || rule.GetPropertyCount() != 1)
+        {
+            return false;
+        }
+
+        foreach (JsonProperty<JsonElement> prop in rule.EnumerateObject())
+        {
+            if (prop.Name != "map")
+            {
+                return false;
+            }
+
+            JsonElement mapArgs = prop.Value;
+            if (mapArgs.ValueKind != JsonValueKind.Array || mapArgs.GetArrayLength() < 2)
+            {
+                return false;
+            }
+
+            arrayArg = mapArgs[0];
+            bodyArg = mapArgs[1];
+            return true;
+        }
+
+        return false;
     }
 }
