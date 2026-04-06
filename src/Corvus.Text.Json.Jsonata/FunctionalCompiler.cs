@@ -740,17 +740,26 @@ internal static class FunctionalCompiler
             var leftEl = left.FirstOrDefault;
             var rightEl = right.FirstOrDefault;
 
-            if (leftEl.ValueKind == JsonValueKind.Null || !TryCoerceToNumber(leftEl, out double leftNum))
+            // Strict arithmetic: only Number ValueKind allowed (no string/boolean coercion)
+            if (leftEl.ValueKind != JsonValueKind.Number)
             {
                 throw new JsonataException("T2001", "The left side of the arithmetic expression is not a number", 0);
             }
 
-            if (rightEl.ValueKind == JsonValueKind.Null || !TryCoerceToNumber(rightEl, out double rightNum))
+            if (rightEl.ValueKind != JsonValueKind.Number)
             {
                 throw new JsonataException("T2002", "The right side of the arithmetic expression is not a number", 0);
             }
 
+            double leftNum = leftEl.GetDouble();
+            double rightNum = rightEl.GetDouble();
+
             double result = op(leftNum, rightNum);
+            if (double.IsInfinity(result) || double.IsNaN(result))
+            {
+                throw new JsonataException("D1001", "Number out of range", 0);
+            }
+
             return new Sequence(CreateNumberElement(result));
         };
     }
@@ -1005,9 +1014,10 @@ internal static class FunctionalCompiler
                     return Sequence.Undefined;
                 }
 
-                if (TryCoerceToNumber(result.FirstOrDefault, out double num))
+                var el = result.FirstOrDefault;
+                if (el.ValueKind == JsonValueKind.Number)
                 {
-                    return new Sequence(CreateNumberElement(-num));
+                    return new Sequence(CreateNumberElement(-el.GetDouble()));
                 }
 
                 throw new JsonataException("D1002", "Cannot negate a non-numeric value", unary.Position);
