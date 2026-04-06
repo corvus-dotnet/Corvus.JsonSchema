@@ -15,7 +15,7 @@ namespace Corvus.Text.Json.JsonLogic.Tests;
 public class JsonLogicEvaluatorTests
 {
     /// <summary>
-    /// Runs a single test vector from the official JsonLogic test suite using the bytecode VM.
+    /// Runs a single test vector from the official JsonLogic test suite.
     /// </summary>
     /// <param name="index">The test index.</param>
     /// <param name="rule">The JsonLogic rule as a JSON string.</param>
@@ -27,35 +27,6 @@ public class JsonLogicEvaluatorTests
     {
         _ = index;
 
-        // Parse the rule and data as Corvus JsonElements
-        byte[] ruleUtf8 = Encoding.UTF8.GetBytes(rule);
-        byte[] dataUtf8 = Encoding.UTF8.GetBytes(data);
-
-        Corvus.Text.Json.JsonElement ruleElement = Corvus.Text.Json.JsonElement.ParseValue(ruleUtf8);
-        Corvus.Text.Json.JsonElement dataElement = Corvus.Text.Json.JsonElement.ParseValue(dataUtf8);
-
-        JsonLogicRule logicRule = new(ruleElement);
-        Corvus.Text.Json.JsonElement result = JsonLogicEvaluator.Default.Evaluate(logicRule, dataElement);
-
-        // Compare using normalized JSON text
-        string expectedText = NormalizeJson(expected);
-        string actualText = NormalizeJson(GetRawText(result));
-        Assert.Equal(expectedText, actualText);
-    }
-
-    /// <summary>
-    /// Runs a single test vector from the official JsonLogic test suite using the functional evaluator.
-    /// </summary>
-    /// <param name="index">The test index.</param>
-    /// <param name="rule">The JsonLogic rule as a JSON string.</param>
-    /// <param name="data">The data as a JSON string.</param>
-    /// <param name="expected">The expected result as a JSON string.</param>
-    [Theory]
-    [MemberData(nameof(GetTestCases))]
-    public void OfficialTestSuiteFunctional(int index, string rule, string data, string expected)
-    {
-        _ = index;
-
         byte[] ruleUtf8 = Encoding.UTF8.GetBytes(rule);
         byte[] dataUtf8 = Encoding.UTF8.GetBytes(data);
 
@@ -64,7 +35,7 @@ public class JsonLogicEvaluatorTests
 
         JsonLogicRule logicRule = new(ruleElement);
         using JsonWorkspace workspace = JsonWorkspace.Create();
-        Corvus.Text.Json.JsonElement result = JsonLogicEvaluator.Default.EvaluateFunctional(logicRule, dataElement, workspace);
+        Corvus.Text.Json.JsonElement result = JsonLogicEvaluator.Default.Evaluate(logicRule, dataElement, workspace);
 
         string expectedText = NormalizeJson(expected);
         string actualText = NormalizeJson(GetRawText(result));

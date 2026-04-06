@@ -3,7 +3,6 @@
 // </copyright>
 
 using System.Collections.Concurrent;
-using Corvus.Text.Json.JsonLogic.Operators;
 
 namespace Corvus.Text.Json.JsonLogic;
 
@@ -12,13 +11,9 @@ namespace Corvus.Text.Json.JsonLogic;
 /// </summary>
 /// <remarks>
 /// <para>
-/// The evaluator compiles rules into bytecode on first use, then caches the
+/// The evaluator compiles rules into delegate trees on first use, then caches the
 /// compiled form keyed by the rule's raw JSON text.
 /// Subsequent evaluations of the same rule skip compilation entirely.
-/// </para>
-/// <para>
-/// Custom operators can be registered via <see cref="WithOperator(IJsonLogicOperator)"/>.
-/// Each evaluator instance has its own operator set and cache.
 /// </para>
 /// </remarks>
 public sealed class JsonLogicEvaluator
@@ -26,49 +21,14 @@ public sealed class JsonLogicEvaluator
     /// <summary>
     /// Gets a default evaluator with all standard built-in operators.
     /// </summary>
-    public static readonly JsonLogicEvaluator Default = new(BuiltInOperators.CreateAll());
+    public static readonly JsonLogicEvaluator Default = new();
 
-    private readonly Dictionary<string, IJsonLogicOperator> operators;
-    private readonly ConcurrentDictionary<string, CompiledRule> cache = new();
-    private readonly ConcurrentDictionary<string, FunctionalEvaluator.RuleEvaluator> functionalCache = new();
+    private readonly ConcurrentDictionary<string, FunctionalEvaluator.RuleEvaluator> cache = new();
+    private FunctionalEvaluator.RuleEvaluator? _lastCompiled;
     private JsonElement _lastRule;
-    private CompiledRule _lastCompiled;
-    private FunctionalEvaluator.RuleEvaluator? _lastFunctional;
-    private JsonElement _lastFunctionalRule;
 
-    private JsonLogicEvaluator(Dictionary<string, IJsonLogicOperator> operators)
+    private JsonLogicEvaluator()
     {
-        this.operators = operators;
-    }
-
-    /// <summary>
-    /// Creates a new evaluator with an additional custom operator registered.
-    /// </summary>
-    /// <param name="op">The operator to register.</param>
-    /// <returns>A new evaluator instance with the operator added.</returns>
-    /// <remarks>
-    /// If an operator with the same name already exists, it is replaced.
-    /// The new evaluator has its own empty cache.
-    /// </remarks>
-    public JsonLogicEvaluator WithOperator(IJsonLogicOperator op)
-    {
-        Dictionary<string, IJsonLogicOperator> newOps = new(this.operators)
-        {
-            [op.OperatorName] = op,
-        };
-        return new JsonLogicEvaluator(newOps);
-    }
-
-    /// <summary>
-    /// Creates a new evaluator with the specified operator removed.
-    /// </summary>
-    /// <param name="operatorName">The name of the operator to remove.</param>
-    /// <returns>A new evaluator instance without the specified operator.</returns>
-    public JsonLogicEvaluator WithoutOperator(string operatorName)
-    {
-        Dictionary<string, IJsonLogicOperator> newOps = new(this.operators);
-        newOps.Remove(operatorName);
-        return new JsonLogicEvaluator(newOps);
     }
 
     /// <summary>
@@ -79,7 +39,7 @@ public sealed class JsonLogicEvaluator
     /// <returns>The result of the evaluation as a <see cref="JsonElement"/>.</returns>
     /// <remarks>
     /// <para>
-    /// The rule is compiled to bytecode on first use, then cached.
+    /// The rule is compiled to a delegate tree on first use, then cached.
     /// Subsequent calls with the same rule content skip compilation.
     /// </para>
     /// <para>
@@ -90,9 +50,9 @@ public sealed class JsonLogicEvaluator
     /// </remarks>
     public JsonElement Evaluate(in JsonLogicRule rule, in JsonElement data)
     {
-        CompiledRule compiled = this.GetOrCompile(rule);
+        FunctionalEvaluator.RuleEvaluator evaluator = this.GetOrCompile(rule);
         using JsonWorkspace workspace = JsonWorkspace.Create();
-        return JsonLogicVM.Execute(compiled, data, workspace, cloneResult: true);
+        return FunctionalEvaluator.Execute(evaluator, data, workspace, cloneResult: true);
     }
 
     /// <summary>
@@ -108,7 +68,7 @@ public sealed class JsonLogicEvaluator
     /// <returns>The result of the evaluation as a <see cref="JsonElement"/>.</returns>
     /// <remarks>
     /// <para>
-    /// The rule is compiled to bytecode on first use, then cached.
+    /// The rule is compiled to a delegate tree on first use, then cached.
     /// Subsequent calls with the same rule content skip compilation.
     /// </para>
     /// <para>
@@ -119,77 +79,42 @@ public sealed class JsonLogicEvaluator
     /// </remarks>
     public JsonElement Evaluate(in JsonLogicRule rule, in JsonElement data, JsonWorkspace workspace)
     {
-        CompiledRule compiled = this.GetOrCompile(rule);
-        return JsonLogicVM.Execute(compiled, data, workspace, cloneResult: false);
+        FunctionalEvaluator.RuleEvaluator evaluator = this.GetOrCompile(rule);
+        return FunctionalEvaluator.Execute(evaluator, data, workspace, cloneResult: false);
     }
 
     /// <summary>
     /// Clears the compiled rule cache.
     /// </summary>
     /// <remarks>
-    /// Call this if operator registrations have changed or to free memory.
+    /// Call this to free memory used by cached compiled rules.
     /// </remarks>
     public void ClearCache()
     {
         this.cache.Clear();
-        this.functionalCache.Clear();
     }
 
-    /// <summary>
-    /// Evaluates a JsonLogic rule using the functional (delegate-tree) evaluator.
-    /// </summary>
-    public JsonElement EvaluateFunctional(in JsonLogicRule rule, in JsonElement data, JsonWorkspace workspace)
-    {
-        FunctionalEvaluator.RuleEvaluator evaluator = this.GetOrCompileFunctional(rule);
-        return FunctionalEvaluator.Execute(evaluator, data, workspace, cloneResult: false);
-    }
-
-    private CompiledRule GetOrCompile(in JsonLogicRule rule)
+    private FunctionalEvaluator.RuleEvaluator GetOrCompile(in JsonLogicRule rule)
     {
         // Fast path: same rule element as last call (zero allocation)
-        if (_lastCompiled.Bytecode is not null && rule.Rule.Equals(_lastRule))
+        if (_lastCompiled is not null && rule.Rule.Equals(_lastRule))
         {
             return _lastCompiled;
         }
 
         string key = rule.Rule.GetRawText();
 
-        if (this.cache.TryGetValue(key, out CompiledRule existing))
+        if (this.cache.TryGetValue(key, out FunctionalEvaluator.RuleEvaluator? existing))
         {
             _lastRule = rule.Rule;
             _lastCompiled = existing;
             return existing;
         }
 
-        JsonLogicCompiler compiler = new(this.operators);
-        CompiledRule compiled = compiler.Compile(rule.Rule);
+        FunctionalEvaluator.RuleEvaluator compiled = FunctionalEvaluator.Compile(rule.Rule);
         this.cache.TryAdd(key, compiled);
         _lastRule = rule.Rule;
         _lastCompiled = compiled;
-        return compiled;
-    }
-
-    private FunctionalEvaluator.RuleEvaluator GetOrCompileFunctional(in JsonLogicRule rule)
-    {
-        // Fast path: same rule element as last call
-        if (_lastFunctional is not null && rule.Rule.Equals(_lastFunctionalRule))
-        {
-            return _lastFunctional;
-        }
-
-        string key = rule.Rule.GetRawText();
-
-        if (this.functionalCache.TryGetValue(key, out FunctionalEvaluator.RuleEvaluator? existing))
-        {
-            _lastFunctionalRule = rule.Rule;
-            _lastFunctional = existing;
-            return existing;
-        }
-
-        FunctionalEvaluator.RuleEvaluator compiled = FunctionalEvaluator.Compile(rule.Rule, this.operators);
-        this.functionalCache.TryAdd(key, compiled);
-        _lastFunctionalRule = rule.Rule;
-        _lastFunctional = compiled;
         return compiled;
     }
 }

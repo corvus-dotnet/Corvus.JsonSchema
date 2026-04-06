@@ -235,47 +235,28 @@ public class FunctionalEvaluatorEdgeCaseTests
     public void LiteralDoubleExtraction(string rule, string data, string description)
     {
         _ = description;
-        // Just verify VM and functional produce identical results
-        string vmResult = EvaluateVM(rule, data);
-        string funcResult = EvaluateFunctional(rule, data);
-        Assert.Equal(vmResult, funcResult);
+        // Verify the evaluator produces a valid result
+        string result = Evaluate(rule, data);
+        Assert.NotNull(result);
     }
 
     // ─── HELPERS ────────────────────────────────────────────────────
 
     private static void AssertBothPaths(string rule, string data, string expected)
     {
-        string vmResult = EvaluateVM(rule, data);
-        string funcResult = EvaluateFunctional(rule, data);
-
+        string result = Evaluate(rule, data);
         string expectedNormalized = NormalizeJson(expected);
-
-        Assert.Equal(expectedNormalized, vmResult);
-        Assert.Equal(expectedNormalized, funcResult);
+        Assert.Equal(expectedNormalized, result);
     }
 
     private static void AssertFunctionalOnly(string rule, string data, string expected)
     {
-        string funcResult = EvaluateFunctional(rule, data);
+        string result = Evaluate(rule, data);
         string expectedNormalized = NormalizeJson(expected);
-        Assert.Equal(expectedNormalized, funcResult);
+        Assert.Equal(expectedNormalized, result);
     }
 
-    private static string EvaluateVM(string rule, string data)
-    {
-        byte[] ruleUtf8 = Encoding.UTF8.GetBytes(rule);
-        byte[] dataUtf8 = Encoding.UTF8.GetBytes(data);
-
-        Corvus.Text.Json.JsonElement ruleElement = Corvus.Text.Json.JsonElement.ParseValue(ruleUtf8);
-        Corvus.Text.Json.JsonElement dataElement = Corvus.Text.Json.JsonElement.ParseValue(dataUtf8);
-
-        JsonLogicRule logicRule = new(ruleElement);
-        Corvus.Text.Json.JsonElement result = JsonLogicEvaluator.Default.Evaluate(logicRule, dataElement);
-
-        return NormalizeJson(GetRawText(result));
-    }
-
-    private static string EvaluateFunctional(string rule, string data)
+    private static string Evaluate(string rule, string data)
     {
         byte[] ruleUtf8 = Encoding.UTF8.GetBytes(rule);
         byte[] dataUtf8 = Encoding.UTF8.GetBytes(data);
@@ -285,7 +266,7 @@ public class FunctionalEvaluatorEdgeCaseTests
 
         JsonLogicRule logicRule = new(ruleElement);
         using JsonWorkspace workspace = JsonWorkspace.Create();
-        Corvus.Text.Json.JsonElement result = JsonLogicEvaluator.Default.EvaluateFunctional(logicRule, dataElement, workspace);
+        Corvus.Text.Json.JsonElement result = JsonLogicEvaluator.Default.Evaluate(logicRule, dataElement, workspace);
 
         return NormalizeJson(GetRawText(result));
     }

@@ -33,22 +33,12 @@ public class BenchmarkArrayFilter : JsonLogicBenchmarkBase
     }
 
     /// <summary>
-    /// Evaluate using Corvus JsonLogic (bytecode VM).
+    /// Evaluate using Corvus JsonLogic.
     /// </summary>
     [Benchmark]
     public void CorvusJsonLogic()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         JsonLogicEvaluator.Default.Evaluate(this.CorvusLogicRule, this.CorvusData, workspace);
-    }
-
-    /// <summary>
-    /// Evaluate using Corvus JsonLogic (functional tree-walking).
-    /// </summary>
-    [Benchmark]
-    public void CorvusFunctional()
-    {
-        using JsonWorkspace workspace = JsonWorkspace.Create();
-        JsonLogicEvaluator.Default.EvaluateFunctional(this.CorvusLogicRule, this.CorvusData, workspace);
     }
 }

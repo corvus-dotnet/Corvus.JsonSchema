@@ -44,21 +44,21 @@ internal static class FunctionalEvaluator
     /// <summary>
     /// Compiles a JsonLogic rule JSON element into a delegate tree.
     /// </summary>
-    internal static RuleEvaluator Compile(in JsonElement rule, Dictionary<string, IJsonLogicOperator>? operators = null)
+    internal static RuleEvaluator Compile(in JsonElement rule)
     {
-        return CompileExpression(rule, operators);
+        return CompileExpression(rule);
     }
 
-    private static RuleEvaluator CompileExpression(in JsonElement rule, Dictionary<string, IJsonLogicOperator>? operators)
+    private static RuleEvaluator CompileExpression(in JsonElement rule)
     {
         if (rule.ValueKind == JsonValueKind.Object && rule.GetPropertyCount() > 0)
         {
-            return CompileOperatorCall(rule, operators);
+            return CompileOperatorCall(rule);
         }
 
         if (rule.ValueKind == JsonValueKind.Array)
         {
-            return CompileArrayLiteral(rule, operators);
+            return CompileArrayLiteral(rule);
         }
 
         // Literal value — capture as constant
@@ -79,7 +79,7 @@ internal static class FunctionalEvaluator
         return (in JsonElement data, JsonWorkspace workspace) => EvalResult.FromElement(captured);
     }
 
-    private static RuleEvaluator CompileArrayLiteral(in JsonElement rule, Dictionary<string, IJsonLogicOperator>? operators)
+    private static RuleEvaluator CompileArrayLiteral(in JsonElement rule)
     {
         int count = rule.GetArrayLength();
         if (count == 0)
@@ -92,7 +92,7 @@ internal static class FunctionalEvaluator
         int i = 0;
         foreach (JsonElement item in rule.EnumerateArray())
         {
-            items[i++] = CompileExpression(item, operators);
+            items[i++] = CompileExpression(item);
         }
 
         return (in JsonElement data, JsonWorkspace workspace) =>
@@ -110,18 +110,18 @@ internal static class FunctionalEvaluator
         };
     }
 
-    private static RuleEvaluator CompileOperatorCall(in JsonElement rule, Dictionary<string, IJsonLogicOperator>? operators)
+    private static RuleEvaluator CompileOperatorCall(in JsonElement rule)
     {
         foreach (JsonProperty<JsonElement> property in rule.EnumerateObject())
         {
             string opName = property.Name;
             JsonElement args = property.Value;
 
-            RuleEvaluator[] operands = CompileArgs(args, operators);
+            RuleEvaluator[] operands = CompileArgs(args);
 
             return opName switch
             {
-                "var" => CompileVar(args, operators),
+                "var" => CompileVar(args),
                 "+" => CompileAdd(operands),
                 "-" => CompileSub(operands),
                 "*" => CompileMul(operands),
@@ -146,14 +146,14 @@ internal static class FunctionalEvaluator
                 "<=" => CompileComparison(operands, CompareOp.LessThanOrEqual),
                 "in" => CompileIn(operands),
                 "merge" => CompileMerge(operands),
-                "map" => CompileMap(args, operators),
-                "filter" => CompileFilter(args, operators),
-                "reduce" => CompileReduce(args, operators),
-                "all" => CompileQuantifier(args, operators, QuantifierKind.All),
-                "none" => CompileQuantifier(args, operators, QuantifierKind.None),
-                "some" => CompileQuantifier(args, operators, QuantifierKind.Some),
+                "map" => CompileMap(args),
+                "filter" => CompileFilter(args),
+                "reduce" => CompileReduce(args),
+                "all" => CompileQuantifier(args, QuantifierKind.All),
+                "none" => CompileQuantifier(args, QuantifierKind.None),
+                "some" => CompileQuantifier(args, QuantifierKind.Some),
                 "missing" => CompileMissing(operands),
-                "missing_some" => CompileMissingSome(args, operators),
+                "missing_some" => CompileMissingSome(args),
                 "log" => CompileLog(operands),
                 "asDouble" => CompileAsDouble(operands),
                 "asLong" => CompileAsLong(operands),
@@ -167,7 +167,7 @@ internal static class FunctionalEvaluator
         return CompileLiteral(rule);
     }
 
-    private static RuleEvaluator[] CompileArgs(in JsonElement args, Dictionary<string, IJsonLogicOperator>? operators)
+    private static RuleEvaluator[] CompileArgs(in JsonElement args)
     {
         if (args.ValueKind == JsonValueKind.Array)
         {
@@ -176,17 +176,17 @@ internal static class FunctionalEvaluator
             int i = 0;
             foreach (JsonElement arg in args.EnumerateArray())
             {
-                result[i++] = CompileExpression(arg, operators);
+                result[i++] = CompileExpression(arg);
             }
 
             return result;
         }
 
-        return [CompileExpression(args, operators)];
+        return [CompileExpression(args)];
     }
 
     // ─── VAR ─────────────────────────────────────────────────────
-    private static RuleEvaluator CompileVar(in JsonElement args, Dictionary<string, IJsonLogicOperator>? operators)
+    private static RuleEvaluator CompileVar(in JsonElement args)
     {
         JsonElement pathArg;
         RuleEvaluator? defaultExpr = null;
@@ -202,7 +202,7 @@ internal static class FunctionalEvaluator
             pathArg = args[0];
             if (count >= 2)
             {
-                defaultExpr = CompileExpression(args[1], operators);
+                defaultExpr = CompileExpression(args[1]);
             }
         }
         else
@@ -245,7 +245,7 @@ internal static class FunctionalEvaluator
         // Dynamic path (computed expression)
         if (pathArg.ValueKind == JsonValueKind.Object && pathArg.GetPropertyCount() > 0)
         {
-            RuleEvaluator pathExpr = CompileExpression(pathArg, operators);
+            RuleEvaluator pathExpr = CompileExpression(pathArg);
             RuleEvaluator? def = defaultExpr;
             return (in JsonElement data, JsonWorkspace workspace) =>
             {
@@ -1286,9 +1286,9 @@ internal static class FunctionalEvaluator
         };
     }
 
-    private static RuleEvaluator CompileMap(in JsonElement args, Dictionary<string, IJsonLogicOperator>? operators)
+    private static RuleEvaluator CompileMap(in JsonElement args)
     {
-        RuleEvaluator[] compiled = CompileArgs(args, operators);
+        RuleEvaluator[] compiled = CompileArgs(args);
         if (compiled.Length < 2)
         {
             return static (in JsonElement data, JsonWorkspace workspace) =>
@@ -1319,9 +1319,9 @@ internal static class FunctionalEvaluator
         };
     }
 
-    private static RuleEvaluator CompileFilter(in JsonElement args, Dictionary<string, IJsonLogicOperator>? operators)
+    private static RuleEvaluator CompileFilter(in JsonElement args)
     {
-        RuleEvaluator[] compiled = CompileArgs(args, operators);
+        RuleEvaluator[] compiled = CompileArgs(args);
         if (compiled.Length < 2)
         {
             return static (in JsonElement data, JsonWorkspace workspace) =>
@@ -1355,7 +1355,7 @@ internal static class FunctionalEvaluator
         };
     }
 
-    private static RuleEvaluator CompileReduce(in JsonElement args, Dictionary<string, IJsonLogicOperator>? operators)
+    private static RuleEvaluator CompileReduce(in JsonElement args)
     {
         if (args.ValueKind != JsonValueKind.Array || args.GetArrayLength() < 3)
         {
@@ -1378,29 +1378,28 @@ internal static class FunctionalEvaluator
             // Fuses into a single loop, eliminating the intermediate array entirely.
             if (TryGetMapArgs(arrayArgRule, out JsonElement mapArrayRule, out JsonElement mapBodyRule))
             {
-                return CompileFusedMapReduce(mapArrayRule, mapBodyRule, bodyRule, initRule, operators);
+                return CompileFusedMapReduce(mapArrayRule, mapBodyRule, bodyRule, initRule);
             }
 
-            return CompileOptimizedReduce(arrayArgRule, bodyRule, initRule, operators);
+            return CompileOptimizedReduce(arrayArgRule, bodyRule, initRule);
         }
 
         // Fallback: use JSON object context (handles var "", dotted paths, etc.)
-        return CompileFallbackReduce(args, operators);
+        return CompileFallbackReduce(args);
     }
 
     private static RuleEvaluator CompileOptimizedReduce(
         in JsonElement arrayArgRule,
         in JsonElement bodyRule,
-        in JsonElement initRule,
-        Dictionary<string, IJsonLogicOperator>? operators)
+        in JsonElement initRule)
     {
-        RuleEvaluator arrayExpr = CompileExpression(arrayArgRule, operators);
-        RuleEvaluator initExpr = CompileExpression(initRule, operators);
+        RuleEvaluator arrayExpr = CompileExpression(arrayArgRule);
+        RuleEvaluator initExpr = CompileExpression(initRule);
 
         ReduceContext ctx = new();
         ReduceContext? saved = t_reduceContext;
         t_reduceContext = ctx;
-        RuleEvaluator bodyExpr = CompileExpression(bodyRule, operators);
+        RuleEvaluator bodyExpr = CompileExpression(bodyRule);
         t_reduceContext = saved;
 
         return (in JsonElement data, JsonWorkspace workspace) =>
@@ -1428,17 +1427,16 @@ internal static class FunctionalEvaluator
         in JsonElement mapArrayRule,
         in JsonElement mapBodyRule,
         in JsonElement reduceBodyRule,
-        in JsonElement initRule,
-        Dictionary<string, IJsonLogicOperator>? operators)
+        in JsonElement initRule)
     {
-        RuleEvaluator arrayExpr = CompileExpression(mapArrayRule, operators);
-        RuleEvaluator mapBody = CompileExpression(mapBodyRule, operators);
-        RuleEvaluator initExpr = CompileExpression(initRule, operators);
+        RuleEvaluator arrayExpr = CompileExpression(mapArrayRule);
+        RuleEvaluator mapBody = CompileExpression(mapBodyRule);
+        RuleEvaluator initExpr = CompileExpression(initRule);
 
         ReduceContext ctx = new();
         ReduceContext? saved = t_reduceContext;
         t_reduceContext = ctx;
-        RuleEvaluator reduceBody = CompileExpression(reduceBodyRule, operators);
+        RuleEvaluator reduceBody = CompileExpression(reduceBodyRule);
         t_reduceContext = saved;
 
         return (in JsonElement data, JsonWorkspace workspace) =>
@@ -1464,9 +1462,9 @@ internal static class FunctionalEvaluator
         };
     }
 
-    private static RuleEvaluator CompileFallbackReduce(in JsonElement args, Dictionary<string, IJsonLogicOperator>? operators)
+    private static RuleEvaluator CompileFallbackReduce(in JsonElement args)
     {
-        RuleEvaluator[] compiled = CompileArgs(args, operators);
+        RuleEvaluator[] compiled = CompileArgs(args);
         if (compiled.Length < 3)
         {
             return static (in JsonElement data, JsonWorkspace workspace) =>
@@ -1509,9 +1507,9 @@ internal static class FunctionalEvaluator
         Some,
     }
 
-    private static RuleEvaluator CompileQuantifier(in JsonElement args, Dictionary<string, IJsonLogicOperator>? operators, QuantifierKind kind)
+    private static RuleEvaluator CompileQuantifier(in JsonElement args, QuantifierKind kind)
     {
-        RuleEvaluator[] compiled = CompileArgs(args, operators);
+        RuleEvaluator[] compiled = CompileArgs(args);
         if (compiled.Length < 2)
         {
             return (in JsonElement data, JsonWorkspace workspace) =>
@@ -1586,9 +1584,9 @@ internal static class FunctionalEvaluator
         };
     }
 
-    private static RuleEvaluator CompileMissingSome(in JsonElement args, Dictionary<string, IJsonLogicOperator>? operators)
+    private static RuleEvaluator CompileMissingSome(in JsonElement args)
     {
-        RuleEvaluator[] compiled = CompileArgs(args, operators);
+        RuleEvaluator[] compiled = CompileArgs(args);
         if (compiled.Length < 2)
         {
             return static (in JsonElement data, JsonWorkspace workspace) =>
