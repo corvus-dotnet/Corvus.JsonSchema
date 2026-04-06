@@ -34,18 +34,24 @@ public sealed class JsonataEvaluator
     /// </summary>
     /// <param name="expression">The JSONata expression string.</param>
     /// <param name="data">The input JSON data.</param>
+    /// <param name="maxDepth">
+    /// The maximum recursion depth for function calls. Defaults to
+    /// <see cref="Environment.DefaultMaxDepth"/>. Pass a lower value
+    /// for safety, or a higher value for deeply recursive expressions.
+    /// </param>
     /// <returns>
     /// The result as a <see cref="JsonElement"/>. Returns a <c>default</c>
     /// <see cref="JsonElement"/> (with <see cref="JsonValueKind.Undefined"/>)
     /// if the expression produces no result.
     /// </returns>
-    public JsonElement Evaluate(string expression, JsonElement data)
+    public JsonElement Evaluate(string expression, JsonElement data, int maxDepth = Environment.DefaultMaxDepth)
     {
         var compiled = this.GetOrCompile(expression);
 
         var env = new Environment
         {
             RootInput = data,
+            MaxDepth = maxDepth,
         };
 
         var result = compiled(data, env);

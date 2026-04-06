@@ -81,6 +81,15 @@ internal sealed class LambdaValue
                 i < args.Length ? args[i] : Sequence.Undefined);
         }
 
-        return this.body(input, invokeEnv);
+        // Track call depth to prevent stack overflow
+        invokeEnv.EnterCall();
+        try
+        {
+            return this.body(input, invokeEnv);
+        }
+        finally
+        {
+            invokeEnv.LeaveCall();
+        }
     }
 }

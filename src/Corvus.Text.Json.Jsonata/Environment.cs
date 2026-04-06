@@ -13,8 +13,15 @@ namespace Corvus.Text.Json.Jsonata;
 /// </summary>
 internal sealed class Environment
 {
+    /// <summary>
+    /// The default maximum call depth for recursive function evaluation.
+    /// </summary>
+    public const int DefaultMaxDepth = 500;
+
     private readonly Dictionary<string, Sequence> bindings = new();
     private readonly Environment? parent;
+    private int currentDepth;
+    private int maxDepth;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Environment"/> class.
@@ -23,6 +30,7 @@ internal sealed class Environment
     public Environment(Environment? parent = null)
     {
         this.parent = parent;
+        this.maxDepth = DefaultMaxDepth;
     }
 
     /// <summary>
@@ -30,6 +38,16 @@ internal sealed class Environment
     /// Stored on the root environment.
     /// </summary>
     public JsonElement RootInput { get; set; }
+
+    /// <summary>
+    /// Gets or sets the maximum call depth for this evaluation.
+    /// Only meaningful on the root environment.
+    /// </summary>
+    public int MaxDepth
+    {
+        get => this.GetRoot().maxDepth;
+        set => this.GetRoot().maxDepth = value;
+    }
 
     /// <summary>
     /// Looks up a variable by name, walking up the scope chain.
@@ -75,6 +93,27 @@ internal sealed class Environment
     }
 
     /// <summary>
+    /// Increments the call depth and throws if the limit is exceeded.
+    /// </summary>
+    /// <exception cref="JsonataException">Thrown with code <c>U1001</c> when the depth limit is exceeded.</exception>
+    public void EnterCall()
+    {
+        var root = this.GetRoot();
+        if (++root.currentDepth > root.maxDepth)
+        {
+            throw new JsonataException("U1001", "Stack overflow error: call depth exceeded", -1);
+        }
+    }
+
+    /// <summary>
+    /// Decrements the call depth after a function call completes.
+    /// </summary>
+    public void LeaveCall()
+    {
+        this.GetRoot().currentDepth--;
+    }
+
+    /// <summary>
     /// Gets the root input, walking up to the root if needed.
     /// </summary>
     public JsonElement GetRootInput()
@@ -85,5 +124,16 @@ internal sealed class Environment
         }
 
         return this.parent.GetRootInput();
+    }
+
+    private Environment GetRoot()
+    {
+        var current = this;
+        while (current.parent is not null)
+        {
+            current = current.parent;
+        }
+
+        return current;
     }
 }
