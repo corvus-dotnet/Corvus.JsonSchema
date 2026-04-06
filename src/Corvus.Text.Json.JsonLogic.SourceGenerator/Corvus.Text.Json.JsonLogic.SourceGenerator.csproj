@@ -71,6 +71,8 @@
   <!-- Link the JsonLogic code generation engine -->
   <ItemGroup>
     <Compile Include="$(CorvusTextJsonJsonLogicCodeGenPath)JsonLogicCodeGenerator.cs" LinkBase="CodeGeneration" />
+    <Compile Include="$(CorvusTextJsonJsonLogicCodeGenPath)CustomOperator.cs" LinkBase="CodeGeneration" />
+    <Compile Include="$(CorvusTextJsonJsonLogicCodeGenPath)JlopsParser.cs" LinkBase="CodeGeneration" />
   </ItemGroup>
 
   <!-- Link BigNumber and its dependencies from Corvus.Text.Json -->

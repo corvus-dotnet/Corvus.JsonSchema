@@ -45,6 +45,7 @@
   <!-- JSON rule files as AdditionalFiles for the source generator -->
   <ItemGroup>
     <AdditionalFiles Include="Rules\*.json" />
+    <AdditionalFiles Include="Operators\*.jlops" />
   </ItemGroup>
 
 </Project>

@@ -38,6 +38,10 @@ internal class JsonLogicCommand : Command<JsonLogicCommand.Settings>
         [CommandOption("--outputPath")]
         [Description("The path to which to write the generated C# file. If not specified, writes to <className>.cs in the current directory.")]
         public string? OutputPath { get; init; }
+
+        [CommandOption("--operators")]
+        [Description("Path to a .jlops file defining custom operator templates.")]
+        public string? OperatorsFile { get; init; }
     }
 
     /// <inheritdoc/>
@@ -55,11 +59,32 @@ internal class JsonLogicCommand : Command<JsonLogicCommand.Settings>
 
         string ruleJson = File.ReadAllText(settings.RuleFile);
 
+        IReadOnlyList<CustomOperator>? customOperators = null;
+        if (!string.IsNullOrEmpty(settings.OperatorsFile))
+        {
+            if (!File.Exists(settings.OperatorsFile))
+            {
+                AnsiConsole.MarkupLine($"[red]Error:[/] Operators file not found: {settings.OperatorsFile}");
+                return 1;
+            }
+
+            try
+            {
+                string opsContent = File.ReadAllText(settings.OperatorsFile);
+                customOperators = JlopsParser.Parse(opsContent);
+            }
+            catch (FormatException ex)
+            {
+                AnsiConsole.MarkupLine($"[red]Error parsing .jlops file:[/] {ex.Message}");
+                return 1;
+            }
+        }
+
         string outputPath = settings.OutputPath ?? $"{settings.ClassName}.cs";
 
         try
         {
-            string generatedCode = JsonLogicCodeGenerator.Generate(ruleJson, settings.ClassName, settings.Namespace);
+            string generatedCode = JsonLogicCodeGenerator.Generate(ruleJson, settings.ClassName, settings.Namespace, customOperators);
 
             string? outputDir = Path.GetDirectoryName(outputPath);
             if (!string.IsNullOrEmpty(outputDir))

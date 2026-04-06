@@ -1,0 +1,2 @@
+// Custom operators for testing
+op double_it(x) => BigNumberToElement(CoerceToBigNumber(x) * (BigNumber)2, workspace);

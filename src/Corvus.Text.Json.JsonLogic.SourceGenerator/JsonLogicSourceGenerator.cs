@@ -32,6 +32,13 @@ public sealed class JsonLogicSourceGenerator : IIncrementalGenerator
         IncrementalValueProvider<ImmutableArray<AdditionalText>> collectedJsonFiles =
             jsonFiles.Collect();
 
+        // Discover all .jlops files for custom operators
+        IncrementalValuesProvider<AdditionalText> jlopsFiles =
+            context.AdditionalTextsProvider.Where(static f => f.Path.EndsWith(".jlops", StringComparison.OrdinalIgnoreCase));
+
+        IncrementalValueProvider<ImmutableArray<AdditionalText>> collectedJlopsFiles =
+            jlopsFiles.Collect();
+
         // Find partial classes/structs annotated with [JsonLogicRule]
         IncrementalValuesProvider<GenerationSpec> specs =
             context.SyntaxProvider.ForAttributeWithMetadataName(
@@ -39,9 +46,12 @@ public sealed class JsonLogicSourceGenerator : IIncrementalGenerator
                 predicate: IsValidTarget,
                 transform: ExtractSpec);
 
-        // Combine each spec with all available JSON files
-        IncrementalValuesProvider<(GenerationSpec Spec, ImmutableArray<AdditionalText> Files)> combined =
-            specs.Combine(collectedJsonFiles);
+        // Combine each spec with all available JSON and .jlops files
+        IncrementalValuesProvider<(GenerationSpec Spec, ImmutableArray<AdditionalText> JsonFiles, ImmutableArray<AdditionalText> JlopsFiles)> combined =
+            specs
+                .Combine(collectedJsonFiles)
+                .Combine(collectedJlopsFiles)
+                .Select(static (pair, _) => (pair.Left.Left, pair.Left.Right, pair.Right));
 
         context.RegisterSourceOutput(combined, Execute);
     }
@@ -110,10 +120,13 @@ public sealed class JsonLogicSourceGenerator : IIncrementalGenerator
 
     private static void Execute(
         SourceProductionContext context,
-        (GenerationSpec Spec, ImmutableArray<AdditionalText> Files) input)
+        (GenerationSpec Spec, ImmutableArray<AdditionalText> JsonFiles, ImmutableArray<AdditionalText> JlopsFiles) input)
     {
         GenerationSpec spec = input.Spec;
-        ImmutableArray<AdditionalText> files = input.Files;
+        ImmutableArray<AdditionalText> files = input.JsonFiles;
+
+        // Parse all .jlops files into custom operators
+        IReadOnlyList<CustomOperator>? customOperators = ParseJlopsFiles(context, input.JlopsFiles);
 
         // Find the matching JSON file
         AdditionalText? matchingFile = null;
@@ -161,7 +174,7 @@ public sealed class JsonLogicSourceGenerator : IIncrementalGenerator
 
         try
         {
-            string generated = JsonLogicCodeGenerator.Generate(ruleJson!, spec.TypeName, spec.NamespaceName);
+            string generated = JsonLogicCodeGenerator.Generate(ruleJson!, spec.TypeName, spec.NamespaceName, customOperators);
 
             // The code generator emits a static class; we need to transform it into
             // a partial type body. Replace the generated class wrapper with a partial
@@ -184,6 +197,51 @@ public sealed class JsonLogicSourceGenerator : IIncrementalGenerator
                 spec.RuleFile,
                 ex.Message));
         }
+    }
+
+    /// <summary>
+    /// Parses all <c>.jlops</c> additional files into a combined list of custom operators.
+    /// </summary>
+    private static IReadOnlyList<CustomOperator>? ParseJlopsFiles(
+        SourceProductionContext context,
+        ImmutableArray<AdditionalText> jlopsFiles)
+    {
+        if (jlopsFiles.IsDefaultOrEmpty)
+        {
+            return null;
+        }
+
+        List<CustomOperator> allOps = new();
+        foreach (AdditionalText jlopsFile in jlopsFiles)
+        {
+            string? content = jlopsFile.GetText(context.CancellationToken)?.ToString();
+            if (string.IsNullOrEmpty(content))
+            {
+                continue;
+            }
+
+            try
+            {
+                IReadOnlyList<CustomOperator> ops = JlopsParser.Parse(content!);
+                allOps.AddRange(ops);
+            }
+            catch (FormatException ex)
+            {
+                context.ReportDiagnostic(Diagnostic.Create(
+                    new DiagnosticDescriptor(
+                        "JLSG004",
+                        "Invalid .jlops file",
+                        "Failed to parse custom operators file '{0}': {1}",
+                        "Corvus.Text.Json.JsonLogic",
+                        DiagnosticSeverity.Error,
+                        isEnabledByDefault: true),
+                    Location.None,
+                    jlopsFile.Path,
+                    ex.Message));
+            }
+        }
+
+        return allOps.Count > 0 ? allOps : null;
     }
 
     /// <summary>

@@ -112,4 +112,44 @@ public class JsonLogicSourceGeneratorTests
         // None are missing
         Assert.Equal("[]", result.GetRawText());
     }
+
+    // ─── Custom Operator Tests ──────────────────────────────────
+
+    [Fact]
+    public void CustomOpRule_DoublesAndAdds()
+    {
+        // Rule: {"+":[{"double_it":[{"var":"x"}]}, {"var":"y"}]}
+        // double_it(5) + 3 = 10 + 3 = 13
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"x":5,"y":3}""");
+        JsonElement result = CustomOpRule.Evaluate(doc.RootElement, workspace);
+        Assert.Equal(JsonValueKind.Number, result.ValueKind);
+        Assert.Equal("13", result.GetRawText());
+    }
+
+    [Fact]
+    public void CustomOpRule_WithZero()
+    {
+        // double_it(0) + 7 = 0 + 7 = 7
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"x":0,"y":7}""");
+        JsonElement result = CustomOpRule.Evaluate(doc.RootElement, workspace);
+        Assert.Equal(JsonValueKind.Number, result.ValueKind);
+        Assert.Equal("7", result.GetRawText());
+    }
+
+    [Fact]
+    public void CustomOpRule_WithDecimals()
+    {
+        // double_it(1.5) + 2.5 = 3 + 2.5 = 5.5
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"x":1.5,"y":2.5}""");
+        JsonElement result = CustomOpRule.Evaluate(doc.RootElement, workspace);
+        Assert.Equal(JsonValueKind.Number, result.ValueKind);
+
+        // BigNumber arithmetic may produce scientific notation
+        Assert.True(
+            result.GetRawText() == "5.5" || result.GetRawText() == "55E-1",
+            $"Expected 5.5 or 55E-1 but got {result.GetRawText()}");
+    }
 }

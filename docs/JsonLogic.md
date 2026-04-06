@@ -24,6 +24,7 @@ The source generator and CLI tool produce optimized static C# that eliminates de
 - [CLI code generation](#cli-code-generation)
 - [Supported operators](#supported-operators)
 - [Extended operators](#extended-operators)
+- [Custom operator templates (.jlops)](#custom-operator-templates-jlops)
 - [Workspace and memory management](#workspace-and-memory-management)
 - [Comparison with other libraries](#comparison-with-other-libraries)
 
@@ -270,6 +271,75 @@ The Corvus implementation adds operators for explicit numeric type conversion, u
 | `asBigInteger` | Coerce a value to arbitrary-precision `BigInteger` (truncated) |
 
 These operators are not part of the standard [JsonLogic](https://jsonlogic.com/) specification but are safe to use with any evaluation mode (interpreted, source generator, or CLI).
+
+## Custom operator templates (.jlops)
+
+The code generator and source generator support user-defined operators via `.jlops` template files. Custom operators extend the standard operator set with C# expression or block bodies that are emitted directly into the generated code.
+
+### Format
+
+A `.jlops` file contains one or more operator definitions. Two forms are supported:
+
+**Expression form** (single line):
+
+```
+op discount(price, percent) => BigNumberToElement(CoerceToBigNumber(price) * (BigNumber.One - CoerceToBigNumber(percent) / (BigNumber)100), workspace);
+```
+
+**Block form** (multi-line):
+
+```
+op clamp(value, lo, hi)
+{
+    BigNumber v = CoerceToBigNumber(value);
+    BigNumber low = CoerceToBigNumber(lo);
+    BigNumber high = CoerceToBigNumber(hi);
+    BigNumber clamped = v < low ? low : v > high ? high : v;
+    return BigNumberToElement(clamped, workspace);
+}
+```
+
+Lines starting with `//` are comments. Blank lines are ignored.
+
+Each parameter receives a `JsonElement` value at runtime. The implicit `workspace` parameter is always available. The body has access to all helper methods in the generated class, including `CoerceToBigNumber()`, `BigNumberToElement()`, and `JsonLogicHelpers.*`.
+
+### Using with the source generator
+
+Include `.jlops` files as `AdditionalFiles` alongside your JSON rule files:
+
+```xml
+<ItemGroup>
+  <AdditionalFiles Include="Rules\*.json" />
+  <AdditionalFiles Include="Operators\*.jlops" />
+</ItemGroup>
+```
+
+All custom operators from all `.jlops` files are available to all `[JsonLogicRule]`-annotated types in the project. Use the custom operator in a rule just like a built-in one:
+
+```json
+{"+":[{"discount":[{"var":"price"}, 20]}, {"var":"tax"}]}
+```
+
+### Using with the CLI tool
+
+Pass the `--operators` flag pointing to a `.jlops` file:
+
+```bash
+generatejsonschematypes jsonlogic rules/pricing.json \
+    --className PricingRule \
+    --namespace MyApp.Rules \
+    --operators operators/custom-ops.jlops
+```
+
+### Argument count validation
+
+The code generator validates that each use of a custom operator passes the exact number of arguments declared in the `.jlops` definition. A mismatch produces a build error (source generator) or an exception (CLI tool).
+
+### Diagnostic messages
+
+| Code | Severity | Description |
+|------|----------|-------------|
+| JLSG004 | Error | Failed to parse a `.jlops` file (invalid syntax) |
 
 ## Workspace and memory management
 
