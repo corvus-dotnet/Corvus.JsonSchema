@@ -715,26 +715,44 @@ internal static class BuiltInFunctions
             }
 
             var values = new List<string>();
-            var arr = arrSeq.FirstOrDefault;
-            if (arr.ValueKind == JsonValueKind.Array)
+
+            // Handle multi-valued sequences (e.g., from piping)
+            if (arrSeq.Count > 1)
             {
-                foreach (var item in arr.EnumerateArray())
+                for (int i = 0; i < arrSeq.Count; i++)
                 {
-                    if (item.ValueKind != JsonValueKind.String)
+                    var el = arrSeq[i];
+                    if (el.ValueKind != JsonValueKind.String)
                     {
                         throw new JsonataException("T0412", "Argument 1 of function $join must be an array of strings", 0);
                     }
 
-                    values.Add(item.GetString() ?? string.Empty);
+                    values.Add(el.GetString() ?? string.Empty);
                 }
-            }
-            else if (arr.ValueKind == JsonValueKind.String)
-            {
-                values.Add(arr.GetString() ?? string.Empty);
             }
             else
             {
-                throw new JsonataException("T0412", "Argument 1 of function $join must be an array of strings", 0);
+                var arr = arrSeq.FirstOrDefault;
+                if (arr.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var item in arr.EnumerateArray())
+                    {
+                        if (item.ValueKind != JsonValueKind.String)
+                        {
+                            throw new JsonataException("T0412", "Argument 1 of function $join must be an array of strings", 0);
+                        }
+
+                        values.Add(item.GetString() ?? string.Empty);
+                    }
+                }
+                else if (arr.ValueKind == JsonValueKind.String)
+                {
+                    values.Add(arr.GetString() ?? string.Empty);
+                }
+                else
+                {
+                    throw new JsonataException("T0412", "Argument 1 of function $join must be an array of strings", 0);
+                }
             }
 
             return new Sequence(FunctionalCompiler.CreateStringElement(string.Join(separator, values)));

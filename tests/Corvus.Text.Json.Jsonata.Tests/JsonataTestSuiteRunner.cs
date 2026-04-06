@@ -115,6 +115,17 @@ public class JsonataTestSuiteRunner
             }
         }
 
+        // Parse optional bindings
+        Dictionary<string, JsonElement>? bindings = null;
+        if (root.TryGetProperty("bindings", out var bindingsElement) && bindingsElement.ValueKind == JsonValueKind.Object)
+        {
+            bindings = new Dictionary<string, JsonElement>();
+            foreach (var prop in bindingsElement.EnumerateObject())
+            {
+                bindings[prop.Name] = prop.Value.Clone();
+            }
+        }
+
         try
         {
             // Determine expected outcome — error cases use either top-level
@@ -133,17 +144,17 @@ public class JsonataTestSuiteRunner
 
             if (expectedErrorCode is not null)
             {
-                RunErrorCase(expectedErrorCode, expr, inputData, hasData, maxDepth);
+                RunErrorCase(expectedErrorCode, expr, inputData, hasData, bindings, maxDepth);
                 this.output.WriteLine($"Got expected error: {expectedErrorCode}");
             }
             else if (root.TryGetProperty("undefinedResult", out _))
             {
-                RunUndefinedCase(expr, inputData, hasData, maxDepth);
+                RunUndefinedCase(expr, inputData, hasData, bindings, maxDepth);
                 this.output.WriteLine("Got expected undefined result");
             }
             else if (root.TryGetProperty("result", out var expectedResult))
             {
-                RunResultCase(expectedResult, expr, inputData, hasData, maxDepth);
+                RunResultCase(expectedResult, expr, inputData, hasData, bindings, maxDepth);
             }
             else
             {
@@ -190,12 +201,12 @@ public class JsonataTestSuiteRunner
         }
     }
 
-    private static void RunErrorCase(string expectedCode, string expr, JsonElement inputData, bool hasData, int maxDepth)
+    private static void RunErrorCase(string expectedCode, string expr, JsonElement inputData, bool hasData, Dictionary<string, JsonElement>? bindings, int maxDepth)
     {
         Exception? caught = null;
         try
         {
-            var task = Task.Run(() => Evaluator.Evaluate(expr, hasData ? inputData : default, maxDepth));
+            var task = Task.Run(() => Evaluator.Evaluate(expr, hasData ? inputData : default, bindings, maxDepth));
             if (!task.Wait(TestTimeout))
             {
                 Assert.Fail($"Evaluation timed out after {TestTimeout.TotalSeconds}s");
@@ -218,9 +229,9 @@ public class JsonataTestSuiteRunner
         }
     }
 
-    private static void RunUndefinedCase(string expr, JsonElement inputData, bool hasData, int maxDepth)
+    private static void RunUndefinedCase(string expr, JsonElement inputData, bool hasData, Dictionary<string, JsonElement>? bindings, int maxDepth)
     {
-        var task = Task.Run(() => Evaluator.Evaluate(expr, hasData ? inputData : default, maxDepth));
+        var task = Task.Run(() => Evaluator.Evaluate(expr, hasData ? inputData : default, bindings, maxDepth));
         if (!task.Wait(TestTimeout))
         {
             Assert.Fail($"Evaluation timed out after {TestTimeout.TotalSeconds}s");
@@ -229,9 +240,9 @@ public class JsonataTestSuiteRunner
         Assert.Equal(JsonValueKind.Undefined, task.Result.ValueKind);
     }
 
-    private void RunResultCase(JsonElement expectedResult, string expr, JsonElement inputData, bool hasData, int maxDepth)
+    private void RunResultCase(JsonElement expectedResult, string expr, JsonElement inputData, bool hasData, Dictionary<string, JsonElement>? bindings, int maxDepth)
     {
-        var task = Task.Run(() => Evaluator.Evaluate(expr, hasData ? inputData : default, maxDepth));
+        var task = Task.Run(() => Evaluator.Evaluate(expr, hasData ? inputData : default, bindings, maxDepth));
         if (!task.Wait(TestTimeout))
         {
             Assert.Fail($"Evaluation timed out after {TestTimeout.TotalSeconds}s");

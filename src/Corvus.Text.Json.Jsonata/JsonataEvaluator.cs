@@ -46,6 +46,19 @@ public sealed class JsonataEvaluator
     /// </returns>
     public JsonElement Evaluate(string expression, JsonElement data, int maxDepth = Environment.DefaultMaxDepth)
     {
+        return this.Evaluate(expression, data, null, maxDepth);
+    }
+
+    /// <summary>
+    /// Evaluates a JSONata expression against input data with optional variable bindings.
+    /// </summary>
+    /// <param name="expression">The JSONata expression string.</param>
+    /// <param name="data">The input JSON data element.</param>
+    /// <param name="bindings">Optional pre-defined variable bindings (name → value).</param>
+    /// <param name="maxDepth">Maximum recursion depth (default 500).</param>
+    /// <returns>The evaluation result as a <see cref="JsonElement"/>, or <c>default</c> if the result is undefined.</returns>
+    public JsonElement Evaluate(string expression, JsonElement data, IReadOnlyDictionary<string, JsonElement>? bindings, int maxDepth = Environment.DefaultMaxDepth)
+    {
         var compiled = this.GetOrCompile(expression);
 
         var env = new Environment
@@ -53,6 +66,14 @@ public sealed class JsonataEvaluator
             RootInput = data,
             MaxDepth = maxDepth,
         };
+
+        if (bindings is not null)
+        {
+            foreach (var kvp in bindings)
+            {
+                env.Bind(kvp.Key, new Sequence(kvp.Value));
+            }
+        }
 
         var result = compiled(data, env);
 
