@@ -4,7 +4,9 @@
 
 using System.Globalization;
 using System.Runtime.CompilerServices;
+using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace Corvus.Text.Json.Jsonata;
 
@@ -618,9 +620,7 @@ internal static class BuiltInFunctions
             }
 
             string? str = strSeq.FirstOrDefault.GetString();
-            string? sep = sepSeq.FirstOrDefault.GetString();
-
-            if (str is null || sep is null)
+            if (str is null)
             {
                 return Sequence.Undefined;
             }
@@ -635,14 +635,30 @@ internal static class BuiltInFunctions
                 }
             }
 
-            var parts = str.Split(new[] { sep }, limit, StringSplitOptions.None);
+            string[] parts;
+            if (sepSeq.IsRegex)
+            {
+                parts = sepSeq.Regex!.Split(str);
+            }
+            else
+            {
+                string? sep = sepSeq.FirstOrDefault.GetString();
+                if (sep is null)
+                {
+                    return Sequence.Undefined;
+                }
+
+                parts = str.Split(new[] { sep }, StringSplitOptions.None);
+            }
+
+            int count = Math.Min(parts.Length, limit);
 
             using var ms = new MemoryStream(256);
             using var writer = new Utf8JsonWriter(ms);
             writer.WriteStartArray();
-            foreach (var part in parts)
+            for (int i = 0; i < count; i++)
             {
-                writer.WriteStringValue(part);
+                writer.WriteStringValue(parts[i]);
             }
 
             writer.WriteEndArray();
@@ -674,9 +690,19 @@ internal static class BuiltInFunctions
             }
 
             string? str = strSeq.FirstOrDefault.GetString();
-            string? search = searchSeq.FirstOrDefault.GetString();
+            if (str is null)
+            {
+                return Sequence.Undefined;
+            }
 
-            bool result = str is not null && search is not null && str.Contains(search);
+            if (searchSeq.IsRegex)
+            {
+                bool isMatch = searchSeq.Regex!.IsMatch(str);
+                return new Sequence(FunctionalCompiler.CreateBoolElement(isMatch));
+            }
+
+            string? search = searchSeq.FirstOrDefault.GetString();
+            bool result = search is not null && str.Contains(search);
             return new Sequence(FunctionalCompiler.CreateBoolElement(result));
         };
     }
@@ -1632,8 +1658,70 @@ internal static class BuiltInFunctions
 
     private static ExpressionEvaluator CompileMatch(ExpressionEvaluator[] args)
     {
-        // Simplified: without regex support, just return undefined
-        return static (in JsonElement input, Environment env) => Sequence.Undefined;
+        if (args.Length < 2 || args.Length > 3)
+        {
+            throw new JsonataException("T0410", "$match expects 2 or 3 arguments", 0);
+        }
+
+        var strArg = args[0];
+        var patternArg = args[1];
+        var limitArg = args.Length > 2 ? args[2] : null;
+
+        return (in JsonElement input, Environment env) =>
+        {
+            var strSeq = strArg(input, env);
+            var patSeq = patternArg(input, env);
+
+            if (strSeq.IsUndefined || !patSeq.IsRegex)
+            {
+                return Sequence.Undefined;
+            }
+
+            string? str = strSeq.FirstOrDefault.GetString();
+            if (str is null)
+            {
+                return Sequence.Undefined;
+            }
+
+            int limit = int.MaxValue;
+            if (limitArg is not null)
+            {
+                var limitSeqVal = limitArg(input, env);
+                if (FunctionalCompiler.TryCoerceToNumber(limitSeqVal.FirstOrDefault, out double limitD))
+                {
+                    limit = (int)limitD;
+                }
+            }
+
+            Regex regex = patSeq.Regex!;
+            MatchCollection matches = regex.Matches(str);
+
+            var results = new List<JsonElement>();
+            int count = 0;
+            foreach (Match m in matches)
+            {
+                if (count >= limit)
+                {
+                    break;
+                }
+
+                var groups = new List<string>();
+                for (int g = 1; g < m.Groups.Count; g++)
+                {
+                    groups.Add(m.Groups[g].Value);
+                }
+
+                results.Add(FunctionalCompiler.CreateMatchObject(m.Value, m.Index, groups));
+                count++;
+            }
+
+            if (results.Count == 0)
+            {
+                return Sequence.Undefined;
+            }
+
+            return new Sequence(FunctionalCompiler.CreateJsonArrayElement(results));
+        };
     }
 
     private static ExpressionEvaluator CompileReplace(ExpressionEvaluator[] args)
@@ -1653,14 +1741,23 @@ internal static class BuiltInFunctions
             var strSeq = strArg(input, env);
             var patSeq = patternArg(input, env);
             var repSeq = replacementArg(input, env);
-            if (strSeq.IsUndefined || patSeq.IsUndefined || repSeq.IsUndefined)
+            if (strSeq.IsUndefined)
+            {
+                return Sequence.Undefined;
+            }
+
+            if (!patSeq.IsRegex && patSeq.IsUndefined)
+            {
+                return Sequence.Undefined;
+            }
+
+            bool isLambdaReplacement = repSeq.IsLambda;
+            if (!isLambdaReplacement && repSeq.IsUndefined)
             {
                 return Sequence.Undefined;
             }
 
             string str = FunctionalCompiler.CoerceElementToString(strSeq.FirstOrDefault);
-            string pattern = FunctionalCompiler.CoerceElementToString(patSeq.FirstOrDefault);
-            string replacement = FunctionalCompiler.CoerceElementToString(repSeq.FirstOrDefault);
             int limit = int.MaxValue;
             if (limitArg is not null)
             {
@@ -1671,17 +1768,204 @@ internal static class BuiltInFunctions
                 }
             }
 
-            // Simple string replacement (not regex)
-            int count = 0;
-            int idx;
-            while (count < limit && (idx = str.IndexOf(pattern, StringComparison.Ordinal)) >= 0)
+            if (patSeq.IsRegex)
             {
-                str = str.Substring(0, idx) + replacement + str.Substring(idx + pattern.Length);
-                count++;
+                Regex regex = patSeq.Regex!;
+                if (isLambdaReplacement)
+                {
+                    str = RegexReplaceWithFunction(str, regex, repSeq.Lambda!, limit, input, env);
+                }
+                else
+                {
+                    string replacement = FunctionalCompiler.CoerceElementToString(repSeq.FirstOrDefault);
+                    str = RegexReplaceWithString(str, regex, replacement, limit);
+                }
+            }
+            else
+            {
+                string pattern = FunctionalCompiler.CoerceElementToString(patSeq.FirstOrDefault);
+                string replacement = FunctionalCompiler.CoerceElementToString(repSeq.FirstOrDefault);
+
+                int count = 0;
+                int idx;
+                while (count < limit && (idx = str.IndexOf(pattern, StringComparison.Ordinal)) >= 0)
+                {
+                    str = str.Substring(0, idx) + replacement + str.Substring(idx + pattern.Length);
+                    count++;
+                }
             }
 
             return new Sequence(FunctionalCompiler.CreateStringElement(str));
         };
+    }
+
+    private static string RegexReplaceWithString(string str, Regex regex, string replacement, int limit)
+    {
+        if (limit <= 0)
+        {
+            return str;
+        }
+
+        int count = 0;
+        int searchStart = 0;
+        var sb = new StringBuilder();
+
+        while (count < limit && searchStart <= str.Length)
+        {
+            Match m = regex.Match(str, searchStart);
+            if (!m.Success)
+            {
+                break;
+            }
+
+            if (m.Length == 0)
+            {
+                throw new JsonataException("D1004", "Regular expression matches zero length string", 0);
+            }
+
+            sb.Append(str, searchStart, m.Index - searchStart);
+            sb.Append(ApplyJsonataBackreferences(replacement, m));
+            searchStart = m.Index + m.Length;
+            count++;
+        }
+
+        sb.Append(str, searchStart, str.Length - searchStart);
+        return sb.ToString();
+    }
+
+    private static string RegexReplaceWithFunction(
+        string str,
+        Regex regex,
+        LambdaValue lambda,
+        int limit,
+        in JsonElement input,
+        Environment env)
+    {
+        if (limit <= 0)
+        {
+            return str;
+        }
+
+        int count = 0;
+        int searchStart = 0;
+        var sb = new StringBuilder();
+
+        while (count < limit && searchStart <= str.Length)
+        {
+            Match m = regex.Match(str, searchStart);
+            if (!m.Success)
+            {
+                break;
+            }
+
+            if (m.Length == 0)
+            {
+                throw new JsonataException("D1004", "Regular expression matches zero length string", 0);
+            }
+
+            sb.Append(str, searchStart, m.Index - searchStart);
+
+            var groups = new List<string>();
+            for (int g = 1; g < m.Groups.Count; g++)
+            {
+                groups.Add(m.Groups[g].Value);
+            }
+
+            JsonElement matchObj = FunctionalCompiler.CreateMatchObject(m.Value, m.Index, groups);
+            Sequence result = lambda.Invoke(new[] { new Sequence(matchObj) }, input, env);
+
+            if (result.IsUndefined || result.FirstOrDefault.ValueKind != JsonValueKind.String)
+            {
+                throw new JsonataException("D3012", "The replacement function must return a string", 0);
+            }
+
+            sb.Append(result.FirstOrDefault.GetString());
+            searchStart = m.Index + m.Length;
+            count++;
+        }
+
+        sb.Append(str, searchStart, str.Length - searchStart);
+        return sb.ToString();
+    }
+
+    private static string ApplyJsonataBackreferences(string replacement, Match match)
+    {
+        int numGroups = match.Groups.Count - 1;
+        var sb = new StringBuilder(replacement.Length);
+
+        for (int i = 0; i < replacement.Length; i++)
+        {
+            if (replacement[i] != '$')
+            {
+                sb.Append(replacement[i]);
+                continue;
+            }
+
+            // At '$'
+            if (i + 1 >= replacement.Length)
+            {
+                // $ at end of string → literal $
+                sb.Append('$');
+                continue;
+            }
+
+            char next = replacement[i + 1];
+
+            if (next == '$')
+            {
+                // $$ → literal $
+                sb.Append('$');
+                i++;
+            }
+            else if (next >= '0' && next <= '9')
+            {
+                // Read all following digits
+                int digitStart = i + 1;
+                int digitEnd = digitStart;
+                while (digitEnd < replacement.Length && replacement[digitEnd] >= '0' && replacement[digitEnd] <= '9')
+                {
+                    digitEnd++;
+                }
+
+                string allDigits = replacement.Substring(digitStart, digitEnd - digitStart);
+
+                // Try longest valid prefix (shorten from the right)
+                int consumed = allDigits.Length;
+                bool found = false;
+                while (consumed > 0)
+                {
+                    int groupNum = int.Parse(allDigits.Substring(0, consumed), CultureInfo.InvariantCulture);
+                    if (groupNum <= numGroups)
+                    {
+                        sb.Append(match.Groups[groupNum].Value);
+
+                        // Remaining digits become literal
+                        sb.Append(allDigits, consumed, allDigits.Length - consumed);
+                        found = true;
+                        break;
+                    }
+
+                    consumed--;
+                }
+
+                if (!found)
+                {
+                    // No valid group reference; remaining digits after the single invalid digit are literal
+                    sb.Append(allDigits, 1, allDigits.Length - 1);
+                }
+
+                i = digitEnd - 1;
+            }
+            else
+            {
+                // $ followed by non-digit → literal $<char>
+                sb.Append('$');
+                sb.Append(next);
+                i++;
+            }
+        }
+
+        return sb.ToString();
     }
 
     // --- Encoding functions ---

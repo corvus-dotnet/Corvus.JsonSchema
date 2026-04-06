@@ -5,6 +5,7 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace Corvus.Text.Json.Jsonata;
 
@@ -36,6 +37,7 @@ internal readonly struct Sequence
     private readonly JsonElement[]? multiValues;
     private readonly int count;
     private readonly LambdaValue? lambda;
+    private readonly Regex? regex;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Sequence"/> struct with a single value.
@@ -91,6 +93,21 @@ internal readonly struct Sequence
         this.count = 0;
         this.singleValue = default;
         this.multiValues = null;
+        this.regex = null;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="Sequence"/> struct wrapping a compiled regular expression.
+    /// </summary>
+    /// <param name="regex">The compiled regular expression.</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public Sequence(Regex regex)
+    {
+        this.regex = regex;
+        this.count = 0;
+        this.singleValue = default;
+        this.multiValues = null;
+        this.lambda = null;
     }
 
     /// <summary>Gets the number of values in the sequence.</summary>
@@ -126,6 +143,20 @@ internal readonly struct Sequence
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get => this.lambda;
+    }
+
+    /// <summary>Gets a value indicating whether this sequence holds a regular expression value.</summary>
+    public bool IsRegex
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => this.regex is not null;
+    }
+
+    /// <summary>Gets the compiled regular expression, or <c>null</c> if this is not a regex.</summary>
+    public Regex? Regex
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => this.regex;
     }
 
     /// <summary>

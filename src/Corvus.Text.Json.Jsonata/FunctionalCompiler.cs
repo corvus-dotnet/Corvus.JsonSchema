@@ -5,6 +5,7 @@
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Corvus.Text.Json.Jsonata.Ast;
 
 namespace Corvus.Text.Json.Jsonata;
@@ -38,6 +39,26 @@ internal static class FunctionalCompiler
     /// </summary>
     public static ExpressionEvaluator Compile(JsonataNode node)
     {
+        var evaluator = CompileCore(node);
+
+        // Apply annotations (stages) for non-path nodes.
+        // PathNode handles its own stages in CompilePath.
+        // Individual step nodes (NameNode, etc.) inside paths are compiled via
+        // CompileCore to avoid double-application — CompilePath applies their stages.
+        if (node is not PathNode && node.Annotations?.Stages.Count > 0)
+        {
+            evaluator = WrapWithStages(evaluator, node.Annotations);
+        }
+
+        return evaluator;
+    }
+
+    /// <summary>
+    /// Core dispatch: compiles a node without applying its annotations.
+    /// Used by CompilePath for step compilation (path applies stages itself).
+    /// </summary>
+    private static ExpressionEvaluator CompileCore(JsonataNode node)
+    {
         return node switch
         {
             PathNode path => CompilePath(path),
@@ -66,6 +87,33 @@ internal static class FunctionalCompiler
             PartialNode partial => CompilePartial(partial),
             PlaceholderNode => throw new JsonataException("D1001", "Unexpected placeholder outside partial application", node.Position),
             _ => throw new JsonataException("D1001", $"Unknown node type: {node.Type}", node.Position),
+        };
+    }
+
+    private static ExpressionEvaluator WrapWithStages(ExpressionEvaluator inner, StepAnnotations annotations)
+    {
+        var stageEvaluators = new ExpressionEvaluator[annotations.Stages.Count];
+        for (int i = 0; i < annotations.Stages.Count; i++)
+        {
+            var stage = annotations.Stages[i];
+            if (stage is FilterNode filterNode)
+            {
+                stageEvaluators[i] = Compile(filterNode.Expression);
+            }
+            else if (stage is SortNode sortNode)
+            {
+                stageEvaluators[i] = CompileSortStage(sortNode);
+            }
+            else
+            {
+                stageEvaluators[i] = Compile(stage);
+            }
+        }
+
+        return (in JsonElement input, Environment env) =>
+        {
+            var result = inner(input, env);
+            return ApplyStages(result, stageEvaluators, env);
         };
     }
 
@@ -211,10 +259,12 @@ internal static class FunctionalCompiler
         var stages = new ExpressionEvaluator[]?[path.Steps.Count];
         var focusVars = new string?[path.Steps.Count];
         var indexVars = new string?[path.Steps.Count];
+        var isPropertyStep = new bool[path.Steps.Count];
 
         for (int i = 0; i < path.Steps.Count; i++)
         {
-            steps[i] = Compile(path.Steps[i]);
+            steps[i] = CompileCore(path.Steps[i]);
+            isPropertyStep[i] = path.Steps[i] is NameNode or WildcardNode or DescendantNode;
 
             var annotations = GetStepAnnotations(path.Steps[i]);
             if (annotations is not null)
@@ -270,6 +320,11 @@ internal static class FunctionalCompiler
                     env.Bind(focusVar, current);
                 }
 
+                // Auto-flatten arrays when:
+                // - stepIdx > 0: any step after the first always maps over array contexts
+                // - stepIdx == 0 AND isPropertyStep: property access on root array (e.g. name[0] on root array)
+                bool shouldFlatten = stepIdx > 0 || isPropertyStep[stepIdx];
+
                 if (current.IsSingleton)
                 {
                     // Hot path: singleton input → evaluate step directly
@@ -281,8 +336,7 @@ internal static class FunctionalCompiler
                         env.Bind(indexVar, new Sequence(CreateNumberElement(0)));
                     }
 
-                    // Auto-flatten arrays for path traversal
-                    if (element.ValueKind == JsonValueKind.Array && stepIdx > 0)
+                    if (element.ValueKind == JsonValueKind.Array && shouldFlatten)
                     {
                         current = FlattenArrayStep(element, step, env);
                     }
@@ -306,7 +360,7 @@ internal static class FunctionalCompiler
 
                         Sequence stepResult;
 
-                        if (element.ValueKind == JsonValueKind.Array && stepIdx > 0)
+                        if (element.ValueKind == JsonValueKind.Array && shouldFlatten)
                         {
                             stepResult = FlattenArrayStep(element, step, env);
                         }
@@ -1095,9 +1149,22 @@ internal static class FunctionalCompiler
 
     private static ExpressionEvaluator CompileRegex(RegexNode regex)
     {
-        // Regex is a value that's used by $match/$replace etc.
-        // Store as a string representation for now
-        return static (in JsonElement input, Environment env) => Sequence.Undefined;
+        RegexOptions options = RegexOptions.None;
+        foreach (char flag in regex.Flags)
+        {
+            switch (flag)
+            {
+                case 'i':
+                    options |= RegexOptions.IgnoreCase;
+                    break;
+                case 'm':
+                    options |= RegexOptions.Multiline;
+                    break;
+            }
+        }
+
+        var compiledRegex = new Regex(regex.Pattern, options);
+        return (in JsonElement input, Environment env) => new Sequence(compiledRegex);
     }
 
     private static ExpressionEvaluator CompileParent()
@@ -1262,5 +1329,44 @@ internal static class FunctionalCompiler
     internal static JsonElement CreateNullElement()
     {
         return NullElement;
+    }
+
+    internal static JsonElement CreateJsonArrayElement(IReadOnlyList<JsonElement> items)
+    {
+        using var ms = new MemoryStream(256);
+        using var writer = new Utf8JsonWriter(ms);
+        writer.WriteStartArray();
+        foreach (var item in items)
+        {
+            item.WriteTo(writer);
+        }
+
+        writer.WriteEndArray();
+        writer.Flush();
+        ms.Position = 0;
+        using var doc = JsonDocument.Parse(ms);
+        return doc.RootElement.Clone();
+    }
+
+    internal static JsonElement CreateMatchObject(string match, int index, IReadOnlyList<string> groups)
+    {
+        using var ms = new MemoryStream(256);
+        using var writer = new Utf8JsonWriter(ms);
+        writer.WriteStartObject();
+        writer.WriteString("match", match);
+        writer.WriteNumber("index", index);
+        writer.WritePropertyName("groups");
+        writer.WriteStartArray();
+        foreach (string g in groups)
+        {
+            writer.WriteStringValue(g);
+        }
+
+        writer.WriteEndArray();
+        writer.WriteEndObject();
+        writer.Flush();
+        ms.Position = 0;
+        using var doc = JsonDocument.Parse(ms);
+        return doc.RootElement.Clone();
     }
 }
