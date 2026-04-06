@@ -1540,13 +1540,58 @@ internal static class FunctionalCompiler
         return element.ValueKind switch
         {
             JsonValueKind.String => element.GetString() ?? string.Empty,
-            JsonValueKind.Number => element.GetDouble().ToString(CultureInfo.InvariantCulture),
+            JsonValueKind.Number => FormatNumberLikeJavaScript(element.GetDouble()),
             JsonValueKind.True => "true",
             JsonValueKind.False => "false",
             JsonValueKind.Null => "null",
             JsonValueKind.Undefined => string.Empty,
             _ => element.GetRawText(),
         };
+    }
+
+    /// <summary>
+    /// Formats a double to match JavaScript's Number.toString() behavior:
+    /// - Lowercase 'e' in scientific notation
+    /// - No leading zero in exponent (e-7, not e-07)
+    /// - Decimal form for numbers in range [1e-6, 1e+20)
+    /// - At most ~17 significant digits
+    /// </summary>
+    internal static string FormatNumberLikeJavaScript(double value)
+    {
+        if (double.IsNaN(value) || double.IsInfinity(value))
+        {
+            return "null";
+        }
+
+        // Use R format for shortest roundtrip representation
+        string result = value.ToString("R", CultureInfo.InvariantCulture);
+
+        // Convert uppercase E to lowercase e
+        result = result.Replace("E+", "e+").Replace("E-", "e-");
+
+        double abs = Math.Abs(value);
+
+        // JavaScript uses decimal form for [1e-6, 1e+20]
+        if (result.Contains('e'))
+        {
+            if (abs >= 1e-6 && abs < 1e+20)
+            {
+                // Force decimal format
+                result = value.ToString("0.####################", CultureInfo.InvariantCulture);
+                return result;
+            }
+
+            // For very large integers (like 1e+20), use integer-like representation
+            if (abs >= 1e+20 && abs < 1e+21 && value == Math.Floor(value))
+            {
+                return value.ToString("0", CultureInfo.InvariantCulture);
+            }
+
+            // Strip leading zeros from exponent: e-07 → e-7, e+02 → e+2
+            result = System.Text.RegularExpressions.Regex.Replace(result, @"e([+-])0+(\d)", "e$1$2");
+        }
+
+        return result;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

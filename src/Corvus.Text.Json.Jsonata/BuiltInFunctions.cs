@@ -264,6 +264,8 @@ internal static class BuiltInFunctions
     {
         // 0 args → use current context
         var arg = args.Length >= 1 ? args[0] : ContextArg;
+        var prettyArg = args.Length >= 2 ? args[1] : null;
+
         return (in JsonElement input, Environment env) =>
         {
             var seq = arg(input, env);
@@ -291,9 +293,88 @@ internal static class BuiltInFunctions
                 }
             }
 
+            bool prettyPrint = false;
+            if (prettyArg is not null)
+            {
+                var prettySeq = prettyArg(input, env);
+                prettyPrint = FunctionalCompiler.IsTruthy(prettySeq);
+            }
+
+            // For arrays and objects, produce JSON
+            if (element.ValueKind is JsonValueKind.Array or JsonValueKind.Object)
+            {
+                string json = StringifyElement(element, prettyPrint);
+                return new Sequence(FunctionalCompiler.CreateStringElement(json));
+            }
+
             string result = FunctionalCompiler.CoerceElementToString(element);
             return new Sequence(FunctionalCompiler.CreateStringElement(result));
         };
+    }
+
+    /// <summary>
+    /// Serializes a JSON element to a compact or pretty-printed string,
+    /// replacing lambda values with empty strings and formatting numbers like JS.
+    /// </summary>
+    private static string StringifyElement(JsonElement element, bool prettyPrint)
+    {
+        using var ms = new MemoryStream(256);
+        using var writer = new Utf8JsonWriter(ms, new JsonWriterOptions
+        {
+            Indented = prettyPrint,
+            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+        });
+
+        WriteStringifiedElement(element, writer);
+        writer.Flush();
+
+        ms.Position = 0;
+        using var reader = new StreamReader(ms);
+        return reader.ReadToEnd();
+    }
+
+    private static void WriteStringifiedElement(JsonElement element, Utf8JsonWriter writer)
+    {
+        switch (element.ValueKind)
+        {
+            case JsonValueKind.Object:
+                writer.WriteStartObject();
+                foreach (var prop in element.EnumerateObject())
+                {
+                    writer.WritePropertyName(prop.Name);
+                    WriteStringifiedElement(prop.Value, writer);
+                }
+
+                writer.WriteEndObject();
+                break;
+
+            case JsonValueKind.Array:
+                writer.WriteStartArray();
+                foreach (var item in element.EnumerateArray())
+                {
+                    WriteStringifiedElement(item, writer);
+                }
+
+                writer.WriteEndArray();
+                break;
+
+            case JsonValueKind.Number:
+                double d = element.GetDouble();
+                if (double.IsNaN(d) || double.IsInfinity(d))
+                {
+                    writer.WriteNullValue();
+                }
+                else
+                {
+                    writer.WriteNumberValue(d);
+                }
+
+                break;
+
+            default:
+                element.WriteTo(writer);
+                break;
+        }
     }
 
     private static ExpressionEvaluator CompileToNumber(ExpressionEvaluator[] args)
