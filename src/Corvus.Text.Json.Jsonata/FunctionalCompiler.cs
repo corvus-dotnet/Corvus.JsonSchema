@@ -964,10 +964,22 @@ internal static class FunctionalCompiler
         // If RHS is a function call, we prepend LHS as the first argument
         if (apply.Rhs is FunctionCallNode funcCall)
         {
-            // Build a new argument list with a placeholder for LHS as the first arg
-            var originalArgs = funcCall.Arguments.Select(Compile).ToArray();
+            // Check if it's a built-in function — compile directly with LHS prepended
+            if (funcCall.Procedure is VariableNode varProc)
+            {
+                var builtIn = BuiltInFunctions.TryGetCompiler(varProc.Name);
+                if (builtIn is not null)
+                {
+                    var originalArgEvals = funcCall.Arguments.Select(Compile).ToArray();
+                    var allArgEvals = new ExpressionEvaluator[originalArgEvals.Length + 1];
+                    allArgEvals[0] = lhsEval;
+                    Array.Copy(originalArgEvals, 0, allArgEvals, 1, originalArgEvals.Length);
+                    return builtIn(allArgEvals);
+                }
+            }
 
-            // Compile the procedure
+            // Generic function call: compile procedure and invoke at runtime
+            var originalArgs = funcCall.Arguments.Select(Compile).ToArray();
             var procedure = Compile(funcCall.Procedure);
 
             return (in JsonElement input, Environment env) =>
@@ -993,16 +1005,23 @@ internal static class FunctionalCompiler
 
         var rhsEval = Compile(apply.Rhs);
 
+        // Function composition: LHS ~> RHS where RHS is a variable/lambda
         return (in JsonElement input, Environment env) =>
         {
             var lhsResult = lhsEval(input, env);
             var rhsResult = rhsEval(input, env);
 
-            // ~> chains: evaluate LHS, pass as first arg to RHS function
+            // If RHS is a lambda, invoke it with LHS as argument
             if (rhsResult.IsLambda)
             {
                 var args = new[] { lhsResult };
                 return rhsResult.Lambda!.Invoke(args, input, env);
+            }
+
+            // If RHS is not callable, that's an error
+            if (!rhsResult.IsUndefined)
+            {
+                throw new JsonataException("T2006", "The right side of the '~>' operator must be a function", apply.Position);
             }
 
             return Sequence.Undefined;

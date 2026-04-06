@@ -631,6 +631,11 @@ internal static class BuiltInFunctions
                 var limitSeq = limitArg(input, env);
                 if (FunctionalCompiler.TryCoerceToNumber(limitSeq.FirstOrDefault, out double limitD))
                 {
+                    if (limitD < 0)
+                    {
+                        throw new JsonataException("D3020", "Third argument of the split function must evaluate to a positive number", 0);
+                    }
+
                     limit = (int)limitD;
                 }
             }
