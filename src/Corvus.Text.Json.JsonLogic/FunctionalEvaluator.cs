@@ -68,6 +68,13 @@ internal static class FunctionalEvaluator
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static RuleEvaluator CompileLiteral(in JsonElement value)
     {
+        // Number literals: extract the double at compile time so downstream
+        // comparisons and arithmetic can use the fast IsDouble path.
+        if (value.ValueKind == JsonValueKind.Number && value.TryGetDouble(out double d))
+        {
+            return (in JsonElement data, JsonWorkspace workspace) => EvalResult.FromDouble(d);
+        }
+
         JsonElement captured = value;
         return (in JsonElement data, JsonWorkspace workspace) => EvalResult.FromElement(captured);
     }
@@ -699,10 +706,10 @@ internal static class FunctionalEvaluator
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool CompareCoerced(in EvalResult left, in EvalResult right, CompareOp op, JsonWorkspace workspace)
     {
-        if (left.IsDouble && right.IsDouble)
+        // Use TryGetDouble which handles both native doubles AND number/bool/null
+        // elements, widening the fast path to avoid CompareCoercedElement overhead.
+        if (left.TryGetDouble(out double ld) && right.TryGetDouble(out double rd))
         {
-            left.TryGetDouble(out double ld);
-            right.TryGetDouble(out double rd);
             return op switch
             {
                 CompareOp.GreaterThan => ld > rd,
