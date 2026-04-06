@@ -24,6 +24,7 @@ The source generator and CLI tool produce optimized static C# that eliminates de
 - [CLI code generation](#cli-code-generation)
 - [Supported operators](#supported-operators)
 - [Extended operators](#extended-operators)
+- [Runtime custom operators (IOperatorCompiler)](#runtime-custom-operators-ioperatorcompiler)
 - [Custom operator templates (.jlops)](#custom-operator-templates-jlops)
 - [Workspace and memory management](#workspace-and-memory-management)
 - [Comparison with other libraries](#comparison-with-other-libraries)
@@ -272,6 +273,249 @@ The Corvus implementation adds operators for explicit numeric type conversion, u
 
 These operators are not part of the standard [JsonLogic](https://jsonlogic.com/) specification but are safe to use with any evaluation mode (interpreted, source generator, or CLI).
 
+## Runtime custom operators (IOperatorCompiler)
+
+The interpreted evaluator supports user-defined operators at runtime via the `IOperatorCompiler` interface. This lets you extend the operator set — or override built-in operators — without code generation.
+
+### Overview
+
+When the evaluator compiles a rule, it walks the JSON tree and produces a delegate tree. For each operator it encounters, it looks up the operator name in a dispatch table. Custom operators are checked **before** the built-in operators, so you can override standard behaviour such as `+`, `var`, or `if`.
+
+### Implementing an operator
+
+Implement `IOperatorCompiler`. The `Compile` method receives the pre-compiled operand delegates and returns a single `RuleEvaluator` delegate that applies the operator:
+
+```csharp
+using Corvus.Text.Json.JsonLogic;
+
+public sealed class DoubleItCompiler : IOperatorCompiler
+{
+    public RuleEvaluator Compile(RuleEvaluator[] operands)
+    {
+        // Capture the single operand
+        RuleEvaluator operand = operands[0];
+
+        return (in JsonElement data, JsonWorkspace workspace) =>
+        {
+            EvalResult val = operand(data, workspace);
+            if (val.TryGetDouble(out double d))
+            {
+                return EvalResult.FromDouble(d * 2);
+            }
+
+            return EvalResult.FromDouble(0);
+        };
+    }
+}
+```
+
+### Registering operators
+
+Pass a dictionary of operator name → compiler to the `JsonLogicEvaluator` constructor:
+
+```csharp
+var customOps = new Dictionary<string, IOperatorCompiler>
+{
+    ["double_it"] = new DoubleItCompiler(),
+};
+
+JsonLogicEvaluator evaluator = new(customOps);
+```
+
+Then use the evaluator as normal. Rules can reference the custom operator by name:
+
+```csharp
+using var ruleDoc = ParsedJsonDocument<JsonElement>.Parse(
+    """{"double_it":[{"var":"x"}]}""");
+using var dataDoc = ParsedJsonDocument<JsonElement>.Parse(
+    """{"x":5}""");
+
+JsonLogicRule rule = new(ruleDoc.RootElement);
+JsonElement result = evaluator.Evaluate(rule, dataDoc.RootElement);
+// result = 10
+```
+
+Custom operators compose freely with built-in operators:
+
+```csharp
+// {"+":[{"double_it":[{"var":"x"}]}, {"var":"y"}]}
+// → double_it(3) + 4 = 6 + 4 = 10
+```
+
+### Overriding built-in operators
+
+Because custom operators are dispatched first, you can replace any standard operator:
+
+```csharp
+var customOps = new Dictionary<string, IOperatorCompiler>
+{
+    ["+"] = new AlwaysFortyTwoCompiler(),
+};
+
+JsonLogicEvaluator evaluator = new(customOps);
+// All "+" rules now return 42, regardless of operands
+```
+
+### Key types
+
+| Type | Description |
+|------|-------------|
+| `IOperatorCompiler` | Interface to implement. Single method: `RuleEvaluator Compile(RuleEvaluator[] operands)` |
+| `RuleEvaluator` | Delegate: `EvalResult RuleEvaluator(in JsonElement data, JsonWorkspace workspace)` |
+| `EvalResult` | Discriminated union — holds either a native `double` or a `JsonElement` |
+| `JsonLogicEvaluator` | Evaluator. Use the constructor overload accepting `IReadOnlyDictionary<string, IOperatorCompiler>` |
+
+### Working with EvalResult
+
+`EvalResult` is a dual-track value type that avoids the double → JSON → double round-trip for arithmetic:
+
+| Method | Description |
+|--------|-------------|
+| `EvalResult.FromDouble(double)` | Create a result wrapping a native double |
+| `EvalResult.FromElement(in JsonElement)` | Create a result wrapping a JSON element |
+| `TryGetDouble(out double)` | Attempt to extract a double (coercing from JSON number/bool/string if needed) |
+| `AsElement(JsonWorkspace)` | Materialize the result as a `JsonElement` (writing the double to the workspace if necessary) |
+| `IsTruthy()` | [JsonLogic truthiness](https://jsonlogic.com/truthy.html) test |
+| `IsNullOrUndefined()` | True for JSON `null` or `Undefined` |
+| `ValueKind` | `JsonValueKind.Number` for doubles; the element's kind otherwise |
+
+When implementing operators that do arithmetic, prefer the double fast path and fall back to `BigNumber` for arbitrary-precision values:
+
+```csharp
+using Corvus.Numerics;
+
+public sealed class AddCompiler : IOperatorCompiler
+{
+    public RuleEvaluator Compile(RuleEvaluator[] operands)
+    {
+        if (operands.Length < 2)
+        {
+            // Too few arguments — return zero (see error handling below)
+            return static (in JsonElement data, JsonWorkspace workspace) =>
+                EvalResult.FromDouble(0);
+        }
+
+        RuleEvaluator left = operands[0];
+        RuleEvaluator right = operands[1];
+
+        return (in JsonElement data, JsonWorkspace workspace) =>
+        {
+            EvalResult l = left(data, workspace);
+            EvalResult r = right(data, workspace);
+
+            // Fast path: both operands fit in a double
+            if (l.TryGetDouble(out double a) && r.TryGetDouble(out double b))
+            {
+                return EvalResult.FromDouble(a + b);
+            }
+
+            // Slow path: fall back to BigNumber for full precision
+            BigNumber lb = CoerceToBigNumber(l.AsElement(workspace));
+            BigNumber rb = CoerceToBigNumber(r.AsElement(workspace));
+            return EvalResult.FromElement(
+                BigNumberToElement(lb + rb, workspace));
+        };
+    }
+
+    private static BigNumber CoerceToBigNumber(in JsonElement element)
+    {
+        if (element.ValueKind == JsonValueKind.Number)
+        {
+            using var raw = JsonMarshal.GetRawUtf8Value(element);
+            if (BigNumber.TryParse(raw.Span, out BigNumber result))
+            {
+                return result;
+            }
+        }
+
+        if (element.ValueKind == JsonValueKind.True) return BigNumber.One;
+        if (element.ValueKind == JsonValueKind.False
+            || element.ValueKind == JsonValueKind.Null) return BigNumber.Zero;
+
+        return BigNumber.Zero;
+    }
+
+    private static JsonElement BigNumberToElement(
+        BigNumber value, JsonWorkspace workspace)
+    {
+        Span<byte> buffer = stackalloc byte[64];
+        if (value.TryFormat(buffer, out int bytesWritten))
+        {
+            return JsonLogicHelpers.NumberFromSpan(
+                buffer.Slice(0, bytesWritten), workspace);
+        }
+
+        return JsonLogicHelpers.Zero();
+    }
+}
+```
+
+### Error handling
+
+[JsonLogic](https://jsonlogic.com/) follows a philosophy of **graceful degradation** — operators never throw exceptions at evaluation time. All built-in operators in the Corvus implementation follow this convention, and custom operators should do the same:
+
+| Situation | Convention | Example |
+|-----------|-----------|---------|
+| Too few arguments | Return `null` or `0` | `{"/":[]}` → `null` |
+| Wrong type (non-numeric for arithmetic) | Coerce if possible, fall back to `0` | `{"+":[true, "3"]}` → `4` |
+| Division / modulo by zero | Return `null` | `{"/":[1, 0]}` → `null` |
+| Missing or undefined data | Return `null` | `{"var":"no.such.path"}` → `null` |
+
+Use `JsonLogicHelpers.NullElement()` to return a JSON `null`, and `JsonLogicHelpers.Zero()` to return the number `0`. Both are allocation-free.
+
+```csharp
+// Too few arguments — return null
+if (operands.Length < 2)
+{
+    return static (in JsonElement data, JsonWorkspace workspace) =>
+        EvalResult.FromElement(JsonLogicHelpers.NullElement());
+}
+
+// Non-numeric operand — coerce or fall back to zero
+if (!val.TryGetDouble(out double d))
+{
+    d = 0;
+}
+```
+
+This means rules with mistakes produce deterministic fallback values rather than aborting evaluation. If your use case requires strict validation, you can throw from `Compile` (which runs once at compilation time) to reject rules with a known-wrong number of operands — but the evaluation delegate itself should not throw.
+
+When your operator produces a non-numeric result, use `AsElement` to get operand values and `FromElement` to return a `JsonElement`:
+
+```csharp
+return (in JsonElement data, JsonWorkspace workspace) =>
+{
+    JsonElement value = operands[0](data, workspace).AsElement(workspace);
+    // ... produce a JsonElement result ...
+    return EvalResult.FromElement(result);
+};
+```
+
+### Zero-argument operators
+
+Operators that take no arguments are supported — the `operands` array will be empty:
+
+```csharp
+public sealed class PiCompiler : IOperatorCompiler
+{
+    public RuleEvaluator Compile(RuleEvaluator[] operands)
+    {
+        return static (in JsonElement data, JsonWorkspace workspace) =>
+            EvalResult.FromDouble(3.14159265358979);
+    }
+}
+```
+
+Rule: `{"pi":[]}` — the empty array is required by the [JsonLogic](https://jsonlogic.com/) format.
+
+### Caching
+
+Compiled rules are cached by the evaluator. A custom operator's `Compile` method is called once per unique rule text, not once per evaluation. The returned `RuleEvaluator` delegate is invoked on every evaluation. This means:
+
+- Expensive setup in `Compile` is acceptable — it runs at compilation time.
+- The returned delegate should be allocation-free on the hot path.
+- Any data captured by the delegate's closure — including the `operands` array and any values derived from it — is also cached for the lifetime of the evaluator (or until `ClearCache()` is called). This is by design: the operand delegates form the compiled expression tree and are reused across evaluations with different data.
+
 ## Custom operator templates (.jlops)
 
 The code generator and source generator support user-defined operators via `.jlops` template files. Custom operators extend the standard operator set with C# expression or block bodies that are emitted directly into the generated code.
@@ -374,6 +618,8 @@ The Corvus JsonLogic implementation is designed for high-throughput scenarios wh
 | Memory model | Pooled (`JsonWorkspace`) | GC-allocated |
 | Zero-allocation hot path | Yes (with workspace) | No |
 | Extended operators | `asDouble`, `asLong`, `asBigNumber`, `asBigInteger` | Custom operator API |
+| Runtime extensibility | `IOperatorCompiler` (can override built-ins) | Custom operator API |
+| Code-gen extensibility | `.jlops` custom operator templates | Not available |
 
 ### Benchmark summary
 
