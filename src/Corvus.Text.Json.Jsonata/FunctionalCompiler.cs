@@ -464,7 +464,11 @@ internal static class FunctionalCompiler
                         }
                         else if (stage is SortNode sortNode)
                         {
-                            stages[i]![s] = CompileSortStage(sortNode);
+                            // Use focus-aware sort when this step has a focus binding,
+                            // so the focus variable is re-bound per comparison element.
+                            stages[i]![s] = focusVars[i] is not null
+                                ? CompileFocusSortStage(sortNode, focusVars[i]!)
+                                : CompileSortStage(sortNode);
                             stageIsSortFlags[i]![s] = true;
                         }
                         else
@@ -1152,6 +1156,56 @@ internal static class FunctionalCompiler
                     }
                 }
 
+                // If the next step is a sort, apply it to the focus elements now.
+                // The sort modifies the iteration order (e.g. Employee@$e^($e.Surname)
+                // sorts employees before the cross-join). We consume the sort step here
+                // and advance stepIdx past it for remaining-steps evaluation.
+                int sortStepConsumed = 0;
+                if (stepIdx + 1 < steps.Length && isSortStep[stepIdx + 1] && elements.Count > 1)
+                {
+                    int sortIdx = stepIdx + 1;
+                    var sortInput = JsonataHelpers.ArrayFromList(elements, env.Workspace);
+
+                    // Use the focus-aware sort: bind the focus variable per comparison
+                    // so sort keys like $e.Surname resolve correctly.
+                    if (sortTermsPerStep[sortIdx] is not null)
+                    {
+                        var sortedSeq = FocusSort(
+                            elements, sortTermsPerStep[sortIdx]!, env, focusVar);
+                        elements.Clear();
+                        for (int si = 0; si < sortedSeq.Count; si++)
+                        {
+                            elements.Add(sortedSeq[si]);
+                        }
+                    }
+                    else
+                    {
+                        var sortedSeq = steps[sortIdx](sortInput, env);
+                        elements.Clear();
+                        if (sortedSeq.IsSingleton)
+                        {
+                            var sortedEl = sortedSeq.FirstOrDefault;
+                            if (sortedEl.ValueKind == JsonValueKind.Array)
+                            {
+                                elements.AddRange(sortedEl.EnumerateArray());
+                            }
+                            else
+                            {
+                                elements.Add(sortedEl);
+                            }
+                        }
+                        else
+                        {
+                            for (int si = 0; si < sortedSeq.Count; si++)
+                            {
+                                elements.Add(sortedSeq[si]);
+                            }
+                        }
+                    }
+
+                    sortStepConsumed = 1;
+                }
+
                 // Determine group-by handling strategy:
                 // - If this is the innermost focus level (no more focus steps after),
                 //   evaluate group-by here while all focus variables are correctly bound.
@@ -1181,7 +1235,45 @@ internal static class FunctionalCompiler
                     applyGroupByHere ? new() : null;
                 var mergeObjects = mergeInnerGroupBy ? new List<JsonElement>() : null;
 
-                // For each focus element: bind, apply stages, then evaluate remaining steps
+                // Apply stages as a BATCH to all focus elements at once.
+                // This ensures numeric index predicates (e.g. [1]) see the full
+                // set of matching elements, not individual singletons.
+                // The focus variable is re-bound per-element during evaluation
+                // so that filter predicates (e.g. [$l.isbn=$b.isbn]) still work.
+                if (stages[stepIdx] is not null)
+                {
+                    var batchSeq = new Sequence(elements.ToArray(), elements.Count);
+                    var filtered = ApplyFocusStages(
+                        batchSeq, stages[stepIdx]!, stageIsSortFlags[stepIdx]!, env, focusVar, indexVar);
+                    if (filtered.IsUndefined)
+                    {
+                        return Sequence.Undefined;
+                    }
+
+                    // Rebuild elements from the filtered result
+                    elements.Clear();
+                    if (filtered.IsSingleton)
+                    {
+                        var el = filtered.FirstOrDefault;
+                        if (el.ValueKind == JsonValueKind.Array)
+                        {
+                            elements.AddRange(el.EnumerateArray());
+                        }
+                        else
+                        {
+                            elements.Add(el);
+                        }
+                    }
+                    else
+                    {
+                        for (int fi = 0; fi < filtered.Count; fi++)
+                        {
+                            elements.Add(filtered[fi]);
+                        }
+                    }
+                }
+
+                // For each surviving focus element: bind, evaluate remaining steps
                 var resultBuilder = default(SequenceBuilder);
                 for (int i = 0; i < elements.Count; i++)
                 {
@@ -1196,21 +1288,13 @@ internal static class FunctionalCompiler
                         env.Bind(indexVar, new Sequence(JsonataHelpers.NumberFromDouble(i, env.Workspace)));
                     }
 
-                    // Apply stages (filters) per-element
-                    if (stages[stepIdx] is not null)
-                    {
-                        var filtered = ApplyStages(new Sequence(el), stages[stepIdx]!, stageIsSortFlags[stepIdx]!, env, indexVar);
-                        if (filtered.IsUndefined)
-                        {
-                            continue;
-                        }
-                    }
-
-                    // Evaluate remaining steps from parent context (cross-join)
+                    // Evaluate remaining steps from parent context (cross-join).
+                    // Skip any consumed sort step.
+                    int nextStep = stepIdx + 1 + sortStepConsumed;
                     Sequence subResult;
-                    if (stepIdx + 1 < steps.Length)
+                    if (nextStep < steps.Length)
                     {
-                        subResult = EvalPathFrom(parentContext, stepIdx + 1);
+                        subResult = EvalPathFrom(parentContext, nextStep);
                     }
                     else
                     {
@@ -2701,6 +2785,218 @@ internal static class FunctionalCompiler
         return current;
     }
 
+    /// <summary>
+    /// Applies stage predicates with focus variable re-binding per element.
+    /// Identical to <see cref="ApplyStages"/> except that before evaluating each
+    /// stage on an element, the focus variable is bound to that element. This
+    /// enables filter predicates referencing the focus variable (e.g.
+    /// <c>[$l.isbn=$b.isbn]</c>) to work correctly, while index predicates
+    /// (e.g. <c>[1]</c>) see the full element count.
+    /// </summary>
+    private static Sequence ApplyFocusStages(
+        Sequence current,
+        ExpressionEvaluator[] stageEvaluators,
+        bool[] isSortStage,
+        Environment env,
+        string focusVar,
+        string? indexVar = null)
+    {
+        for (int s = 0; s < stageEvaluators.Length; s++)
+        {
+            if (current.IsUndefined)
+            {
+                return Sequence.Undefined;
+            }
+
+            var stage = stageEvaluators[s];
+
+            var elements = new List<JsonElement>();
+            if (current.IsSingleton)
+            {
+                var el = current.FirstOrDefault;
+                if (el.ValueKind == JsonValueKind.Array)
+                {
+                    elements.AddRange(el.EnumerateArray());
+                }
+                else
+                {
+                    elements.Add(el);
+                }
+            }
+            else
+            {
+                for (int i = 0; i < current.Count; i++)
+                {
+                    elements.Add(current[i]);
+                }
+            }
+
+            if (isSortStage[s])
+            {
+                var sortElements = new List<JsonElement>(elements.Count * 2);
+                foreach (var el in elements)
+                {
+                    if (el.ValueKind == JsonValueKind.Array)
+                    {
+                        sortElements.AddRange(el.EnumerateArray());
+                    }
+                    else
+                    {
+                        sortElements.Add(el);
+                    }
+                }
+
+                if (sortElements.Count <= 1)
+                {
+                    if (sortElements.Count == 1)
+                    {
+                        current = new Sequence(sortElements[0]);
+                    }
+                }
+                else
+                {
+                    var arrayInput = JsonataHelpers.ArrayFromList(sortElements, env.Workspace);
+                    current = stage(arrayInput, env);
+                }
+
+                continue;
+            }
+
+            var builder = default(SequenceBuilder);
+            for (int i = 0; i < elements.Count; i++)
+            {
+                var el = elements[i];
+
+                // Re-bind focus variable per-element so filter predicates work
+                env.Bind(focusVar, new Sequence(el));
+
+                if (indexVar is not null)
+                {
+                    env.Bind(indexVar, new Sequence(JsonataHelpers.NumberFromDouble(i, env.Workspace)));
+                }
+
+                var result = stage(el, env);
+
+                if (result.IsUndefined)
+                {
+                    continue;
+                }
+
+                var firstResult = result.FirstOrDefault;
+
+                if (result.IsSingleton && firstResult.ValueKind is JsonValueKind.True or JsonValueKind.False)
+                {
+                    if (firstResult.ValueKind == JsonValueKind.True)
+                    {
+                        builder.Add(el);
+                    }
+
+                    continue;
+                }
+
+                bool isNumericIndices = false;
+                List<int>? indices = null;
+
+                if (result.IsSingleton && TryCoerceToNumber(firstResult, out double singleIdx))
+                {
+                    isNumericIndices = true;
+                    int idx = (int)Math.Floor(singleIdx);
+                    if (idx < 0)
+                    {
+                        idx = elements.Count + idx;
+                    }
+
+                    indices = new List<int> { idx };
+                }
+                else if (result.IsSingleton && firstResult.ValueKind == JsonValueKind.Array)
+                {
+                    bool allNum = true;
+                    var tempIndices = new List<int>();
+                    foreach (var arrEl in firstResult.EnumerateArray())
+                    {
+                        if (arrEl.ValueKind is JsonValueKind.True or JsonValueKind.False)
+                        {
+                            allNum = false;
+                            break;
+                        }
+
+                        if (TryCoerceToNumber(arrEl, out double numVal))
+                        {
+                            int idx = (int)Math.Floor(numVal);
+                            if (idx < 0)
+                            {
+                                idx = elements.Count + idx;
+                            }
+
+                            tempIndices.Add(idx);
+                        }
+                        else
+                        {
+                            allNum = false;
+                            break;
+                        }
+                    }
+
+                    if (allNum && tempIndices.Count > 0)
+                    {
+                        isNumericIndices = true;
+                        indices = tempIndices;
+                    }
+                }
+                else if (!result.IsSingleton && result.Count > 0)
+                {
+                    bool allNum = true;
+                    var tempIndices = new List<int>();
+                    for (int j = 0; j < result.Count; j++)
+                    {
+                        var rj = result[j];
+                        if (rj.ValueKind is JsonValueKind.True or JsonValueKind.False || !TryCoerceToNumber(rj, out double numVal))
+                        {
+                            allNum = false;
+                            break;
+                        }
+
+                        int idx = (int)Math.Floor(numVal);
+                        if (idx < 0)
+                        {
+                            idx = elements.Count + idx;
+                        }
+
+                        tempIndices.Add(idx);
+                    }
+
+                    if (allNum)
+                    {
+                        isNumericIndices = true;
+                        indices = tempIndices;
+                    }
+                }
+
+                if (isNumericIndices && indices is not null)
+                {
+                    foreach (int idx in indices)
+                    {
+                        if (idx == i && idx >= 0 && idx < elements.Count)
+                        {
+                            builder.Add(el);
+                        }
+                    }
+
+                    continue;
+                }
+
+                if (IsTruthy(result))
+                {
+                    builder.Add(el);
+                }
+            }
+
+            current = builder.ToSequence();
+        }
+
+        return current;
+    }
+
     private static StepAnnotations? GetStepAnnotations(JsonataNode node)
     {
         return node.Annotations;
@@ -4075,6 +4371,116 @@ internal static class FunctionalCompiler
             // Build result as a JSON array so subsequent path steps flatten it
             return new Sequence(JsonataHelpers.ArrayFromList(sorted, env.Workspace));
         };
+    }
+
+    /// <summary>
+    /// Compiles a focus-aware sort stage that re-binds the focus variable to each
+    /// comparison element before evaluating the sort key. This is necessary for
+    /// sort expressions like <c>^($e.Surname)</c> inside a focus step <c>@$e</c>,
+    /// where the key references the focus variable rather than the input context.
+    /// </summary>
+    private static ExpressionEvaluator CompileFocusSortStage(SortNode sort, string focusVar)
+    {
+        var terms = new (ExpressionEvaluator Expr, bool Descending)[sort.Terms.Count];
+        for (int i = 0; i < sort.Terms.Count; i++)
+        {
+            terms[i] = (Compile(sort.Terms[i].Expression), sort.Terms[i].Descending);
+        }
+
+        return (in JsonElement input, Environment env) =>
+        {
+            var elements = new List<JsonElement>();
+            if (input.ValueKind == JsonValueKind.Array)
+            {
+                elements.AddRange(input.EnumerateArray());
+            }
+            else
+            {
+                elements.Add(input);
+            }
+
+            if (elements.Count <= 1)
+            {
+                return new Sequence(input);
+            }
+
+            var indices = Enumerable.Range(0, elements.Count).ToArray();
+            Array.Sort(indices, (a, b) =>
+            {
+                for (int t = 0; t < terms.Length; t++)
+                {
+                    var (expr, desc) = terms[t];
+
+                    // Re-bind focus variable for each comparison element
+                    env.Bind(focusVar, new Sequence(elements[a]));
+                    var aVal = expr(elements[a], env);
+                    env.Bind(focusVar, new Sequence(elements[b]));
+                    var bVal = expr(elements[b], env);
+
+                    int cmp = CompareSortKeys(aVal, bVal);
+                    if (cmp != 0)
+                    {
+                        return desc ? -cmp : cmp;
+                    }
+                }
+
+                return a.CompareTo(b);
+            });
+
+            var sorted = new List<JsonElement>(elements.Count);
+            for (int i = 0; i < indices.Length; i++)
+            {
+                sorted.Add(elements[indices[i]]);
+            }
+
+            return new Sequence(JsonataHelpers.ArrayFromList(sorted, env.Workspace));
+        };
+    }
+
+    /// <summary>
+    /// Sorts a list of elements with focus-variable re-binding per comparison.
+    /// Used when a sort step follows a focus step (e.g. <c>Employee@$e^($e.Surname)</c>)
+    /// and the sort key expression references the focus variable.
+    /// </summary>
+    private static Sequence FocusSort(
+        List<JsonElement> elements,
+        (ExpressionEvaluator Expr, bool Descending)[] sortTerms,
+        Environment env,
+        string focusVar)
+    {
+        if (elements.Count <= 1)
+        {
+            return elements.Count == 1 ? new Sequence(elements[0]) : Sequence.Undefined;
+        }
+
+        var indices = Enumerable.Range(0, elements.Count).ToArray();
+        Array.Sort(indices, (a, b) =>
+        {
+            for (int t = 0; t < sortTerms.Length; t++)
+            {
+                var (expr, desc) = sortTerms[t];
+                env.Bind(focusVar, new Sequence(elements[a]));
+                var aVal = expr(elements[a], env);
+                env.Bind(focusVar, new Sequence(elements[b]));
+                var bVal = expr(elements[b], env);
+
+                int cmp = CompareSortKeys(aVal, bVal);
+                if (cmp != 0)
+                {
+                    return desc ? -cmp : cmp;
+                }
+            }
+
+            return a.CompareTo(b);
+        });
+
+        var sorted = new JsonElement[elements.Count];
+        for (int i = 0; i < indices.Length; i++)
+        {
+            sorted[i] = elements[indices[i]];
+        }
+
+        return new Sequence(sorted, sorted.Length);
     }
 
     private static int CompareSortKeys(Sequence a, Sequence b)
