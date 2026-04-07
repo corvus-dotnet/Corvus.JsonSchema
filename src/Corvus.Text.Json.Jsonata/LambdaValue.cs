@@ -16,6 +16,7 @@ internal sealed class LambdaValue
     private readonly string[] paramNames;
     private readonly Environment? definingEnv;
     private readonly JsonElement definingInput;
+    private readonly int contextArgCount;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="LambdaValue"/> class for a user-defined lambda.
@@ -25,13 +26,15 @@ internal sealed class LambdaValue
     /// <param name="definingEnv">The environment where the lambda was defined (for closures).</param>
     /// <param name="definingInput">The input context (<c>$</c>) at the point where the lambda was defined.</param>
     /// <param name="isThunk">Whether this is a thunk for tail-call optimization.</param>
-    public LambdaValue(ExpressionEvaluator body, string[] paramNames, Environment definingEnv, in JsonElement definingInput, bool isThunk = false)
+    /// <param name="contextArgCount">Number of context-bound parameters from a function signature (before the <c>-</c> separator).</param>
+    public LambdaValue(ExpressionEvaluator body, string[] paramNames, Environment definingEnv, in JsonElement definingInput, bool isThunk = false, int contextArgCount = 0)
     {
         this.body = body;
         this.paramNames = paramNames;
         this.definingEnv = definingEnv;
         this.definingInput = definingInput;
         this.IsThunk = isThunk;
+        this.contextArgCount = contextArgCount;
     }
 
     /// <summary>
@@ -83,12 +86,28 @@ internal sealed class LambdaValue
         // User-defined lambda: create a child of the DEFINING env (closure semantics)
         var invokeEnv = (this.definingEnv ?? callerEnv).CreateChild();
 
+        // If the lambda has context parameters (from a function signature with '-'),
+        // and the caller provided fewer args than params, prepend the input as context args.
+        Sequence[] effectiveArgs = args;
+        if (this.contextArgCount > 0 && args.Length < this.paramNames.Length)
+        {
+            int missingCount = this.paramNames.Length - args.Length;
+            int contextToInsert = Math.Min(this.contextArgCount, missingCount);
+            effectiveArgs = new Sequence[args.Length + contextToInsert];
+            for (int i = 0; i < contextToInsert; i++)
+            {
+                effectiveArgs[i] = new Sequence(input);
+            }
+
+            Array.Copy(args, 0, effectiveArgs, contextToInsert, args.Length);
+        }
+
         // Bind parameters
         for (int i = 0; i < this.paramNames.Length; i++)
         {
             invokeEnv.Bind(
                 this.paramNames[i],
-                i < args.Length ? args[i] : Sequence.Undefined);
+                i < effectiveArgs.Length ? effectiveArgs[i] : Sequence.Undefined);
         }
 
         // Track call depth to prevent stack overflow

@@ -95,6 +95,8 @@ internal static class BuiltInFunctions
             "millis" => CompileMillis,
             "fromMillis" => CompileFromMillis,
             "toMillis" => CompileToMillis,
+            "formatInteger" => CompileFormatInteger,
+            "parseInteger" => CompileParseInteger,
             "eval" => CompileEval,
             _ => null,
         };
@@ -3468,6 +3470,9 @@ internal static class BuiltInFunctions
         }
 
         var msArg = args[0];
+        var pictureArg = args.Length > 1 ? args[1] : null;
+        var tzArg = args.Length > 2 ? args[2] : null;
+
         return (in JsonElement input, Environment env) =>
         {
             var msSeq = msArg(input, env);
@@ -3482,9 +3487,68 @@ internal static class BuiltInFunctions
             }
 
             var dt = DateTimeOffset.FromUnixTimeMilliseconds((long)millisVal);
-            return new Sequence(FunctionalCompiler.CreateStringElement(
-                dt.ToString("yyyy-MM-ddTHH:mm:ss.fffZ", CultureInfo.InvariantCulture)));
+
+            // Apply timezone offset if provided
+            TimeSpan offset = TimeSpan.Zero;
+            bool hasTz = false;
+            if (tzArg != null)
+            {
+                var tzSeq = tzArg(input, env);
+                if (!tzSeq.IsUndefined)
+                {
+                    string tzStr = FunctionalCompiler.CoerceElementToString(tzSeq.FirstOrDefault);
+                    offset = XPathDateTimeFormatter.ParseTimezoneArgument(tzStr);
+                    hasTz = true;
+                    dt = dt.ToOffset(offset);
+                }
+            }
+
+            // If no picture, use ISO 8601 default
+            if (pictureArg == null)
+            {
+                if (hasTz)
+                {
+                    return new Sequence(FunctionalCompiler.CreateStringElement(
+                        FormatIso8601WithOffset(dt, offset)));
+                }
+
+                return new Sequence(FunctionalCompiler.CreateStringElement(
+                    dt.ToString("yyyy-MM-ddTHH:mm:ss.fffZ", CultureInfo.InvariantCulture)));
+            }
+
+            var picSeq = pictureArg(input, env);
+            if (picSeq.IsUndefined)
+            {
+                // Undefined picture -> use ISO 8601 default with timezone
+                if (hasTz)
+                {
+                    return new Sequence(FunctionalCompiler.CreateStringElement(
+                        FormatIso8601WithOffset(dt, offset)));
+                }
+
+                return new Sequence(FunctionalCompiler.CreateStringElement(
+                    dt.ToString("yyyy-MM-ddTHH:mm:ss.fffZ", CultureInfo.InvariantCulture)));
+            }
+
+            string picture = FunctionalCompiler.CoerceElementToString(picSeq.FirstOrDefault);
+            string result = XPathDateTimeFormatter.FormatDateTime(dt, picture);
+            return new Sequence(FunctionalCompiler.CreateStringElement(result));
         };
+    }
+
+    private static string FormatIso8601WithOffset(DateTimeOffset dt, TimeSpan offset)
+    {
+        string formatted = dt.ToString("yyyy-MM-ddTHH:mm:ss.fff", CultureInfo.InvariantCulture);
+        if (offset == TimeSpan.Zero)
+        {
+            return formatted + "Z";
+        }
+
+        string sign = offset >= TimeSpan.Zero ? "+" : "-";
+        int totalMin = (int)Math.Abs(offset.TotalMinutes);
+        int h = totalMin / 60;
+        int m = totalMin % 60;
+        return formatted + sign + h.ToString(CultureInfo.InvariantCulture).PadLeft(2, '0') + ":" + m.ToString(CultureInfo.InvariantCulture).PadLeft(2, '0');
     }
 
     private static ExpressionEvaluator CompileToMillis(ExpressionEvaluator[] args)
@@ -3495,6 +3559,8 @@ internal static class BuiltInFunctions
         }
 
         var strArg = args[0];
+        var pictureArg = args.Length > 1 ? args[1] : null;
+
         return (in JsonElement input, Environment env) =>
         {
             var strSeq = strArg(input, env);
@@ -3504,9 +3570,104 @@ internal static class BuiltInFunctions
             }
 
             string str = FunctionalCompiler.CoerceElementToString(strSeq.FirstOrDefault);
-            if (DateTimeOffset.TryParse(str, CultureInfo.InvariantCulture, DateTimeStyles.None, out var dt))
+
+            if (pictureArg == null)
             {
-                return new Sequence(FunctionalCompiler.CreateNumberElement(dt.ToUnixTimeMilliseconds()));
+                if (DateTimeOffset.TryParse(str, CultureInfo.InvariantCulture, DateTimeStyles.None, out var dt))
+                {
+                    return new Sequence(FunctionalCompiler.CreateNumberElement(dt.ToUnixTimeMilliseconds()));
+                }
+
+                return Sequence.Undefined;
+            }
+
+            var picSeq = pictureArg(input, env);
+            if (picSeq.IsUndefined)
+            {
+                if (DateTimeOffset.TryParse(str, CultureInfo.InvariantCulture, DateTimeStyles.None, out var dt))
+                {
+                    return new Sequence(FunctionalCompiler.CreateNumberElement(dt.ToUnixTimeMilliseconds()));
+                }
+
+                return Sequence.Undefined;
+            }
+
+            string picture = FunctionalCompiler.CoerceElementToString(picSeq.FirstOrDefault);
+
+            try
+            {
+                if (XPathDateTimeFormatter.TryParseDateTime(str, picture, out long millis))
+                {
+                    return new Sequence(FunctionalCompiler.CreateNumberElement(millis));
+                }
+            }
+            catch (JsonataException)
+            {
+                throw;
+            }
+
+            return Sequence.Undefined;
+        };
+    }
+
+    private static ExpressionEvaluator CompileFormatInteger(ExpressionEvaluator[] args)
+    {
+        if (args.Length < 2)
+        {
+            throw new JsonataException("T0410", "$formatInteger expects at least 2 arguments", 0);
+        }
+
+        var numArg = args[0];
+        var picArg = args[1];
+
+        return (in JsonElement input, Environment env) =>
+        {
+            var numSeq = numArg(input, env);
+            if (numSeq.IsUndefined)
+            {
+                return Sequence.Undefined;
+            }
+
+            if (!FunctionalCompiler.TryCoerceToNumber(numSeq.FirstOrDefault, out double numVal))
+            {
+                return Sequence.Undefined;
+            }
+
+            var picSeq = picArg(input, env);
+            string picture = FunctionalCompiler.CoerceElementToString(picSeq.FirstOrDefault);
+
+            long intVal = (long)numVal;
+            string result = XPathDateTimeFormatter.FormatInteger(intVal, picture);
+            return new Sequence(FunctionalCompiler.CreateStringElement(result));
+        };
+    }
+
+    private static ExpressionEvaluator CompileParseInteger(ExpressionEvaluator[] args)
+    {
+        if (args.Length < 2)
+        {
+            throw new JsonataException("T0410", "$parseInteger expects at least 2 arguments", 0);
+        }
+
+        var strArg = args[0];
+        var picArg = args[1];
+
+        return (in JsonElement input, Environment env) =>
+        {
+            var strSeq = strArg(input, env);
+            if (strSeq.IsUndefined)
+            {
+                return Sequence.Undefined;
+            }
+
+            string str = FunctionalCompiler.CoerceElementToString(strSeq.FirstOrDefault);
+
+            var picSeq = picArg(input, env);
+            string picture = FunctionalCompiler.CoerceElementToString(picSeq.FirstOrDefault);
+
+            if (XPathDateTimeFormatter.TryParseInteger(str, picture, out long value))
+            {
+                return new Sequence(FunctionalCompiler.CreateNumberElement(value));
             }
 
             return Sequence.Undefined;

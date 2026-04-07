@@ -1961,11 +1961,73 @@ internal static class FunctionalCompiler
         var body = Compile(lambda.Body);
         var paramNames = lambda.Parameters.ToArray();
         bool isThunk = lambda.Thunk;
+        int contextArgCount = GetSignatureContextArgCount(lambda.Signature);
 
         return (in JsonElement input, Environment env) =>
         {
-            return new Sequence(new LambdaValue(body, paramNames, env, input, isThunk));
+            return new Sequence(new LambdaValue(body, paramNames, env, input, isThunk, contextArgCount));
         };
+    }
+
+    /// <summary>
+    /// Parses a JSONata function signature string to determine how many parameters
+    /// are context-bound (before the <c>-</c> separator).
+    /// </summary>
+    /// <remarks>
+    /// In a signature like <c>&lt;n-n:n&gt;</c>, the <c>-</c> separates context params from regular params.
+    /// Parameters before <c>-</c> are bound from the path context element when invoked on a path step.
+    /// </remarks>
+    private static int GetSignatureContextArgCount(string? signature)
+    {
+        if (signature is null || signature.Length < 3)
+        {
+            return 0;
+        }
+
+        int depth = 0;
+        int paramCount = 0;
+
+        // Skip leading '<', stop before trailing '>'
+        for (int i = 1; i < signature.Length - 1; i++)
+        {
+            char c = signature[i];
+
+            if (c == '<' || c == '(')
+            {
+                if (depth == 0 && c == '(')
+                {
+                    // Union type — counts as one parameter
+                    paramCount++;
+                }
+
+                depth++;
+            }
+            else if (c == '>' || c == ')')
+            {
+                depth--;
+            }
+            else if (depth == 0)
+            {
+                if (c == '-')
+                {
+                    return paramCount;
+                }
+
+                if (c == ':')
+                {
+                    // Return type separator — no context params found
+                    return 0;
+                }
+
+                if (c != '?' && c != '+')
+                {
+                    // Type character (n, s, b, o, a, f, x, j, l)
+                    paramCount++;
+                }
+            }
+        }
+
+        return 0;
     }
 
     private static ExpressionEvaluator CompileBind(BindNode bind)
