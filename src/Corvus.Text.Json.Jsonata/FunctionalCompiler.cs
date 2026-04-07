@@ -1108,6 +1108,15 @@ internal static class FunctionalCompiler
                     var tempIndices = new List<int>();
                     foreach (var arrEl in firstResult.EnumerateArray())
                     {
+                        // Booleans in a predicate array are NOT numeric indices;
+                        // their presence makes this a mixed predicate that falls
+                        // through to truthiness evaluation.
+                        if (arrEl.ValueKind is JsonValueKind.True or JsonValueKind.False)
+                        {
+                            allNum = false;
+                            break;
+                        }
+
                         if (TryCoerceToNumber(arrEl, out double numVal))
                         {
                             int idx = (int)Math.Floor(numVal);
