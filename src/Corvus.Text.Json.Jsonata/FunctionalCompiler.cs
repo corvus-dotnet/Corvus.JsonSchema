@@ -2,12 +2,12 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers;
 using System.Globalization;
-using System.IO;
 using System.Runtime.CompilerServices;
-using System.Text.Encodings.Web;
-using System.Text.Json;
 using System.Text.RegularExpressions;
+using Corvus.Runtime.InteropServices;
+using Corvus.Text.Json.Internal;
 using Corvus.Text.Json.Jsonata.Ast;
 
 namespace Corvus.Text.Json.Jsonata;
@@ -20,27 +20,10 @@ namespace Corvus.Text.Json.Jsonata;
 /// </summary>
 internal static class FunctionalCompiler
 {
-    // Use relaxed escaping so characters like > and < are not HTML-encoded.
-    private static readonly JsonWriterOptions RelaxedWriterOptions = new()
-    {
-        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-    };
-
-    // Pre-cached constant elements
-    private static readonly JsonElement TrueElement = CreateConstantElement(w => w.WriteBooleanValue(true));
-    private static readonly JsonElement FalseElement = CreateConstantElement(w => w.WriteBooleanValue(false));
-    private static readonly JsonElement NullElement = CreateConstantElement(w => w.WriteNullValue());
-
-    private static JsonElement CreateConstantElement(Action<Utf8JsonWriter> write)
-    {
-        using var ms = new MemoryStream(16);
-        using var writer = new Utf8JsonWriter(ms);
-        write(writer);
-        writer.Flush();
-        ms.Position = 0;
-        using var doc = JsonDocument.Parse(ms);
-        return doc.RootElement.Clone();
-    }
+    // Pre-cached constant elements via JsonataHelpers
+    private static readonly JsonElement TrueElement = JsonataHelpers.True();
+    private static readonly JsonElement FalseElement = JsonataHelpers.False();
+    private static readonly JsonElement NullElement = JsonataHelpers.Null();
 
     /// <summary>
     /// Compiles an AST node into an evaluator delegate.
@@ -181,7 +164,7 @@ internal static class FunctionalCompiler
             // Already a multi-value sequence — materialize as JSON array
             if (!result.IsSingleton)
             {
-                return MaterializeAsArray(result);
+                return MaterializeAsArray(result, env.Workspace);
             }
 
             // Singleton: if it's already a JSON array, return as-is
@@ -192,31 +175,24 @@ internal static class FunctionalCompiler
             }
 
             // Wrap scalar in a one-element JSON array
-            return MaterializeAsArray(result);
+            return MaterializeAsArray(result, env.Workspace);
         };
     }
 
-    private static Sequence MaterializeAsArray(Sequence seq)
+    private static Sequence MaterializeAsArray(Sequence seq, JsonWorkspace workspace)
     {
-        using var ms = new MemoryStream(256);
-        using var writer = new Utf8JsonWriter(ms);
-        writer.WriteStartArray();
-        for (int i = 0; i < seq.Count; i++)
-        {
-            seq[i].WriteTo(writer);
-        }
-
-        writer.WriteEndArray();
-        writer.Flush();
-        ms.Position = 0;
-        using var doc = JsonDocument.Parse(ms);
-        return new Sequence(doc.RootElement.Clone());
+        return new Sequence(JsonataHelpers.ArrayFromSequence(seq, workspace));
     }
 
     private static ExpressionEvaluator CompileNumber(NumberNode num)
     {
-        var element = CreateNumberElement(num.Value);
-        return (in JsonElement input, Environment env) => new Sequence(element);
+        double value = num.Value;
+        if (double.IsNaN(value) || double.IsInfinity(value))
+        {
+            throw new JsonataException("D3001", "A string cannot be generated from this value", 0);
+        }
+
+        return (in JsonElement input, Environment env) => new Sequence(JsonataHelpers.NumberFromDouble(value, env.Workspace));
     }
 
     private static ExpressionEvaluator CompileString(StringNode str)
@@ -232,7 +208,12 @@ internal static class FunctionalCompiler
             };
         }
 
-        var element = CreateStringElement(str.Value);
+        int maxLen = (str.Value.Length * 6) + 2;
+        byte[] buffer = new byte[maxLen];
+        buffer[0] = (byte)'"';
+        int written = JsonataHelpers.WriteJsonEscapedUtf8(str.Value.AsSpan(), buffer.AsSpan(1));
+        buffer[written + 1] = (byte)'"';
+        var element = JsonElement.ParseValue(new ReadOnlySpan<byte>(buffer, 0, written + 2));
         return (in JsonElement input, Environment env) => new Sequence(element);
     }
 
@@ -622,7 +603,7 @@ internal static class FunctionalCompiler
                                 sortedGroupArr[i] = groups[indices[i]];
                             }
 
-                            current = new Sequence(CreateArrayElement(sortedElems));
+                            current = new Sequence(JsonataHelpers.ArrayFromList(sortedElems, env.Workspace));
                             tupleGroupIndices = sortedGroupArr;
                         }
                         else if (sortElems.Count == 1)
@@ -643,7 +624,7 @@ internal static class FunctionalCompiler
                         }
                         else
                         {
-                            var arrayInput = CreateArrayElement(sortElements);
+                            var arrayInput = JsonataHelpers.ArrayFromList(sortElements, env.Workspace);
                             current = step(arrayInput, env);
                         }
 
@@ -725,7 +706,7 @@ internal static class FunctionalCompiler
                     // Bind index variable (0 for singleton)
                     if (indexVar is not null)
                     {
-                        env.Bind(indexVar, new Sequence(CreateNumberElement(0)));
+                        env.Bind(indexVar, new Sequence(JsonataHelpers.Zero()));
                     }
 
                     if (element.ValueKind == JsonValueKind.Array && shouldFlatten)
@@ -755,12 +736,12 @@ internal static class FunctionalCompiler
                         if (tupleGroupIndices is not null && tupleIndexVar is not null
                             && i < tupleGroupIndices.Length)
                         {
-                            env.Bind(tupleIndexVar, new Sequence(CreateNumberElement(tupleGroupIndices[i])));
+                            env.Bind(tupleIndexVar, new Sequence(JsonataHelpers.NumberFromDouble(tupleGroupIndices[i], env.Workspace)));
                         }
 
                         if (indexVar is not null)
                         {
-                            env.Bind(indexVar, new Sequence(CreateNumberElement(i)));
+                            env.Bind(indexVar, new Sequence(JsonataHelpers.NumberFromDouble(i, env.Workspace)));
                         }
 
                         Sequence stepResult;
@@ -828,7 +809,7 @@ internal static class FunctionalCompiler
             if (keepSingleton && !current.IsUndefined && current.IsSingleton
                 && (current.FirstOrDefault.ValueKind != JsonValueKind.Array || lastStepIsConsArray))
             {
-                current = MaterializeAsArray(current);
+                current = MaterializeAsArray(current, env.Workspace);
             }
 
             return current;
@@ -892,7 +873,7 @@ internal static class FunctionalCompiler
             if (elementGroupIndices is not null && tupleIndexVar is not null
                 && idx < elementGroupIndices.Length)
             {
-                env.Bind(tupleIndexVar, new Sequence(CreateNumberElement(elementGroupIndices[idx])));
+                env.Bind(tupleIndexVar, new Sequence(JsonataHelpers.NumberFromDouble(elementGroupIndices[idx], env.Workspace)));
             }
 
             for (int pairIdx = 0; pairIdx < pairs.Length; pairIdx++)
@@ -940,9 +921,8 @@ internal static class FunctionalCompiler
         // the collected group elements as context. This matches the reference
         // JSONata behaviour where the value expression sees the group, not
         // individual elements.
-        using var ms = new MemoryStream(256);
-        using var writer = new Utf8JsonWriter(ms);
-        writer.WriteStartObject();
+        JsonDocumentBuilder<JsonElement.Mutable> objDoc = JsonElement.CreateObjectBuilder(env.Workspace, groupKeys.Count);
+        JsonElement.Mutable objRoot = objDoc.RootElement;
 
         foreach (var key in groupKeys)
         {
@@ -957,7 +937,7 @@ internal static class FunctionalCompiler
             }
             else
             {
-                context = CreateArrayElement(groupElements);
+                context = JsonataHelpers.ArrayFromList(groupElements, env.Workspace);
             }
 
             var valSeq = valueEval(context, env);
@@ -966,29 +946,17 @@ internal static class FunctionalCompiler
                 continue;
             }
 
-            writer.WritePropertyName(key);
-
             if (valSeq.IsSingleton)
             {
-                valSeq.FirstOrDefault.WriteTo(writer);
+                objRoot.SetProperty(key, valSeq.FirstOrDefault);
             }
             else
             {
-                writer.WriteStartArray();
-                for (int i = 0; i < valSeq.Count; i++)
-                {
-                    valSeq[i].WriteTo(writer);
-                }
-
-                writer.WriteEndArray();
+                objRoot.SetProperty(key, JsonataHelpers.ArrayFromSequence(valSeq, env.Workspace));
             }
         }
 
-        writer.WriteEndObject();
-        writer.Flush();
-        ms.Position = 0;
-        using var doc = JsonDocument.Parse(ms);
-        return new Sequence(doc.RootElement.Clone());
+        return new Sequence((JsonElement)objRoot);
     }
 
     private static Sequence ApplyStages(Sequence current, ExpressionEvaluator[] stageEvaluators, bool[] isSortStage, Environment env)
@@ -1053,7 +1021,7 @@ internal static class FunctionalCompiler
                 }
                 else
                 {
-                    var arrayInput = CreateArrayElement(sortElements);
+                    var arrayInput = JsonataHelpers.ArrayFromList(sortElements, env.Workspace);
                     current = stage(arrayInput, env);
                 }
 
@@ -1421,8 +1389,7 @@ internal static class FunctionalCompiler
                 throw new JsonataException("D1001", "Number out of range", 0);
             }
 
-            return new Sequence(CreateNumberElement(result));
-        };
+            return new Sequence(JsonataHelpers.NumberFromDouble(result, env.Workspace));        };
     }
 
     private static ExpressionEvaluator CompileComparison(ExpressionEvaluator lhs, ExpressionEvaluator rhs)
@@ -1435,11 +1402,11 @@ internal static class FunctionalCompiler
             // undefined = undefined → false (undefined is not equal to anything, even itself)
             if (left.IsUndefined || right.IsUndefined)
             {
-                return new Sequence(CreateBoolElement(false));
+                return new Sequence(JsonataHelpers.BooleanElement(false));
             }
 
             bool result = JsonElementEquals(left.FirstOrDefault, right.FirstOrDefault);
-            return new Sequence(CreateBoolElement(result));
+            return new Sequence(JsonataHelpers.BooleanElement(result));
         };
     }
 
@@ -1455,7 +1422,7 @@ internal static class FunctionalCompiler
             }
 
             bool val = result.FirstOrDefault.ValueKind == JsonValueKind.True;
-            return new Sequence(CreateBoolElement(!val));
+            return new Sequence(JsonataHelpers.BooleanElement(!val));
         };
     }
 
@@ -1502,7 +1469,7 @@ internal static class FunctionalCompiler
             if (lv.ValueKind == JsonValueKind.String && rv.ValueKind == JsonValueKind.String)
             {
                 int result = string.CompareOrdinal(lv.GetString(), rv.GetString());
-                return new Sequence(CreateBoolElement(cmp(result, 0)));
+                return new Sequence(JsonataHelpers.BooleanElement(cmp(result, 0)));
             }
 
             // Numeric comparison — both must be numbers
@@ -1510,7 +1477,7 @@ internal static class FunctionalCompiler
             {
                 if (TryCoerceToNumber(lv, out double leftNum) && TryCoerceToNumber(rv, out double rightNum))
                 {
-                    return new Sequence(CreateBoolElement(cmp(leftNum, rightNum)));
+                    return new Sequence(JsonataHelpers.BooleanElement(cmp(leftNum, rightNum)));
                 }
             }
 
@@ -1529,7 +1496,7 @@ internal static class FunctionalCompiler
             string leftStr = CoerceToString(left);
             string rightStr = CoerceToString(right);
 
-            return new Sequence(CreateStringElement(leftStr + rightStr));
+            return new Sequence(JsonataHelpers.StringFromString(leftStr + rightStr, env.Workspace));
         };
     }
 
@@ -1540,11 +1507,11 @@ internal static class FunctionalCompiler
             var left = lhs(input, env);
             if (!IsTruthy(left))
             {
-                return new Sequence(CreateBoolElement(false));
+                return new Sequence(JsonataHelpers.BooleanElement(false));
             }
 
             var right = rhs(input, env);
-            return new Sequence(CreateBoolElement(IsTruthy(right)));
+            return new Sequence(JsonataHelpers.BooleanElement(IsTruthy(right)));
         };
     }
 
@@ -1555,11 +1522,11 @@ internal static class FunctionalCompiler
             var left = lhs(input, env);
             if (IsTruthy(left))
             {
-                return new Sequence(CreateBoolElement(true));
+                return new Sequence(JsonataHelpers.BooleanElement(true));
             }
 
             var right = rhs(input, env);
-            return new Sequence(CreateBoolElement(IsTruthy(right)));
+            return new Sequence(JsonataHelpers.BooleanElement(IsTruthy(right)));
         };
     }
 
@@ -1572,7 +1539,7 @@ internal static class FunctionalCompiler
 
             if (left.IsUndefined || right.IsUndefined)
             {
-                return new Sequence(CreateBoolElement(false));
+                return new Sequence(JsonataHelpers.BooleanElement(false));
             }
 
             var needle = left.FirstOrDefault;
@@ -1584,11 +1551,11 @@ internal static class FunctionalCompiler
                 {
                     if (JsonElementEquals(needle, item))
                     {
-                        return new Sequence(CreateBoolElement(true));
+                        return new Sequence(JsonataHelpers.BooleanElement(true));
                     }
                 }
 
-                return new Sequence(CreateBoolElement(false));
+                return new Sequence(JsonataHelpers.BooleanElement(false));
             }
 
             // String containment: "hello" in "hello world" → true
@@ -1596,11 +1563,11 @@ internal static class FunctionalCompiler
             {
                 string needleStr = needle.GetString()!;
                 string haystackStr = haystack.GetString()!;
-                return new Sequence(CreateBoolElement(haystackStr.Contains(needleStr)));
+                return new Sequence(JsonataHelpers.BooleanElement(haystackStr.Contains(needleStr)));
             }
 
             // Scalar equality check
-            return new Sequence(CreateBoolElement(JsonElementEquals(needle, haystack)));
+            return new Sequence(JsonataHelpers.BooleanElement(JsonElementEquals(needle, haystack)));
         };
     }
 
@@ -1663,27 +1630,11 @@ internal static class FunctionalCompiler
                 throw new JsonataException("D2014", "Range expression generates too many results", 0);
             }
 
-            // Build a single JSON array document, then extract individual elements.
-            // This is much faster than calling CreateNumberElement per number
-            // (which creates a full JsonDocument per number).
-            using var ms = new MemoryStream((int)Math.Min(count * 4, int.MaxValue));
-            using var writer = new Utf8JsonWriter(ms);
-            writer.WriteStartArray();
+            // Build individual number elements for the range
+            var elements = new JsonElement[(int)count];
             for (int i = iStart; i <= iEnd; i++)
             {
-                writer.WriteNumberValue(i);
-            }
-
-            writer.WriteEndArray();
-            writer.Flush();
-            ms.Position = 0;
-            using var doc = JsonDocument.Parse(ms);
-
-            var elements = new JsonElement[(int)count];
-            int idx = 0;
-            foreach (var elem in doc.RootElement.EnumerateArray())
-            {
-                elements[idx++] = elem.Clone();
+                elements[i - iStart] = JsonataHelpers.NumberFromDouble(i, env.Workspace);
             }
 
             return new Sequence(elements, (int)count);
@@ -1706,7 +1657,7 @@ internal static class FunctionalCompiler
                 var el = result.FirstOrDefault;
                 if (el.ValueKind == JsonValueKind.Number)
                 {
-                    return new Sequence(CreateNumberElement(-el.GetDouble()));
+                    return new Sequence(JsonataHelpers.NumberFromDouble(-el.GetDouble(), env.Workspace));
                 }
 
                 throw new JsonataException("D1002", "Cannot negate a non-numeric value", unary.Position);
@@ -1757,9 +1708,8 @@ internal static class FunctionalCompiler
         var items = arr.Expressions.Select(e => (Eval: Compile(e), IsArrayCtor: e is ArrayConstructorNode)).ToArray();
         return (in JsonElement input, Environment env) =>
         {
-            using var ms = new MemoryStream(256);
-            using var writer = new Utf8JsonWriter(ms);
-            writer.WriteStartArray();
+            JsonDocumentBuilder<JsonElement.Mutable> arrDoc = JsonElement.CreateArrayBuilder(env.Workspace, items.Length);
+            JsonElement.Mutable arrRoot = arrDoc.RootElement;
 
             foreach (var (eval, isArrayCtor) in items)
             {
@@ -1774,7 +1724,7 @@ internal static class FunctionalCompiler
                     // Array constructor sub-expression: push result as single element
                     for (int i = 0; i < result.Count; i++)
                     {
-                        result[i].WriteTo(writer);
+                        arrRoot.AddItem(result[i]);
                     }
                 }
                 else
@@ -1791,29 +1741,25 @@ internal static class FunctionalCompiler
                         {
                             foreach (var child in item.EnumerateArray())
                             {
-                                child.WriteTo(writer);
+                                arrRoot.AddItem(child);
                             }
                         }
                         else
                         {
-                            item.WriteTo(writer);
+                            arrRoot.AddItem(item);
                         }
                     }
                     else
                     {
                         for (int i = 0; i < result.Count; i++)
                         {
-                            result[i].WriteTo(writer);
+                            arrRoot.AddItem(result[i]);
                         }
                     }
                 }
             }
 
-            writer.WriteEndArray();
-            writer.Flush();
-            ms.Position = 0;
-            using var doc = JsonDocument.Parse(ms);
-            return new Sequence(doc.RootElement.Clone());
+            return new Sequence((JsonElement)arrRoot);
         };
     }
 
@@ -1823,9 +1769,8 @@ internal static class FunctionalCompiler
         bool hasMuliPlePairs = pairs.Length > 1;
         return (in JsonElement input, Environment env) =>
         {
-            using var ms = new MemoryStream(256);
-            using var writer = new Utf8JsonWriter(ms);
-            writer.WriteStartObject();
+            JsonDocumentBuilder<JsonElement.Mutable> objDoc = JsonElement.CreateObjectBuilder(env.Workspace, pairs.Length);
+            JsonElement.Mutable objRoot = objDoc.RootElement;
 
             // Track which pair index produced each key to detect D1009 duplicates
             Dictionary<string, int>? seenKeys = hasMuliPlePairs ? new() : null;
@@ -1878,8 +1823,7 @@ internal static class FunctionalCompiler
                 if (valueResult.IsLambda)
                 {
                     // Lambda/function values serialize as empty strings in JSON
-                    writer.WritePropertyName(keyStr);
-                    writer.WriteStringValue(string.Empty);
+                    objRoot.SetProperty(keyStr, JsonataHelpers.EmptyString());
                     continue;
                 }
 
@@ -1889,29 +1833,17 @@ internal static class FunctionalCompiler
                     continue;
                 }
 
-                writer.WritePropertyName(keyStr);
-
                 if (valueResult.IsSingleton)
                 {
-                    valueResult.FirstOrDefault.WriteTo(writer);
+                    objRoot.SetProperty(keyStr, valueResult.FirstOrDefault);
                 }
                 else
                 {
-                    writer.WriteStartArray();
-                    for (int i = 0; i < valueResult.Count; i++)
-                    {
-                        valueResult[i].WriteTo(writer);
-                    }
-
-                    writer.WriteEndArray();
+                    objRoot.SetProperty(keyStr, JsonataHelpers.ArrayFromSequence(valueResult, env.Workspace));
                 }
             }
 
-            writer.WriteEndObject();
-            writer.Flush();
-            ms.Position = 0;
-            using var doc = JsonDocument.Parse(ms);
-            return new Sequence(doc.RootElement.Clone());
+            return new Sequence((JsonElement)objRoot);
         };
     }
 
@@ -2213,7 +2145,7 @@ internal static class FunctionalCompiler
                 {
                     string str = el.GetString() ?? string.Empty;
                     bool matches = rhsResult.Regex!.IsMatch(str);
-                    return new Sequence(CreateBoolElement(matches));
+                    return new Sequence(JsonataHelpers.BooleanElement(matches));
                 }
 
                 return Sequence.Undefined;
@@ -2358,7 +2290,7 @@ internal static class FunctionalCompiler
             }
 
             // Build result as a JSON array so subsequent path steps flatten it
-            return new Sequence(CreateArrayElement(sorted));
+            return new Sequence(JsonataHelpers.ArrayFromList(sorted, env.Workspace));
         };
     }
 
@@ -2457,7 +2389,7 @@ internal static class FunctionalCompiler
             results.Add(TransformElement(inputSeq[i], matchTexts, updateEval, deleteEval, env));
         }
 
-        return new Sequence(CreateJsonArrayElement(results));
+        return new Sequence(JsonataHelpers.ArrayFromList(results, env.Workspace));
     }
 
     private static void CollectMatchTexts(JsonElement element, HashSet<string> matchTexts)
@@ -2486,9 +2418,15 @@ internal static class FunctionalCompiler
         {
             bool isMatch = matchTexts.Contains(element.GetRawText());
 
-            using var ms = new MemoryStream(256);
-            using var writer = new Utf8JsonWriter(ms);
-            writer.WriteStartObject();
+            // Count properties for capacity estimate
+            int propCount = 0;
+            foreach (var unused in element.EnumerateObject())
+            {
+                propCount++;
+            }
+
+            JsonDocumentBuilder<JsonElement.Mutable> objDoc = JsonElement.CreateObjectBuilder(env.Workspace, propCount + 4);
+            JsonElement.Mutable objRoot = objDoc.RootElement;
 
             if (isMatch)
             {
@@ -2554,20 +2492,18 @@ internal static class FunctionalCompiler
                         continue;
                     }
 
-                    writer.WritePropertyName(prop.Name);
-
                     if (updatePropNames.Contains(prop.Name))
                     {
                         // Property is overridden by update — use the update value
                         if (updateObj!.Value.TryGetProperty(prop.Name, out var updateValue))
                         {
-                            updateValue.WriteTo(writer);
+                            objRoot.SetProperty(prop.Name, updateValue);
                         }
                     }
                     else
                     {
                         // Recursively transform the property value
-                        TransformElement(prop.Value, matchTexts, updateEval, deleteEval, env).WriteTo(writer);
+                        objRoot.SetProperty(prop.Name, TransformElement(prop.Value, matchTexts, updateEval, deleteEval, env));
                     }
                 }
 
@@ -2588,8 +2524,7 @@ internal static class FunctionalCompiler
 
                         if (!alreadyExists)
                         {
-                            writer.WritePropertyName(prop.Name);
-                            prop.Value.WriteTo(writer);
+                            objRoot.SetProperty(prop.Name, prop.Value);
                         }
                     }
                 }
@@ -2599,33 +2534,24 @@ internal static class FunctionalCompiler
                 // Not a match — recursively transform children
                 foreach (var prop in element.EnumerateObject())
                 {
-                    writer.WritePropertyName(prop.Name);
-                    TransformElement(prop.Value, matchTexts, updateEval, deleteEval, env).WriteTo(writer);
+                    objRoot.SetProperty(prop.Name, TransformElement(prop.Value, matchTexts, updateEval, deleteEval, env));
                 }
             }
 
-            writer.WriteEndObject();
-            writer.Flush();
-            ms.Position = 0;
-            using var doc = JsonDocument.Parse(ms);
-            return doc.RootElement.Clone();
+            return (JsonElement)objRoot;
         }
 
         if (element.ValueKind == JsonValueKind.Array)
         {
-            using var ms = new MemoryStream(256);
-            using var writer = new Utf8JsonWriter(ms);
-            writer.WriteStartArray();
+            int arrayLen = element.GetArrayLength();
+            JsonDocumentBuilder<JsonElement.Mutable> arrDoc = JsonElement.CreateArrayBuilder(env.Workspace, arrayLen);
+            JsonElement.Mutable arrRoot = arrDoc.RootElement;
             foreach (var item in element.EnumerateArray())
             {
-                TransformElement(item, matchTexts, updateEval, deleteEval, env).WriteTo(writer);
+                arrRoot.AddItem(TransformElement(item, matchTexts, updateEval, deleteEval, env));
             }
 
-            writer.WriteEndArray();
-            writer.Flush();
-            ms.Position = 0;
-            using var doc = JsonDocument.Parse(ms);
-            return doc.RootElement.Clone();
+            return (JsonElement)arrRoot;
         }
 
         return element;
@@ -2856,28 +2782,29 @@ internal static class FunctionalCompiler
         // Multi-valued sequences are stringified as JSON arrays
         if (seq.Count > 1)
         {
-            var arr = CreateJsonArrayElement(seq);
-            return arr.GetRawText();
+            return BuildArrayRawText(seq);
         }
 
         return CoerceElementToString(seq.FirstOrDefault);
     }
 
-    private static JsonElement CreateJsonArrayElement(Sequence seq)
+    private static string BuildArrayRawText(Sequence seq)
     {
-        using var ms = new MemoryStream(256);
-        using var writer = new Utf8JsonWriter(ms, RelaxedWriterOptions);
-        writer.WriteStartArray();
+        // Build raw JSON text directly: [elem1,elem2,...]
+        var sb = new System.Text.StringBuilder(seq.Count * 16);
+        sb.Append('[');
         for (int i = 0; i < seq.Count; i++)
         {
-            seq[i].WriteTo(writer);
+            if (i > 0)
+            {
+                sb.Append(',');
+            }
+
+            sb.Append(seq[i].GetRawText());
         }
 
-        writer.WriteEndArray();
-        writer.Flush();
-        ms.Position = 0;
-        using var doc = JsonDocument.Parse(ms);
-        return doc.RootElement.Clone();
+        sb.Append(']');
+        return sb.ToString();
     }
 
     internal static string CoerceElementToString(JsonElement element)
@@ -2996,7 +2923,7 @@ internal static class FunctionalCompiler
                 return element.GetString()?.Length > 0;
             case JsonValueKind.Object:
                 // Empty object is falsy
-                JsonElement.ObjectEnumerator enumerator = element.EnumerateObject();
+                ObjectEnumerator<JsonElement> enumerator = element.EnumerateObject();
                 return enumerator.MoveNext();
             case JsonValueKind.Array:
                 // Array: if any element is truthy, return true
@@ -3095,54 +3022,29 @@ internal static class FunctionalCompiler
         return true;
     }
 
-    internal static JsonElement CreateArrayElement(List<JsonElement> elements)
+    internal static JsonElement CreateArrayElement(List<JsonElement> elements, JsonWorkspace workspace)
     {
-        using var ms = new MemoryStream(elements.Count * 64);
-        using var writer = new Utf8JsonWriter(ms);
-        writer.WriteStartArray();
-        for (int i = 0; i < elements.Count; i++)
-        {
-            elements[i].WriteTo(writer);
-        }
-
-        writer.WriteEndArray();
-        writer.Flush();
-        ms.Position = 0;
-        using var doc = JsonDocument.Parse(ms);
-        return doc.RootElement.Clone();
+        return JsonataHelpers.ArrayFromList(elements, workspace);
     }
 
-    internal static JsonElement CreateNumberElement(double value)
+    internal static JsonElement CreateNumberElement(double value, JsonWorkspace workspace)
     {
         if (double.IsNaN(value) || double.IsInfinity(value))
         {
             throw new JsonataException("D3001", "A string cannot be generated from this value", 0);
         }
 
-        using var ms = new MemoryStream(32);
-        using var writer = new Utf8JsonWriter(ms);
-        writer.WriteNumberValue(value);
-
-        writer.Flush();
-        ms.Position = 0;
-        using var doc = JsonDocument.Parse(ms);
-        return doc.RootElement.Clone();
+        return JsonataHelpers.NumberFromDouble(value, workspace);
     }
 
-    internal static JsonElement CreateStringElement(string value)
+    internal static JsonElement CreateStringElement(string value, JsonWorkspace workspace)
     {
-        using var ms = new MemoryStream(value.Length + 32);
-        using var writer = new Utf8JsonWriter(ms, RelaxedWriterOptions);
-        writer.WriteStringValue(value);
-        writer.Flush();
-        ms.Position = 0;
-        using var doc = JsonDocument.Parse(ms);
-        return doc.RootElement.Clone();
+        return JsonataHelpers.StringFromString(value, workspace);
     }
 
     internal static JsonElement CreateBoolElement(bool value)
     {
-        return value ? TrueElement : FalseElement;
+        return JsonataHelpers.BooleanElement(value);
     }
 
     internal static JsonElement CreateNullElement()
@@ -3187,42 +3089,13 @@ internal static class FunctionalCompiler
             paramCount: 0);
     }
 
-    internal static JsonElement CreateJsonArrayElement(IReadOnlyList<JsonElement> items)
+    internal static JsonElement CreateJsonArrayElement(IReadOnlyList<JsonElement> items, JsonWorkspace workspace)
     {
-        using var ms = new MemoryStream(256);
-        using var writer = new Utf8JsonWriter(ms);
-        writer.WriteStartArray();
-        foreach (var item in items)
-        {
-            item.WriteTo(writer);
-        }
-
-        writer.WriteEndArray();
-        writer.Flush();
-        ms.Position = 0;
-        using var doc = JsonDocument.Parse(ms);
-        return doc.RootElement.Clone();
+        return JsonataHelpers.ArrayFromReadOnlyList(items, workspace);
     }
 
-    internal static JsonElement CreateMatchObject(string match, int index, IReadOnlyList<string> groups)
+    internal static JsonElement CreateMatchObject(string match, int index, IReadOnlyList<string> groups, JsonWorkspace workspace)
     {
-        using var ms = new MemoryStream(256);
-        using var writer = new Utf8JsonWriter(ms, RelaxedWriterOptions);
-        writer.WriteStartObject();
-        writer.WriteString("match", match);
-        writer.WriteNumber("index", index);
-        writer.WritePropertyName("groups");
-        writer.WriteStartArray();
-        foreach (string g in groups)
-        {
-            writer.WriteStringValue(g);
-        }
-
-        writer.WriteEndArray();
-        writer.WriteEndObject();
-        writer.Flush();
-        ms.Position = 0;
-        using var doc = JsonDocument.Parse(ms);
-        return doc.RootElement.Clone();
+        return JsonataHelpers.CreateMatchObject(match, index, groups, workspace);
     }
 }

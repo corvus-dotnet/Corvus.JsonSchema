@@ -3,7 +3,6 @@
 // </copyright>
 
 using System.Collections.Concurrent;
-using System.Text.Json;
 
 namespace Corvus.Text.Json.Jsonata;
 
@@ -61,10 +60,13 @@ public sealed class JsonataEvaluator
     {
         var compiled = this.GetOrCompile(expression);
 
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+
         var env = new Environment
         {
             RootInput = data,
             MaxDepth = maxDepth,
+            Workspace = workspace,
         };
 
         if (bindings is not null)
@@ -82,24 +84,20 @@ public sealed class JsonataEvaluator
             return default;
         }
 
-        if (result.IsSingleton)
+        JsonElement resultElement = result.IsSingleton
+            ? result.FirstOrDefault
+            : JsonataHelpers.ArrayFromSequence(result, workspace);
+
+        if (resultElement.ValueKind == JsonValueKind.Undefined)
         {
-            return result.FirstOrDefault;
+            return default;
         }
 
-        using var ms = new MemoryStream(256);
-        using var writer = new Utf8JsonWriter(ms);
-        writer.WriteStartArray();
-        for (int i = 0; i < result.Count; i++)
-        {
-            result[i].WriteTo(writer);
-        }
-
-        writer.WriteEndArray();
-        writer.Flush();
-        ms.Position = 0;
-        using var doc = JsonDocument.Parse(ms);
-        return doc.RootElement.Clone();
+        // Clone the result into a standalone element before the workspace is disposed.
+        // The workspace owns all intermediate documents; this creates a new document
+        // that outlives the workspace. The backing ParsedJsonDocument will be collected
+        // by GC when the returned element is no longer referenced.
+        return JsonElement.ParseValue(System.Text.Encoding.UTF8.GetBytes(resultElement.GetRawText()));
     }
 
     /// <summary>
@@ -110,7 +108,7 @@ public sealed class JsonataEvaluator
     /// <returns>The result as a JSON string, or <c>null</c> if undefined.</returns>
     public string? EvaluateToString(string expression, string json)
     {
-        using var doc = JsonDocument.Parse(json);
+        using var doc = ParsedJsonDocument<JsonElement>.Parse(System.Text.Encoding.UTF8.GetBytes(json));
         var result = this.Evaluate(expression, doc.RootElement);
         if (result.ValueKind == JsonValueKind.Undefined)
         {

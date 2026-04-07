@@ -30,8 +30,4 @@
     <ProjectReference Include="..\..\src\Corvus.Text.Json.Jsonata\Corvus.Text.Json.Jsonata.csproj" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'net481'">
-    <PackageReference Include="System.Text.Json" Version="10.0.4" />
-  </ItemGroup>
-
 </Project>

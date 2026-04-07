@@ -2,8 +2,6 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Text.Json;
-
 namespace Corvus.Text.Json.Jsonata;
 
 /// <summary>
@@ -40,6 +38,17 @@ internal sealed class Environment
     public JsonElement RootInput { get; set; }
 
     /// <summary>
+    /// Gets the <see cref="JsonWorkspace"/> for this evaluation, providing
+    /// pooled memory for intermediate value creation.
+    /// Stored on the root environment; child scopes delegate to the root.
+    /// </summary>
+    public JsonWorkspace Workspace
+    {
+        get => this.GetRoot().WorkspaceDirect;
+        set => this.GetRoot().WorkspaceDirect = value;
+    }
+
+    /// <summary>
     /// Gets or sets the maximum call depth for this evaluation.
     /// Only meaningful on the root environment.
     /// </summary>
@@ -48,6 +57,9 @@ internal sealed class Environment
         get => this.GetRoot().maxDepth;
         set => this.GetRoot().maxDepth = value;
     }
+
+    // Direct field-backed property for the root environment only.
+    private JsonWorkspace WorkspaceDirect { get; set; } = default!;
 
     /// <summary>
     /// Looks up a variable by name, walking up the scope chain.

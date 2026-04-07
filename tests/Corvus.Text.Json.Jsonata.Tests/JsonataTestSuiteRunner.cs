@@ -2,7 +2,8 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Text.Json;
+using System.Text;
+using Corvus.Text.Json;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -49,7 +50,7 @@ public class JsonataTestSuiteRunner
     public void RunTestCase(string group, string caseName, string caseFilePath)
     {
         string caseJson = File.ReadAllText(caseFilePath);
-        using var caseDoc = JsonDocument.Parse(caseJson);
+        using var caseDoc = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes(caseJson));
         JsonElement root = caseDoc.RootElement;
 
         // Batch files are JSON arrays; extract the sub-case by index.
@@ -92,13 +93,13 @@ public class JsonataTestSuiteRunner
 
         // Load input data
         JsonElement inputData = default;
-        JsonDocument? dataDoc = null;
+        ParsedJsonDocument<JsonElement>? dataDoc = null;
         bool hasData = false;
 
         if (root.TryGetProperty("data", out var dataElement))
         {
             string dataJson = dataElement.GetRawText();
-            dataDoc = JsonDocument.Parse(dataJson);
+            dataDoc = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes(dataJson));
             inputData = dataDoc.RootElement;
             hasData = true;
         }
@@ -109,7 +110,7 @@ public class JsonataTestSuiteRunner
                 string datasetName = datasetElement.GetString()!;
                 string datasetPath = Path.Combine(TestSuiteRoot, "datasets", datasetName + ".json");
                 string datasetJson = File.ReadAllText(datasetPath);
-                dataDoc = JsonDocument.Parse(datasetJson);
+                dataDoc = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes(datasetJson));
                 inputData = dataDoc.RootElement;
                 hasData = true;
             }
@@ -122,7 +123,7 @@ public class JsonataTestSuiteRunner
             bindings = new Dictionary<string, JsonElement>();
             foreach (var prop in bindingsElement.EnumerateObject())
             {
-                bindings[prop.Name] = prop.Value.Clone();
+                bindings[prop.Name] = prop.Value;
             }
         }
 
@@ -184,7 +185,7 @@ public class JsonataTestSuiteRunner
 
                 // Detect batch files (JSON arrays) vs individual cases.
                 string raw = File.ReadAllText(caseFile);
-                using var probe = JsonDocument.Parse(raw);
+                using var probe = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes(raw));
                 if (probe.RootElement.ValueKind == JsonValueKind.Array)
                 {
                     int count = probe.RootElement.GetArrayLength();

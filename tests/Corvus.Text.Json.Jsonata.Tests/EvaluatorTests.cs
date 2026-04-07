@@ -2,7 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Text.Json;
+using System.Text;
 using Xunit;
 
 namespace Corvus.Text.Json.Jsonata.Tests;
@@ -254,7 +254,7 @@ public class EvaluatorTests
     [Fact]
     public void WildcardAccess()
     {
-        using var doc = JsonDocument.Parse("""{"a": 1, "b": 2, "c": 3}""");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"a": 1, "b": 2, "c": 3}"""u8.ToArray());
         var result = Evaluator.Evaluate("*", doc.RootElement);
         Assert.NotEqual(JsonValueKind.Undefined, result.ValueKind);
     }
@@ -278,7 +278,7 @@ public class EvaluatorTests
     [Fact]
     public void EvaluateReturnsUndefinedForMissingField()
     {
-        using var doc = JsonDocument.Parse("""{"x": 1}""");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"x": 1}"""u8.ToArray());
         var result = Evaluator.Evaluate("y", doc.RootElement);
         Assert.Equal(JsonValueKind.Undefined, result.ValueKind);
     }

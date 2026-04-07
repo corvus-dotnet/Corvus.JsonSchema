@@ -4,7 +4,6 @@
 
 using System.Buffers;
 using System.Runtime.CompilerServices;
-using System.Text.Json;
 
 namespace Corvus.Text.Json.Jsonata;
 
