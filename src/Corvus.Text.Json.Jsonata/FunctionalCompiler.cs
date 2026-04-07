@@ -2440,6 +2440,13 @@ internal static class FunctionalCompiler
             builtInCompiler = BuiltInFunctions.TryGetCompiler(varProc.Name);
         }
 
+        // Detect non-$ names that match built-ins (e.g. substring instead of $substring) for T1007
+        bool matchesBuiltIn = false;
+        if (partial.Procedure is NameNode nameProc)
+        {
+            matchesBuiltIn = BuiltInFunctions.TryGetCompiler(nameProc.Value) is not null;
+        }
+
         var procedureEval = Compile(partial.Procedure);
 
         return (in JsonElement input, Environment env) =>
@@ -2498,7 +2505,8 @@ internal static class FunctionalCompiler
                 var funcResult = procedureEval(input, env);
                 if (!funcResult.IsLambda)
                 {
-                    throw new JsonataException("T1007", "Attempted to partially apply a non-function", partial.Position);
+                    string code = matchesBuiltIn ? "T1007" : "T1008";
+                    throw new JsonataException(code, "Attempted to partially apply a non-function", partial.Position);
                 }
 
                 var originalLambda = funcResult.Lambda!;
