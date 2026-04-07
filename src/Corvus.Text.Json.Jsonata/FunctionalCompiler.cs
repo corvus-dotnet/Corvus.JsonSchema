@@ -710,6 +710,13 @@ internal static class FunctionalCompiler
                     current = expander.ToSequence();
                 }
 
+                // Per-element filter stages are only applied for steps after the first
+                // (stepIdx > 0). At stepIdx 0, the multi-value input comes from auto-mapping
+                // over an array input, and stages should be applied globally (matching JSONata's
+                // semantics where a[0].b picks the first a globally, but $.a[0].b picks per-element).
+                var perElementStages = stepIdx > 0 ? stages[stepIdx] : null;
+                var perElementSortFlags = stepIdx > 0 ? stageIsSortFlags[stepIdx] : null;
+
                 if (current.IsSingleton)
                 {
                     // Hot path: singleton input → evaluate step directly
@@ -723,11 +730,16 @@ internal static class FunctionalCompiler
 
                     if (element.ValueKind == JsonValueKind.Array && shouldFlatten)
                     {
-                        current = FlattenArrayStep(element, step, env, isConsArrayStep[stepIdx]);
+                        current = FlattenArrayStep(element, step, env, isConsArrayStep[stepIdx],
+                            perElementStages, perElementSortFlags);
                     }
                     else
                     {
                         current = step(element, env);
+
+                        // Apply per-element filter stages (non-sort) to the single result
+                        current = ApplyPerElementFilterStages(current,
+                            perElementStages, perElementSortFlags, env);
                     }
                 }
                 else
@@ -755,11 +767,16 @@ internal static class FunctionalCompiler
 
                         if (element.ValueKind == JsonValueKind.Array && shouldFlatten)
                         {
-                            stepResult = FlattenArrayStep(element, step, env, isConsArrayStep[stepIdx]);
+                            stepResult = FlattenArrayStep(element, step, env, isConsArrayStep[stepIdx],
+                                perElementStages, perElementSortFlags);
                         }
                         else
                         {
                             stepResult = step(element, env);
+
+                            // Apply per-element filter stages
+                            stepResult = ApplyPerElementFilterStages(stepResult,
+                                perElementStages, perElementSortFlags, env);
                         }
 
                         // Auto-flatten: when a property step returns a single array element
@@ -782,10 +799,19 @@ internal static class FunctionalCompiler
                     current = builder.ToSequence();
                 }
 
-                // Apply stages (predicates/filters/sorts) after step evaluation
+                // Apply stages globally:
+                // - For stepIdx == 0: all stages (filter + sort) are applied globally
+                // - For stepIdx > 0: only sort stages (filter stages were applied per-element)
                 if (stages[stepIdx] is not null)
                 {
-                    current = ApplyStages(current, stages[stepIdx]!, stageIsSortFlags[stepIdx]!, env);
+                    if (stepIdx == 0)
+                    {
+                        current = ApplyStages(current, stages[stepIdx]!, stageIsSortFlags[stepIdx]!, env);
+                    }
+                    else
+                    {
+                        current = ApplySortStagesOnly(current, stages[stepIdx]!, stageIsSortFlags[stepIdx]!, env);
+                    }
                 }
             }
 
@@ -1207,12 +1233,26 @@ internal static class FunctionalCompiler
         return result;
     }
 
-    private static Sequence FlattenArrayStep(JsonElement array, ExpressionEvaluator step, Environment env, bool isConsArray = false)
+    private static Sequence FlattenArrayStep(
+        JsonElement array,
+        ExpressionEvaluator step,
+        Environment env,
+        bool isConsArray = false,
+        ExpressionEvaluator[]? filterStages = null,
+        bool[]? stageIsSortFlags = null)
     {
         var builder = default(SequenceBuilder);
         foreach (var item in array.EnumerateArray())
         {
             var result = step(item, env);
+
+            // Apply per-element filter stages before flattening
+            result = ApplyPerElementFilterStages(result, filterStages, stageIsSortFlags, env);
+
+            if (result.IsUndefined)
+            {
+                continue;
+            }
 
             // Auto-flatten: when a property step returns a JSON array from an element,
             // expand it into individual elements (JSONata's one-level flattening).
@@ -1232,6 +1272,80 @@ internal static class FunctionalCompiler
         }
 
         return builder.ToSequence();
+    }
+
+    /// <summary>
+    /// Applies only non-sort (filter) stages to a per-element result.
+    /// In JSONata, filter predicates are applied per-input-element inside the
+    /// path step evaluation loop, not globally after all elements are collected.
+    /// </summary>
+    private static Sequence ApplyPerElementFilterStages(
+        Sequence result,
+        ExpressionEvaluator[]? stageEvaluators,
+        bool[]? isSortStage,
+        Environment env)
+    {
+        if (stageEvaluators is null || result.IsUndefined)
+        {
+            return result;
+        }
+
+        for (int s = 0; s < stageEvaluators.Length; s++)
+        {
+            if (isSortStage?.Length > s && isSortStage[s])
+            {
+                continue; // Sort stages are applied globally, not per-element
+            }
+
+            if (result.IsUndefined)
+            {
+                return Sequence.Undefined;
+            }
+
+            result = ApplyStages(result, [stageEvaluators[s]], [false], env);
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Applies only sort stages from the stage array. Filter stages have already
+    /// been applied per-element during path step evaluation.
+    /// </summary>
+    private static Sequence ApplySortStagesOnly(
+        Sequence current,
+        ExpressionEvaluator[] stageEvaluators,
+        bool[] isSortStage,
+        Environment env)
+    {
+        bool hasSortStage = false;
+        for (int s = 0; s < isSortStage.Length; s++)
+        {
+            if (isSortStage[s])
+            {
+                hasSortStage = true;
+                break;
+            }
+        }
+
+        if (!hasSortStage)
+        {
+            return current;
+        }
+
+        // Build arrays containing only sort stages
+        var sortStages = new List<ExpressionEvaluator>();
+        var sortFlags = new List<bool>();
+        for (int s = 0; s < stageEvaluators.Length; s++)
+        {
+            if (isSortStage[s])
+            {
+                sortStages.Add(stageEvaluators[s]);
+                sortFlags.Add(true);
+            }
+        }
+
+        return ApplyStages(current, sortStages.ToArray(), sortFlags.ToArray(), env);
     }
 
     private static ExpressionEvaluator CompileBinary(BinaryNode binary)
@@ -2442,7 +2556,9 @@ internal static class FunctionalCompiler
 
         // Detect non-$ names that match built-ins (e.g. substring instead of $substring) for T1007
         bool matchesBuiltIn = false;
-        if (partial.Procedure is NameNode nameProc)
+        NameNode? nameProc = partial.Procedure as NameNode
+            ?? (partial.Procedure is PathNode pathProc && pathProc.Steps.Count == 1 ? pathProc.Steps[0] as NameNode : null);
+        if (nameProc is not null)
         {
             matchesBuiltIn = BuiltInFunctions.TryGetCompiler(nameProc.Value) is not null;
         }

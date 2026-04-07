@@ -928,6 +928,15 @@ internal sealed class Parser
 
         stepAnnotations.Stages.Add(filter);
 
+        // Propagate KeepArray from the binary node — the [] modifier may have
+        // set it on this BinaryNode (predicate), and ProcessPredicate must
+        // forward it to the resulting AST node so that CompilePath or WrapKeepArray
+        // see it.
+        if (binary.KeepArray)
+        {
+            result.KeepArray = true;
+        }
+
         return result;
     }
 
