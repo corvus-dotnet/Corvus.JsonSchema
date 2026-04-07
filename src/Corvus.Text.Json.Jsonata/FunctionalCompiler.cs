@@ -216,7 +216,7 @@ internal static class FunctionalCompiler
             throw new JsonataException("D3001", "A string cannot be generated from this value", 0);
         }
 
-        return (in JsonElement input, Environment env) => new Sequence(JsonataHelpers.NumberFromDouble(value, env.Workspace));
+        return (in JsonElement input, Environment env) => Sequence.FromDouble(value, env.Workspace);
     }
 
     private static ExpressionEvaluator CompileString(StringNode str)
@@ -3716,7 +3716,11 @@ internal static class FunctionalCompiler
                     throw new JsonataException("D1001", $"Number out of range: {left.NonFiniteValue}", 0);
                 }
 
-                if (left.FirstOrDefault.ValueKind != JsonValueKind.Number)
+                if (left.IsRawDouble)
+                {
+                    // Raw double — already a number, fast path
+                }
+                else if (left.FirstOrDefault.ValueKind != JsonValueKind.Number)
                 {
                     throw new JsonataException("T2001", "The left side of the arithmetic expression is not a number", 0);
                 }
@@ -3729,7 +3733,11 @@ internal static class FunctionalCompiler
                     throw new JsonataException("D1001", $"Number out of range: {right.NonFiniteValue}", 0);
                 }
 
-                if (right.FirstOrDefault.ValueKind != JsonValueKind.Number)
+                if (right.IsRawDouble)
+                {
+                    // Raw double — already a number, fast path
+                }
+                else if (right.FirstOrDefault.ValueKind != JsonValueKind.Number)
                 {
                     throw new JsonataException("T2002", "The right side of the arithmetic expression is not a number", 0);
                 }
@@ -3740,8 +3748,17 @@ internal static class FunctionalCompiler
                 return Sequence.Undefined;
             }
 
-            double leftNum = left.FirstOrDefault.GetDouble();
-            double rightNum = right.FirstOrDefault.GetDouble();
+            double leftNum;
+            if (!left.TryGetDouble(out leftNum))
+            {
+                leftNum = left.FirstOrDefault.GetDouble();
+            }
+
+            double rightNum;
+            if (!right.TryGetDouble(out rightNum))
+            {
+                rightNum = right.FirstOrDefault.GetDouble();
+            }
 
             double result = op(leftNum, rightNum);
             if (double.IsInfinity(result) || double.IsNaN(result))
@@ -3749,7 +3766,8 @@ internal static class FunctionalCompiler
                 return new Sequence(result);
             }
 
-            return new Sequence(JsonataHelpers.NumberFromDouble(result, env.Workspace));        };
+            return Sequence.FromDouble(result, env.Workspace);
+        };
     }
 
     private static ExpressionEvaluator CompileComparison(ExpressionEvaluator lhs, ExpressionEvaluator rhs)
@@ -3763,6 +3781,12 @@ internal static class FunctionalCompiler
             if (left.IsUndefined || right.IsUndefined)
             {
                 return new Sequence(JsonataHelpers.BooleanElement(false));
+            }
+
+            // Fast path: both are raw doubles (common in arithmetic chains)
+            if (left.TryGetDouble(out double ld) && right.TryGetDouble(out double rd))
+            {
+                return new Sequence(JsonataHelpers.BooleanElement(ld == rd));
             }
 
             bool result = JsonElementEquals(left.FirstOrDefault, right.FirstOrDefault);
@@ -3796,8 +3820,14 @@ internal static class FunctionalCompiler
             var left = lhs(input, env);
             var right = rhs(input, env);
 
+            // Fast path: both are raw doubles or numeric elements
+            if (left.TryGetDouble(out double ld) && right.TryGetDouble(out double rd))
+            {
+                return new Sequence(JsonataHelpers.BooleanElement(cmp(ld, rd)));
+            }
+
             // Check for invalid types BEFORE undefined check — boolean/null in comparison is always an error
-            if (!left.IsUndefined)
+            if (!left.IsUndefined && !left.IsRawDouble)
             {
                 var l = left.FirstOrDefault;
                 if (l.ValueKind is JsonValueKind.True or JsonValueKind.False or JsonValueKind.Null
@@ -3807,7 +3837,7 @@ internal static class FunctionalCompiler
                 }
             }
 
-            if (!right.IsUndefined)
+            if (!right.IsUndefined && !right.IsRawDouble)
             {
                 var r = right.FirstOrDefault;
                 if (r.ValueKind is JsonValueKind.True or JsonValueKind.False or JsonValueKind.Null
@@ -4165,9 +4195,15 @@ internal static class FunctionalCompiler
                 }
 
                 var el = result.FirstOrDefault;
+                if (result.IsRawDouble)
+                {
+                    result.TryGetDouble(out double d);
+                    return Sequence.FromDouble(-d, env.Workspace);
+                }
+
                 if (el.ValueKind == JsonValueKind.Number)
                 {
-                    return new Sequence(JsonataHelpers.NumberFromDouble(-el.GetDouble(), env.Workspace));
+                    return Sequence.FromDouble(-el.GetDouble(), env.Workspace);
                 }
 
                 throw new JsonataException("D1002", "Cannot negate a non-numeric value", unary.Position);

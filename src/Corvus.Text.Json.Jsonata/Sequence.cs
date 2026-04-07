@@ -39,6 +39,8 @@ internal readonly struct Sequence
     private readonly Regex? regex;
     private readonly TailCallContinuation? tailCall;
     private readonly double nonFiniteValue;
+    private readonly bool isRawDouble;
+    private readonly JsonWorkspace? rawDoubleWorkspace;
     private readonly Sequence[]? tupleItems;
     private readonly Dictionary<string, LambdaValue>? objectLambdas;
     private readonly LazyRangeInfo? lazyRange;
@@ -137,9 +139,41 @@ internal readonly struct Sequence
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Sequence(double nonFiniteValue)
     {
-        Debug.Assert(double.IsInfinity(nonFiniteValue) || double.IsNaN(nonFiniteValue), "Use this constructor only for non-finite values");
+        Debug.Assert(double.IsInfinity(nonFiniteValue) || double.IsNaN(nonFiniteValue), "Use this constructor only for non-finite values; use FromDouble for finite doubles");
         this.nonFiniteValue = nonFiniteValue;
         this.count = 0;
+        this.singleValue = default;
+        this.multiValues = null;
+        this.lambda = null;
+        this.regex = null;
+        this.tailCall = null;
+    }
+
+    /// <summary>
+    /// Creates a <see cref="Sequence"/> holding a raw finite double value without materializing
+    /// a <see cref="JsonElement"/>. The double is stored inline and only materialized to a
+    /// <see cref="JsonElement"/> when needed (e.g. when stored into a JSON array or object).
+    /// </summary>
+    /// <param name="value">The finite double value.</param>
+    /// <param name="workspace">The workspace used to materialize the double to a <see cref="JsonElement"/> on demand.</param>
+    /// <returns>A singleton sequence representing the number.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Sequence FromDouble(double value, JsonWorkspace workspace)
+    {
+        Debug.Assert(!double.IsInfinity(value) && !double.IsNaN(value), "Use Sequence(double) constructor for non-finite values");
+        return new Sequence(value, workspace);
+    }
+
+    /// <summary>
+    /// Private constructor for raw finite doubles.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private Sequence(double value, JsonWorkspace workspace)
+    {
+        this.nonFiniteValue = value;
+        this.isRawDouble = true;
+        this.rawDoubleWorkspace = workspace;
+        this.count = 1;
         this.singleValue = default;
         this.multiValues = null;
         this.lambda = null;
@@ -224,6 +258,95 @@ internal readonly struct Sequence
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get => this.count == 1;
+    }
+
+    /// <summary>Gets a value indicating whether this sequence holds a raw finite double value.</summary>
+    public bool IsRawDouble
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => this.isRawDouble;
+    }
+
+    /// <summary>
+    /// Tries to extract a double value from this sequence. Succeeds for raw doubles
+    /// and for singleton number elements.
+    /// </summary>
+    /// <param name="value">When this method returns <c>true</c>, contains the double value.</param>
+    /// <returns><c>true</c> if the sequence holds a numeric value; otherwise <c>false</c>.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool TryGetDouble(out double value)
+    {
+        if (this.isRawDouble)
+        {
+            value = this.nonFiniteValue;
+            return true;
+        }
+
+        if (this.count == 1 && this.singleValue.ValueKind == JsonValueKind.Number)
+        {
+            return this.singleValue.TryGetDouble(out value);
+        }
+
+        value = 0;
+        return false;
+    }
+
+    /// <summary>
+    /// Materializes this sequence's value as a <see cref="JsonElement"/>. For raw doubles,
+    /// this creates a <see cref="JsonElement"/> in the stored workspace.
+    /// For element-backed sequences, returns the element directly.
+    /// </summary>
+    /// <returns>The <see cref="JsonElement"/> representation.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public JsonElement AsElement()
+    {
+        if (this.isRawDouble)
+        {
+            return JsonataHelpers.NumberFromDouble(this.nonFiniteValue, this.rawDoubleWorkspace!);
+        }
+
+        return this.FirstOrDefault;
+    }
+
+    /// <summary>
+    /// Materializes this sequence's value as a <see cref="JsonElement"/>. For raw doubles,
+    /// this creates a <see cref="JsonElement"/> in the given workspace.
+    /// For element-backed sequences, returns the element directly.
+    /// </summary>
+    /// <param name="workspace">The workspace used to create number elements for raw doubles.</param>
+    /// <returns>The <see cref="JsonElement"/> representation.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public JsonElement AsElement(JsonWorkspace workspace)
+    {
+        if (this.isRawDouble)
+        {
+            return JsonataHelpers.NumberFromDouble(this.nonFiniteValue, workspace);
+        }
+
+        return this.FirstOrDefault;
+    }
+
+    /// <summary>
+    /// Gets the <see cref="JsonValueKind"/> of this sequence's value without materializing.
+    /// Returns <see cref="JsonValueKind.Number"/> for raw doubles and non-finite values.
+    /// </summary>
+    public JsonValueKind SequenceValueKind
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get
+        {
+            if (this.isRawDouble || this.IsNonFinite)
+            {
+                return JsonValueKind.Number;
+            }
+
+            if (this.count > 0)
+            {
+                return this.FirstOrDefault.ValueKind;
+            }
+
+            return JsonValueKind.Undefined;
+        }
     }
 
     /// <summary>Gets a value indicating whether this sequence holds a lambda (function) value.</summary>
@@ -336,6 +459,12 @@ internal readonly struct Sequence
                 ThrowIndexOutOfRange();
             }
 
+            if (this.isRawDouble)
+            {
+                Debug.Assert(index == 0, "Raw double sequence index must be 0");
+                return JsonataHelpers.NumberFromDouble(this.nonFiniteValue, this.rawDoubleWorkspace!);
+            }
+
             if (this.lazyRange is not null)
             {
                 return this.lazyRange.GetElement(index);
@@ -360,6 +489,11 @@ internal readonly struct Sequence
     /// Gets the first (and in singleton case, only) value.
     /// Returns the <c>default</c> <see cref="JsonElement"/> if undefined.
     /// </summary>
+    /// <remarks>
+    /// For raw double sequences, this materializes the double into a <see cref="JsonElement"/>
+    /// using the stored workspace reference. Callers on the arithmetic hot path should use
+    /// <see cref="TryGetDouble"/> instead to avoid this materialization.
+    /// </remarks>
     public JsonElement FirstOrDefault
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -368,6 +502,11 @@ internal readonly struct Sequence
             if (this.count == 0)
             {
                 return default;
+            }
+
+            if (this.isRawDouble)
+            {
+                return JsonataHelpers.NumberFromDouble(this.nonFiniteValue, this.rawDoubleWorkspace!);
             }
 
             if (this.tupleItems is not null)

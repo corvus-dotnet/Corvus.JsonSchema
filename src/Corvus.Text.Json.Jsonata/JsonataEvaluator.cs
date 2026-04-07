@@ -105,10 +105,11 @@ public sealed class JsonataEvaluator
         }
 
         // Clone the result into a standalone element before the workspace is disposed.
-        // The workspace owns all intermediate documents; this creates a new document
-        // that outlives the workspace. The backing ParsedJsonDocument will be collected
-        // by GC when the returned element is no longer referenced.
-        return JsonElement.ParseValue(System.Text.Encoding.UTF8.GetBytes(resultElement.GetRawText()));
+        // The workspace owns all intermediate documents; Clone() performs a binary copy
+        // of the backing metadata and value buffers (no serialize→parse round-trip).
+        // The backing ParsedJsonDocument will be collected by GC when the returned
+        // element is no longer referenced.
+        return resultElement.Clone();
     }
 
     /// <summary>
@@ -127,6 +128,71 @@ public sealed class JsonataEvaluator
         }
 
         return result.GetRawText();
+    }
+
+    /// <summary>
+    /// Evaluates a JSONata expression against input data using the caller's workspace.
+    /// </summary>
+    /// <param name="expression">The JSONata expression string.</param>
+    /// <param name="data">The input JSON data element.</param>
+    /// <param name="workspace">
+    /// The workspace for intermediate document allocation. The returned <see cref="JsonElement"/>
+    /// may reference documents owned by this workspace, so it remains valid only while the
+    /// workspace is alive and has not been reset.
+    /// </param>
+    /// <param name="bindings">Optional pre-defined variable bindings (name → value).</param>
+    /// <param name="maxDepth">Maximum recursion depth (default 500).</param>
+    /// <param name="timeLimitMs">Maximum evaluation time in milliseconds (0 = no limit).</param>
+    /// <returns>The evaluation result as a <see cref="JsonElement"/>, or <c>default</c> if the result is undefined.</returns>
+    /// <remarks>
+    /// <para>
+    /// Because the result is not cloned, this overload avoids allocation at the evaluation
+    /// boundary. The caller is responsible for ensuring the workspace outlives any use of
+    /// the returned element.
+    /// </para>
+    /// </remarks>
+    public JsonElement Evaluate(string expression, JsonElement data, JsonWorkspace workspace, IReadOnlyDictionary<string, JsonElement>? bindings = null, int maxDepth = Environment.DefaultMaxDepth, int timeLimitMs = 0)
+    {
+        var compiled = this.GetOrCompile(expression);
+
+        var env = new Environment
+        {
+            RootInput = data,
+            MaxDepth = maxDepth,
+            Workspace = workspace,
+        };
+
+        if (timeLimitMs > 0)
+        {
+            env.TimeLimitMs = timeLimitMs;
+            env.StartTimer();
+        }
+
+        if (bindings is not null)
+        {
+            foreach (var kvp in bindings)
+            {
+                env.Bind(kvp.Key, new Sequence(kvp.Value));
+            }
+        }
+
+        var result = compiled(data, env);
+
+        if (result.IsUndefined)
+        {
+            return default;
+        }
+
+        JsonElement resultElement = result.IsSingleton
+            ? result.FirstOrDefault
+            : JsonataHelpers.ArrayFromSequence(result, workspace);
+
+        if (resultElement.ValueKind == JsonValueKind.Undefined)
+        {
+            return default;
+        }
+
+        return resultElement;
     }
 
     private ExpressionEvaluator GetOrCompile(string expression)
