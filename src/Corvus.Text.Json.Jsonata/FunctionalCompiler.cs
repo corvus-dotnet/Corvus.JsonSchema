@@ -1240,11 +1240,14 @@ internal static class FunctionalCompiler
                 // set of matching elements, not individual singletons.
                 // The focus variable is re-bound per-element during evaluation
                 // so that filter predicates (e.g. [$l.isbn=$b.isbn]) still work.
+                // Track original indices so the index variable (#$var) reflects
+                // the element's position in the pre-filter array.
+                List<int>? survivingOriginalIndices = indexVar is not null ? new() : null;
                 if (stages[stepIdx] is not null)
                 {
                     var batchSeq = new Sequence(elements.ToArray(), elements.Count);
                     var filtered = ApplyFocusStages(
-                        batchSeq, stages[stepIdx]!, stageIsSortFlags[stepIdx]!, env, focusVar, indexVar);
+                        batchSeq, stages[stepIdx]!, stageIsSortFlags[stepIdx]!, env, focusVar, indexVar, survivingOriginalIndices);
                     if (filtered.IsUndefined)
                     {
                         return Sequence.Undefined;
@@ -1282,10 +1285,14 @@ internal static class FunctionalCompiler
                     // Bind focus variable to this element
                     env.Bind(focusVar, new Sequence(el));
 
-                    // Bind index variable if present
+                    // Bind index variable to the element's ORIGINAL array position
+                    // (before filtering), not the position in the filtered list.
                     if (indexVar is not null)
                     {
-                        env.Bind(indexVar, new Sequence(JsonataHelpers.NumberFromDouble(i, env.Workspace)));
+                        int origIdx = survivingOriginalIndices is not null && i < survivingOriginalIndices.Count
+                            ? survivingOriginalIndices[i]
+                            : i;
+                        env.Bind(indexVar, new Sequence(JsonataHelpers.NumberFromDouble(origIdx, env.Workspace)));
                     }
 
                     // Evaluate remaining steps from parent context (cross-join).
@@ -1906,10 +1913,13 @@ internal static class FunctionalCompiler
                     // Bind index variable
                     env.Bind(indexVar, new Sequence(JsonataHelpers.NumberFromDouble(i, env.Workspace)));
 
-                    // Apply stages (filters) per-element
+                    // Apply stages (filters) per-element.
+                    // Pass null for indexVar — the index is already bound above.
+                    // Passing it here would cause ApplyStages to re-bind it to 0
+                    // (singleton input), overwriting the correct binding.
                     if (stages[stepIdx] is not null)
                     {
-                        var filtered = ApplyStages(new Sequence(el), stages[stepIdx]!, stageIsSortFlags[stepIdx]!, env, indexVar);
+                        var filtered = ApplyStages(new Sequence(el), stages[stepIdx]!, stageIsSortFlags[stepIdx]!, env, null);
                         if (filtered.IsUndefined)
                         {
                             continue;
@@ -2793,14 +2803,35 @@ internal static class FunctionalCompiler
     /// <c>[$l.isbn=$b.isbn]</c>) to work correctly, while index predicates
     /// (e.g. <c>[1]</c>) see the full element count.
     /// </summary>
+    /// <param name="survivingOriginalIndices">
+    /// When non-null, populated with the original (pre-filter) positions of the
+    /// elements that survived all stages. Enables the caller to map filtered
+    /// results back to their original array positions for index binding (#$var).
+    /// </param>
     private static Sequence ApplyFocusStages(
         Sequence current,
         ExpressionEvaluator[] stageEvaluators,
         bool[] isSortStage,
         Environment env,
         string focusVar,
-        string? indexVar = null)
+        string? indexVar = null,
+        List<int>? survivingOriginalIndices = null)
     {
+        // Track original indices through filtering stages.
+        // When survivingOriginalIndices is non-null, we maintain a parallel
+        // mapping from current element position to original array position.
+        int[]? currentIndices = survivingOriginalIndices is not null
+            ? new int[current.IsUndefined ? 0 : current.IsSingleton && current.FirstOrDefault.ValueKind == JsonValueKind.Array ? current.FirstOrDefault.GetArrayLength() : current.Count]
+            : null;
+
+        if (currentIndices is not null)
+        {
+            for (int ci = 0; ci < currentIndices.Length; ci++)
+            {
+                currentIndices[ci] = ci;
+            }
+        }
+
         for (int s = 0; s < stageEvaluators.Length; s++)
         {
             if (current.IsUndefined)
@@ -2859,10 +2890,14 @@ internal static class FunctionalCompiler
                     current = stage(arrayInput, env);
                 }
 
+                // Sort stages reorder elements; original index tracking becomes
+                // unreliable. Clear the mapping (caller won't use it for sorts).
+                currentIndices = null;
                 continue;
             }
 
             var builder = default(SequenceBuilder);
+            List<int>? nextIndices = currentIndices is not null ? new List<int>() : null;
             for (int i = 0; i < elements.Count; i++)
             {
                 var el = elements[i];
@@ -2870,9 +2905,12 @@ internal static class FunctionalCompiler
                 // Re-bind focus variable per-element so filter predicates work
                 env.Bind(focusVar, new Sequence(el));
 
+                // Bind index to the ORIGINAL array position so predicates like
+                // [$ib > 1] reference the pre-filter position.
                 if (indexVar is not null)
                 {
-                    env.Bind(indexVar, new Sequence(JsonataHelpers.NumberFromDouble(i, env.Workspace)));
+                    int origIdx = currentIndices is not null ? currentIndices[i] : i;
+                    env.Bind(indexVar, new Sequence(JsonataHelpers.NumberFromDouble(origIdx, env.Workspace)));
                 }
 
                 var result = stage(el, env);
@@ -2889,6 +2927,7 @@ internal static class FunctionalCompiler
                     if (firstResult.ValueKind == JsonValueKind.True)
                     {
                         builder.Add(el);
+                        nextIndices?.Add(currentIndices is not null ? currentIndices[i] : i);
                     }
 
                     continue;
@@ -2979,6 +3018,7 @@ internal static class FunctionalCompiler
                         if (idx == i && idx >= 0 && idx < elements.Count)
                         {
                             builder.Add(el);
+                            nextIndices?.Add(currentIndices is not null ? currentIndices[i] : i);
                         }
                     }
 
@@ -2988,10 +3028,18 @@ internal static class FunctionalCompiler
                 if (IsTruthy(result))
                 {
                     builder.Add(el);
+                    nextIndices?.Add(currentIndices is not null ? currentIndices[i] : i);
                 }
             }
 
             current = builder.ToSequence();
+            currentIndices = nextIndices?.ToArray();
+        }
+
+        // Output the surviving original indices for the caller
+        if (survivingOriginalIndices is not null && currentIndices is not null)
+        {
+            survivingOriginalIndices.AddRange(currentIndices);
         }
 
         return current;
