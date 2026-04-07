@@ -1207,7 +1207,7 @@ internal static class FunctionalCompiler
         return result;
     }
 
-    private static Sequence FlattenArrayStep(JsonElement array, ExpressionEvaluator step, Environment env)
+    private static Sequence FlattenArrayStep(JsonElement array, ExpressionEvaluator step, Environment env, bool isConsArray = false)
     {
         var builder = default(SequenceBuilder);
         foreach (var item in array.EnumerateArray())
@@ -1216,7 +1216,9 @@ internal static class FunctionalCompiler
 
             // Auto-flatten: when a property step returns a JSON array from an element,
             // expand it into individual elements (JSONata's one-level flattening).
-            if (result.IsSingleton && result.FirstOrDefault.ValueKind == JsonValueKind.Array)
+            // Constructed-array steps (isConsArray) skip this — their results are
+            // "cons" arrays that must be preserved as individual elements.
+            if (!isConsArray && result.IsSingleton && result.FirstOrDefault.ValueKind == JsonValueKind.Array)
             {
                 foreach (var child in result.FirstOrDefault.EnumerateArray())
                 {
@@ -1654,10 +1656,14 @@ internal static class FunctionalCompiler
                 }
                 else
                 {
-                    // Other expressions: flatten arrays into the result
-                    for (int i = 0; i < result.Count; i++)
+                    // Other expressions: equivalent to JSONata's append (one-level concat).
+                    // Singleton array results are flattened (matching how evaluate() unwraps
+                    // singletons and append/concat spreads one level). Multi-value results
+                    // have each element written as-is (sub-arrays from nested constructors
+                    // are preserved, matching how concat doesn't recurse into elements).
+                    if (result.IsSingleton)
                     {
-                        var item = result[i];
+                        var item = result.FirstOrDefault;
                         if (item.ValueKind == JsonValueKind.Array)
                         {
                             foreach (var child in item.EnumerateArray())
@@ -1668,6 +1674,13 @@ internal static class FunctionalCompiler
                         else
                         {
                             item.WriteTo(writer);
+                        }
+                    }
+                    else
+                    {
+                        for (int i = 0; i < result.Count; i++)
+                        {
+                            result[i].WriteTo(writer);
                         }
                     }
                 }
@@ -1684,14 +1697,19 @@ internal static class FunctionalCompiler
     private static ExpressionEvaluator CompileObjectConstructor(ObjectConstructorNode obj)
     {
         var pairs = obj.Pairs.Select(p => (Key: Compile(p.Key), Value: Compile(p.Value))).ToArray();
+        bool hasMuliPlePairs = pairs.Length > 1;
         return (in JsonElement input, Environment env) =>
         {
             using var ms = new MemoryStream(256);
             using var writer = new Utf8JsonWriter(ms);
             writer.WriteStartObject();
 
-            foreach (var (key, value) in pairs)
+            // Track which pair index produced each key to detect D1009 duplicates
+            Dictionary<string, int>? seenKeys = hasMuliPlePairs ? new() : null;
+
+            for (int pairIdx = 0; pairIdx < pairs.Length; pairIdx++)
             {
+                var (key, value) = pairs[pairIdx];
                 var keyResult = key(input, env);
                 var valueResult = value(input, env);
 
@@ -1714,6 +1732,25 @@ internal static class FunctionalCompiler
                 }
 
                 string keyStr = keyResult.FirstOrDefault.GetString()!;
+
+                // D1009: duplicate key from different pair expressions
+                if (seenKeys is not null)
+                {
+                    if (seenKeys.TryGetValue(keyStr, out int prevPairIdx))
+                    {
+                        if (prevPairIdx != pairIdx)
+                        {
+                            throw new JsonataException(
+                                "D1009",
+                                $"Multiple key definitions evaluate to same key: \"{keyStr}\"",
+                                0);
+                        }
+                    }
+                    else
+                    {
+                        seenKeys[keyStr] = pairIdx;
+                    }
+                }
 
                 if (valueResult.IsLambda)
                 {
@@ -2461,7 +2498,7 @@ internal static class FunctionalCompiler
                 var funcResult = procedureEval(input, env);
                 if (!funcResult.IsLambda)
                 {
-                    throw new JsonataException("T1008", "Attempted to partially apply a non-function", partial.Position);
+                    throw new JsonataException("T1007", "Attempted to partially apply a non-function", partial.Position);
                 }
 
                 var originalLambda = funcResult.Lambda!;

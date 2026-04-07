@@ -3515,12 +3515,13 @@ internal static class BuiltInFunctions
 
     private static ExpressionEvaluator CompileEval(ExpressionEvaluator[] args)
     {
-        if (args.Length != 1)
+        if (args.Length < 1 || args.Length > 2)
         {
-            throw new JsonataException("T0410", "$eval expects 1 argument", 0);
+            throw new JsonataException("T0410", "$eval expects 1 or 2 arguments", 0);
         }
 
         var exprArg = args[0];
+        var contextArg = args.Length > 1 ? args[1] : null;
         return (in JsonElement input, Environment env) =>
         {
             var exprSeq = exprArg(input, env);
@@ -3537,10 +3538,55 @@ internal static class BuiltInFunctions
 
             string expr = el.GetString() ?? string.Empty;
 
-            // Parse and compile on the fly
-            var ast = Parser.Parse(expr);
-            var compiled = FunctionalCompiler.Compile(ast);
-            return compiled(input, env);
+            Ast.JsonataNode ast;
+            try
+            {
+                ast = Parser.Parse(expr);
+            }
+            catch (JsonataException ex)
+            {
+                throw new JsonataException("D3120", $"Syntax error in expression passed to $eval: {ex.Message}", 0);
+            }
+
+            ExpressionEvaluator compiled;
+            try
+            {
+                compiled = FunctionalCompiler.Compile(ast);
+            }
+            catch (JsonataException ex)
+            {
+                throw new JsonataException("D3121", $"Dynamic error in expression passed to $eval: {ex.Message}", 0);
+            }
+
+            // Determine input for the compiled expression
+            JsonElement evalInput = input;
+            if (contextArg is not null)
+            {
+                var ctxSeq = contextArg(input, env);
+                if (ctxSeq.IsSingleton)
+                {
+                    evalInput = ctxSeq.FirstOrDefault;
+                }
+                else if (!ctxSeq.IsUndefined)
+                {
+                    var elements = new List<JsonElement>();
+                    foreach (var item in ctxSeq)
+                    {
+                        elements.Add(item);
+                    }
+
+                    evalInput = FunctionalCompiler.CreateArrayElement(elements);
+                }
+            }
+
+            try
+            {
+                return compiled(evalInput, env);
+            }
+            catch (JsonataException ex)
+            {
+                throw new JsonataException("D3121", $"Dynamic error in expression passed to $eval: {ex.Message}", 0);
+            }
         };
     }
 

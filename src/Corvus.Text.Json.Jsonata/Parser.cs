@@ -821,28 +821,7 @@ internal sealed class Parser
         }
 
         var rest = this.ProcessAst(binary.Rhs);
-        if (rest is ObjectConstructorNode objStep)
-        {
-            // Object constructor as a path step becomes a group-by operation.
-            // e.g. $.{type: $sum(value)} groups elements by their type field.
-            var pathAnnotations = GetOrCreateAnnotations(result);
-            if (pathAnnotations.Group is not null)
-            {
-                throw new JsonataException(
-                    "S0210",
-                    "Multiple group-by clauses",
-                    objStep.Position);
-            }
-
-            var groupBy = new GroupBy { Position = objStep.Position };
-            foreach (var (key, value) in objStep.Pairs)
-            {
-                groupBy.Pairs.Add((key, value));
-            }
-
-            pathAnnotations.Group = groupBy;
-        }
-        else if (rest is PathNode restPath)
+        if (rest is PathNode restPath)
         {
             result.Steps.AddRange(restPath.Steps);
         }
