@@ -91,6 +91,13 @@ public class JsonataTestSuiteRunner
             maxDepth = depthEl.GetInt32();
         }
 
+        // Determine time limit in milliseconds (from test case, 0 = no limit)
+        int timeLimitMs = 0;
+        if (root.TryGetProperty("timelimit", out var timelimitEl))
+        {
+            timeLimitMs = timelimitEl.GetInt32();
+        }
+
         // Load input data
         JsonElement inputData = default;
         ParsedJsonDocument<JsonElement>? dataDoc = null;
@@ -145,17 +152,17 @@ public class JsonataTestSuiteRunner
 
             if (expectedErrorCode is not null)
             {
-                RunErrorCase(expectedErrorCode, expr, inputData, hasData, bindings, maxDepth);
+                RunErrorCase(expectedErrorCode, expr, inputData, hasData, bindings, maxDepth, timeLimitMs);
                 this.output.WriteLine($"Got expected error: {expectedErrorCode}");
             }
             else if (root.TryGetProperty("undefinedResult", out _))
             {
-                RunUndefinedCase(expr, inputData, hasData, bindings, maxDepth);
+                RunUndefinedCase(expr, inputData, hasData, bindings, maxDepth, timeLimitMs);
                 this.output.WriteLine("Got expected undefined result");
             }
             else if (root.TryGetProperty("result", out var expectedResult))
             {
-                RunResultCase(expectedResult, expr, inputData, hasData, bindings, maxDepth);
+                RunResultCase(expectedResult, expr, inputData, hasData, bindings, maxDepth, timeLimitMs);
             }
             else
             {
@@ -202,12 +209,12 @@ public class JsonataTestSuiteRunner
         }
     }
 
-    private static void RunErrorCase(string expectedCode, string expr, JsonElement inputData, bool hasData, Dictionary<string, JsonElement>? bindings, int maxDepth)
+    private static void RunErrorCase(string expectedCode, string expr, JsonElement inputData, bool hasData, Dictionary<string, JsonElement>? bindings, int maxDepth, int timeLimitMs)
     {
         Exception? caught = null;
         try
         {
-            var task = Task.Run(() => Evaluator.Evaluate(expr, hasData ? inputData : default, bindings, maxDepth));
+            var task = Task.Run(() => Evaluator.Evaluate(expr, hasData ? inputData : default, bindings, maxDepth, timeLimitMs));
             if (!task.Wait(TestTimeout))
             {
                 Assert.Fail($"Evaluation timed out after {TestTimeout.TotalSeconds}s");
@@ -230,9 +237,9 @@ public class JsonataTestSuiteRunner
         }
     }
 
-    private static void RunUndefinedCase(string expr, JsonElement inputData, bool hasData, Dictionary<string, JsonElement>? bindings, int maxDepth)
+    private static void RunUndefinedCase(string expr, JsonElement inputData, bool hasData, Dictionary<string, JsonElement>? bindings, int maxDepth, int timeLimitMs)
     {
-        var task = Task.Run(() => Evaluator.Evaluate(expr, hasData ? inputData : default, bindings, maxDepth));
+        var task = Task.Run(() => Evaluator.Evaluate(expr, hasData ? inputData : default, bindings, maxDepth, timeLimitMs));
         if (!task.Wait(TestTimeout))
         {
             Assert.Fail($"Evaluation timed out after {TestTimeout.TotalSeconds}s");
@@ -241,9 +248,9 @@ public class JsonataTestSuiteRunner
         Assert.Equal(JsonValueKind.Undefined, task.Result.ValueKind);
     }
 
-    private void RunResultCase(JsonElement expectedResult, string expr, JsonElement inputData, bool hasData, Dictionary<string, JsonElement>? bindings, int maxDepth)
+    private void RunResultCase(JsonElement expectedResult, string expr, JsonElement inputData, bool hasData, Dictionary<string, JsonElement>? bindings, int maxDepth, int timeLimitMs)
     {
-        var task = Task.Run(() => Evaluator.Evaluate(expr, hasData ? inputData : default, bindings, maxDepth));
+        var task = Task.Run(() => Evaluator.Evaluate(expr, hasData ? inputData : default, bindings, maxDepth, timeLimitMs));
         if (!task.Wait(TestTimeout))
         {
             Assert.Fail($"Evaluation timed out after {TestTimeout.TotalSeconds}s");

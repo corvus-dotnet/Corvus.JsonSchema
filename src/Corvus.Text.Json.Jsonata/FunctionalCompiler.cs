@@ -61,6 +61,10 @@ internal static class FunctionalCompiler
             evaluator = WrapKeepArray(evaluator);
         }
 
+        // Wrap with per-expression depth tracking. Every expression evaluation
+        // increments the depth counter, matching jsonata-js's per-evaluate() counting.
+        evaluator = WrapWithDepthTracking(evaluator);
+
         return evaluator;
     }
 
@@ -98,6 +102,22 @@ internal static class FunctionalCompiler
             PartialNode partial => CompilePartial(partial),
             PlaceholderNode => throw new JsonataException("D1001", "Unexpected placeholder outside partial application", node.Position),
             _ => throw new JsonataException("D1001", $"Unknown node type: {node.Type}", node.Position),
+        };
+    }
+
+    private static ExpressionEvaluator WrapWithDepthTracking(ExpressionEvaluator inner)
+    {
+        return (in JsonElement input, Environment env) =>
+        {
+            env.EnterEval();
+            try
+            {
+                return inner(in input, env);
+            }
+            finally
+            {
+                env.LeaveEval();
+            }
         };
     }
 
@@ -438,7 +458,7 @@ internal static class FunctionalCompiler
 
         for (int i = 0; i < path.Steps.Count; i++)
         {
-            steps[i] = CompileCore(path.Steps[i]);
+            steps[i] = WrapWithDepthTracking(CompileCore(path.Steps[i]));
             isPropertyStep[i] = path.Steps[i] is NameNode or WildcardNode or DescendantNode;
             isConsArrayStep[i] = path.Steps[i] is ArrayConstructorNode { ConsArray: true };
             isSortStep[i] = path.Steps[i] is SortNode;

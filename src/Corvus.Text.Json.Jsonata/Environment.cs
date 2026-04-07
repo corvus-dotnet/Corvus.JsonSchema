@@ -2,6 +2,9 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
+
 namespace Corvus.Text.Json.Jsonata;
 
 /// <summary>
@@ -23,8 +26,12 @@ internal sealed class Environment
 
     private readonly Dictionary<string, Sequence> bindings = new();
     private readonly Environment? parent;
+    private readonly Environment root;
     private int currentDepth;
     private int maxDepth;
+    private int evalCount;
+    private long startTicks;
+    private long timeLimitTicks;
     private Dictionary<int, LambdaValue>? lambdaMap;
     private int lambdaCounter;
 
@@ -35,6 +42,7 @@ internal sealed class Environment
     public Environment(Environment? parent = null)
     {
         this.parent = parent;
+        this.root = parent?.root ?? this;
         this.maxDepth = DefaultMaxDepth;
     }
 
@@ -51,8 +59,8 @@ internal sealed class Environment
     /// </summary>
     public JsonWorkspace Workspace
     {
-        get => this.GetRoot().WorkspaceDirect;
-        set => this.GetRoot().WorkspaceDirect = value;
+        get => this.root.WorkspaceDirect;
+        set => this.root.WorkspaceDirect = value;
     }
 
     /// <summary>
@@ -61,8 +69,18 @@ internal sealed class Environment
     /// </summary>
     public int MaxDepth
     {
-        get => this.GetRoot().maxDepth;
-        set => this.GetRoot().maxDepth = value;
+        get => this.root.maxDepth;
+        set => this.root.maxDepth = value;
+    }
+
+    /// <summary>
+    /// Gets or sets the time limit in milliseconds for this evaluation.
+    /// Zero means no time limit. Only meaningful on the root environment.
+    /// </summary>
+    public int TimeLimitMs
+    {
+        get => (int)(this.root.timeLimitTicks * 1000 / Stopwatch.Frequency);
+        set => this.root.timeLimitTicks = value > 0 ? (long)value * Stopwatch.Frequency / 1000 : 0;
     }
 
     // Direct field-backed property for the root environment only.
@@ -112,24 +130,43 @@ internal sealed class Environment
     }
 
     /// <summary>
-    /// Increments the call depth and throws if the limit is exceeded.
+    /// Increments the evaluation depth and throws if the limit is exceeded.
+    /// Also periodically checks the time limit.
+    /// Called by the depth-tracking wrapper around every compiled expression.
     /// </summary>
-    /// <exception cref="JsonataException">Thrown with code <c>U1001</c> when the depth limit is exceeded.</exception>
-    public void EnterCall()
+    /// <exception cref="JsonataException">Thrown with code <c>U1001</c> when the depth or time limit is exceeded.</exception>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void EnterEval()
     {
-        var root = this.GetRoot();
-        if (++root.currentDepth > root.maxDepth)
+        var r = this.root;
+        if (++r.currentDepth > r.maxDepth)
         {
-            throw new JsonataException("U1001", "Stack overflow error: call depth exceeded", -1);
+            ThrowDepthExceeded();
+        }
+
+        // Check timeout every 1024 evaluations to amortize clock reads
+        if (r.timeLimitTicks > 0 && (++r.evalCount & 0x3FF) == 0)
+        {
+            CheckTimeout(r);
         }
     }
 
     /// <summary>
-    /// Decrements the call depth after a function call completes.
+    /// Decrements the evaluation depth after an expression evaluation completes.
     /// </summary>
-    public void LeaveCall()
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void LeaveEval()
     {
-        this.GetRoot().currentDepth--;
+        this.root.currentDepth--;
+    }
+
+    /// <summary>
+    /// Starts the timer for time-limited evaluation. Call this once
+    /// before beginning expression evaluation.
+    /// </summary>
+    public void StartTimer()
+    {
+        this.root.startTicks = Stopwatch.GetTimestamp();
     }
 
     /// <summary>
@@ -140,10 +177,10 @@ internal sealed class Environment
     /// <returns>A unique integer ID that can be used to retrieve the lambda later.</returns>
     public int RegisterLambda(LambdaValue lambda)
     {
-        var root = this.GetRoot();
-        root.lambdaMap ??= new Dictionary<int, LambdaValue>();
-        int id = root.lambdaCounter++;
-        root.lambdaMap[id] = lambda;
+        var r = this.root;
+        r.lambdaMap ??= new Dictionary<int, LambdaValue>();
+        int id = r.lambdaCounter++;
+        r.lambdaMap[id] = lambda;
         return id;
     }
 
@@ -155,8 +192,8 @@ internal sealed class Environment
     /// <returns><c>true</c> if the lambda was found; otherwise <c>false</c>.</returns>
     public bool TryGetLambda(int id, out LambdaValue? lambda)
     {
-        var root = this.GetRoot();
-        if (root.lambdaMap is not null && root.lambdaMap.TryGetValue(id, out lambda))
+        var r = this.root;
+        if (r.lambdaMap is not null && r.lambdaMap.TryGetValue(id, out lambda))
         {
             return true;
         }
@@ -192,22 +229,25 @@ internal sealed class Environment
     /// </summary>
     public JsonElement GetRootInput()
     {
-        if (this.parent is null)
-        {
-            return this.RootInput;
-        }
-
-        return this.parent.GetRootInput();
+        return this.root.RootInput;
     }
 
-    private Environment GetRoot()
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static void ThrowDepthExceeded()
     {
-        var current = this;
-        while (current.parent is not null)
-        {
-            current = current.parent;
-        }
+        throw new JsonataException(
+            "U1001",
+            "Stack overflow error: Check for non-terminating recursive function. Consider rewriting as tail-recursive.",
+            -1);
+    }
 
-        return current;
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static void CheckTimeout(Environment r)
+    {
+        long elapsed = Stopwatch.GetTimestamp() - r.startTicks;
+        if (elapsed > r.timeLimitTicks)
+        {
+            throw new JsonataException("U1001", "Expression evaluation timeout: Check for infinite loop", -1);
+        }
     }
 }

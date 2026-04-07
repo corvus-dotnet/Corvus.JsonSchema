@@ -157,15 +157,6 @@ internal sealed class LambdaValue
             SignatureValidator.ValidateArgs(this.signature, effectiveArgs, -1);
         }
 
-        // Track call depth to prevent stack overflow
-        invokeEnv.EnterCall();
-        try
-        {
-            return this.body(this.definingInput, invokeEnv);
-        }
-        finally
-        {
-            invokeEnv.LeaveCall();
-        }
+        return this.body(this.definingInput, invokeEnv);
     }
 }

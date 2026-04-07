@@ -38,14 +38,18 @@ public sealed class JsonataEvaluator
     /// <see cref="Environment.DefaultMaxDepth"/>. Pass a lower value
     /// for safety, or a higher value for deeply recursive expressions.
     /// </param>
+    /// <param name="timeLimitMs">
+    /// The maximum time in milliseconds for expression evaluation. Zero means no limit.
+    /// When the limit is exceeded, a <see cref="JsonataException"/> with code <c>U1001</c> is thrown.
+    /// </param>
     /// <returns>
     /// The result as a <see cref="JsonElement"/>. Returns a <c>default</c>
     /// <see cref="JsonElement"/> (with <see cref="JsonValueKind.Undefined"/>)
     /// if the expression produces no result.
     /// </returns>
-    public JsonElement Evaluate(string expression, JsonElement data, int maxDepth = Environment.DefaultMaxDepth)
+    public JsonElement Evaluate(string expression, JsonElement data, int maxDepth = Environment.DefaultMaxDepth, int timeLimitMs = 0)
     {
-        return this.Evaluate(expression, data, null, maxDepth);
+        return this.Evaluate(expression, data, null, maxDepth, timeLimitMs);
     }
 
     /// <summary>
@@ -55,8 +59,9 @@ public sealed class JsonataEvaluator
     /// <param name="data">The input JSON data element.</param>
     /// <param name="bindings">Optional pre-defined variable bindings (name → value).</param>
     /// <param name="maxDepth">Maximum recursion depth (default 500).</param>
+    /// <param name="timeLimitMs">Maximum evaluation time in milliseconds (0 = no limit).</param>
     /// <returns>The evaluation result as a <see cref="JsonElement"/>, or <c>default</c> if the result is undefined.</returns>
-    public JsonElement Evaluate(string expression, JsonElement data, IReadOnlyDictionary<string, JsonElement>? bindings, int maxDepth = Environment.DefaultMaxDepth)
+    public JsonElement Evaluate(string expression, JsonElement data, IReadOnlyDictionary<string, JsonElement>? bindings, int maxDepth = Environment.DefaultMaxDepth, int timeLimitMs = 0)
     {
         var compiled = this.GetOrCompile(expression);
 
@@ -68,6 +73,12 @@ public sealed class JsonataEvaluator
             MaxDepth = maxDepth,
             Workspace = workspace,
         };
+
+        if (timeLimitMs > 0)
+        {
+            env.TimeLimitMs = timeLimitMs;
+            env.StartTimer();
+        }
 
         if (bindings is not null)
         {
