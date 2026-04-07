@@ -723,8 +723,20 @@ internal static class BuiltInFunctions
                 return Sequence.Undefined;
             }
 
-            string? str = strSeq.FirstOrDefault.GetString();
-            if (str is null || !FunctionalCompiler.TryCoerceToNumber(startSeq.FirstOrDefault, out double startD))
+            var strElem = strSeq.FirstOrDefault;
+            if (strElem.ValueKind != JsonValueKind.String)
+            {
+                throw new JsonataException("T0410", "Argument 1 of function $substring is not a string", 0);
+            }
+
+            var startElem = startSeq.FirstOrDefault;
+            if (!FunctionalCompiler.TryCoerceToNumber(startElem, out double startD))
+            {
+                throw new JsonataException("T0410", "Argument 2 of function $substring is not a number", 0);
+            }
+
+            string? str = strElem.GetString();
+            if (str is null)
             {
                 return Sequence.Undefined;
             }
@@ -747,7 +759,7 @@ internal static class BuiltInFunctions
                 var lenSeq = lengthArg(input, env);
                 if (!FunctionalCompiler.TryCoerceToNumber(lenSeq.FirstOrDefault, out double lenD))
                 {
-                    return Sequence.Undefined;
+                    throw new JsonataException("T0410", "Argument 3 of function $substring is not a number", 0);
                 }
 
                 count = Math.Max(0, (int)lenD);
@@ -805,7 +817,13 @@ internal static class BuiltInFunctions
                 return Sequence.Undefined;
             }
 
-            string? str = strSeq.FirstOrDefault.GetString();
+            var strElem = strSeq.FirstOrDefault;
+            if (strElem.ValueKind != JsonValueKind.String)
+            {
+                throw new JsonataException("T0410", "Argument 1 of string function is not a string", 0);
+            }
+
+            string? str = strElem.GetString();
             string? search = searchSeq.FirstOrDefault.GetString();
 
             if (str is null || search is null)
@@ -855,7 +873,7 @@ internal static class BuiltInFunctions
             }
 
             var elem = seq.FirstOrDefault;
-            if (elem.ValueKind is JsonValueKind.Undefined or JsonValueKind.Null)
+            if (elem.ValueKind == JsonValueKind.Undefined)
             {
                 return Sequence.Undefined;
             }
