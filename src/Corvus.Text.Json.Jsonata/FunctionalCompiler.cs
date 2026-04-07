@@ -3935,6 +3935,13 @@ internal static class FunctionalCompiler
             return;
         }
 
+        // Raw double fast path: format directly without materializing a JsonElement
+        if (seq.IsRawDouble && seq.TryGetDouble(out double d))
+        {
+            AppendNumberToBuffer(d, ref buffer, ref pos);
+            return;
+        }
+
         AppendCoercedElementToBuffer(seq.FirstOrDefault, ref buffer, ref pos);
     }
 
@@ -3977,11 +3984,7 @@ internal static class FunctionalCompiler
         double value = elem.GetDouble();
         if (double.IsNaN(value) || double.IsInfinity(value))
         {
-            JsonataHelpers.GrowBufferIfNeeded(ref buffer, pos, 4);
-            buffer[pos++] = (byte)'n';
-            buffer[pos++] = (byte)'u';
-            buffer[pos++] = (byte)'l';
-            buffer[pos++] = (byte)'l';
+            AppendNullToBuffer(ref buffer, ref pos);
             return;
         }
 
@@ -4013,6 +4016,54 @@ internal static class FunctionalCompiler
         }
 
         // Non-integer path: format via G15 then write as ASCII bytes
+        AppendG15FormattedNumber(value, ref buffer, ref pos);
+    }
+
+    /// <summary>
+    /// Appends a raw double value's formatted UTF-8 representation directly to the buffer.
+    /// For integer values, writes the integer form directly. For non-integers, uses G15 formatting.
+    /// </summary>
+    private static void AppendNumberToBuffer(double value, ref byte[] buffer, ref int pos)
+    {
+        if (double.IsNaN(value) || double.IsInfinity(value))
+        {
+            AppendNullToBuffer(ref buffer, ref pos);
+            return;
+        }
+
+        // Integer fast path: format as integer directly
+        if (value == Math.Floor(value) && !double.IsInfinity(value) && Math.Abs(value) < 1e15)
+        {
+            long intVal = (long)value;
+            Span<byte> intBuffer = stackalloc byte[20]; // max long is 19 digits + sign
+#if NET
+            if (Utf8Formatter.TryFormat(intVal, intBuffer, out int intBytesWritten))
+#else
+            if (System.Buffers.Text.Utf8Formatter.TryFormat(intVal, intBuffer, out int intBytesWritten))
+#endif
+            {
+                JsonataHelpers.GrowBufferIfNeeded(ref buffer, pos, intBytesWritten);
+                intBuffer.Slice(0, intBytesWritten).CopyTo(buffer.AsSpan(pos));
+                pos += intBytesWritten;
+                return;
+            }
+        }
+
+        // Non-integer path: format via G15 then write as ASCII bytes
+        AppendG15FormattedNumber(value, ref buffer, ref pos);
+    }
+
+    private static void AppendNullToBuffer(ref byte[] buffer, ref int pos)
+    {
+        JsonataHelpers.GrowBufferIfNeeded(ref buffer, pos, 4);
+        buffer[pos++] = (byte)'n';
+        buffer[pos++] = (byte)'u';
+        buffer[pos++] = (byte)'l';
+        buffer[pos++] = (byte)'l';
+    }
+
+    private static void AppendG15FormattedNumber(double value, ref byte[] buffer, ref int pos)
+    {
         string formatted = FormatNumberLikeJavaScript(value);
         JsonataHelpers.GrowBufferIfNeeded(ref buffer, pos, formatted.Length);
         for (int i = 0; i < formatted.Length; i++)
@@ -4095,9 +4146,25 @@ internal static class FunctionalCompiler
             // String containment: "hello" in "hello world" → true
             if (needle.ValueKind == JsonValueKind.String && haystack.ValueKind == JsonValueKind.String)
             {
-                string needleStr = needle.GetString()!;
-                string haystackStr = haystack.GetString()!;
-                return new Sequence(JsonataHelpers.BooleanElement(haystackStr.Contains(needleStr)));
+                // Use UTF-8 span comparison to avoid string allocation
+                using RawUtf8JsonString needleRaw = JsonMarshal.GetRawUtf8Value(needle);
+                using RawUtf8JsonString haystackRaw = JsonMarshal.GetRawUtf8Value(haystack);
+
+                // Raw spans include quotes, so strip them for content comparison
+                ReadOnlySpan<byte> needleSpan = needleRaw.Span;
+                ReadOnlySpan<byte> haystackSpan = haystackRaw.Span;
+
+                if (needleSpan.Length >= 2 && needleSpan[0] == (byte)'"')
+                {
+                    needleSpan = needleSpan.Slice(1, needleSpan.Length - 2);
+                }
+
+                if (haystackSpan.Length >= 2 && haystackSpan[0] == (byte)'"')
+                {
+                    haystackSpan = haystackSpan.Slice(1, haystackSpan.Length - 2);
+                }
+
+                return new Sequence(JsonataHelpers.BooleanElement(haystackSpan.IndexOf(needleSpan) >= 0));
             }
 
             // Scalar equality check
@@ -5767,6 +5834,11 @@ internal static class FunctionalCompiler
         if (seq.IsUndefined)
         {
             return false;
+        }
+
+        if (seq.TryGetDouble(out double d))
+        {
+            return d != 0 && !double.IsNaN(d);
         }
 
         return IsTruthyElement(seq.FirstOrDefault);
