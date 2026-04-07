@@ -696,7 +696,8 @@ internal static class BuiltInFunctions
 
     private static ExpressionEvaluator CompileTrim(ExpressionEvaluator[] args)
     {
-        return CompileStringTransform(args, s => s.Trim());
+        // JSONata $trim normalizes all whitespace (including newlines, tabs) to single spaces
+        return CompileStringTransform(args, s => System.Text.RegularExpressions.Regex.Replace(s.Trim(), @"\s+", " "));
     }
 
     private static ExpressionEvaluator CompileStringTransform(ExpressionEvaluator[] args, Func<string, string> transform)
@@ -962,7 +963,30 @@ internal static class BuiltInFunctions
 
     private static ExpressionEvaluator CompileCeil(ExpressionEvaluator[] args) => CompileMathFunc(args, Math.Ceiling);
 
-    private static ExpressionEvaluator CompileSqrt(ExpressionEvaluator[] args) => CompileMathFunc(args, Math.Sqrt);
+    private static ExpressionEvaluator CompileSqrt(ExpressionEvaluator[] args)
+    {
+        if (args.Length != 1)
+        {
+            throw new JsonataException("T0410", "$sqrt expects 1 argument", 0);
+        }
+
+        var arg = args[0];
+        return (in JsonElement input, Environment env) =>
+        {
+            var seq = arg(input, env);
+            if (seq.IsUndefined || !FunctionalCompiler.TryCoerceToNumber(seq.FirstOrDefault, out double num))
+            {
+                return Sequence.Undefined;
+            }
+
+            if (num < 0)
+            {
+                throw new JsonataException("D3060", "The argument of the $sqrt function must be non-negative", 0);
+            }
+
+            return new Sequence(FunctionalCompiler.CreateNumberElement(Math.Sqrt(num)));
+        };
+    }
 
     private static ExpressionEvaluator CompileRound(ExpressionEvaluator[] args)
     {
@@ -1028,7 +1052,13 @@ internal static class BuiltInFunctions
                 return Sequence.Undefined;
             }
 
-            return new Sequence(FunctionalCompiler.CreateNumberElement(Math.Pow(baseNum, expNum)));
+            double result = Math.Pow(baseNum, expNum);
+            if (double.IsInfinity(result) || double.IsNaN(result))
+            {
+                throw new JsonataException("D3061", "The power function has resulted in a value that cannot be represented as a JSON number", 0);
+            }
+
+            return new Sequence(FunctionalCompiler.CreateNumberElement(result));
         };
     }
 
@@ -2412,9 +2442,14 @@ internal static class BuiltInFunctions
     // --- Encoding functions ---
     private static ExpressionEvaluator CompileBase64Encode(ExpressionEvaluator[] args)
     {
-        if (args.Length != 1)
+        if (args.Length > 1)
         {
-            throw new JsonataException("T0410", "$base64encode expects 1 argument", 0);
+            throw new JsonataException("T0410", "$base64encode expects 0-1 arguments", 0);
+        }
+
+        if (args.Length == 0)
+        {
+            return static (in JsonElement input, Environment env) => Sequence.Undefined;
         }
 
         var arg = args[0];
@@ -2434,9 +2469,14 @@ internal static class BuiltInFunctions
 
     private static ExpressionEvaluator CompileBase64Decode(ExpressionEvaluator[] args)
     {
-        if (args.Length != 1)
+        if (args.Length > 1)
         {
-            throw new JsonataException("T0410", "$base64decode expects 1 argument", 0);
+            throw new JsonataException("T0410", "$base64decode expects 0-1 arguments", 0);
+        }
+
+        if (args.Length == 0)
+        {
+            return static (in JsonElement input, Environment env) => Sequence.Undefined;
         }
 
         var arg = args[0];

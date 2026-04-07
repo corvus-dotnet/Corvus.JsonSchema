@@ -1560,14 +1560,15 @@ internal static class FunctionalCompiler
             return 0;
         }
 
+        // Undefined values sort last (after all defined values)
         if (a.IsUndefined)
         {
-            return -1;
+            return 1;
         }
 
         if (b.IsUndefined)
         {
-            return 1;
+            return -1;
         }
 
         var aEl = a.FirstOrDefault;
@@ -1938,7 +1939,31 @@ internal static class FunctionalCompiler
             return string.Empty;
         }
 
+        // Multi-valued sequences are stringified as JSON arrays
+        if (seq.Count > 1)
+        {
+            var arr = CreateJsonArrayElement(seq);
+            return arr.GetRawText();
+        }
+
         return CoerceElementToString(seq.FirstOrDefault);
+    }
+
+    private static JsonElement CreateJsonArrayElement(Sequence seq)
+    {
+        using var ms = new MemoryStream(256);
+        using var writer = new Utf8JsonWriter(ms, RelaxedWriterOptions);
+        writer.WriteStartArray();
+        for (int i = 0; i < seq.Count; i++)
+        {
+            seq[i].WriteTo(writer);
+        }
+
+        writer.WriteEndArray();
+        writer.Flush();
+        ms.Position = 0;
+        using var doc = JsonDocument.Parse(ms);
+        return doc.RootElement.Clone();
     }
 
     internal static string CoerceElementToString(JsonElement element)
