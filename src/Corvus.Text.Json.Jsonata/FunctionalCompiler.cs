@@ -373,31 +373,27 @@ internal static class FunctionalCompiler
 
         static void CollectDescendants(JsonElement element, ref SequenceBuilder builder)
         {
+            // Non-array values are added as descendants (the element itself).
+            // Arrays are never added — only their elements are recursed into.
+            // This matches the jsonata-js recurse_descendant semantics.
+            if (element.ValueKind != JsonValueKind.Array)
+            {
+                builder.Add(element);
+            }
+
             switch (element.ValueKind)
             {
                 case JsonValueKind.Object:
                     foreach (var prop in element.EnumerateObject())
                     {
-                        // Non-array values are added as descendants
-                        if (prop.Value.ValueKind != JsonValueKind.Array)
-                        {
-                            builder.Add(prop.Value);
-                        }
-
                         CollectDescendants(prop.Value, ref builder);
                     }
 
                     break;
 
                 case JsonValueKind.Array:
-                    // Arrays are NOT added as descendants — only their elements
                     foreach (var item in element.EnumerateArray())
                     {
-                        if (item.ValueKind != JsonValueKind.Array)
-                        {
-                            builder.Add(item);
-                        }
-
                         CollectDescendants(item, ref builder);
                     }
 
@@ -584,7 +580,7 @@ internal static class FunctionalCompiler
                                     }
                                 }
 
-                                return 0;
+                                return a.CompareTo(b);
                             });
 
                             // Reorder elements and groups
@@ -1998,14 +1994,16 @@ internal static class FunctionalCompiler
                 return new Sequence(input);
             }
 
-            // Sort using the compiled terms
-            elements.Sort((a, b) =>
+            // Stable sort using index-based ordering to preserve relative
+            // order of equal elements (matches JSONata reference semantics).
+            var indices = Enumerable.Range(0, elements.Count).ToArray();
+            Array.Sort(indices, (a, b) =>
             {
                 for (int t = 0; t < terms.Length; t++)
                 {
                     var (expr, desc) = terms[t];
-                    var aVal = expr(a, env);
-                    var bVal = expr(b, env);
+                    var aVal = expr(elements[a], env);
+                    var bVal = expr(elements[b], env);
 
                     int cmp = CompareSortKeys(aVal, bVal);
                     if (cmp != 0)
@@ -2014,11 +2012,17 @@ internal static class FunctionalCompiler
                     }
                 }
 
-                return 0;
+                return a.CompareTo(b);
             });
 
+            var sorted = new List<JsonElement>(elements.Count);
+            for (int i = 0; i < indices.Length; i++)
+            {
+                sorted.Add(elements[indices[i]]);
+            }
+
             // Build result as a JSON array so subsequent path steps flatten it
-            return new Sequence(CreateArrayElement(elements));
+            return new Sequence(CreateArrayElement(sorted));
         };
     }
 
@@ -2545,11 +2549,54 @@ internal static class FunctionalCompiler
     }
 
     /// <summary>
-    /// Formats a double to match JSONata's number-to-string behavior.
-    /// JSONata uses <c>Number(val.toPrecision(15))</c> which limits to
-    /// 15 significant digits and strips trailing noise from IEEE 754 arithmetic.
+    /// Formats a double to match JavaScript's <c>String(value)</c> behavior,
+    /// which produces the shortest representation that uniquely identifies
+    /// the double value. Used for <c>$string</c> and string concatenation.
     /// </summary>
     internal static string FormatNumberLikeJavaScript(double value)
+    {
+        if (double.IsNaN(value) || double.IsInfinity(value))
+        {
+            return "null";
+        }
+
+        // .NET 7+ default ToString gives shortest round-trip representation
+        // (Grisu3/Ryu), matching JavaScript's toString() semantics.
+        string result = value.ToString(CultureInfo.InvariantCulture);
+
+        // Convert uppercase E to lowercase e
+        result = result.Replace("E+", "e+").Replace("E-", "e-");
+
+        double abs = Math.Abs(value);
+
+        // JavaScript uses decimal form for [1e-6, 1e+21)
+        if (result.Contains('e'))
+        {
+            if (abs >= 1e-6 && abs < 1e+20)
+            {
+                result = value.ToString("0.####################", CultureInfo.InvariantCulture);
+                return result;
+            }
+
+            // For very large integers (like 1e+20), use integer-like representation
+            if (abs >= 1e+20 && abs < 1e+21 && value == Math.Floor(value))
+            {
+                return value.ToString("0", CultureInfo.InvariantCulture);
+            }
+
+            // Strip leading zeros from exponent: e-07 → e-7, e+02 → e+2
+            result = System.Text.RegularExpressions.Regex.Replace(result, @"e([+-])0+(\d)", "e$1$2");
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Formats a double using JSONata's JSON.stringify replacer behavior:
+    /// <c>Number(val.toPrecision(15))</c>. Used only for stringifying
+    /// numbers within arrays and objects.
+    /// </summary>
+    internal static string FormatNumberForJsonStringify(double value)
     {
         if (double.IsNaN(value) || double.IsInfinity(value))
         {
@@ -2564,7 +2611,7 @@ internal static class FunctionalCompiler
 
         double abs = Math.Abs(value);
 
-        // JavaScript uses decimal form for [1e-6, 1e+20]
+        // JavaScript uses decimal form for [1e-6, 1e+21)
         if (result.Contains('e'))
         {
             if (abs >= 1e-6 && abs < 1e+20)

@@ -328,6 +328,21 @@ internal static class BuiltInFunctions
                 return new Sequence(FunctionalCompiler.CreateStringElement(json));
             }
 
+            // For numbers, $string uses Number(toPrecision(15)).toString()
+            // which rounds to 15 significant digits before formatting.
+            if (element.ValueKind == JsonValueKind.Number)
+            {
+                double d = element.GetDouble();
+
+                // Apply toPrecision(15): round to 15 sig digits then format
+                double rounded = double.Parse(
+                    d.ToString("G15", CultureInfo.InvariantCulture),
+                    System.Globalization.NumberStyles.Float,
+                    CultureInfo.InvariantCulture);
+                string numResult = FunctionalCompiler.FormatNumberLikeJavaScript(rounded);
+                return new Sequence(FunctionalCompiler.CreateStringElement(numResult));
+            }
+
             string result = FunctionalCompiler.CoerceElementToString(element);
             return new Sequence(FunctionalCompiler.CreateStringElement(result));
         };
@@ -1004,7 +1019,12 @@ internal static class BuiltInFunctions
             // Validate separator is a string or regex
             if (!sepSeq.IsRegex)
             {
-                if (sepSeq.IsUndefined || sepSeq.IsLambda || sepSeq.FirstOrDefault.ValueKind != JsonValueKind.String)
+                if (sepSeq.IsLambda)
+                {
+                    throw new JsonataException("T1010", "The function argument to '$split' does not match function signature", 0);
+                }
+
+                if (sepSeq.IsUndefined || sepSeq.FirstOrDefault.ValueKind != JsonValueKind.String)
                 {
                     throw new JsonataException("T0410", "Argument 2 of function $split is not of the correct type", 0);
                 }
@@ -1447,7 +1467,7 @@ internal static class BuiltInFunctions
                 {
                     var lambda = funcSeq.Lambda!;
                     var sortInput = input;
-                    elements.Sort((a, b) =>
+                    StableSort(elements, (a, b) =>
                     {
                         var aSeq = new Sequence(a);
                         var bSeq = new Sequence(b);
@@ -1459,7 +1479,8 @@ internal static class BuiltInFunctions
 
                         var el = result.FirstOrDefault;
 
-                        // Boolean comparator: true means a > b (a should come after b)
+                        // Boolean comparator: true means a > b (a should come after b).
+                        // false could mean a < b OR a == b, so check the reverse.
                         if (el.ValueKind == JsonValueKind.True)
                         {
                             return 1;
@@ -1467,7 +1488,14 @@ internal static class BuiltInFunctions
 
                         if (el.ValueKind == JsonValueKind.False)
                         {
-                            return -1;
+                            var reverseResult = lambda.Invoke([bSeq, aSeq], sortInput, env);
+                            if (!reverseResult.IsUndefined
+                                && reverseResult.FirstOrDefault.ValueKind == JsonValueKind.True)
+                            {
+                                return -1;
+                            }
+
+                            return 0;
                         }
 
                         if (FunctionalCompiler.TryCoerceToNumber(el, out double num))
@@ -1497,7 +1525,7 @@ internal static class BuiltInFunctions
                     throw new JsonataException("D3070", "The single argument form of the $sort function can only be used on an array of strings or an array of numbers", 0);
                 }
 
-                elements.Sort((a, b) =>
+                StableSort(elements, (a, b) =>
                 {
                     if (a.ValueKind == JsonValueKind.Number && b.ValueKind == JsonValueKind.Number)
                     {
@@ -2391,6 +2419,7 @@ internal static class BuiltInFunctions
             using var writer = new Utf8JsonWriter(ms);
             writer.WriteStartObject();
             var objSeq = new Sequence(obj);
+            bool anyMatch = false;
             foreach (var prop in obj.EnumerateObject())
             {
                 var valSeq = new Sequence(prop.Value);
@@ -2400,10 +2429,17 @@ internal static class BuiltInFunctions
                 {
                     writer.WritePropertyName(prop.Name);
                     prop.Value.WriteTo(writer);
+                    anyMatch = true;
                 }
             }
 
             writer.WriteEndObject();
+
+            if (!anyMatch)
+            {
+                return Sequence.Undefined;
+            }
+
             writer.Flush();
             ms.Position = 0;
             using var doc = JsonDocument.Parse(ms);
@@ -3633,5 +3669,31 @@ internal static class BuiltInFunctions
         }
 
         return sb.ToString();
+    }
+
+    /// <summary>
+    /// Performs a stable sort on a list using the given comparison function.
+    /// .NET's List&lt;T&gt;.Sort is not guaranteed stable; this preserves
+    /// the relative order of elements that compare equal.
+    /// </summary>
+    private static void StableSort(List<JsonElement> list, Comparison<JsonElement> comparison)
+    {
+        // Pair each element with its original index to break ties
+        var indexed = new (JsonElement Element, int Index)[list.Count];
+        for (int i = 0; i < list.Count; i++)
+        {
+            indexed[i] = (list[i], i);
+        }
+
+        Array.Sort(indexed, (a, b) =>
+        {
+            int cmp = comparison(a.Element, b.Element);
+            return cmp != 0 ? cmp : a.Index.CompareTo(b.Index);
+        });
+
+        for (int i = 0; i < list.Count; i++)
+        {
+            list[i] = indexed[i].Element;
+        }
     }
 }
