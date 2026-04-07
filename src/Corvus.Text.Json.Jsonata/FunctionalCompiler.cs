@@ -3220,8 +3220,11 @@ internal static class FunctionalCompiler
         var items = arr.Expressions.Select(e => (Eval: Compile(e), IsArrayCtor: e is ArrayConstructorNode)).ToArray();
         return (in JsonElement input, Environment env) =>
         {
-            JsonDocumentBuilder<JsonElement.Mutable> arrDoc = JsonElement.CreateArrayBuilder(env.Workspace, items.Length);
-            JsonElement.Mutable arrRoot = arrDoc.RootElement;
+            // Start optimistically building a JSON array. If a non-JSON value (lambda, regex)
+            // is encountered, switch to a tuple Sequence that preserves function references.
+            JsonDocumentBuilder<JsonElement.Mutable>? arrDoc = null;
+            JsonElement.Mutable arrRoot = default;
+            List<Sequence>? tupleItems = null;
 
             foreach (var (eval, isArrayCtor) in items)
             {
@@ -3231,22 +3234,82 @@ internal static class FunctionalCompiler
                     continue;
                 }
 
-                if (isArrayCtor)
+                // Switch to tuple path on first non-JSON value
+                if (tupleItems is null && (result.IsLambda || result.IsRegex || result.IsTupleSequence))
                 {
-                    // Array constructor sub-expression: push result as single element
-                    for (int i = 0; i < result.Count; i++)
+                    tupleItems = new List<Sequence>();
+
+                    // Backfill any items already added to the JSON array
+                    if (arrDoc is not null)
                     {
-                        arrRoot.AddItem(result[i]);
+                        foreach (var child in arrRoot.EnumerateArray())
+                        {
+                            tupleItems.Add(new Sequence(child));
+                        }
+                    }
+                }
+
+                if (tupleItems is not null)
+                {
+                    // Tuple path: preserve full Sequences including lambdas
+                    if (result.IsLambda || result.IsRegex)
+                    {
+                        tupleItems.Add(result);
+                    }
+                    else if (result.IsTupleSequence)
+                    {
+                        for (int i = 0; i < result.Count; i++)
+                        {
+                            tupleItems.Add(result.GetItemSequence(i));
+                        }
+                    }
+                    else if (isArrayCtor)
+                    {
+                        for (int i = 0; i < result.Count; i++)
+                        {
+                            tupleItems.Add(result.GetItemSequence(i));
+                        }
+                    }
+                    else if (result.IsSingleton)
+                    {
+                        var item = result.FirstOrDefault;
+                        if (item.ValueKind == JsonValueKind.Array)
+                        {
+                            foreach (var child in item.EnumerateArray())
+                            {
+                                tupleItems.Add(new Sequence(child));
+                            }
+                        }
+                        else
+                        {
+                            tupleItems.Add(result);
+                        }
+                    }
+                    else
+                    {
+                        for (int i = 0; i < result.Count; i++)
+                        {
+                            tupleItems.Add(new Sequence(result[i]));
+                        }
                     }
                 }
                 else
                 {
-                    // Other expressions: equivalent to JSONata's append (one-level concat).
-                    // Singleton array results are flattened (matching how evaluate() unwraps
-                    // singletons and append/concat spreads one level). Multi-value results
-                    // have each element written as-is (sub-arrays from nested constructors
-                    // are preserved, matching how concat doesn't recurse into elements).
-                    if (result.IsSingleton)
+                    // JSON path: build into a JSON array document
+                    if (arrDoc is null)
+                    {
+                        arrDoc = JsonElement.CreateArrayBuilder(env.Workspace, items.Length);
+                        arrRoot = arrDoc.RootElement;
+                    }
+
+                    if (isArrayCtor)
+                    {
+                        for (int i = 0; i < result.Count; i++)
+                        {
+                            arrRoot.AddItem(result[i]);
+                        }
+                    }
+                    else if (result.IsSingleton)
                     {
                         var item = result.FirstOrDefault;
                         if (item.ValueKind == JsonValueKind.Array)
@@ -3271,6 +3334,17 @@ internal static class FunctionalCompiler
                 }
             }
 
+            if (tupleItems is not null)
+            {
+                return new Sequence(tupleItems.ToArray());
+            }
+
+            if (arrDoc is null)
+            {
+                arrDoc = JsonElement.CreateArrayBuilder(env.Workspace, 0);
+                arrRoot = arrDoc.RootElement;
+            }
+
             return new Sequence((JsonElement)arrRoot);
         };
     }
@@ -3286,6 +3360,7 @@ internal static class FunctionalCompiler
 
             // Track which pair index produced each key to detect D1009 duplicates
             Dictionary<string, int>? seenKeys = hasMuliPlePairs ? new() : null;
+            Dictionary<string, LambdaValue>? lambdaProps = null;
 
             for (int pairIdx = 0; pairIdx < pairs.Length; pairIdx++)
             {
@@ -3334,7 +3409,11 @@ internal static class FunctionalCompiler
 
                 if (valueResult.IsLambda)
                 {
-                    // Lambda/function values serialize as empty strings in JSON
+                    // Lambda values serialize as empty strings in JSON, but we preserve
+                    // the reference in ObjectLambdas so callers (e.g. $match custom matcher
+                    // protocol) can retrieve them.
+                    lambdaProps ??= new Dictionary<string, LambdaValue>();
+                    lambdaProps[keyStr] = valueResult.Lambda!;
                     objRoot.SetProperty(keyStr, JsonataHelpers.EmptyString());
                     continue;
                 }
@@ -3361,6 +3440,11 @@ internal static class FunctionalCompiler
                 }
             }
 
+            if (lambdaProps is not null)
+            {
+                return new Sequence((JsonElement)objRoot, lambdaProps);
+            }
+
             return new Sequence((JsonElement)objRoot);
         };
     }
@@ -3372,12 +3456,34 @@ internal static class FunctionalCompiler
         // Check for built-in functions by name.
         // Built-in functions are compiled directly and do NOT participate
         // in tail-call optimization — they are always evaluated inline.
+        // However, user-defined functions can shadow built-in names (e.g. defining
+        // $match inside a closure), so we emit a runtime check that falls back to
+        // the user binding when one exists.
         if (func.Procedure is VariableNode varProc)
         {
             var builtIn = BuiltInFunctions.TryGetCompiler(varProc.Name);
             if (builtIn is not null)
             {
-                return builtIn(args);
+                var builtInEval = builtIn(args);
+                string varName = varProc.Name;
+
+                return (in JsonElement input, Environment env) =>
+                {
+                    // Runtime scope check: if the variable is rebound to a lambda,
+                    // the user's function shadows the built-in
+                    if (env.TryLookup(varName, out Sequence rebound) && rebound.IsLambda)
+                    {
+                        var evalArgs = new Sequence[args.Length];
+                        for (int i = 0; i < args.Length; i++)
+                        {
+                            evalArgs[i] = args[i](input, env);
+                        }
+
+                        return rebound.Lambda!.Invoke(evalArgs, input, env);
+                    }
+
+                    return builtInEval(input, env);
+                };
             }
         }
 

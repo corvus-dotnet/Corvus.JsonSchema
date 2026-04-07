@@ -12,6 +12,11 @@ namespace Corvus.Text.Json.Jsonata;
 internal sealed class Environment
 {
     /// <summary>
+    /// The prefix used for lambda sentinel values stored in JSON objects.
+    /// </summary>
+    internal const string LambdaSentinelPrefix = "__fn:";
+
+    /// <summary>
     /// The default maximum call depth for recursive function evaluation.
     /// </summary>
     public const int DefaultMaxDepth = 500;
@@ -20,6 +25,8 @@ internal sealed class Environment
     private readonly Environment? parent;
     private int currentDepth;
     private int maxDepth;
+    private Dictionary<int, LambdaValue>? lambdaMap;
+    private int lambdaCounter;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Environment"/> class.
@@ -123,6 +130,61 @@ internal sealed class Environment
     public void LeaveCall()
     {
         this.GetRoot().currentDepth--;
+    }
+
+    /// <summary>
+    /// Registers a lambda value in the root environment's lambda map and returns a unique ID.
+    /// Used to preserve function references stored in JSON objects (where they would otherwise be lost).
+    /// </summary>
+    /// <param name="lambda">The lambda to register.</param>
+    /// <returns>A unique integer ID that can be used to retrieve the lambda later.</returns>
+    public int RegisterLambda(LambdaValue lambda)
+    {
+        var root = this.GetRoot();
+        root.lambdaMap ??= new Dictionary<int, LambdaValue>();
+        int id = root.lambdaCounter++;
+        root.lambdaMap[id] = lambda;
+        return id;
+    }
+
+    /// <summary>
+    /// Attempts to retrieve a previously registered lambda by its ID.
+    /// </summary>
+    /// <param name="id">The lambda ID returned by <see cref="RegisterLambda"/>.</param>
+    /// <param name="lambda">The retrieved lambda, or <c>null</c> if not found.</param>
+    /// <returns><c>true</c> if the lambda was found; otherwise <c>false</c>.</returns>
+    public bool TryGetLambda(int id, out LambdaValue? lambda)
+    {
+        var root = this.GetRoot();
+        if (root.lambdaMap is not null && root.lambdaMap.TryGetValue(id, out lambda))
+        {
+            return true;
+        }
+
+        lambda = null;
+        return false;
+    }
+
+    /// <summary>
+    /// Checks if a JSON element is a lambda sentinel string and retrieves the associated lambda.
+    /// </summary>
+    /// <param name="element">The JSON element to check.</param>
+    /// <param name="lambda">The lambda if the element is a sentinel; otherwise <c>null</c>.</param>
+    /// <returns><c>true</c> if the element was a lambda sentinel with a valid registration.</returns>
+    public bool TryGetStoredLambda(in JsonElement element, out LambdaValue? lambda)
+    {
+        if (element.ValueKind == JsonValueKind.String)
+        {
+            string? s = element.GetString();
+            if (s?.StartsWith(LambdaSentinelPrefix, StringComparison.Ordinal) == true
+                && int.TryParse(s.Substring(LambdaSentinelPrefix.Length), out int id))
+            {
+                return this.TryGetLambda(id, out lambda);
+            }
+        }
+
+        lambda = null;
+        return false;
     }
 
     /// <summary>

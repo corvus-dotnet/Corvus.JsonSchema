@@ -39,6 +39,8 @@ internal readonly struct Sequence
     private readonly Regex? regex;
     private readonly TailCallContinuation? tailCall;
     private readonly double nonFiniteValue;
+    private readonly Sequence[]? tupleItems;
+    private readonly Dictionary<string, LambdaValue>? objectLambdas;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Sequence"/> struct with a single value.
@@ -144,6 +146,45 @@ internal readonly struct Sequence
         this.tailCall = null;
     }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="Sequence"/> struct as a tuple array
+    /// of sub-sequences. Used when an array constructor contains non-JSON values (e.g. lambdas)
+    /// that must be preserved without reification into a JSON array.
+    /// </summary>
+    /// <param name="tupleItems">The sub-sequences, one per array element.</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public Sequence(Sequence[] tupleItems)
+    {
+        this.tupleItems = tupleItems;
+        this.count = tupleItems.Length;
+        this.singleValue = default;
+        this.multiValues = null;
+        this.lambda = null;
+        this.regex = null;
+        this.tailCall = null;
+        this.nonFiniteValue = 0;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="Sequence"/> struct wrapping a single JSON element
+    /// that has associated lambda property values. Used when an object constructor creates
+    /// an object with function-valued properties (e.g. the custom matcher protocol's <c>next</c> property).
+    /// </summary>
+    /// <param name="value">The JSON element.</param>
+    /// <param name="objectLambdas">Dictionary mapping property names to their lambda values.</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public Sequence(in JsonElement value, Dictionary<string, LambdaValue> objectLambdas)
+    {
+        this.singleValue = value;
+        this.multiValues = null;
+        this.count = 1;
+        this.lambda = null;
+        this.regex = null;
+        this.tailCall = null;
+        this.nonFiniteValue = 0;
+        this.objectLambdas = objectLambdas;
+    }
+
     /// <summary>Gets the number of values in the sequence.</summary>
     public int Count
     {
@@ -221,6 +262,40 @@ internal readonly struct Sequence
         get => this.nonFiniteValue;
     }
 
+    /// <summary>Gets a value indicating whether this is a tuple sequence holding sub-sequences (e.g. an array containing lambdas).</summary>
+    public bool IsTupleSequence
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => this.tupleItems is not null;
+    }
+
+    /// <summary>
+    /// Gets the lambda properties associated with this object element, if any.
+    /// Used by the custom matcher protocol to retrieve function-valued properties
+    /// (such as <c>next</c>) that cannot be represented in JSON.
+    /// </summary>
+    public Dictionary<string, LambdaValue>? ObjectLambdas
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => this.objectLambdas;
+    }
+
+    /// <summary>
+    /// Gets the full sub-sequence at the given index. For tuple sequences, this returns the
+    /// original sub-sequence (which may be a lambda or other non-JSON variant). For non-tuple
+    /// sequences, this wraps the JSON element at the index.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public Sequence GetItemSequence(int index)
+    {
+        if (this.tupleItems is not null)
+        {
+            return this.tupleItems[index];
+        }
+
+        return new Sequence(this[index]);
+    }
+
     /// <summary>
     /// Gets the element at the specified index.
     /// </summary>
@@ -232,6 +307,11 @@ internal readonly struct Sequence
             if ((uint)index >= (uint)this.count)
             {
                 ThrowIndexOutOfRange();
+            }
+
+            if (this.tupleItems is not null)
+            {
+                return this.tupleItems[index].FirstOrDefault;
             }
 
             if (this.multiValues is not null)
@@ -256,6 +336,11 @@ internal readonly struct Sequence
             if (this.count == 0)
             {
                 return default;
+            }
+
+            if (this.tupleItems is not null)
+            {
+                return this.tupleItems[0].FirstOrDefault;
             }
 
             return this.multiValues is not null ? this.multiValues[0] : this.singleValue;

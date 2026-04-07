@@ -2045,21 +2045,32 @@ internal static class BuiltInFunctions
                 throw new JsonataException("D3050", "The second argument of the $reduce function must be a function with at least two arguments", 0);
             }
 
-            // Collect array elements
-            var elements = new List<JsonElement>();
-            if (seq.IsSingleton && seq.FirstOrDefault.ValueKind == JsonValueKind.Array)
+            // Collect items as Sequences to preserve function references in tuple arrays
+            var itemSeqs = new List<Sequence>();
+            bool isTuple = seq.IsTupleSequence;
+            if (isTuple)
             {
-                elements.AddRange(seq.FirstOrDefault.EnumerateArray());
+                for (int i = 0; i < seq.Count; i++)
+                {
+                    itemSeqs.Add(seq.GetItemSequence(i));
+                }
+            }
+            else if (seq.IsSingleton && seq.FirstOrDefault.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var el in seq.FirstOrDefault.EnumerateArray())
+                {
+                    itemSeqs.Add(new Sequence(el));
+                }
             }
             else
             {
                 for (int i = 0; i < seq.Count; i++)
                 {
-                    elements.Add(seq[i]);
+                    itemSeqs.Add(new Sequence(seq[i]));
                 }
             }
 
-            if (elements.Count == 0)
+            if (itemSeqs.Count == 0)
             {
                 return Sequence.Undefined;
             }
@@ -2073,28 +2084,31 @@ internal static class BuiltInFunctions
             }
             else
             {
-                accumulator = new Sequence(elements[0]);
+                accumulator = itemSeqs[0];
                 startIdx = 1;
             }
 
-            // Build array element for the 4th lambda arg
-            JsonElement arrElement;
+            // Build array element for the 4th lambda arg (best-effort; lambdas have no JSON representation)
+            Sequence arrSeq;
+            if (isTuple)
             {
-                JsonDocumentBuilder<JsonElement.Mutable> arrDoc = JsonElement.CreateArrayBuilder(env.Workspace, elements.Count);
+                arrSeq = Sequence.Undefined;
+            }
+            else
+            {
+                JsonDocumentBuilder<JsonElement.Mutable> arrDoc = JsonElement.CreateArrayBuilder(env.Workspace, itemSeqs.Count);
                 JsonElement.Mutable arrRoot = arrDoc.RootElement;
-                for (int i = 0; i < elements.Count; i++)
+                for (int i = 0; i < itemSeqs.Count; i++)
                 {
-                    arrRoot.AddItem(elements[i]);
+                    arrRoot.AddItem(itemSeqs[i].FirstOrDefault);
                 }
 
-                arrElement = (JsonElement)arrRoot;
+                arrSeq = new Sequence((JsonElement)arrRoot);
             }
 
-            var arrSeq = new Sequence(arrElement);
-
-            for (int i = startIdx; i < elements.Count; i++)
+            for (int i = startIdx; i < itemSeqs.Count; i++)
             {
-                var elemSeq = new Sequence(elements[i]);
+                var elemSeq = itemSeqs[i];
                 var idxSeq = new Sequence(JsonataHelpers.NumberFromDouble(i, env.Workspace));
                 accumulator = lambda.Invoke(new[] { accumulator, elemSeq, idxSeq, arrSeq }, input, env);
             }
@@ -2634,13 +2648,111 @@ internal static class BuiltInFunctions
             var strSeq = strArg(input, env);
             var patSeq = patternArg(input, env);
 
-            if (strSeq.IsUndefined || !patSeq.IsRegex)
+            if (strSeq.IsUndefined)
             {
                 return Sequence.Undefined;
             }
 
-            string? str = strSeq.FirstOrDefault.GetString();
-            if (str is null)
+            // Custom matcher protocol: pattern is a function that returns
+            // {match, start, end, groups, next} where next() returns the next match
+            if (patSeq.IsLambda)
+            {
+                string? matcherStr = strSeq.FirstOrDefault.GetString();
+                if (matcherStr is null)
+                {
+                    return Sequence.Undefined;
+                }
+
+                int matcherLimit = int.MaxValue;
+                if (limitArg is not null)
+                {
+                    var limitSeqVal = limitArg(input, env);
+                    if (FunctionalCompiler.TryCoerceToNumber(limitSeqVal.FirstOrDefault, out double limitD))
+                    {
+                        matcherLimit = (int)limitD;
+                    }
+                }
+
+                var matcherLambda = patSeq.Lambda!;
+                var matcherResults = default(SequenceBuilder);
+                int matcherCount = 0;
+
+                // Call the matcher with the string
+                var matchResult = matcherLambda.Invoke(new[] { strSeq }, input, env);
+
+                while (!matchResult.IsUndefined && matcherCount < matcherLimit)
+                {
+                    var matchObj = matchResult.FirstOrDefault;
+                    if (matchObj.ValueKind != JsonValueKind.Object)
+                    {
+                        break;
+                    }
+
+                    // Extract match, start, groups from the result
+                    string matchStr = string.Empty;
+                    int matchIndex = 0;
+                    var matcherGroups = new List<string>();
+
+                    if (matchObj.TryGetProperty("match"u8, out JsonElement matchProp))
+                    {
+                        matchStr = matchProp.GetString() ?? string.Empty;
+                    }
+
+                    if (matchObj.TryGetProperty("start"u8, out JsonElement startProp))
+                    {
+                        if (FunctionalCompiler.TryCoerceToNumber(startProp, out double startD))
+                        {
+                            matchIndex = (int)startD;
+                        }
+                    }
+
+                    if (matchObj.TryGetProperty("groups"u8, out JsonElement groupsProp)
+                        && groupsProp.ValueKind == JsonValueKind.Array)
+                    {
+                        foreach (var g in groupsProp.EnumerateArray())
+                        {
+                            matcherGroups.Add(g.GetString() ?? string.Empty);
+                        }
+                    }
+
+                    matcherResults.Add(JsonataHelpers.CreateMatchObject(matchStr, matchIndex, matcherGroups, env.Workspace));
+                    matcherCount++;
+
+                    // Follow the 'next' property — a lambda carried in ObjectLambdas
+                    if (matchResult.ObjectLambdas?.TryGetValue("next", out LambdaValue? nextLambda) == true
+                        && nextLambda is not null)
+                    {
+                        matchResult = nextLambda.Invoke(Array.Empty<Sequence>(), input, env);
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+
+                Sequence customResult = matcherResults.ToSequence();
+                if (customResult.IsUndefined)
+                {
+                    matcherResults.ReturnArray();
+                    return Sequence.Undefined;
+                }
+
+                if (customResult.Count == 1)
+                {
+                    matcherResults.ReturnArray();
+                    return new Sequence(customResult[0]);
+                }
+
+                return customResult;
+            }
+
+            if (!patSeq.IsRegex)
+            {
+                return Sequence.Undefined;
+            }
+
+            string? regexStr = strSeq.FirstOrDefault.GetString();
+            if (regexStr is null)
             {
                 return Sequence.Undefined;
             }
@@ -2656,7 +2768,7 @@ internal static class BuiltInFunctions
             }
 
             Regex regex = patSeq.Regex!;
-            MatchCollection matches = regex.Matches(str);
+            MatchCollection matches = regex.Matches(regexStr);
 
             var results = default(SequenceBuilder);
             int count = 0;
