@@ -22,11 +22,13 @@ internal sealed class LambdaValue
     /// <param name="body">The compiled body expression.</param>
     /// <param name="paramNames">The parameter names (without <c>$</c> prefix).</param>
     /// <param name="definingEnv">The environment where the lambda was defined (for closures).</param>
-    public LambdaValue(ExpressionEvaluator body, string[] paramNames, Environment definingEnv)
+    /// <param name="isThunk">Whether this is a thunk for tail-call optimization.</param>
+    public LambdaValue(ExpressionEvaluator body, string[] paramNames, Environment definingEnv, bool isThunk = false)
     {
         this.body = body;
         this.paramNames = paramNames;
         this.definingEnv = definingEnv;
+        this.IsThunk = isThunk;
     }
 
     /// <summary>
@@ -45,6 +47,11 @@ internal sealed class LambdaValue
     /// Gets the native function implementation, if this is a built-in wrapper.
     /// </summary>
     public Func<Sequence[], JsonElement, Environment, Sequence>? NativeFunc { get; }
+
+    /// <summary>
+    /// Gets a value indicating whether this lambda is a thunk for tail-call optimization.
+    /// </summary>
+    public bool IsThunk { get; }
 
     /// <summary>
     /// Gets the parameter names.
@@ -85,7 +92,19 @@ internal sealed class LambdaValue
         invokeEnv.EnterCall();
         try
         {
-            return this.body(input, invokeEnv);
+            var result = this.body(input, invokeEnv);
+
+            // Trampoline: when the body returns a thunk (a tail-call-optimized
+            // lambda with no parameters), execute it immediately instead of
+            // returning the thunk as a value. This ensures that tail-position
+            // function calls produce the actual result rather than a deferred
+            // lambda wrapper.
+            while (result.IsLambda && result.Lambda!.IsThunk)
+            {
+                result = result.Lambda!.Invoke([], input, callerEnv);
+            }
+
+            return result;
         }
         finally
         {

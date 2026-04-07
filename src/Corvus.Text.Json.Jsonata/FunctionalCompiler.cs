@@ -58,6 +58,14 @@ internal static class FunctionalCompiler
             evaluator = WrapWithStages(evaluator, node.Annotations);
         }
 
+        // Handle expr[] — the "keep array" modifier ensures the result is always
+        // returned as a JSON array, even for singleton results. PathNode handles
+        // this via its own KeepSingletonArray flag in CompilePath.
+        if (node is not PathNode && node.KeepArray)
+        {
+            evaluator = WrapKeepArray(evaluator);
+        }
+
         return evaluator;
     }
 
@@ -125,6 +133,57 @@ internal static class FunctionalCompiler
             var result = inner(input, env);
             return ApplyStages(result, stageEvaluators, isSortStage, env);
         };
+    }
+
+    /// <summary>
+    /// Wraps an evaluator to ensure the result is always a JSON array (the [] operator).
+    /// Singletons are wrapped in a one-element array; multi-value sequences are
+    /// materialized as arrays; undefined remains undefined.
+    /// </summary>
+    private static ExpressionEvaluator WrapKeepArray(ExpressionEvaluator inner)
+    {
+        return (in JsonElement input, Environment env) =>
+        {
+            var result = inner(input, env);
+
+            if (result.IsUndefined)
+            {
+                return Sequence.Undefined;
+            }
+
+            // Already a multi-value sequence — materialize as JSON array
+            if (!result.IsSingleton)
+            {
+                return MaterializeAsArray(result);
+            }
+
+            // Singleton: if it's already a JSON array, return as-is
+            var element = result.FirstOrDefault;
+            if (element.ValueKind == JsonValueKind.Array)
+            {
+                return result;
+            }
+
+            // Wrap scalar in a one-element JSON array
+            return MaterializeAsArray(result);
+        };
+    }
+
+    private static Sequence MaterializeAsArray(Sequence seq)
+    {
+        using var ms = new MemoryStream(256);
+        using var writer = new Utf8JsonWriter(ms);
+        writer.WriteStartArray();
+        for (int i = 0; i < seq.Count; i++)
+        {
+            seq[i].WriteTo(writer);
+        }
+
+        writer.WriteEndArray();
+        writer.Flush();
+        ms.Position = 0;
+        using var doc = JsonDocument.Parse(ms);
+        return new Sequence(doc.RootElement.Clone());
     }
 
     private static ExpressionEvaluator CompileNumber(NumberNode num)
@@ -226,18 +285,35 @@ internal static class FunctionalCompiler
         var fieldName = name.Value;
         return (in JsonElement input, Environment env) =>
         {
-            if (input.ValueKind != JsonValueKind.Object)
+            return LookupField(input, fieldName);
+        };
+
+        static Sequence LookupField(in JsonElement input, string fieldName)
+        {
+            if (input.ValueKind == JsonValueKind.Object)
             {
-                return Sequence.Undefined;
+                return input.TryGetProperty(fieldName, out var value)
+                    ? new Sequence(value)
+                    : Sequence.Undefined;
             }
 
-            if (input.TryGetProperty(fieldName, out var value))
+            if (input.ValueKind == JsonValueKind.Array)
             {
-                return new Sequence(value);
+                var builder = default(SequenceBuilder);
+                foreach (var item in input.EnumerateArray())
+                {
+                    var result = LookupField(item, fieldName);
+                    if (!result.IsUndefined)
+                    {
+                        builder.AddRange(result);
+                    }
+                }
+
+                return builder.ToSequence();
             }
 
             return Sequence.Undefined;
-        };
+        }
     }
 
     private static ExpressionEvaluator CompileWildcard()
@@ -263,7 +339,18 @@ internal static class FunctionalCompiler
             var builder = default(SequenceBuilder);
             foreach (var prop in input.EnumerateObject())
             {
-                builder.Add(prop.Value);
+                // Flatten array property values into individual elements
+                if (prop.Value.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var item in prop.Value.EnumerateArray())
+                    {
+                        builder.Add(item);
+                    }
+                }
+                else
+                {
+                    builder.Add(prop.Value);
+                }
             }
 
             var result = builder.ToSequence();
@@ -557,6 +644,36 @@ internal static class FunctionalCompiler
                 // - stepIdx == 0 AND isPropertyStep: property access on root array (e.g. name[0] on root array)
                 bool shouldFlatten = stepIdx > 0 || isPropertyStep[stepIdx];
 
+                // When a singleton contains a JSON array AND this property step has a
+                // boolean filter stage, expand the array to multi-value so filters
+                // operate on individual elements (not the array as a whole).
+                // Only do this for filter stages — sort and index stages need the original arrays.
+                bool hasFilterStage = false;
+                if (stages[stepIdx] is not null && stageIsSortFlags[stepIdx] is not null)
+                {
+                    for (int sf = 0; sf < stageIsSortFlags[stepIdx]!.Length; sf++)
+                    {
+                        if (!stageIsSortFlags[stepIdx]![sf])
+                        {
+                            hasFilterStage = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (current.IsSingleton && isPropertyStep[stepIdx] && shouldFlatten
+                    && hasFilterStage && current.FirstOrDefault.ValueKind == JsonValueKind.Array)
+                {
+                    var arr = current.FirstOrDefault;
+                    var expander = default(SequenceBuilder);
+                    foreach (var item in arr.EnumerateArray())
+                    {
+                        expander.Add(item);
+                    }
+
+                    current = expander.ToSequence();
+                }
+
                 if (current.IsSingleton)
                 {
                     // Hot path: singleton input → evaluate step directly
@@ -640,6 +757,14 @@ internal static class FunctionalCompiler
             if (groupByPairs is not null)
             {
                 current = ApplyGroupBy(current, groupByPairs, env, tupleIndexVar, tupleGroupIndices);
+            }
+
+            // When the path has the KeepSingletonArray flag (from [] modifier),
+            // ensure singleton results are wrapped in a JSON array.
+            if (keepSingleton && !current.IsUndefined && current.IsSingleton
+                && current.FirstOrDefault.ValueKind != JsonValueKind.Array)
+            {
+                current = MaterializeAsArray(current);
             }
 
             return current;
@@ -888,59 +1013,96 @@ internal static class FunctionalCompiler
                     continue;
                 }
 
-                // Numeric result = index access
-                if (result.IsSingleton && TryCoerceToNumber(firstResult, out double idx))
+                // Collect numeric indices from the result (single number, multi-value, or array of numbers)
+                bool isNumericIndices = false;
+                List<int>? indices = null;
+
+                if (result.IsSingleton && TryCoerceToNumber(firstResult, out double singleIdx))
                 {
-                    int index = (int)idx;
-                    if (index < 0)
+                    // Single numeric → treat as index array of one element
+                    isNumericIndices = true;
+                    int idx = (int)Math.Floor(singleIdx);
+                    if (idx < 0)
                     {
-                        index = elements.Count + index;
+                        idx = elements.Count + idx;
                     }
 
-                    if (index >= 0 && index < elements.Count)
-                    {
-                        builder.Add(elements[index]);
-                    }
-
-                    // Index access returns a single element, stop iterating
-                    current = builder.ToSequence();
-                    break;
+                    indices = new List<int> { idx };
                 }
-
-                // Multi-value numeric = multiple index access
-                if (!result.IsSingleton && result.Count > 0)
+                else if (result.IsSingleton && firstResult.ValueKind == JsonValueKind.Array)
                 {
-                    bool allNumeric = true;
-                    for (int j = 0; j < result.Count; j++)
+                    // Singleton JSON array — check if all elements are numbers
+                    bool allNum = true;
+                    var tempIndices = new List<int>();
+                    foreach (var arrEl in firstResult.EnumerateArray())
                     {
-                        var rj = result[j];
-                        if (rj.ValueKind is JsonValueKind.True or JsonValueKind.False || !TryCoerceToNumber(rj, out _))
+                        if (TryCoerceToNumber(arrEl, out double numVal))
                         {
-                            allNumeric = false;
+                            int idx = (int)Math.Floor(numVal);
+                            if (idx < 0)
+                            {
+                                idx = elements.Count + idx;
+                            }
+
+                            tempIndices.Add(idx);
+                        }
+                        else
+                        {
+                            allNum = false;
                             break;
                         }
                     }
 
-                    if (allNumeric)
+                    if (allNum && tempIndices.Count > 0)
                     {
-                        for (int j = 0; j < result.Count; j++)
+                        isNumericIndices = true;
+                        indices = tempIndices;
+                    }
+                }
+                else if (!result.IsSingleton && result.Count > 0)
+                {
+                    // Multi-value sequence — check if all are numeric
+                    bool allNum = true;
+                    var tempIndices = new List<int>();
+                    for (int j = 0; j < result.Count; j++)
+                    {
+                        var rj = result[j];
+                        if (rj.ValueKind is JsonValueKind.True or JsonValueKind.False || !TryCoerceToNumber(rj, out double numVal))
                         {
-                            TryCoerceToNumber(result[j], out double idx2);
-                            int index2 = (int)idx2;
-                            if (index2 < 0)
-                            {
-                                index2 = elements.Count + index2;
-                            }
-
-                            if (index2 >= 0 && index2 < elements.Count)
-                            {
-                                builder.Add(elements[index2]);
-                            }
+                            allNum = false;
+                            break;
                         }
 
-                        current = builder.ToSequence();
-                        break;
+                        int idx = (int)Math.Floor(numVal);
+                        if (idx < 0)
+                        {
+                            idx = elements.Count + idx;
+                        }
+
+                        tempIndices.Add(idx);
                     }
+
+                    if (allNum)
+                    {
+                        isNumericIndices = true;
+                        indices = tempIndices;
+                    }
+                }
+
+                if (isNumericIndices && indices is not null)
+                {
+                    // JSONata semantics: include the element if the current loop index
+                    // matches any of the numeric indices. This naturally deduplicates.
+                    foreach (int idx in indices)
+                    {
+                        if (idx == i)
+                        {
+                            builder.Add(el);
+                            break;
+                        }
+                    }
+
+                    continue;
                 }
 
                 // Boolean filter
@@ -1072,7 +1234,7 @@ internal static class FunctionalCompiler
             double result = op(leftNum, rightNum);
             if (double.IsInfinity(result) || double.IsNaN(result))
             {
-                throw new JsonataException("D1001", "Number out of range", 0);
+                throw new JsonataException("D3001", "Number out of range", 0);
             }
 
             return new Sequence(CreateNumberElement(result));
@@ -1311,19 +1473,36 @@ internal static class FunctionalCompiler
                 return Sequence.Undefined;
             }
 
-            // Guard against excessively large ranges (max 10M elements)
-            if ((long)iEnd - (long)iStart >= 10_000_000)
+            long count = (long)iEnd - (long)iStart + 1;
+            if (count > 10_000_000)
             {
                 throw new JsonataException("D2014", "Range expression generates too many results", 0);
             }
 
-            var builder = default(SequenceBuilder);
+            // Build a single JSON array document, then extract individual elements.
+            // This is much faster than calling CreateNumberElement per number
+            // (which creates a full JsonDocument per number).
+            using var ms = new MemoryStream((int)Math.Min(count * 4, int.MaxValue));
+            using var writer = new Utf8JsonWriter(ms);
+            writer.WriteStartArray();
             for (int i = iStart; i <= iEnd; i++)
             {
-                builder.Add(CreateNumberElement(i));
+                writer.WriteNumberValue(i);
             }
 
-            return builder.ToSequence();
+            writer.WriteEndArray();
+            writer.Flush();
+            ms.Position = 0;
+            using var doc = JsonDocument.Parse(ms);
+
+            var elements = new JsonElement[(int)count];
+            int idx = 0;
+            foreach (var elem in doc.RootElement.EnumerateArray())
+            {
+                elements[idx++] = elem.Clone();
+            }
+
+            return new Sequence(elements, (int)count);
         };
     }
 
@@ -1389,19 +1568,49 @@ internal static class FunctionalCompiler
 
     private static ExpressionEvaluator CompileArrayConstructor(ArrayConstructorNode arr)
     {
-        var exprs = arr.Expressions.Select(Compile).ToArray();
+        // Track which sub-expressions are array constructors (pushed as single elements)
+        // vs other expressions (flattened — individual elements appended)
+        var items = arr.Expressions.Select(e => (Eval: Compile(e), IsArrayCtor: e is ArrayConstructorNode)).ToArray();
         return (in JsonElement input, Environment env) =>
         {
             using var ms = new MemoryStream(256);
             using var writer = new Utf8JsonWriter(ms);
             writer.WriteStartArray();
 
-            foreach (var expr in exprs)
+            foreach (var (eval, isArrayCtor) in items)
             {
-                var result = expr(input, env);
-                for (int i = 0; i < result.Count; i++)
+                var result = eval(input, env);
+                if (result.IsUndefined)
                 {
-                    result[i].WriteTo(writer);
+                    continue;
+                }
+
+                if (isArrayCtor)
+                {
+                    // Array constructor sub-expression: push result as single element
+                    for (int i = 0; i < result.Count; i++)
+                    {
+                        result[i].WriteTo(writer);
+                    }
+                }
+                else
+                {
+                    // Other expressions: flatten arrays into the result
+                    for (int i = 0; i < result.Count; i++)
+                    {
+                        var item = result[i];
+                        if (item.ValueKind == JsonValueKind.Array)
+                        {
+                            foreach (var child in item.EnumerateArray())
+                            {
+                                child.WriteTo(writer);
+                            }
+                        }
+                        else
+                        {
+                            item.WriteTo(writer);
+                        }
+                    }
                 }
             }
 
@@ -1433,6 +1642,14 @@ internal static class FunctionalCompiler
                 }
 
                 string keyStr = CoerceToString(keyResult);
+
+                if (valueResult.IsLambda)
+                {
+                    // Lambda/function values serialize as empty strings in JSON
+                    writer.WritePropertyName(keyStr);
+                    writer.WriteStringValue(string.Empty);
+                    continue;
+                }
 
                 if (valueResult.IsUndefined)
                 {
@@ -1482,6 +1699,13 @@ internal static class FunctionalCompiler
 
         var procedure = Compile(func.Procedure);
 
+        // Detect non-$ function names that match built-ins (e.g. sum instead of $sum)
+        string? suggestedBuiltIn = null;
+        if (func.Procedure is NameNode nameProc && BuiltInFunctions.TryGetCompiler(nameProc.Value) is not null)
+        {
+            suggestedBuiltIn = nameProc.Value;
+        }
+
         // Generic function call (user-defined / lambda)
         return (in JsonElement input, Environment env) =>
         {
@@ -1498,6 +1722,11 @@ internal static class FunctionalCompiler
                 return funcResult.Lambda!.Invoke(evaluatedArgs, input, env);
             }
 
+            if (suggestedBuiltIn is not null)
+            {
+                throw new JsonataException("T1005", $"Attempted to invoke a non-function. Did you mean '${suggestedBuiltIn}'?", func.Position);
+            }
+
             throw new JsonataException("T1006", "Attempted to invoke a non-function", func.Position);
         };
     }
@@ -1506,10 +1735,11 @@ internal static class FunctionalCompiler
     {
         var body = Compile(lambda.Body);
         var paramNames = lambda.Parameters.ToArray();
+        bool isThunk = lambda.Thunk;
 
         return (in JsonElement input, Environment env) =>
         {
-            return new Sequence(new LambdaValue(body, paramNames, env));
+            return new Sequence(new LambdaValue(body, paramNames, env, isThunk));
         };
     }
 
@@ -2194,11 +2424,9 @@ internal static class FunctionalCompiler
     }
 
     /// <summary>
-    /// Formats a double to match JavaScript's Number.toString() behavior:
-    /// - Lowercase 'e' in scientific notation
-    /// - No leading zero in exponent (e-7, not e-07)
-    /// - Decimal form for numbers in range [1e-6, 1e+20)
-    /// - At most ~17 significant digits
+    /// Formats a double to match JSONata's number-to-string behavior.
+    /// JSONata uses <c>Number(val.toPrecision(15))</c> which limits to
+    /// 15 significant digits and strips trailing noise from IEEE 754 arithmetic.
     /// </summary>
     internal static string FormatNumberLikeJavaScript(double value)
     {
@@ -2207,8 +2435,8 @@ internal static class FunctionalCompiler
             return "null";
         }
 
-        // Use R format for shortest roundtrip representation
-        string result = value.ToString("R", CultureInfo.InvariantCulture);
+        // Match JSONata's Number(val.toPrecision(15)): 15 significant digits
+        string result = value.ToString("G15", CultureInfo.InvariantCulture);
 
         // Convert uppercase E to lowercase e
         result = result.Replace("E+", "e+").Replace("E-", "e-");
@@ -2220,8 +2448,10 @@ internal static class FunctionalCompiler
         {
             if (abs >= 1e-6 && abs < 1e+20)
             {
-                // Force decimal format
-                result = value.ToString("0.####################", CultureInfo.InvariantCulture);
+                // Force decimal format — re-parse G15 result to get the rounded value,
+                // then format as decimal
+                double rounded = double.Parse(result.Replace("e+", "E+").Replace("e-", "E-"), CultureInfo.InvariantCulture);
+                result = rounded.ToString("0.####################", CultureInfo.InvariantCulture);
                 return result;
             }
 

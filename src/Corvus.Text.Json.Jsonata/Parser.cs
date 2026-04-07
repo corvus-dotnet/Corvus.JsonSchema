@@ -1128,6 +1128,7 @@ internal sealed class Parser
         {
             Procedure = this.ProcessAst(func.Procedure),
             Position = func.Position,
+            KeepArray = func.KeepArray,
         };
         foreach (var arg in func.Arguments)
         {
@@ -1159,7 +1160,12 @@ internal sealed class Parser
     private LambdaNode ProcessLambda(LambdaNode lambda)
     {
         var body = this.ProcessAst(lambda.Body);
-        body = TailCallOptimize(body);
+
+        // TODO: Re-enable TCO once a proper trampoline is implemented in LambdaValue.Invoke.
+        // The thunk-based approach requires evaluating thunk bodies in the thunk's defining
+        // environment and re-resolving function calls, which the current compiled delegate
+        // model doesn't support without restructuring.
+        //// body = TailCallOptimize(body);
 
         return new LambdaNode
         {

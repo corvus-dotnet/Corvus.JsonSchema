@@ -264,7 +264,7 @@ internal static class BuiltInFunctions
     {
         if (args.Length > 2)
         {
-            throw new JsonataException("T0410", "$string expects 0 or 1 arguments", 0);
+            throw new JsonataException("T0410", "$string expects at most 2 arguments", 0);
         }
 
         // 0 args → use current context
@@ -288,6 +288,13 @@ internal static class BuiltInFunctions
 
             var element = seq.FirstOrDefault;
 
+            // When the context itself is undefined (e.g. $string() with no data),
+            // the element will have ValueKind.Undefined even though the sequence is not empty.
+            if (element.ValueKind == JsonValueKind.Undefined)
+            {
+                return Sequence.Undefined;
+            }
+
             // Check for NaN/Infinity (non-finite numbers cannot be stringified)
             if (element.ValueKind == JsonValueKind.Number)
             {
@@ -302,7 +309,16 @@ internal static class BuiltInFunctions
             if (prettyArg is not null)
             {
                 var prettySeq = prettyArg(input, env);
-                prettyPrint = FunctionalCompiler.IsTruthy(prettySeq);
+                if (!prettySeq.IsUndefined)
+                {
+                    var prettyElem = prettySeq.FirstOrDefault;
+                    if (prettyElem.ValueKind is not JsonValueKind.True and not JsonValueKind.False)
+                    {
+                        throw new JsonataException("T0410", "Second argument of $string must be a boolean", 0);
+                    }
+
+                    prettyPrint = prettyElem.ValueKind == JsonValueKind.True;
+                }
             }
 
             // For arrays and objects, produce JSON
@@ -372,7 +388,12 @@ internal static class BuiltInFunctions
                 }
                 else
                 {
-                    writer.WriteNumberValue(d);
+                    // Match JSONata's JSON.stringify replacer: Number(val.toPrecision(15))
+                    double rounded = double.Parse(
+                        d.ToString("G15", CultureInfo.InvariantCulture),
+                        System.Globalization.NumberStyles.Float,
+                        CultureInfo.InvariantCulture);
+                    writer.WriteNumberValue(rounded);
                 }
 
                 break;
@@ -1721,27 +1742,11 @@ internal static class BuiltInFunctions
                 builder.AddRange(result);
             }
 
-            // Materialize builder as JSON array, or auto-unwrap singleton
-            var built = builder.ToSequence();
-            if (built.Count == 1)
-            {
-                // JSONata auto-unwraps singleton map results
-                return built;
-            }
-
-            using var ms = new MemoryStream(256);
-            using var writer = new Utf8JsonWriter(ms);
-            writer.WriteStartArray();
-            for (int i = 0; i < built.Count; i++)
-            {
-                built[i].WriteTo(writer);
-            }
-
-            writer.WriteEndArray();
-            writer.Flush();
-            ms.Position = 0;
-            using var doc = JsonDocument.Parse(ms);
-            return new Sequence(doc.RootElement.Clone());
+            // Return as a multi-value Sequence (not wrapped in a JSON array).
+            // The evaluator's Sequence→JsonElement conversion handles array
+            // creation when there are multiple results, and auto-unwraps
+            // singletons. This matches JSONata's auto-wrap/unwrap semantics.
+            return builder.ToSequence();
         };
     }
 
@@ -2100,15 +2105,17 @@ internal static class BuiltInFunctions
         return (in JsonElement input, Environment env) =>
         {
             var seq = arg(input, env);
+
+            // For lambdas/functions, $spread passes them through
+            // (must check before IsUndefined since lambda sequences have count==0)
+            if (seq.IsLambda)
+            {
+                return seq;
+            }
+
             if (seq.IsUndefined)
             {
                 return Sequence.Undefined;
-            }
-
-            // For lambdas, return empty string
-            if (seq.IsLambda)
-            {
-                return new Sequence(FunctionalCompiler.CreateStringElement(string.Empty));
             }
 
             // Collect all elements to spread
