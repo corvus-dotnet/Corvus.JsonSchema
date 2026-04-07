@@ -38,6 +38,7 @@ internal readonly struct Sequence
     private readonly LambdaValue? lambda;
     private readonly Regex? regex;
     private readonly TailCallContinuation? tailCall;
+    private readonly double nonFiniteValue;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Sequence"/> struct with a single value.
@@ -125,6 +126,24 @@ internal readonly struct Sequence
         this.regex = null;
     }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="Sequence"/> struct wrapping a non-finite numeric value
+    /// (Infinity or NaN) that cannot be represented as a JSON number.
+    /// </summary>
+    /// <param name="nonFiniteValue">The non-finite double value.</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public Sequence(double nonFiniteValue)
+    {
+        Debug.Assert(double.IsInfinity(nonFiniteValue) || double.IsNaN(nonFiniteValue), "Use this constructor only for non-finite values");
+        this.nonFiniteValue = nonFiniteValue;
+        this.count = 0;
+        this.singleValue = default;
+        this.multiValues = null;
+        this.lambda = null;
+        this.regex = null;
+        this.tailCall = null;
+    }
+
     /// <summary>Gets the number of values in the sequence.</summary>
     public int Count
     {
@@ -136,7 +155,7 @@ internal readonly struct Sequence
     public bool IsUndefined
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => this.count == 0;
+        get => this.count == 0 && this.lambda is null && this.regex is null && this.tailCall is null && !this.IsNonFinite;
     }
 
     /// <summary>Gets a value indicating whether this is a singleton sequence.</summary>
@@ -186,6 +205,20 @@ internal readonly struct Sequence
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get => this.tailCall;
+    }
+
+    /// <summary>Gets a value indicating whether this sequence holds a non-finite numeric value (Infinity or NaN).</summary>
+    public bool IsNonFinite
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => double.IsInfinity(this.nonFiniteValue) || double.IsNaN(this.nonFiniteValue);
+    }
+
+    /// <summary>Gets the non-finite double value. Only valid when <see cref="IsNonFinite"/> is <c>true</c>.</summary>
+    public double NonFiniteValue
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => this.nonFiniteValue;
     }
 
     /// <summary>

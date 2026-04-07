@@ -292,6 +292,12 @@ internal static class BuiltInFunctions
                 return Sequence.Undefined;
             }
 
+            // Non-finite numeric values (Infinity, NaN) cannot be stringified
+            if (seq.IsNonFinite)
+            {
+                throw new JsonataException("D3001", "Attempting to invoke string function on Infinity or NaN", 0);
+            }
+
             var element = seq.FirstOrDefault;
 
             // When the context itself is undefined (e.g. $string() with no data),

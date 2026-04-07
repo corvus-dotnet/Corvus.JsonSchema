@@ -1719,14 +1719,32 @@ internal static class FunctionalCompiler
 
             // Check for non-number types before checking for undefined,
             // so that e.g. `false + $x` throws T2001 rather than returning undefined.
-            if (!left.IsUndefined && left.FirstOrDefault.ValueKind != JsonValueKind.Number)
+            // Non-finite values (Infinity/NaN) throw D1001 when used as an operand —
+            // matching JSONata-js isNumeric() which throws D1001 for !isFinite(n).
+            if (!left.IsUndefined)
             {
-                throw new JsonataException("T2001", "The left side of the arithmetic expression is not a number", 0);
+                if (left.IsNonFinite)
+                {
+                    throw new JsonataException("D1001", $"Number out of range: {left.NonFiniteValue}", 0);
+                }
+
+                if (left.FirstOrDefault.ValueKind != JsonValueKind.Number)
+                {
+                    throw new JsonataException("T2001", "The left side of the arithmetic expression is not a number", 0);
+                }
             }
 
-            if (!right.IsUndefined && right.FirstOrDefault.ValueKind != JsonValueKind.Number)
+            if (!right.IsUndefined)
             {
-                throw new JsonataException("T2002", "The right side of the arithmetic expression is not a number", 0);
+                if (right.IsNonFinite)
+                {
+                    throw new JsonataException("D1001", $"Number out of range: {right.NonFiniteValue}", 0);
+                }
+
+                if (right.FirstOrDefault.ValueKind != JsonValueKind.Number)
+                {
+                    throw new JsonataException("T2002", "The right side of the arithmetic expression is not a number", 0);
+                }
             }
 
             if (left.IsUndefined || right.IsUndefined)
@@ -1740,7 +1758,7 @@ internal static class FunctionalCompiler
             double result = op(leftNum, rightNum);
             if (double.IsInfinity(result) || double.IsNaN(result))
             {
-                throw new JsonataException("D1001", "Number out of range", 0);
+                return new Sequence(result);
             }
 
             return new Sequence(JsonataHelpers.NumberFromDouble(result, env.Workspace));        };
@@ -2284,6 +2302,12 @@ internal static class FunctionalCompiler
                 {
                     // Skip undefined values — they don't produce a key in the output
                     continue;
+                }
+
+                // Non-finite numeric values (Infinity/NaN) cannot be stored in JSON
+                if (valueResult.IsNonFinite)
+                {
+                    throw new JsonataException("D1001", $"Number out of range: {valueResult.NonFiniteValue}", 0);
                 }
 
                 if (valueResult.IsSingleton)
