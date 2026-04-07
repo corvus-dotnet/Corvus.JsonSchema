@@ -830,6 +830,14 @@ internal sealed class Parser
         if (rest is PathNode restPath)
         {
             result.Steps.AddRange(restPath.Steps);
+
+            // Merge unresolved parent slots from the sub-path so multi-level
+            // parent operators (e.g. %.%.AccountName) propagate correctly.
+            if (restPath.SeekingParent is not null)
+            {
+                result.SeekingParent ??= [];
+                result.SeekingParent.AddRange(restPath.SeekingParent);
+            }
         }
         else
         {
@@ -1319,6 +1327,8 @@ internal sealed class Parser
                 {
                     var ann = GetOrCreateAnnotations(node);
                     ann.Tuple = true;
+                    ann.AncestorLabels ??= [];
+                    ann.AncestorLabels.Add(slot.Label);
                 }
 
                 break;

@@ -94,7 +94,7 @@ internal static class FunctionalCompiler
             SortNode sort => CompileSort(sort),
             TransformNode transform => CompileTransform(transform),
             RegexNode regex => CompileRegex(regex),
-            ParentNode => CompileParent(),
+            ParentNode parent => CompileParent(parent),
             PartialNode partial => CompilePartial(partial),
             PlaceholderNode => throw new JsonataException("D1001", "Unexpected placeholder outside partial application", node.Position),
             _ => throw new JsonataException("D1001", $"Unknown node type: {node.Type}", node.Position),
@@ -427,6 +427,7 @@ internal static class FunctionalCompiler
         var stageIsSortFlags = new bool[]?[path.Steps.Count];
         var focusVars = new string?[path.Steps.Count];
         var indexVars = new string?[path.Steps.Count];
+        var ancestorLabels = new string[]?[path.Steps.Count];
         var isPropertyStep = new bool[path.Steps.Count];
         var isConsArrayStep = new bool[path.Steps.Count];
         var isSortStep = new bool[path.Steps.Count];
@@ -474,6 +475,10 @@ internal static class FunctionalCompiler
 
                 focusVars[i] = annotations.Focus;
                 indexVars[i] = annotations.Index;
+                if (annotations.AncestorLabels is not null)
+                {
+                    ancestorLabels[i] = annotations.AncestorLabels.ToArray();
+                }
 
                 if (annotations.Group is not null)
                 {
@@ -542,6 +547,16 @@ internal static class FunctionalCompiler
                     var step = steps[stepIdx];
                     var focusVar = focusVars[stepIdx];
                     var indexVar = indexVars[stepIdx];
+                    var labels = ancestorLabels[stepIdx];
+
+                    // Ancestor binding (parent operator %) — per-element context binding.
+                    // When a step has ancestor labels, the INPUT to this step is the parent
+                    // context that % operators in downstream steps need. We must process
+                    // per-element so each element carries its correct ancestor binding.
+                    if (labels is not null && focusVar is null && indexVar is null)
+                    {
+                        return EvalAncestorStep(current, stepIdx);
+                    }
 
                     // Focus binding (@$var) — cross-join semantics.
                     // The focus variable captures each element of the step's result.
@@ -847,6 +862,18 @@ internal static class FunctionalCompiler
                 var step = steps[stepIdx];
                 var focusVar = focusVars[stepIdx]!;
                 var indexVar = indexVars[stepIdx];
+                var labels = ancestorLabels[stepIdx];
+
+                // Bind ancestor labels to the parent context (the INPUT to this step)
+                // so that downstream % operators can look up the parent.
+                if (labels is not null && parentContext.IsSingleton)
+                {
+                    var el = parentContext.FirstOrDefault;
+                    for (int l = 0; l < labels.Length; l++)
+                    {
+                        env.Bind(labels[l], new Sequence(el));
+                    }
+                }
 
                 // Evaluate the step on the parent context to get focus elements
                 Sequence focusResult;
@@ -1006,6 +1033,283 @@ internal static class FunctionalCompiler
                 }
 
                 return resultBuilder.ToSequence();
+            }
+
+            // Evaluates a step that has ancestor labels (parent operator %).
+            // The INPUT to this step is bound under the ancestor labels so that
+            // downstream % operators can look it up. We process per-element to
+            // ensure each element carries its correct parent binding.
+            Sequence EvalAncestorStep(Sequence inputContext, int stepIdx)
+            {
+                var step = steps[stepIdx];
+                var labels = ancestorLabels[stepIdx]!;
+                bool shouldFlatten = stepIdx > 0 || isPropertyStep[stepIdx];
+
+                // Expand input to individual elements for per-element binding
+                var inputElements = new List<JsonElement>();
+                for (int i = 0; i < inputContext.Count; i++)
+                {
+                    var el = inputContext[i];
+                    if (el.ValueKind == JsonValueKind.Array && shouldFlatten)
+                    {
+                        inputElements.AddRange(el.EnumerateArray());
+                    }
+                    else
+                    {
+                        inputElements.Add(el);
+                    }
+                }
+
+                // When the next step is a sort, we can't evaluate remaining steps
+                // per-element (sort needs all elements as a batch). Instead, collect
+                // all (result, ancestor) pairs, then sort with per-element binding.
+                bool nextIsSort = stepIdx + 1 < steps.Length && isSortStep[stepIdx + 1];
+                if (nextIsSort)
+                {
+                    return EvalAncestorWithSort(inputElements, stepIdx, labels);
+                }
+
+                // Determine group-by handling
+                bool hasGroupBy = groupByPairs is not null;
+                bool applyGroupByHere = hasGroupBy;
+                List<string>? groupKeys = applyGroupByHere ? new() : null;
+                Dictionary<string, (List<JsonElement> Elements, int PairIndex)>? groupData =
+                    applyGroupByHere ? new() : null;
+
+                var resultBuilder = default(SequenceBuilder);
+                for (int i = 0; i < inputElements.Count; i++)
+                {
+                    var el = inputElements[i];
+
+                    // Bind ancestor labels to the input element (the parent context)
+                    for (int l = 0; l < labels.Length; l++)
+                    {
+                        env.Bind(labels[l], new Sequence(el));
+                    }
+
+                    // Evaluate the step on this element
+                    Sequence stepResult = step(el, env);
+
+                    // Apply per-element stages if any
+                    if (stages[stepIdx] is not null)
+                    {
+                        stepResult = ApplyStages(stepResult, stages[stepIdx]!, stageIsSortFlags[stepIdx]!, env, indexVars[stepIdx]);
+                        if (stepResult.IsUndefined)
+                        {
+                            continue;
+                        }
+                    }
+
+                    // Continue remaining steps per-element
+                    Sequence subResult;
+                    if (stepIdx + 1 < steps.Length)
+                    {
+                        subResult = EvalPathFrom(stepResult, stepIdx + 1);
+                    }
+                    else
+                    {
+                        subResult = stepResult;
+                    }
+
+                    if (subResult.IsUndefined)
+                    {
+                        continue;
+                    }
+
+                    // Handle group-by accumulation
+                    if (applyGroupByHere)
+                    {
+                        AccumulateGroupBy(subResult, groupByPairs!, groupKeys!, groupData!, env);
+                        continue;
+                    }
+
+                    // In tuple stream context, array results are expanded element-by-element
+                    // (matching jsonata-js evaluateTupleStep which iterates res[bb] to create
+                    // separate tuples). This naturally flattens constructed arrays.
+                    for (int j = 0; j < subResult.Count; j++)
+                    {
+                        var item = subResult[j];
+                        if (item.ValueKind == JsonValueKind.Array)
+                        {
+                            foreach (var child in item.EnumerateArray())
+                            {
+                                resultBuilder.Add(child);
+                            }
+                        }
+                        else
+                        {
+                            resultBuilder.Add(item);
+                        }
+                    }
+                }
+
+                if (applyGroupByHere && groupKeys!.Count > 0)
+                {
+                    return BuildGroupByResult(groupKeys!, groupData!, groupByPairs!, env);
+                }
+
+                return resultBuilder.ToSequence();
+            }
+
+            // Handles the case where an ancestor step is immediately followed by a sort.
+            // Collects (element, ancestor) pairs, sorts with per-element ancestor binding,
+            // then continues remaining steps per-element.
+            Sequence EvalAncestorWithSort(List<JsonElement> inputElements, int stepIdx, string[] labels)
+            {
+                var step = steps[stepIdx];
+                var sortStepIdx = stepIdx + 1;
+
+                // Phase 1: collect all result elements with their ancestor mappings
+                var resultElements = new List<JsonElement>();
+                var ancestorMap = new List<JsonElement>();
+
+                for (int i = 0; i < inputElements.Count; i++)
+                {
+                    var el = inputElements[i];
+
+                    // Bind ancestor for stage evaluation
+                    for (int l = 0; l < labels.Length; l++)
+                    {
+                        env.Bind(labels[l], new Sequence(el));
+                    }
+
+                    Sequence stepResult = step(el, env);
+
+                    // Apply stages if any
+                    if (stages[stepIdx] is not null)
+                    {
+                        stepResult = ApplyStages(stepResult, stages[stepIdx]!, stageIsSortFlags[stepIdx]!, env, indexVars[stepIdx]);
+                        if (stepResult.IsUndefined)
+                        {
+                            continue;
+                        }
+                    }
+
+                    // Expand results and map each to its ancestor
+                    if (stepResult.IsSingleton)
+                    {
+                        var item = stepResult.FirstOrDefault;
+                        if (item.ValueKind == JsonValueKind.Array)
+                        {
+                            foreach (var child in item.EnumerateArray())
+                            {
+                                resultElements.Add(child);
+                                ancestorMap.Add(el);
+                            }
+                        }
+                        else
+                        {
+                            resultElements.Add(item);
+                            ancestorMap.Add(el);
+                        }
+                    }
+                    else
+                    {
+                        for (int j = 0; j < stepResult.Count; j++)
+                        {
+                            resultElements.Add(stepResult[j]);
+                            ancestorMap.Add(el);
+                        }
+                    }
+                }
+
+                if (resultElements.Count == 0)
+                {
+                    return Sequence.Undefined;
+                }
+
+                // Phase 2: sort using per-element ancestor binding
+                if (resultElements.Count > 1 && sortTermsPerStep[sortStepIdx] is not null)
+                {
+                    var terms = sortTermsPerStep[sortStepIdx]!;
+                    var sortIndices = Enumerable.Range(0, resultElements.Count).ToArray();
+                    Array.Sort(sortIndices, (a, b) =>
+                    {
+                        // Bind ancestor for element A
+                        for (int l = 0; l < labels.Length; l++)
+                        {
+                            env.Bind(labels[l], new Sequence(ancestorMap[a]));
+                        }
+
+                        var aVals = new Sequence[terms.Length];
+                        for (int t = 0; t < terms.Length; t++)
+                        {
+                            aVals[t] = terms[t].Expr(resultElements[a], env);
+                        }
+
+                        // Bind ancestor for element B
+                        for (int l = 0; l < labels.Length; l++)
+                        {
+                            env.Bind(labels[l], new Sequence(ancestorMap[b]));
+                        }
+
+                        for (int t = 0; t < terms.Length; t++)
+                        {
+                            var bVal = terms[t].Expr(resultElements[b], env);
+                            int cmp = CompareSortKeys(aVals[t], bVal);
+                            if (cmp != 0)
+                            {
+                                return terms[t].Descending ? -cmp : cmp;
+                            }
+                        }
+
+                        return a.CompareTo(b);
+                    });
+
+                    var sorted = new List<JsonElement>(resultElements.Count);
+                    var sortedAncestors = new List<JsonElement>(resultElements.Count);
+                    for (int i = 0; i < sortIndices.Length; i++)
+                    {
+                        sorted.Add(resultElements[sortIndices[i]]);
+                        sortedAncestors.Add(ancestorMap[sortIndices[i]]);
+                    }
+
+                    resultElements = sorted;
+                    ancestorMap = sortedAncestors;
+                }
+
+                // Apply sort step stages (filters after sort)
+                Sequence sortedSeq;
+                if (resultElements.Count == 1)
+                {
+                    sortedSeq = new Sequence(resultElements[0]);
+                }
+                else
+                {
+                    sortedSeq = new Sequence(JsonataHelpers.ArrayFromList(resultElements, env.Workspace));
+                }
+
+                if (stages[sortStepIdx] is not null)
+                {
+                    sortedSeq = ApplyStages(sortedSeq, stages[sortStepIdx]!, stageIsSortFlags[sortStepIdx]!, env, indexVars[sortStepIdx]);
+                }
+
+                // Phase 3: continue remaining steps per-element with ancestor binding
+                if (sortStepIdx + 1 >= steps.Length)
+                {
+                    return sortedSeq;
+                }
+
+                var builder = default(SequenceBuilder);
+
+                // Expand to individual elements for per-element continuation
+                var finalElements = CollectFlatElements(sortedSeq);
+                for (int i = 0; i < finalElements.Count; i++)
+                {
+                    // Bind ancestor for this element (use sorted order)
+                    if (i < ancestorMap.Count)
+                    {
+                        for (int l = 0; l < labels.Length; l++)
+                        {
+                            env.Bind(labels[l], new Sequence(ancestorMap[i]));
+                        }
+                    }
+
+                    var subResult = EvalPathFrom(new Sequence(finalElements[i]), sortStepIdx + 1);
+                    builder.AddRange(subResult);
+                }
+
+                return builder.ToSequence();
             }
 
             // Evaluates a step with index binding (#$var) without focus binding.
@@ -3186,10 +3490,18 @@ internal static class FunctionalCompiler
         return (in JsonElement input, Environment env) => new Sequence(compiledRegex);
     }
 
-    private static ExpressionEvaluator CompileParent()
+    private static ExpressionEvaluator CompileParent(ParentNode parent)
     {
-        // TODO: Parent context tracking
-        return static (in JsonElement input, Environment env) => Sequence.Undefined;
+        string label = parent.Slot.Label;
+        return (in JsonElement input, Environment env) =>
+        {
+            if (env.TryLookup(label, out var result))
+            {
+                return result;
+            }
+
+            return Sequence.Undefined;
+        };
     }
 
     private static ExpressionEvaluator CompilePartial(PartialNode partial)

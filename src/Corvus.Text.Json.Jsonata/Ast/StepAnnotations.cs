@@ -25,4 +25,9 @@ internal sealed class StepAnnotations
 
     /// <summary>Gets or sets a value indicating whether this step participates in a tuple context.</summary>
     public bool Tuple { get; set; }
+
+    /// <summary>Gets the labels of parent-operator slots resolved at this step.
+    /// When present, the input context to this step should be bound under these labels
+    /// so that <c>%</c> operators can look them up.</summary>
+    public List<string>? AncestorLabels { get; set; }
 }
