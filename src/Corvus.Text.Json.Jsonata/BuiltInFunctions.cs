@@ -832,6 +832,24 @@ internal static class BuiltInFunctions
                     0);
             }
 
+            if (searchSeq.IsUndefined || searchSeq.FirstOrDefault.ValueKind != JsonValueKind.String)
+            {
+                throw new JsonataException("T0410", "Argument 2 of string function is not a string", 0);
+            }
+
+#if NET
+            using UnescapedUtf16JsonString strUtf16 = strElem.GetUtf16String();
+            ReadOnlySpan<char> strSpan = strUtf16.Span;
+            using UnescapedUtf16JsonString searchUtf16 = searchSeq.FirstOrDefault.GetUtf16String();
+            ReadOnlySpan<char> searchSpan = searchUtf16.Span;
+
+            int idx = strSpan.IndexOf(searchSpan, StringComparison.Ordinal);
+            ReadOnlySpan<char> result = idx < 0
+                ? strSpan
+                : before ? strSpan.Slice(0, idx) : strSpan.Slice(idx + searchSpan.Length);
+
+            return new Sequence(JsonataHelpers.StringFromChars(result, env.Workspace));
+#else
             string? str = strElem.GetString();
             string? search = searchSeq.FirstOrDefault.GetString();
 
@@ -846,17 +864,26 @@ internal static class BuiltInFunctions
                 : before ? str.Substring(0, idx) : str.Substring(idx + search.Length);
 
             return new Sequence(JsonataHelpers.StringFromString(result, env.Workspace));
+#endif
         };
     }
 
     private static ExpressionEvaluator CompileUppercase(ExpressionEvaluator[] args)
     {
+#if NET
+        return CompileStringSpanTransform(args, static (source, dest) => source.ToUpperInvariant(dest));
+#else
         return CompileStringTransform(args, s => s.ToUpperInvariant());
+#endif
     }
 
     private static ExpressionEvaluator CompileLowercase(ExpressionEvaluator[] args)
     {
+#if NET
+        return CompileStringSpanTransform(args, static (source, dest) => source.ToLowerInvariant(dest));
+#else
         return CompileStringTransform(args, s => s.ToLowerInvariant());
+#endif
     }
 
     private static ExpressionEvaluator CompileTrim(ExpressionEvaluator[] args)
@@ -901,6 +928,72 @@ internal static class BuiltInFunctions
             return new Sequence(JsonataHelpers.StringFromString(transform(str), env.Workspace));
         };
     }
+
+#if NET
+    /// <summary>
+    /// Compiles a string function that transforms via a span-to-span operation
+    /// (e.g., ToUpperInvariant, ToLowerInvariant) without allocating intermediate strings.
+    /// </summary>
+    private static ExpressionEvaluator CompileStringSpanTransform(
+        ExpressionEvaluator[] args,
+        SpanAction spanTransform)
+    {
+        if (args.Length > 1)
+        {
+            throw new JsonataException("T0410", "String function expects 0 or 1 arguments", 0);
+        }
+
+        var arg = args.Length == 1 ? args[0] : ContextArg;
+        return (in JsonElement input, Environment env) =>
+        {
+            var seq = arg(input, env);
+            if (seq.IsUndefined)
+            {
+                return Sequence.Undefined;
+            }
+
+            var elem = seq.FirstOrDefault;
+            if (elem.ValueKind == JsonValueKind.Undefined)
+            {
+                return Sequence.Undefined;
+            }
+
+            if (elem.ValueKind != JsonValueKind.String)
+            {
+                throw new JsonataException("T0410", "String function argument must be a string", 0);
+            }
+
+            using UnescapedUtf16JsonString utf16 = elem.GetUtf16String();
+            ReadOnlySpan<char> source = utf16.Span;
+
+            if (source.Length == 0)
+            {
+                return new Sequence(JsonataHelpers.EmptyString());
+            }
+
+            char[]? rentedChars = null;
+            Span<char> dest = source.Length <= 128
+                ? stackalloc char[128]
+                : (rentedChars = ArrayPool<char>.Shared.Rent(source.Length));
+
+            try
+            {
+                int written = spanTransform(source, dest);
+                return new Sequence(JsonataHelpers.StringFromChars(
+                    dest.Slice(0, written), env.Workspace));
+            }
+            finally
+            {
+                if (rentedChars is not null)
+                {
+                    ArrayPool<char>.Shared.Return(rentedChars);
+                }
+            }
+        };
+    }
+
+    private delegate int SpanAction(ReadOnlySpan<char> source, Span<char> destination);
+#endif
 
     private static ExpressionEvaluator CompileJoin(ExpressionEvaluator[] args)
     {
@@ -1156,6 +1249,30 @@ internal static class BuiltInFunctions
                 return Sequence.Undefined;
             }
 
+#if NET
+            if (strSeq.FirstOrDefault.ValueKind != JsonValueKind.String)
+            {
+                throw new JsonataException("T0410", "Argument 1 of function $contains must be a string", 0);
+            }
+
+            using UnescapedUtf16JsonString strUtf16 = strSeq.FirstOrDefault.GetUtf16String();
+            ReadOnlySpan<char> strSpan = strUtf16.Span;
+
+            if (searchSeq.IsRegex)
+            {
+                bool isMatch = searchSeq.Regex!.IsMatch(strSpan);
+                return new Sequence(JsonataHelpers.BooleanElement(isMatch));
+            }
+
+            if (searchSeq.IsUndefined || searchSeq.FirstOrDefault.ValueKind != JsonValueKind.String)
+            {
+                throw new JsonataException("T0410", "Argument 2 of function $contains must be a string or regex", 0);
+            }
+
+            using UnescapedUtf16JsonString searchUtf16 = searchSeq.FirstOrDefault.GetUtf16String();
+            bool result = strSpan.Contains(searchUtf16.Span, StringComparison.Ordinal);
+            return new Sequence(JsonataHelpers.BooleanElement(result));
+#else
             string? str = strSeq.FirstOrDefault.GetString();
             if (str is null)
             {
@@ -1171,6 +1288,7 @@ internal static class BuiltInFunctions
             string? search = searchSeq.FirstOrDefault.GetString();
             bool result = search is not null && str.Contains(search);
             return new Sequence(JsonataHelpers.BooleanElement(result));
+#endif
         };
     }
 
