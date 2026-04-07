@@ -211,11 +211,12 @@ internal static class XPathDateTimeFormatter
 
             char compChar = comp.Component;
             string presentation = comp.Presentation;
+            int digitWidth = comp.DigitWidth;
 
             switch (compChar)
             {
                 case 'Y':
-                    year = ParseIntegerValueFromString(str, ref pos, presentation);
+                    year = ParseIntegerValueFromString(str, ref pos, presentation, digitWidth);
                     if (year < 0)
                     {
                         return false;
@@ -223,7 +224,7 @@ internal static class XPathDateTimeFormatter
 
                     break;
                 case 'M':
-                    month = ParseDateComponentFromString(str, ref pos, presentation, MonthNames);
+                    month = ParseDateComponentFromString(str, ref pos, presentation, MonthNames, digitWidth);
                     if (month < 0)
                     {
                         return false;
@@ -231,7 +232,7 @@ internal static class XPathDateTimeFormatter
 
                     break;
                 case 'D':
-                    day = ParseIntegerValueFromString(str, ref pos, presentation);
+                    day = ParseIntegerValueFromString(str, ref pos, presentation, digitWidth);
                     if (day < 0)
                     {
                         return false;
@@ -239,7 +240,7 @@ internal static class XPathDateTimeFormatter
 
                     break;
                 case 'd':
-                    dayOfYear = ParseIntegerValueFromString(str, ref pos, presentation);
+                    dayOfYear = ParseIntegerValueFromString(str, ref pos, presentation, digitWidth);
                     if (dayOfYear < 0)
                     {
                         return false;
@@ -247,7 +248,7 @@ internal static class XPathDateTimeFormatter
 
                     break;
                 case 'H':
-                    hour = ParseIntegerValueFromString(str, ref pos, presentation);
+                    hour = ParseIntegerValueFromString(str, ref pos, presentation, digitWidth);
                     if (hour < 0)
                     {
                         return false;
@@ -255,7 +256,7 @@ internal static class XPathDateTimeFormatter
 
                     break;
                 case 'h':
-                    hour = ParseIntegerValueFromString(str, ref pos, presentation);
+                    hour = ParseIntegerValueFromString(str, ref pos, presentation, digitWidth);
                     if (hour < 0)
                     {
                         return false;
@@ -263,7 +264,7 @@ internal static class XPathDateTimeFormatter
 
                     break;
                 case 'm':
-                    minute = ParseIntegerValueFromString(str, ref pos, presentation);
+                    minute = ParseIntegerValueFromString(str, ref pos, presentation, digitWidth);
                     if (minute < 0)
                     {
                         return false;
@@ -271,7 +272,7 @@ internal static class XPathDateTimeFormatter
 
                     break;
                 case 's':
-                    second = ParseIntegerValueFromString(str, ref pos, presentation);
+                    second = ParseIntegerValueFromString(str, ref pos, presentation, digitWidth);
                     if (second < 0)
                     {
                         return false;
@@ -470,6 +471,64 @@ internal static class XPathDateTimeFormatter
     }
 
     /// <summary>
+    /// Formats a large integer (as a double) using an XPath integer picture string.
+    /// Used when the value is outside the range of <see cref="long"/>.
+    /// </summary>
+    /// <param name="value">The integer value as a double.</param>
+    /// <param name="picture">The XPath integer picture string.</param>
+    /// <returns>The formatted string.</returns>
+    public static string FormatInteger(double value, string picture)
+    {
+        if (value >= long.MinValue && value <= long.MaxValue)
+        {
+            return FormatInteger((long)value, picture);
+        }
+
+        string primary;
+        bool isOrdinal = false;
+        int semiIdx = picture.IndexOf(';');
+        if (semiIdx >= 0)
+        {
+            primary = picture.Substring(0, semiIdx);
+            string modifier = picture.Substring(semiIdx + 1);
+            if (modifier.IndexOf('o') >= 0)
+            {
+                isOrdinal = true;
+            }
+        }
+        else
+        {
+            primary = picture;
+        }
+
+        if (primary.Length == 0)
+        {
+            primary = "0";
+        }
+
+        if (primary == "W" || primary == "w" || primary == "Ww")
+        {
+            bool isNegative = value < 0;
+            double absValue = Math.Abs(value);
+            string words = NumberToWordsLarge(absValue);
+            if (isNegative)
+            {
+                words = "minus " + words;
+            }
+
+            if (isOrdinal)
+            {
+                words = MakeOrdinalWords(words);
+            }
+
+            return ApplyWordCasing(words, primary);
+        }
+
+        // For non-word patterns, format using scientific notation
+        return value.ToString("R", CultureInfo.InvariantCulture);
+    }
+
+    /// <summary>
     /// Parses an integer from a string using an XPath integer picture string.
     /// </summary>
     /// <param name="str">The string to parse.</param>
@@ -503,6 +562,55 @@ internal static class XPathDateTimeFormatter
         }
 
         return TryParseIntegerWithPresentation(str, primary, isOrdinal, out value);
+    }
+
+    /// <summary>
+    /// Parses an integer from a string using an XPath integer picture string, returning a double
+    /// to handle values outside the range of <see cref="long"/>.
+    /// </summary>
+    /// <param name="str">The string to parse.</param>
+    /// <param name="picture">The XPath integer picture string.</param>
+    /// <param name="value">The parsed value as a double.</param>
+    /// <returns><see langword="true"/> if the string was successfully parsed; otherwise <see langword="false"/>.</returns>
+    public static bool TryParseInteger(string str, string picture, out double value)
+    {
+        value = 0;
+
+        string primary;
+        bool isOrdinal = false;
+        int semiIdx = picture.IndexOf(';');
+        if (semiIdx >= 0)
+        {
+            primary = picture.Substring(0, semiIdx);
+            string modifier = picture.Substring(semiIdx + 1);
+            if (modifier.IndexOf('o') >= 0)
+            {
+                isOrdinal = true;
+            }
+        }
+        else
+        {
+            primary = picture;
+        }
+
+        if (primary.Length == 0)
+        {
+            primary = "0";
+        }
+
+        if (primary == "W" || primary == "w" || primary == "Ww")
+        {
+            return TryParseWordsToNumberDouble(str, isOrdinal, out value);
+        }
+
+        // For other patterns, use the long version
+        if (TryParseIntegerWithPresentation(str, primary, isOrdinal, out long longValue))
+        {
+            value = longValue;
+            return true;
+        }
+
+        return false;
     }
 
     internal static string FormatIntegerWithPresentation(long value, string presentation, bool isOrdinal)
@@ -622,12 +730,14 @@ internal static class XPathDateTimeFormatter
             }
         }
 
+        bool hardMaxWidth = false;
         if (widthCommaIdx >= 0)
         {
             string widthSpec = rest.Substring(widthCommaIdx + 1);
             rest = rest.Substring(0, widthCommaIdx);
-            bool isRange = widthSpec.Contains('-');
+            bool isRange = widthSpec.IndexOf('-') >= 0;
             ParseWidthModifier(widthSpec, out minWidth, out maxWidth);
+            hardMaxWidth = isRange;
 
             // When the width modifier is a single value (not a range), the maxWidth
             // should not truncate below the mandatory digit count in the presentation.
@@ -672,23 +782,23 @@ internal static class XPathDateTimeFormatter
         switch (comp)
         {
             case 'Y':
-                FormatDateValue(dt.Year, presentation, minWidth, maxWidth, sb);
+                FormatDateValue(dt.Year, presentation, minWidth, maxWidth, hardMaxWidth, sb);
                 break;
             case 'M':
-                FormatDateValueOrName(dt.Month, presentation, minWidth, maxWidth, MonthNames, sb);
+                FormatDateValueOrName(dt.Month, presentation, minWidth, maxWidth, hardMaxWidth, MonthNames, sb);
                 break;
             case 'D':
-                FormatDateValue(dt.Day, presentation, minWidth, maxWidth, sb);
+                FormatDateValue(dt.Day, presentation, minWidth, maxWidth, hardMaxWidth, sb);
                 break;
             case 'd':
-                FormatDateValue(dt.DayOfYear, presentation, minWidth, maxWidth, sb);
+                FormatDateValue(dt.DayOfYear, presentation, minWidth, maxWidth, hardMaxWidth, sb);
                 break;
             case 'F':
                 int isoDay = GetIsoDayOfWeek(dt.DayOfWeek);
-                FormatDateValueOrName(isoDay, presentation, minWidth, maxWidth, DayNames, sb);
+                FormatDateValueOrName(isoDay, presentation, minWidth, maxWidth, hardMaxWidth, DayNames, sb);
                 break;
             case 'H':
-                FormatDateValue(dt.Hour, presentation, minWidth, maxWidth, sb);
+                FormatDateValue(dt.Hour, presentation, minWidth, maxWidth, hardMaxWidth, sb);
                 break;
             case 'h':
                 int h12 = dt.Hour % 12;
@@ -697,7 +807,7 @@ internal static class XPathDateTimeFormatter
                     h12 = 12;
                 }
 
-                FormatDateValue(h12, presentation, minWidth, maxWidth, sb);
+                FormatDateValue(h12, presentation, minWidth, maxWidth, hardMaxWidth, sb);
                 break;
             case 'P':
                 string ampm = dt.Hour < 12 ? "am" : "pm";
@@ -716,10 +826,10 @@ internal static class XPathDateTimeFormatter
 
                 break;
             case 'm':
-                FormatDateValue(dt.Minute, presentation, minWidth, maxWidth, sb);
+                FormatDateValue(dt.Minute, presentation, minWidth, maxWidth, hardMaxWidth, sb);
                 break;
             case 's':
-                FormatDateValue(dt.Second, presentation, minWidth, maxWidth, sb);
+                FormatDateValue(dt.Second, presentation, minWidth, maxWidth, hardMaxWidth, sb);
                 break;
             case 'f':
                 FormatFractionalSeconds(dt.Millisecond, presentation, sb);
@@ -731,16 +841,16 @@ internal static class XPathDateTimeFormatter
                 FormatTimezoneGmt(dt.Offset, sb);
                 break;
             case 'W':
-                FormatDateValue(GetIsoWeekOfYear(dt), presentation, minWidth, maxWidth, sb);
+                FormatDateValue(GetIsoWeekOfYear(dt), presentation, minWidth, maxWidth, hardMaxWidth, sb);
                 break;
             case 'w':
-                FormatDateValue(GetWeekOfMonth(dt), presentation, minWidth, maxWidth, sb);
+                FormatDateValue(GetWeekOfMonth(dt), presentation, minWidth, maxWidth, hardMaxWidth, sb);
                 break;
             case 'x':
-                FormatDateValueOrName(GetMonthOfWeek(dt), presentation, minWidth, maxWidth, MonthNames, sb);
+                FormatDateValueOrName(GetMonthOfWeek(dt), presentation, minWidth, maxWidth, hardMaxWidth, MonthNames, sb);
                 break;
             case 'X':
-                FormatDateValue(GetIsoWeekYear(dt), presentation, minWidth, maxWidth, sb);
+                FormatDateValue(GetIsoWeekYear(dt), presentation, minWidth, maxWidth, hardMaxWidth, sb);
                 break;
             case 'C':
                 sb.Append("ISO");
@@ -753,7 +863,7 @@ internal static class XPathDateTimeFormatter
         }
     }
 
-    private static void FormatDateValue(int value, string presentation, int minWidth, int maxWidth, StringBuilder sb)
+    private static void FormatDateValue(int value, string presentation, int minWidth, int maxWidth, bool hardMaxWidth, StringBuilder sb)
     {
         bool isOrdinal = false;
         string pres = presentation;
@@ -774,7 +884,19 @@ internal static class XPathDateTimeFormatter
 
         if (maxWidth >= 0 && formatted.Length > maxWidth)
         {
-            formatted = formatted.Substring(formatted.Length - maxWidth);
+            if (hardMaxWidth)
+            {
+                formatted = formatted.Substring(formatted.Length - maxWidth);
+            }
+            else
+            {
+                int mandatoryFromPres = CountMandatoryDigits(pres);
+                int effectiveMax = Math.Max(maxWidth, mandatoryFromPres);
+                if (formatted.Length > effectiveMax)
+                {
+                    formatted = formatted.Substring(formatted.Length - effectiveMax);
+                }
+            }
         }
 
         if (minWidth >= 0 && formatted.Length < minWidth)
@@ -785,12 +907,12 @@ internal static class XPathDateTimeFormatter
         sb.Append(formatted);
     }
 
-    private static void FormatDateValueOrName(int value, string presentation, int minWidth, int maxWidth, string[] names, StringBuilder sb)
+    private static void FormatDateValueOrName(int value, string presentation, int minWidth, int maxWidth, bool hardMaxWidth, string[] names, StringBuilder sb)
     {
         if (presentation.Length == 0)
         {
             // Default numeric
-            FormatDateValue(value, presentation, minWidth, maxWidth, sb);
+            FormatDateValue(value, presentation, minWidth, maxWidth, hardMaxWidth, sb);
             return;
         }
 
@@ -849,7 +971,7 @@ internal static class XPathDateTimeFormatter
             return;
         }
 
-        FormatDateValue(value, presentation, minWidth, maxWidth, sb);
+        FormatDateValue(value, presentation, minWidth, maxWidth, hardMaxWidth, sb);
     }
 
     private static void FormatFractionalSeconds(int milliseconds, string presentation, StringBuilder sb)
@@ -1741,6 +1863,35 @@ internal static class XPathDateTimeFormatter
         return result.ToString();
     }
 
+    private static string NumberToWordsLarge(double value)
+    {
+        if (value < 1_000_000_000_000.0)
+        {
+            return NumberToWords((long)value);
+        }
+
+        double trillions = Math.Floor(value / 1_000_000_000_000.0);
+        double remainder = value - (trillions * 1_000_000_000_000.0);
+
+        string trillionPart;
+        if (trillions >= 1_000_000_000_000.0)
+        {
+            trillionPart = NumberToWordsLarge(trillions) + " trillion";
+        }
+        else
+        {
+            trillionPart = NumberToWords((long)trillions) + " trillion";
+        }
+
+        if (remainder < 1.0)
+        {
+            return trillionPart;
+        }
+
+        string sep = remainder < 100 ? " and " : ", ";
+        return trillionPart + sep + NumberToWords((long)remainder);
+    }
+
     private static string MakeOrdinalWords(string words)
     {
         // Find the last word and convert it to ordinal form
@@ -1860,6 +2011,22 @@ internal static class XPathDateTimeFormatter
     private static bool TryParseWordsToNumber(string str, bool isOrdinal, out long value)
     {
         value = 0;
+        if (TryParseWordsToNumberDouble(str, isOrdinal, out double dblValue))
+        {
+            if (dblValue >= long.MinValue && dblValue <= long.MaxValue)
+            {
+                value = (long)dblValue;
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
+    private static bool TryParseWordsToNumberDouble(string str, bool isOrdinal, out double value)
+    {
+        value = 0;
         string text = str.Trim().ToLowerInvariant();
 
         if (text.Length == 0)
@@ -1879,7 +2046,7 @@ internal static class XPathDateTimeFormatter
             text = ConvertOrdinalToCardinal(text);
         }
 
-        return TryParseCardinalWords(text, out value);
+        return TryParseCardinalWordsDouble(text, out value);
     }
 
     private static string ConvertOrdinalToCardinal(string text)
@@ -1905,11 +2072,10 @@ internal static class XPathDateTimeFormatter
         return text;
     }
 
-    private static bool TryParseCardinalWords(string text, out long value)
+    private static bool TryParseCardinalWordsDouble(string text, out double value)
     {
         value = 0;
 
-        // Tokenize: split on spaces, commas, "and"
         string cleaned = text.Replace(",", " ").Replace(" and ", " ");
         string[] tokens = cleaned.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
 
@@ -1918,24 +2084,20 @@ internal static class XPathDateTimeFormatter
             return false;
         }
 
-        // Parse using a stack-based approach for scale words
-        long current = 0;
-        long result = 0;
+        double current = 0;
+        double result = 0;
 
         for (int i = 0; i < tokens.Length; i++)
         {
             string token = tokens[i];
 
-            // Check hyphenated words like "twenty-three"
             int hyphen = token.IndexOf('-');
             if (hyphen > 0)
             {
                 string left = token.Substring(0, hyphen);
                 string right = token.Substring(hyphen + 1);
-
                 long leftVal = WordToNumber(left);
                 long rightVal = WordToNumber(right);
-
                 if (leftVal < 0 || rightVal < 0)
                 {
                     return false;
@@ -1945,21 +2107,33 @@ internal static class XPathDateTimeFormatter
                 continue;
             }
 
-            // Check scale words
             long scaleVal = GetScaleValue(token);
             if (scaleVal > 0)
             {
                 if (scaleVal >= 1000)
                 {
-                    // Major scale: multiply accumulated and add to result
-                    if (current == 0)
+                    if (current == 0 && result > 0)
                     {
-                        current = 1;
+                        // No preceding number for this scale: multiply everything so far
+                        result *= scaleVal;
                     }
+                    else
+                    {
+                        if (current == 0)
+                        {
+                            current = 1;
+                        }
 
-                    current *= scaleVal;
-                    result += current;
-                    current = 0;
+                        if (result > 0 && result < scaleVal)
+                        {
+                            current += result;
+                            result = 0;
+                        }
+
+                        current *= scaleVal;
+                        result += current;
+                        current = 0;
+                    }
                 }
                 else
                 {
@@ -2104,6 +2278,7 @@ internal static class XPathDateTimeFormatter
         public string? Literal;
         public char Component;
         public string Presentation;
+        public int DigitWidth;
     }
 
     private static List<PictureComponent> ParsePictureString(string picture)
@@ -2140,11 +2315,43 @@ internal static class XPathDateTimeFormatter
                 char comp = stripped[0];
                 string pres = stripped.Length > 1 ? stripped.Substring(1) : string.Empty;
 
-                // Remove width modifier
-                int comma = pres.IndexOf(',');
-                if (comma >= 0)
+                // Remove width modifier using last-comma approach
+                int lastComma = -1;
+                for (int ci = pres.Length - 1; ci >= 0; ci--)
                 {
-                    pres = pres.Substring(0, comma);
+                    if (pres[ci] == ',')
+                    {
+                        string candidate = pres.Substring(ci + 1);
+                        if (IsValidWidthModifier(candidate))
+                        {
+                            lastComma = ci;
+                            break;
+                        }
+                    }
+                }
+
+                int digitWidth = 0;
+                int maxWidthFromPic = -1;
+                if (lastComma >= 0)
+                {
+                    string widthPart = pres.Substring(lastComma + 1);
+                    pres = pres.Substring(0, lastComma);
+                    ParseWidthModifier(widthPart, out _, out maxWidthFromPic);
+                }
+
+                // Count digit positions in presentation for fixed-width parsing
+                foreach (char dc in pres)
+                {
+                    if ((dc >= '0' && dc <= '9') || dc == '#')
+                    {
+                        digitWidth++;
+                    }
+                }
+
+                // If the width modifier specifies a max that's less, use it
+                if (maxWidthFromPic > 0 && (digitWidth == 0 || maxWidthFromPic < digitWidth))
+                {
+                    digitWidth = maxWidthFromPic;
                 }
 
                 // Validate component
@@ -2165,6 +2372,7 @@ internal static class XPathDateTimeFormatter
                         IsLiteral = false,
                         Component = comp,
                         Presentation = pres,
+                        DigitWidth = digitWidth,
                     });
                 }
                 else
@@ -2204,7 +2412,7 @@ internal static class XPathDateTimeFormatter
         return components;
     }
 
-    private static int ParseIntegerValueFromString(string str, ref int pos, string presentation)
+    private static int ParseIntegerValueFromString(string str, ref int pos, string presentation, int overrideMaxDigits = 0)
     {
         if (pos >= str.Length)
         {
@@ -2264,6 +2472,12 @@ internal static class XPathDateTimeFormatter
             }
         }
 
+        // Use the override from PictureComponent.DigitWidth when available
+        if (overrideMaxDigits > 1)
+        {
+            maxDigits = overrideMaxDigits;
+        }
+
         // If presentation specifies more than 1 digit, use it as a fixed width
         // Otherwise (default), consume greedily
         bool fixedWidth = maxDigits > 1;
@@ -2312,7 +2526,7 @@ internal static class XPathDateTimeFormatter
         return result;
     }
 
-    private static int ParseDateComponentFromString(string str, ref int pos, string presentation, string[] names)
+    private static int ParseDateComponentFromString(string str, ref int pos, string presentation, string[] names, int overrideMaxDigits = 0)
     {
         if (pos >= str.Length)
         {
@@ -2339,7 +2553,7 @@ internal static class XPathDateTimeFormatter
         }
 
         // Numeric
-        return ParseIntegerValueFromString(str, ref pos, presentation);
+        return ParseIntegerValueFromString(str, ref pos, presentation, overrideMaxDigits);
     }
 
     private static int ParseNameFromString(string str, ref int pos, string[] names)
@@ -2419,17 +2633,16 @@ internal static class XPathDateTimeFormatter
 
     private static int ParseWordsFromString(string str, ref int pos, bool isOrdinal)
     {
-        // Find the extent of the word(s) - consume until we hit something that's clearly not a word char
         int start = pos;
-        int lastGoodEnd = pos;
 
         // Greedily match word characters (letters, hyphens, spaces, commas)
-        while (pos < str.Length)
+        int end = pos;
+        while (end < str.Length)
         {
-            char c = str[pos];
+            char c = str[end];
             if (char.IsLetter(c) || c == '-' || c == ' ' || c == ',')
             {
-                pos++;
+                end++;
             }
             else
             {
@@ -2437,24 +2650,56 @@ internal static class XPathDateTimeFormatter
             }
         }
 
-        // Trim trailing spaces/commas
-        while (pos > start && (str[pos - 1] == ' ' || str[pos - 1] == ','))
+        // Trim trailing separators
+        while (end > start && (str[end - 1] == ' ' || str[end - 1] == ','))
         {
-            pos--;
+            end--;
         }
 
-        if (pos == start)
+        if (end == start)
         {
             return -1;
         }
 
-        string wordStr = str.Substring(start, pos - start);
-        if (TryParseWordsToNumber(wordStr, isOrdinal, out long value))
+        // Try the full match first, then back off word-by-word
+        int tryEnd = end;
+        while (tryEnd > start)
         {
-            return (int)value;
+            string wordStr = str.Substring(start, tryEnd - start);
+
+            // Try cardinal first, then ordinal (or vice versa based on isOrdinal)
+            if (TryParseWordsToNumber(wordStr, isOrdinal, out long value) ||
+                TryParseWordsToNumber(wordStr, !isOrdinal, out value))
+            {
+                pos = tryEnd;
+                return (int)value;
+            }
+
+            // Back off: find the last space before tryEnd
+            int lastSpace = -1;
+            for (int si = tryEnd - 1; si > start; si--)
+            {
+                if (str[si] == ' ')
+                {
+                    lastSpace = si;
+                    break;
+                }
+            }
+
+            if (lastSpace < 0)
+            {
+                break;
+            }
+
+            tryEnd = lastSpace;
+
+            // Trim trailing separators
+            while (tryEnd > start && (str[tryEnd - 1] == ' ' || str[tryEnd - 1] == ','))
+            {
+                tryEnd--;
+            }
         }
 
-        pos = start;
         return -1;
     }
 

@@ -4325,8 +4325,16 @@ internal static class BuiltInFunctions
             var picSeq = picArg(input, env);
             string picture = FunctionalCompiler.CoerceElementToString(picSeq.FirstOrDefault);
 
-            long intVal = (long)numVal;
-            string result = XPathDateTimeFormatter.FormatInteger(intVal, picture);
+            string result;
+            if (numVal >= long.MinValue && numVal <= long.MaxValue)
+            {
+                result = XPathDateTimeFormatter.FormatInteger((long)numVal, picture);
+            }
+            else
+            {
+                result = XPathDateTimeFormatter.FormatInteger(numVal, picture);
+            }
+
             return new Sequence(FunctionalCompiler.CreateStringElement(result));
         };
     }
@@ -4354,9 +4362,9 @@ internal static class BuiltInFunctions
             var picSeq = picArg(input, env);
             string picture = FunctionalCompiler.CoerceElementToString(picSeq.FirstOrDefault);
 
-            if (XPathDateTimeFormatter.TryParseInteger(str, picture, out long value))
+            if (XPathDateTimeFormatter.TryParseInteger(str, picture, out double dblValue))
             {
-                return new Sequence(FunctionalCompiler.CreateNumberElement(value));
+                return new Sequence(FunctionalCompiler.CreateNumberElement(dblValue));
             }
 
             return Sequence.Undefined;
