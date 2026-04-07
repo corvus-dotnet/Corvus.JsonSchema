@@ -564,18 +564,58 @@ internal static class XPathDateTimeFormatter
         char comp = marker[0];
         string rest = marker.Length > 1 ? marker.Substring(1) : string.Empty;
 
-        // Parse optional width modifier (after comma)
+        // Parse optional width modifier (after comma).
+        // The presentation modifier can itself contain commas (e.g. '#,##0' as a grouping pattern),
+        // so we scan from right to left for the comma that starts a valid width modifier.
         int maxWidth = -1;
         int minWidth = -1;
-        int commaIdx = rest.IndexOf(',');
-        if (commaIdx >= 0)
+        int widthCommaIdx = -1;
+        for (int ci = rest.Length - 1; ci >= 0; ci--)
         {
-            string widthSpec = rest.Substring(commaIdx + 1);
-            rest = rest.Substring(0, commaIdx);
+            if (rest[ci] == ',')
+            {
+                string candidate = rest.Substring(ci + 1);
+                if (IsValidWidthModifier(candidate))
+                {
+                    widthCommaIdx = ci;
+                    break;
+                }
+            }
+        }
+
+        if (widthCommaIdx >= 0)
+        {
+            string widthSpec = rest.Substring(widthCommaIdx + 1);
+            rest = rest.Substring(0, widthCommaIdx);
             ParseWidthModifier(widthSpec, out minWidth, out maxWidth);
         }
 
         string presentation = rest;
+
+        // Apply XPath 3.1 default presentation modifiers per component
+        if (presentation.Length == 0)
+        {
+            presentation = comp switch
+            {
+                'Y' => "1",
+                'M' => "1",
+                'D' => "1",
+                'd' => "1",
+                'F' => "n",
+                'H' => "1",
+                'h' => "1",
+                'P' => "n",
+                'm' => "01",
+                's' => "01",
+                'f' => "1",
+                'Z' => "01:01",
+                'W' => "1",
+                'w' => "1",
+                'x' => "1",
+                'X' => "1",
+                _ => "1",
+            };
+        }
 
         switch (comp)
         {
@@ -678,6 +718,13 @@ internal static class XPathDateTimeFormatter
             pres = "1";
         }
 
+        // Name presentations (N, n, Nn) only apply to components with names (month, day-of-week).
+        // For numeric-only components (year, hour, minute, etc.), fall back to default numeric.
+        if (pres == "N" || pres == "n" || pres == "Nn")
+        {
+            pres = "1";
+        }
+
         string formatted = FormatIntegerWithPresentation(value, pres, isOrdinal);
 
         if (maxWidth >= 0 && formatted.Length > maxWidth)
@@ -762,11 +809,11 @@ internal static class XPathDateTimeFormatter
 
     private static void FormatFractionalSeconds(int milliseconds, string presentation, StringBuilder sb)
     {
-        // Count number of 0s in presentation for number of fractional digits
+        // Count digit characters in presentation for number of fractional digits
         int digits = 0;
         foreach (char c in presentation)
         {
-            if (c == '0')
+            if (c >= '0' && c <= '9')
             {
                 digits++;
             }
@@ -950,17 +997,26 @@ internal static class XPathDateTimeFormatter
 
     private static int GetWeekOfMonth(DateTimeOffset dt)
     {
-        // ISO week-of-month: weeks start Monday, week 1 contains the first Thursday of the month
+        // ISO week-of-month: weeks start Monday, the reference month is the month
+        // containing the Thursday of the week (same as GetMonthOfWeek)
         DateTime d = dt.UtcDateTime.Date;
         int isoDow = d.DayOfWeek == DayOfWeek.Sunday ? 7 : (int)d.DayOfWeek;
 
+        // Thursday of the current week determines which month this week belongs to
+        DateTime thursday = d.AddDays(4 - isoDow);
+        int refMonth = thursday.Month;
+        int refYear = thursday.Year;
+
+        // First day of the reference month
+        DateTime firstOfMonth = new DateTime(refYear, refMonth, 1);
+        int firstDow = firstOfMonth.DayOfWeek == DayOfWeek.Sunday ? 7 : (int)firstOfMonth.DayOfWeek;
+
+        // Monday of the first ISO week of the reference month
+        // (week 1 contains the first Thursday of the month)
+        DateTime firstMonday = firstOfMonth.AddDays(firstDow <= 4 ? (1 - firstDow) : (8 - firstDow));
+
         // Monday of the current week
         DateTime currentMonday = d.AddDays(1 - isoDow);
-
-        // First day of the month that contains currentMonday (could be previous month)
-        DateTime firstOfMonth = new DateTime(d.Year, d.Month, 1);
-        int firstDow = firstOfMonth.DayOfWeek == DayOfWeek.Sunday ? 7 : (int)firstOfMonth.DayOfWeek;
-        DateTime firstMonday = firstOfMonth.AddDays(firstDow <= 4 ? (1 - firstDow) : (8 - firstDow));
 
         int weekOfMonth = ((currentMonday - firstMonday).Days / 7) + 1;
         return weekOfMonth;
@@ -973,6 +1029,51 @@ internal static class XPathDateTimeFormatter
         int isoDow = d.DayOfWeek == DayOfWeek.Sunday ? 7 : (int)d.DayOfWeek;
         DateTime thursday = d.AddDays(4 - isoDow);
         return thursday.Month;
+    }
+
+    /// <summary>
+    /// Checks if a string is a valid width modifier: a number, '*', or 'n-m' range.
+    /// </summary>
+    private static bool IsValidWidthModifier(string spec)
+    {
+        if (spec.Length == 0)
+        {
+            return false;
+        }
+
+        // Split on '-' for range
+        int dash = spec.IndexOf('-');
+        if (dash >= 0)
+        {
+            string left = spec.Substring(0, dash).Trim();
+            string right = spec.Substring(dash + 1).Trim();
+            return IsWidthPart(left) && IsWidthPart(right);
+        }
+
+        return IsWidthPart(spec.Trim());
+    }
+
+    private static bool IsWidthPart(string part)
+    {
+        if (part == "*")
+        {
+            return true;
+        }
+
+        if (part.Length == 0)
+        {
+            return false;
+        }
+
+        foreach (char c in part)
+        {
+            if (c < '0' || c > '9')
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private static void ParseWidthModifier(string spec, out int minWidth, out int maxWidth)
@@ -1006,7 +1107,7 @@ internal static class XPathDateTimeFormatter
         }
         else
         {
-            // Single value = minimum width
+            // Single value = both minimum and maximum width
             if (spec == "*")
             {
                 minWidth = -1;
@@ -1014,6 +1115,7 @@ internal static class XPathDateTimeFormatter
             else if (int.TryParse(spec.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out int w))
             {
                 minWidth = w;
+                maxWidth = w;
             }
         }
     }

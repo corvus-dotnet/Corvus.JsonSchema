@@ -4123,18 +4123,23 @@ internal static class BuiltInFunctions
 
     private static ExpressionEvaluator CompileFromMillis(ExpressionEvaluator[] args)
     {
-        if (args.Length < 1)
-        {
-            throw new JsonataException("T0410", "$fromMillis expects at least 1 argument", 0);
-        }
-
-        var msArg = args[0];
+        var msArg = args.Length > 0 ? args[0] : null;
         var pictureArg = args.Length > 1 ? args[1] : null;
         var tzArg = args.Length > 2 ? args[2] : null;
 
         return (in JsonElement input, Environment env) =>
         {
-            var msSeq = msArg(input, env);
+            Sequence msSeq;
+            if (msArg is not null)
+            {
+                msSeq = msArg(input, env);
+            }
+            else
+            {
+                // 0-arg form: use context as the milliseconds value
+                msSeq = new Sequence(input);
+            }
+
             if (msSeq.IsUndefined)
             {
                 return Sequence.Undefined;
