@@ -1851,15 +1851,32 @@ internal static class FunctionalCompiler
 
         var rhsEval = Compile(apply.Rhs);
 
-        // Function composition: LHS ~> RHS where RHS is a variable/lambda
+        // Function composition / pipe: LHS ~> RHS where RHS is a variable/lambda
         return (in JsonElement input, Environment env) =>
         {
             var lhsResult = lhsEval(input, env);
             var rhsResult = rhsEval(input, env);
 
-            // If RHS is a lambda, invoke it with LHS as argument
+            // If RHS is a lambda...
             if (rhsResult.IsLambda)
             {
+                // If LHS is also a lambda, compose: create a new function
+                // that applies LHS first, then pipes result through RHS
+                if (lhsResult.IsLambda)
+                {
+                    var lhsLambda = lhsResult.Lambda!;
+                    var rhsLambda = rhsResult.Lambda!;
+                    var composedLambda = new LambdaValue(
+                        (args, compInput, compEnv) =>
+                        {
+                            var intermediate = lhsLambda.Invoke(args, compInput, compEnv);
+                            return rhsLambda.Invoke([intermediate], compInput, compEnv);
+                        },
+                        lhsLambda.Arity > 0 ? lhsLambda.Arity : 1);
+                    return new Sequence(composedLambda);
+                }
+
+                // LHS is a value — invoke RHS with LHS as argument
                 var args = new[] { lhsResult };
                 return rhsResult.Lambda!.Invoke(args, input, env);
             }
