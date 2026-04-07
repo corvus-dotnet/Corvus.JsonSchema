@@ -3157,13 +3157,14 @@ internal static class BuiltInFunctions
 
     private static ExpressionEvaluator CompileFormatNumber(ExpressionEvaluator[] args)
     {
-        if (args.Length != 2)
+        if (args.Length < 2 || args.Length > 3)
         {
-            throw new JsonataException("T0410", "$formatNumber expects 2 arguments", 0);
+            throw new JsonataException("T0410", "$formatNumber expects 2 or 3 arguments", 0);
         }
 
         var numArg = args[0];
         var picArg = args[1];
+        var optArg = args.Length >= 3 ? args[2] : null;
         return (in JsonElement input, Environment env) =>
         {
             var numSeq = numArg(input, env);
@@ -3179,9 +3180,667 @@ internal static class BuiltInFunctions
             }
 
             string picture = FunctionalCompiler.CoerceElementToString(picSeq.FirstOrDefault);
+
+            JsonElement options = default;
+            if (optArg is not null)
+            {
+                var optSeq = optArg(input, env);
+                if (!optSeq.IsUndefined)
+                {
+                    options = optSeq.FirstOrDefault;
+                }
+            }
+
             return new Sequence(FunctionalCompiler.CreateStringElement(
-                num.ToString(picture, CultureInfo.InvariantCulture)));
+                FormatNumberXPath(num, picture, options)));
         };
+    }
+
+    private static string FormatNumberXPath(double value, string picture, JsonElement options)
+    {
+        // Build formatting properties (defaults overridden by options).
+        char decSep = '.';
+        char grpSep = ',';
+        char expSep = 'e';
+        string minusSign = "-";
+        string pct = "%";
+        string perMille = "\u2030";
+        char zeroDigit = '0';
+        char optDigit = '#';
+        char patSep = ';';
+
+        if (options.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var prop in options.EnumerateObject())
+            {
+                string v = prop.Value.GetString() ?? string.Empty;
+                switch (prop.Name)
+                {
+                    case "decimal-separator": if (v.Length > 0) decSep = v[0]; break;
+                    case "grouping-separator": if (v.Length > 0) grpSep = v[0]; break;
+                    case "exponent-separator": if (v.Length > 0) expSep = v[0]; break;
+                    case "minus-sign": if (v.Length > 0) minusSign = v; break;
+                    case "percent": pct = v; break;
+                    case "per-mille": perMille = v; break;
+                    case "zero-digit": if (v.Length > 0) zeroDigit = v[0]; break;
+                    case "digit": if (v.Length > 0) optDigit = v[0]; break;
+                    case "pattern-separator": if (v.Length > 0) patSep = v[0]; break;
+                }
+            }
+        }
+
+        // Digit family: 10 consecutive code points starting at zeroDigit.
+        bool IsInDigitFamily(char c) => c >= zeroDigit && c < (char)(zeroDigit + 10);
+        bool IsActiveNotExp(char c) => (IsInDigitFamily(c) || c == optDigit || c == decSep || c == grpSep) && c != expSep;
+        bool IsActive(char c) => IsInDigitFamily(c) || c == optDigit || c == decSep || c == grpSep || c == expSep;
+        bool IsDigitOrOpt(char c) => IsInDigitFamily(c) || c == optDigit;
+        char DigitFamilyChar(int n) => (char)(zeroDigit + n);
+
+        // Split on pattern separator.
+        string[] subPics = picture.Split(patSep);
+        if (subPics.Length > 2)
+        {
+            throw new JsonataException("D3080", "The picture string must not contain more than one pattern separator", 0);
+        }
+
+        // Parse each sub-picture.
+        int numPics = subPics.Length;
+        string[] prefixes = new string[numPics];
+        string[] suffixes = new string[numPics];
+        string[] activeParts = new string[numPics];
+        string[] mantissaParts = new string[numPics];
+        string?[] exponentParts = new string?[numPics];
+        string[] integerParts = new string[numPics];
+        string[] fractionalParts = new string[numPics];
+
+        for (int p = 0; p < numPics; p++)
+        {
+            string sub = subPics[p];
+
+            // Find prefix: everything before first active char (excluding expSep).
+            int prefixEnd = sub.Length;
+            for (int i = 0; i < sub.Length; i++)
+            {
+                if (IsActiveNotExp(sub[i]))
+                {
+                    prefixEnd = i;
+                    break;
+                }
+            }
+
+            // Find suffix: everything after last active char (excluding expSep).
+            int suffixStart = 0;
+            for (int i = sub.Length - 1; i >= 0; i--)
+            {
+                if (IsActiveNotExp(sub[i]))
+                {
+                    suffixStart = i + 1;
+                    break;
+                }
+            }
+
+            string pfx = sub.Substring(0, prefixEnd);
+            string sfx = sub.Substring(suffixStart);
+            string active = (prefixEnd <= suffixStart)
+                ? sub.Substring(prefixEnd, suffixStart - prefixEnd)
+                : string.Empty;
+
+            // Find exponent separator in subpicture (starting from prefix end).
+            int expPos = sub.IndexOf(expSep, prefixEnd);
+            string mant;
+            string? expo;
+            if (expPos == -1 || expPos >= suffixStart)
+            {
+                mant = active;
+                expo = null;
+            }
+            else
+            {
+                int expPosInActive = expPos - prefixEnd;
+                mant = active.Substring(0, expPosInActive);
+                expo = active.Substring(expPosInActive + 1);
+            }
+
+            // Split mantissa on decimal separator.
+            int decIdx = mant.IndexOf(decSep);
+            string intPart;
+            string fracPart;
+            if (decIdx == -1)
+            {
+                intPart = mant;
+                fracPart = sfx;
+            }
+            else
+            {
+                intPart = mant.Substring(0, decIdx);
+                fracPart = mant.Substring(decIdx + 1);
+            }
+
+            prefixes[p] = pfx;
+            suffixes[p] = sfx;
+            activeParts[p] = active;
+            mantissaParts[p] = mant;
+            exponentParts[p] = expo;
+            integerParts[p] = intPart;
+            fractionalParts[p] = fracPart;
+        }
+
+        // Validate each sub-picture (F&O 4.7.3).
+        for (int p = 0; p < numPics; p++)
+        {
+            string sub = subPics[p];
+
+            if (sub.IndexOf(decSep) != sub.LastIndexOf(decSep))
+            {
+                throw new JsonataException("D3081", "The picture string must not contain more than one decimal separator", 0);
+            }
+
+            if (pct.Length > 0)
+            {
+                int firstPct = sub.IndexOf(pct, StringComparison.Ordinal);
+                if (firstPct != -1 && sub.IndexOf(pct, firstPct + pct.Length, StringComparison.Ordinal) != -1)
+                {
+                    throw new JsonataException("D3082", "The picture string must not contain more than one percent character", 0);
+                }
+            }
+
+            if (perMille.Length > 0)
+            {
+                int firstPm = sub.IndexOf(perMille, StringComparison.Ordinal);
+                if (firstPm != -1 && sub.IndexOf(perMille, firstPm + perMille.Length, StringComparison.Ordinal) != -1)
+                {
+                    throw new JsonataException("D3083", "The picture string must not contain more than one per-mille character", 0);
+                }
+            }
+
+            if (pct.Length > 0 && perMille.Length > 0 &&
+                sub.IndexOf(pct, StringComparison.Ordinal) != -1 &&
+                sub.IndexOf(perMille, StringComparison.Ordinal) != -1)
+            {
+                throw new JsonataException("D3084", "The picture string must not contain both percent and per-mille characters", 0);
+            }
+
+            bool hasDigit = false;
+            for (int i = 0; i < mantissaParts[p].Length; i++)
+            {
+                if (IsInDigitFamily(mantissaParts[p][i]) || mantissaParts[p][i] == optDigit)
+                {
+                    hasDigit = true;
+                    break;
+                }
+            }
+
+            if (!hasDigit)
+            {
+                throw new JsonataException("D3085", "The mantissa part of the picture string must contain at least one digit or optional digit character", 0);
+            }
+
+            for (int i = 0; i < activeParts[p].Length; i++)
+            {
+                if (!IsActive(activeParts[p][i]))
+                {
+                    throw new JsonataException("D3086", "The picture string must not contain a passive character between active characters", 0);
+                }
+            }
+
+            int decPosInSub = sub.IndexOf(decSep);
+            if (decPosInSub != -1)
+            {
+                if ((decPosInSub > 0 && sub[decPosInSub - 1] == grpSep) ||
+                    (decPosInSub < sub.Length - 1 && sub[decPosInSub + 1] == grpSep))
+                {
+                    throw new JsonataException("D3087", "The picture string must not contain a grouping separator adjacent to the decimal separator", 0);
+                }
+            }
+            else
+            {
+                if (integerParts[p].Length > 0 && integerParts[p][integerParts[p].Length - 1] == grpSep)
+                {
+                    throw new JsonataException("D3088", "The integer part of the picture string must not end with a grouping separator", 0);
+                }
+            }
+
+            string doubleGrp = new string(grpSep, 2);
+            if (sub.IndexOf(doubleGrp, StringComparison.Ordinal) != -1)
+            {
+                throw new JsonataException("D3089", "The picture string must not contain adjacent grouping separators", 0);
+            }
+
+            int optPos = integerParts[p].IndexOf(optDigit);
+            if (optPos != -1)
+            {
+                for (int i = 0; i < optPos; i++)
+                {
+                    if (IsInDigitFamily(integerParts[p][i]))
+                    {
+                        throw new JsonataException("D3090", "The integer part must not contain a mandatory digit before an optional digit", 0);
+                    }
+                }
+            }
+
+            int lastOptPos = fractionalParts[p].LastIndexOf(optDigit);
+            if (lastOptPos != -1)
+            {
+                for (int i = lastOptPos; i < fractionalParts[p].Length; i++)
+                {
+                    if (IsInDigitFamily(fractionalParts[p][i]))
+                    {
+                        throw new JsonataException("D3091", "The fractional part must not contain a mandatory digit after an optional digit", 0);
+                    }
+                }
+            }
+
+            bool expExists = exponentParts[p] is not null;
+            if (expExists && exponentParts[p]!.Length > 0 &&
+                (sub.IndexOf(pct, StringComparison.Ordinal) != -1 ||
+                 sub.IndexOf(perMille, StringComparison.Ordinal) != -1))
+            {
+                throw new JsonataException("D3092", "The picture string must not contain an exponent with percent or per-mille", 0);
+            }
+
+            if (expExists)
+            {
+                if (exponentParts[p]!.Length == 0)
+                {
+                    throw new JsonataException("D3093", "The exponent part of the picture string must contain at least one digit", 0);
+                }
+
+                for (int i = 0; i < exponentParts[p]!.Length; i++)
+                {
+                    if (!IsInDigitFamily(exponentParts[p]![i]))
+                    {
+                        throw new JsonataException("D3093", "The exponent part of the picture string must contain only digit characters", 0);
+                    }
+                }
+            }
+        }
+
+        // Analyse each sub-picture (F&O 4.7.4).
+        List<int> GetGroupingPositions(string part, bool toLeft, string searchPart)
+        {
+            var positions = new List<int>();
+            int grpPos = part.IndexOf(grpSep);
+            while (grpPos != -1)
+            {
+                string segment = toLeft ? part.Substring(0, grpPos) : part.Substring(grpPos);
+                int count = 0;
+                for (int i = 0; i < segment.Length; i++)
+                {
+                    if (IsDigitOrOpt(segment[i]))
+                    {
+                        count++;
+                    }
+                }
+
+                positions.Add(count);
+
+                // Reference impl searches integerPart for subsequent positions.
+                grpPos = searchPart.IndexOf(grpSep, grpPos + 1);
+            }
+
+            return positions;
+        }
+
+        static int ComputeRegularGrouping(List<int> positions)
+        {
+            if (positions.Count == 0)
+            {
+                return 0;
+            }
+
+            static int Gcd(int a, int b) => b == 0 ? a : Gcd(b, a % b);
+            int factor = positions[0];
+            for (int i = 1; i < positions.Count; i++)
+            {
+                factor = Gcd(factor, positions[i]);
+            }
+
+            for (int idx = 1; idx <= positions.Count; idx++)
+            {
+                if (!positions.Contains(idx * factor))
+                {
+                    return 0;
+                }
+            }
+
+            return factor;
+        }
+
+        var intGrpPositions = new List<int>[numPics];
+        var fracGrpPositions = new List<int>[numPics];
+        int[] regularGroupings = new int[numPics];
+        int[] minIntSizes = new int[numPics];
+        int[] scalingFactors = new int[numPics];
+        int[] minFracSizes = new int[numPics];
+        int[] maxFracSizes = new int[numPics];
+        int[] minExpSizes = new int[numPics];
+
+        for (int p = 0; p < numPics; p++)
+        {
+            intGrpPositions[p] = GetGroupingPositions(integerParts[p], false, integerParts[p]);
+            regularGroupings[p] = ComputeRegularGrouping(intGrpPositions[p]);
+            fracGrpPositions[p] = GetGroupingPositions(fractionalParts[p], true, integerParts[p]);
+
+            int minInt = 0;
+            for (int i = 0; i < integerParts[p].Length; i++)
+            {
+                if (IsInDigitFamily(integerParts[p][i]))
+                {
+                    minInt++;
+                }
+            }
+
+            int sf = minInt;
+            int minFrac = 0;
+            int maxFrac = 0;
+            for (int i = 0; i < fractionalParts[p].Length; i++)
+            {
+                if (IsInDigitFamily(fractionalParts[p][i]))
+                {
+                    minFrac++;
+                }
+
+                if (IsDigitOrOpt(fractionalParts[p][i]))
+                {
+                    maxFrac++;
+                }
+            }
+
+            bool expPresent = exponentParts[p] is not null;
+
+            if (minInt == 0 && maxFrac == 0)
+            {
+                if (expPresent)
+                {
+                    minFrac = 1;
+                    maxFrac = 1;
+                }
+                else
+                {
+                    minInt = 1;
+                }
+            }
+
+            if (expPresent && minInt == 0 && integerParts[p].IndexOf(optDigit) != -1)
+            {
+                minInt = 1;
+            }
+
+            if (minInt == 0 && minFrac == 0)
+            {
+                minFrac = 1;
+            }
+
+            int minExp = 0;
+            if (expPresent)
+            {
+                for (int i = 0; i < exponentParts[p]!.Length; i++)
+                {
+                    if (IsInDigitFamily(exponentParts[p]![i]))
+                    {
+                        minExp++;
+                    }
+                }
+            }
+
+            minIntSizes[p] = minInt;
+            scalingFactors[p] = sf;
+            minFracSizes[p] = minFrac;
+            maxFracSizes[p] = maxFrac;
+            minExpSizes[p] = minExp;
+        }
+
+        // If only one sub-picture, create a negative variant with minus prefix.
+        string negPrefix;
+        string negSuffix;
+        string negPicture;
+        List<int> negIntGrpPos;
+        List<int> negFracGrpPos;
+        int negRegGrp;
+        int negMinInt;
+        int negScaleFactor;
+        int negMinFrac;
+        int negMaxFrac;
+        int negMinExp;
+
+        if (numPics == 1)
+        {
+            negPrefix = minusSign + prefixes[0];
+            negSuffix = suffixes[0];
+            negPicture = subPics[0];
+            negIntGrpPos = intGrpPositions[0];
+            negFracGrpPos = fracGrpPositions[0];
+            negRegGrp = regularGroupings[0];
+            negMinInt = minIntSizes[0];
+            negScaleFactor = scalingFactors[0];
+            negMinFrac = minFracSizes[0];
+            negMaxFrac = maxFracSizes[0];
+            negMinExp = minExpSizes[0];
+        }
+        else
+        {
+            negPrefix = prefixes[1];
+            negSuffix = suffixes[1];
+            negPicture = subPics[1];
+            negIntGrpPos = intGrpPositions[1];
+            negFracGrpPos = fracGrpPositions[1];
+            negRegGrp = regularGroupings[1];
+            negMinInt = minIntSizes[1];
+            negScaleFactor = scalingFactors[1];
+            negMinFrac = minFracSizes[1];
+            negMaxFrac = maxFracSizes[1];
+            negMinExp = minExpSizes[1];
+        }
+
+        // Select sub-picture based on sign.
+        string picPrefix;
+        string picSuffix;
+        string picPicture;
+        List<int> picIntGrpPos;
+        List<int> picFracGrpPos;
+        int picRegGrp;
+        int picMinInt;
+        int picScaleFactor;
+        int picMinFrac;
+        int picMaxFrac;
+        int picMinExp;
+
+        if (value >= 0)
+        {
+            picPrefix = prefixes[0];
+            picSuffix = suffixes[0];
+            picPicture = subPics[0];
+            picIntGrpPos = intGrpPositions[0];
+            picFracGrpPos = fracGrpPositions[0];
+            picRegGrp = regularGroupings[0];
+            picMinInt = minIntSizes[0];
+            picScaleFactor = scalingFactors[0];
+            picMinFrac = minFracSizes[0];
+            picMaxFrac = maxFracSizes[0];
+            picMinExp = minExpSizes[0];
+        }
+        else
+        {
+            picPrefix = negPrefix;
+            picSuffix = negSuffix;
+            picPicture = negPicture;
+            picIntGrpPos = negIntGrpPos;
+            picFracGrpPos = negFracGrpPos;
+            picRegGrp = negRegGrp;
+            picMinInt = negMinInt;
+            picScaleFactor = negScaleFactor;
+            picMinFrac = negMinFrac;
+            picMaxFrac = negMaxFrac;
+            picMinExp = negMinExp;
+        }
+
+        // Apply percent/per-mille scaling.
+        double adjustedNumber;
+        if (pct.Length > 0 && picPicture.IndexOf(pct, StringComparison.Ordinal) != -1)
+        {
+            adjustedNumber = value * 100;
+        }
+        else if (perMille.Length > 0 && picPicture.IndexOf(perMille, StringComparison.Ordinal) != -1)
+        {
+            adjustedNumber = value * 1000;
+        }
+        else
+        {
+            adjustedNumber = value;
+        }
+
+        // Handle exponent normalization.
+        double fmtMantissa;
+        int? exponentValue = null;
+        if (picMinExp == 0)
+        {
+            fmtMantissa = adjustedNumber;
+        }
+        else
+        {
+            double maxMantissa = Math.Pow(10, picScaleFactor);
+            double minMantissa = Math.Pow(10, picScaleFactor - 1);
+            fmtMantissa = adjustedNumber;
+            int exp = 0;
+            double absMant = Math.Abs(fmtMantissa);
+
+            if (absMant != 0)
+            {
+                while (absMant < minMantissa)
+                {
+                    fmtMantissa *= 10;
+                    absMant *= 10;
+                    exp--;
+                }
+
+                while (absMant > maxMantissa)
+                {
+                    fmtMantissa /= 10;
+                    absMant /= 10;
+                    exp++;
+                }
+            }
+
+            exponentValue = exp;
+        }
+
+        // Convert mantissa to string with custom digit family.
+        string MakeString(double val, int dp)
+        {
+            string str = Math.Abs(val).ToString("F" + dp, CultureInfo.InvariantCulture);
+            if (zeroDigit != '0')
+            {
+                var sb = new StringBuilder(str.Length);
+                for (int i = 0; i < str.Length; i++)
+                {
+                    char c = str[i];
+                    if (c >= '0' && c <= '9')
+                    {
+                        sb.Append(DigitFamilyChar(c - '0'));
+                    }
+                    else
+                    {
+                        sb.Append(c);
+                    }
+                }
+
+                str = sb.ToString();
+            }
+
+            return str;
+        }
+
+        string stringValue = MakeString(fmtMantissa, picMaxFrac);
+
+        // Replace the '.' from ToString("F...") with custom decimal separator.
+        int dotPos = stringValue.IndexOf('.');
+        if (dotPos == -1)
+        {
+            stringValue += decSep;
+        }
+        else
+        {
+            stringValue = stringValue.Substring(0, dotPos) + decSep + stringValue.Substring(dotPos + 1);
+        }
+
+        // Strip leading zero-digits.
+        while (stringValue.Length > 0 && stringValue[0] == zeroDigit)
+        {
+            stringValue = stringValue.Substring(1);
+        }
+
+        // Strip trailing zero-digits.
+        while (stringValue.Length > 0 && stringValue[stringValue.Length - 1] == zeroDigit)
+        {
+            stringValue = stringValue.Substring(0, stringValue.Length - 1);
+        }
+
+        // Pad to minimum sizes.
+        int decimalPos = stringValue.IndexOf(decSep);
+        int padLeft = picMinInt - decimalPos;
+        int padRight = picMinFrac - (stringValue.Length - decimalPos - 1);
+
+        if (padLeft > 0)
+        {
+            stringValue = new string(zeroDigit, padLeft) + stringValue;
+        }
+
+        if (padRight > 0)
+        {
+            stringValue += new string(zeroDigit, padRight);
+        }
+
+        // Insert integer grouping separators.
+        decimalPos = stringValue.IndexOf(decSep);
+        if (picRegGrp > 0)
+        {
+            int groupCount = (decimalPos - 1) / picRegGrp;
+            for (int group = 1; group <= groupCount; group++)
+            {
+                int insertPos = decimalPos - (group * picRegGrp);
+                stringValue = stringValue.Substring(0, insertPos) + grpSep + stringValue.Substring(insertPos);
+            }
+        }
+        else
+        {
+            foreach (int pos in picIntGrpPos)
+            {
+                int insertPos = decimalPos - pos;
+                stringValue = stringValue.Substring(0, insertPos) + grpSep + stringValue.Substring(insertPos);
+                decimalPos++;
+            }
+        }
+
+        // Insert fractional grouping separators.
+        decimalPos = stringValue.IndexOf(decSep);
+        foreach (int pos in picFracGrpPos)
+        {
+            int insertPos = pos + decimalPos + 1;
+            stringValue = stringValue.Substring(0, insertPos) + grpSep + stringValue.Substring(insertPos);
+        }
+
+        // Remove decimal separator if not in picture or at end of string.
+        decimalPos = stringValue.IndexOf(decSep);
+        if (picPicture.IndexOf(decSep) == -1 || decimalPos == stringValue.Length - 1)
+        {
+            stringValue = stringValue.Substring(0, stringValue.Length - 1);
+        }
+
+        // Format exponent.
+        if (exponentValue is not null)
+        {
+            string stringExponent = MakeString(exponentValue.Value, 0);
+            int expPadLeft = picMinExp - stringExponent.Length;
+            if (expPadLeft > 0)
+            {
+                stringExponent = new string(zeroDigit, expPadLeft) + stringExponent;
+            }
+
+            stringValue = stringValue + expSep + (exponentValue.Value < 0 ? minusSign : "") + stringExponent;
+        }
+
+        // Add prefix and suffix.
+        return picPrefix + stringValue + picSuffix;
     }
 
     private static ExpressionEvaluator CompileFormatBase(ExpressionEvaluator[] args)

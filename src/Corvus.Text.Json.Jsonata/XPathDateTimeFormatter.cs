@@ -1028,12 +1028,14 @@ internal static class XPathDateTimeFormatter
         // A decimal digit pattern contains at least one digit character (0-9 or Unicode digit)
         // and optionally '#' and grouping separators
         bool hasDigit = false;
+        bool hasPosition = false; // true if we've seen '#' or a digit
         int? detectedDecimalGroup = null;
 
         foreach (char c in presentation)
         {
             if (c == '#')
             {
+                hasPosition = true;
                 continue;
             }
 
@@ -1046,6 +1048,7 @@ internal static class XPathDateTimeFormatter
 
                 detectedDecimalGroup = 0;
                 hasDigit = true;
+                hasPosition = true;
                 continue;
             }
 
@@ -1060,11 +1063,12 @@ internal static class XPathDateTimeFormatter
 
                 detectedDecimalGroup = unicodeGroup;
                 hasDigit = true;
+                hasPosition = true;
                 continue;
             }
 
             // Must be a grouping separator if there's already been a digit or #
-            if (!hasDigit)
+            if (!hasPosition)
             {
                 return false;
             }
@@ -1644,21 +1648,38 @@ internal static class XPathDateTimeFormatter
         var sb = new StringBuilder(text.Length);
         bool capitalizeNext = true;
 
-        foreach (char c in text)
+        // Split into words and capitalize each, except "and" which stays lowercase
+        int i = 0;
+        while (i < text.Length)
         {
-            if (c == ' ' || c == '-' || c == ',')
+            if (text[i] == ' ' || text[i] == '-' || text[i] == ',')
             {
-                sb.Append(c);
+                sb.Append(text[i]);
                 capitalizeNext = true;
+                i++;
             }
             else if (capitalizeNext)
             {
-                sb.Append(char.ToUpperInvariant(c));
-                capitalizeNext = false;
+                // Check if this word is "and"
+                if (i + 3 < text.Length &&
+                    text[i] == 'a' && text[i + 1] == 'n' && text[i + 2] == 'd' &&
+                    (text[i + 3] == ' ' || text[i + 3] == '-' || text[i + 3] == ','))
+                {
+                    sb.Append("and");
+                    i += 3;
+                    capitalizeNext = false;
+                }
+                else
+                {
+                    sb.Append(char.ToUpperInvariant(text[i]));
+                    capitalizeNext = false;
+                    i++;
+                }
             }
             else
             {
-                sb.Append(c);
+                sb.Append(text[i]);
+                i++;
             }
         }
 
