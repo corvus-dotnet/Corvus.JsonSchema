@@ -934,7 +934,18 @@ internal sealed class Parser
         // see it.
         if (binary.KeepArray)
         {
-            result.KeepArray = true;
+            if (result is PathNode pn)
+            {
+                // Set KeepArray on the last step so ProcessDot picks it up,
+                // and set KeepSingletonArray directly for paths that aren't
+                // further combined by a dot expression.
+                pn.Steps[pn.Steps.Count - 1].KeepArray = true;
+                pn.KeepSingletonArray = true;
+            }
+            else
+            {
+                result.KeepArray = true;
+            }
         }
 
         return result;
