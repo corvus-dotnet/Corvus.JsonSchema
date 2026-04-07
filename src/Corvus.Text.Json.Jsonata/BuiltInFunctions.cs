@@ -655,7 +655,8 @@ internal static class BuiltInFunctions
             throw new JsonataException("T0410", "$length expects 0 or 1 arguments", 0);
         }
 
-        var arg = args.Length == 1 ? args[0] : ContextArg;
+        bool isContextArg = args.Length == 0;
+        var arg = isContextArg ? ContextArg : args[0];
         return (in JsonElement input, Environment env) =>
         {
             var seq = arg(input, env);
@@ -672,8 +673,11 @@ internal static class BuiltInFunctions
                 return new Sequence(FunctionalCompiler.CreateNumberElement(len));
             }
 
-            // $length on non-string should throw type error
-            throw new JsonataException("T0411", "$length expects a string argument", 0);
+            // Wrong type: T0411 when context-derived, T0410 when explicit arg
+            throw new JsonataException(
+                isContextArg ? "T0411" : "T0410",
+                "Argument 1 of function $length is not of the correct type",
+                0);
         };
     }
 
@@ -1170,7 +1174,11 @@ internal static class BuiltInFunctions
             }
             else
             {
-                result = Math.Round(num, Math.Min(precision, 15), MidpointRounding.ToEven);
+                // Use decimal arithmetic for precise banker's rounding,
+                // avoiding IEEE 754 double representation errors.
+                decimal decValue = (decimal)num;
+                decimal rounded = Math.Round(decValue, Math.Min(precision, 15), MidpointRounding.ToEven);
+                result = (double)rounded;
             }
 
             return new Sequence(FunctionalCompiler.CreateNumberElement(result));
@@ -1430,15 +1438,15 @@ internal static class BuiltInFunctions
 
                         var el = result.FirstOrDefault;
 
-                        // Boolean comparator: true means a < b (a should come before b)
+                        // Boolean comparator: true means a > b (a should come after b)
                         if (el.ValueKind == JsonValueKind.True)
                         {
-                            return -1;
+                            return 1;
                         }
 
                         if (el.ValueKind == JsonValueKind.False)
                         {
-                            return 1;
+                            return -1;
                         }
 
                         if (FunctionalCompiler.TryCoerceToNumber(el, out double num))
@@ -1540,8 +1548,23 @@ internal static class BuiltInFunctions
                 return Sequence.Undefined;
             }
 
-            var arr = seq.FirstOrDefault;
-            if (arr.ValueKind != JsonValueKind.Array)
+            // Collect all items to deduplicate, flattening arrays in multi-valued sequences
+            var items = new List<JsonElement>();
+            for (int si = 0; si < seq.Count; si++)
+            {
+                var el = seq[si];
+                if (el.ValueKind == JsonValueKind.Array)
+                {
+                    items.AddRange(el.EnumerateArray());
+                }
+                else
+                {
+                    items.Add(el);
+                }
+            }
+
+            // If only one non-array item, return as-is
+            if (items.Count <= 1 && seq.Count == 1 && seq.FirstOrDefault.ValueKind != JsonValueKind.Array)
             {
                 return seq;
             }
@@ -1550,12 +1573,12 @@ internal static class BuiltInFunctions
             using var writer = new Utf8JsonWriter(ms);
             writer.WriteStartArray();
             var seen = new HashSet<string>();
-            foreach (var item in arr.EnumerateArray())
+            for (int i = 0; i < items.Count; i++)
             {
-                var raw = item.GetRawText();
+                var raw = items[i].GetRawText();
                 if (seen.Add(raw))
                 {
-                    item.WriteTo(writer);
+                    items[i].WriteTo(writer);
                 }
             }
 
@@ -1698,11 +1721,17 @@ internal static class BuiltInFunctions
                 builder.AddRange(result);
             }
 
-            // Materialize builder as JSON array
+            // Materialize builder as JSON array, or auto-unwrap singleton
+            var built = builder.ToSequence();
+            if (built.Count == 1)
+            {
+                // JSONata auto-unwraps singleton map results
+                return built;
+            }
+
             using var ms = new MemoryStream(256);
             using var writer = new Utf8JsonWriter(ms);
             writer.WriteStartArray();
-            var built = builder.ToSequence();
             for (int i = 0; i < built.Count; i++)
             {
                 built[i].WriteTo(writer);
@@ -2908,16 +2937,18 @@ internal static class BuiltInFunctions
                 return Sequence.Undefined;
             }
 
-            string str = FunctionalCompiler.CoerceElementToString(seq.FirstOrDefault);
-
+            string str;
             try
             {
-                return new Sequence(FunctionalCompiler.CreateStringElement(Uri.EscapeDataString(str)));
+                str = FunctionalCompiler.CoerceElementToString(seq.FirstOrDefault);
             }
-            catch (Exception ex) when (ex is UriFormatException or ArgumentException or FormatException)
+            catch (InvalidOperationException)
             {
-                throw new JsonataException("D3140", $"Malformed URL passed to $encodeUrlComponent(): \"{str}\"", 0);
+                throw new JsonataException("D3140", "Malformed URL passed to $encodeUrlComponent(): invalid string", 0);
             }
+
+            ValidateNoUnpairedSurrogates(str, "$encodeUrlComponent");
+            return new Sequence(FunctionalCompiler.CreateStringElement(Uri.EscapeDataString(str)));
         };
     }
 
@@ -2938,6 +2969,11 @@ internal static class BuiltInFunctions
             }
 
             string str = FunctionalCompiler.CoerceElementToString(seq.FirstOrDefault);
+
+            if (HasInvalidPercentEncoding(str))
+            {
+                throw new JsonataException("D3140", $"Malformed URL passed to $decodeUrlComponent(): \"{str}\"", 0);
+            }
 
             try
             {
@@ -2967,16 +3003,18 @@ internal static class BuiltInFunctions
                 return Sequence.Undefined;
             }
 
-            string str = FunctionalCompiler.CoerceElementToString(seq.FirstOrDefault);
-
+            string str;
             try
             {
-                return new Sequence(FunctionalCompiler.CreateStringElement(Uri.EscapeUriString(str)));
+                str = FunctionalCompiler.CoerceElementToString(seq.FirstOrDefault);
             }
-            catch (Exception ex) when (ex is UriFormatException or ArgumentException or FormatException)
+            catch (InvalidOperationException)
             {
-                throw new JsonataException("D3140", $"Malformed URL passed to $encodeUrl(): \"{str}\"", 0);
+                throw new JsonataException("D3140", "Malformed URL passed to $encodeUrl(): invalid string", 0);
             }
+
+            ValidateNoUnpairedSurrogates(str, "$encodeUrl");
+            return new Sequence(FunctionalCompiler.CreateStringElement(Uri.EscapeUriString(str)));
         };
     }
 #pragma warning restore SYSLIB0013
@@ -2999,6 +3037,11 @@ internal static class BuiltInFunctions
 
             string str = FunctionalCompiler.CoerceElementToString(seq.FirstOrDefault);
 
+            if (HasInvalidPercentEncoding(str))
+            {
+                throw new JsonataException("D3140", $"Malformed URL passed to $decodeUrl(): \"{str}\"", 0);
+            }
+
             try
             {
                 return new Sequence(FunctionalCompiler.CreateStringElement(Uri.UnescapeDataString(str)));
@@ -3011,6 +3054,48 @@ internal static class BuiltInFunctions
     }
 
     // --- Numeric functions: random, formatNumber, formatBase ---
+    private static bool HasInvalidPercentEncoding(string input)
+    {
+        for (int i = 0; i < input.Length; i++)
+        {
+            if (input[i] == '%')
+            {
+                if (i + 2 >= input.Length ||
+                    !IsHexDigit(input[i + 1]) ||
+                    !IsHexDigit(input[i + 2]))
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private static void ValidateNoUnpairedSurrogates(string str, string funcName)
+    {
+        for (int i = 0; i < str.Length; i++)
+        {
+            char c = str[i];
+            if (char.IsHighSurrogate(c))
+            {
+                if (i + 1 >= str.Length || !char.IsLowSurrogate(str[i + 1]))
+                {
+                    throw new JsonataException("D3140", $"Malformed URL passed to {funcName}(): \"{str}\"", 0);
+                }
+
+                i++;
+            }
+            else if (char.IsLowSurrogate(c))
+            {
+                throw new JsonataException("D3140", $"Malformed URL passed to {funcName}(): \"{str}\"", 0);
+            }
+        }
+    }
+
+    private static bool IsHexDigit(char c) =>
+        (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
+
     private static ExpressionEvaluator CompileRandom(ExpressionEvaluator[] args)
     {
         return static (in JsonElement input, Environment env) =>

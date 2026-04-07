@@ -135,8 +135,42 @@ internal static class FunctionalCompiler
 
     private static ExpressionEvaluator CompileString(StringNode str)
     {
+        // Strings with unpaired surrogates cannot be stored as JSON elements;
+        // defer the error to evaluation time so that URL functions can report D3140.
+        if (HasUnpairedSurrogate(str.Value))
+        {
+            var rawValue = str.Value;
+            return (in JsonElement input, Environment env) =>
+            {
+                throw new JsonataException("D3140", $"String contains unpaired surrogates", 0);
+            };
+        }
+
         var element = CreateStringElement(str.Value);
         return (in JsonElement input, Environment env) => new Sequence(element);
+    }
+
+    private static bool HasUnpairedSurrogate(string s)
+    {
+        for (int i = 0; i < s.Length; i++)
+        {
+            char c = s[i];
+            if (char.IsHighSurrogate(c))
+            {
+                if (i + 1 >= s.Length || !char.IsLowSurrogate(s[i + 1]))
+                {
+                    return true;
+                }
+
+                i++;
+            }
+            else if (char.IsLowSurrogate(c))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static ExpressionEvaluator CompileValue(ValueNode val)
@@ -210,6 +244,17 @@ internal static class FunctionalCompiler
     {
         return static (in JsonElement input, Environment env) =>
         {
+            if (input.ValueKind == JsonValueKind.Array)
+            {
+                var arrayBuilder = default(SequenceBuilder);
+                foreach (var item in input.EnumerateArray())
+                {
+                    arrayBuilder.Add(item);
+                }
+
+                return arrayBuilder.ToSequence();
+            }
+
             if (input.ValueKind != JsonValueKind.Object)
             {
                 return Sequence.Undefined;
@@ -1565,6 +1610,25 @@ internal static class FunctionalCompiler
             {
                 var args = new[] { lhsResult };
                 return rhsResult.Lambda!.Invoke(args, input, env);
+            }
+
+            // If RHS is a regex, apply $contains semantics: string ~> /regex/ → boolean
+            if (rhsResult.IsRegex)
+            {
+                if (lhsResult.IsUndefined)
+                {
+                    return Sequence.Undefined;
+                }
+
+                var el = lhsResult.FirstOrDefault;
+                if (el.ValueKind == JsonValueKind.String)
+                {
+                    string str = el.GetString() ?? string.Empty;
+                    bool matches = rhsResult.Regex!.IsMatch(str);
+                    return new Sequence(CreateBoolElement(matches));
+                }
+
+                return Sequence.Undefined;
             }
 
             // If RHS is not callable, that's an error
