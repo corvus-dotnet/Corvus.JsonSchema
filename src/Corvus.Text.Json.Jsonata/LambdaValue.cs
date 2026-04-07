@@ -2,6 +2,8 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers;
+
 namespace Corvus.Text.Json.Jsonata;
 
 /// <summary>
@@ -116,9 +118,11 @@ internal sealed class LambdaValue
         // args from the end, context params (before '-') are filled by remaining args
         // from the start, and any still-unfilled context params get the input.
         Sequence[] effectiveArgs = args;
+        Sequence[]? rentedArgs = null;
         if (this.contextArgCount > 0 && args.Length < this.paramNames.Length)
         {
-            effectiveArgs = new Sequence[this.paramNames.Length];
+            rentedArgs = ArrayPool<Sequence>.Shared.Rent(this.paramNames.Length);
+            effectiveArgs = rentedArgs;
 
             // Regular params (after '-') are filled from the end of explicit args
             int regularToFill = Math.Min(this.regularArgCount, args.Length);
@@ -143,20 +147,32 @@ internal sealed class LambdaValue
             }
         }
 
-        // Bind parameters
-        for (int i = 0; i < this.paramNames.Length; i++)
+        try
         {
-            invokeEnv.Bind(
-                this.paramNames[i],
-                i < effectiveArgs.Length ? effectiveArgs[i] : Sequence.Undefined);
-        }
+            // Bind parameters
+            for (int i = 0; i < this.paramNames.Length; i++)
+            {
+                invokeEnv.Bind(
+                    this.paramNames[i],
+                    i < effectiveArgs.Length ? effectiveArgs[i] : Sequence.Undefined);
+            }
 
-        // Validate argument types against the signature, if present
-        if (this.signature is not null)
+            // Validate argument types against the signature, if present
+            if (this.signature is not null)
+            {
+                int effectiveCount = rentedArgs is not null ? this.paramNames.Length : effectiveArgs.Length;
+                SignatureValidator.ValidateArgs(this.signature, effectiveArgs.AsSpan(0, effectiveCount), -1);
+            }
+
+            return this.body(this.definingInput, invokeEnv);
+        }
+        finally
         {
-            SignatureValidator.ValidateArgs(this.signature, effectiveArgs, -1);
+            if (rentedArgs is not null)
+            {
+                rentedArgs.AsSpan(0, this.paramNames.Length).Clear();
+                ArrayPool<Sequence>.Shared.Return(rentedArgs);
+            }
         }
-
-        return this.body(this.definingInput, invokeEnv);
     }
 }

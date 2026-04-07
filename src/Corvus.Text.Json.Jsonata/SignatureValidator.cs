@@ -155,7 +155,7 @@ internal static class SignatureValidator
     /// <exception cref="JsonataException">
     /// Thrown with code T0410 for argument type mismatch or T0412 for array element type mismatch.
     /// </exception>
-    public static void ValidateArgs(string signature, Sequence[] args, int position)
+    public static void ValidateArgs(string signature, ReadOnlySpan<Sequence> args, int position)
     {
         // Parse the parameter type specs from the signature
         var paramSpecs = ParseParamSpecs(signature);
