@@ -2885,7 +2885,7 @@ internal static class FunctionalCompiler
         return element.ValueKind switch
         {
             JsonValueKind.String => element.GetString() ?? string.Empty,
-            JsonValueKind.Number => FormatNumberLikeJavaScript(element.GetDouble()),
+            JsonValueKind.Number => FormatNumberLikeJavaScript(element),
             JsonValueKind.True => "true",
             JsonValueKind.False => "false",
             JsonValueKind.Null => "null",
@@ -2895,11 +2895,38 @@ internal static class FunctionalCompiler
     }
 
     /// <summary>
-    /// Formats a double to match JSONata's number-to-string behavior.
-    /// JSONata uses <c>Number(val.toPrecision(15))</c> which limits to
-    /// 15 significant digits and strips trailing noise from IEEE 754 arithmetic.
-    /// This is used by both <c>$string</c> and the <c>&amp;</c> concatenation
-    /// operator (which calls <c>$string</c> internally in jsonata-js).
+    /// Formats a JSON number element to match JSONata's <c>$string</c> behavior.
+    /// JSONata applies <c>Number.toPrecision(15)</c> to non-integer values
+    /// (cleaning up IEEE 754 noise), but preserves integers at full precision.
+    /// </summary>
+    internal static string FormatNumberLikeJavaScript(JsonElement element)
+    {
+        double value = element.GetDouble();
+        if (double.IsNaN(value) || double.IsInfinity(value))
+        {
+            return "null";
+        }
+
+        // Integer values: use raw text from JSON to preserve full precision
+        if (value == Math.Floor(value) && !double.IsInfinity(value))
+        {
+            string raw = element.GetRawText();
+
+            // Only use raw text if it doesn't contain a decimal point or exponent
+            // (i.e., it's a plain integer literal like "5890840712243076")
+            if (!raw.Contains('.') && !raw.Contains('e') && !raw.Contains('E'))
+            {
+                return raw;
+            }
+        }
+
+        return FormatNumberLikeJavaScript(value);
+    }
+
+    /// <summary>
+    /// Formats a double to match JSONata's number-to-string behavior for non-integers.
+    /// Uses <c>toPrecision(15)</c> (G15 format) to clean up IEEE 754 noise,
+    /// then applies JavaScript's scientific notation expansion rules.
     /// </summary>
     internal static string FormatNumberLikeJavaScript(double value)
     {
