@@ -589,12 +589,35 @@ internal static class FunctionalCompiler
                     // When a step has #$var AND there are subsequent non-sort steps, we must
                     // evaluate remaining steps per-element so each element carries its correct
                     // index. Skip this when the next step is a sort (sort needs all elements
-                    // as a batch). Unlike focus binding, the next step evaluates on each
-                    // result element (not the parent context).
-                    if (indexVar is not null && stepIdx + 1 < steps.Length
-                        && !isSortStep[stepIdx + 1])
+                    // as a batch). When a downstream sort exists beyond intermediate steps,
+                    // use EvalIndexWithSort to collect all elements with their group indices,
+                    // evaluate intermediate steps, sort globally, then continue.
+                    if (indexVar is not null && stepIdx + 1 < steps.Length)
                     {
-                        return EvalIndexStep(current, stepIdx);
+                        int downstreamSortIdx = -1;
+                        for (int s = stepIdx + 1; s < steps.Length; s++)
+                        {
+                            if (isSortStep[s])
+                            {
+                                downstreamSortIdx = s;
+                                break;
+                            }
+                        }
+
+                        if (downstreamSortIdx < 0)
+                        {
+                            return EvalIndexStep(current, stepIdx);
+                        }
+                        else if (downstreamSortIdx == stepIdx + 1)
+                        {
+                            // Sort is immediately next — skip index step, let sort handle grouping
+                        }
+                        else
+                        {
+                            // Sort is downstream but not immediate — evaluate index step
+                            // and intermediate steps, then sort globally with index tracking.
+                            return EvalIndexWithSort(current, stepIdx, downstreamSortIdx);
+                        }
                     }
 
                     // Sort steps need all elements as a batch — collect, flatten, sort.
@@ -1820,6 +1843,192 @@ internal static class FunctionalCompiler
                 }
 
                 return resultBuilder.ToSequence();
+            }
+
+            // Handles the case where an index-bound step (#$var) has a downstream sort
+            // with intermediate steps between them. Evaluates the index step and
+            // intermediate steps per-element, collecting all results with their group
+            // indices, then sorts globally and continues remaining steps with restored
+            // index bindings.
+            Sequence EvalIndexWithSort(Sequence inputContext, int stepIdx, int sortStepIdx)
+            {
+                var step = steps[stepIdx];
+                var idxVar = indexVars[stepIdx]!;
+                bool shouldFlatten = stepIdx > 0 || isPropertyStep[stepIdx];
+
+                // Evaluate the index step
+                Sequence stepResult;
+                if (inputContext.IsSingleton)
+                {
+                    var el = inputContext.FirstOrDefault;
+                    stepResult = (el.ValueKind == JsonValueKind.Array && shouldFlatten)
+                        ? FlattenArrayStep(el, step, env, isConsArrayStep[stepIdx])
+                        : step(el, env);
+                }
+                else
+                {
+                    var sb = default(SequenceBuilder);
+                    for (int i = 0; i < inputContext.Count; i++)
+                    {
+                        var el = inputContext[i];
+                        sb.AddRange((el.ValueKind == JsonValueKind.Array && shouldFlatten)
+                            ? FlattenArrayStep(el, step, env, isConsArrayStep[stepIdx])
+                            : step(el, env));
+                    }
+
+                    stepResult = sb.ToSequence();
+                }
+
+                if (stepResult.IsUndefined)
+                {
+                    return Sequence.Undefined;
+                }
+
+                // Expand to individual elements with group (index) tracking
+                var elements = CollectFlatElements(stepResult);
+                var resultElements = new List<JsonElement>();
+                var groupIndices = new List<int>();
+
+                for (int i = 0; i < elements.Count; i++)
+                {
+                    var el = elements[i];
+
+                    // Bind index variable
+                    env.Bind(idxVar, new Sequence(JsonataHelpers.NumberFromDouble(i, env.Workspace)));
+
+                    // Apply stages if any
+                    if (stages[stepIdx] is not null)
+                    {
+                        var filtered = ApplyStages(new Sequence(el), stages[stepIdx]!, stageIsSortFlags[stepIdx]!, env, idxVar);
+                        if (filtered.IsUndefined)
+                        {
+                            continue;
+                        }
+                    }
+
+                    // Evaluate intermediate steps (between index step and sort step)
+                    Sequence current = new Sequence(el);
+                    for (int s = stepIdx + 1; s < sortStepIdx; s++)
+                    {
+                        if (current.IsUndefined)
+                        {
+                            break;
+                        }
+
+                        bool shouldFlattenInt = s > 0 || isPropertyStep[s];
+                        var intResult = default(SequenceBuilder);
+                        for (int j = 0; j < current.Count; j++)
+                        {
+                            var item = current[j];
+                            if (item.ValueKind == JsonValueKind.Array && shouldFlattenInt)
+                            {
+                                foreach (var child in item.EnumerateArray())
+                                {
+                                    intResult.AddRange(steps[s](child, env));
+                                }
+                            }
+                            else
+                            {
+                                intResult.AddRange(steps[s](item, env));
+                            }
+                        }
+
+                        current = intResult.ToSequence();
+
+                        if (stages[s] is not null)
+                        {
+                            current = ApplyStages(current, stages[s]!, stageIsSortFlags[s]!, env, indexVars[s]);
+                        }
+                    }
+
+                    if (current.IsUndefined)
+                    {
+                        continue;
+                    }
+
+                    // Collect results with group index
+                    var flatResults = CollectFlatElements(current);
+                    foreach (var r in flatResults)
+                    {
+                        resultElements.Add(r);
+                        groupIndices.Add(i);
+                    }
+                }
+
+                if (resultElements.Count == 0)
+                {
+                    return Sequence.Undefined;
+                }
+
+                // Sort globally with per-element index rebinding
+                if (sortTermsPerStep[sortStepIdx] is not null)
+                {
+                    var terms = sortTermsPerStep[sortStepIdx]!;
+                    var sortIndices = Enumerable.Range(0, resultElements.Count).ToArray();
+                    Array.Sort(sortIndices, (a, b) =>
+                    {
+                        for (int t = 0; t < terms.Length; t++)
+                        {
+                            var aVal = terms[t].Expr(resultElements[a], env);
+                            var bVal = terms[t].Expr(resultElements[b], env);
+                            int cmp = CompareSortKeys(aVal, bVal);
+                            if (cmp != 0)
+                            {
+                                return terms[t].Descending ? -cmp : cmp;
+                            }
+                        }
+
+                        return a.CompareTo(b);
+                    });
+
+                    var sorted = new List<JsonElement>(resultElements.Count);
+                    var sortedGroups = new int[resultElements.Count];
+                    for (int i = 0; i < sortIndices.Length; i++)
+                    {
+                        sorted.Add(resultElements[sortIndices[i]]);
+                        sortedGroups[i] = groupIndices[sortIndices[i]];
+                    }
+
+                    resultElements = sorted;
+                    groupIndices = new List<int>(sortedGroups);
+                }
+
+                // Apply sort step stages
+                Sequence sortedSeq;
+                if (resultElements.Count == 1)
+                {
+                    sortedSeq = new Sequence(resultElements[0]);
+                }
+                else
+                {
+                    sortedSeq = new Sequence(JsonataHelpers.ArrayFromList(resultElements, env.Workspace));
+                }
+
+                if (stages[sortStepIdx] is not null)
+                {
+                    sortedSeq = ApplyStages(sortedSeq, stages[sortStepIdx]!, stageIsSortFlags[sortStepIdx]!, env, indexVars[sortStepIdx]);
+                }
+
+                // Continue remaining steps per-element with restored index bindings
+                if (sortStepIdx + 1 >= steps.Length)
+                {
+                    return sortedSeq;
+                }
+
+                var builder = default(SequenceBuilder);
+                var finalElements = CollectFlatElements(sortedSeq);
+                for (int i = 0; i < finalElements.Count; i++)
+                {
+                    if (i < groupIndices.Count)
+                    {
+                        env.Bind(idxVar, new Sequence(JsonataHelpers.NumberFromDouble(groupIndices[i], env.Workspace)));
+                    }
+
+                    var subResult = EvalPathFrom(new Sequence(finalElements[i]), sortStepIdx + 1);
+                    builder.AddRange(subResult);
+                }
+
+                return builder.ToSequence();
             }
         };
     }
