@@ -970,13 +970,16 @@ internal static class FunctionalCompiler
                 bool isLastStep = stepIdx + 1 >= steps.Length;
 
                 // Expand input to individual elements
-                var inputElements = new List<JsonElement>();
+                var inputElements = default(SequenceBuilder);
                 for (int i = 0; i < inputContext.Count; i++)
                 {
                     var el = inputContext[i];
                     if (el.ValueKind == JsonValueKind.Array && shouldFlatten)
                     {
-                        inputElements.AddRange(el.EnumerateArray());
+                        foreach (var item in el.EnumerateArray())
+                        {
+                            inputElements.Add(item);
+                        }
                     }
                     else
                     {
@@ -1061,13 +1064,16 @@ internal static class FunctionalCompiler
                         }
 
                         // Expand block result to individual elements
-                        var resultElements = new List<JsonElement>();
+                        var resultElements = default(SequenceBuilder);
                         for (int j = 0; j < blockResult.Count; j++)
                         {
                             var r = blockResult[j];
                             if (r.ValueKind == JsonValueKind.Array)
                             {
-                                resultElements.AddRange(r.EnumerateArray());
+                                foreach (var item in r.EnumerateArray())
+                                {
+                                    resultElements.Add(item);
+                                }
                             }
                             else
                             {
@@ -1728,13 +1734,16 @@ internal static class FunctionalCompiler
                 bool shouldFlatten = stepIdx > 0 || isPropertyStep[stepIdx];
 
                 // Expand input to individual elements for per-element binding
-                var inputElements = new List<JsonElement>();
+                var inputElements = default(SequenceBuilder);
                 for (int i = 0; i < inputContext.Count; i++)
                 {
                     var el = inputContext[i];
                     if (el.ValueKind == JsonValueKind.Array && shouldFlatten)
                     {
-                        inputElements.AddRange(el.EnumerateArray());
+                        foreach (var item in el.EnumerateArray())
+                        {
+                            inputElements.Add(item);
+                        }
                     }
                     else
                     {
@@ -1890,7 +1899,7 @@ internal static class FunctionalCompiler
             // Handles the case where an ancestor step has a downstream sort.
             // Collects (element, ancestor) pairs through intermediate steps,
             // sorts with per-element ancestor binding, then continues remaining steps.
-            Sequence EvalAncestorWithSort(List<JsonElement> inputElements, int stepIdx, string[] labels, int sortStepIdx)
+            Sequence EvalAncestorWithSort(SequenceBuilder inputElements, int stepIdx, string[] labels, int sortStepIdx)
             {
                 var step = steps[stepIdx];
 
@@ -2246,13 +2255,16 @@ internal static class FunctionalCompiler
                 }
 
                 // Expand singleton array to individual elements
-                var elements = new List<JsonElement>();
+                var elements = default(SequenceBuilder);
                 if (stepResult.IsSingleton)
                 {
                     var el = stepResult.FirstOrDefault;
                     if (el.ValueKind == JsonValueKind.Array)
                     {
-                        elements.AddRange(el.EnumerateArray());
+                        foreach (var item in el.EnumerateArray())
+                        {
+                            elements.Add(item);
+                        }
                     }
                     else
                     {
@@ -2522,13 +2534,16 @@ internal static class FunctionalCompiler
         Environment env)
     {
         // Collect individual elements from the sub-result
-        var elements = new List<JsonElement>();
+        var elements = default(SequenceBuilder);
         if (subResult.IsSingleton)
         {
             var el = subResult.FirstOrDefault;
             if (el.ValueKind == JsonValueKind.Array)
             {
-                elements.AddRange(el.EnumerateArray());
+                foreach (var item in el.EnumerateArray())
+                {
+                    elements.Add(item);
+                }
             }
             else
             {
@@ -2543,8 +2558,9 @@ internal static class FunctionalCompiler
             }
         }
 
-        foreach (var element in elements)
+        for (int ei = 0; ei < elements.Count; ei++)
         {
+            var element = elements[ei];
             for (int pairIdx = 0; pairIdx < pairs.Length; pairIdx++)
             {
                 var keySeq = pairs[pairIdx].Key(element, env);
@@ -2641,13 +2657,16 @@ internal static class FunctionalCompiler
         JsonElement focusElement)
     {
         // Extract context elements from subResult for key evaluation
-        var contextElements = new List<JsonElement>();
+        var contextElements = default(SequenceBuilder);
         if (subResult.IsSingleton)
         {
             var el = subResult.FirstOrDefault;
             if (el.ValueKind == JsonValueKind.Array)
             {
-                contextElements.AddRange(el.EnumerateArray());
+                foreach (var item in el.EnumerateArray())
+                {
+                    contextElements.Add(item);
+                }
             }
             else
             {
@@ -2662,8 +2681,9 @@ internal static class FunctionalCompiler
             }
         }
 
-        foreach (var element in contextElements)
+        for (int ei = 0; ei < contextElements.Count; ei++)
         {
+            var element = contextElements[ei];
             for (int pairIdx = 0; pairIdx < pairs.Length; pairIdx++)
             {
                 var keySeq = pairs[pairIdx].Key(element, env);
@@ -2824,7 +2844,7 @@ internal static class FunctionalCompiler
 
         // Collect all elements to iterate — flatten arrays in the sequence,
         // preserving tuple group indices when available.
-        var elements = new List<JsonElement>();
+        var elements = default(SequenceBuilder);
         int[]? elementGroupIndices = null;
 
         if (tupleGroupIndices is not null && tupleIndexVar is not null)
@@ -2844,7 +2864,10 @@ internal static class FunctionalCompiler
                 var el = current[i];
                 if (el.ValueKind == JsonValueKind.Array)
                 {
-                    elements.AddRange(el.EnumerateArray());
+                    foreach (var item in el.EnumerateArray())
+                    {
+                        elements.Add(item);
+                    }
                 }
                 else
                 {
