@@ -677,7 +677,7 @@ internal static class FunctionalCompiler
                             && sortTermsPerStep[stepIdx] is not null)
                         {
                             // Tuple-aware sort: sort elements inline while tracking group indices.
-                            var sortElems = new List<JsonElement>();
+                            var sortElems = default(SequenceBuilder);
                             var groups = new List<int>();
                             for (int i = 0; i < current.Count; i++)
                             {
@@ -723,7 +723,7 @@ internal static class FunctionalCompiler
                                 }));
 
                                 // Reorder elements and groups
-                                var sortedElems = new List<JsonElement>(sortElems.Count);
+                                var sortedElems = default(SequenceBuilder);
                                 var sortedGroupArr = new int[sortElems.Count];
                                 for (int i = 0; i < sortElems.Count; i++)
                                 {
@@ -732,13 +732,19 @@ internal static class FunctionalCompiler
                                 }
 
                                 ReturnSortIndices(indices);
-                                current = new Sequence(JsonataHelpers.ArrayFromList(sortedElems, env.Workspace));
+                                sortElems.ReturnArray();
+                                current = new Sequence(JsonataHelpers.ArrayFromBuilder(ref sortedElems, env.Workspace));
                                 tupleGroupIndices = sortedGroupArr;
                             }
                             else if (sortElems.Count == 1)
                             {
                                 current = new Sequence(sortElems[0]);
+                                sortElems.ReturnArray();
                                 tupleGroupIndices = [groups[0]];
+                            }
+                            else
+                            {
+                                sortElems.ReturnArray();
                             }
                         }
                         else
@@ -750,10 +756,12 @@ internal static class FunctionalCompiler
                                 {
                                     current = new Sequence(sortElements[0]);
                                 }
+
+                                sortElements.ReturnArray();
                             }
                             else
                             {
-                                var arrayInput = JsonataHelpers.ArrayFromList(sortElements, env.Workspace);
+                                var arrayInput = JsonataHelpers.ArrayFromBuilder(ref sortElements, env.Workspace);
                                 current = step(arrayInput, env);
                             }
 
@@ -1182,13 +1190,16 @@ internal static class FunctionalCompiler
                 }
 
                 // Expand singleton array to individual elements for per-element binding
-                var elements = new List<JsonElement>();
+                var elements = default(SequenceBuilder);
                 if (focusResult.IsSingleton)
                 {
                     var el = focusResult.FirstOrDefault;
                     if (el.ValueKind == JsonValueKind.Array)
                     {
-                        elements.AddRange(el.EnumerateArray());
+                        foreach (var item in el.EnumerateArray())
+                        {
+                            elements.Add(item);
+                        }
                     }
                     else
                     {
@@ -1211,7 +1222,6 @@ internal static class FunctionalCompiler
                 if (stepIdx + 1 < steps.Length && isSortStep[stepIdx + 1] && elements.Count > 1)
                 {
                     int sortIdx = stepIdx + 1;
-                    var sortInput = JsonataHelpers.ArrayFromList(elements, env.Workspace);
 
                     // Use the focus-aware sort: bind the focus variable per comparison
                     // so sort keys like $e.Surname resolve correctly.
@@ -1227,14 +1237,17 @@ internal static class FunctionalCompiler
                     }
                     else
                     {
+                        var sortInput = JsonataHelpers.ArrayFromBuilder(ref elements, env.Workspace);
                         var sortedSeq = steps[sortIdx](sortInput, env);
-                        elements.Clear();
                         if (sortedSeq.IsSingleton)
                         {
                             var sortedEl = sortedSeq.FirstOrDefault;
                             if (sortedEl.ValueKind == JsonValueKind.Array)
                             {
-                                elements.AddRange(sortedEl.EnumerateArray());
+                                foreach (var item in sortedEl.EnumerateArray())
+                                {
+                                    elements.Add(item);
+                                }
                             }
                             else
                             {
@@ -1292,11 +1305,12 @@ internal static class FunctionalCompiler
                 List<int>? survivingOriginalIndices = indexVar is not null ? new() : null;
                 if (stages[stepIdx] is not null)
                 {
-                    var batchSeq = new Sequence(elements.ToArray(), elements.Count);
+                    var batchSeq = elements.ToSequence();
                     var filtered = ApplyFocusStages(
                         batchSeq, stages[stepIdx]!, stageIsSortFlags[stepIdx]!, env, focusVar, indexVar, survivingOriginalIndices);
                     if (filtered.IsUndefined)
                     {
+                        elements.ReturnArray();
                         return Sequence.Undefined;
                     }
 
@@ -1307,7 +1321,10 @@ internal static class FunctionalCompiler
                         var el = filtered.FirstOrDefault;
                         if (el.ValueKind == JsonValueKind.Array)
                         {
-                            elements.AddRange(el.EnumerateArray());
+                            foreach (var item in el.EnumerateArray())
+                            {
+                                elements.Add(item);
+                            }
                         }
                         else
                         {
@@ -1419,7 +1436,7 @@ internal static class FunctionalCompiler
             // tuples first, then applies inner stages globally, then evaluates
             // remaining steps per surviving tuple.
             Sequence EvalCrossJoinFocus(
-                List<JsonElement> outerElements,
+                SequenceBuilder outerElements,
                 Sequence parentContext,
                 int outerStepIdx,
                 int innerStepIdx,
@@ -1472,13 +1489,16 @@ internal static class FunctionalCompiler
                 }
 
                 // Expand to individual elements
-                var innerElements = new List<JsonElement>();
+                var innerElements = default(SequenceBuilder);
                 if (innerFocusResult.IsSingleton)
                 {
                     var el = innerFocusResult.FirstOrDefault;
                     if (el.ValueKind == JsonValueKind.Array)
                     {
-                        innerElements.AddRange(el.EnumerateArray());
+                        foreach (var item in el.EnumerateArray())
+                        {
+                            innerElements.Add(item);
+                        }
                     }
                     else
                     {
@@ -2172,6 +2192,8 @@ internal static class FunctionalCompiler
                     builder.AddRange(subResult);
                 }
 
+                finalElements.ReturnArray();
+
                 return builder.ToSequence();
             }
 
@@ -2398,11 +2420,13 @@ internal static class FunctionalCompiler
 
                     // Collect results with group index
                     var flatResults = CollectFlatElements(current);
-                    foreach (var r in flatResults)
+                    for (int j = 0; j < flatResults.Count; j++)
                     {
-                        resultElements.Add(r);
+                        resultElements.Add(flatResults[j]);
                         groupIndices.Add(i);
                     }
+
+                    flatResults.ReturnArray();
                 }
 
                 if (resultElements.Count == 0)
@@ -2479,6 +2503,7 @@ internal static class FunctionalCompiler
                     builder.AddRange(subResult);
                 }
 
+                finalElements.ReturnArray();
                 return builder.ToSequence();
             }
         };
@@ -2955,9 +2980,13 @@ internal static class FunctionalCompiler
                     var el = current.FirstOrDefault;
                     if (el.ValueKind == JsonValueKind.Array)
                     {
-                        var expanded = new List<JsonElement>();
-                        expanded.AddRange(el.EnumerateArray());
-                        current = new Sequence(expanded.ToArray(), expanded.Count);
+                        var expanded = default(SequenceBuilder);
+                        foreach (var item in el.EnumerateArray())
+                        {
+                            expanded.Add(item);
+                        }
+
+                        current = expanded.ToSequence();
                     }
                 }
 
@@ -2967,13 +2996,16 @@ internal static class FunctionalCompiler
             var stage = stageEvaluators[s];
 
             // Collect all elements into a working set
-            var elements = new List<JsonElement>();
+            var elements = default(SequenceBuilder);
             if (current.IsSingleton)
             {
                 var el = current.FirstOrDefault;
                 if (el.ValueKind == JsonValueKind.Array)
                 {
-                    elements.AddRange(el.EnumerateArray());
+                    foreach (var item in el.EnumerateArray())
+                    {
+                        elements.Add(item);
+                    }
                 }
                 else
                 {
@@ -2993,18 +3025,24 @@ internal static class FunctionalCompiler
                 // In path contexts, property steps can produce arrays of arrays
                 // (e.g. Account.Order.Product yields [productArray1, productArray2]).
                 // Flatten one level so the sort sees individual elements.
-                var sortElements = new List<JsonElement>(elements.Count * 2);
-                foreach (var el in elements)
+                var sortElements = default(SequenceBuilder);
+                for (int i = 0; i < elements.Count; i++)
                 {
+                    var el = elements[i];
                     if (el.ValueKind == JsonValueKind.Array)
                     {
-                        sortElements.AddRange(el.EnumerateArray());
+                        foreach (var item in el.EnumerateArray())
+                        {
+                            sortElements.Add(item);
+                        }
                     }
                     else
                     {
                         sortElements.Add(el);
                     }
                 }
+
+                elements.ReturnArray();
 
                 // Sort stages need all elements at once — build a JSON array
                 // and pass it to the sort evaluator.
@@ -3014,10 +3052,12 @@ internal static class FunctionalCompiler
                     {
                         current = new Sequence(sortElements[0]);
                     }
+
+                    sortElements.ReturnArray();
                 }
                 else
                 {
-                    var arrayInput = JsonataHelpers.ArrayFromList(sortElements, env.Workspace);
+                    var arrayInput = JsonataHelpers.ArrayFromBuilder(ref sortElements, env.Workspace);
                     current = stage(arrayInput, env);
                 }
 
@@ -3171,6 +3211,7 @@ internal static class FunctionalCompiler
                 }
             }
 
+            elements.ReturnArray();
             current = builder.ToSequence();
         }
 
@@ -3223,13 +3264,16 @@ internal static class FunctionalCompiler
 
             var stage = stageEvaluators[s];
 
-            var elements = new List<JsonElement>();
+            var elements = default(SequenceBuilder);
             if (current.IsSingleton)
             {
                 var el = current.FirstOrDefault;
                 if (el.ValueKind == JsonValueKind.Array)
                 {
-                    elements.AddRange(el.EnumerateArray());
+                    foreach (var item in el.EnumerateArray())
+                    {
+                        elements.Add(item);
+                    }
                 }
                 else
                 {
@@ -3246,12 +3290,16 @@ internal static class FunctionalCompiler
 
             if (isSortStage[s])
             {
-                var sortElements = new List<JsonElement>(elements.Count * 2);
-                foreach (var el in elements)
+                var sortElements = default(SequenceBuilder);
+                for (int i = 0; i < elements.Count; i++)
                 {
+                    var el = elements[i];
                     if (el.ValueKind == JsonValueKind.Array)
                     {
-                        sortElements.AddRange(el.EnumerateArray());
+                        foreach (var item in el.EnumerateArray())
+                        {
+                            sortElements.Add(item);
+                        }
                     }
                     else
                     {
@@ -3259,16 +3307,20 @@ internal static class FunctionalCompiler
                     }
                 }
 
+                elements.ReturnArray();
+
                 if (sortElements.Count <= 1)
                 {
                     if (sortElements.Count == 1)
                     {
                         current = new Sequence(sortElements[0]);
                     }
+
+                    sortElements.ReturnArray();
                 }
                 else
                 {
-                    var arrayInput = JsonataHelpers.ArrayFromList(sortElements, env.Workspace);
+                    var arrayInput = JsonataHelpers.ArrayFromBuilder(ref sortElements, env.Workspace);
                     current = stage(arrayInput, env);
                 }
 
@@ -3414,6 +3466,7 @@ internal static class FunctionalCompiler
                 }
             }
 
+            elements.ReturnArray();
             current = builder.ToSequence();
             currentIndices = nextIndices?.ToArray();
         }
@@ -3436,15 +3489,18 @@ internal static class FunctionalCompiler
     /// Collects all elements from a sequence, flattening one level of nested arrays.
     /// Used before sort operations to gather individual items from multi-value path results.
     /// </summary>
-    private static List<JsonElement> CollectFlatElements(Sequence current)
+    private static SequenceBuilder CollectFlatElements(Sequence current)
     {
-        var result = new List<JsonElement>();
+        var result = default(SequenceBuilder);
         if (current.IsSingleton)
         {
             var el = current.FirstOrDefault;
             if (el.ValueKind == JsonValueKind.Array)
             {
-                result.AddRange(el.EnumerateArray());
+                foreach (var item in el.EnumerateArray())
+                {
+                    result.Add(item);
+                }
             }
             else
             {
@@ -3458,7 +3514,10 @@ internal static class FunctionalCompiler
                 var el = current[i];
                 if (el.ValueKind == JsonValueKind.Array)
                 {
-                    result.AddRange(el.EnumerateArray());
+                    foreach (var item in el.EnumerateArray())
+                    {
+                        result.Add(item);
+                    }
                 }
                 else
                 {
@@ -4756,10 +4815,13 @@ internal static class FunctionalCompiler
         return (in JsonElement input, Environment env) =>
         {
             // Collect elements to sort
-            var elements = new List<JsonElement>();
+            var elements = default(SequenceBuilder);
             if (input.ValueKind == JsonValueKind.Array)
             {
-                elements.AddRange(input.EnumerateArray());
+                foreach (var item in input.EnumerateArray())
+                {
+                    elements.Add(item);
+                }
             }
             else
             {
@@ -4768,6 +4830,7 @@ internal static class FunctionalCompiler
 
             if (elements.Count <= 1)
             {
+                elements.ReturnArray();
                 return new Sequence(input);
             }
 
@@ -4792,16 +4855,17 @@ internal static class FunctionalCompiler
                 return a.CompareTo(b);
             }));
 
-            var sorted = new List<JsonElement>(elements.Count);
+            var sorted = default(SequenceBuilder);
             for (int i = 0; i < elements.Count; i++)
             {
                 sorted.Add(elements[indices[i]]);
             }
 
             ReturnSortIndices(indices);
+            elements.ReturnArray();
 
             // Build result as a JSON array so subsequent path steps flatten it
-            return new Sequence(JsonataHelpers.ArrayFromList(sorted, env.Workspace));
+            return new Sequence(JsonataHelpers.ArrayFromBuilder(ref sorted, env.Workspace));
         };
     }
 
@@ -4821,10 +4885,13 @@ internal static class FunctionalCompiler
 
         return (in JsonElement input, Environment env) =>
         {
-            var elements = new List<JsonElement>();
+            var elements = default(SequenceBuilder);
             if (input.ValueKind == JsonValueKind.Array)
             {
-                elements.AddRange(input.EnumerateArray());
+                foreach (var item in input.EnumerateArray())
+                {
+                    elements.Add(item);
+                }
             }
             else
             {
@@ -4833,6 +4900,7 @@ internal static class FunctionalCompiler
 
             if (elements.Count <= 1)
             {
+                elements.ReturnArray();
                 return new Sequence(input);
             }
 
@@ -4859,15 +4927,16 @@ internal static class FunctionalCompiler
                 return a.CompareTo(b);
             }));
 
-            var sorted = new List<JsonElement>(elements.Count);
+            var sorted = default(SequenceBuilder);
             for (int i = 0; i < elements.Count; i++)
             {
                 sorted.Add(elements[indices[i]]);
             }
 
             ReturnSortIndices(indices);
+            elements.ReturnArray();
 
-            return new Sequence(JsonataHelpers.ArrayFromList(sorted, env.Workspace));
+            return new Sequence(JsonataHelpers.ArrayFromBuilder(ref sorted, env.Workspace));
         };
     }
 
@@ -4877,7 +4946,7 @@ internal static class FunctionalCompiler
     /// and the sort key expression references the focus variable.
     /// </summary>
     private static Sequence FocusSort(
-        List<JsonElement> elements,
+        SequenceBuilder elements,
         (ExpressionEvaluator Expr, bool Descending)[] sortTerms,
         Environment env,
         string focusVar)

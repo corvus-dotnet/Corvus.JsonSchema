@@ -20,6 +20,15 @@ internal struct SequenceBuilder
     /// <summary>Gets the current count of values added.</summary>
     public readonly int Count => this.count;
 
+    /// <summary>Gets or sets the element at the specified index.</summary>
+    public readonly JsonElement this[int index]
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => this.array![index];
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        set => this.array![index] = value;
+    }
+
     /// <summary>
     /// Adds a value to the builder.
     /// </summary>
@@ -86,6 +95,15 @@ internal struct SequenceBuilder
             this.array = null;
             this.count = 0;
         }
+    }
+
+    /// <summary>
+    /// Resets the builder to empty without returning the backing array.
+    /// The existing array is reused for subsequent <see cref="Add"/> calls.
+    /// </summary>
+    public void Clear()
+    {
+        this.count = 0;
     }
 
     private void Grow()

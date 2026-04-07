@@ -278,6 +278,28 @@ internal static class JsonataHelpers
     }
 
     /// <summary>
+    /// Creates a JSON array element from a <see cref="SequenceBuilder"/>.
+    /// </summary>
+    public static JsonElement ArrayFromBuilder(ref SequenceBuilder builder, JsonWorkspace workspace)
+    {
+        if (builder.Count == 0)
+        {
+            return EmptyArrayElement;
+        }
+
+        JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateArrayBuilder(workspace, builder.Count);
+        JsonElement.Mutable root = doc.RootElement;
+
+        for (int i = 0; i < builder.Count; i++)
+        {
+            root.AddItem(builder[i]);
+        }
+
+        builder.ReturnArray();
+        return (JsonElement)root;
+    }
+
+    /// <summary>
     /// Creates a JSON array element from a read-only list of elements.
     /// </summary>
     public static JsonElement ArrayFromReadOnlyList(IReadOnlyList<JsonElement> items, JsonWorkspace workspace)
