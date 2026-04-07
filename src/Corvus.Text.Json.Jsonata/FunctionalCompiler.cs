@@ -873,12 +873,12 @@ internal static class FunctionalCompiler
                             if (tupleGroupIndices is not null && tupleIndexVar is not null
                                 && i < tupleGroupIndices.Length)
                             {
-                                env.Bind(tupleIndexVar, new Sequence(JsonataHelpers.NumberFromDouble(tupleGroupIndices[i], env.Workspace)));
+                                env.Bind(tupleIndexVar, Sequence.FromDouble(tupleGroupIndices[i], env.Workspace));
                             }
 
                             if (indexVar is not null)
                             {
-                                env.Bind(indexVar, new Sequence(JsonataHelpers.NumberFromDouble(i, env.Workspace)));
+                                env.Bind(indexVar, Sequence.FromDouble(i, env.Workspace));
                             }
 
                             Sequence stepResult;
@@ -1379,7 +1379,7 @@ internal static class FunctionalCompiler
                         int origIdx = survivingOriginalIndices is not null && i < survivingOriginalIndices.Count
                             ? survivingOriginalIndices[i]
                             : i;
-                        env.Bind(indexVar, new Sequence(JsonataHelpers.NumberFromDouble(origIdx, env.Workspace)));
+                        env.Bind(indexVar, Sequence.FromDouble(origIdx, env.Workspace));
                     }
 
                     // Evaluate remaining steps from parent context (cross-join).
@@ -1532,7 +1532,7 @@ internal static class FunctionalCompiler
                         int origIdx = outerSurvivingIndices is not null && oi < outerSurvivingIndices.Count
                             ? outerSurvivingIndices[oi]
                             : oi;
-                        env.Bind(outerIndexVar, new Sequence(JsonataHelpers.NumberFromDouble(origIdx, env.Workspace)));
+                        env.Bind(outerIndexVar, Sequence.FromDouble(origIdx, env.Workspace));
                     }
 
                     for (int ii = 0; ii < innerElements.Count; ii++)
@@ -1583,7 +1583,7 @@ internal static class FunctionalCompiler
                             var varNode = (VariableNode)stageAnnotations!.Stages[s];
                             for (int t = 0; t < tuples.Count; t++)
                             {
-                                env.Bind(varNode.Name, new Sequence(JsonataHelpers.NumberFromDouble(t, env.Workspace)));
+                                env.Bind(varNode.Name, Sequence.FromDouble(t, env.Workspace));
                             }
 
                             // Keep all tuples (index binding doesn't filter)
@@ -1603,13 +1603,13 @@ internal static class FunctionalCompiler
                                 int origIdx = outerSurvivingIndices is not null && tuple.OuterIdx < outerSurvivingIndices.Count
                                     ? outerSurvivingIndices[tuple.OuterIdx]
                                     : tuple.OuterIdx;
-                                env.Bind(outerIndexVar, new Sequence(JsonataHelpers.NumberFromDouble(origIdx, env.Workspace)));
+                                env.Bind(outerIndexVar, Sequence.FromDouble(origIdx, env.Workspace));
                             }
 
                             env.Bind(innerFocusVar, new Sequence(tuple.InnerEl));
                             if (innerIndexVar is not null)
                             {
-                                env.Bind(innerIndexVar, new Sequence(JsonataHelpers.NumberFromDouble(tuple.InnerIdx, env.Workspace)));
+                                env.Bind(innerIndexVar, Sequence.FromDouble(tuple.InnerIdx, env.Workspace));
                             }
 
                             var result = stage(tuple.InnerEl, env);
@@ -1679,14 +1679,14 @@ internal static class FunctionalCompiler
                         int origIdx = outerSurvivingIndices is not null && tuple.OuterIdx < outerSurvivingIndices.Count
                             ? outerSurvivingIndices[tuple.OuterIdx]
                             : tuple.OuterIdx;
-                        env.Bind(outerIndexVar, new Sequence(JsonataHelpers.NumberFromDouble(origIdx, env.Workspace)));
+                        env.Bind(outerIndexVar, Sequence.FromDouble(origIdx, env.Workspace));
                     }
 
                     // Re-bind inner variables
                     env.Bind(innerFocusVar, new Sequence(tuple.InnerEl));
                     if (innerIndexVar is not null)
                     {
-                        env.Bind(innerIndexVar, new Sequence(JsonataHelpers.NumberFromDouble(tuple.InnerIdx, env.Workspace)));
+                        env.Bind(innerIndexVar, Sequence.FromDouble(tuple.InnerIdx, env.Workspace));
                     }
 
                     // Bind the index binding stage variable (e.g. $ib2) to this tuple's
@@ -1699,7 +1699,7 @@ internal static class FunctionalCompiler
                         {
                             if (innerAnnotations.Stages[s] is VariableNode varStage)
                             {
-                                env.Bind(varStage.Name, new Sequence(JsonataHelpers.NumberFromDouble(t, env.Workspace)));
+                                env.Bind(varStage.Name, Sequence.FromDouble(t, env.Workspace));
                             }
                         }
                     }
@@ -2293,7 +2293,7 @@ internal static class FunctionalCompiler
                     var el = elements[i];
 
                     // Bind index variable
-                    env.Bind(indexVar, new Sequence(JsonataHelpers.NumberFromDouble(i, env.Workspace)));
+                    env.Bind(indexVar, Sequence.FromDouble(i, env.Workspace));
 
                     // Apply stages (filters) per-element.
                     // Pass null for indexVar — the index is already bound above.
@@ -2378,7 +2378,7 @@ internal static class FunctionalCompiler
                     var el = elements[i];
 
                     // Bind index variable
-                    env.Bind(idxVar, new Sequence(JsonataHelpers.NumberFromDouble(i, env.Workspace)));
+                    env.Bind(idxVar, Sequence.FromDouble(i, env.Workspace));
 
                     // Apply stages if any
                     if (stages[stepIdx] is not null)
@@ -2508,7 +2508,7 @@ internal static class FunctionalCompiler
                 {
                     if (i < groupIndices.Count)
                     {
-                        env.Bind(idxVar, new Sequence(JsonataHelpers.NumberFromDouble(groupIndices[i], env.Workspace)));
+                        env.Bind(idxVar, Sequence.FromDouble(groupIndices[i], env.Workspace));
                     }
 
                     var subResult = EvalPathFrom(new Sequence(finalElements[i]), sortStepIdx + 1);
@@ -2890,7 +2890,7 @@ internal static class FunctionalCompiler
             if (elementGroupIndices is not null && tupleIndexVar is not null
                 && idx < elementGroupIndices.Length)
             {
-                env.Bind(tupleIndexVar, new Sequence(JsonataHelpers.NumberFromDouble(elementGroupIndices[idx], env.Workspace)));
+                env.Bind(tupleIndexVar, Sequence.FromDouble(elementGroupIndices[idx], env.Workspace));
             }
 
             for (int pairIdx = 0; pairIdx < pairs.Length; pairIdx++)
@@ -3097,13 +3097,13 @@ internal static class FunctionalCompiler
                 // so predicates like [$pos<3] see the correct position.
                 if (indexVar is not null)
                 {
-                    env.Bind(indexVar, new Sequence(JsonataHelpers.NumberFromDouble(i, env.Workspace)));
+                    env.Bind(indexVar, Sequence.FromDouble(i, env.Workspace));
                 }
 
                 // Bind any active index binding variable (from a preceding #$var stage)
                 if (activeIndexBinding is not null)
                 {
-                    env.Bind(activeIndexBinding, new Sequence(JsonataHelpers.NumberFromDouble(i, env.Workspace)));
+                    env.Bind(activeIndexBinding, Sequence.FromDouble(i, env.Workspace));
                 }
 
                 var result = stage(el, env);
@@ -3367,7 +3367,7 @@ internal static class FunctionalCompiler
                 if (indexVar is not null)
                 {
                     int origIdx = currentIndices is not null ? currentIndices[i] : i;
-                    env.Bind(indexVar, new Sequence(JsonataHelpers.NumberFromDouble(origIdx, env.Workspace)));
+                    env.Bind(indexVar, Sequence.FromDouble(origIdx, env.Workspace));
                 }
 
                 var result = stage(el, env);

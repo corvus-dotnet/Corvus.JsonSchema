@@ -132,7 +132,7 @@ internal static class BuiltInFunctions
                 count = seq.Count;
             }
 
-            return new Sequence(JsonataHelpers.NumberFromDouble(count, env.Workspace));
+            return Sequence.FromDouble(count, env.Workspace);
         };
     }
 
@@ -154,7 +154,7 @@ internal static class BuiltInFunctions
 
             double total = 0;
             EnumerateNumericValues(seq, ref total, static (ref double acc, double val) => acc += val);
-            return new Sequence(JsonataHelpers.NumberFromDouble(total, env.Workspace));
+            return Sequence.FromDouble(total, env.Workspace);
         };
     }
 
@@ -191,7 +191,7 @@ internal static class BuiltInFunctions
                 return Sequence.Undefined;
             }
 
-            return new Sequence(JsonataHelpers.NumberFromDouble(max, env.Workspace));
+            return Sequence.FromDouble(max, env.Workspace);
         };
     }
 
@@ -228,7 +228,7 @@ internal static class BuiltInFunctions
                 return Sequence.Undefined;
             }
 
-            return new Sequence(JsonataHelpers.NumberFromDouble(min, env.Workspace));
+            return Sequence.FromDouble(min, env.Workspace);
         };
     }
 
@@ -261,7 +261,7 @@ internal static class BuiltInFunctions
                 return Sequence.Undefined;
             }
 
-            return new Sequence(JsonataHelpers.NumberFromDouble(total / count, env.Workspace));
+            return Sequence.FromDouble(total / count, env.Workspace);
         };
     }
 
@@ -463,12 +463,12 @@ internal static class BuiltInFunctions
             // Booleans: true → 1, false → 0
             if (element.ValueKind == JsonValueKind.True)
             {
-                return new Sequence(JsonataHelpers.NumberFromDouble(1, env.Workspace));
+                return Sequence.FromDouble(1, env.Workspace);
             }
 
             if (element.ValueKind == JsonValueKind.False)
             {
-                return new Sequence(JsonataHelpers.NumberFromDouble(0, env.Workspace));
+                return Sequence.FromDouble(0, env.Workspace);
             }
 
             if (element.ValueKind == JsonValueKind.Number)
@@ -479,7 +479,7 @@ internal static class BuiltInFunctions
                     throw new JsonataException("D3030", "Unable to cast value to a number", 0);
                 }
 
-                return new Sequence(JsonataHelpers.NumberFromDouble(num, env.Workspace));
+                return Sequence.FromDouble(num, env.Workspace);
             }
 
             // String conversion
@@ -499,7 +499,7 @@ internal static class BuiltInFunctions
                     {
                         if (long.TryParse(s.Substring(2), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out long hexVal))
                         {
-                            return new Sequence(JsonataHelpers.NumberFromDouble(hexVal, env.Workspace));
+                            return Sequence.FromDouble(hexVal, env.Workspace);
                         }
 
                         throw new JsonataException("D3030", "Unable to cast value to a number", 0);
@@ -509,7 +509,7 @@ internal static class BuiltInFunctions
                     {
                         if (TryParseBinary(s, 2, out long binVal))
                         {
-                            return new Sequence(JsonataHelpers.NumberFromDouble(binVal, env.Workspace));
+                            return Sequence.FromDouble(binVal, env.Workspace);
                         }
 
                         throw new JsonataException("D3030", "Unable to cast value to a number", 0);
@@ -519,7 +519,7 @@ internal static class BuiltInFunctions
                     {
                         if (TryParseOctal(s, 2, out long octVal))
                         {
-                            return new Sequence(JsonataHelpers.NumberFromDouble(octVal, env.Workspace));
+                            return Sequence.FromDouble(octVal, env.Workspace);
                         }
 
                         throw new JsonataException("D3030", "Unable to cast value to a number", 0);
@@ -533,7 +533,7 @@ internal static class BuiltInFunctions
                         throw new JsonataException("D3030", "Unable to cast value to a number", 0);
                     }
 
-                    return new Sequence(JsonataHelpers.NumberFromDouble(parsed, env.Workspace));
+                    return Sequence.FromDouble(parsed, env.Workspace);
                 }
 
                 throw new JsonataException("D3030", "Unable to cast value to a number", 0);
@@ -716,7 +716,7 @@ internal static class BuiltInFunctions
             {
                 string str = el.GetString() ?? string.Empty;
                 int len = CountCodePoints(str);
-                return new Sequence(JsonataHelpers.NumberFromDouble(len, env.Workspace));
+                return Sequence.FromDouble(len, env.Workspace);
             }
 
             // Wrong type: T0411 when context-derived, T0410 when explicit arg
@@ -1339,7 +1339,7 @@ internal static class BuiltInFunctions
                 throw new JsonataException("D3060", "The argument of the $sqrt function must be non-negative", 0);
             }
 
-            return new Sequence(JsonataHelpers.NumberFromDouble(Math.Sqrt(num), env.Workspace));
+            return Sequence.FromDouble(Math.Sqrt(num), env.Workspace);
         };
     }
 
@@ -1386,7 +1386,7 @@ internal static class BuiltInFunctions
                 result = (double)rounded;
             }
 
-            return new Sequence(JsonataHelpers.NumberFromDouble(result, env.Workspace));
+            return Sequence.FromDouble(result, env.Workspace);
         };
     }
 
@@ -1417,7 +1417,7 @@ internal static class BuiltInFunctions
                 throw new JsonataException("D3061", "The power function has resulted in a value that cannot be represented as a JSON number", 0);
             }
 
-            return new Sequence(JsonataHelpers.NumberFromDouble(result, env.Workspace));
+            return Sequence.FromDouble(result, env.Workspace);
         };
     }
 
@@ -1437,7 +1437,7 @@ internal static class BuiltInFunctions
                 return Sequence.Undefined;
             }
 
-            return new Sequence(JsonataHelpers.NumberFromDouble(func(num), env.Workspace));
+            return Sequence.FromDouble(func(num), env.Workspace);
         };
     }
 
@@ -1907,7 +1907,7 @@ internal static class BuiltInFunctions
             for (int i = 0; i < items.Count; i++)
             {
                 var elemSeq = new Sequence(items[i]);
-                var idxSeq = new Sequence(JsonataHelpers.NumberFromDouble(i, env.Workspace));
+                var idxSeq = Sequence.FromDouble(i, env.Workspace);
                 var result = lambda.Invoke(new[] { elemSeq, idxSeq, arrSeq }, items[i], env);
                 builder.AddRange(result);
             }
@@ -1994,7 +1994,7 @@ internal static class BuiltInFunctions
                 for (int i = 0; i < len; i++)
                 {
                     var elemSeq = new Sequence(arr[i]);
-                    var idxSeq = new Sequence(JsonataHelpers.NumberFromDouble(i, env.Workspace));
+                    var idxSeq = Sequence.FromDouble(i, env.Workspace);
                     var result = lambda.Invoke(new[] { elemSeq, idxSeq, seq }, arr[i], env);
                     if (FunctionalCompiler.IsTruthy(result))
                     {
@@ -2008,7 +2008,7 @@ internal static class BuiltInFunctions
                 for (int i = 0; i < seq.Count; i++)
                 {
                     var elemSeq = new Sequence(seq[i]);
-                    var idxSeq = new Sequence(JsonataHelpers.NumberFromDouble(i, env.Workspace));
+                    var idxSeq = Sequence.FromDouble(i, env.Workspace);
                     var result = lambda.Invoke(new[] { elemSeq, idxSeq, seq }, seq[i], env);
                     if (FunctionalCompiler.IsTruthy(result))
                     {
@@ -2132,7 +2132,7 @@ internal static class BuiltInFunctions
             for (int i = startIdx; i < itemSeqs.Count; i++)
             {
                 var elemSeq = itemSeqs[i];
-                var idxSeq = new Sequence(JsonataHelpers.NumberFromDouble(i, env.Workspace));
+                var idxSeq = Sequence.FromDouble(i, env.Workspace);
                 accumulator = lambda.Invoke(new[] { accumulator, elemSeq, idxSeq, arrSeq }, input, env);
             }
 
@@ -2498,7 +2498,7 @@ internal static class BuiltInFunctions
             for (int i = 0; i < elements.Count; i++)
             {
                 var lambdaResult = lambda.Invoke(
-                    new[] { new Sequence(elements[i]), new Sequence(JsonataHelpers.NumberFromDouble(i, env.Workspace)), arrSeq },
+                    new[] { new Sequence(elements[i]), Sequence.FromDouble(i, env.Workspace), arrSeq },
                     elements[i],
                     env);
                 if (FunctionalCompiler.IsTruthy(lambdaResult))
@@ -3374,7 +3374,7 @@ internal static class BuiltInFunctions
     {
         return static (in JsonElement input, Environment env) =>
         {
-            return new Sequence(JsonataHelpers.NumberFromDouble(ThreadRandom.NextDouble(), env.Workspace));
+            return Sequence.FromDouble(ThreadRandom.NextDouble(), env.Workspace);
         };
     }
 
@@ -4335,7 +4335,7 @@ internal static class BuiltInFunctions
     {
         return static (in JsonElement input, Environment env) =>
         {
-            return new Sequence(JsonataHelpers.NumberFromDouble(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), env.Workspace));
+            return Sequence.FromDouble(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), env.Workspace);
         };
     }
 
@@ -4462,7 +4462,7 @@ internal static class BuiltInFunctions
             DateTimeStyles.AssumeUniversal,
             out var dt))
         {
-            return new Sequence(JsonataHelpers.NumberFromDouble(dt.ToUnixTimeMilliseconds(), workspace));
+            return Sequence.FromDouble(dt.ToUnixTimeMilliseconds(), workspace);
         }
 
         throw new JsonataException("D3110", $"The string \"{str}\" cannot be parsed as a valid timestamp", 0);
@@ -4505,7 +4505,7 @@ internal static class BuiltInFunctions
             {
                 if (XPathDateTimeFormatter.TryParseDateTime(str, picture, out long millis))
                 {
-                    return new Sequence(JsonataHelpers.NumberFromDouble(millis, env.Workspace));
+                    return Sequence.FromDouble(millis, env.Workspace);
                 }
             }
             catch (JsonataException)
@@ -4593,7 +4593,7 @@ internal static class BuiltInFunctions
 
             if (XPathDateTimeFormatter.TryParseInteger(str, picture, out double dblValue))
             {
-                return new Sequence(JsonataHelpers.NumberFromDouble(dblValue, env.Workspace));
+                return Sequence.FromDouble(dblValue, env.Workspace);
             }
 
             return Sequence.Undefined;
