@@ -810,13 +810,31 @@ public sealed class FixedJsonValueDocument<T> : IJsonDocument, IWorkspaceManaged
     {
         Debug.Assert(index == 0);
 
-        if (_tokenType == JsonTokenType.String)
+        switch (_tokenType)
         {
-            writer.WriteRawValue(_rawValue.Span);
-        }
-        else
-        {
-            writer.WriteRawValue(_rawValue.Span);
+            case JsonTokenType.Number:
+                // Use the typed WriteNumberValue so the writer handles
+                // list separators AND indentation correctly.
+                writer.WriteNumberValue(_rawValue.Span);
+                break;
+
+            case JsonTokenType.True:
+                writer.WriteBooleanValue(value: true);
+                break;
+
+            case JsonTokenType.False:
+                writer.WriteBooleanValue(value: false);
+                break;
+
+            case JsonTokenType.Null:
+                writer.WriteNullValue();
+                break;
+
+            default:
+                // Strings (whose _rawValue includes surrounding quotes)
+                // and any other token types.
+                writer.WriteRawValue(_rawValue.Span);
+                break;
         }
     }
 

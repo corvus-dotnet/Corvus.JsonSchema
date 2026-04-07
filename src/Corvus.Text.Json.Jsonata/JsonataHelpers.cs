@@ -94,11 +94,18 @@ internal static class JsonataHelpers
     {
         Span<byte> buffer = stackalloc byte[32];
 
+#if NET
         if (!Utf8Formatter.TryFormat(value, buffer, out int bytesWritten))
         {
             // Fallback for very long representations
             return NumberFromDoubleSlow(value, workspace);
         }
+#else
+        // On netstandard2.0 / .NET Framework, Utf8Formatter uses G17 which produces
+        // non-shortest representations (e.g. 39.4 → "39.399999999999999"). Use "R"
+        // format via ToString which produces the shortest roundtrip form, then transcode.
+        int bytesWritten = FormatDoubleRoundtrip(value, buffer);
+#endif
 
         FixedJsonValueDocument<JsonElement> doc = FixedJsonValueDocument<JsonElement>.ForNumberFromSpan(buffer.Slice(0, bytesWritten));
         workspace.RegisterDocument(doc);
@@ -498,11 +505,15 @@ internal static class JsonataHelpers
         byte[] buffer = ArrayPool<byte>.Shared.Rent(64);
         try
         {
+#if NET
             if (!Utf8Formatter.TryFormat(value, buffer, out int bytesWritten))
             {
                 ThrowFormatFailed();
                 bytesWritten = 0; // unreachable
             }
+#else
+            int bytesWritten = FormatDoubleRoundtrip(value, buffer);
+#endif
 
             FixedJsonValueDocument<JsonElement> doc = FixedJsonValueDocument<JsonElement>.ForNumberFromSpan(
                 new ReadOnlySpan<byte>(buffer, 0, bytesWritten));
@@ -514,6 +525,31 @@ internal static class JsonataHelpers
             ArrayPool<byte>.Shared.Return(buffer);
         }
     }
+
+#if !NET
+    /// <summary>
+    /// Formats a double to its shortest roundtrip UTF-8 representation on
+    /// .NET Framework / netstandard2.0 where <see cref="Utf8Formatter"/>
+    /// uses G17 (which is not shortest-roundtrip).
+    /// </summary>
+    private static int FormatDoubleRoundtrip(double value, Span<byte> destination)
+    {
+        string text = value.ToString("R", System.Globalization.CultureInfo.InvariantCulture);
+
+        // All digits, '.', '-', 'E', '+' are ASCII — direct byte cast
+        if (text.Length > destination.Length)
+        {
+            ThrowFormatFailed();
+        }
+
+        for (int i = 0; i < text.Length; i++)
+        {
+            destination[i] = (byte)text[i];
+        }
+
+        return text.Length;
+    }
+#endif
 
     [MethodImpl(MethodImplOptions.NoInlining)]
     private static void ThrowFormatFailed()

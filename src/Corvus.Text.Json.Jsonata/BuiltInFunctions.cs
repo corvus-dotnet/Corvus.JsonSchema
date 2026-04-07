@@ -400,12 +400,25 @@ internal static class BuiltInFunctions
                 }
                 else
                 {
-                    // Match JSONata's JSON.stringify replacer: Number(val.toPrecision(15))
-                    double rounded = double.Parse(
-                        d.ToString("G15", CultureInfo.InvariantCulture),
-                        System.Globalization.NumberStyles.Float,
-                        CultureInfo.InvariantCulture);
-                    writer.WriteNumberValue(rounded);
+#if NET
+                    // On modern .NET, Ryu produces shortest roundtrip output and
+                    // G15 toPrecision(15) semantics are already satisfied.
+                    writer.WriteNumberValue(d);
+#else
+                    // On netstandard2.0 / net481, Utf8Formatter uses G17 which
+                    // produces non-shortest representations (e.g. 39.399999999999999
+                    // instead of 39.4). Format via G15 to match JSONata's
+                    // Number(val.toPrecision(15)) and write the raw UTF-8 bytes.
+                    string g15 = d.ToString("G15", CultureInfo.InvariantCulture);
+                    Span<byte> numBuf = stackalloc byte[32];
+                    for (int c = 0; c < g15.Length; c++)
+                    {
+                        numBuf[c] = (byte)g15[c];
+                    }
+
+                    using var tmpDoc = FixedJsonValueDocument<JsonElement>.ForNumberFromSpan(numBuf.Slice(0, g15.Length));
+                    tmpDoc.RootElement.WriteTo(writer);
+#endif
                 }
 
                 break;
@@ -4497,22 +4510,33 @@ internal static class BuiltInFunctions
                 return Sequence.Undefined;
             }
 
-            if (!FunctionalCompiler.TryCoerceToNumber(numSeq.FirstOrDefault, out double numVal))
-            {
-                return Sequence.Undefined;
-            }
+            var numElement = numSeq.FirstOrDefault;
 
             var picSeq = picArg(input, env);
             string picture = FunctionalCompiler.CoerceElementToString(picSeq.FirstOrDefault);
 
             string result;
-            if (numVal >= long.MinValue && numVal <= long.MaxValue)
+
+            // Try to parse as long directly from the raw UTF-8 text to avoid
+            // precision loss when converting large integers through double.
+            if (numElement.ValueKind == JsonValueKind.Number && numElement.TryGetInt64(out long longVal))
             {
-                result = XPathDateTimeFormatter.FormatInteger((long)numVal, picture);
+                result = XPathDateTimeFormatter.FormatInteger(longVal, picture);
+            }
+            else if (FunctionalCompiler.TryCoerceToNumber(numElement, out double numVal))
+            {
+                if (numVal >= long.MinValue && numVal <= long.MaxValue)
+                {
+                    result = XPathDateTimeFormatter.FormatInteger((long)numVal, picture);
+                }
+                else
+                {
+                    result = XPathDateTimeFormatter.FormatInteger(numVal, picture);
+                }
             }
             else
             {
-                result = XPathDateTimeFormatter.FormatInteger(numVal, picture);
+                return Sequence.Undefined;
             }
 
             return new Sequence(JsonataHelpers.StringFromString(result, env.Workspace));
