@@ -53,9 +53,17 @@ internal static class FunctionalCompiler
         // PathNode handles its own stages in CompilePath.
         // Individual step nodes (NameNode, etc.) inside paths are compiled via
         // CompileCore to avoid double-application — CompilePath applies their stages.
-        if (node is not PathNode && node.Annotations?.Stages.Count > 0)
+        if (node is not PathNode && node.Annotations is not null)
         {
-            evaluator = WrapWithStages(evaluator, node.Annotations);
+            if (node.Annotations.Stages.Count > 0)
+            {
+                evaluator = WrapWithStages(evaluator, node.Annotations);
+            }
+
+            if (node.Annotations.Group is not null)
+            {
+                evaluator = WrapWithGroupBy(evaluator, node.Annotations.Group);
+            }
         }
 
         // Handle expr[] — the "keep array" modifier ensures the result is always
@@ -132,6 +140,25 @@ internal static class FunctionalCompiler
         {
             var result = inner(input, env);
             return ApplyStages(result, stageEvaluators, isSortStage, env);
+        };
+    }
+
+    /// <summary>
+    /// Wraps an evaluator to apply a group-by clause for non-path nodes
+    /// (e.g., function calls or variable references followed by <c>{key: value}</c>).
+    /// </summary>
+    private static ExpressionEvaluator WrapWithGroupBy(ExpressionEvaluator inner, GroupBy group)
+    {
+        var groupByPairs = new (ExpressionEvaluator Key, ExpressionEvaluator Value)[group.Pairs.Count];
+        for (int g = 0; g < group.Pairs.Count; g++)
+        {
+            groupByPairs[g] = (Compile(group.Pairs[g].Key), Compile(group.Pairs[g].Value));
+        }
+
+        return (in JsonElement input, Environment env) =>
+        {
+            var result = inner(input, env);
+            return ApplyGroupBy(result, groupByPairs, env);
         };
     }
 
@@ -416,6 +443,7 @@ internal static class FunctionalCompiler
         var focusVars = new string?[path.Steps.Count];
         var indexVars = new string?[path.Steps.Count];
         var isPropertyStep = new bool[path.Steps.Count];
+        var isConsArrayStep = new bool[path.Steps.Count];
         var isSortStep = new bool[path.Steps.Count];
         var sortTermsPerStep = new (ExpressionEvaluator Expr, bool Descending)[]?[path.Steps.Count];
         (ExpressionEvaluator Key, ExpressionEvaluator Value)[]? groupByPairs = null;
@@ -424,6 +452,7 @@ internal static class FunctionalCompiler
         {
             steps[i] = CompileCore(path.Steps[i]);
             isPropertyStep[i] = path.Steps[i] is NameNode or WildcardNode or DescendantNode;
+            isConsArrayStep[i] = path.Steps[i] is ArrayConstructorNode { ConsArray: true };
             isSortStep[i] = path.Steps[i] is SortNode;
             if (path.Steps[i] is SortNode sortNodeStep)
             {
@@ -486,6 +515,7 @@ internal static class FunctionalCompiler
         }
 
         var keepSingleton = path.KeepSingletonArray;
+        var lastStepIsConsArray = path.Steps[path.Steps.Count - 1] is ArrayConstructorNode { ConsArray: true };
 
         // Detect if a sort step follows an index-bound step (tuple semantics).
         // If so, we track per-element group indices through the sort to restore bindings.
@@ -693,7 +723,7 @@ internal static class FunctionalCompiler
 
                     if (element.ValueKind == JsonValueKind.Array && shouldFlatten)
                     {
-                        current = FlattenArrayStep(element, step, env);
+                        current = FlattenArrayStep(element, step, env, isConsArrayStep[stepIdx]);
                     }
                     else
                     {
@@ -725,7 +755,7 @@ internal static class FunctionalCompiler
 
                         if (element.ValueKind == JsonValueKind.Array && shouldFlatten)
                         {
-                            stepResult = FlattenArrayStep(element, step, env);
+                            stepResult = FlattenArrayStep(element, step, env, isConsArrayStep[stepIdx]);
                         }
                         else
                         {
@@ -767,8 +797,10 @@ internal static class FunctionalCompiler
 
             // When the path has the KeepSingletonArray flag (from [] modifier),
             // ensure singleton results are wrapped in a JSON array.
+            // For cons-array steps (array constructors), even singleton arrays must
+            // be wrapped — they are "constructed" arrays that should not be unwrapped.
             if (keepSingleton && !current.IsUndefined && current.IsSingleton
-                && current.FirstOrDefault.ValueKind != JsonValueKind.Array)
+                && (current.FirstOrDefault.ValueKind != JsonValueKind.Array || lastStepIsConsArray))
             {
                 current = MaterializeAsArray(current);
             }
@@ -865,6 +897,13 @@ internal static class FunctionalCompiler
                     entry = ([], pairIdx);
                     groupData[keyStr] = entry;
                     groupKeys.Add(keyStr);
+                }
+                else if (entry.PairIndex != pairIdx)
+                {
+                    throw new JsonataException(
+                        "D1009",
+                        $"Multiple key definitions evaluate to same key: \"{keyStr}\"",
+                        0);
                 }
 
                 entry.Elements.Add(element);
@@ -1661,7 +1700,20 @@ internal static class FunctionalCompiler
                     continue;
                 }
 
-                string keyStr = CoerceToString(keyResult);
+                // T1003: key must evaluate to a string
+                if (keyResult.Count > 1
+                    || keyResult.FirstOrDefault.ValueKind is not JsonValueKind.String)
+                {
+                    string gotType = keyResult.Count > 1
+                        ? "array"
+                        : keyResult.FirstOrDefault.ValueKind.ToString().ToLowerInvariant();
+                    throw new JsonataException(
+                        "T1003",
+                        $"Key in object structure must evaluate to a string; got: {gotType}",
+                        0);
+                }
+
+                string keyStr = keyResult.FirstOrDefault.GetString()!;
 
                 if (valueResult.IsLambda)
                 {

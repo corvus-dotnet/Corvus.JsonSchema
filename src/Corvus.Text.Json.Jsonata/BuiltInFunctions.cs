@@ -779,12 +779,12 @@ internal static class BuiltInFunctions
     {
         if (args.Length == 1)
         {
-            return CompileStringSearch(ContextArg, args[0], before: true);
+            return CompileStringSearch(ContextArg, args[0], before: true, contextImplied: true);
         }
 
         if (args.Length != 2)
         {
-            throw new JsonataException("T0410", "$substringBefore expects 2 arguments", 0);
+            throw new JsonataException("T0411", "$substringBefore expects 2 arguments", 0);
         }
 
         return CompileStringSearch(args[0], args[1], before: true);
@@ -794,18 +794,18 @@ internal static class BuiltInFunctions
     {
         if (args.Length == 1)
         {
-            return CompileStringSearch(ContextArg, args[0], before: false);
+            return CompileStringSearch(ContextArg, args[0], before: false, contextImplied: true);
         }
 
         if (args.Length != 2)
         {
-            throw new JsonataException("T0410", "$substringAfter expects 2 arguments", 0);
+            throw new JsonataException("T0411", "$substringAfter expects 2 arguments", 0);
         }
 
         return CompileStringSearch(args[0], args[1], before: false);
     }
 
-    private static ExpressionEvaluator CompileStringSearch(ExpressionEvaluator strArg, ExpressionEvaluator searchArg, bool before)
+    private static ExpressionEvaluator CompileStringSearch(ExpressionEvaluator strArg, ExpressionEvaluator searchArg, bool before, bool contextImplied = false)
     {
         return (in JsonElement input, Environment env) =>
         {
@@ -820,7 +820,10 @@ internal static class BuiltInFunctions
             var strElem = strSeq.FirstOrDefault;
             if (strElem.ValueKind != JsonValueKind.String)
             {
-                throw new JsonataException("T0410", "Argument 1 of string function is not a string", 0);
+                throw new JsonataException(
+                    contextImplied ? "T0411" : "T0410",
+                    "Argument 1 of string function is not a string",
+                    0);
             }
 
             string? str = strElem.GetString();

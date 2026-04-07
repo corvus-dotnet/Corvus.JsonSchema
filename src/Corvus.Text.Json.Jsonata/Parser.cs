@@ -107,8 +107,7 @@ internal sealed class Parser
     private void Advance(string? expectedOperator = null, bool infix = false)
     {
         if (expectedOperator is not null
-            && !(this.current.Type == TokenType.Operator && this.current.Value == expectedOperator)
-            && this.current.Type != TokenType.End)
+            && !(this.current.Type == TokenType.Operator && this.current.Value == expectedOperator))
         {
             string code = this.current.Type == TokenType.End ? "S0203" : "S0202";
             throw new JsonataException(
@@ -822,7 +821,28 @@ internal sealed class Parser
         }
 
         var rest = this.ProcessAst(binary.Rhs);
-        if (rest is PathNode restPath)
+        if (rest is ObjectConstructorNode objStep)
+        {
+            // Object constructor as a path step becomes a group-by operation.
+            // e.g. $.{type: $sum(value)} groups elements by their type field.
+            var pathAnnotations = GetOrCreateAnnotations(result);
+            if (pathAnnotations.Group is not null)
+            {
+                throw new JsonataException(
+                    "S0210",
+                    "Multiple group-by clauses",
+                    objStep.Position);
+            }
+
+            var groupBy = new GroupBy { Position = objStep.Position };
+            foreach (var (key, value) in objStep.Pairs)
+            {
+                groupBy.Pairs.Add((key, value));
+            }
+
+            pathAnnotations.Group = groupBy;
+        }
+        else if (rest is PathNode restPath)
         {
             result.Steps.AddRange(restPath.Steps);
         }
@@ -890,12 +910,10 @@ internal sealed class Parser
         var predicate = this.ProcessAst(binary.Rhs);
 
         JsonataNode step = result;
-        bool usesStages = false;
 
         if (result is PathNode pathNode)
         {
             step = pathNode.Steps[pathNode.Steps.Count - 1];
-            usesStages = true;
         }
 
         // Resolve parent seeking in predicate
@@ -918,14 +936,18 @@ internal sealed class Parser
 
         var filter = new FilterNode { Expression = predicate, Position = binary.Position };
 
-        if (usesStages)
+        var stepAnnotations = GetOrCreateAnnotations(step);
+
+        // S0209: A predicate cannot follow a grouping expression in a step
+        if (stepAnnotations.Group is not null)
         {
-            GetOrCreateAnnotations(step).Stages.Add(filter);
+            throw new JsonataException(
+                "S0209",
+                "A predicate cannot follow a grouping expression in a step",
+                binary.Position);
         }
-        else
-        {
-            GetOrCreateAnnotations(step).Stages.Add(filter);
-        }
+
+        stepAnnotations.Stages.Add(filter);
 
         return result;
     }
