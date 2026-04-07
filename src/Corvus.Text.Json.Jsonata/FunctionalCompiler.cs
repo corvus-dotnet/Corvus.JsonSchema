@@ -1173,8 +1173,11 @@ internal static class FunctionalCompiler
                 bool applyGroupByHere = hasGroupBy && !hasInnerFocus;
                 bool mergeInnerGroupBy = hasGroupBy && hasInnerFocus;
 
-                List<string>? groupKeys = applyGroupByHere ? new() : null;
-                Dictionary<string, (List<JsonElement> Elements, int PairIndex)>? groupData =
+                // Phase 1 data for focus-aware group-by:
+                // Collect focus elements per group key so we can re-bind the focus
+                // variable to a sequence when evaluating the value expression.
+                List<string>? focusGroupKeys = applyGroupByHere ? new() : null;
+                Dictionary<string, (List<JsonElement> FocusElements, List<JsonElement> ContextElements, int PairIndex)>? focusGroupData =
                     applyGroupByHere ? new() : null;
                 var mergeObjects = mergeInnerGroupBy ? new List<JsonElement>() : null;
 
@@ -1221,8 +1224,10 @@ internal static class FunctionalCompiler
 
                     if (applyGroupByHere)
                     {
-                        // Innermost focus — evaluate group-by keys/values now
-                        AccumulateGroupBy(subResult, groupByPairs!, groupKeys!, groupData!, env);
+                        // Phase 1: evaluate key, collect focus element per group.
+                        // Value expression is deferred to Phase 2 so it sees the
+                        // full sequence of focus elements for each group.
+                        AccumulateFocusGroupKey(subResult, groupByPairs!, focusGroupKeys!, focusGroupData!, env, el);
                     }
                     else if (mergeInnerGroupBy)
                     {
@@ -1238,9 +1243,12 @@ internal static class FunctionalCompiler
                     }
                 }
 
-                if (applyGroupByHere && groupKeys!.Count > 0)
+                if (applyGroupByHere && focusGroupKeys!.Count > 0)
                 {
-                    return BuildGroupByResult(groupKeys!, groupData!, groupByPairs!, env);
+                    // Phase 2: For each group, re-bind focus variable to the
+                    // sequence of all matching elements and evaluate value once.
+                    return BuildFocusGroupByResult(
+                        focusGroupKeys!, focusGroupData!, groupByPairs!, env, focusVar);
                 }
 
                 if (mergeInnerGroupBy && mergeObjects!.Count > 0)
@@ -2143,6 +2151,143 @@ internal static class FunctionalCompiler
             else if (values.Count > 1)
             {
                 objRoot.SetProperty(key, JsonataHelpers.ArrayFromList(values, env.Workspace));
+            }
+        }
+
+        return new Sequence((JsonElement)objRoot);
+    }
+
+    /// <summary>
+    /// Phase 1 of focus-aware group-by: evaluates the KEY expression per-element and
+    /// stores both the focus element and the sub-result element under the group key.
+    /// The VALUE expression is NOT evaluated here — it is deferred to
+    /// <see cref="BuildFocusGroupByResult"/> so that the focus variable can be re-bound
+    /// to the full sequence of matching elements for the group.
+    /// </summary>
+    private static void AccumulateFocusGroupKey(
+        Sequence subResult,
+        (ExpressionEvaluator Key, ExpressionEvaluator Value)[] pairs,
+        List<string> groupKeys,
+        Dictionary<string, (List<JsonElement> FocusElements, List<JsonElement> ContextElements, int PairIndex)> groupData,
+        Environment env,
+        JsonElement focusElement)
+    {
+        // Extract context elements from subResult for key evaluation
+        var contextElements = new List<JsonElement>();
+        if (subResult.IsSingleton)
+        {
+            var el = subResult.FirstOrDefault;
+            if (el.ValueKind == JsonValueKind.Array)
+            {
+                contextElements.AddRange(el.EnumerateArray());
+            }
+            else
+            {
+                contextElements.Add(el);
+            }
+        }
+        else
+        {
+            for (int i = 0; i < subResult.Count; i++)
+            {
+                contextElements.Add(subResult[i]);
+            }
+        }
+
+        foreach (var element in contextElements)
+        {
+            for (int pairIdx = 0; pairIdx < pairs.Length; pairIdx++)
+            {
+                var keySeq = pairs[pairIdx].Key(element, env);
+                if (keySeq.IsUndefined)
+                {
+                    continue;
+                }
+
+                string keyStr;
+                if (keySeq.FirstOrDefault.ValueKind == JsonValueKind.String)
+                {
+                    keyStr = keySeq.FirstOrDefault.GetString()!;
+                }
+                else if (keySeq.FirstOrDefault.ValueKind == JsonValueKind.Number)
+                {
+                    throw new JsonataException("T1003", "Key in object structure must evaluate to a string; got: number", 0);
+                }
+                else
+                {
+                    keyStr = CoerceElementToString(keySeq.FirstOrDefault);
+                }
+
+                if (!groupData.TryGetValue(keyStr, out var entry))
+                {
+                    entry = ([], [], pairIdx);
+                    groupData[keyStr] = entry;
+                    groupKeys.Add(keyStr);
+                }
+
+                entry.FocusElements.Add(focusElement);
+                entry.ContextElements.Add(element);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Phase 2 of focus-aware group-by: for each group, re-binds the focus variable
+    /// to a <see cref="Sequence"/> of all matching focus elements, builds the context
+    /// from all matching sub-result elements, then evaluates the value expression once.
+    /// This gives the value expression access to the full set of matching elements
+    /// (e.g. <c>$join($c.Phone.number, ', ')</c> sees ALL phone numbers from all
+    /// matching contacts, not just one contact at a time).
+    /// </summary>
+    private static Sequence BuildFocusGroupByResult(
+        List<string> groupKeys,
+        Dictionary<string, (List<JsonElement> FocusElements, List<JsonElement> ContextElements, int PairIndex)> groupData,
+        (ExpressionEvaluator Key, ExpressionEvaluator Value)[] pairs,
+        Environment env,
+        string focusVar)
+    {
+        JsonDocumentBuilder<JsonElement.Mutable> objDoc = JsonElement.CreateObjectBuilder(env.Workspace, groupKeys.Count);
+        JsonElement.Mutable objRoot = objDoc.RootElement;
+
+        foreach (var key in groupKeys)
+        {
+            var (focusElements, contextElements, pairIndex) = groupData[key];
+            var valueEval = pairs[pairIndex].Value;
+
+            // Re-bind focus variable to the full sequence of matching focus elements
+            if (focusElements.Count == 1)
+            {
+                env.Bind(focusVar, new Sequence(focusElements[0]));
+            }
+            else
+            {
+                env.Bind(focusVar, new Sequence(focusElements.ToArray(), focusElements.Count));
+            }
+
+            // Build context from sub-result elements for the value expression
+            JsonElement context;
+            if (contextElements.Count == 1)
+            {
+                context = contextElements[0];
+            }
+            else
+            {
+                context = JsonataHelpers.ArrayFromList(contextElements, env.Workspace);
+            }
+
+            var valSeq = valueEval(context, env);
+            if (valSeq.IsUndefined)
+            {
+                continue;
+            }
+
+            if (valSeq.IsSingleton)
+            {
+                objRoot.SetProperty(key, valSeq.FirstOrDefault);
+            }
+            else
+            {
+                objRoot.SetProperty(key, JsonataHelpers.ArrayFromSequence(valSeq, env.Workspace));
             }
         }
 
