@@ -3,21 +3,22 @@
 // </copyright>
 
 using BenchmarkDotNet.Attributes;
+using BenchmarkDotNet.Configs;
+#if !NETFRAMEWORK
+using Jsonata.Net.Native;
+using Jsonata.Net.Native.Json;
+#endif
 
 namespace Corvus.Text.Json.Jsonata.Benchmarks;
 
 /// <summary>
-/// Benchmark for object construction — the <c>{...}</c> syntax.
-/// Exercises workspace document creation, group-by with focus binding,
-/// and array construction.
+/// Head-to-head benchmark for object construction.
 /// </summary>
 [MemoryDiagnoser]
+[GroupBenchmarksBy(BenchmarkLogicalGroupRule.ByCategory)]
+[CategoriesColumn]
 public class BenchmarkObjectConstruction : JsonataBenchmarkBase
 {
-    private JsonataEvaluator evaluator = null!;
-    private ParsedJsonDocument<JsonElement>? doc;
-    private JsonElement data;
-
     private const string DataJson = """
         {
             "Account": {
@@ -42,6 +43,21 @@ public class BenchmarkObjectConstruction : JsonataBenchmarkBase
         }
         """;
 
+    private const string ExprSimpleObject = """{"name": Account.`Account Name`, "total": $sum(Account.Order.Product.(Price * Quantity))}""";
+    private const string ExprGroupByObject = "Account.Order.Product.{`Product Name`: Price}";
+    private const string ExprArrayOfObjects = """[Account.Order.Product.{"name": `Product Name`, "total": Price * Quantity}]""";
+
+    private JsonataEvaluator evaluator = null!;
+    private ParsedJsonDocument<JsonElement>? doc;
+    private JsonElement data;
+
+#if !NETFRAMEWORK
+    private JsonataQuery nativeSimpleObject = null!;
+    private JsonataQuery nativeGroupByObject = null!;
+    private JsonataQuery nativeArrayOfObjects = null!;
+    private JToken nativeData = null!;
+#endif
+
     /// <summary>
     /// Global setup.
     /// </summary>
@@ -51,11 +67,16 @@ public class BenchmarkObjectConstruction : JsonataBenchmarkBase
         this.doc = ParsedJsonDocument<JsonElement>.Parse(System.Text.Encoding.UTF8.GetBytes(DataJson));
         this.data = this.doc.RootElement;
         this.evaluator = new JsonataEvaluator();
+        this.evaluator.Evaluate(ExprSimpleObject, this.data);
+        this.evaluator.Evaluate(ExprGroupByObject, this.data);
+        this.evaluator.Evaluate(ExprArrayOfObjects, this.data);
 
-        // Pre-warm all expressions
-        this.evaluator.Evaluate("""{"name": Account.`Account Name`, "total": $sum(Account.Order.Product.(Price * Quantity))}""", this.data);
-        this.evaluator.Evaluate("Account.Order.Product.{`Product Name`: Price}", this.data);
-        this.evaluator.Evaluate("[Account.Order.Product.{\"name\": `Product Name`, \"total\": Price * Quantity}]", this.data);
+#if !NETFRAMEWORK
+        this.nativeData = JToken.Parse(DataJson);
+        this.nativeSimpleObject = new JsonataQuery(ExprSimpleObject);
+        this.nativeGroupByObject = new JsonataQuery(ExprGroupByObject);
+        this.nativeArrayOfObjects = new JsonataQuery(ExprArrayOfObjects);
+#endif
     }
 
     /// <summary>
@@ -65,35 +86,56 @@ public class BenchmarkObjectConstruction : JsonataBenchmarkBase
     public void GlobalCleanup() => this.doc?.Dispose();
 
     /// <summary>
-    /// Simple object construction with aggregation.
+    /// Corvus: simple object with aggregation.
     /// </summary>
+    [BenchmarkCategory("SimpleObject")]
+    [Benchmark]
+    public JsonElement Corvus_SimpleObject() =>
+        this.evaluator.Evaluate(ExprSimpleObject, this.data);
+
+#if !NETFRAMEWORK
+    /// <summary>
+    /// Native: simple object with aggregation.
+    /// </summary>
+    [BenchmarkCategory("SimpleObject")]
     [Benchmark(Baseline = true)]
-    public JsonElement SimpleObject()
-    {
-        return this.evaluator.Evaluate(
-            """{"name": Account.`Account Name`, "total": $sum(Account.Order.Product.(Price * Quantity))}""",
-            this.data);
-    }
+    public JToken Native_SimpleObject() =>
+        this.nativeSimpleObject.Eval(this.nativeData);
+#endif
 
     /// <summary>
-    /// Per-element object construction (group-by pattern):
-    /// Account.Order.Product.{`Product Name`: Price}.
+    /// Corvus: per-element object construction.
     /// </summary>
+    [BenchmarkCategory("GroupByObject")]
     [Benchmark]
-    public JsonElement GroupByObject()
-    {
-        return this.evaluator.Evaluate("Account.Order.Product.{`Product Name`: Price}", this.data);
-    }
+    public JsonElement Corvus_GroupByObject() =>
+        this.evaluator.Evaluate(ExprGroupByObject, this.data);
+
+#if !NETFRAMEWORK
+    /// <summary>
+    /// Native: per-element object construction.
+    /// </summary>
+    [BenchmarkCategory("GroupByObject")]
+    [Benchmark(Baseline = true)]
+    public JToken Native_GroupByObject() =>
+        this.nativeGroupByObject.Eval(this.nativeData);
+#endif
 
     /// <summary>
-    /// Array of constructed objects:
-    /// [Account.Order.Product.{"name": ..., "total": ...}].
+    /// Corvus: array of constructed objects.
     /// </summary>
+    [BenchmarkCategory("ArrayOfObjects")]
     [Benchmark]
-    public JsonElement ArrayOfObjects()
-    {
-        return this.evaluator.Evaluate(
-            """[Account.Order.Product.{"name": `Product Name`, "total": Price * Quantity}]""",
-            this.data);
-    }
+    public JsonElement Corvus_ArrayOfObjects() =>
+        this.evaluator.Evaluate(ExprArrayOfObjects, this.data);
+
+#if !NETFRAMEWORK
+    /// <summary>
+    /// Native: array of constructed objects.
+    /// </summary>
+    [BenchmarkCategory("ArrayOfObjects")]
+    [Benchmark(Baseline = true)]
+    public JToken Native_ArrayOfObjects() =>
+        this.nativeArrayOfObjects.Eval(this.nativeData);
+#endif
 }

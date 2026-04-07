@@ -3,20 +3,22 @@
 // </copyright>
 
 using BenchmarkDotNet.Attributes;
+using BenchmarkDotNet.Configs;
+#if !NETFRAMEWORK
+using Jsonata.Net.Native;
+using Jsonata.Net.Native.Json;
+#endif
 
 namespace Corvus.Text.Json.Jsonata.Benchmarks;
 
 /// <summary>
-/// Benchmark for array predicate filtering — the inline <c>[predicate]</c> syntax.
-/// Exercises ApplyStages, SequenceBuilder collection, and truthiness evaluation.
+/// Head-to-head benchmark for array predicate filtering.
 /// </summary>
 [MemoryDiagnoser]
+[GroupBenchmarksBy(BenchmarkLogicalGroupRule.ByCategory)]
+[CategoriesColumn]
 public class BenchmarkPredicateFilter : JsonataBenchmarkBase
 {
-    private JsonataEvaluator evaluator = null!;
-    private ParsedJsonDocument<JsonElement>? doc;
-    private JsonElement data;
-
     private const string DataJson = """
         {
             "Contact": [
@@ -47,6 +49,21 @@ public class BenchmarkPredicateFilter : JsonataBenchmarkBase
         }
         """;
 
+    private const string ExprSinglePredicate = "Contact.Phone[type = 'mobile'].number";
+    private const string ExprChainedPredicate = "Contact[ssn = '496913021'].Phone[0].number";
+    private const string ExprCompoundPredicate = "Contact.Phone[type = 'office' or type = 'mobile'].number";
+
+    private JsonataEvaluator evaluator = null!;
+    private ParsedJsonDocument<JsonElement>? doc;
+    private JsonElement data;
+
+#if !NETFRAMEWORK
+    private JsonataQuery nativeSinglePredicate = null!;
+    private JsonataQuery nativeChainedPredicate = null!;
+    private JsonataQuery nativeCompoundPredicate = null!;
+    private JToken nativeData = null!;
+#endif
+
     /// <summary>
     /// Global setup.
     /// </summary>
@@ -56,11 +73,16 @@ public class BenchmarkPredicateFilter : JsonataBenchmarkBase
         this.doc = ParsedJsonDocument<JsonElement>.Parse(System.Text.Encoding.UTF8.GetBytes(DataJson));
         this.data = this.doc.RootElement;
         this.evaluator = new JsonataEvaluator();
+        this.evaluator.Evaluate(ExprSinglePredicate, this.data);
+        this.evaluator.Evaluate(ExprChainedPredicate, this.data);
+        this.evaluator.Evaluate(ExprCompoundPredicate, this.data);
 
-        // Pre-warm all expressions
-        this.evaluator.Evaluate("Contact.Phone[type = 'mobile'].number", this.data);
-        this.evaluator.Evaluate("Contact[ssn = '496913021'].Phone[0].number", this.data);
-        this.evaluator.Evaluate("Contact.Phone[type = 'office' or type = 'mobile'].number", this.data);
+#if !NETFRAMEWORK
+        this.nativeData = JToken.Parse(DataJson);
+        this.nativeSinglePredicate = new JsonataQuery(ExprSinglePredicate);
+        this.nativeChainedPredicate = new JsonataQuery(ExprChainedPredicate);
+        this.nativeCompoundPredicate = new JsonataQuery(ExprCompoundPredicate);
+#endif
     }
 
     /// <summary>
@@ -70,32 +92,56 @@ public class BenchmarkPredicateFilter : JsonataBenchmarkBase
     public void GlobalCleanup() => this.doc?.Dispose();
 
     /// <summary>
-    /// Filter nested arrays: Contact.Phone[type='mobile'].number.
-    /// Exercises double array descent + equality predicate.
+    /// Corvus: Contact.Phone[type='mobile'].number.
     /// </summary>
+    [BenchmarkCategory("SinglePredicate")]
+    [Benchmark]
+    public JsonElement Corvus_SinglePredicate() =>
+        this.evaluator.Evaluate(ExprSinglePredicate, this.data);
+
+#if !NETFRAMEWORK
+    /// <summary>
+    /// Native: Contact.Phone[type='mobile'].number.
+    /// </summary>
+    [BenchmarkCategory("SinglePredicate")]
     [Benchmark(Baseline = true)]
-    public JsonElement SinglePredicate()
-    {
-        return this.evaluator.Evaluate("Contact.Phone[type = 'mobile'].number", this.data);
-    }
+    public JToken Native_SinglePredicate() =>
+        this.nativeSinglePredicate.Eval(this.nativeData);
+#endif
 
     /// <summary>
-    /// Chained predicates: Contact[ssn='...'].Phone[0].number.
-    /// Exercises predicate at parent level + index at child level.
+    /// Corvus: Contact[ssn='...'].Phone[0].number.
     /// </summary>
+    [BenchmarkCategory("ChainedPredicate")]
     [Benchmark]
-    public JsonElement ChainedPredicate()
-    {
-        return this.evaluator.Evaluate("Contact[ssn = '496913021'].Phone[0].number", this.data);
-    }
+    public JsonElement Corvus_ChainedPredicate() =>
+        this.evaluator.Evaluate(ExprChainedPredicate, this.data);
+
+#if !NETFRAMEWORK
+    /// <summary>
+    /// Native: Contact[ssn='...'].Phone[0].number.
+    /// </summary>
+    [BenchmarkCategory("ChainedPredicate")]
+    [Benchmark(Baseline = true)]
+    public JToken Native_ChainedPredicate() =>
+        this.nativeChainedPredicate.Eval(this.nativeData);
+#endif
 
     /// <summary>
-    /// Compound predicate with 'or': Contact.Phone[type='office' or type='mobile'].number.
-    /// Exercises boolean short-circuit evaluation in predicates.
+    /// Corvus: Contact.Phone[type='office' or type='mobile'].number.
     /// </summary>
+    [BenchmarkCategory("CompoundPredicate")]
     [Benchmark]
-    public JsonElement CompoundPredicate()
-    {
-        return this.evaluator.Evaluate("Contact.Phone[type = 'office' or type = 'mobile'].number", this.data);
-    }
+    public JsonElement Corvus_CompoundPredicate() =>
+        this.evaluator.Evaluate(ExprCompoundPredicate, this.data);
+
+#if !NETFRAMEWORK
+    /// <summary>
+    /// Native: Contact.Phone[type='office' or type='mobile'].number.
+    /// </summary>
+    [BenchmarkCategory("CompoundPredicate")]
+    [Benchmark(Baseline = true)]
+    public JToken Native_CompoundPredicate() =>
+        this.nativeCompoundPredicate.Eval(this.nativeData);
+#endif
 }

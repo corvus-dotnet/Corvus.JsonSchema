@@ -3,20 +3,22 @@
 // </copyright>
 
 using BenchmarkDotNet.Attributes;
+using BenchmarkDotNet.Configs;
+#if !NETFRAMEWORK
+using Jsonata.Net.Native;
+using Jsonata.Net.Native.Json;
+#endif
 
 namespace Corvus.Text.Json.Jsonata.Benchmarks;
 
 /// <summary>
-/// Benchmark for string concatenation — exercises the UTF-8 buffer concat path,
-/// number-to-string coercion, and the $join built-in function.
+/// Head-to-head benchmark for string concatenation.
 /// </summary>
 [MemoryDiagnoser]
+[GroupBenchmarksBy(BenchmarkLogicalGroupRule.ByCategory)]
+[CategoriesColumn]
 public class BenchmarkStringConcat : JsonataBenchmarkBase
 {
-    private JsonataEvaluator evaluator = null!;
-    private ParsedJsonDocument<JsonElement>? doc;
-    private JsonElement data;
-
     private const string DataJson = """
         {
             "FirstName": "Fred",
@@ -30,6 +32,21 @@ public class BenchmarkStringConcat : JsonataBenchmarkBase
         }
         """;
 
+    private const string ExprSimpleConcat = "FirstName & ' ' & Surname";
+    private const string ExprConcatWithNumber = "FirstName & ' ' & Surname & ', age ' & $string(Age)";
+    private const string ExprJoinArray = "$join([Address.Street, Address.City, Address.Postcode], ', ')";
+
+    private JsonataEvaluator evaluator = null!;
+    private ParsedJsonDocument<JsonElement>? doc;
+    private JsonElement data;
+
+#if !NETFRAMEWORK
+    private JsonataQuery nativeSimpleConcat = null!;
+    private JsonataQuery nativeConcatWithNumber = null!;
+    private JsonataQuery nativeJoinArray = null!;
+    private JToken nativeData = null!;
+#endif
+
     /// <summary>
     /// Global setup.
     /// </summary>
@@ -39,11 +56,16 @@ public class BenchmarkStringConcat : JsonataBenchmarkBase
         this.doc = ParsedJsonDocument<JsonElement>.Parse(System.Text.Encoding.UTF8.GetBytes(DataJson));
         this.data = this.doc.RootElement;
         this.evaluator = new JsonataEvaluator();
+        this.evaluator.Evaluate(ExprSimpleConcat, this.data);
+        this.evaluator.Evaluate(ExprConcatWithNumber, this.data);
+        this.evaluator.Evaluate(ExprJoinArray, this.data);
 
-        // Pre-warm all expressions
-        this.evaluator.Evaluate("FirstName & ' ' & Surname", this.data);
-        this.evaluator.Evaluate("FirstName & ' ' & Surname & ', age ' & $string(Age)", this.data);
-        this.evaluator.Evaluate("$join([Address.Street, Address.City, Address.Postcode], ', ')", this.data);
+#if !NETFRAMEWORK
+        this.nativeData = JToken.Parse(DataJson);
+        this.nativeSimpleConcat = new JsonataQuery(ExprSimpleConcat);
+        this.nativeConcatWithNumber = new JsonataQuery(ExprConcatWithNumber);
+        this.nativeJoinArray = new JsonataQuery(ExprJoinArray);
+#endif
     }
 
     /// <summary>
@@ -53,29 +75,56 @@ public class BenchmarkStringConcat : JsonataBenchmarkBase
     public void GlobalCleanup() => this.doc?.Dispose();
 
     /// <summary>
-    /// Simple two-part string concatenation with separator.
+    /// Corvus: simple string concatenation.
     /// </summary>
+    [BenchmarkCategory("SimpleConcat")]
+    [Benchmark]
+    public JsonElement Corvus_SimpleConcat() =>
+        this.evaluator.Evaluate(ExprSimpleConcat, this.data);
+
+#if !NETFRAMEWORK
+    /// <summary>
+    /// Native: simple string concatenation.
+    /// </summary>
+    [BenchmarkCategory("SimpleConcat")]
     [Benchmark(Baseline = true)]
-    public JsonElement SimpleConcat()
-    {
-        return this.evaluator.Evaluate("FirstName & ' ' & Surname", this.data);
-    }
+    public JToken Native_SimpleConcat() =>
+        this.nativeSimpleConcat.Eval(this.nativeData);
+#endif
 
     /// <summary>
-    /// String concatenation with number-to-string coercion ($string(Age)).
+    /// Corvus: string concat with number coercion.
     /// </summary>
+    [BenchmarkCategory("ConcatWithNumber")]
     [Benchmark]
-    public JsonElement ConcatWithNumber()
-    {
-        return this.evaluator.Evaluate("FirstName & ' ' & Surname & ', age ' & $string(Age)", this.data);
-    }
+    public JsonElement Corvus_ConcatWithNumber() =>
+        this.evaluator.Evaluate(ExprConcatWithNumber, this.data);
+
+#if !NETFRAMEWORK
+    /// <summary>
+    /// Native: string concat with number coercion.
+    /// </summary>
+    [BenchmarkCategory("ConcatWithNumber")]
+    [Benchmark(Baseline = true)]
+    public JToken Native_ConcatWithNumber() =>
+        this.nativeConcatWithNumber.Eval(this.nativeData);
+#endif
 
     /// <summary>
-    /// $join with array and separator — exercises the built-in join function.
+    /// Corvus: $join with array and separator.
     /// </summary>
+    [BenchmarkCategory("JoinArray")]
     [Benchmark]
-    public JsonElement JoinArray()
-    {
-        return this.evaluator.Evaluate("$join([Address.Street, Address.City, Address.Postcode], ', ')", this.data);
-    }
+    public JsonElement Corvus_JoinArray() =>
+        this.evaluator.Evaluate(ExprJoinArray, this.data);
+
+#if !NETFRAMEWORK
+    /// <summary>
+    /// Native: $join with array and separator.
+    /// </summary>
+    [BenchmarkCategory("JoinArray")]
+    [Benchmark(Baseline = true)]
+    public JToken Native_JoinArray() =>
+        this.nativeJoinArray.Eval(this.nativeData);
+#endif
 }

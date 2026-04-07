@@ -3,21 +3,22 @@
 // </copyright>
 
 using BenchmarkDotNet.Attributes;
+using BenchmarkDotNet.Configs;
+#if !NETFRAMEWORK
+using Jsonata.Net.Native;
+using Jsonata.Net.Native.Json;
+#endif
 
 namespace Corvus.Text.Json.Jsonata.Benchmarks;
 
 /// <summary>
-/// Benchmark for higher-order functions ($map, $filter, $reduce, $sort).
-/// Exercises lambda invocation, parameter array pooling, sort index pooling,
-/// and SequenceBuilder allocation paths.
+/// Head-to-head benchmark for higher-order functions ($map, $filter, $reduce, $sort).
 /// </summary>
 [MemoryDiagnoser]
+[GroupBenchmarksBy(BenchmarkLogicalGroupRule.ByCategory)]
+[CategoriesColumn]
 public class BenchmarkHigherOrder : JsonataBenchmarkBase
 {
-    private JsonataEvaluator evaluator = null!;
-    private ParsedJsonDocument<JsonElement>? doc;
-    private JsonElement data;
-
     private const string DataJson = """
         {
             "Account": {
@@ -39,6 +40,23 @@ public class BenchmarkHigherOrder : JsonataBenchmarkBase
         }
         """;
 
+    private const string ExprMap = "$map(Account.Order.Product, function($v) { $v.`Product Name` })";
+    private const string ExprFilter = "$filter(Account.Order.Product, function($v) { $v.Price > 30 })";
+    private const string ExprReduce = "$reduce(Account.Order.Product, function($prev, $curr) { $prev + $curr.Price * $curr.Quantity }, 0)";
+    private const string ExprSort = "$sort(Account.Order.Product, function($a, $b) { $a.Price > $b.Price })";
+
+    private JsonataEvaluator evaluator = null!;
+    private ParsedJsonDocument<JsonElement>? doc;
+    private JsonElement data;
+
+#if !NETFRAMEWORK
+    private JsonataQuery nativeMap = null!;
+    private JsonataQuery nativeFilter = null!;
+    private JsonataQuery nativeReduce = null!;
+    private JsonataQuery nativeSort = null!;
+    private JToken nativeData = null!;
+#endif
+
     /// <summary>
     /// Global setup.
     /// </summary>
@@ -48,12 +66,18 @@ public class BenchmarkHigherOrder : JsonataBenchmarkBase
         this.doc = ParsedJsonDocument<JsonElement>.Parse(System.Text.Encoding.UTF8.GetBytes(DataJson));
         this.data = this.doc.RootElement;
         this.evaluator = new JsonataEvaluator();
+        this.evaluator.Evaluate(ExprMap, this.data);
+        this.evaluator.Evaluate(ExprFilter, this.data);
+        this.evaluator.Evaluate(ExprReduce, this.data);
+        this.evaluator.Evaluate(ExprSort, this.data);
 
-        // Pre-warm all expressions
-        this.evaluator.Evaluate("$map(Account.Order.Product, function($v) { $v.`Product Name` })", this.data);
-        this.evaluator.Evaluate("$filter(Account.Order.Product, function($v) { $v.Price > 30 })", this.data);
-        this.evaluator.Evaluate("$reduce(Account.Order.Product, function($prev, $curr) { $prev + $curr.Price * $curr.Quantity }, 0)", this.data);
-        this.evaluator.Evaluate("$sort(Account.Order.Product, function($a, $b) { $a.Price > $b.Price })", this.data);
+#if !NETFRAMEWORK
+        this.nativeData = JToken.Parse(DataJson);
+        this.nativeMap = new JsonataQuery(ExprMap);
+        this.nativeFilter = new JsonataQuery(ExprFilter);
+        this.nativeReduce = new JsonataQuery(ExprReduce);
+        this.nativeSort = new JsonataQuery(ExprSort);
+#endif
     }
 
     /// <summary>
@@ -63,38 +87,74 @@ public class BenchmarkHigherOrder : JsonataBenchmarkBase
     public void GlobalCleanup() => this.doc?.Dispose();
 
     /// <summary>
-    /// $map over products extracting names — exercises lambda invocation per element.
+    /// Corvus: $map extracting product names.
     /// </summary>
+    [BenchmarkCategory("Map")]
+    [Benchmark]
+    public JsonElement Corvus_Map() =>
+        this.evaluator.Evaluate(ExprMap, this.data);
+
+#if !NETFRAMEWORK
+    /// <summary>
+    /// Native: $map extracting product names.
+    /// </summary>
+    [BenchmarkCategory("Map")]
     [Benchmark(Baseline = true)]
-    public JsonElement Map()
-    {
-        return this.evaluator.Evaluate("$map(Account.Order.Product, function($v) { $v.`Product Name` })", this.data);
-    }
+    public JToken Native_Map() =>
+        this.nativeMap.Eval(this.nativeData);
+#endif
 
     /// <summary>
-    /// $filter with predicate — exercises lambda invocation + truthiness check per element.
+    /// Corvus: $filter with price predicate.
     /// </summary>
+    [BenchmarkCategory("Filter")]
     [Benchmark]
-    public JsonElement Filter()
-    {
-        return this.evaluator.Evaluate("$filter(Account.Order.Product, function($v) { $v.Price > 30 })", this.data);
-    }
+    public JsonElement Corvus_Filter() =>
+        this.evaluator.Evaluate(ExprFilter, this.data);
+
+#if !NETFRAMEWORK
+    /// <summary>
+    /// Native: $filter with price predicate.
+    /// </summary>
+    [BenchmarkCategory("Filter")]
+    [Benchmark(Baseline = true)]
+    public JToken Native_Filter() =>
+        this.nativeFilter.Eval(this.nativeData);
+#endif
 
     /// <summary>
-    /// $reduce with accumulator — exercises repeated lambda invocation with arithmetic.
+    /// Corvus: $reduce with accumulator.
     /// </summary>
+    [BenchmarkCategory("Reduce")]
     [Benchmark]
-    public JsonElement Reduce()
-    {
-        return this.evaluator.Evaluate("$reduce(Account.Order.Product, function($prev, $curr) { $prev + $curr.Price * $curr.Quantity }, 0)", this.data);
-    }
+    public JsonElement Corvus_Reduce() =>
+        this.evaluator.Evaluate(ExprReduce, this.data);
+
+#if !NETFRAMEWORK
+    /// <summary>
+    /// Native: $reduce with accumulator.
+    /// </summary>
+    [BenchmarkCategory("Reduce")]
+    [Benchmark(Baseline = true)]
+    public JToken Native_Reduce() =>
+        this.nativeReduce.Eval(this.nativeData);
+#endif
 
     /// <summary>
-    /// $sort with comparator — exercises sort index pooling and lambda-based comparison.
+    /// Corvus: $sort with comparator.
     /// </summary>
+    [BenchmarkCategory("Sort")]
     [Benchmark]
-    public JsonElement Sort()
-    {
-        return this.evaluator.Evaluate("$sort(Account.Order.Product, function($a, $b) { $a.Price > $b.Price })", this.data);
-    }
+    public JsonElement Corvus_Sort() =>
+        this.evaluator.Evaluate(ExprSort, this.data);
+
+#if !NETFRAMEWORK
+    /// <summary>
+    /// Native: $sort with comparator.
+    /// </summary>
+    [BenchmarkCategory("Sort")]
+    [Benchmark(Baseline = true)]
+    public JToken Native_Sort() =>
+        this.nativeSort.Eval(this.nativeData);
+#endif
 }

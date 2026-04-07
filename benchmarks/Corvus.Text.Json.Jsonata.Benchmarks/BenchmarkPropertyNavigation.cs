@@ -3,20 +3,22 @@
 // </copyright>
 
 using BenchmarkDotNet.Attributes;
+using BenchmarkDotNet.Configs;
+#if !NETFRAMEWORK
+using Jsonata.Net.Native;
+using Jsonata.Net.Native.Json;
+#endif
 
 namespace Corvus.Text.Json.Jsonata.Benchmarks;
 
 /// <summary>
-/// Benchmark for property navigation — the most common JSONata operation.
-/// Tests simple path traversal, array descent, and nested property access.
+/// Head-to-head benchmark for property navigation.
 /// </summary>
 [MemoryDiagnoser]
+[GroupBenchmarksBy(BenchmarkLogicalGroupRule.ByCategory)]
+[CategoriesColumn]
 public class BenchmarkPropertyNavigation : JsonataBenchmarkBase
 {
-    private JsonataEvaluator evaluator = null!;
-    private ParsedJsonDocument<JsonElement>? doc;
-    private JsonElement data;
-
     private const string DataJson = """
         {
             "Account": {
@@ -41,6 +43,21 @@ public class BenchmarkPropertyNavigation : JsonataBenchmarkBase
         }
         """;
 
+    private const string ExprDeepPath = "Account.Order.Product.Price";
+    private const string ExprQuotedProperty = "Account.`Account Name`";
+    private const string ExprArrayIndex = "Account.Order[0].OrderID";
+
+    private JsonataEvaluator evaluator = null!;
+    private ParsedJsonDocument<JsonElement>? doc;
+    private JsonElement data;
+
+#if !NETFRAMEWORK
+    private JsonataQuery nativeDeepPath = null!;
+    private JsonataQuery nativeQuotedProperty = null!;
+    private JsonataQuery nativeArrayIndex = null!;
+    private JToken nativeData = null!;
+#endif
+
     /// <summary>
     /// Global setup.
     /// </summary>
@@ -50,11 +67,16 @@ public class BenchmarkPropertyNavigation : JsonataBenchmarkBase
         this.doc = ParsedJsonDocument<JsonElement>.Parse(System.Text.Encoding.UTF8.GetBytes(DataJson));
         this.data = this.doc.RootElement;
         this.evaluator = new JsonataEvaluator();
+        this.evaluator.Evaluate(ExprDeepPath, this.data);
+        this.evaluator.Evaluate(ExprQuotedProperty, this.data);
+        this.evaluator.Evaluate(ExprArrayIndex, this.data);
 
-        // Pre-warm all expressions
-        this.evaluator.Evaluate("Account.Order.Product.Price", this.data);
-        this.evaluator.Evaluate("""Account.`Account Name`""", this.data);
-        this.evaluator.Evaluate("Account.Order[0].OrderID", this.data);
+#if !NETFRAMEWORK
+        this.nativeData = JToken.Parse(DataJson);
+        this.nativeDeepPath = new JsonataQuery(ExprDeepPath);
+        this.nativeQuotedProperty = new JsonataQuery(ExprQuotedProperty);
+        this.nativeArrayIndex = new JsonataQuery(ExprArrayIndex);
+#endif
     }
 
     /// <summary>
@@ -64,30 +86,56 @@ public class BenchmarkPropertyNavigation : JsonataBenchmarkBase
     public void GlobalCleanup() => this.doc?.Dispose();
 
     /// <summary>
-    /// Deep path traversal through arrays: Account.Order.Product.Price
-    /// exercises array descent (flattening) at two levels.
+    /// Corvus: deep path traversal through arrays.
     /// </summary>
+    [BenchmarkCategory("DeepPath")]
+    [Benchmark]
+    public JsonElement Corvus_DeepPath() =>
+        this.evaluator.Evaluate(ExprDeepPath, this.data);
+
+#if !NETFRAMEWORK
+    /// <summary>
+    /// Native: deep path traversal through arrays.
+    /// </summary>
+    [BenchmarkCategory("DeepPath")]
     [Benchmark(Baseline = true)]
-    public JsonElement DeepPath()
-    {
-        return this.evaluator.Evaluate("Account.Order.Product.Price", this.data);
-    }
+    public JToken Native_DeepPath() =>
+        this.nativeDeepPath.Eval(this.nativeData);
+#endif
 
     /// <summary>
-    /// Quoted property name access: Account.`Account Name`.
+    /// Corvus: quoted property name access.
     /// </summary>
+    [BenchmarkCategory("QuotedProperty")]
     [Benchmark]
-    public JsonElement QuotedProperty()
-    {
-        return this.evaluator.Evaluate("""Account.`Account Name`""", this.data);
-    }
+    public JsonElement Corvus_QuotedProperty() =>
+        this.evaluator.Evaluate(ExprQuotedProperty, this.data);
+
+#if !NETFRAMEWORK
+    /// <summary>
+    /// Native: quoted property name access.
+    /// </summary>
+    [BenchmarkCategory("QuotedProperty")]
+    [Benchmark(Baseline = true)]
+    public JToken Native_QuotedProperty() =>
+        this.nativeQuotedProperty.Eval(this.nativeData);
+#endif
 
     /// <summary>
-    /// Array index access: Account.Order[0].OrderID.
+    /// Corvus: array index access.
     /// </summary>
+    [BenchmarkCategory("ArrayIndex")]
     [Benchmark]
-    public JsonElement ArrayIndex()
-    {
-        return this.evaluator.Evaluate("Account.Order[0].OrderID", this.data);
-    }
+    public JsonElement Corvus_ArrayIndex() =>
+        this.evaluator.Evaluate(ExprArrayIndex, this.data);
+
+#if !NETFRAMEWORK
+    /// <summary>
+    /// Native: array index access.
+    /// </summary>
+    [BenchmarkCategory("ArrayIndex")]
+    [Benchmark(Baseline = true)]
+    public JToken Native_ArrayIndex() =>
+        this.nativeArrayIndex.Eval(this.nativeData);
+#endif
 }

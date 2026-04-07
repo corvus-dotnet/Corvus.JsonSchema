@@ -3,20 +3,22 @@
 // </copyright>
 
 using BenchmarkDotNet.Attributes;
+using BenchmarkDotNet.Configs;
+#if !NETFRAMEWORK
+using Jsonata.Net.Native;
+using Jsonata.Net.Native.Json;
+#endif
 
 namespace Corvus.Text.Json.Jsonata.Benchmarks;
 
 /// <summary>
-/// Benchmark for arithmetic expressions — exercises NumberFromDouble,
-/// TryCoerceToNumber, and the numeric comparison hot paths.
+/// Head-to-head benchmark for arithmetic expressions.
 /// </summary>
 [MemoryDiagnoser]
+[GroupBenchmarksBy(BenchmarkLogicalGroupRule.ByCategory)]
+[CategoriesColumn]
 public class BenchmarkArithmetic : JsonataBenchmarkBase
 {
-    private JsonataEvaluator evaluator = null!;
-    private ParsedJsonDocument<JsonElement>? doc;
-    private JsonElement data;
-
     private const string DataJson = """
         {
             "Account": {
@@ -38,6 +40,21 @@ public class BenchmarkArithmetic : JsonataBenchmarkBase
         }
         """;
 
+    private const string ExprSumProduct = "$sum(Account.Order.Product.(Price * Quantity))";
+    private const string ExprMapArithmetic = "Account.Order.Product.(Price * Quantity)";
+    private const string ExprPureArithmetic = "1 + 2 * 3 - 4 / 2 + 10 % 3";
+
+    private JsonataEvaluator evaluator = null!;
+    private ParsedJsonDocument<JsonElement>? doc;
+    private JsonElement data;
+
+#if !NETFRAMEWORK
+    private JsonataQuery nativeSumProduct = null!;
+    private JsonataQuery nativeMapArithmetic = null!;
+    private JsonataQuery nativePureArithmetic = null!;
+    private JToken nativeData = null!;
+#endif
+
     /// <summary>
     /// Global setup.
     /// </summary>
@@ -47,11 +64,16 @@ public class BenchmarkArithmetic : JsonataBenchmarkBase
         this.doc = ParsedJsonDocument<JsonElement>.Parse(System.Text.Encoding.UTF8.GetBytes(DataJson));
         this.data = this.doc.RootElement;
         this.evaluator = new JsonataEvaluator();
+        this.evaluator.Evaluate(ExprSumProduct, this.data);
+        this.evaluator.Evaluate(ExprMapArithmetic, this.data);
+        this.evaluator.Evaluate(ExprPureArithmetic, this.data);
 
-        // Pre-warm all expressions
-        this.evaluator.Evaluate("$sum(Account.Order.Product.(Price * Quantity))", this.data);
-        this.evaluator.Evaluate("Account.Order.Product.(Price * Quantity)", this.data);
-        this.evaluator.Evaluate("1 + 2 * 3 - 4 / 2 + 10 % 3", this.data);
+#if !NETFRAMEWORK
+        this.nativeData = JToken.Parse(DataJson);
+        this.nativeSumProduct = new JsonataQuery(ExprSumProduct);
+        this.nativeMapArithmetic = new JsonataQuery(ExprMapArithmetic);
+        this.nativePureArithmetic = new JsonataQuery(ExprPureArithmetic);
+#endif
     }
 
     /// <summary>
@@ -61,32 +83,56 @@ public class BenchmarkArithmetic : JsonataBenchmarkBase
     public void GlobalCleanup() => this.doc?.Dispose();
 
     /// <summary>
-    /// Aggregate sum with per-element multiplication:
-    /// $sum(Account.Order.Product.(Price * Quantity)).
-    /// Exercises path descent, per-element arithmetic, and $sum aggregation.
+    /// Corvus: $sum(Account.Order.Product.(Price * Quantity)).
     /// </summary>
+    [BenchmarkCategory("SumProduct")]
+    [Benchmark]
+    public JsonElement Corvus_SumProduct() =>
+        this.evaluator.Evaluate(ExprSumProduct, this.data);
+
+#if !NETFRAMEWORK
+    /// <summary>
+    /// Native: $sum(Account.Order.Product.(Price * Quantity)).
+    /// </summary>
+    [BenchmarkCategory("SumProduct")]
     [Benchmark(Baseline = true)]
-    public JsonElement SumProduct()
-    {
-        return this.evaluator.Evaluate("$sum(Account.Order.Product.(Price * Quantity))", this.data);
-    }
+    public JToken Native_SumProduct() =>
+        this.nativeSumProduct.Eval(this.nativeData);
+#endif
 
     /// <summary>
-    /// Per-element arithmetic producing an array:
-    /// Account.Order.Product.(Price * Quantity).
+    /// Corvus: Account.Order.Product.(Price * Quantity).
     /// </summary>
+    [BenchmarkCategory("MapArithmetic")]
     [Benchmark]
-    public JsonElement MapArithmetic()
-    {
-        return this.evaluator.Evaluate("Account.Order.Product.(Price * Quantity)", this.data);
-    }
+    public JsonElement Corvus_MapArithmetic() =>
+        this.evaluator.Evaluate(ExprMapArithmetic, this.data);
+
+#if !NETFRAMEWORK
+    /// <summary>
+    /// Native: Account.Order.Product.(Price * Quantity).
+    /// </summary>
+    [BenchmarkCategory("MapArithmetic")]
+    [Benchmark(Baseline = true)]
+    public JToken Native_MapArithmetic() =>
+        this.nativeMapArithmetic.Eval(this.nativeData);
+#endif
 
     /// <summary>
-    /// Pure arithmetic chain with no data access — measures raw operator cost.
+    /// Corvus: pure arithmetic with no data access.
     /// </summary>
+    [BenchmarkCategory("PureArithmetic")]
     [Benchmark]
-    public JsonElement PureArithmetic()
-    {
-        return this.evaluator.Evaluate("1 + 2 * 3 - 4 / 2 + 10 % 3", this.data);
-    }
+    public JsonElement Corvus_PureArithmetic() =>
+        this.evaluator.Evaluate(ExprPureArithmetic, this.data);
+
+#if !NETFRAMEWORK
+    /// <summary>
+    /// Native: pure arithmetic with no data access.
+    /// </summary>
+    [BenchmarkCategory("PureArithmetic")]
+    [Benchmark(Baseline = true)]
+    public JToken Native_PureArithmetic() =>
+        this.nativePureArithmetic.Eval(this.nativeData);
+#endif
 }
