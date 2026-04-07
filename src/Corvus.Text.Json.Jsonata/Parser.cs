@@ -172,6 +172,11 @@ internal sealed class Parser
                 Position = token.Position,
             },
             TokenType.Operator => this.NudOperator(token),
+            TokenType.End => throw new JsonataException(
+                "S0207",
+                "Unexpected end of expression",
+                token.Position,
+                token.Value),
             _ => throw new JsonataException(
                 "S0211",
                 $"Unexpected token: {token.Value}",

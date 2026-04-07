@@ -117,6 +117,12 @@ internal struct Lexer
             return new Token(TokenType.Operator, c.ToString(), pos);
         }
 
+        // Characters that are only valid as part of multi-char operators (e.g. ! in !=, ~ in ~>)
+        if (c == '!' || c == '~')
+        {
+            throw new JsonataException("S0204", $"Unknown operator: {c}", this.position, c.ToString());
+        }
+
         // String literals
         if (c == '"' || c == '\'')
         {

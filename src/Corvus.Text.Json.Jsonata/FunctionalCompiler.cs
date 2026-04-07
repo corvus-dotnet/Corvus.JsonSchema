@@ -378,16 +378,26 @@ internal static class FunctionalCompiler
                 case JsonValueKind.Object:
                     foreach (var prop in element.EnumerateObject())
                     {
-                        builder.Add(prop.Value);
+                        // Non-array values are added as descendants
+                        if (prop.Value.ValueKind != JsonValueKind.Array)
+                        {
+                            builder.Add(prop.Value);
+                        }
+
                         CollectDescendants(prop.Value, ref builder);
                     }
 
                     break;
 
                 case JsonValueKind.Array:
+                    // Arrays are NOT added as descendants — only their elements
                     foreach (var item in element.EnumerateArray())
                     {
-                        builder.Add(item);
+                        if (item.ValueKind != JsonValueKind.Array)
+                        {
+                            builder.Add(item);
+                        }
+
                         CollectDescendants(item, ref builder);
                     }
 
@@ -814,25 +824,26 @@ internal static class FunctionalCompiler
             }
         }
 
-        // Build grouped result: ordered dictionary of key → list of values
+        // Phase 1: Evaluate KEY per element to determine grouping.
+        // Collect the grouped elements (not values) per key, tracking which
+        // pair expression produced each key.
         var groupKeys = new List<string>();
-        var groupValues = new Dictionary<string, List<JsonElement>>();
+        var groupData = new Dictionary<string, (List<JsonElement> Elements, int PairIndex)>();
 
         for (int idx = 0; idx < elements.Count; idx++)
         {
             var element = elements[idx];
 
-            // Restore per-element tuple binding before evaluating key/value expressions
+            // Restore per-element tuple binding before evaluating key expressions
             if (elementGroupIndices is not null && tupleIndexVar is not null
                 && idx < elementGroupIndices.Length)
             {
                 env.Bind(tupleIndexVar, new Sequence(CreateNumberElement(elementGroupIndices[idx])));
             }
 
-            foreach (var (keyEval, valueEval) in pairs)
+            for (int pairIdx = 0; pairIdx < pairs.Length; pairIdx++)
             {
-                var keySeq = keyEval(element, env);
-                var valSeq = valueEval(element, env);
+                var keySeq = pairs[pairIdx].Key(element, env);
 
                 if (keySeq.IsUndefined)
                 {
@@ -853,59 +864,59 @@ internal static class FunctionalCompiler
                     keyStr = CoerceElementToString(keySeq.FirstOrDefault);
                 }
 
-                if (!groupValues.TryGetValue(keyStr, out var valueList))
+                if (!groupData.TryGetValue(keyStr, out var entry))
                 {
-                    valueList = [];
-                    groupValues[keyStr] = valueList;
+                    entry = ([], pairIdx);
+                    groupData[keyStr] = entry;
                     groupKeys.Add(keyStr);
                 }
 
-                // Collect values — if value is array, add individual elements
-                if (valSeq.IsUndefined)
-                {
-                    // Skip undefined values
-                }
-                else if (valSeq.Count > 1)
-                {
-                    for (int i = 0; i < valSeq.Count; i++)
-                    {
-                        valueList.Add(valSeq[i]);
-                    }
-                }
-                else
-                {
-                    var val = valSeq.FirstOrDefault;
-                    if (val.ValueKind == JsonValueKind.Array)
-                    {
-                        valueList.AddRange(val.EnumerateArray());
-                    }
-                    else
-                    {
-                        valueList.Add(val);
-                    }
-                }
+                entry.Elements.Add(element);
             }
         }
 
-        // Build the result object
+        // Phase 2: For each group, evaluate the VALUE expression once with
+        // the collected group elements as context. This matches the reference
+        // JSONata behaviour where the value expression sees the group, not
+        // individual elements.
         using var ms = new MemoryStream(256);
         using var writer = new Utf8JsonWriter(ms);
         writer.WriteStartObject();
 
         foreach (var key in groupKeys)
         {
-            writer.WritePropertyName(key);
-            var values = groupValues[key];
-            if (values.Count == 1)
+            var (groupElements, pairIndex) = groupData[key];
+            var valueEval = pairs[pairIndex].Value;
+
+            // Build the context: single element or JSON array of elements
+            JsonElement context;
+            if (groupElements.Count == 1)
             {
-                values[0].WriteTo(writer);
+                context = groupElements[0];
+            }
+            else
+            {
+                context = CreateArrayElement(groupElements);
+            }
+
+            var valSeq = valueEval(context, env);
+            if (valSeq.IsUndefined)
+            {
+                continue;
+            }
+
+            writer.WritePropertyName(key);
+
+            if (valSeq.IsSingleton)
+            {
+                valSeq.FirstOrDefault.WriteTo(writer);
             }
             else
             {
                 writer.WriteStartArray();
-                foreach (var v in values)
+                for (int i = 0; i < valSeq.Count; i++)
                 {
-                    v.WriteTo(writer);
+                    valSeq[i].WriteTo(writer);
                 }
 
                 writer.WriteEndArray();
@@ -1234,7 +1245,7 @@ internal static class FunctionalCompiler
             double result = op(leftNum, rightNum);
             if (double.IsInfinity(result) || double.IsNaN(result))
             {
-                throw new JsonataException("D3001", "Number out of range", 0);
+                throw new JsonataException("D1001", "Number out of range", 0);
             }
 
             return new Sequence(CreateNumberElement(result));
@@ -1701,7 +1712,9 @@ internal static class FunctionalCompiler
 
         // Detect non-$ function names that match built-ins (e.g. sum instead of $sum)
         string? suggestedBuiltIn = null;
-        if (func.Procedure is NameNode nameProc && BuiltInFunctions.TryGetCompiler(nameProc.Value) is not null)
+        NameNode? nameProc = func.Procedure as NameNode
+            ?? (func.Procedure is PathNode pathProc && pathProc.Steps.Count == 1 ? pathProc.Steps[0] as NameNode : null);
+        if (nameProc is not null && BuiltInFunctions.TryGetCompiler(nameProc.Value) is not null)
         {
             suggestedBuiltIn = nameProc.Value;
         }
@@ -1739,7 +1752,7 @@ internal static class FunctionalCompiler
 
         return (in JsonElement input, Environment env) =>
         {
-            return new Sequence(new LambdaValue(body, paramNames, env, isThunk));
+            return new Sequence(new LambdaValue(body, paramNames, env, input, isThunk));
         };
     }
 

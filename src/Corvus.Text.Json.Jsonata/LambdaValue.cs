@@ -15,6 +15,7 @@ internal sealed class LambdaValue
     private readonly ExpressionEvaluator body;
     private readonly string[] paramNames;
     private readonly Environment? definingEnv;
+    private readonly JsonElement definingInput;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="LambdaValue"/> class for a user-defined lambda.
@@ -22,12 +23,14 @@ internal sealed class LambdaValue
     /// <param name="body">The compiled body expression.</param>
     /// <param name="paramNames">The parameter names (without <c>$</c> prefix).</param>
     /// <param name="definingEnv">The environment where the lambda was defined (for closures).</param>
+    /// <param name="definingInput">The input context (<c>$</c>) at the point where the lambda was defined.</param>
     /// <param name="isThunk">Whether this is a thunk for tail-call optimization.</param>
-    public LambdaValue(ExpressionEvaluator body, string[] paramNames, Environment definingEnv, bool isThunk = false)
+    public LambdaValue(ExpressionEvaluator body, string[] paramNames, Environment definingEnv, in JsonElement definingInput, bool isThunk = false)
     {
         this.body = body;
         this.paramNames = paramNames;
         this.definingEnv = definingEnv;
+        this.definingInput = definingInput;
         this.IsThunk = isThunk;
     }
 
@@ -92,7 +95,9 @@ internal sealed class LambdaValue
         invokeEnv.EnterCall();
         try
         {
-            var result = this.body(input, invokeEnv);
+            // Use the defining input (the context at lambda creation time) so that
+            // $ inside the body refers to the closure context, not the call-site context.
+            var result = this.body(this.definingInput, invokeEnv);
 
             // Trampoline: when the body returns a thunk (a tail-call-optimized
             // lambda with no parameters), execute it immediately instead of
