@@ -1599,13 +1599,16 @@ internal static class BuiltInFunctions
             }
 
             // Collect elements from array, sequence, or wrap singleton — flatten arrays
-            var elements = new List<JsonElement>();
+            var elements = default(SequenceBuilder);
             for (int i = 0; i < seq.Count; i++)
             {
                 var el = seq[i];
                 if (el.ValueKind == JsonValueKind.Array)
                 {
-                    elements.AddRange(el.EnumerateArray());
+                    foreach (var item in el.EnumerateArray())
+                    {
+                        elements.Add(item);
+                    }
                 }
                 else
                 {
@@ -1621,7 +1624,7 @@ internal static class BuiltInFunctions
                     var lambda = funcSeq.Lambda!;
                     var sortInput = input;
                     var sortArgs = new Sequence[2]; // Reuse across comparisons
-                    StableSort(elements, (a, b) =>
+                    StableSort(ref elements, (a, b) =>
                     {
                         sortArgs[0] = new Sequence(a);
                         sortArgs[1] = new Sequence(b);
@@ -1665,9 +1668,9 @@ internal static class BuiltInFunctions
             {
                 // Default sort: check types are homogeneous
                 bool hasObjects = false;
-                foreach (var el in elements)
+                for (int i = 0; i < elements.Count; i++)
                 {
-                    if (el.ValueKind is JsonValueKind.Object or JsonValueKind.Array)
+                    if (elements[i].ValueKind is JsonValueKind.Object or JsonValueKind.Array)
                     {
                         hasObjects = true;
                         break;
@@ -1679,7 +1682,7 @@ internal static class BuiltInFunctions
                     throw new JsonataException("D3070", "The single argument form of the $sort function can only be used on an array of strings or an array of numbers", 0);
                 }
 
-                StableSort(elements, (a, b) =>
+                StableSort(ref elements, (a, b) =>
                 {
                     if (a.ValueKind == JsonValueKind.Number && b.ValueKind == JsonValueKind.Number)
                     {
@@ -1692,7 +1695,7 @@ internal static class BuiltInFunctions
                 });
             }
 
-            return new Sequence(JsonataHelpers.ArrayFromReadOnlyList(elements, env.Workspace));
+            return new Sequence(JsonataHelpers.ArrayFromBuilder(ref elements, env.Workspace));
         };
     }
 
@@ -1747,13 +1750,16 @@ internal static class BuiltInFunctions
             }
 
             // Collect all items to deduplicate, flattening arrays in multi-valued sequences
-            var items = new List<JsonElement>();
+            var items = default(SequenceBuilder);
             for (int si = 0; si < seq.Count; si++)
             {
                 var el = seq[si];
                 if (el.ValueKind == JsonValueKind.Array)
                 {
-                    items.AddRange(el.EnumerateArray());
+                    foreach (var item in el.EnumerateArray())
+                    {
+                        items.Add(item);
+                    }
                 }
                 else
                 {
@@ -1764,6 +1770,7 @@ internal static class BuiltInFunctions
             // If only one non-array item, return as-is
             if (items.Count <= 1 && seq.Count == 1 && seq.FirstOrDefault.ValueKind != JsonValueKind.Array)
             {
+                items.ReturnArray();
                 return seq;
             }
 
@@ -1779,6 +1786,7 @@ internal static class BuiltInFunctions
                 }
             }
 
+            items.ReturnArray();
             return new Sequence((JsonElement)arrayRoot);
         };
     }
@@ -1852,7 +1860,7 @@ internal static class BuiltInFunctions
             var builder = default(SequenceBuilder);
 
             // Collect all items into a flat list for indexing
-            var items = new List<JsonElement>();
+            var items = default(SequenceBuilder);
             if (seq.IsSingleton && seq.FirstOrDefault.ValueKind == JsonValueKind.Array)
             {
                 var arr = seq.FirstOrDefault;
@@ -1887,9 +1895,9 @@ internal static class BuiltInFunctions
             {
                 JsonDocumentBuilder<JsonElement.Mutable> flatDoc = JsonElement.CreateArrayBuilder(env.Workspace, items.Count);
                 JsonElement.Mutable flatRoot = flatDoc.RootElement;
-                foreach (var item in items)
+                for (int i = 0; i < items.Count; i++)
                 {
-                    flatRoot.AddItem(item);
+                    flatRoot.AddItem(items[i]);
                 }
 
                 flatArr = (JsonElement)flatRoot;
@@ -1903,6 +1911,8 @@ internal static class BuiltInFunctions
                 var result = lambda.Invoke(new[] { elemSeq, idxSeq, arrSeq }, items[i], env);
                 builder.AddRange(result);
             }
+
+            items.ReturnArray();
 
             // Return as a multi-value Sequence (not wrapped in a JSON array).
             // The evaluator's Sequence→JsonElement conversion handles array
@@ -2426,10 +2436,13 @@ internal static class BuiltInFunctions
                 return Sequence.Undefined;
             }
 
-            var elements = new List<JsonElement>();
+            var elements = default(SequenceBuilder);
             if (seq.IsSingleton && seq.FirstOrDefault.ValueKind == JsonValueKind.Array)
             {
-                elements.AddRange(seq.FirstOrDefault.EnumerateArray());
+                foreach (var item in seq.FirstOrDefault.EnumerateArray())
+                {
+                    elements.Add(item);
+                }
             }
             else
             {
@@ -2443,20 +2456,25 @@ internal static class BuiltInFunctions
             {
                 if (elements.Count == 0)
                 {
+                    elements.ReturnArray();
                     throw new JsonataException("D3139", "The $single function matched zero results", 0);
                 }
 
                 if (elements.Count != 1)
                 {
+                    elements.ReturnArray();
                     throw new JsonataException("D3138", "The $single function expected exactly one matching result", 0);
                 }
 
-                return new Sequence(elements[0]);
+                var result = new Sequence(elements[0]);
+                elements.ReturnArray();
+                return result;
             }
 
             var funcSeq = funcArg(input, env);
             if (!funcSeq.IsLambda)
             {
+                elements.ReturnArray();
                 return Sequence.Undefined;
             }
 
@@ -2479,20 +2497,23 @@ internal static class BuiltInFunctions
             JsonElement? match = null;
             for (int i = 0; i < elements.Count; i++)
             {
-                var result = lambda.Invoke(
+                var lambdaResult = lambda.Invoke(
                     new[] { new Sequence(elements[i]), new Sequence(JsonataHelpers.NumberFromDouble(i, env.Workspace)), arrSeq },
                     elements[i],
                     env);
-                if (FunctionalCompiler.IsTruthy(result))
+                if (FunctionalCompiler.IsTruthy(lambdaResult))
                 {
                     if (match.HasValue)
                     {
+                        elements.ReturnArray();
                         throw new JsonataException("D3138", "The $single function expected exactly one matching result", 0);
                     }
 
                     match = elements[i];
                 }
             }
+
+            elements.ReturnArray();
 
             if (!match.HasValue)
             {
@@ -4150,8 +4171,11 @@ internal static class BuiltInFunctions
                 return seq;
             }
 
-            var elements = new List<JsonElement>();
-            elements.AddRange(arr.EnumerateArray());
+            var elements = default(SequenceBuilder);
+            foreach (var item in arr.EnumerateArray())
+            {
+                elements.Add(item);
+            }
 
             // Fisher-Yates shuffle
             for (int i = elements.Count - 1; i > 0; i--)
@@ -4162,11 +4186,12 @@ internal static class BuiltInFunctions
 
             JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(env.Workspace, elements.Count);
             JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
-            foreach (var elem in elements)
+            for (int k = 0; k < elements.Count; k++)
             {
-                arrayRoot.AddItem(elem);
+                arrayRoot.AddItem(elements[k]);
             }
 
+            elements.ReturnArray();
             return new Sequence((JsonElement)arrayRoot);
         };
     }
@@ -4631,13 +4656,9 @@ internal static class BuiltInFunctions
                 }
                 else if (!ctxSeq.IsUndefined)
                 {
-                    var elements = new List<JsonElement>();
-                    foreach (var item in ctxSeq)
-                    {
-                        elements.Add(item);
-                    }
-
-                    evalInput = JsonataHelpers.ArrayFromList(elements, env.Workspace);
+                    var elements = default(SequenceBuilder);
+                    elements.AddRange(ctxSeq);
+                    evalInput = JsonataHelpers.ArrayFromBuilder(ref elements, env.Workspace);
                 }
             }
 
@@ -4823,13 +4844,15 @@ internal static class BuiltInFunctions
     /// .NET's List&lt;T&gt;.Sort is not guaranteed stable; this preserves
     /// the relative order of elements that compare equal.
     /// </summary>
-    private static void StableSort(List<JsonElement> list, Comparison<JsonElement> comparison)
+    private static void StableSort(ref SequenceBuilder builder, Comparison<JsonElement> comparison)
     {
+        int count = builder.Count;
+
         // Pair each element with its original index to break ties
-        var indexed = new (JsonElement Element, int Index)[list.Count];
-        for (int i = 0; i < list.Count; i++)
+        var indexed = new (JsonElement Element, int Index)[count];
+        for (int i = 0; i < count; i++)
         {
-            indexed[i] = (list[i], i);
+            indexed[i] = (builder[i], i);
         }
 
         Array.Sort(indexed, (a, b) =>
@@ -4838,9 +4861,9 @@ internal static class BuiltInFunctions
             return cmp != 0 ? cmp : a.Index.CompareTo(b.Index);
         });
 
-        for (int i = 0; i < list.Count; i++)
+        for (int i = 0; i < count; i++)
         {
-            list[i] = indexed[i].Element;
+            builder[i] = indexed[i].Element;
         }
     }
 }
