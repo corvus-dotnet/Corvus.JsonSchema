@@ -41,6 +41,7 @@ internal readonly struct Sequence
     private readonly double nonFiniteValue;
     private readonly Sequence[]? tupleItems;
     private readonly Dictionary<string, LambdaValue>? objectLambdas;
+    private readonly LazyRangeInfo? lazyRange;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Sequence"/> struct with a single value.
@@ -185,6 +186,25 @@ internal readonly struct Sequence
         this.objectLambdas = objectLambdas;
     }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="Sequence"/> struct as a lazy range
+    /// that generates number elements on demand. Used for large integer ranges
+    /// (e.g. <c>[1..10000000]</c>) to avoid materializing millions of elements.
+    /// </summary>
+    /// <param name="rangeInfo">The lazy range bounds and workspace reference.</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public Sequence(LazyRangeInfo rangeInfo)
+    {
+        this.lazyRange = rangeInfo;
+        this.count = rangeInfo.End - rangeInfo.Start + 1;
+        this.singleValue = default;
+        this.multiValues = null;
+        this.lambda = null;
+        this.regex = null;
+        this.tailCall = null;
+        this.nonFiniteValue = 0;
+    }
+
     /// <summary>Gets the number of values in the sequence.</summary>
     public int Count
     {
@@ -269,6 +289,13 @@ internal readonly struct Sequence
         get => this.tupleItems is not null;
     }
 
+    /// <summary>Gets a value indicating whether this is a lazy range sequence.</summary>
+    public bool IsLazyRange
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => this.lazyRange is not null;
+    }
+
     /// <summary>
     /// Gets the lambda properties associated with this object element, if any.
     /// Used by the custom matcher protocol to retrieve function-valued properties
@@ -307,6 +334,11 @@ internal readonly struct Sequence
             if ((uint)index >= (uint)this.count)
             {
                 ThrowIndexOutOfRange();
+            }
+
+            if (this.lazyRange is not null)
+            {
+                return this.lazyRange.GetElement(index);
             }
 
             if (this.tupleItems is not null)
@@ -399,6 +431,40 @@ internal readonly struct Sequence
             }
 
             return false;
+        }
+    }
+
+    /// <summary>
+    /// Carries bounds and workspace reference for a lazily-evaluated integer range.
+    /// Elements are generated on demand, avoiding the cost of materializing millions of <see cref="JsonElement"/> values.
+    /// </summary>
+    internal sealed class LazyRangeInfo
+    {
+        /// <summary>Gets the inclusive start of the range.</summary>
+        public int Start { get; }
+
+        /// <summary>Gets the inclusive end of the range.</summary>
+        public int End { get; }
+
+        private readonly JsonWorkspace workspace;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="LazyRangeInfo"/> class.
+        /// </summary>
+        public LazyRangeInfo(int start, int end, JsonWorkspace workspace)
+        {
+            this.Start = start;
+            this.End = end;
+            this.workspace = workspace;
+        }
+
+        /// <summary>
+        /// Gets the JSON number element at the specified index within the range.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public JsonElement GetElement(int index)
+        {
+            return JsonataHelpers.NumberFromDouble(this.Start + index, this.workspace);
         }
     }
 }

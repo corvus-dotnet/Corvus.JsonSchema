@@ -3136,6 +3136,12 @@ internal static class FunctionalCompiler
                 throw new JsonataException("D2014", "Range expression generates too many results", 0);
             }
 
+            // Use lazy range for large ranges to avoid materializing millions of elements
+            if (count > 100_000)
+            {
+                return new Sequence(new Sequence.LazyRangeInfo(iStart, iEnd, env.Workspace));
+            }
+
             // Build individual number elements for the range
             var elements = new JsonElement[(int)count];
             for (int i = iStart; i <= iEnd; i++)
@@ -3234,8 +3240,8 @@ internal static class FunctionalCompiler
                     continue;
                 }
 
-                // Switch to tuple path on first non-JSON value
-                if (tupleItems is null && (result.IsLambda || result.IsRegex || result.IsTupleSequence))
+                // Switch to tuple path on first non-JSON value or lazy range
+                if (tupleItems is null && (result.IsLambda || result.IsRegex || result.IsTupleSequence || result.IsLazyRange))
                 {
                     tupleItems = new List<Sequence>();
 
@@ -3251,9 +3257,10 @@ internal static class FunctionalCompiler
 
                 if (tupleItems is not null)
                 {
-                    // Tuple path: preserve full Sequences including lambdas
-                    if (result.IsLambda || result.IsRegex)
+                    // Tuple path: preserve full Sequences including lambdas and lazy ranges
+                    if (result.IsLambda || result.IsRegex || result.IsLazyRange)
                     {
+                        // Add as a single opaque item — lazy ranges are not materialized
                         tupleItems.Add(result);
                     }
                     else if (result.IsTupleSequence)
@@ -3336,6 +3343,13 @@ internal static class FunctionalCompiler
 
             if (tupleItems is not null)
             {
+                // If the only item is a lazy range, return it directly (avoid
+                // wrapping in a tuple which would lose the range's element count)
+                if (tupleItems.Count == 1 && tupleItems[0].IsLazyRange)
+                {
+                    return tupleItems[0];
+                }
+
                 return new Sequence(tupleItems.ToArray());
             }
 
