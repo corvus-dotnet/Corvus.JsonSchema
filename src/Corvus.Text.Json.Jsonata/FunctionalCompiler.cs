@@ -521,303 +521,645 @@ internal static class FunctionalCompiler
 
         return (in JsonElement input, Environment env) =>
         {
-            // Start with the input as a singleton sequence
-            Sequence current = new(input);
+            return EvalPathFrom(new Sequence(input), 0);
 
-            // Per-element group indices for tuple-aware sort.
-            // When non-null, each element in current has a corresponding group index
-            // used to restore index variable bindings after sorting.
-            int[]? tupleGroupIndices = null;
-
-            for (int stepIdx = 0; stepIdx < steps.Length; stepIdx++)
+            Sequence EvalPathFrom(Sequence initial, int startStep)
             {
-                if (current.IsUndefined)
-                {
-                    return Sequence.Undefined;
-                }
+                Sequence current = initial;
 
-                var step = steps[stepIdx];
-                var focusVar = focusVars[stepIdx];
-                var indexVar = indexVars[stepIdx];
+                // Per-element group indices for tuple-aware sort.
+                // When non-null, each element in current has a corresponding group index
+                // used to restore index variable bindings after sorting.
+                int[]? tupleGroupIndices = null;
 
-                // Bind focus variable if present
-                if (focusVar is not null)
+                for (int stepIdx = startStep; stepIdx < steps.Length; stepIdx++)
                 {
-                    env.Bind(focusVar, current);
-                }
-
-                // Sort steps need all elements as a batch — collect, flatten, sort.
-                if (isSortStep[stepIdx])
-                {
-                    if (tupleIndexVar is not null && !current.IsSingleton
-                        && sortTermsPerStep[stepIdx] is not null)
+                    if (current.IsUndefined)
                     {
-                        // Tuple-aware sort: sort elements inline while tracking group indices.
-                        var sortElems = new List<JsonElement>();
-                        var groups = new List<int>();
-                        for (int i = 0; i < current.Count; i++)
+                        return Sequence.Undefined;
+                    }
+
+                    var step = steps[stepIdx];
+                    var focusVar = focusVars[stepIdx];
+                    var indexVar = indexVars[stepIdx];
+
+                    // Focus binding (@$var) — cross-join semantics.
+                    // The focus variable captures each element of the step's result.
+                    // Subsequent steps evaluate from the PARENT context (input to this step),
+                    // not from the step's output. This creates a cross-join when multiple
+                    // focus-bound steps are chained (e.g. loans@$l.books@$b).
+                    if (focusVar is not null)
+                    {
+                        return EvalFocusStep(current, stepIdx);
+                    }
+
+                    // Sort steps need all elements as a batch — collect, flatten, sort.
+                    if (isSortStep[stepIdx])
+                    {
+                        if (tupleIndexVar is not null && !current.IsSingleton
+                            && sortTermsPerStep[stepIdx] is not null)
                         {
-                            var el = current[i];
-                            if (el.ValueKind == JsonValueKind.Array)
+                            // Tuple-aware sort: sort elements inline while tracking group indices.
+                            var sortElems = new List<JsonElement>();
+                            var groups = new List<int>();
+                            for (int i = 0; i < current.Count; i++)
                             {
-                                foreach (var item in el.EnumerateArray())
+                                var el = current[i];
+                                if (el.ValueKind == JsonValueKind.Array)
                                 {
-                                    sortElems.Add(item);
+                                    foreach (var item in el.EnumerateArray())
+                                    {
+                                        sortElems.Add(item);
+                                        groups.Add(tupleGroupIndices is not null && i < tupleGroupIndices.Length
+                                            ? tupleGroupIndices[i] : i);
+                                    }
+                                }
+                                else
+                                {
+                                    sortElems.Add(el);
                                     groups.Add(tupleGroupIndices is not null && i < tupleGroupIndices.Length
                                         ? tupleGroupIndices[i] : i);
                                 }
                             }
-                            else
-                            {
-                                sortElems.Add(el);
-                                groups.Add(tupleGroupIndices is not null && i < tupleGroupIndices.Length
-                                    ? tupleGroupIndices[i] : i);
-                            }
-                        }
 
-                        if (sortElems.Count > 1)
-                        {
-                            // Sort index array using the sort terms directly (avoids
-                            // round-tripping through JSON which breaks element identity).
-                            var terms = sortTermsPerStep[stepIdx]!;
-                            var indices = Enumerable.Range(0, sortElems.Count).ToArray();
-                            Array.Sort(indices, (a, b) =>
+                            if (sortElems.Count > 1)
                             {
-                                for (int t = 0; t < terms.Length; t++)
+                                // Sort index array using the sort terms directly (avoids
+                                // round-tripping through JSON which breaks element identity).
+                                var terms = sortTermsPerStep[stepIdx]!;
+                                var indices = Enumerable.Range(0, sortElems.Count).ToArray();
+                                Array.Sort(indices, (a, b) =>
                                 {
-                                    var (expr, desc) = terms[t];
-                                    var aVal = expr(sortElems[a], env);
-                                    var bVal = expr(sortElems[b], env);
-                                    int cmp = CompareSortKeys(aVal, bVal);
-                                    if (cmp != 0)
+                                    for (int t = 0; t < terms.Length; t++)
                                     {
-                                        return desc ? -cmp : cmp;
+                                        var (expr, desc) = terms[t];
+                                        var aVal = expr(sortElems[a], env);
+                                        var bVal = expr(sortElems[b], env);
+                                        int cmp = CompareSortKeys(aVal, bVal);
+                                        if (cmp != 0)
+                                        {
+                                            return desc ? -cmp : cmp;
+                                        }
                                     }
+
+                                    return a.CompareTo(b);
+                                });
+
+                                // Reorder elements and groups
+                                var sortedElems = new List<JsonElement>(sortElems.Count);
+                                var sortedGroupArr = new int[sortElems.Count];
+                                for (int i = 0; i < indices.Length; i++)
+                                {
+                                    sortedElems.Add(sortElems[indices[i]]);
+                                    sortedGroupArr[i] = groups[indices[i]];
                                 }
 
-                                return a.CompareTo(b);
-                            });
-
-                            // Reorder elements and groups
-                            var sortedElems = new List<JsonElement>(sortElems.Count);
-                            var sortedGroupArr = new int[sortElems.Count];
-                            for (int i = 0; i < indices.Length; i++)
-                            {
-                                sortedElems.Add(sortElems[indices[i]]);
-                                sortedGroupArr[i] = groups[indices[i]];
+                                current = new Sequence(JsonataHelpers.ArrayFromList(sortedElems, env.Workspace));
+                                tupleGroupIndices = sortedGroupArr;
                             }
-
-                            current = new Sequence(JsonataHelpers.ArrayFromList(sortedElems, env.Workspace));
-                            tupleGroupIndices = sortedGroupArr;
-                        }
-                        else if (sortElems.Count == 1)
-                        {
-                            current = new Sequence(sortElems[0]);
-                            tupleGroupIndices = [groups[0]];
-                        }
-                    }
-                    else
-                    {
-                        var sortElements = CollectFlatElements(current);
-                        if (sortElements.Count <= 1)
-                        {
-                            if (sortElements.Count == 1)
+                            else if (sortElems.Count == 1)
                             {
-                                current = new Sequence(sortElements[0]);
+                                current = new Sequence(sortElems[0]);
+                                tupleGroupIndices = [groups[0]];
                             }
                         }
                         else
                         {
-                            var arrayInput = JsonataHelpers.ArrayFromList(sortElements, env.Workspace);
-                            current = step(arrayInput, env);
+                            var sortElements = CollectFlatElements(current);
+                            if (sortElements.Count <= 1)
+                            {
+                                if (sortElements.Count == 1)
+                                {
+                                    current = new Sequence(sortElements[0]);
+                                }
+                            }
+                            else
+                            {
+                                var arrayInput = JsonataHelpers.ArrayFromList(sortElements, env.Workspace);
+                                current = step(arrayInput, env);
+                            }
+
+                            tupleGroupIndices = null;
                         }
 
-                        tupleGroupIndices = null;
+                        // Apply any stages on the sort step itself (e.g. filters after sort)
+                        if (stages[stepIdx] is not null)
+                        {
+                            current = ApplyStages(current, stages[stepIdx]!, stageIsSortFlags[stepIdx]!, env, indexVars[stepIdx]);
+                        }
+
+                        // When tuple tracking is active, expand the sorted JSON array to
+                        // multi-value so subsequent steps use the multi-value branch where
+                        // per-element tuple bindings are restored.
+                        if (tupleGroupIndices is not null && current.IsSingleton
+                            && current.FirstOrDefault.ValueKind == JsonValueKind.Array)
+                        {
+                            var arr = current.FirstOrDefault;
+                            var expandBuilder = default(SequenceBuilder);
+                            foreach (var item in arr.EnumerateArray())
+                            {
+                                expandBuilder.Add(item);
+                            }
+
+                            current = expandBuilder.ToSequence();
+                        }
+
+                        continue;
                     }
 
-                    // Apply any stages on the sort step itself (e.g. filters after sort)
-                    if (stages[stepIdx] is not null)
+                    // Auto-flatten arrays when:
+                    // - stepIdx > 0: any step after the first always maps over array contexts
+                    // - stepIdx == 0 AND isPropertyStep: property access on root array (e.g. name[0] on root array)
+                    bool shouldFlatten = stepIdx > 0 || isPropertyStep[stepIdx];
+
+                    // When a singleton contains a JSON array AND this property step has a
+                    // boolean filter stage, expand the array to multi-value so filters
+                    // operate on individual elements (not the array as a whole).
+                    // Only do this for filter stages — sort and index stages need the original arrays.
+                    bool hasFilterStage = false;
+                    if (stages[stepIdx] is not null && stageIsSortFlags[stepIdx] is not null)
                     {
-                        current = ApplyStages(current, stages[stepIdx]!, stageIsSortFlags[stepIdx]!, env);
+                        for (int sf = 0; sf < stageIsSortFlags[stepIdx]!.Length; sf++)
+                        {
+                            if (!stageIsSortFlags[stepIdx]![sf])
+                            {
+                                hasFilterStage = true;
+                                break;
+                            }
+                        }
                     }
 
-                    // When tuple tracking is active, expand the sorted JSON array to
-                    // multi-value so subsequent steps use the multi-value branch where
-                    // per-element tuple bindings are restored.
-                    if (tupleGroupIndices is not null && current.IsSingleton
-                        && current.FirstOrDefault.ValueKind == JsonValueKind.Array)
+                    if (current.IsSingleton && isPropertyStep[stepIdx] && shouldFlatten
+                        && hasFilterStage && current.FirstOrDefault.ValueKind == JsonValueKind.Array)
                     {
                         var arr = current.FirstOrDefault;
-                        var expandBuilder = default(SequenceBuilder);
+                        var expander = default(SequenceBuilder);
                         foreach (var item in arr.EnumerateArray())
                         {
-                            expandBuilder.Add(item);
+                            expander.Add(item);
                         }
 
-                        current = expandBuilder.ToSequence();
+                        current = expander.ToSequence();
                     }
 
-                    continue;
+                    // Per-element filter stages are only applied for steps after the first
+                    // (stepIdx > 0). At stepIdx 0, the multi-value input comes from auto-mapping
+                    // over an array input, and stages should be applied globally (matching JSONata's
+                    // semantics where a[0].b picks the first a globally, but $.a[0].b picks per-element).
+                    var perElementStages = stepIdx > 0 ? stages[stepIdx] : null;
+                    var perElementSortFlags = stepIdx > 0 ? stageIsSortFlags[stepIdx] : null;
+
+                    if (current.IsSingleton)
+                    {
+                        // Hot path: singleton input → evaluate step directly
+                        var element = current.FirstOrDefault;
+
+                        // Bind index variable (0 for singleton)
+                        if (indexVar is not null)
+                        {
+                            env.Bind(indexVar, new Sequence(JsonataHelpers.Zero()));
+                        }
+
+                        if (element.ValueKind == JsonValueKind.Array && shouldFlatten)
+                        {
+                            current = FlattenArrayStep(element, step, env, isConsArrayStep[stepIdx],
+                                perElementStages, perElementSortFlags);
+                        }
+                        else
+                        {
+                            current = step(element, env);
+
+                            // Apply per-element filter stages (non-sort) to the single result
+                            current = ApplyPerElementFilterStages(current,
+                                perElementStages, perElementSortFlags, env);
+                        }
+                    }
+                    else
+                    {
+                        // Multi-value: map step over all values
+                        var builder = default(SequenceBuilder);
+                        for (int i = 0; i < current.Count; i++)
+                        {
+                            var element = current[i];
+
+                            // Restore per-element tuple binding (index variable from a
+                            // preceding step, preserved through sort reordering).
+                            if (tupleGroupIndices is not null && tupleIndexVar is not null
+                                && i < tupleGroupIndices.Length)
+                            {
+                                env.Bind(tupleIndexVar, new Sequence(JsonataHelpers.NumberFromDouble(tupleGroupIndices[i], env.Workspace)));
+                            }
+
+                            if (indexVar is not null)
+                            {
+                                env.Bind(indexVar, new Sequence(JsonataHelpers.NumberFromDouble(i, env.Workspace)));
+                            }
+
+                            Sequence stepResult;
+
+                            if (element.ValueKind == JsonValueKind.Array && shouldFlatten)
+                            {
+                                stepResult = FlattenArrayStep(element, step, env, isConsArrayStep[stepIdx],
+                                    perElementStages, perElementSortFlags);
+                            }
+                            else
+                            {
+                                stepResult = step(element, env);
+
+                                // Apply per-element filter stages
+                                stepResult = ApplyPerElementFilterStages(stepResult,
+                                    perElementStages, perElementSortFlags, env);
+                            }
+
+                            // Auto-flatten: when a property step returns a single array element
+                            // in a multi-context traversal, expand it into individual elements.
+                            // This gives JSONata's one-level-deep flattening semantics.
+                            if (isPropertyStep[stepIdx] && stepResult.IsSingleton
+                                && stepResult.FirstOrDefault.ValueKind == JsonValueKind.Array)
+                            {
+                                foreach (var item in stepResult.FirstOrDefault.EnumerateArray())
+                                {
+                                    builder.Add(item);
+                                }
+                            }
+                            else
+                            {
+                                builder.AddRange(stepResult);
+                            }
+                        }
+
+                        current = builder.ToSequence();
+                    }
+
+                    // Apply stages globally:
+                    // - For stepIdx == 0: all stages (filter + sort) are applied globally
+                    // - For stepIdx > 0: only sort stages (filter stages were applied per-element)
+                    if (stages[stepIdx] is not null)
+                    {
+                        if (stepIdx == 0)
+                        {
+                            current = ApplyStages(current, stages[stepIdx]!, stageIsSortFlags[stepIdx]!, env, indexVars[stepIdx]);
+                        }
+                        else
+                        {
+                            current = ApplySortStagesOnly(current, stages[stepIdx]!, stageIsSortFlags[stepIdx]!, env);
+                        }
+                    }
                 }
 
-                // Auto-flatten arrays when:
-                // - stepIdx > 0: any step after the first always maps over array contexts
-                // - stepIdx == 0 AND isPropertyStep: property access on root array (e.g. name[0] on root array)
-                bool shouldFlatten = stepIdx > 0 || isPropertyStep[stepIdx];
-
-                // When a singleton contains a JSON array AND this property step has a
-                // boolean filter stage, expand the array to multi-value so filters
-                // operate on individual elements (not the array as a whole).
-                // Only do this for filter stages — sort and index stages need the original arrays.
-                bool hasFilterStage = false;
-                if (stages[stepIdx] is not null && stageIsSortFlags[stepIdx] is not null)
+                // Apply group-by if present (only at the outermost level;
+                // focus-bound paths handle group-by inside EvalFocusStep).
+                if (startStep == 0 && groupByPairs is not null)
                 {
-                    for (int sf = 0; sf < stageIsSortFlags[stepIdx]!.Length; sf++)
+                    current = ApplyGroupBy(current, groupByPairs, env, tupleIndexVar, tupleGroupIndices);
+                }
+
+                // When the path has the KeepSingletonArray flag (from [] modifier),
+                // ensure singleton results are wrapped in a JSON array.
+                // For cons-array steps (array constructors), even singleton arrays must
+                // be wrapped — they are "constructed" arrays that should not be unwrapped.
+                if (keepSingleton && !current.IsUndefined && current.IsSingleton
+                    && (current.FirstOrDefault.ValueKind != JsonValueKind.Array || lastStepIsConsArray))
+                {
+                    current = MaterializeAsArray(current, env.Workspace);
+                }
+
+                return current;
+            }
+
+            // Evaluates a focus-bound step (@$var) with cross-join semantics.
+            // The step's result elements are bound to the focus variable,
+            // and remaining steps evaluate from the parent context (this step's input).
+            Sequence EvalFocusStep(Sequence parentContext, int stepIdx)
+            {
+                var step = steps[stepIdx];
+                var focusVar = focusVars[stepIdx]!;
+                var indexVar = indexVars[stepIdx];
+
+                // Evaluate the step on the parent context to get focus elements
+                Sequence focusResult;
+                if (parentContext.IsSingleton)
+                {
+                    var el = parentContext.FirstOrDefault;
+                    if (el.ValueKind == JsonValueKind.Array && (stepIdx > 0 || isPropertyStep[stepIdx]))
                     {
-                        if (!stageIsSortFlags[stepIdx]![sf])
+                        focusResult = FlattenArrayStep(el, step, env, isConsArrayStep[stepIdx]);
+                    }
+                    else
+                    {
+                        focusResult = step(el, env);
+                    }
+                }
+                else
+                {
+                    var builder = default(SequenceBuilder);
+                    for (int i = 0; i < parentContext.Count; i++)
+                    {
+                        var el = parentContext[i];
+                        if (el.ValueKind == JsonValueKind.Array && (stepIdx > 0 || isPropertyStep[stepIdx]))
                         {
-                            hasFilterStage = true;
+                            var flat = FlattenArrayStep(el, step, env, isConsArrayStep[stepIdx]);
+                            builder.AddRange(flat);
+                        }
+                        else
+                        {
+                            builder.AddRange(step(el, env));
+                        }
+                    }
+
+                    focusResult = builder.ToSequence();
+                }
+
+                if (focusResult.IsUndefined)
+                {
+                    return Sequence.Undefined;
+                }
+
+                // Expand singleton array to individual elements for per-element binding
+                var elements = new List<JsonElement>();
+                if (focusResult.IsSingleton)
+                {
+                    var el = focusResult.FirstOrDefault;
+                    if (el.ValueKind == JsonValueKind.Array)
+                    {
+                        elements.AddRange(el.EnumerateArray());
+                    }
+                    else
+                    {
+                        elements.Add(el);
+                    }
+                }
+                else
+                {
+                    for (int i = 0; i < focusResult.Count; i++)
+                    {
+                        elements.Add(focusResult[i]);
+                    }
+                }
+
+                // Determine group-by handling strategy:
+                // - If this is the innermost focus level (no more focus steps after),
+                //   evaluate group-by here while all focus variables are correctly bound.
+                // - If inner focus steps exist, they handle group-by; we merge their results.
+                bool hasGroupBy = groupByPairs is not null;
+                bool hasInnerFocus = false;
+                if (hasGroupBy)
+                {
+                    for (int k = stepIdx + 1; k < steps.Length; k++)
+                    {
+                        if (focusVars[k] is not null)
+                        {
+                            hasInnerFocus = true;
                             break;
                         }
                     }
                 }
 
-                if (current.IsSingleton && isPropertyStep[stepIdx] && shouldFlatten
-                    && hasFilterStage && current.FirstOrDefault.ValueKind == JsonValueKind.Array)
+                bool applyGroupByHere = hasGroupBy && !hasInnerFocus;
+                bool mergeInnerGroupBy = hasGroupBy && hasInnerFocus;
+
+                List<string>? groupKeys = applyGroupByHere ? new() : null;
+                Dictionary<string, (List<JsonElement> Elements, int PairIndex)>? groupData =
+                    applyGroupByHere ? new() : null;
+                var mergeObjects = mergeInnerGroupBy ? new List<JsonElement>() : null;
+
+                // For each focus element: bind, apply stages, then evaluate remaining steps
+                var resultBuilder = default(SequenceBuilder);
+                for (int i = 0; i < elements.Count; i++)
                 {
-                    var arr = current.FirstOrDefault;
-                    var expander = default(SequenceBuilder);
-                    foreach (var item in arr.EnumerateArray())
-                    {
-                        expander.Add(item);
-                    }
+                    var el = elements[i];
 
-                    current = expander.ToSequence();
-                }
+                    // Bind focus variable to this element
+                    env.Bind(focusVar, new Sequence(el));
 
-                // Per-element filter stages are only applied for steps after the first
-                // (stepIdx > 0). At stepIdx 0, the multi-value input comes from auto-mapping
-                // over an array input, and stages should be applied globally (matching JSONata's
-                // semantics where a[0].b picks the first a globally, but $.a[0].b picks per-element).
-                var perElementStages = stepIdx > 0 ? stages[stepIdx] : null;
-                var perElementSortFlags = stepIdx > 0 ? stageIsSortFlags[stepIdx] : null;
-
-                if (current.IsSingleton)
-                {
-                    // Hot path: singleton input → evaluate step directly
-                    var element = current.FirstOrDefault;
-
-                    // Bind index variable (0 for singleton)
+                    // Bind index variable if present
                     if (indexVar is not null)
                     {
-                        env.Bind(indexVar, new Sequence(JsonataHelpers.Zero()));
+                        env.Bind(indexVar, new Sequence(JsonataHelpers.NumberFromDouble(i, env.Workspace)));
                     }
 
-                    if (element.ValueKind == JsonValueKind.Array && shouldFlatten)
+                    // Apply stages (filters) per-element
+                    if (stages[stepIdx] is not null)
                     {
-                        current = FlattenArrayStep(element, step, env, isConsArrayStep[stepIdx],
-                            perElementStages, perElementSortFlags);
+                        var filtered = ApplyStages(new Sequence(el), stages[stepIdx]!, stageIsSortFlags[stepIdx]!, env, indexVar);
+                        if (filtered.IsUndefined)
+                        {
+                            continue;
+                        }
+                    }
+
+                    // Evaluate remaining steps from parent context (cross-join)
+                    Sequence subResult;
+                    if (stepIdx + 1 < steps.Length)
+                    {
+                        subResult = EvalPathFrom(parentContext, stepIdx + 1);
                     }
                     else
                     {
-                        current = step(element, env);
-
-                        // Apply per-element filter stages (non-sort) to the single result
-                        current = ApplyPerElementFilterStages(current,
-                            perElementStages, perElementSortFlags, env);
+                        subResult = new Sequence(el);
                     }
+
+                    if (subResult.IsUndefined)
+                    {
+                        continue;
+                    }
+
+                    if (applyGroupByHere)
+                    {
+                        // Innermost focus — evaluate group-by keys/values now
+                        AccumulateGroupBy(subResult, groupByPairs!, groupKeys!, groupData!, env);
+                    }
+                    else if (mergeInnerGroupBy)
+                    {
+                        // Inner focus handled group-by — collect objects for merging
+                        for (int j = 0; j < subResult.Count; j++)
+                        {
+                            mergeObjects!.Add(subResult[j]);
+                        }
+                    }
+                    else
+                    {
+                        resultBuilder.AddRange(subResult);
+                    }
+                }
+
+                if (applyGroupByHere && groupKeys!.Count > 0)
+                {
+                    return BuildGroupByResult(groupKeys!, groupData!, groupByPairs!, env);
+                }
+
+                if (mergeInnerGroupBy && mergeObjects!.Count > 0)
+                {
+                    return MergeGroupedObjects(mergeObjects!, env);
+                }
+
+                return resultBuilder.ToSequence();
+            }
+        };
+    }
+
+    /// <summary>
+    /// Accumulates pre-evaluated group-by key/value pairs from a sub-result sequence.
+    /// Both key and value expressions are evaluated NOW while the environment
+    /// has correct focus variable bindings.
+    /// </summary>
+    private static void AccumulateGroupBy(
+        Sequence subResult,
+        (ExpressionEvaluator Key, ExpressionEvaluator Value)[] pairs,
+        List<string> groupKeys,
+        Dictionary<string, (List<JsonElement> Values, int PairIndex)> groupData,
+        Environment env)
+    {
+        // Collect individual elements from the sub-result
+        var elements = new List<JsonElement>();
+        if (subResult.IsSingleton)
+        {
+            var el = subResult.FirstOrDefault;
+            if (el.ValueKind == JsonValueKind.Array)
+            {
+                elements.AddRange(el.EnumerateArray());
+            }
+            else
+            {
+                elements.Add(el);
+            }
+        }
+        else
+        {
+            for (int i = 0; i < subResult.Count; i++)
+            {
+                elements.Add(subResult[i]);
+            }
+        }
+
+        foreach (var element in elements)
+        {
+            for (int pairIdx = 0; pairIdx < pairs.Length; pairIdx++)
+            {
+                var keySeq = pairs[pairIdx].Key(element, env);
+                if (keySeq.IsUndefined)
+                {
+                    continue;
+                }
+
+                string keyStr;
+                if (keySeq.FirstOrDefault.ValueKind == JsonValueKind.String)
+                {
+                    keyStr = keySeq.FirstOrDefault.GetString()!;
+                }
+                else if (keySeq.FirstOrDefault.ValueKind == JsonValueKind.Number)
+                {
+                    throw new JsonataException("T1003", "Key in object structure must evaluate to a string; got: number", 0);
                 }
                 else
                 {
-                    // Multi-value: map step over all values
-                    var builder = default(SequenceBuilder);
-                    for (int i = 0; i < current.Count; i++)
-                    {
-                        var element = current[i];
-
-                        // Restore per-element tuple binding (index variable from a
-                        // preceding step, preserved through sort reordering).
-                        if (tupleGroupIndices is not null && tupleIndexVar is not null
-                            && i < tupleGroupIndices.Length)
-                        {
-                            env.Bind(tupleIndexVar, new Sequence(JsonataHelpers.NumberFromDouble(tupleGroupIndices[i], env.Workspace)));
-                        }
-
-                        if (indexVar is not null)
-                        {
-                            env.Bind(indexVar, new Sequence(JsonataHelpers.NumberFromDouble(i, env.Workspace)));
-                        }
-
-                        Sequence stepResult;
-
-                        if (element.ValueKind == JsonValueKind.Array && shouldFlatten)
-                        {
-                            stepResult = FlattenArrayStep(element, step, env, isConsArrayStep[stepIdx],
-                                perElementStages, perElementSortFlags);
-                        }
-                        else
-                        {
-                            stepResult = step(element, env);
-
-                            // Apply per-element filter stages
-                            stepResult = ApplyPerElementFilterStages(stepResult,
-                                perElementStages, perElementSortFlags, env);
-                        }
-
-                        // Auto-flatten: when a property step returns a single array element
-                        // in a multi-context traversal, expand it into individual elements.
-                        // This gives JSONata's one-level-deep flattening semantics.
-                        if (isPropertyStep[stepIdx] && stepResult.IsSingleton
-                            && stepResult.FirstOrDefault.ValueKind == JsonValueKind.Array)
-                        {
-                            foreach (var item in stepResult.FirstOrDefault.EnumerateArray())
-                            {
-                                builder.Add(item);
-                            }
-                        }
-                        else
-                        {
-                            builder.AddRange(stepResult);
-                        }
-                    }
-
-                    current = builder.ToSequence();
+                    keyStr = CoerceElementToString(keySeq.FirstOrDefault);
                 }
 
-                // Apply stages globally:
-                // - For stepIdx == 0: all stages (filter + sort) are applied globally
-                // - For stepIdx > 0: only sort stages (filter stages were applied per-element)
-                if (stages[stepIdx] is not null)
+                // Evaluate the value expression NOW while focus bindings are correct
+                var valueSeq = pairs[pairIdx].Value(element, env);
+
+                if (!groupData.TryGetValue(keyStr, out var entry))
                 {
-                    if (stepIdx == 0)
+                    entry = ([], pairIdx);
+                    groupData[keyStr] = entry;
+                    groupKeys.Add(keyStr);
+                }
+
+                // Accumulate the evaluated value (not the raw element)
+                if (!valueSeq.IsUndefined)
+                {
+                    if (valueSeq.IsSingleton)
                     {
-                        current = ApplyStages(current, stages[stepIdx]!, stageIsSortFlags[stepIdx]!, env);
+                        entry.Values.Add(valueSeq.FirstOrDefault);
                     }
                     else
                     {
-                        current = ApplySortStagesOnly(current, stages[stepIdx]!, stageIsSortFlags[stepIdx]!, env);
+                        for (int v = 0; v < valueSeq.Count; v++)
+                        {
+                            entry.Values.Add(valueSeq[v]);
+                        }
                     }
                 }
             }
+        }
+    }
 
-            // Apply group-by if present
-            if (groupByPairs is not null)
+    /// <summary>
+    /// Builds the final group-by object from pre-evaluated key/value data.
+    /// </summary>
+    private static Sequence BuildGroupByResult(
+        List<string> groupKeys,
+        Dictionary<string, (List<JsonElement> Values, int PairIndex)> groupData,
+        (ExpressionEvaluator Key, ExpressionEvaluator Value)[] pairs,
+        Environment env)
+    {
+        JsonDocumentBuilder<JsonElement.Mutable> objDoc = JsonElement.CreateObjectBuilder(env.Workspace, groupKeys.Count);
+        JsonElement.Mutable objRoot = objDoc.RootElement;
+
+        foreach (var key in groupKeys)
+        {
+            var (values, _) = groupData[key];
+
+            if (values.Count == 1)
             {
-                current = ApplyGroupBy(current, groupByPairs, env, tupleIndexVar, tupleGroupIndices);
+                objRoot.SetProperty(key, values[0]);
+            }
+            else if (values.Count > 1)
+            {
+                objRoot.SetProperty(key, JsonataHelpers.ArrayFromList(values, env.Workspace));
+            }
+        }
+
+        return new Sequence((JsonElement)objRoot);
+    }
+
+    /// <summary>
+    /// Merges multiple grouped objects (from nested focus binding iterations)
+    /// into a single object. Same-key values are collected into arrays.
+    /// </summary>
+    private static Sequence MergeGroupedObjects(List<JsonElement> objects, Environment env)
+    {
+        var keys = new List<string>();
+        var merged = new Dictionary<string, List<JsonElement>>();
+
+        foreach (var obj in objects)
+        {
+            if (obj.ValueKind != JsonValueKind.Object)
+            {
+                continue;
             }
 
-            // When the path has the KeepSingletonArray flag (from [] modifier),
-            // ensure singleton results are wrapped in a JSON array.
-            // For cons-array steps (array constructors), even singleton arrays must
-            // be wrapped — they are "constructed" arrays that should not be unwrapped.
-            if (keepSingleton && !current.IsUndefined && current.IsSingleton
-                && (current.FirstOrDefault.ValueKind != JsonValueKind.Array || lastStepIsConsArray))
+            foreach (var prop in obj.EnumerateObject())
             {
-                current = MaterializeAsArray(current, env.Workspace);
-            }
+                if (!merged.TryGetValue(prop.Name, out var values))
+                {
+                    values = [];
+                    merged[prop.Name] = values;
+                    keys.Add(prop.Name);
+                }
 
-            return current;
-        };
+                values.Add(prop.Value);
+            }
+        }
+
+        JsonDocumentBuilder<JsonElement.Mutable> objDoc = JsonElement.CreateObjectBuilder(env.Workspace, keys.Count);
+        JsonElement.Mutable objRoot = objDoc.RootElement;
+
+        foreach (var key in keys)
+        {
+            var values = merged[key];
+            if (values.Count == 1)
+            {
+                objRoot.SetProperty(key, values[0]);
+            }
+            else
+            {
+                objRoot.SetProperty(key, JsonataHelpers.ArrayFromList(values, env.Workspace));
+            }
+        }
+
+        return new Sequence((JsonElement)objRoot);
     }
 
     private static Sequence ApplyGroupBy(
@@ -963,7 +1305,7 @@ internal static class FunctionalCompiler
         return new Sequence((JsonElement)objRoot);
     }
 
-    private static Sequence ApplyStages(Sequence current, ExpressionEvaluator[] stageEvaluators, bool[] isSortStage, Environment env)
+    private static Sequence ApplyStages(Sequence current, ExpressionEvaluator[] stageEvaluators, bool[] isSortStage, Environment env, string? indexVar = null)
     {
         for (int s = 0; s < stageEvaluators.Length; s++)
         {
@@ -1037,6 +1379,14 @@ internal static class FunctionalCompiler
             for (int i = 0; i < elements.Count; i++)
             {
                 var el = elements[i];
+
+                // When index binding is active, update the index variable per-element
+                // so predicates like [$pos<3] see the correct position.
+                if (indexVar is not null)
+                {
+                    env.Bind(indexVar, new Sequence(JsonataHelpers.NumberFromDouble(i, env.Workspace)));
+                }
+
                 var result = stage(el, env);
 
                 if (result.IsUndefined)
