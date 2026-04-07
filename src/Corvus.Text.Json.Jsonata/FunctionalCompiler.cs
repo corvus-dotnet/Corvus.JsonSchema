@@ -2549,54 +2549,13 @@ internal static class FunctionalCompiler
     }
 
     /// <summary>
-    /// Formats a double to match JavaScript's <c>String(value)</c> behavior,
-    /// which produces the shortest representation that uniquely identifies
-    /// the double value. Used for <c>$string</c> and string concatenation.
+    /// Formats a double to match JSONata's number-to-string behavior.
+    /// JSONata uses <c>Number(val.toPrecision(15))</c> which limits to
+    /// 15 significant digits and strips trailing noise from IEEE 754 arithmetic.
+    /// This is used by both <c>$string</c> and the <c>&amp;</c> concatenation
+    /// operator (which calls <c>$string</c> internally in jsonata-js).
     /// </summary>
     internal static string FormatNumberLikeJavaScript(double value)
-    {
-        if (double.IsNaN(value) || double.IsInfinity(value))
-        {
-            return "null";
-        }
-
-        // .NET 7+ default ToString gives shortest round-trip representation
-        // (Grisu3/Ryu), matching JavaScript's toString() semantics.
-        string result = value.ToString(CultureInfo.InvariantCulture);
-
-        // Convert uppercase E to lowercase e
-        result = result.Replace("E+", "e+").Replace("E-", "e-");
-
-        double abs = Math.Abs(value);
-
-        // JavaScript uses decimal form for [1e-6, 1e+21)
-        if (result.Contains('e'))
-        {
-            if (abs >= 1e-6 && abs < 1e+20)
-            {
-                result = value.ToString("0.####################", CultureInfo.InvariantCulture);
-                return result;
-            }
-
-            // For very large integers (like 1e+20), use integer-like representation
-            if (abs >= 1e+20 && abs < 1e+21 && value == Math.Floor(value))
-            {
-                return value.ToString("0", CultureInfo.InvariantCulture);
-            }
-
-            // Strip leading zeros from exponent: e-07 → e-7, e+02 → e+2
-            result = System.Text.RegularExpressions.Regex.Replace(result, @"e([+-])0+(\d)", "e$1$2");
-        }
-
-        return result;
-    }
-
-    /// <summary>
-    /// Formats a double using JSONata's JSON.stringify replacer behavior:
-    /// <c>Number(val.toPrecision(15))</c>. Used only for stringifying
-    /// numbers within arrays and objects.
-    /// </summary>
-    internal static string FormatNumberForJsonStringify(double value)
     {
         if (double.IsNaN(value) || double.IsInfinity(value))
         {

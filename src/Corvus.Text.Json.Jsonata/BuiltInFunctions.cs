@@ -328,21 +328,6 @@ internal static class BuiltInFunctions
                 return new Sequence(FunctionalCompiler.CreateStringElement(json));
             }
 
-            // For numbers, $string uses Number(toPrecision(15)).toString()
-            // which rounds to 15 significant digits before formatting.
-            if (element.ValueKind == JsonValueKind.Number)
-            {
-                double d = element.GetDouble();
-
-                // Apply toPrecision(15): round to 15 sig digits then format
-                double rounded = double.Parse(
-                    d.ToString("G15", CultureInfo.InvariantCulture),
-                    System.Globalization.NumberStyles.Float,
-                    CultureInfo.InvariantCulture);
-                string numResult = FunctionalCompiler.FormatNumberLikeJavaScript(rounded);
-                return new Sequence(FunctionalCompiler.CreateStringElement(numResult));
-            }
-
             string result = FunctionalCompiler.CoerceElementToString(element);
             return new Sequence(FunctionalCompiler.CreateStringElement(result));
         };
