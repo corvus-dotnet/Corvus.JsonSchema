@@ -1122,7 +1122,7 @@ internal sealed class Parser
 
     private JsonataNode ProcessArrayConstructor(ArrayConstructorNode array)
     {
-        var result = new ArrayConstructorNode { Position = array.Position, ConsArray = array.ConsArray };
+        var result = new ArrayConstructorNode { Position = array.Position, ConsArray = array.ConsArray, KeepArray = array.KeepArray };
         foreach (var item in array.Expressions)
         {
             var processed = this.ProcessAst(item);
