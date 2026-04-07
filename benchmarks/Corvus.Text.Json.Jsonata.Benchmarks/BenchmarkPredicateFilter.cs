@@ -56,6 +56,7 @@ public class BenchmarkPredicateFilter : JsonataBenchmarkBase
     private JsonataEvaluator evaluator = null!;
     private ParsedJsonDocument<JsonElement>? doc;
     private JsonElement data;
+    private JsonWorkspace workspace = null!;
 
 #if !NETFRAMEWORK
     private JsonataQuery nativeSinglePredicate = null!;
@@ -73,6 +74,7 @@ public class BenchmarkPredicateFilter : JsonataBenchmarkBase
         this.doc = ParsedJsonDocument<JsonElement>.Parse(System.Text.Encoding.UTF8.GetBytes(DataJson));
         this.data = this.doc.RootElement;
         this.evaluator = new JsonataEvaluator();
+        this.workspace = JsonWorkspace.Create();
         this.evaluator.Evaluate(ExprSinglePredicate, this.data);
         this.evaluator.Evaluate(ExprChainedPredicate, this.data);
         this.evaluator.Evaluate(ExprCompoundPredicate, this.data);
@@ -89,15 +91,22 @@ public class BenchmarkPredicateFilter : JsonataBenchmarkBase
     /// Global cleanup.
     /// </summary>
     [GlobalCleanup]
-    public void GlobalCleanup() => this.doc?.Dispose();
+    public void GlobalCleanup()
+    {
+        this.workspace.Dispose();
+        this.doc?.Dispose();
+    }
 
     /// <summary>
     /// Corvus: Contact.Phone[type='mobile'].number.
     /// </summary>
     [BenchmarkCategory("SinglePredicate")]
     [Benchmark]
-    public JsonElement Corvus_SinglePredicate() =>
-        this.evaluator.Evaluate(ExprSinglePredicate, this.data);
+    public JsonElement Corvus_SinglePredicate()
+    {
+        this.workspace.Reset();
+        return this.evaluator.Evaluate(ExprSinglePredicate, this.data, this.workspace);
+    }
 
 #if !NETFRAMEWORK
     /// <summary>
@@ -114,8 +123,11 @@ public class BenchmarkPredicateFilter : JsonataBenchmarkBase
     /// </summary>
     [BenchmarkCategory("ChainedPredicate")]
     [Benchmark]
-    public JsonElement Corvus_ChainedPredicate() =>
-        this.evaluator.Evaluate(ExprChainedPredicate, this.data);
+    public JsonElement Corvus_ChainedPredicate()
+    {
+        this.workspace.Reset();
+        return this.evaluator.Evaluate(ExprChainedPredicate, this.data, this.workspace);
+    }
 
 #if !NETFRAMEWORK
     /// <summary>
@@ -132,8 +144,11 @@ public class BenchmarkPredicateFilter : JsonataBenchmarkBase
     /// </summary>
     [BenchmarkCategory("CompoundPredicate")]
     [Benchmark]
-    public JsonElement Corvus_CompoundPredicate() =>
-        this.evaluator.Evaluate(ExprCompoundPredicate, this.data);
+    public JsonElement Corvus_CompoundPredicate()
+    {
+        this.workspace.Reset();
+        return this.evaluator.Evaluate(ExprCompoundPredicate, this.data, this.workspace);
+    }
 
 #if !NETFRAMEWORK
     /// <summary>

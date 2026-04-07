@@ -24,7 +24,7 @@ internal sealed class Environment
     /// </summary>
     public const int DefaultMaxDepth = 500;
 
-    private readonly Dictionary<string, Sequence> bindings = new();
+    private Dictionary<string, Sequence>? bindings;
     private readonly Environment? parent;
     private readonly Environment root;
     private int currentDepth;
@@ -94,7 +94,7 @@ internal sealed class Environment
     /// <returns><c>true</c> if the variable was found; otherwise <c>false</c>.</returns>
     public bool TryLookup(string name, out Sequence value)
     {
-        if (this.bindings.TryGetValue(name, out value))
+        if (this.bindings is not null && this.bindings.TryGetValue(name, out value))
         {
             return true;
         }
@@ -115,6 +115,7 @@ internal sealed class Environment
     /// <param name="value">The value to bind.</param>
     public void Bind(string name, Sequence value)
     {
+        this.bindings ??= new();
         this.bindings[name] = value;
     }
 

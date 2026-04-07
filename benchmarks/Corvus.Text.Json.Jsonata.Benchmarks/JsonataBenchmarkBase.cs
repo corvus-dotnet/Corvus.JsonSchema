@@ -15,6 +15,7 @@ public abstract class JsonataBenchmarkBase
 {
     private JsonataEvaluator evaluator = null!;
     private ParsedJsonDocument<JsonElement>? parsedDocument;
+    private JsonWorkspace workspace = null!;
 
     /// <summary>
     /// Gets the pre-parsed input data element.
@@ -42,6 +43,7 @@ public abstract class JsonataBenchmarkBase
         this.Data = this.parsedDocument.RootElement;
 
         this.evaluator = new JsonataEvaluator();
+        this.workspace = JsonWorkspace.Create();
 
         // Pre-warm: compiles and caches the expression
         this.evaluator.Evaluate(expression, this.Data);
@@ -56,10 +58,22 @@ public abstract class JsonataBenchmarkBase
     }
 
     /// <summary>
-    /// Cleans up the parsed document.
+    /// Evaluates the given expression using the caller-provided workspace,
+    /// avoiding the Clone() overhead at the evaluation boundary.
+    /// The workspace is reset between iterations to reclaim document memory.
+    /// </summary>
+    protected JsonElement EvaluateWithWorkspace(string expression, JsonElement data)
+    {
+        this.workspace.Reset();
+        return this.evaluator.Evaluate(expression, data, this.workspace);
+    }
+
+    /// <summary>
+    /// Cleans up the parsed document and workspace.
     /// </summary>
     protected void Cleanup()
     {
+        this.workspace.Dispose();
         this.parsedDocument?.Dispose();
         this.parsedDocument = null;
     }

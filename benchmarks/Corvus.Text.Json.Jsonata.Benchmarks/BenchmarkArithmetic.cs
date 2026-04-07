@@ -47,6 +47,7 @@ public class BenchmarkArithmetic : JsonataBenchmarkBase
     private JsonataEvaluator evaluator = null!;
     private ParsedJsonDocument<JsonElement>? doc;
     private JsonElement data;
+    private JsonWorkspace workspace = null!;
 
 #if !NETFRAMEWORK
     private JsonataQuery nativeSumProduct = null!;
@@ -64,6 +65,7 @@ public class BenchmarkArithmetic : JsonataBenchmarkBase
         this.doc = ParsedJsonDocument<JsonElement>.Parse(System.Text.Encoding.UTF8.GetBytes(DataJson));
         this.data = this.doc.RootElement;
         this.evaluator = new JsonataEvaluator();
+        this.workspace = JsonWorkspace.Create();
         this.evaluator.Evaluate(ExprSumProduct, this.data);
         this.evaluator.Evaluate(ExprMapArithmetic, this.data);
         this.evaluator.Evaluate(ExprPureArithmetic, this.data);
@@ -80,15 +82,22 @@ public class BenchmarkArithmetic : JsonataBenchmarkBase
     /// Global cleanup.
     /// </summary>
     [GlobalCleanup]
-    public void GlobalCleanup() => this.doc?.Dispose();
+    public void GlobalCleanup()
+    {
+        this.workspace.Dispose();
+        this.doc?.Dispose();
+    }
 
     /// <summary>
     /// Corvus: $sum(Account.Order.Product.(Price * Quantity)).
     /// </summary>
     [BenchmarkCategory("SumProduct")]
     [Benchmark]
-    public JsonElement Corvus_SumProduct() =>
-        this.evaluator.Evaluate(ExprSumProduct, this.data);
+    public JsonElement Corvus_SumProduct()
+    {
+        this.workspace.Reset();
+        return this.evaluator.Evaluate(ExprSumProduct, this.data, this.workspace);
+    }
 
 #if !NETFRAMEWORK
     /// <summary>
@@ -105,8 +114,11 @@ public class BenchmarkArithmetic : JsonataBenchmarkBase
     /// </summary>
     [BenchmarkCategory("MapArithmetic")]
     [Benchmark]
-    public JsonElement Corvus_MapArithmetic() =>
-        this.evaluator.Evaluate(ExprMapArithmetic, this.data);
+    public JsonElement Corvus_MapArithmetic()
+    {
+        this.workspace.Reset();
+        return this.evaluator.Evaluate(ExprMapArithmetic, this.data, this.workspace);
+    }
 
 #if !NETFRAMEWORK
     /// <summary>
@@ -123,8 +135,11 @@ public class BenchmarkArithmetic : JsonataBenchmarkBase
     /// </summary>
     [BenchmarkCategory("PureArithmetic")]
     [Benchmark]
-    public JsonElement Corvus_PureArithmetic() =>
-        this.evaluator.Evaluate(ExprPureArithmetic, this.data);
+    public JsonElement Corvus_PureArithmetic()
+    {
+        this.workspace.Reset();
+        return this.evaluator.Evaluate(ExprPureArithmetic, this.data, this.workspace);
+    }
 
 #if !NETFRAMEWORK
     /// <summary>

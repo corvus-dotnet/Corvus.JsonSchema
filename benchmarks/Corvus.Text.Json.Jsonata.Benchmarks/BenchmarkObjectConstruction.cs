@@ -50,6 +50,7 @@ public class BenchmarkObjectConstruction : JsonataBenchmarkBase
     private JsonataEvaluator evaluator = null!;
     private ParsedJsonDocument<JsonElement>? doc;
     private JsonElement data;
+    private JsonWorkspace workspace = null!;
 
 #if !NETFRAMEWORK
     private JsonataQuery nativeSimpleObject = null!;
@@ -67,6 +68,7 @@ public class BenchmarkObjectConstruction : JsonataBenchmarkBase
         this.doc = ParsedJsonDocument<JsonElement>.Parse(System.Text.Encoding.UTF8.GetBytes(DataJson));
         this.data = this.doc.RootElement;
         this.evaluator = new JsonataEvaluator();
+        this.workspace = JsonWorkspace.Create();
         this.evaluator.Evaluate(ExprSimpleObject, this.data);
         this.evaluator.Evaluate(ExprGroupByObject, this.data);
         this.evaluator.Evaluate(ExprArrayOfObjects, this.data);
@@ -83,15 +85,22 @@ public class BenchmarkObjectConstruction : JsonataBenchmarkBase
     /// Global cleanup.
     /// </summary>
     [GlobalCleanup]
-    public void GlobalCleanup() => this.doc?.Dispose();
+    public void GlobalCleanup()
+    {
+        this.workspace.Dispose();
+        this.doc?.Dispose();
+    }
 
     /// <summary>
     /// Corvus: simple object with aggregation.
     /// </summary>
     [BenchmarkCategory("SimpleObject")]
     [Benchmark]
-    public JsonElement Corvus_SimpleObject() =>
-        this.evaluator.Evaluate(ExprSimpleObject, this.data);
+    public JsonElement Corvus_SimpleObject()
+    {
+        this.workspace.Reset();
+        return this.evaluator.Evaluate(ExprSimpleObject, this.data, this.workspace);
+    }
 
 #if !NETFRAMEWORK
     /// <summary>
@@ -108,8 +117,11 @@ public class BenchmarkObjectConstruction : JsonataBenchmarkBase
     /// </summary>
     [BenchmarkCategory("GroupByObject")]
     [Benchmark]
-    public JsonElement Corvus_GroupByObject() =>
-        this.evaluator.Evaluate(ExprGroupByObject, this.data);
+    public JsonElement Corvus_GroupByObject()
+    {
+        this.workspace.Reset();
+        return this.evaluator.Evaluate(ExprGroupByObject, this.data, this.workspace);
+    }
 
 #if !NETFRAMEWORK
     /// <summary>
@@ -126,8 +138,11 @@ public class BenchmarkObjectConstruction : JsonataBenchmarkBase
     /// </summary>
     [BenchmarkCategory("ArrayOfObjects")]
     [Benchmark]
-    public JsonElement Corvus_ArrayOfObjects() =>
-        this.evaluator.Evaluate(ExprArrayOfObjects, this.data);
+    public JsonElement Corvus_ArrayOfObjects()
+    {
+        this.workspace.Reset();
+        return this.evaluator.Evaluate(ExprArrayOfObjects, this.data, this.workspace);
+    }
 
 #if !NETFRAMEWORK
     /// <summary>

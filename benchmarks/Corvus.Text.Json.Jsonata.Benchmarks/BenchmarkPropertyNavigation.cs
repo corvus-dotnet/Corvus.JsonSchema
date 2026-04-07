@@ -50,6 +50,7 @@ public class BenchmarkPropertyNavigation : JsonataBenchmarkBase
     private JsonataEvaluator evaluator = null!;
     private ParsedJsonDocument<JsonElement>? doc;
     private JsonElement data;
+    private JsonWorkspace workspace = null!;
 
 #if !NETFRAMEWORK
     private JsonataQuery nativeDeepPath = null!;
@@ -67,6 +68,7 @@ public class BenchmarkPropertyNavigation : JsonataBenchmarkBase
         this.doc = ParsedJsonDocument<JsonElement>.Parse(System.Text.Encoding.UTF8.GetBytes(DataJson));
         this.data = this.doc.RootElement;
         this.evaluator = new JsonataEvaluator();
+        this.workspace = JsonWorkspace.Create();
         this.evaluator.Evaluate(ExprDeepPath, this.data);
         this.evaluator.Evaluate(ExprQuotedProperty, this.data);
         this.evaluator.Evaluate(ExprArrayIndex, this.data);
@@ -83,15 +85,22 @@ public class BenchmarkPropertyNavigation : JsonataBenchmarkBase
     /// Global cleanup.
     /// </summary>
     [GlobalCleanup]
-    public void GlobalCleanup() => this.doc?.Dispose();
+    public void GlobalCleanup()
+    {
+        this.workspace.Dispose();
+        this.doc?.Dispose();
+    }
 
     /// <summary>
     /// Corvus: deep path traversal through arrays.
     /// </summary>
     [BenchmarkCategory("DeepPath")]
     [Benchmark]
-    public JsonElement Corvus_DeepPath() =>
-        this.evaluator.Evaluate(ExprDeepPath, this.data);
+    public JsonElement Corvus_DeepPath()
+    {
+        this.workspace.Reset();
+        return this.evaluator.Evaluate(ExprDeepPath, this.data, this.workspace);
+    }
 
 #if !NETFRAMEWORK
     /// <summary>
@@ -108,8 +117,11 @@ public class BenchmarkPropertyNavigation : JsonataBenchmarkBase
     /// </summary>
     [BenchmarkCategory("QuotedProperty")]
     [Benchmark]
-    public JsonElement Corvus_QuotedProperty() =>
-        this.evaluator.Evaluate(ExprQuotedProperty, this.data);
+    public JsonElement Corvus_QuotedProperty()
+    {
+        this.workspace.Reset();
+        return this.evaluator.Evaluate(ExprQuotedProperty, this.data, this.workspace);
+    }
 
 #if !NETFRAMEWORK
     /// <summary>
@@ -126,8 +138,11 @@ public class BenchmarkPropertyNavigation : JsonataBenchmarkBase
     /// </summary>
     [BenchmarkCategory("ArrayIndex")]
     [Benchmark]
-    public JsonElement Corvus_ArrayIndex() =>
-        this.evaluator.Evaluate(ExprArrayIndex, this.data);
+    public JsonElement Corvus_ArrayIndex()
+    {
+        this.workspace.Reset();
+        return this.evaluator.Evaluate(ExprArrayIndex, this.data, this.workspace);
+    }
 
 #if !NETFRAMEWORK
     /// <summary>

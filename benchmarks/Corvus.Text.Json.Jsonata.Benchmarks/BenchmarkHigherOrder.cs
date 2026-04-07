@@ -48,6 +48,7 @@ public class BenchmarkHigherOrder : JsonataBenchmarkBase
     private JsonataEvaluator evaluator = null!;
     private ParsedJsonDocument<JsonElement>? doc;
     private JsonElement data;
+    private JsonWorkspace workspace = null!;
 
 #if !NETFRAMEWORK
     private JsonataQuery nativeMap = null!;
@@ -66,6 +67,7 @@ public class BenchmarkHigherOrder : JsonataBenchmarkBase
         this.doc = ParsedJsonDocument<JsonElement>.Parse(System.Text.Encoding.UTF8.GetBytes(DataJson));
         this.data = this.doc.RootElement;
         this.evaluator = new JsonataEvaluator();
+        this.workspace = JsonWorkspace.Create();
         this.evaluator.Evaluate(ExprMap, this.data);
         this.evaluator.Evaluate(ExprFilter, this.data);
         this.evaluator.Evaluate(ExprReduce, this.data);
@@ -84,15 +86,22 @@ public class BenchmarkHigherOrder : JsonataBenchmarkBase
     /// Global cleanup.
     /// </summary>
     [GlobalCleanup]
-    public void GlobalCleanup() => this.doc?.Dispose();
+    public void GlobalCleanup()
+    {
+        this.workspace.Dispose();
+        this.doc?.Dispose();
+    }
 
     /// <summary>
     /// Corvus: $map extracting product names.
     /// </summary>
     [BenchmarkCategory("Map")]
     [Benchmark]
-    public JsonElement Corvus_Map() =>
-        this.evaluator.Evaluate(ExprMap, this.data);
+    public JsonElement Corvus_Map()
+    {
+        this.workspace.Reset();
+        return this.evaluator.Evaluate(ExprMap, this.data, this.workspace);
+    }
 
 #if !NETFRAMEWORK
     /// <summary>
@@ -109,8 +118,11 @@ public class BenchmarkHigherOrder : JsonataBenchmarkBase
     /// </summary>
     [BenchmarkCategory("Filter")]
     [Benchmark]
-    public JsonElement Corvus_Filter() =>
-        this.evaluator.Evaluate(ExprFilter, this.data);
+    public JsonElement Corvus_Filter()
+    {
+        this.workspace.Reset();
+        return this.evaluator.Evaluate(ExprFilter, this.data, this.workspace);
+    }
 
 #if !NETFRAMEWORK
     /// <summary>
@@ -127,8 +139,11 @@ public class BenchmarkHigherOrder : JsonataBenchmarkBase
     /// </summary>
     [BenchmarkCategory("Reduce")]
     [Benchmark]
-    public JsonElement Corvus_Reduce() =>
-        this.evaluator.Evaluate(ExprReduce, this.data);
+    public JsonElement Corvus_Reduce()
+    {
+        this.workspace.Reset();
+        return this.evaluator.Evaluate(ExprReduce, this.data, this.workspace);
+    }
 
 #if !NETFRAMEWORK
     /// <summary>
@@ -145,8 +160,11 @@ public class BenchmarkHigherOrder : JsonataBenchmarkBase
     /// </summary>
     [BenchmarkCategory("Sort")]
     [Benchmark]
-    public JsonElement Corvus_Sort() =>
-        this.evaluator.Evaluate(ExprSort, this.data);
+    public JsonElement Corvus_Sort()
+    {
+        this.workspace.Reset();
+        return this.evaluator.Evaluate(ExprSort, this.data, this.workspace);
+    }
 
 #if !NETFRAMEWORK
     /// <summary>

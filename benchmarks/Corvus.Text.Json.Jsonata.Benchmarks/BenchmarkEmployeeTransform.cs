@@ -29,6 +29,8 @@ public class BenchmarkEmployeeTransform : JsonataBenchmarkBase
         }
         """;
 
+    private JsonWorkspace workspace = null!;
+
 #if !NETFRAMEWORK
     private JsonataQuery nativeQuery = null!;
     private JToken nativeData = null!;
@@ -43,6 +45,7 @@ public class BenchmarkEmployeeTransform : JsonataBenchmarkBase
     {
         this.dataJson = File.ReadAllText("employees.json");
         this.SetupFromFile(Query, "employees.json");
+        this.workspace = JsonWorkspace.Create();
 
 #if !NETFRAMEWORK
         this.nativeQuery = new JsonataQuery(Query);
@@ -54,7 +57,11 @@ public class BenchmarkEmployeeTransform : JsonataBenchmarkBase
     /// Global cleanup.
     /// </summary>
     [GlobalCleanup]
-    public void GlobalCleanup() => this.Cleanup();
+    public void GlobalCleanup()
+    {
+        this.workspace.Dispose();
+        this.Cleanup();
+    }
 
     /// <summary>
     /// Corvus: evaluate only (expression pre-compiled and cached).
@@ -63,7 +70,8 @@ public class BenchmarkEmployeeTransform : JsonataBenchmarkBase
     [Benchmark]
     public JsonElement Corvus_Evaluate()
     {
-        return this.Evaluator.Evaluate(this.Expression, this.Data);
+        this.workspace.Reset();
+        return this.Evaluator.Evaluate(this.Expression, this.Data, this.workspace);
     }
 
 #if !NETFRAMEWORK

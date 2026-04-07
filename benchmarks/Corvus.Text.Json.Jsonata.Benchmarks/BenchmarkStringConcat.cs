@@ -39,6 +39,7 @@ public class BenchmarkStringConcat : JsonataBenchmarkBase
     private JsonataEvaluator evaluator = null!;
     private ParsedJsonDocument<JsonElement>? doc;
     private JsonElement data;
+    private JsonWorkspace workspace = null!;
 
 #if !NETFRAMEWORK
     private JsonataQuery nativeSimpleConcat = null!;
@@ -56,6 +57,7 @@ public class BenchmarkStringConcat : JsonataBenchmarkBase
         this.doc = ParsedJsonDocument<JsonElement>.Parse(System.Text.Encoding.UTF8.GetBytes(DataJson));
         this.data = this.doc.RootElement;
         this.evaluator = new JsonataEvaluator();
+        this.workspace = JsonWorkspace.Create();
         this.evaluator.Evaluate(ExprSimpleConcat, this.data);
         this.evaluator.Evaluate(ExprConcatWithNumber, this.data);
         this.evaluator.Evaluate(ExprJoinArray, this.data);
@@ -72,15 +74,22 @@ public class BenchmarkStringConcat : JsonataBenchmarkBase
     /// Global cleanup.
     /// </summary>
     [GlobalCleanup]
-    public void GlobalCleanup() => this.doc?.Dispose();
+    public void GlobalCleanup()
+    {
+        this.workspace.Dispose();
+        this.doc?.Dispose();
+    }
 
     /// <summary>
     /// Corvus: simple string concatenation.
     /// </summary>
     [BenchmarkCategory("SimpleConcat")]
     [Benchmark]
-    public JsonElement Corvus_SimpleConcat() =>
-        this.evaluator.Evaluate(ExprSimpleConcat, this.data);
+    public JsonElement Corvus_SimpleConcat()
+    {
+        this.workspace.Reset();
+        return this.evaluator.Evaluate(ExprSimpleConcat, this.data, this.workspace);
+    }
 
 #if !NETFRAMEWORK
     /// <summary>
@@ -97,8 +106,11 @@ public class BenchmarkStringConcat : JsonataBenchmarkBase
     /// </summary>
     [BenchmarkCategory("ConcatWithNumber")]
     [Benchmark]
-    public JsonElement Corvus_ConcatWithNumber() =>
-        this.evaluator.Evaluate(ExprConcatWithNumber, this.data);
+    public JsonElement Corvus_ConcatWithNumber()
+    {
+        this.workspace.Reset();
+        return this.evaluator.Evaluate(ExprConcatWithNumber, this.data, this.workspace);
+    }
 
 #if !NETFRAMEWORK
     /// <summary>
@@ -115,8 +127,11 @@ public class BenchmarkStringConcat : JsonataBenchmarkBase
     /// </summary>
     [BenchmarkCategory("JoinArray")]
     [Benchmark]
-    public JsonElement Corvus_JoinArray() =>
-        this.evaluator.Evaluate(ExprJoinArray, this.data);
+    public JsonElement Corvus_JoinArray()
+    {
+        this.workspace.Reset();
+        return this.evaluator.Evaluate(ExprJoinArray, this.data, this.workspace);
+    }
 
 #if !NETFRAMEWORK
     /// <summary>
