@@ -91,6 +91,9 @@ internal static class XPathDateTimeFormatter
     /// <returns>The formatted string.</returns>
     public static string FormatDateTime(DateTimeOffset dt, string picture)
     {
+        // Pre-validate bracket matching before formatting any components
+        ValidateBrackets(picture);
+
         var sb = new StringBuilder();
         int i = 0;
 
@@ -137,6 +140,34 @@ internal static class XPathDateTimeFormatter
         }
 
         return sb.ToString();
+    }
+
+    private static void ValidateBrackets(string picture)
+    {
+        int i = 0;
+        while (i < picture.Length)
+        {
+            if (picture[i] == '[')
+            {
+                if (i + 1 < picture.Length && picture[i + 1] == '[')
+                {
+                    i += 2;
+                    continue;
+                }
+
+                int end = picture.IndexOf(']', i + 1);
+                if (end < 0)
+                {
+                    throw new JsonataException("D3135", "Picture string contains a '[' with no matching ']'", 0);
+                }
+
+                i = end + 1;
+            }
+            else
+            {
+                i++;
+            }
+        }
     }
 
     /// <summary>
@@ -302,6 +333,14 @@ internal static class XPathDateTimeFormatter
                 default:
                     throw new JsonataException("D3132", $"Unknown component specifier '{compChar}' in date/time picture string", 0);
             }
+        }
+
+        // If no date/time components were extracted at all (e.g., picture was all literal text),
+        // the parse is considered unsuccessful.
+        if (year < 0 && month < 0 && day < 0 && dayOfYear < 0 &&
+            hour < 0 && minute < 0 && second < 0 && millisecond < 0)
+        {
+            return false;
         }
 
         // Validate consistency
@@ -718,18 +757,18 @@ internal static class XPathDateTimeFormatter
             pres = "1";
         }
 
-        // Name presentations (N, n, Nn) only apply to components with names (month, day-of-week).
-        // For numeric-only components (year, hour, minute, etc.), fall back to default numeric.
-        if (pres == "N" || pres == "n" || pres == "Nn")
-        {
-            pres = "1";
-        }
-
         string formatted = FormatIntegerWithPresentation(value, pres, isOrdinal);
 
+        // Count the mandatory digit positions in the presentation pattern.
+        // maxWidth should never truncate below what the presentation requires.
         if (maxWidth >= 0 && formatted.Length > maxWidth)
         {
-            formatted = formatted.Substring(formatted.Length - maxWidth);
+            int mandatoryFromPres = CountMandatoryDigits(pres);
+            int effectiveMax = Math.Max(maxWidth, mandatoryFromPres);
+            if (formatted.Length > effectiveMax)
+            {
+                formatted = formatted.Substring(formatted.Length - effectiveMax);
+            }
         }
 
         if (minWidth >= 0 && formatted.Length < minWidth)
@@ -1074,6 +1113,30 @@ internal static class XPathDateTimeFormatter
         }
 
         return true;
+    }
+
+    private static int CountMandatoryDigits(string presentation)
+    {
+        // Count digit positions (0-9) and optional-digit markers (#) — these
+        // define how many digit characters the presentation pattern requires.
+        int count = 0;
+        foreach (char c in presentation)
+        {
+            if ((c >= '0' && c <= '9') || c == '#')
+            {
+                count++;
+            }
+            else
+            {
+                int ug = GetUnicodeDecimalGroup(c);
+                if (ug >= 0)
+                {
+                    count++;
+                }
+            }
+        }
+
+        return count;
     }
 
     private static void ParseWidthModifier(string spec, out int minWidth, out int maxWidth)
@@ -2184,6 +2247,21 @@ internal static class XPathDateTimeFormatter
         // Strip '#' from presentation
         pres = pres.Replace("#", string.Empty);
 
+        // Count expected digits from presentation to limit consumption
+        // when adjacent components have no separator (e.g., "201802" with [Y0001][M01])
+        int maxDigits = 0;
+        foreach (char dc in pres)
+        {
+            if (dc >= '0' && dc <= '9')
+            {
+                maxDigits++;
+            }
+        }
+
+        // If presentation specifies more than 1 digit, use it as a fixed width
+        // Otherwise (default), consume greedily
+        bool fixedWidth = maxDigits > 1;
+
         // Parse numeric value
         int start = pos;
         bool negative = false;
@@ -2193,9 +2271,15 @@ internal static class XPathDateTimeFormatter
             pos++;
         }
 
+        int digitsRead = 0;
         while (pos < str.Length && str[pos] >= '0' && str[pos] <= '9')
         {
             pos++;
+            digitsRead++;
+            if (fixedWidth && digitsRead >= maxDigits)
+            {
+                break;
+            }
         }
 
         if (pos == start || (negative && pos == start + 1))

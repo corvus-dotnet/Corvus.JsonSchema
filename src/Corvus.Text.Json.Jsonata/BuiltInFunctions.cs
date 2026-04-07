@@ -4215,6 +4215,41 @@ internal static class BuiltInFunctions
         return formatted + sign + h.ToString(CultureInfo.InvariantCulture).PadLeft(2, '0') + ":" + m.ToString(CultureInfo.InvariantCulture).PadLeft(2, '0');
     }
 
+    /// <summary>
+    /// Parse a string as strict ISO 8601 date/time or throw D3110 for invalid format.
+    /// </summary>
+    private static Sequence ParseIso8601ToMillis(string str)
+    {
+        // ISO 8601 formats: YYYY, YYYY-MM, YYYY-MM-DD, YYYY-MM-DDThh:mm:ss[.fff][Z|±hh:mm]
+        string[] iso8601Formats =
+        [
+            "yyyy-MM-ddTHH:mm:ss.fffzzz",
+            "yyyy-MM-ddTHH:mm:ss.fffZ",
+            "yyyy-MM-ddTHH:mm:ss.fff",
+            "yyyy-MM-ddTHH:mm:sszzz",
+            "yyyy-MM-ddTHH:mm:ssZ",
+            "yyyy-MM-ddTHH:mm:ss",
+            "yyyy-MM-ddTHH:mmzzz",
+            "yyyy-MM-ddTHH:mmZ",
+            "yyyy-MM-ddTHH:mm",
+            "yyyy-MM-dd",
+            "yyyy-MM",
+            "yyyy",
+        ];
+
+        if (DateTimeOffset.TryParseExact(
+            str,
+            iso8601Formats,
+            CultureInfo.InvariantCulture,
+            DateTimeStyles.AssumeUniversal,
+            out var dt))
+        {
+            return new Sequence(FunctionalCompiler.CreateNumberElement(dt.ToUnixTimeMilliseconds()));
+        }
+
+        throw new JsonataException("D3110", $"The string \"{str}\" cannot be parsed as a valid timestamp", 0);
+    }
+
     private static ExpressionEvaluator CompileToMillis(ExpressionEvaluator[] args)
     {
         if (args.Length < 1)
@@ -4237,23 +4272,13 @@ internal static class BuiltInFunctions
 
             if (pictureArg == null)
             {
-                if (DateTimeOffset.TryParse(str, CultureInfo.InvariantCulture, DateTimeStyles.None, out var dt))
-                {
-                    return new Sequence(FunctionalCompiler.CreateNumberElement(dt.ToUnixTimeMilliseconds()));
-                }
-
-                return Sequence.Undefined;
+                return ParseIso8601ToMillis(str);
             }
 
             var picSeq = pictureArg(input, env);
             if (picSeq.IsUndefined)
             {
-                if (DateTimeOffset.TryParse(str, CultureInfo.InvariantCulture, DateTimeStyles.None, out var dt))
-                {
-                    return new Sequence(FunctionalCompiler.CreateNumberElement(dt.ToUnixTimeMilliseconds()));
-                }
-
-                return Sequence.Undefined;
+                return ParseIso8601ToMillis(str);
             }
 
             string picture = FunctionalCompiler.CoerceElementToString(picSeq.FirstOrDefault);
