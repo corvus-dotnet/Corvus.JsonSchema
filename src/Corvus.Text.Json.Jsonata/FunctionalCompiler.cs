@@ -425,6 +425,7 @@ internal static class FunctionalCompiler
         var steps = new ExpressionEvaluator[path.Steps.Count];
         var stages = new ExpressionEvaluator[]?[path.Steps.Count];
         var stageIsSortFlags = new bool[]?[path.Steps.Count];
+        var stageIndexBindingVars = new string?[]?[path.Steps.Count];
         var focusVars = new string?[path.Steps.Count];
         var indexVars = new string?[path.Steps.Count];
         var ancestorLabels = new string[]?[path.Steps.Count];
@@ -454,6 +455,7 @@ internal static class FunctionalCompiler
                 {
                     stages[i] = new ExpressionEvaluator[annotations.Stages.Count];
                     stageIsSortFlags[i] = new bool[annotations.Stages.Count];
+                    stageIndexBindingVars[i] = new string?[annotations.Stages.Count];
                     for (int s = 0; s < annotations.Stages.Count; s++)
                     {
                         var stage = annotations.Stages[s];
@@ -470,6 +472,14 @@ internal static class FunctionalCompiler
                                 ? CompileFocusSortStage(sortNode, focusVars[i]!)
                                 : CompileSortStage(sortNode);
                             stageIsSortFlags[i]![s] = true;
+                        }
+                        else if (stage is VariableNode varStage)
+                        {
+                            // Post-predicate index binding (e.g. books[$filter]#$ib2).
+                            // Treated as a pass-through stage that binds the variable
+                            // to each element's position.
+                            stageIndexBindingVars[i]![s] = varStage.Name;
+                            stages[i]![s] = static (in JsonElement _, Environment __) => Sequence.Undefined;
                         }
                         else
                         {
@@ -515,6 +525,22 @@ internal static class FunctionalCompiler
         }
 
         var keepSingleton = path.KeepSingletonArray;
+
+        // KeepSingletonArray may not have been propagated from step-level KeepArray
+        // when the path was created by ProcessSortBinary or ProcessIndexBinary
+        // rather than ProcessDot. Check steps directly as a fallback.
+        if (!keepSingleton)
+        {
+            for (int k = 0; k < path.Steps.Count; k++)
+            {
+                if (path.Steps[k].KeepArray)
+                {
+                    keepSingleton = true;
+                    break;
+                }
+            }
+        }
+
         var lastStepIsConsArray = path.Steps[path.Steps.Count - 1] is ArrayConstructorNode { ConsArray: true };
 
         // Detect if a sort step follows an index-bound step (tuple semantics).
@@ -716,7 +742,7 @@ internal static class FunctionalCompiler
                         // Apply any stages on the sort step itself (e.g. filters after sort)
                         if (stages[stepIdx] is not null)
                         {
-                            current = ApplyStages(current, stages[stepIdx]!, stageIsSortFlags[stepIdx]!, env, indexVars[stepIdx]);
+                            current = ApplyStages(current, stages[stepIdx]!, stageIsSortFlags[stepIdx]!, env, indexVars[stepIdx], stageIndexBindingVars[stepIdx]);
                         }
 
                         // When tuple tracking is active, expand the sorted JSON array to
@@ -869,7 +895,7 @@ internal static class FunctionalCompiler
                     {
                         if (stepIdx == 0)
                         {
-                            current = ApplyStages(current, stages[stepIdx]!, stageIsSortFlags[stepIdx]!, env, indexVars[stepIdx]);
+                            current = ApplyStages(current, stages[stepIdx]!, stageIsSortFlags[stepIdx]!, env, indexVars[stepIdx], stageIndexBindingVars[stepIdx]);
                         }
                         else
                         {
@@ -2879,13 +2905,40 @@ internal static class FunctionalCompiler
         return new Sequence((JsonElement)objRoot);
     }
 
-    private static Sequence ApplyStages(Sequence current, ExpressionEvaluator[] stageEvaluators, bool[] isSortStage, Environment env, string? indexVar = null)
+    private static Sequence ApplyStages(Sequence current, ExpressionEvaluator[] stageEvaluators, bool[] isSortStage, Environment env, string? indexVar = null, string?[]? indexBindingVars = null)
     {
+        // Track any index binding variable introduced by a VariableNode stage.
+        // Subsequent filter/predicate stages bind this variable per-element so
+        // expressions like [$pos>=2] reference the correct position.
+        string? activeIndexBinding = null;
+
         for (int s = 0; s < stageEvaluators.Length; s++)
         {
             if (current.IsUndefined)
             {
                 return Sequence.Undefined;
+            }
+
+            // Index binding stage: register the variable for per-element binding
+            // in subsequent stages, and expand elements (don't filter).
+            if (indexBindingVars is not null && s < indexBindingVars.Length && indexBindingVars[s] is not null)
+            {
+                activeIndexBinding = indexBindingVars[s]!;
+
+                // Expand singleton array to multi-value so subsequent stages
+                // iterate individual elements
+                if (current.IsSingleton)
+                {
+                    var el = current.FirstOrDefault;
+                    if (el.ValueKind == JsonValueKind.Array)
+                    {
+                        var expanded = new List<JsonElement>();
+                        expanded.AddRange(el.EnumerateArray());
+                        current = new Sequence(expanded.ToArray(), expanded.Count);
+                    }
+                }
+
+                continue;
             }
 
             var stage = stageEvaluators[s];
@@ -2959,6 +3012,12 @@ internal static class FunctionalCompiler
                 if (indexVar is not null)
                 {
                     env.Bind(indexVar, new Sequence(JsonataHelpers.NumberFromDouble(i, env.Workspace)));
+                }
+
+                // Bind any active index binding variable (from a preceding #$var stage)
+                if (activeIndexBinding is not null)
+                {
+                    env.Bind(activeIndexBinding, new Sequence(JsonataHelpers.NumberFromDouble(i, env.Workspace)));
                 }
 
                 var result = stage(el, env);

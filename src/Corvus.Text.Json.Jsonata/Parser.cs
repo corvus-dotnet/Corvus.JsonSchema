@@ -1142,6 +1142,11 @@ internal sealed class Parser
             }
         }
 
+        if (binary.KeepArray)
+        {
+            step.KeepArray = true;
+        }
+
         var varNode = (VariableNode)this.ProcessAst(binary.Rhs);
         var annotations = GetOrCreateAnnotations(step);
         if (annotations.Stages.Count == 0)
