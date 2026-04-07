@@ -1004,27 +1004,25 @@ internal static class FunctionalCompiler
             var left = lhs(input, env);
             var right = rhs(input, env);
 
+            // Check for non-number types before checking for undefined,
+            // so that e.g. `false + $x` throws T2001 rather than returning undefined.
+            if (!left.IsUndefined && left.FirstOrDefault.ValueKind != JsonValueKind.Number)
+            {
+                throw new JsonataException("T2001", "The left side of the arithmetic expression is not a number", 0);
+            }
+
+            if (!right.IsUndefined && right.FirstOrDefault.ValueKind != JsonValueKind.Number)
+            {
+                throw new JsonataException("T2002", "The right side of the arithmetic expression is not a number", 0);
+            }
+
             if (left.IsUndefined || right.IsUndefined)
             {
                 return Sequence.Undefined;
             }
 
-            var leftEl = left.FirstOrDefault;
-            var rightEl = right.FirstOrDefault;
-
-            // Strict arithmetic: only Number ValueKind allowed (no string/boolean coercion)
-            if (leftEl.ValueKind != JsonValueKind.Number)
-            {
-                throw new JsonataException("T2001", "The left side of the arithmetic expression is not a number", 0);
-            }
-
-            if (rightEl.ValueKind != JsonValueKind.Number)
-            {
-                throw new JsonataException("T2002", "The right side of the arithmetic expression is not a number", 0);
-            }
-
-            double leftNum = leftEl.GetDouble();
-            double rightNum = rightEl.GetDouble();
+            double leftNum = left.FirstOrDefault.GetDouble();
+            double rightNum = right.FirstOrDefault.GetDouble();
 
             double result = op(leftNum, rightNum);
             if (double.IsInfinity(result) || double.IsNaN(result))

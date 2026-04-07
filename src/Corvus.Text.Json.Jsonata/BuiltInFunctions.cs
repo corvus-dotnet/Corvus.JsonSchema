@@ -395,14 +395,15 @@ internal static class BuiltInFunctions
         return (in JsonElement input, Environment env) =>
         {
             var seq = arg(input, env);
-            if (seq.IsUndefined)
-            {
-                return Sequence.Undefined;
-            }
 
             if (seq.IsLambda)
             {
                 throw new JsonataException("T0410", "Argument 1 of function $number is not of the correct type", 0);
+            }
+
+            if (seq.IsUndefined)
+            {
+                return Sequence.Undefined;
             }
 
             var element = seq.FirstOrDefault;
@@ -413,10 +414,15 @@ internal static class BuiltInFunctions
                 throw new JsonataException("T0410", "Argument 1 of function $number is not of the correct type", 0);
             }
 
-            // Booleans return undefined per JSONata spec
-            if (element.ValueKind is JsonValueKind.True or JsonValueKind.False)
+            // Booleans: true → 1, false → 0
+            if (element.ValueKind == JsonValueKind.True)
             {
-                return Sequence.Undefined;
+                return new Sequence(FunctionalCompiler.CreateNumberElement(1));
+            }
+
+            if (element.ValueKind == JsonValueKind.False)
+            {
+                return new Sequence(FunctionalCompiler.CreateNumberElement(0));
             }
 
             if (element.ValueKind == JsonValueKind.Number)
@@ -434,7 +440,47 @@ internal static class BuiltInFunctions
             if (element.ValueKind == JsonValueKind.String)
             {
                 string? s = element.GetString();
-                if (s is not null && double.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out double parsed))
+                if (s is null || s.Length == 0)
+                {
+                    throw new JsonataException("D3030", "Unable to cast value to a number", 0);
+                }
+
+                // Handle hex (0x/0X), binary (0b/0B), and octal (0o/0O) prefixes
+                if (s.Length > 2 && s[0] == '0')
+                {
+                    char prefix = s[1];
+                    if (prefix is 'x' or 'X')
+                    {
+                        if (long.TryParse(s.Substring(2), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out long hexVal))
+                        {
+                            return new Sequence(FunctionalCompiler.CreateNumberElement(hexVal));
+                        }
+
+                        throw new JsonataException("D3030", "Unable to cast value to a number", 0);
+                    }
+
+                    if (prefix is 'b' or 'B')
+                    {
+                        if (TryParseBinary(s, 2, out long binVal))
+                        {
+                            return new Sequence(FunctionalCompiler.CreateNumberElement(binVal));
+                        }
+
+                        throw new JsonataException("D3030", "Unable to cast value to a number", 0);
+                    }
+
+                    if (prefix is 'o' or 'O')
+                    {
+                        if (TryParseOctal(s, 2, out long octVal))
+                        {
+                            return new Sequence(FunctionalCompiler.CreateNumberElement(octVal));
+                        }
+
+                        throw new JsonataException("D3030", "Unable to cast value to a number", 0);
+                    }
+                }
+
+                if (double.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out double parsed))
                 {
                     if (double.IsInfinity(parsed))
                     {
@@ -449,6 +495,50 @@ internal static class BuiltInFunctions
 
             return Sequence.Undefined;
         };
+    }
+
+    private static bool TryParseBinary(string digits, int startIndex, out long result)
+    {
+        result = 0;
+        if (startIndex >= digits.Length)
+        {
+            return false;
+        }
+
+        for (int i = startIndex; i < digits.Length; i++)
+        {
+            char c = digits[i];
+            if (c is not ('0' or '1'))
+            {
+                return false;
+            }
+
+            result = (result << 1) | (long)(uint)(c - '0');
+        }
+
+        return true;
+    }
+
+    private static bool TryParseOctal(string digits, int startIndex, out long result)
+    {
+        result = 0;
+        if (startIndex >= digits.Length)
+        {
+            return false;
+        }
+
+        for (int i = startIndex; i < digits.Length; i++)
+        {
+            char c = digits[i];
+            if (c < '0' || c > '7')
+            {
+                return false;
+            }
+
+            result = (result << 3) | (long)(uint)(c - '0');
+        }
+
+        return true;
     }
 
     private static ExpressionEvaluator CompileToBoolean(ExpressionEvaluator[] args)
@@ -583,7 +673,7 @@ internal static class BuiltInFunctions
             }
 
             // $length on non-string should throw type error
-            throw new JsonataException("T0410", "$length expects a string argument", 0);
+            throw new JsonataException("T0411", "$length expects a string argument", 0);
         };
     }
 
@@ -837,14 +927,32 @@ internal static class BuiltInFunctions
 
     private static ExpressionEvaluator CompileSplit(ExpressionEvaluator[] args)
     {
-        if (args.Length < 2 || args.Length > 3)
-        {
-            throw new JsonataException("T0410", "$split expects 2 or 3 arguments", 0);
-        }
+        ExpressionEvaluator strArg;
+        ExpressionEvaluator sepArg;
+        ExpressionEvaluator? limitArg;
 
-        var strArg = args[0];
-        var sepArg = args[1];
-        var limitArg = args.Length > 2 ? args[2] : null;
+        if (args.Length == 1)
+        {
+            strArg = ContextArg;
+            sepArg = args[0];
+            limitArg = null;
+        }
+        else if (args.Length == 2)
+        {
+            strArg = args[0];
+            sepArg = args[1];
+            limitArg = null;
+        }
+        else if (args.Length == 3)
+        {
+            strArg = args[0];
+            sepArg = args[1];
+            limitArg = args[2];
+        }
+        else
+        {
+            throw new JsonataException("T0410", "$split expects 1-3 arguments", 0);
+        }
 
         return (in JsonElement input, Environment env) =>
         {
@@ -1758,7 +1866,8 @@ internal static class BuiltInFunctions
             var lambda = funcSeq.Lambda!;
 
             // Validate the reducer function accepts at least 2 parameters
-            if (lambda.Arity < 2)
+            // (skip for built-in functions which have dynamic arity)
+            if (lambda.NativeFunc is null && lambda.Arity < 2)
             {
                 throw new JsonataException("D3050", "The second argument of the $reduce function must be a function with at least two arguments", 0);
             }
@@ -2057,20 +2166,55 @@ internal static class BuiltInFunctions
                 return Sequence.Undefined;
             }
 
-            var obj = objSeq.FirstOrDefault;
-            if (obj.ValueKind != JsonValueKind.Object)
+            string? key = keySeq.FirstOrDefault.GetString();
+            if (key is null)
             {
                 return Sequence.Undefined;
             }
 
-            string? key = keySeq.FirstOrDefault.GetString();
-            if (key is not null && obj.TryGetProperty(key, out var value))
+            // Collect all objects from the sequence, flattening any nested arrays
+            var results = new List<JsonElement>();
+            LookupCollect(objSeq, key, results);
+
+            if (results.Count == 0)
             {
-                return new Sequence(value);
+                return Sequence.Undefined;
             }
 
-            return Sequence.Undefined;
+            if (results.Count == 1)
+            {
+                return new Sequence(results[0]);
+            }
+
+            return new Sequence(FunctionalCompiler.CreateJsonArrayElement(results));
         };
+    }
+
+    private static void LookupCollect(Sequence seq, string key, List<JsonElement> results)
+    {
+        for (int i = 0; i < seq.Count; i++)
+        {
+            var el = seq[i];
+            LookupCollectElement(el, key, results);
+        }
+    }
+
+    private static void LookupCollectElement(JsonElement el, string key, List<JsonElement> results)
+    {
+        if (el.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var item in el.EnumerateArray())
+            {
+                LookupCollectElement(item, key, results);
+            }
+        }
+        else if (el.ValueKind == JsonValueKind.Object)
+        {
+            if (el.TryGetProperty(key, out var value))
+            {
+                results.Add(value);
+            }
+        }
     }
 
     // --- Thread-safe random for netstandard2.0/net481 compatibility ---
@@ -2133,11 +2277,31 @@ internal static class BuiltInFunctions
             }
 
             var lambda = funcSeq.Lambda!;
+
+            // Build array element for 3rd lambda arg
+            JsonElement arrElement;
+            {
+                using var arrMs = new MemoryStream(256);
+                using var arrWriter = new Utf8JsonWriter(arrMs);
+                arrWriter.WriteStartArray();
+                for (int i = 0; i < elements.Count; i++)
+                {
+                    elements[i].WriteTo(arrWriter);
+                }
+
+                arrWriter.WriteEndArray();
+                arrWriter.Flush();
+                arrMs.Position = 0;
+                using var arrDoc = JsonDocument.Parse(arrMs);
+                arrElement = arrDoc.RootElement.Clone();
+            }
+
+            var arrSeq = new Sequence(arrElement);
             JsonElement? match = null;
             for (int i = 0; i < elements.Count; i++)
             {
                 var result = lambda.Invoke(
-                    new[] { new Sequence(elements[i]), new Sequence(FunctionalCompiler.CreateNumberElement(i)) },
+                    new[] { new Sequence(elements[i]), new Sequence(FunctionalCompiler.CreateNumberElement(i)), arrSeq },
                     elements[i],
                     env);
                 if (FunctionalCompiler.IsTruthy(result))
@@ -2190,11 +2354,12 @@ internal static class BuiltInFunctions
             using var ms = new MemoryStream(256);
             using var writer = new Utf8JsonWriter(ms);
             writer.WriteStartObject();
+            var objSeq = new Sequence(obj);
             foreach (var prop in obj.EnumerateObject())
             {
                 var valSeq = new Sequence(prop.Value);
                 var keySeq = new Sequence(FunctionalCompiler.CreateStringElement(prop.Name));
-                var result = lambda.Invoke(new[] { valSeq, keySeq }, input, env);
+                var result = lambda.Invoke(new[] { valSeq, keySeq, objSeq }, input, env);
                 if (FunctionalCompiler.IsTruthy(result))
                 {
                     writer.WritePropertyName(prop.Name);
@@ -2284,14 +2449,32 @@ internal static class BuiltInFunctions
 
     private static ExpressionEvaluator CompileMatch(ExpressionEvaluator[] args)
     {
-        if (args.Length < 2 || args.Length > 3)
-        {
-            throw new JsonataException("T0410", "$match expects 2 or 3 arguments", 0);
-        }
+        ExpressionEvaluator strArg;
+        ExpressionEvaluator patternArg;
+        ExpressionEvaluator? limitArg;
 
-        var strArg = args[0];
-        var patternArg = args[1];
-        var limitArg = args.Length > 2 ? args[2] : null;
+        if (args.Length == 1)
+        {
+            strArg = ContextArg;
+            patternArg = args[0];
+            limitArg = null;
+        }
+        else if (args.Length == 2)
+        {
+            strArg = args[0];
+            patternArg = args[1];
+            limitArg = null;
+        }
+        else if (args.Length == 3)
+        {
+            strArg = args[0];
+            patternArg = args[1];
+            limitArg = args[2];
+        }
+        else
+        {
+            throw new JsonataException("T0410", "$match expects 1-3 arguments", 0);
+        }
 
         return (in JsonElement input, Environment env) =>
         {
@@ -2357,15 +2540,36 @@ internal static class BuiltInFunctions
 
     private static ExpressionEvaluator CompileReplace(ExpressionEvaluator[] args)
     {
-        if (args.Length < 3)
-        {
-            throw new JsonataException("T0410", "$replace expects 3+ arguments", 0);
-        }
+        ExpressionEvaluator strArg;
+        ExpressionEvaluator patternArg;
+        ExpressionEvaluator replacementArg;
+        ExpressionEvaluator? limitArg;
 
-        var strArg = args[0];
-        var patternArg = args[1];
-        var replacementArg = args[2];
-        var limitArg = args.Length > 3 ? args[3] : null;
+        if (args.Length == 2)
+        {
+            strArg = ContextArg;
+            patternArg = args[0];
+            replacementArg = args[1];
+            limitArg = null;
+        }
+        else if (args.Length == 3)
+        {
+            strArg = args[0];
+            patternArg = args[1];
+            replacementArg = args[2];
+            limitArg = null;
+        }
+        else if (args.Length == 4)
+        {
+            strArg = args[0];
+            patternArg = args[1];
+            replacementArg = args[2];
+            limitArg = args[3];
+        }
+        else
+        {
+            throw new JsonataException("T0410", "$replace expects 2-4 arguments", 0);
+        }
 
         return (in JsonElement input, Environment env) =>
         {
@@ -2705,7 +2909,15 @@ internal static class BuiltInFunctions
             }
 
             string str = FunctionalCompiler.CoerceElementToString(seq.FirstOrDefault);
-            return new Sequence(FunctionalCompiler.CreateStringElement(Uri.EscapeDataString(str)));
+
+            try
+            {
+                return new Sequence(FunctionalCompiler.CreateStringElement(Uri.EscapeDataString(str)));
+            }
+            catch (Exception ex) when (ex is UriFormatException or ArgumentException or FormatException)
+            {
+                throw new JsonataException("D3140", $"Malformed URL passed to $encodeUrlComponent(): \"{str}\"", 0);
+            }
         };
     }
 
@@ -2726,7 +2938,15 @@ internal static class BuiltInFunctions
             }
 
             string str = FunctionalCompiler.CoerceElementToString(seq.FirstOrDefault);
-            return new Sequence(FunctionalCompiler.CreateStringElement(Uri.UnescapeDataString(str)));
+
+            try
+            {
+                return new Sequence(FunctionalCompiler.CreateStringElement(Uri.UnescapeDataString(str)));
+            }
+            catch (Exception ex) when (ex is UriFormatException or ArgumentException or FormatException)
+            {
+                throw new JsonataException("D3140", $"Malformed URL passed to $decodeUrlComponent(): \"{str}\"", 0);
+            }
         };
     }
 
@@ -2748,7 +2968,15 @@ internal static class BuiltInFunctions
             }
 
             string str = FunctionalCompiler.CoerceElementToString(seq.FirstOrDefault);
-            return new Sequence(FunctionalCompiler.CreateStringElement(Uri.EscapeUriString(str)));
+
+            try
+            {
+                return new Sequence(FunctionalCompiler.CreateStringElement(Uri.EscapeUriString(str)));
+            }
+            catch (Exception ex) when (ex is UriFormatException or ArgumentException or FormatException)
+            {
+                throw new JsonataException("D3140", $"Malformed URL passed to $encodeUrl(): \"{str}\"", 0);
+            }
         };
     }
 #pragma warning restore SYSLIB0013
@@ -2770,7 +2998,15 @@ internal static class BuiltInFunctions
             }
 
             string str = FunctionalCompiler.CoerceElementToString(seq.FirstOrDefault);
-            return new Sequence(FunctionalCompiler.CreateStringElement(Uri.UnescapeDataString(str)));
+
+            try
+            {
+                return new Sequence(FunctionalCompiler.CreateStringElement(Uri.UnescapeDataString(str)));
+            }
+            catch (Exception ex) when (ex is UriFormatException or ArgumentException or FormatException)
+            {
+                throw new JsonataException("D3140", $"Malformed URL passed to $decodeUrl(): \"{str}\"", 0);
+            }
         };
     }
 
