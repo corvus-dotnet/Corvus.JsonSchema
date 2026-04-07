@@ -626,7 +626,20 @@ internal static class XPathDateTimeFormatter
         {
             string widthSpec = rest.Substring(widthCommaIdx + 1);
             rest = rest.Substring(0, widthCommaIdx);
+            bool isRange = widthSpec.Contains('-');
             ParseWidthModifier(widthSpec, out minWidth, out maxWidth);
+
+            // When the width modifier is a single value (not a range), the maxWidth
+            // should not truncate below the mandatory digit count in the presentation.
+            // When it's an explicit range, the max is authoritative.
+            if (!isRange && maxWidth >= 0)
+            {
+                int mandatoryFromPres = CountMandatoryDigits(rest);
+                if (mandatoryFromPres > maxWidth)
+                {
+                    maxWidth = mandatoryFromPres;
+                }
+            }
         }
 
         string presentation = rest;
@@ -759,16 +772,9 @@ internal static class XPathDateTimeFormatter
 
         string formatted = FormatIntegerWithPresentation(value, pres, isOrdinal);
 
-        // Count the mandatory digit positions in the presentation pattern.
-        // maxWidth should never truncate below what the presentation requires.
         if (maxWidth >= 0 && formatted.Length > maxWidth)
         {
-            int mandatoryFromPres = CountMandatoryDigits(pres);
-            int effectiveMax = Math.Max(maxWidth, mandatoryFromPres);
-            if (formatted.Length > effectiveMax)
-            {
-                formatted = formatted.Substring(formatted.Length - effectiveMax);
-            }
+            formatted = formatted.Substring(formatted.Length - maxWidth);
         }
 
         if (minWidth >= 0 && formatted.Length < minWidth)
