@@ -38,6 +38,7 @@ internal readonly struct Sequence
     private readonly int count;
     private readonly LambdaValue? lambda;
     private readonly Regex? regex;
+    private readonly TailCallContinuation? tailCall;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Sequence"/> struct with a single value.
@@ -110,6 +111,21 @@ internal readonly struct Sequence
         this.lambda = null;
     }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="Sequence"/> struct wrapping a tail-call continuation.
+    /// </summary>
+    /// <param name="tailCall">The tail-call continuation.</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public Sequence(TailCallContinuation tailCall)
+    {
+        this.tailCall = tailCall;
+        this.count = 0;
+        this.singleValue = default;
+        this.multiValues = null;
+        this.lambda = null;
+        this.regex = null;
+    }
+
     /// <summary>Gets the number of values in the sequence.</summary>
     public int Count
     {
@@ -157,6 +173,20 @@ internal readonly struct Sequence
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get => this.regex;
+    }
+
+    /// <summary>Gets a value indicating whether this sequence holds a tail-call continuation.</summary>
+    public bool IsTailCall
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => this.tailCall is not null;
+    }
+
+    /// <summary>Gets the tail-call continuation, or <c>null</c> if this is not a tail call.</summary>
+    public TailCallContinuation? TailCall
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => this.tailCall;
     }
 
     /// <summary>

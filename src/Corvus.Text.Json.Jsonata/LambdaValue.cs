@@ -17,6 +17,8 @@ internal sealed class LambdaValue
     private readonly Environment? definingEnv;
     private readonly JsonElement definingInput;
     private readonly int contextArgCount;
+    private readonly int regularArgCount;
+    private readonly string? signature;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="LambdaValue"/> class for a user-defined lambda.
@@ -25,16 +27,18 @@ internal sealed class LambdaValue
     /// <param name="paramNames">The parameter names (without <c>$</c> prefix).</param>
     /// <param name="definingEnv">The environment where the lambda was defined (for closures).</param>
     /// <param name="definingInput">The input context (<c>$</c>) at the point where the lambda was defined.</param>
-    /// <param name="isThunk">Whether this is a thunk for tail-call optimization.</param>
     /// <param name="contextArgCount">Number of context-bound parameters from a function signature (before the <c>-</c> separator).</param>
-    public LambdaValue(ExpressionEvaluator body, string[] paramNames, Environment definingEnv, in JsonElement definingInput, bool isThunk = false, int contextArgCount = 0)
+    /// <param name="regularArgCount">Number of regular parameters (after the <c>-</c> separator).</param>
+    /// <param name="signature">The raw function signature string, if any.</param>
+    public LambdaValue(ExpressionEvaluator body, string[] paramNames, Environment definingEnv, in JsonElement definingInput, int contextArgCount = 0, int regularArgCount = 0, string? signature = null)
     {
         this.body = body;
         this.paramNames = paramNames;
         this.definingEnv = definingEnv;
         this.definingInput = definingInput;
-        this.IsThunk = isThunk;
         this.contextArgCount = contextArgCount;
+        this.regularArgCount = regularArgCount;
+        this.signature = signature;
     }
 
     /// <summary>
@@ -55,11 +59,6 @@ internal sealed class LambdaValue
     public Func<Sequence[], JsonElement, Environment, Sequence>? NativeFunc { get; }
 
     /// <summary>
-    /// Gets a value indicating whether this lambda is a thunk for tail-call optimization.
-    /// </summary>
-    public bool IsThunk { get; }
-
-    /// <summary>
     /// Gets the parameter names.
     /// </summary>
     public string[] ParamNames => this.paramNames;
@@ -78,6 +77,33 @@ internal sealed class LambdaValue
     /// <returns>The result of invoking the lambda body.</returns>
     public Sequence Invoke(Sequence[] args, in JsonElement input, Environment callerEnv)
     {
+        var result = this.InvokeBody(args, input, callerEnv);
+
+        // Trampoline: when the body returns a tail-call continuation,
+        // call the target's InvokeBody directly instead of recursing through Invoke.
+        // This keeps the .NET call stack flat for both direct and mutual recursion.
+        while (result.IsTailCall)
+        {
+            var tc = result.TailCall!;
+            result = tc.Target.InvokeBody(tc.Args, tc.Input, tc.CallerEnv);
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Evaluates this lambda's body with the given arguments, without trampolining.
+    /// Called by the trampoline in <see cref="Invoke"/> and also for the initial invocation.
+    /// </summary>
+    /// <param name="args">The evaluated argument sequences.</param>
+    /// <param name="input">The current context element.</param>
+    /// <param name="callerEnv">The caller's environment.</param>
+    /// <returns>
+    /// The result of evaluating the body. May be a <see cref="TailCallContinuation"/>
+    /// if the body ends with a tail-position function call.
+    /// </returns>
+    internal Sequence InvokeBody(Sequence[] args, in JsonElement input, Environment callerEnv)
+    {
         if (this.NativeFunc is not null)
         {
             return this.NativeFunc(args, input, callerEnv);
@@ -87,19 +113,36 @@ internal sealed class LambdaValue
         var invokeEnv = (this.definingEnv ?? callerEnv).CreateChild();
 
         // If the lambda has context parameters (from a function signature with '-'),
-        // and the caller provided fewer args than params, prepend the input as context args.
+        // and the caller provided fewer args than params, fill unfilled params with
+        // the input context. Regular params (after '-') are filled first by explicit
+        // args from the end, context params (before '-') are filled by remaining args
+        // from the start, and any still-unfilled context params get the input.
         Sequence[] effectiveArgs = args;
         if (this.contextArgCount > 0 && args.Length < this.paramNames.Length)
         {
-            int missingCount = this.paramNames.Length - args.Length;
-            int contextToInsert = Math.Min(this.contextArgCount, missingCount);
-            effectiveArgs = new Sequence[args.Length + contextToInsert];
-            for (int i = 0; i < contextToInsert; i++)
+            effectiveArgs = new Sequence[this.paramNames.Length];
+
+            // Regular params (after '-') are filled from the end of explicit args
+            int regularToFill = Math.Min(this.regularArgCount, args.Length);
+            int argsForRegular = regularToFill;
+            int regularStart = this.paramNames.Length - this.regularArgCount;
+            for (int i = 0; i < regularToFill; i++)
+            {
+                effectiveArgs[regularStart + i] = args[args.Length - argsForRegular + i];
+            }
+
+            // Remaining explicit args fill context params from the left
+            int argsForContext = args.Length - argsForRegular;
+            for (int i = 0; i < argsForContext; i++)
+            {
+                effectiveArgs[i] = args[i];
+            }
+
+            // Unfilled context params get the input
+            for (int i = argsForContext; i < regularStart; i++)
             {
                 effectiveArgs[i] = new Sequence(input);
             }
-
-            Array.Copy(args, 0, effectiveArgs, contextToInsert, args.Length);
         }
 
         // Bind parameters
@@ -110,25 +153,17 @@ internal sealed class LambdaValue
                 i < effectiveArgs.Length ? effectiveArgs[i] : Sequence.Undefined);
         }
 
+        // Validate argument types against the signature, if present
+        if (this.signature is not null)
+        {
+            SignatureValidator.ValidateArgs(this.signature, effectiveArgs, -1);
+        }
+
         // Track call depth to prevent stack overflow
         invokeEnv.EnterCall();
         try
         {
-            // Use the defining input (the context at lambda creation time) so that
-            // $ inside the body refers to the closure context, not the call-site context.
-            var result = this.body(this.definingInput, invokeEnv);
-
-            // Trampoline: when the body returns a thunk (a tail-call-optimized
-            // lambda with no parameters), execute it immediately instead of
-            // returning the thunk as a value. This ensures that tail-position
-            // function calls produce the actual result rather than a deferred
-            // lambda wrapper.
-            while (result.IsLambda && result.Lambda!.IsThunk)
-            {
-                result = result.Lambda!.Invoke([], input, callerEnv);
-            }
-
-            return result;
+            return this.body(this.definingInput, invokeEnv);
         }
         finally
         {

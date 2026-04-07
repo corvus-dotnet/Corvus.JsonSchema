@@ -1910,7 +1910,9 @@ internal static class FunctionalCompiler
     {
         var args = func.Arguments.Select(Compile).ToArray();
 
-        // Check for built-in functions by name
+        // Check for built-in functions by name.
+        // Built-in functions are compiled directly and do NOT participate
+        // in tail-call optimization — they are always evaluated inline.
         if (func.Procedure is VariableNode varProc)
         {
             var builtIn = BuiltInFunctions.TryGetCompiler(varProc.Name);
@@ -1921,6 +1923,7 @@ internal static class FunctionalCompiler
         }
 
         var procedure = Compile(func.Procedure);
+        bool isTailCall = func.IsTailCall;
 
         // Detect non-$ function names that match built-ins (e.g. sum instead of $sum)
         string? suggestedBuiltIn = null;
@@ -1944,6 +1947,12 @@ internal static class FunctionalCompiler
                     evaluatedArgs[i] = args[i](input, env);
                 }
 
+                if (isTailCall)
+                {
+                    // Return a continuation for the caller's trampoline to handle
+                    return new Sequence(new TailCallContinuation(funcResult.Lambda!, evaluatedArgs, input, env));
+                }
+
                 return funcResult.Lambda!.Invoke(evaluatedArgs, input, env);
             }
 
@@ -1960,12 +1969,18 @@ internal static class FunctionalCompiler
     {
         var body = Compile(lambda.Body);
         var paramNames = lambda.Parameters.ToArray();
-        bool isThunk = lambda.Thunk;
-        int contextArgCount = GetSignatureContextArgCount(lambda.Signature);
+        string? signature = lambda.Signature;
+        int contextArgCount = GetSignatureContextArgCount(signature, out int regularArgCount);
+
+        // Validate signature syntax at compile time
+        if (signature is not null)
+        {
+            SignatureValidator.ValidateSyntax(signature, lambda.Position);
+        }
 
         return (in JsonElement input, Environment env) =>
         {
-            return new Sequence(new LambdaValue(body, paramNames, env, input, isThunk, contextArgCount));
+            return new Sequence(new LambdaValue(body, paramNames, env, input, contextArgCount, regularArgCount, signature));
         };
     }
 
@@ -1979,6 +1994,16 @@ internal static class FunctionalCompiler
     /// </remarks>
     private static int GetSignatureContextArgCount(string? signature)
     {
+        return GetSignatureContextArgCount(signature, out _);
+    }
+
+    /// <summary>
+    /// Parses a JSONata function signature to determine context and regular param counts.
+    /// </summary>
+    private static int GetSignatureContextArgCount(string? signature, out int regularArgCount)
+    {
+        regularArgCount = 0;
+
         if (signature is null || signature.Length < 3)
         {
             return 0;
@@ -1986,8 +2011,9 @@ internal static class FunctionalCompiler
 
         int depth = 0;
         int paramCount = 0;
+        bool foundDash = false;
+        int postDashCount = 0;
 
-        // Skip leading '<', stop before trailing '>'
         for (int i = 1; i < signature.Length - 1; i++)
         {
             char c = signature[i];
@@ -1996,8 +2022,14 @@ internal static class FunctionalCompiler
             {
                 if (depth == 0 && c == '(')
                 {
-                    // Union type — counts as one parameter
-                    paramCount++;
+                    if (foundDash)
+                    {
+                        postDashCount++;
+                    }
+                    else
+                    {
+                        paramCount++;
+                    }
                 }
 
                 depth++;
@@ -2010,24 +2042,37 @@ internal static class FunctionalCompiler
             {
                 if (c == '-')
                 {
-                    return paramCount;
+                    foundDash = true;
+                    continue;
                 }
 
                 if (c == ':')
                 {
-                    // Return type separator — no context params found
-                    return 0;
+                    break;
                 }
 
                 if (c != '?' && c != '+')
                 {
-                    // Type character (n, s, b, o, a, f, x, j, l)
-                    paramCount++;
+                    if (foundDash)
+                    {
+                        postDashCount++;
+                    }
+                    else
+                    {
+                        paramCount++;
+                    }
                 }
             }
         }
 
-        return 0;
+        if (!foundDash)
+        {
+            regularArgCount = 0;
+            return 0;
+        }
+
+        regularArgCount = postDashCount;
+        return paramCount;
     }
 
     private static ExpressionEvaluator CompileBind(BindNode bind)

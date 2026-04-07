@@ -517,6 +517,12 @@ internal sealed class Parser
 
             this.Advance(">");
             lambda.Signature = sig;
+
+            // Check for unbalanced signature — extra '>' after the closing one
+            if (this.current.Type == TokenType.Operator && this.current.Value == ">")
+            {
+                throw new JsonataException("S0402", $"The function signature \"{sig}>\" is not valid. Unexpected '>'", sigPos);
+            }
         }
 
         // Parse the function body: { expr }
@@ -1187,11 +1193,9 @@ internal sealed class Parser
     {
         var body = this.ProcessAst(lambda.Body);
 
-        // TODO: Re-enable TCO once a proper trampoline is implemented in LambdaValue.Invoke.
-        // The thunk-based approach requires evaluating thunk bodies in the thunk's defining
-        // environment and re-resolving function calls, which the current compiled delegate
-        // model doesn't support without restructuring.
-        //// body = TailCallOptimize(body);
+        // Enable tail-call optimization: wrap tail-position function calls in thunks
+        // so the trampoline in LambdaValue.Invoke can evaluate them without increasing depth.
+        body = TailCallOptimize(body);
 
         return new LambdaNode
         {
@@ -1262,13 +1266,8 @@ internal sealed class Parser
     {
         if (expr is FunctionCallNode funcCall)
         {
-            // Wrap the function call in a thunk lambda for trampoline
-            return new LambdaNode
-            {
-                Thunk = true,
-                Body = funcCall,
-                Position = funcCall.Position,
-            };
+            funcCall.IsTailCall = true;
+            return funcCall;
         }
 
         if (expr is ConditionNode cond)
