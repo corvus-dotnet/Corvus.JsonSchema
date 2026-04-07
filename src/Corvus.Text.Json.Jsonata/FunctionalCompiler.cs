@@ -3922,16 +3922,7 @@ internal static class FunctionalCompiler
 
         if (elem.ValueKind == JsonValueKind.Number)
         {
-            // Use FormatNumberLikeJavaScript for proper precision-15 formatting.
-            // For integers with clean raw representation, this just copies the raw bytes.
-            // For non-integers, it applies G15 to clean up IEEE noise.
-            string formatted = FormatNumberLikeJavaScript(elem);
-            JsonataHelpers.GrowBufferIfNeeded(ref buffer, pos, formatted.Length);
-            for (int i = 0; i < formatted.Length; i++)
-            {
-                buffer[pos++] = (byte)formatted[i]; // All number chars are ASCII
-            }
-
+            AppendNumberToBuffer(elem, ref buffer, ref pos);
             return;
         }
 
@@ -3944,6 +3935,60 @@ internal static class FunctionalCompiler
 
         // For strings, booleans, null — delegate to JsonataHelpers
         JsonataHelpers.AppendCoercedToBuffer(elem, ref buffer, ref pos);
+    }
+
+    /// <summary>
+    /// Appends a number element's formatted UTF-8 representation directly to the buffer.
+    /// For integers with clean raw text (no decimal/exponent), copies raw UTF-8 bytes
+    /// with zero string allocation. For non-integers, falls back to G15 formatting.
+    /// </summary>
+    private static void AppendNumberToBuffer(JsonElement elem, ref byte[] buffer, ref int pos)
+    {
+        double value = elem.GetDouble();
+        if (double.IsNaN(value) || double.IsInfinity(value))
+        {
+            JsonataHelpers.GrowBufferIfNeeded(ref buffer, pos, 4);
+            buffer[pos++] = (byte)'n';
+            buffer[pos++] = (byte)'u';
+            buffer[pos++] = (byte)'l';
+            buffer[pos++] = (byte)'l';
+            return;
+        }
+
+        // Integer fast path: copy raw UTF-8 bytes directly (zero allocation)
+        if (value == Math.Floor(value) && !double.IsInfinity(value))
+        {
+            using RawUtf8JsonString raw = JsonMarshal.GetRawUtf8Value(elem);
+            ReadOnlySpan<byte> rawSpan = raw.Span;
+
+            // Only use raw bytes if the text is a plain integer literal (no '.' or 'e'/'E')
+            bool isPlainInteger = true;
+            for (int i = 0; i < rawSpan.Length; i++)
+            {
+                byte b = rawSpan[i];
+                if (b == (byte)'.' || b == (byte)'e' || b == (byte)'E')
+                {
+                    isPlainInteger = false;
+                    break;
+                }
+            }
+
+            if (isPlainInteger)
+            {
+                JsonataHelpers.GrowBufferIfNeeded(ref buffer, pos, rawSpan.Length);
+                rawSpan.CopyTo(buffer.AsSpan(pos));
+                pos += rawSpan.Length;
+                return;
+            }
+        }
+
+        // Non-integer path: format via G15 then write as ASCII bytes
+        string formatted = FormatNumberLikeJavaScript(value);
+        JsonataHelpers.GrowBufferIfNeeded(ref buffer, pos, formatted.Length);
+        for (int i = 0; i < formatted.Length; i++)
+        {
+            buffer[pos++] = (byte)formatted[i];
+        }
     }
 
     /// <summary>
