@@ -462,6 +462,13 @@ internal static class BuiltInFunctions
         return (in JsonElement input, Environment env) =>
         {
             var seq = arg(input, env);
+
+            // Functions/lambdas are not boolean-convertible — return false
+            if (seq.IsLambda)
+            {
+                return new Sequence(FunctionalCompiler.CreateBoolElement(false));
+            }
+
             if (seq.IsUndefined)
             {
                 return Sequence.Undefined;
@@ -482,6 +489,11 @@ internal static class BuiltInFunctions
         return (in JsonElement input, Environment env) =>
         {
             var seq = arg(input, env);
+            if (seq.IsUndefined)
+            {
+                return Sequence.Undefined;
+            }
+
             return new Sequence(FunctionalCompiler.CreateBoolElement(!FunctionalCompiler.IsTruthy(seq)));
         };
     }
@@ -519,14 +531,15 @@ internal static class BuiltInFunctions
         return (in JsonElement input, Environment env) =>
         {
             var seq = arg(input, env);
-            if (seq.IsUndefined)
-            {
-                return Sequence.Undefined;
-            }
 
             if (seq.IsLambda)
             {
                 return new Sequence(FunctionalCompiler.CreateStringElement("function"));
+            }
+
+            if (seq.IsUndefined)
+            {
+                return Sequence.Undefined;
             }
 
             string typeName = seq.FirstOrDefault.ValueKind switch
@@ -637,6 +650,11 @@ internal static class BuiltInFunctions
 
     private static ExpressionEvaluator CompileSubstringBefore(ExpressionEvaluator[] args)
     {
+        if (args.Length == 1)
+        {
+            return CompileStringSearch(ContextArg, args[0], before: true);
+        }
+
         if (args.Length != 2)
         {
             throw new JsonataException("T0410", "$substringBefore expects 2 arguments", 0);
@@ -647,6 +665,11 @@ internal static class BuiltInFunctions
 
     private static ExpressionEvaluator CompileSubstringAfter(ExpressionEvaluator[] args)
     {
+        if (args.Length == 1)
+        {
+            return CompileStringSearch(ContextArg, args[0], before: false);
+        }
+
         if (args.Length != 2)
         {
             throw new JsonataException("T0410", "$substringAfter expects 2 arguments", 0);
@@ -716,7 +739,18 @@ internal static class BuiltInFunctions
                 return Sequence.Undefined;
             }
 
-            string? str = seq.FirstOrDefault.GetString();
+            var elem = seq.FirstOrDefault;
+            if (elem.ValueKind is JsonValueKind.Undefined or JsonValueKind.Null)
+            {
+                return Sequence.Undefined;
+            }
+
+            if (elem.ValueKind != JsonValueKind.String)
+            {
+                throw new JsonataException("T0410", "String function argument must be a string", 0);
+            }
+
+            string? str = elem.GetString();
             if (str is null)
             {
                 return Sequence.Undefined;
@@ -861,13 +895,8 @@ internal static class BuiltInFunctions
                             throw new JsonataException("D3020", "Third argument of the split function must evaluate to a positive number", 0);
                         }
 
-                        // Must be a positive integer
-                        if (limitD != Math.Floor(limitD))
-                        {
-                            throw new JsonataException("T0410", "Argument 3 of function $split is not of the correct type", 0);
-                        }
-
-                        limit = (int)limitD;
+                        // Floor the limit (JSONata accepts non-integer limits)
+                        limit = (int)Math.Floor(limitD);
                     }
                 }
             }
@@ -920,13 +949,22 @@ internal static class BuiltInFunctions
 
     private static ExpressionEvaluator CompileContains(ExpressionEvaluator[] args)
     {
-        if (args.Length != 2)
+        ExpressionEvaluator strArg;
+        ExpressionEvaluator searchArg;
+        if (args.Length == 1)
         {
-            throw new JsonataException("T0410", "$contains expects 2 arguments", 0);
+            strArg = ContextArg;
+            searchArg = args[0];
         }
-
-        var strArg = args[0];
-        var searchArg = args[1];
+        else if (args.Length == 2)
+        {
+            strArg = args[0];
+            searchArg = args[1];
+        }
+        else
+        {
+            throw new JsonataException("T0410", "$contains expects 1 or 2 arguments", 0);
+        }
 
         return (in JsonElement input, Environment env) =>
         {
@@ -1203,6 +1241,22 @@ internal static class BuiltInFunctions
             var seq1 = arr1(input, env);
             var seq2 = arr2(input, env);
 
+            // If either is undefined, return the other
+            if (seq1.IsUndefined && seq2.IsUndefined)
+            {
+                return Sequence.Undefined;
+            }
+
+            if (seq2.IsUndefined)
+            {
+                return seq1;
+            }
+
+            if (seq1.IsUndefined)
+            {
+                return seq2;
+            }
+
             using var ms = new MemoryStream(256);
             using var writer = new Utf8JsonWriter(ms);
             writer.WriteStartArray();
@@ -1478,27 +1532,62 @@ internal static class BuiltInFunctions
             var lambda = funcSeq.Lambda!;
             var builder = default(SequenceBuilder);
 
+            // Collect all items into a flat list for indexing
+            var items = new List<JsonElement>();
             if (seq.IsSingleton && seq.FirstOrDefault.ValueKind == JsonValueKind.Array)
             {
                 var arr = seq.FirstOrDefault;
                 int len = arr.GetArrayLength();
-                for (int i = 0; i < len; i++)
+                for (int idx = 0; idx < len; idx++)
                 {
-                    var elemSeq = new Sequence(arr[i]);
-                    var idxSeq = new Sequence(FunctionalCompiler.CreateNumberElement(i));
-                    var result = lambda.Invoke(new[] { elemSeq, idxSeq, seq }, arr[i], env);
-                    builder.AddRange(result);
+                    items.Add(arr[idx]);
                 }
             }
             else
             {
                 for (int i = 0; i < seq.Count; i++)
                 {
-                    var elemSeq = new Sequence(seq[i]);
-                    var idxSeq = new Sequence(FunctionalCompiler.CreateNumberElement(i));
-                    var result = lambda.Invoke(new[] { elemSeq, idxSeq, seq }, seq[i], env);
-                    builder.AddRange(result);
+                    var elem = seq[i];
+                    if (elem.ValueKind == JsonValueKind.Array)
+                    {
+                        int len = elem.GetArrayLength();
+                        for (int j = 0; j < len; j++)
+                        {
+                            items.Add(elem[j]);
+                        }
+                    }
+                    else
+                    {
+                        items.Add(elem);
+                    }
                 }
+            }
+
+            // Build the flattened array as a Sequence for the 3rd lambda arg
+            JsonElement flatArr;
+            {
+                using var flatMs = new MemoryStream(256);
+                using var flatWriter = new Utf8JsonWriter(flatMs);
+                flatWriter.WriteStartArray();
+                foreach (var item in items)
+                {
+                    item.WriteTo(flatWriter);
+                }
+
+                flatWriter.WriteEndArray();
+                flatWriter.Flush();
+                flatMs.Position = 0;
+                using var flatDoc = JsonDocument.Parse(flatMs);
+                flatArr = flatDoc.RootElement.Clone();
+            }
+
+            var arrSeq = new Sequence(flatArr);
+            for (int i = 0; i < items.Count; i++)
+            {
+                var elemSeq = new Sequence(items[i]);
+                var idxSeq = new Sequence(FunctionalCompiler.CreateNumberElement(i));
+                var result = lambda.Invoke(new[] { elemSeq, idxSeq, arrSeq }, items[i], env);
+                builder.AddRange(result);
             }
 
             // Materialize builder as JSON array
@@ -1540,11 +1629,57 @@ internal static class BuiltInFunctions
             }
 
             var lambda = funcSeq.Lambda!;
+            bool inputWasArray = seq.IsSingleton && seq.FirstOrDefault.ValueKind == JsonValueKind.Array;
+
+            // Flatten multi-valued sequences with arrays (e.g., Account.Order.Product)
+            if (!inputWasArray && seq.Count > 1)
+            {
+                bool hasArrays = false;
+                for (int i = 0; i < seq.Count; i++)
+                {
+                    if (seq[i].ValueKind == JsonValueKind.Array)
+                    {
+                        hasArrays = true;
+                        break;
+                    }
+                }
+
+                if (hasArrays)
+                {
+                    using var flatMs = new MemoryStream(256);
+                    using var flatWriter = new Utf8JsonWriter(flatMs);
+                    flatWriter.WriteStartArray();
+                    for (int i = 0; i < seq.Count; i++)
+                    {
+                        var elem = seq[i];
+                        if (elem.ValueKind == JsonValueKind.Array)
+                        {
+                            foreach (var item in elem.EnumerateArray())
+                            {
+                                item.WriteTo(flatWriter);
+                            }
+                        }
+                        else
+                        {
+                            elem.WriteTo(flatWriter);
+                        }
+                    }
+
+                    flatWriter.WriteEndArray();
+                    flatWriter.Flush();
+                    flatMs.Position = 0;
+                    using var flatDoc = JsonDocument.Parse(flatMs);
+                    seq = new Sequence(flatDoc.RootElement.Clone());
+                    inputWasArray = true;
+                }
+            }
+
             using var ms = new MemoryStream(256);
             using var writer = new Utf8JsonWriter(ms);
             writer.WriteStartArray();
+            int matchCount = 0;
 
-            if (seq.IsSingleton && seq.FirstOrDefault.ValueKind == JsonValueKind.Array)
+            if (inputWasArray)
             {
                 var arr = seq.FirstOrDefault;
                 int len = arr.GetArrayLength();
@@ -1556,6 +1691,7 @@ internal static class BuiltInFunctions
                     if (FunctionalCompiler.IsTruthy(result))
                     {
                         arr[i].WriteTo(writer);
+                        matchCount++;
                     }
                 }
             }
@@ -1569,6 +1705,7 @@ internal static class BuiltInFunctions
                     if (FunctionalCompiler.IsTruthy(result))
                     {
                         seq[i].WriteTo(writer);
+                        matchCount++;
                     }
                 }
             }
@@ -1577,7 +1714,23 @@ internal static class BuiltInFunctions
             writer.Flush();
             ms.Position = 0;
             using var doc = JsonDocument.Parse(ms);
-            return new Sequence(doc.RootElement.Clone());
+            var resultArr = doc.RootElement.Clone();
+
+            // If input was not an array, unwrap single results
+            if (!inputWasArray)
+            {
+                if (matchCount == 0)
+                {
+                    return Sequence.Undefined;
+                }
+
+                if (matchCount == 1)
+                {
+                    return new Sequence(resultArr[0].Clone());
+                }
+            }
+
+            return new Sequence(resultArr);
         };
     }
 
@@ -1642,11 +1795,31 @@ internal static class BuiltInFunctions
                 startIdx = 1;
             }
 
+            // Build array element for the 4th lambda arg
+            JsonElement arrElement;
+            {
+                using var arrMs = new MemoryStream(256);
+                using var arrWriter = new Utf8JsonWriter(arrMs);
+                arrWriter.WriteStartArray();
+                for (int i = 0; i < elements.Count; i++)
+                {
+                    elements[i].WriteTo(arrWriter);
+                }
+
+                arrWriter.WriteEndArray();
+                arrWriter.Flush();
+                arrMs.Position = 0;
+                using var arrDoc = JsonDocument.Parse(arrMs);
+                arrElement = arrDoc.RootElement.Clone();
+            }
+
+            var arrSeq = new Sequence(arrElement);
+
             for (int i = startIdx; i < elements.Count; i++)
             {
                 var elemSeq = new Sequence(elements[i]);
                 var idxSeq = new Sequence(FunctionalCompiler.CreateNumberElement(i));
-                accumulator = lambda.Invoke(new[] { accumulator, elemSeq, idxSeq }, input, env);
+                accumulator = lambda.Invoke(new[] { accumulator, elemSeq, idxSeq, arrSeq }, input, env);
             }
 
             return accumulator;
@@ -1730,6 +1903,12 @@ internal static class BuiltInFunctions
                 return Sequence.Undefined;
             }
 
+            if (seq.IsSingleton && seq.FirstOrDefault.ValueKind == JsonValueKind.Object)
+            {
+                // Single object — return as-is
+                return seq;
+            }
+
             using var ms = new MemoryStream(256);
             using var writer = new Utf8JsonWriter(ms);
             writer.WriteStartObject();
@@ -1738,6 +1917,21 @@ internal static class BuiltInFunctions
             {
                 foreach (var item in seq.FirstOrDefault.EnumerateArray())
                 {
+                    if (item.ValueKind == JsonValueKind.Object)
+                    {
+                        foreach (var prop in item.EnumerateObject())
+                        {
+                            writer.WritePropertyName(prop.Name);
+                            prop.Value.WriteTo(writer);
+                        }
+                    }
+                }
+            }
+            else if (seq.Count > 1)
+            {
+                for (int i = 0; i < seq.Count; i++)
+                {
+                    var item = seq[i];
                     if (item.ValueKind == JsonValueKind.Object)
                     {
                         foreach (var prop in item.EnumerateObject())
@@ -2762,6 +2956,14 @@ internal static class BuiltInFunctions
                 {
                     list.AddRange(seq.FirstOrDefault.EnumerateArray());
                 }
+                else if (!seq.IsUndefined)
+                {
+                    // Scalar values: treat as single-element array
+                    for (int i = 0; i < seq.Count; i++)
+                    {
+                        list.Add(seq[i]);
+                    }
+                }
 
                 arrays.Add(list);
             }
@@ -2845,7 +3047,14 @@ internal static class BuiltInFunctions
         return (in JsonElement input, Environment env) =>
         {
             var cond = condArg(input, env);
-            if (!FunctionalCompiler.IsTruthy(cond))
+
+            // $assert requires a boolean argument
+            if (cond.IsUndefined || cond.FirstOrDefault.ValueKind is not (JsonValueKind.True or JsonValueKind.False))
+            {
+                throw new JsonataException("T0410", "Argument 1 of function $assert must be a boolean", 0);
+            }
+
+            if (cond.FirstOrDefault.ValueKind == JsonValueKind.False)
             {
                 string message = "Assertion failed";
                 if (msgArg is not null)

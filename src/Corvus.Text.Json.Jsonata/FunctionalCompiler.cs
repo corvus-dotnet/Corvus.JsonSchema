@@ -279,6 +279,7 @@ internal static class FunctionalCompiler
         var indexVars = new string?[path.Steps.Count];
         var isPropertyStep = new bool[path.Steps.Count];
         var isSortStep = new bool[path.Steps.Count];
+        var sortTermsPerStep = new (ExpressionEvaluator Expr, bool Descending)[]?[path.Steps.Count];
         (ExpressionEvaluator Key, ExpressionEvaluator Value)[]? groupByPairs = null;
 
         for (int i = 0; i < path.Steps.Count; i++)
@@ -286,6 +287,11 @@ internal static class FunctionalCompiler
             steps[i] = CompileCore(path.Steps[i]);
             isPropertyStep[i] = path.Steps[i] is NameNode or WildcardNode or DescendantNode;
             isSortStep[i] = path.Steps[i] is SortNode;
+            if (path.Steps[i] is SortNode sortNodeStep)
+            {
+                sortTermsPerStep[i] = sortNodeStep.Terms
+                    .Select(t => (Compile(t.Expression), t.Descending)).ToArray();
+            }
 
             var annotations = GetStepAnnotations(path.Steps[i]);
             if (annotations is not null)
@@ -343,10 +349,32 @@ internal static class FunctionalCompiler
 
         var keepSingleton = path.KeepSingletonArray;
 
+        // Detect if a sort step follows an index-bound step (tuple semantics).
+        // If so, we track per-element group indices through the sort to restore bindings.
+        string? tupleIndexVar = null;
+        for (int k = 0; k < path.Steps.Count; k++)
+        {
+            if (isSortStep[k])
+            {
+                for (int j = 0; j < k; j++)
+                {
+                    if (indexVars[j] is not null)
+                    {
+                        tupleIndexVar = indexVars[j];
+                    }
+                }
+            }
+        }
+
         return (in JsonElement input, Environment env) =>
         {
             // Start with the input as a singleton sequence
             Sequence current = new(input);
+
+            // Per-element group indices for tuple-aware sort.
+            // When non-null, each element in current has a corresponding group index
+            // used to restore index variable bindings after sorting.
+            int[]? tupleGroupIndices = null;
 
             for (int stepIdx = 0; stepIdx < steps.Length; stepIdx++)
             {
@@ -368,24 +396,112 @@ internal static class FunctionalCompiler
                 // Sort steps need all elements as a batch — collect, flatten, sort.
                 if (isSortStep[stepIdx])
                 {
-                    var sortElements = CollectFlatElements(current);
-                    if (sortElements.Count <= 1)
+                    if (tupleIndexVar is not null && !current.IsSingleton
+                        && sortTermsPerStep[stepIdx] is not null)
                     {
-                        if (sortElements.Count == 1)
+                        // Tuple-aware sort: sort elements inline while tracking group indices.
+                        var sortElems = new List<JsonElement>();
+                        var groups = new List<int>();
+                        for (int i = 0; i < current.Count; i++)
                         {
-                            current = new Sequence(sortElements[0]);
+                            var el = current[i];
+                            if (el.ValueKind == JsonValueKind.Array)
+                            {
+                                foreach (var item in el.EnumerateArray())
+                                {
+                                    sortElems.Add(item);
+                                    groups.Add(tupleGroupIndices is not null && i < tupleGroupIndices.Length
+                                        ? tupleGroupIndices[i] : i);
+                                }
+                            }
+                            else
+                            {
+                                sortElems.Add(el);
+                                groups.Add(tupleGroupIndices is not null && i < tupleGroupIndices.Length
+                                    ? tupleGroupIndices[i] : i);
+                            }
+                        }
+
+                        if (sortElems.Count > 1)
+                        {
+                            // Sort index array using the sort terms directly (avoids
+                            // round-tripping through JSON which breaks element identity).
+                            var terms = sortTermsPerStep[stepIdx]!;
+                            var indices = Enumerable.Range(0, sortElems.Count).ToArray();
+                            Array.Sort(indices, (a, b) =>
+                            {
+                                for (int t = 0; t < terms.Length; t++)
+                                {
+                                    var (expr, desc) = terms[t];
+                                    var aVal = expr(sortElems[a], env);
+                                    var bVal = expr(sortElems[b], env);
+                                    int cmp = CompareSortKeys(aVal, bVal);
+                                    if (cmp != 0)
+                                    {
+                                        return desc ? -cmp : cmp;
+                                    }
+                                }
+
+                                return 0;
+                            });
+
+                            // Reorder elements and groups
+                            var sortedElems = new List<JsonElement>(sortElems.Count);
+                            var sortedGroupArr = new int[sortElems.Count];
+                            for (int i = 0; i < indices.Length; i++)
+                            {
+                                sortedElems.Add(sortElems[indices[i]]);
+                                sortedGroupArr[i] = groups[indices[i]];
+                            }
+
+                            current = new Sequence(CreateArrayElement(sortedElems));
+                            tupleGroupIndices = sortedGroupArr;
+                        }
+                        else if (sortElems.Count == 1)
+                        {
+                            current = new Sequence(sortElems[0]);
+                            tupleGroupIndices = [groups[0]];
                         }
                     }
                     else
                     {
-                        var arrayInput = CreateArrayElement(sortElements);
-                        current = step(arrayInput, env);
+                        var sortElements = CollectFlatElements(current);
+                        if (sortElements.Count <= 1)
+                        {
+                            if (sortElements.Count == 1)
+                            {
+                                current = new Sequence(sortElements[0]);
+                            }
+                        }
+                        else
+                        {
+                            var arrayInput = CreateArrayElement(sortElements);
+                            current = step(arrayInput, env);
+                        }
+
+                        tupleGroupIndices = null;
                     }
 
                     // Apply any stages on the sort step itself (e.g. filters after sort)
                     if (stages[stepIdx] is not null)
                     {
                         current = ApplyStages(current, stages[stepIdx]!, stageIsSortFlags[stepIdx]!, env);
+                    }
+
+                    // When tuple tracking is active, expand the sorted JSON array to
+                    // multi-value so subsequent steps use the multi-value branch where
+                    // per-element tuple bindings are restored.
+                    if (tupleGroupIndices is not null && current.IsSingleton
+                        && current.FirstOrDefault.ValueKind == JsonValueKind.Array)
+                    {
+                        var arr = current.FirstOrDefault;
+                        var expandBuilder = default(SequenceBuilder);
+                        foreach (var item in arr.EnumerateArray())
+                        {
+                            expandBuilder.Add(item);
+                        }
+
+                        current = expandBuilder.ToSequence();
                     }
 
                     continue;
@@ -423,6 +539,14 @@ internal static class FunctionalCompiler
                     for (int i = 0; i < current.Count; i++)
                     {
                         var element = current[i];
+
+                        // Restore per-element tuple binding (index variable from a
+                        // preceding step, preserved through sort reordering).
+                        if (tupleGroupIndices is not null && tupleIndexVar is not null
+                            && i < tupleGroupIndices.Length)
+                        {
+                            env.Bind(tupleIndexVar, new Sequence(CreateNumberElement(tupleGroupIndices[i])));
+                        }
 
                         if (indexVar is not null)
                         {
@@ -470,7 +594,7 @@ internal static class FunctionalCompiler
             // Apply group-by if present
             if (groupByPairs is not null)
             {
-                current = ApplyGroupBy(current, groupByPairs, env);
+                current = ApplyGroupBy(current, groupByPairs, env, tupleIndexVar, tupleGroupIndices);
             }
 
             return current;
@@ -480,25 +604,43 @@ internal static class FunctionalCompiler
     private static Sequence ApplyGroupBy(
         Sequence current,
         (ExpressionEvaluator Key, ExpressionEvaluator Value)[] pairs,
-        Environment env)
+        Environment env,
+        string? tupleIndexVar = null,
+        int[]? tupleGroupIndices = null)
     {
         if (current.IsUndefined)
         {
             return Sequence.Undefined;
         }
 
-        // Collect all elements to iterate — flatten arrays in the sequence
+        // Collect all elements to iterate — flatten arrays in the sequence,
+        // preserving tuple group indices when available.
         var elements = new List<JsonElement>();
-        for (int i = 0; i < current.Count; i++)
+        int[]? elementGroupIndices = null;
+
+        if (tupleGroupIndices is not null && tupleIndexVar is not null)
         {
-            var el = current[i];
-            if (el.ValueKind == JsonValueKind.Array)
+            elementGroupIndices = tupleGroupIndices;
+
+            // Elements should already be individual (expanded by sort handler)
+            for (int i = 0; i < current.Count; i++)
             {
-                elements.AddRange(el.EnumerateArray());
+                elements.Add(current[i]);
             }
-            else
+        }
+        else
+        {
+            for (int i = 0; i < current.Count; i++)
             {
-                elements.Add(el);
+                var el = current[i];
+                if (el.ValueKind == JsonValueKind.Array)
+                {
+                    elements.AddRange(el.EnumerateArray());
+                }
+                else
+                {
+                    elements.Add(el);
+                }
             }
         }
 
@@ -506,8 +648,17 @@ internal static class FunctionalCompiler
         var groupKeys = new List<string>();
         var groupValues = new Dictionary<string, List<JsonElement>>();
 
-        foreach (var element in elements)
+        for (int idx = 0; idx < elements.Count; idx++)
         {
+            var element = elements[idx];
+
+            // Restore per-element tuple binding before evaluating key/value expressions
+            if (elementGroupIndices is not null && tupleIndexVar is not null
+                && idx < elementGroupIndices.Length)
+            {
+                env.Bind(tupleIndexVar, new Sequence(CreateNumberElement(elementGroupIndices[idx])));
+            }
+
             foreach (var (keyEval, valueEval) in pairs)
             {
                 var keySeq = keyEval(element, env);
