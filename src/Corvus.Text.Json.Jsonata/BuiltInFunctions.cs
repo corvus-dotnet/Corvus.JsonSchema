@@ -262,6 +262,11 @@ internal static class BuiltInFunctions
     // --- Type coercion functions ---
     private static ExpressionEvaluator CompileToString(ExpressionEvaluator[] args)
     {
+        if (args.Length > 2)
+        {
+            throw new JsonataException("T0410", "$string expects 0 or 1 arguments", 0);
+        }
+
         // 0 args → use current context
         var arg = args.Length >= 1 ? args[0] : ContextArg;
         var prettyArg = args.Length >= 2 ? args[1] : null;
@@ -395,6 +400,11 @@ internal static class BuiltInFunctions
                 return Sequence.Undefined;
             }
 
+            if (seq.IsLambda)
+            {
+                throw new JsonataException("T0410", "Argument 1 of function $number is not of the correct type", 0);
+            }
+
             var element = seq.FirstOrDefault;
 
             // Reject types that cannot be converted to number
@@ -403,14 +413,15 @@ internal static class BuiltInFunctions
                 throw new JsonataException("T0410", "Argument 1 of function $number is not of the correct type", 0);
             }
 
-            if (seq.IsLambda)
+            // Booleans return undefined per JSONata spec
+            if (element.ValueKind is JsonValueKind.True or JsonValueKind.False)
             {
-                throw new JsonataException("T0410", "Argument 1 of function $number is not of the correct type", 0);
+                return Sequence.Undefined;
             }
 
-            if (FunctionalCompiler.TryCoerceToNumber(element, out double num))
+            if (element.ValueKind == JsonValueKind.Number)
             {
-                // Overflow to Infinity should be an error
+                double num = element.GetDouble();
                 if (double.IsInfinity(num))
                 {
                     throw new JsonataException("D3030", "Unable to cast value to a number", 0);
@@ -419,14 +430,18 @@ internal static class BuiltInFunctions
                 return new Sequence(FunctionalCompiler.CreateNumberElement(num));
             }
 
-            // String that can't be parsed as a number
+            // String conversion
             if (element.ValueKind == JsonValueKind.String)
             {
-                // Check for overflow case
                 string? s = element.GetString();
-                if (s is not null && double.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out double overflowCheck) && double.IsInfinity(overflowCheck))
+                if (s is not null && double.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out double parsed))
                 {
-                    throw new JsonataException("D3030", "Unable to cast value to a number", 0);
+                    if (double.IsInfinity(parsed))
+                    {
+                        throw new JsonataException("D3030", "Unable to cast value to a number", 0);
+                    }
+
+                    return new Sequence(FunctionalCompiler.CreateNumberElement(parsed));
                 }
 
                 throw new JsonataException("D3030", "Unable to cast value to a number", 0);
@@ -482,6 +497,13 @@ internal static class BuiltInFunctions
         return (in JsonElement input, Environment env) =>
         {
             var seq = arg(input, env);
+
+            // Lambda/function references exist
+            if (seq.IsLambda)
+            {
+                return new Sequence(FunctionalCompiler.CreateBoolElement(true));
+            }
+
             return new Sequence(FunctionalCompiler.CreateBoolElement(!seq.IsUndefined));
         };
     }
@@ -500,6 +522,11 @@ internal static class BuiltInFunctions
             if (seq.IsUndefined)
             {
                 return Sequence.Undefined;
+            }
+
+            if (seq.IsLambda)
+            {
+                return new Sequence(FunctionalCompiler.CreateStringElement("function"));
             }
 
             string typeName = seq.FirstOrDefault.ValueKind switch
@@ -794,24 +821,53 @@ internal static class BuiltInFunctions
                 return Sequence.Undefined;
             }
 
+            // Validate input is a string
+            if (strSeq.IsLambda || strSeq.FirstOrDefault.ValueKind != JsonValueKind.String)
+            {
+                throw new JsonataException("T0410", "Argument 1 of function $split is not of the correct type", 0);
+            }
+
             string? str = strSeq.FirstOrDefault.GetString();
             if (str is null)
             {
                 return Sequence.Undefined;
             }
 
+            // Validate separator is a string or regex
+            if (!sepSeq.IsRegex)
+            {
+                if (sepSeq.IsUndefined || sepSeq.IsLambda || sepSeq.FirstOrDefault.ValueKind != JsonValueKind.String)
+                {
+                    throw new JsonataException("T0410", "Argument 2 of function $split is not of the correct type", 0);
+                }
+            }
+
             int limit = int.MaxValue;
             if (limitArg is not null)
             {
                 var limitSeq = limitArg(input, env);
-                if (FunctionalCompiler.TryCoerceToNumber(limitSeq.FirstOrDefault, out double limitD))
+                if (!limitSeq.IsUndefined)
                 {
-                    if (limitD < 0)
+                    if (limitSeq.IsLambda || limitSeq.FirstOrDefault.ValueKind != JsonValueKind.Number)
                     {
-                        throw new JsonataException("D3020", "Third argument of the split function must evaluate to a positive number", 0);
+                        throw new JsonataException("T0410", "Argument 3 of function $split is not of the correct type", 0);
                     }
 
-                    limit = (int)limitD;
+                    if (FunctionalCompiler.TryCoerceToNumber(limitSeq.FirstOrDefault, out double limitD))
+                    {
+                        if (limitD < 0)
+                        {
+                            throw new JsonataException("D3020", "Third argument of the split function must evaluate to a positive number", 0);
+                        }
+
+                        // Must be a positive integer
+                        if (limitD != Math.Floor(limitD))
+                        {
+                            throw new JsonataException("T0410", "Argument 3 of function $split is not of the correct type", 0);
+                        }
+
+                        limit = (int)limitD;
+                    }
                 }
             }
 
@@ -828,7 +884,19 @@ internal static class BuiltInFunctions
                     return Sequence.Undefined;
                 }
 
-                parts = str.Split(new[] { sep }, StringSplitOptions.None);
+                if (sep.Length == 0)
+                {
+                    // Empty separator: split into individual characters
+                    parts = new string[str.Length];
+                    for (int i = 0; i < str.Length; i++)
+                    {
+                        parts[i] = str[i].ToString();
+                    }
+                }
+                else
+                {
+                    parts = str.Split(new[] { sep }, StringSplitOptions.None);
+                }
             }
 
             int count = Math.Min(parts.Length, limit);
@@ -1136,24 +1204,19 @@ internal static class BuiltInFunctions
                 return Sequence.Undefined;
             }
 
-            // Collect elements from array, sequence, or wrap singleton
+            // Collect elements from array, sequence, or wrap singleton — flatten arrays
             var elements = new List<JsonElement>();
-            var arr = seq.FirstOrDefault;
-            if (arr.ValueKind == JsonValueKind.Array)
+            for (int i = 0; i < seq.Count; i++)
             {
-                elements.AddRange(arr.EnumerateArray());
-            }
-            else if (seq.Count > 1)
-            {
-                for (int i = 0; i < seq.Count; i++)
+                var el = seq[i];
+                if (el.ValueKind == JsonValueKind.Array)
                 {
-                    elements.Add(seq[i]);
+                    elements.AddRange(el.EnumerateArray());
                 }
-            }
-            else
-            {
-                // Singleton value — wrap in array
-                elements.Add(arr);
+                else
+                {
+                    elements.Add(el);
+                }
             }
 
             if (funcArg is not null)
@@ -1511,6 +1574,12 @@ internal static class BuiltInFunctions
 
             var lambda = funcSeq.Lambda!;
 
+            // Validate the reducer function accepts at least 2 parameters
+            if (lambda.Arity < 2)
+            {
+                throw new JsonataException("D3050", "The second argument of the $reduce function must be a function with at least two arguments", 0);
+            }
+
             // Collect array elements
             var elements = new List<JsonElement>();
             if (seq.IsSingleton && seq.FirstOrDefault.ValueKind == JsonValueKind.Array)
@@ -1820,9 +1889,14 @@ internal static class BuiltInFunctions
 
             if (funcArg is null)
             {
+                if (elements.Count == 0)
+                {
+                    throw new JsonataException("D3139", "The $single function matched zero results", 0);
+                }
+
                 if (elements.Count != 1)
                 {
-                    throw new JsonataException("D3138", "$single: expected single match", 0);
+                    throw new JsonataException("D3138", "The $single function expected exactly one matching result", 0);
                 }
 
                 return new Sequence(elements[0]);
@@ -1846,14 +1920,19 @@ internal static class BuiltInFunctions
                 {
                     if (match.HasValue)
                     {
-                        throw new JsonataException("D3138", "$single: expected single match", 0);
+                        throw new JsonataException("D3138", "The $single function expected exactly one matching result", 0);
                     }
 
                     match = elements[i];
                 }
             }
 
-            return match.HasValue ? new Sequence(match.Value) : Sequence.Undefined;
+            if (!match.HasValue)
+            {
+                throw new JsonataException("D3139", "The $single function matched zero results", 0);
+            }
+
+            return new Sequence(match.Value);
         };
     }
 
@@ -2074,15 +2153,29 @@ internal static class BuiltInFunctions
                 return Sequence.Undefined;
             }
 
-            if (!patSeq.IsRegex && patSeq.IsUndefined)
+            // Validate input is a string
+            if (strSeq.IsLambda || strSeq.FirstOrDefault.ValueKind != JsonValueKind.String)
             {
-                return Sequence.Undefined;
+                throw new JsonataException("T0410", "Argument 1 of function $replace is not of the correct type", 0);
             }
 
-            bool isLambdaReplacement = repSeq.IsLambda;
-            if (!isLambdaReplacement && repSeq.IsUndefined)
+            // Validate pattern is a string or regex
+            if (!patSeq.IsRegex)
             {
-                return Sequence.Undefined;
+                if (patSeq.IsUndefined || patSeq.IsLambda || patSeq.FirstOrDefault.ValueKind != JsonValueKind.String)
+                {
+                    throw new JsonataException("T0410", "Argument 2 of function $replace is not of the correct type", 0);
+                }
+            }
+
+            // Validate replacement is a string or function
+            bool isLambdaReplacement = repSeq.IsLambda;
+            if (!isLambdaReplacement)
+            {
+                if (repSeq.IsUndefined || repSeq.FirstOrDefault.ValueKind != JsonValueKind.String)
+                {
+                    throw new JsonataException("T0410", "Argument 3 of function $replace is not of the correct type", 0);
+                }
             }
 
             string str = FunctionalCompiler.CoerceElementToString(strSeq.FirstOrDefault);
@@ -2090,9 +2183,22 @@ internal static class BuiltInFunctions
             if (limitArg is not null)
             {
                 var limSeq = limitArg(input, env);
-                if (!limSeq.IsUndefined && FunctionalCompiler.TryCoerceToNumber(limSeq.FirstOrDefault, out double n))
+                if (!limSeq.IsUndefined)
                 {
-                    limit = (int)n;
+                    if (limSeq.IsLambda || limSeq.FirstOrDefault.ValueKind != JsonValueKind.Number)
+                    {
+                        throw new JsonataException("T0410", "Argument 4 of function $replace is not of the correct type", 0);
+                    }
+
+                    if (FunctionalCompiler.TryCoerceToNumber(limSeq.FirstOrDefault, out double n))
+                    {
+                        if (n < 0)
+                        {
+                            throw new JsonataException("D3011", "The fourth argument of the $replace function must be a positive number", 0);
+                        }
+
+                        limit = (int)n;
+                    }
                 }
             }
 
@@ -2112,6 +2218,13 @@ internal static class BuiltInFunctions
             else
             {
                 string pattern = FunctionalCompiler.CoerceElementToString(patSeq.FirstOrDefault);
+
+                // Empty string pattern is an error
+                if (pattern.Length == 0)
+                {
+                    throw new JsonataException("D3010", "The second argument of the $replace function cannot be an empty string", 0);
+                }
+
                 string replacement = FunctionalCompiler.CoerceElementToString(repSeq.FirstOrDefault);
 
                 int count = 0;

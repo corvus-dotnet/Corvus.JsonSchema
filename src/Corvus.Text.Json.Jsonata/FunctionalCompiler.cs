@@ -101,6 +101,7 @@ internal static class FunctionalCompiler
     private static ExpressionEvaluator WrapWithStages(ExpressionEvaluator inner, StepAnnotations annotations)
     {
         var stageEvaluators = new ExpressionEvaluator[annotations.Stages.Count];
+        var isSortStage = new bool[annotations.Stages.Count];
         for (int i = 0; i < annotations.Stages.Count; i++)
         {
             var stage = annotations.Stages[i];
@@ -111,6 +112,7 @@ internal static class FunctionalCompiler
             else if (stage is SortNode sortNode)
             {
                 stageEvaluators[i] = CompileSortStage(sortNode);
+                isSortStage[i] = true;
             }
             else
             {
@@ -121,7 +123,7 @@ internal static class FunctionalCompiler
         return (in JsonElement input, Environment env) =>
         {
             var result = inner(input, env);
-            return ApplyStages(result, stageEvaluators, env);
+            return ApplyStages(result, stageEvaluators, isSortStage, env);
         };
     }
 
@@ -272,15 +274,18 @@ internal static class FunctionalCompiler
         // Compile each step and its annotations (stages/filters)
         var steps = new ExpressionEvaluator[path.Steps.Count];
         var stages = new ExpressionEvaluator[]?[path.Steps.Count];
+        var stageIsSortFlags = new bool[]?[path.Steps.Count];
         var focusVars = new string?[path.Steps.Count];
         var indexVars = new string?[path.Steps.Count];
         var isPropertyStep = new bool[path.Steps.Count];
+        var isSortStep = new bool[path.Steps.Count];
         (ExpressionEvaluator Key, ExpressionEvaluator Value)[]? groupByPairs = null;
 
         for (int i = 0; i < path.Steps.Count; i++)
         {
             steps[i] = CompileCore(path.Steps[i]);
             isPropertyStep[i] = path.Steps[i] is NameNode or WildcardNode or DescendantNode;
+            isSortStep[i] = path.Steps[i] is SortNode;
 
             var annotations = GetStepAnnotations(path.Steps[i]);
             if (annotations is not null)
@@ -288,6 +293,7 @@ internal static class FunctionalCompiler
                 if (annotations.Stages.Count > 0)
                 {
                     stages[i] = new ExpressionEvaluator[annotations.Stages.Count];
+                    stageIsSortFlags[i] = new bool[annotations.Stages.Count];
                     for (int s = 0; s < annotations.Stages.Count; s++)
                     {
                         var stage = annotations.Stages[s];
@@ -299,6 +305,7 @@ internal static class FunctionalCompiler
                         else if (stage is SortNode sortNode)
                         {
                             stages[i]![s] = CompileSortStage(sortNode);
+                            stageIsSortFlags[i]![s] = true;
                         }
                         else
                         {
@@ -356,6 +363,32 @@ internal static class FunctionalCompiler
                 if (focusVar is not null)
                 {
                     env.Bind(focusVar, current);
+                }
+
+                // Sort steps need all elements as a batch — collect, flatten, sort.
+                if (isSortStep[stepIdx])
+                {
+                    var sortElements = CollectFlatElements(current);
+                    if (sortElements.Count <= 1)
+                    {
+                        if (sortElements.Count == 1)
+                        {
+                            current = new Sequence(sortElements[0]);
+                        }
+                    }
+                    else
+                    {
+                        var arrayInput = CreateArrayElement(sortElements);
+                        current = step(arrayInput, env);
+                    }
+
+                    // Apply any stages on the sort step itself (e.g. filters after sort)
+                    if (stages[stepIdx] is not null)
+                    {
+                        current = ApplyStages(current, stages[stepIdx]!, stageIsSortFlags[stepIdx]!, env);
+                    }
+
+                    continue;
                 }
 
                 // Auto-flatten arrays when:
@@ -430,7 +463,7 @@ internal static class FunctionalCompiler
                 // Apply stages (predicates/filters/sorts) after step evaluation
                 if (stages[stepIdx] is not null)
                 {
-                    current = ApplyStages(current, stages[stepIdx]!, env);
+                    current = ApplyStages(current, stages[stepIdx]!, stageIsSortFlags[stepIdx]!, env);
                 }
             }
 
@@ -565,7 +598,7 @@ internal static class FunctionalCompiler
         return new Sequence(doc.RootElement.Clone());
     }
 
-    private static Sequence ApplyStages(Sequence current, ExpressionEvaluator[] stageEvaluators, Environment env)
+    private static Sequence ApplyStages(Sequence current, ExpressionEvaluator[] stageEvaluators, bool[] isSortStage, Environment env)
     {
         for (int s = 0; s < stageEvaluators.Length; s++)
         {
@@ -598,6 +631,42 @@ internal static class FunctionalCompiler
                 }
             }
 
+            if (isSortStage[s])
+            {
+                // In path contexts, property steps can produce arrays of arrays
+                // (e.g. Account.Order.Product yields [productArray1, productArray2]).
+                // Flatten one level so the sort sees individual elements.
+                var sortElements = new List<JsonElement>(elements.Count * 2);
+                foreach (var el in elements)
+                {
+                    if (el.ValueKind == JsonValueKind.Array)
+                    {
+                        sortElements.AddRange(el.EnumerateArray());
+                    }
+                    else
+                    {
+                        sortElements.Add(el);
+                    }
+                }
+
+                // Sort stages need all elements at once — build a JSON array
+                // and pass it to the sort evaluator.
+                if (sortElements.Count <= 1)
+                {
+                    if (sortElements.Count == 1)
+                    {
+                        current = new Sequence(sortElements[0]);
+                    }
+                }
+                else
+                {
+                    var arrayInput = CreateArrayElement(sortElements);
+                    current = stage(arrayInput, env);
+                }
+
+                continue;
+            }
+
             // Apply the stage predicate to each element
             var builder = default(SequenceBuilder);
             for (int i = 0; i < elements.Count; i++)
@@ -610,8 +679,21 @@ internal static class FunctionalCompiler
                     continue;
                 }
 
+                var firstResult = result.FirstOrDefault;
+
+                // Boolean result takes priority — don't coerce to numeric index
+                if (result.IsSingleton && firstResult.ValueKind is JsonValueKind.True or JsonValueKind.False)
+                {
+                    if (firstResult.ValueKind == JsonValueKind.True)
+                    {
+                        builder.Add(el);
+                    }
+
+                    continue;
+                }
+
                 // Numeric result = index access
-                if (result.IsSingleton && TryCoerceToNumber(result.FirstOrDefault, out double idx))
+                if (result.IsSingleton && TryCoerceToNumber(firstResult, out double idx))
                 {
                     int index = (int)idx;
                     if (index < 0)
@@ -635,7 +717,8 @@ internal static class FunctionalCompiler
                     bool allNumeric = true;
                     for (int j = 0; j < result.Count; j++)
                     {
-                        if (!TryCoerceToNumber(result[j], out _))
+                        var rj = result[j];
+                        if (rj.ValueKind is JsonValueKind.True or JsonValueKind.False || !TryCoerceToNumber(rj, out _))
                         {
                             allNumeric = false;
                             break;
@@ -680,6 +763,44 @@ internal static class FunctionalCompiler
     private static StepAnnotations? GetStepAnnotations(JsonataNode node)
     {
         return node.Annotations;
+    }
+
+    /// <summary>
+    /// Collects all elements from a sequence, flattening one level of nested arrays.
+    /// Used before sort operations to gather individual items from multi-value path results.
+    /// </summary>
+    private static List<JsonElement> CollectFlatElements(Sequence current)
+    {
+        var result = new List<JsonElement>();
+        if (current.IsSingleton)
+        {
+            var el = current.FirstOrDefault;
+            if (el.ValueKind == JsonValueKind.Array)
+            {
+                result.AddRange(el.EnumerateArray());
+            }
+            else
+            {
+                result.Add(el);
+            }
+        }
+        else
+        {
+            for (int i = 0; i < current.Count; i++)
+            {
+                var el = current[i];
+                if (el.ValueKind == JsonValueKind.Array)
+                {
+                    result.AddRange(el.EnumerateArray());
+                }
+                else
+                {
+                    result.Add(el);
+                }
+            }
+        }
+
+        return result;
     }
 
     private static Sequence FlattenArrayStep(JsonElement array, ExpressionEvaluator step, Environment env)
@@ -911,7 +1032,7 @@ internal static class FunctionalCompiler
 
             if (left.IsUndefined || right.IsUndefined)
             {
-                return Sequence.Undefined;
+                return new Sequence(CreateBoolElement(false));
             }
 
             var needle = left.FirstOrDefault;
@@ -926,9 +1047,20 @@ internal static class FunctionalCompiler
                         return new Sequence(CreateBoolElement(true));
                     }
                 }
+
+                return new Sequence(CreateBoolElement(false));
             }
 
-            return new Sequence(CreateBoolElement(false));
+            // String containment: "hello" in "hello world" → true
+            if (needle.ValueKind == JsonValueKind.String && haystack.ValueKind == JsonValueKind.String)
+            {
+                string needleStr = needle.GetString()!;
+                string haystackStr = haystack.GetString()!;
+                return new Sequence(CreateBoolElement(haystackStr.Contains(needleStr)));
+            }
+
+            // Scalar equality check
+            return new Sequence(CreateBoolElement(JsonElementEquals(needle, haystack)));
         };
     }
 
@@ -985,8 +1117,8 @@ internal static class FunctionalCompiler
                 return Sequence.Undefined;
             }
 
-            // Guard against excessively large ranges
-            if ((long)iEnd - (long)iStart > 10_000_000)
+            // Guard against excessively large ranges (max 10M elements)
+            if ((long)iEnd - (long)iStart >= 10_000_000)
             {
                 throw new JsonataException("D2014", "Range expression generates too many results", 0);
             }
@@ -1303,8 +1435,21 @@ internal static class FunctionalCompiler
         {
             var result = predicate(input, env);
 
+            if (result.IsUndefined)
+            {
+                return Sequence.Undefined;
+            }
+
+            var first = result.FirstOrDefault;
+
+            // Boolean filter takes priority over numeric coercion
+            if (first.ValueKind is JsonValueKind.True or JsonValueKind.False)
+            {
+                return first.ValueKind == JsonValueKind.True ? new Sequence(input) : Sequence.Undefined;
+            }
+
             // Numeric filter = index access
-            if (result.IsSingleton && TryCoerceToNumber(result.FirstOrDefault, out double idx))
+            if (result.IsSingleton && TryCoerceToNumber(first, out double idx))
             {
                 if (input.ValueKind == JsonValueKind.Array)
                 {
@@ -1323,7 +1468,32 @@ internal static class FunctionalCompiler
                 return Sequence.Undefined;
             }
 
-            // Boolean filter
+            // Multi-value result: collect matching indices (array of indices pattern)
+            if (result.Count > 1)
+            {
+                var builder = default(SequenceBuilder);
+                for (int i = 0; i < result.Count; i++)
+                {
+                    var elem = result[i];
+                    if (elem.ValueKind is JsonValueKind.True)
+                    {
+                        builder.Add(input);
+                    }
+                    else if (TryCoerceToNumber(elem, out double elemIdx) && input.ValueKind == JsonValueKind.Array)
+                    {
+                        int eIdx = (int)elemIdx;
+                        if (eIdx < 0) eIdx = input.GetArrayLength() + eIdx;
+                        if (eIdx >= 0 && eIdx < input.GetArrayLength())
+                        {
+                            builder.Add(input[eIdx]);
+                        }
+                    }
+                }
+
+                return builder.ToSequence();
+            }
+
+            // General truthiness
             return IsTruthy(result) ? new Sequence(input) : Sequence.Undefined;
         };
     }
@@ -1368,7 +1538,7 @@ internal static class FunctionalCompiler
                     var aVal = expr(a, env);
                     var bVal = expr(b, env);
 
-                    int cmp = CompareSequences(aVal, bVal);
+                    int cmp = CompareSortKeys(aVal, bVal);
                     if (cmp != 0)
                     {
                         return desc ? -cmp : cmp;
@@ -1378,19 +1548,12 @@ internal static class FunctionalCompiler
                 return 0;
             });
 
-            // Build result as a multi-value sequence (not a JSON array)
-            // so subsequent path steps can iterate over individual elements
-            var builder = default(SequenceBuilder);
-            for (int i = 0; i < elements.Count; i++)
-            {
-                builder.Add(elements[i]);
-            }
-
-            return builder.ToSequence();
+            // Build result as a JSON array so subsequent path steps flatten it
+            return new Sequence(CreateArrayElement(elements));
         };
     }
 
-    private static int CompareSequences(Sequence a, Sequence b)
+    private static int CompareSortKeys(Sequence a, Sequence b)
     {
         if (a.IsUndefined && b.IsUndefined)
         {
@@ -1410,17 +1573,34 @@ internal static class FunctionalCompiler
         var aEl = a.FirstOrDefault;
         var bEl = b.FirstOrDefault;
 
-        if (TryCoerceToNumber(aEl, out double aNum) && TryCoerceToNumber(bEl, out double bNum))
+        bool aIsNum = aEl.ValueKind == JsonValueKind.Number;
+        bool aIsStr = aEl.ValueKind == JsonValueKind.String;
+        bool bIsNum = bEl.ValueKind == JsonValueKind.Number;
+        bool bIsStr = bEl.ValueKind == JsonValueKind.String;
+
+        // T2008: sort key must evaluate to a number or string
+        if (!aIsNum && !aIsStr)
         {
-            return aNum.CompareTo(bNum);
+            throw new JsonataException("T2008", "The expressions within an order-by clause must evaluate to numeric or string values", 0);
         }
 
-        if (aEl.ValueKind == JsonValueKind.String && bEl.ValueKind == JsonValueKind.String)
+        if (!bIsNum && !bIsStr)
         {
-            return string.CompareOrdinal(aEl.GetString(), bEl.GetString());
+            throw new JsonataException("T2008", "The expressions within an order-by clause must evaluate to numeric or string values", 0);
         }
 
-        return 0;
+        // T2007: types must be consistent (both numbers or both strings)
+        if (aIsNum != bIsNum)
+        {
+            throw new JsonataException("T2007", "Type mismatch within order-by clause. All values must be of the same type", 0);
+        }
+
+        if (aIsNum)
+        {
+            return aEl.GetDouble().CompareTo(bEl.GetDouble());
+        }
+
+        return string.CompareOrdinal(aEl.GetString(), bEl.GetString());
     }
 
     private static ExpressionEvaluator CompileTransform(TransformNode transform)
@@ -1945,6 +2125,23 @@ internal static class FunctionalCompiler
         }
 
         return true;
+    }
+
+    internal static JsonElement CreateArrayElement(List<JsonElement> elements)
+    {
+        using var ms = new MemoryStream(elements.Count * 64);
+        using var writer = new Utf8JsonWriter(ms);
+        writer.WriteStartArray();
+        for (int i = 0; i < elements.Count; i++)
+        {
+            elements[i].WriteTo(writer);
+        }
+
+        writer.WriteEndArray();
+        writer.Flush();
+        ms.Position = 0;
+        using var doc = JsonDocument.Parse(ms);
+        return doc.RootElement.Clone();
     }
 
     internal static JsonElement CreateNumberElement(double value)

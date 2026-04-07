@@ -330,6 +330,13 @@ public class JsonataTestSuiteRunner
             return;
         }
 
+        // Compare string values semantically, not raw text, so that "\ud83d\ude02" and "😂" are equal
+        if (expected.ValueKind == JsonValueKind.String && actual.ValueKind == JsonValueKind.String)
+        {
+            Assert.Equal(expected.GetString(), actual.GetString());
+            return;
+        }
+
         Assert.Equal(expected.GetRawText(), actual.GetRawText());
     }
 }
