@@ -434,11 +434,137 @@ internal static class FunctionalCompiler
         }
     }
 
+    /// <summary>
+    /// Tries to compile a path as a simple property chain (a.b.c.d) without
+    /// any annotations, stages, or non-Name steps. Returns a tight evaluator
+    /// that chains TryGetProperty calls directly — no delegates, no Sequence
+    /// intermediaries for the common object-input case.
+    /// </summary>
+    private static bool TryCompileSimplePropertyChain(PathNode path, out ExpressionEvaluator evaluator)
+    {
+        // Check all steps are NameNodes with no annotations
+        if (path.KeepArray || path.KeepSingletonArray || GetStepAnnotations(path) is not null)
+        {
+            evaluator = default!;
+            return false;
+        }
+
+        var names = new string[path.Steps.Count];
+        for (int i = 0; i < path.Steps.Count; i++)
+        {
+            if (path.Steps[i] is not NameNode nameNode || GetStepAnnotations(path.Steps[i]) is not null)
+            {
+                evaluator = default!;
+                return false;
+            }
+
+            names[i] = nameNode.Value;
+        }
+
+        evaluator = (in JsonElement input, Environment env) =>
+        {
+            return EvalSimplePropertyChain(input, names);
+        };
+
+        return true;
+
+        static Sequence EvalSimplePropertyChain(in JsonElement input, string[] names)
+        {
+            JsonElement current = input;
+
+            for (int step = 0; step < names.Length; step++)
+            {
+                if (current.ValueKind == JsonValueKind.Object)
+                {
+                    if (!current.TryGetProperty(names[step], out current))
+                    {
+                        return Sequence.Undefined;
+                    }
+                }
+                else if (current.ValueKind == JsonValueKind.Array)
+                {
+                    // Auto-flatten: map remaining steps over array elements
+                    return EvalChainOverArray(current, names, step);
+                }
+                else
+                {
+                    return Sequence.Undefined;
+                }
+            }
+
+            return new Sequence(current);
+        }
+
+        static Sequence EvalChainOverArray(in JsonElement array, string[] names, int fromStep)
+        {
+            var builder = default(SequenceBuilder);
+            foreach (var item in array.EnumerateArray())
+            {
+                JsonElement current = item;
+                bool found = true;
+                for (int step = fromStep; step < names.Length; step++)
+                {
+                    if (current.ValueKind == JsonValueKind.Object)
+                    {
+                        if (!current.TryGetProperty(names[step], out current))
+                        {
+                            found = false;
+                            break;
+                        }
+                    }
+                    else if (current.ValueKind == JsonValueKind.Array)
+                    {
+                        // Nested array: recurse for remaining steps
+                        var inner = EvalChainOverArray(current, names, step);
+                        if (!inner.IsUndefined)
+                        {
+                            builder.AddRange(inner);
+                        }
+
+                        found = false;
+                        break;
+                    }
+                    else
+                    {
+                        found = false;
+                        break;
+                    }
+                }
+
+                if (found)
+                {
+                    // Auto-flatten: if a property step returns an array in a multi-context,
+                    // expand it into individual elements
+                    if (current.ValueKind == JsonValueKind.Array)
+                    {
+                        foreach (var child in current.EnumerateArray())
+                        {
+                            builder.Add(child);
+                        }
+                    }
+                    else
+                    {
+                        builder.Add(current);
+                    }
+                }
+            }
+
+            return builder.ToSequence();
+        }
+    }
+
     private static ExpressionEvaluator CompilePath(PathNode path)
     {
         if (path.Steps.Count == 0)
         {
             return static (in JsonElement input, Environment env) => Sequence.Undefined;
+        }
+
+        // Fast path: simple property chain (a.b.c.d) with no annotations.
+        // Avoids all delegate dispatch, Sequence intermediaries, and stage checks.
+        if (TryCompileSimplePropertyChain(path, out var fastEvaluator))
+        {
+            return fastEvaluator;
         }
 
         // Compile each step and its annotations (stages/filters)
@@ -458,7 +584,7 @@ internal static class FunctionalCompiler
 
         for (int i = 0; i < path.Steps.Count; i++)
         {
-            steps[i] = WrapWithDepthTracking(CompileCore(path.Steps[i]));
+            steps[i] = CompileCore(path.Steps[i]);
             isPropertyStep[i] = path.Steps[i] is NameNode or WildcardNode or DescendantNode;
             isConsArrayStep[i] = path.Steps[i] is ArrayConstructorNode { ConsArray: true };
             isSortStep[i] = path.Steps[i] is SortNode;
