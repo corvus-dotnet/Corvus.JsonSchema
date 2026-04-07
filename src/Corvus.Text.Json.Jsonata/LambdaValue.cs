@@ -175,4 +175,64 @@ internal sealed class LambdaValue
             }
         }
     }
+
+    /// <summary>
+    /// Creates a child environment suitable for reuse across multiple invocations
+    /// of this lambda. The environment is a child of the defining environment
+    /// (for closure semantics).
+    /// </summary>
+    /// <param name="callerEnv">Fallback environment if no defining environment exists.</param>
+    /// <returns>A child environment to pass to <see cref="InvokeReusing"/>.</returns>
+    internal Environment CreateInvokeEnv(Environment callerEnv)
+    {
+        return (this.definingEnv ?? callerEnv).CreateChild();
+    }
+
+    /// <summary>
+    /// Invokes this lambda reusing a pre-created child environment, avoiding
+    /// per-call Environment and Dictionary allocation. The caller must have
+    /// obtained <paramref name="reuseEnv"/> from <see cref="CreateInvokeEnv"/>.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This is safe for built-in higher-order functions ($map, $filter, $reduce, $sort)
+    /// where each iteration's result is consumed immediately and does not capture the
+    /// iteration environment in a long-lived closure.
+    /// </para>
+    /// <para>
+    /// For native functions, this delegates to <see cref="Invoke"/> since native
+    /// functions do not use the environment for parameter binding.
+    /// </para>
+    /// </remarks>
+    internal Sequence InvokeReusing(Sequence[] args, in JsonElement input, Environment reuseEnv, Environment callerEnv)
+    {
+        if (this.NativeFunc is not null)
+        {
+            return this.Invoke(args, input, callerEnv);
+        }
+
+        // Rebind parameters in the reused environment
+        for (int i = 0; i < this.paramNames.Length; i++)
+        {
+            reuseEnv.Bind(
+                this.paramNames[i],
+                i < args.Length ? args[i] : Sequence.Undefined);
+        }
+
+        if (this.signature is not null)
+        {
+            SignatureValidator.ValidateArgs(this.signature, args, -1);
+        }
+
+        var result = this.body(this.definingInput, reuseEnv);
+
+        // Trampoline for tail calls
+        while (result.IsTailCall)
+        {
+            var tc = result.TailCall!;
+            result = tc.Target.InvokeBody(tc.Args, tc.Input, tc.CallerEnv);
+        }
+
+        return result;
+    }
 }

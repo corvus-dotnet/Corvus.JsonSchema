@@ -1623,12 +1623,14 @@ internal static class BuiltInFunctions
                 {
                     var lambda = funcSeq.Lambda!;
                     var sortInput = input;
-                    var sortArgs = new Sequence[2]; // Reuse across comparisons
+                    var sortArgs = new Sequence[2];
+                    var reverseArgs = new Sequence[2];
+                    var invokeEnv = lambda.CreateInvokeEnv(env);
                     StableSort(ref elements, (a, b) =>
                     {
                         sortArgs[0] = new Sequence(a);
                         sortArgs[1] = new Sequence(b);
-                        var result = lambda.Invoke(sortArgs, sortInput, env);
+                        var result = lambda.InvokeReusing(sortArgs, sortInput, invokeEnv, env);
                         if (result.IsUndefined)
                         {
                             return 0;
@@ -1645,7 +1647,9 @@ internal static class BuiltInFunctions
 
                         if (el.ValueKind == JsonValueKind.False)
                         {
-                            var reverseResult = lambda.Invoke([sortArgs[1], sortArgs[0]], sortInput, env);
+                            reverseArgs[0] = sortArgs[1];
+                            reverseArgs[1] = sortArgs[0];
+                            var reverseResult = lambda.InvokeReusing(reverseArgs, sortInput, invokeEnv, env);
                             if (!reverseResult.IsUndefined
                                 && reverseResult.FirstOrDefault.ValueKind == JsonValueKind.True)
                             {
@@ -1903,12 +1907,15 @@ internal static class BuiltInFunctions
                 flatArr = (JsonElement)flatRoot;
             }
 
-            var arrSeq = new Sequence(flatArr);
+            // Reuse args array and child environment across all iterations
+            var lambdaArgs = new Sequence[3];
+            lambdaArgs[2] = new Sequence(flatArr);
+            var invokeEnv = lambda.CreateInvokeEnv(env);
             for (int i = 0; i < items.Count; i++)
             {
-                var elemSeq = new Sequence(items[i]);
-                var idxSeq = Sequence.FromDouble(i, env.Workspace);
-                var result = lambda.Invoke(new[] { elemSeq, idxSeq, arrSeq }, items[i], env);
+                lambdaArgs[0] = new Sequence(items[i]);
+                lambdaArgs[1] = Sequence.FromDouble(i, env.Workspace);
+                var result = lambda.InvokeReusing(lambdaArgs, items[i], invokeEnv, env);
                 builder.AddRange(result);
             }
 
@@ -1987,15 +1994,20 @@ internal static class BuiltInFunctions
             JsonElement.Mutable filterRoot = filterDoc.RootElement;
             int matchCount = 0;
 
+            // Reuse args array and child environment across all iterations
+            var lambdaArgs = new Sequence[3];
+            var invokeEnv = lambda.CreateInvokeEnv(env);
+
             if (inputWasArray)
             {
                 var arr = seq.FirstOrDefault;
                 int len = arr.GetArrayLength();
+                lambdaArgs[2] = seq;
                 for (int i = 0; i < len; i++)
                 {
-                    var elemSeq = new Sequence(arr[i]);
-                    var idxSeq = Sequence.FromDouble(i, env.Workspace);
-                    var result = lambda.Invoke(new[] { elemSeq, idxSeq, seq }, arr[i], env);
+                    lambdaArgs[0] = new Sequence(arr[i]);
+                    lambdaArgs[1] = Sequence.FromDouble(i, env.Workspace);
+                    var result = lambda.InvokeReusing(lambdaArgs, arr[i], invokeEnv, env);
                     if (FunctionalCompiler.IsTruthy(result))
                     {
                         filterRoot.AddItem(arr[i]);
@@ -2005,11 +2017,12 @@ internal static class BuiltInFunctions
             }
             else
             {
+                lambdaArgs[2] = seq;
                 for (int i = 0; i < seq.Count; i++)
                 {
-                    var elemSeq = new Sequence(seq[i]);
-                    var idxSeq = Sequence.FromDouble(i, env.Workspace);
-                    var result = lambda.Invoke(new[] { elemSeq, idxSeq, seq }, seq[i], env);
+                    lambdaArgs[0] = new Sequence(seq[i]);
+                    lambdaArgs[1] = Sequence.FromDouble(i, env.Workspace);
+                    var result = lambda.InvokeReusing(lambdaArgs, seq[i], invokeEnv, env);
                     if (FunctionalCompiler.IsTruthy(result))
                     {
                         filterRoot.AddItem(seq[i]);
@@ -2068,35 +2081,37 @@ internal static class BuiltInFunctions
                 throw new JsonataException("D3050", "The second argument of the $reduce function must be a function with at least two arguments", 0);
             }
 
-            // Collect items as Sequences to preserve function references in tuple arrays
-            var itemSeqs = new List<Sequence>();
+            // Collect items using SequenceBuilder instead of List<Sequence>
             bool isTuple = seq.IsTupleSequence;
-            if (isTuple)
+            var items = default(SequenceBuilder);
+            if (!isTuple)
             {
-                for (int i = 0; i < seq.Count; i++)
+                if (seq.IsSingleton && seq.FirstOrDefault.ValueKind == JsonValueKind.Array)
                 {
-                    itemSeqs.Add(seq.GetItemSequence(i));
+                    foreach (var el in seq.FirstOrDefault.EnumerateArray())
+                    {
+                        items.Add(el);
+                    }
                 }
-            }
-            else if (seq.IsSingleton && seq.FirstOrDefault.ValueKind == JsonValueKind.Array)
-            {
-                foreach (var el in seq.FirstOrDefault.EnumerateArray())
+                else
                 {
-                    itemSeqs.Add(new Sequence(el));
+                    for (int i = 0; i < seq.Count; i++)
+                    {
+                        items.Add(seq[i]);
+                    }
                 }
-            }
-            else
-            {
-                for (int i = 0; i < seq.Count; i++)
-                {
-                    itemSeqs.Add(new Sequence(seq[i]));
-                }
-            }
 
-            if (itemSeqs.Count == 0)
+                if (items.Count == 0)
+                {
+                    return Sequence.Undefined;
+                }
+            }
+            else if (seq.Count == 0)
             {
                 return Sequence.Undefined;
             }
+
+            int itemCount = isTuple ? seq.Count : items.Count;
 
             Sequence accumulator;
             int startIdx;
@@ -2107,11 +2122,11 @@ internal static class BuiltInFunctions
             }
             else
             {
-                accumulator = itemSeqs[0];
+                accumulator = isTuple ? seq.GetItemSequence(0) : new Sequence(items[0]);
                 startIdx = 1;
             }
 
-            // Build array element for the 4th lambda arg (best-effort; lambdas have no JSON representation)
+            // Build array element for the 4th lambda arg
             Sequence arrSeq;
             if (isTuple)
             {
@@ -2119,22 +2134,30 @@ internal static class BuiltInFunctions
             }
             else
             {
-                JsonDocumentBuilder<JsonElement.Mutable> arrDoc = JsonElement.CreateArrayBuilder(env.Workspace, itemSeqs.Count);
+                JsonDocumentBuilder<JsonElement.Mutable> arrDoc = JsonElement.CreateArrayBuilder(env.Workspace, items.Count);
                 JsonElement.Mutable arrRoot = arrDoc.RootElement;
-                for (int i = 0; i < itemSeqs.Count; i++)
+                for (int i = 0; i < items.Count; i++)
                 {
-                    arrRoot.AddItem(itemSeqs[i].FirstOrDefault);
+                    arrRoot.AddItem(items[i]);
                 }
 
                 arrSeq = new Sequence((JsonElement)arrRoot);
             }
 
-            for (int i = startIdx; i < itemSeqs.Count; i++)
+            // Reuse args array across iterations, but use standard Invoke
+            // (not InvokeReusing) because the accumulator can be a closure
+            // that captures the iteration environment (e.g., function composition via $reduce)
+            var lambdaArgs = new Sequence[4];
+            lambdaArgs[3] = arrSeq;
+            for (int i = startIdx; i < itemCount; i++)
             {
-                var elemSeq = itemSeqs[i];
-                var idxSeq = Sequence.FromDouble(i, env.Workspace);
-                accumulator = lambda.Invoke(new[] { accumulator, elemSeq, idxSeq, arrSeq }, input, env);
+                lambdaArgs[0] = accumulator;
+                lambdaArgs[1] = isTuple ? seq.GetItemSequence(i) : new Sequence(items[i]);
+                lambdaArgs[2] = Sequence.FromDouble(i, env.Workspace);
+                accumulator = lambda.Invoke(lambdaArgs, input, env);
             }
+
+            items.ReturnArray();
 
             return accumulator;
         };
