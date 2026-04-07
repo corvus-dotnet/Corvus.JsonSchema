@@ -553,6 +553,18 @@ internal static class FunctionalCompiler
                         return EvalFocusStep(current, stepIdx);
                     }
 
+                    // Index binding (#$var) without focus — per-element propagation.
+                    // When a step has #$var AND there are subsequent non-sort steps, we must
+                    // evaluate remaining steps per-element so each element carries its correct
+                    // index. Skip this when the next step is a sort (sort needs all elements
+                    // as a batch). Unlike focus binding, the next step evaluates on each
+                    // result element (not the parent context).
+                    if (indexVar is not null && stepIdx + 1 < steps.Length
+                        && !isSortStep[stepIdx + 1])
+                    {
+                        return EvalIndexStep(current, stepIdx);
+                    }
+
                     // Sort steps need all elements as a batch — collect, flatten, sort.
                     if (isSortStep[stepIdx])
                     {
@@ -991,6 +1003,123 @@ internal static class FunctionalCompiler
                 if (mergeInnerGroupBy && mergeObjects!.Count > 0)
                 {
                     return MergeGroupedObjects(mergeObjects!, env);
+                }
+
+                return resultBuilder.ToSequence();
+            }
+
+            // Evaluates a step with index binding (#$var) without focus binding.
+            // The step's result elements each get their index bound, then remaining
+            // steps are evaluated per-element so each carries the correct index.
+            Sequence EvalIndexStep(Sequence inputContext, int stepIdx)
+            {
+                var step = steps[stepIdx];
+                var indexVar = indexVars[stepIdx]!;
+
+                // Evaluate the step to get result elements
+                bool shouldFlatten = stepIdx > 0 || isPropertyStep[stepIdx];
+                Sequence stepResult;
+                if (inputContext.IsSingleton)
+                {
+                    var el = inputContext.FirstOrDefault;
+                    if (el.ValueKind == JsonValueKind.Array && shouldFlatten)
+                    {
+                        stepResult = FlattenArrayStep(el, step, env, isConsArrayStep[stepIdx]);
+                    }
+                    else
+                    {
+                        stepResult = step(el, env);
+                    }
+                }
+                else
+                {
+                    var builder = default(SequenceBuilder);
+                    for (int i = 0; i < inputContext.Count; i++)
+                    {
+                        var el = inputContext[i];
+                        if (el.ValueKind == JsonValueKind.Array && shouldFlatten)
+                        {
+                            var flat = FlattenArrayStep(el, step, env, isConsArrayStep[stepIdx]);
+                            builder.AddRange(flat);
+                        }
+                        else
+                        {
+                            builder.AddRange(step(el, env));
+                        }
+                    }
+
+                    stepResult = builder.ToSequence();
+                }
+
+                if (stepResult.IsUndefined)
+                {
+                    return Sequence.Undefined;
+                }
+
+                // Expand singleton array to individual elements
+                var elements = new List<JsonElement>();
+                if (stepResult.IsSingleton)
+                {
+                    var el = stepResult.FirstOrDefault;
+                    if (el.ValueKind == JsonValueKind.Array)
+                    {
+                        elements.AddRange(el.EnumerateArray());
+                    }
+                    else
+                    {
+                        elements.Add(el);
+                    }
+                }
+                else
+                {
+                    for (int i = 0; i < stepResult.Count; i++)
+                    {
+                        elements.Add(stepResult[i]);
+                    }
+                }
+
+                // Determine group-by handling — same logic as EvalFocusStep
+                bool hasGroupBy = groupByPairs is not null;
+                bool applyGroupByHere = hasGroupBy;
+                List<string>? groupKeys = applyGroupByHere ? new() : null;
+                Dictionary<string, (List<JsonElement> Elements, int PairIndex)>? groupData =
+                    applyGroupByHere ? new() : null;
+
+                // For each element: bind index, apply stages, evaluate remaining steps
+                var resultBuilder = default(SequenceBuilder);
+                for (int i = 0; i < elements.Count; i++)
+                {
+                    var el = elements[i];
+
+                    // Bind index variable
+                    env.Bind(indexVar, new Sequence(JsonataHelpers.NumberFromDouble(i, env.Workspace)));
+
+                    // Apply stages (filters) per-element
+                    if (stages[stepIdx] is not null)
+                    {
+                        var filtered = ApplyStages(new Sequence(el), stages[stepIdx]!, stageIsSortFlags[stepIdx]!, env, indexVar);
+                        if (filtered.IsUndefined)
+                        {
+                            continue;
+                        }
+                    }
+
+                    // Evaluate remaining steps on this element (not parent context — unlike focus)
+                    Sequence subResult = EvalPathFrom(new Sequence(el), stepIdx + 1);
+
+                    // Handle group-by accumulation
+                    if (applyGroupByHere && !subResult.IsUndefined)
+                    {
+                        AccumulateGroupBy(subResult, groupByPairs!, groupKeys!, groupData!, env);
+                        continue;
+                    }
+
+                    resultBuilder.AddRange(subResult);
+                }
+
+                if (applyGroupByHere && groupKeys!.Count > 0)
+                {
+                    return BuildGroupByResult(groupKeys!, groupData!, groupByPairs!, env);
                 }
 
                 return resultBuilder.ToSequence();
