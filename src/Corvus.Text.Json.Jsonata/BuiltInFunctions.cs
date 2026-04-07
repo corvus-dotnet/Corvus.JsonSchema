@@ -2,10 +2,13 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
+using Corvus.Runtime.InteropServices;
+using Corvus.Text.Json.Internal;
 
 namespace Corvus.Text.Json.Jsonata;
 
@@ -16,6 +19,8 @@ namespace Corvus.Text.Json.Jsonata;
 /// </summary>
 internal static class BuiltInFunctions
 {
+    private static readonly Regex WhitespaceCollapseRegex = new(@"\s+", RegexOptions.Compiled);
+
     /// <summary>
     /// Evaluator that returns the current context as a singleton sequence.
     /// Used for context-binding (0-arg calls like <c>$number()</c>).
@@ -857,7 +862,7 @@ internal static class BuiltInFunctions
     private static ExpressionEvaluator CompileTrim(ExpressionEvaluator[] args)
     {
         // JSONata $trim normalizes all whitespace (including newlines, tabs) to single spaces
-        return CompileStringTransform(args, s => System.Text.RegularExpressions.Regex.Replace(s.Trim(), @"\s+", " "));
+        return CompileStringTransform(args, s => WhitespaceCollapseRegex.Replace(s.Trim(), " "));
     }
 
     private static ExpressionEvaluator CompileStringTransform(ExpressionEvaluator[] args, Func<string, string> transform)
@@ -915,7 +920,9 @@ internal static class BuiltInFunctions
                 return Sequence.Undefined;
             }
 
-            string separator = string.Empty;
+            // Get separator as raw UTF-8 bytes (without quotes), copied to a small buffer
+            byte[]? sepBuffer = null;
+            int sepLen = 0;
             if (sepArg is not null)
             {
                 var sepSeq = sepArg(input, env);
@@ -924,51 +931,69 @@ internal static class BuiltInFunctions
                     throw new JsonataException("T0410", "Second argument of $join must be a string", 0);
                 }
 
-                separator = FunctionalCompiler.CoerceToString(sepSeq);
-            }
-
-            var values = new List<string>();
-
-            // Handle multi-valued sequences (e.g., from piping)
-            if (arrSeq.Count > 1)
-            {
-                for (int i = 0; i < arrSeq.Count; i++)
+                if (!sepSeq.IsUndefined && sepSeq.FirstOrDefault.ValueKind == JsonValueKind.String)
                 {
-                    var el = arrSeq[i];
-                    if (el.ValueKind != JsonValueKind.String)
+                    using RawUtf8JsonString sepRaw = JsonMarshal.GetRawUtf8Value(sepSeq.FirstOrDefault);
+                    ReadOnlySpan<byte> sepSpan = sepRaw.Span;
+                    if (sepSpan.Length > 2)
                     {
-                        throw new JsonataException("T0412", "Argument 1 of function $join must be an array of strings", 0);
-                    }
-
-                    values.Add(el.GetString() ?? string.Empty);
-                }
-            }
-            else
-            {
-                var arr = arrSeq.FirstOrDefault;
-                if (arr.ValueKind == JsonValueKind.Array)
-                {
-                    foreach (var item in arr.EnumerateArray())
-                    {
-                        if (item.ValueKind != JsonValueKind.String)
-                        {
-                            throw new JsonataException("T0412", "Argument 1 of function $join must be an array of strings", 0);
-                        }
-
-                        values.Add(item.GetString() ?? string.Empty);
+                        sepLen = sepSpan.Length - 2;
+                        sepBuffer = ArrayPool<byte>.Shared.Rent(sepLen);
+                        sepSpan.Slice(1, sepLen).CopyTo(sepBuffer);
                     }
                 }
-                else if (arr.ValueKind == JsonValueKind.String)
+            }
+
+            try
+            {
+                // Build the joined result directly as quoted UTF-8
+                byte[] buffer = ArrayPool<byte>.Shared.Rent(256);
+                int pos = 0;
+                buffer[pos++] = (byte)'"';
+                bool first = true;
+
+                if (arrSeq.Count > 1)
                 {
-                    values.Add(arr.GetString() ?? string.Empty);
+                    for (int i = 0; i < arrSeq.Count; i++)
+                    {
+                        AppendJoinElement(arrSeq[i], ref buffer, ref pos, ref first, sepBuffer, sepLen);
+                    }
                 }
                 else
                 {
-                    throw new JsonataException("T0412", "Argument 1 of function $join must be an array of strings", 0);
+                    var arr = arrSeq.FirstOrDefault;
+                    if (arr.ValueKind == JsonValueKind.Array)
+                    {
+                        foreach (var item in arr.EnumerateArray())
+                        {
+                            AppendJoinElement(item, ref buffer, ref pos, ref first, sepBuffer, sepLen);
+                        }
+                    }
+                    else if (arr.ValueKind == JsonValueKind.String)
+                    {
+                        AppendJoinElement(arr, ref buffer, ref pos, ref first, sepBuffer, sepLen);
+                    }
+                    else
+                    {
+                        throw new JsonataException("T0412", "Argument 1 of function $join must be an array of strings", 0);
+                    }
+                }
+
+                JsonataHelpers.GrowBufferIfNeeded(ref buffer, pos, 1);
+                buffer[pos++] = (byte)'"';
+
+                JsonElement result = JsonataHelpers.StringFromQuotedUtf8Span(
+                    new ReadOnlySpan<byte>(buffer, 0, pos), env.Workspace);
+                ArrayPool<byte>.Shared.Return(buffer);
+                return new Sequence(result);
+            }
+            finally
+            {
+                if (sepBuffer is not null)
+                {
+                    ArrayPool<byte>.Shared.Return(sepBuffer);
                 }
             }
-
-            return new Sequence(JsonataHelpers.StringFromString(string.Join(separator, values), env.Workspace));
         };
     }
 
@@ -1458,11 +1483,12 @@ internal static class BuiltInFunctions
                 {
                     var lambda = funcSeq.Lambda!;
                     var sortInput = input;
+                    var sortArgs = new Sequence[2]; // Reuse across comparisons
                     StableSort(elements, (a, b) =>
                     {
-                        var aSeq = new Sequence(a);
-                        var bSeq = new Sequence(b);
-                        var result = lambda.Invoke([aSeq, bSeq], sortInput, env);
+                        sortArgs[0] = new Sequence(a);
+                        sortArgs[1] = new Sequence(b);
+                        var result = lambda.Invoke(sortArgs, sortInput, env);
                         if (result.IsUndefined)
                         {
                             return 0;
@@ -1479,7 +1505,7 @@ internal static class BuiltInFunctions
 
                         if (el.ValueKind == JsonValueKind.False)
                         {
-                            var reverseResult = lambda.Invoke([bSeq, aSeq], sortInput, env);
+                            var reverseResult = lambda.Invoke([sortArgs[1], sortArgs[0]], sortInput, env);
                             if (!reverseResult.IsUndefined
                                 && reverseResult.FirstOrDefault.ValueKind == JsonValueKind.True)
                             {
@@ -2091,7 +2117,7 @@ internal static class BuiltInFunctions
             }
 
             // Collect all elements to spread
-            var objects = new List<JsonElement>();
+            var objects = default(SequenceBuilder);
             for (int i = 0; i < seq.Count; i++)
             {
                 var el = seq[i];
@@ -2124,21 +2150,27 @@ internal static class BuiltInFunctions
                 else
                 {
                     // Non-objects return as-is
+                    objects.ReturnArray();
                     return new Sequence(el);
                 }
             }
 
-            if (objects.Count == 0)
+            Sequence objSeqResult = objects.ToSequence();
+            if (objSeqResult.IsUndefined)
             {
+                objects.ReturnArray();
                 return Sequence.Undefined;
             }
 
-            if (objects.Count == 1)
+            if (objSeqResult.Count == 1)
             {
-                return new Sequence(objects[0]);
+                objects.ReturnArray();
+                return new Sequence(objSeqResult[0]);
             }
 
-            return new Sequence(JsonataHelpers.ArrayFromReadOnlyList(objects, env.Workspace));
+            JsonElement arrResult = JsonataHelpers.ArrayFromSequence(objSeqResult, env.Workspace);
+            objects.ReturnArray();
+            return new Sequence(arrResult);
         };
     }
 
@@ -2169,39 +2201,44 @@ internal static class BuiltInFunctions
             }
 
             // Collect all objects from the sequence, flattening any nested arrays
-            var results = new List<JsonElement>();
-            LookupCollect(objSeq, key, results);
+            var results = default(SequenceBuilder);
+            LookupCollect(objSeq, key, ref results);
 
-            if (results.Count == 0)
+            Sequence resultSeq = results.ToSequence();
+            if (resultSeq.IsUndefined)
             {
+                results.ReturnArray();
                 return Sequence.Undefined;
             }
 
-            if (results.Count == 1)
+            if (resultSeq.Count == 1)
             {
-                return new Sequence(results[0]);
+                results.ReturnArray();
+                return new Sequence(resultSeq[0]);
             }
 
-            return new Sequence(JsonataHelpers.ArrayFromReadOnlyList(results, env.Workspace));
+            JsonElement arrResult = JsonataHelpers.ArrayFromSequence(resultSeq, env.Workspace);
+            results.ReturnArray();
+            return new Sequence(arrResult);
         };
     }
 
-    private static void LookupCollect(Sequence seq, string key, List<JsonElement> results)
+    private static void LookupCollect(Sequence seq, string key, ref SequenceBuilder results)
     {
         for (int i = 0; i < seq.Count; i++)
         {
             var el = seq[i];
-            LookupCollectElement(el, key, results);
+            LookupCollectElement(el, key, ref results);
         }
     }
 
-    private static void LookupCollectElement(JsonElement el, string key, List<JsonElement> results)
+    private static void LookupCollectElement(JsonElement el, string key, ref SequenceBuilder results)
     {
         if (el.ValueKind == JsonValueKind.Array)
         {
             foreach (var item in el.EnumerateArray())
             {
-                LookupCollectElement(item, key, results);
+                LookupCollectElement(item, key, ref results);
             }
         }
         else if (el.ValueKind == JsonValueKind.Object)
@@ -2497,7 +2534,7 @@ internal static class BuiltInFunctions
             Regex regex = patSeq.Regex!;
             MatchCollection matches = regex.Matches(str);
 
-            var results = new List<JsonElement>();
+            var results = default(SequenceBuilder);
             int count = 0;
             foreach (Match m in matches)
             {
@@ -2516,17 +2553,21 @@ internal static class BuiltInFunctions
                 count++;
             }
 
-            if (results.Count == 0)
+            Sequence resultSeq = results.ToSequence();
+            if (resultSeq.IsUndefined)
             {
+                results.ReturnArray();
                 return Sequence.Undefined;
             }
 
-            if (results.Count == 1)
+            if (resultSeq.Count == 1)
             {
-                return new Sequence(results[0]);
+                results.ReturnArray();
+                return new Sequence(resultSeq[0]);
             }
 
-            return new Sequence(results.ToArray(), results.Count);
+            // For multi-match, the Sequence already holds the array — return it directly
+            return resultSeq;
         };
     }
 
@@ -4482,6 +4523,39 @@ internal static class BuiltInFunctions
         }
 
         return sb.ToString();
+    }
+
+    /// <summary>
+    /// Appends a string element's unquoted UTF-8 content to a join buffer,
+    /// preceded by the separator if this is not the first element.
+    /// </summary>
+    private static void AppendJoinElement(
+        JsonElement el, ref byte[] buffer, ref int pos, ref bool first,
+        byte[]? sepBuffer, int sepLen)
+    {
+        if (el.ValueKind != JsonValueKind.String)
+        {
+            throw new JsonataException("T0412", "Argument 1 of function $join must be an array of strings", 0);
+        }
+
+        if (!first && sepBuffer is not null)
+        {
+            JsonataHelpers.GrowBufferIfNeeded(ref buffer, pos, sepLen);
+            sepBuffer.AsSpan(0, sepLen).CopyTo(buffer.AsSpan(pos));
+            pos += sepLen;
+        }
+
+        first = false;
+
+        using RawUtf8JsonString raw = JsonMarshal.GetRawUtf8Value(el);
+        ReadOnlySpan<byte> span = raw.Span;
+        if (span.Length > 2)
+        {
+            int contentLen = span.Length - 2;
+            JsonataHelpers.GrowBufferIfNeeded(ref buffer, pos, contentLen);
+            span.Slice(1, contentLen).CopyTo(buffer.AsSpan(pos));
+            pos += contentLen;
+        }
     }
 
     /// <summary>

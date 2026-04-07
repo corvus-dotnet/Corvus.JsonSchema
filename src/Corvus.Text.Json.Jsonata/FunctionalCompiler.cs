@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Buffers;
+using System.Buffers.Text;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
@@ -24,6 +25,9 @@ internal static class FunctionalCompiler
     private static readonly JsonElement TrueElement = JsonataHelpers.True();
     private static readonly JsonElement FalseElement = JsonataHelpers.False();
     private static readonly JsonElement NullElement = JsonataHelpers.Null();
+
+    // Pre-compiled regex for stripping leading zeros from exponents in number formatting
+    private static readonly Regex ExponentLeadingZeroRegex = new(@"e([+-])0+(\d)", RegexOptions.Compiled);
 
     /// <summary>
     /// Compiles an AST node into an evaluator delegate.
@@ -1468,7 +1472,7 @@ internal static class FunctionalCompiler
             // String comparison
             if (lv.ValueKind == JsonValueKind.String && rv.ValueKind == JsonValueKind.String)
             {
-                int result = string.CompareOrdinal(lv.GetString(), rv.GetString());
+                int result = Utf8CompareOrdinal(lv, rv);
                 return new Sequence(JsonataHelpers.BooleanElement(cmp(result, 0)));
             }
 
@@ -1493,11 +1497,110 @@ internal static class FunctionalCompiler
             var left = lhs(input, env);
             var right = rhs(input, env);
 
-            string leftStr = CoerceToString(left);
-            string rightStr = CoerceToString(right);
+            // Use a rented buffer to build the quoted UTF-8 string directly,
+            // avoiding .NET string allocations entirely (like JsonLogic CompileCat).
+            byte[] buffer = ArrayPool<byte>.Shared.Rent(256);
+            int pos = 0;
+            buffer[pos++] = (byte)'"';
 
-            return new Sequence(JsonataHelpers.StringFromString(leftStr + rightStr, env.Workspace));
+            AppendCoercedToBuffer(left, ref buffer, ref pos);
+            AppendCoercedToBuffer(right, ref buffer, ref pos);
+
+            JsonataHelpers.GrowBufferIfNeeded(ref buffer, pos, 1);
+            buffer[pos++] = (byte)'"';
+
+            JsonElement result = JsonataHelpers.StringFromQuotedUtf8Span(
+                new ReadOnlySpan<byte>(buffer, 0, pos), env.Workspace);
+            ArrayPool<byte>.Shared.Return(buffer);
+            return new Sequence(result);
         };
+    }
+
+    /// <summary>
+    /// Appends the UTF-8 coercion of a sequence to a rented byte buffer.
+    /// For multi-valued sequences, writes the JSON array representation.
+    /// Numbers use JSONata's FormatNumberLikeJavaScript for precision-15 formatting.
+    /// </summary>
+    private static void AppendCoercedToBuffer(Sequence seq, ref byte[] buffer, ref int pos)
+    {
+        if (seq.IsUndefined)
+        {
+            return;
+        }
+
+        if (seq.Count > 1)
+        {
+            // Multi-valued sequences are stringified as JSON arrays: [elem1,elem2,...]
+            JsonataHelpers.GrowBufferIfNeeded(ref buffer, pos, 1);
+            buffer[pos++] = (byte)'[';
+            for (int i = 0; i < seq.Count; i++)
+            {
+                if (i > 0)
+                {
+                    JsonataHelpers.GrowBufferIfNeeded(ref buffer, pos, 1);
+                    buffer[pos++] = (byte)',';
+                }
+
+                AppendElementRawTextToBuffer(seq[i], ref buffer, ref pos);
+            }
+
+            JsonataHelpers.GrowBufferIfNeeded(ref buffer, pos, 1);
+            buffer[pos++] = (byte)']';
+            return;
+        }
+
+        AppendCoercedElementToBuffer(seq.FirstOrDefault, ref buffer, ref pos);
+    }
+
+    /// <summary>
+    /// Appends the coerced UTF-8 representation of a single element.
+    /// Numbers go through FormatNumberLikeJavaScript for G15 precision formatting.
+    /// Arrays and objects use their raw JSON text representation.
+    /// </summary>
+    private static void AppendCoercedElementToBuffer(JsonElement elem, ref byte[] buffer, ref int pos)
+    {
+        if (elem.ValueKind == JsonValueKind.Undefined)
+        {
+            return;
+        }
+
+        if (elem.ValueKind == JsonValueKind.Number)
+        {
+            // Use FormatNumberLikeJavaScript for proper precision-15 formatting.
+            // For integers with clean raw representation, this just copies the raw bytes.
+            // For non-integers, it applies G15 to clean up IEEE noise.
+            string formatted = FormatNumberLikeJavaScript(elem);
+            JsonataHelpers.GrowBufferIfNeeded(ref buffer, pos, formatted.Length);
+            for (int i = 0; i < formatted.Length; i++)
+            {
+                buffer[pos++] = (byte)formatted[i]; // All number chars are ASCII
+            }
+
+            return;
+        }
+
+        if (elem.ValueKind is JsonValueKind.Array or JsonValueKind.Object)
+        {
+            // Arrays and objects are serialized as their raw JSON text
+            AppendElementRawTextToBuffer(elem, ref buffer, ref pos);
+            return;
+        }
+
+        // For strings, booleans, null — delegate to JsonataHelpers
+        JsonataHelpers.AppendCoercedToBuffer(elem, ref buffer, ref pos);
+    }
+
+    /// <summary>
+    /// Appends the raw JSON text of an element to a rented byte buffer.
+    /// This is used for non-string values within array coercion.
+    /// </summary>
+    private static void AppendElementRawTextToBuffer(JsonElement element, ref byte[] buffer, ref int pos)
+    {
+        using RawUtf8JsonString raw = JsonMarshal.GetRawUtf8Value(element);
+        ReadOnlySpan<byte> span = raw.Span;
+        JsonataHelpers.GrowBufferIfNeeded(ref buffer, pos, span.Length);
+        span.CopyTo(buffer.AsSpan(pos));
+        pos += span.Length;
     }
 
     private static ExpressionEvaluator CompileAnd(ExpressionEvaluator lhs, ExpressionEvaluator rhs)
@@ -2342,7 +2445,7 @@ internal static class FunctionalCompiler
             return aEl.GetDouble().CompareTo(bEl.GetDouble());
         }
 
-        return string.CompareOrdinal(aEl.GetString(), bEl.GetString());
+        return Utf8CompareOrdinal(aEl, bEl);
     }
 
     private static ExpressionEvaluator CompileTransform(TransformNode transform)
@@ -2383,13 +2486,16 @@ internal static class FunctionalCompiler
             return new Sequence(transformed);
         }
 
-        var results = new List<JsonElement>();
+        var builder = default(SequenceBuilder);
         for (int i = 0; i < inputSeq.Count; i++)
         {
-            results.Add(TransformElement(inputSeq[i], matchTexts, updateEval, deleteEval, env));
+            builder.Add(TransformElement(inputSeq[i], matchTexts, updateEval, deleteEval, env));
         }
 
-        return new Sequence(JsonataHelpers.ArrayFromList(results, env.Workspace));
+        Sequence resultSeq = builder.ToSequence();
+        JsonElement arrayResult = JsonataHelpers.ArrayFromSequence(resultSeq, env.Workspace);
+        builder.ReturnArray();
+        return new Sequence(arrayResult);
     }
 
     private static void CollectMatchTexts(JsonElement element, HashSet<string> matchTexts)
@@ -2715,61 +2821,100 @@ internal static class FunctionalCompiler
                 value = 0;
                 return true;
             case JsonValueKind.String:
-                string? s = element.GetString();
-                if (s is null)
+                // Use raw UTF-8 bytes to avoid string allocation for the common decimal path
+                using (RawUtf8JsonString rawStr = JsonMarshal.GetRawUtf8Value(element))
                 {
+                    ReadOnlySpan<byte> span = rawStr.Span;
+                    if (span.Length <= 2)
+                    {
+                        // Empty string
+                        value = 0;
+                        return false;
+                    }
+
+                    // Unquoted content
+                    ReadOnlySpan<byte> content = span.Slice(1, span.Length - 2);
+
+                    // Check for hex/binary/octal prefixes (need string fallback)
+                    if (content.Length > 2 && content[0] == (byte)'0')
+                    {
+                        byte prefix = content[1];
+                        if (prefix == (byte)'x' || prefix == (byte)'X' ||
+                            prefix == (byte)'b' || prefix == (byte)'B' ||
+                            prefix == (byte)'o' || prefix == (byte)'O')
+                        {
+                            // Fall back to string for hex/binary/octal parsing
+                            string s = element.GetString()!;
+                            return TryParseSpecialRadix(s, out value);
+                        }
+                    }
+
+                    // Try UTF-8 double parsing (common path — no string allocation)
+                    if (Utf8Parser.TryParse(content, out value, out int bytesConsumed)
+                        && bytesConsumed == content.Length)
+                    {
+                        return true;
+                    }
+
                     value = 0;
                     return false;
                 }
 
-                // Hex prefix: 0x or 0X
-                if (s.Length > 2 && s[0] == '0' && (s[1] == 'x' || s[1] == 'X'))
-                {
-                    if (long.TryParse(s.Substring(2), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out long hex))
-                    {
-                        value = hex;
-                        return true;
-                    }
-
-                    value = 0;
-                    return false;
-                }
-
-                // Binary prefix: 0b or 0B
-                if (s.Length > 2 && s[0] == '0' && (s[1] == 'b' || s[1] == 'B'))
-                {
-                    try
-                    {
-                        value = Convert.ToInt64(s.Substring(2), 2);
-                        return true;
-                    }
-                    catch
-                    {
-                        value = 0;
-                        return false;
-                    }
-                }
-
-                // Octal prefix: 0o or 0O
-                if (s.Length > 2 && s[0] == '0' && (s[1] == 'o' || s[1] == 'O'))
-                {
-                    try
-                    {
-                        value = Convert.ToInt64(s.Substring(2), 8);
-                        return true;
-                    }
-                    catch
-                    {
-                        value = 0;
-                        return false;
-                    }
-                }
-
-                return double.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out value);
             default:
                 value = 0;
                 return false;
         }
+    }
+
+    /// <summary>
+    /// Parses hex (0x), binary (0b), or octal (0o) prefixed strings to double.
+    /// </summary>
+    private static bool TryParseSpecialRadix(string s, out double value)
+    {
+        char prefix = s[1];
+
+        if (prefix is 'x' or 'X')
+        {
+            if (long.TryParse(s.Substring(2), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out long hex))
+            {
+                value = hex;
+                return true;
+            }
+
+            value = 0;
+            return false;
+        }
+
+        if (prefix is 'b' or 'B')
+        {
+            try
+            {
+                value = Convert.ToInt64(s.Substring(2), 2);
+                return true;
+            }
+            catch
+            {
+                value = 0;
+                return false;
+            }
+        }
+
+        if (prefix is 'o' or 'O')
+        {
+            try
+            {
+                value = Convert.ToInt64(s.Substring(2), 8);
+                return true;
+            }
+            catch
+            {
+                value = 0;
+                return false;
+            }
+        }
+
+        value = 0;
+        return false;
     }
 
     internal static string CoerceToString(Sequence seq)
@@ -2889,7 +3034,7 @@ internal static class FunctionalCompiler
             }
 
             // Strip leading zeros from exponent: e-07 → e-7, e+02 → e+2
-            result = System.Text.RegularExpressions.Regex.Replace(result, @"e([+-])0+(\d)", "e$1$2");
+            result = ExponentLeadingZeroRegex.Replace(result, "e$1$2");
         }
 
         return result;
@@ -2920,7 +3065,13 @@ internal static class FunctionalCompiler
                 double d = element.GetDouble();
                 return d != 0 && !double.IsNaN(d);
             case JsonValueKind.String:
-                return element.GetString()?.Length > 0;
+            {
+                // Check if string is non-empty without allocating a .NET string.
+                // Raw UTF-8 includes quotes, so length > 2 means non-empty content.
+                using RawUtf8JsonString raw = JsonMarshal.GetRawUtf8Value(element);
+                return raw.Span.Length > 2;
+            }
+
             case JsonValueKind.Object:
                 // Empty object is falsy
                 ObjectEnumerator<JsonElement> enumerator = element.EnumerateObject();
@@ -2951,12 +3102,38 @@ internal static class FunctionalCompiler
         return a.ValueKind switch
         {
             JsonValueKind.Number => a.GetDouble() == b.GetDouble(),
-            JsonValueKind.String => a.GetString() == b.GetString(),
+            JsonValueKind.String => Utf8StringEquals(a, b),
             JsonValueKind.True or JsonValueKind.False or JsonValueKind.Null => true,
             JsonValueKind.Array => ArrayDeepEquals(a, b),
             JsonValueKind.Object => ObjectDeepEquals(a, b),
-            _ => a.GetRawText() == b.GetRawText(),
+            _ => Utf8RawEquals(a, b),
         };
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool Utf8StringEquals(JsonElement a, JsonElement b)
+    {
+        using RawUtf8JsonString rawA = JsonMarshal.GetRawUtf8Value(a);
+        using RawUtf8JsonString rawB = JsonMarshal.GetRawUtf8Value(b);
+        return rawA.Span.SequenceEqual(rawB.Span);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool Utf8RawEquals(JsonElement a, JsonElement b)
+    {
+        using RawUtf8JsonString rawA = JsonMarshal.GetRawUtf8Value(a);
+        using RawUtf8JsonString rawB = JsonMarshal.GetRawUtf8Value(b);
+        return rawA.Span.SequenceEqual(rawB.Span);
+    }
+
+    /// <summary>
+    /// Compares two string JSON elements by ordinal byte order, without allocating .NET strings.
+    /// </summary>
+    private static int Utf8CompareOrdinal(JsonElement a, JsonElement b)
+    {
+        using RawUtf8JsonString rawA = JsonMarshal.GetRawUtf8Value(a);
+        using RawUtf8JsonString rawB = JsonMarshal.GetRawUtf8Value(b);
+        return rawA.Span.SequenceCompareTo(rawB.Span);
     }
 
     private static bool ArrayDeepEquals(JsonElement a, JsonElement b)
