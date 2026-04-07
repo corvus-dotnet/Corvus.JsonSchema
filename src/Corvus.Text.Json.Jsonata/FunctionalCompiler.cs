@@ -1276,6 +1276,23 @@ internal static class FunctionalCompiler
                     }
                 }
 
+                // Cross-join mode: when the next step is also a focus step with
+                // stages, evaluate the cross-join globally so that post-filter stages
+                // (numeric indices [1], index bindings #$var) operate on the full
+                // cross-join result, not per-outer-iteration singletons.
+                int crossJoinNextStep = stepIdx + 1 + sortStepConsumed;
+                bool needsCrossJoin = crossJoinNextStep < steps.Length
+                    && focusVars[crossJoinNextStep] is not null
+                    && stages[crossJoinNextStep] is not null
+                    && !applyGroupByHere && !mergeInnerGroupBy;
+
+                if (needsCrossJoin)
+                {
+                    return EvalCrossJoinFocus(
+                        elements, parentContext, stepIdx, crossJoinNextStep,
+                        focusVar, indexVar, survivingOriginalIndices);
+                }
+
                 // For each surviving focus element: bind, evaluate remaining steps
                 var resultBuilder = default(SequenceBuilder);
                 for (int i = 0; i < elements.Count; i++)
@@ -1345,6 +1362,289 @@ internal static class FunctionalCompiler
                 if (mergeInnerGroupBy && mergeObjects!.Count > 0)
                 {
                     return MergeGroupedObjects(mergeObjects!, env);
+                }
+
+                return resultBuilder.ToSequence();
+            }
+
+            // Evaluates a cross-join between an outer focus step and an inner focus
+            // step that has stages requiring global evaluation. Collects ALL cross-join
+            // tuples first, then applies inner stages globally, then evaluates
+            // remaining steps per surviving tuple.
+            Sequence EvalCrossJoinFocus(
+                List<JsonElement> outerElements,
+                Sequence parentContext,
+                int outerStepIdx,
+                int innerStepIdx,
+                string outerFocusVar,
+                string? outerIndexVar,
+                List<int>? outerSurvivingIndices)
+            {
+                var innerStep = steps[innerStepIdx];
+                var innerFocusVar = focusVars[innerStepIdx]!;
+                var innerIndexVar = indexVars[innerStepIdx];
+                bool shouldFlatten = innerStepIdx > 0 || isPropertyStep[innerStepIdx];
+
+                // Evaluate the inner step once to get ALL focus elements (from parent).
+                // The parent context is the same for all outer iterations (cross-join).
+                Sequence innerFocusResult;
+                if (parentContext.IsSingleton)
+                {
+                    var parentEl = parentContext.FirstOrDefault;
+                    if (parentEl.ValueKind == JsonValueKind.Array && shouldFlatten)
+                    {
+                        innerFocusResult = FlattenArrayStep(parentEl, innerStep, env, isConsArrayStep[innerStepIdx]);
+                    }
+                    else
+                    {
+                        innerFocusResult = innerStep(parentEl, env);
+                    }
+                }
+                else
+                {
+                    var builder = default(SequenceBuilder);
+                    for (int i = 0; i < parentContext.Count; i++)
+                    {
+                        var parentEl = parentContext[i];
+                        if (parentEl.ValueKind == JsonValueKind.Array && shouldFlatten)
+                        {
+                            builder.AddRange(FlattenArrayStep(parentEl, innerStep, env, isConsArrayStep[innerStepIdx]));
+                        }
+                        else
+                        {
+                            builder.AddRange(innerStep(parentEl, env));
+                        }
+                    }
+
+                    innerFocusResult = builder.ToSequence();
+                }
+
+                if (innerFocusResult.IsUndefined)
+                {
+                    return Sequence.Undefined;
+                }
+
+                // Expand to individual elements
+                var innerElements = new List<JsonElement>();
+                if (innerFocusResult.IsSingleton)
+                {
+                    var el = innerFocusResult.FirstOrDefault;
+                    if (el.ValueKind == JsonValueKind.Array)
+                    {
+                        innerElements.AddRange(el.EnumerateArray());
+                    }
+                    else
+                    {
+                        innerElements.Add(el);
+                    }
+                }
+                else
+                {
+                    for (int i = 0; i < innerFocusResult.Count; i++)
+                    {
+                        innerElements.Add(innerFocusResult[i]);
+                    }
+                }
+
+                // Phase 1: Build cross-join tuples.
+                // For each outer element × each inner element, record the tuple.
+                // (outerIdx, outerElement, innerElement, originalInnerIdx)
+                var tuples = new List<(int OuterIdx, JsonElement OuterEl, JsonElement InnerEl, int InnerIdx)>();
+                for (int oi = 0; oi < outerElements.Count; oi++)
+                {
+                    var outerEl = outerElements[oi];
+                    env.Bind(outerFocusVar, new Sequence(outerEl));
+                    if (outerIndexVar is not null)
+                    {
+                        int origIdx = outerSurvivingIndices is not null && oi < outerSurvivingIndices.Count
+                            ? outerSurvivingIndices[oi]
+                            : oi;
+                        env.Bind(outerIndexVar, new Sequence(JsonataHelpers.NumberFromDouble(origIdx, env.Workspace)));
+                    }
+
+                    for (int ii = 0; ii < innerElements.Count; ii++)
+                    {
+                        tuples.Add((oi, outerEl, innerElements[ii], ii));
+                    }
+                }
+
+                // Phase 2: Apply inner stages to ALL cross-join tuples globally.
+                // Build a combined sequence and apply stages with both outer and
+                // inner variable re-binding per element.
+                if (stages[innerStepIdx] is not null)
+                {
+                    var stageEvaluators = stages[innerStepIdx]!;
+                    var isSortStage = stageIsSortFlags[innerStepIdx]!;
+
+                    for (int s = 0; s < stageEvaluators.Length; s++)
+                    {
+                        if (tuples.Count == 0)
+                        {
+                            return Sequence.Undefined;
+                        }
+
+                        var stage = stageEvaluators[s];
+
+                        if (isSortStage[s])
+                        {
+                            // Sort stage — sort all tuples' inner elements
+                            var sortElements = tuples.Select(t => t.InnerEl).ToList();
+                            if (sortElements.Count > 1)
+                            {
+                                var arrayInput = JsonataHelpers.ArrayFromList(sortElements, env.Workspace);
+                                var sorted = stage(arrayInput, env);
+                            }
+
+                            continue;
+                        }
+
+                        // Check if this is an index binding stage (VariableNode added by parser)
+                        var stageAnnotations = innerStepIdx < steps.Length ? GetStepAnnotations(path.Steps[innerStepIdx]) : null;
+                        bool isIndexBindingStage = stageAnnotations is not null
+                            && s < stageAnnotations.Stages.Count
+                            && stageAnnotations.Stages[s] is VariableNode;
+
+                        if (isIndexBindingStage)
+                        {
+                            // Index binding stage: assign position index to each tuple
+                            var varNode = (VariableNode)stageAnnotations!.Stages[s];
+                            for (int t = 0; t < tuples.Count; t++)
+                            {
+                                env.Bind(varNode.Name, new Sequence(JsonataHelpers.NumberFromDouble(t, env.Workspace)));
+                            }
+
+                            // Keep all tuples (index binding doesn't filter)
+                            continue;
+                        }
+
+                        // Filter or numeric index stage
+                        var survivingTuples = new List<(int OuterIdx, JsonElement OuterEl, JsonElement InnerEl, int InnerIdx)>();
+                        for (int t = 0; t < tuples.Count; t++)
+                        {
+                            var tuple = tuples[t];
+
+                            // Re-bind both outer and inner variables
+                            env.Bind(outerFocusVar, new Sequence(tuple.OuterEl));
+                            if (outerIndexVar is not null)
+                            {
+                                int origIdx = outerSurvivingIndices is not null && tuple.OuterIdx < outerSurvivingIndices.Count
+                                    ? outerSurvivingIndices[tuple.OuterIdx]
+                                    : tuple.OuterIdx;
+                                env.Bind(outerIndexVar, new Sequence(JsonataHelpers.NumberFromDouble(origIdx, env.Workspace)));
+                            }
+
+                            env.Bind(innerFocusVar, new Sequence(tuple.InnerEl));
+                            if (innerIndexVar is not null)
+                            {
+                                env.Bind(innerIndexVar, new Sequence(JsonataHelpers.NumberFromDouble(tuple.InnerIdx, env.Workspace)));
+                            }
+
+                            var result = stage(tuple.InnerEl, env);
+
+                            if (result.IsUndefined)
+                            {
+                                continue;
+                            }
+
+                            var firstResult = result.FirstOrDefault;
+
+                            if (result.IsSingleton && firstResult.ValueKind is JsonValueKind.True or JsonValueKind.False)
+                            {
+                                if (firstResult.ValueKind == JsonValueKind.True)
+                                {
+                                    survivingTuples.Add(tuple);
+                                }
+
+                                continue;
+                            }
+
+                            // Numeric index
+                            if (result.IsSingleton && TryCoerceToNumber(firstResult, out double singleIdx))
+                            {
+                                int idx = (int)Math.Floor(singleIdx);
+                                if (idx < 0)
+                                {
+                                    idx = tuples.Count + idx;
+                                }
+
+                                if (idx == t && idx >= 0 && idx < tuples.Count)
+                                {
+                                    survivingTuples.Add(tuple);
+                                }
+
+                                continue;
+                            }
+
+                            if (IsTruthy(result))
+                            {
+                                survivingTuples.Add(tuple);
+                            }
+                        }
+
+                        tuples = survivingTuples;
+                    }
+                }
+
+                if (tuples.Count == 0)
+                {
+                    return Sequence.Undefined;
+                }
+
+                // Phase 3: For each surviving tuple, re-bind variables and evaluate
+                // remaining steps from the parent context.
+                var resultBuilder = default(SequenceBuilder);
+                int remainingStart = innerStepIdx + 1;
+
+                for (int t = 0; t < tuples.Count; t++)
+                {
+                    var tuple = tuples[t];
+
+                    // Re-bind outer variables
+                    env.Bind(outerFocusVar, new Sequence(tuple.OuterEl));
+                    if (outerIndexVar is not null)
+                    {
+                        int origIdx = outerSurvivingIndices is not null && tuple.OuterIdx < outerSurvivingIndices.Count
+                            ? outerSurvivingIndices[tuple.OuterIdx]
+                            : tuple.OuterIdx;
+                        env.Bind(outerIndexVar, new Sequence(JsonataHelpers.NumberFromDouble(origIdx, env.Workspace)));
+                    }
+
+                    // Re-bind inner variables
+                    env.Bind(innerFocusVar, new Sequence(tuple.InnerEl));
+                    if (innerIndexVar is not null)
+                    {
+                        env.Bind(innerIndexVar, new Sequence(JsonataHelpers.NumberFromDouble(tuple.InnerIdx, env.Workspace)));
+                    }
+
+                    // Bind the index binding stage variable (e.g. $ib2) to this tuple's
+                    // position in the surviving tuples list.
+                    // Check for any VariableNode stages (index binding stages)
+                    var innerAnnotations = GetStepAnnotations(path.Steps[innerStepIdx]);
+                    if (innerAnnotations is not null)
+                    {
+                        for (int s = 0; s < innerAnnotations.Stages.Count; s++)
+                        {
+                            if (innerAnnotations.Stages[s] is VariableNode varStage)
+                            {
+                                env.Bind(varStage.Name, new Sequence(JsonataHelpers.NumberFromDouble(t, env.Workspace)));
+                            }
+                        }
+                    }
+
+                    Sequence subResult;
+                    if (remainingStart < steps.Length)
+                    {
+                        subResult = EvalPathFrom(parentContext, remainingStart);
+                    }
+                    else
+                    {
+                        subResult = new Sequence(tuple.InnerEl);
+                    }
+
+                    if (!subResult.IsUndefined)
+                    {
+                        resultBuilder.AddRange(subResult);
+                    }
                 }
 
                 return resultBuilder.ToSequence();
