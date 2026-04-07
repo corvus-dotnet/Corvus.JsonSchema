@@ -1178,7 +1178,20 @@ internal static class FunctionalCompiler
         foreach (var item in array.EnumerateArray())
         {
             var result = step(item, env);
-            builder.AddRange(result);
+
+            // Auto-flatten: when a property step returns a JSON array from an element,
+            // expand it into individual elements (JSONata's one-level flattening).
+            if (result.IsSingleton && result.FirstOrDefault.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var child in result.FirstOrDefault.EnumerateArray())
+                {
+                    builder.Add(child);
+                }
+            }
+            else
+            {
+                builder.AddRange(result);
+            }
         }
 
         return builder.ToSequence();
@@ -2306,8 +2319,103 @@ internal static class FunctionalCompiler
 
     private static ExpressionEvaluator CompilePartial(PartialNode partial)
     {
-        // TODO: Partial application
-        return static (in JsonElement input, Environment env) => Sequence.Undefined;
+        var argCompilers = partial.Arguments
+            .Select(a => a is PlaceholderNode ? null : Compile(a))
+            .ToArray();
+
+        // Check for built-in function by name
+        Func<ExpressionEvaluator[], ExpressionEvaluator>? builtInCompiler = null;
+        if (partial.Procedure is VariableNode varProc)
+        {
+            builtInCompiler = BuiltInFunctions.TryGetCompiler(varProc.Name);
+        }
+
+        var procedureEval = Compile(partial.Procedure);
+
+        return (in JsonElement input, Environment env) =>
+        {
+            // Evaluate non-placeholder arguments eagerly
+            var evaluatedArgs = new Sequence?[argCompilers.Length];
+            var placeholderCount = 0;
+            for (int i = 0; i < argCompilers.Length; i++)
+            {
+                if (argCompilers[i] is null)
+                {
+                    placeholderCount++;
+                }
+                else
+                {
+                    evaluatedArgs[i] = argCompilers[i]!(input, env);
+                }
+            }
+
+            var capturedArgs = (Sequence?[])evaluatedArgs.Clone();
+
+            if (builtInCompiler is not null)
+            {
+                var capturedCompiler = builtInCompiler;
+
+                return new Sequence(new LambdaValue(
+                    (runtimeArgs, innerInput, innerEnv) =>
+                    {
+                        // Fill placeholder positions with runtime arguments
+                        var fullArgEvals = new ExpressionEvaluator[capturedArgs.Length];
+                        int pIdx = 0;
+                        for (int i = 0; i < capturedArgs.Length; i++)
+                        {
+                            if (capturedArgs[i] is null)
+                            {
+                                var arg = pIdx < runtimeArgs.Length ? runtimeArgs[pIdx] : Sequence.Undefined;
+                                pIdx++;
+                                var captured = arg;
+                                fullArgEvals[i] = (in JsonElement _, Environment __) => captured;
+                            }
+                            else
+                            {
+                                var val = capturedArgs[i]!.Value;
+                                fullArgEvals[i] = (in JsonElement _, Environment __) => val;
+                            }
+                        }
+
+                        var compiled = capturedCompiler(fullArgEvals);
+                        return compiled(innerInput, innerEnv);
+                    },
+                    placeholderCount));
+            }
+            else
+            {
+                // User-defined or variable-resolved function
+                var funcResult = procedureEval(input, env);
+                if (!funcResult.IsLambda)
+                {
+                    throw new JsonataException("T1008", "Attempted to partially apply a non-function", partial.Position);
+                }
+
+                var originalLambda = funcResult.Lambda!;
+
+                return new Sequence(new LambdaValue(
+                    (runtimeArgs, innerInput, innerEnv) =>
+                    {
+                        var fullArgs = new Sequence[capturedArgs.Length];
+                        int pIdx = 0;
+                        for (int i = 0; i < capturedArgs.Length; i++)
+                        {
+                            if (capturedArgs[i] is null)
+                            {
+                                fullArgs[i] = pIdx < runtimeArgs.Length ? runtimeArgs[pIdx] : Sequence.Undefined;
+                                pIdx++;
+                            }
+                            else
+                            {
+                                fullArgs[i] = capturedArgs[i]!.Value;
+                            }
+                        }
+
+                        return originalLambda.Invoke(fullArgs, innerInput, innerEnv);
+                    },
+                    placeholderCount));
+            }
+        };
     }
 
     #pragma warning disable SA1201 // Elements should appear in the correct order
