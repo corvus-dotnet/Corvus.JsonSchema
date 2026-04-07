@@ -982,12 +982,73 @@ internal sealed class Parser
         // Process each pair in the object constructor RHS
         var objRhs = (ObjectConstructorNode)binary.Rhs;
         var groupBy = new GroupBy { Position = binary.Position };
+        bool hasAncestrySlots = false;
         foreach (var (key, value) in objRhs.Pairs)
         {
-            groupBy.Pairs.Add((this.ProcessAst(key), this.ProcessAst(value)));
+            var processedKey = this.ProcessAst(key);
+            var processedValue = this.ProcessAst(value);
+            groupBy.Pairs.Add((processedKey, processedValue));
+
+            // Propagate parent-seeking slots from group-by expressions to the result.
+            // In jsonata-js the object constructor is a step in the path, so seekingParent
+            // naturally propagates. Our group-by is annotations, so we push explicitly.
+            if (processedKey.SeekingParent is not null || processedKey is ParentNode
+                || processedValue.SeekingParent is not null || processedValue is ParentNode)
+            {
+                hasAncestrySlots = true;
+            }
+
+            PushAncestry(result, processedKey);
+            PushAncestry(result, processedValue);
         }
 
         annotations.Group = groupBy;
+
+        // If ancestry slots were found in group-by expressions, we need to resolve
+        // them now. The path's ResolveAncestry already ran during ProcessDot, so
+        // these new slots need a second resolution pass.
+        // Group-by expressions sit logically AFTER all path steps, so % resolution
+        // starts by seeking into the last step (not the step before it).
+        if (hasAncestrySlots && result is PathNode pathResult && pathResult.Steps.Count > 0)
+        {
+            var slotsToResolve = pathResult.SeekingParent;
+            pathResult.SeekingParent = null;
+            if (slotsToResolve is not null)
+            {
+                foreach (var slot in slotsToResolve)
+                {
+                    // Start seeking from the last step (group-by is after all steps)
+                    int index = pathResult.Steps.Count - 1;
+                    while (slot.Level > 0 && index >= 0)
+                    {
+                        var step = pathResult.Steps[index--];
+
+                        // Skip contiguous focus-bound steps
+                        var stepAnn = GetAnnotations(step);
+                        while (index >= 0 && stepAnn?.Focus is not null)
+                        {
+                            var prevAnn = GetAnnotations(pathResult.Steps[index]);
+                            if (prevAnn?.Focus is null)
+                            {
+                                break;
+                            }
+
+                            step = pathResult.Steps[index--];
+                            stepAnn = prevAnn;
+                        }
+
+                        SeekParent(step, slot);
+                    }
+
+                    if (slot.Level > 0)
+                    {
+                        pathResult.SeekingParent ??= [];
+                        pathResult.SeekingParent.Add(slot);
+                    }
+                }
+            }
+        }
+
         return result;
     }
 
@@ -1338,11 +1399,22 @@ internal sealed class Parser
             case BlockNode block:
                 if (block.Expressions.Count > 0)
                 {
+                    var ann = GetOrCreateAnnotations(block);
+                    ann.Tuple = true;
+                    ann.TupleLabels ??= [];
+                    if (!ann.TupleLabels.Contains(slot.Label))
+                    {
+                        ann.TupleLabels.Add(slot.Label);
+                    }
+
                     SeekParent(block.Expressions[block.Expressions.Count - 1], slot);
                 }
 
                 break;
             case PathNode path:
+            {
+                var ann = GetOrCreateAnnotations(path);
+                ann.Tuple = true;
                 int index = path.Steps.Count - 1;
                 SeekParent(path.Steps[index--], slot);
                 while (slot.Level > 0 && index >= 0)
@@ -1351,6 +1423,8 @@ internal sealed class Parser
                 }
 
                 break;
+            }
+
             default:
                 throw new JsonataException(
                     "S0217",

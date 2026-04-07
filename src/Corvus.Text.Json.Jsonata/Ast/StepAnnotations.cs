@@ -30,4 +30,10 @@ internal sealed class StepAnnotations
     /// When present, the input context to this step should be bound under these labels
     /// so that <c>%</c> operators can look them up.</summary>
     public List<string>? AncestorLabels { get; set; }
+
+    /// <summary>Gets the ancestor labels that are resolved INSIDE this step (e.g., inside a block's
+    /// inner path). Unlike <see cref="AncestorLabels"/> which triggers per-element processing at this
+    /// step, <c>TupleLabels</c> indicates that the step's inner evaluation produces per-element
+    /// ancestor bindings that should be propagated to subsequent steps via tuple binding maps.</summary>
+    public List<string>? TupleLabels { get; set; }
 }
