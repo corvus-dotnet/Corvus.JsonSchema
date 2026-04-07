@@ -2568,6 +2568,7 @@ public sealed partial class JsonDocumentBuilder<T> : JsonDocument, IMutableJsonD
     private void ProcessComplexObject(int index, JsonWorkspace workspace, ref MetadataDb db, int workspaceDocumentIndex)
     {
         DbRow complexObjectRow = _parsedData.Get(index);
+        int startLength = db.Length;
         db.AppendExternal(complexObjectRow.TokenType, index, complexObjectRow.RawSizeOrLength, workspaceDocumentIndex);
 
         int endIndex = index + GetDbSizeUnsafe(index, false);
@@ -2582,7 +2583,12 @@ public sealed partial class JsonDocumentBuilder<T> : JsonDocument, IMutableJsonD
 
         complexObjectRow = _parsedData.Get(endIndex);
         int entityLength = complexObjectRow.HasPropertyMap ? GetLengthOfEndToken(complexObjectRow.SizeOrLengthOrPropertyMapIndex) : complexObjectRow.RawSizeOrLength;
-        db.AppendExternal(complexObjectRow.TokenType, index, entityLength, workspaceDocumentIndex);
+
+        // The End row must store the actual NumberOfRows (not workspaceDocumentIndex).
+        // The backward property search and GetStartIndex rely on NumberOfRows being correct
+        // on End rows. Only Start rows need the WorkspaceDocumentId for external lookups.
+        int numberOfRows = (db.Length - startLength) / DbRow.Size;
+        db.AppendExternal(complexObjectRow.TokenType, index, entityLength, numberOfRows);
     }
 
     private int WriteElementAt(int index, JsonWorkspace workspace, ref MetadataDb db, int workspaceDocumentIndex, int writePosition)
@@ -2634,7 +2640,10 @@ public sealed partial class JsonDocumentBuilder<T> : JsonDocument, IMutableJsonD
 
         complexObjectRow = _parsedData.Get(endIndex);
         int entityLength = complexObjectRow.HasPropertyMap ? GetLengthOfEndToken(complexObjectRow.SizeOrLengthOrPropertyMapIndex) : complexObjectRow.RawSizeOrLength;
-        db.WriteRowAt(currentWritePos, new DbRow(complexObjectRow.TokenType, index, entityLength, workspaceDocumentIndex));
+
+        // The End row must store the actual NumberOfRows (count - 1 = children + End,
+        // excluding Start), not workspaceDocumentIndex.
+        db.WriteRowAt(currentWritePos, new DbRow(complexObjectRow.TokenType, index, entityLength, count - 1));
         return count;
     }
 
