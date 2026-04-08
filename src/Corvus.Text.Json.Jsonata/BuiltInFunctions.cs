@@ -1861,6 +1861,7 @@ internal static class BuiltInFunctions
             }
 
             var lambda = funcSeq.Lambda!;
+            int arity = lambda.Arity;
             var builder = default(SequenceBuilder);
 
             // Collect all items into a flat list for indexing
@@ -1894,8 +1895,10 @@ internal static class BuiltInFunctions
                 }
             }
 
-            // Build the flattened array as a Sequence for the 3rd lambda arg
-            JsonElement flatArr;
+            // Build the flattened array as a Sequence for the 3rd lambda arg,
+            // but only if the lambda actually uses it (arity >= 3)
+            Sequence flatArrSeq = default;
+            if (arity >= 3)
             {
                 JsonDocumentBuilder<JsonElement.Mutable> flatDoc = JsonElement.CreateArrayBuilder(env.Workspace, items.Count);
                 JsonElement.Mutable flatRoot = flatDoc.RootElement;
@@ -1904,17 +1907,27 @@ internal static class BuiltInFunctions
                     flatRoot.AddItem(items[i]);
                 }
 
-                flatArr = (JsonElement)flatRoot;
+                flatArrSeq = new Sequence((JsonElement)flatRoot);
             }
 
-            // Reuse args array and child environment across all iterations
+            // Reuse args array and child environment across all iterations.
+            // Always pass 3 args (the standard for $map), but skip computing expensive
+            // index/array values when the lambda won't use them.
             var lambdaArgs = new Sequence[3];
-            lambdaArgs[2] = new Sequence(flatArr);
+            if (arity >= 3)
+            {
+                lambdaArgs[2] = flatArrSeq;
+            }
+
             var invokeEnv = lambda.CreateInvokeEnv(env);
             for (int i = 0; i < items.Count; i++)
             {
                 lambdaArgs[0] = new Sequence(items[i]);
-                lambdaArgs[1] = Sequence.FromDouble(i, env.Workspace);
+                if (arity >= 2)
+                {
+                    lambdaArgs[1] = Sequence.FromDouble(i, env.Workspace);
+                }
+
                 var result = lambda.InvokeReusing(lambdaArgs, items[i], invokeEnv, env);
                 builder.AddRange(result);
             }
@@ -1950,6 +1963,7 @@ internal static class BuiltInFunctions
             }
 
             var lambda = funcSeq.Lambda!;
+            int arity = lambda.Arity;
             bool inputWasArray = seq.IsSingleton && seq.FirstOrDefault.ValueKind == JsonValueKind.Array;
 
             // Flatten multi-valued sequences with arrays (e.g., Account.Order.Product)
@@ -1994,7 +2008,9 @@ internal static class BuiltInFunctions
             JsonElement.Mutable filterRoot = filterDoc.RootElement;
             int matchCount = 0;
 
-            // Reuse args array and child environment across all iterations
+            // Reuse args array and child environment across all iterations.
+            // Always pass 3 args (the standard for $filter), but skip computing expensive
+            // index/array values when the lambda won't use them.
             var lambdaArgs = new Sequence[3];
             var invokeEnv = lambda.CreateInvokeEnv(env);
 
@@ -2002,11 +2018,19 @@ internal static class BuiltInFunctions
             {
                 var arr = seq.FirstOrDefault;
                 int len = arr.GetArrayLength();
-                lambdaArgs[2] = seq;
+                if (arity >= 3)
+                {
+                    lambdaArgs[2] = seq;
+                }
+
                 for (int i = 0; i < len; i++)
                 {
                     lambdaArgs[0] = new Sequence(arr[i]);
-                    lambdaArgs[1] = Sequence.FromDouble(i, env.Workspace);
+                    if (arity >= 2)
+                    {
+                        lambdaArgs[1] = Sequence.FromDouble(i, env.Workspace);
+                    }
+
                     var result = lambda.InvokeReusing(lambdaArgs, arr[i], invokeEnv, env);
                     if (FunctionalCompiler.IsTruthy(result))
                     {
@@ -2017,11 +2041,19 @@ internal static class BuiltInFunctions
             }
             else
             {
-                lambdaArgs[2] = seq;
+                if (arity >= 3)
+                {
+                    lambdaArgs[2] = seq;
+                }
+
                 for (int i = 0; i < seq.Count; i++)
                 {
                     lambdaArgs[0] = new Sequence(seq[i]);
-                    lambdaArgs[1] = Sequence.FromDouble(i, env.Workspace);
+                    if (arity >= 2)
+                    {
+                        lambdaArgs[1] = Sequence.FromDouble(i, env.Workspace);
+                    }
+
                     var result = lambda.InvokeReusing(lambdaArgs, seq[i], invokeEnv, env);
                     if (FunctionalCompiler.IsTruthy(result))
                     {
@@ -2126,13 +2158,10 @@ internal static class BuiltInFunctions
                 startIdx = 1;
             }
 
-            // Build array element for the 4th lambda arg
+            // Build array element for the 4th lambda arg, only if lambda uses it
+            int arity = lambda.Arity;
             Sequence arrSeq;
-            if (isTuple)
-            {
-                arrSeq = Sequence.Undefined;
-            }
-            else
+            if (arity >= 4 && !isTuple)
             {
                 JsonDocumentBuilder<JsonElement.Mutable> arrDoc = JsonElement.CreateArrayBuilder(env.Workspace, items.Count);
                 JsonElement.Mutable arrRoot = arrDoc.RootElement;
@@ -2143,17 +2172,31 @@ internal static class BuiltInFunctions
 
                 arrSeq = new Sequence((JsonElement)arrRoot);
             }
+            else
+            {
+                arrSeq = Sequence.Undefined;
+            }
 
             // Reuse args array across iterations, but use standard Invoke
             // (not InvokeReusing) because the accumulator can be a closure
-            // that captures the iteration environment (e.g., function composition via $reduce)
+            // that captures the iteration environment (e.g., function composition via $reduce).
+            // Always pass 4 args (the standard for $reduce), but skip computing expensive
+            // index/array values when the lambda won't use them.
             var lambdaArgs = new Sequence[4];
-            lambdaArgs[3] = arrSeq;
+            if (arity >= 4)
+            {
+                lambdaArgs[3] = arrSeq;
+            }
+
             for (int i = startIdx; i < itemCount; i++)
             {
                 lambdaArgs[0] = accumulator;
                 lambdaArgs[1] = isTuple ? seq.GetItemSequence(i) : new Sequence(items[i]);
-                lambdaArgs[2] = Sequence.FromDouble(i, env.Workspace);
+                if (arity >= 3)
+                {
+                    lambdaArgs[2] = Sequence.FromDouble(i, env.Workspace);
+                }
+
                 accumulator = lambda.Invoke(lambdaArgs, input, env);
             }
 
