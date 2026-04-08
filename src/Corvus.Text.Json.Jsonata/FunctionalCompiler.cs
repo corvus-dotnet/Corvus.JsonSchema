@@ -450,7 +450,7 @@ internal static class FunctionalCompiler
     /// </summary>
     private static bool TryCompileSimplePropertyChain(PathNode path, out ExpressionEvaluator evaluator)
     {
-        // Check all steps are NameNodes with no annotations
+        // Check all steps are NameNodes with no annotations (or simple constant-integer predicates)
         if (path.KeepArray || path.KeepSingletonArray || GetStepAnnotations(path) is not null)
         {
             evaluator = default!;
@@ -458,21 +458,68 @@ internal static class FunctionalCompiler
         }
 
         var utf8Names = new byte[path.Steps.Count][];
+        int[]? constantIndices = null;
         for (int i = 0; i < path.Steps.Count; i++)
         {
-            if (path.Steps[i] is not NameNode nameNode || GetStepAnnotations(path.Steps[i]) is not null)
+            if (path.Steps[i] is not NameNode nameNode)
             {
                 evaluator = default!;
                 return false;
             }
 
+            var stepAnnotations = GetStepAnnotations(path.Steps[i]);
+            if (stepAnnotations is not null)
+            {
+                // Allow a single constant non-negative integer predicate with no other annotations
+                if (stepAnnotations.Stages.Count == 1
+                    && stepAnnotations.Stages[0] is FilterNode filterNode
+                    && filterNode.Expression is NumberNode numNode
+                    && numNode.Value >= 0
+                    && numNode.Value <= int.MaxValue
+                    && numNode.Value == Math.Floor(numNode.Value)
+                    && stepAnnotations.Group is null
+                    && stepAnnotations.Focus is null
+                    && stepAnnotations.Index is null
+                    && stepAnnotations.AncestorLabels is null
+                    && stepAnnotations.TupleLabels is null
+                    && !stepAnnotations.Tuple)
+                {
+                    if (constantIndices is null)
+                    {
+                        constantIndices = new int[path.Steps.Count];
+                        Array.Fill(constantIndices, -1);
+                    }
+
+                    constantIndices[i] = (int)numNode.Value;
+                }
+                else
+                {
+                    evaluator = default!;
+                    return false;
+                }
+            }
+            else if (constantIndices is not null)
+            {
+                constantIndices[i] = -1;
+            }
+
             utf8Names[i] = System.Text.Encoding.UTF8.GetBytes(nameNode.Value);
         }
 
-        evaluator = (in JsonElement input, Environment env) =>
+        if (constantIndices is not null)
         {
-            return EvalSimplePropertyChain(input, utf8Names);
-        };
+            evaluator = (in JsonElement input, Environment env) =>
+            {
+                return EvalPropertyChainWithIndices(input, utf8Names, constantIndices);
+            };
+        }
+        else
+        {
+            evaluator = (in JsonElement input, Environment env) =>
+            {
+                return EvalSimplePropertyChain(input, utf8Names);
+            };
+        }
 
         return true;
 
@@ -555,6 +602,174 @@ internal static class FunctionalCompiler
                         builder.Add(current);
                     }
                 }
+            }
+
+            return builder.ToSequence();
+        }
+
+        static Sequence EvalPropertyChainWithIndices(in JsonElement input, byte[][] utf8Names, int[] constantIndices)
+        {
+            return EvalFromStep(input, utf8Names, constantIndices, 0);
+        }
+
+        static Sequence EvalFromStep(in JsonElement input, byte[][] utf8Names, int[] constantIndices, int startStep)
+        {
+            JsonElement current = input;
+
+            for (int step = startStep; step < utf8Names.Length; step++)
+            {
+                if (current.ValueKind == JsonValueKind.Object)
+                {
+                    if (!current.TryGetProperty(utf8Names[step], out current))
+                    {
+                        return Sequence.Undefined;
+                    }
+
+                    // Apply constant index if present for this step
+                    if (constantIndices[step] >= 0)
+                    {
+                        if (current.ValueKind == JsonValueKind.Array)
+                        {
+                            int idx = constantIndices[step];
+                            if (idx < current.GetArrayLength())
+                            {
+                                current = current[idx];
+                            }
+                            else
+                            {
+                                return Sequence.Undefined;
+                            }
+                        }
+                        else
+                        {
+                            // Singleton: index 0 returns the value itself
+                            if (constantIndices[step] != 0)
+                            {
+                                return Sequence.Undefined;
+                            }
+                        }
+                    }
+                }
+                else if (current.ValueKind == JsonValueKind.Array)
+                {
+                    // Array input: collect-then-index semantics
+                    return CollectAndContinue(current, utf8Names, constantIndices, step);
+                }
+                else
+                {
+                    return Sequence.Undefined;
+                }
+            }
+
+            return new Sequence(current);
+        }
+
+        static Sequence CollectAndContinue(in JsonElement array, byte[][] utf8Names, int[] constantIndices, int step)
+        {
+            bool hasIndexThisStep = constantIndices[step] >= 0;
+            bool globalIndex = hasIndexThisStep && step == 0;
+            bool perElementIndex = hasIndexThisStep && step > 0;
+
+            var builder = default(SequenceBuilder);
+            foreach (var item in array.EnumerateArray())
+            {
+                if (item.ValueKind == JsonValueKind.Object)
+                {
+                    if (item.TryGetProperty(utf8Names[step], out var propValue))
+                    {
+                        if (perElementIndex)
+                        {
+                            // Per-element index (step > 0): apply index inline, then continue
+                            if (propValue.ValueKind == JsonValueKind.Array)
+                            {
+                                int idx = constantIndices[step];
+                                if (idx < propValue.GetArrayLength())
+                                {
+                                    propValue = propValue[idx];
+                                }
+                                else
+                                {
+                                    continue;
+                                }
+                            }
+                            else if (constantIndices[step] != 0)
+                            {
+                                continue;
+                            }
+
+                            if (step + 1 < utf8Names.Length)
+                            {
+                                var result = EvalFromStep(propValue, utf8Names, constantIndices, step + 1);
+                                if (!result.IsUndefined)
+                                {
+                                    builder.AddRange(result);
+                                }
+                            }
+                            else
+                            {
+                                builder.Add(propValue);
+                            }
+                        }
+                        else
+                        {
+                            // No per-element index: collect with auto-flatten
+                            if (propValue.ValueKind == JsonValueKind.Array)
+                            {
+                                foreach (var child in propValue.EnumerateArray())
+                                {
+                                    builder.Add(child);
+                                }
+                            }
+                            else
+                            {
+                                builder.Add(propValue);
+                            }
+                        }
+                    }
+                }
+                else if (item.ValueKind == JsonValueKind.Array)
+                {
+                    var inner = CollectAndContinue(item, utf8Names, constantIndices, step);
+                    if (!inner.IsUndefined)
+                    {
+                        builder.AddRange(inner);
+                    }
+                }
+            }
+
+            // For step 0: apply global index to collected results
+            if (globalIndex)
+            {
+                int idx = constantIndices[step];
+                if (idx >= builder.Count)
+                {
+                    return Sequence.Undefined;
+                }
+
+                JsonElement indexed = builder[idx];
+
+                if (step + 1 >= utf8Names.Length)
+                {
+                    return new Sequence(indexed);
+                }
+
+                return EvalFromStep(indexed, utf8Names, constantIndices, step + 1);
+            }
+
+            // No index, more steps: continue per-element on collected results
+            if (!perElementIndex && step + 1 < utf8Names.Length)
+            {
+                var resultBuilder = default(SequenceBuilder);
+                for (int i = 0; i < builder.Count; i++)
+                {
+                    var result = EvalFromStep(builder[i], utf8Names, constantIndices, step + 1);
+                    if (!result.IsUndefined)
+                    {
+                        resultBuilder.AddRange(result);
+                    }
+                }
+
+                return resultBuilder.ToSequence();
             }
 
             return builder.ToSequence();
