@@ -553,6 +553,12 @@ internal static class FunctionalCompiler
         static Sequence EvalChainOverArray(in JsonElement array, byte[][] utf8Names, int fromStep)
         {
             var builder = default(SequenceBuilder);
+            EvalChainOverArrayInto(array, utf8Names, fromStep, ref builder);
+            return builder.ToSequence();
+        }
+
+        static void EvalChainOverArrayInto(in JsonElement array, byte[][] utf8Names, int fromStep, ref SequenceBuilder builder)
+        {
             foreach (var item in array.EnumerateArray())
             {
                 JsonElement current = item;
@@ -569,13 +575,8 @@ internal static class FunctionalCompiler
                     }
                     else if (current.ValueKind == JsonValueKind.Array)
                     {
-                        // Nested array: recurse for remaining steps
-                        var inner = EvalChainOverArray(current, utf8Names, step);
-                        if (!inner.IsUndefined)
-                        {
-                            builder.AddRange(inner);
-                        }
-
+                        // Nested array: recurse into the same builder to avoid intermediate allocations
+                        EvalChainOverArrayInto(current, utf8Names, step, ref builder);
                         found = false;
                         break;
                     }
@@ -603,8 +604,6 @@ internal static class FunctionalCompiler
                     }
                 }
             }
-
-            return builder.ToSequence();
         }
 
         static Sequence EvalPropertyChainWithIndices(in JsonElement input, byte[][] utf8Names, int[] constantIndices)
