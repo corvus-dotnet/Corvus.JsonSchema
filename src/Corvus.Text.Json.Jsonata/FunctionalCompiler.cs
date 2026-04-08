@@ -1326,7 +1326,7 @@ internal static class FunctionalCompiler
                                 // round-tripping through JSON which breaks element identity).
                                 var terms = sortTermsPerStep[stepIdx]!;
                                 var indices = RentSortIndices(sortElems.Count);
-                                Array.Sort(indices, 0, sortElems.Count, Comparer<int>.Create((a, b) =>
+                                indices.AsSpan(0, sortElems.Count).Sort((a, b) =>
                                 {
                                     for (int t = 0; t < terms.Length; t++)
                                     {
@@ -1341,7 +1341,7 @@ internal static class FunctionalCompiler
                                     }
 
                                     return a.CompareTo(b);
-                                }));
+                                });
 
                                 // Reorder elements and groups
                                 var sortedElems = default(SequenceBuilder);
@@ -2236,11 +2236,20 @@ internal static class FunctionalCompiler
                         if (isSortStage[s])
                         {
                             // Sort stage — sort all tuples' inner elements
-                            var sortElements = tuples.Select(t => t.InnerEl).ToList();
-                            if (sortElements.Count > 1)
+                            var sortBuilder = default(SequenceBuilder);
+                            for (int t = 0; t < tuples.Count; t++)
                             {
-                                var arrayInput = JsonataHelpers.ArrayFromList(sortElements, env.Workspace);
+                                sortBuilder.Add(tuples[t].InnerEl);
+                            }
+
+                            if (sortBuilder.Count > 1)
+                            {
+                                var arrayInput = JsonataHelpers.ArrayFromBuilder(ref sortBuilder, env.Workspace);
                                 var sorted = stage(arrayInput, env);
+                            }
+                            else
+                            {
+                                sortBuilder.ReturnArray();
                             }
 
                             continue;
@@ -2775,7 +2784,7 @@ internal static class FunctionalCompiler
                 {
                     var terms = sortTermsPerStep[sortStepIdx]!;
                     var sortIndices = RentSortIndices(resultElements.Count);
-                    Array.Sort(sortIndices, 0, resultElements.Count, Comparer<int>.Create((a, b) =>
+                    sortIndices.AsSpan(0, resultElements.Count).Sort((a, b) =>
                     {
                         // Bind ALL ancestor labels for element A
                         foreach (var label in allLabels)
@@ -2812,7 +2821,7 @@ internal static class FunctionalCompiler
                         }
 
                         return a.CompareTo(b);
-                    }));
+                    });
 
                     var sorted = new List<JsonElement>(resultElements.Count);
                     var sortedLabelValues = new Dictionary<string, List<JsonElement>>();
@@ -3140,7 +3149,7 @@ internal static class FunctionalCompiler
                 {
                     var terms = sortTermsPerStep[sortStepIdx]!;
                     var sortIndices = RentSortIndices(resultElements.Count);
-                    Array.Sort(sortIndices, 0, resultElements.Count, Comparer<int>.Create((a, b) =>
+                    sortIndices.AsSpan(0, resultElements.Count).Sort((a, b) =>
                     {
                         for (int t = 0; t < terms.Length; t++)
                         {
@@ -3154,7 +3163,7 @@ internal static class FunctionalCompiler
                         }
 
                         return a.CompareTo(b);
-                    }));
+                    });
 
                     var sorted = new List<JsonElement>(resultElements.Count);
                     var sortedGroups = new int[resultElements.Count];
@@ -4455,18 +4464,29 @@ internal static class FunctionalCompiler
         }
 
         // Build arrays containing only sort stages
-        var sortStages = new List<ExpressionEvaluator>();
-        var sortFlags = new List<bool>();
+        int sortCount = 0;
         for (int s = 0; s < stageEvaluators.Length; s++)
         {
             if (isSortStage[s])
             {
-                sortStages.Add(stageEvaluators[s]);
-                sortFlags.Add(true);
+                sortCount++;
             }
         }
 
-        return ApplyStages(current, sortStages.ToArray(), sortFlags.ToArray(), env);
+        var sortStages = new ExpressionEvaluator[sortCount];
+        var sortFlags = new bool[sortCount];
+        int si = 0;
+        for (int s = 0; s < stageEvaluators.Length; s++)
+        {
+            if (isSortStage[s])
+            {
+                sortStages[si] = stageEvaluators[s];
+                sortFlags[si] = true;
+                si++;
+            }
+        }
+
+        return ApplyStages(current, sortStages, sortFlags, env);
     }
 
     private static ExpressionEvaluator CompileBinary(BinaryNode binary)
@@ -5974,7 +5994,7 @@ internal static class FunctionalCompiler
             // Stable sort using index-based ordering to preserve relative
             // order of equal elements (matches JSONata reference semantics).
             var indices = RentSortIndices(elements.Count);
-            Array.Sort(indices, 0, elements.Count, Comparer<int>.Create((a, b) =>
+            indices.AsSpan(0, elements.Count).Sort((a, b) =>
             {
                 for (int t = 0; t < terms.Length; t++)
                 {
@@ -5990,7 +6010,7 @@ internal static class FunctionalCompiler
                 }
 
                 return a.CompareTo(b);
-            }));
+            });
 
             var sorted = default(SequenceBuilder);
             for (int i = 0; i < elements.Count; i++)
@@ -6042,7 +6062,7 @@ internal static class FunctionalCompiler
             }
 
             var indices = RentSortIndices(elements.Count);
-            Array.Sort(indices, 0, elements.Count, Comparer<int>.Create((a, b) =>
+            indices.AsSpan(0, elements.Count).Sort((a, b) =>
             {
                 for (int t = 0; t < terms.Length; t++)
                 {
@@ -6062,7 +6082,7 @@ internal static class FunctionalCompiler
                 }
 
                 return a.CompareTo(b);
-            }));
+            });
 
             var sorted = default(SequenceBuilder);
             for (int i = 0; i < elements.Count; i++)
@@ -6094,7 +6114,7 @@ internal static class FunctionalCompiler
         }
 
         var indices = RentSortIndices(elements.Count);
-        Array.Sort(indices, 0, elements.Count, Comparer<int>.Create((a, b) =>
+        indices.AsSpan(0, elements.Count).Sort((a, b) =>
         {
             for (int t = 0; t < sortTerms.Length; t++)
             {
@@ -6112,7 +6132,7 @@ internal static class FunctionalCompiler
             }
 
             return a.CompareTo(b);
-        }));
+        });
 
         var sorted = ArrayPool<JsonElement>.Shared.Rent(elements.Count);
         for (int i = 0; i < elements.Count; i++)
