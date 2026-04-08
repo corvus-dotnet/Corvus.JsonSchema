@@ -483,6 +483,42 @@ internal static class FunctionalCompiler
     }
 
     /// <summary>
+    /// Recursively extracts equality predicate values from an expression tree.
+    /// Handles single equality (<c>prop = 'value'</c>) and OR-ed equalities
+    /// (<c>prop = 'a' or prop = 'b'</c>) where all branches test the same property.
+    /// </summary>
+    private static bool TryExtractEqualityPredicateValues(
+        JsonataNode expression,
+        out string propName,
+        out List<string> values)
+    {
+        // Single equality: prop = 'value'
+        if (expression is BinaryNode { Operator: "=" } eq
+            && TryGetSimpleNameNode(eq.Lhs, out propName)
+            && TryGetStringNode(eq.Rhs, out var singleValue))
+        {
+            values = [singleValue];
+            return true;
+        }
+
+        // OR of equalities: lhs or rhs (recursive)
+        if (expression is BinaryNode { Operator: "or" } orNode
+            && TryExtractEqualityPredicateValues(orNode.Lhs, out var leftProp, out var leftValues)
+            && TryExtractEqualityPredicateValues(orNode.Rhs, out var rightProp, out var rightValues)
+            && leftProp == rightProp)
+        {
+            propName = leftProp;
+            leftValues.AddRange(rightValues);
+            values = leftValues;
+            return true;
+        }
+
+        propName = default!;
+        values = default!;
+        return false;
+    }
+
+    /// <summary>
     /// Tries to compile a path consisting entirely of NameNode steps (property accesses)
     /// with optional constant-integer index predicates or simple string equality predicates
     /// into a tight evaluator loop that avoids all delegate dispatch and Sequence
@@ -501,8 +537,9 @@ internal static class FunctionalCompiler
         var utf8Names = new byte[path.Steps.Count][];
         int[]? constantIndices = null;
 
-        // String equality predicates: (propertyNameUtf8, expectedValueUtf8) pairs per step
-        (byte[] PropName, byte[] ExpectedValue)[]? equalityPredicates = null;
+        // String equality predicates: (propertyNameUtf8, expectedValuesUtf8[]) per step
+        // Multiple expected values support OR-ed predicates like [type = 'office' or type = 'mobile']
+        (byte[] PropName, byte[][] ExpectedValues)[]? equalityPredicates = null;
         bool hasPredicates = false;
         for (int i = 0; i < path.Steps.Count; i++)
         {
@@ -545,19 +582,24 @@ internal static class FunctionalCompiler
                     hasPredicates = true;
                 }
 
-                // Allow a single string equality predicate: [propName = 'stringLiteral']
-                else if (stepAnnotations.Stages[0] is FilterNode { Expression: BinaryNode { Operator: "=" } binaryEq }
-                         && TryGetSimpleNameNode(binaryEq.Lhs, out var filterPropName)
-                         && TryGetStringNode(binaryEq.Rhs, out var filterStringValue))
+                // Allow a string equality predicate or OR-ed string equality predicates on the same property
+                // e.g. [type = 'mobile'] or [type = 'office' or type = 'mobile']
+                else if (stepAnnotations.Stages[0] is FilterNode filterNode
+                         && TryExtractEqualityPredicateValues(filterNode.Expression, out var filterPropName, out var filterValues))
                 {
                     if (equalityPredicates is null)
                     {
-                        equalityPredicates = new (byte[], byte[])[path.Steps.Count];
+                        equalityPredicates = new (byte[], byte[][])[path.Steps.Count];
                     }
 
-                    equalityPredicates[i] = (
-                        System.Text.Encoding.UTF8.GetBytes(filterPropName),
-                        System.Text.Encoding.UTF8.GetBytes(filterStringValue));
+                    byte[] propNameUtf8 = System.Text.Encoding.UTF8.GetBytes(filterPropName);
+                    byte[][] valuesUtf8 = new byte[filterValues.Count][];
+                    for (int v = 0; v < filterValues.Count; v++)
+                    {
+                        valuesUtf8[v] = System.Text.Encoding.UTF8.GetBytes(filterValues[v]);
+                    }
+
+                    equalityPredicates[i] = (propNameUtf8, valuesUtf8);
                     hasPredicates = true;
                 }
                 else
@@ -682,12 +724,12 @@ internal static class FunctionalCompiler
             }
         }
 
-        static Sequence EvalPropertyChainWithPredicates(in JsonElement input, byte[][] utf8Names, int[] constantIndices, (byte[] PropName, byte[] ExpectedValue)[]? equalityPredicates)
+        static Sequence EvalPropertyChainWithPredicates(in JsonElement input, byte[][] utf8Names, int[] constantIndices, (byte[] PropName, byte[][] ExpectedValues)[]? equalityPredicates)
         {
             return EvalFromStep(input, utf8Names, constantIndices, equalityPredicates, 0);
         }
 
-        static Sequence EvalFromStep(in JsonElement input, byte[][] utf8Names, int[] constantIndices, (byte[] PropName, byte[] ExpectedValue)[]? equalityPredicates, int startStep)
+        static Sequence EvalFromStep(in JsonElement input, byte[][] utf8Names, int[] constantIndices, (byte[] PropName, byte[][] ExpectedValues)[]? equalityPredicates, int startStep)
         {
             JsonElement current = input;
 
@@ -732,12 +774,12 @@ internal static class FunctionalCompiler
                         if (current.ValueKind == JsonValueKind.Array)
                         {
                             // Filter array elements matching the predicate
-                            return FilterAndContinue(current, utf8Names, constantIndices, equalityPredicates, step, pred.PropName, pred.ExpectedValue);
+                            return FilterAndContinue(current, utf8Names, constantIndices, equalityPredicates, step, pred.PropName, pred.ExpectedValues);
                         }
                         else if (current.ValueKind == JsonValueKind.Object)
                         {
                             // Singleton object: check if it matches
-                            if (!MatchesEqualityPredicate(current, pred.PropName, pred.ExpectedValue))
+                            if (!MatchesEqualityPredicate(current, pred.PropName, pred.ExpectedValues))
                             {
                                 return Sequence.Undefined;
                             }
@@ -762,7 +804,7 @@ internal static class FunctionalCompiler
             return new Sequence(current);
         }
 
-        static bool MatchesEqualityPredicate(in JsonElement element, byte[] propName, byte[] expectedValue)
+        static bool MatchesEqualityPredicate(in JsonElement element, byte[] propName, byte[][] expectedValues)
         {
             if (element.ValueKind != JsonValueKind.Object)
             {
@@ -779,15 +821,23 @@ internal static class FunctionalCompiler
                 return false;
             }
 
-            return propValue.ValueEquals(expectedValue);
+            for (int i = 0; i < expectedValues.Length; i++)
+            {
+                if (propValue.ValueEquals(expectedValues[i]))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
-        static Sequence FilterAndContinue(in JsonElement array, byte[][] utf8Names, int[] constantIndices, (byte[] PropName, byte[] ExpectedValue)[]? equalityPredicates, int step, byte[] propName, byte[] expectedValue)
+        static Sequence FilterAndContinue(in JsonElement array, byte[][] utf8Names, int[] constantIndices, (byte[] PropName, byte[][] ExpectedValues)[]? equalityPredicates, int step, byte[] propName, byte[][] expectedValues)
         {
             var builder = default(SequenceBuilder);
             foreach (var item in array.EnumerateArray())
             {
-                if (MatchesEqualityPredicate(item, propName, expectedValue))
+                if (MatchesEqualityPredicate(item, propName, expectedValues))
                 {
                     if (step + 1 < utf8Names.Length)
                     {
@@ -807,7 +857,7 @@ internal static class FunctionalCompiler
             return builder.ToSequence();
         }
 
-        static Sequence CollectAndContinue(in JsonElement array, byte[][] utf8Names, int[] constantIndices, (byte[] PropName, byte[] ExpectedValue)[]? equalityPredicates, int step)
+        static Sequence CollectAndContinue(in JsonElement array, byte[][] utf8Names, int[] constantIndices, (byte[] PropName, byte[][] ExpectedValues)[]? equalityPredicates, int step)
         {
             bool hasIndexThisStep = constantIndices[step] >= 0;
             bool hasEqPredThisStep = equalityPredicates?.Length > step && equalityPredicates[step].PropName is not null;
@@ -862,7 +912,7 @@ internal static class FunctionalCompiler
                             {
                                 foreach (var child in propValue.EnumerateArray())
                                 {
-                                    if (MatchesEqualityPredicate(child, pred.PropName, pred.ExpectedValue))
+                                    if (MatchesEqualityPredicate(child, pred.PropName, pred.ExpectedValues))
                                     {
                                         if (step + 1 < utf8Names.Length)
                                         {
@@ -882,7 +932,7 @@ internal static class FunctionalCompiler
                             else if (propValue.ValueKind == JsonValueKind.Object)
                             {
                                 // Singleton: check if it matches
-                                if (MatchesEqualityPredicate(propValue, pred.PropName, pred.ExpectedValue))
+                                if (MatchesEqualityPredicate(propValue, pred.PropName, pred.ExpectedValues))
                                 {
                                     if (step + 1 < utf8Names.Length)
                                     {
