@@ -45,6 +45,7 @@ internal readonly struct Sequence
     private readonly Sequence[]? tupleItems;
     private readonly Dictionary<string, LambdaValue>? objectLambdas;
     private readonly LazyRangeInfo? lazyRange;
+    private readonly double[]? rawDoubleArray;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Sequence"/> struct with a single value.
@@ -183,6 +184,40 @@ internal readonly struct Sequence
     }
 
     /// <summary>
+    /// Creates a multi-value sequence backed by an array of raw doubles.
+    /// The doubles are only materialized to <see cref="JsonElement"/> when accessed
+    /// via the indexer. For bulk operations (e.g. building a JSON array), callers
+    /// should use <see cref="IsRawDoubleArray"/> and <see cref="GetRawDoubleAt"/>
+    /// to access the raw values directly.
+    /// </summary>
+    /// <param name="values">The rented double array (ownership transfers to this sequence).</param>
+    /// <param name="count">The number of valid doubles in the array.</param>
+    /// <param name="workspace">The workspace used for on-demand materialization.</param>
+    /// <returns>A multi-value sequence of numbers.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static Sequence FromDoubleArray(double[] values, int count, JsonWorkspace workspace)
+    {
+        return new Sequence(values, count, workspace, isDoubleArray: true);
+    }
+
+    /// <summary>
+    /// Private constructor for raw double arrays.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private Sequence(double[] values, int count, JsonWorkspace workspace, bool isDoubleArray)
+    {
+        Debug.Assert(isDoubleArray);
+        this.rawDoubleArray = values;
+        this.rawDoubleWorkspace = workspace;
+        this.count = count;
+        this.singleValue = default;
+        this.multiValues = null;
+        this.lambda = null;
+        this.regex = null;
+        this.tailCall = null;
+    }
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="Sequence"/> struct as a tuple array
     /// of sub-sequences. Used when an array constructor contains non-JSON values (e.g. lambdas)
     /// that must be preserved without reification into a JSON array.
@@ -260,6 +295,11 @@ internal readonly struct Sequence
         {
             ArrayPool<JsonElement>.Shared.Return(this.multiValues);
         }
+
+        if (this.rawDoubleArray is not null)
+        {
+            ArrayPool<double>.Shared.Return(this.rawDoubleArray);
+        }
     }
 
     /// <summary>Gets a value indicating whether this is an undefined (empty) sequence.</summary>
@@ -281,6 +321,30 @@ internal readonly struct Sequence
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get => this.isRawDouble;
+    }
+
+    /// <summary>Gets the workspace associated with a raw double sequence.</summary>
+    internal JsonWorkspace? RawDoubleWorkspace
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => this.rawDoubleWorkspace;
+    }
+
+    /// <summary>Gets a value indicating whether this sequence is backed by an array of raw doubles.</summary>
+    public bool IsRawDoubleArray
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => this.rawDoubleArray is not null;
+    }
+
+    /// <summary>Gets the raw double value at the specified index in a raw double array sequence.</summary>
+    /// <param name="index">The zero-based index.</param>
+    /// <returns>The raw double value.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public double GetRawDoubleAt(int index)
+    {
+        Debug.Assert(this.rawDoubleArray is not null, "Not a raw double array sequence");
+        return this.rawDoubleArray![index];
     }
 
     /// <summary>
@@ -479,6 +543,11 @@ internal readonly struct Sequence
             {
                 Debug.Assert(index == 0, "Raw double sequence index must be 0");
                 return JsonataHelpers.NumberFromDouble(this.nonFiniteValue, this.rawDoubleWorkspace!);
+            }
+
+            if (this.rawDoubleArray is not null)
+            {
+                return JsonataHelpers.NumberFromDouble(this.rawDoubleArray[index], this.rawDoubleWorkspace!);
             }
 
             if (this.lazyRange is not null)

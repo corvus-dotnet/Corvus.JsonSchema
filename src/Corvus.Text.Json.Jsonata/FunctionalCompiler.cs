@@ -5347,7 +5347,16 @@ internal static class FunctionalCompiler
 
                 if (valueResult.IsSingleton)
                 {
-                    objRoot.SetProperty(keyUtf8[i], valueResult.FirstOrDefault);
+                    // Fast path: raw doubles (from arithmetic) bypass FixedJsonValueDocument
+                    // by writing directly through Source(double) → SimpleTypesBacking.
+                    if (valueResult.TryGetDouble(out double d))
+                    {
+                        objRoot.SetProperty(keyUtf8[i], (JsonElement.Source)d);
+                    }
+                    else
+                    {
+                        objRoot.SetProperty(keyUtf8[i], valueResult.FirstOrDefault);
+                    }
                 }
                 else
                 {

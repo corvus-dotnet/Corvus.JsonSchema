@@ -248,9 +248,21 @@ internal static class JsonataHelpers
         JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateArrayBuilder(workspace, seq.Count);
         JsonElement.Mutable root = doc.RootElement;
 
-        for (int i = 0; i < seq.Count; i++)
+        if (seq.IsRawDoubleArray)
         {
-            root.AddItem(seq[i]);
+            // Write doubles directly via Source(double) → SimpleTypesBacking,
+            // bypassing FixedJsonValueDocument entirely.
+            for (int i = 0; i < seq.Count; i++)
+            {
+                root.AddItem((JsonElement.Source)seq.GetRawDoubleAt(i));
+            }
+        }
+        else
+        {
+            for (int i = 0; i < seq.Count; i++)
+            {
+                root.AddItem(seq[i]);
+            }
         }
 
         return (JsonElement)root;

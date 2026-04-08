@@ -12,10 +12,22 @@ namespace Corvus.Text.Json.Jsonata;
 /// The backing array is rented from <see cref="ArrayPool{T}"/> and must
 /// be returned by the caller after the <see cref="Sequence"/> is no longer needed.
 /// </summary>
+/// <remarks>
+/// When all added values are raw double singletons (e.g. arithmetic results),
+/// this builder defers materialization into <see cref="JsonElement"/> by storing
+/// the doubles in a separate pool-rented <c>double[]</c>. The resulting
+/// <see cref="Sequence"/> is then a <see cref="Sequence.IsRawDoubleArray"/> variant,
+/// allowing consumers like <see cref="JsonataHelpers.ArrayFromSequence"/> to write
+/// the doubles directly into a mutable document via <c>Source(double)</c> without
+/// creating intermediate <c>FixedJsonValueDocument</c> instances.
+/// </remarks>
 internal struct SequenceBuilder
 {
     private JsonElement[]? array;
+    private double[]? doubleArray;
     private int count;
+    private int rawDoubleCount;
+    private JsonWorkspace? doubleWorkspace;
 
     /// <summary>Gets the current count of values added.</summary>
     public readonly int Count => this.count;
@@ -35,16 +47,14 @@ internal struct SequenceBuilder
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Add(in JsonElement value)
     {
-        if (this.array is null)
+        // Switching from all-doubles mode to mixed: materialize pending doubles.
+        if (this.rawDoubleCount > 0 && this.rawDoubleCount == this.count)
         {
-            this.array = ArrayPool<JsonElement>.Shared.Rent(8);
-        }
-        else if (this.count == this.array.Length)
-        {
-            this.Grow();
+            this.MaterializePendingDoubles();
         }
 
-        this.array[this.count++] = value;
+        this.EnsureElementCapacity();
+        this.array![this.count++] = value;
     }
 
     /// <summary>
@@ -52,9 +62,36 @@ internal struct SequenceBuilder
     /// </summary>
     public void AddRange(Sequence sequence)
     {
+        // Fast path: singleton raw doubles stay deferred.
+        if (sequence.IsSingleton && sequence.IsRawDouble)
+        {
+            // Only defer if we're still in all-doubles mode (or empty).
+            if (this.rawDoubleCount == this.count)
+            {
+                sequence.TryGetDouble(out double d);
+                this.EnsureDoubleCapacity();
+                this.doubleArray![this.rawDoubleCount++] = d;
+                this.count++;
+                this.doubleWorkspace = sequence.RawDoubleWorkspace;
+                return;
+            }
+
+            // Mixed mode: materialize this double immediately.
+            this.EnsureElementCapacity();
+            this.array![this.count++] = sequence.FirstOrDefault;
+            return;
+        }
+
+        // Non-double elements: leave all-doubles mode if needed.
+        if (this.rawDoubleCount > 0 && this.rawDoubleCount == this.count)
+        {
+            this.MaterializePendingDoubles();
+        }
+
         for (int i = 0; i < sequence.Count; i++)
         {
-            this.Add(sequence[i]);
+            this.EnsureElementCapacity();
+            this.array![this.count++] = sequence[i];
         }
     }
 
@@ -65,6 +102,8 @@ internal struct SequenceBuilder
     /// A <see cref="Sequence"/>. For zero or one values, this is stack-only
     /// (no rented array). For multiple values, the backing array is kept rented
     /// and the caller is responsible for returning it via <see cref="ReturnArray"/>.
+    /// When all values are raw doubles, returns a <see cref="Sequence.IsRawDoubleArray"/>
+    /// variant backed by the rented <c>double[]</c>.
     /// </returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public readonly Sequence ToSequence()
@@ -72,6 +111,17 @@ internal struct SequenceBuilder
         if (this.count == 0)
         {
             return Sequence.Undefined;
+        }
+
+        // All-doubles path: defer materialization through the Sequence.
+        if (this.rawDoubleCount == this.count)
+        {
+            if (this.count == 1)
+            {
+                return Sequence.FromDouble(this.doubleArray![0], this.doubleWorkspace!);
+            }
+
+            return Sequence.FromDoubleArray(this.doubleArray!, this.rawDoubleCount, this.doubleWorkspace!);
         }
 
         if (this.count == 1)
@@ -93,8 +143,16 @@ internal struct SequenceBuilder
         {
             ArrayPool<JsonElement>.Shared.Return(this.array);
             this.array = null;
-            this.count = 0;
         }
+
+        if (this.doubleArray is not null)
+        {
+            ArrayPool<double>.Shared.Return(this.doubleArray);
+            this.doubleArray = null;
+        }
+
+        this.count = 0;
+        this.rawDoubleCount = 0;
     }
 
     /// <summary>
@@ -104,14 +162,75 @@ internal struct SequenceBuilder
     public void Clear()
     {
         this.count = 0;
+        this.rawDoubleCount = 0;
     }
 
-    private void Grow()
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void EnsureElementCapacity()
+    {
+        if (this.array is null)
+        {
+            this.array = ArrayPool<JsonElement>.Shared.Rent(8);
+        }
+        else if (this.count == this.array.Length)
+        {
+            this.GrowElementArray();
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void EnsureDoubleCapacity()
+    {
+        if (this.doubleArray is null)
+        {
+            this.doubleArray = ArrayPool<double>.Shared.Rent(8);
+        }
+        else if (this.rawDoubleCount == this.doubleArray.Length)
+        {
+            this.GrowDoubleArray();
+        }
+    }
+
+    private void MaterializePendingDoubles()
+    {
+        this.EnsureElementCapacity();
+
+        // Ensure element array has room for all pending doubles.
+        while (this.array!.Length < this.rawDoubleCount)
+        {
+            this.GrowElementArray();
+        }
+
+        for (int i = 0; i < this.rawDoubleCount; i++)
+        {
+            this.array[i] = JsonataHelpers.NumberFromDouble(this.doubleArray![i], this.doubleWorkspace!);
+        }
+
+        // Free the double array (no longer needed).
+        if (this.doubleArray is not null)
+        {
+            ArrayPool<double>.Shared.Return(this.doubleArray);
+            this.doubleArray = null;
+        }
+
+        this.rawDoubleCount = 0;
+    }
+
+    private void GrowElementArray()
     {
         int newCapacity = this.array!.Length * 2;
         var newArray = ArrayPool<JsonElement>.Shared.Rent(newCapacity);
         Array.Copy(this.array, newArray, this.count);
         ArrayPool<JsonElement>.Shared.Return(this.array);
         this.array = newArray;
+    }
+
+    private void GrowDoubleArray()
+    {
+        int newCapacity = this.doubleArray!.Length * 2;
+        var newArray = ArrayPool<double>.Shared.Rent(newCapacity);
+        Array.Copy(this.doubleArray, newArray, this.rawDoubleCount);
+        ArrayPool<double>.Shared.Return(this.doubleArray);
+        this.doubleArray = newArray;
     }
 }
