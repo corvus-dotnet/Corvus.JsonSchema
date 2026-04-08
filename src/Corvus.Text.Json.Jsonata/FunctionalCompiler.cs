@@ -443,14 +443,55 @@ internal static class FunctionalCompiler
     }
 
     /// <summary>
-    /// Tries to compile a path as a simple property chain (a.b.c.d) without
-    /// any annotations, stages, or non-Name steps. Returns a tight evaluator
-    /// that chains TryGetProperty calls directly — no delegates, no Sequence
+    /// Extracts a simple property name from a node that is either a bare NameNode
+    /// or a single-step PathNode containing a NameNode (which is how the parser wraps bare names).
+    /// </summary>
+    private static bool TryGetSimpleNameNode(JsonataNode node, out string name)
+    {
+        if (node is NameNode nameNode)
+        {
+            name = nameNode.Value;
+            return true;
+        }
+
+        if (node is PathNode { Steps: [NameNode innerName] } pathNode
+            && !pathNode.KeepArray && !pathNode.KeepSingletonArray
+            && GetStepAnnotations(pathNode) is null
+            && GetStepAnnotations(innerName) is null)
+        {
+            name = innerName.Value;
+            return true;
+        }
+
+        name = default!;
+        return false;
+    }
+
+    /// <summary>
+    /// Extracts a string literal value from a node that is a StringNode.
+    /// </summary>
+    private static bool TryGetStringNode(JsonataNode node, out string value)
+    {
+        if (node is StringNode stringNode)
+        {
+            value = stringNode.Value;
+            return true;
+        }
+
+        value = default!;
+        return false;
+    }
+
+    /// <summary>
+    /// Tries to compile a path consisting entirely of NameNode steps (property accesses)
+    /// with optional constant-integer index predicates or simple string equality predicates
+    /// into a tight evaluator loop that avoids all delegate dispatch and Sequence
     /// intermediaries for the common object-input case.
     /// </summary>
     private static bool TryCompileSimplePropertyChain(PathNode path, out ExpressionEvaluator evaluator)
     {
-        // Check all steps are NameNodes with no annotations (or simple constant-integer predicates)
+        // Check all steps are NameNodes with no annotations (or simple constant-integer predicates
+        // or simple string equality predicates like [type = 'mobile'])
         if (path.KeepArray || path.KeepSingletonArray || GetStepAnnotations(path) is not null)
         {
             evaluator = default!;
@@ -459,6 +500,10 @@ internal static class FunctionalCompiler
 
         var utf8Names = new byte[path.Steps.Count][];
         int[]? constantIndices = null;
+
+        // String equality predicates: (propertyNameUtf8, expectedValueUtf8) pairs per step
+        (byte[] PropName, byte[] ExpectedValue)[]? equalityPredicates = null;
+        bool hasPredicates = false;
         for (int i = 0; i < path.Steps.Count; i++)
         {
             if (path.Steps[i] is not NameNode nameNode)
@@ -470,19 +515,25 @@ internal static class FunctionalCompiler
             var stepAnnotations = GetStepAnnotations(path.Steps[i]);
             if (stepAnnotations is not null)
             {
-                // Allow a single constant non-negative integer predicate with no other annotations
-                if (stepAnnotations.Stages.Count == 1
-                    && stepAnnotations.Stages[0] is FilterNode filterNode
-                    && filterNode.Expression is NumberNode numNode
-                    && numNode.Value >= 0
-                    && numNode.Value <= int.MaxValue
-                    && numNode.Value == Math.Floor(numNode.Value)
-                    && stepAnnotations.Group is null
+                bool isSimpleAnnotation =
+                    stepAnnotations.Group is null
                     && stepAnnotations.Focus is null
                     && stepAnnotations.Index is null
                     && stepAnnotations.AncestorLabels is null
                     && stepAnnotations.TupleLabels is null
-                    && !stepAnnotations.Tuple)
+                    && !stepAnnotations.Tuple;
+
+                if (!isSimpleAnnotation || stepAnnotations.Stages.Count != 1)
+                {
+                    evaluator = default!;
+                    return false;
+                }
+
+                // Allow a single constant non-negative integer predicate
+                if (stepAnnotations.Stages[0] is FilterNode { Expression: NumberNode numNode }
+                    && numNode.Value >= 0
+                    && numNode.Value <= int.MaxValue
+                    && numNode.Value == Math.Floor(numNode.Value))
                 {
                     if (constantIndices is null)
                     {
@@ -491,6 +542,23 @@ internal static class FunctionalCompiler
                     }
 
                     constantIndices[i] = (int)numNode.Value;
+                    hasPredicates = true;
+                }
+
+                // Allow a single string equality predicate: [propName = 'stringLiteral']
+                else if (stepAnnotations.Stages[0] is FilterNode { Expression: BinaryNode { Operator: "=" } binaryEq }
+                         && TryGetSimpleNameNode(binaryEq.Lhs, out var filterPropName)
+                         && TryGetStringNode(binaryEq.Rhs, out var filterStringValue))
+                {
+                    if (equalityPredicates is null)
+                    {
+                        equalityPredicates = new (byte[], byte[])[path.Steps.Count];
+                    }
+
+                    equalityPredicates[i] = (
+                        System.Text.Encoding.UTF8.GetBytes(filterPropName),
+                        System.Text.Encoding.UTF8.GetBytes(filterStringValue));
+                    hasPredicates = true;
                 }
                 else
                 {
@@ -506,11 +574,19 @@ internal static class FunctionalCompiler
             utf8Names[i] = System.Text.Encoding.UTF8.GetBytes(nameNode.Value);
         }
 
-        if (constantIndices is not null)
+        if (hasPredicates)
         {
+            // We have at least one predicate (constant index or equality).
+            // Ensure constantIndices exists and all non-predicate slots are -1.
+            if (constantIndices is null)
+            {
+                constantIndices = new int[path.Steps.Count];
+                Array.Fill(constantIndices, -1);
+            }
+
             evaluator = (in JsonElement input, Environment env) =>
             {
-                return EvalPropertyChainWithIndices(input, utf8Names, constantIndices);
+                return EvalPropertyChainWithPredicates(input, utf8Names, constantIndices, equalityPredicates);
             };
         }
         else
@@ -606,12 +682,12 @@ internal static class FunctionalCompiler
             }
         }
 
-        static Sequence EvalPropertyChainWithIndices(in JsonElement input, byte[][] utf8Names, int[] constantIndices)
+        static Sequence EvalPropertyChainWithPredicates(in JsonElement input, byte[][] utf8Names, int[] constantIndices, (byte[] PropName, byte[] ExpectedValue)[]? equalityPredicates)
         {
-            return EvalFromStep(input, utf8Names, constantIndices, 0);
+            return EvalFromStep(input, utf8Names, constantIndices, equalityPredicates, 0);
         }
 
-        static Sequence EvalFromStep(in JsonElement input, byte[][] utf8Names, int[] constantIndices, int startStep)
+        static Sequence EvalFromStep(in JsonElement input, byte[][] utf8Names, int[] constantIndices, (byte[] PropName, byte[] ExpectedValue)[]? equalityPredicates, int startStep)
         {
             JsonElement current = input;
 
@@ -648,11 +724,34 @@ internal static class FunctionalCompiler
                             }
                         }
                     }
+
+                    // Apply equality predicate if present for this step
+                    else if (equalityPredicates?.Length > step && equalityPredicates[step].PropName is not null)
+                    {
+                        var pred = equalityPredicates[step];
+                        if (current.ValueKind == JsonValueKind.Array)
+                        {
+                            // Filter array elements matching the predicate
+                            return FilterAndContinue(current, utf8Names, constantIndices, equalityPredicates, step, pred.PropName, pred.ExpectedValue);
+                        }
+                        else if (current.ValueKind == JsonValueKind.Object)
+                        {
+                            // Singleton object: check if it matches
+                            if (!MatchesEqualityPredicate(current, pred.PropName, pred.ExpectedValue))
+                            {
+                                return Sequence.Undefined;
+                            }
+                        }
+                        else
+                        {
+                            return Sequence.Undefined;
+                        }
+                    }
                 }
                 else if (current.ValueKind == JsonValueKind.Array)
                 {
-                    // Array input: collect-then-index semantics
-                    return CollectAndContinue(current, utf8Names, constantIndices, step);
+                    // Array input: collect-then-predicate semantics
+                    return CollectAndContinue(current, utf8Names, constantIndices, equalityPredicates, step);
                 }
                 else
                 {
@@ -663,9 +762,55 @@ internal static class FunctionalCompiler
             return new Sequence(current);
         }
 
-        static Sequence CollectAndContinue(in JsonElement array, byte[][] utf8Names, int[] constantIndices, int step)
+        static bool MatchesEqualityPredicate(in JsonElement element, byte[] propName, byte[] expectedValue)
+        {
+            if (element.ValueKind != JsonValueKind.Object)
+            {
+                return false;
+            }
+
+            if (!element.TryGetProperty(propName, out var propValue))
+            {
+                return false;
+            }
+
+            if (propValue.ValueKind != JsonValueKind.String)
+            {
+                return false;
+            }
+
+            return propValue.ValueEquals(expectedValue);
+        }
+
+        static Sequence FilterAndContinue(in JsonElement array, byte[][] utf8Names, int[] constantIndices, (byte[] PropName, byte[] ExpectedValue)[]? equalityPredicates, int step, byte[] propName, byte[] expectedValue)
+        {
+            var builder = default(SequenceBuilder);
+            foreach (var item in array.EnumerateArray())
+            {
+                if (MatchesEqualityPredicate(item, propName, expectedValue))
+                {
+                    if (step + 1 < utf8Names.Length)
+                    {
+                        var result = EvalFromStep(item, utf8Names, constantIndices, equalityPredicates, step + 1);
+                        if (!result.IsUndefined)
+                        {
+                            builder.AddRange(result);
+                        }
+                    }
+                    else
+                    {
+                        builder.Add(item);
+                    }
+                }
+            }
+
+            return builder.ToSequence();
+        }
+
+        static Sequence CollectAndContinue(in JsonElement array, byte[][] utf8Names, int[] constantIndices, (byte[] PropName, byte[] ExpectedValue)[]? equalityPredicates, int step)
         {
             bool hasIndexThisStep = constantIndices[step] >= 0;
+            bool hasEqPredThisStep = equalityPredicates?.Length > step && equalityPredicates[step].PropName is not null;
             bool globalIndex = hasIndexThisStep && step == 0;
             bool perElementIndex = hasIndexThisStep && step > 0;
 
@@ -698,7 +843,7 @@ internal static class FunctionalCompiler
 
                             if (step + 1 < utf8Names.Length)
                             {
-                                var result = EvalFromStep(propValue, utf8Names, constantIndices, step + 1);
+                                var result = EvalFromStep(propValue, utf8Names, constantIndices, equalityPredicates, step + 1);
                                 if (!result.IsUndefined)
                                 {
                                     builder.AddRange(result);
@@ -709,9 +854,54 @@ internal static class FunctionalCompiler
                                 builder.Add(propValue);
                             }
                         }
+                        else if (hasEqPredThisStep)
+                        {
+                            // Per-element equality predicate: filter the property value (which should be an array)
+                            var pred = equalityPredicates![step];
+                            if (propValue.ValueKind == JsonValueKind.Array)
+                            {
+                                foreach (var child in propValue.EnumerateArray())
+                                {
+                                    if (MatchesEqualityPredicate(child, pred.PropName, pred.ExpectedValue))
+                                    {
+                                        if (step + 1 < utf8Names.Length)
+                                        {
+                                            var result = EvalFromStep(child, utf8Names, constantIndices, equalityPredicates, step + 1);
+                                            if (!result.IsUndefined)
+                                            {
+                                                builder.AddRange(result);
+                                            }
+                                        }
+                                        else
+                                        {
+                                            builder.Add(child);
+                                        }
+                                    }
+                                }
+                            }
+                            else if (propValue.ValueKind == JsonValueKind.Object)
+                            {
+                                // Singleton: check if it matches
+                                if (MatchesEqualityPredicate(propValue, pred.PropName, pred.ExpectedValue))
+                                {
+                                    if (step + 1 < utf8Names.Length)
+                                    {
+                                        var result = EvalFromStep(propValue, utf8Names, constantIndices, equalityPredicates, step + 1);
+                                        if (!result.IsUndefined)
+                                        {
+                                            builder.AddRange(result);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        builder.Add(propValue);
+                                    }
+                                }
+                            }
+                        }
                         else
                         {
-                            // No per-element index: collect with auto-flatten
+                            // No per-element index or predicate: collect with auto-flatten
                             if (propValue.ValueKind == JsonValueKind.Array)
                             {
                                 foreach (var child in propValue.EnumerateArray())
@@ -728,7 +918,7 @@ internal static class FunctionalCompiler
                 }
                 else if (item.ValueKind == JsonValueKind.Array)
                 {
-                    var inner = CollectAndContinue(item, utf8Names, constantIndices, step);
+                    var inner = CollectAndContinue(item, utf8Names, constantIndices, equalityPredicates, step);
                     if (!inner.IsUndefined)
                     {
                         builder.AddRange(inner);
@@ -752,16 +942,16 @@ internal static class FunctionalCompiler
                     return new Sequence(indexed);
                 }
 
-                return EvalFromStep(indexed, utf8Names, constantIndices, step + 1);
+                return EvalFromStep(indexed, utf8Names, constantIndices, equalityPredicates, step + 1);
             }
 
             // No index, more steps: continue per-element on collected results
-            if (!perElementIndex && step + 1 < utf8Names.Length)
+            if (!perElementIndex && !hasEqPredThisStep && step + 1 < utf8Names.Length)
             {
                 var resultBuilder = default(SequenceBuilder);
                 for (int i = 0; i < builder.Count; i++)
                 {
-                    var result = EvalFromStep(builder[i], utf8Names, constantIndices, step + 1);
+                    var result = EvalFromStep(builder[i], utf8Names, constantIndices, equalityPredicates, step + 1);
                     if (!result.IsUndefined)
                     {
                         resultBuilder.AddRange(result);
