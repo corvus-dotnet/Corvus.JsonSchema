@@ -30,22 +30,46 @@ namespace Corvus.Text.Json.Jsonata;
 /// </remarks>
 internal readonly struct Sequence
 {
+    // --- Tagged union layout: 32 bytes on x64 (was ~116) ---
+    //
+    // payload  (object?, 8 bytes)  — the single reference: array, lambda, regex, etc.
+    // rawValue (double, 8 bytes)   — inline double (RawDouble, NonFinite)
+    // singleValue (JE, 12 bytes)   — inline JsonElement for singleton/ObjectLambdas
+    // countAndTag (int, 4 bytes)   — bits 0–23 = count, bits 24–31 = variant tag
+    //
+    // At most ONE reference-type field is non-null at a time, so a single object? suffices.
+    private const int TagShift = 24;
+    private const int CountMask = 0x00FFFFFF;
+
+    private const int TagUndefined = 0;
+    private const int TagSingleton = 1;
+    private const int TagMulti = 2;
+    private const int TagLambda = 3;
+    private const int TagRegex = 4;
+    private const int TagTailCall = 5;
+    private const int TagNonFinite = 6;
+    private const int TagRawDouble = 7;
+    private const int TagRawDoubleArray = 8;
+    private const int TagTuple = 9;
+    private const int TagObjectLambdas = 10;
+    private const int TagLazyRange = 11;
+
+    private readonly object? payload;
+    private readonly double rawValue;
+    private readonly JsonElement singleValue;
+    private readonly int countAndTag;
+
+    private int Tag
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => this.countAndTag >>> TagShift;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static int Pack(int tag, int count) => (tag << TagShift) | (count & CountMask);
+
     /// <summary>An empty (undefined) sequence.</summary>
     public static readonly Sequence Undefined = default;
-
-    private readonly JsonElement singleValue;
-    private readonly JsonElement[]? multiValues;
-    private readonly int count;
-    private readonly LambdaValue? lambda;
-    private readonly Regex? regex;
-    private readonly TailCallContinuation? tailCall;
-    private readonly double nonFiniteValue;
-    private readonly bool isRawDouble;
-    private readonly JsonWorkspace? rawDoubleWorkspace;
-    private readonly Sequence[]? tupleItems;
-    private readonly Dictionary<string, LambdaValue>? objectLambdas;
-    private readonly LazyRangeInfo? lazyRange;
-    private readonly double[]? rawDoubleArray;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Sequence"/> struct with a single value.
@@ -54,9 +78,7 @@ internal readonly struct Sequence
     public Sequence(in JsonElement value)
     {
         this.singleValue = value;
-        this.multiValues = null;
-        this.count = 1;
-        this.lambda = null;
+        this.countAndTag = Pack(TagSingleton, 1);
     }
 
     /// <summary>
@@ -70,8 +92,6 @@ internal readonly struct Sequence
         Debug.Assert(count >= 0, "Count must be non-negative");
         Debug.Assert(values.Length >= count, "Array must be large enough for count");
 
-        this.lambda = null;
-
         if (count == 0)
         {
             this = default;
@@ -79,14 +99,12 @@ internal readonly struct Sequence
         else if (count == 1)
         {
             this.singleValue = values[0];
-            this.multiValues = null;
-            this.count = 1;
+            this.countAndTag = Pack(TagSingleton, 1);
         }
         else
         {
-            this.singleValue = default;
-            this.multiValues = values;
-            this.count = count;
+            this.payload = values;
+            this.countAndTag = Pack(TagMulti, count);
         }
     }
 
@@ -97,11 +115,8 @@ internal readonly struct Sequence
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Sequence(LambdaValue lambda)
     {
-        this.lambda = lambda;
-        this.count = 0;
-        this.singleValue = default;
-        this.multiValues = null;
-        this.regex = null;
+        this.payload = lambda;
+        this.countAndTag = Pack(TagLambda, 0);
     }
 
     /// <summary>
@@ -111,11 +126,8 @@ internal readonly struct Sequence
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Sequence(Regex regex)
     {
-        this.regex = regex;
-        this.count = 0;
-        this.singleValue = default;
-        this.multiValues = null;
-        this.lambda = null;
+        this.payload = regex;
+        this.countAndTag = Pack(TagRegex, 0);
     }
 
     /// <summary>
@@ -125,12 +137,8 @@ internal readonly struct Sequence
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Sequence(TailCallContinuation tailCall)
     {
-        this.tailCall = tailCall;
-        this.count = 0;
-        this.singleValue = default;
-        this.multiValues = null;
-        this.lambda = null;
-        this.regex = null;
+        this.payload = tailCall;
+        this.countAndTag = Pack(TagTailCall, 0);
     }
 
     /// <summary>
@@ -142,13 +150,8 @@ internal readonly struct Sequence
     public Sequence(double nonFiniteValue)
     {
         Debug.Assert(double.IsInfinity(nonFiniteValue) || double.IsNaN(nonFiniteValue), "Use this constructor only for non-finite values; use FromDouble for finite doubles");
-        this.nonFiniteValue = nonFiniteValue;
-        this.count = 0;
-        this.singleValue = default;
-        this.multiValues = null;
-        this.lambda = null;
-        this.regex = null;
-        this.tailCall = null;
+        this.rawValue = nonFiniteValue;
+        this.countAndTag = Pack(TagNonFinite, 0);
     }
 
     /// <summary>
@@ -172,15 +175,9 @@ internal readonly struct Sequence
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private Sequence(double value, JsonWorkspace workspace)
     {
-        this.nonFiniteValue = value;
-        this.isRawDouble = true;
-        this.rawDoubleWorkspace = workspace;
-        this.count = 1;
-        this.singleValue = default;
-        this.multiValues = null;
-        this.lambda = null;
-        this.regex = null;
-        this.tailCall = null;
+        this.rawValue = value;
+        this.payload = workspace;
+        this.countAndTag = Pack(TagRawDouble, 1);
     }
 
     /// <summary>
@@ -197,24 +194,14 @@ internal readonly struct Sequence
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static Sequence FromDoubleArray(double[] values, int count, JsonWorkspace workspace)
     {
-        return new Sequence(values, count, workspace, isDoubleArray: true);
+        return new Sequence(new RawDoubleArrayPayload(values, workspace), count);
     }
 
-    /// <summary>
-    /// Private constructor for raw double arrays.
-    /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private Sequence(double[] values, int count, JsonWorkspace workspace, bool isDoubleArray)
+    private Sequence(RawDoubleArrayPayload doubleArray, int count)
     {
-        Debug.Assert(isDoubleArray);
-        this.rawDoubleArray = values;
-        this.rawDoubleWorkspace = workspace;
-        this.count = count;
-        this.singleValue = default;
-        this.multiValues = null;
-        this.lambda = null;
-        this.regex = null;
-        this.tailCall = null;
+        this.payload = doubleArray;
+        this.countAndTag = Pack(TagRawDoubleArray, count);
     }
 
     /// <summary>
@@ -226,14 +213,8 @@ internal readonly struct Sequence
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Sequence(Sequence[] tupleItems)
     {
-        this.tupleItems = tupleItems;
-        this.count = tupleItems.Length;
-        this.singleValue = default;
-        this.multiValues = null;
-        this.lambda = null;
-        this.regex = null;
-        this.tailCall = null;
-        this.nonFiniteValue = 0;
+        this.payload = tupleItems;
+        this.countAndTag = Pack(TagTuple, tupleItems.Length);
     }
 
     /// <summary>
@@ -247,13 +228,8 @@ internal readonly struct Sequence
     public Sequence(in JsonElement value, Dictionary<string, LambdaValue> objectLambdas)
     {
         this.singleValue = value;
-        this.multiValues = null;
-        this.count = 1;
-        this.lambda = null;
-        this.regex = null;
-        this.tailCall = null;
-        this.nonFiniteValue = 0;
-        this.objectLambdas = objectLambdas;
+        this.payload = objectLambdas;
+        this.countAndTag = Pack(TagObjectLambdas, 1);
     }
 
     /// <summary>
@@ -265,21 +241,15 @@ internal readonly struct Sequence
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Sequence(LazyRangeInfo rangeInfo)
     {
-        this.lazyRange = rangeInfo;
-        this.count = rangeInfo.End - rangeInfo.Start + 1;
-        this.singleValue = default;
-        this.multiValues = null;
-        this.lambda = null;
-        this.regex = null;
-        this.tailCall = null;
-        this.nonFiniteValue = 0;
+        this.payload = rangeInfo;
+        this.countAndTag = Pack(TagLazyRange, rangeInfo.End - rangeInfo.Start + 1);
     }
 
     /// <summary>Gets the number of values in the sequence.</summary>
     public int Count
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => this.count;
+        get => this.countAndTag & CountMask;
     }
 
     /// <summary>
@@ -291,14 +261,14 @@ internal readonly struct Sequence
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void ReturnBackingArray()
     {
-        if (this.multiValues is not null)
+        int tag = this.Tag;
+        if (tag == TagMulti)
         {
-            ArrayPool<JsonElement>.Shared.Return(this.multiValues);
+            ArrayPool<JsonElement>.Shared.Return((JsonElement[])this.payload!);
         }
-
-        if (this.rawDoubleArray is not null)
+        else if (tag == TagRawDoubleArray)
         {
-            ArrayPool<double>.Shared.Return(this.rawDoubleArray);
+            ArrayPool<double>.Shared.Return(((RawDoubleArrayPayload)this.payload!).Values);
         }
     }
 
@@ -306,35 +276,35 @@ internal readonly struct Sequence
     public bool IsUndefined
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => this.count == 0 && this.lambda is null && this.regex is null && this.tailCall is null && !this.IsNonFinite;
+        get => this.countAndTag == 0;
     }
 
     /// <summary>Gets a value indicating whether this is a singleton sequence.</summary>
     public bool IsSingleton
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => this.count == 1;
+        get => (this.countAndTag & CountMask) == 1;
     }
 
     /// <summary>Gets a value indicating whether this sequence holds a raw finite double value.</summary>
     public bool IsRawDouble
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => this.isRawDouble;
+        get => this.Tag == TagRawDouble;
     }
 
     /// <summary>Gets the workspace associated with a raw double sequence.</summary>
     internal JsonWorkspace? RawDoubleWorkspace
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => this.rawDoubleWorkspace;
+        get => this.Tag == TagRawDouble ? (JsonWorkspace?)this.payload : null;
     }
 
     /// <summary>Gets a value indicating whether this sequence is backed by an array of raw doubles.</summary>
     public bool IsRawDoubleArray
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => this.rawDoubleArray is not null;
+        get => this.Tag == TagRawDoubleArray;
     }
 
     /// <summary>Gets the raw double value at the specified index in a raw double array sequence.</summary>
@@ -343,8 +313,8 @@ internal readonly struct Sequence
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public double GetRawDoubleAt(int index)
     {
-        Debug.Assert(this.rawDoubleArray is not null, "Not a raw double array sequence");
-        return this.rawDoubleArray![index];
+        Debug.Assert(this.Tag == TagRawDoubleArray, "Not a raw double array sequence");
+        return ((RawDoubleArrayPayload)this.payload!).Values[index];
     }
 
     /// <summary>
@@ -356,13 +326,13 @@ internal readonly struct Sequence
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool TryGetDouble(out double value)
     {
-        if (this.isRawDouble)
+        if (this.Tag == TagRawDouble)
         {
-            value = this.nonFiniteValue;
+            value = this.rawValue;
             return true;
         }
 
-        if (this.count == 1 && this.singleValue.ValueKind == JsonValueKind.Number)
+        if ((this.countAndTag & CountMask) == 1 && this.singleValue.ValueKind == JsonValueKind.Number)
         {
             return this.singleValue.TryGetDouble(out value);
         }
@@ -380,9 +350,9 @@ internal readonly struct Sequence
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public JsonElement AsElement()
     {
-        if (this.isRawDouble)
+        if (this.Tag == TagRawDouble)
         {
-            return JsonataHelpers.NumberFromDouble(this.nonFiniteValue, this.rawDoubleWorkspace!);
+            return JsonataHelpers.NumberFromDouble(this.rawValue, (JsonWorkspace)this.payload!);
         }
 
         return this.FirstOrDefault;
@@ -398,9 +368,9 @@ internal readonly struct Sequence
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public JsonElement AsElement(JsonWorkspace workspace)
     {
-        if (this.isRawDouble)
+        if (this.Tag == TagRawDouble)
         {
-            return JsonataHelpers.NumberFromDouble(this.nonFiniteValue, workspace);
+            return JsonataHelpers.NumberFromDouble(this.rawValue, workspace);
         }
 
         return this.FirstOrDefault;
@@ -415,12 +385,13 @@ internal readonly struct Sequence
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get
         {
-            if (this.isRawDouble || this.IsNonFinite)
+            int tag = this.Tag;
+            if (tag == TagRawDouble || tag == TagNonFinite)
             {
                 return JsonValueKind.Number;
             }
 
-            if (this.count > 0)
+            if ((this.countAndTag & CountMask) > 0)
             {
                 return this.FirstOrDefault.ValueKind;
             }
@@ -433,70 +404,70 @@ internal readonly struct Sequence
     public bool IsLambda
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => this.lambda is not null;
+        get => this.Tag == TagLambda;
     }
 
     /// <summary>Gets the lambda value, or <c>null</c> if this is not a lambda.</summary>
     public LambdaValue? Lambda
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => this.lambda;
+        get => this.Tag == TagLambda ? (LambdaValue?)this.payload : null;
     }
 
     /// <summary>Gets a value indicating whether this sequence holds a regular expression value.</summary>
     public bool IsRegex
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => this.regex is not null;
+        get => this.Tag == TagRegex;
     }
 
     /// <summary>Gets the compiled regular expression, or <c>null</c> if this is not a regex.</summary>
     public Regex? Regex
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => this.regex;
+        get => this.Tag == TagRegex ? (Regex?)this.payload : null;
     }
 
     /// <summary>Gets a value indicating whether this sequence holds a tail-call continuation.</summary>
     public bool IsTailCall
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => this.tailCall is not null;
+        get => this.Tag == TagTailCall;
     }
 
     /// <summary>Gets the tail-call continuation, or <c>null</c> if this is not a tail call.</summary>
     public TailCallContinuation? TailCall
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => this.tailCall;
+        get => this.Tag == TagTailCall ? (TailCallContinuation?)this.payload : null;
     }
 
     /// <summary>Gets a value indicating whether this sequence holds a non-finite numeric value (Infinity or NaN).</summary>
     public bool IsNonFinite
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => double.IsInfinity(this.nonFiniteValue) || double.IsNaN(this.nonFiniteValue);
+        get => this.Tag == TagNonFinite;
     }
 
     /// <summary>Gets the non-finite double value. Only valid when <see cref="IsNonFinite"/> is <c>true</c>.</summary>
     public double NonFiniteValue
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => this.nonFiniteValue;
+        get => this.rawValue;
     }
 
     /// <summary>Gets a value indicating whether this is a tuple sequence holding sub-sequences (e.g. an array containing lambdas).</summary>
     public bool IsTupleSequence
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => this.tupleItems is not null;
+        get => this.Tag == TagTuple;
     }
 
     /// <summary>Gets a value indicating whether this is a lazy range sequence.</summary>
     public bool IsLazyRange
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => this.lazyRange is not null;
+        get => this.Tag == TagLazyRange;
     }
 
     /// <summary>
@@ -507,7 +478,7 @@ internal readonly struct Sequence
     public Dictionary<string, LambdaValue>? ObjectLambdas
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => this.objectLambdas;
+        get => this.Tag == TagObjectLambdas ? (Dictionary<string, LambdaValue>?)this.payload : null;
     }
 
     /// <summary>
@@ -518,9 +489,9 @@ internal readonly struct Sequence
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Sequence GetItemSequence(int index)
     {
-        if (this.tupleItems is not null)
+        if (this.Tag == TagTuple)
         {
-            return this.tupleItems[index];
+            return ((Sequence[])this.payload!)[index];
         }
 
         return new Sequence(this[index]);
@@ -534,35 +505,38 @@ internal readonly struct Sequence
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get
         {
-            if ((uint)index >= (uint)this.count)
+            if ((uint)index >= (uint)(this.countAndTag & CountMask))
             {
                 ThrowIndexOutOfRange();
             }
 
-            if (this.isRawDouble)
+            int tag = this.Tag;
+
+            if (tag == TagRawDouble)
             {
                 Debug.Assert(index == 0, "Raw double sequence index must be 0");
-                return JsonataHelpers.NumberFromDouble(this.nonFiniteValue, this.rawDoubleWorkspace!);
+                return JsonataHelpers.NumberFromDouble(this.rawValue, (JsonWorkspace)this.payload!);
             }
 
-            if (this.rawDoubleArray is not null)
+            if (tag == TagRawDoubleArray)
             {
-                return JsonataHelpers.NumberFromDouble(this.rawDoubleArray[index], this.rawDoubleWorkspace!);
+                var dbl = (RawDoubleArrayPayload)this.payload!;
+                return JsonataHelpers.NumberFromDouble(dbl.Values[index], dbl.Workspace);
             }
 
-            if (this.lazyRange is not null)
+            if (tag == TagLazyRange)
             {
-                return this.lazyRange.GetElement(index);
+                return ((LazyRangeInfo)this.payload!).GetElement(index);
             }
 
-            if (this.tupleItems is not null)
+            if (tag == TagTuple)
             {
-                return this.tupleItems[index].FirstOrDefault;
+                return ((Sequence[])this.payload!)[index].FirstOrDefault;
             }
 
-            if (this.multiValues is not null)
+            if (tag == TagMulti)
             {
-                return this.multiValues[index];
+                return ((JsonElement[])this.payload!)[index];
             }
 
             Debug.Assert(index == 0, "Singleton sequence index must be 0");
@@ -584,22 +558,30 @@ internal readonly struct Sequence
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get
         {
-            if (this.count == 0)
+            int ct = this.countAndTag;
+            if ((ct & CountMask) == 0)
             {
                 return default;
             }
 
-            if (this.isRawDouble)
+            int tag = ct >>> TagShift;
+
+            if (tag == TagRawDouble)
             {
-                return JsonataHelpers.NumberFromDouble(this.nonFiniteValue, this.rawDoubleWorkspace!);
+                return JsonataHelpers.NumberFromDouble(this.rawValue, (JsonWorkspace)this.payload!);
             }
 
-            if (this.tupleItems is not null)
+            if (tag == TagTuple)
             {
-                return this.tupleItems[0].FirstOrDefault;
+                return ((Sequence[])this.payload!)[0].FirstOrDefault;
             }
 
-            return this.multiValues is not null ? this.multiValues[0] : this.singleValue;
+            if (tag == TagMulti)
+            {
+                return ((JsonElement[])this.payload!)[0];
+            }
+
+            return this.singleValue;
         }
     }
 
@@ -627,12 +609,14 @@ internal readonly struct Sequence
     public struct Enumerator
     {
         private readonly Sequence sequence;
+        private readonly int count;
         private int index;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal Enumerator(Sequence sequence)
         {
             this.sequence = sequence;
+            this.count = sequence.Count;
             this.index = -1;
         }
 
@@ -648,13 +632,30 @@ internal readonly struct Sequence
         public bool MoveNext()
         {
             int next = this.index + 1;
-            if (next < this.sequence.count)
+            if (next < this.count)
             {
                 this.index = next;
                 return true;
             }
 
             return false;
+        }
+    }
+
+    /// <summary>
+    /// Carries a rented double[] and workspace for the RawDoubleArray variant.
+    /// This is a class because the Sequence struct has only one object? field.
+    /// </summary>
+    internal sealed class RawDoubleArrayPayload
+    {
+        public readonly double[] Values;
+        public readonly JsonWorkspace Workspace;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public RawDoubleArrayPayload(double[] values, JsonWorkspace workspace)
+        {
+            this.Values = values;
+            this.Workspace = workspace;
         }
     }
 
