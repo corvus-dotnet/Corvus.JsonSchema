@@ -4642,14 +4642,34 @@ internal static class FunctionalCompiler
             // Tuple-mode blocks (containing ancestry-bound paths) skip child env creation
             // so that ancestor label bindings propagate to the caller's environment.
             // This matches jsonata-js where tuple stream bindings flow through blocks.
-            var evalEnv = isTuple ? env : env.CreateChild();
-            Sequence result = Sequence.Undefined;
-            foreach (var expr in exprs)
+            if (isTuple)
             {
-                result = expr(input, evalEnv);
-            }
+                Sequence result = Sequence.Undefined;
+                foreach (var expr in exprs)
+                {
+                    result = expr(input, env);
+                }
 
-            return result;
+                return result;
+            }
+            else
+            {
+                var evalEnv = Environment.RentChild(env);
+                try
+                {
+                    Sequence result = Sequence.Undefined;
+                    foreach (var expr in exprs)
+                    {
+                        result = expr(input, evalEnv);
+                    }
+
+                    return result;
+                }
+                finally
+                {
+                    Environment.ReturnChild(evalEnv);
+                }
+            }
         };
     }
 

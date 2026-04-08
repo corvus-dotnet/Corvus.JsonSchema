@@ -27,9 +27,13 @@ internal sealed class Environment
     [ThreadStatic]
     private static Environment? t_cachedRoot;
 
+    [ThreadStatic]
+    private static Environment? t_cachedChild;
+
     private Dictionary<string, Sequence>? bindings;
-    private readonly Environment? parent;
-    private readonly Environment root;
+    private Environment? parent;
+    private Environment root;
+    private bool isCaptured;
     private int currentDepth;
     private int maxDepth;
     private int evalCount;
@@ -84,6 +88,57 @@ internal sealed class Environment
         env.RootInput = default;
         env.WorkspaceDirect = default!;
         t_cachedRoot = env;
+    }
+
+    /// <summary>
+    /// Rents a child <see cref="Environment"/> from the thread-local cache,
+    /// or allocates a new one if the cache is empty.
+    /// </summary>
+    /// <param name="parent">The parent environment for scope chaining.</param>
+    /// <returns>A child environment ready for use.</returns>
+    public static Environment RentChild(Environment parent)
+    {
+        var child = t_cachedChild;
+        if (child is not null)
+        {
+            t_cachedChild = null;
+            child.parent = parent;
+            child.root = parent.root ?? parent;
+            child.RootInput = parent.GetRootInput();
+            return child;
+        }
+
+        return new Environment(parent)
+        {
+            RootInput = parent.GetRootInput(),
+        };
+    }
+
+    /// <summary>
+    /// Returns a child <see cref="Environment"/> to the thread-local cache.
+    /// If the environment was captured by a lambda closure, it is not pooled.
+    /// </summary>
+    /// <param name="child">The child environment to return.</param>
+    public static void ReturnChild(Environment child)
+    {
+        if (child.isCaptured)
+        {
+            return;
+        }
+
+        child.bindings?.Clear();
+        child.RootInput = default;
+        t_cachedChild = child;
+    }
+
+    /// <summary>
+    /// Marks this environment as captured by a lambda closure.
+    /// A captured environment will not be returned to the pool.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal void MarkCaptured()
+    {
+        this.isCaptured = true;
     }
 
     /// <summary>

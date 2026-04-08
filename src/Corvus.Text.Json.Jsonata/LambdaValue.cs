@@ -35,6 +35,7 @@ internal sealed class LambdaValue
         this.body = body;
         this.paramNames = paramNames;
         this.definingEnv = definingEnv;
+        definingEnv.MarkCaptured();
         this.definingInput = definingInput;
         this.contextArgCount = contextArgCount;
         this.regularArgCount = regularArgCount;
