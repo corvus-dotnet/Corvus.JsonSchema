@@ -770,6 +770,42 @@ public static class JsonDocumentBuilderTests
     }
 
     [Fact]
+    public static void EnsurePropertyMapOnManyArrayElements()
+    {
+        // Regression test: calling EnsurePropertyMap on 27+ objects in the same
+        // document triggers the int[] Enlarge overload. A missing early-return
+        // guard caused unconditional doubling, leading to Buffer.BlockCopy overflow.
+        StringBuilder sb = new();
+        sb.Append('[');
+        for (int i = 0; i < 50; i++)
+        {
+            if (i > 0) sb.Append(',');
+            sb.Append($$$"""{"a":{{{i}}},"b":"val_{{{i}}}","c":true}""");
+        }
+        sb.Append(']');
+
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(sb.ToString());
+        JsonElement root = doc.RootElement;
+
+        // Map every element
+        foreach (JsonElement item in root.EnumerateArray())
+        {
+            item.EnsurePropertyMap();
+        }
+
+        // Verify property lookup still works for all items
+        int idx = 0;
+        foreach (JsonElement item in root.EnumerateArray())
+        {
+            Assert.Equal(idx, item.GetProperty("a"u8).GetInt32());
+            Assert.Equal($"val_{idx}", item.GetProperty("b"u8).GetString());
+            Assert.True(item.GetProperty("c"u8).GetBoolean());
+            idx++;
+        }
+        Assert.Equal(50, idx);
+    }
+
+    [Fact]
     public static void ParseBoolean()
     {
         using (var workspace = JsonWorkspace.Create())

@@ -446,6 +446,12 @@ public abstract partial class JsonDocument
     /// <param name="intArray">The integer array to enlarge (passed by reference).</param>
     protected static void Enlarge(int v, ref int[] intArray)
     {
+        // Use unsigned comparison to optimize length check
+        if ((uint)intArray.Length > (uint)v)
+        {
+            return;
+        }
+
         int[] toReturn = intArray;
 
         // Allow the data to grow up to maximum possible capacity (~2G bytes) before encountering overflow.

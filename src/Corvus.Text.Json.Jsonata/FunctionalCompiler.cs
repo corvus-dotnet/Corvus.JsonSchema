@@ -5492,6 +5492,13 @@ internal static class FunctionalCompiler
         bool hasMultiplePairs = pairs.Length > 1;
         return (in JsonElement input, Environment env) =>
         {
+            // Build a hash-based property map for O(1) lookups when multiple key/value
+            // expressions will access properties on the same input element.
+            if (pairs.Length >= 2 && input.ValueKind == JsonValueKind.Object)
+            {
+                input.EnsurePropertyMap();
+            }
+
             // For multi-pair objects, rent tracking arrays for duplicate detection.
             // Single-pair objects (common — e.g. group-by) skip this entirely.
             JsonElement[]? seenKeyElements = hasMultiplePairs ? ArrayPool<JsonElement>.Shared.Rent(pairs.Length) : null;
@@ -5663,6 +5670,15 @@ internal static class FunctionalCompiler
 
         return (in JsonElement input, Environment env) =>
         {
+            // Build a hash-based property map for O(1) lookups when multiple value
+            // expressions will access properties on the same input element.
+            // The map is idempotent and persists in the document, so the cost is
+            // amortized to zero on subsequent evaluations of the same element.
+            if (values.Length >= 2 && input.ValueKind == JsonValueKind.Object)
+            {
+                input.EnsurePropertyMap();
+            }
+
             var ctx = new ConstKeyObjectBuildContext(keyUtf8, keyStrings, values, input, env);
             JsonDocumentBuilder<JsonElement.Mutable> objDoc = JsonElement.CreateBuilder(
                 env.Workspace,
