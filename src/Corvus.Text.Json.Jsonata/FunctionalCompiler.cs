@@ -794,6 +794,7 @@ internal static class FunctionalCompiler
         var stages = new ExpressionEvaluator[]?[path.Steps.Count];
         var stageIsSortFlags = new bool[]?[path.Steps.Count];
         var stageIndexBindingVars = new string?[]?[path.Steps.Count];
+        var constantIntStageValues = new int[]?[path.Steps.Count];
         var focusVars = new string?[path.Steps.Count];
         var indexVars = new string?[path.Steps.Count];
         var ancestorLabels = new string[]?[path.Steps.Count];
@@ -824,6 +825,12 @@ internal static class FunctionalCompiler
                     stages[i] = new ExpressionEvaluator[annotations.Stages.Count];
                     stageIsSortFlags[i] = new bool[annotations.Stages.Count];
                     stageIndexBindingVars[i] = new string?[annotations.Stages.Count];
+                    constantIntStageValues[i] = new int[annotations.Stages.Count];
+                    for (int ci = 0; ci < constantIntStageValues[i]!.Length; ci++)
+                    {
+                        constantIntStageValues[i]![ci] = -1; // -1 = not a constant integer
+                    }
+
                     for (int s = 0; s < annotations.Stages.Count; s++)
                     {
                         var stage = annotations.Stages[s];
@@ -831,6 +838,16 @@ internal static class FunctionalCompiler
                         {
                             // Compile just the predicate expression — ApplyStages handles filtering logic
                             stages[i]![s] = Compile(filterNode.Expression);
+
+                            // Detect constant integer predicates for fast-path indexing
+                            if (filterNode.Expression is NumberNode numNode)
+                            {
+                                double d = numNode.Value;
+                                if (d >= 0 && d == Math.Floor(d) && d <= int.MaxValue)
+                                {
+                                    constantIntStageValues[i]![s] = (int)d;
+                                }
+                            }
                         }
                         else if (stage is SortNode sortNode)
                         {
@@ -1119,7 +1136,7 @@ internal static class FunctionalCompiler
                         // Apply any stages on the sort step itself (e.g. filters after sort)
                         if (stages[stepIdx] is not null)
                         {
-                            current = ApplyStages(current, stages[stepIdx]!, stageIsSortFlags[stepIdx]!, env, indexVars[stepIdx], stageIndexBindingVars[stepIdx]);
+                            current = ApplyStages(current, stages[stepIdx]!, stageIsSortFlags[stepIdx]!, env, indexVars[stepIdx], stageIndexBindingVars[stepIdx], constantIntStageValues[stepIdx]);
                         }
 
                         // When tuple tracking is active, expand the sorted JSON array to
@@ -1182,6 +1199,7 @@ internal static class FunctionalCompiler
                     // semantics where a[0].b picks the first a globally, but $.a[0].b picks per-element).
                     var perElementStages = stepIdx > 0 ? stages[stepIdx] : null;
                     var perElementSortFlags = stepIdx > 0 ? stageIsSortFlags[stepIdx] : null;
+                    var perElementConstantInts = stepIdx > 0 ? constantIntStageValues[stepIdx] : null;
 
                     if (current.IsSingleton)
                     {
@@ -1197,7 +1215,7 @@ internal static class FunctionalCompiler
                         if (element.ValueKind == JsonValueKind.Array && shouldFlatten)
                         {
                             current = FlattenArrayStep(element, step, env, isConsArrayStep[stepIdx],
-                                perElementStages, perElementSortFlags);
+                                perElementStages, perElementSortFlags, perElementConstantInts);
                         }
                         else
                         {
@@ -1205,7 +1223,7 @@ internal static class FunctionalCompiler
 
                             // Apply per-element filter stages (non-sort) to the single result
                             current = ApplyPerElementFilterStages(current,
-                                perElementStages, perElementSortFlags, env);
+                                perElementStages, perElementSortFlags, env, perElementConstantInts);
                         }
                     }
                     else
@@ -1234,7 +1252,7 @@ internal static class FunctionalCompiler
                             if (element.ValueKind == JsonValueKind.Array && shouldFlatten)
                             {
                                 stepResult = FlattenArrayStep(element, step, env, isConsArrayStep[stepIdx],
-                                    perElementStages, perElementSortFlags);
+                                    perElementStages, perElementSortFlags, perElementConstantInts);
                             }
                             else
                             {
@@ -1242,7 +1260,7 @@ internal static class FunctionalCompiler
 
                                 // Apply per-element filter stages
                                 stepResult = ApplyPerElementFilterStages(stepResult,
-                                    perElementStages, perElementSortFlags, env);
+                                    perElementStages, perElementSortFlags, env, perElementConstantInts);
                             }
 
                             // Auto-flatten: when a property step returns a single array element
@@ -1272,7 +1290,7 @@ internal static class FunctionalCompiler
                     {
                         if (stepIdx == 0)
                         {
-                            current = ApplyStages(current, stages[stepIdx]!, stageIsSortFlags[stepIdx]!, env, indexVars[stepIdx], stageIndexBindingVars[stepIdx]);
+                            current = ApplyStages(current, stages[stepIdx]!, stageIsSortFlags[stepIdx]!, env, indexVars[stepIdx], stageIndexBindingVars[stepIdx], constantIntStageValues[stepIdx]);
                         }
                         else
                         {
@@ -1448,7 +1466,7 @@ internal static class FunctionalCompiler
                             var elementSeq = new Sequence(resultElements[j]);
                             if (stages[stepIdx] is not null)
                             {
-                                elementSeq = ApplyStages(elementSeq, stages[stepIdx]!, stageIsSortFlags[stepIdx]!, env, indexVars[stepIdx]);
+                                elementSeq = ApplyStages(elementSeq, stages[stepIdx]!, stageIsSortFlags[stepIdx]!, env, indexVars[stepIdx], null, constantIntStageValues[stepIdx]);
                                 if (elementSeq.IsUndefined)
                                 {
                                     continue;
@@ -2157,7 +2175,7 @@ internal static class FunctionalCompiler
                     // Apply per-element stages if any
                     if (stages[stepIdx] is not null)
                     {
-                        stepResult = ApplyStages(stepResult, stages[stepIdx]!, stageIsSortFlags[stepIdx]!, env, indexVars[stepIdx]);
+                        stepResult = ApplyStages(stepResult, stages[stepIdx]!, stageIsSortFlags[stepIdx]!, env, indexVars[stepIdx], null, constantIntStageValues[stepIdx]);
                         if (stepResult.IsUndefined)
                         {
                             continue;
@@ -2286,7 +2304,7 @@ internal static class FunctionalCompiler
                     // Apply stages if any
                     if (stages[stepIdx] is not null)
                     {
-                        stepResult = ApplyStages(stepResult, stages[stepIdx]!, stageIsSortFlags[stepIdx]!, env, indexVars[stepIdx]);
+                        stepResult = ApplyStages(stepResult, stages[stepIdx]!, stageIsSortFlags[stepIdx]!, env, indexVars[stepIdx], null, constantIntStageValues[stepIdx]);
                         if (stepResult.IsUndefined)
                         {
                             continue;
@@ -2387,7 +2405,7 @@ internal static class FunctionalCompiler
                                 sb.Add(elem);
                             }
 
-                            var staged = ApplyStages(sb.ToSequence(), stages[s]!, stageIsSortFlags[s]!, env, indexVars[s]);
+                            var staged = ApplyStages(sb.ToSequence(), stages[s]!, stageIsSortFlags[s]!, env, indexVars[s], null, constantIntStageValues[s]);
 
                             // Rebuild nextElements preserving only staged elements
                             // (for now, skip complex filtering — stages on intermediate steps are rare)
@@ -2521,7 +2539,7 @@ internal static class FunctionalCompiler
 
                 if (stages[sortStepIdx] is not null)
                 {
-                    sortedSeq = ApplyStages(sortedSeq, stages[sortStepIdx]!, stageIsSortFlags[sortStepIdx]!, env, indexVars[sortStepIdx]);
+                    sortedSeq = ApplyStages(sortedSeq, stages[sortStepIdx]!, stageIsSortFlags[sortStepIdx]!, env, indexVars[sortStepIdx], null, constantIntStageValues[sortStepIdx]);
                 }
 
                 // Phase 3: continue remaining steps per-element with ancestor binding
@@ -2649,7 +2667,7 @@ internal static class FunctionalCompiler
                     // (singleton input), overwriting the correct binding.
                     if (stages[stepIdx] is not null)
                     {
-                        var filtered = ApplyStages(new Sequence(el), stages[stepIdx]!, stageIsSortFlags[stepIdx]!, env, null);
+                        var filtered = ApplyStages(new Sequence(el), stages[stepIdx]!, stageIsSortFlags[stepIdx]!, env, null, null, constantIntStageValues[stepIdx]);
                         if (filtered.IsUndefined)
                         {
                             continue;
@@ -2731,7 +2749,7 @@ internal static class FunctionalCompiler
                     // Apply stages if any
                     if (stages[stepIdx] is not null)
                     {
-                        var filtered = ApplyStages(new Sequence(el), stages[stepIdx]!, stageIsSortFlags[stepIdx]!, env, idxVar);
+                        var filtered = ApplyStages(new Sequence(el), stages[stepIdx]!, stageIsSortFlags[stepIdx]!, env, idxVar, null, constantIntStageValues[stepIdx]);
                         if (filtered.IsUndefined)
                         {
                             continue;
@@ -2769,7 +2787,7 @@ internal static class FunctionalCompiler
 
                         if (stages[s] is not null)
                         {
-                            current = ApplyStages(current, stages[s]!, stageIsSortFlags[s]!, env, indexVars[s]);
+                            current = ApplyStages(current, stages[s]!, stageIsSortFlags[s]!, env, indexVars[s], null, constantIntStageValues[s]);
                         }
                     }
 
@@ -2841,7 +2859,7 @@ internal static class FunctionalCompiler
 
                 if (stages[sortStepIdx] is not null)
                 {
-                    sortedSeq = ApplyStages(sortedSeq, stages[sortStepIdx]!, stageIsSortFlags[sortStepIdx]!, env, indexVars[sortStepIdx]);
+                    sortedSeq = ApplyStages(sortedSeq, stages[sortStepIdx]!, stageIsSortFlags[sortStepIdx]!, env, indexVars[sortStepIdx], null, constantIntStageValues[sortStepIdx]);
                 }
 
                 // Continue remaining steps per-element with restored index bindings
@@ -3324,7 +3342,7 @@ internal static class FunctionalCompiler
         return new Sequence((JsonElement)objRoot);
     }
 
-    private static Sequence ApplyStages(Sequence current, ExpressionEvaluator[] stageEvaluators, bool[] isSortStage, Environment env, string? indexVar = null, string?[]? indexBindingVars = null)
+    private static Sequence ApplyStages(Sequence current, ExpressionEvaluator[] stageEvaluators, bool[] isSortStage, Environment env, string? indexVar = null, string?[]? indexBindingVars = null, int[]? constantIntValues = null)
     {
         // Track any index binding variable introduced by a VariableNode stage.
         // Subsequent filter/predicate stages bind this variable per-element so
@@ -3358,6 +3376,47 @@ internal static class FunctionalCompiler
                         }
 
                         current = expanded.ToSequence();
+                    }
+                }
+
+                continue;
+            }
+
+            // Fast-path: constant integer index (e.g., [0], [1])
+            // Directly index into the current collection without delegate evaluation
+            if (constantIntValues is not null && s < constantIntValues.Length && constantIntValues[s] >= 0 && !isSortStage[s])
+            {
+                int idx = constantIntValues[s];
+                if (current.IsSingleton)
+                {
+                    var el = current.FirstOrDefault;
+                    if (el.ValueKind == JsonValueKind.Array)
+                    {
+                        if (idx < el.GetArrayLength())
+                        {
+                            current = new Sequence(el[idx]);
+                        }
+                        else
+                        {
+                            return Sequence.Undefined;
+                        }
+                    }
+                    else
+                    {
+                        // Singleton non-array: index 0 returns the value itself
+                        current = idx == 0 ? current : Sequence.Undefined;
+                    }
+                }
+                else
+                {
+                    // Multi-value sequence: index directly
+                    if (idx < current.Count)
+                    {
+                        current = new Sequence(current[idx]);
+                    }
+                    else
+                    {
+                        return Sequence.Undefined;
                     }
                 }
 
@@ -3905,7 +3964,8 @@ internal static class FunctionalCompiler
         Environment env,
         bool isConsArray = false,
         ExpressionEvaluator[]? filterStages = null,
-        bool[]? stageIsSortFlags = null)
+        bool[]? stageIsSortFlags = null,
+        int[]? constantIntValues = null)
     {
         var builder = default(SequenceBuilder);
         foreach (var item in array.EnumerateArray())
@@ -3913,7 +3973,7 @@ internal static class FunctionalCompiler
             var result = step(item, env);
 
             // Apply per-element filter stages before flattening
-            result = ApplyPerElementFilterStages(result, filterStages, stageIsSortFlags, env);
+            result = ApplyPerElementFilterStages(result, filterStages, stageIsSortFlags, env, constantIntValues);
 
             if (result.IsUndefined)
             {
@@ -3949,7 +4009,8 @@ internal static class FunctionalCompiler
         Sequence result,
         ExpressionEvaluator[]? stageEvaluators,
         bool[]? isSortStage,
-        Environment env)
+        Environment env,
+        int[]? constantIntValues = null)
     {
         if (stageEvaluators is null || result.IsUndefined)
         {
@@ -3966,6 +4027,47 @@ internal static class FunctionalCompiler
             if (result.IsUndefined)
             {
                 return Sequence.Undefined;
+            }
+
+            // Fast-path: constant integer index (e.g., [0], [1])
+            // Directly index into the result without going through ApplyStages
+            if (constantIntValues is not null && s < constantIntValues.Length && constantIntValues[s] >= 0)
+            {
+                int idx = constantIntValues[s];
+                if (result.IsSingleton)
+                {
+                    var el = result.FirstOrDefault;
+                    if (el.ValueKind == JsonValueKind.Array)
+                    {
+                        if (idx < el.GetArrayLength())
+                        {
+                            result = new Sequence(el[idx]);
+                        }
+                        else
+                        {
+                            return Sequence.Undefined;
+                        }
+                    }
+                    else
+                    {
+                        // Singleton non-array: index 0 returns the value itself
+                        result = idx == 0 ? result : Sequence.Undefined;
+                    }
+                }
+                else
+                {
+                    // Multi-value sequence: index directly
+                    if (idx < result.Count)
+                    {
+                        result = new Sequence(result[idx]);
+                    }
+                    else
+                    {
+                        return Sequence.Undefined;
+                    }
+                }
+
+                continue;
             }
 
             var singleStage = t_singleStageArray ??= new ExpressionEvaluator[1];
