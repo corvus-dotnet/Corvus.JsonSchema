@@ -1961,7 +1961,7 @@ internal static class FunctionalCompiler
                 List<string>? focusGroupKeys = applyGroupByHere ? new() : null;
                 Dictionary<string, (List<JsonElement> FocusElements, List<JsonElement> ContextElements, int PairIndex)>? focusGroupData =
                     applyGroupByHere ? new() : null;
-                var mergeObjects = mergeInnerGroupBy ? new List<JsonElement>() : null;
+                var mergeObjects = default(SequenceBuilder);
 
                 // Apply stages as a BATCH to all focus elements at once.
                 // This ensures numeric index predicates (e.g. [1]) see the full
@@ -2077,7 +2077,7 @@ internal static class FunctionalCompiler
                         // Inner focus handled group-by — collect objects for merging
                         for (int j = 0; j < subResult.Count; j++)
                         {
-                            mergeObjects!.Add(subResult[j]);
+                            mergeObjects.Add(subResult[j]);
                         }
 
                         subResult.ReturnBackingArray();
@@ -2097,9 +2097,9 @@ internal static class FunctionalCompiler
                         focusGroupKeys!, focusGroupData!, groupByPairs!, env, focusVar);
                 }
 
-                if (mergeInnerGroupBy && mergeObjects!.Count > 0)
+                if (mergeInnerGroupBy && mergeObjects.Count > 0)
                 {
-                    return MergeGroupedObjects(mergeObjects!, env);
+                    return MergeGroupedObjects(ref mergeObjects, env);
                 }
 
                 return resultBuilder.ToSequence();
@@ -2612,7 +2612,7 @@ internal static class FunctionalCompiler
                 }
 
                 // Phase 1: collect all result elements with their per-label ancestor mappings
-                var resultElements = new List<JsonElement>();
+                var resultElements = default(SequenceBuilder);
 
                 for (int i = 0; i < inputElements.Count; i++)
                 {
@@ -2776,6 +2776,7 @@ internal static class FunctionalCompiler
 
                 if (resultElements.Count == 0)
                 {
+                    resultElements.ReturnArray();
                     return Sequence.Undefined;
                 }
 
@@ -2823,7 +2824,7 @@ internal static class FunctionalCompiler
                         return a.CompareTo(b);
                     });
 
-                    var sorted = new List<JsonElement>(resultElements.Count);
+                    var sorted = default(SequenceBuilder);
                     var sortedLabelValues = new Dictionary<string, List<JsonElement>>();
                     foreach (var label in allLabels)
                     {
@@ -2843,6 +2844,7 @@ internal static class FunctionalCompiler
                     }
 
                     ReturnSortIndices(sortIndices);
+                    resultElements.ReturnArray();
                     resultElements = sorted;
                     labelValues.Clear();
                     foreach (var kvp in sortedLabelValues)
@@ -2856,10 +2858,11 @@ internal static class FunctionalCompiler
                 if (resultElements.Count == 1)
                 {
                     sortedSeq = new Sequence(resultElements[0]);
+                    resultElements.ReturnArray();
                 }
                 else
                 {
-                    sortedSeq = new Sequence(JsonataHelpers.ArrayFromList(resultElements, env.Workspace));
+                    sortedSeq = new Sequence(JsonataHelpers.ArrayFromBuilder(ref resultElements, env.Workspace));
                 }
 
                 if (stages[sortStepIdx] is not null)
@@ -3068,7 +3071,7 @@ internal static class FunctionalCompiler
 
                 // Expand to individual elements with group (index) tracking
                 var elements = CollectFlatElements(stepResult);
-                var resultElements = new List<JsonElement>();
+                var resultElements = default(SequenceBuilder);
                 var groupIndices = new ValueListBuilder<int>(Math.Max(elements.Count, 8));
 
                 for (int i = 0; i < elements.Count; i++)
@@ -3141,6 +3144,7 @@ internal static class FunctionalCompiler
 
                 if (resultElements.Count == 0)
                 {
+                    resultElements.ReturnArray();
                     groupIndices.Dispose();
                     return Sequence.Undefined;
                 }
@@ -3166,18 +3170,21 @@ internal static class FunctionalCompiler
                         return a.CompareTo(b);
                     });
 
-                    var sorted = new List<JsonElement>(resultElements.Count);
-                    var sortedGroups = new int[resultElements.Count];
-                    for (int i = 0; i < resultElements.Count; i++)
+                    var sorted = default(SequenceBuilder);
+                    int sortCount = resultElements.Count;
+                    int[] sortedGroups = ArrayPool<int>.Shared.Rent(sortCount);
+                    for (int i = 0; i < sortCount; i++)
                     {
                         sorted.Add(resultElements[sortIndices[i]]);
                         sortedGroups[i] = groupIndices[sortIndices[i]];
                     }
 
                     ReturnSortIndices(sortIndices);
+                    resultElements.ReturnArray();
                     resultElements = sorted;
                     groupIndices.Length = 0;
-                    groupIndices.Append(sortedGroups);
+                    groupIndices.Append(new ReadOnlySpan<int>(sortedGroups, 0, sortCount));
+                    ArrayPool<int>.Shared.Return(sortedGroups);
                 }
 
                 // Apply sort step stages
@@ -3185,10 +3192,11 @@ internal static class FunctionalCompiler
                 if (resultElements.Count == 1)
                 {
                     sortedSeq = new Sequence(resultElements[0]);
+                    resultElements.ReturnArray();
                 }
                 else
                 {
-                    sortedSeq = new Sequence(JsonataHelpers.ArrayFromList(resultElements, env.Workspace));
+                    sortedSeq = new Sequence(JsonataHelpers.ArrayFromBuilder(ref resultElements, env.Workspace));
                 }
 
                 if (stages[sortStepIdx] is not null)
@@ -3488,13 +3496,14 @@ internal static class FunctionalCompiler
     /// Merges multiple grouped objects (from nested focus binding iterations)
     /// into a single object. Same-key values are collected into arrays.
     /// </summary>
-    private static Sequence MergeGroupedObjects(List<JsonElement> objects, Environment env)
+    private static Sequence MergeGroupedObjects(ref SequenceBuilder objects, Environment env)
     {
         var keys = new List<string>();
         var merged = new Dictionary<string, List<JsonElement>>();
 
-        foreach (var obj in objects)
+        for (int o = 0; o < objects.Count; o++)
         {
+            var obj = objects[o];
             if (obj.ValueKind != JsonValueKind.Object)
             {
                 continue;
@@ -3512,6 +3521,8 @@ internal static class FunctionalCompiler
                 values.Add(prop.Value);
             }
         }
+
+        objects.ReturnArray();
 
         JsonDocumentBuilder<JsonElement.Mutable> objDoc = JsonElement.CreateObjectBuilder(env.Workspace, keys.Count);
         JsonElement.Mutable objRoot = objDoc.RootElement;
