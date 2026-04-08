@@ -2566,11 +2566,16 @@ internal static class BuiltInFunctions
                 return Sequence.Undefined;
             }
 
+#if NET
+            using UnescapedUtf16JsonString keyUtf16 = keySeq.FirstOrDefault.GetUtf16String();
+            ReadOnlySpan<char> key = keyUtf16.Span;
+#else
             string? key = keySeq.FirstOrDefault.GetString();
             if (key is null)
             {
                 return Sequence.Undefined;
             }
+#endif
 
             // Collect all objects from the sequence, flattening any nested arrays
             var results = default(SequenceBuilder);
@@ -2595,6 +2600,34 @@ internal static class BuiltInFunctions
         };
     }
 
+#if NET
+    private static void LookupCollect(Sequence seq, ReadOnlySpan<char> key, ref SequenceBuilder results)
+    {
+        for (int i = 0; i < seq.Count; i++)
+        {
+            var el = seq[i];
+            LookupCollectElement(el, key, ref results);
+        }
+    }
+
+    private static void LookupCollectElement(JsonElement el, ReadOnlySpan<char> key, ref SequenceBuilder results)
+    {
+        if (el.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var item in el.EnumerateArray())
+            {
+                LookupCollectElement(item, key, ref results);
+            }
+        }
+        else if (el.ValueKind == JsonValueKind.Object)
+        {
+            if (el.TryGetProperty(key, out var value))
+            {
+                results.Add(value);
+            }
+        }
+    }
+#else
     private static void LookupCollect(Sequence seq, string key, ref SequenceBuilder results)
     {
         for (int i = 0; i < seq.Count; i++)
@@ -2621,6 +2654,7 @@ internal static class BuiltInFunctions
             }
         }
     }
+#endif
 
     // --- Thread-safe random for netstandard2.0/net481 compatibility ---
     [ThreadStatic]
