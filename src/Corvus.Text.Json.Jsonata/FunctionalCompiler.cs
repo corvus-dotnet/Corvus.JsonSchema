@@ -575,7 +575,7 @@ internal static class FunctionalCompiler
                     if (constantIndices is null)
                     {
                         constantIndices = new int[path.Steps.Count];
-                        Array.Fill(constantIndices, -1);
+                        constantIndices.AsSpan().Fill(-1);
                     }
 
                     constantIndices[i] = (int)numNode.Value;
@@ -623,7 +623,7 @@ internal static class FunctionalCompiler
             if (constantIndices is null)
             {
                 constantIndices = new int[path.Steps.Count];
-                Array.Fill(constantIndices, -1);
+                constantIndices.AsSpan().Fill(-1);
             }
 
             evaluator = (in JsonElement input, Environment env) =>
@@ -1296,7 +1296,7 @@ internal static class FunctionalCompiler
                         {
                             // Tuple-aware sort: sort elements inline while tracking group indices.
                             var sortElems = default(SequenceBuilder);
-                            var groups = new List<int>();
+                            using var groups = new ValueListBuilder<int>(Math.Max(current.Count, 8));
                             for (int i = 0; i < current.Count; i++)
                             {
                                 var el = current[i];
@@ -1305,14 +1305,14 @@ internal static class FunctionalCompiler
                                     foreach (var item in el.EnumerateArray())
                                     {
                                         sortElems.Add(item);
-                                        groups.Add(tupleGroupIndices is not null && i < tupleGroupIndices.Length
+                                        groups.Append(tupleGroupIndices is not null && i < tupleGroupIndices.Length
                                             ? tupleGroupIndices[i] : i);
                                     }
                                 }
                                 else
                                 {
                                     sortElems.Add(el);
-                                    groups.Add(tupleGroupIndices is not null && i < tupleGroupIndices.Length
+                                    groups.Append(tupleGroupIndices is not null && i < tupleGroupIndices.Length
                                         ? tupleGroupIndices[i] : i);
                                 }
                             }
@@ -1326,7 +1326,7 @@ internal static class FunctionalCompiler
                                 // round-tripping through JSON which breaks element identity).
                                 var terms = sortTermsPerStep[stepIdx]!;
                                 var indices = RentSortIndices(sortElems.Count);
-                                indices.AsSpan(0, sortElems.Count).Sort((a, b) =>
+                                SortIndices(indices, sortElems.Count, (a, b) =>
                                 {
                                     for (int t = 0; t < terms.Length; t++)
                                     {
@@ -2784,7 +2784,7 @@ internal static class FunctionalCompiler
                 {
                     var terms = sortTermsPerStep[sortStepIdx]!;
                     var sortIndices = RentSortIndices(resultElements.Count);
-                    sortIndices.AsSpan(0, resultElements.Count).Sort((a, b) =>
+                    SortIndices(sortIndices, resultElements.Count, (a, b) =>
                     {
                         // Bind ALL ancestor labels for element A
                         foreach (var label in allLabels)
@@ -3069,7 +3069,7 @@ internal static class FunctionalCompiler
                 // Expand to individual elements with group (index) tracking
                 var elements = CollectFlatElements(stepResult);
                 var resultElements = new List<JsonElement>();
-                var groupIndices = new List<int>();
+                var groupIndices = new ValueListBuilder<int>(Math.Max(elements.Count, 8));
 
                 for (int i = 0; i < elements.Count; i++)
                 {
@@ -3133,7 +3133,7 @@ internal static class FunctionalCompiler
                     for (int j = 0; j < flatResults.Count; j++)
                     {
                         resultElements.Add(flatResults[j]);
-                        groupIndices.Add(i);
+                        groupIndices.Append(i);
                     }
 
                     flatResults.ReturnArray();
@@ -3141,6 +3141,7 @@ internal static class FunctionalCompiler
 
                 if (resultElements.Count == 0)
                 {
+                    groupIndices.Dispose();
                     return Sequence.Undefined;
                 }
 
@@ -3149,7 +3150,7 @@ internal static class FunctionalCompiler
                 {
                     var terms = sortTermsPerStep[sortStepIdx]!;
                     var sortIndices = RentSortIndices(resultElements.Count);
-                    sortIndices.AsSpan(0, resultElements.Count).Sort((a, b) =>
+                    SortIndices(sortIndices, resultElements.Count, (a, b) =>
                     {
                         for (int t = 0; t < terms.Length; t++)
                         {
@@ -3175,7 +3176,8 @@ internal static class FunctionalCompiler
 
                     ReturnSortIndices(sortIndices);
                     resultElements = sorted;
-                    groupIndices = new List<int>(sortedGroups);
+                    groupIndices.Length = 0;
+                    groupIndices.Append(sortedGroups);
                 }
 
                 // Apply sort step stages
@@ -3197,6 +3199,7 @@ internal static class FunctionalCompiler
                 // Continue remaining steps per-element with restored index bindings
                 if (sortStepIdx + 1 >= steps.Length)
                 {
+                    groupIndices.Dispose();
                     return sortedSeq;
                 }
 
@@ -3204,7 +3207,7 @@ internal static class FunctionalCompiler
                 var finalElements = CollectFlatElements(sortedSeq);
                 for (int i = 0; i < finalElements.Count; i++)
                 {
-                    if (i < groupIndices.Count)
+                    if (i < groupIndices.Length)
                     {
                         env.Bind(idxVar, Sequence.FromDouble(groupIndices[i], env.Workspace));
                     }
@@ -3213,6 +3216,7 @@ internal static class FunctionalCompiler
                     builder.AddRange(subResult);
                 }
 
+                groupIndices.Dispose();
                 finalElements.ReturnArray();
                 return builder.ToSequence();
             }
@@ -3881,13 +3885,14 @@ internal static class FunctionalCompiler
                     continue;
                 }
 
-                // Collect numeric indices from the result (single number, multi-value, or array of numbers)
+                // Check if the predicate result is a numeric index (or set of indices).
+                // Instead of materializing a List<int>, check each index against
+                // the current loop position inline to avoid per-element allocation.
                 bool isNumericIndices = false;
-                List<int>? indices = null;
+                bool matchedCurrentIndex = false;
 
                 if (result.IsSingleton && TryCoerceToNumber(firstResult, out double singleIdx))
                 {
-                    // Single numeric → treat as index array of one element
                     isNumericIndices = true;
                     int idx = (int)Math.Floor(singleIdx);
                     if (idx < 0)
@@ -3895,18 +3900,18 @@ internal static class FunctionalCompiler
                         idx = elements.Count + idx;
                     }
 
-                    indices = new List<int> { idx };
+                    matchedCurrentIndex = idx == i;
                 }
                 else if (result.IsSingleton && firstResult.ValueKind == JsonValueKind.Array)
                 {
-                    // Singleton JSON array — check if all elements are numbers
+                    // Singleton JSON array — check if all elements are numbers.
+                    // Booleans in a predicate array are NOT numeric indices;
+                    // their presence makes this a mixed predicate that falls
+                    // through to truthiness evaluation.
                     bool allNum = true;
-                    var tempIndices = new List<int>();
+                    bool hasAnyIndex = false;
                     foreach (var arrEl in firstResult.EnumerateArray())
                     {
-                        // Booleans in a predicate array are NOT numeric indices;
-                        // their presence makes this a mixed predicate that falls
-                        // through to truthiness evaluation.
                         if (arrEl.ValueKind is JsonValueKind.True or JsonValueKind.False)
                         {
                             allNum = false;
@@ -3915,13 +3920,17 @@ internal static class FunctionalCompiler
 
                         if (TryCoerceToNumber(arrEl, out double numVal))
                         {
+                            hasAnyIndex = true;
                             int idx = (int)Math.Floor(numVal);
                             if (idx < 0)
                             {
                                 idx = elements.Count + idx;
                             }
 
-                            tempIndices.Add(idx);
+                            if (idx == i)
+                            {
+                                matchedCurrentIndex = true;
+                            }
                         }
                         else
                         {
@@ -3930,17 +3939,15 @@ internal static class FunctionalCompiler
                         }
                     }
 
-                    if (allNum && tempIndices.Count > 0)
+                    if (allNum && hasAnyIndex)
                     {
                         isNumericIndices = true;
-                        indices = tempIndices;
                     }
                 }
                 else if (!result.IsSingleton && result.Count > 0)
                 {
                     // Multi-value sequence — check if all are numeric
                     bool allNum = true;
-                    var tempIndices = new List<int>();
                     for (int j = 0; j < result.Count; j++)
                     {
                         var rj = result[j];
@@ -3956,27 +3963,23 @@ internal static class FunctionalCompiler
                             idx = elements.Count + idx;
                         }
 
-                        tempIndices.Add(idx);
+                        if (idx == i)
+                        {
+                            matchedCurrentIndex = true;
+                        }
                     }
 
                     if (allNum)
                     {
                         isNumericIndices = true;
-                        indices = tempIndices;
                     }
                 }
 
-                if (isNumericIndices && indices is not null)
+                if (isNumericIndices)
                 {
-                    // JSONata semantics: include the element if the current loop index
-                    // matches any of the numeric indices. This naturally deduplicates.
-                    foreach (int idx in indices)
+                    if (matchedCurrentIndex)
                     {
-                        if (idx == i)
-                        {
-                            builder.Add(el);
-                            break;
-                        }
+                        builder.Add(el);
                     }
 
                     continue;
@@ -4117,7 +4120,8 @@ internal static class FunctionalCompiler
             }
 
             var builder = default(SequenceBuilder);
-            List<int>? nextIndices = currentIndices is not null ? new List<int>() : null;
+            bool trackIndices = currentIndices is not null;
+            var nextIndices = trackIndices ? new ValueListBuilder<int>(elements.Count) : default;
             for (int i = 0; i < elements.Count; i++)
             {
                 var el = elements[i];
@@ -4147,14 +4151,15 @@ internal static class FunctionalCompiler
                     if (firstResult.ValueKind == JsonValueKind.True)
                     {
                         builder.Add(el);
-                        nextIndices?.Add(currentIndices is not null ? currentIndices[i] : i);
+                        if (trackIndices) { nextIndices.Append(currentIndices is not null ? currentIndices[i] : i); }
                     }
 
                     continue;
                 }
 
+                // Check if the predicate result is a numeric index (or set of indices).
                 bool isNumericIndices = false;
-                List<int>? indices = null;
+                bool matchedCurrentIndex = false;
 
                 if (result.IsSingleton && TryCoerceToNumber(firstResult, out double singleIdx))
                 {
@@ -4165,12 +4170,12 @@ internal static class FunctionalCompiler
                         idx = elements.Count + idx;
                     }
 
-                    indices = new List<int> { idx };
+                    matchedCurrentIndex = idx == i && idx >= 0 && idx < elements.Count;
                 }
                 else if (result.IsSingleton && firstResult.ValueKind == JsonValueKind.Array)
                 {
                     bool allNum = true;
-                    var tempIndices = new List<int>();
+                    bool hasAnyIndex = false;
                     foreach (var arrEl in firstResult.EnumerateArray())
                     {
                         if (arrEl.ValueKind is JsonValueKind.True or JsonValueKind.False)
@@ -4181,13 +4186,17 @@ internal static class FunctionalCompiler
 
                         if (TryCoerceToNumber(arrEl, out double numVal))
                         {
+                            hasAnyIndex = true;
                             int idx = (int)Math.Floor(numVal);
                             if (idx < 0)
                             {
                                 idx = elements.Count + idx;
                             }
 
-                            tempIndices.Add(idx);
+                            if (idx == i && idx >= 0 && idx < elements.Count)
+                            {
+                                matchedCurrentIndex = true;
+                            }
                         }
                         else
                         {
@@ -4196,16 +4205,14 @@ internal static class FunctionalCompiler
                         }
                     }
 
-                    if (allNum && tempIndices.Count > 0)
+                    if (allNum && hasAnyIndex)
                     {
                         isNumericIndices = true;
-                        indices = tempIndices;
                     }
                 }
                 else if (!result.IsSingleton && result.Count > 0)
                 {
                     bool allNum = true;
-                    var tempIndices = new List<int>();
                     for (int j = 0; j < result.Count; j++)
                     {
                         var rj = result[j];
@@ -4221,25 +4228,24 @@ internal static class FunctionalCompiler
                             idx = elements.Count + idx;
                         }
 
-                        tempIndices.Add(idx);
+                        if (idx == i && idx >= 0 && idx < elements.Count)
+                        {
+                            matchedCurrentIndex = true;
+                        }
                     }
 
                     if (allNum)
                     {
                         isNumericIndices = true;
-                        indices = tempIndices;
                     }
                 }
 
-                if (isNumericIndices && indices is not null)
+                if (isNumericIndices)
                 {
-                    foreach (int idx in indices)
+                    if (matchedCurrentIndex)
                     {
-                        if (idx == i && idx >= 0 && idx < elements.Count)
-                        {
-                            builder.Add(el);
-                            nextIndices?.Add(currentIndices is not null ? currentIndices[i] : i);
-                        }
+                        builder.Add(el);
+                        if (trackIndices) { nextIndices.Append(currentIndices is not null ? currentIndices[i] : i); }
                     }
 
                     continue;
@@ -4248,14 +4254,15 @@ internal static class FunctionalCompiler
                 if (IsTruthy(result))
                 {
                     builder.Add(el);
-                    nextIndices?.Add(currentIndices is not null ? currentIndices[i] : i);
+                    if (trackIndices) { nextIndices.Append(currentIndices is not null ? currentIndices[i] : i); }
                 }
             }
 
             elements.ReturnArray();
             current = builder.ToSequence();
             currentArrayOwned = current.Count >= 2;
-            currentIndices = nextIndices?.ToArray();
+            currentIndices = trackIndices ? nextIndices.AsSpan().ToArray() : null;
+            nextIndices.Dispose();
         }
 
         // Output the surviving original indices for the caller
@@ -5994,7 +6001,7 @@ internal static class FunctionalCompiler
             // Stable sort using index-based ordering to preserve relative
             // order of equal elements (matches JSONata reference semantics).
             var indices = RentSortIndices(elements.Count);
-            indices.AsSpan(0, elements.Count).Sort((a, b) =>
+            SortIndices(indices, elements.Count, (a, b) =>
             {
                 for (int t = 0; t < terms.Length; t++)
                 {
@@ -6062,7 +6069,7 @@ internal static class FunctionalCompiler
             }
 
             var indices = RentSortIndices(elements.Count);
-            indices.AsSpan(0, elements.Count).Sort((a, b) =>
+            SortIndices(indices, elements.Count, (a, b) =>
             {
                 for (int t = 0; t < terms.Length; t++)
                 {
@@ -6114,7 +6121,7 @@ internal static class FunctionalCompiler
         }
 
         var indices = RentSortIndices(elements.Count);
-        indices.AsSpan(0, elements.Count).Sort((a, b) =>
+        SortIndices(indices, elements.Count, (a, b) =>
         {
             for (int t = 0; t < sortTerms.Length; t++)
             {
@@ -6161,6 +6168,20 @@ internal static class FunctionalCompiler
     private static void ReturnSortIndices(int[] indices)
     {
         ArrayPool<int>.Shared.Return(indices);
+    }
+
+    /// <summary>
+    /// Sorts a rented index array using the given comparison.
+    /// Uses Span.Sort on .NET (avoids Comparer wrapper allocation);
+    /// falls back to Array.Sort on netstandard.
+    /// </summary>
+    private static void SortIndices(int[] indices, int count, Comparison<int> comparison)
+    {
+#if NET
+        indices.AsSpan(0, count).Sort(comparison);
+#else
+        Array.Sort(indices, 0, count, Comparer<int>.Create(comparison));
+#endif
     }
 
     private static int CompareSortKeys(Sequence a, Sequence b)
