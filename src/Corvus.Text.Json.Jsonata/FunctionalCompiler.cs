@@ -4837,6 +4837,16 @@ internal static class FunctionalCompiler
 
     private static ExpressionEvaluator CompileObjectConstructor(ObjectConstructorNode obj)
     {
+        // Check if ALL keys are compile-time string constants.
+        // When they are, we can skip runtime key evaluation, GetString(),
+        // and the duplicate-detection dictionary entirely.
+        bool allKeysConstant = obj.Pairs.All(p => p.Key is StringNode);
+
+        if (allKeysConstant && obj.Pairs.Count > 0)
+        {
+            return CompileObjectConstructorConstantKeys(obj);
+        }
+
         var pairs = obj.Pairs.Select(p => (Key: Compile(p.Key), Value: Compile(p.Value))).ToArray();
         bool hasMuliPlePairs = pairs.Length > 1;
         return (in JsonElement input, Environment env) =>
@@ -4933,6 +4943,131 @@ internal static class FunctionalCompiler
 
             return new Sequence((JsonElement)objRoot);
         };
+    }
+
+    /// <summary>
+    /// Fast path for object constructors where all keys are compile-time string constants.
+    /// Eliminates per-object key evaluation, GetString(), and duplicate-detection dictionary.
+    /// </summary>
+    private static ExpressionEvaluator CompileObjectConstructorConstantKeys(ObjectConstructorNode obj)
+    {
+        var keyStrings = new string[obj.Pairs.Count];
+        var keyUtf8 = new byte[obj.Pairs.Count][];
+        var values = new ExpressionEvaluator[obj.Pairs.Count];
+
+        for (int i = 0; i < obj.Pairs.Count; i++)
+        {
+            keyStrings[i] = ((StringNode)obj.Pairs[i].Key).Value;
+            keyUtf8[i] = System.Text.Encoding.UTF8.GetBytes(keyStrings[i]);
+            values[i] = Compile(obj.Pairs[i].Value);
+        }
+
+        // Validate no duplicate keys at compile time
+        for (int i = 0; i < keyStrings.Length; i++)
+        {
+            for (int j = i + 1; j < keyStrings.Length; j++)
+            {
+                if (keyStrings[i] == keyStrings[j])
+                {
+                    throw new JsonataException(
+                        "D1009",
+                        $"Multiple key definitions evaluate to same key: \"{keyStrings[i]}\"",
+                        0);
+                }
+            }
+        }
+
+        return (in JsonElement input, Environment env) =>
+        {
+            JsonDocumentBuilder<JsonElement.Mutable> objDoc = JsonElement.CreateObjectBuilder(env.Workspace, values.Length);
+            JsonElement.Mutable objRoot = objDoc.RootElement;
+
+            for (int i = 0; i < values.Length; i++)
+            {
+                var valueResult = values[i](input, env);
+
+                if (valueResult.IsLambda)
+                {
+                    // Lambda values require the general path for ObjectLambdas tracking.
+                    // Fall through to the general constructor for this rare case.
+                    return CompileObjectConstructorConstantKeysFallbackLambda(
+                        objRoot, keyStrings, keyUtf8, values, i, valueResult, input, env);
+                }
+
+                if (valueResult.IsUndefined)
+                {
+                    continue;
+                }
+
+                if (valueResult.IsNonFinite)
+                {
+                    throw new JsonataException("D1001", $"Number out of range: {valueResult.NonFiniteValue}", 0);
+                }
+
+                if (valueResult.IsSingleton)
+                {
+                    objRoot.SetProperty(keyUtf8[i], valueResult.FirstOrDefault);
+                }
+                else
+                {
+                    objRoot.SetProperty(keyUtf8[i], JsonataHelpers.ArrayFromSequence(valueResult, env.Workspace));
+                }
+            }
+
+            return new Sequence((JsonElement)objRoot);
+        };
+    }
+
+    /// <summary>
+    /// Handles the rare case where a constant-key object constructor encounters a lambda value.
+    /// Completes the remaining pairs using string keys (needed for ObjectLambdas dictionary).
+    /// </summary>
+    private static Sequence CompileObjectConstructorConstantKeysFallbackLambda(
+        JsonElement.Mutable objRoot,
+        string[] keyStrings,
+        byte[][] keyUtf8,
+        ExpressionEvaluator[] values,
+        int lambdaIndex,
+        Sequence lambdaResult,
+        in JsonElement input,
+        Environment env)
+    {
+        var lambdaProps = new Dictionary<string, LambdaValue>();
+        lambdaProps[keyStrings[lambdaIndex]] = lambdaResult.Lambda!;
+        objRoot.SetProperty(keyStrings[lambdaIndex], JsonataHelpers.EmptyString());
+
+        for (int i = lambdaIndex + 1; i < values.Length; i++)
+        {
+            var valueResult = values[i](input, env);
+
+            if (valueResult.IsLambda)
+            {
+                lambdaProps[keyStrings[i]] = valueResult.Lambda!;
+                objRoot.SetProperty(keyStrings[i], JsonataHelpers.EmptyString());
+                continue;
+            }
+
+            if (valueResult.IsUndefined)
+            {
+                continue;
+            }
+
+            if (valueResult.IsNonFinite)
+            {
+                throw new JsonataException("D1001", $"Number out of range: {valueResult.NonFiniteValue}", 0);
+            }
+
+            if (valueResult.IsSingleton)
+            {
+                objRoot.SetProperty(keyUtf8[i], valueResult.FirstOrDefault);
+            }
+            else
+            {
+                objRoot.SetProperty(keyUtf8[i], JsonataHelpers.ArrayFromSequence(valueResult, env.Workspace));
+            }
+        }
+
+        return new Sequence((JsonElement)objRoot, lambdaProps);
     }
 
     private static ExpressionEvaluator CompileFunctionCall(FunctionCallNode func)
