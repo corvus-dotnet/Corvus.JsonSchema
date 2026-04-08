@@ -37,12 +37,13 @@ public abstract partial class JsonDocument
     /// Mask used for extracting hash values from stored metadata.
     /// </summary>
     [CLSCompliant(false)]
-    protected const ulong HashMask = 0xFFUL << 56;
+    protected const ulong HashMask = Utf8Hash.HashMask;
 
     /// <summary>
     /// Length in bytes of hash values stored in metadata.
+    /// Keys shorter than this threshold are perfectly encoded in the hash.
     /// </summary>
-    protected const int HashLength = 8;
+    protected const int HashLength = Utf8Hash.PerfectHashLength + 1;
 
     /// <summary>
     /// Backing array for the property map data.

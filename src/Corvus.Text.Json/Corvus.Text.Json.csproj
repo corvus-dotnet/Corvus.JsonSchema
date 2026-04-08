@@ -219,6 +219,7 @@
     <Compile Include="Corvus\Text\Json\Document\Utf8IriValue.cs" />
     <Compile Include="Corvus\Text\Json\Document\Utf8UriValue.cs" />
     <Compile Include="Corvus\Text\Json\Internal\BigIntegerPolyfills.cs" />
+    <Compile Include="Corvus\Text\Json\Internal\Utf8Hash.cs" />
     <Compile Include="Corvus\Text\Json\Internal\JsonElementHelpers.Numeric.Core.cs" />
     <Compile Include="Corvus\Text\Json\Internal\JsonElementHelpers.ParseValue.cs" />
     <Compile Include="Corvus\Text\Json\Internal\JsonElementHelpers.String.cs" />
