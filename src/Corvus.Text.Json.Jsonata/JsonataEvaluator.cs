@@ -67,49 +67,54 @@ public sealed class JsonataEvaluator
 
         using JsonWorkspace workspace = JsonWorkspace.Create();
 
-        var env = new Environment
+        var env = Environment.RentRoot();
+        try
         {
-            RootInput = data,
-            MaxDepth = maxDepth,
-            Workspace = workspace,
-        };
+            env.RootInput = data;
+            env.MaxDepth = maxDepth;
+            env.Workspace = workspace;
 
-        if (timeLimitMs > 0)
-        {
-            env.TimeLimitMs = timeLimitMs;
-            env.StartTimer();
-        }
-
-        if (bindings is not null)
-        {
-            foreach (var kvp in bindings)
+            if (timeLimitMs > 0)
             {
-                env.Bind(kvp.Key, new Sequence(kvp.Value));
+                env.TimeLimitMs = timeLimitMs;
+                env.StartTimer();
             }
+
+            if (bindings is not null)
+            {
+                foreach (var kvp in bindings)
+                {
+                    env.Bind(kvp.Key, new Sequence(kvp.Value));
+                }
+            }
+
+            var result = compiled(data, env);
+
+            if (result.IsUndefined)
+            {
+                return default;
+            }
+
+            JsonElement resultElement = result.IsSingleton
+                ? result.FirstOrDefault
+                : JsonataHelpers.ArrayFromSequence(result, workspace);
+
+            if (resultElement.ValueKind == JsonValueKind.Undefined)
+            {
+                return default;
+            }
+
+            // Clone the result into a standalone element before the workspace is disposed.
+            // The workspace owns all intermediate documents; Clone() performs a binary copy
+            // of the backing metadata and value buffers (no serialize→parse round-trip).
+            // The backing ParsedJsonDocument will be collected by GC when the returned
+            // element is no longer referenced.
+            return resultElement.Clone();
         }
-
-        var result = compiled(data, env);
-
-        if (result.IsUndefined)
+        finally
         {
-            return default;
+            Environment.ReturnRoot(env);
         }
-
-        JsonElement resultElement = result.IsSingleton
-            ? result.FirstOrDefault
-            : JsonataHelpers.ArrayFromSequence(result, workspace);
-
-        if (resultElement.ValueKind == JsonValueKind.Undefined)
-        {
-            return default;
-        }
-
-        // Clone the result into a standalone element before the workspace is disposed.
-        // The workspace owns all intermediate documents; Clone() performs a binary copy
-        // of the backing metadata and value buffers (no serialize→parse round-trip).
-        // The backing ParsedJsonDocument will be collected by GC when the returned
-        // element is no longer referenced.
-        return resultElement.Clone();
     }
 
     /// <summary>
@@ -155,44 +160,49 @@ public sealed class JsonataEvaluator
     {
         var compiled = this.GetOrCompile(expression);
 
-        var env = new Environment
+        var env = Environment.RentRoot();
+        try
         {
-            RootInput = data,
-            MaxDepth = maxDepth,
-            Workspace = workspace,
-        };
+            env.RootInput = data;
+            env.MaxDepth = maxDepth;
+            env.Workspace = workspace;
 
-        if (timeLimitMs > 0)
-        {
-            env.TimeLimitMs = timeLimitMs;
-            env.StartTimer();
-        }
-
-        if (bindings is not null)
-        {
-            foreach (var kvp in bindings)
+            if (timeLimitMs > 0)
             {
-                env.Bind(kvp.Key, new Sequence(kvp.Value));
+                env.TimeLimitMs = timeLimitMs;
+                env.StartTimer();
             }
+
+            if (bindings is not null)
+            {
+                foreach (var kvp in bindings)
+                {
+                    env.Bind(kvp.Key, new Sequence(kvp.Value));
+                }
+            }
+
+            var result = compiled(data, env);
+
+            if (result.IsUndefined)
+            {
+                return default;
+            }
+
+            JsonElement resultElement = result.IsSingleton
+                ? result.FirstOrDefault
+                : JsonataHelpers.ArrayFromSequence(result, workspace);
+
+            if (resultElement.ValueKind == JsonValueKind.Undefined)
+            {
+                return default;
+            }
+
+            return resultElement;
         }
-
-        var result = compiled(data, env);
-
-        if (result.IsUndefined)
+        finally
         {
-            return default;
+            Environment.ReturnRoot(env);
         }
-
-        JsonElement resultElement = result.IsSingleton
-            ? result.FirstOrDefault
-            : JsonataHelpers.ArrayFromSequence(result, workspace);
-
-        if (resultElement.ValueKind == JsonValueKind.Undefined)
-        {
-            return default;
-        }
-
-        return resultElement;
     }
 
     private ExpressionEvaluator GetOrCompile(string expression)

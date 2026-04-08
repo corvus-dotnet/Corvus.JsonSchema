@@ -26,6 +26,14 @@ internal static class FunctionalCompiler
     private static readonly JsonElement FalseElement = JsonataHelpers.False();
     private static readonly JsonElement NullElement = JsonataHelpers.Null();
 
+    // Thread-local scratch arrays for ApplyPerElementFilterStages to avoid
+    // allocating wrapper arrays on every call to ApplyStages.
+    [ThreadStatic]
+    private static ExpressionEvaluator[]? t_singleStageArray;
+
+    [ThreadStatic]
+    private static bool[]? t_singleFlagArray;
+
     // Pre-compiled regex for stripping leading zeros from exponents in number formatting
     private static readonly Regex ExponentLeadingZeroRegex = new(@"e([+-])0+(\d)", RegexOptions.Compiled);
 
@@ -314,17 +322,17 @@ internal static class FunctionalCompiler
 
     private static ExpressionEvaluator CompileName(NameNode name)
     {
-        var fieldName = name.Value;
+        byte[] utf8FieldName = System.Text.Encoding.UTF8.GetBytes(name.Value);
         return (in JsonElement input, Environment env) =>
         {
-            return LookupField(input, fieldName);
+            return LookupField(input, utf8FieldName);
         };
 
-        static Sequence LookupField(in JsonElement input, string fieldName)
+        static Sequence LookupField(in JsonElement input, byte[] utf8FieldName)
         {
             if (input.ValueKind == JsonValueKind.Object)
             {
-                return input.TryGetProperty(fieldName, out var value)
+                return input.TryGetProperty(utf8FieldName, out var value)
                     ? new Sequence(value)
                     : Sequence.Undefined;
             }
@@ -334,7 +342,7 @@ internal static class FunctionalCompiler
                 var builder = default(SequenceBuilder);
                 foreach (var item in input.EnumerateArray())
                 {
-                    var result = LookupField(item, fieldName);
+                    var result = LookupField(item, utf8FieldName);
                     if (!result.IsUndefined)
                     {
                         builder.AddRange(result);
@@ -449,7 +457,7 @@ internal static class FunctionalCompiler
             return false;
         }
 
-        var names = new string[path.Steps.Count];
+        var utf8Names = new byte[path.Steps.Count][];
         for (int i = 0; i < path.Steps.Count; i++)
         {
             if (path.Steps[i] is not NameNode nameNode || GetStepAnnotations(path.Steps[i]) is not null)
@@ -458,25 +466,25 @@ internal static class FunctionalCompiler
                 return false;
             }
 
-            names[i] = nameNode.Value;
+            utf8Names[i] = System.Text.Encoding.UTF8.GetBytes(nameNode.Value);
         }
 
         evaluator = (in JsonElement input, Environment env) =>
         {
-            return EvalSimplePropertyChain(input, names);
+            return EvalSimplePropertyChain(input, utf8Names);
         };
 
         return true;
 
-        static Sequence EvalSimplePropertyChain(in JsonElement input, string[] names)
+        static Sequence EvalSimplePropertyChain(in JsonElement input, byte[][] utf8Names)
         {
             JsonElement current = input;
 
-            for (int step = 0; step < names.Length; step++)
+            for (int step = 0; step < utf8Names.Length; step++)
             {
                 if (current.ValueKind == JsonValueKind.Object)
                 {
-                    if (!current.TryGetProperty(names[step], out current))
+                    if (!current.TryGetProperty(utf8Names[step], out current))
                     {
                         return Sequence.Undefined;
                     }
@@ -484,7 +492,7 @@ internal static class FunctionalCompiler
                 else if (current.ValueKind == JsonValueKind.Array)
                 {
                     // Auto-flatten: map remaining steps over array elements
-                    return EvalChainOverArray(current, names, step);
+                    return EvalChainOverArray(current, utf8Names, step);
                 }
                 else
                 {
@@ -495,18 +503,18 @@ internal static class FunctionalCompiler
             return new Sequence(current);
         }
 
-        static Sequence EvalChainOverArray(in JsonElement array, string[] names, int fromStep)
+        static Sequence EvalChainOverArray(in JsonElement array, byte[][] utf8Names, int fromStep)
         {
             var builder = default(SequenceBuilder);
             foreach (var item in array.EnumerateArray())
             {
                 JsonElement current = item;
                 bool found = true;
-                for (int step = fromStep; step < names.Length; step++)
+                for (int step = fromStep; step < utf8Names.Length; step++)
                 {
                     if (current.ValueKind == JsonValueKind.Object)
                     {
-                        if (!current.TryGetProperty(names[step], out current))
+                        if (!current.TryGetProperty(utf8Names[step], out current))
                         {
                             found = false;
                             break;
@@ -515,7 +523,7 @@ internal static class FunctionalCompiler
                     else if (current.ValueKind == JsonValueKind.Array)
                     {
                         // Nested array: recurse for remaining steps
-                        var inner = EvalChainOverArray(current, names, step);
+                        var inner = EvalChainOverArray(current, utf8Names, step);
                         if (!inner.IsUndefined)
                         {
                             builder.AddRange(inner);
@@ -3370,7 +3378,6 @@ internal static class FunctionalCompiler
     /// <summary>
     /// Applies stage predicates with focus variable re-binding per element.
     /// Identical to <see cref="ApplyStages"/> except that before evaluating each
-    /// stage on an element, the focus variable is bound to that element. This
     /// enables filter predicates referencing the focus variable (e.g.
     /// <c>[$l.isbn=$b.isbn]</c>) to work correctly, while index predicates
     /// (e.g. <c>[1]</c>) see the full element count.
@@ -3747,7 +3754,10 @@ internal static class FunctionalCompiler
                 return Sequence.Undefined;
             }
 
-            result = ApplyStages(result, [stageEvaluators[s]], [false], env);
+            var singleStage = t_singleStageArray ??= new ExpressionEvaluator[1];
+            var singleFlag = t_singleFlagArray ??= [false];
+            singleStage[0] = stageEvaluators[s];
+            result = ApplyStages(result, singleStage, singleFlag, env);
         }
 
         return result;

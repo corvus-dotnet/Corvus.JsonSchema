@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
@@ -244,6 +245,21 @@ internal readonly struct Sequence
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get => this.count;
+    }
+
+    /// <summary>
+    /// Returns the multi-value backing array to <see cref="ArrayPool{T}"/>.
+    /// Call this when the sequence is no longer needed and its elements have
+    /// already been consumed or copied. This is a no-op for singleton, undefined,
+    /// or non-array-backed sequences.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal void ReturnBackingArray()
+    {
+        if (this.multiValues is not null)
+        {
+            ArrayPool<JsonElement>.Shared.Return(this.multiValues);
+        }
     }
 
     /// <summary>Gets a value indicating whether this is an undefined (empty) sequence.</summary>

@@ -24,6 +24,9 @@ internal sealed class Environment
     /// </summary>
     public const int DefaultMaxDepth = 500;
 
+    [ThreadStatic]
+    private static Environment? t_cachedRoot;
+
     private Dictionary<string, Sequence>? bindings;
     private readonly Environment? parent;
     private readonly Environment root;
@@ -44,6 +47,43 @@ internal sealed class Environment
         this.parent = parent;
         this.root = parent?.root ?? this;
         this.maxDepth = DefaultMaxDepth;
+    }
+
+    /// <summary>
+    /// Rents a root <see cref="Environment"/> from the thread-local cache,
+    /// or allocates a new one if the cache is empty.
+    /// </summary>
+    /// <returns>A root environment ready for use.</returns>
+    public static Environment RentRoot()
+    {
+        var env = t_cachedRoot;
+        if (env is not null)
+        {
+            t_cachedRoot = null;
+            return env;
+        }
+
+        return new Environment();
+    }
+
+    /// <summary>
+    /// Returns a root <see cref="Environment"/> to the thread-local cache.
+    /// Resets all mutable state so the instance can be reused.
+    /// </summary>
+    /// <param name="env">The root environment to return.</param>
+    public static void ReturnRoot(Environment env)
+    {
+        Debug.Assert(env.parent is null, "Only root environments should be returned to the cache.");
+        env.bindings?.Clear();
+        env.currentDepth = 0;
+        env.evalCount = 0;
+        env.startTicks = 0;
+        env.timeLimitTicks = 0;
+        env.lambdaMap?.Clear();
+        env.lambdaCounter = 0;
+        env.RootInput = default;
+        env.WorkspaceDirect = default!;
+        t_cachedRoot = env;
     }
 
     /// <summary>
