@@ -69,9 +69,13 @@ internal static class FunctionalCompiler
             evaluator = WrapKeepArray(evaluator);
         }
 
-        // Wrap with per-expression depth tracking. Every expression evaluation
-        // increments the depth counter, matching jsonata-js's per-evaluate() counting.
-        evaluator = WrapWithDepthTracking(evaluator);
+        // Wrap with per-expression depth tracking for non-leaf nodes.
+        // Leaf nodes (numbers, strings, booleans, regex, variables) cannot recurse
+        // and never cause stack overflow — skip the overhead for these.
+        if (node is not (NumberNode or StringNode or ValueNode or RegexNode or VariableNode))
+        {
+            evaluator = WrapWithDepthTracking(evaluator);
+        }
 
         return evaluator;
     }
@@ -1187,6 +1191,24 @@ internal static class FunctionalCompiler
             }
         }
 
+        // Detect steps that are simple name lookups with no annotations.
+        // At runtime, these use direct TryGetProperty instead of delegate dispatch,
+        // eliminating per-step delegate calls and Sequence intermediaries.
+        byte[]?[]? inlineNameUtf8 = null;
+        for (int i = 0; i < path.Steps.Count; i++)
+        {
+            if (path.Steps[i] is NameNode nameNode
+                && stages[i] is null
+                && focusVars[i] is null
+                && indexVars[i] is null
+                && ancestorLabels[i] is null
+                && tupleLabels[i] is null)
+            {
+                inlineNameUtf8 ??= new byte[]?[path.Steps.Count];
+                inlineNameUtf8[i] = System.Text.Encoding.UTF8.GetBytes(nameNode.Value);
+            }
+        }
+
         return (in JsonElement input, Environment env) =>
         {
             return EvalPathFrom(new Sequence(input), 0);
@@ -1212,6 +1234,77 @@ internal static class FunctionalCompiler
                     if (current.IsUndefined)
                     {
                         return Sequence.Undefined;
+                    }
+
+                    // Inline name step fast path: direct UTF-8 property lookup without
+                    // delegate dispatch. For simple name steps with no annotations, this
+                    // eliminates the CompileName delegate call, Sequence intermediaries,
+                    // and all annotation/stage checks (verified null at compile time).
+                    // Skipped when tuple tracking is active (preceding sort with index binding).
+                    if (inlineNameUtf8?[stepIdx] is byte[] nameBytes
+                        && tupleGroupIndices is null)
+                    {
+                        if (current.IsSingleton)
+                        {
+                            var element = current.FirstOrDefault;
+                            if (element.ValueKind == JsonValueKind.Array)
+                            {
+                                // Auto-flatten: map name lookup over array elements
+                                var nameBuilder = default(SequenceBuilder);
+                                InlineNameOverArray(element, nameBytes, ref nameBuilder);
+                                current = nameBuilder.ToSequence();
+                                currentArrayOwned = current.Count >= 2;
+                            }
+                            else if (element.ValueKind == JsonValueKind.Object)
+                            {
+                                current = element.TryGetProperty(nameBytes, out var val)
+                                    ? new Sequence(val) : Sequence.Undefined;
+                            }
+                            else
+                            {
+                                current = Sequence.Undefined;
+                            }
+                        }
+                        else
+                        {
+                            // Multi-value: inline name lookup per element with auto-flatten
+                            Sequence previousCurrent = currentArrayOwned ? current : default;
+                            bool hadOwnedArray = currentArrayOwned;
+                            currentArrayOwned = false;
+
+                            var nameBuilder = default(SequenceBuilder);
+                            for (int i = 0; i < current.Count; i++)
+                            {
+                                var element = current[i];
+                                if (element.ValueKind == JsonValueKind.Object)
+                                {
+                                    if (element.TryGetProperty(nameBytes, out var val))
+                                    {
+                                        if (val.ValueKind == JsonValueKind.Array)
+                                        {
+                                            foreach (var item in val.EnumerateArray())
+                                            {
+                                                nameBuilder.Add(item);
+                                            }
+                                        }
+                                        else
+                                        {
+                                            nameBuilder.Add(val);
+                                        }
+                                    }
+                                }
+                                else if (element.ValueKind == JsonValueKind.Array)
+                                {
+                                    InlineNameOverArray(element, nameBytes, ref nameBuilder);
+                                }
+                            }
+
+                            if (hadOwnedArray) { previousCurrent.ReturnBackingArray(); }
+                            current = nameBuilder.ToSequence();
+                            currentArrayOwned = current.Count >= 2;
+                        }
+
+                        continue;
                     }
 
                     var step = steps[stepIdx];
@@ -4402,6 +4495,38 @@ internal static class FunctionalCompiler
         }
 
         return builder.ToSequence();
+    }
+
+    /// <summary>
+    /// Inline name lookup over array elements without delegate dispatch.
+    /// Recursively handles nested arrays (JSONata's one-level flattening).
+    /// </summary>
+    private static void InlineNameOverArray(in JsonElement array, byte[] nameUtf8, ref SequenceBuilder builder)
+    {
+        foreach (var item in array.EnumerateArray())
+        {
+            if (item.ValueKind == JsonValueKind.Object)
+            {
+                if (item.TryGetProperty(nameUtf8, out var val))
+                {
+                    if (val.ValueKind == JsonValueKind.Array)
+                    {
+                        foreach (var child in val.EnumerateArray())
+                        {
+                            builder.Add(child);
+                        }
+                    }
+                    else
+                    {
+                        builder.Add(val);
+                    }
+                }
+            }
+            else if (item.ValueKind == JsonValueKind.Array)
+            {
+                InlineNameOverArray(item, nameUtf8, ref builder);
+            }
+        }
     }
 
     /// <summary>
