@@ -485,19 +485,20 @@ internal static class BuiltInFunctions
             // String conversion
             if (element.ValueKind == JsonValueKind.String)
             {
-                string? s = element.GetString();
-                if (s is null || s.Length == 0)
+#if NET
+                using UnescapedUtf16JsonString utf16 = element.GetUtf16String();
+                ReadOnlySpan<char> s = utf16.Span;
+                if (s.Length == 0)
                 {
                     throw new JsonataException("D3030", "Unable to cast value to a number", 0);
                 }
 
-                // Handle hex (0x/0X), binary (0b/0B), and octal (0o/0O) prefixes
                 if (s.Length > 2 && s[0] == '0')
                 {
                     char prefix = s[1];
                     if (prefix is 'x' or 'X')
                     {
-                        if (long.TryParse(s.Substring(2), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out long hexVal))
+                        if (long.TryParse(s.Slice(2), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out long hexVal))
                         {
                             return Sequence.FromDouble(hexVal, env.Workspace);
                         }
@@ -507,7 +508,7 @@ internal static class BuiltInFunctions
 
                     if (prefix is 'b' or 'B')
                     {
-                        if (TryParseBinary(s, 2, out long binVal))
+                        if (TryParseBinary(s.Slice(2), out long binVal))
                         {
                             return Sequence.FromDouble(binVal, env.Workspace);
                         }
@@ -517,7 +518,7 @@ internal static class BuiltInFunctions
 
                     if (prefix is 'o' or 'O')
                     {
-                        if (TryParseOctal(s, 2, out long octVal))
+                        if (TryParseOctal(s.Slice(2), out long octVal))
                         {
                             return Sequence.FromDouble(octVal, env.Workspace);
                         }
@@ -537,6 +538,60 @@ internal static class BuiltInFunctions
                 }
 
                 throw new JsonataException("D3030", "Unable to cast value to a number", 0);
+#else
+                string? s2 = element.GetString();
+                if (s2 is null || s2.Length == 0)
+                {
+                    throw new JsonataException("D3030", "Unable to cast value to a number", 0);
+                }
+
+                // Handle hex (0x/0X), binary (0b/0B), and octal (0o/0O) prefixes
+                if (s2.Length > 2 && s2[0] == '0')
+                {
+                    char prefix = s2[1];
+                    if (prefix is 'x' or 'X')
+                    {
+                        if (long.TryParse(s2.Substring(2), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out long hexVal))
+                        {
+                            return Sequence.FromDouble(hexVal, env.Workspace);
+                        }
+
+                        throw new JsonataException("D3030", "Unable to cast value to a number", 0);
+                    }
+
+                    if (prefix is 'b' or 'B')
+                    {
+                        if (TryParseBinary(s2, 2, out long binVal))
+                        {
+                            return Sequence.FromDouble(binVal, env.Workspace);
+                        }
+
+                        throw new JsonataException("D3030", "Unable to cast value to a number", 0);
+                    }
+
+                    if (prefix is 'o' or 'O')
+                    {
+                        if (TryParseOctal(s2, 2, out long octVal))
+                        {
+                            return Sequence.FromDouble(octVal, env.Workspace);
+                        }
+
+                        throw new JsonataException("D3030", "Unable to cast value to a number", 0);
+                    }
+                }
+
+                if (double.TryParse(s2, NumberStyles.Float, CultureInfo.InvariantCulture, out double parsed))
+                {
+                    if (double.IsInfinity(parsed))
+                    {
+                        throw new JsonataException("D3030", "Unable to cast value to a number", 0);
+                    }
+
+                    return Sequence.FromDouble(parsed, env.Workspace);
+                }
+
+                throw new JsonataException("D3030", "Unable to cast value to a number", 0);
+#endif
             }
 
             return Sequence.Undefined;
@@ -565,6 +620,30 @@ internal static class BuiltInFunctions
         return true;
     }
 
+#if NET
+    private static bool TryParseBinary(ReadOnlySpan<char> digits, out long result)
+    {
+        result = 0;
+        if (digits.Length == 0)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < digits.Length; i++)
+        {
+            char c = digits[i];
+            if (c is not ('0' or '1'))
+            {
+                return false;
+            }
+
+            result = (result << 1) | (long)(uint)(c - '0');
+        }
+
+        return true;
+    }
+#endif
+
     private static bool TryParseOctal(string digits, int startIndex, out long result)
     {
         result = 0;
@@ -586,6 +665,30 @@ internal static class BuiltInFunctions
 
         return true;
     }
+
+#if NET
+    private static bool TryParseOctal(ReadOnlySpan<char> digits, out long result)
+    {
+        result = 0;
+        if (digits.Length == 0)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < digits.Length; i++)
+        {
+            char c = digits[i];
+            if (c < '0' || c > '7')
+            {
+                return false;
+            }
+
+            result = (result << 3) | (long)(uint)(c - '0');
+        }
+
+        return true;
+    }
+#endif
 
     private static ExpressionEvaluator CompileToBoolean(ExpressionEvaluator[] args)
     {
@@ -714,9 +817,15 @@ internal static class BuiltInFunctions
             var el = seq.FirstOrDefault;
             if (el.ValueKind == JsonValueKind.String)
             {
+#if NET
+                using UnescapedUtf16JsonString utf16 = el.GetUtf16String();
+                int len = CountCodePoints(utf16.Span);
+                return Sequence.FromDouble(len, env.Workspace);
+#else
                 string str = el.GetString() ?? string.Empty;
                 int len = CountCodePoints(str);
                 return Sequence.FromDouble(len, env.Workspace);
+#endif
             }
 
             // Wrong type: T0411 when context-derived, T0410 when explicit arg
@@ -760,6 +869,41 @@ internal static class BuiltInFunctions
                 throw new JsonataException("T0410", "Argument 2 of function $substring is not a number", 0);
             }
 
+#if NET
+            using UnescapedUtf16JsonString utf16 = strElem.GetUtf16String();
+            ReadOnlySpan<char> span = utf16.Span;
+
+            int cpLen = CountCodePoints(span);
+            int start = (int)startD;
+            if (start < 0)
+            {
+                start = Math.Max(0, cpLen + start);
+            }
+
+            start = Math.Min(start, cpLen);
+
+            int count;
+            if (lengthArg is not null)
+            {
+                var lenSeq = lengthArg(input, env);
+                if (!FunctionalCompiler.TryCoerceToNumber(lenSeq.FirstOrDefault, out double lenD))
+                {
+                    throw new JsonataException("T0410", "Argument 3 of function $substring is not a number", 0);
+                }
+
+                count = Math.Max(0, (int)lenD);
+                count = Math.Min(count, cpLen - start);
+            }
+            else
+            {
+                count = cpLen - start;
+            }
+
+            int startCharIdx = CodePointToCharIndex(span, start);
+            int endCharIdx = CodePointToCharIndex(span.Slice(startCharIdx), count) + startCharIdx;
+            ReadOnlySpan<char> result = span.Slice(startCharIdx, endCharIdx - startCharIdx);
+            return new Sequence(JsonataHelpers.StringFromChars(result, env.Workspace));
+#else
             string? str = strElem.GetString();
             if (str is null)
             {
@@ -797,6 +941,7 @@ internal static class BuiltInFunctions
 
             string result = CodePointsToString(codePoints, start, count);
             return new Sequence(JsonataHelpers.StringFromString(result, env.Workspace));
+#endif
         };
     }
 
@@ -4829,6 +4974,39 @@ internal static class BuiltInFunctions
 
         return count;
     }
+
+#if NET
+    private static int CountCodePoints(ReadOnlySpan<char> span)
+    {
+        int count = 0;
+        int i = 0;
+        while (i < span.Length)
+        {
+            Rune.DecodeFromUtf16(span.Slice(i), out _, out int charsConsumed);
+            count++;
+            i += charsConsumed;
+        }
+
+        return count;
+    }
+
+    /// <summary>
+    /// Finds the char index of a given code point offset in a span.
+    /// </summary>
+    private static int CodePointToCharIndex(ReadOnlySpan<char> span, int codePointOffset)
+    {
+        int cpIdx = 0;
+        int charIdx = 0;
+        while (cpIdx < codePointOffset && charIdx < span.Length)
+        {
+            Rune.DecodeFromUtf16(span.Slice(charIdx), out _, out int consumed);
+            charIdx += consumed;
+            cpIdx++;
+        }
+
+        return charIdx;
+    }
+#endif
 
     /// <summary>
     /// Converts a string to an array of Unicode code points.

@@ -6699,9 +6699,14 @@ internal static class FunctionalCompiler
                             prefix == (byte)'b' || prefix == (byte)'B' ||
                             prefix == (byte)'o' || prefix == (byte)'O')
                         {
+#if NET
+                            using var utf16 = element.GetUtf16String();
+                            return TryParseSpecialRadix(utf16.Span, out value);
+#else
                             // Fall back to string for hex/binary/octal parsing
                             string s = element.GetString()!;
                             return TryParseSpecialRadix(s, out value);
+#endif
                         }
                     }
 
@@ -6772,6 +6777,70 @@ internal static class FunctionalCompiler
         value = 0;
         return false;
     }
+
+#if NET
+    /// <summary>
+    /// Parses hex (0x), binary (0b), or octal (0o) prefixed spans to double.
+    /// </summary>
+    private static bool TryParseSpecialRadix(ReadOnlySpan<char> s, out double value)
+    {
+        char prefix = s[1];
+        ReadOnlySpan<char> digits = s.Slice(2);
+
+        if (prefix is 'x' or 'X')
+        {
+            if (long.TryParse(digits, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out long hex))
+            {
+                value = hex;
+                return true;
+            }
+
+            value = 0;
+            return false;
+        }
+
+        if (prefix is 'b' or 'B')
+        {
+            long result = 0;
+            for (int i = 0; i < digits.Length; i++)
+            {
+                char c = digits[i];
+                if (c is not ('0' or '1'))
+                {
+                    value = 0;
+                    return false;
+                }
+
+                result = (result << 1) | (long)(uint)(c - '0');
+            }
+
+            value = result;
+            return digits.Length > 0;
+        }
+
+        if (prefix is 'o' or 'O')
+        {
+            long result = 0;
+            for (int i = 0; i < digits.Length; i++)
+            {
+                char c = digits[i];
+                if (c < '0' || c > '7')
+                {
+                    value = 0;
+                    return false;
+                }
+
+                result = (result << 3) | (long)(uint)(c - '0');
+            }
+
+            value = result;
+            return digits.Length > 0;
+        }
+
+        value = 0;
+        return false;
+    }
+#endif
 
     internal static string CoerceToString(Sequence seq)
     {
