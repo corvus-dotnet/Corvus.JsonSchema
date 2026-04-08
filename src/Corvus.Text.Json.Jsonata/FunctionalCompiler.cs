@@ -306,7 +306,9 @@ internal static class FunctionalCompiler
         {
             if (env.TryLookup(name, out var value))
             {
-                return value;
+                // Environment bindings are shared — return an owned copy so the
+                // caller can safely return the backing array after consumption.
+                return value.CopyOwned();
             }
 
             // Check if this is a built-in function reference (e.g. $uppercase used as a value)
@@ -1580,7 +1582,18 @@ internal static class FunctionalCompiler
                             current = ApplySortStagesOnly(current, stages[stepIdx]!, stageIsSortFlags[stepIdx]!, env);
                         }
 
-                        if (stagesHadOwnedArray) { stagesPrevious.ReturnBackingArray(); }
+                        // Only return the old array if stages produced a genuinely new Sequence.
+                        // ApplySortStagesOnly may return the same Sequence unchanged when there
+                        // are no sort stages — returning the array in that case would corrupt current.
+                        if (stagesHadOwnedArray && !current.SharesBackingArray(stagesPrevious))
+                        {
+                            stagesPrevious.ReturnBackingArray();
+                        }
+                        else if (stagesHadOwnedArray)
+                        {
+                            // Stages returned the same sequence — re-assert ownership.
+                            currentArrayOwned = true;
+                        }
                     }
                 }
 
@@ -3466,7 +3479,14 @@ internal static class FunctionalCompiler
             }
             else
             {
-                env.Bind(focusVar, new Sequence(focusElements.ToArray(), focusElements.Count));
+                // Use a pooled array so the env can safely return it on cleanup.
+                var focusArr = ArrayPool<JsonElement>.Shared.Rent(focusElements.Count);
+                for (int fe = 0; fe < focusElements.Count; fe++)
+                {
+                    focusArr[fe] = focusElements[fe];
+                }
+
+                env.Bind(focusVar, new Sequence(focusArr, focusElements.Count));
             }
 
             // Build context from sub-result elements for the value expression
@@ -5806,7 +5826,10 @@ internal static class FunctionalCompiler
         {
             var value = rhs(input, env);
             env.Bind(name, value);
-            return value;
+
+            // The binding and the return share the same backing array.
+            // Return an owned copy so the caller can safely return it.
+            return value.CopyOwned();
         };
     }
 

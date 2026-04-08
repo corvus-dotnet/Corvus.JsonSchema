@@ -207,7 +207,9 @@ internal sealed class Environment
     /// Binds a variable in this scope.
     /// </summary>
     /// <param name="name">The variable name (without <c>$</c> prefix).</param>
-    /// <param name="value">The value to bind.</param>
+    /// <param name="value">The value to bind. If this is an owned multi-value
+    /// sequence with a pooled backing array, the environment takes ownership and
+    /// will return the array when the scope is cleaned up.</param>
     public void Bind(string name, Sequence value)
     {
         this.bindings ??= new();

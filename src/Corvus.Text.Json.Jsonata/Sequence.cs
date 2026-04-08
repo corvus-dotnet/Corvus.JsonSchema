@@ -258,6 +258,12 @@ internal readonly struct Sequence
     /// already been consumed or copied. This is a no-op for singleton, undefined,
     /// or non-array-backed sequences.
     /// </summary>
+    /// <remarks>
+    /// Only call this on sequences whose backing array you <b>own</b>. Shared
+    /// sequences (e.g. from environment lookups) must not have their arrays returned
+    /// directly — use <see cref="CopyOwned"/> first if the consumer needs to return
+    /// the array later.
+    /// </remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void ReturnBackingArray()
     {
@@ -268,8 +274,50 @@ internal readonly struct Sequence
         }
         else if (tag == TagRawDoubleArray)
         {
-            ArrayPool<double>.Shared.Return(((RawDoubleArrayPayload)this.payload!).Values);
+            var p = (RawDoubleArrayPayload)this.payload!;
+            ArrayPool<double>.Shared.Return(p.Values);
         }
+    }
+
+    /// <summary>
+    /// Returns <see langword="true"/> if this sequence and <paramref name="other"/>
+    /// share the same backing array (payload reference equality).
+    /// Used to guard against returning an array that is still aliased.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal bool SharesBackingArray(in Sequence other) =>
+        this.payload is not null && ReferenceEquals(this.payload, other.payload);
+
+    /// <summary>
+    /// Returns an owned copy of this sequence. For multi-value sequences backed by
+    /// a pooled array, this rents a fresh array from the pool and copies the elements.
+    /// The caller owns the returned copy and is responsible for returning its backing
+    /// array. Singletons and other non-array variants are returned as-is (no copy needed).
+    /// </summary>
+    /// <returns>An owned sequence whose backing array (if any) can safely be returned.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal Sequence CopyOwned()
+    {
+        int tag = this.Tag;
+        if (tag == TagMulti)
+        {
+            int count = this.Count;
+            var src = (JsonElement[])this.payload!;
+            var copy = ArrayPool<JsonElement>.Shared.Rent(count);
+            Array.Copy(src, copy, count);
+            return new Sequence(copy, count);
+        }
+
+        if (tag == TagRawDoubleArray)
+        {
+            int count = this.Count;
+            var p = (RawDoubleArrayPayload)this.payload!;
+            var copy = ArrayPool<double>.Shared.Rent(count);
+            Array.Copy(p.Values, copy, count);
+            return FromDoubleArray(copy, count, p.Workspace);
+        }
+
+        return this;
     }
 
     /// <summary>Gets a value indicating whether this is an undefined (empty) sequence.</summary>

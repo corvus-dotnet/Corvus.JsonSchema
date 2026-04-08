@@ -100,13 +100,14 @@ internal struct SequenceBuilder
     /// </summary>
     /// <returns>
     /// A <see cref="Sequence"/>. For zero or one values, this is stack-only
-    /// (no rented array). For multiple values, the backing array is kept rented
-    /// and the caller is responsible for returning it via <see cref="ReturnArray"/>.
+    /// (no rented array). For multiple values, ownership of the backing array
+    /// transfers to the returned <see cref="Sequence"/>; the builder's reference
+    /// is nulled so that a subsequent <see cref="ReturnArray"/> is a safe no-op.
     /// When all values are raw doubles, returns a <see cref="Sequence.IsRawDoubleArray"/>
     /// variant backed by the rented <c>double[]</c>.
     /// </returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public readonly Sequence ToSequence()
+    public Sequence ToSequence()
     {
         if (this.count == 0)
         {
@@ -121,7 +122,10 @@ internal struct SequenceBuilder
                 return Sequence.FromDouble(this.doubleArray![0], this.doubleWorkspace!);
             }
 
-            return Sequence.FromDoubleArray(this.doubleArray!, this.rawDoubleCount, this.doubleWorkspace!);
+            // Transfer ownership of the double array to the Sequence.
+            var da = this.doubleArray!;
+            this.doubleArray = null;
+            return Sequence.FromDoubleArray(da, this.rawDoubleCount, this.doubleWorkspace!);
         }
 
         if (this.count == 1)
@@ -129,7 +133,10 @@ internal struct SequenceBuilder
             return new Sequence(this.array![0]);
         }
 
-        return new Sequence(this.array!, this.count);
+        // Transfer ownership of the element array to the Sequence.
+        var arr = this.array!;
+        this.array = null;
+        return new Sequence(arr, this.count);
     }
 
     /// <summary>
