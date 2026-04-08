@@ -42,6 +42,10 @@ internal sealed class Environment
     private Dictionary<int, LambdaValue>? lambdaMap;
     private int lambdaCounter;
 
+    // Side-channel for CVB-based object construction: when an ObjectBuilder callback
+    // encounters a lambda value, it stores it here. The caller reads and clears after build.
+    internal Dictionary<string, LambdaValue>? TempObjectLambdas;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="Environment"/> class.
     /// </summary>
@@ -85,6 +89,7 @@ internal sealed class Environment
         env.timeLimitTicks = 0;
         env.lambdaMap?.Clear();
         env.lambdaCounter = 0;
+        env.TempObjectLambdas = null;
         env.RootInput = default;
         env.WorkspaceDirect = default!;
         t_cachedRoot = env;

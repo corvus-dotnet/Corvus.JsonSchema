@@ -5489,106 +5489,149 @@ internal static class FunctionalCompiler
         }
 
         var pairs = obj.Pairs.Select(p => (Key: Compile(p.Key), Value: Compile(p.Value))).ToArray();
-        bool hasMuliPlePairs = pairs.Length > 1;
+        bool hasMultiplePairs = pairs.Length > 1;
         return (in JsonElement input, Environment env) =>
         {
-            JsonDocumentBuilder<JsonElement.Mutable> objDoc = JsonElement.CreateObjectBuilder(env.Workspace, pairs.Length);
-            JsonElement.Mutable objRoot = objDoc.RootElement;
-
-            // Track which pair index produced each key to detect D1009 duplicates
-            Dictionary<string, int>? seenKeys = hasMuliPlePairs ? new() : null;
-            Dictionary<string, LambdaValue>? lambdaProps = null;
-
-            for (int pairIdx = 0; pairIdx < pairs.Length; pairIdx++)
+            // For multi-pair objects, rent tracking arrays for duplicate detection.
+            // Single-pair objects (common — e.g. group-by) skip this entirely.
+            JsonElement[]? seenKeyElements = hasMultiplePairs ? ArrayPool<JsonElement>.Shared.Rent(pairs.Length) : null;
+            int[]? seenPairIndices = hasMultiplePairs ? ArrayPool<int>.Shared.Rent(pairs.Length) : null;
+            try
             {
-                var (key, value) = pairs[pairIdx];
-                var keyResult = key(input, env);
-                var valueResult = value(input, env);
-
-                if (keyResult.IsUndefined)
-                {
-                    continue;
-                }
-
-                // T1003: key must evaluate to a string
-                if (keyResult.Count > 1
-                    || keyResult.FirstOrDefault.ValueKind is not JsonValueKind.String)
-                {
-                    string gotType = keyResult.Count > 1
-                        ? "array"
-                        : keyResult.FirstOrDefault.ValueKind.ToString().ToLowerInvariant();
-                    throw new JsonataException(
-                        "T1003",
-                        $"Key in object structure must evaluate to a string; got: {gotType}",
-                        0);
-                }
-
-                string keyStr = keyResult.FirstOrDefault.GetString()!;
-
-                // D1009: duplicate key from different pair expressions
-                if (seenKeys is not null)
-                {
-                    if (seenKeys.TryGetValue(keyStr, out int prevPairIdx))
+                var ctx = new DynKeyObjectBuildContext(pairs, seenKeyElements, seenPairIndices, input, env);
+                JsonDocumentBuilder<JsonElement.Mutable> objDoc = JsonElement.CreateBuilder(
+                    env.Workspace,
+                    in ctx,
+                    static (in DynKeyObjectBuildContext c, ref JsonElement.ObjectBuilder builder) =>
                     {
-                        if (prevPairIdx != pairIdx)
+                        int seenCount = 0;
+
+                        for (int pairIdx = 0; pairIdx < c.Pairs.Length; pairIdx++)
                         {
-                            throw new JsonataException(
-                                "D1009",
-                                $"Multiple key definitions evaluate to same key: \"{keyStr}\"",
-                                0);
+                            var (key, value) = c.Pairs[pairIdx];
+                            var keyResult = key(c.Input, c.Env);
+                            var valueResult = value(c.Input, c.Env);
+
+                            if (keyResult.IsUndefined)
+                            {
+                                continue;
+                            }
+
+                            // T1003: key must evaluate to a string
+                            if (keyResult.Count > 1
+                                || keyResult.FirstOrDefault.ValueKind is not JsonValueKind.String)
+                            {
+                                string gotType = keyResult.Count > 1
+                                    ? "array"
+                                    : keyResult.FirstOrDefault.ValueKind.ToString().ToLowerInvariant();
+                                throw new JsonataException(
+                                    "T1003",
+                                    $"Key in object structure must evaluate to a string; got: {gotType}",
+                                    0);
+                            }
+
+                            JsonElement keyElement = keyResult.FirstOrDefault;
+                            using UnescapedUtf8JsonString utf8Key = keyElement.GetUtf8String();
+                            ReadOnlySpan<byte> keyBytes = utf8Key.Span;
+
+                            // D1009: duplicate key from different pair expressions (linear scan, pair count is tiny)
+                            if (c.SeenKeyElements is not null)
+                            {
+                                for (int j = 0; j < seenCount; j++)
+                                {
+                                    if (c.SeenKeyElements[j].ValueEquals(keyBytes) && c.SeenPairIndices![j] != pairIdx)
+                                    {
+                                        throw new JsonataException(
+                                            "D1009",
+                                            $"Multiple key definitions evaluate to same key: \"{keyElement.GetString()}\"",
+                                            0);
+                                    }
+                                }
+
+                                c.SeenKeyElements[seenCount] = keyElement;
+                                c.SeenPairIndices![seenCount] = pairIdx;
+                                seenCount++;
+                            }
+
+                            if (valueResult.IsLambda)
+                            {
+                                // Lambda values need a string key for the TempObjectLambdas dictionary.
+                                // This path is extremely rare — only allocate the string here.
+                                c.Env.TempObjectLambdas ??= new Dictionary<string, LambdaValue>();
+                                c.Env.TempObjectLambdas[keyElement.GetString()!] = valueResult.Lambda!;
+                                builder.AddProperty(keyBytes, JsonataHelpers.EmptyString());
+                                continue;
+                            }
+
+                            if (valueResult.IsUndefined)
+                            {
+                                continue;
+                            }
+
+                            if (valueResult.IsNonFinite)
+                            {
+                                throw new JsonataException("D1001", $"Number out of range: {valueResult.NonFiniteValue}", 0);
+                            }
+
+                            if (valueResult.IsSingleton)
+                            {
+                                if (valueResult.TryGetDouble(out double d))
+                                {
+                                    builder.AddProperty(keyBytes, d);
+                                }
+                                else
+                                {
+                                    builder.AddProperty(keyBytes, valueResult.FirstOrDefault);
+                                }
+                            }
+                            else
+                            {
+                                builder.AddProperty(
+                                    keyBytes,
+                                    valueResult,
+                                    static (in Sequence seq, ref JsonElement.ArrayBuilder ab) =>
+                                    {
+                                        for (int j = 0; j < seq.Count; j++)
+                                        {
+                                            ab.AddItem(seq[j]);
+                                        }
+                                    });
+                            }
                         }
-                    }
-                    else
-                    {
-                        seenKeys[keyStr] = pairIdx;
-                    }
+                    },
+                    pairs.Length);
+
+                var lambdas = env.TempObjectLambdas;
+                env.TempObjectLambdas = null;
+
+                if (lambdas is not null)
+                {
+                    return new Sequence((JsonElement)objDoc.RootElement, lambdas);
                 }
 
-                if (valueResult.IsLambda)
-                {
-                    // Lambda values serialize as empty strings in JSON, but we preserve
-                    // the reference in ObjectLambdas so callers (e.g. $match custom matcher
-                    // protocol) can retrieve them.
-                    lambdaProps ??= new Dictionary<string, LambdaValue>();
-                    lambdaProps[keyStr] = valueResult.Lambda!;
-                    objRoot.SetProperty(keyStr, JsonataHelpers.EmptyString());
-                    continue;
-                }
-
-                if (valueResult.IsUndefined)
-                {
-                    // Skip undefined values — they don't produce a key in the output
-                    continue;
-                }
-
-                // Non-finite numeric values (Infinity/NaN) cannot be stored in JSON
-                if (valueResult.IsNonFinite)
-                {
-                    throw new JsonataException("D1001", $"Number out of range: {valueResult.NonFiniteValue}", 0);
-                }
-
-                if (valueResult.IsSingleton)
-                {
-                    objRoot.SetProperty(keyStr, valueResult.FirstOrDefault);
-                }
-                else
-                {
-                    objRoot.SetProperty(keyStr, JsonataHelpers.ArrayFromSequence(valueResult, env.Workspace));
-                }
+                return new Sequence((JsonElement)objDoc.RootElement);
             }
-
-            if (lambdaProps is not null)
+            finally
             {
-                return new Sequence((JsonElement)objRoot, lambdaProps);
-            }
+                if (seenKeyElements is not null)
+                {
+                    Array.Clear(seenKeyElements, 0, pairs.Length);
+                    ArrayPool<JsonElement>.Shared.Return(seenKeyElements);
+                }
 
-            return new Sequence((JsonElement)objRoot);
+                if (seenPairIndices is not null)
+                {
+                    ArrayPool<int>.Shared.Return(seenPairIndices);
+                }
+            }
         };
     }
 
     /// <summary>
     /// Fast path for object constructors where all keys are compile-time string constants.
     /// Eliminates per-object key evaluation, GetString(), and duplicate-detection dictionary.
+    /// Uses forward-only CVB building via <c>CreateBuilder</c>
+    /// instead of the create-empty-then-mutate pattern.
     /// </summary>
     private static ExpressionEvaluator CompileObjectConstructorConstantKeys(ObjectConstructorNode obj)
     {
@@ -5620,104 +5663,112 @@ internal static class FunctionalCompiler
 
         return (in JsonElement input, Environment env) =>
         {
-            JsonDocumentBuilder<JsonElement.Mutable> objDoc = JsonElement.CreateObjectBuilder(env.Workspace, values.Length);
-            JsonElement.Mutable objRoot = objDoc.RootElement;
+            var ctx = new ConstKeyObjectBuildContext(keyUtf8, keyStrings, values, input, env);
+            JsonDocumentBuilder<JsonElement.Mutable> objDoc = JsonElement.CreateBuilder(
+                env.Workspace,
+                in ctx,
+                static (in ConstKeyObjectBuildContext c, ref JsonElement.ObjectBuilder builder) =>
+                {
+                    for (int i = 0; i < c.Values.Length; i++)
+                    {
+                        var valueResult = c.Values[i](c.Input, c.Env);
 
-            for (int i = 0; i < values.Length; i++)
+                        if (valueResult.IsLambda)
+                        {
+                            // Lambda values serialize as empty strings in JSON, but we preserve
+                            // the reference via Environment side-channel so callers can retrieve them.
+                            c.Env.TempObjectLambdas ??= new Dictionary<string, LambdaValue>();
+                            c.Env.TempObjectLambdas[c.KeyStrings[i]] = valueResult.Lambda!;
+                            builder.AddProperty(c.KeyUtf8[i], JsonataHelpers.EmptyString());
+                            continue;
+                        }
+
+                        if (valueResult.IsUndefined)
+                        {
+                            continue;
+                        }
+
+                        if (valueResult.IsNonFinite)
+                        {
+                            throw new JsonataException("D1001", $"Number out of range: {valueResult.NonFiniteValue}", 0);
+                        }
+
+                        if (valueResult.IsSingleton)
+                        {
+                            // Fast path: raw doubles (from arithmetic) bypass FixedJsonValueDocument.
+                            if (valueResult.TryGetDouble(out double d))
+                            {
+                                builder.AddProperty(c.KeyUtf8[i], d);
+                            }
+                            else
+                            {
+                                builder.AddProperty(c.KeyUtf8[i], valueResult.FirstOrDefault);
+                            }
+                        }
+                        else
+                        {
+                            // Multi-value result → build inline array
+                            builder.AddProperty(
+                                c.KeyUtf8[i],
+                                valueResult,
+                                static (in Sequence seq, ref JsonElement.ArrayBuilder ab) =>
+                                {
+                                    for (int j = 0; j < seq.Count; j++)
+                                    {
+                                        ab.AddItem(seq[j]);
+                                    }
+                                });
+                        }
+                    }
+                },
+                values.Length);
+
+            var lambdas = env.TempObjectLambdas;
+            env.TempObjectLambdas = null;
+
+            if (lambdas is not null)
             {
-                var valueResult = values[i](input, env);
-
-                if (valueResult.IsLambda)
-                {
-                    // Lambda values require the general path for ObjectLambdas tracking.
-                    // Fall through to the general constructor for this rare case.
-                    return CompileObjectConstructorConstantKeysFallbackLambda(
-                        objRoot, keyStrings, keyUtf8, values, i, valueResult, input, env);
-                }
-
-                if (valueResult.IsUndefined)
-                {
-                    continue;
-                }
-
-                if (valueResult.IsNonFinite)
-                {
-                    throw new JsonataException("D1001", $"Number out of range: {valueResult.NonFiniteValue}", 0);
-                }
-
-                if (valueResult.IsSingleton)
-                {
-                    // Fast path: raw doubles (from arithmetic) bypass FixedJsonValueDocument
-                    // by writing directly through Source(double) → SimpleTypesBacking.
-                    if (valueResult.TryGetDouble(out double d))
-                    {
-                        objRoot.SetProperty(keyUtf8[i], (JsonElement.Source)d);
-                    }
-                    else
-                    {
-                        objRoot.SetProperty(keyUtf8[i], valueResult.FirstOrDefault);
-                    }
-                }
-                else
-                {
-                    objRoot.SetProperty(keyUtf8[i], JsonataHelpers.ArrayFromSequence(valueResult, env.Workspace));
-                }
+                return new Sequence((JsonElement)objDoc.RootElement, lambdas);
             }
 
-            return new Sequence((JsonElement)objRoot);
+            return new Sequence((JsonElement)objDoc.RootElement);
         };
     }
 
     /// <summary>
-    /// Handles the rare case where a constant-key object constructor encounters a lambda value.
-    /// Completes the remaining pairs using string keys (needed for ObjectLambdas dictionary).
+    /// Context struct for the CVB object builder callback in constant-key object construction.
+    /// Passed by <c>in</c> reference to avoid heap allocation.
     /// </summary>
-    private static Sequence CompileObjectConstructorConstantKeysFallbackLambda(
-        JsonElement.Mutable objRoot,
-        string[] keyStrings,
+    private readonly struct ConstKeyObjectBuildContext(
         byte[][] keyUtf8,
+        string[] keyStrings,
         ExpressionEvaluator[] values,
-        int lambdaIndex,
-        Sequence lambdaResult,
-        in JsonElement input,
+        JsonElement input,
         Environment env)
     {
-        var lambdaProps = new Dictionary<string, LambdaValue>();
-        lambdaProps[keyStrings[lambdaIndex]] = lambdaResult.Lambda!;
-        objRoot.SetProperty(keyStrings[lambdaIndex], JsonataHelpers.EmptyString());
+        public readonly byte[][] KeyUtf8 = keyUtf8;
+        public readonly string[] KeyStrings = keyStrings;
+        public readonly ExpressionEvaluator[] Values = values;
+        public readonly JsonElement Input = input;
+        public readonly Environment Env = env;
+    }
 
-        for (int i = lambdaIndex + 1; i < values.Length; i++)
-        {
-            var valueResult = values[i](input, env);
-
-            if (valueResult.IsLambda)
-            {
-                lambdaProps[keyStrings[i]] = valueResult.Lambda!;
-                objRoot.SetProperty(keyStrings[i], JsonataHelpers.EmptyString());
-                continue;
-            }
-
-            if (valueResult.IsUndefined)
-            {
-                continue;
-            }
-
-            if (valueResult.IsNonFinite)
-            {
-                throw new JsonataException("D1001", $"Number out of range: {valueResult.NonFiniteValue}", 0);
-            }
-
-            if (valueResult.IsSingleton)
-            {
-                objRoot.SetProperty(keyUtf8[i], valueResult.FirstOrDefault);
-            }
-            else
-            {
-                objRoot.SetProperty(keyUtf8[i], JsonataHelpers.ArrayFromSequence(valueResult, env.Workspace));
-            }
-        }
-
-        return new Sequence((JsonElement)objRoot, lambdaProps);
+    /// <summary>
+    /// Context struct for the CVB object builder callback in dynamic-key object construction.
+    /// Passed by <c>in</c> reference to avoid heap allocation.
+    /// </summary>
+    private readonly struct DynKeyObjectBuildContext(
+        (ExpressionEvaluator Key, ExpressionEvaluator Value)[] pairs,
+        JsonElement[]? seenKeyElements,
+        int[]? seenPairIndices,
+        JsonElement input,
+        Environment env)
+    {
+        public readonly (ExpressionEvaluator Key, ExpressionEvaluator Value)[] Pairs = pairs;
+        public readonly JsonElement[]? SeenKeyElements = seenKeyElements;
+        public readonly int[]? SeenPairIndices = seenPairIndices;
+        public readonly JsonElement Input = input;
+        public readonly Environment Env = env;
     }
 
     private static ExpressionEvaluator CompileFunctionCall(FunctionCallNode func)
