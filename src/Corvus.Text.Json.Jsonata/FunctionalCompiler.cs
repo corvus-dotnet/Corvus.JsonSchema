@@ -2197,7 +2197,11 @@ internal static class FunctionalCompiler
                 // Phase 1: Build cross-join tuples.
                 // For each outer element × each inner element, record the tuple.
                 // (outerIdx, outerElement, innerElement, originalInnerIdx)
-                var tuples = new List<(int OuterIdx, JsonElement OuterEl, JsonElement InnerEl, int InnerIdx)>();
+                int maxTuples = outerElements.Count * innerElements.Count;
+                var tuplesArray = maxTuples > 0
+                    ? ArrayPool<(int OuterIdx, JsonElement OuterEl, JsonElement InnerEl, int InnerIdx)>.Shared.Rent(maxTuples)
+                    : null;
+                int tupleCount = 0;
                 for (int oi = 0; oi < outerElements.Count; oi++)
                 {
                     var outerEl = outerElements[oi];
@@ -2212,7 +2216,7 @@ internal static class FunctionalCompiler
 
                     for (int ii = 0; ii < innerElements.Count; ii++)
                     {
-                        tuples.Add((oi, outerEl, innerElements[ii], ii));
+                        tuplesArray![tupleCount++] = (oi, outerEl, innerElements[ii], ii);
                     }
                 }
 
@@ -2226,8 +2230,9 @@ internal static class FunctionalCompiler
 
                     for (int s = 0; s < stageEvaluators.Length; s++)
                     {
-                        if (tuples.Count == 0)
+                        if (tupleCount == 0)
                         {
+                            if (tuplesArray is not null) { ArrayPool<(int, JsonElement, JsonElement, int)>.Shared.Return(tuplesArray); }
                             return Sequence.Undefined;
                         }
 
@@ -2237,9 +2242,9 @@ internal static class FunctionalCompiler
                         {
                             // Sort stage — sort all tuples' inner elements
                             var sortBuilder = default(SequenceBuilder);
-                            for (int t = 0; t < tuples.Count; t++)
+                            for (int t = 0; t < tupleCount; t++)
                             {
-                                sortBuilder.Add(tuples[t].InnerEl);
+                                sortBuilder.Add(tuplesArray![t].InnerEl);
                             }
 
                             if (sortBuilder.Count > 1)
@@ -2265,7 +2270,7 @@ internal static class FunctionalCompiler
                         {
                             // Index binding stage: assign position index to each tuple
                             var varNode = (VariableNode)stageAnnotations!.Stages[s];
-                            for (int t = 0; t < tuples.Count; t++)
+                            for (int t = 0; t < tupleCount; t++)
                             {
                                 env.Bind(varNode.Name, Sequence.FromDouble(t, env.Workspace));
                             }
@@ -2274,11 +2279,11 @@ internal static class FunctionalCompiler
                             continue;
                         }
 
-                        // Filter or numeric index stage
-                        var survivingTuples = new List<(int OuterIdx, JsonElement OuterEl, JsonElement InnerEl, int InnerIdx)>();
-                        for (int t = 0; t < tuples.Count; t++)
+                        // Filter or numeric index stage — filter in-place
+                        int writeIdx = 0;
+                        for (int t = 0; t < tupleCount; t++)
                         {
-                            var tuple = tuples[t];
+                            var tuple = tuplesArray![t];
 
                             // Re-bind both outer and inner variables
                             env.Bind(outerFocusVar, new Sequence(tuple.OuterEl));
@@ -2309,7 +2314,7 @@ internal static class FunctionalCompiler
                             {
                                 if (firstResult.ValueKind == JsonValueKind.True)
                                 {
-                                    survivingTuples.Add(tuple);
+                                    tuplesArray![writeIdx++] = tuple;
                                 }
 
                                 continue;
@@ -2321,12 +2326,12 @@ internal static class FunctionalCompiler
                                 int idx = (int)Math.Floor(singleIdx);
                                 if (idx < 0)
                                 {
-                                    idx = tuples.Count + idx;
+                                    idx = tupleCount + idx;
                                 }
 
-                                if (idx == t && idx >= 0 && idx < tuples.Count)
+                                if (idx == t && idx >= 0 && idx < tupleCount)
                                 {
-                                    survivingTuples.Add(tuple);
+                                    tuplesArray![writeIdx++] = tuple;
                                 }
 
                                 continue;
@@ -2334,16 +2339,17 @@ internal static class FunctionalCompiler
 
                             if (IsTruthy(result))
                             {
-                                survivingTuples.Add(tuple);
+                                tuplesArray![writeIdx++] = tuple;
                             }
                         }
 
-                        tuples = survivingTuples;
+                        tupleCount = writeIdx;
                     }
                 }
 
-                if (tuples.Count == 0)
+                if (tupleCount == 0)
                 {
+                    if (tuplesArray is not null) { ArrayPool<(int, JsonElement, JsonElement, int)>.Shared.Return(tuplesArray); }
                     return Sequence.Undefined;
                 }
 
@@ -2352,9 +2358,9 @@ internal static class FunctionalCompiler
                 var resultBuilder = default(SequenceBuilder);
                 int remainingStart = innerStepIdx + 1;
 
-                for (int t = 0; t < tuples.Count; t++)
+                for (int t = 0; t < tupleCount; t++)
                 {
-                    var tuple = tuples[t];
+                    var tuple = tuplesArray![t];
 
                     // Re-bind outer variables
                     env.Bind(outerFocusVar, new Sequence(tuple.OuterEl));
@@ -2405,6 +2411,7 @@ internal static class FunctionalCompiler
                     }
                 }
 
+                if (tuplesArray is not null) { ArrayPool<(int, JsonElement, JsonElement, int)>.Shared.Return(tuplesArray); }
                 return resultBuilder.ToSequence();
             }
 
