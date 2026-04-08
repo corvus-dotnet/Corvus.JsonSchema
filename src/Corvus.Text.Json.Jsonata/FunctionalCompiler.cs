@@ -1193,6 +1193,13 @@ internal static class FunctionalCompiler
             {
                 Sequence current = initial;
 
+                // Tracks whether we own the backing array of `current` and are responsible
+                // for returning it to ArrayPool. Set true when the multi-value branch
+                // creates `current` via SequenceBuilder.ToSequence(). Cleared before
+                // dispatching to sub-evaluators (focus/ancestor/index/tuple) that take
+                // ownership of current's elements.
+                bool currentArrayOwned = false;
+
                 // Per-element group indices for tuple-aware sort.
                 // When non-null, each element in current has a corresponding group index
                 // used to restore index variable bindings after sorting.
@@ -1216,6 +1223,8 @@ internal static class FunctionalCompiler
                     // per-element so each element carries its correct ancestor binding.
                     if (labels is not null && focusVar is null && indexVar is null)
                     {
+                        // Relinquish ownership — EvalAncestorStep iterates current's elements.
+                        if (currentArrayOwned) { current.ReturnBackingArray(); currentArrayOwned = false; }
                         return EvalAncestorStep(current, stepIdx);
                     }
 
@@ -1227,6 +1236,7 @@ internal static class FunctionalCompiler
                     var tLabels = tupleLabels[stepIdx];
                     if (tLabels is not null)
                     {
+                        if (currentArrayOwned) { current.ReturnBackingArray(); currentArrayOwned = false; }
                         return EvalTupleBlockStep(current, stepIdx, tLabels);
                     }
 
@@ -1237,6 +1247,7 @@ internal static class FunctionalCompiler
                     // focus-bound steps are chained (e.g. loans@$l.books@$b).
                     if (focusVar is not null)
                     {
+                        if (currentArrayOwned) { current.ReturnBackingArray(); currentArrayOwned = false; }
                         return EvalFocusStep(current, stepIdx);
                     }
 
@@ -1261,6 +1272,7 @@ internal static class FunctionalCompiler
 
                         if (downstreamSortIdx < 0)
                         {
+                            if (currentArrayOwned) { current.ReturnBackingArray(); currentArrayOwned = false; }
                             return EvalIndexStep(current, stepIdx);
                         }
                         else if (downstreamSortIdx == stepIdx + 1)
@@ -1271,6 +1283,7 @@ internal static class FunctionalCompiler
                         {
                             // Sort is downstream but not immediate — evaluate index step
                             // and intermediate steps, then sort globally with index tracking.
+                            if (currentArrayOwned) { current.ReturnBackingArray(); currentArrayOwned = false; }
                             return EvalIndexWithSort(current, stepIdx, downstreamSortIdx);
                         }
                     }
@@ -1303,6 +1316,9 @@ internal static class FunctionalCompiler
                                         ? tupleGroupIndices[i] : i);
                                 }
                             }
+
+                            // All elements copied out of current — return its backing array.
+                            if (currentArrayOwned) { current.ReturnBackingArray(); currentArrayOwned = false; }
 
                             if (sortElems.Count > 1)
                             {
@@ -1355,6 +1371,10 @@ internal static class FunctionalCompiler
                         else
                         {
                             var sortElements = CollectFlatElements(current);
+
+                            // All elements copied out — return current's backing array.
+                            if (currentArrayOwned) { current.ReturnBackingArray(); currentArrayOwned = false; }
+
                             if (sortElements.Count <= 1)
                             {
                                 if (sortElements.Count == 1)
@@ -1393,6 +1413,7 @@ internal static class FunctionalCompiler
                             }
 
                             current = expandBuilder.ToSequence();
+                            currentArrayOwned = current.Count >= 2;
                         }
 
                         continue;
@@ -1431,6 +1452,7 @@ internal static class FunctionalCompiler
                         }
 
                         current = expander.ToSequence();
+                        currentArrayOwned = current.Count >= 2;
                     }
 
                     // Per-element filter stages are only applied for steps after the first
@@ -1468,7 +1490,13 @@ internal static class FunctionalCompiler
                     }
                     else
                     {
-                        // Multi-value: map step over all values
+                        // Multi-value: map step over all values.
+                        // We need to return current's backing array after all elements are
+                        // copied out. Save the old sequence so we can return after the loop.
+                        Sequence previousCurrent = currentArrayOwned ? current : default;
+                        bool hadOwnedArray = currentArrayOwned;
+                        currentArrayOwned = false;
+
                         var builder = default(SequenceBuilder);
                         for (int i = 0; i < current.Count; i++)
                         {
@@ -1518,9 +1546,17 @@ internal static class FunctionalCompiler
                             {
                                 builder.AddRange(stepResult);
                             }
+
+                            // All elements from stepResult have been value-copied into builder.
+                            stepResult.ReturnBackingArray();
                         }
 
+                        // All elements have been value-copied out of previousCurrent.
+                        // Safe to return its backing array now.
+                        if (hadOwnedArray) { previousCurrent.ReturnBackingArray(); }
+
                         current = builder.ToSequence();
+                        currentArrayOwned = current.Count >= 2;
                     }
 
                     // Apply stages globally:
@@ -1528,6 +1564,13 @@ internal static class FunctionalCompiler
                     // - For stepIdx > 0: only sort stages (filter stages were applied per-element)
                     if (stages[stepIdx] is not null)
                     {
+                        // ApplyStages reads from current then produces a new Sequence.
+                        // We can't return current's array before the call (it still reads from it).
+                        // Instead, save the owned flag and return after stages replace current.
+                        bool stagesHadOwnedArray = currentArrayOwned;
+                        Sequence stagesPrevious = currentArrayOwned ? current : default;
+                        currentArrayOwned = false;
+
                         if (stepIdx == 0)
                         {
                             current = ApplyStages(current, stages[stepIdx]!, stageIsSortFlags[stepIdx]!, env, indexVars[stepIdx], stageIndexBindingVars[stepIdx], constantIntStageValues[stepIdx]);
@@ -1536,6 +1579,8 @@ internal static class FunctionalCompiler
                         {
                             current = ApplySortStagesOnly(current, stages[stepIdx]!, stageIsSortFlags[stepIdx]!, env);
                         }
+
+                        if (stagesHadOwnedArray) { stagesPrevious.ReturnBackingArray(); }
                     }
                 }
 
@@ -1543,6 +1588,8 @@ internal static class FunctionalCompiler
                 // focus-bound paths handle group-by inside EvalFocusStep).
                 if (startStep == 0 && groupByPairs is not null)
                 {
+                    // GroupBy consumes current's elements — return our array.
+                    if (currentArrayOwned) { current.ReturnBackingArray(); currentArrayOwned = false; }
                     current = ApplyGroupBy(current, groupByPairs, env, tupleIndexVar, tupleGroupIndices);
                 }
 
@@ -1556,6 +1603,7 @@ internal static class FunctionalCompiler
                     current = MaterializeAsArray(current, env.Workspace);
                 }
 
+                // Don't return current's array here — caller takes ownership.
                 return current;
             }
 
@@ -1786,10 +1834,13 @@ internal static class FunctionalCompiler
                         {
                             var flat = FlattenArrayStep(el, step, env, isConsArrayStep[stepIdx]);
                             builder.AddRange(flat);
+                            flat.ReturnBackingArray();
                         }
                         else
                         {
-                            builder.AddRange(step(el, env));
+                            var sr = step(el, env);
+                            builder.AddRange(sr);
+                            sr.ReturnBackingArray();
                         }
                     }
 
@@ -1826,6 +1877,9 @@ internal static class FunctionalCompiler
                     }
                 }
 
+                // All elements copied out — return focusResult's backing array.
+                focusResult.ReturnBackingArray();
+
                 // If the next step is a sort, apply it to the focus elements now.
                 // The sort modifies the iteration order (e.g. Employee@$e^($e.Surname)
                 // sorts employees before the cross-join). We consume the sort step here
@@ -1846,6 +1900,8 @@ internal static class FunctionalCompiler
                         {
                             elements.Add(sortedSeq[si]);
                         }
+
+                        // Note: FocusSort returns a non-pooled array — do NOT call ReturnBackingArray.
                     }
                     else
                     {
@@ -1950,6 +2006,9 @@ internal static class FunctionalCompiler
                             elements.Add(filtered[fi]);
                         }
                     }
+
+                    // All elements copied out — return filtered's backing array.
+                    filtered.ReturnBackingArray();
                 }
 
                 // Cross-join mode: when the next step is also a focus step with
@@ -2020,10 +2079,13 @@ internal static class FunctionalCompiler
                         {
                             mergeObjects!.Add(subResult[j]);
                         }
+
+                        subResult.ReturnBackingArray();
                     }
                     else
                     {
                         resultBuilder.AddRange(subResult);
+                        subResult.ReturnBackingArray();
                     }
                 }
 
@@ -2084,11 +2146,15 @@ internal static class FunctionalCompiler
                         var parentEl = parentContext[i];
                         if (parentEl.ValueKind == JsonValueKind.Array && shouldFlatten)
                         {
-                            builder.AddRange(FlattenArrayStep(parentEl, innerStep, env, isConsArrayStep[innerStepIdx]));
+                            var flat = FlattenArrayStep(parentEl, innerStep, env, isConsArrayStep[innerStepIdx]);
+                            builder.AddRange(flat);
+                            flat.ReturnBackingArray();
                         }
                         else
                         {
-                            builder.AddRange(innerStep(parentEl, env));
+                            var sr = innerStep(parentEl, env);
+                            builder.AddRange(sr);
+                            sr.ReturnBackingArray();
                         }
                     }
 
@@ -2124,6 +2190,9 @@ internal static class FunctionalCompiler
                         innerElements.Add(innerFocusResult[i]);
                     }
                 }
+
+                // All elements copied out — return innerFocusResult's backing array.
+                innerFocusResult.ReturnBackingArray();
 
                 // Phase 1: Build cross-join tuples.
                 // For each outer element × each inner element, record the tuple.
@@ -2323,6 +2392,7 @@ internal static class FunctionalCompiler
                     if (!subResult.IsUndefined)
                     {
                         resultBuilder.AddRange(subResult);
+                        subResult.ReturnBackingArray();
                     }
                 }
 
@@ -2427,6 +2497,9 @@ internal static class FunctionalCompiler
                     if (stepIdx + 1 < steps.Length)
                     {
                         subResult = EvalPathFrom(stepResult, stepIdx + 1);
+
+                        // stepResult was consumed by EvalPathFrom — return its array.
+                        stepResult.ReturnBackingArray();
                     }
                     else
                     {
@@ -2477,6 +2550,9 @@ internal static class FunctionalCompiler
                             }
                         }
                     }
+
+                    // All elements copied out — return subResult's backing array.
+                    subResult.ReturnBackingArray();
                 }
 
                 if (applyGroupByHere && groupKeys!.Count > 0)
@@ -2845,10 +2921,13 @@ internal static class FunctionalCompiler
                         {
                             var flat = FlattenArrayStep(el, step, env, isConsArrayStep[stepIdx]);
                             builder.AddRange(flat);
+                            flat.ReturnBackingArray();
                         }
                         else
                         {
-                            builder.AddRange(step(el, env));
+                            var sr = step(el, env);
+                            builder.AddRange(sr);
+                            sr.ReturnBackingArray();
                         }
                     }
 
@@ -2884,6 +2963,9 @@ internal static class FunctionalCompiler
                         elements.Add(stepResult[i]);
                     }
                 }
+
+                // All elements copied out — return stepResult's backing array.
+                stepResult.ReturnBackingArray();
 
                 // Determine group-by handling — same logic as EvalFocusStep
                 bool hasGroupBy = groupByPairs is not null;
@@ -2925,6 +3007,7 @@ internal static class FunctionalCompiler
                     }
 
                     resultBuilder.AddRange(subResult);
+                    subResult.ReturnBackingArray();
                 }
 
                 if (applyGroupByHere && groupKeys!.Count > 0)
@@ -3589,6 +3672,10 @@ internal static class FunctionalCompiler
         // expressions like [$pos>=2] reference the correct position.
         string? activeIndexBinding = null;
 
+        // Track whether we own current's backing array (created by a stage within this method).
+        // The initial `current` is owned by the caller — we don't return it.
+        bool currentArrayOwned = false;
+
         for (int s = 0; s < stageEvaluators.Length; s++)
         {
             if (current.IsUndefined)
@@ -3616,6 +3703,7 @@ internal static class FunctionalCompiler
                         }
 
                         current = expanded.ToSequence();
+                        currentArrayOwned = current.Count >= 2;
                     }
                 }
 
@@ -3634,28 +3722,34 @@ internal static class FunctionalCompiler
                     {
                         if (idx < el.GetArrayLength())
                         {
+                            if (currentArrayOwned) { current.ReturnBackingArray(); currentArrayOwned = false; }
                             current = new Sequence(el[idx]);
                         }
                         else
                         {
+                            if (currentArrayOwned) { current.ReturnBackingArray(); }
                             return Sequence.Undefined;
                         }
                     }
                     else
                     {
                         // Singleton non-array: index 0 returns the value itself
+                        if (idx != 0 && currentArrayOwned) { current.ReturnBackingArray(); currentArrayOwned = false; }
                         current = idx == 0 ? current : Sequence.Undefined;
                     }
                 }
                 else
                 {
-                    // Multi-value sequence: index directly
+                    // Multi-value sequence: index directly — element is value-copied
                     if (idx < current.Count)
                     {
-                        current = new Sequence(current[idx]);
+                        JsonElement el = current[idx];
+                        if (currentArrayOwned) { current.ReturnBackingArray(); currentArrayOwned = false; }
+                        current = new Sequence(el);
                     }
                     else
                     {
+                        if (currentArrayOwned) { current.ReturnBackingArray(); }
                         return Sequence.Undefined;
                     }
                 }
@@ -3689,6 +3783,9 @@ internal static class FunctionalCompiler
                     elements.Add(current[i]);
                 }
             }
+
+            // All elements copied out — return old current's backing array.
+            if (currentArrayOwned) { current.ReturnBackingArray(); currentArrayOwned = false; }
 
             if (isSortStage[s])
             {
@@ -3724,11 +3821,13 @@ internal static class FunctionalCompiler
                     }
 
                     sortElements.ReturnArray();
+                    currentArrayOwned = false;
                 }
                 else
                 {
                     var arrayInput = JsonataHelpers.ArrayFromBuilder(ref sortElements, env.Workspace);
                     current = stage(arrayInput, env);
+                    currentArrayOwned = current.Count >= 2;
                 }
 
                 continue;
@@ -3883,8 +3982,10 @@ internal static class FunctionalCompiler
 
             elements.ReturnArray();
             current = builder.ToSequence();
+            currentArrayOwned = current.Count >= 2;
         }
 
+        // Don't return current's array — caller takes ownership.
         return current;
     }
 
@@ -3924,6 +4025,8 @@ internal static class FunctionalCompiler
             }
         }
 
+        bool currentArrayOwned = false;
+
         for (int s = 0; s < stageEvaluators.Length; s++)
         {
             if (current.IsUndefined)
@@ -3957,6 +4060,9 @@ internal static class FunctionalCompiler
                 }
             }
 
+            // All elements copied out — return old current's backing array.
+            if (currentArrayOwned) { current.ReturnBackingArray(); currentArrayOwned = false; }
+
             if (isSortStage[s])
             {
                 var sortElements = default(SequenceBuilder);
@@ -3986,11 +4092,13 @@ internal static class FunctionalCompiler
                     }
 
                     sortElements.ReturnArray();
+                    currentArrayOwned = false;
                 }
                 else
                 {
                     var arrayInput = JsonataHelpers.ArrayFromBuilder(ref sortElements, env.Workspace);
                     current = stage(arrayInput, env);
+                    currentArrayOwned = current.Count >= 2;
                 }
 
                 // Sort stages reorder elements; original index tracking becomes
@@ -4137,6 +4245,7 @@ internal static class FunctionalCompiler
 
             elements.ReturnArray();
             current = builder.ToSequence();
+            currentArrayOwned = current.Count >= 2;
             currentIndices = nextIndices?.ToArray();
         }
 
@@ -4146,6 +4255,7 @@ internal static class FunctionalCompiler
             survivingOriginalIndices.AddRange(currentIndices);
         }
 
+        // Don't return current's array — caller takes ownership.
         return current;
     }
 
@@ -4930,7 +5040,7 @@ internal static class FunctionalCompiler
             }
 
             // Build individual number elements for the range
-            var elements = new JsonElement[(int)count];
+            var elements = ArrayPool<JsonElement>.Shared.Rent((int)count);
             for (int i = iStart; i <= iEnd; i++)
             {
                 elements[i - iStart] = JsonataHelpers.NumberFromDouble(i, env.Workspace);
@@ -6004,7 +6114,7 @@ internal static class FunctionalCompiler
             return a.CompareTo(b);
         }));
 
-        var sorted = new JsonElement[elements.Count];
+        var sorted = ArrayPool<JsonElement>.Shared.Rent(elements.Count);
         for (int i = 0; i < elements.Count; i++)
         {
             sorted[i] = elements[indices[i]];
@@ -6012,7 +6122,7 @@ internal static class FunctionalCompiler
 
         ReturnSortIndices(indices);
 
-        return new Sequence(sorted, sorted.Length);
+        return new Sequence(sorted, elements.Count);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -99,6 +99,9 @@ public sealed class JsonataEvaluator
                 ? result.FirstOrDefault
                 : JsonataHelpers.ArrayFromSequence(result, workspace);
 
+            // All elements consumed — return the backing array to the pool.
+            result.ReturnBackingArray();
+
             if (resultElement.ValueKind == JsonValueKind.Undefined)
             {
                 return default;
@@ -191,6 +194,9 @@ public sealed class JsonataEvaluator
             JsonElement resultElement = result.IsSingleton
                 ? result.FirstOrDefault
                 : JsonataHelpers.ArrayFromSequence(result, workspace);
+
+            // All elements consumed — return the backing array to the pool.
+            result.ReturnBackingArray();
 
             if (resultElement.ValueKind == JsonValueKind.Undefined)
             {
