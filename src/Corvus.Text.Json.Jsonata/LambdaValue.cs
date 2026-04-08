@@ -73,12 +73,13 @@ internal sealed class LambdaValue
     /// Invokes the lambda with the given arguments.
     /// </summary>
     /// <param name="args">The evaluated argument sequences.</param>
+    /// <param name="argsCount">The number of valid arguments in <paramref name="args"/>.</param>
     /// <param name="input">The current context element.</param>
     /// <param name="callerEnv">The caller's environment.</param>
     /// <returns>The result of invoking the lambda body.</returns>
-    public Sequence Invoke(Sequence[] args, in JsonElement input, Environment callerEnv)
+    public Sequence Invoke(Sequence[] args, int argsCount, in JsonElement input, Environment callerEnv)
     {
-        var result = this.InvokeBody(args, input, callerEnv);
+        var result = this.InvokeBody(args, argsCount, input, callerEnv);
 
         // Trampoline: when the body returns a tail-call continuation,
         // call the target's InvokeBody directly instead of recursing through Invoke.
@@ -86,7 +87,7 @@ internal sealed class LambdaValue
         while (result.IsTailCall)
         {
             var tc = result.TailCall!;
-            result = tc.Target.InvokeBody(tc.Args, tc.Input, tc.CallerEnv);
+            result = tc.Target.InvokeBody(tc.Args, tc.ArgsCount, tc.Input, tc.CallerEnv);
         }
 
         return result;
@@ -97,13 +98,14 @@ internal sealed class LambdaValue
     /// Called by the trampoline in <see cref="Invoke"/> and also for the initial invocation.
     /// </summary>
     /// <param name="args">The evaluated argument sequences.</param>
+    /// <param name="argsCount">The number of valid arguments in <paramref name="args"/>.</param>
     /// <param name="input">The current context element.</param>
     /// <param name="callerEnv">The caller's environment.</param>
     /// <returns>
     /// The result of evaluating the body. May be a <see cref="TailCallContinuation"/>
     /// if the body ends with a tail-position function call.
     /// </returns>
-    internal Sequence InvokeBody(Sequence[] args, in JsonElement input, Environment callerEnv)
+    internal Sequence InvokeBody(Sequence[] args, int argsCount, in JsonElement input, Environment callerEnv)
     {
         if (this.NativeFunc is not null)
         {
@@ -120,22 +122,22 @@ internal sealed class LambdaValue
         // from the start, and any still-unfilled context params get the input.
         Sequence[] effectiveArgs = args;
         Sequence[]? rentedArgs = null;
-        if (this.contextArgCount > 0 && args.Length < this.paramNames.Length)
+        if (this.contextArgCount > 0 && argsCount < this.paramNames.Length)
         {
             rentedArgs = ArrayPool<Sequence>.Shared.Rent(this.paramNames.Length);
             effectiveArgs = rentedArgs;
 
             // Regular params (after '-') are filled from the end of explicit args
-            int regularToFill = Math.Min(this.regularArgCount, args.Length);
+            int regularToFill = Math.Min(this.regularArgCount, argsCount);
             int argsForRegular = regularToFill;
             int regularStart = this.paramNames.Length - this.regularArgCount;
             for (int i = 0; i < regularToFill; i++)
             {
-                effectiveArgs[regularStart + i] = args[args.Length - argsForRegular + i];
+                effectiveArgs[regularStart + i] = args[argsCount - argsForRegular + i];
             }
 
             // Remaining explicit args fill context params from the left
-            int argsForContext = args.Length - argsForRegular;
+            int argsForContext = argsCount - argsForRegular;
             for (int i = 0; i < argsForContext; i++)
             {
                 effectiveArgs[i] = args[i];
@@ -151,17 +153,17 @@ internal sealed class LambdaValue
         try
         {
             // Bind parameters
+            int effectiveCount = rentedArgs is not null ? this.paramNames.Length : argsCount;
             for (int i = 0; i < this.paramNames.Length; i++)
             {
                 invokeEnv.Bind(
                     this.paramNames[i],
-                    i < effectiveArgs.Length ? effectiveArgs[i] : Sequence.Undefined);
+                    i < effectiveCount ? effectiveArgs[i] : Sequence.Undefined);
             }
 
             // Validate argument types against the signature, if present
             if (this.signature is not null)
             {
-                int effectiveCount = rentedArgs is not null ? this.paramNames.Length : effectiveArgs.Length;
                 SignatureValidator.ValidateArgs(this.signature, effectiveArgs.AsSpan(0, effectiveCount), -1);
             }
 
@@ -205,11 +207,11 @@ internal sealed class LambdaValue
     /// functions do not use the environment for parameter binding.
     /// </para>
     /// </remarks>
-    internal Sequence InvokeReusing(Sequence[] args, in JsonElement input, Environment reuseEnv, Environment callerEnv)
+    internal Sequence InvokeReusing(Sequence[] args, int argsCount, in JsonElement input, Environment reuseEnv, Environment callerEnv)
     {
         if (this.NativeFunc is not null)
         {
-            return this.Invoke(args, input, callerEnv);
+            return this.Invoke(args, argsCount, input, callerEnv);
         }
 
         // Rebind parameters in the reused environment
@@ -217,12 +219,12 @@ internal sealed class LambdaValue
         {
             reuseEnv.Bind(
                 this.paramNames[i],
-                i < args.Length ? args[i] : Sequence.Undefined);
+                i < argsCount ? args[i] : Sequence.Undefined);
         }
 
         if (this.signature is not null)
         {
-            SignatureValidator.ValidateArgs(this.signature, args, -1);
+            SignatureValidator.ValidateArgs(this.signature, args.AsSpan(0, argsCount), -1);
         }
 
         var result = this.body(this.definingInput, reuseEnv);
@@ -231,7 +233,7 @@ internal sealed class LambdaValue
         while (result.IsTailCall)
         {
             var tc = result.TailCall!;
-            result = tc.Target.InvokeBody(tc.Args, tc.Input, tc.CallerEnv);
+            result = tc.Target.InvokeBody(tc.Args, tc.ArgsCount, tc.Input, tc.CallerEnv);
         }
 
         return result;

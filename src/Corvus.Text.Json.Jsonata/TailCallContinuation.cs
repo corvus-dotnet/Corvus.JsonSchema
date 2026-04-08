@@ -17,12 +17,14 @@ internal sealed class TailCallContinuation
     /// </summary>
     /// <param name="target">The function to invoke.</param>
     /// <param name="args">The evaluated argument sequences.</param>
+    /// <param name="argsCount">The number of valid arguments in <paramref name="args"/>.</param>
     /// <param name="input">The current input context element.</param>
     /// <param name="callerEnv">The caller's environment.</param>
-    public TailCallContinuation(LambdaValue target, Sequence[] args, in JsonElement input, Environment callerEnv)
+    public TailCallContinuation(LambdaValue target, Sequence[] args, int argsCount, in JsonElement input, Environment callerEnv)
     {
         this.Target = target;
         this.Args = args;
+        this.ArgsCount = argsCount;
         this.Input = input;
         this.CallerEnv = callerEnv;
     }
@@ -32,6 +34,9 @@ internal sealed class TailCallContinuation
 
     /// <summary>Gets the evaluated arguments.</summary>
     public Sequence[] Args { get; }
+
+    /// <summary>Gets the number of valid arguments in <see cref="Args"/>.</summary>
+    public int ArgsCount { get; }
 
     /// <summary>Gets the current input context.</summary>
     public JsonElement Input { get; }

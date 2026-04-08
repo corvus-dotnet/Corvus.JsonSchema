@@ -1630,7 +1630,7 @@ internal static class BuiltInFunctions
                     {
                         sortArgs[0] = new Sequence(a);
                         sortArgs[1] = new Sequence(b);
-                        var result = lambda.InvokeReusing(sortArgs, sortInput, invokeEnv, env);
+                        var result = lambda.InvokeReusing(sortArgs, 2, sortInput, invokeEnv, env);
                         if (result.IsUndefined)
                         {
                             return 0;
@@ -1649,7 +1649,7 @@ internal static class BuiltInFunctions
                         {
                             reverseArgs[0] = sortArgs[1];
                             reverseArgs[1] = sortArgs[0];
-                            var reverseResult = lambda.InvokeReusing(reverseArgs, sortInput, invokeEnv, env);
+                            var reverseResult = lambda.InvokeReusing(reverseArgs, 2, sortInput, invokeEnv, env);
                             if (!reverseResult.IsUndefined
                                 && reverseResult.FirstOrDefault.ValueKind == JsonValueKind.True)
                             {
@@ -1928,7 +1928,7 @@ internal static class BuiltInFunctions
                     lambdaArgs[1] = Sequence.FromDouble(i, env.Workspace);
                 }
 
-                var result = lambda.InvokeReusing(lambdaArgs, items[i], invokeEnv, env);
+                var result = lambda.InvokeReusing(lambdaArgs, 3, items[i], invokeEnv, env);
                 builder.AddRange(result);
             }
 
@@ -2031,7 +2031,7 @@ internal static class BuiltInFunctions
                         lambdaArgs[1] = Sequence.FromDouble(i, env.Workspace);
                     }
 
-                    var result = lambda.InvokeReusing(lambdaArgs, arr[i], invokeEnv, env);
+                    var result = lambda.InvokeReusing(lambdaArgs, 3, arr[i], invokeEnv, env);
                     if (FunctionalCompiler.IsTruthy(result))
                     {
                         filterRoot.AddItem(arr[i]);
@@ -2054,7 +2054,7 @@ internal static class BuiltInFunctions
                         lambdaArgs[1] = Sequence.FromDouble(i, env.Workspace);
                     }
 
-                    var result = lambda.InvokeReusing(lambdaArgs, seq[i], invokeEnv, env);
+                    var result = lambda.InvokeReusing(lambdaArgs, 3, seq[i], invokeEnv, env);
                     if (FunctionalCompiler.IsTruthy(result))
                     {
                         filterRoot.AddItem(seq[i]);
@@ -2197,7 +2197,7 @@ internal static class BuiltInFunctions
                     lambdaArgs[2] = Sequence.FromDouble(i, env.Workspace);
                 }
 
-                accumulator = lambda.Invoke(lambdaArgs, input, env);
+                accumulator = lambda.Invoke(lambdaArgs, 4, input, env);
             }
 
             items.ReturnArray();
@@ -2241,7 +2241,7 @@ internal static class BuiltInFunctions
             {
                 var valSeq = new Sequence(prop.Value);
                 var keySeq = new Sequence(JsonataHelpers.StringFromString(prop.Name, env.Workspace));
-                var result = lambda.Invoke(new[] { valSeq, keySeq }, input, env);
+                var result = lambda.Invoke(new[] { valSeq, keySeq }, 2, input, env);
                 if (!result.IsUndefined)
                 {
                     if (result.IsSingleton)
@@ -2565,6 +2565,7 @@ internal static class BuiltInFunctions
             {
                 var lambdaResult = lambda.Invoke(
                     new[] { new Sequence(elements[i]), Sequence.FromDouble(i, env.Workspace), arrSeq },
+                    3,
                     elements[i],
                     env);
                 if (FunctionalCompiler.IsTruthy(lambdaResult))
@@ -2625,7 +2626,7 @@ internal static class BuiltInFunctions
             {
                 var valSeq = new Sequence(prop.Value);
                 var keySeq = new Sequence(JsonataHelpers.StringFromString(prop.Name, env.Workspace));
-                var result = lambda.Invoke(new[] { valSeq, keySeq, objSeq }, input, env);
+                var result = lambda.Invoke(new[] { valSeq, keySeq, objSeq }, 3, input, env);
                 if (FunctionalCompiler.IsTruthy(result))
                 {
                     objRoot.SetProperty(prop.Name, prop.Value);
@@ -2778,7 +2779,7 @@ internal static class BuiltInFunctions
                 int matcherCount = 0;
 
                 // Call the matcher with the string
-                var matchResult = matcherLambda.Invoke(new[] { strSeq }, input, env);
+                var matchResult = matcherLambda.Invoke(new[] { strSeq }, 1, input, env);
 
                 while (!matchResult.IsUndefined && matcherCount < matcherLimit)
                 {
@@ -2822,7 +2823,7 @@ internal static class BuiltInFunctions
                     if (matchResult.ObjectLambdas?.TryGetValue("next", out LambdaValue? nextLambda) == true
                         && nextLambda is not null)
                     {
-                        matchResult = nextLambda.Invoke(Array.Empty<Sequence>(), input, env);
+                        matchResult = nextLambda.Invoke(Array.Empty<Sequence>(), 0, input, env);
                     }
                     else
                     {
@@ -3110,7 +3111,7 @@ internal static class BuiltInFunctions
             }
 
             JsonElement matchObj = JsonataHelpers.CreateMatchObject(m.Value, m.Index, groups, env.Workspace);
-            Sequence result = lambda.Invoke(new[] { new Sequence(matchObj) }, input, env);
+            Sequence result = lambda.Invoke(new[] { new Sequence(matchObj) }, 1, input, env);
 
             if (result.IsUndefined || result.FirstOrDefault.ValueKind != JsonValueKind.String)
             {

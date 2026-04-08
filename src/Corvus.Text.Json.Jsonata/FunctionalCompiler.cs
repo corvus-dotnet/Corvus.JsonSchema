@@ -5592,13 +5592,22 @@ internal static class FunctionalCompiler
                     // the user's function shadows the built-in
                     if (env.TryLookup(varName, out Sequence rebound) && rebound.IsLambda)
                     {
-                        var evalArgs = new Sequence[args.Length];
-                        for (int i = 0; i < args.Length; i++)
+                        int argCount = args.Length;
+                        var evalArgs = ArrayPool<Sequence>.Shared.Rent(argCount);
+                        for (int i = 0; i < argCount; i++)
                         {
                             evalArgs[i] = args[i](input, env);
                         }
 
-                        return rebound.Lambda!.Invoke(evalArgs, input, env);
+                        try
+                        {
+                            return rebound.Lambda!.Invoke(evalArgs, argCount, input, env);
+                        }
+                        finally
+                        {
+                            evalArgs.AsSpan(0, argCount).Clear();
+                            ArrayPool<Sequence>.Shared.Return(evalArgs);
+                        }
                     }
 
                     return builtInEval(input, env);
@@ -5625,19 +5634,35 @@ internal static class FunctionalCompiler
 
             if (funcResult.IsLambda)
             {
-                var evaluatedArgs = new Sequence[args.Length];
-                for (int i = 0; i < args.Length; i++)
-                {
-                    evaluatedArgs[i] = args[i](input, env);
-                }
+                int argCount = args.Length;
 
                 if (isTailCall)
                 {
-                    // Return a continuation for the caller's trampoline to handle
-                    return new Sequence(new TailCallContinuation(funcResult.Lambda!, evaluatedArgs, input, env));
+                    // Tail-call: args live in the continuation until the trampoline consumes them
+                    var evaluatedArgs = new Sequence[argCount];
+                    for (int i = 0; i < argCount; i++)
+                    {
+                        evaluatedArgs[i] = args[i](input, env);
+                    }
+
+                    return new Sequence(new TailCallContinuation(funcResult.Lambda!, evaluatedArgs, argCount, input, env));
                 }
 
-                return funcResult.Lambda!.Invoke(evaluatedArgs, input, env);
+                var rentedArgs = ArrayPool<Sequence>.Shared.Rent(argCount);
+                for (int i = 0; i < argCount; i++)
+                {
+                    rentedArgs[i] = args[i](input, env);
+                }
+
+                try
+                {
+                    return funcResult.Lambda!.Invoke(rentedArgs, argCount, input, env);
+                }
+                finally
+                {
+                    rentedArgs.AsSpan(0, argCount).Clear();
+                    ArrayPool<Sequence>.Shared.Return(rentedArgs);
+                }
             }
 
             if (suggestedBuiltIn is not null)
@@ -5810,14 +5835,23 @@ internal static class FunctionalCompiler
 
                 if (funcResult.IsLambda)
                 {
-                    var allArgs = new Sequence[originalArgs.Length + 1];
+                    int allArgCount = originalArgs.Length + 1;
+                    var allArgs = ArrayPool<Sequence>.Shared.Rent(allArgCount);
                     allArgs[0] = lhsResult;
                     for (int i = 0; i < originalArgs.Length; i++)
                     {
                         allArgs[i + 1] = originalArgs[i](input, env);
                     }
 
-                    return funcResult.Lambda!.Invoke(allArgs, input, env);
+                    try
+                    {
+                        return funcResult.Lambda!.Invoke(allArgs, allArgCount, input, env);
+                    }
+                    finally
+                    {
+                        allArgs.AsSpan(0, allArgCount).Clear();
+                        ArrayPool<Sequence>.Shared.Return(allArgs);
+                    }
                 }
 
                 return Sequence.Undefined;
@@ -5863,8 +5897,8 @@ internal static class FunctionalCompiler
                     var composedLambda = new LambdaValue(
                         (args, compInput, compEnv) =>
                         {
-                            var intermediate = lhsLambda.Invoke(args, compInput, compEnv);
-                            return rhsLambda.Invoke([intermediate], compInput, compEnv);
+                            var intermediate = lhsLambda.Invoke(args, args.Length, compInput, compEnv);
+                            return rhsLambda.Invoke([intermediate], 1, compInput, compEnv);
                         },
                         lhsLambda.Arity > 0 ? lhsLambda.Arity : 1);
                     return new Sequence(composedLambda);
@@ -5872,7 +5906,7 @@ internal static class FunctionalCompiler
 
                 // LHS is a value — invoke RHS with LHS as argument
                 var args = new[] { lhsResult };
-                return rhsResult.Lambda!.Invoke(args, input, env);
+                return rhsResult.Lambda!.Invoke(args, 1, input, env);
             }
 
             // If RHS is a regex, apply $contains semantics: string ~> /regex/ → boolean
@@ -6584,9 +6618,10 @@ internal static class FunctionalCompiler
                 return new Sequence(new LambdaValue(
                     (runtimeArgs, innerInput, innerEnv) =>
                     {
-                        var fullArgs = new Sequence[capturedArgs.Length];
+                        int fullArgCount = capturedArgs.Length;
+                        var fullArgs = ArrayPool<Sequence>.Shared.Rent(fullArgCount);
                         int pIdx = 0;
-                        for (int i = 0; i < capturedArgs.Length; i++)
+                        for (int i = 0; i < fullArgCount; i++)
                         {
                             if (capturedArgs[i] is null)
                             {
@@ -6599,7 +6634,15 @@ internal static class FunctionalCompiler
                             }
                         }
 
-                        return originalLambda.Invoke(fullArgs, innerInput, innerEnv);
+                        try
+                        {
+                            return originalLambda.Invoke(fullArgs, fullArgCount, innerInput, innerEnv);
+                        }
+                        finally
+                        {
+                            fullArgs.AsSpan(0, fullArgCount).Clear();
+                            ArrayPool<Sequence>.Shared.Return(fullArgs);
+                        }
                     },
                     placeholderCount));
             }
