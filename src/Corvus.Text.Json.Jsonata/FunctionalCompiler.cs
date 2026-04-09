@@ -174,6 +174,19 @@ internal static class FunctionalCompiler
             groupByPairs[g] = (Compile(group.Pairs[g].Key), Compile(group.Pairs[g].Value));
         }
 
+        // Fast path for single-pair NameNode key + value
+        if (group.Pairs is [var pair] && pair.Key is NameNode keyName && pair.Value is NameNode valueName)
+        {
+            byte[] keyPropUtf8 = System.Text.Encoding.UTF8.GetBytes(keyName.Value);
+            byte[] valuePropUtf8 = System.Text.Encoding.UTF8.GetBytes(valueName.Value);
+
+            return (in JsonElement input, Environment env) =>
+            {
+                var result = inner(input, env);
+                return ApplySimpleNamePairGroupBy(result, keyPropUtf8, valuePropUtf8, env);
+            };
+        }
+
         return (in JsonElement input, Environment env) =>
         {
             var result = inner(input, env);
@@ -1050,6 +1063,7 @@ internal static class FunctionalCompiler
         var isSortStep = new bool[path.Steps.Count];
         var sortTermsPerStep = new (ExpressionEvaluator Expr, bool Descending)[]?[path.Steps.Count];
         (ExpressionEvaluator Key, ExpressionEvaluator Value)[]? groupByPairs = null;
+        GroupBy? groupByAst = null;
 
         for (int i = 0; i < path.Steps.Count; i++)
         {
@@ -1134,6 +1148,7 @@ internal static class FunctionalCompiler
                 if (annotations.Group is not null)
                 {
                     var group = annotations.Group;
+                    groupByAst = group;
                     groupByPairs = new (ExpressionEvaluator, ExpressionEvaluator)[group.Pairs.Count];
                     for (int g = 0; g < group.Pairs.Count; g++)
                     {
@@ -1148,11 +1163,26 @@ internal static class FunctionalCompiler
         if (pathAnnotations?.Group is not null && groupByPairs is null)
         {
             var group = pathAnnotations.Group;
+            groupByAst = group;
             groupByPairs = new (ExpressionEvaluator, ExpressionEvaluator)[group.Pairs.Count];
             for (int g = 0; g < group.Pairs.Count; g++)
             {
                 groupByPairs[g] = (Compile(group.Pairs[g].Key), Compile(group.Pairs[g].Value));
             }
+        }
+
+        // Detect single-pair group-by with NameNode key + NameNode value.
+        // For this pattern, we can use the CVB object itself as the grouping accumulator,
+        // avoiding Dictionary/List allocations, string extraction, and 2-phase evaluation.
+        byte[]? simpleGroupByKeyPropUtf8 = null;
+        byte[]? simpleGroupByValuePropUtf8 = null;
+
+        if (groupByAst is not null && groupByPairs is { Length: 1 }
+            && groupByAst.Pairs[0].Key is NameNode keyNameNode
+            && groupByAst.Pairs[0].Value is NameNode valueNameNode)
+        {
+            simpleGroupByKeyPropUtf8 = System.Text.Encoding.UTF8.GetBytes(keyNameNode.Value);
+            simpleGroupByValuePropUtf8 = System.Text.Encoding.UTF8.GetBytes(valueNameNode.Value);
         }
 
         var keepSingleton = path.KeepSingletonArray;
@@ -1696,7 +1726,17 @@ internal static class FunctionalCompiler
                 {
                     // GroupBy consumes current's elements — return our array.
                     if (currentArrayOwned) { current.ReturnBackingArray(); currentArrayOwned = false; }
-                    current = ApplyGroupBy(current, groupByPairs, env, tupleIndexVar, tupleGroupIndices);
+
+                    // Fast path: single-pair group-by with NameNode key + value.
+                    // Uses the CVB object directly as the grouping accumulator.
+                    if (simpleGroupByKeyPropUtf8 is not null && tupleIndexVar is null)
+                    {
+                        current = ApplySimpleNamePairGroupBy(current, simpleGroupByKeyPropUtf8, simpleGroupByValuePropUtf8!, env);
+                    }
+                    else
+                    {
+                        current = ApplyGroupBy(current, groupByPairs, env, tupleIndexVar, tupleGroupIndices);
+                    }
                 }
 
                 // When the path has the KeepSingletonArray flag (from [] modifier),
@@ -3809,6 +3849,202 @@ internal static class FunctionalCompiler
         return new Sequence((JsonElement)objRoot);
     }
 
+    /// <summary>
+    /// Fast-path group-by for the common single-pair pattern where both key and value are
+    /// simple NameNode property accesses. Collects key-value pairs first, then groups and
+    /// builds the CVB object in a single pass with exactly one SetProperty per unique key.
+    /// Avoids Dictionary/List allocations, string extraction, and 2-phase evaluation.
+    /// </summary>
+    private static Sequence ApplySimpleNamePairGroupBy(
+        Sequence current,
+        byte[] keyPropUtf8,
+        byte[] valuePropUtf8,
+        Environment env)
+    {
+        if (current.IsUndefined)
+        {
+            return Sequence.Undefined;
+        }
+
+        // Phase 1: Collect (keyElement, valueElement) pairs from all elements.
+        // Use ArrayPool for the pair buffers.
+        int maxElements = CountSequenceElements(current);
+        if (maxElements == 0)
+        {
+            return Sequence.Undefined;
+        }
+
+        JsonElement[] keyBuffer = ArrayPool<JsonElement>.Shared.Rent(maxElements);
+        JsonElement[] valBuffer = ArrayPool<JsonElement>.Shared.Rent(maxElements);
+
+        try
+        {
+            int pairCount = 0;
+
+            if (current.IsSingleton)
+            {
+                CollectGroupByPairs(current.FirstOrDefault, keyPropUtf8, valuePropUtf8, keyBuffer, valBuffer, ref pairCount);
+            }
+            else
+            {
+                for (int i = 0; i < current.Count; i++)
+                {
+                    CollectGroupByPairs(current[i], keyPropUtf8, valuePropUtf8, keyBuffer, valBuffer, ref pairCount);
+                }
+            }
+
+            if (pairCount == 0)
+            {
+                return Sequence.Undefined;
+            }
+
+            // Phase 2: Group by key and build CVB with exactly one SetProperty per group.
+            // Use a simple O(n²) scan — optimal for typical small group counts.
+            var objDoc = JsonElement.CreateObjectBuilder(env.Workspace, Math.Min(pairCount, 16));
+            var objRoot = objDoc.RootElement;
+
+            Span<bool> processed = pairCount <= 256
+                ? stackalloc bool[Math.Min(pairCount, 256)]
+                : new bool[pairCount];
+
+            for (int i = 0; i < pairCount; i++)
+            {
+                if (processed[i])
+                {
+                    continue;
+                }
+
+                processed[i] = true;
+
+                using var keyUtf8 = keyBuffer[i].GetUtf8String();
+                ReadOnlySpan<byte> keyBytes = keyUtf8.Span;
+
+                // Scan forward for duplicates of this key.
+                bool hasDuplicates = false;
+                for (int j = i + 1; j < pairCount; j++)
+                {
+                    if (!processed[j] && keyBuffer[j].ValueEquals(keyBytes))
+                    {
+                        hasDuplicates = true;
+                        break;
+                    }
+                }
+
+                if (!hasDuplicates)
+                {
+                    // Singleton group — set scalar value directly.
+                    objRoot.SetProperty(keyBytes, valBuffer[i]);
+                }
+                else
+                {
+                    // Multi-element group — build array from all matching values.
+                    var groupBuilder = default(SequenceBuilder);
+                    groupBuilder.Add(valBuffer[i]);
+
+                    for (int j = i + 1; j < pairCount; j++)
+                    {
+                        if (!processed[j] && keyBuffer[j].ValueEquals(keyBytes))
+                        {
+                            groupBuilder.Add(valBuffer[j]);
+                            processed[j] = true;
+                        }
+                    }
+
+                    var groupArray = JsonataHelpers.ArrayFromBuilder(ref groupBuilder, env.Workspace);
+                    objRoot.SetProperty(keyBytes, groupArray);
+                }
+            }
+
+            if (objRoot.GetPropertyCount() == 0)
+            {
+                return Sequence.Undefined;
+            }
+
+            return new Sequence((JsonElement)objRoot);
+        }
+        finally
+        {
+            ArrayPool<JsonElement>.Shared.Return(keyBuffer);
+            ArrayPool<JsonElement>.Shared.Return(valBuffer);
+        }
+
+        // Collects key-value pairs from a single element (arrays are flattened).
+        static void CollectGroupByPairs(
+            JsonElement element,
+            byte[] keyPropUtf8,
+            byte[] valuePropUtf8,
+            JsonElement[] keyBuffer,
+            JsonElement[] valBuffer,
+            ref int pairCount)
+        {
+            if (element.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var item in element.EnumerateArray())
+                {
+                    TryAddGroupByPair(item, keyPropUtf8, valuePropUtf8, keyBuffer, valBuffer, ref pairCount);
+                }
+            }
+            else
+            {
+                TryAddGroupByPair(element, keyPropUtf8, valuePropUtf8, keyBuffer, valBuffer, ref pairCount);
+            }
+        }
+
+        static void TryAddGroupByPair(
+            JsonElement element,
+            byte[] keyPropUtf8,
+            byte[] valuePropUtf8,
+            JsonElement[] keyBuffer,
+            JsonElement[] valBuffer,
+            ref int pairCount)
+        {
+            if (!element.TryGetProperty(keyPropUtf8, out JsonElement keyEl))
+            {
+                return;
+            }
+
+            if (keyEl.ValueKind == JsonValueKind.Number)
+            {
+                throw new JsonataException("T1003", "Key in object structure must evaluate to a string; got: number", 0);
+            }
+
+            if (keyEl.ValueKind != JsonValueKind.String)
+            {
+                return;
+            }
+
+            if (!element.TryGetProperty(valuePropUtf8, out JsonElement valueEl))
+            {
+                return;
+            }
+
+            keyBuffer[pairCount] = keyEl;
+            valBuffer[pairCount] = valueEl;
+            pairCount++;
+        }
+    }
+
+    /// <summary>
+    /// Counts the total number of leaf elements in a sequence, flattening arrays.
+    /// </summary>
+    private static int CountSequenceElements(Sequence current)
+    {
+        if (current.IsSingleton)
+        {
+            var el = current.FirstOrDefault;
+            return el.ValueKind == JsonValueKind.Array ? el.GetArrayLength() : 1;
+        }
+
+        int count = 0;
+        for (int i = 0; i < current.Count; i++)
+        {
+            var el = current[i];
+            count += el.ValueKind == JsonValueKind.Array ? el.GetArrayLength() : 1;
+        }
+
+        return count;
+    }
+
     private static Sequence ApplyStages(Sequence current, ExpressionEvaluator[] stageEvaluators, bool[] isSortStage, Environment env, string? indexVar = null, string?[]? indexBindingVars = null, int[]? constantIntValues = null)
     {
         // Track any index binding variable introduced by a VariableNode stage.
@@ -5334,6 +5570,23 @@ internal static class FunctionalCompiler
 
     private static ExpressionEvaluator CompileArrayConstructor(ArrayConstructorNode arr)
     {
+        // Fused array-of-objects: detect [path.to.{"const-key": value, ...}]
+        // When the sole expression is a path ending in a constant-key object constructor
+        // with no annotations on the last step, we can build each object directly into
+        // the array's document using AddItem(ctx, ObjectBuilder.Build) — eliminating
+        // one intermediate document allocation and copy per element.
+        if (arr.Expressions.Count == 1
+            && arr.Expressions[0] is PathNode fusionPath
+            && fusionPath.Steps.Count >= 2
+            && fusionPath.Steps[^1] is ObjectConstructorNode fusionObj
+            && fusionObj.Pairs.Count > 0
+            && fusionObj.Pairs.All(p => p.Key is StringNode)
+            && GetStepAnnotations(fusionPath.Steps[^1]) is null
+            && GetStepAnnotations(fusionPath)?.Group is null)
+        {
+            return CompileFusedArrayOfObjects(fusionPath, fusionObj);
+        }
+
         // Track which sub-expressions are array constructors (pushed as single elements)
         // vs other expressions (flattened — individual elements appended)
         var items = arr.Expressions.Select(e => (Eval: Compile(e), IsArrayCtor: e is ArrayConstructorNode)).ToArray();
@@ -5474,6 +5727,189 @@ internal static class FunctionalCompiler
 
             return new Sequence((JsonElement)arrRoot);
         };
+    }
+
+    /// <summary>
+    /// Fused compilation for <c>[path.to.{"const-key": value, ...}]</c>.
+    /// Instead of creating an intermediate document per object, each object is built
+    /// directly into the array's document via <c>AddItem(ctx, ObjectBuilder.Build)</c>.
+    /// </summary>
+    private static ExpressionEvaluator CompileFusedArrayOfObjects(PathNode fullPath, ObjectConstructorNode objNode)
+    {
+        // Compile the prefix path (all steps except the last object constructor)
+        var prefixPath = new PathNode();
+        for (int i = 0; i < fullPath.Steps.Count - 1; i++)
+        {
+            prefixPath.Steps.Add(fullPath.Steps[i]);
+        }
+
+        var prefixEval = CompilePath(prefixPath);
+
+        // Compile object constructor keys/values
+        var keyStrings = new string[objNode.Pairs.Count];
+        var keyUtf8 = new byte[objNode.Pairs.Count][];
+        var values = new ExpressionEvaluator[objNode.Pairs.Count];
+
+        for (int i = 0; i < objNode.Pairs.Count; i++)
+        {
+            keyStrings[i] = ((StringNode)objNode.Pairs[i].Key).Value;
+            keyUtf8[i] = System.Text.Encoding.UTF8.GetBytes(keyStrings[i]);
+            values[i] = Compile(objNode.Pairs[i].Value);
+        }
+
+        // Validate no duplicate keys at compile time
+        for (int i = 0; i < keyStrings.Length; i++)
+        {
+            for (int j = i + 1; j < keyStrings.Length; j++)
+            {
+                if (keyStrings[i] == keyStrings[j])
+                {
+                    throw new JsonataException(
+                        "D1009",
+                        $"Multiple key definitions evaluate to same key: \"{keyStrings[i]}\"",
+                        0);
+                }
+            }
+        }
+
+        return (in JsonElement input, Environment env) =>
+        {
+            // Evaluate prefix path to get input elements
+            var prefixResult = prefixEval(input, env);
+            if (prefixResult.IsUndefined)
+            {
+                // Empty array for undefined path result
+                var emptyDoc = JsonElement.CreateArrayBuilder(env.Workspace, 0);
+                return new Sequence((JsonElement)emptyDoc.RootElement);
+            }
+
+            // Create array builder with estimated capacity
+            var arrDoc = JsonElement.CreateArrayBuilder(env.Workspace, Math.Max(prefixResult.Count * (values.Length + 1), 4));
+            var arrRoot = arrDoc.RootElement;
+
+            if (prefixResult.IsSingleton)
+            {
+                var element = prefixResult.FirstOrDefault;
+                if (element.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var child in element.EnumerateArray())
+                    {
+                        FusedBuildObjectIntoArray(ref arrRoot, child, keyUtf8, keyStrings, values, env);
+                    }
+                }
+                else
+                {
+                    FusedBuildObjectIntoArray(ref arrRoot, element, keyUtf8, keyStrings, values, env);
+                }
+            }
+            else
+            {
+                for (int i = 0; i < prefixResult.Count; i++)
+                {
+                    var element = prefixResult[i];
+                    if (element.ValueKind == JsonValueKind.Array)
+                    {
+                        foreach (var child in element.EnumerateArray())
+                        {
+                            FusedBuildObjectIntoArray(ref arrRoot, child, keyUtf8, keyStrings, values, env);
+                        }
+                    }
+                    else
+                    {
+                        FusedBuildObjectIntoArray(ref arrRoot, element, keyUtf8, keyStrings, values, env);
+                    }
+                }
+
+                prefixResult.ReturnBackingArray();
+            }
+
+            return new Sequence((JsonElement)arrRoot);
+        };
+    }
+
+    /// <summary>
+    /// Builds one constant-key object directly into an array's document,
+    /// avoiding an intermediate document allocation and copy.
+    /// </summary>
+    private static void FusedBuildObjectIntoArray(
+        ref JsonElement.Mutable arrRoot,
+        in JsonElement element,
+        byte[][] keyUtf8,
+        string[] keyStrings,
+        ExpressionEvaluator[] values,
+        Environment env)
+    {
+        if (values.Length >= 2 && element.ValueKind == JsonValueKind.Object)
+        {
+            element.EnsurePropertyMap();
+        }
+
+        var ctx = new ConstKeyObjectBuildContext(keyUtf8, keyStrings, values, element, env);
+        arrRoot.AddItem(ctx, ConstKeyObjectBuilderCallback, values.Length);
+
+        // Clean up lambda side-channel (extremely rare — only when a property
+        // value expression returns a lambda, which serializes as an empty string).
+        env.TempObjectLambdas = null;
+    }
+
+    /// <summary>
+    /// Shared static callback for building a constant-key object into a
+    /// <see cref="JsonElement.ObjectBuilder"/>. Used by both standalone object
+    /// construction and fused array-of-objects construction.
+    /// </summary>
+    private static void ConstKeyObjectBuilderCallback(in ConstKeyObjectBuildContext c, ref JsonElement.ObjectBuilder builder)
+    {
+        for (int i = 0; i < c.Values.Length; i++)
+        {
+            var valueResult = c.Values[i](c.Input, c.Env);
+
+            if (valueResult.IsLambda)
+            {
+                // Lambda values serialize as empty strings in JSON, but we preserve
+                // the reference via Environment side-channel so callers can retrieve them.
+                c.Env.TempObjectLambdas ??= new Dictionary<string, LambdaValue>();
+                c.Env.TempObjectLambdas[c.KeyStrings[i]] = valueResult.Lambda!;
+                builder.AddProperty(c.KeyUtf8[i], JsonataHelpers.EmptyString());
+                continue;
+            }
+
+            if (valueResult.IsUndefined)
+            {
+                continue;
+            }
+
+            if (valueResult.IsNonFinite)
+            {
+                throw new JsonataException("D1001", $"Number out of range: {valueResult.NonFiniteValue}", 0);
+            }
+
+            if (valueResult.IsSingleton)
+            {
+                // Fast path: raw doubles (from arithmetic) bypass FixedJsonValueDocument.
+                if (valueResult.TryGetDouble(out double d))
+                {
+                    builder.AddProperty(c.KeyUtf8[i], d);
+                }
+                else
+                {
+                    builder.AddProperty(c.KeyUtf8[i], valueResult.FirstOrDefault);
+                }
+            }
+            else
+            {
+                // Multi-value result → build inline array
+                builder.AddProperty(
+                    c.KeyUtf8[i],
+                    valueResult,
+                    static (in Sequence seq, ref JsonElement.ArrayBuilder ab) =>
+                    {
+                        for (int j = 0; j < seq.Count; j++)
+                        {
+                            ab.AddItem(seq[j]);
+                        }
+                    });
+            }
+        }
     }
 
     private static ExpressionEvaluator CompileObjectConstructor(ObjectConstructorNode obj)
@@ -5683,60 +6119,7 @@ internal static class FunctionalCompiler
             JsonDocumentBuilder<JsonElement.Mutable> objDoc = JsonElement.CreateBuilder(
                 env.Workspace,
                 in ctx,
-                static (in ConstKeyObjectBuildContext c, ref JsonElement.ObjectBuilder builder) =>
-                {
-                    for (int i = 0; i < c.Values.Length; i++)
-                    {
-                        var valueResult = c.Values[i](c.Input, c.Env);
-
-                        if (valueResult.IsLambda)
-                        {
-                            // Lambda values serialize as empty strings in JSON, but we preserve
-                            // the reference via Environment side-channel so callers can retrieve them.
-                            c.Env.TempObjectLambdas ??= new Dictionary<string, LambdaValue>();
-                            c.Env.TempObjectLambdas[c.KeyStrings[i]] = valueResult.Lambda!;
-                            builder.AddProperty(c.KeyUtf8[i], JsonataHelpers.EmptyString());
-                            continue;
-                        }
-
-                        if (valueResult.IsUndefined)
-                        {
-                            continue;
-                        }
-
-                        if (valueResult.IsNonFinite)
-                        {
-                            throw new JsonataException("D1001", $"Number out of range: {valueResult.NonFiniteValue}", 0);
-                        }
-
-                        if (valueResult.IsSingleton)
-                        {
-                            // Fast path: raw doubles (from arithmetic) bypass FixedJsonValueDocument.
-                            if (valueResult.TryGetDouble(out double d))
-                            {
-                                builder.AddProperty(c.KeyUtf8[i], d);
-                            }
-                            else
-                            {
-                                builder.AddProperty(c.KeyUtf8[i], valueResult.FirstOrDefault);
-                            }
-                        }
-                        else
-                        {
-                            // Multi-value result → build inline array
-                            builder.AddProperty(
-                                c.KeyUtf8[i],
-                                valueResult,
-                                static (in Sequence seq, ref JsonElement.ArrayBuilder ab) =>
-                                {
-                                    for (int j = 0; j < seq.Count; j++)
-                                    {
-                                        ab.AddItem(seq[j]);
-                                    }
-                                });
-                        }
-                    }
-                },
+                ConstKeyObjectBuilderCallback,
                 values.Length);
 
             var lambdas = env.TempObjectLambdas;
