@@ -49,6 +49,8 @@
   </Folder>
   <Folder Name="/src/">
     <Project Path="src/Corvus.Text.Json.Jsonata/Corvus.Text.Json.Jsonata.csproj" />
+    <Project Path="src/Corvus.Text.Json.Jsonata.CodeGeneration/Corvus.Text.Json.Jsonata.CodeGeneration.csproj" />
+    <Project Path="src/Corvus.Text.Json.Jsonata.SourceGenerator/Corvus.Text.Json.Jsonata.SourceGenerator.csproj" />
   </Folder>
   <Folder Name="/v4/">
     <Project Path="src-v4/Corvus.Json.Validator/Corvus.Json.Validator.csproj" />
@@ -69,6 +71,8 @@
     <Project Path="tests/Corvus.Text.Json.Tests.MigrationModels.V5/Corvus.Text.Json.Tests.MigrationModels.V5.csproj" />
     <Project Path="tests/Corvus.Text.Json.Tests/Corvus.Text.Json.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.Validator.Tests/Corvus.Text.Json.Validator.Tests.csproj" />
+    <Project Path="tests/Corvus.Text.Json.Jsonata.CodeGeneration.Tests/Corvus.Text.Json.Jsonata.CodeGeneration.Tests.csproj" />
+    <Project Path="tests/Corvus.Text.Json.Jsonata.SourceGenerator.Tests/Corvus.Text.Json.Jsonata.SourceGenerator.Tests.csproj" />
   </Folder>
   <Folder Name="/v5/">
     <Project Path="src/Corvus.Text.Json.Analyzers/Corvus.Text.Json.Analyzers.csproj" />

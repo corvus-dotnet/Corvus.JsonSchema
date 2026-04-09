@@ -45,6 +45,8 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="Corvus.Text.Json.Jsonata.Tests" />
+    <InternalsVisibleTo Include="Corvus.Text.Json.Jsonata.CodeGeneration" />
+    <InternalsVisibleTo Include="Corvus.Text.Json.Jsonata.CodeGeneration.Tests" />
   </ItemGroup>
 
   <ItemGroup>
