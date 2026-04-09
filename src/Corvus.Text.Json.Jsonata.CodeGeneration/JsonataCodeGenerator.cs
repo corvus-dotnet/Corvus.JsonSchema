@@ -76,7 +76,9 @@ public static class JsonataCodeGenerator
         AppendLine(sb, "    ", "/// <param name=\"data\">The input JSON data element.</param>");
         AppendLine(sb, "    ", "/// <param name=\"workspace\">The workspace for pooled memory.</param>");
         AppendLine(sb, "    ", "/// <returns>The result of the evaluation, or a <c>default</c> <see cref=\"JsonElement\"/> if the expression produces no result.</returns>");
+        AppendLine(sb, string.Empty, "#if !NETFRAMEWORK");
         AppendLine(sb, "    ", "[MethodImpl(MethodImplOptions.AggressiveOptimization)]");
+        AppendLine(sb, string.Empty, "#endif");
         AppendLine(sb, "    ", "public static JsonElement Evaluate(in JsonElement data, JsonWorkspace workspace)");
         AppendLine(sb, "    ", "{");
         AppendLine(sb, "        ", "return Evaluator.Evaluate(Expression, data, workspace);");
@@ -93,7 +95,9 @@ public static class JsonataCodeGenerator
         AppendLine(sb, "    ", "/// <param name=\"maxDepth\">Maximum evaluation depth (default 500).</param>");
         AppendLine(sb, "    ", "/// <param name=\"timeLimitMs\">Time limit in milliseconds (0 = unlimited).</param>");
         AppendLine(sb, "    ", "/// <returns>The result of the evaluation, or a <c>default</c> <see cref=\"JsonElement\"/> if the expression produces no result.</returns>");
+        AppendLine(sb, string.Empty, "#if !NETFRAMEWORK");
         AppendLine(sb, "    ", "[MethodImpl(MethodImplOptions.AggressiveOptimization)]");
+        AppendLine(sb, string.Empty, "#endif");
         AppendLine(sb, "    ", "public static JsonElement Evaluate(");
         AppendLine(sb, "        ", "in JsonElement data,");
         AppendLine(sb, "        ", "JsonWorkspace workspace,");
@@ -124,7 +128,9 @@ public static class JsonataCodeGenerator
         return s
             .Replace("&", "&amp;")
             .Replace("<", "&lt;")
-            .Replace(">", "&gt;");
+            .Replace(">", "&gt;")
+            .Replace("\r", string.Empty)
+            .Replace("\n", " ");
     }
 
     private static void AppendLine(StringBuilder sb, string indent, string line)

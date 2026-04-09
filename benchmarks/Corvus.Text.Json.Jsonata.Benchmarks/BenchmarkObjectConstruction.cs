@@ -73,6 +73,14 @@ public class BenchmarkObjectConstruction : JsonataBenchmarkBase
         this.evaluator.Evaluate(ExprGroupByObject, this.data);
         this.evaluator.Evaluate(ExprArrayOfObjects, this.data);
 
+        // Warm up source-generated evaluators (first call compiles + caches)
+        SimpleObjectCodeGen.Evaluate(this.data, this.workspace);
+        this.workspace.Reset();
+        GroupByObjectCodeGen.Evaluate(this.data, this.workspace);
+        this.workspace.Reset();
+        ArrayOfObjectsCodeGen.Evaluate(this.data, this.workspace);
+        this.workspace.Reset();
+
 #if !NETFRAMEWORK
         this.nativeData = JToken.Parse(DataJson);
         this.nativeSimpleObject = new JsonataQuery(ExprSimpleObject);
@@ -153,4 +161,37 @@ public class BenchmarkObjectConstruction : JsonataBenchmarkBase
     public JToken Native_ArrayOfObjects() =>
         this.nativeArrayOfObjects.Eval(this.nativeData);
 #endif
+
+    /// <summary>
+    /// CodeGen: simple object with aggregation.
+    /// </summary>
+    [BenchmarkCategory("SimpleObject")]
+    [Benchmark]
+    public JsonElement Corvus_CodeGen_SimpleObject()
+    {
+        this.workspace.Reset();
+        return SimpleObjectCodeGen.Evaluate(this.data, this.workspace);
+    }
+
+    /// <summary>
+    /// CodeGen: per-element object construction.
+    /// </summary>
+    [BenchmarkCategory("GroupByObject")]
+    [Benchmark]
+    public JsonElement Corvus_CodeGen_GroupByObject()
+    {
+        this.workspace.Reset();
+        return GroupByObjectCodeGen.Evaluate(this.data, this.workspace);
+    }
+
+    /// <summary>
+    /// CodeGen: array of constructed objects.
+    /// </summary>
+    [BenchmarkCategory("ArrayOfObjects")]
+    [Benchmark]
+    public JsonElement Corvus_CodeGen_ArrayOfObjects()
+    {
+        this.workspace.Reset();
+        return ArrayOfObjectsCodeGen.Evaluate(this.data, this.workspace);
+    }
 }

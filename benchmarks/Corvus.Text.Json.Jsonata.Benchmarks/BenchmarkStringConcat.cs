@@ -62,6 +62,14 @@ public class BenchmarkStringConcat : JsonataBenchmarkBase
         this.evaluator.Evaluate(ExprConcatWithNumber, this.data);
         this.evaluator.Evaluate(ExprJoinArray, this.data);
 
+        // Warm up source-generated evaluators (first call compiles + caches)
+        SimpleConcatCodeGen.Evaluate(this.data, this.workspace);
+        this.workspace.Reset();
+        ConcatWithNumberCodeGen.Evaluate(this.data, this.workspace);
+        this.workspace.Reset();
+        JoinArrayCodeGen.Evaluate(this.data, this.workspace);
+        this.workspace.Reset();
+
 #if !NETFRAMEWORK
         this.nativeData = JToken.Parse(DataJson);
         this.nativeSimpleConcat = new JsonataQuery(ExprSimpleConcat);
@@ -142,4 +150,37 @@ public class BenchmarkStringConcat : JsonataBenchmarkBase
     public JToken Native_JoinArray() =>
         this.nativeJoinArray.Eval(this.nativeData);
 #endif
+
+    /// <summary>
+    /// CodeGen: simple string concatenation.
+    /// </summary>
+    [BenchmarkCategory("SimpleConcat")]
+    [Benchmark]
+    public JsonElement Corvus_CodeGen_SimpleConcat()
+    {
+        this.workspace.Reset();
+        return SimpleConcatCodeGen.Evaluate(this.data, this.workspace);
+    }
+
+    /// <summary>
+    /// CodeGen: string concat with number coercion.
+    /// </summary>
+    [BenchmarkCategory("ConcatWithNumber")]
+    [Benchmark]
+    public JsonElement Corvus_CodeGen_ConcatWithNumber()
+    {
+        this.workspace.Reset();
+        return ConcatWithNumberCodeGen.Evaluate(this.data, this.workspace);
+    }
+
+    /// <summary>
+    /// CodeGen: $join with array and separator.
+    /// </summary>
+    [BenchmarkCategory("JoinArray")]
+    [Benchmark]
+    public JsonElement Corvus_CodeGen_JoinArray()
+    {
+        this.workspace.Reset();
+        return JoinArrayCodeGen.Evaluate(this.data, this.workspace);
+    }
 }

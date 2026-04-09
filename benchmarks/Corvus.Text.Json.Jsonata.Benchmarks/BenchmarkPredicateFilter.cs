@@ -79,6 +79,14 @@ public class BenchmarkPredicateFilter : JsonataBenchmarkBase
         this.evaluator.Evaluate(ExprChainedPredicate, this.data);
         this.evaluator.Evaluate(ExprCompoundPredicate, this.data);
 
+        // Warm up source-generated evaluators (first call compiles + caches)
+        SinglePredicateCodeGen.Evaluate(this.data, this.workspace);
+        this.workspace.Reset();
+        ChainedPredicateCodeGen.Evaluate(this.data, this.workspace);
+        this.workspace.Reset();
+        CompoundPredicateCodeGen.Evaluate(this.data, this.workspace);
+        this.workspace.Reset();
+
 #if !NETFRAMEWORK
         this.nativeData = JToken.Parse(DataJson);
         this.nativeSinglePredicate = new JsonataQuery(ExprSinglePredicate);
@@ -159,4 +167,37 @@ public class BenchmarkPredicateFilter : JsonataBenchmarkBase
     public JToken Native_CompoundPredicate() =>
         this.nativeCompoundPredicate.Eval(this.nativeData);
 #endif
+
+    /// <summary>
+    /// CodeGen: Contact.Phone[type='mobile'].number.
+    /// </summary>
+    [BenchmarkCategory("SinglePredicate")]
+    [Benchmark]
+    public JsonElement Corvus_CodeGen_SinglePredicate()
+    {
+        this.workspace.Reset();
+        return SinglePredicateCodeGen.Evaluate(this.data, this.workspace);
+    }
+
+    /// <summary>
+    /// CodeGen: Contact[ssn='...'].Phone[0].number.
+    /// </summary>
+    [BenchmarkCategory("ChainedPredicate")]
+    [Benchmark]
+    public JsonElement Corvus_CodeGen_ChainedPredicate()
+    {
+        this.workspace.Reset();
+        return ChainedPredicateCodeGen.Evaluate(this.data, this.workspace);
+    }
+
+    /// <summary>
+    /// CodeGen: Contact.Phone[type='office' or type='mobile'].number.
+    /// </summary>
+    [BenchmarkCategory("CompoundPredicate")]
+    [Benchmark]
+    public JsonElement Corvus_CodeGen_CompoundPredicate()
+    {
+        this.workspace.Reset();
+        return CompoundPredicateCodeGen.Evaluate(this.data, this.workspace);
+    }
 }

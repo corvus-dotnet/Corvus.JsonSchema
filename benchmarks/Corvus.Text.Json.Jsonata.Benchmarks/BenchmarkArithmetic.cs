@@ -70,6 +70,14 @@ public class BenchmarkArithmetic : JsonataBenchmarkBase
         this.evaluator.Evaluate(ExprMapArithmetic, this.data);
         this.evaluator.Evaluate(ExprPureArithmetic, this.data);
 
+        // Warm up source-generated evaluators (first call compiles + caches)
+        SumProductCodeGen.Evaluate(this.data, this.workspace);
+        this.workspace.Reset();
+        MapArithmeticCodeGen.Evaluate(this.data, this.workspace);
+        this.workspace.Reset();
+        PureArithmeticCodeGen.Evaluate(this.data, this.workspace);
+        this.workspace.Reset();
+
 #if !NETFRAMEWORK
         this.nativeData = JToken.Parse(DataJson);
         this.nativeSumProduct = new JsonataQuery(ExprSumProduct);
@@ -150,4 +158,37 @@ public class BenchmarkArithmetic : JsonataBenchmarkBase
     public JToken Native_PureArithmetic() =>
         this.nativePureArithmetic.Eval(this.nativeData);
 #endif
+
+    /// <summary>
+    /// CodeGen: $sum(Account.Order.Product.(Price * Quantity)).
+    /// </summary>
+    [BenchmarkCategory("SumProduct")]
+    [Benchmark]
+    public JsonElement Corvus_CodeGen_SumProduct()
+    {
+        this.workspace.Reset();
+        return SumProductCodeGen.Evaluate(this.data, this.workspace);
+    }
+
+    /// <summary>
+    /// CodeGen: Account.Order.Product.(Price * Quantity).
+    /// </summary>
+    [BenchmarkCategory("MapArithmetic")]
+    [Benchmark]
+    public JsonElement Corvus_CodeGen_MapArithmetic()
+    {
+        this.workspace.Reset();
+        return MapArithmeticCodeGen.Evaluate(this.data, this.workspace);
+    }
+
+    /// <summary>
+    /// CodeGen: pure arithmetic with no data access.
+    /// </summary>
+    [BenchmarkCategory("PureArithmetic")]
+    [Benchmark]
+    public JsonElement Corvus_CodeGen_PureArithmetic()
+    {
+        this.workspace.Reset();
+        return PureArithmeticCodeGen.Evaluate(this.data, this.workspace);
+    }
 }

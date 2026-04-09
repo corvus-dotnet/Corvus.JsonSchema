@@ -47,6 +47,10 @@ public class BenchmarkEmployeeTransform : JsonataBenchmarkBase
         this.SetupFromFile(Query, "employees.json");
         this.workspace = JsonWorkspace.Create();
 
+        // Warm up source-generated evaluator (first call compiles + caches)
+        EmployeeTransformCodeGen.Evaluate(this.Data, this.workspace);
+        this.workspace.Reset();
+
 #if !NETFRAMEWORK
         this.nativeQuery = new JsonataQuery(Query);
         this.nativeData = JToken.Parse(this.dataJson);
@@ -109,4 +113,15 @@ public class BenchmarkEmployeeTransform : JsonataBenchmarkBase
         return freshQuery.Eval(this.nativeData);
     }
 #endif
+
+    /// <summary>
+    /// CodeGen: evaluate only (expression source-generated and cached).
+    /// </summary>
+    [BenchmarkCategory("CachedEval")]
+    [Benchmark]
+    public JsonElement Corvus_CodeGen_Evaluate()
+    {
+        this.workspace.Reset();
+        return EmployeeTransformCodeGen.Evaluate(this.Data, this.workspace);
+    }
 }

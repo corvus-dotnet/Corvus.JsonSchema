@@ -73,6 +73,16 @@ public class BenchmarkHigherOrder : JsonataBenchmarkBase
         this.evaluator.Evaluate(ExprReduce, this.data);
         this.evaluator.Evaluate(ExprSort, this.data);
 
+        // Warm up source-generated evaluators (first call compiles + caches)
+        MapHofCodeGen.Evaluate(this.data, this.workspace);
+        this.workspace.Reset();
+        FilterHofCodeGen.Evaluate(this.data, this.workspace);
+        this.workspace.Reset();
+        ReduceHofCodeGen.Evaluate(this.data, this.workspace);
+        this.workspace.Reset();
+        SortHofCodeGen.Evaluate(this.data, this.workspace);
+        this.workspace.Reset();
+
 #if !NETFRAMEWORK
         this.nativeData = JToken.Parse(DataJson);
         this.nativeMap = new JsonataQuery(ExprMap);
@@ -175,4 +185,48 @@ public class BenchmarkHigherOrder : JsonataBenchmarkBase
     public JToken Native_Sort() =>
         this.nativeSort.Eval(this.nativeData);
 #endif
+
+    /// <summary>
+    /// CodeGen: $map extracting product names.
+    /// </summary>
+    [BenchmarkCategory("Map")]
+    [Benchmark]
+    public JsonElement Corvus_CodeGen_Map()
+    {
+        this.workspace.Reset();
+        return MapHofCodeGen.Evaluate(this.data, this.workspace);
+    }
+
+    /// <summary>
+    /// CodeGen: $filter with price predicate.
+    /// </summary>
+    [BenchmarkCategory("Filter")]
+    [Benchmark]
+    public JsonElement Corvus_CodeGen_Filter()
+    {
+        this.workspace.Reset();
+        return FilterHofCodeGen.Evaluate(this.data, this.workspace);
+    }
+
+    /// <summary>
+    /// CodeGen: $reduce with accumulator.
+    /// </summary>
+    [BenchmarkCategory("Reduce")]
+    [Benchmark]
+    public JsonElement Corvus_CodeGen_Reduce()
+    {
+        this.workspace.Reset();
+        return ReduceHofCodeGen.Evaluate(this.data, this.workspace);
+    }
+
+    /// <summary>
+    /// CodeGen: $sort with comparator.
+    /// </summary>
+    [BenchmarkCategory("Sort")]
+    [Benchmark]
+    public JsonElement Corvus_CodeGen_Sort()
+    {
+        this.workspace.Reset();
+        return SortHofCodeGen.Evaluate(this.data, this.workspace);
+    }
 }

@@ -73,6 +73,14 @@ public class BenchmarkPropertyNavigation : JsonataBenchmarkBase
         this.evaluator.Evaluate(ExprQuotedProperty, this.data);
         this.evaluator.Evaluate(ExprArrayIndex, this.data);
 
+        // Warm up source-generated evaluators (first call compiles + caches)
+        DeepPathCodeGen.Evaluate(this.data, this.workspace);
+        this.workspace.Reset();
+        QuotedPropertyCodeGen.Evaluate(this.data, this.workspace);
+        this.workspace.Reset();
+        ArrayIndexCodeGen.Evaluate(this.data, this.workspace);
+        this.workspace.Reset();
+
 #if !NETFRAMEWORK
         this.nativeData = JToken.Parse(DataJson);
         this.nativeDeepPath = new JsonataQuery(ExprDeepPath);
@@ -153,4 +161,37 @@ public class BenchmarkPropertyNavigation : JsonataBenchmarkBase
     public JToken Native_ArrayIndex() =>
         this.nativeArrayIndex.Eval(this.nativeData);
 #endif
+
+    /// <summary>
+    /// CodeGen: deep path traversal through arrays.
+    /// </summary>
+    [BenchmarkCategory("DeepPath")]
+    [Benchmark]
+    public JsonElement Corvus_CodeGen_DeepPath()
+    {
+        this.workspace.Reset();
+        return DeepPathCodeGen.Evaluate(this.data, this.workspace);
+    }
+
+    /// <summary>
+    /// CodeGen: quoted property name access.
+    /// </summary>
+    [BenchmarkCategory("QuotedProperty")]
+    [Benchmark]
+    public JsonElement Corvus_CodeGen_QuotedProperty()
+    {
+        this.workspace.Reset();
+        return QuotedPropertyCodeGen.Evaluate(this.data, this.workspace);
+    }
+
+    /// <summary>
+    /// CodeGen: array index access.
+    /// </summary>
+    [BenchmarkCategory("ArrayIndex")]
+    [Benchmark]
+    public JsonElement Corvus_CodeGen_ArrayIndex()
+    {
+        this.workspace.Reset();
+        return ArrayIndexCodeGen.Evaluate(this.data, this.workspace);
+    }
 }
