@@ -1507,45 +1507,92 @@ public static class JsonataCodeGenerator
         private string EmitStringConcat(
             StringBuilder sb, BinaryNode binary, string indent, string dataVar, string wsVar)
         {
-            // Flatten chain: A & B & C & D → collect all operands, emit single multi-concat call
-            List<string> operands = new();
+            // Flatten chain: A & B & C & D → collect all operands
+            List<(string Var, bool IsLiteral)> operands = new();
             FlattenConcatOperands(sb, binary, indent, dataVar, wsVar, operands);
 
-            if (operands.Count == 2)
+            bool hasLiterals = false;
+            for (int i = 0; i < operands.Count; i++)
             {
-                string v = NextVar();
-                L(sb, indent, $"var {v} = {H}.StringConcat({operands[0]}, {operands[1]}, {wsVar});");
-                return v;
+                if (operands[i].IsLiteral)
+                {
+                    hasLiterals = true;
+                    break;
+                }
             }
 
-            string args = string.Join(", ", operands);
-            string result = NextVar();
-
-            if (operands.Count <= 5)
+            if (!hasLiterals)
             {
-                string method = $"StringConcat{operands.Count}";
-                L(sb, indent, $"var {result} = {H}.{method}({args}, {wsVar});");
-            }
-            else
-            {
-                L(sb, indent, $"var {result} = {H}.StringConcatMany({wsVar}, {args});");
+                // No literals — use existing helper calls
+                if (operands.Count == 2)
+                {
+                    string v = NextVar();
+                    L(sb, indent, $"var {v} = {H}.StringConcat({operands[0].Var}, {operands[1].Var}, {wsVar});");
+                    return v;
+                }
+
+                string args = string.Join(", ", operands.ConvertAll(o => o.Var));
+                string result = NextVar();
+
+                if (operands.Count <= 5)
+                {
+                    string method = $"StringConcat{operands.Count}";
+                    L(sb, indent, $"var {result} = {H}.{method}({args}, {wsVar});");
+                }
+                else
+                {
+                    L(sb, indent, $"var {result} = {H}.StringConcatMany({wsVar}, {args});");
+                }
+
+                return result;
             }
 
-            return result;
+            // Has literals — emit ConcatBuilder to avoid StringElement allocations
+            string cbVar = NextVar();
+            string resultVar = NextVar();
+            L(sb, indent, $"var {cbVar} = {H}.BeginConcat(stackalloc byte[256]);");
+            L(sb, indent, $"JsonElement {resultVar};");
+            L(sb, indent, "try");
+            L(sb, indent, "{");
+            string innerIndent = indent + "    ";
+
+            for (int i = 0; i < operands.Count; i++)
+            {
+                if (operands[i].IsLiteral)
+                {
+                    L(sb, innerIndent, $"{cbVar}.AppendLiteral({operands[i].Var});");
+                }
+                else
+                {
+                    L(sb, innerIndent, $"{cbVar}.AppendElement({operands[i].Var});");
+                }
+            }
+
+            L(sb, innerIndent, $"{resultVar} = {cbVar}.Complete({wsVar});");
+            L(sb, indent, "}");
+            L(sb, indent, "finally");
+            L(sb, indent, "{");
+            L(sb, innerIndent, $"{cbVar}.Dispose();");
+            L(sb, indent, "}");
+            return resultVar;
         }
 
         private void FlattenConcatOperands(
             StringBuilder sb, BinaryNode binary, string indent, string dataVar,
-            string wsVar, List<string> operands)
+            string wsVar, List<(string Var, bool IsLiteral)> operands)
         {
             // Recurse into left & operator chains
             if (binary.Lhs is BinaryNode { Operator: "&" } leftConcat)
             {
                 FlattenConcatOperands(sb, leftConcat, indent, dataVar, wsVar, operands);
             }
+            else if (binary.Lhs is StringNode lhsStr)
+            {
+                operands.Add(($"\"{EscapeStringLiteral(lhsStr.Value)}\"u8", true));
+            }
             else
             {
-                operands.Add(EmitExpression(sb, binary.Lhs, indent, dataVar, wsVar));
+                operands.Add((EmitExpression(sb, binary.Lhs, indent, dataVar, wsVar), false));
             }
 
             // Right side is usually a leaf (left-associative parsing)
@@ -1553,9 +1600,13 @@ public static class JsonataCodeGenerator
             {
                 FlattenConcatOperands(sb, rightConcat, indent, dataVar, wsVar, operands);
             }
+            else if (binary.Rhs is StringNode rhsStr)
+            {
+                operands.Add(($"\"{EscapeStringLiteral(rhsStr.Value)}\"u8", true));
+            }
             else
             {
-                operands.Add(EmitExpression(sb, binary.Rhs, indent, dataVar, wsVar));
+                operands.Add((EmitExpression(sb, binary.Rhs, indent, dataVar, wsVar), false));
             }
         }
 
@@ -1908,22 +1959,31 @@ public static class JsonataCodeGenerator
                 }
             }
 
-            string[] keyStrings = new string[obj.Pairs.Count];
+            // Emit value expressions first (before building the object)
+            string[] keyLiterals = new string[obj.Pairs.Count];
             string[] valueVars = new string[obj.Pairs.Count];
 
             for (int i = 0; i < obj.Pairs.Count; i++)
             {
                 string keyValue = obj.Pairs[i].Key is StringNode s ? s.Value
                     : ((NameNode)obj.Pairs[i].Key).Value;
-                keyStrings[i] = $"\"{EscapeStringLiteral(keyValue)}\"";
+                keyLiterals[i] = $"\"{EscapeStringLiteral(keyValue)}\"u8";
                 valueVars[i] = EmitExpression(sb, obj.Pairs[i].Value, indent, dataVar, wsVar);
             }
 
+            // Build object inline with UTF-8 keys — zero array allocation
+            string docVar = NextVar();
+            string rootVar = NextVar();
+            L(sb, indent, $"var {docVar} = JsonElement.CreateObjectBuilder({wsVar}, {obj.Pairs.Count});");
+            L(sb, indent, $"var {rootVar} = {docVar}.RootElement;");
+
+            for (int i = 0; i < obj.Pairs.Count; i++)
+            {
+                L(sb, indent, $"if ({valueVars[i]}.ValueKind != JsonValueKind.Undefined) {rootVar}.SetProperty({keyLiterals[i]}, {valueVars[i]});");
+            }
+
             string v = NextVar();
-            L(sb, indent, $"var {v} = {H}.CreateObject(");
-            L(sb, indent + "    ", $"new string[] {{ {string.Join(", ", keyStrings)} }},");
-            L(sb, indent + "    ", $"new JsonElement[] {{ {string.Join(", ", valueVars)} }},");
-            L(sb, indent + "    ", $"{wsVar});");
+            L(sb, indent, $"var {v} = (JsonElement){rootVar};");
             return v;
         }
 

@@ -1150,6 +1150,60 @@ public static class JsonataCodeGenHelpers
     }
 
     /// <summary>
+    /// Creates a <see cref="ConcatBuilder"/> for zero-allocation string concatenation
+    /// in generated code. The caller provides a stack-allocated initial buffer.
+    /// </summary>
+    /// <param name="initialBuffer">A stack-allocated byte buffer (typically 256 bytes).</param>
+    /// <returns>A new <see cref="ConcatBuilder"/> that must be disposed after use.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static ConcatBuilder BeginConcat(Span<byte> initialBuffer) => new(initialBuffer);
+
+    /// <summary>
+    /// A ref struct for building concatenated strings from a mix of <see cref="JsonElement"/>
+    /// values and UTF-8 literal spans. Wraps the internal <see cref="Utf8ValueStringBuilder"/>
+    /// to provide a public API for generated code.
+    /// </summary>
+    public ref struct ConcatBuilder
+    {
+        private Utf8ValueStringBuilder _sb;
+
+        internal ConcatBuilder(Span<byte> initialBuffer)
+        {
+            _sb = new Utf8ValueStringBuilder(initialBuffer);
+        }
+
+        /// <summary>
+        /// Appends a <see cref="JsonElement"/> value, coerced to its string representation.
+        /// Undefined and null values append nothing.
+        /// </summary>
+        /// <param name="value">The JSON element to append.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void AppendElement(in JsonElement value) => AppendCoercedValue(value, ref _sb);
+
+        /// <summary>
+        /// Appends a UTF-8 literal span directly (no coercion, no allocation).
+        /// </summary>
+        /// <param name="literal">The UTF-8 bytes to append.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void AppendLiteral(ReadOnlySpan<byte> literal) => _sb.Append(literal);
+
+        /// <summary>
+        /// Completes the concatenation and returns the result as a string <see cref="JsonElement"/>.
+        /// </summary>
+        /// <param name="workspace">The workspace for the result element.</param>
+        /// <returns>A string <see cref="JsonElement"/> containing the concatenated value.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public JsonElement Complete(JsonWorkspace workspace) =>
+            JsonataHelpers.StringFromUnescapedUtf8(_sb.AsSpan(), workspace);
+
+        /// <summary>
+        /// Releases resources used by this builder.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Dispose() => _sb.Dispose();
+    }
+
+    /// <summary>
     /// JSONata range (..) operator. Builds an array of integers from <paramref name="left"/> to <paramref name="right"/>.
     /// </summary>
     public static JsonElement Range(in JsonElement left, in JsonElement right, JsonWorkspace workspace)
@@ -4871,6 +4925,8 @@ public static class JsonataCodeGenHelpers
     /// Writes the coerced string representation of a JSON element directly to a UTF-8 builder.
     /// For the &amp; concat operator: undefined and null both produce empty (append nothing).
     /// </summary>
+    /// <param name="value">The JSON element to coerce.</param>
+    /// <param name="sb">The UTF-8 string builder to append to.</param>
     private static void AppendCoercedValue(in JsonElement value, ref Utf8ValueStringBuilder sb)
     {
         if (value.IsNullOrUndefined())
