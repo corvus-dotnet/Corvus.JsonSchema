@@ -317,7 +317,7 @@ Remove-Item "$benchDir\BenchmarkDotNet.Artifacts\results\*" -Force -ErrorAction 
 
 # 4. Run benchmarks (takes ~15-25 minutes)
 cd benchmarks\Corvus.Text.Json.Jsonata.Benchmarks
-dotnet run -c Release -f net10.0
+dotnet run -c Release -f net10.0 -- --filter *
 ```
 
 ### Critical rules
@@ -326,6 +326,7 @@ dotnet run -c Release -f net10.0
 2. **Never pipe BDN output through `Select-Object -First N`** or any truncating command. This kills the BDN host process mid-run, producing incomplete/corrupt results.
 3. **Use `mode="sync"` with `initial_wait=30`** when running from the Copilot shell. BDN runs for 15-25 minutes. After initial_wait expires it continues in background — you'll be notified on completion. Use `read_powershell` with `delay=600` (call twice if needed for the full output).
 4. **Build timeout is pre-configured** in `Program.cs` at 15 minutes (`WithBuildTimeout(TimeSpan.FromMinutes(15))`). No `--buildTimeout` flag needed.
+5. **Always pass `-- --filter *`** to run all benchmarks non-interactively. Without `--filter`, BDN presents an interactive menu that blocks in the shell.
 
 ### Result locations and naming
 

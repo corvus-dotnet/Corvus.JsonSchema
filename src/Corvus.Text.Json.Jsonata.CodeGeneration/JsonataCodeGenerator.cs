@@ -481,7 +481,6 @@ public static class JsonataCodeGenerator
                         // use fused chain+operation helpers that avoid intermediate CreateArrayBuilder.
                         if (i < steps.Count
                             && steps[i] is not NameNode
-                            && steps[i] is not ObjectConstructorNode
                             && steps[i] is not ArrayConstructorNode { ConsArray: true, Expressions.Count: 0 }
                             && steps[i] is not WildcardNode
                             && steps[i] is not DescendantNode
@@ -1129,9 +1128,11 @@ public static class JsonataCodeGenerator
         }
 
         /// <summary>
-        /// Chained &amp;&amp; condition for the all-objects fast path with a flat
-        /// NavigatePropertyChain fallback. Uses at most one ArrayBuilder for the
-        /// entire chain regardless of how many nested arrays are encountered.
+        /// Nested-if chain: each step checks ValueKind == Object and TryGetProperty.
+        /// On failure at step <c>k</c>, falls back to
+        /// <c>NavigatePropertyChain(lastResolvedValue, chain, k, workspace)</c>
+        /// which resumes navigation from step <c>k</c>, avoiding re-navigation of
+        /// already-resolved prefix steps.
         /// </summary>
         private string EmitAndChainWithFlatFallback(
             StringBuilder sb, List<JsonataNode> steps, int start, int end,
@@ -1139,7 +1140,7 @@ public static class JsonataCodeGenerator
         {
             int count = end - start;
 
-            // Build the byte[][] chain field for the fallback path.
+            // Build the byte[][] chain field for the fallback paths.
             string[] names = new string[count];
             for (int i = 0; i < count; i++)
             {
@@ -1152,48 +1153,68 @@ public static class JsonataCodeGenerator
             string resultVar = NextVar();
             L(sb, indent, $"JsonElement {resultVar};");
 
-            // Build the && chain: each step checks ValueKind == Object && TryGetProperty.
-            // All intermediate out vars are declared inline via 'out var'.
-            var condition = new StringBuilder();
+            // Emit nested ifs: each level resolves one step, and on failure
+            // calls NavigatePropertyChain with the appropriate startIndex.
             string prevVar = dataVar;
+            string[] chainVars = new string[count];
 
             for (int i = 0; i < count; i++)
             {
                 string escapedName = EscapeStringLiteral(names[i]);
-
-                if (i > 0)
-                {
-                    condition.Append($"{indent}    && ");
-                }
-
                 string outVar;
+
                 if (i < count - 1)
                 {
                     outVar = $"__chain{_varCounter++}";
-                    condition.Append($"{prevVar}.ValueKind == JsonValueKind.Object && {prevVar}.TryGetProperty(\"{escapedName}\"u8, out var {outVar})");
+                    L(sb, indent, $"if ({prevVar}.ValueKind == JsonValueKind.Object && {prevVar}.TryGetProperty(\"{escapedName}\"u8, out var {outVar}))");
                 }
                 else
                 {
-                    // Last step: assign to the result variable directly (no 'var' — already declared).
+                    // Last step: assign to the result variable directly
                     outVar = resultVar;
-                    condition.Append($"{prevVar}.ValueKind == JsonValueKind.Object && {prevVar}.TryGetProperty(\"{escapedName}\"u8, out {outVar})");
+                    L(sb, indent, $"if ({prevVar}.ValueKind == JsonValueKind.Object && {prevVar}.TryGetProperty(\"{escapedName}\"u8, out {outVar}))");
                 }
 
-                if (i < count - 1)
-                {
-                    condition.AppendLine();
-                }
-
+                L(sb, indent, "{");
+                chainVars[i] = outVar;
                 prevVar = outVar;
+                indent += "    ";
             }
 
-            L(sb, indent, $"if ({condition})");
-            L(sb, indent, "{");
-            L(sb, indent, "}");
-            L(sb, indent, "else");
-            L(sb, indent, "{");
-            L(sb, indent, $"    {resultVar} = {H}.NavigatePropertyChain({dataVar}, {chainField}, {wsVar});");
-            L(sb, indent, "}");
+            // Innermost block: all steps succeeded — nothing more to do (resultVar is set)
+            indent = indent.Substring(0, indent.Length - 4); // back one level
+
+            // Close each nesting level with an else that falls back to NavigatePropertyChain
+            for (int i = count - 1; i >= 0; i--)
+            {
+                L(sb, indent, "}");
+                L(sb, indent, "else");
+                L(sb, indent, "{");
+
+                if (i == 0)
+                {
+                    // First step failed — navigate full chain from dataVar
+                    L(sb, indent, $"    {resultVar} = {H}.NavigatePropertyChain({dataVar}, {chainField}, {wsVar});");
+                }
+                else if (i == count - 1)
+                {
+                    // Last step failed — just navigate single property from previous chain var
+                    string nameField = GetOrCreateNameField(names[i]);
+                    L(sb, indent, $"    {resultVar} = {H}.NavigateProperty({chainVars[i - 1]}, {nameField}, {wsVar});");
+                }
+                else
+                {
+                    // Middle step failed — navigate remaining chain from previous chain var
+                    L(sb, indent, $"    {resultVar} = {H}.NavigatePropertyChain({chainVars[i - 1]}, {chainField}, {i}, {wsVar});");
+                }
+
+                L(sb, indent, "}");
+                if (i > 0)
+                {
+                    indent = indent.Substring(0, indent.Length - 4); // back one level
+                }
+            }
+
             L(sb, indent, "");
 
             return resultVar;
@@ -1313,56 +1334,94 @@ public static class JsonataCodeGenerator
             StringBuilder sb, ObjectConstructorNode objCtor, string currentVar,
             string indent, string wsVar)
         {
+            // Single-pair groupby: both key and value are simple property names.
+            if (objCtor.Pairs.Count == 1)
+            {
+                (JsonataNode keyExpr, JsonataNode valExpr) = objCtor.Pairs[0];
+
+                // Fast path: both key and value are simple property names.
+                // Use direct TryGetProperty — no Dictionary, no List, no lambda dispatch.
+                if (TryGetSimpleNameNode(keyExpr, out string? keyPropName)
+                    && TryGetSimpleNameNode(valExpr, out string? valPropName))
+                {
+                    string keyField = GetOrCreateNameField(keyPropName);
+                    string valField = GetOrCreateNameField(valPropName);
+                    string v = NextVar();
+                    L(sb, indent, $"var {v} = {H}.SimpleGroupByPerElement({currentVar}, {keyField}, {valField}, {wsVar});");
+                    return v;
+                }
+            }
+
+            // Multi-pair with all-StringNode keys: per-element object construction via
+            // MapElements + EmitObjectConstructor. StringNode keys are literal property names
+            // in the constructed object, and values are evaluated per element.
+            {
+                bool allStringKeys = true;
+                foreach ((JsonataNode key, _) in objCtor.Pairs)
+                {
+                    if (key is not StringNode) { allStringKeys = false; break; }
+                }
+
+                if (allStringKeys)
+                {
+                    int lambdaIdx = _lambdaCounter++;
+                    string elParam = $"el_{lambdaIdx}";
+                    string wsParam = $"ws_{lambdaIdx}";
+                    string innerIndent = indent + "    ";
+                    StringBuilder lambdaBody = new();
+
+                    string objResult = EmitObjectConstructor(lambdaBody, objCtor, innerIndent, elParam, wsParam);
+
+                    string v = NextVar();
+                    L(sb, indent, $"var {v} = {H}.GroupByMapElements({currentVar}, {Static}(JsonElement {elParam}, JsonWorkspace {wsParam}) =>");
+                    L(sb, indent, "{");
+                    sb.Append(lambdaBody);
+                    L(sb, innerIndent, $"return {objResult};");
+                    L(sb, indent, $"}}, {wsVar});");
+                    return v;
+                }
+            }
+
+            // General case: lambda-based approach for NameNode keys.
+            // Each element gets its own GroupByObject call producing a single-entry object.
+            // GroupByObjectPerElement collects these into an array with singleton semantics.
+            // KeepArray (the [] modifier) is handled by the value expression itself,
+            // matching the runtime where WrapKeepArray is part of the compiled evaluator.
             if (objCtor.Pairs.Count != 1)
             {
                 throw new FallbackException();
             }
 
-            (JsonataNode keyExpr, JsonataNode valExpr) = objCtor.Pairs[0];
-
-            // Fast path: both key and value are simple property names.
-            // Use direct TryGetProperty — no Dictionary, no List, no lambda dispatch.
-            if (TryGetSimpleNameNode(keyExpr, out string? keyPropName)
-                && TryGetSimpleNameNode(valExpr, out string? valPropName))
             {
-                string keyField = GetOrCreateNameField(keyPropName);
-                string valField = GetOrCreateNameField(valPropName);
-                string v = NextVar();
-                L(sb, indent, $"var {v} = {H}.SimpleGroupByPerElement({currentVar}, {keyField}, {valField}, {wsVar});");
-                return v;
+                (JsonataNode keyExpr, JsonataNode valExpr) = objCtor.Pairs[0];
+
+                int lambdaIdx = _lambdaCounter++;
+                string elParam = $"el_{lambdaIdx}";
+                string wsParam = $"ws_{lambdaIdx}";
+                string innerIndent = indent + "        ";
+
+                StringBuilder keySb = new();
+                string keyVar = EmitExpression(keySb, keyExpr, innerIndent, elParam, wsParam);
+
+                StringBuilder valSb = new();
+                string valVar = EmitExpression(valSb, valExpr, innerIndent, elParam, wsParam);
+
+                string v2 = NextVar();
+
+                L(sb, indent, $"var {v2} = {H}.GroupByObjectPerElement({currentVar},");
+                L(sb, indent + "    ", $"{Static}(JsonElement {elParam}, JsonWorkspace {wsParam}) =>");
+                L(sb, indent + "    ", "{");
+                sb.Append(keySb);
+                L(sb, innerIndent, $"return {H}.ValidateGroupByKey({keyVar});");
+                L(sb, indent + "    ", "},");
+                L(sb, indent + "    ", $"{Static}(JsonElement {elParam}, JsonWorkspace {wsParam}) =>");
+                L(sb, indent + "    ", "{");
+                sb.Append(valSb);
+                L(sb, innerIndent, $"return {valVar};");
+                L(sb, indent + "    ", "},");
+                L(sb, indent + "    ", $"{wsVar});");
+                return v2;
             }
-
-            // General case: lambda-based approach.
-            // Each element gets its own GroupByObject call producing a single-entry object.
-            // GroupByObjectPerElement collects these into an array with singleton semantics.
-            // KeepArray (the [] modifier) is handled by the value expression itself,
-            // matching the runtime where WrapKeepArray is part of the compiled evaluator.
-            int lambdaIdx = _lambdaCounter++;
-            string elParam = $"el_{lambdaIdx}";
-            string wsParam = $"ws_{lambdaIdx}";
-            string innerIndent = indent + "        ";
-
-            StringBuilder keySb = new();
-            string keyVar = EmitExpression(keySb, keyExpr, innerIndent, elParam, wsParam);
-
-            StringBuilder valSb = new();
-            string valVar = EmitExpression(valSb, valExpr, innerIndent, elParam, wsParam);
-
-            string v2 = NextVar();
-
-            L(sb, indent, $"var {v2} = {H}.GroupByObjectPerElement({currentVar},");
-            L(sb, indent + "    ", $"{Static}(JsonElement {elParam}, JsonWorkspace {wsParam}) =>");
-            L(sb, indent + "    ", "{");
-            sb.Append(keySb);
-            L(sb, innerIndent, $"return {H}.ValidateGroupByKey({keyVar});");
-            L(sb, indent + "    ", "},");
-            L(sb, indent + "    ", $"{Static}(JsonElement {elParam}, JsonWorkspace {wsParam}) =>");
-            L(sb, indent + "    ", "{");
-            sb.Append(valSb);
-            L(sb, innerIndent, $"return {valVar};");
-            L(sb, indent + "    ", "},");
-            L(sb, indent + "    ", $"{wsVar});");
-            return v2;
         }
 
         private string EmitGroupByAnnotation(
@@ -1517,6 +1576,7 @@ public static class JsonataCodeGenerator
 
             // Arithmetic computed step → MapChainDouble
             if (computedStep is not ArrayConstructorNode
+                && computedStep is not ObjectConstructorNode
                 && GetArithmeticBody(computedStep) is BinaryNode arithBody
                 && !IsConstantNumericExpression(arithBody))
             {
@@ -1535,6 +1595,54 @@ public static class JsonataCodeGenerator
                 L(sb, innerIndent, $"return {doubleResult};");
                 L(sb, indent, $"}}, {wsVar});");
                 return v;
+            }
+
+            // Object constructor computed step — fused chain + per-element object construction.
+            // For NameNode keys (groupby semantics): use FusedChainGroupByPerElement helper.
+            // For StringNode keys (literal keys): use ApplyChainStep with EmitObjectConstructor lambda.
+            if (computedStep is ObjectConstructorNode objCtor)
+            {
+                // Single-pair with both simple name nodes: use specialized fused groupby helper
+                if (objCtor.Pairs.Count == 1
+                    && TryGetSimpleNameNode(objCtor.Pairs[0].Key, out string? keyName)
+                    && TryGetSimpleNameNode(objCtor.Pairs[0].Value, out string? valName))
+                {
+                    string keyField = GetOrCreateNameField(keyName);
+                    string valField = GetOrCreateNameField(valName);
+                    string v = NextVar();
+                    L(sb, indent, $"var {v} = {H}.FusedChainGroupByPerElement({currentVar}, {chainField}, {keyField}, {valField}, {wsVar});");
+                    return v;
+                }
+
+                // All-StringNode keys: use ApplyChainStep with per-element object construction.
+                // EmitObjectConstructor handles StringNode keys correctly as literal property names.
+                bool allStringKeys = true;
+                foreach ((JsonataNode key, _) in objCtor.Pairs)
+                {
+                    if (key is not StringNode) { allStringKeys = false; break; }
+                }
+
+                if (allStringKeys)
+                {
+                    int lambdaIdx = _lambdaCounter++;
+                    string elParam = $"el_{lambdaIdx}";
+                    string wsParam = $"ws_{lambdaIdx}";
+                    string innerIndent = indent + "    ";
+                    StringBuilder lambdaBody = new();
+
+                    string objResult = EmitObjectConstructor(lambdaBody, objCtor, innerIndent, elParam, wsParam);
+
+                    string v = NextVar();
+                    L(sb, indent, $"var {v} = {H}.ApplyChainStep({currentVar}, {chainField}, {Static}(JsonElement {elParam}, JsonWorkspace {wsParam}) =>");
+                    L(sb, indent, "{");
+                    sb.Append(lambdaBody);
+                    L(sb, innerIndent, $"return {objResult};");
+                    L(sb, indent, $"}}, {wsVar});");
+                    return v;
+                }
+
+                // NameNode keys with multi-pair or complex values: can't fuse, skip
+                return null;
             }
 
             // General computed step → ApplyChainStep

@@ -220,6 +220,99 @@ public static class JsonataCodeGenHelpers
     }
 
     /// <summary>
+    /// Navigates a property chain starting at <paramref name="startIndex"/>, skipping
+    /// already-resolved prefix steps. Used by generated code that resolves chain steps
+    /// incrementally via nested <c>if</c> checks and falls back to this helper when
+    /// an array is encountered partway through, avoiding re-navigation of already-known steps.
+    /// </summary>
+    /// <param name="data">The element at the start position (already resolved up to <paramref name="startIndex"/>).</param>
+    /// <param name="names">The full UTF-8 encoded property names array.</param>
+    /// <param name="startIndex">The index into <paramref name="names"/> to start navigating from.</param>
+    /// <param name="workspace">The workspace for intermediate allocations.</param>
+    /// <returns>The navigation result, or <c>default</c> if undefined.</returns>
+    public static JsonElement NavigatePropertyChain(in JsonElement data, byte[][] names, int startIndex, JsonWorkspace workspace)
+    {
+        JsonElement current = data;
+
+        for (int i = startIndex; i < names.Length; i++)
+        {
+            if (current.ValueKind == JsonValueKind.Object)
+            {
+                if (!current.TryGetProperty((ReadOnlySpan<byte>)names[i], out current))
+                {
+                    return default;
+                }
+            }
+            else if (current.ValueKind == JsonValueKind.Array)
+            {
+                var doc = JsonElement.CreateArrayBuilder(workspace, current.GetArrayLength());
+                JsonElement.Mutable root = doc.RootElement;
+                int count = 0;
+                CollectChainFlat(current, names, i, root, ref count);
+                return count == 0 ? default : count == 1 ? root[0] : (JsonElement)root;
+            }
+            else
+            {
+                return default;
+            }
+        }
+
+        return current;
+    }
+
+    /// <summary>
+    /// Fuses a property chain navigation with per-element group-by object construction.
+    /// Navigates the chain into an <see cref="ElementBuffer"/> (no intermediate
+    /// <see cref="JsonElement.CreateArrayBuilder"/>), then builds <c>{key: value}</c> objects
+    /// directly into the result array. This saves one full builder allocation compared to
+    /// the separate <see cref="NavigatePropertyChain(in JsonElement, byte[][], JsonWorkspace)"/> + <see cref="SimpleGroupByPerElement"/> path.
+    /// </summary>
+    /// <param name="data">The input data element.</param>
+    /// <param name="chainNames">The UTF-8 encoded property names for the prefix chain.</param>
+    /// <param name="keyPropUtf8">UTF-8 encoded key property name (evaluated per element).</param>
+    /// <param name="valuePropUtf8">UTF-8 encoded value property name.</param>
+    /// <param name="workspace">The workspace for intermediate allocations.</param>
+    /// <returns>The array of objects, single object, or <c>default</c> if no results.</returns>
+    public static JsonElement FusedChainGroupByPerElement(
+        in JsonElement data,
+        byte[][] chainNames,
+        byte[] keyPropUtf8,
+        byte[] valuePropUtf8,
+        JsonWorkspace workspace)
+    {
+        var buffer = default(ElementBuffer);
+        try
+        {
+            NavigatePropertyChainInto(data, chainNames, ref buffer);
+
+            if (buffer.Count == 0)
+            {
+                return default;
+            }
+
+            var doc = JsonElement.CreateArrayBuilder(workspace, buffer.Count);
+            JsonElement.Mutable root = doc.RootElement;
+            int count = 0;
+
+            for (int i = 0; i < buffer.Count; i++)
+            {
+                JsonElement obj = BuildSingleEntryObject(buffer[i], keyPropUtf8, valuePropUtf8, workspace);
+                if (obj.ValueKind != JsonValueKind.Undefined)
+                {
+                    root.AddItem(obj);
+                    count++;
+                }
+            }
+
+            return count == 0 ? default : count == 1 ? root[0] : (JsonElement)root;
+        }
+        finally
+        {
+            buffer.Dispose();
+        }
+    }
+
+    /// <summary>
     /// Navigates a property chain, collecting leaf results into an <see cref="ElementBuffer"/>
     /// instead of creating a <see cref="JsonElement.CreateArrayBuilder"/>-backed array.
     /// This avoids MetadataDb overhead for intermediate results — the caller iterates the
@@ -1802,7 +1895,7 @@ public static class JsonataCodeGenHelpers
     /// Navigates <paramref name="names"/> into an <see cref="ElementBuffer"/> (ArrayPool-backed),
     /// then maps each element through <paramref name="step"/>, building the final array in one pass.
     /// Eliminates the intermediate <see cref="JsonElement.CreateArrayBuilder"/> that
-    /// <see cref="NavigatePropertyChain"/> would create.
+    /// <see cref="NavigatePropertyChain(in JsonElement, byte[][], JsonWorkspace)"/> would create.
     /// </summary>
     public static JsonElement MapChainDouble(
         in JsonElement data,
@@ -4694,6 +4787,51 @@ public static class JsonataCodeGenHelpers
         var singleDoc = JsonElement.CreateArrayBuilder(workspace, 1);
         singleDoc.RootElement.AddItem(single);
         return (JsonElement)singleDoc.RootElement;
+    }
+
+    /// <summary>
+    /// Per-element object construction with groupby semantics: returns <c>default</c> for
+    /// empty or null/undefined input, singularises a 1-element result, and skips undefined
+    /// transform results. Used for <c>path.{StringKey: expr, ...}</c> where all keys are
+    /// literal string constants.
+    /// </summary>
+    public static JsonElement GroupByMapElements(
+        in JsonElement input,
+        Func<JsonElement, JsonWorkspace, JsonElement> transform,
+        JsonWorkspace workspace)
+    {
+        if (input.IsNullOrUndefined())
+        {
+            return default;
+        }
+
+        if (input.ValueKind == JsonValueKind.Array)
+        {
+            int len = input.GetArrayLength();
+            if (len == 0)
+            {
+                return default;
+            }
+
+            var doc = JsonElement.CreateArrayBuilder(workspace, len);
+            JsonElement.Mutable root = doc.RootElement;
+            int count = 0;
+
+            foreach (JsonElement item in input.EnumerateArray())
+            {
+                JsonElement result = transform(item, workspace);
+                if (result.ValueKind != JsonValueKind.Undefined)
+                {
+                    root.AddItem(result);
+                    count++;
+                }
+            }
+
+            return count == 0 ? default : count == 1 ? root[0] : (JsonElement)root;
+        }
+
+        // Single value — transform once
+        return transform(input, workspace);
     }
 
     /// <summary>
