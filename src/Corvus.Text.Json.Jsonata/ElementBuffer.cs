@@ -76,7 +76,7 @@ public struct ElementBuffer : IDisposable
                 this.Add(child);
             }
         }
-        else
+        else if (value.ValueKind != JsonValueKind.Undefined)
         {
             this.Add(value);
         }

@@ -189,34 +189,16 @@ public static class JsonataCodeGenHelpers
     /// <returns>The navigation result, or <c>default</c> if undefined.</returns>
     public static JsonElement NavigatePropertyChain(in JsonElement data, byte[][] names, JsonWorkspace workspace)
     {
-        // Walk object steps until we complete the chain or encounter an array.
-        JsonElement current = data;
-
-        for (int i = 0; i < names.Length; i++)
+        var buffer = default(ElementBuffer);
+        try
         {
-            if (current.ValueKind == JsonValueKind.Object)
-            {
-                if (!current.TryGetProperty((ReadOnlySpan<byte>)names[i], out current))
-                {
-                    return default;
-                }
-            }
-            else if (current.ValueKind == JsonValueKind.Array)
-            {
-                // First array encountered — collect ALL remaining results into one builder.
-                var doc = JsonElement.CreateArrayBuilder(workspace, current.GetArrayLength());
-                JsonElement.Mutable root = doc.RootElement;
-                int count = 0;
-                CollectChainFlat(current, names, i, root, ref count);
-                return count == 0 ? default : count == 1 ? root[0] : (JsonElement)root;
-            }
-            else
-            {
-                return default;
-            }
+            NavigatePropertyChainInto(data, names, ref buffer);
+            return buffer.ToResult(workspace);
         }
-
-        return current;
+        finally
+        {
+            buffer.Dispose();
+        }
     }
 
     /// <summary>
@@ -473,28 +455,31 @@ public static class JsonataCodeGenHelpers
         byte[][] expectedValues,
         JsonWorkspace workspace)
     {
-        int count = 0;
-        var doc = JsonElement.CreateArrayBuilder(workspace, array.GetArrayLength());
-        JsonElement.Mutable root = doc.RootElement;
-
-        foreach (JsonElement item in array.EnumerateArray())
+        var buffer = default(ElementBuffer);
+        try
         {
-            if (FusedMatchesEqualityPredicate(item, propName, expectedValues))
+            foreach (JsonElement item in array.EnumerateArray())
             {
-                if (step + 1 < names.Length)
+                if (FusedMatchesEqualityPredicate(item, propName, expectedValues))
                 {
-                    JsonElement result = FusedEvalFromStep(item, names, constantIndices, equalityPredicates, step + 1, workspace);
-                    count = AddResultWithFlatten(root, result, count);
-                }
-                else
-                {
-                    root.AddItem(item);
-                    count++;
+                    if (step + 1 < names.Length)
+                    {
+                        JsonElement result = FusedEvalFromStep(item, names, constantIndices, equalityPredicates, step + 1, workspace);
+                        buffer.AddFlatten(result);
+                    }
+                    else
+                    {
+                        buffer.Add(item);
+                    }
                 }
             }
-        }
 
-        return count == 0 ? default : count == 1 ? root[0] : (JsonElement)root;
+            return buffer.ToResult(workspace);
+        }
+        finally
+        {
+            buffer.Dispose();
+        }
     }
 
     private static JsonElement FusedCollectAndContinue(
@@ -512,145 +497,136 @@ public static class JsonataCodeGenHelpers
         bool globalIndex = hasIndexThisStep && step == 0;
         bool perElementIndex = hasIndexThisStep && step > 0;
 
-        int count = 0;
-        var doc = JsonElement.CreateArrayBuilder(workspace, array.GetArrayLength());
-        JsonElement.Mutable root = doc.RootElement;
-
-        foreach (JsonElement item in array.EnumerateArray())
+        var buffer = default(ElementBuffer);
+        try
         {
-            if (item.ValueKind == JsonValueKind.Object)
+            foreach (JsonElement item in array.EnumerateArray())
             {
-                if (item.TryGetProperty((ReadOnlySpan<byte>)names[step], out var propValue))
+                if (item.ValueKind == JsonValueKind.Object)
                 {
-                    if (perElementIndex)
+                    if (item.TryGetProperty((ReadOnlySpan<byte>)names[step], out var propValue))
                     {
-                        // Per-element index (step > 0): apply index inline, then continue
-                        if (propValue.ValueKind == JsonValueKind.Array)
+                        if (perElementIndex)
                         {
-                            int idx = constantIndices![step];
-                            if (idx < propValue.GetArrayLength())
+                            if (propValue.ValueKind == JsonValueKind.Array)
                             {
-                                propValue = propValue[idx];
+                                int idx = constantIndices![step];
+                                if (idx < propValue.GetArrayLength())
+                                {
+                                    propValue = propValue[idx];
+                                }
+                                else
+                                {
+                                    continue;
+                                }
                             }
-                            else
+                            else if (constantIndices![step] != 0)
                             {
                                 continue;
                             }
-                        }
-                        else if (constantIndices![step] != 0)
-                        {
-                            continue;
-                        }
 
-                        if (step + 1 < names.Length)
-                        {
-                            JsonElement result = FusedEvalFromStep(propValue, names, constantIndices, equalityPredicates, step + 1, workspace);
-                            count = AddResultWithFlatten(root, result, count);
-                        }
-                        else
-                        {
-                            count = AddResultWithFlatten(root, propValue, count);
-                        }
-                    }
-                    else if (hasEqPredThisStep)
-                    {
-                        var pred = equalityPredicates![step];
-                        if (propValue.ValueKind == JsonValueKind.Array)
-                        {
-                            foreach (JsonElement subItem in propValue.EnumerateArray())
-                            {
-                                if (FusedMatchesEqualityPredicate(subItem, pred.PropName, pred.ExpectedValues))
-                                {
-                                    if (step + 1 < names.Length)
-                                    {
-                                        JsonElement result = FusedEvalFromStep(subItem, names, constantIndices, equalityPredicates, step + 1, workspace);
-                                        count = AddResultWithFlatten(root, result, count);
-                                    }
-                                    else
-                                    {
-                                        root.AddItem(subItem);
-                                        count++;
-                                    }
-                                }
-                            }
-                        }
-                        else if (FusedMatchesEqualityPredicate(propValue, pred.PropName, pred.ExpectedValues))
-                        {
                             if (step + 1 < names.Length)
                             {
                                 JsonElement result = FusedEvalFromStep(propValue, names, constantIndices, equalityPredicates, step + 1, workspace);
-                                count = AddResultWithFlatten(root, result, count);
+                                buffer.AddFlatten(result);
                             }
                             else
                             {
-                                root.AddItem(propValue);
-                                count++;
+                                buffer.AddFlatten(propValue);
                             }
                         }
-                    }
-                    else
-                    {
-                        // No per-element predicate: collect with auto-flatten
-                        if (propValue.ValueKind == JsonValueKind.Array)
+                        else if (hasEqPredThisStep)
                         {
-                            foreach (JsonElement child in propValue.EnumerateArray())
+                            var pred = equalityPredicates![step];
+                            if (propValue.ValueKind == JsonValueKind.Array)
                             {
-                                root.AddItem(child);
-                                count++;
+                                foreach (JsonElement subItem in propValue.EnumerateArray())
+                                {
+                                    if (FusedMatchesEqualityPredicate(subItem, pred.PropName, pred.ExpectedValues))
+                                    {
+                                        if (step + 1 < names.Length)
+                                        {
+                                            JsonElement result = FusedEvalFromStep(subItem, names, constantIndices, equalityPredicates, step + 1, workspace);
+                                            buffer.AddFlatten(result);
+                                        }
+                                        else
+                                        {
+                                            buffer.Add(subItem);
+                                        }
+                                    }
+                                }
+                            }
+                            else if (FusedMatchesEqualityPredicate(propValue, pred.PropName, pred.ExpectedValues))
+                            {
+                                if (step + 1 < names.Length)
+                                {
+                                    JsonElement result = FusedEvalFromStep(propValue, names, constantIndices, equalityPredicates, step + 1, workspace);
+                                    buffer.AddFlatten(result);
+                                }
+                                else
+                                {
+                                    buffer.Add(propValue);
+                                }
                             }
                         }
                         else
                         {
-                            root.AddItem(propValue);
-                            count++;
+                            buffer.AddFlatten(propValue);
                         }
                     }
                 }
+                else if (item.ValueKind == JsonValueKind.Array)
+                {
+                    JsonElement nested = FusedCollectAndContinue(item, names, constantIndices, equalityPredicates, step, workspace);
+                    buffer.AddFlatten(nested);
+                }
             }
-            else if (item.ValueKind == JsonValueKind.Array)
-            {
-                // Nested array: recurse
-                JsonElement nested = FusedCollectAndContinue(item, names, constantIndices, equalityPredicates, step, workspace);
-                count = AddResultWithFlatten(root, nested, count);
-            }
-        }
 
-        // Global index (step 0): apply index to collected results
-        if (globalIndex)
+            // Global index (step 0): apply index to collected results
+            if (globalIndex)
+            {
+                int idx = constantIndices![step];
+                if (idx >= buffer.Count)
+                {
+                    return default;
+                }
+
+                JsonElement indexed = buffer[idx];
+
+                if (step + 1 >= names.Length)
+                {
+                    return indexed;
+                }
+
+                return FusedEvalFromStep(indexed, names, constantIndices, equalityPredicates, step + 1, workspace);
+            }
+
+            // No per-element predicate and more steps: continue per-element on collected results
+            if (!perElementIndex && !hasEqPredThisStep && step + 1 < names.Length)
+            {
+                var resultBuffer = default(ElementBuffer);
+                try
+                {
+                    for (int i = 0; i < buffer.Count; i++)
+                    {
+                        JsonElement result = FusedEvalFromStep(buffer[i], names, constantIndices, equalityPredicates, step + 1, workspace);
+                        resultBuffer.AddFlatten(result);
+                    }
+
+                    return resultBuffer.ToResult(workspace);
+                }
+                finally
+                {
+                    resultBuffer.Dispose();
+                }
+            }
+
+            return buffer.ToResult(workspace);
+        }
+        finally
         {
-            int idx = constantIndices![step];
-            if (idx >= count)
-            {
-                return default;
-            }
-
-            JsonElement indexed = root[idx];
-
-            if (step + 1 >= names.Length)
-            {
-                return indexed;
-            }
-
-            return FusedEvalFromStep(indexed, names, constantIndices, equalityPredicates, step + 1, workspace);
+            buffer.Dispose();
         }
-
-        // No per-element predicate and more steps: continue per-element on collected results
-        if (!perElementIndex && !hasEqPredThisStep && step + 1 < names.Length)
-        {
-            int resultCount = 0;
-            var resultDoc = JsonElement.CreateArrayBuilder(workspace, count);
-            JsonElement.Mutable resultRoot = resultDoc.RootElement;
-
-            for (int i = 0; i < count; i++)
-            {
-                JsonElement result = FusedEvalFromStep(root[i], names, constantIndices, equalityPredicates, step + 1, workspace);
-                resultCount = AddResultWithFlatten(resultRoot, result, resultCount);
-            }
-
-            return resultCount == 0 ? default : resultCount == 1 ? resultRoot[0] : (JsonElement)resultRoot;
-        }
-
-        return count == 0 ? default : count == 1 ? root[0] : (JsonElement)root;
     }
 
     /// <summary>
@@ -886,17 +862,21 @@ public static class JsonataCodeGenHelpers
     {
         if (data.ValueKind == JsonValueKind.Array)
         {
-            int count = 0;
-            var doc = JsonElement.CreateArrayBuilder(workspace, data.GetArrayLength());
-            JsonElement.Mutable root = doc.RootElement;
-
-            foreach (JsonElement item in data.EnumerateArray())
+            var buffer = default(ElementBuffer);
+            try
             {
-                JsonElement result = step(item, workspace);
-                count = AddResultWithFlatten(root, result, count);
-            }
+                foreach (JsonElement item in data.EnumerateArray())
+                {
+                    JsonElement result = step(item, workspace);
+                    buffer.AddFlatten(result);
+                }
 
-            return count == 0 ? default : count == 1 ? root[0] : (JsonElement)root;
+                return buffer.ToResult(workspace);
+            }
+            finally
+            {
+                buffer.Dispose();
+            }
         }
 
         if (data.ValueKind != JsonValueKind.Undefined)
@@ -4675,8 +4655,7 @@ public static class JsonataCodeGenHelpers
 
         if (input.ValueKind == JsonValueKind.Array)
         {
-            int len = input.GetArrayLength();
-            var doc = JsonElement.CreateArrayBuilder(workspace, len);
+            var doc = JsonElement.CreateArrayBuilder(workspace, input.GetArrayLength());
             JsonElement.Mutable root = doc.RootElement;
 
             foreach (JsonElement item in input.EnumerateArray())
@@ -4698,7 +4677,7 @@ public static class JsonataCodeGenHelpers
             return default;
         }
 
-        using var singleDoc = JsonElement.CreateArrayBuilder(workspace, 1);
+        var singleDoc = JsonElement.CreateArrayBuilder(workspace, 1);
         singleDoc.RootElement.AddItem(single);
         return (JsonElement)singleDoc.RootElement;
     }
@@ -4765,20 +4744,23 @@ public static class JsonataCodeGenHelpers
 
         if (input.ValueKind == JsonValueKind.Array)
         {
-            int count = 0;
-            var doc = JsonElement.CreateArrayBuilder(workspace, input.GetArrayLength());
-            JsonElement.Mutable root = doc.RootElement;
-
-            foreach (JsonElement item in input.EnumerateArray())
+            var buffer = default(ElementBuffer);
+            try
             {
-                if (predicate(item, workspace))
+                foreach (JsonElement item in input.EnumerateArray())
                 {
-                    root.AddItem(item);
-                    count++;
+                    if (predicate(item, workspace))
+                    {
+                        buffer.Add(item);
+                    }
                 }
-            }
 
-            return count == 0 ? default : count == 1 ? root[0] : (JsonElement)root;
+                return buffer.ToResult(workspace);
+            }
+            finally
+            {
+                buffer.Dispose();
+            }
         }
 
         // Single value — test predicate
@@ -5661,17 +5643,21 @@ public static class JsonataCodeGenHelpers
     private static JsonElement NavigatePropertyOverArray(
         in JsonElement array, byte[] name, JsonWorkspace workspace)
     {
-        int count = 0;
-        var doc = JsonElement.CreateArrayBuilder(workspace, array.GetArrayLength());
-        JsonElement.Mutable root = doc.RootElement;
-
-        foreach (JsonElement item in array.EnumerateArray())
+        var buffer = default(ElementBuffer);
+        try
         {
-            JsonElement result = NavigateProperty(item, name, workspace);
-            count = AddResultWithFlatten(root, result, count);
-        }
+            foreach (JsonElement item in array.EnumerateArray())
+            {
+                JsonElement result = NavigateProperty(item, name, workspace);
+                buffer.AddFlatten(result);
+            }
 
-        return count == 0 ? default : count == 1 ? root[0] : (JsonElement)root;
+            return buffer.ToResult(workspace);
+        }
+        finally
+        {
+            buffer.Dispose();
+        }
     }
 
     /// <summary>
