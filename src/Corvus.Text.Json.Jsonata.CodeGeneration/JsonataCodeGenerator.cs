@@ -242,6 +242,7 @@ public static class JsonataCodeGenerator
         private int _varCounter;
         private int _nameFieldCounter;
         private int _pathFieldCounter;
+        private int _predicateFieldCounter;
         private int _lambdaCounter;
 
         /// <summary>
@@ -374,6 +375,24 @@ public static class JsonataCodeGenerator
                 // Still apply KeepSingletonArray wrapping if needed (e.g. number[])
                 if (path.KeepSingletonArray || path.KeepArray
                     || steps.Exists(s => s.KeepArray))
+                {
+                    string wrapped = NextVar();
+                    L(sb, indent, $"var {wrapped} = {H}.KeepSingletonArray({result}, {wsVar});");
+                    result = wrapped;
+                }
+
+                return result;
+            }
+
+            // Check for property chain with constant-index or string-equality predicates
+            // (e.g. Contact.Phone[type = 'mobile'].number, items[0].name)
+            if (path.Annotations?.Group is null
+                && !path.KeepArray && !path.KeepSingletonArray
+                && TryBuildFusedPropertyChain(steps, out var fusedNames, out var fusedIndices, out var fusedPreds))
+            {
+                string result = EmitFusedPropertyChain(sb, fusedNames, fusedIndices, fusedPreds, indent, dataVar, wsVar);
+
+                if (steps.Exists(s => s.KeepArray))
                 {
                     string wrapped = NextVar();
                     L(sb, indent, $"var {wrapped} = {H}.KeepSingletonArray({result}, {wsVar});");
@@ -654,6 +673,251 @@ public static class JsonataCodeGenerator
             }
 
             return true;
+        }
+
+        /// <summary>
+        /// Attempts to detect a property chain with optional constant-index or
+        /// string-equality predicates that can be fused into a single helper call.
+        /// Mirrors the runtime's <c>TryCompileSimplePropertyChain</c>.
+        /// </summary>
+        private static bool TryBuildFusedPropertyChain(
+            List<JsonataNode> steps,
+            out string[] propertyNames,
+            out int[]? constantIndices,
+            out (string PropName, string[] ExpectedValues)[]? equalityPredicates)
+        {
+            propertyNames = new string[steps.Count];
+            constantIndices = null;
+            equalityPredicates = null;
+            bool hasPredicates = false;
+
+            for (int i = 0; i < steps.Count; i++)
+            {
+                if (steps[i] is not NameNode nameNode)
+                {
+                    return false;
+                }
+
+                if (HasComplexAnnotations(nameNode) || HasGroupAnnotation(nameNode))
+                {
+                    return false;
+                }
+
+                propertyNames[i] = nameNode.Value;
+
+                if (HasStages(nameNode))
+                {
+                    var stages = nameNode.Annotations!.Stages;
+                    if (stages.Count != 1)
+                    {
+                        return false;
+                    }
+
+                    if (stages[0] is FilterNode { Expression: NumberNode numNode }
+                        && numNode.Value >= 0
+                        && numNode.Value <= int.MaxValue
+                        && numNode.Value == Math.Floor(numNode.Value))
+                    {
+                        // Constant non-negative integer index
+                        if (constantIndices is null)
+                        {
+                            constantIndices = new int[steps.Count];
+#if NETSTANDARD2_0
+                            for (int j = 0; j < constantIndices.Length; j++)
+                            {
+                                constantIndices[j] = -1;
+                            }
+#else
+                            Array.Fill(constantIndices, -1);
+#endif
+                        }
+
+                        constantIndices[i] = (int)numNode.Value;
+                        hasPredicates = true;
+                    }
+                    else if (stages[0] is FilterNode filterNode
+                             && TryExtractEqualityPredicateValues(filterNode.Expression, out var filterPropName, out var filterValues))
+                    {
+                        // String equality predicate (possibly OR-ed)
+                        if (equalityPredicates is null)
+                        {
+                            equalityPredicates = new (string, string[])[steps.Count];
+                        }
+
+                        equalityPredicates[i] = (filterPropName, filterValues.ToArray());
+                        hasPredicates = true;
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                }
+                else if (constantIndices is not null)
+                {
+                    constantIndices[i] = -1;
+                }
+            }
+
+            if (!hasPredicates)
+            {
+                return false;
+            }
+
+            // Ensure constantIndices is fully initialized
+            if (constantIndices is null)
+            {
+                constantIndices = new int[steps.Count];
+#if NETSTANDARD2_0
+                for (int j = 0; j < constantIndices.Length; j++)
+                {
+                    constantIndices[j] = -1;
+                }
+#else
+                Array.Fill(constantIndices, -1);
+#endif
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Recursively extracts equality predicate values from an expression tree.
+        /// Handles <c>prop = 'value'</c> and <c>prop = 'a' or prop = 'b'</c>.
+        /// Mirrors the runtime's <c>TryExtractEqualityPredicateValues</c>.
+        /// </summary>
+        private static bool TryExtractEqualityPredicateValues(
+            JsonataNode expression,
+            out string propName,
+            out List<string> values)
+        {
+            // Single equality: prop = 'value'
+            if (expression is BinaryNode { Operator: "=" } eq
+                && TryGetSimpleNameNode(eq.Lhs, out propName)
+                && eq.Rhs is StringNode strNode)
+            {
+                values = [strNode.Value];
+                return true;
+            }
+
+            // OR of equalities: lhs or rhs (recursive)
+            if (expression is BinaryNode { Operator: "or" } orNode
+                && TryExtractEqualityPredicateValues(orNode.Lhs, out var leftProp, out var leftValues)
+                && TryExtractEqualityPredicateValues(orNode.Rhs, out var rightProp, out var rightValues)
+                && leftProp == rightProp)
+            {
+                propName = leftProp;
+                leftValues.AddRange(rightValues);
+                values = leftValues;
+                return true;
+            }
+
+            propName = default!;
+            values = default!;
+            return false;
+        }
+
+        /// <summary>
+        /// Extracts a bare property name from a NameNode or a PathNode wrapping a single NameNode.
+        /// Mirrors the runtime's <c>TryGetSimpleNameNode</c>.
+        /// </summary>
+        private static bool TryGetSimpleNameNode(JsonataNode node, out string name)
+        {
+            if (node is NameNode nameNode)
+            {
+                name = nameNode.Value;
+                return true;
+            }
+
+            if (node is PathNode { Steps: [NameNode innerName] } pathNode
+                && !pathNode.KeepArray && !pathNode.KeepSingletonArray
+                && pathNode.Annotations is null
+                && innerName.Annotations is null)
+            {
+                name = innerName.Value;
+                return true;
+            }
+
+            name = default!;
+            return false;
+        }
+
+        /// <summary>
+        /// Emits a fused property chain call with pre-encoded predicate data.
+        /// </summary>
+        private string EmitFusedPropertyChain(
+            StringBuilder sb,
+            string[] propertyNames,
+            int[]? constantIndices,
+            (string PropName, string[] ExpectedValues)[]? equalityPredicates,
+            string indent,
+            string dataVar,
+            string wsVar)
+        {
+            // Create the path field (byte[][])
+            string pathField = CreatePathField(propertyNames);
+
+            // Create constant indices field
+            string indicesExpr;
+            bool hasAnyIndex = constantIndices is not null && Array.Exists(constantIndices, i => i >= 0);
+            if (hasAnyIndex)
+            {
+                string idxField = $"s_ci{_predicateFieldCounter++}";
+                string values = string.Join(", ", constantIndices!);
+                _staticFieldDeclarations.Add(
+                    $"private static readonly int[] {idxField} = new int[] {{ {values} }};");
+                indicesExpr = idxField;
+            }
+            else
+            {
+                indicesExpr = "null";
+            }
+
+            // Create equality predicates field
+            string predsExpr;
+            bool hasAnyEqPred = equalityPredicates is not null
+                                && Array.Exists(equalityPredicates, p => p.PropName is not null);
+            if (hasAnyEqPred)
+            {
+                string predField = $"s_ep{_predicateFieldCounter++}";
+                var sb2 = new StringBuilder();
+                sb2.Append($"private static readonly (byte[], byte[][])[] {predField} = new (byte[], byte[][])[] {{ ");
+
+                for (int i = 0; i < equalityPredicates!.Length; i++)
+                {
+                    if (i > 0)
+                    {
+                        sb2.Append(", ");
+                    }
+
+                    if (equalityPredicates[i].PropName is not null)
+                    {
+                        string propNameField = GetOrCreateNameField(equalityPredicates[i].PropName);
+                        var valueFields = new string[equalityPredicates[i].ExpectedValues.Length];
+                        for (int v = 0; v < valueFields.Length; v++)
+                        {
+                            valueFields[v] = GetOrCreateNameField(equalityPredicates[i].ExpectedValues[v]);
+                        }
+
+                        sb2.Append($"({propNameField}, new byte[][] {{ {string.Join(", ", valueFields)} }})");
+                    }
+                    else
+                    {
+                        sb2.Append("(null!, null!)");
+                    }
+                }
+
+                sb2.Append(" };");
+                _staticFieldDeclarations.Add(sb2.ToString());
+                predsExpr = predField;
+            }
+            else
+            {
+                predsExpr = "null";
+            }
+
+            string v2 = NextVar();
+            L(sb, indent, $"var {v2} = {H}.NavigatePropertyChainWithPredicates({dataVar}, {pathField}, {indicesExpr}, {predsExpr}, {wsVar});");
+            return v2;
         }
 
         private static bool HasStages(JsonataNode node)
