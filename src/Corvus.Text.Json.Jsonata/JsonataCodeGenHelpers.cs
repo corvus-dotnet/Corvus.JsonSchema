@@ -2614,6 +2614,148 @@ public static class JsonataCodeGenHelpers
         return StringComparer.Ordinal.Compare(a.GetString(), b.GetString());
     }
 
+    /// <summary>
+    /// JSONata <c>$sort</c> function with 1 argument — default sort.
+    /// Flattens arrays, validates no objects/arrays, sorts numbers numerically
+    /// and strings by ordinal comparison.
+    /// </summary>
+    public static JsonElement SortDefault(in JsonElement input, JsonWorkspace workspace)
+    {
+        if (input.IsUndefined())
+        {
+            return default;
+        }
+
+        // Collect and flatten elements
+        int capacity = input.ValueKind == JsonValueKind.Array ? input.GetArrayLength() : 1;
+
+        JsonElement[] elements = ArrayPool<JsonElement>.Shared.Rent(capacity * 2);
+        int count = 0;
+
+        try
+        {
+            if (input.ValueKind == JsonValueKind.Array)
+            {
+                foreach (JsonElement el in input.EnumerateArray())
+                {
+                    if (el.ValueKind == JsonValueKind.Array)
+                    {
+                        foreach (JsonElement inner in el.EnumerateArray())
+                        {
+                            if (count >= elements.Length)
+                            {
+                                JsonElement[] newArr = ArrayPool<JsonElement>.Shared.Rent(elements.Length * 2);
+                                Array.Copy(elements, newArr, count);
+                                ArrayPool<JsonElement>.Shared.Return(elements);
+                                elements = newArr;
+                            }
+
+                            elements[count++] = inner;
+                        }
+                    }
+                    else
+                    {
+                        if (count >= elements.Length)
+                        {
+                            JsonElement[] newArr = ArrayPool<JsonElement>.Shared.Rent(elements.Length * 2);
+                            Array.Copy(elements, newArr, count);
+                            ArrayPool<JsonElement>.Shared.Return(elements);
+                            elements = newArr;
+                        }
+
+                        elements[count++] = el;
+                    }
+                }
+            }
+            else
+            {
+                elements[count++] = input;
+            }
+
+            if (count <= 1)
+            {
+                if (count == 0)
+                {
+                    return default;
+                }
+
+                // Single element — wrap in array
+                var singleDoc = JsonElement.CreateArrayBuilder(workspace, 1);
+                singleDoc.RootElement.AddItem(elements[0]);
+                return (JsonElement)singleDoc.RootElement;
+            }
+
+            // Check for objects/arrays — D3070
+            for (int i = 0; i < count; i++)
+            {
+                if (elements[i].ValueKind is JsonValueKind.Object or JsonValueKind.Array)
+                {
+                    throw new JsonataException("D3070", "The single argument form of the $sort function can only be used on an array of strings or an array of numbers", 0);
+                }
+            }
+
+            // Build index array for stable sort
+            int[] indices = ArrayPool<int>.Shared.Rent(count);
+            for (int i = 0; i < count; i++)
+            {
+                indices[i] = i;
+            }
+
+            try
+            {
+                Array.Sort(indices, 0, count, Comparer<int>.Create((a, b) =>
+                {
+                    JsonElement aEl = elements[a];
+                    JsonElement bEl = elements[b];
+
+                    if (aEl.ValueKind == JsonValueKind.Number && bEl.ValueKind == JsonValueKind.Number)
+                    {
+                        int cmp = aEl.GetDouble().CompareTo(bEl.GetDouble());
+                        return cmp != 0 ? cmp : a.CompareTo(b);
+                    }
+
+                    int strCmp = StringComparer.Ordinal.Compare(
+                        CoerceElementToString(aEl),
+                        CoerceElementToString(bEl));
+                    return strCmp != 0 ? strCmp : a.CompareTo(b);
+                }));
+
+                var doc = JsonElement.CreateArrayBuilder(workspace, count);
+                JsonElement.Mutable root = doc.RootElement;
+                for (int i = 0; i < count; i++)
+                {
+                    root.AddItem(elements[indices[i]]);
+                }
+
+                return (JsonElement)root;
+            }
+            finally
+            {
+                ArrayPool<int>.Shared.Return(indices);
+            }
+        }
+        finally
+        {
+            ArrayPool<JsonElement>.Shared.Return(elements);
+        }
+    }
+
+    /// <summary>
+    /// Coerces a JSON element to its string representation for sort comparisons.
+    /// </summary>
+    internal static string CoerceElementToString(in JsonElement element)
+    {
+        return element.ValueKind switch
+        {
+            JsonValueKind.String => element.GetString() ?? string.Empty,
+            JsonValueKind.Number => element.GetDouble().ToString(System.Globalization.CultureInfo.InvariantCulture),
+            JsonValueKind.True => "true",
+            JsonValueKind.False => "false",
+            JsonValueKind.Null => "null",
+            _ => element.GetRawText(),
+        };
+    }
+
     // ===== Phase 1g: Date/Time Formatting =====
 
     /// <summary>

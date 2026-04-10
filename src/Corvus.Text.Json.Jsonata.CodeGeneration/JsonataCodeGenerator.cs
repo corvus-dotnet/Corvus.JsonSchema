@@ -2061,6 +2061,15 @@ public static class JsonataCodeGenerator
         private string EmitHofSort(
             StringBuilder sb, FunctionCallNode func, string indent, string dataVar, string wsVar)
         {
+            if (func.Arguments.Count == 1)
+            {
+                // $sort(array) — default sort, no comparator
+                string sortInput = EmitExpression(sb, func.Arguments[0], indent, dataVar, wsVar);
+                string sortResult = NextVar();
+                L(sb, indent, $"var {sortResult} = {H}.SortDefault({sortInput}, {wsVar});");
+                return sortResult;
+            }
+
             if (func.Arguments.Count < 2 || func.Arguments[1] is not LambdaNode lambda)
             {
                 throw new FallbackException();
