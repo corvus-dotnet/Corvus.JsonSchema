@@ -4669,6 +4669,276 @@ public static class JsonataCodeGenHelpers
     }
 
     /// <summary>
+    /// Optimized per-element group-by for path steps where both key and value are simple
+    /// property names (<c>.{keyProp: valueProp}</c>). Accesses properties directly via
+    /// <see cref="JsonElement.TryGetProperty(ReadOnlySpan{byte}, out JsonElement)"/> with
+    /// pre-compiled UTF-8 names — no Dictionary, no List, no lambda dispatch.
+    /// </summary>
+    /// <param name="input">The input (array or scalar).</param>
+    /// <param name="keyPropUtf8">UTF-8 encoded key property name.</param>
+    /// <param name="valuePropUtf8">UTF-8 encoded value property name.</param>
+    /// <param name="workspace">The workspace for intermediate allocations.</param>
+    /// <returns>An array of objects (or singleton), or <c>default</c> if input is undefined/empty.</returns>
+    public static JsonElement SimpleGroupByPerElement(
+        in JsonElement input,
+        byte[] keyPropUtf8,
+        byte[] valuePropUtf8,
+        JsonWorkspace workspace)
+    {
+        if (input.ValueKind == JsonValueKind.Array)
+        {
+            int len = input.GetArrayLength();
+            if (len == 0)
+            {
+                return default;
+            }
+
+            var doc = JsonElement.CreateArrayBuilder(workspace, len);
+            JsonElement.Mutable root = doc.RootElement;
+            int count = 0;
+
+            foreach (JsonElement item in input.EnumerateArray())
+            {
+                JsonElement obj = BuildSingleEntryObject(item, keyPropUtf8, valuePropUtf8, workspace);
+                if (obj.ValueKind != JsonValueKind.Undefined)
+                {
+                    root.AddItem(obj);
+                    count++;
+                }
+            }
+
+            return count == 0 ? default : count == 1 ? root[0] : (JsonElement)root;
+        }
+
+        if (input.ValueKind != JsonValueKind.Undefined)
+        {
+            return BuildSingleEntryObject(input, keyPropUtf8, valuePropUtf8, workspace);
+        }
+
+        return default;
+    }
+
+    /// <summary>
+    /// Optimized annotation group-by where both key and value are simple property names.
+    /// Groups ALL elements by key property, collecting values per group. Mirrors the
+    /// runtime's <c>ApplySimpleNamePairGroupBy</c> using ArrayPool buffers and O(n²)
+    /// grouping with stackalloc — no Dictionary, no List, no lambda dispatch.
+    /// </summary>
+    /// <param name="input">The input (array or scalar).</param>
+    /// <param name="keyPropUtf8">UTF-8 encoded key property name.</param>
+    /// <param name="valuePropUtf8">UTF-8 encoded value property name.</param>
+    /// <param name="workspace">The workspace for intermediate allocations.</param>
+    /// <returns>A JSON object with grouped values, or <c>default</c> if input is undefined.</returns>
+    public static JsonElement SimpleGroupByAnnotation(
+        in JsonElement input,
+        byte[] keyPropUtf8,
+        byte[] valuePropUtf8,
+        JsonWorkspace workspace)
+    {
+        if (input.IsNullOrUndefined())
+        {
+            return default;
+        }
+
+        int maxElements;
+        if (input.ValueKind == JsonValueKind.Array)
+        {
+            maxElements = input.GetArrayLength();
+            if (maxElements == 0)
+            {
+                var emptyDoc = JsonElement.CreateObjectBuilder(workspace, 0);
+                return (JsonElement)emptyDoc.RootElement;
+            }
+        }
+        else
+        {
+            maxElements = 1;
+        }
+
+        JsonElement[] keyBuffer = ArrayPool<JsonElement>.Shared.Rent(maxElements);
+        JsonElement[] valBuffer = ArrayPool<JsonElement>.Shared.Rent(maxElements);
+
+        try
+        {
+            int pairCount = 0;
+
+            if (input.ValueKind == JsonValueKind.Array)
+            {
+                foreach (JsonElement item in input.EnumerateArray())
+                {
+                    CollectSimpleGroupByPair(item, keyPropUtf8, valuePropUtf8, keyBuffer, valBuffer, ref pairCount);
+                }
+            }
+            else
+            {
+                CollectSimpleGroupByPair(input, keyPropUtf8, valuePropUtf8, keyBuffer, valBuffer, ref pairCount);
+            }
+
+            if (pairCount == 0)
+            {
+                if (input.ValueKind == JsonValueKind.Array)
+                {
+                    var emptyDoc = JsonElement.CreateObjectBuilder(workspace, 0);
+                    return (JsonElement)emptyDoc.RootElement;
+                }
+
+                return default;
+            }
+
+            // Phase 2: Group by key with O(n²) scan + stackalloc bool[].
+            var objDoc = JsonElement.CreateObjectBuilder(workspace, Math.Min(pairCount, 16));
+            var objRoot = objDoc.RootElement;
+
+            Span<bool> processed = pairCount <= 256
+                ? stackalloc bool[Math.Min(pairCount, 256)]
+                : new bool[pairCount];
+
+            for (int i = 0; i < pairCount; i++)
+            {
+                if (processed[i])
+                {
+                    continue;
+                }
+
+                processed[i] = true;
+
+                using var keyUtf8 = keyBuffer[i].GetUtf8String();
+                ReadOnlySpan<byte> keyBytes = keyUtf8.Span;
+
+                bool hasDuplicates = false;
+                for (int j = i + 1; j < pairCount; j++)
+                {
+                    if (!processed[j] && keyBuffer[j].ValueEquals(keyBytes))
+                    {
+                        hasDuplicates = true;
+                        break;
+                    }
+                }
+
+                if (!hasDuplicates)
+                {
+                    objRoot.SetProperty(keyBytes, valBuffer[i]);
+                }
+                else
+                {
+                    var arrDoc = JsonElement.CreateArrayBuilder(workspace, 4);
+                    var arrRoot = arrDoc.RootElement;
+                    arrRoot.AddItem(valBuffer[i]);
+
+                    for (int j = i + 1; j < pairCount; j++)
+                    {
+                        if (!processed[j] && keyBuffer[j].ValueEquals(keyBytes))
+                        {
+                            arrRoot.AddItem(valBuffer[j]);
+                            processed[j] = true;
+                        }
+                    }
+
+                    objRoot.SetProperty(keyBytes, (JsonElement)arrRoot);
+                }
+            }
+
+            return objRoot.GetPropertyCount() == 0 ? default : (JsonElement)objRoot;
+        }
+        finally
+        {
+            ArrayPool<JsonElement>.Shared.Return(keyBuffer);
+            ArrayPool<JsonElement>.Shared.Return(valBuffer);
+        }
+    }
+
+    private static JsonElement BuildSingleEntryObject(
+        in JsonElement element,
+        byte[] keyPropUtf8,
+        byte[] valuePropUtf8,
+        JsonWorkspace workspace)
+    {
+        if (element.ValueKind != JsonValueKind.Object)
+        {
+            return default;
+        }
+
+        if (!element.TryGetProperty(keyPropUtf8, out JsonElement keyEl))
+        {
+            return default;
+        }
+
+        if (keyEl.ValueKind == JsonValueKind.Number)
+        {
+            throw new JsonataException("T1003", "Key in object structure must evaluate to a string; got: number", 0);
+        }
+
+        if (keyEl.ValueKind != JsonValueKind.String)
+        {
+            return default;
+        }
+
+        if (!element.TryGetProperty(valuePropUtf8, out JsonElement valEl))
+        {
+            return default;
+        }
+
+        using var keyUtf8 = keyEl.GetUtf8String();
+        var doc = JsonElement.CreateObjectBuilder(workspace, 1);
+        doc.RootElement.SetProperty(keyUtf8.Span, valEl);
+        return (JsonElement)doc.RootElement;
+    }
+
+    private static void CollectSimpleGroupByPair(
+        in JsonElement element,
+        byte[] keyPropUtf8,
+        byte[] valuePropUtf8,
+        JsonElement[] keyBuffer,
+        JsonElement[] valBuffer,
+        ref int pairCount)
+    {
+        if (element.ValueKind == JsonValueKind.Array)
+        {
+            foreach (JsonElement item in element.EnumerateArray())
+            {
+                TryAddSimpleGroupByPair(item, keyPropUtf8, valuePropUtf8, keyBuffer, valBuffer, ref pairCount);
+            }
+        }
+        else
+        {
+            TryAddSimpleGroupByPair(element, keyPropUtf8, valuePropUtf8, keyBuffer, valBuffer, ref pairCount);
+        }
+    }
+
+    private static void TryAddSimpleGroupByPair(
+        in JsonElement element,
+        byte[] keyPropUtf8,
+        byte[] valuePropUtf8,
+        JsonElement[] keyBuffer,
+        JsonElement[] valBuffer,
+        ref int pairCount)
+    {
+        if (!element.TryGetProperty(keyPropUtf8, out JsonElement keyEl))
+        {
+            return;
+        }
+
+        if (keyEl.ValueKind == JsonValueKind.Number)
+        {
+            throw new JsonataException("T1003", "Key in object structure must evaluate to a string; got: number", 0);
+        }
+
+        if (keyEl.ValueKind != JsonValueKind.String)
+        {
+            return;
+        }
+
+        if (!element.TryGetProperty(valuePropUtf8, out JsonElement valEl))
+        {
+            return;
+        }
+
+        keyBuffer[pairCount] = keyEl;
+        valBuffer[pairCount] = valEl;
+        pairCount++;
+    }
+
+    /// <summary>
     /// Per-element group-by for path steps (<c>.{key: value}</c>).
     /// Each element of the input array is individually passed to <see cref="GroupByObject"/>,
     /// producing one object per element. Results are collected with standard singleton

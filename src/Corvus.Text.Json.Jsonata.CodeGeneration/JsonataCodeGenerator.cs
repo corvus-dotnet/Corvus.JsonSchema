@@ -1222,7 +1222,19 @@ public static class JsonataCodeGenerator
 
             (JsonataNode keyExpr, JsonataNode valExpr) = objCtor.Pairs[0];
 
-            // Path-step group-by (.{key: value}): apply per-element.
+            // Fast path: both key and value are simple property names.
+            // Use direct TryGetProperty — no Dictionary, no List, no lambda dispatch.
+            if (TryGetSimpleNameNode(keyExpr, out string? keyPropName)
+                && TryGetSimpleNameNode(valExpr, out string? valPropName))
+            {
+                string keyField = GetOrCreateNameField(keyPropName);
+                string valField = GetOrCreateNameField(valPropName);
+                string v = NextVar();
+                L(sb, indent, $"var {v} = {H}.SimpleGroupByPerElement({currentVar}, {keyField}, {valField}, {wsVar});");
+                return v;
+            }
+
+            // General case: lambda-based approach.
             // Each element gets its own GroupByObject call producing a single-entry object.
             // GroupByObjectPerElement collects these into an array with singleton semantics.
             // KeepArray (the [] modifier) is handled by the value expression itself,
@@ -1238,9 +1250,9 @@ public static class JsonataCodeGenerator
             StringBuilder valSb = new();
             string valVar = EmitExpression(valSb, valExpr, innerIndent, elParam, wsParam);
 
-            string v = NextVar();
+            string v2 = NextVar();
 
-            L(sb, indent, $"var {v} = {H}.GroupByObjectPerElement({currentVar},");
+            L(sb, indent, $"var {v2} = {H}.GroupByObjectPerElement({currentVar},");
             L(sb, indent + "    ", $"{Static}(JsonElement {elParam}, JsonWorkspace {wsParam}) =>");
             L(sb, indent + "    ", "{");
             sb.Append(keySb);
@@ -1252,7 +1264,7 @@ public static class JsonataCodeGenerator
             L(sb, innerIndent, $"return {valVar};");
             L(sb, indent + "    ", "},");
             L(sb, indent + "    ", $"{wsVar});");
-            return v;
+            return v2;
         }
 
         private string EmitGroupByAnnotation(
@@ -1265,6 +1277,19 @@ public static class JsonataCodeGenerator
 
             (JsonataNode keyExpr, JsonataNode valExpr) = group.Pairs[0];
 
+            // Fast path: both key and value are simple property names.
+            // Uses ArrayPool + O(n²) grouping — no Dictionary, no List, no lambda dispatch.
+            if (TryGetSimpleNameNode(keyExpr, out string? keyPropName)
+                && TryGetSimpleNameNode(valExpr, out string? valPropName))
+            {
+                string keyField = GetOrCreateNameField(keyPropName);
+                string valField = GetOrCreateNameField(valPropName);
+                string v = NextVar();
+                L(sb, indent, $"var {v} = {H}.SimpleGroupByAnnotation({currentVar}, {keyField}, {valField}, {wsVar});");
+                return v;
+            }
+
+            // General case: lambda-based approach.
             // Annotation group-by (expr{key: value}): two-phase approach matching the runtime.
             // Phase 1: Group ELEMENTS by key.
             // Phase 2: For each group, build context (single element or array), evaluate VALUE.
@@ -1281,8 +1306,8 @@ public static class JsonataCodeGenerator
             StringBuilder valSb = new();
             string valVar = EmitExpression(valSb, valExpr, innerIndent, elParam, wsParam);
 
-            string v = NextVar();
-            L(sb, indent, $"var {v} = {H}.GroupByObject({currentVar},");
+            string v2 = NextVar();
+            L(sb, indent, $"var {v2} = {H}.GroupByObject({currentVar},");
             L(sb, indent + "    ", $"{Static}(JsonElement {elParam}, JsonWorkspace {wsParam}) =>");
             L(sb, indent + "    ", "{");
             sb.Append(keySb);
@@ -1294,7 +1319,7 @@ public static class JsonataCodeGenerator
             L(sb, innerIndent, $"return {valVar};");
             L(sb, indent + "    ", "},");
             L(sb, indent + "    ", $"{wsVar});");
-            return v;
+            return v2;
         }
 
         /// <summary>
