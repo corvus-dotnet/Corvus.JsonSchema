@@ -527,7 +527,7 @@ public static class JsonataCodeGenerator
                 }
                 else if (step is WildcardNode or DescendantNode)
                 {
-                    if (HasComplexAnnotations(step) || HasStages(step))
+                    if (HasComplexAnnotations(step))
                     {
                         throw new FallbackException();
                     }
@@ -546,6 +546,15 @@ public static class JsonataCodeGenerator
                         string v = NextVar();
                         L(sb, indent, $"var {v} = {H}.ApplyStepOverElements({currentVar}, static (el, ws) => {H}.{helperName}(el, ws), {wsVar});");
                         currentVar = v;
+                    }
+
+                    // Apply stages (e.g. [type="home"] predicate) after wildcard/descendant
+                    if (HasStages(step))
+                    {
+                        foreach (JsonataNode stage in step.Annotations!.Stages)
+                        {
+                            currentVar = EmitFilterStage(sb, stage, currentVar, indent, wsVar);
+                        }
                     }
 
                     i++;
@@ -1468,7 +1477,7 @@ public static class JsonataCodeGenerator
         {
             foreach ((JsonataNode key, _) in obj.Pairs)
             {
-                if (key is not StringNode)
+                if (key is not StringNode and not NameNode)
                 {
                     throw new FallbackException();
                 }
@@ -1479,7 +1488,9 @@ public static class JsonataCodeGenerator
 
             for (int i = 0; i < obj.Pairs.Count; i++)
             {
-                keyStrings[i] = $"\"{EscapeStringLiteral(((StringNode)obj.Pairs[i].Key).Value)}\"";
+                string keyValue = obj.Pairs[i].Key is StringNode s ? s.Value
+                    : ((NameNode)obj.Pairs[i].Key).Value;
+                keyStrings[i] = $"\"{EscapeStringLiteral(keyValue)}\"";
                 valueVars[i] = EmitExpression(sb, obj.Pairs[i].Value, indent, dataVar, wsVar);
             }
 
