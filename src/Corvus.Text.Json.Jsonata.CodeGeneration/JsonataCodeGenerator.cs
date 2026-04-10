@@ -2467,16 +2467,31 @@ public static class JsonataCodeGenerator
                     goto generic;
                 }
 
-                // Emit each element
+                // Emit each element, then use JoinBuilder pattern (like ConcatBuilder — zero allocation)
                 List<string> elemVars = new(arr.Expressions.Count);
                 foreach (var item in arr.Expressions)
                 {
                     elemVars.Add(EmitExpression(sb, item, indent, dataVar, wsVar));
                 }
 
+                string jb = NextVar();
                 string v = NextVar();
-                string elemsArray = string.Join(", ", elemVars);
-                L(sb, indent, $"var {v} = {H}.JoinScalarElements({sepUtf8}, new JsonElement[] {{ {elemsArray} }}, {wsVar});");
+                L(sb, indent, $"var {jb} = {H}.BeginJoin(stackalloc byte[256], {sepUtf8});");
+                L(sb, indent, $"JsonElement {v};");
+                L(sb, indent, "try");
+                L(sb, indent, "{");
+                foreach (string ev in elemVars)
+                {
+                    L(sb, indent, $"    {jb}.AppendElement({ev});");
+                }
+
+                L(sb, indent, $"    {v} = {jb}.Complete({wsVar});");
+                L(sb, indent, "}");
+                L(sb, indent, "finally");
+                L(sb, indent, "{");
+                L(sb, indent, $"    {jb}.Dispose();");
+                L(sb, indent, "}");
+
                 return v;
             }
 

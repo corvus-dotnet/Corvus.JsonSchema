@@ -1726,45 +1726,71 @@ public static class JsonataCodeGenHelpers
     }
 
     /// <summary>
-    /// Fused <c>$join</c> for codegen: joins scalar elements directly with a UTF-8 separator,
-    /// avoiding intermediate array document construction and <c>StringElement</c> allocation.
+    /// Creates a <see cref="JoinBuilder"/> for zero-allocation <c>$join</c> of scalar elements.
     /// </summary>
-    /// <param name="separator">The separator as raw UTF-8 bytes (empty for no separator).</param>
-    /// <param name="elements">The elements to join (not wrapped in a mutable document).</param>
-    /// <param name="workspace">The workspace for pooled memory.</param>
-    /// <returns>The joined string as a <see cref="JsonElement"/>.</returns>
-    public static JsonElement JoinScalarElements(ReadOnlySpan<byte> separator, JsonElement[] elements, JsonWorkspace workspace)
+    /// <param name="initialBuffer">A stack-allocated buffer for the builder (use <c>stackalloc byte[256]</c>).</param>
+    /// <param name="separator">The UTF-8 separator bytes (empty for no separator).</param>
+    /// <returns>A new <see cref="JoinBuilder"/> that must be disposed after use.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static JoinBuilder BeginJoin(Span<byte> initialBuffer, ReadOnlySpan<byte> separator) => new(initialBuffer, separator);
+
+    /// <summary>
+    /// A ref struct for building <c>$join</c> results from individual <see cref="JsonElement"/> values
+    /// and a UTF-8 separator, without allocating an intermediate array or mutable document.
+    /// Follows the same pattern as <see cref="ConcatBuilder"/>.
+    /// </summary>
+    public ref struct JoinBuilder
     {
-        Utf8ValueStringBuilder sb = new(stackalloc byte[256]);
-        try
+        private Utf8ValueStringBuilder _sb;
+        private readonly ReadOnlySpan<byte> _separator;
+        private bool _first;
+
+        internal JoinBuilder(Span<byte> initialBuffer, ReadOnlySpan<byte> separator)
         {
-            bool first = true;
-            for (int i = 0; i < elements.Length; i++)
+            _sb = new Utf8ValueStringBuilder(initialBuffer);
+            _separator = separator;
+            _first = true;
+        }
+
+        /// <summary>
+        /// Appends a string <see cref="JsonElement"/>. Undefined/null elements are skipped.
+        /// Non-string, non-null/undefined elements throw <see cref="JsonataException"/>.
+        /// </summary>
+        /// <param name="value">The JSON element to append.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void AppendElement(in JsonElement value)
+        {
+            if (value.ValueKind == JsonValueKind.String)
             {
-                JsonElement item = elements[i];
-                if (item.ValueKind == JsonValueKind.String)
+                if (!_first && _separator.Length > 0)
                 {
-                    if (!first && separator.Length > 0)
-                    {
-                        sb.Append(separator);
-                    }
+                    _sb.Append(_separator);
+                }
 
-                    using UnescapedUtf8JsonString utf8Item = item.GetUtf8String();
-                    sb.Append(utf8Item.Span);
-                    first = false;
-                }
-                else if (!item.IsNullOrUndefined())
-                {
-                    throw new JsonataException("T0412", "Argument 1 of function $join must be an array of strings", 0);
-                }
+                using UnescapedUtf8JsonString utf8 = value.GetUtf8String();
+                _sb.Append(utf8.Span);
+                _first = false;
             }
+            else if (!value.IsNullOrUndefined())
+            {
+                throw new JsonataException("T0412", "Argument 1 of function $join must be an array of strings", 0);
+            }
+        }
 
-            return JsonataHelpers.StringFromUnescapedUtf8(sb.AsSpan(), workspace);
-        }
-        finally
-        {
-            sb.Dispose();
-        }
+        /// <summary>
+        /// Completes the join and returns the result as a string <see cref="JsonElement"/>.
+        /// </summary>
+        /// <param name="workspace">The workspace for the result element.</param>
+        /// <returns>A string <see cref="JsonElement"/> containing the joined value.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public JsonElement Complete(JsonWorkspace workspace) =>
+            JsonataHelpers.StringFromUnescapedUtf8(_sb.AsSpan(), workspace);
+
+        /// <summary>
+        /// Releases resources used by this builder.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Dispose() => _sb.Dispose();
     }
 
     /// <summary>
