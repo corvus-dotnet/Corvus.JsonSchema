@@ -3574,7 +3574,7 @@ internal static class BuiltInFunctions
     }
 
     // --- Numeric functions: random, formatNumber, formatBase ---
-    private static bool HasInvalidPercentEncoding(string input)
+    internal static bool HasInvalidPercentEncoding(string input)
     {
         for (int i = 0; i < input.Length; i++)
         {
@@ -3592,7 +3592,7 @@ internal static class BuiltInFunctions
         return false;
     }
 
-    private static void ValidateNoUnpairedSurrogates(string str, string funcName)
+    internal static void ValidateNoUnpairedSurrogates(string str, string funcName)
     {
         for (int i = 0; i < str.Length; i++)
         {
@@ -3665,7 +3665,7 @@ internal static class BuiltInFunctions
         };
     }
 
-    private static string FormatNumberXPath(double value, string picture, JsonElement options)
+    internal static string FormatNumberXPath(double value, string picture, JsonElement options)
     {
         // Build formatting properties (defaults overridden by options).
         char decSep = '.';
@@ -4368,7 +4368,7 @@ internal static class BuiltInFunctions
         };
     }
 
-    private static string ConvertToBase(long value, int radix)
+    internal static string ConvertToBase(long value, int radix)
     {
         if (radix is 2 or 8 or 10 or 16)
         {
@@ -4664,7 +4664,7 @@ internal static class BuiltInFunctions
         };
     }
 
-    private static string FormatIso8601WithOffset(DateTimeOffset dt, TimeSpan offset)
+    internal static string FormatIso8601WithOffset(DateTimeOffset dt, TimeSpan offset)
     {
         string formatted = dt.ToString("yyyy-MM-ddTHH:mm:ss.fff", CultureInfo.InvariantCulture);
         if (offset == TimeSpan.Zero)
@@ -4682,7 +4682,7 @@ internal static class BuiltInFunctions
     /// <summary>
     /// Parse a string as strict ISO 8601 date/time or throw D3110 for invalid format.
     /// </summary>
-    private static Sequence ParseIso8601ToMillis(string str, JsonWorkspace workspace)
+    internal static Sequence ParseIso8601ToMillis(string str, JsonWorkspace workspace)
     {
         // ISO 8601 formats: YYYY, YYYY-MM, YYYY-MM-DD, YYYY-MM-DDThh:mm:ss[.fff][Z|±hh:mm]
         string[] iso8601Formats =

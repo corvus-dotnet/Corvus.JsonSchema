@@ -296,28 +296,32 @@ public sealed class FixedJsonValueDocument<T> : IJsonDocument, IWorkspaceManaged
         return 0;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     string? IJsonDocument.GetString(int index, JsonTokenType expectedType)
     {
         Debug.Assert(index == 0);
 
         if (_tokenType == JsonTokenType.String)
         {
-            return JsonReaderHelper.TranscodeHelper(_rawValue.Span[1..^1]);
+            ReadOnlySpan<byte> content = _rawValue.Span[1..^1];
+            return content.IndexOf((byte)'\\') >= 0
+                ? JsonReaderHelper.GetUnescapedString(content)
+                : JsonReaderHelper.TranscodeHelper(content);
         }
 
         ThrowHelper.ThrowJsonElementWrongTypeException(JsonTokenType.String, _tokenType);
         return default;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     bool IJsonDocument.TryGetString(int index, JsonTokenType expectedType, [NotNullWhen(true)] out string? result)
     {
         Debug.Assert(index == 0);
 
         if (_tokenType == JsonTokenType.String)
         {
-            result = JsonReaderHelper.TranscodeHelper(_rawValue.Span[1..^1]);
+            ReadOnlySpan<byte> content = _rawValue.Span[1..^1];
+            result = content.IndexOf((byte)'\\') >= 0
+                ? JsonReaderHelper.GetUnescapedString(content)
+                : JsonReaderHelper.TranscodeHelper(content);
             return true;
         }
 
@@ -334,7 +338,25 @@ public sealed class FixedJsonValueDocument<T> : IJsonDocument, IWorkspaceManaged
             ThrowHelper.ThrowJsonElementWrongTypeException(JsonTokenType.String, _tokenType);
         }
 
-        return new UnescapedUtf8JsonString(_rawValue[1..^1]);
+        ReadOnlyMemory<byte> segment = _rawValue[1..^1];
+
+        if (segment.Span.IndexOf((byte)'\\') >= 0)
+        {
+            int segmentLength = segment.Length;
+            byte[] rentedBytes = ArrayPool<byte>.Shared.Rent(segmentLength);
+            try
+            {
+                JsonReaderHelper.Unescape(segment.Span, rentedBytes, out int written);
+                return new UnescapedUtf8JsonString(rentedBytes.AsMemory(0, written), rentedBytes);
+            }
+            catch
+            {
+                ArrayPool<byte>.Shared.Return(rentedBytes);
+                throw;
+            }
+        }
+
+        return new UnescapedUtf8JsonString(segment);
     }
 
     UnescapedUtf16JsonString IJsonDocument.GetUtf16JsonString(int index, JsonTokenType expectedType)
@@ -347,6 +369,42 @@ public sealed class FixedJsonValueDocument<T> : IJsonDocument, IWorkspaceManaged
         }
 
         ReadOnlySpan<byte> utf8Source = _rawValue.Span[1..^1];
+
+        if (utf8Source.IndexOf((byte)'\\') >= 0)
+        {
+            int utf8Length = utf8Source.Length;
+            byte[]? rentedUtf8 = null;
+
+            Span<byte> utf8Unescaped = utf8Length <= JsonConstants.StackallocByteThreshold
+                ? stackalloc byte[JsonConstants.StackallocByteThreshold]
+                : (rentedUtf8 = ArrayPool<byte>.Shared.Rent(utf8Length));
+
+            try
+            {
+                JsonReaderHelper.Unescape(utf8Source, utf8Unescaped, out int utf8Written);
+                utf8Unescaped = utf8Unescaped.Slice(0, utf8Written);
+
+                char[] rentedChars = ArrayPool<char>.Shared.Rent(utf8Written);
+                try
+                {
+                    int charsWritten = JsonReaderHelper.TranscodeHelper(utf8Unescaped, rentedChars);
+                    return new UnescapedUtf16JsonString(rentedChars.AsMemory(0, charsWritten), rentedChars);
+                }
+                catch
+                {
+                    ArrayPool<char>.Shared.Return(rentedChars);
+                    throw;
+                }
+            }
+            finally
+            {
+                if (rentedUtf8 != null)
+                {
+                    ArrayPool<byte>.Shared.Return(rentedUtf8);
+                }
+            }
+        }
+
         char[] rentedTranscoded = ArrayPool<char>.Shared.Rent(utf8Source.Length);
         try
         {
@@ -367,6 +425,8 @@ public sealed class FixedJsonValueDocument<T> : IJsonDocument, IWorkspaceManaged
             return false;
         }
 
+        ReadOnlySpan<byte> content = _rawValue.Span[1..^1];
+
         byte[]? otherUtf8TextArray = null;
         int length = checked(otherText.Length * JsonConstants.MaxExpansionFactorWhileTranscoding);
         Span<byte> otherUtf8Text = (uint)length <= (uint)JsonConstants.StackallocByteThreshold ?
@@ -383,7 +443,28 @@ public sealed class FixedJsonValueDocument<T> : IJsonDocument, IWorkspaceManaged
         else
         {
             Debug.Assert(status == OperationStatus.Done);
-            result = _rawValue.Span[1..^1].SequenceEqual(otherUtf8Text.Slice(0, written));
+            ReadOnlySpan<byte> otherSlice = otherUtf8Text.Slice(0, written);
+
+            if (content.IndexOf((byte)'\\') >= 0)
+            {
+                // Content has escapes — unescape before comparing
+                byte[]? unescapedArray = null;
+                Span<byte> unescaped = content.Length <= JsonConstants.StackallocByteThreshold
+                    ? stackalloc byte[JsonConstants.StackallocByteThreshold]
+                    : (unescapedArray = ArrayPool<byte>.Shared.Rent(content.Length));
+
+                JsonReaderHelper.Unescape(content, unescaped, out int unescapedWritten);
+                result = unescaped.Slice(0, unescapedWritten).SequenceEqual(otherSlice);
+
+                if (unescapedArray != null)
+                {
+                    ArrayPool<byte>.Shared.Return(unescapedArray);
+                }
+            }
+            else
+            {
+                result = content.SequenceEqual(otherSlice);
+            }
         }
 
         if (otherUtf8TextArray != null)
@@ -405,7 +486,28 @@ public sealed class FixedJsonValueDocument<T> : IJsonDocument, IWorkspaceManaged
             return false;
         }
 
-        return _rawValue.Span[1..^1].SequenceEqual(otherUtf8Text);
+        ReadOnlySpan<byte> content = _rawValue.Span[1..^1];
+
+        if (content.IndexOf((byte)'\\') >= 0)
+        {
+            // Content has escapes — unescape before comparing
+            byte[]? unescapedArray = null;
+            Span<byte> unescaped = content.Length <= JsonConstants.StackallocByteThreshold
+                ? stackalloc byte[JsonConstants.StackallocByteThreshold]
+                : (unescapedArray = ArrayPool<byte>.Shared.Rent(content.Length));
+
+            JsonReaderHelper.Unescape(content, unescaped, out int unescapedWritten);
+            bool result = unescaped.Slice(0, unescapedWritten).SequenceEqual(otherUtf8Text);
+
+            if (unescapedArray != null)
+            {
+                ArrayPool<byte>.Shared.Return(unescapedArray);
+            }
+
+            return result;
+        }
+
+        return content.SequenceEqual(otherUtf8Text);
     }
 
     string IJsonDocument.ToString(int index)
@@ -413,7 +515,10 @@ public sealed class FixedJsonValueDocument<T> : IJsonDocument, IWorkspaceManaged
         Debug.Assert(index == 0);
         if (_tokenType == JsonTokenType.String)
         {
-            return JsonReaderHelper.TranscodeHelper(_rawValue.Span[1..^1]);
+            ReadOnlySpan<byte> content = _rawValue.Span[1..^1];
+            return content.IndexOf((byte)'\\') >= 0
+                ? JsonReaderHelper.GetUnescapedString(content)
+                : JsonReaderHelper.TranscodeHelper(content);
         }
 
         // For numbers, transcode the raw value directly

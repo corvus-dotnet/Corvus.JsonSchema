@@ -38,7 +38,7 @@ public class CodeGenConformanceTests : IClassFixture<CodeGenConformanceFixture>
     }
 
     [Theory]
-    [Trait("Category", "codegen-conformance")]
+    [Trait("category", "codegen-conformance")]
     [MemberData(nameof(GetTestCases))]
     public void RunTestCase(string group, string caseName)
     {
@@ -127,9 +127,43 @@ public class CodeGenConformanceTests : IClassFixture<CodeGenConformanceFixture>
 
         this.output.WriteLine($"Inlined:    {compiled.IsInlined}");
 
+        // Determine expected outcome first — we need this to know how to handle
+        // compilation failures.
+        string? expectedErrorCode = null;
+        if (root.TryGetProperty("code", out var codeElement))
+        {
+            expectedErrorCode = codeElement.GetString()!;
+        }
+        else if (root.TryGetProperty("error", out var errorElement) &&
+                 errorElement.ValueKind == JsonValueKind.Object &&
+                 errorElement.TryGetProperty("code", out var nestedCode))
+        {
+            expectedErrorCode = nestedCode.GetString()!;
+        }
+
+        bool expectsUndefined = root.TryGetProperty("undefinedResult", out _);
+        bool expectsResult = root.TryGetProperty("result", out var expectedResult);
+
         if (compiled.Method is null)
         {
-            this.output.WriteLine($"SKIP: Compilation failed — {compiled.Error}");
+            // Compilation failed — was this expected?
+            if (compiled.ErrorCode is not null && expectedErrorCode is not null)
+            {
+                // Parse error with a matching expected error code — validate it.
+                this.output.WriteLine($"Got parse error: {compiled.ErrorCode}");
+                Assert.Equal(expectedErrorCode, compiled.ErrorCode);
+                return;
+            }
+
+            if (compiled.ErrorCode is not null && expectedErrorCode is null)
+            {
+                // Parse error but we expected a result/undefined — this is a codegen bug.
+                Assert.Fail($"Unexpected parse error (expected {(expectsUndefined ? "undefined" : "result")}): {compiled.Error}");
+                return;
+            }
+
+            // Non-parse failure (timeout, Roslyn error, etc.) — fail with details.
+            Assert.Fail($"Compilation failed: {compiled.Error}");
             return;
         }
 
@@ -160,30 +194,17 @@ public class CodeGenConformanceTests : IClassFixture<CodeGenConformanceFixture>
 
         try
         {
-            // Determine expected outcome.
-            string? expectedErrorCode = null;
-            if (root.TryGetProperty("code", out var codeElement))
-            {
-                expectedErrorCode = codeElement.GetString()!;
-            }
-            else if (root.TryGetProperty("error", out var errorElement) &&
-                     errorElement.ValueKind == JsonValueKind.Object &&
-                     errorElement.TryGetProperty("code", out var nestedCode))
-            {
-                expectedErrorCode = nestedCode.GetString()!;
-            }
-
             if (expectedErrorCode is not null)
             {
                 RunErrorCase(compiled.Method, expectedErrorCode, inputData, hasData);
                 this.output.WriteLine($"Got expected error: {expectedErrorCode}");
             }
-            else if (root.TryGetProperty("undefinedResult", out _))
+            else if (expectsUndefined)
             {
                 RunUndefinedCase(compiled.Method, inputData, hasData);
                 this.output.WriteLine("Got expected undefined result");
             }
-            else if (root.TryGetProperty("result", out var expectedResult))
+            else if (expectsResult)
             {
                 RunResultCase(compiled.Method, expectedResult, inputData, hasData);
             }

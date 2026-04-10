@@ -5,6 +5,7 @@
 using System.Collections.Concurrent;
 using System.Reflection;
 using System.Runtime.Loader;
+using Corvus.Text.Json.Jsonata;
 using Corvus.Text.Json.Jsonata.CodeGeneration;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -59,12 +60,6 @@ public sealed class CodeGenConformanceFixture : IDisposable
     /// </summary>
     private static readonly TimeSpan CompilationTimeout = TimeSpan.FromSeconds(30);
 
-    /// <summary>
-    /// Path to the progress log file for diagnosing hung tests.
-    /// </summary>
-    private static readonly string ProgressLogPath = Path.Combine(
-        Path.GetTempPath(), "codegen-conformance-progress.log");
-
     public CompiledExpression GetOrCompile(string expression)
     {
         return Cache.GetOrAdd(expression, static expr =>
@@ -74,8 +69,6 @@ public sealed class CodeGenConformanceFixture : IDisposable
             {
                 int id = Interlocked.Increment(ref s_classCounter);
                 string className = $"Expr_{id}";
-
-                File.AppendAllText(ProgressLogPath, $"[{DateTime.Now:HH:mm:ss.fff}] #{id} GENERATING: {(expr.Length > 80 ? expr[..80] + "..." : expr)}\n");
 
                 // Wrap the entire pipeline in a timeout — code gen AND Roslyn emit.
                 var compileTask = Task.Run(() =>
@@ -112,7 +105,6 @@ public sealed class CodeGenConformanceFixture : IDisposable
 
                 if (!compileTask.Wait(CompilationTimeout))
                 {
-                    File.AppendAllText(ProgressLogPath, $"[{DateTime.Now:HH:mm:ss.fff}] #{id} TIMEOUT\n");
                     return new CompiledExpression(
                         null, generatedCode,
                         $"Pipeline timed out after {CompilationTimeout.TotalSeconds}s for: {(expr.Length > 80 ? expr[..80] + "..." : expr)}");
@@ -123,7 +115,6 @@ public sealed class CodeGenConformanceFixture : IDisposable
 
                 if (error is not null)
                 {
-                    File.AppendAllText(ProgressLogPath, $"[{DateTime.Now:HH:mm:ss.fff}] #{id} ERROR: {error[..Math.Min(error.Length, 60)]}\n");
                     return new CompiledExpression(null, generatedCode, error);
                 }
 
@@ -133,18 +124,18 @@ public sealed class CodeGenConformanceFixture : IDisposable
                     "Evaluate",
                     [typeof(Corvus.Text.Json.JsonElement).MakeByRefType(), typeof(Corvus.Text.Json.JsonWorkspace)]);
 
-                File.AppendAllText(ProgressLogPath, $"[{DateTime.Now:HH:mm:ss.fff}] #{id} OK\n");
                 return new CompiledExpression(method, generatedCode, method is null ? $"Type or method not found: {fullTypeName}" : null);
             }
             catch (AggregateException ae) when (ae.InnerException is not null)
             {
-                File.AppendAllText(ProgressLogPath, $"[{DateTime.Now:HH:mm:ss.fff}] EXCEPTION: {ae.InnerException.Message[..Math.Min(ae.InnerException.Message.Length, 60)]}\n");
-                return new CompiledExpression(null, generatedCode, ae.InnerException.Message);
+                Exception inner = ae.InnerException;
+                string? errorCode = inner is JsonataException jex ? jex.Code : null;
+                return new CompiledExpression(null, generatedCode, inner.Message, errorCode);
             }
             catch (Exception ex)
             {
-                File.AppendAllText(ProgressLogPath, $"[{DateTime.Now:HH:mm:ss.fff}] EXCEPTION: {ex.Message[..Math.Min(ex.Message.Length, 60)]}\n");
-                return new CompiledExpression(null, generatedCode, ex.Message);
+                string? errorCode = ex is JsonataException jex ? jex.Code : null;
+                return new CompiledExpression(null, generatedCode, ex.Message, errorCode);
             }
         });
     }
@@ -209,7 +200,8 @@ public sealed class CodeGenConformanceFixture : IDisposable
 /// <param name="Method">The compiled <c>Evaluate(in JsonElement, JsonWorkspace)</c> method, or null on failure.</param>
 /// <param name="GeneratedCode">The generated C# source code, or null if generation failed.</param>
 /// <param name="Error">An error message if generation or compilation failed.</param>
-public record CompiledExpression(MethodInfo? Method, string? GeneratedCode, string? Error)
+/// <param name="ErrorCode">The JSONata error code (e.g. <c>S0201</c>) if the failure was a parse error, or null otherwise.</param>
+public record CompiledExpression(MethodInfo? Method, string? GeneratedCode, string? Error, string? ErrorCode = null)
 {
     /// <summary>
     /// Gets a value indicating whether the expression uses inlined code (not the runtime fallback).

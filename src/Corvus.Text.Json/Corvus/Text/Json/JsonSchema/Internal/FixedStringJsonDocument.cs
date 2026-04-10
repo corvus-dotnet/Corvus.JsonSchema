@@ -228,7 +228,10 @@ public sealed class FixedStringJsonDocument<T> : IJsonDocument
     string? IJsonDocument.GetString(int index, JsonTokenType expectedType)
     {
         Debug.Assert(index == 0 && expectedType == JsonTokenType.String);
-        return JsonReaderHelper.TranscodeHelper(_rawJsonStringValue.Span[1..^1]);
+        ReadOnlySpan<byte> content = _rawJsonStringValue.Span[1..^1];
+        return _requiresUnescaping
+            ? JsonReaderHelper.GetUnescapedString(content)
+            : JsonReaderHelper.TranscodeHelper(content);
     }
 
     /// <inheritdoc />
@@ -236,7 +239,10 @@ public sealed class FixedStringJsonDocument<T> : IJsonDocument
     bool IJsonDocument.TryGetString(int index, JsonTokenType expectedType, [NotNullWhen(true)] out string? result)
     {
         Debug.Assert(index == 0 && expectedType == JsonTokenType.String);
-        result = JsonReaderHelper.TranscodeHelper(_rawJsonStringValue.Span[1..^1]);
+        ReadOnlySpan<byte> content = _rawJsonStringValue.Span[1..^1];
+        result = _requiresUnescaping
+            ? JsonReaderHelper.GetUnescapedString(content)
+            : JsonReaderHelper.TranscodeHelper(content);
         return true;
     }
 
