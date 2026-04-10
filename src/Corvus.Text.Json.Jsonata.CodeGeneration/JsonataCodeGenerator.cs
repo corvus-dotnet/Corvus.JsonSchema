@@ -239,6 +239,15 @@ public static class JsonataCodeGenerator
         private readonly Dictionary<string, string> _nameFields = new(StringComparer.Ordinal);
         private readonly List<string> _staticFieldDeclarations = new();
         private readonly Dictionary<string, string> _variables = new(StringComparer.Ordinal);
+
+        /// <summary>
+        /// CSE cache for property navigation steps.
+        /// Key: (sourceVarName, propertyName) → resultVarName.
+        /// When the same property is navigated from the same source variable,
+        /// the result is reused instead of emitting a redundant navigation.
+        /// </summary>
+        private readonly Dictionary<(string, string), string> _propertyStepCache = new();
+
         private int _varCounter;
         private int _nameFieldCounter;
         private int _pathFieldCounter;
@@ -966,9 +975,19 @@ public static class JsonataCodeGenerator
             int count = end - start;
             if (count == 1)
             {
-                string nameField = GetOrCreateNameField(((NameNode)steps[start]).Value);
+                string name = ((NameNode)steps[start]).Value;
+
+                // CSE: reuse if this (source, property) was already navigated.
+                var cacheKey = (currentVar, name);
+                if (_propertyStepCache.TryGetValue(cacheKey, out string? cached))
+                {
+                    return cached;
+                }
+
+                string nameField = GetOrCreateNameField(name);
                 string v = NextVar();
                 L(sb, indent, $"var {v} = {H}.NavigateProperty({currentVar}, {nameField}, {wsVar});");
+                _propertyStepCache[cacheKey] = v;
                 return v;
             }
 
@@ -1000,6 +1019,7 @@ public static class JsonataCodeGenerator
         /// Per-step inline: each step independently checks ValueKind == Object and
         /// TryGetProperty, falling back to NavigateProperty for that single step.
         /// Optimal for short chains where nested arrays are unlikely.
+        /// Uses CSE cache to reuse previously computed property navigation results.
         /// </summary>
         private string EmitPerStepInlineChain(
             StringBuilder sb, List<JsonataNode> steps, int start, int end,
@@ -1010,6 +1030,15 @@ public static class JsonataCodeGenerator
             for (int i = start; i < end; i++)
             {
                 string name = ((NameNode)steps[i]).Value;
+
+                // CSE: if this exact (source, property) pair was already navigated, reuse.
+                var cacheKey = (prevVar, name);
+                if (_propertyStepCache.TryGetValue(cacheKey, out string? cached))
+                {
+                    prevVar = cached;
+                    continue;
+                }
+
                 string escapedName = EscapeStringLiteral(name);
                 string nameField = GetOrCreateNameField(name);
                 string resultVar = NextVar();
@@ -1024,6 +1053,7 @@ public static class JsonataCodeGenerator
                 L(sb, indent, "}");
                 L(sb, indent, "");
 
+                _propertyStepCache[cacheKey] = resultVar;
                 prevVar = resultVar;
             }
 
@@ -2189,19 +2219,45 @@ public static class JsonataCodeGenerator
                 valueVars[i] = EmitExpression(sb, obj.Pairs[i].Value, indent, dataVar, wsVar);
             }
 
-            // Build object inline with UTF-8 keys — zero array allocation
-            string docVar = NextVar();
-            string rootVar = NextVar();
-            L(sb, indent, $"var {docVar} = JsonElement.CreateObjectBuilder({wsVar}, {obj.Pairs.Count});");
-            L(sb, indent, $"var {rootVar} = {docVar}.RootElement;");
+            int n = obj.Pairs.Count;
 
-            for (int i = 0; i < obj.Pairs.Count; i++)
+            if (n == 0)
             {
-                L(sb, indent, $"if ({valueVars[i]}.ValueKind != JsonValueKind.Undefined) {rootVar}.SetProperty({keyLiterals[i]}, {valueVars[i]});");
+                // Empty object: CreateObjectBuilder is optimal (no properties to add).
+                string docVar = NextVar();
+                L(sb, indent, $"var {docVar} = (JsonElement)JsonElement.CreateObjectBuilder({wsVar}, 0).RootElement;");
+                return docVar;
             }
 
+            // Use CVB (ComplexValueBuilder) pattern: CreateBuilder with a static callback
+            // writes properties forward-only into the metadata buffer, avoiding the
+            // version-tracking and property-name-scan overhead of SetProperty.
+
+            // Build a value tuple of computed values for the callback context.
+            // For n==1 we must use ValueTuple.Create() since (x) is not a tuple literal.
+            string ctxExpr = n == 1
+                ? $"ValueTuple.Create({valueVars[0]})"
+                : $"({string.Join(", ", valueVars)})";
+
+            // Build the tuple type for the lambda parameter
+            string ctxType = n == 1
+                ? $"ValueTuple<JsonElement>"
+                : $"({string.Join(", ", Enumerable.Range(0, n).Select(i => "JsonElement"))})";
+
+            string builderVar = NextVar();
+            L(sb, indent, $"var {builderVar} = JsonElement.CreateBuilder({wsVar}, {ctxExpr}, static (in {ctxType} __ctx, ref JsonElement.ObjectBuilder __b) =>");
+            L(sb, indent, "{");
+
+            for (int i = 0; i < n; i++)
+            {
+                string itemRef = n == 1 ? "__ctx.Item1" : $"__ctx.Item{i + 1}";
+                L(sb, indent, $"    if ({itemRef}.ValueKind != JsonValueKind.Undefined) __b.AddProperty({keyLiterals[i]}, {itemRef});");
+            }
+
+            L(sb, indent, $"}}, {n});");
+
             string v = NextVar();
-            L(sb, indent, $"var {v} = (JsonElement){rootVar};");
+            L(sb, indent, $"var {v} = (JsonElement){builderVar}.RootElement;");
             return v;
         }
 
