@@ -2469,6 +2469,151 @@ public static class JsonataCodeGenHelpers
         return (JsonElement)outerRoot;
     }
 
+    /// <summary>
+    /// Sort step helper: sorts an array by evaluating sort key expressions per element.
+    /// Uses a stable index-based sort that preserves relative order of equal elements.
+    /// </summary>
+    /// <param name="input">The input array (or scalar, treated as single-element array).</param>
+    /// <param name="keyExtractors">Functions that extract sort keys from elements.</param>
+    /// <param name="descending">Whether each key sorts in descending order.</param>
+    /// <param name="workspace">The workspace for building the result array.</param>
+    /// <returns>A sorted JSON array.</returns>
+    public static JsonElement SortByKeys(
+        in JsonElement input,
+        Func<JsonElement, JsonWorkspace, JsonElement>[] keyExtractors,
+        bool[] descending,
+        JsonWorkspace workspace)
+    {
+        // Collect elements
+        int count;
+        JsonElement[] elements;
+        if (input.ValueKind == JsonValueKind.Array)
+        {
+            count = input.GetArrayLength();
+            if (count <= 1)
+            {
+                return input;
+            }
+
+            elements = ArrayPool<JsonElement>.Shared.Rent(count);
+            int idx = 0;
+            foreach (JsonElement item in input.EnumerateArray())
+            {
+                elements[idx++] = item;
+            }
+        }
+        else if (input.IsUndefined())
+        {
+            return default;
+        }
+        else
+        {
+            return input;
+        }
+
+        try
+        {
+            // Build index array for stable sort
+            int[] indices = ArrayPool<int>.Shared.Rent(count);
+            for (int i = 0; i < count; i++)
+            {
+                indices[i] = i;
+            }
+
+            try
+            {
+                // Sort indices by comparing sort keys
+                Array.Sort(indices, 0, count, Comparer<int>.Create((a, b) =>
+                {
+                    for (int t = 0; t < keyExtractors.Length; t++)
+                    {
+                        JsonElement aKey = keyExtractors[t](elements[a], workspace);
+                        JsonElement bKey = keyExtractors[t](elements[b], workspace);
+
+                        int cmp = CompareSortKeys(aKey, bKey);
+                        if (cmp != 0)
+                        {
+                            return descending[t] ? -cmp : cmp;
+                        }
+                    }
+
+                    // Stable sort: preserve original order for equal elements
+                    return a.CompareTo(b);
+                }));
+
+                // Build sorted result
+                var doc = JsonElement.CreateArrayBuilder(workspace, count);
+                JsonElement.Mutable root = doc.RootElement;
+                for (int i = 0; i < count; i++)
+                {
+                    root.AddItem(elements[indices[i]]);
+                }
+
+                return (JsonElement)root;
+            }
+            finally
+            {
+                ArrayPool<int>.Shared.Return(indices);
+            }
+        }
+        finally
+        {
+            ArrayPool<JsonElement>.Shared.Return(elements);
+        }
+    }
+
+    /// <summary>
+    /// Compares two sort key values. Numbers compare numerically, strings compare
+    /// by ordinal UTF-8 bytes. Undefined sorts last. Type mismatches throw T2007.
+    /// </summary>
+    internal static int CompareSortKeys(in JsonElement a, in JsonElement b)
+    {
+        bool aUndef = a.IsUndefined();
+        bool bUndef = b.IsUndefined();
+
+        if (aUndef && bUndef)
+        {
+            return 0;
+        }
+
+        if (aUndef)
+        {
+            return 1;
+        }
+
+        if (bUndef)
+        {
+            return -1;
+        }
+
+        bool aIsNum = a.ValueKind == JsonValueKind.Number;
+        bool aIsStr = a.ValueKind == JsonValueKind.String;
+        bool bIsNum = b.ValueKind == JsonValueKind.Number;
+        bool bIsStr = b.ValueKind == JsonValueKind.String;
+
+        if (!aIsNum && !aIsStr)
+        {
+            throw new JsonataException("T2008", "The expressions within an order-by clause must evaluate to numeric or string values", 0);
+        }
+
+        if (!bIsNum && !bIsStr)
+        {
+            throw new JsonataException("T2008", "The expressions within an order-by clause must evaluate to numeric or string values", 0);
+        }
+
+        if (aIsNum != bIsNum)
+        {
+            throw new JsonataException("T2007", "Type mismatch within order-by clause. All values must be of the same type", 0);
+        }
+
+        if (aIsNum)
+        {
+            return a.GetDouble().CompareTo(b.GetDouble());
+        }
+
+        return StringComparer.Ordinal.Compare(a.GetString(), b.GetString());
+    }
+
     // ===== Phase 1g: Date/Time Formatting =====
 
     /// <summary>
