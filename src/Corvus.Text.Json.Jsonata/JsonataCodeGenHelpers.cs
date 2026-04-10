@@ -1367,6 +1367,91 @@ public static class JsonataCodeGenHelpers
     public static JsonElement GreaterThanOrEqual(in JsonElement left, in JsonElement right) =>
         OrderedCompare(left, right, ">=", static (cmp) => cmp >= 0);
 
+    // ── Fused numeric comparison → bool (avoids NumberFromDouble + BooleanElement + IsTruthy) ──
+
+    /// <summary>
+    /// Fused <c>element &gt; constant</c> comparison that returns <see langword="bool"/> directly.
+    /// Avoids materializing the constant as a <see cref="JsonElement"/> via <c>NumberFromDouble</c>.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool CompareNumberGT(in JsonElement left, double right)
+    {
+        if (left.ValueKind == JsonValueKind.Number)
+        {
+            return left.GetDouble() > right;
+        }
+
+        if (left.IsNullOrUndefined())
+        {
+            return false;
+        }
+
+        return ThrowCompareError<bool>(">");
+    }
+
+    /// <summary>
+    /// Fused <c>element &gt;= constant</c> comparison that returns <see langword="bool"/> directly.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool CompareNumberGTE(in JsonElement left, double right)
+    {
+        if (left.ValueKind == JsonValueKind.Number)
+        {
+            return left.GetDouble() >= right;
+        }
+
+        if (left.IsNullOrUndefined())
+        {
+            return false;
+        }
+
+        return ThrowCompareError<bool>(">=");
+    }
+
+    /// <summary>
+    /// Fused <c>element &lt; constant</c> comparison that returns <see langword="bool"/> directly.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool CompareNumberLT(in JsonElement left, double right)
+    {
+        if (left.ValueKind == JsonValueKind.Number)
+        {
+            return left.GetDouble() < right;
+        }
+
+        if (left.IsNullOrUndefined())
+        {
+            return false;
+        }
+
+        return ThrowCompareError<bool>("<");
+    }
+
+    /// <summary>
+    /// Fused <c>element &lt;= constant</c> comparison that returns <see langword="bool"/> directly.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool CompareNumberLTE(in JsonElement left, double right)
+    {
+        if (left.ValueKind == JsonValueKind.Number)
+        {
+            return left.GetDouble() <= right;
+        }
+
+        if (left.IsNullOrUndefined())
+        {
+            return false;
+        }
+
+        return ThrowCompareError<bool>("<=");
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static T ThrowCompareError<T>(string op)
+    {
+        throw new JsonataException("T2010", $"The expressions either side of operator \"{op}\" must be both numbers or both strings", 0);
+    }
+
     /// <summary>
     /// JSONata <c>in</c> operator — tests whether the left value is contained in the right array.
     /// </summary>
@@ -1510,6 +1595,54 @@ public static class JsonataCodeGenHelpers
         else
         {
             throw new JsonataException("T0412", "Argument 1 of function 'sum' must be an array of numbers", 0);
+        }
+
+        return JsonataHelpers.NumberFromDouble(sum, workspace);
+    }
+
+    /// <summary>
+    /// Fused <c>$sum</c> over per-element double-producing step. Evaluates the step function
+    /// per element and sums the raw doubles directly, avoiding the intermediate
+    /// <see cref="JsonElement"/> array and per-element <c>NumberFromDouble</c> materialisation.
+    /// Only one <c>NumberFromDouble</c> call is made for the final result.
+    /// </summary>
+    /// <param name="data">The input array (or single value) to iterate.</param>
+    /// <param name="step">A function that produces a raw <see langword="double"/> per element.
+    /// Returns <see cref="double.NaN"/> for undefined/non-numeric inputs.</param>
+    /// <param name="workspace">The workspace for the final result document.</param>
+    /// <returns>The sum as a <see cref="JsonElement"/> number, or <c>default</c> if undefined.</returns>
+    public static JsonElement SumOverElementsDouble(
+        in JsonElement data,
+        Func<JsonElement, JsonWorkspace, double> step,
+        JsonWorkspace workspace)
+    {
+        if (data.ValueKind == JsonValueKind.Undefined)
+        {
+            return default;
+        }
+
+        double sum = 0;
+
+        if (data.ValueKind == JsonValueKind.Array)
+        {
+            foreach (JsonElement item in data.EnumerateArray())
+            {
+                double val = step(item, workspace);
+                if (!double.IsNaN(val))
+                {
+                    sum += val;
+                }
+            }
+        }
+        else
+        {
+            double val = step(data, workspace);
+            if (double.IsNaN(val))
+            {
+                return default;
+            }
+
+            sum = val;
         }
 
         return JsonataHelpers.NumberFromDouble(sum, workspace);
@@ -4852,7 +4985,15 @@ public static class JsonataCodeGenHelpers
         return count == 0 ? default : count == 1 ? root[0] : (JsonElement)root;
     }
 
-    private static int AddResultWithFlatten(JsonElement.Mutable root, in JsonElement result, int count)
+    /// <summary>
+    /// Adds a result element to a mutable array builder with auto-flattening.
+    /// If the result is an array, each element is added individually.
+    /// </summary>
+    /// <param name="root">The mutable array root to add to.</param>
+    /// <param name="result">The result element to add.</param>
+    /// <param name="count">The current count of elements added.</param>
+    /// <returns>The updated count.</returns>
+    public static int AddResultWithFlatten(JsonElement.Mutable root, in JsonElement result, int count)
     {
         if (result.ValueKind == JsonValueKind.Array)
         {

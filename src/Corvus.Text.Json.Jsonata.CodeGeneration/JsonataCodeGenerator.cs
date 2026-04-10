@@ -1612,6 +1612,67 @@ public static class JsonataCodeGenerator
             return v;
         }
 
+        /// <summary>
+        /// Tries to emit an expression that returns <see langword="bool"/> directly,
+        /// avoiding the <c>JsonElement</c> → <c>IsTruthy</c> roundtrip. Currently handles
+        /// ordered comparisons (<c>&gt;</c>, <c>&gt;=</c>, <c>&lt;</c>, <c>&lt;=</c>) where
+        /// one operand is a numeric constant.
+        /// </summary>
+        /// <returns>A <c>bool</c> variable name, or <c>null</c> if the pattern doesn't match.</returns>
+        private string? TryEmitExpressionAsBool(
+            StringBuilder sb, JsonataNode expr, string indent, string dataVar, string wsVar)
+        {
+            if (expr is not BinaryNode binary)
+            {
+                return null;
+            }
+
+            // Map operator → fused helper name (element on left, constant on right)
+            string? helperName = binary.Operator switch
+            {
+                ">" => "CompareNumberGT",
+                ">=" => "CompareNumberGTE",
+                "<" => "CompareNumberLT",
+                "<=" => "CompareNumberLTE",
+                _ => null,
+            };
+
+            if (helperName is null)
+            {
+                return null;
+            }
+
+            // Constant on the right: element > 30
+            if (binary.Rhs is NumberNode rightNum)
+            {
+                string lhs = EmitExpression(sb, binary.Lhs, indent, dataVar, wsVar);
+                string literal = rightNum.Value.ToString("R", CultureInfo.InvariantCulture);
+                string v = NextVar();
+                L(sb, indent, $"bool {v} = {H}.{helperName}({lhs}, {literal});");
+                return v;
+            }
+
+            // Constant on the left: 30 > element → element < 30
+            if (binary.Lhs is NumberNode leftNum)
+            {
+                string flipped = binary.Operator switch
+                {
+                    ">" => "CompareNumberLT",
+                    ">=" => "CompareNumberLTE",
+                    "<" => "CompareNumberGT",
+                    "<=" => "CompareNumberGTE",
+                    _ => null!,
+                };
+                string rhs = EmitExpression(sb, binary.Rhs, indent, dataVar, wsVar);
+                string literal = leftNum.Value.ToString("R", CultureInfo.InvariantCulture);
+                string v = NextVar();
+                L(sb, indent, $"bool {v} = {H}.{flipped}({rhs}, {literal});");
+                return v;
+            }
+
+            return null;
+        }
+
         private string EmitStringConcat(
             StringBuilder sb, BinaryNode binary, string indent, string dataVar, string wsVar)
         {
@@ -2107,7 +2168,8 @@ public static class JsonataCodeGenerator
             return procVar.Name switch
             {
                 // Existing functions
-                "sum" => EmitBuiltinUnaryOrError(sb, func, indent, dataVar, wsVar, "Sum", "sum"),
+                "sum" => TryEmitSumDoubleFusion(sb, func, indent, dataVar, wsVar)
+                         ?? EmitBuiltinUnaryOrError(sb, func, indent, dataVar, wsVar, "Sum", "sum"),
                 "count" => EmitBuiltinUnaryOrError(sb, func, indent, dataVar, wsVar, "Count", "count"),
                 "string" => EmitBuiltinString(sb, func, indent, dataVar, wsVar),
                 "boolean" => EmitBuiltinBoolean(sb, func, indent, dataVar, wsVar, negate: false),
@@ -2221,6 +2283,89 @@ public static class JsonataCodeGenerator
             string v = NextVar();
             L(sb, indent, $"var {v} = {H}.{helperName}({arg}, {wsVar});");
             return v;
+        }
+
+        /// <summary>
+        /// Tries to fuse <c>$sum(path.arithmetic)</c> into <c>SumOverElementsDouble</c>,
+        /// avoiding the per-element <c>DoubleToElement</c> + intermediate array + <c>GetDouble</c>
+        /// roundtrip. The lambda produces a raw double per element, and only one
+        /// <c>NumberFromDouble</c> materialises the final sum.
+        /// </summary>
+        /// <returns>The result variable name, or <c>null</c> if the pattern doesn't match.</returns>
+        private string? TryEmitSumDoubleFusion(
+            StringBuilder sb, FunctionCallNode func, string indent, string dataVar, string wsVar)
+        {
+            if (func.Arguments.Count != 1)
+            {
+                return null;
+            }
+
+            // Unwrap single-step path wrapper to get the real path.
+            JsonataNode arg = func.Arguments[0];
+            if (arg is PathNode outerPath && outerPath.Steps.Count == 1)
+            {
+                arg = outerPath.Steps[0];
+            }
+
+            if (arg is not PathNode path || path.Steps.Count < 2)
+            {
+                return null;
+            }
+
+            // The last step must be a block containing arithmetic.
+            JsonataNode lastStep = path.Steps[^1];
+            BinaryNode? arithmetic = GetArithmeticBody(lastStep);
+            if (arithmetic is null)
+            {
+                return null;
+            }
+
+            // Emit the prefix path (all steps except the last computed step).
+            PathNode prefixPath = new();
+            for (int i = 0; i < path.Steps.Count - 1; i++)
+            {
+                prefixPath.Steps.Add(path.Steps[i]);
+            }
+
+            string inputVar = EmitPath(sb, prefixPath, indent, dataVar, wsVar);
+
+            // Emit the fused SumOverElementsDouble call with a double-returning lambda.
+            int lambdaIdx = _lambdaCounter++;
+            string elParam = $"el_{lambdaIdx}";
+            string wsParam = $"ws_{lambdaIdx}";
+            string innerIndent = indent + "    ";
+            StringBuilder lambdaBody = new();
+
+            string doubleResult = EmitArithmeticAsDouble(lambdaBody, arithmetic, innerIndent, elParam, wsParam);
+
+            string v = NextVar();
+            L(sb, indent, $"var {v} = {H}.SumOverElementsDouble({inputVar}, {Static}(JsonElement {elParam}, JsonWorkspace {wsParam}) =>");
+            L(sb, indent, "{");
+            sb.Append(lambdaBody);
+            L(sb, innerIndent, $"return {doubleResult};");
+            L(sb, indent, $"}}, {wsVar});");
+            return v;
+        }
+
+        /// <summary>
+        /// Extracts the arithmetic <see cref="BinaryNode"/> from a computed step,
+        /// unwrapping a single-expression <see cref="BlockNode"/> if present.
+        /// Returns <c>null</c> if the step is not a simple arithmetic expression.
+        /// </summary>
+        private static BinaryNode? GetArithmeticBody(JsonataNode step)
+        {
+            // Unwrap block containing a single expression: (Price * Quantity)
+            if (step is BlockNode block && block.Expressions.Count == 1)
+            {
+                step = block.Expressions[0];
+            }
+
+            if (step is BinaryNode binary && binary.Operator is "+" or "-" or "*" or "/" or "%")
+            {
+                return binary;
+            }
+
+            return null;
         }
 
         /// <summary>
@@ -2585,7 +2730,14 @@ public static class JsonataCodeGenerator
             // outer HOF parameters. Disable static lambdas to avoid CS8820.
             bool prevRootRef = _usesRootRef;
             _usesRootRef = true;
-            string bodyResult = EmitExpression(lambdaBody, lambda.Body, innerIndent, elParam, wsParam);
+
+            // For filter predicates (returnsElement=false), try fused comparison that returns bool directly,
+            // avoiding NumberFromDouble + BooleanElement + IsTruthy per element.
+            string? boolResult = !returnsElement
+                ? TryEmitExpressionAsBool(lambdaBody, lambda.Body, innerIndent, elParam, wsParam)
+                : null;
+            string bodyResult = boolResult ?? EmitExpression(lambdaBody, lambda.Body, innerIndent, elParam, wsParam);
+
             _usesRootRef = prevRootRef;
 
             if (hasIndex)
@@ -2609,7 +2761,11 @@ public static class JsonataCodeGenerator
             L(sb, indent, "{");
             sb.Append(lambdaBody);
 
-            if (returnsElement)
+            if (boolResult != null)
+            {
+                L(sb, innerIndent, $"return {boolResult};");
+            }
+            else if (returnsElement)
             {
                 L(sb, innerIndent, $"return {bodyResult};");
             }
