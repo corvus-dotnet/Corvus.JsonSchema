@@ -578,6 +578,254 @@ public static class JsonataCodeGenHelpers
         return JsonataHelpers.NumberFromDouble(-value.GetDouble(), workspace);
     }
 
+    // ===== Raw-double arithmetic (matches runtime Sequence.FromDouble pattern) =====
+    // These methods keep intermediate arithmetic results as raw doubles,
+    // avoiding the double→UTF-8→FixedJsonValueDocument→GetDouble round-trip
+    // that occurs with the JsonElement-based helpers above.
+    // NaN is used as a sentinel for undefined propagation.
+
+    /// <summary>
+    /// Extracts a <see langword="double"/> from a left operand <see cref="JsonElement"/> for arithmetic.
+    /// Returns <see cref="double.NaN"/> for undefined (propagation sentinel).
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static double ToArithmeticDoubleLeft(in JsonElement element)
+    {
+        if (element.ValueKind == JsonValueKind.Number)
+        {
+            return element.GetDouble();
+        }
+
+        if (element.ValueKind == JsonValueKind.Undefined)
+        {
+            return double.NaN;
+        }
+
+        throw new JsonataException("T2001", "The left side of the arithmetic expression is not a number", 0);
+    }
+
+    /// <summary>
+    /// Extracts a <see langword="double"/> from a right operand <see cref="JsonElement"/> for arithmetic.
+    /// Returns <see cref="double.NaN"/> for undefined (propagation sentinel).
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static double ToArithmeticDoubleRight(in JsonElement element)
+    {
+        if (element.ValueKind == JsonValueKind.Number)
+        {
+            return element.GetDouble();
+        }
+
+        if (element.ValueKind == JsonValueKind.Undefined)
+        {
+            return double.NaN;
+        }
+
+        throw new JsonataException("T2002", "The right side of the arithmetic expression is not a number", 0);
+    }
+
+    /// <summary>
+    /// Raw-double addition. NaN inputs propagate as undefined.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static double ArithmeticAdd(double left, double right)
+    {
+        if (double.IsNaN(left) || double.IsNaN(right))
+        {
+            return double.NaN;
+        }
+
+        double result = left + right;
+        if (double.IsInfinity(result))
+        {
+            throw new JsonataException("D1001", "Number out of range", 0);
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Raw-double subtraction. NaN inputs propagate as undefined.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static double ArithmeticSubtract(double left, double right)
+    {
+        if (double.IsNaN(left) || double.IsNaN(right))
+        {
+            return double.NaN;
+        }
+
+        double result = left - right;
+        if (double.IsInfinity(result))
+        {
+            throw new JsonataException("D1001", "Number out of range", 0);
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Raw-double multiplication. NaN inputs propagate as undefined.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static double ArithmeticMultiply(double left, double right)
+    {
+        if (double.IsNaN(left) || double.IsNaN(right))
+        {
+            return double.NaN;
+        }
+
+        double result = left * right;
+        if (double.IsInfinity(result))
+        {
+            throw new JsonataException("D1001", "Number out of range", 0);
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Raw-double division. NaN inputs propagate as undefined.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static double ArithmeticDivide(double left, double right)
+    {
+        if (double.IsNaN(left) || double.IsNaN(right))
+        {
+            return double.NaN;
+        }
+
+        double result = left / right;
+        if (double.IsInfinity(result) || double.IsNaN(result))
+        {
+            throw new JsonataException("D1001", "Number out of range", 0);
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Raw-double modulo. NaN inputs propagate as undefined.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static double ArithmeticModulo(double left, double right)
+    {
+        if (double.IsNaN(left) || double.IsNaN(right))
+        {
+            return double.NaN;
+        }
+
+        double result = left % right;
+        if (double.IsNaN(result))
+        {
+            throw new JsonataException("D1001", "Number out of range", 0);
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Materializes a raw <see langword="double"/> to a <see cref="JsonElement"/>.
+    /// NaN (undefined sentinel) returns <c>default</c>.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static JsonElement DoubleToElement(double value, JsonWorkspace workspace)
+    {
+        if (double.IsNaN(value))
+        {
+            return default;
+        }
+
+        return JsonataHelpers.NumberFromDouble(value, workspace);
+    }
+
+    /// <summary>
+    /// Multi-operand string concatenation. Uses a single <see cref="Utf8ValueStringBuilder"/>
+    /// pass instead of creating intermediate string elements.
+    /// </summary>
+    public static JsonElement StringConcat3(
+        in JsonElement a, in JsonElement b, in JsonElement c, JsonWorkspace workspace)
+    {
+        Utf8ValueStringBuilder sb = new(stackalloc byte[256]);
+        try
+        {
+            AppendCoercedValue(a, ref sb);
+            AppendCoercedValue(b, ref sb);
+            AppendCoercedValue(c, ref sb);
+            return JsonataHelpers.StringFromUnescapedUtf8(sb.AsSpan(), workspace);
+        }
+        finally
+        {
+            sb.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Multi-operand string concatenation (4 operands).
+    /// </summary>
+    public static JsonElement StringConcat4(
+        in JsonElement a, in JsonElement b, in JsonElement c, in JsonElement d,
+        JsonWorkspace workspace)
+    {
+        Utf8ValueStringBuilder sb = new(stackalloc byte[256]);
+        try
+        {
+            AppendCoercedValue(a, ref sb);
+            AppendCoercedValue(b, ref sb);
+            AppendCoercedValue(c, ref sb);
+            AppendCoercedValue(d, ref sb);
+            return JsonataHelpers.StringFromUnescapedUtf8(sb.AsSpan(), workspace);
+        }
+        finally
+        {
+            sb.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Multi-operand string concatenation (5 operands).
+    /// </summary>
+    public static JsonElement StringConcat5(
+        in JsonElement a, in JsonElement b, in JsonElement c, in JsonElement d,
+        in JsonElement e, JsonWorkspace workspace)
+    {
+        Utf8ValueStringBuilder sb = new(stackalloc byte[256]);
+        try
+        {
+            AppendCoercedValue(a, ref sb);
+            AppendCoercedValue(b, ref sb);
+            AppendCoercedValue(c, ref sb);
+            AppendCoercedValue(d, ref sb);
+            AppendCoercedValue(e, ref sb);
+            return JsonataHelpers.StringFromUnescapedUtf8(sb.AsSpan(), workspace);
+        }
+        finally
+        {
+            sb.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Multi-operand string concatenation (6+ operands).
+    /// </summary>
+    public static JsonElement StringConcatMany(JsonWorkspace workspace, params JsonElement[] elements)
+    {
+        Utf8ValueStringBuilder sb = new(stackalloc byte[256]);
+        try
+        {
+            for (int i = 0; i < elements.Length; i++)
+            {
+                AppendCoercedValue(elements[i], ref sb);
+            }
+
+            return JsonataHelpers.StringFromUnescapedUtf8(sb.AsSpan(), workspace);
+        }
+        finally
+        {
+            sb.Dispose();
+        }
+    }
+
     /// <summary>
     /// JSONata range (..) operator. Builds an array of integers from <paramref name="left"/> to <paramref name="right"/>.
     /// </summary>

@@ -1066,35 +1066,151 @@ public static class JsonataCodeGenerator
             StringBuilder sb, BinaryNode binary, string indent, string dataVar,
             string wsVar, string helperName)
         {
-            // Constant folding
-            if (binary.Lhs is NumberNode lNum && binary.Rhs is NumberNode rNum)
+            // Deep constant folding — evaluates the entire arithmetic subtree at codegen time.
+            // IsConstantNumericExpression checks first (cheap), then evaluates.
+            if (IsConstantNumericExpression(binary))
             {
-                double result = helperName switch
+                if (TryEvaluateConstant(binary, out double constResult))
                 {
-                    "Add" => lNum.Value + rNum.Value,
-                    "Subtract" => lNum.Value - rNum.Value,
-                    "Multiply" => lNum.Value * rNum.Value,
-                    "Divide" => rNum.Value != 0 ? lNum.Value / rNum.Value : double.PositiveInfinity,
-                    "Modulo" => rNum.Value != 0 ? lNum.Value % rNum.Value : double.NaN,
-                    _ => throw new FallbackException(),
-                };
-
-                if (!double.IsNaN(result) && !double.IsInfinity(result))
-                {
-                    return EmitDoubleConstant(sb, result, indent, wsVar);
+                    return EmitDoubleConstant(sb, constResult, indent, wsVar);
                 }
 
-                // Non-finite constant result (e.g. 1/0 → Infinity) — the runtime evaluator
-                // handles these differently (may allow Infinity to propagate to $string which
-                // throws D3001). Fall back so the runtime produces the correct error.
+                // Entirely constant but non-finite (e.g. 1/0 → Infinity, 0%0 → NaN).
+                // Fall back to runtime which propagates these correctly (e.g. $string(1/0) → D3001).
                 throw new FallbackException();
             }
 
-            string lhs = EmitExpression(sb, binary.Lhs, indent, dataVar, wsVar);
-            string rhs = EmitExpression(sb, binary.Rhs, indent, dataVar, wsVar);
+            // Emit the entire arithmetic subtree as raw doubles (matching the runtime's
+            // Sequence.FromDouble pattern), then materialize to JsonElement only at the boundary.
+            string doubleVar = EmitArithmeticAsDouble(sb, binary, indent, dataVar, wsVar);
             string v = NextVar();
-            L(sb, indent, $"var {v} = {H}.{helperName}({lhs}, {rhs}, {wsVar});");
+            L(sb, indent, $"var {v} = {H}.DoubleToElement({doubleVar}, {wsVar});");
             return v;
+        }
+
+        /// <summary>
+        /// Emits an arithmetic binary node as a raw <c>double</c> variable, keeping
+        /// the entire arithmetic chain in double-space without intermediate materialization.
+        /// </summary>
+        private string EmitArithmeticAsDouble(
+            StringBuilder sb, BinaryNode binary, string indent, string dataVar, string wsVar)
+        {
+            string lhsD = EmitArithmeticOperandAsDouble(sb, binary.Lhs, indent, dataVar, wsVar, isLeft: true);
+            string rhsD = EmitArithmeticOperandAsDouble(sb, binary.Rhs, indent, dataVar, wsVar, isLeft: false);
+            string v = NextVar();
+            string method = binary.Operator switch
+            {
+                "+" => "ArithmeticAdd",
+                "-" => "ArithmeticSubtract",
+                "*" => "ArithmeticMultiply",
+                "/" => "ArithmeticDivide",
+                "%" => "ArithmeticModulo",
+                _ => throw new FallbackException(),
+            };
+
+            L(sb, indent, $"double {v} = {H}.{method}({lhsD}, {rhsD});");
+            return v;
+        }
+
+        /// <summary>
+        /// Emits an operand of an arithmetic expression as a raw <c>double</c>.
+        /// For arithmetic sub-expressions, recurses in double-space.
+        /// For number literals, emits a <c>double</c> constant.
+        /// For everything else (property navigation, function calls, etc.),
+        /// emits as <see cref="JsonElement"/> then extracts the double.
+        /// </summary>
+        private string EmitArithmeticOperandAsDouble(
+            StringBuilder sb, JsonataNode node, string indent, string dataVar, string wsVar,
+            bool isLeft)
+        {
+            switch (node)
+            {
+                case NumberNode num:
+                    string dv = NextVar();
+                    string literal = num.Value.ToString("R", CultureInfo.InvariantCulture);
+                    L(sb, indent, $"double {dv} = {literal};");
+                    return dv;
+
+                case UnaryNode { Operator: "-" } unary:
+                    string inner = EmitArithmeticOperandAsDouble(sb, unary.Expression, indent, dataVar, wsVar, isLeft);
+                    string neg = NextVar();
+                    L(sb, indent, $"double {neg} = -{inner};");
+                    return neg;
+
+                case BinaryNode { Operator: "+" or "-" or "*" or "/" or "%" } binary:
+                    return EmitArithmeticAsDouble(sb, binary, indent, dataVar, wsVar);
+
+                default:
+                    // Non-arithmetic leaf: emit as element, extract double
+                    string elem = EmitExpression(sb, node, indent, dataVar, wsVar);
+                    string d = NextVar();
+                    string method = isLeft ? "ToArithmeticDoubleLeft" : "ToArithmeticDoubleRight";
+                    L(sb, indent, $"double {d} = {H}.{method}({elem});");
+                    return d;
+            }
+        }
+
+        /// <summary>
+        /// Recursively evaluates a constant numeric expression at code generation time.
+        /// Returns <see langword="true"/> if the entire subtree is a compile-time constant.
+        /// </summary>
+        private static bool TryEvaluateConstant(JsonataNode node, out double value)
+        {
+            switch (node)
+            {
+                case NumberNode num:
+                    value = num.Value;
+                    return true;
+
+                case UnaryNode { Operator: "-" } unary:
+                    if (TryEvaluateConstant(unary.Expression, out double inner))
+                    {
+                        value = -inner;
+                        return true;
+                    }
+
+                    break;
+
+                case BinaryNode { Operator: "+" or "-" or "*" or "/" or "%" } binary:
+                    if (TryEvaluateConstant(binary.Lhs, out double lv) &&
+                        TryEvaluateConstant(binary.Rhs, out double rv))
+                    {
+                        value = binary.Operator switch
+                        {
+                            "+" => lv + rv,
+                            "-" => lv - rv,
+                            "*" => lv * rv,
+                            "/" => lv / rv,
+                            "%" => lv % rv,
+                            _ => double.NaN,
+                        };
+
+                        // Non-finite results (1/0, 0%0) — return true but the caller
+                        // must check and handle non-finite values appropriately.
+                        return !double.IsNaN(value) && !double.IsInfinity(value);
+                    }
+
+                    break;
+            }
+
+            value = 0;
+            return false;
+        }
+
+        /// <summary>
+        /// Returns <see langword="true"/> if the entire subtree consists only of
+        /// number literals, unary negation, and arithmetic operators — no data access.
+        /// </summary>
+        private static bool IsConstantNumericExpression(JsonataNode node)
+        {
+            return node switch
+            {
+                NumberNode => true,
+                UnaryNode { Operator: "-" } u => IsConstantNumericExpression(u.Expression),
+                BinaryNode { Operator: "+" or "-" or "*" or "/" or "%" } b
+                    => IsConstantNumericExpression(b.Lhs) && IsConstantNumericExpression(b.Rhs),
+                _ => false,
+            };
         }
 
         private string EmitEqualityComparison(
@@ -1127,11 +1243,56 @@ public static class JsonataCodeGenerator
         private string EmitStringConcat(
             StringBuilder sb, BinaryNode binary, string indent, string dataVar, string wsVar)
         {
-            string lhs = EmitExpression(sb, binary.Lhs, indent, dataVar, wsVar);
-            string rhs = EmitExpression(sb, binary.Rhs, indent, dataVar, wsVar);
-            string v = NextVar();
-            L(sb, indent, $"var {v} = {H}.StringConcat({lhs}, {rhs}, {wsVar});");
-            return v;
+            // Flatten chain: A & B & C & D → collect all operands, emit single multi-concat call
+            List<string> operands = new();
+            FlattenConcatOperands(sb, binary, indent, dataVar, wsVar, operands);
+
+            if (operands.Count == 2)
+            {
+                string v = NextVar();
+                L(sb, indent, $"var {v} = {H}.StringConcat({operands[0]}, {operands[1]}, {wsVar});");
+                return v;
+            }
+
+            string args = string.Join(", ", operands);
+            string result = NextVar();
+
+            if (operands.Count <= 5)
+            {
+                string method = $"StringConcat{operands.Count}";
+                L(sb, indent, $"var {result} = {H}.{method}({args}, {wsVar});");
+            }
+            else
+            {
+                L(sb, indent, $"var {result} = {H}.StringConcatMany({wsVar}, {args});");
+            }
+
+            return result;
+        }
+
+        private void FlattenConcatOperands(
+            StringBuilder sb, BinaryNode binary, string indent, string dataVar,
+            string wsVar, List<string> operands)
+        {
+            // Recurse into left & operator chains
+            if (binary.Lhs is BinaryNode { Operator: "&" } leftConcat)
+            {
+                FlattenConcatOperands(sb, leftConcat, indent, dataVar, wsVar, operands);
+            }
+            else
+            {
+                operands.Add(EmitExpression(sb, binary.Lhs, indent, dataVar, wsVar));
+            }
+
+            // Right side is usually a leaf (left-associative parsing)
+            if (binary.Rhs is BinaryNode { Operator: "&" } rightConcat)
+            {
+                FlattenConcatOperands(sb, rightConcat, indent, dataVar, wsVar, operands);
+            }
+            else
+            {
+                operands.Add(EmitExpression(sb, binary.Rhs, indent, dataVar, wsVar));
+            }
         }
 
         private string EmitLogical(
