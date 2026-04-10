@@ -189,16 +189,34 @@ public static class JsonataCodeGenHelpers
     /// <returns>The navigation result, or <c>default</c> if undefined.</returns>
     public static JsonElement NavigatePropertyChain(in JsonElement data, byte[][] names, JsonWorkspace workspace)
     {
-        var buffer = default(ElementBuffer);
-        try
+        // Walk object steps until we complete the chain or encounter an array.
+        JsonElement current = data;
+
+        for (int i = 0; i < names.Length; i++)
         {
-            NavigatePropertyChainInto(data, names, ref buffer);
-            return buffer.ToResult(workspace);
+            if (current.ValueKind == JsonValueKind.Object)
+            {
+                if (!current.TryGetProperty((ReadOnlySpan<byte>)names[i], out current))
+                {
+                    return default;
+                }
+            }
+            else if (current.ValueKind == JsonValueKind.Array)
+            {
+                // First array encountered — collect ALL remaining results into one builder.
+                var doc = JsonElement.CreateArrayBuilder(workspace, current.GetArrayLength());
+                JsonElement.Mutable root = doc.RootElement;
+                int count = 0;
+                CollectChainFlat(current, names, i, root, ref count);
+                return count == 0 ? default : count == 1 ? root[0] : (JsonElement)root;
+            }
+            else
+            {
+                return default;
+            }
         }
-        finally
-        {
-            buffer.Dispose();
-        }
+
+        return current;
     }
 
     /// <summary>
@@ -862,21 +880,17 @@ public static class JsonataCodeGenHelpers
     {
         if (data.ValueKind == JsonValueKind.Array)
         {
-            var buffer = default(ElementBuffer);
-            try
-            {
-                foreach (JsonElement item in data.EnumerateArray())
-                {
-                    JsonElement result = step(item, workspace);
-                    buffer.AddFlatten(result);
-                }
+            int count = 0;
+            var doc = JsonElement.CreateArrayBuilder(workspace, data.GetArrayLength());
+            JsonElement.Mutable root = doc.RootElement;
 
-                return buffer.ToResult(workspace);
-            }
-            finally
+            foreach (JsonElement item in data.EnumerateArray())
             {
-                buffer.Dispose();
+                JsonElement result = step(item, workspace);
+                count = AddResultWithFlatten(root, result, count);
             }
+
+            return count == 0 ? default : count == 1 ? root[0] : (JsonElement)root;
         }
 
         if (data.ValueKind != JsonValueKind.Undefined)
@@ -5643,21 +5657,17 @@ public static class JsonataCodeGenHelpers
     private static JsonElement NavigatePropertyOverArray(
         in JsonElement array, byte[] name, JsonWorkspace workspace)
     {
-        var buffer = default(ElementBuffer);
-        try
-        {
-            foreach (JsonElement item in array.EnumerateArray())
-            {
-                JsonElement result = NavigateProperty(item, name, workspace);
-                buffer.AddFlatten(result);
-            }
+        int count = 0;
+        var doc = JsonElement.CreateArrayBuilder(workspace, array.GetArrayLength());
+        JsonElement.Mutable root = doc.RootElement;
 
-            return buffer.ToResult(workspace);
-        }
-        finally
+        foreach (JsonElement item in array.EnumerateArray())
         {
-            buffer.Dispose();
+            JsonElement result = NavigateProperty(item, name, workspace);
+            count = AddResultWithFlatten(root, result, count);
         }
+
+        return count == 0 ? default : count == 1 ? root[0] : (JsonElement)root;
     }
 
     /// <summary>
