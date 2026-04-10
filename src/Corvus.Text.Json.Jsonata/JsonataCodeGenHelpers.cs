@@ -220,6 +220,117 @@ public static class JsonataCodeGenHelpers
     }
 
     /// <summary>
+    /// Navigates a property chain, collecting leaf results into an <see cref="ElementBuffer"/>
+    /// instead of creating a <see cref="JsonElement.CreateArrayBuilder"/>-backed array.
+    /// This avoids MetadataDb overhead for intermediate results — the caller iterates the
+    /// buffer directly and only materializes when the final result is needed.
+    /// </summary>
+    /// <param name="data">The input data element.</param>
+    /// <param name="names">The UTF-8 encoded property names for each step.</param>
+    /// <param name="buffer">The buffer to collect results into.</param>
+    public static void NavigatePropertyChainInto(
+        in JsonElement data,
+        byte[][] names,
+        ref ElementBuffer buffer)
+    {
+        JsonElement current = data;
+
+        for (int i = 0; i < names.Length; i++)
+        {
+            if (current.ValueKind == JsonValueKind.Object)
+            {
+                if (!current.TryGetProperty((ReadOnlySpan<byte>)names[i], out current))
+                {
+                    return;
+                }
+            }
+            else if (current.ValueKind == JsonValueKind.Array)
+            {
+                CollectChainFlatInto(current, names, i, ref buffer);
+                return;
+            }
+            else
+            {
+                return;
+            }
+        }
+
+        // Completed chain without hitting an array — single result (with auto-flatten)
+        buffer.AddFlatten(current);
+    }
+
+    /// <summary>
+    /// Recursively collects property chain results from an array into an <see cref="ElementBuffer"/>.
+    /// Mirrors <see cref="CollectChainFlat"/> but avoids MetadataDb-based accumulation.
+    /// </summary>
+    private static void CollectChainFlatInto(
+        in JsonElement array,
+        byte[][] names,
+        int stepIndex,
+        ref ElementBuffer buffer)
+    {
+        byte[] name = names[stepIndex];
+        int nextStep = stepIndex + 1;
+        bool isLastStep = nextStep >= names.Length;
+
+        foreach (JsonElement item in array.EnumerateArray())
+        {
+            if (item.ValueKind == JsonValueKind.Object)
+            {
+                if (item.TryGetProperty((ReadOnlySpan<byte>)name, out var val))
+                {
+                    if (isLastStep)
+                    {
+                        buffer.AddFlatten(val);
+                    }
+                    else
+                    {
+                        ContinueChainFlatInto(val, names, nextStep, ref buffer);
+                    }
+                }
+            }
+            else if (item.ValueKind == JsonValueKind.Array)
+            {
+                CollectChainFlatInto(item, names, stepIndex, ref buffer);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Continues navigating remaining chain steps from a single value into an <see cref="ElementBuffer"/>.
+    /// </summary>
+    private static void ContinueChainFlatInto(
+        in JsonElement value,
+        byte[][] names,
+        int nextIndex,
+        ref ElementBuffer buffer)
+    {
+        JsonElement current = value;
+
+        for (int i = nextIndex; i < names.Length; i++)
+        {
+            if (current.ValueKind == JsonValueKind.Object)
+            {
+                if (!current.TryGetProperty((ReadOnlySpan<byte>)names[i], out current))
+                {
+                    return;
+                }
+            }
+            else if (current.ValueKind == JsonValueKind.Array)
+            {
+                CollectChainFlatInto(current, names, i, ref buffer);
+                return;
+            }
+            else
+            {
+                return;
+            }
+        }
+
+        buffer.AddFlatten(current);
+    }
+
+    /// <summary>
     /// Navigates a property chain with fused constant-index and string-equality predicates.
     /// This is the codegen equivalent of the runtime's EvalPropertyChainWithPredicates —
     /// a single tight loop handles the entire path including predicates, avoiding all
@@ -1690,6 +1801,202 @@ public static class JsonataCodeGenHelpers
         }
 
         return default;
+    }
+
+    /// <summary>
+    /// Fused property-chain navigation + double-space map.
+    /// Navigates <paramref name="names"/> into an <see cref="ElementBuffer"/> (ArrayPool-backed),
+    /// then maps each element through <paramref name="step"/>, building the final array in one pass.
+    /// Eliminates the intermediate <see cref="JsonElement.CreateArrayBuilder"/> that
+    /// <see cref="NavigatePropertyChain"/> would create.
+    /// </summary>
+    public static JsonElement MapChainDouble(
+        in JsonElement data,
+        byte[][] names,
+        Func<JsonElement, JsonWorkspace, double> step,
+        JsonWorkspace workspace)
+    {
+        var buffer = default(ElementBuffer);
+        try
+        {
+            NavigatePropertyChainInto(data, names, ref buffer);
+
+            if (buffer.Count == 0)
+            {
+                return default;
+            }
+
+            if (buffer.Count == 1)
+            {
+                double d = step(buffer[0], workspace);
+                return double.IsNaN(d) ? default : JsonataHelpers.NumberFromDouble(d, workspace);
+            }
+
+            var doc = JsonElement.CreateArrayBuilder(workspace, buffer.Count);
+            JsonElement.Mutable root = doc.RootElement;
+            int count = 0;
+
+            for (int i = 0; i < buffer.Count; i++)
+            {
+                double d = step(buffer[i], workspace);
+                if (!double.IsNaN(d))
+                {
+                    root.AddItem(d);
+                    count++;
+                }
+            }
+
+            return count == 0 ? default : count == 1 ? root[0] : (JsonElement)root;
+        }
+        finally
+        {
+            buffer.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Fused property-chain navigation + element map.
+    /// Navigates <paramref name="names"/> into an <see cref="ElementBuffer"/>,
+    /// then maps each element through <paramref name="transform"/>.
+    /// </summary>
+    public static JsonElement MapChainElements(
+        in JsonElement data,
+        byte[][] names,
+        Func<JsonElement, JsonWorkspace, JsonElement> transform,
+        JsonWorkspace workspace)
+    {
+        var buffer = default(ElementBuffer);
+        try
+        {
+            NavigatePropertyChainInto(data, names, ref buffer);
+
+            if (buffer.Count == 0)
+            {
+                return default;
+            }
+
+            if (buffer.Count == 1)
+            {
+                JsonElement single = transform(buffer[0], workspace);
+                if (single.ValueKind == JsonValueKind.Undefined)
+                {
+                    return default;
+                }
+
+                var singleDoc = JsonElement.CreateArrayBuilder(workspace, 1);
+                singleDoc.RootElement.AddItem(single);
+                return (JsonElement)singleDoc.RootElement;
+            }
+
+            var doc = JsonElement.CreateArrayBuilder(workspace, buffer.Count);
+            JsonElement.Mutable root = doc.RootElement;
+
+            for (int i = 0; i < buffer.Count; i++)
+            {
+                JsonElement result = transform(buffer[i], workspace);
+                if (result.ValueKind != JsonValueKind.Undefined)
+                {
+                    root.AddItem(result);
+                }
+            }
+
+            return (JsonElement)root;
+        }
+        finally
+        {
+            buffer.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Fused property-chain navigation + element filter.
+    /// Navigates <paramref name="names"/> into an <see cref="ElementBuffer"/>,
+    /// then filters elements through <paramref name="predicate"/>.
+    /// </summary>
+    public static JsonElement FilterChainElements(
+        in JsonElement data,
+        byte[][] names,
+        Func<JsonElement, JsonWorkspace, bool> predicate,
+        JsonWorkspace workspace)
+    {
+        var buffer = default(ElementBuffer);
+        try
+        {
+            NavigatePropertyChainInto(data, names, ref buffer);
+
+            if (buffer.Count == 0)
+            {
+                return default;
+            }
+
+            if (buffer.Count == 1)
+            {
+                return predicate(buffer[0], workspace) ? buffer[0] : default;
+            }
+
+            var doc = JsonElement.CreateArrayBuilder(workspace, buffer.Count);
+            JsonElement.Mutable root = doc.RootElement;
+            int count = 0;
+
+            for (int i = 0; i < buffer.Count; i++)
+            {
+                if (predicate(buffer[i], workspace))
+                {
+                    root.AddItem(buffer[i]);
+                    count++;
+                }
+            }
+
+            return count == 0 ? default : count == 1 ? root[0] : (JsonElement)root;
+        }
+        finally
+        {
+            buffer.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Fused property-chain navigation + step application (general version).
+    /// Same as <see cref="ApplyStepOverElements"/> but avoids the intermediate
+    /// <see cref="JsonElement.CreateArrayBuilder"/> for the chain result.
+    /// </summary>
+    public static JsonElement ApplyChainStep(
+        in JsonElement data,
+        byte[][] names,
+        Func<JsonElement, JsonWorkspace, JsonElement> step,
+        JsonWorkspace workspace)
+    {
+        var buffer = default(ElementBuffer);
+        try
+        {
+            NavigatePropertyChainInto(data, names, ref buffer);
+
+            if (buffer.Count == 0)
+            {
+                return default;
+            }
+
+            if (buffer.Count == 1)
+            {
+                return step(buffer[0], workspace);
+            }
+
+            var doc = JsonElement.CreateArrayBuilder(workspace, buffer.Count);
+            JsonElement.Mutable root = doc.RootElement;
+            int count = 0;
+
+            for (int i = 0; i < buffer.Count; i++)
+            {
+                JsonElement result = step(buffer[i], workspace);
+                count = AddResultWithFlatten(root, result, count);
+            }
+
+            return count == 0 ? default : count == 1 ? root[0] : (JsonElement)root;
+        }
+        finally
+        {
+            buffer.Dispose();
+        }
     }
 
     /// <summary>

@@ -306,6 +306,21 @@ public static class JsonataCodeGenerator
         }
 
         /// <summary>
+        /// Gets or creates a static <c>byte[][]</c> chain field from a range of name steps.
+        /// </summary>
+        private string GetOrCreateChainField(List<JsonataNode> steps, int start, int end)
+        {
+            int count = end - start;
+            string[] names = new string[count];
+            for (int i = 0; i < count; i++)
+            {
+                names[i] = ((NameNode)steps[start + i]).Value;
+            }
+
+            return CreatePathField(names);
+        }
+
+        /// <summary>
         /// Emits C# statements for the given AST node and returns the variable name
         /// holding the result.
         /// </summary>
@@ -462,6 +477,29 @@ public static class JsonataCodeGenerator
 
                     if (i > segStart)
                     {
+                        // Fusion: if the chain is followed by a computed step,
+                        // use fused chain+operation helpers that avoid intermediate CreateArrayBuilder.
+                        if (i < steps.Count
+                            && steps[i] is not NameNode
+                            && steps[i] is not ObjectConstructorNode
+                            && steps[i] is not ArrayConstructorNode { ConsArray: true, Expressions.Count: 0 }
+                            && steps[i] is not WildcardNode
+                            && steps[i] is not DescendantNode
+                            && steps[i] is not SortNode
+                            && !HasComplexAnnotations(steps[i])
+                            && i > 0  // computed step must not be the first step
+                            && (i - segStart) >= 2) // chain must be 2+ steps to benefit from fusion
+                        {
+                            string? fused = TryEmitFusedChainStep(
+                                sb, steps, segStart, i, steps[i], indent, currentVar, wsVar);
+                            if (fused != null)
+                            {
+                                currentVar = fused;
+                                i++; // consumed the computed step too
+                                continue;
+                            }
+                        }
+
                         currentVar = EmitPropertyChainSegment(sb, steps, segStart, i, indent, currentVar, wsVar);
                     }
 
@@ -682,6 +720,36 @@ public static class JsonataCodeGenerator
             }
 
             return true;
+        }
+
+        /// <summary>
+        /// If <paramref name="node"/> is a simple property chain PathNode with 2+ name steps
+        /// (no predicates/annotations), creates and returns the chain field name for use with
+        /// fused chain helpers. Returns <c>null</c> otherwise.
+        /// </summary>
+        private string? TryGetSimpleChainField(JsonataNode node)
+        {
+            if (node is not PathNode path)
+            {
+                return null;
+            }
+
+            if (path.Steps.Count < 2)
+            {
+                return null;
+            }
+
+            if (!IsSimplePropertyChain(path.Steps))
+            {
+                return null;
+            }
+
+            if (path.Annotations?.Group is not null || path.KeepArray || path.KeepSingletonArray)
+            {
+                return null;
+            }
+
+            return GetOrCreateChainField(path.Steps, 0, path.Steps.Count);
         }
 
         /// <summary>
@@ -1432,6 +1500,67 @@ public static class JsonataCodeGenerator
             L(sb, indent, $"    new Func<JsonElement, JsonWorkspace, JsonElement>[] {{ {extractorsArray} }},");
             L(sb, indent, $"    new bool[] {{ {descendingArray} }}, {wsVar});");
             return v;
+        }
+
+        /// <summary>
+        /// Tries to fuse a property chain segment with a following computed step into a single
+        /// helper call that uses <see cref="ElementBuffer"/> for the intermediate chain result,
+        /// avoiding the <see cref="JsonElement.CreateArrayBuilder"/> overhead of <c>NavigatePropertyChain</c>.
+        /// </summary>
+        /// <returns>The result variable name, or <c>null</c> if the pattern can't be fused.</returns>
+        private string? TryEmitFusedChainStep(
+            StringBuilder sb, List<JsonataNode> steps, int chainStart, int chainEnd,
+            JsonataNode computedStep, string indent, string currentVar, string wsVar)
+        {
+            // Build the chain field reference
+            string chainField = GetOrCreateChainField(steps, chainStart, chainEnd);
+
+            // Arithmetic computed step → MapChainDouble
+            if (computedStep is not ArrayConstructorNode
+                && GetArithmeticBody(computedStep) is BinaryNode arithBody
+                && !IsConstantNumericExpression(arithBody))
+            {
+                int lambdaIdx = _lambdaCounter++;
+                string elParam = $"el_{lambdaIdx}";
+                string wsParam = $"ws_{lambdaIdx}";
+                string innerIndent = indent + "    ";
+                StringBuilder lambdaBody = new();
+
+                string doubleResult = EmitArithmeticAsDouble(lambdaBody, arithBody, innerIndent, elParam, wsParam);
+
+                string v = NextVar();
+                L(sb, indent, $"var {v} = {H}.MapChainDouble({currentVar}, {chainField}, {Static}(JsonElement {elParam}, JsonWorkspace {wsParam}) =>");
+                L(sb, indent, "{");
+                sb.Append(lambdaBody);
+                L(sb, innerIndent, $"return {doubleResult};");
+                L(sb, indent, $"}}, {wsVar});");
+                return v;
+            }
+
+            // General computed step → ApplyChainStep
+            {
+                int lambdaIdx = _lambdaCounter++;
+                string elParam = $"el_{lambdaIdx}";
+                string wsParam = $"ws_{lambdaIdx}";
+                string innerIndent = indent + "    ";
+                StringBuilder lambdaBody = new();
+
+                string bodyResult = EmitExpression(lambdaBody, computedStep, innerIndent, elParam, wsParam);
+
+                // Array constructor steps use different helpers — don't fuse those
+                if (computedStep is ArrayConstructorNode)
+                {
+                    return null;
+                }
+
+                string v = NextVar();
+                L(sb, indent, $"var {v} = {H}.ApplyChainStep({currentVar}, {chainField}, {Static}(JsonElement {elParam}, JsonWorkspace {wsParam}) =>");
+                L(sb, indent, "{");
+                sb.Append(lambdaBody);
+                L(sb, innerIndent, $"return {bodyResult};");
+                L(sb, indent, $"}}, {wsVar});");
+                return v;
+            }
         }
 
         private string EmitComputedStep(
@@ -2910,7 +3039,25 @@ public static class JsonataCodeGenerator
                 throw new FallbackException();
             }
 
-            string inputVar = EmitExpression(sb, func.Arguments[0], indent, dataVar, wsVar);
+            bool hasIndex = lambda.Parameters.Count >= 2 && helperName == "MapElements";
+
+            // Fusion: detect simple property chain input BEFORE evaluating it,
+            // so we skip the intermediate NavigatePropertyChain when fusing.
+            string? chainField = !hasIndex ? TryGetSimpleChainField(func.Arguments[0]) : null;
+            string? fusedHelper = chainField != null
+                ? helperName switch
+                {
+                    "MapElements" => "MapChainElements",
+                    "FilterElements" => "FilterChainElements",
+                    _ => null,
+                }
+                : null;
+
+            // Only evaluate the input expression if we're NOT fusing
+            // (fused helpers navigate the chain internally from dataVar).
+            string inputVar = fusedHelper != null
+                ? dataVar  // placeholder — won't be used in the fused call
+                : EmitExpression(sb, func.Arguments[0], indent, dataVar, wsVar);
 
             int lambdaIdx = _lambdaCounter++;
             string elParam = $"el_{lambdaIdx}";
@@ -2918,7 +3065,6 @@ public static class JsonataCodeGenerator
             string innerIndent = indent + "    ";
             StringBuilder lambdaBody = new();
 
-            bool hasIndex = lambda.Parameters.Count >= 2 && helperName == "MapElements";
             string? idxParam = hasIndex ? $"idx_{lambdaIdx}" : null;
 
             string? savedVar = StashVariable(lambda.Parameters[0], elParam);
@@ -2950,6 +3096,10 @@ public static class JsonataCodeGenerator
             if (hasIndex)
             {
                 L(sb, indent, $"var {v} = {H}.MapElementsWithIndex({inputVar}, (JsonElement {elParam}, JsonElement {idxParam}, JsonWorkspace {wsParam}) =>");
+            }
+            else if (fusedHelper != null)
+            {
+                L(sb, indent, $"var {v} = {H}.{fusedHelper}({dataVar}, {chainField}, {Static}(JsonElement {elParam}, JsonWorkspace {wsParam}) =>");
             }
             else
             {
