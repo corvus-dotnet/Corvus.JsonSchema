@@ -1920,16 +1920,14 @@ public static class JsonataCodeGenerator
                     long count = (long)end - (long)start + 1;
                     if (count <= 100)
                     {
-                        // Small constant ranges: emit inline array literal
+                        // Small constant ranges: emit inline CVB array
                         var elVars = new string[(int)count];
                         for (int i = 0; i < (int)count; i++)
                         {
                             elVars[i] = EmitDoubleConstant(sb, start + i, indent, wsVar);
                         }
 
-                        string arrV = NextVar();
-                        L(sb, indent, $"var {arrV} = {H}.CreateArray(new JsonElement[] {{ {string.Join(", ", elVars)} }}, {wsVar});");
-                        return arrV;
+                        return EmitCreateArrayCVB(sb, elVars, indent, wsVar);
                     }
                 }
             }
@@ -2155,7 +2153,7 @@ public static class JsonataCodeGenerator
             if (arr.Expressions.Count == 0)
             {
                 string v = NextVar();
-                L(sb, indent, $"var {v} = {H}.CreateArray(System.Array.Empty<JsonElement>(), {wsVar});");
+                L(sb, indent, $"var {v} = (JsonElement)JsonElement.CreateArrayBuilder({wsVar}, 0).RootElement;");
                 return v;
             }
 
@@ -2170,10 +2168,10 @@ public static class JsonataCodeGenerator
                 }
             }
 
-            string v2 = NextVar();
+            int n = arr.Expressions.Count;
 
             // If any expression is NOT an array constructor, we need flatten semantics
-            bool needsFlatten = isArrayCtorMask != 0 && isArrayCtorMask != ((1L << arr.Expressions.Count) - 1);
+            bool needsFlatten = isArrayCtorMask != 0 && isArrayCtorMask != ((1L << n) - 1);
 
             // Also need flatten when no array constructors but some expressions might produce arrays
             // In JSONata, [path.to.array] flattens the array result
@@ -2185,15 +2183,62 @@ public static class JsonataCodeGenerator
 
             if (needsFlatten)
             {
-                L(sb, indent, $"var {v2} = {H}.CreateArrayWithFlatten(new JsonElement[] {{ {string.Join(", ", elemVars)} }}, {isArrayCtorMask}L, {wsVar});");
+                // Flatten case still needs the runtime helper (complex per-element logic),
+                // but we use per-arity overloads to avoid the array allocation.
+                return EmitCreateArrayWithFlatten(sb, elemVars, isArrayCtorMask, indent, wsVar);
             }
             else
             {
-                // All expressions are array constructors — no flattening needed
-                L(sb, indent, $"var {v2} = {H}.CreateArray(new JsonElement[] {{ {string.Join(", ", elemVars)} }}, {wsVar});");
+                // No flatten needed: use CVB pattern — forward-only AddItem via static callback.
+                return EmitCreateArrayCVB(sb, elemVars, indent, wsVar);
+            }
+        }
+
+        /// <summary>
+        /// Emits a CVB (ComplexValueBuilder) array construction using
+        /// <c>JsonElement.CreateBuilder</c> with an <c>ArrayBuilder.Build</c> callback.
+        /// Avoids <c>new JsonElement[]</c> heap allocation and Mutable.AddItem version tracking.
+        /// </summary>
+        private string EmitCreateArrayCVB(
+            StringBuilder sb, string[] elemVars, string indent, string wsVar)
+        {
+            int n = elemVars.Length;
+
+            string ctxExpr = n == 1
+                ? $"ValueTuple.Create({elemVars[0]})"
+                : $"({string.Join(", ", elemVars)})";
+
+            string ctxType = n == 1
+                ? "ValueTuple<JsonElement>"
+                : $"({string.Join(", ", Enumerable.Range(0, n).Select(_ => "JsonElement"))})";
+
+            string docVar = NextVar();
+            L(sb, indent, $"var {docVar} = JsonElement.CreateBuilder({wsVar}, {ctxExpr}, static (in {ctxType} __ctx, ref JsonElement.ArrayBuilder __b) =>");
+            L(sb, indent, "{");
+
+            for (int i = 0; i < n; i++)
+            {
+                string itemRef = n == 1 ? "__ctx.Item1" : $"__ctx.Item{i + 1}";
+                L(sb, indent, $"    if ({itemRef}.ValueKind != JsonValueKind.Undefined) __b.AddItem({itemRef});");
             }
 
-            return v2;
+            L(sb, indent, $"}}, {n});");
+
+            string v = NextVar();
+            L(sb, indent, $"var {v} = (JsonElement){docVar}.RootElement;");
+            return v;
+        }
+
+        /// <summary>
+        /// Emits array construction with flatten semantics. For small known counts,
+        /// uses per-arity overloads to avoid <c>new JsonElement[]</c> allocation.
+        /// </summary>
+        private string EmitCreateArrayWithFlatten(
+            StringBuilder sb, string[] elemVars, long isArrayCtorMask, string indent, string wsVar)
+        {
+            string v = NextVar();
+            L(sb, indent, $"var {v} = {H}.CreateArrayWithFlatten(new JsonElement[] {{ {string.Join(", ", elemVars)} }}, {isArrayCtorMask}L, {wsVar});");
+            return v;
         }
 
         private string EmitObjectConstructor(
