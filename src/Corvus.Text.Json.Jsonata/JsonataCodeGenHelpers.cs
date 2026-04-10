@@ -168,12 +168,20 @@ public static class JsonataCodeGenHelpers
     // ===== Navigation =====
 
     /// <summary>
-    /// Navigates a chain of property names with JSONata auto-flattening semantics.
+    /// Navigates a chain of property names with JSONata auto-flattening semantics,
+    /// using at most one <c>ArrayBuilder</c> for the entire chain regardless of
+    /// how many nested arrays are encountered.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// At each step, if the current value is an object, the property is looked up directly.
-    /// If the current value is an array, the property is looked up on each element and
-    /// results are collected with auto-flattening (nested arrays are expanded).
+    /// If the current value is an array, all remaining steps are collected into a single
+    /// mutable array builder — avoiding the nested-builder overhead of the recursive approach.
+    /// </para>
+    /// <para>
+    /// This matches the runtime compiler's inline name step pattern where a single
+    /// <c>SequenceBuilder</c> accumulates results across all path steps.
+    /// </para>
     /// </remarks>
     /// <param name="data">The input data element.</param>
     /// <param name="names">The UTF-8 encoded property names to navigate.</param>
@@ -181,7 +189,34 @@ public static class JsonataCodeGenHelpers
     /// <returns>The navigation result, or <c>default</c> if undefined.</returns>
     public static JsonElement NavigatePropertyChain(in JsonElement data, byte[][] names, JsonWorkspace workspace)
     {
-        return NavigatePropertyChainCore(data, names, 0, workspace);
+        // Walk object steps until we complete the chain or encounter an array.
+        JsonElement current = data;
+
+        for (int i = 0; i < names.Length; i++)
+        {
+            if (current.ValueKind == JsonValueKind.Object)
+            {
+                if (!current.TryGetProperty((ReadOnlySpan<byte>)names[i], out current))
+                {
+                    return default;
+                }
+            }
+            else if (current.ValueKind == JsonValueKind.Array)
+            {
+                // First array encountered — collect ALL remaining results into one builder.
+                var doc = JsonElement.CreateArrayBuilder(workspace, current.GetArrayLength());
+                JsonElement.Mutable root = doc.RootElement;
+                int count = 0;
+                CollectChainFlat(current, names, i, root, ref count);
+                return count == 0 ? default : count == 1 ? root[0] : (JsonElement)root;
+            }
+            else
+            {
+                return default;
+            }
+        }
+
+        return current;
     }
 
     /// <summary>
@@ -4724,47 +4759,81 @@ public static class JsonataCodeGenHelpers
         return root.Clone();
     }
 
-    private static JsonElement NavigatePropertyChainCore(
-        in JsonElement data, byte[][] names, int startIndex, JsonWorkspace workspace)
+    /// <summary>
+    /// Collects results from an array element by applying the current property step
+    /// to each array item, then continuing the chain. All results are added to the
+    /// same <paramref name="root"/> builder — no nested builders are created.
+    /// </summary>
+    private static void CollectChainFlat(
+        in JsonElement array,
+        byte[][] names,
+        int stepIndex,
+        JsonElement.Mutable root,
+        ref int count)
     {
-        JsonElement current = data;
+        byte[] name = names[stepIndex];
+        int nextStep = stepIndex + 1;
+        bool isLastStep = nextStep >= names.Length;
 
-        for (int i = startIndex; i < names.Length; i++)
+        foreach (JsonElement item in array.EnumerateArray())
+        {
+            if (item.ValueKind == JsonValueKind.Object)
+            {
+                if (item.TryGetProperty((ReadOnlySpan<byte>)name, out var val))
+                {
+                    if (isLastStep)
+                    {
+                        count = AddResultWithFlatten(root, val, count);
+                    }
+                    else
+                    {
+                        ContinueChainFlat(val, names, nextStep, root, ref count);
+                    }
+                }
+            }
+            else if (item.ValueKind == JsonValueKind.Array)
+            {
+                // Nested array auto-flatten: apply same step to inner array
+                CollectChainFlat(item, names, stepIndex, root, ref count);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Continues navigating remaining chain steps from a single value,
+    /// collecting all results into the shared <paramref name="root"/> builder.
+    /// </summary>
+    private static void ContinueChainFlat(
+        in JsonElement value,
+        byte[][] names,
+        int nextIndex,
+        JsonElement.Mutable root,
+        ref int count)
+    {
+        // Walk through object steps until we complete the chain or hit an array.
+        JsonElement current = value;
+
+        for (int i = nextIndex; i < names.Length; i++)
         {
             if (current.ValueKind == JsonValueKind.Object)
             {
                 if (!current.TryGetProperty((ReadOnlySpan<byte>)names[i], out current))
                 {
-                    return default;
+                    return;
                 }
             }
             else if (current.ValueKind == JsonValueKind.Array)
             {
-                return NavigateChainOverArray(current, names, i, workspace);
+                CollectChainFlat(current, names, i, root, ref count);
+                return;
             }
             else
             {
-                return default;
+                return;
             }
         }
 
-        return current;
-    }
-
-    private static JsonElement NavigateChainOverArray(
-        in JsonElement array, byte[][] names, int startIndex, JsonWorkspace workspace)
-    {
-        int count = 0;
-        var doc = JsonElement.CreateArrayBuilder(workspace, array.GetArrayLength());
-        JsonElement.Mutable root = doc.RootElement;
-
-        foreach (JsonElement item in array.EnumerateArray())
-        {
-            JsonElement result = NavigatePropertyChainCore(item, names, startIndex, workspace);
-            count = AddResultWithFlatten(root, result, count);
-        }
-
-        return count == 0 ? default : count == 1 ? root[0] : (JsonElement)root;
+        count = AddResultWithFlatten(root, current, count);
     }
 
     private static JsonElement NavigatePropertyOverArray(

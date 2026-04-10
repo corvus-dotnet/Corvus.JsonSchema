@@ -956,16 +956,7 @@ public static class JsonataCodeGenerator
                 return v;
             }
 
-            string[] names = new string[steps.Count];
-            for (int i = 0; i < steps.Count; i++)
-            {
-                names[i] = ((NameNode)steps[i]).Value;
-            }
-
-            string pathField = CreatePathField(names);
-            string v2 = NextVar();
-            L(sb, indent, $"var {v2} = {H}.NavigatePropertyChain({dataVar}, {pathField}, {wsVar});");
-            return v2;
+            return EmitInlinePropertyChain(sb, steps, 0, steps.Count, indent, dataVar, wsVar);
         }
 
         private string EmitPropertyChainSegment(
@@ -981,16 +972,133 @@ public static class JsonataCodeGenerator
                 return v;
             }
 
+            return EmitInlinePropertyChain(sb, steps, start, end, indent, currentVar, wsVar);
+        }
+
+        /// <summary>
+        /// Emits inline property chain navigation. For short chains (2 steps), uses
+        /// per-step inline with <c>NavigateProperty</c> fallback per step. For longer
+        /// chains (3+), uses a chained <c>&amp;&amp;</c> condition for the all-objects
+        /// fast path with a flat <c>NavigatePropertyChain</c> fallback that uses at most
+        /// one ArrayBuilder for the entire remaining chain.
+        /// </summary>
+        private string EmitInlinePropertyChain(
+            StringBuilder sb, List<JsonataNode> steps, int start, int end,
+            string indent, string dataVar, string wsVar)
+        {
+            int count = end - start;
+
+            if (count <= 2)
+            {
+                return EmitPerStepInlineChain(sb, steps, start, end, indent, dataVar, wsVar);
+            }
+
+            return EmitAndChainWithFlatFallback(sb, steps, start, end, indent, dataVar, wsVar);
+        }
+
+        /// <summary>
+        /// Per-step inline: each step independently checks ValueKind == Object and
+        /// TryGetProperty, falling back to NavigateProperty for that single step.
+        /// Optimal for short chains where nested arrays are unlikely.
+        /// </summary>
+        private string EmitPerStepInlineChain(
+            StringBuilder sb, List<JsonataNode> steps, int start, int end,
+            string indent, string dataVar, string wsVar)
+        {
+            string prevVar = dataVar;
+
+            for (int i = start; i < end; i++)
+            {
+                string name = ((NameNode)steps[i]).Value;
+                string escapedName = EscapeStringLiteral(name);
+                string nameField = GetOrCreateNameField(name);
+                string resultVar = NextVar();
+
+                L(sb, indent, $"JsonElement {resultVar};");
+                L(sb, indent, $"if ({prevVar}.ValueKind == JsonValueKind.Object && {prevVar}.TryGetProperty(\"{escapedName}\"u8, out {resultVar}))");
+                L(sb, indent, "{");
+                L(sb, indent, "}");
+                L(sb, indent, "else");
+                L(sb, indent, "{");
+                L(sb, indent, $"    {resultVar} = {H}.NavigateProperty({prevVar}, {nameField}, {wsVar});");
+                L(sb, indent, "}");
+                L(sb, indent, "");
+
+                prevVar = resultVar;
+            }
+
+            return prevVar;
+        }
+
+        /// <summary>
+        /// Chained &amp;&amp; condition for the all-objects fast path with a flat
+        /// NavigatePropertyChain fallback. Uses at most one ArrayBuilder for the
+        /// entire chain regardless of how many nested arrays are encountered.
+        /// </summary>
+        private string EmitAndChainWithFlatFallback(
+            StringBuilder sb, List<JsonataNode> steps, int start, int end,
+            string indent, string dataVar, string wsVar)
+        {
+            int count = end - start;
+
+            // Build the byte[][] chain field for the fallback path.
             string[] names = new string[count];
             for (int i = 0; i < count; i++)
             {
                 names[i] = ((NameNode)steps[start + i]).Value;
             }
 
-            string pathField = CreatePathField(names);
-            string v2 = NextVar();
-            L(sb, indent, $"var {v2} = {H}.NavigatePropertyChain({currentVar}, {pathField}, {wsVar});");
-            return v2;
+            string chainField = CreatePathField(names);
+
+            // Result variable — assigned by the fast path or fallback.
+            string resultVar = NextVar();
+            L(sb, indent, $"JsonElement {resultVar};");
+
+            // Build the && chain: each step checks ValueKind == Object && TryGetProperty.
+            // All intermediate out vars are declared inline via 'out var'.
+            var condition = new StringBuilder();
+            string prevVar = dataVar;
+
+            for (int i = 0; i < count; i++)
+            {
+                string escapedName = EscapeStringLiteral(names[i]);
+
+                if (i > 0)
+                {
+                    condition.Append($"{indent}    && ");
+                }
+
+                string outVar;
+                if (i < count - 1)
+                {
+                    outVar = $"__chain{_varCounter++}";
+                    condition.Append($"{prevVar}.ValueKind == JsonValueKind.Object && {prevVar}.TryGetProperty(\"{escapedName}\"u8, out var {outVar})");
+                }
+                else
+                {
+                    // Last step: assign to the result variable directly (no 'var' — already declared).
+                    outVar = resultVar;
+                    condition.Append($"{prevVar}.ValueKind == JsonValueKind.Object && {prevVar}.TryGetProperty(\"{escapedName}\"u8, out {outVar})");
+                }
+
+                if (i < count - 1)
+                {
+                    condition.AppendLine();
+                }
+
+                prevVar = outVar;
+            }
+
+            L(sb, indent, $"if ({condition})");
+            L(sb, indent, "{");
+            L(sb, indent, "}");
+            L(sb, indent, "else");
+            L(sb, indent, "{");
+            L(sb, indent, $"    {resultVar} = {H}.NavigatePropertyChain({dataVar}, {chainField}, {wsVar});");
+            L(sb, indent, "}");
+            L(sb, indent, "");
+
+            return resultVar;
         }
 
         private string EmitFilterStage(
