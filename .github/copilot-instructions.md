@@ -296,6 +296,70 @@ dotnet run -c Release -f net10.0 -- --filter=*<SchemaName>* --buildTimeout 1200
 
 The `--buildTimeout 1200` flag is required because the default 120s is too short for this solution with source generators. Always ask the user to confirm their PC is idle before running benchmarks (they are CPU-intensive and results are unreliable under load).
 
+## JSONata Benchmarks
+
+The `benchmarks/Corvus.Text.Json.Jsonata.Benchmarks/` project compares the JSONata **code generator (CG)** against the **runtime compiler (RT)** and a **Jsonata.Net.Native** baseline across 20 expression categories. There are 62 benchmarks total (20 CG + 20 RT + 22 Native). If results show fewer than 62, something went wrong — see troubleshooting below.
+
+### Building and running
+
+```powershell
+# 1. Build the code generator and runtime (must succeed before benchmarks)
+dotnet build src\Corvus.Text.Json.Jsonata -c Release -v q --no-restore
+dotnet build src\Corvus.Text.Json.Jsonata.CodeGeneration -c Release -v q --no-restore
+
+# 2. Run conformance tests (always verify before benchmarking)
+dotnet test tests\Corvus.Text.Json.Jsonata.CodeGeneration.Tests -f net10.0 --filter "category=codegen-conformance" --no-restore -v q
+
+# 3. Clean stale BDN artifacts (CRITICAL — stale Job-* dirs cause file locks)
+$benchDir = "benchmarks\Corvus.Text.Json.Jsonata.Benchmarks"
+Remove-Item "$benchDir\bin\Release\net10.0\Job-*" -Recurse -Force -ErrorAction SilentlyContinue
+Remove-Item "$benchDir\BenchmarkDotNet.Artifacts\results\*" -Force -ErrorAction SilentlyContinue
+
+# 4. Run benchmarks (takes ~15-25 minutes)
+cd benchmarks\Corvus.Text.Json.Jsonata.Benchmarks
+dotnet run -c Release -f net10.0
+```
+
+### Critical rules
+
+1. **Always clean `Job-*` directories** before running. BDN uses out-of-process toolchains that create `Job-*` subdirectories under `bin\Release\net10.0\`. Stale ones cause file locks; BDN's build exits with code 1 and **silently drops CodeGen benchmarks** from results. You won't see an error — you'll just get fewer results.
+2. **Never pipe BDN output through `Select-Object -First N`** or any truncating command. This kills the BDN host process mid-run, producing incomplete/corrupt results.
+3. **Use `mode="sync"` with `initial_wait=30`** when running from the Copilot shell. BDN runs for 15-25 minutes. After initial_wait expires it continues in background — you'll be notified on completion. Use `read_powershell` with `delay=600` (call twice if needed for the full output).
+4. **Build timeout is pre-configured** in `Program.cs` at 15 minutes (`WithBuildTimeout(TimeSpan.FromMinutes(15))`). No `--buildTimeout` flag needed.
+
+### Result locations and naming
+
+- Results are at `benchmarks/Corvus.Text.Json.Jsonata.Benchmarks/BenchmarkDotNet.Artifacts/results/` (**not** the repo root).
+- JSON reports: `*-report-full.json` files, one per benchmark class.
+- **Method naming convention:**
+  - `Corvus_<Category>` → RT (runtime compiler)
+  - `Corvus_CodeGen_<Category>` → CG (code generator)
+  - `Native_<Category>` → Jsonata.Net.Native baseline
+- **CG/RT ratio** = `CodeGen.Mean / Corvus.Mean`. CG WIN ≤ 0.95, RT WIN ≥ 1.05, PARITY otherwise.
+
+### Parsing results (PowerShell)
+
+```powershell
+$base = "benchmarks\Corvus.Text.Json.Jsonata.Benchmarks\BenchmarkDotNet.Artifacts\results"
+$files = Get-ChildItem $base -Filter "*Jsonata*-report-full.json"
+foreach ($f in $files) {
+    $report = Get-Content $f.FullName -Raw | ConvertFrom-Json
+    foreach ($b in $report.Benchmarks) {
+        $method = $b.Method; $mean = $b.Statistics.Mean
+        # Group by category (from BenchmarkCategory attribute), compute CG/RT ratio
+    }
+}
+```
+
+### Troubleshooting
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| Fewer than 62 benchmarks in results | Stale `Job-*` dirs caused build failure | Clean `Job-*` dirs and re-run |
+| BDN build exits code 1 | File lock from prior run | Clean `Job-*` dirs |
+| No `*CodeGen*` methods in results | Source generator didn't run | Build in Release config, check `obj\Release\net10.0\generated\` for `.g.cs` files |
+| Results in wrong directory | Looking at repo root | Check `benchmarks\...\BenchmarkDotNet.Artifacts\results\` |
+
 ## Namespaces
 
 | Namespace | Purpose |
