@@ -1562,7 +1562,7 @@ public static class JsonataCodeGenerator
                 "lookup" => EmitBuiltinBinary(sb, func, indent, dataVar, wsVar, "Lookup"),
                 "merge" => EmitBuiltinUnary(sb, func, indent, dataVar, wsVar, "Merge"),
                 "spread" => EmitBuiltinUnary(sb, func, indent, dataVar, wsVar, "Spread"),
-                "single" => func.Arguments.Count > 1 ? throw new FallbackException() : EmitBuiltinUnary(sb, func, indent, dataVar, wsVar, "Single"),
+                "single" => EmitBuiltinSingle(sb, func, indent, dataVar, wsVar),
                 "flatten" => EmitBuiltinUnary(sb, func, indent, dataVar, wsVar, "Flatten"),
                 "shuffle" => EmitBuiltinUnary(sb, func, indent, dataVar, wsVar, "Shuffle"),
 
@@ -1957,6 +1957,13 @@ public static class JsonataCodeGenerator
             StringBuilder sb, FunctionCallNode func, string indent, string dataVar,
             string wsVar, string helperName, bool returnsElement)
         {
+            // Handle $map/$filter with built-in function reference (e.g. $map(arr, $string))
+            if (func.Arguments.Count >= 2 && func.Arguments[1] is VariableNode builtinRef
+                && IsBuiltinFunctionName(builtinRef.Name))
+            {
+                return EmitHofWithBuiltinRef(sb, func, indent, dataVar, wsVar, helperName, returnsElement, builtinRef.Name);
+            }
+
             if (func.Arguments.Count < 2 || func.Arguments[1] is not LambdaNode lambda)
             {
                 throw new FallbackException();
@@ -2068,6 +2075,77 @@ public static class JsonataCodeGenerator
             return v;
         }
 
+        /// <summary>
+        /// Emits a HOF call where the callback is a built-in function reference.
+        /// E.g., $map([1,2,3], $string) or $filter([0,1,2], $boolean).
+        /// </summary>
+        private string EmitHofWithBuiltinRef(
+            StringBuilder sb, FunctionCallNode func, string indent, string dataVar,
+            string wsVar, string helperName, bool returnsElement, string builtinName)
+        {
+            string inputVar = EmitExpression(sb, func.Arguments[0], indent, dataVar, wsVar);
+
+            // Map the built-in name to the helper call to apply per-element
+            string? perElementCall = builtinName switch
+            {
+                "string" => "{H}.String({el}, {ws})",
+                "number" => "{H}.Number({el}, {ws})",
+                "boolean" => "{H}.BooleanElement({H}.IsTruthy({el}))",
+                "not" => "{H}.BooleanElement(!{H}.IsTruthy({el}))",
+                "uppercase" => "{H}.Uppercase({el}, {ws})",
+                "lowercase" => "{H}.Lowercase({el}, {ws})",
+                "trim" => "{H}.Trim({el}, {ws})",
+                "length" => "{H}.Length({el}, {ws})",
+                "type" => "{H}.Type({el}, {ws})",
+                "exists" => "{H}.Exists({el}, {ws})",
+                "abs" => "{H}.Abs({el}, {ws})",
+                "floor" => "{H}.Floor({el}, {ws})",
+                "ceil" => "{H}.Ceil({el}, {ws})",
+                "sqrt" => "{H}.Sqrt({el}, {ws})",
+                "sum" => "{H}.Sum({el}, {ws})",
+                "count" => "{H}.Count({el}, {ws})",
+                "max" => "{H}.Max({el}, {ws})",
+                "min" => "{H}.Min({el}, {ws})",
+                "average" => "{H}.Average({el}, {ws})",
+                "reverse" => "{H}.Reverse({el}, {ws})",
+                "shuffle" => "{H}.Shuffle({el}, {ws})",
+                "sort" => "{H}.SortDefault({el}, {ws})",
+                "keys" => "{H}.Keys({el}, {ws})",
+                "values" => "{H}.Values({el}, {ws})",
+                "spread" => "{H}.Spread({el}, {ws})",
+                _ => null,
+            };
+
+            if (perElementCall is null)
+            {
+                throw new FallbackException();
+            }
+
+            int lambdaIdx = _lambdaCounter++;
+            string elParam = $"el_{lambdaIdx}";
+            string wsParam = $"ws_{lambdaIdx}";
+
+            // Replace placeholders
+            string call = perElementCall.Replace("{H}", H).Replace("{el}", elParam).Replace("{ws}", wsParam);
+
+            string v = NextVar();
+            if (returnsElement)
+            {
+                L(sb, indent, $"var {v} = {H}.{helperName}({inputVar}, static (JsonElement {elParam}, JsonWorkspace {wsParam}) =>");
+                L(sb, indent, "{");
+                L(sb, indent + "    ", $"return {call};");
+            }
+            else
+            {
+                L(sb, indent, $"var {v} = {H}.{helperName}({inputVar}, static (JsonElement {elParam}, JsonWorkspace {wsParam}) =>");
+                L(sb, indent, "{");
+                L(sb, indent + "    ", $"return {H}.IsTruthy({call});");
+            }
+
+            L(sb, indent, $"}}, {wsVar});");
+            return v;
+        }
+
         // ── HOF: $sort ───────────────────────────────────────
         private string EmitHofSort(
             StringBuilder sb, FunctionCallNode func, string indent, string dataVar, string wsVar)
@@ -2139,6 +2217,106 @@ public static class JsonataCodeGenerator
             {
                 _variables.Remove(name);
             }
+        }
+
+        private string EmitBuiltinSingle(
+            StringBuilder sb, FunctionCallNode func, string indent, string dataVar, string wsVar)
+        {
+            if (func.Arguments.Count == 1)
+            {
+                return EmitBuiltinUnary(sb, func, indent, dataVar, wsVar, "Single");
+            }
+
+            if (func.Arguments.Count != 2)
+            {
+                throw new JsonataException("T0410", "Arguments of function 'single' do not match function signature", 0);
+            }
+
+            // 2-arg form: $single(array, predicate)
+            // Handle lambda or built-in ref
+            string inputVar = EmitExpression(sb, func.Arguments[0], indent, dataVar, wsVar);
+
+            if (func.Arguments[1] is LambdaNode lambda)
+            {
+                if (lambda.Parameters.Count < 1)
+                {
+                    throw new FallbackException();
+                }
+
+                int lambdaIdx = _lambdaCounter++;
+                string elParam = $"el_{lambdaIdx}";
+                string wsParam = $"ws_{lambdaIdx}";
+                string innerIndent = indent + "    ";
+                StringBuilder lambdaBody = new();
+
+                string? savedVar = StashVariable(lambda.Parameters[0], elParam);
+
+                bool hasIndex = lambda.Parameters.Count >= 2;
+                bool hasArray = lambda.Parameters.Count >= 3;
+                string? idxParam = hasIndex ? $"idx_{lambdaIdx}" : null;
+                string? arrParam = hasArray ? $"arr_{lambdaIdx}" : null;
+                string? savedIdx = hasIndex ? StashVariable(lambda.Parameters[1], idxParam!) : null;
+                string? savedArr = hasArray ? StashVariable(lambda.Parameters[2], arrParam!) : null;
+
+                bool prevRootRef = _usesRootRef;
+                _usesRootRef = true;
+                string bodyResult = EmitExpression(lambdaBody, lambda.Body, innerIndent, elParam, wsParam);
+                _usesRootRef = prevRootRef;
+
+                if (hasArray)
+                {
+                    RestoreVariable(lambda.Parameters[2], savedArr);
+                }
+
+                if (hasIndex)
+                {
+                    RestoreVariable(lambda.Parameters[1], savedIdx);
+                }
+
+                RestoreVariable(lambda.Parameters[0], savedVar);
+
+                string v = NextVar();
+                if (hasIndex)
+                {
+                    L(sb, indent, $"var {v} = {H}.SingleWithPredicateIndexed({inputVar}, (JsonElement {elParam}, JsonElement {idxParam}, JsonElement {arrParam ?? $"_arr_{lambdaIdx}"}, JsonWorkspace {wsParam}) =>");
+                }
+                else
+                {
+                    L(sb, indent, $"var {v} = {H}.SingleWithPredicate({inputVar}, (JsonElement {elParam}, JsonWorkspace {wsParam}) =>");
+                }
+
+                L(sb, indent, "{");
+                sb.Append(lambdaBody);
+                L(sb, innerIndent, $"return {H}.IsTruthy({bodyResult});");
+                L(sb, indent, $"}}, {wsVar});");
+                return v;
+            }
+            else if (func.Arguments[1] is VariableNode builtinRef && IsBuiltinFunctionName(builtinRef.Name))
+            {
+                // $single(arr, $boolean) etc.
+                string? call = builtinRef.Name switch
+                {
+                    "boolean" => $"{H}.IsTruthy({{el}})",
+                    "not" => $"!{H}.IsTruthy({{el}})",
+                    _ => null,
+                };
+
+                if (call is null)
+                {
+                    throw new FallbackException();
+                }
+
+                int lambdaIdx = _lambdaCounter++;
+                string elParam = $"el_{lambdaIdx}";
+                string wsParam = $"ws_{lambdaIdx}";
+
+                string callExpanded = call.Replace("{el}", elParam);
+                string v = NextVar();
+                L(sb, indent, $"var {v} = {H}.SingleWithPredicate({inputVar}, static (JsonElement {elParam}, JsonWorkspace {wsParam}) => {callExpanded}, {wsVar});");
+                return v;
+            }
+
+            throw new FallbackException();
         }
 
         /// <summary>

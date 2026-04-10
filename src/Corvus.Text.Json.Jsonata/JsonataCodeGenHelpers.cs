@@ -2037,6 +2037,111 @@ public static class JsonataCodeGenHelpers
     }
 
     /// <summary>
+    /// JSONata <c>$single(array, predicate)</c> — filters array by predicate, expects exactly 1 match.
+    /// </summary>
+    public static JsonElement SingleWithPredicate(
+        in JsonElement input,
+        Func<JsonElement, JsonWorkspace, bool> predicate,
+        JsonWorkspace workspace)
+    {
+        if (input.IsUndefined())
+        {
+            return default;
+        }
+
+        JsonElement found = default;
+        int matchCount = 0;
+
+        if (input.ValueKind == JsonValueKind.Array)
+        {
+            foreach (JsonElement item in input.EnumerateArray())
+            {
+                if (predicate(item, workspace))
+                {
+                    matchCount++;
+                    if (matchCount == 1)
+                    {
+                        found = item;
+                    }
+                    else
+                    {
+                        throw new JsonataException("D3138", "The $single function expected exactly 1 matching result but got " + matchCount, 0);
+                    }
+                }
+            }
+        }
+        else
+        {
+            if (predicate(input, workspace))
+            {
+                return input;
+            }
+        }
+
+        if (matchCount == 0)
+        {
+            throw new JsonataException("D3139", "The $single function expected exactly 1 matching result but got 0", 0);
+        }
+
+        return found;
+    }
+
+    /// <summary>
+    /// JSONata <c>$single(array, predicate)</c> with index and array parameters.
+    /// </summary>
+    public static JsonElement SingleWithPredicateIndexed(
+        in JsonElement input,
+        Func<JsonElement, JsonElement, JsonElement, JsonWorkspace, bool> predicate,
+        JsonWorkspace workspace)
+    {
+        if (input.IsUndefined())
+        {
+            return default;
+        }
+
+        JsonElement found = default;
+        int matchCount = 0;
+
+        if (input.ValueKind == JsonValueKind.Array)
+        {
+            int idx = 0;
+            foreach (JsonElement item in input.EnumerateArray())
+            {
+                JsonElement indexEl = NumberFromDouble(idx, workspace);
+                if (predicate(item, indexEl, input, workspace))
+                {
+                    matchCount++;
+                    if (matchCount == 1)
+                    {
+                        found = item;
+                    }
+                    else
+                    {
+                        throw new JsonataException("D3138", "The $single function expected exactly 1 matching result but got " + matchCount, 0);
+                    }
+                }
+
+                idx++;
+            }
+        }
+        else
+        {
+            JsonElement indexEl = NumberFromDouble(0, workspace);
+            if (predicate(input, indexEl, input, workspace))
+            {
+                return input;
+            }
+        }
+
+        if (matchCount == 0)
+        {
+            throw new JsonataException("D3139", "The $single function expected exactly 1 matching result but got 0", 0);
+        }
+
+        return found;
+    }
+
+    /// <summary>
     /// JSONata <c>$flatten</c> function — flattens nested arrays one level.
     /// </summary>
     public static JsonElement Flatten(in JsonElement input, JsonWorkspace workspace)
