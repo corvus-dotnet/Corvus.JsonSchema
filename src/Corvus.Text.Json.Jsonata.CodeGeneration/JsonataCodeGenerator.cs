@@ -2448,14 +2448,47 @@ public static class JsonataCodeGenerator
                 throw new FallbackException();
             }
 
+            // Fused pattern: $join([elem1, elem2, ...], "separator")
+            // Avoids intermediate array document construction and StringElement allocation.
+            if (func.Arguments[0] is ArrayConstructorNode arr && arr.Expressions.Count > 0)
+            {
+                string sepUtf8;
+                if (func.Arguments.Count >= 2 && func.Arguments[1] is StringNode sepNode)
+                {
+                    sepUtf8 = $"\"{EscapeStringLiteral(sepNode.Value)}\"u8";
+                }
+                else if (func.Arguments.Count < 2)
+                {
+                    sepUtf8 = "default";
+                }
+                else
+                {
+                    // Non-constant separator — fall through to generic path
+                    goto generic;
+                }
+
+                // Emit each element
+                List<string> elemVars = new(arr.Expressions.Count);
+                foreach (var item in arr.Expressions)
+                {
+                    elemVars.Add(EmitExpression(sb, item, indent, dataVar, wsVar));
+                }
+
+                string v = NextVar();
+                string elemsArray = string.Join(", ", elemVars);
+                L(sb, indent, $"var {v} = {H}.JoinScalarElements({sepUtf8}, new JsonElement[] {{ {elemsArray} }}, {wsVar});");
+                return v;
+            }
+
+            generic:
             string arg0 = EmitExpression(sb, func.Arguments[0], indent, dataVar, wsVar);
             string arg1 = func.Arguments.Count >= 2
                 ? EmitExpression(sb, func.Arguments[1], indent, dataVar, wsVar)
                 : "default";
 
-            string v = NextVar();
-            L(sb, indent, $"var {v} = {H}.Join({arg0}, {arg1}, {wsVar});");
-            return v;
+            string vg = NextVar();
+            L(sb, indent, $"var {vg} = {H}.Join({arg0}, {arg1}, {wsVar});");
+            return vg;
         }
 
         /// <summary>

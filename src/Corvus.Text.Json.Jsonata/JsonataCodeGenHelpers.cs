@@ -1726,6 +1726,48 @@ public static class JsonataCodeGenHelpers
     }
 
     /// <summary>
+    /// Fused <c>$join</c> for codegen: joins scalar elements directly with a UTF-8 separator,
+    /// avoiding intermediate array document construction and <c>StringElement</c> allocation.
+    /// </summary>
+    /// <param name="separator">The separator as raw UTF-8 bytes (empty for no separator).</param>
+    /// <param name="elements">The elements to join (not wrapped in a mutable document).</param>
+    /// <param name="workspace">The workspace for pooled memory.</param>
+    /// <returns>The joined string as a <see cref="JsonElement"/>.</returns>
+    public static JsonElement JoinScalarElements(ReadOnlySpan<byte> separator, JsonElement[] elements, JsonWorkspace workspace)
+    {
+        Utf8ValueStringBuilder sb = new(stackalloc byte[256]);
+        try
+        {
+            bool first = true;
+            for (int i = 0; i < elements.Length; i++)
+            {
+                JsonElement item = elements[i];
+                if (item.ValueKind == JsonValueKind.String)
+                {
+                    if (!first && separator.Length > 0)
+                    {
+                        sb.Append(separator);
+                    }
+
+                    using UnescapedUtf8JsonString utf8Item = item.GetUtf8String();
+                    sb.Append(utf8Item.Span);
+                    first = false;
+                }
+                else if (!item.IsNullOrUndefined())
+                {
+                    throw new JsonataException("T0412", "Argument 1 of function $join must be an array of strings", 0);
+                }
+            }
+
+            return JsonataHelpers.StringFromUnescapedUtf8(sb.AsSpan(), workspace);
+        }
+        finally
+        {
+            sb.Dispose();
+        }
+    }
+
+    /// <summary>
     /// JSONata <c>$string</c> function — converts a value to its string representation.
     /// </summary>
     public static JsonElement String(in JsonElement value, JsonWorkspace workspace)
