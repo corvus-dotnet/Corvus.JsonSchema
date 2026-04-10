@@ -236,6 +236,36 @@ internal static class JsonataHelpers
     }
 
     /// <summary>
+    /// Creates a string element from unescaped UTF-8 bytes. The bytes are JSON-escaped,
+    /// quoted, and stored in a pooled document.
+    /// </summary>
+    /// <param name="unescapedUtf8">The unescaped UTF-8 bytes (e.g. from <see cref="UnescapedUtf8JsonString"/>).</param>
+    /// <param name="workspace">The workspace for the pooled document.</param>
+    /// <returns>A string element containing the escaped value.</returns>
+    public static JsonElement StringFromUnescapedUtf8(ReadOnlySpan<byte> unescapedUtf8, JsonWorkspace workspace)
+    {
+        if (unescapedUtf8.Length == 0)
+        {
+            return EmptyStringElement;
+        }
+
+        // Worst case: each byte < 0x20 → 6 bytes (\u00XX) + 2 for quotes
+        int maxLen = (unescapedUtf8.Length * 6) + 2;
+        byte[] buffer = ArrayPool<byte>.Shared.Rent(maxLen);
+        int pos = 0;
+
+        buffer[pos++] = (byte)'"';
+        pos += WriteJsonEscapedFromUtf8(unescapedUtf8, buffer.AsSpan(pos));
+        buffer[pos++] = (byte)'"';
+
+        FixedJsonValueDocument<JsonElement> doc = FixedJsonValueDocument<JsonElement>.ForStringFromSpan(
+            new ReadOnlySpan<byte>(buffer, 0, pos));
+        workspace.RegisterDocument(doc);
+        ArrayPool<byte>.Shared.Return(buffer);
+        return doc.RootElement;
+    }
+
+    /// <summary>
     /// Creates a JSON array element from the values in a <see cref="Sequence"/>.
     /// </summary>
     public static JsonElement ArrayFromSequence(Sequence seq, JsonWorkspace workspace)
@@ -512,6 +542,74 @@ internal static class JsonataHelpers
                 destination[pos++] = (byte)(0xE0 | (c >> 12));
                 destination[pos++] = (byte)(0x80 | ((c >> 6) & 0x3F));
                 destination[pos++] = (byte)(0x80 | (c & 0x3F));
+            }
+        }
+
+        return pos;
+    }
+
+    /// <summary>
+    /// Writes JSON-escaped UTF-8 bytes from an unescaped UTF-8 source.
+    /// Multi-byte UTF-8 sequences (bytes ≥ 0x80) pass through unchanged since they
+    /// never require JSON escaping. Only ASCII control characters, backslash, and
+    /// double-quote need escaping.
+    /// </summary>
+    public static int WriteJsonEscapedFromUtf8(ReadOnlySpan<byte> source, Span<byte> destination)
+    {
+        int pos = 0;
+
+        for (int i = 0; i < source.Length; i++)
+        {
+            byte b = source[i];
+
+            if (b == (byte)'"')
+            {
+                destination[pos++] = (byte)'\\';
+                destination[pos++] = (byte)'"';
+            }
+            else if (b == (byte)'\\')
+            {
+                destination[pos++] = (byte)'\\';
+                destination[pos++] = (byte)'\\';
+            }
+            else if (b < 0x20)
+            {
+                switch (b)
+                {
+                    case (byte)'\b':
+                        destination[pos++] = (byte)'\\';
+                        destination[pos++] = (byte)'b';
+                        break;
+                    case (byte)'\f':
+                        destination[pos++] = (byte)'\\';
+                        destination[pos++] = (byte)'f';
+                        break;
+                    case (byte)'\n':
+                        destination[pos++] = (byte)'\\';
+                        destination[pos++] = (byte)'n';
+                        break;
+                    case (byte)'\r':
+                        destination[pos++] = (byte)'\\';
+                        destination[pos++] = (byte)'r';
+                        break;
+                    case (byte)'\t':
+                        destination[pos++] = (byte)'\\';
+                        destination[pos++] = (byte)'t';
+                        break;
+                    default:
+                        destination[pos++] = (byte)'\\';
+                        destination[pos++] = (byte)'u';
+                        destination[pos++] = (byte)'0';
+                        destination[pos++] = (byte)'0';
+                        destination[pos++] = HexDigit(b >> 4);
+                        destination[pos++] = HexDigit(b & 0xF);
+                        break;
+                }
+            }
+            else
+            {
+                // Bytes >= 0x20 pass through (ASCII and multi-byte UTF-8 continuations)
+                destination[pos++] = b;
             }
         }
 

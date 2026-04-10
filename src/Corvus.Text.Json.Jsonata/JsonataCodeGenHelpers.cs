@@ -7,6 +7,7 @@ using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
+using Corvus.Text.Json.Internal;
 
 namespace Corvus.Text.Json.Jsonata;
 
@@ -870,26 +871,38 @@ public static class JsonataCodeGenHelpers
             throw new JsonataException("T0410", "Second argument of function $join must be a string", 0);
         }
 
-        string sep = separator.ValueKind == JsonValueKind.String
-            ? separator.GetString() ?? string.Empty
-            : string.Empty;
-
         if (input.ValueKind == JsonValueKind.Array)
         {
-            var parts = new List<string>();
-            foreach (JsonElement item in input.EnumerateArray())
+            Utf8ValueStringBuilder sb = new(stackalloc byte[256]);
+            try
             {
-                if (item.ValueKind == JsonValueKind.String)
+                bool first = true;
+                foreach (JsonElement item in input.EnumerateArray())
                 {
-                    parts.Add(item.GetString() ?? string.Empty);
-                }
-                else if (!item.IsNullOrUndefined())
-                {
-                    throw new JsonataException("T0412", "Argument 1 of function $join must be an array of strings", 0);
-                }
-            }
+                    if (item.ValueKind == JsonValueKind.String)
+                    {
+                        if (!first && separator.ValueKind == JsonValueKind.String)
+                        {
+                            using UnescapedUtf8JsonString utf8Sep = separator.GetUtf8String();
+                            sb.Append(utf8Sep.Span);
+                        }
 
-            return JsonataHelpers.StringFromString(string.Join(sep, parts), workspace);
+                        using UnescapedUtf8JsonString utf8Item = item.GetUtf8String();
+                        sb.Append(utf8Item.Span);
+                        first = false;
+                    }
+                    else if (!item.IsNullOrUndefined())
+                    {
+                        throw new JsonataException("T0412", "Argument 1 of function $join must be an array of strings", 0);
+                    }
+                }
+
+                return JsonataHelpers.StringFromUnescapedUtf8(sb.AsSpan(), workspace);
+            }
+            finally
+            {
+                sb.Dispose();
+            }
         }
 
         if (input.ValueKind == JsonValueKind.String)
@@ -1015,16 +1028,8 @@ public static class JsonataCodeGenHelpers
             throw new JsonataException("T0410", "Argument 1 of function 'length' must be a string", 0);
         }
 
-        string str = input.GetString()!;
-        int count = 0;
-        for (int i = 0; i < str.Length; i++)
-        {
-            count++;
-            if (char.IsHighSurrogate(str[i]) && i + 1 < str.Length && char.IsLowSurrogate(str[i + 1]))
-            {
-                i++;
-            }
-        }
+        using UnescapedUtf8JsonString utf8 = input.GetUtf8String();
+        int count = JsonElementHelpers.GetUtf8StringLength(utf8.Span);
 
         return JsonataHelpers.NumberFromDouble(count, workspace);
     }
@@ -1355,6 +1360,13 @@ public static class JsonataCodeGenHelpers
     // ===== Phase 1c: String Transforms =====
     private static readonly Regex WhitespaceCollapseRegex = new(@"\s+", RegexOptions.Compiled);
 
+#if !NET
+    [ThreadStatic]
+    private static Random? t_random;
+
+    private static Random ThreadLocalRandom => t_random ??= new Random();
+#endif
+
     /// <summary>
     /// JSONata <c>$uppercase</c> function.
     /// </summary>
@@ -1370,8 +1382,38 @@ public static class JsonataCodeGenHelpers
             throw new JsonataException("T0410", "String function argument must be a string", 0);
         }
 
-        string str = input.GetString()!;
-        return JsonataHelpers.StringFromString(str.ToUpperInvariant(), workspace);
+        using UnescapedUtf16JsonString utf16 = input.GetUtf16String();
+        ReadOnlySpan<char> source = utf16.Span;
+        if (source.Length == 0)
+        {
+            return JsonataHelpers.EmptyString();
+        }
+
+        char[]? rentedChars = null;
+        Span<char> dest = source.Length <= 128
+            ? stackalloc char[128]
+            : (rentedChars = ArrayPool<char>.Shared.Rent(source.Length));
+        try
+        {
+#if NET
+            int written = source.ToUpperInvariant(dest);
+#else
+            for (int i = 0; i < source.Length; i++)
+            {
+                dest[i] = char.ToUpperInvariant(source[i]);
+            }
+
+            int written = source.Length;
+#endif
+            return JsonataHelpers.StringFromChars(dest.Slice(0, written), workspace);
+        }
+        finally
+        {
+            if (rentedChars is not null)
+            {
+                ArrayPool<char>.Shared.Return(rentedChars);
+            }
+        }
     }
 
     /// <summary>
@@ -1389,8 +1431,38 @@ public static class JsonataCodeGenHelpers
             throw new JsonataException("T0410", "String function argument must be a string", 0);
         }
 
-        string str = input.GetString()!;
-        return JsonataHelpers.StringFromString(str.ToLowerInvariant(), workspace);
+        using UnescapedUtf16JsonString utf16 = input.GetUtf16String();
+        ReadOnlySpan<char> source = utf16.Span;
+        if (source.Length == 0)
+        {
+            return JsonataHelpers.EmptyString();
+        }
+
+        char[]? rentedChars = null;
+        Span<char> dest = source.Length <= 128
+            ? stackalloc char[128]
+            : (rentedChars = ArrayPool<char>.Shared.Rent(source.Length));
+        try
+        {
+#if NET
+            int written = source.ToLowerInvariant(dest);
+#else
+            for (int i = 0; i < source.Length; i++)
+            {
+                dest[i] = char.ToLowerInvariant(source[i]);
+            }
+
+            int written = source.Length;
+#endif
+            return JsonataHelpers.StringFromChars(dest.Slice(0, written), workspace);
+        }
+        finally
+        {
+            if (rentedChars is not null)
+            {
+                ArrayPool<char>.Shared.Return(rentedChars);
+            }
+        }
     }
 
     /// <summary>
@@ -1408,8 +1480,48 @@ public static class JsonataCodeGenHelpers
             throw new JsonataException("T0410", "String function argument must be a string", 0);
         }
 
-        string str = input.GetString()!;
-        return JsonataHelpers.StringFromString(WhitespaceCollapseRegex.Replace(str.Trim(), " "), workspace);
+        using UnescapedUtf16JsonString utf16 = input.GetUtf16String();
+        ReadOnlySpan<char> trimmed = utf16.Span.Trim();
+        if (trimmed.Length == 0)
+        {
+            return JsonataHelpers.EmptyString();
+        }
+
+        // Collapse whitespace runs to single spaces without regex or string allocation
+        char[]? rentedChars = null;
+        Span<char> dest = trimmed.Length <= 128
+            ? stackalloc char[128]
+            : (rentedChars = ArrayPool<char>.Shared.Rent(trimmed.Length));
+        try
+        {
+            int written = 0;
+            bool prevWhitespace = false;
+            for (int i = 0; i < trimmed.Length; i++)
+            {
+                if (char.IsWhiteSpace(trimmed[i]))
+                {
+                    if (!prevWhitespace)
+                    {
+                        dest[written++] = ' ';
+                        prevWhitespace = true;
+                    }
+                }
+                else
+                {
+                    dest[written++] = trimmed[i];
+                    prevWhitespace = false;
+                }
+            }
+
+            return JsonataHelpers.StringFromChars(dest.Slice(0, written), workspace);
+        }
+        finally
+        {
+            if (rentedChars is not null)
+            {
+                ArrayPool<char>.Shared.Return(rentedChars);
+            }
+        }
     }
 
     /// <summary>
@@ -1432,8 +1544,9 @@ public static class JsonataCodeGenHelpers
             throw new JsonataException("T0410", "Argument 2 of function $substring is not a number", 0);
         }
 
-        string str = input.GetString()!;
-        int cpLen = CountCodePoints(str);
+        using UnescapedUtf16JsonString utf16 = input.GetUtf16String();
+        ReadOnlySpan<char> span = utf16.Span;
+        int cpLen = CountCodePoints(span);
         int start = (int)startD;
         if (start < 0)
         {
@@ -1458,10 +1571,10 @@ public static class JsonataCodeGenHelpers
             count = cpLen - start;
         }
 
-        int startCharIdx = CodePointToCharIndex(str, start);
-        int endCharIdx = CodePointToCharIndex(str, start + count);
-        string result = str.Substring(startCharIdx, endCharIdx - startCharIdx);
-        return JsonataHelpers.StringFromString(result, workspace);
+        int startCharIdx = CodePointToCharIndex(span, start);
+        int endCharIdx = CodePointToCharIndex(span, start + count);
+        ReadOnlySpan<char> result = span.Slice(startCharIdx, endCharIdx - startCharIdx);
+        return JsonataHelpers.StringFromChars(result, workspace);
     }
 
     /// <summary>
@@ -1484,11 +1597,14 @@ public static class JsonataCodeGenHelpers
             throw new JsonataException("T0410", "Argument 2 of string function is not a string", 0);
         }
 
-        string str = input.GetString()!;
-        string searchStr = search.GetString()!;
-        int idx = str.IndexOf(searchStr, StringComparison.Ordinal);
-        string result = idx < 0 ? str : str.Substring(0, idx);
-        return JsonataHelpers.StringFromString(result, workspace);
+        // Use UTF-8 span comparison to avoid string allocations
+        using UnescapedUtf8JsonString utf8Str = input.GetUtf8String();
+        using UnescapedUtf8JsonString utf8Search = search.GetUtf8String();
+        ReadOnlySpan<byte> str = utf8Str.Span;
+        ReadOnlySpan<byte> searchSpan = utf8Search.Span;
+        int idx = str.IndexOf(searchSpan);
+        ReadOnlySpan<byte> result = idx < 0 ? str : str.Slice(0, idx);
+        return JsonataHelpers.StringFromUnescapedUtf8(result, workspace);
     }
 
     /// <summary>
@@ -1511,11 +1627,14 @@ public static class JsonataCodeGenHelpers
             throw new JsonataException("T0410", "Argument 2 of string function is not a string", 0);
         }
 
-        string str = input.GetString()!;
-        string searchStr = search.GetString()!;
-        int idx = str.IndexOf(searchStr, StringComparison.Ordinal);
-        string result = idx < 0 ? str : str.Substring(idx + searchStr.Length);
-        return JsonataHelpers.StringFromString(result, workspace);
+        // Use UTF-8 span comparison to avoid string allocations
+        using UnescapedUtf8JsonString utf8Str = input.GetUtf8String();
+        using UnescapedUtf8JsonString utf8Search = search.GetUtf8String();
+        ReadOnlySpan<byte> str = utf8Str.Span;
+        ReadOnlySpan<byte> searchSpan = utf8Search.Span;
+        int idx = str.IndexOf(searchSpan);
+        ReadOnlySpan<byte> result = idx < 0 ? str : str.Slice(idx + searchSpan.Length);
+        return JsonataHelpers.StringFromUnescapedUtf8(result, workspace);
     }
 
     /// <summary>
@@ -1561,9 +1680,6 @@ public static class JsonataCodeGenHelpers
             throw new JsonataException("T0410", "Argument 2 of function $split is not of the correct type", 0);
         }
 
-        string str = input.GetString()!;
-        string sep = separator.GetString()!;
-
         int limit = int.MaxValue;
         if (limitElement.ValueKind != JsonValueKind.Undefined)
         {
@@ -1583,29 +1699,75 @@ public static class JsonataCodeGenHelpers
             }
         }
 
-        string[] parts;
+        using UnescapedUtf8JsonString utf8Str = input.GetUtf8String();
+        using UnescapedUtf8JsonString utf8Sep = separator.GetUtf8String();
+        ReadOnlySpan<byte> str = utf8Str.Span;
+        ReadOnlySpan<byte> sep = utf8Sep.Span;
+
         if (sep.Length == 0)
         {
-            parts = new string[str.Length];
-            for (int i = 0; i < str.Length; i++)
+            // Split into individual UTF-8 code points
+            int cpCount = 0;
+            for (int i = 0; i < str.Length;)
             {
-                parts[i] = str[i].ToString();
+                cpCount++;
+                byte b = str[i];
+                i += b < 0x80 ? 1 : b < 0xE0 ? 2 : b < 0xF0 ? 3 : 4;
             }
+
+            int count = Math.Min(cpCount, limit);
+            JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(workspace, count);
+            JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
+            int pos = 0;
+            for (int c = 0; c < count; c++)
+            {
+                byte b = str[pos];
+                int cpLen = b < 0x80 ? 1 : b < 0xE0 ? 2 : b < 0xF0 ? 3 : 4;
+                arrayRoot.AddItem(JsonataHelpers.StringFromUnescapedUtf8(str.Slice(pos, cpLen), workspace));
+                pos += cpLen;
+            }
+
+            return (JsonElement)arrayRoot;
         }
         else
         {
-            parts = str.Split(new[] { sep }, StringSplitOptions.None);
-        }
+            // Collect split results using UTF-8 byte-level IndexOf
+            var parts = new List<(int Start, int Length)>();
+            int searchStart = 0;
+            while (parts.Count < limit)
+            {
+                int idx = str.Slice(searchStart).IndexOf(sep);
+                if (idx < 0)
+                {
+                    parts.Add((searchStart, str.Length - searchStart));
+                    break;
+                }
 
-        int count = Math.Min(parts.Length, limit);
-        JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(workspace, count);
-        JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
-        for (int i = 0; i < count; i++)
-        {
-            arrayRoot.AddItem(JsonataHelpers.StringFromString(parts[i], workspace));
-        }
+                parts.Add((searchStart, idx));
+                searchStart += idx + sep.Length;
 
-        return (JsonElement)arrayRoot;
+                if (searchStart > str.Length)
+                {
+                    break;
+                }
+
+                if (searchStart == str.Length && parts.Count < limit)
+                {
+                    parts.Add((searchStart, 0));
+                    break;
+                }
+            }
+
+            int resultCount = Math.Min(parts.Count, limit);
+            JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(workspace, resultCount);
+            JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
+            for (int i = 0; i < resultCount; i++)
+            {
+                arrayRoot.AddItem(JsonataHelpers.StringFromUnescapedUtf8(str.Slice(parts[i].Start, parts[i].Length), workspace));
+            }
+
+            return (JsonElement)arrayRoot;
+        }
     }
 
     /// <summary>
@@ -1865,10 +2027,9 @@ public static class JsonataCodeGenHelpers
             return default;
         }
 
-        string key = keyElement.GetString()!;
-
+        using UnescapedUtf8JsonString utf8Key = keyElement.GetUtf8String();
         var results = new List<JsonElement>();
-        LookupCollect(input, key, results);
+        LookupCollect(input, utf8Key.Span, results);
 
         if (results.Count == 0)
         {
@@ -1890,18 +2051,18 @@ public static class JsonataCodeGenHelpers
         return (JsonElement)arrayRoot;
     }
 
-    private static void LookupCollect(JsonElement el, string key, List<JsonElement> results)
+    private static void LookupCollect(JsonElement el, ReadOnlySpan<byte> utf8Key, List<JsonElement> results)
     {
         if (el.ValueKind == JsonValueKind.Array)
         {
             foreach (var item in el.EnumerateArray())
             {
-                LookupCollect(item, key, results);
+                LookupCollect(item, utf8Key, results);
             }
         }
         else if (el.ValueKind == JsonValueKind.Object)
         {
-            if (el.TryGetProperty(key, out var value))
+            if (el.TryGetProperty(utf8Key, out var value))
             {
                 results.Add(value);
             }
@@ -2203,7 +2364,11 @@ public static class JsonataCodeGenHelpers
 
         for (int i = len - 1; i > 0; i--)
         {
+#if NET
             int j = Random.Shared.Next(i + 1);
+#else
+            int j = ThreadLocalRandom.Next(i + 1);
+#endif
             (elements[i], elements[j]) = (elements[j], elements[i]);
         }
 
@@ -2456,9 +2621,13 @@ public static class JsonataCodeGenHelpers
             throw new JsonataException("T0410", "Argument 3 of function $replace is not of the correct type", 0);
         }
 
-        string str = input.GetString()!;
-        string pat = pattern.GetString()!;
-        string rep = replacement.GetString()!;
+        using UnescapedUtf8JsonString utf8Str = input.GetUtf8String();
+        using UnescapedUtf8JsonString utf8Pat = pattern.GetUtf8String();
+        using UnescapedUtf8JsonString utf8Rep = replacement.GetUtf8String();
+
+        ReadOnlySpan<byte> str = utf8Str.Span;
+        ReadOnlySpan<byte> pat = utf8Pat.Span;
+        ReadOnlySpan<byte> rep = utf8Rep.Span;
 
         if (pat.Length == 0)
         {
@@ -2487,22 +2656,28 @@ public static class JsonataCodeGenHelpers
             limit = (int)n;
         }
 
-        // Use StringBuilder to avoid O(n²) allocations from repeated Substring + concat
-        var sb = new System.Text.StringBuilder(str.Length);
-        int count = 0;
-        int searchStart = 0;
-        int idx;
-        while (count < limit && (idx = str.IndexOf(pat, searchStart, StringComparison.Ordinal)) >= 0)
+        Utf8ValueStringBuilder sb = new(stackalloc byte[256]);
+        try
         {
-            sb.Append(str, searchStart, idx - searchStart);
-            sb.Append(rep);
-            searchStart = idx + pat.Length;
-            count++;
+            int count = 0;
+            int searchStart = 0;
+            int idx;
+            while (count < limit && (idx = str.Slice(searchStart).IndexOf(pat)) >= 0)
+            {
+                sb.Append(str.Slice(searchStart, idx));
+                sb.Append(rep);
+                searchStart += idx + pat.Length;
+                count++;
+            }
+
+            sb.Append(str.Slice(searchStart));
+
+            return JsonataHelpers.StringFromUnescapedUtf8(sb.AsSpan(), workspace);
         }
-
-        sb.Append(str, searchStart, str.Length - searchStart);
-
-        return JsonataHelpers.StringFromString(sb.ToString(), workspace);
+        finally
+        {
+            sb.Dispose();
+        }
     }
 
     /// <summary>
@@ -3076,6 +3251,39 @@ public static class JsonataCodeGenHelpers
         for (int cpCount = 0; charIdx < str.Length && cpCount < codePointIndex; cpCount++)
         {
             if (char.IsHighSurrogate(str[charIdx]) && charIdx + 1 < str.Length && char.IsLowSurrogate(str[charIdx + 1]))
+            {
+                charIdx += 2;
+            }
+            else
+            {
+                charIdx++;
+            }
+        }
+
+        return charIdx;
+    }
+
+    private static int CountCodePoints(ReadOnlySpan<char> span)
+    {
+        int count = 0;
+        for (int i = 0; i < span.Length; i++)
+        {
+            count++;
+            if (char.IsHighSurrogate(span[i]) && i + 1 < span.Length && char.IsLowSurrogate(span[i + 1]))
+            {
+                i++;
+            }
+        }
+
+        return count;
+    }
+
+    private static int CodePointToCharIndex(ReadOnlySpan<char> span, int codePointIndex)
+    {
+        int charIdx = 0;
+        for (int cpCount = 0; charIdx < span.Length && cpCount < codePointIndex; cpCount++)
+        {
+            if (char.IsHighSurrogate(span[charIdx]) && charIdx + 1 < span.Length && char.IsLowSurrogate(span[charIdx + 1]))
             {
                 charIdx += 2;
             }
