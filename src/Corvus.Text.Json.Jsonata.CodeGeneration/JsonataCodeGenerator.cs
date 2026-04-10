@@ -1383,13 +1383,37 @@ public static class JsonataCodeGenerator
             StringBuilder sb, JsonataNode step, string currentVar, string indent, string wsVar,
             bool followedByConsArray = false)
         {
-            int lambdaIdx = _lambdaCounter++;
-            string elParam = $"el_{lambdaIdx}";
-            string wsParam = $"ws_{lambdaIdx}";
-            string innerIndent = indent + "    ";
-            StringBuilder lambdaBody = new();
+            // Fusion: if the step body is pure arithmetic, use MapOverElementsDouble
+            // to avoid per-element DoubleToElement/FixedJsonValueDocument overhead.
+            // The doubles are written directly into the array builder via AddItem(double).
+            if (!followedByConsArray && step is not ArrayConstructorNode
+                && GetArithmeticBody(step) is BinaryNode arithBody
+                && !IsConstantNumericExpression(arithBody))
+            {
+                int lambdaIdx = _lambdaCounter++;
+                string elParam = $"el_{lambdaIdx}";
+                string wsParam = $"ws_{lambdaIdx}";
+                string innerIndent = indent + "    ";
+                StringBuilder lambdaBody = new();
 
-            string bodyResult = EmitExpression(lambdaBody, step, innerIndent, elParam, wsParam);
+                string doubleResult = EmitArithmeticAsDouble(lambdaBody, arithBody, innerIndent, elParam, wsParam);
+
+                string v = NextVar();
+                L(sb, indent, $"var {v} = {H}.MapOverElementsDouble({currentVar}, {Static}(JsonElement {elParam}, JsonWorkspace {wsParam}) =>");
+                L(sb, indent, "{");
+                sb.Append(lambdaBody);
+                L(sb, innerIndent, $"return {doubleResult};");
+                L(sb, indent, $"}}, {wsVar});");
+                return v;
+            }
+
+            int lambdaIdx2 = _lambdaCounter++;
+            string elParam2 = $"el_{lambdaIdx2}";
+            string wsParam2 = $"ws_{lambdaIdx2}";
+            string innerIndent2 = indent + "    ";
+            StringBuilder lambdaBody2 = new();
+
+            string bodyResult = EmitExpression(lambdaBody2, step, innerIndent2, elParam2, wsParam2);
 
             // Array constructor steps (e.g. .[expr,expr]) use NoFlatten to preserve array structure.
             // When followed by [] (either as a separate ConsArray step or absorbed as KeepArray on the node),
@@ -1399,13 +1423,13 @@ public static class JsonataCodeGenerator
                 ? (needsCollectionSemantics ? "ApplyStepCollectingResults" : "ApplyStepOverElementsNoFlatten")
                 : "ApplyStepOverElements";
 
-            string v = NextVar();
-            L(sb, indent, $"var {v} = {H}.{helperName}({currentVar}, {Static}(JsonElement {elParam}, JsonWorkspace {wsParam}) =>");
+            string v2 = NextVar();
+            L(sb, indent, $"var {v2} = {H}.{helperName}({currentVar}, {Static}(JsonElement {elParam2}, JsonWorkspace {wsParam2}) =>");
             L(sb, indent, "{");
-            sb.Append(lambdaBody);
-            L(sb, innerIndent, $"return {bodyResult};");
+            sb.Append(lambdaBody2);
+            L(sb, innerIndent2, $"return {bodyResult};");
             L(sb, indent, $"}}, {wsVar});");
-            return v;
+            return v2;
         }
 
         // ── Binary ───────────────────────────────────────────

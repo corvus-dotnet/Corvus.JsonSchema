@@ -1649,6 +1649,50 @@ public static class JsonataCodeGenHelpers
     }
 
     /// <summary>
+    /// Fused map-over-elements for computed steps that produce <see langword="double"/> results.
+    /// Writes doubles directly into the array builder via <c>AddItem(double)</c> (implicit
+    /// <see cref="JsonElement.Mutable.Source"/> conversion), avoiding per-element
+    /// <c>NumberFromDouble</c> / <c>FixedJsonValueDocument</c> overhead.
+    /// </summary>
+    /// <param name="data">The input (array or single value).</param>
+    /// <param name="step">A function that produces a raw <see langword="double"/> per element.
+    /// Returns <see cref="double.NaN"/> for undefined/non-numeric inputs.</param>
+    /// <param name="workspace">The workspace for intermediate allocations.</param>
+    /// <returns>The array of numbers, a single number, or <c>default</c> if undefined.</returns>
+    public static JsonElement MapOverElementsDouble(
+        in JsonElement data,
+        Func<JsonElement, JsonWorkspace, double> step,
+        JsonWorkspace workspace)
+    {
+        if (data.ValueKind == JsonValueKind.Array)
+        {
+            int count = 0;
+            var doc = JsonElement.CreateArrayBuilder(workspace, data.GetArrayLength());
+            JsonElement.Mutable root = doc.RootElement;
+
+            foreach (JsonElement item in data.EnumerateArray())
+            {
+                double result = step(item, workspace);
+                if (!double.IsNaN(result))
+                {
+                    root.AddItem(result);
+                    count++;
+                }
+            }
+
+            return count == 0 ? default : count == 1 ? root[0] : (JsonElement)root;
+        }
+
+        if (!data.IsUndefined())
+        {
+            double result = step(data, workspace);
+            return double.IsNaN(result) ? default : JsonataHelpers.NumberFromDouble(result, workspace);
+        }
+
+        return default;
+    }
+
+    /// <summary>
     /// JSONata <c>$count</c> function — counts elements in an array.
     /// </summary>
     public static JsonElement Count(in JsonElement input, JsonWorkspace workspace)
