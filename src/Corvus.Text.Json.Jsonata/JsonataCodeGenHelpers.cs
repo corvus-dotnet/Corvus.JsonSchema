@@ -1538,9 +1538,10 @@ public static class JsonataCodeGenHelpers
             throw new JsonataException("T0410", "Argument 2 of function $contains must be a string or regex", 0);
         }
 
-        string str = input.GetString()!;
-        string searchStr = search.GetString()!;
-        return BooleanElement(str.Contains(searchStr));
+        // Use UTF-8 span comparison to avoid two string allocations
+        using UnescapedUtf8JsonString utf8Input = input.GetUtf8String();
+        using UnescapedUtf8JsonString utf8Search = search.GetUtf8String();
+        return BooleanElement(utf8Input.Span.IndexOf(utf8Search.Span) >= 0);
     }
 
     /// <summary>
@@ -2486,15 +2487,22 @@ public static class JsonataCodeGenHelpers
             limit = (int)n;
         }
 
+        // Use StringBuilder to avoid O(n²) allocations from repeated Substring + concat
+        var sb = new System.Text.StringBuilder(str.Length);
         int count = 0;
+        int searchStart = 0;
         int idx;
-        while (count < limit && (idx = str.IndexOf(pat, StringComparison.Ordinal)) >= 0)
+        while (count < limit && (idx = str.IndexOf(pat, searchStart, StringComparison.Ordinal)) >= 0)
         {
-            str = str.Substring(0, idx) + rep + str.Substring(idx + pat.Length);
+            sb.Append(str, searchStart, idx - searchStart);
+            sb.Append(rep);
+            searchStart = idx + pat.Length;
             count++;
         }
 
-        return JsonataHelpers.StringFromString(str, workspace);
+        sb.Append(str, searchStart, str.Length - searchStart);
+
+        return JsonataHelpers.StringFromString(sb.ToString(), workspace);
     }
 
     /// <summary>
@@ -2716,7 +2724,7 @@ public static class JsonataCodeGenHelpers
             return a.GetDouble().CompareTo(b.GetDouble());
         }
 
-        return StringComparer.Ordinal.Compare(a.GetString(), b.GetString());
+        return FunctionalCompiler.Utf8CompareOrdinal(a, b);
     }
 
     /// <summary>
@@ -2819,9 +2827,8 @@ public static class JsonataCodeGenHelpers
                         return cmp != 0 ? cmp : a.CompareTo(b);
                     }
 
-                    int strCmp = StringComparer.Ordinal.Compare(
-                        CoerceElementToString(aEl),
-                        CoerceElementToString(bEl));
+                    // Both are strings (objects/arrays already excluded) — use zero-allocation UTF-8 comparison
+                    int strCmp = FunctionalCompiler.Utf8CompareOrdinal(aEl, bEl);
                     return strCmp != 0 ? strCmp : a.CompareTo(b);
                 }));
 
@@ -2843,22 +2850,6 @@ public static class JsonataCodeGenHelpers
         {
             ArrayPool<JsonElement>.Shared.Return(elements);
         }
-    }
-
-    /// <summary>
-    /// Coerces a JSON element to its string representation for sort comparisons.
-    /// </summary>
-    internal static string CoerceElementToString(in JsonElement element)
-    {
-        return element.ValueKind switch
-        {
-            JsonValueKind.String => element.GetString() ?? string.Empty,
-            JsonValueKind.Number => element.GetDouble().ToString(System.Globalization.CultureInfo.InvariantCulture),
-            JsonValueKind.True => "true",
-            JsonValueKind.False => "false",
-            JsonValueKind.Null => "null",
-            _ => element.GetRawText(),
-        };
     }
 
     // ===== Phase 1g: Date/Time Formatting =====
@@ -3971,7 +3962,7 @@ public static class JsonataCodeGenHelpers
         // String comparison
         if (left.ValueKind == JsonValueKind.String && right.ValueKind == JsonValueKind.String)
         {
-            int result = string.CompareOrdinal(left.GetString(), right.GetString());
+            int result = FunctionalCompiler.Utf8CompareOrdinal(left, right);
             return BooleanElement(predicate(result));
         }
 
@@ -3990,71 +3981,8 @@ public static class JsonataCodeGenHelpers
 
     private static bool ElementEquals(in JsonElement left, in JsonElement right)
     {
-        // Different types are never equal in JSONata (no cross-type coercion)
-        if (left.ValueKind != right.ValueKind)
-        {
-            return false;
-        }
-
-        return left.ValueKind switch
-        {
-            JsonValueKind.Number => left.GetDouble() == right.GetDouble(),
-            JsonValueKind.String => string.Equals(left.GetString(), right.GetString(), StringComparison.Ordinal),
-            JsonValueKind.True => true,
-            JsonValueKind.False => true,
-            JsonValueKind.Null => true,
-            JsonValueKind.Array => ArrayDeepEquals(left, right),
-            JsonValueKind.Object => ObjectDeepEquals(left, right),
-            _ => false,
-        };
-    }
-
-    private static bool ArrayDeepEquals(in JsonElement a, in JsonElement b)
-    {
-        int lenA = a.GetArrayLength();
-        int lenB = b.GetArrayLength();
-        if (lenA != lenB)
-        {
-            return false;
-        }
-
-        var enumA = a.EnumerateArray().GetEnumerator();
-        var enumB = b.EnumerateArray().GetEnumerator();
-        while (enumA.MoveNext() && enumB.MoveNext())
-        {
-            if (!ElementEquals(enumA.Current, enumB.Current))
-            {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    private static bool ObjectDeepEquals(in JsonElement a, in JsonElement b)
-    {
-        int countA = a.GetPropertyCount();
-        int countB = b.GetPropertyCount();
-
-        if (countA != countB)
-        {
-            return false;
-        }
-
-        foreach (var prop in a.EnumerateObject())
-        {
-            if (!b.TryGetProperty(prop.Name, out JsonElement bVal))
-            {
-                return false;
-            }
-
-            if (!ElementEquals(prop.Value, bVal))
-            {
-                return false;
-            }
-        }
-
-        return true;
+        // Delegate to the runtime's zero-allocation equality (uses raw UTF-8 byte comparison)
+        return FunctionalCompiler.JsonElementEquals(left, right);
     }
 
     private static string CoerceToStringValue(in JsonElement value)

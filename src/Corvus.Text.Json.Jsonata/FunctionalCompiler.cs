@@ -7657,7 +7657,7 @@ internal static class FunctionalCompiler
     /// <summary>
     /// Compares two string JSON elements by ordinal byte order, without allocating .NET strings.
     /// </summary>
-    private static int Utf8CompareOrdinal(JsonElement a, JsonElement b)
+    internal static int Utf8CompareOrdinal(JsonElement a, JsonElement b)
     {
         using RawUtf8JsonString rawA = JsonMarshal.GetRawUtf8Value(a);
         using RawUtf8JsonString rawB = JsonMarshal.GetRawUtf8Value(b);
