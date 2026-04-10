@@ -7,6 +7,7 @@ using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
+using Corvus.Runtime.InteropServices;
 using Corvus.Text.Json.Internal;
 
 namespace Corvus.Text.Json.Jsonata;
@@ -734,12 +735,17 @@ public static class JsonataCodeGenHelpers
     /// </summary>
     public static JsonElement StringConcat(in JsonElement left, in JsonElement right, JsonWorkspace workspace)
     {
-        // In JSONata, the & operator coerces both operands to strings and concatenates.
-        // undefined → ""
-        string leftStr = CoerceToStringValue(left);
-        string rightStr = CoerceToStringValue(right);
-        string result = string.Concat(leftStr, rightStr);
-        return JsonataHelpers.StringFromString(result, workspace);
+        Utf8ValueStringBuilder sb = new(stackalloc byte[256]);
+        try
+        {
+            AppendCoercedValue(left, ref sb);
+            AppendCoercedValue(right, ref sb);
+            return JsonataHelpers.StringFromUnescapedUtf8(sb.AsSpan(), workspace);
+        }
+        finally
+        {
+            sb.Dispose();
+        }
     }
 
     /// <summary>
@@ -752,8 +758,21 @@ public static class JsonataCodeGenHelpers
             return default;
         }
 
-        string str = CoerceToStringValue(value);
-        return JsonataHelpers.StringFromString(str, workspace);
+        if (value.ValueKind == JsonValueKind.String)
+        {
+            return value;
+        }
+
+        Utf8ValueStringBuilder sb = new(stackalloc byte[256]);
+        try
+        {
+            AppendCoercedValue(value, ref sb);
+            return JsonataHelpers.StringFromUnescapedUtf8(sb.AsSpan(), workspace);
+        }
+        finally
+        {
+            sb.Dispose();
+        }
     }
 
     // ===== Truthiness =====
@@ -948,10 +967,16 @@ public static class JsonataCodeGenHelpers
             return default;
         }
 
-        // Null produces the string "null" (distinct from CoerceToStringValue which returns "" for concat)
+        // Strings pass through unchanged
+        if (value.ValueKind == JsonValueKind.String)
+        {
+            return value;
+        }
+
+        // Null produces the string "null" (distinct from AppendCoercedValue which appends nothing for concat)
         if (value.ValueKind == JsonValueKind.Null)
         {
-            return JsonataHelpers.StringFromString("null", workspace);
+            return JsonataHelpers.StringFromUnescapedUtf8("null"u8, workspace);
         }
 
         // Non-finite numbers cannot be stringified
@@ -962,6 +987,17 @@ public static class JsonataCodeGenHelpers
             {
                 throw new JsonataException("D3001", "Attempting to invoke string function on Infinity or NaN", 0);
             }
+
+            Utf8ValueStringBuilder sb = new(stackalloc byte[64]);
+            try
+            {
+                AppendFormattedNumber(value, ref sb);
+                return JsonataHelpers.StringFromUnescapedUtf8(sb.AsSpan(), workspace);
+            }
+            finally
+            {
+                sb.Dispose();
+            }
         }
 
         // For arrays and objects, produce JSON representation
@@ -971,9 +1007,9 @@ public static class JsonataCodeGenHelpers
             return JsonataHelpers.StringFromString(json, workspace);
         }
 
-        // For scalars (including null), use the same CoerceElementToString logic as the runtime
-        string result = CoerceToStringValue(value);
-        return JsonataHelpers.StringFromString(result, workspace);
+        // true/false
+        ReadOnlySpan<byte> literal = value.ValueKind == JsonValueKind.True ? "true"u8 : "false"u8;
+        return JsonataHelpers.StringFromUnescapedUtf8(literal, workspace);
     }
 
     // ===== Phase 1a: Simple Built-in Functions =====
@@ -1780,58 +1816,125 @@ public static class JsonataCodeGenHelpers
             return default;
         }
 
-        string str = FunctionalCompiler.CoerceElementToString(input);
-
         if (!FunctionalCompiler.TryCoerceToNumber(widthElement, out double widthNum))
         {
             return default;
         }
 
         int width = (int)widthNum;
-        string padStr = " ";
-        if (padCharElement.ValueKind != JsonValueKind.Undefined)
+
+        // Get input as UTF-16 span — use GetUtf16String for strings, CoerceElementToString for other types
+        string? coercedStr = null;
+        using UnescapedUtf16JsonString utf16Input = input.ValueKind == JsonValueKind.String
+            ? input.GetUtf16String()
+            : default;
+        ReadOnlySpan<char> inputSpan = input.ValueKind == JsonValueKind.String
+            ? utf16Input.Span
+            : (coercedStr = FunctionalCompiler.CoerceElementToString(input)).AsSpan();
+
+        // Get pad char as UTF-16 span
+        string? coercedPad = null;
+        using UnescapedUtf16JsonString utf16Pad = padCharElement.ValueKind == JsonValueKind.String
+            ? padCharElement.GetUtf16String()
+            : default;
+        ReadOnlySpan<char> padSpan;
+        if (padCharElement.ValueKind == JsonValueKind.Undefined)
         {
-            string padVal = FunctionalCompiler.CoerceElementToString(padCharElement);
-            if (padVal.Length > 0)
+            padSpan = " ".AsSpan();
+        }
+        else if (padCharElement.ValueKind == JsonValueKind.String)
+        {
+            padSpan = utf16Pad.Span;
+            if (padSpan.Length == 0)
             {
-                padStr = padVal;
+                padSpan = " ".AsSpan();
             }
         }
+        else
+        {
+            coercedPad = FunctionalCompiler.CoerceElementToString(padCharElement);
+            padSpan = coercedPad.Length > 0 ? coercedPad.AsSpan() : " ".AsSpan();
+        }
 
-        int cpLen = CountCodePoints(str);
+        int cpLen = CountCodePoints(inputSpan);
         int absWidth = Math.Abs(width);
         int padNeeded = absWidth - cpLen;
         if (padNeeded <= 0)
         {
-            return JsonataHelpers.StringFromString(str, workspace);
+            return JsonataHelpers.StringFromChars(inputSpan, workspace);
         }
 
         // Build code-point array for the pad string so cycling works correctly with surrogates.
-        int padCpCount = CountCodePoints(padStr);
+        int padCpCount = CountCodePoints(padSpan);
         int[] padCodePoints = new int[padCpCount];
         int cpIdx = 0;
-        for (int ci = 0; ci < padStr.Length; ci++)
+        for (int ci = 0; ci < padSpan.Length; ci++)
         {
-            if (char.IsHighSurrogate(padStr[ci]) && ci + 1 < padStr.Length && char.IsLowSurrogate(padStr[ci + 1]))
+            if (char.IsHighSurrogate(padSpan[ci]) && ci + 1 < padSpan.Length && char.IsLowSurrogate(padSpan[ci + 1]))
             {
-                padCodePoints[cpIdx++] = char.ConvertToUtf32(padStr[ci], padStr[ci + 1]);
+                padCodePoints[cpIdx++] = char.ConvertToUtf32(padSpan[ci], padSpan[ci + 1]);
                 ci++;
             }
             else
             {
-                padCodePoints[cpIdx++] = padStr[ci];
+                padCodePoints[cpIdx++] = padSpan[ci];
             }
         }
 
-        var sbPad = new StringBuilder();
-        for (int i = 0; i < padNeeded; i++)
+        // Build result in a rented char buffer: padding can be at most padNeeded * 2 chars (surrogates)
+        int maxPadChars = padNeeded * 2;
+        int maxResultChars = inputSpan.Length + maxPadChars;
+        char[]? rentedChars = null;
+        Span<char> dest = maxResultChars <= 128
+            ? stackalloc char[128]
+            : (rentedChars = ArrayPool<char>.Shared.Rent(maxResultChars));
+        try
         {
-            sbPad.Append(char.ConvertFromUtf32(padCodePoints[i % padCpCount]));
+            int written = 0;
+            if (width < 0)
+            {
+                // Left-pad: padding first
+                for (int i = 0; i < padNeeded; i++)
+                {
+                    written += WriteCodePoint(padCodePoints[i % padCpCount], dest.Slice(written));
+                }
+
+                inputSpan.CopyTo(dest.Slice(written));
+                written += inputSpan.Length;
+            }
+            else
+            {
+                // Right-pad: string first
+                inputSpan.CopyTo(dest);
+                written = inputSpan.Length;
+                for (int i = 0; i < padNeeded; i++)
+                {
+                    written += WriteCodePoint(padCodePoints[i % padCpCount], dest.Slice(written));
+                }
+            }
+
+            return JsonataHelpers.StringFromChars(dest.Slice(0, written), workspace);
+        }
+        finally
+        {
+            if (rentedChars is not null)
+            {
+                ArrayPool<char>.Shared.Return(rentedChars);
+            }
+        }
+    }
+
+    private static int WriteCodePoint(int codePoint, Span<char> dest)
+    {
+        if (codePoint <= 0xFFFF)
+        {
+            dest[0] = (char)codePoint;
+            return 1;
         }
 
-        string padding = sbPad.ToString();
-        string result = width > 0 ? str + padding : padding + str;
-        return JsonataHelpers.StringFromString(result, workspace);
+        dest[0] = (char)((codePoint - 0x10000) / 0x400 + 0xD800);
+        dest[1] = (char)((codePoint - 0x10000) % 0x400 + 0xDC00);
+        return 2;
     }
 
     // ===== Phase 1d: Array/Object Operations =====
@@ -4193,22 +4296,81 @@ public static class JsonataCodeGenHelpers
         return FunctionalCompiler.JsonElementEquals(left, right);
     }
 
-    private static string CoerceToStringValue(in JsonElement value)
+    /// <summary>
+    /// Writes the coerced string representation of a JSON element directly to a UTF-8 builder.
+    /// For the &amp; concat operator: undefined and null both produce empty (append nothing).
+    /// </summary>
+    private static void AppendCoercedValue(in JsonElement value, ref Utf8ValueStringBuilder sb)
     {
         if (value.IsNullOrUndefined())
         {
-            return string.Empty;
+            return;
         }
 
-        return value.ValueKind switch
+        switch (value.ValueKind)
         {
-            JsonValueKind.String => value.GetString() ?? string.Empty,
-            JsonValueKind.Number => FunctionalCompiler.FormatNumberLikeJavaScript(value),
-            JsonValueKind.True => "true",
-            JsonValueKind.False => "false",
-            JsonValueKind.Null => "null",
-            _ => value.GetRawText(),
-        };
+            case JsonValueKind.String:
+                {
+                    using UnescapedUtf8JsonString utf8 = value.GetUtf8String();
+                    sb.Append(utf8.Span);
+                    break;
+                }
+
+            case JsonValueKind.Number:
+                AppendFormattedNumber(value, ref sb);
+                break;
+
+            case JsonValueKind.True:
+                sb.Append("true"u8);
+                break;
+
+            case JsonValueKind.False:
+                sb.Append("false"u8);
+                break;
+
+            default:
+                // Object/Array — write raw UTF-8 JSON representation directly
+                {
+                    using RawUtf8JsonString rawUtf8 = JsonMarshal.GetRawUtf8Value(value);
+                    sb.Append(rawUtf8.Span);
+                    break;
+                }
+        }
+    }
+
+    /// <summary>
+    /// Appends a number formatted like JavaScript to a UTF-8 builder.
+    /// Integer values with plain literal representation use raw UTF-8 (zero alloc).
+    /// Non-integer values use G15 formatting (one string alloc for format, written as ASCII bytes).
+    /// </summary>
+    private static void AppendFormattedNumber(in JsonElement element, ref Utf8ValueStringBuilder sb)
+    {
+        double value = element.GetDouble();
+        if (double.IsNaN(value) || double.IsInfinity(value))
+        {
+            sb.Append("null"u8);
+            return;
+        }
+
+        // Integer values: use raw UTF-8 bytes directly (zero alloc)
+        if (value == Math.Floor(value))
+        {
+            using RawUtf8JsonString rawUtf8 = JsonMarshal.GetRawUtf8Value(element);
+            ReadOnlySpan<byte> raw = rawUtf8.Span;
+            if (raw.IndexOf((byte)'.') < 0 && raw.IndexOf((byte)'e') < 0 && raw.IndexOf((byte)'E') < 0)
+            {
+                sb.Append(raw);
+                return;
+            }
+        }
+
+        // Non-integer: format via G15 then write as ASCII bytes
+        string formatted = FunctionalCompiler.FormatNumberLikeJavaScript(value);
+        Span<byte> dest = sb.AppendSpan(formatted.Length);
+        for (int i = 0; i < formatted.Length; i++)
+        {
+            dest[i] = (byte)formatted[i];
+        }
     }
 
     /// <summary>
