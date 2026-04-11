@@ -66,6 +66,80 @@ public class CodeGenEdgeCaseTests : IClassFixture<CodeGenConformanceFixture>
     [InlineData("-5", "-5")]
     // Modulo
     [InlineData("10 % 3", "1")]
+    // Multi-level variable shadowing restoration
+    [InlineData("($x := 1; ($x := 2; $x) + $x)", "3")]
+    // Nested $reduce capturing outer lambda parameter
+    [InlineData("$reduce([1,2,3], function($prev, $curr) { $prev + $curr * 2 })", "11")]
+    // $single with exactly one match
+    [InlineData("$single([1,2,3], function($v) { $v = 2 })", "2")]
+    // Triple-nested HOF with different parameter names
+    [InlineData("$map([1], function($a) { $map([2], function($b) { $a + $b }) })", "[[3]]")]
+    // Lambda in conditional — then branch
+    [InlineData("true ? $map([1,2], function($v) { $v * 2 }) : [0]", "[2,4]")]
+    // Lambda in conditional — else branch
+    [InlineData("false ? [0] : $map([1,2], function($v) { $v * 3 })", "[3,6]")]
+    // Negative array index — last element
+    [InlineData("[10,20,30][-1]", "30")]
+    // Negative array index — second to last
+    [InlineData("[10,20,30][-2]", "20")]
+    // Negative index out of range — returns undefined (tested separately)
+    // Object construction with literal keys
+    [InlineData("""{"a": 1, "b": 2}""", """{"a":1,"b":2}""")]
+    // Object construction with computed values
+    [InlineData("""{"sum": 1 + 2, "prod": 3 * 4}""", """{"sum":3,"prod":12}""")]
+    // $sort without custom comparator — natural order
+    [InlineData("$sort([3,1,4,1,5])", "[1,1,3,4,5]")]
+    // $reverse
+    [InlineData("$reverse([1,2,3])", "[3,2,1]")]
+    // $join
+    [InlineData("""$join(["a","b","c"], "-")""", "\"a-b-c\"")]
+    // $string on number
+    [InlineData("$string(42)", "\"42\"")]
+    // $number from string
+    [InlineData("""$number("3.14")""", "3.14")]
+    // $floor/$ceil/$round
+    [InlineData("$floor(3.7)", "3")]
+    [InlineData("$ceil(3.2)", "4")]
+    [InlineData("$round(3.456, 2)", "3.46")]
+    // $abs
+    [InlineData("$abs(-5)", "5")]
+    // $power/$sqrt
+    [InlineData("$power(2, 10)", "1024")]
+    [InlineData("$sqrt(144)", "12")]
+    // $substring
+    [InlineData("""$substring("hello world", 6)""", "\"world\"")]
+    [InlineData("""$substring("hello world", 0, 5)""", "\"hello\"")]
+    // $uppercase/$lowercase
+    [InlineData("""$uppercase("hello")""", "\"HELLO\"")]
+    [InlineData("""$lowercase("HELLO")""", "\"hello\"")]
+    // $trim
+    [InlineData("""$trim("  hello  ")""", "\"hello\"")]
+    // $contains
+    [InlineData("""$contains("hello world", "world")""", "true")]
+    [InlineData("""$contains("hello world", "xyz")""", "false")]
+    // $split
+    [InlineData("""$split("a,b,c", ",")""", """["a","b","c"]""")]
+    // $replace (string pattern, not regex)
+    [InlineData("""$replace("hello", "l", "r")""", "\"herro\"")]
+    // $boolean
+    [InlineData("$boolean(0)", "false")]
+    [InlineData("$boolean(1)", "true")]
+    [InlineData("""$boolean("")""", "false")]
+    [InlineData("""$boolean("x")""", "true")]
+    // $not
+    [InlineData("$not(true)", "false")]
+    [InlineData("$not(false)", "true")]
+    // $append
+    [InlineData("$append([1,2], [3,4])", "[1,2,3,4]")]
+    // $distinct
+    [InlineData("$distinct([1,2,2,3,3,3])", "[1,2,3]")]
+    // $count
+    [InlineData("$count([1,2,3,4,5])", "5")]
+    // $sum/$max/$min/$average
+    [InlineData("$sum([1,2,3])", "6")]
+    [InlineData("$max([1,2,3])", "3")]
+    [InlineData("$min([1,2,3])", "1")]
+    [InlineData("$average([2,4,6])", "4")]
     public void EvaluateSelfContainedExpression(string expression, string expectedJson, string inputJson = "null")
     {
         this.CompileAndAssert(expression, inputJson, expectedJson);
@@ -99,6 +173,30 @@ public class CodeGenEdgeCaseTests : IClassFixture<CodeGenConformanceFixture>
     // $type
     [InlineData("$type(a)", """{"a":"hello"}""", "\"string\"")]
     [InlineData("$type(a)", """{"a":42}""", "\"number\"")]
+    // Negative index on data property
+    [InlineData("items[-1]", """{"items":[10,20,30]}""", "30")]
+    // Wildcard — enumerate all property values
+    [InlineData("$sum(*)", """{"a":1,"b":2,"c":3}""", "6")]
+    // Wildcard with property access
+    [InlineData("*.name", """{"x":{"name":"a"},"y":{"name":"b"}}""", """["a","b"]""")]
+    // Nested path with negative index
+    [InlineData("items[-1].name", """{"items":[{"name":"first"},{"name":"last"}]}""", "\"last\"")]
+    // $single on array returning undefined (multi-match) — tested in undefined section
+    // $flatten
+    [InlineData("$flatten([[1,2],[3,[4,5]]])", "null", "[1,2,3,4,5]")]
+    // $merge
+    [InlineData("""$merge([{"a":1},{"b":2}])""", "null", """{"a":1,"b":2}""")]
+    // $lookup
+    [InlineData("""$lookup({"a":1,"b":2}, "b")""", "null", "2")]
+    // $values
+    [InlineData("$values(x)", """{"x":{"a":1,"b":2}}""", "[1,2]")]
+    // Autoboxing: scalar with index 0
+    [InlineData("a[0]", """{"a":42}""", "42")]
+    // $length on string
+    [InlineData("""$length("hello")""", "null", "5")]
+    // $substringBefore/$substringAfter
+    [InlineData("""$substringBefore("hello world", " ")""", "null", "\"hello\"")]
+    [InlineData("""$substringAfter("hello world", " ")""", "null", "\"world\"")]
     public void EvaluateExpressionWithData(string expression, string inputJson, string expectedJson)
     {
         this.CompileAndAssert(expression, inputJson, expectedJson);
@@ -131,6 +229,8 @@ public class CodeGenEdgeCaseTests : IClassFixture<CodeGenConformanceFixture>
     [InlineData("$unknown", "null")]
     // Undefined from filter that matches nothing
     [InlineData("items[val > 100].name", """{"items":[{"val":1,"name":"a"}]}""")]
+    // Negative index out of range returns undefined
+    [InlineData("[1,2,3][-10]", "null")]
     public void EvaluateExpressionReturnsUndefined(string expression, string inputJson)
     {
         CompiledExpression compiled = this.fixture.GetOrCompile(expression);
@@ -142,6 +242,80 @@ public class CodeGenEdgeCaseTests : IClassFixture<CodeGenConformanceFixture>
 
         JsonElement result = Invoke(compiled.Method, inputDoc.RootElement, workspace);
         Assert.Equal(JsonValueKind.Undefined, result.ValueKind);
+    }
+
+    [Theory]
+    [Trait("category", "codegen-edge")]
+    // $single on empty array throws D3139
+    [InlineData("$single([])", "null", "D3139")]
+    // $single with multiple matches throws D3138
+    [InlineData("$single([1,2,3], function($v) { $v > 0 })", "null", "D3138")]
+    public void EvaluateExpressionThrowsJsonataException(string expression, string inputJson, string expectedErrorCode)
+    {
+        CompiledExpression compiled = this.fixture.GetOrCompile(expression);
+        Assert.NotNull(compiled.Method);
+        Assert.Null(compiled.Error);
+
+        using var inputDoc = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes(inputJson));
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+
+        var ex = Assert.Throws<TargetInvocationException>(
+            () => Invoke(compiled.Method, inputDoc.RootElement, workspace));
+        var jex = Assert.IsType<JsonataException>(ex.InnerException);
+        Assert.Contains(expectedErrorCode, jex.Message);
+    }
+
+    [Fact]
+    [Trait("category", "codegen-edge")]
+    public void Generate_BlockVariableCapturedInHofLambda_LambdaIsNotStatic()
+    {
+        // Block-scoped variable ($x) captured inside a HOF lambda must make the
+        // lambda non-static; otherwise C# emits CS8820.
+        CompiledExpression compiled = this.fixture.GetOrCompile(
+            "($x := 5; $map([1,2,3], function($v) { $v + $x }))");
+
+        this.output.WriteLine($"Error: {compiled.Error}");
+        if (compiled.GeneratedCode is not null)
+        {
+            this.output.WriteLine($"Generated:\n{compiled.GeneratedCode}");
+        }
+
+        // The expression must compile without error (no CS8820)
+        Assert.Null(compiled.Error);
+        Assert.NotNull(compiled.Method);
+
+        // And must produce the correct result
+        using var inputDoc = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("null"));
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        JsonElement result = Invoke(compiled.Method, inputDoc.RootElement, workspace);
+        Assert.Equal("[6,7,8]", result.GetRawText());
+    }
+
+    [Fact]
+    [Trait("category", "codegen-edge")]
+    public void Generate_BlockVariableInFilterPredicate_Compiles()
+    {
+        // Block-scoped variable ($x) referenced inside a filter predicate lambda
+        // must not cause CS8820 if the filter stage uses {Static}.
+        CompiledExpression compiled = this.fixture.GetOrCompile(
+            """($threshold := 2; items[$threshold < val].name)""");
+
+        this.output.WriteLine($"Error: {compiled.Error}");
+        if (compiled.GeneratedCode is not null)
+        {
+            this.output.WriteLine($"Generated:\n{compiled.GeneratedCode}");
+        }
+
+        // Must compile without error
+        Assert.Null(compiled.Error);
+        Assert.NotNull(compiled.Method);
+
+        // And produce correct result
+        using var inputDoc = ParsedJsonDocument<JsonElement>.Parse(
+            Encoding.UTF8.GetBytes("""{"items":[{"val":1,"name":"a"},{"val":3,"name":"b"},{"val":5,"name":"c"}]}"""));
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        JsonElement result = Invoke(compiled.Method, inputDoc.RootElement, workspace);
+        Assert.Equal("""["b","c"]""", result.GetRawText());
     }
 
     private void CompileAndAssert(string expression, string inputJson, string expectedJson)

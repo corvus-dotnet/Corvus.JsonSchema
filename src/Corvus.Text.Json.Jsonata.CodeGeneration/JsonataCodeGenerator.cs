@@ -322,9 +322,10 @@ public static class JsonataCodeGenerator
 
         /// <summary>
         /// Returns <c>"static "</c> when lambdas can be static, or <c>""</c> when
-        /// they need to capture <c>__rootData</c> or <c>__bindings</c>.
+        /// they need to capture <c>__rootData</c>, <c>__bindings</c>, or local
+        /// block-scoped variables.
         /// </summary>
-        private string Static => _usesRootRef || _usesBindings ? "" : "static ";
+        private string Static => _usesRootRef || _usesBindings || _variables.Count > 0 ? "" : "static ";
 
         /// <summary>Gets the static field declarations collected during emission.</summary>
         internal IReadOnlyList<string> StaticFieldDeclarations => _staticFieldDeclarations;
@@ -4689,6 +4690,7 @@ public static class JsonataCodeGenerator
             string? savedB = StashVariable(lambda.Parameters[1], bParam);
             bool prevRootRef = _usesRootRef;
             _usesRootRef = true;
+
             string bodyResult = EmitExpression(lambdaBody, lambda.Body, ind5, aParam, wsVar);
             bool bodyUsedRoot = bodyResult.Contains("__rootData")
                 || lambdaBody.ToString().Contains("__rootData");
@@ -4834,7 +4836,9 @@ public static class JsonataCodeGenerator
                 bool prevRootRef = _usesRootRef;
                 _usesRootRef = true;
                 string bodyResult = EmitExpression(lambdaBody, lambda.Body, innerIndent, elParam, wsParam);
-                _usesRootRef = prevRootRef;
+                bool bodyUsedRoot = bodyResult.Contains("__rootData")
+                    || lambdaBody.ToString().Contains("__rootData");
+                _usesRootRef = prevRootRef || bodyUsedRoot;
 
                 if (hasArray)
                 {
