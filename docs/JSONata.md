@@ -81,7 +81,7 @@ JsonElement result = evaluator.Evaluate(
     workspace);
 
 // result is a string element: "Fred Smith"
-Console.WriteLine(result.GetRawText()); // "Fred Smith"
+Console.WriteLine(result); // "Fred Smith"
 ```
 
 The evaluator compiles the expression into a delegate tree on first use and caches it. Subsequent evaluations of the same expression skip compilation entirely.
