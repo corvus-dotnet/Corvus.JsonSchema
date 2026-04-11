@@ -4478,7 +4478,12 @@ public static class JsonataCodeGenerator
                 : null;
             string bodyResult = boolResult ?? EmitExpression(lambdaBody, lambda.Body, innerIndent, elParam, wsParam);
 
-            _usesRootRef = prevRootRef;
+            // Restore, but keep true if the body actually emitted a $$ reference.
+            // Check both the body statements and the result variable — a simple $$
+            // returns "__rootData" directly without emitting anything into lambdaBody.
+            bool bodyUsedRoot = bodyResult.Contains("__rootData")
+                || lambdaBody.ToString().Contains("__rootData");
+            _usesRootRef = prevRootRef || bodyUsedRoot;
 
             if (hasIndex)
             {
@@ -4553,7 +4558,9 @@ public static class JsonataCodeGenerator
             bool prevRootRef = _usesRootRef;
             _usesRootRef = true;
             string bodyResult = EmitExpression(lambdaBody, lambda.Body, innerIndent, currParam, wsParam);
-            _usesRootRef = prevRootRef;
+            bool bodyUsedRoot = bodyResult.Contains("__rootData")
+                || lambdaBody.ToString().Contains("__rootData");
+            _usesRootRef = prevRootRef || bodyUsedRoot;
             RestoreVariable(lambda.Parameters[1], savedCurr);
             RestoreVariable(lambda.Parameters[0], savedPrev);
 
@@ -4683,7 +4690,9 @@ public static class JsonataCodeGenerator
             bool prevRootRef = _usesRootRef;
             _usesRootRef = true;
             string bodyResult = EmitExpression(lambdaBody, lambda.Body, ind5, aParam, wsVar);
-            _usesRootRef = prevRootRef;
+            bool bodyUsedRoot = bodyResult.Contains("__rootData")
+                || lambdaBody.ToString().Contains("__rootData");
+            _usesRootRef = prevRootRef || bodyUsedRoot;
             RestoreVariable(lambda.Parameters[1], savedB);
             RestoreVariable(lambda.Parameters[0], savedA);
 
