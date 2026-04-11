@@ -414,7 +414,7 @@ The Corvus JSONata implementation is designed for high-throughput scenarios wher
 
 Measured on .NET 10.0 (13th Gen Intel Core i7-13800H) across 20 representative scenarios covering property navigation, arithmetic, string operations, higher-order functions, predicate filtering, and object construction. Each benchmark compares three implementations: `Corvus` (interpreted), `CodeGen` (source-generated), and `Jsonata.Net.Native` (reference .NET implementation, v3.0.0).
 
-All Corvus benchmarks use caller-managed `JsonWorkspace` for zero-allocation evaluation. Jsonata.Net.Native uses pre-compiled `JsonataQuery` objects with pre-parsed `JToken` data. The "Alloc" columns show per-invocation GC allocation.
+All Runtime benchmarks use caller-managed `JsonWorkspace` for zero-allocation evaluation. Jsonata.Net.Native uses pre-compiled `JsonataQuery` objects with pre-parsed `JToken` data. The "Alloc" columns show per-invocation GC allocation.
 
 #### Employee transform (reference benchmark)
 
@@ -431,17 +431,17 @@ This benchmark replicates the [Jsonata.Net.Native benchmark scenario](https://gi
 
 | Method | Mean | Allocated |
 |--------|-----:|----------:|
-| Corvus (interpreted) | 1,180 ns | 960 B |
-| Corvus (code-gen) | 1,183 ns | 240 B |
+| Runtime (interpreted) | 1,180 ns | 960 B |
+| Runtime (code-gen) | 1,183 ns | 240 B |
 | Jsonata.Net.Native | 2,067 ns | 9,920 B |
 
-Corvus is **1.8× faster** with **90% less allocation** than the reference implementation. Code-gen reduces allocation to 240 B (98% reduction).
+The runtime evaluator is **1.8× faster** with **90% less allocation** than the reference implementation. Code-gen reduces allocation to 240 B (98% reduction).
 
 **Cold start** (fresh compile + evaluate):
 
 | Method | Mean | Allocated |
 |--------|-----:|----------:|
-| Corvus (interpreted) | 6,964 ns | 10,800 B |
+| Runtime (interpreted) | 6,964 ns | 10,800 B |
 | Jsonata.Net.Native | 6,703 ns | 19,264 B |
 
 Cold start is comparable in speed, but Corvus allocates 44% less memory.
@@ -450,17 +450,17 @@ Cold start is comparable in speed, but Corvus allocates 44% less memory.
 
 ##### Property navigation
 
-| Scenario | Expression | Corvus | CodeGen | Jsonata.Net.Native | Corvus Alloc | CodeGen Alloc | Native Alloc |
+| Scenario | Expression | Runtime | CodeGen | Jsonata.Net.Native | Runtime Alloc | CodeGen Alloc | Native Alloc |
 |----------|-----------|-------:|--------:|-------------------:|-------------:|--------------:|-------------:|
 | Deep path | `Account.Order.Product.Price` | 764 ns | 736 ns | 654 ns | 120 B | 120 B | 1,816 B |
 | Quoted property | `` Account.`Account Name` `` | 76 ns | 59 ns | 258 ns | 0 B | 0 B | 1,024 B |
 | Array index | `Account.Order[0].OrderID` | 103 ns | 94 ns | 370 ns | 0 B | 0 B | 1,408 B |
 
-Corvus is **3–4× faster** for simple property access and array indexing, with zero allocation. Deep path traversal through nested arrays is comparable in speed but uses **93% less memory**.
+The runtime evaluator is **3–4× faster** for simple property access and array indexing, with zero allocation. Deep path traversal through nested arrays is comparable in speed but uses **93% less memory**.
 
 ##### Arithmetic
 
-| Scenario | Expression | Corvus | CodeGen | Jsonata.Net.Native | Corvus Alloc | CodeGen Alloc | Native Alloc |
+| Scenario | Expression | Runtime | CodeGen | Jsonata.Net.Native | Runtime Alloc | CodeGen Alloc | Native Alloc |
 |----------|-----------|-------:|--------:|-------------------:|-------------:|--------------:|-------------:|
 | Sum-product | `$sum(Account.Order.Product.(Price * Quantity))` | 1,261 ns | 424 ns | 1,424 ns | 216 B | 0 B | 6,480 B |
 | Map arithmetic | `Account.Order.Product.(Price * Quantity)` | 1,149 ns | 817 ns | 1,174 ns | 184 B | 120 B | 5,536 B |
@@ -470,7 +470,7 @@ Code-gen achieves **3–4× speedup** over the reference implementation for arit
 
 ##### String operations
 
-| Scenario | Expression | Corvus | CodeGen | Jsonata.Net.Native | Corvus Alloc | CodeGen Alloc | Native Alloc |
+| Scenario | Expression | Runtime | CodeGen | Jsonata.Net.Native | Runtime Alloc | CodeGen Alloc | Native Alloc |
 |----------|-----------|-------:|--------:|-------------------:|-------------:|--------------:|-------------:|
 | Simple concat | `FirstName & ' ' & Surname` | 416 ns | 220 ns | 382 ns | 0 B | 0 B | 1,408 B |
 | Concat + number | `FirstName & ' ' & Surname & ', age ' & $string(Age)` | 1,139 ns | 428 ns | 1,069 ns | 32 B | 0 B | 3,136 B |
@@ -480,7 +480,7 @@ Code-gen is **2–5× faster** than the reference implementation for string oper
 
 ##### Higher-order functions
 
-| Scenario | Expression | Corvus | CodeGen | Jsonata.Net.Native | Corvus Alloc | CodeGen Alloc | Native Alloc |
+| Scenario | Expression | Runtime | CodeGen | Jsonata.Net.Native | Runtime Alloc | CodeGen Alloc | Native Alloc |
 |----------|-----------|-------:|--------:|-------------------:|-------------:|--------------:|-------------:|
 | $map | `$map(Account.Order.Product, function($v) { ... })` | 2,069 ns | 1,362 ns | 2,069 ns | 1,184 B | 120 B | 6,768 B |
 | $filter | `$filter(Account.Order.Product, function($v) { ... })` | 2,197 ns | 1,477 ns | 2,647 ns | 1,184 B | 120 B | 7,632 B |
@@ -491,17 +491,17 @@ Higher-order functions show **75–98% less allocation** than the reference impl
 
 ##### Predicate filtering
 
-| Scenario | Expression | Corvus | CodeGen | Jsonata.Net.Native | Corvus Alloc | CodeGen Alloc | Native Alloc |
+| Scenario | Expression | Runtime | CodeGen | Jsonata.Net.Native | Runtime Alloc | CodeGen Alloc | Native Alloc |
 |----------|-----------|-------:|--------:|-------------------:|-------------:|--------------:|-------------:|
 | Single predicate | `Contact.Phone[type = 'mobile'].number` | 980 ns | 976 ns | 1,888 ns | 120 B | 120 B | 5,760 B |
 | Chained predicate | `Contact[ssn = '496913021'].Phone[0].number` | 259 ns | 218 ns | 903 ns | 0 B | 0 B | 3,072 B |
 | Compound predicate | `Contact.Phone[type = 'office' or type = 'mobile'].number` | 1,253 ns | 1,153 ns | 3,554 ns | 120 B | 120 B | 10,376 B |
 
-Predicate filtering shows the largest speedup: Corvus is **2–3.5× faster** than the reference implementation with **97–100% less allocation**.
+Predicate filtering shows the largest speedup: the runtime evaluator is **2–3.5× faster** than the reference implementation with **97–100% less allocation**.
 
 ##### Object construction
 
-| Scenario | Expression | Corvus | CodeGen | Jsonata.Net.Native | Corvus Alloc | CodeGen Alloc | Native Alloc |
+| Scenario | Expression | Runtime | CodeGen | Jsonata.Net.Native | Runtime Alloc | CodeGen Alloc | Native Alloc |
 |----------|-----------|-------:|--------:|-------------------:|-------------:|--------------:|-------------:|
 | Simple object | `{"name": Account.`Account Name`, "total": $sum(...)}` | 2,439 ns | 990 ns | 2,926 ns | 336 B | 120 B | 7,840 B |
 | Group-by object | `` Account.Order.Product.{`Product Name`: Price} `` | 3,095 ns | 1,054 ns | 2,051 ns | 632 B | 120 B | 7,104 B |
@@ -509,4 +509,4 @@ Predicate filtering shows the largest speedup: Corvus is **2–3.5× faster** th
 
 Code-gen achieves **2–3× speedup** for object construction with **98–99% less allocation**.
 
-> *Benchmarks run with BenchmarkDotNet v0.15.8 on .NET 10.0.5, 13th Gen Intel Core i7-13800H, Windows 11. All Corvus benchmarks use `JsonWorkspace` for pooled evaluation. Jsonata.Net.Native v3.0.0 uses pre-compiled `JsonataQuery` with pre-parsed `JToken` data. OutlierMode=RemoveAll, RunStrategy=Throughput.*
+> *Benchmarks run with BenchmarkDotNet v0.15.8 on .NET 10.0.5, 13th Gen Intel Core i7-13800H, Windows 11. All Runtime benchmarks use `JsonWorkspace` for pooled evaluation. Jsonata.Net.Native v3.0.0 uses pre-compiled `JsonataQuery` with pre-parsed `JToken` data. OutlierMode=RemoveAll, RunStrategy=Throughput.*
