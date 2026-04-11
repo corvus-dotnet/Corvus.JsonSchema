@@ -51,7 +51,7 @@ public readonly struct JsonSchema
 
         if (canonicalUri is null && !TryGetCanonicalUri(document, out canonicalUri))
         {
-            throw new InvalidOperationException("The document does not have a canonical URI and one was not provided.");
+            throw new InvalidOperationException(SR.DocumentDoesNotHaveCanonicalUri);
         }
 
         string cacheKey = BuildCacheKey(canonicalUri!, options.AlwaysAssertFormat);
@@ -89,7 +89,7 @@ public readonly struct JsonSchema
 
         if (canonicalUri is null && !TryGetCanonicalUri(document, out canonicalUri))
         {
-            throw new InvalidOperationException("The document does not have a canonical URI and one was not provided.");
+            throw new InvalidOperationException(SR.DocumentDoesNotHaveCanonicalUri);
         }
 
         string cacheKey = BuildCacheKey(canonicalUri!, options.AlwaysAssertFormat);

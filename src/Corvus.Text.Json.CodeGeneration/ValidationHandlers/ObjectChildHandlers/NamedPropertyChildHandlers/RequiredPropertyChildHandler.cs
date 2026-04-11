@@ -300,7 +300,7 @@ internal class RequiredPropertyChildHandler : INamedPropertyChildHandler
     {
         foreach (IGrouping<IObjectRequiredPropertyValidationKeyword?, PropertyDeclaration> propertiesByKeyword in requiredPropertyDeclarations.GroupBy(k => k.RequiredKeyword))
         {
-            IKeyword keyword = propertiesByKeyword.Key ?? throw new InvalidOperationException("The required keyword must not be null on a required propertiesByKeyword.");
+            IKeyword keyword = propertiesByKeyword.Key ?? throw new InvalidOperationException(SR.RequiredKeywordMustNotBeNull);
 
             PropertyDependencies propertyDependencies = new(null, keyword);
 

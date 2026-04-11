@@ -111,7 +111,7 @@ internal static class XPathDateTimeFormatter
                 int end = picture.IndexOf(']', i + 1);
                 if (end < 0)
                 {
-                    throw new JsonataException("D3135", "Picture string contains a '[' with no matching ']'", 0);
+                    throw new JsonataException("D3135", SR.D3135_PictureStringContainsAWithNoMatching, 0);
                 }
 
                 string marker = picture.Substring(i + 1, end - i - 1);
@@ -158,7 +158,7 @@ internal static class XPathDateTimeFormatter
                 int end = picture.IndexOf(']', i + 1);
                 if (end < 0)
                 {
-                    throw new JsonataException("D3135", "Picture string contains a '[' with no matching ']'", 0);
+                    throw new JsonataException("D3135", SR.D3135_PictureStringContainsAWithNoMatching, 0);
                 }
 
                 i = end + 1;
@@ -330,9 +330,9 @@ internal static class XPathDateTimeFormatter
                 case 'w':
                 case 'X':
                 case 'x':
-                    throw new JsonataException("D3136", "The date/time components in the picture string are not consistent", 0);
+                    throw new JsonataException("D3136", SR.D3136_TheDateTimeComponentsInThePictureStringAreNotConsistent, 0);
                 default:
-                    throw new JsonataException("D3132", $"Unknown component specifier '{compChar}' in date/time picture string", 0);
+                    throw new JsonataException("D3132", SR.Format(SR.D3132_UnknownComponentSpecifier, compChar), 0);
             }
         }
 
@@ -349,7 +349,7 @@ internal static class XPathDateTimeFormatter
         {
             if (year < 0)
             {
-                throw new JsonataException("D3136", "The date/time components in the picture string are not consistent", 0);
+                throw new JsonataException("D3136", SR.D3136_TheDateTimeComponentsInThePictureStringAreNotConsistent, 0);
             }
 
             var jan1 = new DateTimeOffset(year, 1, 1, 0, 0, 0, TimeSpan.Zero);
@@ -361,7 +361,7 @@ internal static class XPathDateTimeFormatter
         // Validate: if we have day and year but no month (and no dayOfYear), that's an error
         if (day >= 0 && year >= 0 && month < 0 && dayOfYear < 0)
         {
-            throw new JsonataException("D3136", "The date/time components in the picture string are not consistent", 0);
+            throw new JsonataException("D3136", SR.D3136_TheDateTimeComponentsInThePictureStringAreNotConsistent, 0);
         }
 
         // Validate: if we have minute and second but no hour, that's an error
@@ -369,7 +369,7 @@ internal static class XPathDateTimeFormatter
         {
             if (minute >= 0 && second >= 0)
             {
-                throw new JsonataException("D3136", "The date/time components in the picture string are not consistent", 0);
+                throw new JsonataException("D3136", SR.D3136_TheDateTimeComponentsInThePictureStringAreNotConsistent, 0);
             }
         }
 
@@ -643,7 +643,7 @@ internal static class XPathDateTimeFormatter
 
         if (presentation == "N" || presentation == "n" || presentation == "Nn")
         {
-            throw new JsonataException("D3133", "The component cannot be represented as a name", 0);
+            throw new JsonataException("D3133", SR.D3133_TheComponentCannotBeRepresentedAsAName, 0);
         }
 
         // Check if it's a decimal digit pattern
@@ -655,10 +655,10 @@ internal static class XPathDateTimeFormatter
         // Check for single '#' which is an error in formatInteger context
         if (presentation == "#")
         {
-            throw new JsonataException("D3130", "The format/picture string is not valid", 0);
+            throw new JsonataException("D3130", SR.D3130_TheFormatPictureStringIsNotValid, 0);
         }
 
-        throw new JsonataException("D3130", "The format/picture string is not valid", 0);
+        throw new JsonataException("D3130", SR.D3130_TheFormatPictureStringIsNotValid, 0);
     }
 
     private static bool TryParseIntegerWithPresentation(string str, string presentation, bool isOrdinal, out long value)
@@ -690,7 +690,7 @@ internal static class XPathDateTimeFormatter
 
         if (presentation == "#")
         {
-            throw new JsonataException("D3130", "The format/picture string is not valid", 0);
+            throw new JsonataException("D3130", SR.D3130_TheFormatPictureStringIsNotValid, 0);
         }
 
         if (IsDecimalDigitPattern(presentation))
@@ -698,7 +698,7 @@ internal static class XPathDateTimeFormatter
             return TryParseDecimalDigit(str, presentation, isOrdinal, out value);
         }
 
-        throw new JsonataException("D3130", "The format/picture string is not valid", 0);
+        throw new JsonataException("D3130", SR.D3130_TheFormatPictureStringIsNotValid, 0);
     }
 
     private static void FormatComponent(DateTimeOffset dt, string marker, StringBuilder sb)
@@ -859,7 +859,7 @@ internal static class XPathDateTimeFormatter
                 sb.Append("ISO");
                 break;
             default:
-                throw new JsonataException("D3132", $"Unknown component specifier '{comp}' in date/time picture string", 0);
+                throw new JsonataException("D3132", SR.Format(SR.D3132_UnknownComponentSpecifier, comp), 0);
         }
     }
 
@@ -1055,7 +1055,7 @@ internal static class XPathDateTimeFormatter
         else if (p.Length >= 6)
         {
             // 6+ digits is an error
-            throw new JsonataException("D3134", "The timezone component of the picture string is not valid", 0);
+            throw new JsonataException("D3134", SR.D3134_TheTimezoneComponentOfThePictureStringIsNotValid, 0);
         }
         else if (p.Length == 0)
         {
@@ -1336,7 +1336,7 @@ internal static class XPathDateTimeFormatter
             {
                 if (detectedDecimalGroup.HasValue && detectedDecimalGroup.Value != 0)
                 {
-                    throw new JsonataException("D3131", "The format/picture string contains mixed decimal digit groups", 0);
+                    throw new JsonataException("D3131", SR.D3131_TheFormatPictureStringContainsMixedDecimalDigitGroups, 0);
                 }
 
                 detectedDecimalGroup = 0;
@@ -1351,7 +1351,7 @@ internal static class XPathDateTimeFormatter
             {
                 if (detectedDecimalGroup.HasValue && detectedDecimalGroup.Value != unicodeGroup)
                 {
-                    throw new JsonataException("D3131", "The format/picture string contains mixed decimal digit groups", 0);
+                    throw new JsonataException("D3131", SR.D3131_TheFormatPictureStringContainsMixedDecimalDigitGroups, 0);
                 }
 
                 detectedDecimalGroup = unicodeGroup;
@@ -2300,7 +2300,7 @@ internal static class XPathDateTimeFormatter
                 int end = picture.IndexOf(']', i + 1);
                 if (end < 0)
                 {
-                    throw new JsonataException("D3135", "Picture string contains a '[' with no matching ']'", 0);
+                    throw new JsonataException("D3135", SR.D3135_PictureStringContainsAWithNoMatching, 0);
                 }
 
                 string marker = picture.Substring(i + 1, end - i - 1);
@@ -2364,7 +2364,7 @@ internal static class XPathDateTimeFormatter
                     // Check for name presentation which is not supported for Y
                     if (comp == 'Y' && (pres == "N" || pres == "Nn"))
                     {
-                        throw new JsonataException("D3133", "The year component cannot be represented as a name", 0);
+                        throw new JsonataException("D3133", SR.D3133_TheYearComponentCannotBeRepresentedAsAName, 0);
                     }
 
                     components.Add(new PictureComponent
@@ -2377,7 +2377,7 @@ internal static class XPathDateTimeFormatter
                 }
                 else
                 {
-                    throw new JsonataException("D3132", $"Unknown component specifier '{comp}' in date/time picture string", 0);
+                    throw new JsonataException("D3132", SR.Format(SR.D3132_UnknownComponentSpecifier, comp), 0);
                 }
 
                 i = end + 1;
@@ -2422,7 +2422,7 @@ internal static class XPathDateTimeFormatter
         // Check for 'N' or 'Nn' name presentation (used for year names - not supported)
         if (presentation == "N" || presentation == "Nn")
         {
-            throw new JsonataException("D3133", "The component cannot be represented as a name", 0);
+            throw new JsonataException("D3133", SR.D3133_TheComponentCannotBeRepresentedAsAName, 0);
         }
 
         // Check for Roman numerals

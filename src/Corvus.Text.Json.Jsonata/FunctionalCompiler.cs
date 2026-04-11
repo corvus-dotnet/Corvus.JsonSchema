@@ -112,8 +112,8 @@ internal static class FunctionalCompiler
             RegexNode regex => CompileRegex(regex),
             ParentNode parent => CompileParent(parent),
             PartialNode partial => CompilePartial(partial),
-            PlaceholderNode => throw new JsonataException("D1001", "Unexpected placeholder outside partial application", node.Position),
-            _ => throw new JsonataException("D1001", $"Unknown node type: {node.Type}", node.Position),
+            PlaceholderNode => throw new JsonataException("D1001", SR.D1001_UnexpectedPlaceholderOutsidePartialApplication, node.Position),
+            _ => throw new JsonataException("D1001", SR.Format(SR.D1001_UnknownNodeType, node.Type), node.Position),
         };
     }
 
@@ -238,7 +238,7 @@ internal static class FunctionalCompiler
         double value = num.Value;
         if (double.IsNaN(value) || double.IsInfinity(value))
         {
-            throw new JsonataException("D3001", "A string cannot be generated from this value", 0);
+            throw new JsonataException("D3001", SR.D3001_AStringCannotBeGeneratedFromThisValue, 0);
         }
 
         return (in JsonElement input, Environment env) => Sequence.FromDouble(value, env.Workspace);
@@ -253,7 +253,7 @@ internal static class FunctionalCompiler
             var rawValue = str.Value;
             return (in JsonElement input, Environment env) =>
             {
-                throw new JsonataException("D3140", $"String contains unpaired surrogates", 0);
+                throw new JsonataException("D3140", SR.D3140_StringContainsUnpairedSurrogates, 0);
             };
         }
 
@@ -299,7 +299,7 @@ internal static class FunctionalCompiler
                 new Sequence(FalseElement),
             "null" => static (in JsonElement input, Environment env) =>
                 new Sequence(NullElement),
-            _ => throw new JsonataException("D1001", $"Unknown value: {val.Value}", val.Position),
+            _ => throw new JsonataException("D1001", SR.Format(SR.D1001_UnknownValue, val.Value), val.Position),
         };
     }
 
@@ -3439,7 +3439,7 @@ internal static class FunctionalCompiler
                 }
                 else if (keySeq.FirstOrDefault.ValueKind == JsonValueKind.Number)
                 {
-                    throw new JsonataException("T1003", "Key in object structure must evaluate to a string; got: number", 0);
+                    throw new JsonataException("T1003", SR.T1003_KeyInObjectStructureMustEvaluateToAStringGotNumber, 0);
                 }
                 else
                 {
@@ -3562,7 +3562,7 @@ internal static class FunctionalCompiler
                 }
                 else if (keySeq.FirstOrDefault.ValueKind == JsonValueKind.Number)
                 {
-                    throw new JsonataException("T1003", "Key in object structure must evaluate to a string; got: number", 0);
+                    throw new JsonataException("T1003", SR.T1003_KeyInObjectStructureMustEvaluateToAStringGotNumber, 0);
                 }
                 else
                 {
@@ -3782,7 +3782,7 @@ internal static class FunctionalCompiler
                 }
                 else if (keySeq.FirstOrDefault.ValueKind == JsonValueKind.Number)
                 {
-                    throw new JsonataException("T1003", "Key in object structure must evaluate to a string; got: number", 0);
+                    throw new JsonataException("T1003", SR.T1003_KeyInObjectStructureMustEvaluateToAStringGotNumber, 0);
                 }
                 else
                 {
@@ -3799,7 +3799,7 @@ internal static class FunctionalCompiler
                 {
                     throw new JsonataException(
                         "D1009",
-                        $"Multiple key definitions evaluate to same key: \"{keyStr}\"",
+                        SR.Format(SR.D1009_MultipleKeyDefinitionsEvaluateToSameKey, keyStr),
                         0);
                 }
 
@@ -4005,7 +4005,7 @@ internal static class FunctionalCompiler
 
             if (keyEl.ValueKind == JsonValueKind.Number)
             {
-                throw new JsonataException("T1003", "Key in object structure must evaluate to a string; got: number", 0);
+                throw new JsonataException("T1003", SR.T1003_KeyInObjectStructureMustEvaluateToAStringGotNumber, 0);
             }
 
             if (keyEl.ValueKind != JsonValueKind.String)
@@ -4919,7 +4919,7 @@ internal static class FunctionalCompiler
             "or" => CompileOr(lhs, rhs),
             "in" => CompileIn(lhs, rhs),
             ".." => CompileRange(lhs, rhs),
-            _ => throw new JsonataException("D1001", $"Unknown binary operator: {op}", binary.Position),
+            _ => throw new JsonataException("D1001", SR.Format(SR.D1001_UnknownBinaryOperator, op), binary.Position),
         };
     }
 
@@ -4941,7 +4941,7 @@ internal static class FunctionalCompiler
             {
                 if (left.IsNonFinite)
                 {
-                    throw new JsonataException("D1001", $"Number out of range: {left.NonFiniteValue}", 0);
+                    throw new JsonataException("D1001", SR.Format(SR.D1001_NumberOutOfRangeWithValue, left.NonFiniteValue), 0);
                 }
 
                 if (left.IsRawDouble)
@@ -4950,7 +4950,7 @@ internal static class FunctionalCompiler
                 }
                 else if (left.FirstOrDefault.ValueKind != JsonValueKind.Number)
                 {
-                    throw new JsonataException("T2001", "The left side of the arithmetic expression is not a number", 0);
+                    throw new JsonataException("T2001", SR.T2001_TheLeftSideOfTheArithmeticExpressionIsNotANumber, 0);
                 }
             }
 
@@ -4958,7 +4958,7 @@ internal static class FunctionalCompiler
             {
                 if (right.IsNonFinite)
                 {
-                    throw new JsonataException("D1001", $"Number out of range: {right.NonFiniteValue}", 0);
+                    throw new JsonataException("D1001", SR.Format(SR.D1001_NumberOutOfRangeWithValue, right.NonFiniteValue), 0);
                 }
 
                 if (right.IsRawDouble)
@@ -4967,7 +4967,7 @@ internal static class FunctionalCompiler
                 }
                 else if (right.FirstOrDefault.ValueKind != JsonValueKind.Number)
                 {
-                    throw new JsonataException("T2002", "The right side of the arithmetic expression is not a number", 0);
+                    throw new JsonataException("T2002", SR.T2002_TheRightSideOfTheArithmeticExpressionIsNotANumber, 0);
                 }
             }
 
@@ -5061,7 +5061,7 @@ internal static class FunctionalCompiler
                 if (l.ValueKind is JsonValueKind.True or JsonValueKind.False or JsonValueKind.Null
                     or JsonValueKind.Array or JsonValueKind.Object)
                 {
-                    throw new JsonataException("T2010", "The expressions either side of operator must be both numbers or both strings", 0);
+                    throw new JsonataException("T2010", SR.T2010_TheExpressionsEitherSideOfOperatorMustBeBothNumbersOrBothStr, 0);
                 }
             }
 
@@ -5071,7 +5071,7 @@ internal static class FunctionalCompiler
                 if (r.ValueKind is JsonValueKind.True or JsonValueKind.False or JsonValueKind.Null
                     or JsonValueKind.Array or JsonValueKind.Object)
                 {
-                    throw new JsonataException("T2010", "The expressions either side of operator must be both numbers or both strings", 0);
+                    throw new JsonataException("T2010", SR.T2010_TheExpressionsEitherSideOfOperatorMustBeBothNumbersOrBothStr, 0);
                 }
             }
 
@@ -5100,7 +5100,7 @@ internal static class FunctionalCompiler
             }
 
             // Type mismatch (e.g. string vs number)
-            throw new JsonataException("T2009", "The values either side of the operator must be of the same data type", 0);
+            throw new JsonataException("T2009", SR.T2009_TheValuesEitherSideOfTheOperatorMustBeOfTheSameDataType, 0);
         };
     }
 
@@ -5413,7 +5413,7 @@ internal static class FunctionalCompiler
                 var leftElem = left.FirstOrDefault;
                 if (leftElem.ValueKind != JsonValueKind.Number)
                 {
-                    throw new JsonataException("T2003", "The left side of the range operator (..) must evaluate to an integer", 0);
+                    throw new JsonataException("T2003", SR.T2003_TheLeftSideOfTheRangeOperatorMustEvaluateToAnInteger, 0);
                 }
             }
 
@@ -5422,7 +5422,7 @@ internal static class FunctionalCompiler
                 var rightElem = right.FirstOrDefault;
                 if (rightElem.ValueKind != JsonValueKind.Number)
                 {
-                    throw new JsonataException("T2004", "The right side of the range operator (..) must evaluate to an integer", 0);
+                    throw new JsonataException("T2004", SR.T2004_TheRightSideOfTheRangeOperatorMustEvaluateToAnInteger, 0);
                 }
             }
 
@@ -5437,12 +5437,12 @@ internal static class FunctionalCompiler
             // Must be integer values
             if (start != Math.Floor(start))
             {
-                throw new JsonataException("T2003", "The left side of the range operator (..) must evaluate to an integer", 0);
+                throw new JsonataException("T2003", SR.T2003_TheLeftSideOfTheRangeOperatorMustEvaluateToAnInteger, 0);
             }
 
             if (end != Math.Floor(end))
             {
-                throw new JsonataException("T2004", "The right side of the range operator (..) must evaluate to an integer", 0);
+                throw new JsonataException("T2004", SR.T2004_TheRightSideOfTheRangeOperatorMustEvaluateToAnInteger, 0);
             }
 
             int iStart = (int)start;
@@ -5456,7 +5456,7 @@ internal static class FunctionalCompiler
             long count = (long)iEnd - (long)iStart + 1;
             if (count > 10_000_000)
             {
-                throw new JsonataException("D2014", "Range expression generates too many results", 0);
+                throw new JsonataException("D2014", SR.D2014_RangeExpressionGeneratesTooManyResults, 0);
             }
 
             // Use lazy range for large ranges to avoid materializing millions of elements
@@ -5501,11 +5501,11 @@ internal static class FunctionalCompiler
                     return Sequence.FromDouble(-el.GetDouble(), env.Workspace);
                 }
 
-                throw new JsonataException("D1002", "Cannot negate a non-numeric value", unary.Position);
+                throw new JsonataException("D1002", SR.D1002_CannotNegateANonNumericValue, unary.Position);
             };
         }
 
-        throw new JsonataException("D1001", $"Unknown unary operator: {unary.Operator}", unary.Position);
+        throw new JsonataException("D1001", SR.Format(SR.D1001_UnknownUnaryOperator, unary.Operator), unary.Position);
     }
 
     private static ExpressionEvaluator CompileBlock(BlockNode block)
@@ -5766,7 +5766,7 @@ internal static class FunctionalCompiler
                 {
                     throw new JsonataException(
                         "D1009",
-                        $"Multiple key definitions evaluate to same key: \"{keyStrings[i]}\"",
+                        SR.Format(SR.D1009_MultipleKeyDefinitionsEvaluateToSameKey, keyStrings[i]),
                         0);
                 }
             }
@@ -5880,7 +5880,7 @@ internal static class FunctionalCompiler
 
             if (valueResult.IsNonFinite)
             {
-                throw new JsonataException("D1001", $"Number out of range: {valueResult.NonFiniteValue}", 0);
+                throw new JsonataException("D1001", SR.Format(SR.D1001_NumberOutOfRangeWithValue, valueResult.NonFiniteValue), 0);
             }
 
             if (valueResult.IsSingleton)
@@ -5969,7 +5969,7 @@ internal static class FunctionalCompiler
                                     : keyResult.FirstOrDefault.ValueKind.ToString().ToLowerInvariant();
                                 throw new JsonataException(
                                     "T1003",
-                                    $"Key in object structure must evaluate to a string; got: {gotType}",
+                                    SR.Format(SR.T1003_KeyMustBeStringGotType, gotType),
                                     0);
                             }
 
@@ -5986,7 +5986,7 @@ internal static class FunctionalCompiler
                                     {
                                         throw new JsonataException(
                                             "D1009",
-                                            $"Multiple key definitions evaluate to same key: \"{keyElement.GetString()}\"",
+                                            SR.Format(SR.D1009_MultipleKeyDefinitionsEvaluateToSameKey, keyElement.GetString()),
                                             0);
                                     }
                                 }
@@ -6013,7 +6013,7 @@ internal static class FunctionalCompiler
 
                             if (valueResult.IsNonFinite)
                             {
-                                throw new JsonataException("D1001", $"Number out of range: {valueResult.NonFiniteValue}", 0);
+                                throw new JsonataException("D1001", SR.Format(SR.D1001_NumberOutOfRangeWithValue, valueResult.NonFiniteValue), 0);
                             }
 
                             if (valueResult.IsSingleton)
@@ -6098,7 +6098,7 @@ internal static class FunctionalCompiler
                 {
                     throw new JsonataException(
                         "D1009",
-                        $"Multiple key definitions evaluate to same key: \"{keyStrings[i]}\"",
+                        SR.Format(SR.D1009_MultipleKeyDefinitionsEvaluateToSameKey, keyStrings[i]),
                         0);
                 }
             }
@@ -6269,10 +6269,10 @@ internal static class FunctionalCompiler
 
             if (suggestedBuiltIn is not null)
             {
-                throw new JsonataException("T1005", $"Attempted to invoke a non-function. Did you mean '${suggestedBuiltIn}'?", func.Position);
+                throw new JsonataException("T1005", SR.Format(SR.T1005_AttemptedToInvokeNonFunctionSuggestion, suggestedBuiltIn), func.Position);
             }
 
-            throw new JsonataException("T1006", "Attempted to invoke a non-function", func.Position);
+            throw new JsonataException("T1006", SR.T1006_AttemptedToInvokeANonFunction, func.Position);
         };
     }
 
@@ -6393,7 +6393,7 @@ internal static class FunctionalCompiler
 
         if (lhsNode is not VariableNode varNode)
         {
-            throw new JsonataException("D1001", "Bind LHS must be a variable", bind.Position);
+            throw new JsonataException("D1001", SR.D1001_BindLhsMustBeAVariable, bind.Position);
         }
 
         var name = varNode.Name;
@@ -6536,7 +6536,7 @@ internal static class FunctionalCompiler
             // If RHS is not callable, that's an error
             if (!rhsResult.IsUndefined)
             {
-                throw new JsonataException("T2006", "The right side of the '~>' operator must be a function", apply.Position);
+                throw new JsonataException("T2006", SR.T2006_TheRightSideOfTheOperatorMustBeAFunction, apply.Position);
             }
 
             return Sequence.Undefined;
@@ -6863,18 +6863,18 @@ internal static class FunctionalCompiler
         // T2008: sort key must evaluate to a number or string
         if (!aIsNum && !aIsStr)
         {
-            throw new JsonataException("T2008", "The expressions within an order-by clause must evaluate to numeric or string values", 0);
+            throw new JsonataException("T2008", SR.T2008_OrderByMustBeNumericOrString, 0);
         }
 
         if (!bIsNum && !bIsStr)
         {
-            throw new JsonataException("T2008", "The expressions within an order-by clause must evaluate to numeric or string values", 0);
+            throw new JsonataException("T2008", SR.T2008_OrderByMustBeNumericOrString, 0);
         }
 
         // T2007: types must be consistent (both numbers or both strings)
         if (aIsNum != bIsNum)
         {
-            throw new JsonataException("T2007", "Type mismatch within order-by clause. All values must be of the same type", 0);
+            throw new JsonataException("T2007", SR.T2007_TypeMismatchWithinOrderByClauseAllValuesMustBeOfTheSameType, 0);
         }
 
         if (aIsNum)
@@ -6981,7 +6981,7 @@ internal static class FunctionalCompiler
                     var first = updateResult.FirstOrDefault;
                     if (first.ValueKind != JsonValueKind.Object)
                     {
-                        throw new JsonataException("T2011", "The literal value of the right side of the Transform expression must be an object", 0);
+                        throw new JsonataException("T2011", SR.T2011_TransformRhsMustBeObject, 0);
                     }
 
                     updateObj = first;
@@ -7012,7 +7012,7 @@ internal static class FunctionalCompiler
                         }
                         else
                         {
-                            throw new JsonataException("T2012", "The delete clause of the Transform expression must evaluate to a string or array of strings", 0);
+                            throw new JsonataException("T2012", SR.T2012_TransformDeleteClauseMustBeString, 0);
                         }
                     }
                 }
@@ -7215,7 +7215,7 @@ internal static class FunctionalCompiler
                 if (!funcResult.IsLambda)
                 {
                     string code = matchesBuiltIn ? "T1007" : "T1008";
-                    throw new JsonataException(code, "Attempted to partially apply a non-function", partial.Position);
+                    throw new JsonataException(code, SR.T1007_AttemptedToPartiallyApplyANonFunction, partial.Position);
                 }
 
                 var originalLambda = funcResult.Lambda!;
@@ -7736,7 +7736,7 @@ internal static class FunctionalCompiler
     {
         if (double.IsNaN(value) || double.IsInfinity(value))
         {
-            throw new JsonataException("D3001", "A string cannot be generated from this value", 0);
+            throw new JsonataException("D3001", SR.D3001_AStringCannotBeGeneratedFromThisValue, 0);
         }
 
         return JsonataHelpers.NumberFromDouble(value, workspace);
@@ -7789,7 +7789,7 @@ internal static class FunctionalCompiler
                     }
                 }
 
-                throw new JsonataException("T0410", "Unable to invoke built-in function", 0);
+                throw new JsonataException("T0410", SR.T0410_UnableToInvokeBuiltInFunction, 0);
             },
             paramCount: 0);
     }

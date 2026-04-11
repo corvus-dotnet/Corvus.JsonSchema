@@ -46,9 +46,9 @@ public class UniqueItemsValidationHandler : IChildArrayItemValidationHandler2, I
 
         public string Keyword { get; }
 
-        public string HasUniqueItemsVariableName { get => field ?? throw new InvalidOperationException("You must set the uniqueItems count variable name."); internal set; }
+        public string HasUniqueItemsVariableName { get => field ?? throw new InvalidOperationException(SR.UniqueItemsCountVariableNameNotSet); internal set; }
 
-        public string UniqueItemsHashSetVariableName { get => field ?? throw new InvalidOperationException("You must set the uniqueItems hash set variable name."); internal set; }
+        public string UniqueItemsHashSetVariableName { get => field ?? throw new InvalidOperationException(SR.UniqueItemsHashSetVariableNameNotSet); internal set; }
     }
 
     private class UniqueItemsOperator

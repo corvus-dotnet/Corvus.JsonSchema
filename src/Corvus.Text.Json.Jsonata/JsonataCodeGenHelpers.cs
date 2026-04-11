@@ -1,4 +1,4 @@
-// <copyright file="JsonataCodeGenHelpers.cs" company="Endjin Limited">
+﻿// <copyright file="JsonataCodeGenHelpers.cs" company="Endjin Limited">
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
@@ -309,7 +309,7 @@ public static class JsonataCodeGenHelpers
 
                 if (keyEl.ValueKind == JsonValueKind.Number)
                 {
-                    throw new JsonataException("T1003", "Key in object structure must evaluate to a string; got: number", 0);
+                    throw new JsonataException("T1003", SR.T1003_KeyInObjectStructureMustEvaluateToAStringGotNumber, 0);
                 }
 
                 if (keyEl.ValueKind != JsonValueKind.String)
@@ -1170,7 +1170,7 @@ public static class JsonataCodeGenHelpers
 
         if (value.ValueKind != JsonValueKind.Number)
         {
-            throw new JsonataException("D1002", "Cannot negate a non-numeric value", 0);
+            throw new JsonataException("D1002", SR.D1002_CannotNegateANonNumericValue, 0);
         }
 
         return JsonataHelpers.NumberFromDouble(-value.GetDouble(), workspace);
@@ -1199,7 +1199,7 @@ public static class JsonataCodeGenHelpers
             return double.NaN;
         }
 
-        throw new JsonataException("T2001", "The left side of the arithmetic expression is not a number", 0);
+        throw new JsonataException("T2001", SR.T2001_TheLeftSideOfTheArithmeticExpressionIsNotANumber, 0);
     }
 
     /// <summary>
@@ -1219,7 +1219,7 @@ public static class JsonataCodeGenHelpers
             return double.NaN;
         }
 
-        throw new JsonataException("T2002", "The right side of the arithmetic expression is not a number", 0);
+        throw new JsonataException("T2002", SR.T2002_TheRightSideOfTheArithmeticExpressionIsNotANumber, 0);
     }
 
     /// <summary>
@@ -1236,7 +1236,7 @@ public static class JsonataCodeGenHelpers
         double result = left + right;
         if (double.IsInfinity(result))
         {
-            throw new JsonataException("D1001", "Number out of range", 0);
+            throw new JsonataException("D1001", SR.D1001_NumberOutOfRange, 0);
         }
 
         return result;
@@ -1256,7 +1256,7 @@ public static class JsonataCodeGenHelpers
         double result = left - right;
         if (double.IsInfinity(result))
         {
-            throw new JsonataException("D1001", "Number out of range", 0);
+            throw new JsonataException("D1001", SR.D1001_NumberOutOfRange, 0);
         }
 
         return result;
@@ -1276,7 +1276,7 @@ public static class JsonataCodeGenHelpers
         double result = left * right;
         if (double.IsInfinity(result))
         {
-            throw new JsonataException("D1001", "Number out of range", 0);
+            throw new JsonataException("D1001", SR.D1001_NumberOutOfRange, 0);
         }
 
         return result;
@@ -1296,7 +1296,7 @@ public static class JsonataCodeGenHelpers
         double result = left / right;
         if (double.IsInfinity(result) || double.IsNaN(result))
         {
-            throw new JsonataException("D1001", "Number out of range", 0);
+            throw new JsonataException("D1001", SR.D1001_NumberOutOfRange, 0);
         }
 
         return result;
@@ -1316,7 +1316,7 @@ public static class JsonataCodeGenHelpers
         double result = left % right;
         if (double.IsNaN(result))
         {
-            throw new JsonataException("D1001", "Number out of range", 0);
+            throw new JsonataException("D1001", SR.D1001_NumberOutOfRange, 0);
         }
 
         return result;
@@ -1582,12 +1582,12 @@ public static class JsonataCodeGenHelpers
     {
         if (!left.IsUndefined() && left.ValueKind != JsonValueKind.Number)
         {
-            throw new JsonataException("T2003", "The left side of the range operator (..) must evaluate to an integer", 0);
+            throw new JsonataException("T2003", SR.T2003_TheLeftSideOfTheRangeOperatorMustEvaluateToAnInteger, 0);
         }
 
         if (!right.IsUndefined() && right.ValueKind != JsonValueKind.Number)
         {
-            throw new JsonataException("T2004", "The right side of the range operator (..) must evaluate to an integer", 0);
+            throw new JsonataException("T2004", SR.T2004_TheRightSideOfTheRangeOperatorMustEvaluateToAnInteger, 0);
         }
 
         if (left.IsUndefined() || right.IsUndefined())
@@ -1600,12 +1600,12 @@ public static class JsonataCodeGenHelpers
 
         if (start != Math.Floor(start))
         {
-            throw new JsonataException("T2003", "The left side of the range operator (..) must evaluate to an integer", 0);
+            throw new JsonataException("T2003", SR.T2003_TheLeftSideOfTheRangeOperatorMustEvaluateToAnInteger, 0);
         }
 
         if (end != Math.Floor(end))
         {
-            throw new JsonataException("T2004", "The right side of the range operator (..) must evaluate to an integer", 0);
+            throw new JsonataException("T2004", SR.T2004_TheRightSideOfTheRangeOperatorMustEvaluateToAnInteger, 0);
         }
 
         int iStart = (int)start;
@@ -1619,7 +1619,7 @@ public static class JsonataCodeGenHelpers
         long count = (long)iEnd - (long)iStart + 1;
         if (count > 10_000_000)
         {
-            throw new JsonataException("D2014", "Range expression generates too many results", 0);
+            throw new JsonataException("D2014", SR.D2014_RangeExpressionGeneratesTooManyResults, 0);
         }
 
         JsonElement[] elements = ArrayPool<JsonElement>.Shared.Rent((int)count);
@@ -1786,7 +1786,7 @@ public static class JsonataCodeGenHelpers
     [MethodImpl(MethodImplOptions.NoInlining)]
     private static T ThrowCompareError<T>(string op)
     {
-        throw new JsonataException("T2010", $"The expressions either side of operator \"{op}\" must be both numbers or both strings", 0);
+        throw new JsonataException("T2010", SR.Format(SR.T2010_ExpressionsMustBeNumbersOrStringsWithOp, op), 0);
     }
 
     /// <summary>
@@ -1921,7 +1921,7 @@ public static class JsonataCodeGenHelpers
                 }
                 else if (!item.IsNullOrUndefined())
                 {
-                    throw new JsonataException("T0412", "Argument 1 of function 'sum' must be an array of numbers", 0);
+                    throw new JsonataException("T0412", SR.T0412_Argument1OfFunctionSumMustBeAnArrayOfNumbers, 0);
                 }
             }
         }
@@ -1931,7 +1931,7 @@ public static class JsonataCodeGenHelpers
         }
         else
         {
-            throw new JsonataException("T0412", "Argument 1 of function 'sum' must be an array of numbers", 0);
+            throw new JsonataException("T0412", SR.T0412_Argument1OfFunctionSumMustBeAnArrayOfNumbers, 0);
         }
 
         return JsonataHelpers.NumberFromDouble(sum, workspace);
@@ -2406,7 +2406,7 @@ public static class JsonataCodeGenHelpers
         // Validate separator type — must be a string if provided
         if (!separator.IsNullOrUndefined() && separator.ValueKind != JsonValueKind.String)
         {
-            throw new JsonataException("T0410", "Second argument of function $join must be a string", 0);
+            throw new JsonataException("T0410", SR.T0410_SecondArgumentOfFunctionJoinMustBeAString, 0);
         }
 
         if (input.ValueKind == JsonValueKind.Array)
@@ -2431,7 +2431,7 @@ public static class JsonataCodeGenHelpers
                     }
                     else if (!item.IsNullOrUndefined())
                     {
-                        throw new JsonataException("T0412", "Argument 1 of function $join must be an array of strings", 0);
+                        throw new JsonataException("T0412", SR.T0412_Argument1OfFunctionJoinMustBeAnArrayOfStrings, 0);
                     }
                 }
 
@@ -2448,7 +2448,7 @@ public static class JsonataCodeGenHelpers
             return input;
         }
 
-        throw new JsonataException("T0412", "Argument 1 of function $join must be an array of strings", 0);
+        throw new JsonataException("T0412", SR.T0412_Argument1OfFunctionJoinMustBeAnArrayOfStrings, 0);
     }
 
     /// <summary>
@@ -2499,7 +2499,7 @@ public static class JsonataCodeGenHelpers
             }
             else if (!value.IsNullOrUndefined())
             {
-                throw new JsonataException("T0412", "Argument 1 of function $join must be an array of strings", 0);
+                throw new JsonataException("T0412", SR.T0412_Argument1OfFunctionJoinMustBeAnArrayOfStrings, 0);
             }
         }
 
@@ -2537,7 +2537,7 @@ public static class JsonataCodeGenHelpers
         {
             if (prettyFlag.ValueKind is not JsonValueKind.True and not JsonValueKind.False)
             {
-                throw new JsonataException("T0410", "Second argument of $string must be a boolean", 0);
+                throw new JsonataException("T0410", SR.T0410_SecondArgumentOfStringMustBeABoolean, 0);
             }
 
             prettyPrint = prettyFlag.ValueKind == JsonValueKind.True;
@@ -2572,7 +2572,7 @@ public static class JsonataCodeGenHelpers
             double d = value.GetDouble();
             if (double.IsNaN(d) || double.IsInfinity(d))
             {
-                throw new JsonataException("D3001", "Attempting to invoke string function on Infinity or NaN", 0);
+                throw new JsonataException("D3001", SR.D3001_AttemptingToInvokeStringFunctionOnInfinityOrNan, 0);
             }
 
             Utf8ValueStringBuilder sb = new(stackalloc byte[64]);
@@ -2648,7 +2648,7 @@ public static class JsonataCodeGenHelpers
 
         if (input.ValueKind != JsonValueKind.String)
         {
-            throw new JsonataException("T0410", "Argument 1 of function 'length' must be a string", 0);
+            throw new JsonataException("T0410", SR.T0410_Argument1OfFunctionLengthMustBeAString, 0);
         }
 
         using UnescapedUtf8JsonString utf8 = input.GetUtf8String();
@@ -2676,7 +2676,7 @@ public static class JsonataCodeGenHelpers
                 double num = input.GetDouble();
                 if (double.IsInfinity(num))
                 {
-                    throw new JsonataException("D3030", "Unable to cast value to a number", 0);
+                    throw new JsonataException("D3030", SR.D3030_UnableToCastValueToANumber, 0);
                 }
 
                 return input;
@@ -2694,17 +2694,17 @@ public static class JsonataCodeGenHelpers
                 {
                     if (double.IsInfinity(parsed))
                     {
-                        throw new JsonataException("D3030", "Unable to cast value to a number", 0);
+                        throw new JsonataException("D3030", SR.D3030_UnableToCastValueToANumber, 0);
                     }
 
                     return JsonataHelpers.NumberFromDouble(parsed, workspace);
                 }
 
-                throw new JsonataException("D3030", "Unable to cast value to a number", 0);
+                throw new JsonataException("D3030", SR.D3030_UnableToCastValueToANumber, 0);
             }
 
             default:
-                throw new JsonataException("T0410", "Argument 1 of function 'number' is not of the correct type", 0);
+                throw new JsonataException("T0410", SR.T0410_Argument1OfFunctionNumberIsNotOfTheCorrectType2, 0);
         }
     }
 
@@ -2737,7 +2737,7 @@ public static class JsonataCodeGenHelpers
                 }
                 else if (!item.IsNullOrUndefined())
                 {
-                    throw new JsonataException("T0412", "Argument 1 of function 'max' must be an array of numbers", 0);
+                    throw new JsonataException("T0412", SR.T0412_Argument1OfFunctionMaxMustBeAnArrayOfNumbers, 0);
                 }
             }
         }
@@ -2748,7 +2748,7 @@ public static class JsonataCodeGenHelpers
         }
         else
         {
-            throw new JsonataException("T0412", "Argument 1 of function 'max' must be an array of numbers", 0);
+            throw new JsonataException("T0412", SR.T0412_Argument1OfFunctionMaxMustBeAnArrayOfNumbers, 0);
         }
 
         return found ? JsonataHelpers.NumberFromDouble(max, workspace) : default;
@@ -2783,7 +2783,7 @@ public static class JsonataCodeGenHelpers
                 }
                 else if (!item.IsNullOrUndefined())
                 {
-                    throw new JsonataException("T0412", "Argument 1 of function 'min' must be an array of numbers", 0);
+                    throw new JsonataException("T0412", SR.T0412_Argument1OfFunctionMinMustBeAnArrayOfNumbers, 0);
                 }
             }
         }
@@ -2794,7 +2794,7 @@ public static class JsonataCodeGenHelpers
         }
         else
         {
-            throw new JsonataException("T0412", "Argument 1 of function 'min' must be an array of numbers", 0);
+            throw new JsonataException("T0412", SR.T0412_Argument1OfFunctionMinMustBeAnArrayOfNumbers, 0);
         }
 
         return found ? JsonataHelpers.NumberFromDouble(min, workspace) : default;
@@ -2824,7 +2824,7 @@ public static class JsonataCodeGenHelpers
                 }
                 else if (!item.IsNullOrUndefined())
                 {
-                    throw new JsonataException("T0412", "Argument 1 of function 'average' must be an array of numbers", 0);
+                    throw new JsonataException("T0412", SR.T0412_Argument1OfFunctionAverageMustBeAnArrayOfNumbers, 0);
                 }
             }
         }
@@ -2835,7 +2835,7 @@ public static class JsonataCodeGenHelpers
         }
         else
         {
-            throw new JsonataException("T0412", "Argument 1 of function 'average' must be an array of numbers", 0);
+            throw new JsonataException("T0412", SR.T0412_Argument1OfFunctionAverageMustBeAnArrayOfNumbers, 0);
         }
 
         return count == 0 ? default : JsonataHelpers.NumberFromDouble(total / count, workspace);
@@ -2855,7 +2855,7 @@ public static class JsonataCodeGenHelpers
 
         if (!FunctionalCompiler.TryCoerceToNumber(input, out double num))
         {
-            throw new JsonataException("T0410", "Unable to cast value to a number", 0);
+            throw new JsonataException("T0410", SR.T0410_UnableToCastValueToANumber, 0);
         }
 
         return JsonataHelpers.NumberFromDouble(Math.Abs(num), workspace);
@@ -2873,7 +2873,7 @@ public static class JsonataCodeGenHelpers
 
         if (!FunctionalCompiler.TryCoerceToNumber(input, out double num))
         {
-            throw new JsonataException("T0410", "Unable to cast value to a number", 0);
+            throw new JsonataException("T0410", SR.T0410_UnableToCastValueToANumber, 0);
         }
 
         return JsonataHelpers.NumberFromDouble(Math.Floor(num), workspace);
@@ -2891,7 +2891,7 @@ public static class JsonataCodeGenHelpers
 
         if (!FunctionalCompiler.TryCoerceToNumber(input, out double num))
         {
-            throw new JsonataException("T0410", "Unable to cast value to a number", 0);
+            throw new JsonataException("T0410", SR.T0410_UnableToCastValueToANumber, 0);
         }
 
         return JsonataHelpers.NumberFromDouble(Math.Ceiling(num), workspace);
@@ -2909,12 +2909,12 @@ public static class JsonataCodeGenHelpers
 
         if (!FunctionalCompiler.TryCoerceToNumber(input, out double num))
         {
-            throw new JsonataException("T0410", "Unable to cast value to a number", 0);
+            throw new JsonataException("T0410", SR.T0410_UnableToCastValueToANumber, 0);
         }
 
         if (num < 0)
         {
-            throw new JsonataException("D3060", "The argument of the $sqrt function must be non-negative", 0);
+            throw new JsonataException("D3060", SR.D3060_TheArgumentOfTheSqrtFunctionMustBeNonNegative, 0);
         }
 
         return JsonataHelpers.NumberFromDouble(Math.Sqrt(num), workspace);
@@ -2934,7 +2934,7 @@ public static class JsonataCodeGenHelpers
 
         if (!FunctionalCompiler.TryCoerceToNumber(input, out double num))
         {
-            throw new JsonataException("T0410", "Unable to cast value to a number", 0);
+            throw new JsonataException("T0410", SR.T0410_UnableToCastValueToANumber, 0);
         }
 
         int precision = 0;
@@ -2974,7 +2974,7 @@ public static class JsonataCodeGenHelpers
         double result = Math.Pow(baseNum, expNum);
         if (double.IsInfinity(result) || double.IsNaN(result))
         {
-            throw new JsonataException("D3061", "The power function has resulted in a value that cannot be represented as a JSON number", 0);
+            throw new JsonataException("D3061", SR.D3061_PowerFunctionResultOutOfRange, 0);
         }
 
         return JsonataHelpers.NumberFromDouble(result, workspace);
@@ -3002,7 +3002,7 @@ public static class JsonataCodeGenHelpers
 
         if (input.ValueKind != JsonValueKind.String)
         {
-            throw new JsonataException("T0410", "String function argument must be a string", 0);
+            throw new JsonataException("T0410", SR.T0410_StringFunctionArgumentMustBeAString, 0);
         }
 
         using UnescapedUtf16JsonString utf16 = input.GetUtf16String();
@@ -3051,7 +3051,7 @@ public static class JsonataCodeGenHelpers
 
         if (input.ValueKind != JsonValueKind.String)
         {
-            throw new JsonataException("T0410", "String function argument must be a string", 0);
+            throw new JsonataException("T0410", SR.T0410_StringFunctionArgumentMustBeAString, 0);
         }
 
         using UnescapedUtf16JsonString utf16 = input.GetUtf16String();
@@ -3100,7 +3100,7 @@ public static class JsonataCodeGenHelpers
 
         if (input.ValueKind != JsonValueKind.String)
         {
-            throw new JsonataException("T0410", "String function argument must be a string", 0);
+            throw new JsonataException("T0410", SR.T0410_StringFunctionArgumentMustBeAString, 0);
         }
 
         using UnescapedUtf16JsonString utf16 = input.GetUtf16String();
@@ -3159,12 +3159,12 @@ public static class JsonataCodeGenHelpers
 
         if (input.ValueKind != JsonValueKind.String)
         {
-            throw new JsonataException("T0410", "Argument 1 of function $substring is not a string", 0);
+            throw new JsonataException("T0410", SR.T0410_Argument1OfFunctionSubstringIsNotAString, 0);
         }
 
         if (!FunctionalCompiler.TryCoerceToNumber(startElement, out double startD))
         {
-            throw new JsonataException("T0410", "Argument 2 of function $substring is not a number", 0);
+            throw new JsonataException("T0410", SR.T0410_Argument2OfFunctionSubstringIsNotANumber, 0);
         }
 
         using UnescapedUtf16JsonString utf16 = input.GetUtf16String();
@@ -3183,7 +3183,7 @@ public static class JsonataCodeGenHelpers
         {
             if (!FunctionalCompiler.TryCoerceToNumber(lengthElement, out double lenD))
             {
-                throw new JsonataException("T0410", "Argument 3 of function $substring is not a number", 0);
+                throw new JsonataException("T0410", SR.T0410_Argument3OfFunctionSubstringIsNotANumber, 0);
             }
 
             count = Math.Max(0, (int)lenD);
@@ -3212,12 +3212,12 @@ public static class JsonataCodeGenHelpers
 
         if (input.ValueKind != JsonValueKind.String)
         {
-            throw new JsonataException("T0410", "Argument 1 of string function is not a string", 0);
+            throw new JsonataException("T0410", SR.T0410_Argument1OfStringFunctionIsNotAString, 0);
         }
 
         if (search.ValueKind != JsonValueKind.String)
         {
-            throw new JsonataException("T0410", "Argument 2 of string function is not a string", 0);
+            throw new JsonataException("T0410", SR.T0410_Argument2OfStringFunctionIsNotAString, 0);
         }
 
         // Use UTF-8 span comparison to avoid string allocations
@@ -3242,12 +3242,12 @@ public static class JsonataCodeGenHelpers
 
         if (input.ValueKind != JsonValueKind.String)
         {
-            throw new JsonataException("T0410", "Argument 1 of string function is not a string", 0);
+            throw new JsonataException("T0410", SR.T0410_Argument1OfStringFunctionIsNotAString, 0);
         }
 
         if (search.ValueKind != JsonValueKind.String)
         {
-            throw new JsonataException("T0410", "Argument 2 of string function is not a string", 0);
+            throw new JsonataException("T0410", SR.T0410_Argument2OfStringFunctionIsNotAString, 0);
         }
 
         // Use UTF-8 span comparison to avoid string allocations
@@ -3272,12 +3272,12 @@ public static class JsonataCodeGenHelpers
 
         if (input.ValueKind != JsonValueKind.String)
         {
-            throw new JsonataException("T0410", "Argument 1 of function $contains must be a string", 0);
+            throw new JsonataException("T0410", SR.T0410_Argument1OfFunctionContainsMustBeAString, 0);
         }
 
         if (search.IsNullOrUndefined() || search.ValueKind != JsonValueKind.String)
         {
-            throw new JsonataException("T0410", "Argument 2 of function $contains must be a string or regex", 0);
+            throw new JsonataException("T0410", SR.T0410_Argument2OfFunctionContainsMustBeAStringOrRegex, 0);
         }
 
         // Use UTF-8 span comparison to avoid two string allocations
@@ -3295,12 +3295,12 @@ public static class JsonataCodeGenHelpers
         // so undefined/null input falls through to the type check and throws T0410.
         if (input.ValueKind != JsonValueKind.String)
         {
-            throw new JsonataException("T0410", "Argument 1 of function $split is not of the correct type", 0);
+            throw new JsonataException("T0410", SR.T0410_Argument1OfFunctionSplitIsNotOfTheCorrectType, 0);
         }
 
         if (separator.IsUndefined() || separator.ValueKind != JsonValueKind.String)
         {
-            throw new JsonataException("T0410", "Argument 2 of function $split is not of the correct type", 0);
+            throw new JsonataException("T0410", SR.T0410_Argument2OfFunctionSplitIsNotOfTheCorrectType, 0);
         }
 
         int limit = int.MaxValue;
@@ -3308,14 +3308,14 @@ public static class JsonataCodeGenHelpers
         {
             if (limitElement.ValueKind != JsonValueKind.Number)
             {
-                throw new JsonataException("T0410", "Argument 3 of function $split is not of the correct type", 0);
+                throw new JsonataException("T0410", SR.T0410_Argument3OfFunctionSplitIsNotOfTheCorrectType, 0);
             }
 
             if (FunctionalCompiler.TryCoerceToNumber(limitElement, out double limitD))
             {
                 if (limitD < 0)
                 {
-                    throw new JsonataException("D3020", "Third argument of the split function must evaluate to a positive number", 0);
+                    throw new JsonataException("D3020", SR.D3020_ThirdArgumentOfTheSplitFunctionMustEvaluateToAPositiveNumber, 0);
                 }
 
                 limit = (int)Math.Floor(limitD);
@@ -3882,10 +3882,10 @@ public static class JsonataCodeGenHelpers
 
         if (count == 0)
         {
-            throw new JsonataException("D3139", "The $single function expected exactly 1 matching result but got 0", 0);
+            throw new JsonataException("D3139", SR.D3139_SingleFunctionExpectedOneResultGotZero, 0);
         }
 
-        throw new JsonataException("D3138", "The $single function expected exactly 1 matching result but got " + count, 0);
+        throw new JsonataException("D3138", SR.Format(SR.D3138_SingleFunctionExpectedOneResult, count), 0);
     }
 
     /// <summary>
@@ -3917,7 +3917,7 @@ public static class JsonataCodeGenHelpers
                     }
                     else
                     {
-                        throw new JsonataException("D3138", "The $single function expected exactly 1 matching result but got " + matchCount, 0);
+                        throw new JsonataException("D3138", SR.Format(SR.D3138_SingleFunctionExpectedOneResult, matchCount), 0);
                     }
                 }
             }
@@ -3932,7 +3932,7 @@ public static class JsonataCodeGenHelpers
 
         if (matchCount == 0)
         {
-            throw new JsonataException("D3139", "The $single function expected exactly 1 matching result but got 0", 0);
+            throw new JsonataException("D3139", SR.D3139_SingleFunctionExpectedOneResultGotZero, 0);
         }
 
         return found;
@@ -3969,7 +3969,7 @@ public static class JsonataCodeGenHelpers
                     }
                     else
                     {
-                        throw new JsonataException("D3138", "The $single function expected exactly 1 matching result but got " + matchCount, 0);
+                        throw new JsonataException("D3138", SR.Format(SR.D3138_SingleFunctionExpectedOneResult, matchCount), 0);
                     }
                 }
 
@@ -3987,7 +3987,7 @@ public static class JsonataCodeGenHelpers
 
         if (matchCount == 0)
         {
-            throw new JsonataException("D3139", "The $single function expected exactly 1 matching result but got 0", 0);
+            throw new JsonataException("D3139", SR.D3139_SingleFunctionExpectedOneResultGotZero, 0);
         }
 
         return found;
@@ -4084,7 +4084,7 @@ public static class JsonataCodeGenHelpers
         {
             if (input.ValueKind != JsonValueKind.String)
             {
-                throw new JsonataException("T0410", "$error expects a string argument", 0);
+                throw new JsonataException("T0410", SR.T0410_ErrorExpectsAStringArgument, 0);
             }
 
             message = input.GetString() ?? message;
@@ -4101,7 +4101,7 @@ public static class JsonataCodeGenHelpers
         if (condition.ValueKind == JsonValueKind.Undefined
             || condition.ValueKind is not (JsonValueKind.True or JsonValueKind.False))
         {
-            throw new JsonataException("T0410", "Argument 1 of function $assert must be a boolean", 0);
+            throw new JsonataException("T0410", SR.T0410_Argument1OfFunctionAssertMustBeABoolean, 0);
         }
 
         if (condition.ValueKind == JsonValueKind.False)
@@ -4184,7 +4184,7 @@ public static class JsonataCodeGenHelpers
         }
         catch (InvalidOperationException)
         {
-            throw new JsonataException("D3140", "Malformed URL passed to $encodeUrlComponent(): invalid string", 0);
+            throw new JsonataException("D3140", SR.D3140_MalformedUrlEncodeUrlComponent, 0);
         }
 
         BuiltInFunctions.ValidateNoUnpairedSurrogates(str, "$encodeUrlComponent");
@@ -4205,7 +4205,7 @@ public static class JsonataCodeGenHelpers
 
         if (BuiltInFunctions.HasInvalidPercentEncoding(str))
         {
-            throw new JsonataException("D3140", $"Malformed URL passed to $decodeUrlComponent(): \"{str}\"", 0);
+            throw new JsonataException("D3140", SR.Format(SR.D3140_MalformedUrlPassedToDecodeUrlComponent, str), 0);
         }
 
         try
@@ -4214,7 +4214,7 @@ public static class JsonataCodeGenHelpers
         }
         catch (Exception ex) when (ex is UriFormatException or ArgumentException or FormatException)
         {
-            throw new JsonataException("D3140", $"Malformed URL passed to $decodeUrlComponent(): \"{str}\"", 0);
+            throw new JsonataException("D3140", SR.Format(SR.D3140_MalformedUrlPassedToDecodeUrlComponent, str), 0);
         }
     }
 
@@ -4236,7 +4236,7 @@ public static class JsonataCodeGenHelpers
         }
         catch (InvalidOperationException)
         {
-            throw new JsonataException("D3140", "Malformed URL passed to $encodeUrl(): invalid string", 0);
+            throw new JsonataException("D3140", SR.D3140_MalformedUrlEncodeUrl, 0);
         }
 
         BuiltInFunctions.ValidateNoUnpairedSurrogates(str, "$encodeUrl");
@@ -4258,7 +4258,7 @@ public static class JsonataCodeGenHelpers
 
         if (BuiltInFunctions.HasInvalidPercentEncoding(str))
         {
-            throw new JsonataException("D3140", $"Malformed URL passed to $decodeUrl(): \"{str}\"", 0);
+            throw new JsonataException("D3140", SR.Format(SR.D3140_MalformedUrlPassedToDecodeUrl, str), 0);
         }
 
         try
@@ -4267,7 +4267,7 @@ public static class JsonataCodeGenHelpers
         }
         catch (Exception ex) when (ex is UriFormatException or ArgumentException or FormatException)
         {
-            throw new JsonataException("D3140", $"Malformed URL passed to $decodeUrl(): \"{str}\"", 0);
+            throw new JsonataException("D3140", SR.Format(SR.D3140_MalformedUrlPassedToDecodeUrl, str), 0);
         }
     }
 
@@ -4298,17 +4298,17 @@ public static class JsonataCodeGenHelpers
 
         if (input.ValueKind != JsonValueKind.String)
         {
-            throw new JsonataException("T0410", "Argument 1 of function $replace is not of the correct type", 0);
+            throw new JsonataException("T0410", SR.T0410_Argument1OfFunctionReplaceIsNotOfTheCorrectType, 0);
         }
 
         if (pattern.IsUndefined() || pattern.ValueKind != JsonValueKind.String)
         {
-            throw new JsonataException("T0410", "Argument 2 of function $replace is not of the correct type", 0);
+            throw new JsonataException("T0410", SR.T0410_Argument2OfFunctionReplaceIsNotOfTheCorrectType, 0);
         }
 
         if (replacement.IsUndefined() || replacement.ValueKind != JsonValueKind.String)
         {
-            throw new JsonataException("T0410", "Argument 3 of function $replace is not of the correct type", 0);
+            throw new JsonataException("T0410", SR.T0410_Argument3OfFunctionReplaceIsNotOfTheCorrectType, 0);
         }
 
         using UnescapedUtf8JsonString utf8Str = input.GetUtf8String();
@@ -4321,7 +4321,7 @@ public static class JsonataCodeGenHelpers
 
         if (pat.Length == 0)
         {
-            throw new JsonataException("D3010", "The second argument of the $replace function cannot be an empty string", 0);
+            throw new JsonataException("D3010", SR.D3010_TheSecondArgumentOfTheReplaceFunctionCannotBeAnEmptyString, 0);
         }
 
         int limit = int.MaxValue;
@@ -4329,18 +4329,18 @@ public static class JsonataCodeGenHelpers
         {
             if (limitElement.ValueKind == JsonValueKind.Null)
             {
-                throw new JsonataException("T0410", "Argument 4 of function $replace is not of the correct type", 0);
+                throw new JsonataException("T0410", SR.T0410_Argument4OfFunctionReplaceIsNotOfTheCorrectType, 0);
             }
 
             if (limitElement.ValueKind != JsonValueKind.Number)
             {
-                throw new JsonataException("T0410", "Argument 4 of function $replace is not of the correct type", 0);
+                throw new JsonataException("T0410", SR.T0410_Argument4OfFunctionReplaceIsNotOfTheCorrectType, 0);
             }
 
             double n = limitElement.GetDouble();
             if (n < 0)
             {
-                throw new JsonataException("D3011", "The fourth argument of the $replace function must be a positive number", 0);
+                throw new JsonataException("D3011", SR.D3011_TheFourthArgumentOfTheReplaceFunctionMustBeAPositiveNumber, 0);
             }
 
             limit = (int)n;
@@ -4571,17 +4571,17 @@ public static class JsonataCodeGenHelpers
 
         if (!aIsNum && !aIsStr)
         {
-            throw new JsonataException("T2008", "The expressions within an order-by clause must evaluate to numeric or string values", 0);
+            throw new JsonataException("T2008", SR.T2008_OrderByMustBeNumericOrString, 0);
         }
 
         if (!bIsNum && !bIsStr)
         {
-            throw new JsonataException("T2008", "The expressions within an order-by clause must evaluate to numeric or string values", 0);
+            throw new JsonataException("T2008", SR.T2008_OrderByMustBeNumericOrString, 0);
         }
 
         if (aIsNum != bIsNum)
         {
-            throw new JsonataException("T2007", "Type mismatch within order-by clause. All values must be of the same type", 0);
+            throw new JsonataException("T2007", SR.T2007_TypeMismatchWithinOrderByClauseAllValuesMustBeOfTheSameType, 0);
         }
 
         if (aIsNum)
@@ -4668,7 +4668,7 @@ public static class JsonataCodeGenHelpers
             {
                 if (elements[i].ValueKind is JsonValueKind.Object or JsonValueKind.Array)
                 {
-                    throw new JsonataException("D3070", "The single argument form of the $sort function can only be used on an array of strings or an array of numbers", 0);
+                    throw new JsonataException("D3070", SR.D3070_SortSingleArgRequiresStringsOrNumbers, 0);
                 }
             }
 
@@ -4848,7 +4848,7 @@ public static class JsonataCodeGenHelpers
 
         if (radixInt < 2 || radixInt > 36)
         {
-            throw new JsonataException("D3100", $"The radix of the $formatBase function must be between 2 and 36. It was given {radixInt}", 0);
+            throw new JsonataException("D3100", SR.Format(SR.D3100_FormatBaseRadixOutOfRange, radixInt), 0);
         }
 
         long numLong = (long)Math.Round(num, MidpointRounding.ToEven);
@@ -5412,7 +5412,7 @@ public static class JsonataCodeGenHelpers
             return null;
         }
 
-        throw new JsonataException("T1003", "Key in object structure must evaluate to a string; got: " + key.ValueKind, 0);
+        throw new JsonataException("T1003", SR.Format(SR.T1003_KeyMustBeStringGotValueKind, key.ValueKind), 0);
     }
 
     /// <summary>
@@ -5458,7 +5458,7 @@ public static class JsonataCodeGenHelpers
 
                 if (keyEl.ValueKind == JsonValueKind.Number)
                 {
-                    throw new JsonataException("T1003", "Key in object structure must evaluate to a string; got: number", 0);
+                    throw new JsonataException("T1003", SR.T1003_KeyInObjectStructureMustEvaluateToAStringGotNumber, 0);
                 }
 
                 if (keyEl.ValueKind != JsonValueKind.String)
@@ -5635,7 +5635,7 @@ public static class JsonataCodeGenHelpers
 
         if (keyEl.ValueKind == JsonValueKind.Number)
         {
-            throw new JsonataException("T1003", "Key in object structure must evaluate to a string; got: number", 0);
+            throw new JsonataException("T1003", SR.T1003_KeyInObjectStructureMustEvaluateToAStringGotNumber, 0);
         }
 
         if (keyEl.ValueKind != JsonValueKind.String)
@@ -5690,7 +5690,7 @@ public static class JsonataCodeGenHelpers
 
         if (keyEl.ValueKind == JsonValueKind.Number)
         {
-            throw new JsonataException("T1003", "Key in object structure must evaluate to a string; got: number", 0);
+            throw new JsonataException("T1003", SR.T1003_KeyInObjectStructureMustEvaluateToAStringGotNumber, 0);
         }
 
         if (keyEl.ValueKind != JsonValueKind.String)
@@ -6193,12 +6193,12 @@ public static class JsonataCodeGenHelpers
         // Type check: null and non-numeric types are errors
         if (!lhsUndef && left.ValueKind != JsonValueKind.Number)
         {
-            throw new JsonataException("T2001", $"The left side of the \"{op}\" operator must evaluate to a number", 0);
+            throw new JsonataException("T2001", SR.Format(SR.T2001_LeftSideOfOperatorMustBeNumber, op), 0);
         }
 
         if (!rhsUndef && right.ValueKind != JsonValueKind.Number)
         {
-            throw new JsonataException("T2002", $"The right side of the \"{op}\" operator must evaluate to a number", 0);
+            throw new JsonataException("T2002", SR.Format(SR.T2002_RightSideOfOperatorMustBeNumber, op), 0);
         }
 
         if (lhsUndef || rhsUndef)
@@ -6210,7 +6210,7 @@ public static class JsonataCodeGenHelpers
 
         if (double.IsInfinity(result) || double.IsNaN(result))
         {
-            throw new JsonataException("D1001", $"Number out of range: {op}(\"{left.GetRawText()}\", \"{right.GetRawText()}\")", 0);
+            throw new JsonataException("D1001", SR.Format(SR.D1001_NumberOutOfRangeWithExpr, op, left.GetRawText(), right.GetRawText()), 0);
         }
 
         return JsonataHelpers.NumberFromDouble(result, workspace);
@@ -6233,22 +6233,22 @@ public static class JsonataCodeGenHelpers
         // Check for invalid types BEFORE undefined — bool/null/array/object in comparison is always an error
         if (!left.IsNullOrUndefined() && left.ValueKind is JsonValueKind.True or JsonValueKind.False or JsonValueKind.Array or JsonValueKind.Object)
         {
-            throw new JsonataException("T2010", $"The expressions either side of operator \"{op}\" must be both numbers or both strings", 0);
+            throw new JsonataException("T2010", SR.Format(SR.T2010_ExpressionsMustBeNumbersOrStringsWithOp, op), 0);
         }
 
         if (left.ValueKind == JsonValueKind.Null)
         {
-            throw new JsonataException("T2010", $"The expressions either side of operator \"{op}\" must be both numbers or both strings", 0);
+            throw new JsonataException("T2010", SR.Format(SR.T2010_ExpressionsMustBeNumbersOrStringsWithOp, op), 0);
         }
 
         if (!right.IsNullOrUndefined() && right.ValueKind is JsonValueKind.True or JsonValueKind.False or JsonValueKind.Array or JsonValueKind.Object)
         {
-            throw new JsonataException("T2010", $"The expressions either side of operator \"{op}\" must be both numbers or both strings", 0);
+            throw new JsonataException("T2010", SR.Format(SR.T2010_ExpressionsMustBeNumbersOrStringsWithOp, op), 0);
         }
 
         if (right.ValueKind == JsonValueKind.Null)
         {
-            throw new JsonataException("T2010", $"The expressions either side of operator \"{op}\" must be both numbers or both strings", 0);
+            throw new JsonataException("T2010", SR.Format(SR.T2010_ExpressionsMustBeNumbersOrStringsWithOp, op), 0);
         }
 
         // If either side is undefined (after invalid-type check), return undefined
@@ -6274,7 +6274,7 @@ public static class JsonataCodeGenHelpers
         }
 
         // Type mismatch (string vs number)
-        throw new JsonataException("T2009", "The values either side of the operator must be of the same data type", 0);
+        throw new JsonataException("T2009", SR.T2009_TheValuesEitherSideOfTheOperatorMustBeOfTheSameDataType, 0);
     }
 
     private static bool ElementEquals(in JsonElement left, in JsonElement right)

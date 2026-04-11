@@ -8,6 +8,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>preview</LangVersion>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <EnableDefaultEmbeddedResourceItems>false</EnableDefaultEmbeddedResourceItems>
     <RootNamespace>Corvus.Text.Json.JsonLogic.SourceGenerator</RootNamespace>
     <CorvusTextJsonPath>..\Corvus.Text.Json\</CorvusTextJsonPath>
     <CorvusTextJsonJsonLogicCodeGenPath>..\Corvus.Text.Json.JsonLogic.CodeGeneration\</CorvusTextJsonJsonLogicCodeGenPath>
@@ -48,6 +49,7 @@
     <Using Include="System.Text" />
     <Using Include="System.Threading" />
     <Using Include="System.Collections.Generic" />
+    <Using Include="Resources.Strings" Alias="SR" />
   </ItemGroup>
 
   <!-- Roslyn and polyfill packages -->
@@ -66,6 +68,9 @@
   <ItemGroup>
     <Compile Include="JsonLogicSourceGenerator.cs" />
     <Compile Include="JsonElementHelpers.BigNumberFormatting.cs" />
+    <Compile Include="SR.cs" />
+    <Compile Include="Resources\Strings.Designer.cs" />
+    <EmbeddedResource Include="Resources\Strings.resx" />
   </ItemGroup>
 
   <!-- Link the JsonLogic code generation engine -->

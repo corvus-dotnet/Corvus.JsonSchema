@@ -102,7 +102,7 @@ public static class NumberValidationExtensions
 
         if (!keyword.TryGetValidationConstants(typeDeclaration, out JsonElement[] constants))
         {
-            throw new InvalidOperationException("Unable to get validation constants for keyword.");
+            throw new InvalidOperationException(SR.UnableToGetValidationConstants);
         }
 
         Debug.Assert(constants.Length == 1, "Expected exactly one validation constant for keyword.");
@@ -128,7 +128,7 @@ public static class NumberValidationExtensions
             Operator.LessThanOrEquals => "JsonSchemaEvaluation.MatchLessThanOrEquals",
             Operator.GreaterThan => "JsonSchemaEvaluation.MatchGreaterThan",
             Operator.GreaterThanOrEquals => "JsonSchemaEvaluation.MatchGreaterThanOrEquals",
-            _ => throw new InvalidOperationException($"Unsupported operator: {op}")
+            _ => throw new InvalidOperationException(SR.Format(SR.UnsupportedOperator, op))
         };
 
         return generator
@@ -154,7 +154,7 @@ public static class NumberValidationExtensions
 
         if (!keyword.TryGetValidationConstants(typeDeclaration, out JsonElement[] constants))
         {
-            throw new InvalidOperationException("Unable to get validation constants for multipleOf-type keyword.");
+            throw new InvalidOperationException(SR.UnableToGetMultipleOfValidationConstants);
         }
 
         Debug.Assert(constants.Length == 1, "Expected exactly one validation constant for multipleOf-type keyword.");

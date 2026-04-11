@@ -686,6 +686,6 @@ internal static class JsonataHelpers
     [MethodImpl(MethodImplOptions.NoInlining)]
     private static void ThrowFormatFailed()
     {
-        throw new InvalidOperationException("Failed to format number as UTF-8");
+        throw new InvalidOperationException(SR.FailedToFormatNumberAsUtf8);
     }
 }

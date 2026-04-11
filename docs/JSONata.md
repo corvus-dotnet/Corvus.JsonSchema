@@ -27,36 +27,16 @@ The code generation pipeline compiles each expression to optimized static C#. Te
 
 > **Note on surrogate edge cases:** The upstream test suite contains two additional cases (`function-encodeUrl/case002` and `function-encodeUrlComponent/case002`) whose expression strings include a lone UTF-16 surrogate (`\uD800`). These are not representable in .NET's `System.String` — the JSON parser cannot load the test data. JavaScript engines (where jsonata-js runs) permit lone surrogates in strings, so these tests are valid on that platform. The test harness detects this at load time and gracefully skips both cases.
 
-## Installation
+## Quick start
 
-### Interpreted mode (runtime evaluation)
-
-```bash
-dotnet add package Corvus.Text.Json
-dotnet add package Corvus.Text.Json.Jsonata
-```
-
-### Source generator (build-time code generation)
+Install the packages:
 
 ```bash
 dotnet add package Corvus.Text.Json
 dotnet add package Corvus.Text.Json.Jsonata
-dotnet add package Corvus.Text.Json.Jsonata.SourceGenerator
 ```
 
-The source generator package is a development dependency — it runs at build time and produces C# source; the generated code depends on `Corvus.Text.Json` and `Corvus.Text.Json.Jsonata` at runtime.
-
-### CLI tool
-
-```bash
-dotnet tool install --global Corvus.Json.CodeGenerator
-```
-
-The `generatejsonschematypes` tool includes a `jsonata` subcommand. See [CLI code generation](#cli-code-generation) below.
-
-## Interpreted evaluation
-
-Create a `JsonataEvaluator`, pass it an expression string, JSON data, and a `JsonWorkspace`:
+Evaluate an expression:
 
 ```csharp
 using Corvus.Text.Json;
@@ -68,53 +48,67 @@ using var dataDoc = ParsedJsonDocument<JsonElement>.Parse(
     {
       "FirstName": "Fred",
       "Surname": "Smith",
-      "Age": 28
+      "Age": 28,
+      "Address": { "City": "London" }
     }
     """u8);
 
-// Evaluate a JSONata expression
+// Create a workspace for zero-allocation evaluation
 using JsonWorkspace workspace = JsonWorkspace.Create();
-var evaluator = new JsonataEvaluator();
-JsonElement result = evaluator.Evaluate(
+
+// Evaluate a JSONata expression
+JsonElement result = JsonataEvaluator.Default.Evaluate(
     "FirstName & ' ' & Surname",
     dataDoc.RootElement,
     workspace);
 
-// result is a string element: "Fred Smith"
 Console.WriteLine(result); // "Fred Smith"
 ```
 
 The evaluator compiles the expression into a delegate tree on first use and caches it. Subsequent evaluations of the same expression skip compilation entirely.
 
-When you provide a workspace, the result element is backed by the workspace's pooled memory — **zero GC allocation** per evaluation for most expressions. The result remains valid until the workspace is disposed or reset.
+The workspace provides pooled memory for the result — **zero GC allocation** per evaluation for most expressions. The result remains valid until the workspace is disposed or reset.
 
-> You can omit the workspace parameter; the evaluator will create one internally and return a cloned, self-contained result. This is convenient but allocates on every call.
+## Evaluation modes
 
-### Variable bindings, recursion depth, and timeouts
+Three evaluation modes are available. All three produce the same results for the same expression; they differ in when compilation happens and what overhead is incurred at evaluation time.
 
-The 5-parameter overload supports external variable bindings, custom recursion depth, and execution timeouts:
+### Interpreted (runtime evaluation)
+
+Use `JsonataEvaluator` when expressions are determined at runtime:
 
 ```csharp
 using JsonWorkspace workspace = JsonWorkspace.Create();
-
-// External variable bindings
-var bindings = new Dictionary<string, JsonElement>
-{
-    ["threshold"] = JsonElement.ParseValue("100"u8),
-};
+var evaluator = new JsonataEvaluator();
 
 JsonElement result = evaluator.Evaluate(
-    "$filter(items, function($v) { $v.price > $threshold })",
+    "Account.Order.Product.Price",
     dataDoc.RootElement,
-    workspace,
-    bindings: bindings,
-    maxDepth: 500,       // recursion depth limit (default: 500)
-    timeLimitMs: 5000);  // timeout in milliseconds (default: 0 = no limit)
+    workspace);
 ```
 
-## Source generator
+Create one `JsonataEvaluator` instance and reuse it — it caches compiled delegate trees per expression string and is thread-safe. For simple cases, `JsonataEvaluator.Default` provides a shared static instance.
 
-For expressions known at build time, the source generator eliminates all runtime compilation overhead. Declare a partial class annotated with `[JsonataExpression]`, pointing at a `.jsonata` expression file:
+### Source generator (build-time code generation)
+
+When expressions are known at build time, the source generator eliminates all runtime compilation overhead.
+
+**1. Install the source generator package:**
+
+```bash
+dotnet add package Corvus.Text.Json.Jsonata.SourceGenerator
+```
+
+**2. Create a `.jsonata` expression file** (e.g. `Expressions/employee-transform.jsonata`):
+
+```jsonata
+{
+  'name': FirstName & ' ' & Surname,
+  'mobile': Contact.Phone[type = 'mobile'].number
+}
+```
+
+**3. Declare a partial class with the `[JsonataExpression]` attribute:**
 
 ```csharp
 using Corvus.Text.Json.Jsonata;
@@ -127,26 +121,13 @@ internal static partial class EmployeeTransform
 }
 ```
 
-Create the expression file (e.g. `Expressions/employee-transform.jsonata`):
-
-```jsonata
-{
-  'name': FirstName & ' ' & Surname,
-  'mobile': Contact.Phone[type = 'mobile'].number
-}
-```
-
-Include the expression file as an `AdditionalFiles` item in your `.csproj`:
+**4. Include the expression file and packages in your `.csproj`:**
 
 ```xml
 <ItemGroup>
   <AdditionalFiles Include="Expressions\employee-transform.jsonata" />
 </ItemGroup>
-```
 
-And reference the source generator:
-
-```xml
 <ItemGroup>
   <PackageReference Include="Corvus.Text.Json.Jsonata.SourceGenerator"
                     PrivateAssets="all"
@@ -157,33 +138,16 @@ And reference the source generator:
 </ItemGroup>
 ```
 
-At build time, the generator reads the `.jsonata` file and emits an `Evaluate` method on the partial class:
+**5. Call the generated `Evaluate` method:**
 
 ```csharp
-using Corvus.Text.Json;
-using Corvus.Text.Json.Jsonata;
-
-using var dataDoc = ParsedJsonDocument<JsonElement>.Parse(
-    """
-    {
-      "FirstName": "Fred",
-      "Surname": "Smith",
-      "Contact": {
-        "Phone": [
-          {"type": "home", "number": "0203 544 1234"},
-          {"type": "mobile", "number": "077 7700 1234"}
-        ]
-      }
-    }
-    """u8);
-
 using JsonWorkspace workspace = JsonWorkspace.Create();
 JsonElement result = EmployeeTransform.Evaluate(dataDoc.RootElement, workspace);
 ```
 
-The generated `Evaluate` method is a static method that directly evaluates the expression without delegate dispatch.
+The generated method is a static method that directly evaluates the expression without delegate dispatch. For expressions that use external variables (see [Variable bindings](#variable-bindings)), the generator also emits overloads that accept `bindings`, `maxDepth`, and `timeLimitMs` parameters — identical to the interpreted API.
 
-### Diagnostic messages
+**Diagnostic messages:**
 
 | Code | Severity | Description |
 |------|----------|-------------|
@@ -191,9 +155,13 @@ The generated `Evaluate` method is a static method that directly evaluates the e
 | JASG002 | Error | Expression file is empty |
 | JASG003 | Error | Code generation failed (invalid expression or unsupported feature) |
 
-## CLI code generation
+### CLI code generation
 
-The `generatejsonschematypes` CLI tool includes a `jsonata` subcommand for ahead-of-time code generation:
+The `generatejsonschematypes` CLI tool includes a `jsonata` subcommand for ahead-of-time code generation outside the MSBuild pipeline:
+
+```bash
+dotnet tool install --global Corvus.Json.CodeGenerator
+```
 
 ```bash
 generatejsonschematypes jsonata <expressionFile> \
@@ -218,11 +186,195 @@ generatejsonschematypes jsonata expressions/employee-transform.jsonata \
     --outputPath Generated/EmployeeTransform.cs
 ```
 
-This produces a self-contained `.cs` file with a static `Evaluate` method, identical to what the source generator produces. Use the CLI tool when:
+This produces a self-contained `.cs` file with the same static `Evaluate` methods as the source generator. Use the CLI tool when:
 
 - You need to generate code outside the MSBuild pipeline
 - You want to inspect or modify the generated code before committing it
 - You are integrating with a non-.NET build system
+
+## How-to guides
+
+### Variable bindings
+
+Pass external variables into an expression using the `bindings` parameter. Variables are referenced in expressions with the `$` prefix:
+
+```csharp
+using JsonWorkspace workspace = JsonWorkspace.Create();
+
+var bindings = new Dictionary<string, JsonElement>
+{
+    ["threshold"] = JsonElement.ParseValue("100"u8),
+    ["label"] = JsonElement.ParseValue("\"High value\""u8),
+};
+
+JsonElement result = JsonataEvaluator.Default.Evaluate(
+    "$filter(items, function($v) { $v.price > $threshold })",
+    dataDoc.RootElement,
+    workspace,
+    bindings: bindings);
+```
+
+Bindings accept any JSON value — numbers, strings, booleans, objects, and arrays. The bound values are available as `$name` in the expression.
+
+### Custom functions
+
+JSONata has first-class support for user-defined functions via its `function` keyword. Define functions directly in the expression, or compose them with variable binding (`$var := ...`) blocks:
+
+**Inline lambda:**
+
+```jsonata
+$map(items, function($v) { $v.price * 1.2 })
+```
+
+**Named function via variable binding in the expression:**
+
+```jsonata
+(
+  $discount := function($price, $pct) { $price * (1 - $pct / 100) };
+  $map(items, function($v) { $discount($v.price, 10) })
+)
+```
+
+**Recursive functions:**
+
+```jsonata
+(
+  $factorial := function($n) { $n <= 1 ? 1 : $n * $factorial($n - 1) };
+  $factorial(10)
+)
+```
+
+**Higher-order functions** — all of the standard JSONata higher-order functions are supported:
+
+```csharp
+using JsonWorkspace workspace = JsonWorkspace.Create();
+
+// $filter with an inline predicate
+JsonElement expensive = JsonataEvaluator.Default.Evaluate(
+    "$filter(Account.Order.Product, function($v) { $v.Price > 50 })",
+    dataDoc.RootElement,
+    workspace);
+
+// $reduce to sum prices
+workspace.Reset();
+JsonElement total = JsonataEvaluator.Default.Evaluate(
+    "$reduce(Account.Order.Product, function($prev, $curr) { $prev + $curr.Price }, 0)",
+    dataDoc.RootElement,
+    workspace);
+
+// $sort with a custom comparator
+workspace.Reset();
+JsonElement sorted = JsonataEvaluator.Default.Evaluate(
+    "$sort(Account.Order.Product, function($a, $b) { $a.Price > $b.Price })",
+    dataDoc.RootElement,
+    workspace);
+```
+
+> **Note:** Custom functions are defined *within* the JSONata expression itself, not passed programmatically from C#. The bindings parameter accepts JSON values (`JsonElement`), not callable delegates. This design keeps the evaluation model pure and enables the code generator to optimize the entire expression statically.
+
+### Recursion depth and execution timeouts
+
+Guard against runaway expressions with depth and timeout limits:
+
+```csharp
+using JsonWorkspace workspace = JsonWorkspace.Create();
+
+try
+{
+    JsonElement result = JsonataEvaluator.Default.Evaluate(
+        myExpression,
+        dataDoc.RootElement,
+        workspace,
+        maxDepth: 200,       // recursion depth limit (default: 500)
+        timeLimitMs: 5000);  // timeout in milliseconds (default: 0 = no limit)
+}
+catch (JsonataException ex) when (ex.Code == "U1001")
+{
+    // U1001: stack overflow or timeout
+    Console.WriteLine($"Expression exceeded limits: {ex.Message}");
+}
+```
+
+Both limits apply to all evaluation modes (interpreted and code-generated). When a limit is exceeded, a `JsonataException` with code `U1001` is thrown.
+
+### Workspace and memory management
+
+The `JsonWorkspace` provides pooled memory for evaluation results and intermediate values. Using a caller-managed workspace is the recommended pattern for zero-allocation evaluation.
+
+**Single evaluation:**
+
+```csharp
+using JsonWorkspace workspace = JsonWorkspace.Create();
+JsonElement result = evaluator.Evaluate(expression, data, workspace);
+// result is valid until workspace is disposed or reset
+```
+
+**Batch evaluation — reset the workspace between iterations:**
+
+```csharp
+var evaluator = new JsonataEvaluator();
+using JsonWorkspace workspace = JsonWorkspace.Create();
+
+foreach (var item in items)
+{
+    workspace.Reset();
+    JsonElement result = evaluator.Evaluate(expression, item, workspace);
+    ProcessResult(result);
+}
+```
+
+This pattern achieves **zero GC allocation** per evaluation for most expressions. The workspace pools memory internally via `ArrayPool<byte>` and reuses it across evaluations.
+
+**Without a workspace (convenience, allocates per call):**
+
+```csharp
+// Omit the workspace — the evaluator creates one internally and clones the result
+JsonElement result = evaluator.Evaluate(expression, data);
+```
+
+This overload creates a workspace internally, evaluates the expression, clones the result into a standalone `JsonElement`, and disposes the workspace. It is convenient for one-off evaluations but allocates on every call.
+
+### Error handling
+
+All evaluation errors throw `JsonataException` with a standard error code, message, and character position:
+
+```csharp
+try
+{
+    JsonElement result = evaluator.Evaluate(expression, data, workspace);
+}
+catch (JsonataException ex)
+{
+    Console.WriteLine($"Error {ex.Code} at position {ex.Position}: {ex.Message}");
+    // ex.Token contains the relevant token, if any
+}
+```
+
+Error codes follow the [jsonata-js](https://github.com/jsonata-org/jsonata) conventions:
+
+| Prefix | Category | Example |
+|--------|----------|---------|
+| `S0xxx` | Syntax/parse errors | `S0101`: String literal not terminated |
+| `T0xxx` | Type errors | `T0410`: Argument type mismatch |
+| `D0xxx` | Runtime/data errors | `D3001`: Cannot convert value to string |
+| `T1xxx` | Evaluation errors | `T1005`: Attempted to invoke a non-function |
+| `T2xxx` | Operator errors | `T2001`: Left side of arithmetic is not a number |
+| `U1001` | Resource limits | Stack overflow or execution timeout |
+
+### String-to-string evaluation
+
+For simple string-in, string-out transformations:
+
+```csharp
+string? result = evaluator.EvaluateToString(
+    "FirstName & ' ' & Surname",
+    """{"FirstName": "Fred", "Surname": "Smith"}""");
+
+// result is the JSON string: "Fred Smith" (with quotes)
+// Returns null if the expression produces no result
+```
+
+This convenience method parses the input JSON, evaluates the expression, and returns the result as a JSON string via `GetRawText()`. It does not support bindings or resource limits — use the full `Evaluate` overloads for those.
 
 ## Supported functions
 
@@ -353,44 +505,6 @@ In addition to built-in functions, JSONata supports:
 | Regular expressions | `/pattern/flags` | Regex literals in `$match`, `$replace`, `$split`, `$contains` |
 | Range operator | `[1..10]` | Numeric ranges |
 | Order-by | `Account.Order^(OrderID)` | Sort expression results |
-
-## Workspace and memory management
-
-The `JsonataEvaluator` is designed for high-throughput scenarios. Key performance patterns:
-
-### Evaluator reuse
-
-Create one evaluator and reuse it across evaluations. The evaluator caches compiled delegate trees per expression string. Provide a workspace and reset it between iterations for zero-allocation evaluation:
-
-```csharp
-// Create once, reuse many times
-var evaluator = new JsonataEvaluator();
-using JsonWorkspace workspace = JsonWorkspace.Create();
-
-foreach (var item in items)
-{
-    workspace.Reset();
-    JsonElement result = evaluator.Evaluate(expression, item, workspace);
-    ProcessResult(result);
-}
-```
-
-This pattern achieves **zero GC allocation** per evaluation for most expressions. The workspace pools memory internally via `ArrayPool<byte>` and reuses it across evaluations.
-
-### Code-generated evaluation
-
-For expressions known at compile time, the source generator or CLI tool produces a static `Evaluate` method that bypasses the evaluator entirely:
-
-```csharp
-using JsonWorkspace workspace = JsonWorkspace.Create();
-
-foreach (var item in items)
-{
-    workspace.Reset();
-    JsonElement result = MyExpression.Evaluate(item, workspace);
-    ProcessResult(result);
-}
-```
 
 ## Comparison with other libraries
 

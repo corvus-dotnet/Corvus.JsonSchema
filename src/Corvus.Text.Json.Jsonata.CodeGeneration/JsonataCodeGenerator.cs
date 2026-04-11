@@ -3935,7 +3935,7 @@ public static class JsonataCodeGenerator
             if (func.Arguments.Count != 1)
             {
                 // Emit the error inline — same as runtime
-                throw new JsonataException("T0410", $"Arguments of function '{funcName}' do not match function signature", 0);
+                throw new JsonataException("T0410", SR.Format(SR.T0410_ArgumentsDoNotMatchSignature, funcName), 0);
             }
 
             string arg = EmitExpression(sb, func.Arguments[0], indent, dataVar, wsVar);
@@ -4077,7 +4077,7 @@ public static class JsonataCodeGenerator
             string funcName = negate ? "not" : "boolean";
             if (func.Arguments.Count != 1)
             {
-                throw new JsonataException("T0410", $"Arguments of function '{funcName}' do not match function signature", 0);
+                throw new JsonataException("T0410", SR.Format(SR.T0410_ArgumentsDoNotMatchSignature, funcName), 0);
             }
 
             string arg = EmitExpression(sb, func.Arguments[0], indent, dataVar, wsVar);
@@ -4804,7 +4804,7 @@ public static class JsonataCodeGenerator
 
             if (func.Arguments.Count != 2)
             {
-                throw new JsonataException("T0410", "Arguments of function 'single' do not match function signature", 0);
+                throw new JsonataException("T0410", SR.Format(SR.T0410_ArgumentsDoNotMatchSignature, "single"), 0);
             }
 
             // 2-arg form: $single(array, predicate)
@@ -4909,7 +4909,7 @@ public static class JsonataCodeGenerator
             {
                 if (func.Arguments.Count is 0 or 1)
                 {
-                    throw new JsonataException("T0410", "$replace expects 3-4 arguments", 0);
+                    throw new JsonataException("T0410", SR.T0410_ReplaceExpects3Or4Arguments, 0);
                 }
 
                 throw new FallbackException();

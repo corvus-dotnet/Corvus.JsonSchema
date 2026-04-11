@@ -144,7 +144,7 @@ public static class TypeDeclarationExtensions
     {
         if (!that.BuildComplete)
         {
-            throw new InvalidOperationException("You cannot use CanReduceToAnyOf during the type build process.");
+            throw new InvalidOperationException(SR.CannotUseCanReduceToAnyOfDuringTypeBuild);
         }
 
         if (!that.TryGetMetadata(nameof(CanReduceToAnyOf), out bool canReduce))
@@ -165,7 +165,7 @@ public static class TypeDeclarationExtensions
     {
         if (!that.BuildComplete)
         {
-            throw new InvalidOperationException("You cannot use CanReduceToOneOf during the type build process.");
+            throw new InvalidOperationException(SR.CannotUseCanReduceToOneOfDuringTypeBuild);
         }
 
         if (!that.TryGetMetadata(nameof(CanReduceToOneOf), out bool canReduce))
@@ -313,7 +313,7 @@ public static class TypeDeclarationExtensions
             return ns;
         }
 
-        throw new InvalidOperationException("The dotnet namespace metadata is not available.");
+        throw new InvalidOperationException(SR.DotnetNamespaceMetadataNotAvailable);
     }
 
     /// <summary>
@@ -328,7 +328,7 @@ public static class TypeDeclarationExtensions
             return name;
         }
 
-        throw new InvalidOperationException("The .NET type name metadata is not available.");
+        throw new InvalidOperationException(SR.DotnetTypeNameMetadataNotAvailable);
     }
 
     /// <summary>
@@ -348,7 +348,7 @@ public static class TypeDeclarationExtensions
             typeDeclaration.SetMetadata(DotnetTypeNameWithoutNamespaceKey, fqdntn);
         }
 
-        return fqdntn ?? throw new InvalidOperationException("The .NET type name metadata is not available.");
+        return fqdntn ?? throw new InvalidOperationException(SR.DotnetTypeNameMetadataNotAvailable);
     }
 
     /// <summary>
@@ -392,7 +392,7 @@ public static class TypeDeclarationExtensions
             typeDeclaration.SetMetadata(FullyQualifiedDotnetTypeNameKey, fqdntn);
         }
 
-        return fqdntn ?? throw new InvalidOperationException("The .NET type name metadata is not available.");
+        return fqdntn ?? throw new InvalidOperationException(SR.DotnetTypeNameMetadataNotAvailable);
     }
 
     public static string GetIJsonElementInterface(this TypeDeclaration typeDeclaration, bool forMutable)
@@ -919,7 +919,7 @@ public static class TypeDeclarationExtensions
     {
         if (!that.BuildComplete)
         {
-            throw new InvalidOperationException("You cannot use RequiresValueKind during the type build process.");
+            throw new InvalidOperationException(SR.CannotUseRequiresValueKindDuringTypeBuild);
         }
 
         if (!that.TryGetMetadata(nameof(RequiresJsonTokenType), out bool requiresJsonTokenType))

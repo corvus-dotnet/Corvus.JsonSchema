@@ -662,7 +662,7 @@ public readonly struct Period : IEquatable<Period>
     {
         if (Months != 0 || Years != 0)
         {
-            throw new InvalidOperationException("Cannot construct duration of period with non-zero months or years.");
+            throw new InvalidOperationException(SR.Period_CannotConstructDurationWithMonthsOrYears);
         }
 
         return Duration.FromNanoseconds(TotalNanoseconds);

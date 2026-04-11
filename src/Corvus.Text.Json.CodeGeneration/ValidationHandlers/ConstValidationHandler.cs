@@ -130,7 +130,7 @@ file static class ConstValidationHandlerExtensions
                     .AppendComplexValueConstantValidation(typeDeclaration, keyword, constantValue);
                 break;
             default:
-                throw new InvalidOperationException("Usupported constant value.");
+                throw new InvalidOperationException(SR.UnsupportedConstantValue);
         }
 
         generator

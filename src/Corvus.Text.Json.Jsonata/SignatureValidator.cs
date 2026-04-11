@@ -42,7 +42,7 @@ internal static class SignatureValidator
     {
         if (signature.Length < 2 || signature[0] != '<')
         {
-            throw new JsonataException("S0402", $"The function signature \"{signature}\" is not valid. Unrecognized signature structure", position);
+            throw new JsonataException("S0402", SR.Format(SR.S0402_UnrecognizedSignatureStructure, signature), position);
         }
 
         int i = 1; // Skip leading '<'
@@ -60,7 +60,7 @@ internal static class SignatureValidator
                 // Sub-type specifier is valid after 'a' (array) or 'f' (function with signature)
                 if (prevTypeChar != 'a' && prevTypeChar != 'f' && prevTypeChar != '\0')
                 {
-                    throw new JsonataException("S0401", $"The \"{prevTypeChar}\" type in the function signature \"{signature}\" does not support sub-types", position);
+                    throw new JsonataException("S0401", SR.Format(SR.S0401_TypeDoesNotSupportSubTypes, prevTypeChar, signature), position);
                 }
 
                 i++;
@@ -72,7 +72,7 @@ internal static class SignatureValidator
                 angleBracketDepth--;
                 if (angleBracketDepth < 0)
                 {
-                    throw new JsonataException("S0402", $"The function signature \"{signature}\" is not valid. Unexpected '>'", position);
+                    throw new JsonataException("S0402", SR.Format(SR.S0402_UnexpectedGt, signature), position);
                 }
 
                 prevTypeChar = '\0';
@@ -101,7 +101,7 @@ internal static class SignatureValidator
 
                 if (parenDepth != 0)
                 {
-                    throw new JsonataException("S0402", $"The function signature \"{signature}\" is not valid. Unmatched '('", position);
+                    throw new JsonataException("S0402", SR.Format(SR.S0402_UnmatchedOpenParen, signature), position);
                 }
 
                 prevTypeChar = 'x'; // Union is like "any"
@@ -137,12 +137,12 @@ internal static class SignatureValidator
             }
 
             // Unknown character
-            throw new JsonataException("S0401", $"The \"{c}\" type in the function signature \"{signature}\" is not valid", position);
+            throw new JsonataException("S0401", SR.Format(SR.S0401_TypeIsNotValid, c, signature), position);
         }
 
         if (angleBracketDepth != 0)
         {
-            throw new JsonataException("S0402", $"The function signature \"{signature}\" is not valid. Unmatched '<'", position);
+            throw new JsonataException("S0402", SR.Format(SR.S0402_UnmatchedLt, signature), position);
         }
     }
 
@@ -237,7 +237,7 @@ internal static class SignatureValidator
         // Check for extra arguments beyond what the signature expects
         if (argIdx < args.Length)
         {
-            throw new JsonataException("T0410", $"Too many arguments for function {signature}", position);
+            throw new JsonataException("T0410", SR.Format(SR.T0410_TooManyArgumentsForFunction, signature), position);
         }
     }
 
@@ -254,10 +254,10 @@ internal static class SignatureValidator
         {
             if (spec.SubType is not null && (spec.Types.Contains('a') || spec.Types.Count == 0))
             {
-                throw new JsonataException("T0412", $"Argument {argNumber} of function {signature} expected array of {DescribeType(spec.SubType)} but got {DescribeValue(element)}", position);
+                throw new JsonataException("T0412", SR.Format(SR.T0412_ArgumentExpectedArrayOfType, argNumber, signature, DescribeType(spec.SubType), DescribeValue(element)), position);
             }
 
-            throw new JsonataException("T0410", $"Argument {argNumber} of function {signature} expected {DescribeTypes(spec)} but got {DescribeValue(element)}", position);
+            throw new JsonataException("T0410", SR.Format(SR.T0410_ArgumentTypeMismatch, argNumber, signature, DescribeTypes(spec), DescribeValue(element)), position);
         }
 
         // Check array element sub-type
@@ -269,7 +269,7 @@ internal static class SignatureValidator
                 {
                     if (!MatchesSingleType(element[i], spec.SubType))
                     {
-                        throw new JsonataException("T0412", $"Argument {argNumber} of function {signature} expected array of {DescribeType(spec.SubType)} but got array containing {DescribeValue(element[i])}", position);
+                        throw new JsonataException("T0412", SR.Format(SR.T0412_ArgumentExpectedArrayOfTypeGotArrayContaining, argNumber, signature, DescribeType(spec.SubType), DescribeValue(element[i])), position);
                     }
                 }
             }
@@ -278,7 +278,7 @@ internal static class SignatureValidator
                 // Non-array passed to a<subtype> — the auto-wrapped value must match sub-type
                 if (!MatchesSingleType(element, spec.SubType))
                 {
-                    throw new JsonataException("T0412", $"Argument {argNumber} of function {signature} expected array of {DescribeType(spec.SubType)} but got {DescribeValue(element)}", position);
+                    throw new JsonataException("T0412", SR.Format(SR.T0412_ArgumentExpectedArrayOfType, argNumber, signature, DescribeType(spec.SubType), DescribeValue(element)), position);
                 }
             }
         }

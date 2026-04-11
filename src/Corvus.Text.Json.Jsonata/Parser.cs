@@ -84,7 +84,7 @@ internal sealed class Parser
         {
             throw new JsonataException(
                 "S0201",
-                $"Unexpected token: {parser.current.Value}",
+                SR.Format(SR.S0201_UnexpectedToken, parser.current.Value),
                 parser.current.Position,
                 parser.current.Value);
         }
@@ -96,7 +96,7 @@ internal sealed class Parser
         {
             throw new JsonataException(
                 "S0217",
-                "Attempt to derive parent at top level",
+                SR.S0217_AttemptToDeriveParentAtTopLevel,
                 ast.Position,
                 ast.Type.ToString());
         }
@@ -173,12 +173,12 @@ internal sealed class Parser
             TokenType.Operator => this.NudOperator(token),
             TokenType.End => throw new JsonataException(
                 "S0207",
-                "Unexpected end of expression",
+                SR.S0207_UnexpectedEndOfExpression,
                 token.Position,
                 token.Value),
             _ => throw new JsonataException(
                 "S0211",
-                $"Unexpected token: {token.Value}",
+                SR.Format(SR.S0211_UnexpectedToken, token.Value),
                 token.Position,
                 token.Value),
         };
@@ -220,7 +220,7 @@ internal sealed class Parser
             "and" or "or" or "in" => new NameNode { Value = token.Value, Position = token.Position },
             _ => throw new JsonataException(
                 "S0211",
-                $"Unexpected operator in prefix position: {token.Value}",
+                SR.Format(SR.S0211_UnexpectedOperatorInPrefixPosition, token.Value),
                 token.Position,
                 token.Value),
         };
@@ -364,7 +364,7 @@ internal sealed class Parser
         {
             throw new JsonataException(
                 "S0204",
-                $"Unknown operator: {token.Value}",
+                SR.Format(SR.S0204_UnknownOperator, token.Value),
                 token.Position,
                 token.Value);
         }
@@ -387,7 +387,7 @@ internal sealed class Parser
             "#" => this.LedIndex(token, left),
             _ => throw new JsonataException(
                 "S0204",
-                $"Unknown operator: {token.Value}",
+                SR.Format(SR.S0204_UnknownOperator, token.Value),
                 token.Position,
                 token.Value),
         };
@@ -484,7 +484,7 @@ internal sealed class Parser
             {
                 throw new JsonataException(
                     "S0208",
-                    $"Parameter {i + 1} of function definition is not a variable",
+                    SR.Format(SR.S0208_ParameterIsNotAVariable, i + 1),
                     paramNodes[i].Position,
                     paramNodes[i].ToString());
             }
@@ -521,7 +521,7 @@ internal sealed class Parser
             // Check for unbalanced signature — extra '>' after the closing one
             if (this.current.Type == TokenType.Operator && this.current.Value == ">")
             {
-                throw new JsonataException("S0402", $"The function signature \"{sig}>\" is not valid. Unexpected '>'", sigPos);
+                throw new JsonataException("S0402", SR.Format(SR.S0402_UnexpectedGt, sig + ">"), sigPos);
             }
         }
 
@@ -593,7 +593,7 @@ internal sealed class Parser
         {
             throw new JsonataException(
                 "S0212",
-                "The left side of := must be a variable",
+                SR.S0212_TheLeftSideOfMustBeAVariable,
                 left.Position,
                 left.ToString());
         }
@@ -668,7 +668,7 @@ internal sealed class Parser
         {
             throw new JsonataException(
                 "S0214",
-                "The right side of @ must be a variable",
+                SR.S0214_RightSideOfAtMustBeAVariable,
                 rhs.Position,
                 "@");
         }
@@ -689,7 +689,7 @@ internal sealed class Parser
         {
             throw new JsonataException(
                 "S0214",
-                "The right side of # must be a variable",
+                SR.S0214_RightSideOfHashMustBeAVariable,
                 rhs.Position,
                 "#");
         }
@@ -765,7 +765,7 @@ internal sealed class Parser
             default:
                 throw new JsonataException(
                     "S0206",
-                    $"Unexpected node type: {node.Type}",
+                    SR.Format(SR.S0206_UnexpectedNodeType, node.Type),
                     node.Position);
         }
     }
@@ -862,7 +862,7 @@ internal sealed class Parser
             {
                 throw new JsonataException(
                     "S0213",
-                    $"Number used as a step in a path: {numStep.Value}",
+                    SR.Format(SR.S0213_NumberUsedAsStepInPath, numStep.Value),
                     numStep.Position,
                     numStep.Value.ToString());
             }
@@ -870,7 +870,7 @@ internal sealed class Parser
             {
                 throw new JsonataException(
                     "S0213",
-                    $"Value used as a step in a path: {valStep.Value}",
+                    SR.Format(SR.S0213_ValueUsedAsStepInPath, valStep.Value),
                     valStep.Position,
                     valStep.Value);
             }
@@ -936,7 +936,7 @@ internal sealed class Parser
         {
             throw new JsonataException(
                 "S0209",
-                "A predicate cannot follow a grouping expression in a step",
+                SR.S0209_APredicateCannotFollowAGroupingExpressionInAStep,
                 binary.Position);
         }
 
@@ -975,7 +975,7 @@ internal sealed class Parser
         {
             throw new JsonataException(
                 "S0210",
-                "Multiple group-by clauses",
+                SR.S0210_MultipleGroupByClauses,
                 binary.Position);
         }
 
@@ -1100,12 +1100,12 @@ internal sealed class Parser
         var annotations = GetOrCreateAnnotations(step);
         if (annotations.Stages.Count > 0)
         {
-            throw new JsonataException("S0215", "Focus binding after predicate", binary.Position);
+            throw new JsonataException("S0215", SR.S0215_FocusBindingAfterPredicate, binary.Position);
         }
 
         if (step is SortNode)
         {
-            throw new JsonataException("S0216", "Focus binding after sort", binary.Position);
+            throw new JsonataException("S0216", SR.S0216_FocusBindingAfterSort, binary.Position);
         }
 
         if (binary.KeepArray)
@@ -1433,7 +1433,7 @@ internal sealed class Parser
             default:
                 throw new JsonataException(
                     "S0217",
-                    "Cannot derive ancestor",
+                    SR.S0217_CannotDeriveAncestor,
                     node.Position,
                     node.Type.ToString());
         }

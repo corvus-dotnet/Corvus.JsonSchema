@@ -106,7 +106,7 @@ internal class DependentSchemasChildHandler : INamedPropertyChildHandler
                 }
             }
 
-            throw new InvalidOperationException("Unable to find schema evaluation path provider for dependent schema.");
+            throw new InvalidOperationException(SR.UnableToFindSchemaEvaluationPathProvider);
         }
     }
 

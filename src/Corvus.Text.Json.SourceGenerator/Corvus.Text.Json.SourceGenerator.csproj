@@ -57,6 +57,13 @@
     <Using Include="System.Threading" />
     <Using Include="System.Threading.Tasks" />
     <Using Include="System.Collections.Generic" />
+    <Using Include="Resources.Strings" Alias="SR" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="SR.cs" />
+    <Compile Include="Resources\Strings.Designer.cs" />
+    <EmbeddedResource Include="Resources\Strings.resx" />
   </ItemGroup>
 
   <ItemGroup>

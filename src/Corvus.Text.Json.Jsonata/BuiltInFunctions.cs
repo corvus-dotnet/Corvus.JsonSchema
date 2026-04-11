@@ -111,7 +111,7 @@ internal static class BuiltInFunctions
     {
         if (args.Length != 1)
         {
-            throw new JsonataException("T0410", "$count expects 1 argument", 0);
+            throw new JsonataException("T0410", SR.T0410_CountExpects1Argument, 0);
         }
 
         var arg = args[0];
@@ -140,7 +140,7 @@ internal static class BuiltInFunctions
     {
         if (args.Length != 1)
         {
-            throw new JsonataException("T0410", "$sum expects 1 argument", 0);
+            throw new JsonataException("T0410", SR.T0410_SumExpects1Argument, 0);
         }
 
         var arg = args[0];
@@ -162,7 +162,7 @@ internal static class BuiltInFunctions
     {
         if (args.Length != 1)
         {
-            throw new JsonataException("T0410", "$max expects 1 argument", 0);
+            throw new JsonataException("T0410", SR.T0410_MaxExpects1Argument, 0);
         }
 
         var arg = args[0];
@@ -199,7 +199,7 @@ internal static class BuiltInFunctions
     {
         if (args.Length != 1)
         {
-            throw new JsonataException("T0410", "$min expects 1 argument", 0);
+            throw new JsonataException("T0410", SR.T0410_MinExpects1Argument, 0);
         }
 
         var arg = args[0];
@@ -236,7 +236,7 @@ internal static class BuiltInFunctions
     {
         if (args.Length != 1)
         {
-            throw new JsonataException("T0410", "$average expects 1 argument", 0);
+            throw new JsonataException("T0410", SR.T0410_AverageExpects1Argument, 0);
         }
 
         var arg = args[0];
@@ -270,7 +270,7 @@ internal static class BuiltInFunctions
     {
         if (args.Length > 2)
         {
-            throw new JsonataException("T0410", "$string expects at most 2 arguments", 0);
+            throw new JsonataException("T0410", SR.T0410_StringExpectsAtMost2Arguments, 0);
         }
 
         // 0 args → use current context
@@ -295,7 +295,7 @@ internal static class BuiltInFunctions
             // Non-finite numeric values (Infinity, NaN) cannot be stringified
             if (seq.IsNonFinite)
             {
-                throw new JsonataException("D3001", "Attempting to invoke string function on Infinity or NaN", 0);
+                throw new JsonataException("D3001", SR.D3001_AttemptingToInvokeStringFunctionOnInfinityOrNan, 0);
             }
 
             var element = seq.FirstOrDefault;
@@ -313,7 +313,7 @@ internal static class BuiltInFunctions
                 double d = element.GetDouble();
                 if (double.IsNaN(d) || double.IsInfinity(d))
                 {
-                    throw new JsonataException("D3001", "Attempting to invoke string function on Infinity or NaN", 0);
+                    throw new JsonataException("D3001", SR.D3001_AttemptingToInvokeStringFunctionOnInfinityOrNan, 0);
                 }
             }
 
@@ -326,7 +326,7 @@ internal static class BuiltInFunctions
                     var prettyElem = prettySeq.FirstOrDefault;
                     if (prettyElem.ValueKind is not JsonValueKind.True and not JsonValueKind.False)
                     {
-                        throw new JsonataException("T0410", "Second argument of $string must be a boolean", 0);
+                        throw new JsonataException("T0410", SR.T0410_SecondArgumentOfStringMustBeABoolean, 0);
                     }
 
                     prettyPrint = prettyElem.ValueKind == JsonValueKind.True;
@@ -433,7 +433,7 @@ internal static class BuiltInFunctions
     {
         if (args.Length > 1)
         {
-            throw new JsonataException("T0410", "$number expects 0 or 1 arguments", 0);
+            throw new JsonataException("T0410", SR.T0410_NumberExpects0Or1Arguments, 0);
         }
 
         // 0 args → use current context
@@ -444,7 +444,7 @@ internal static class BuiltInFunctions
 
             if (seq.IsLambda)
             {
-                throw new JsonataException("T0410", "Argument 1 of function $number is not of the correct type", 0);
+                throw new JsonataException("T0410", SR.T0410_Argument1OfFunctionNumberIsNotOfTheCorrectType, 0);
             }
 
             if (seq.IsUndefined)
@@ -457,7 +457,7 @@ internal static class BuiltInFunctions
             // Reject types that cannot be converted to number
             if (element.ValueKind is JsonValueKind.Array or JsonValueKind.Object or JsonValueKind.Null)
             {
-                throw new JsonataException("T0410", "Argument 1 of function $number is not of the correct type", 0);
+                throw new JsonataException("T0410", SR.T0410_Argument1OfFunctionNumberIsNotOfTheCorrectType, 0);
             }
 
             // Booleans: true → 1, false → 0
@@ -476,7 +476,7 @@ internal static class BuiltInFunctions
                 double num = element.GetDouble();
                 if (double.IsInfinity(num))
                 {
-                    throw new JsonataException("D3030", "Unable to cast value to a number", 0);
+                    throw new JsonataException("D3030", SR.D3030_UnableToCastValueToANumber, 0);
                 }
 
                 return Sequence.FromDouble(num, env.Workspace);
@@ -490,7 +490,7 @@ internal static class BuiltInFunctions
                 ReadOnlySpan<char> s = utf16.Span;
                 if (s.Length == 0)
                 {
-                    throw new JsonataException("D3030", "Unable to cast value to a number", 0);
+                    throw new JsonataException("D3030", SR.D3030_UnableToCastValueToANumber, 0);
                 }
 
                 if (s.Length > 2 && s[0] == '0')
@@ -503,7 +503,7 @@ internal static class BuiltInFunctions
                             return Sequence.FromDouble(hexVal, env.Workspace);
                         }
 
-                        throw new JsonataException("D3030", "Unable to cast value to a number", 0);
+                        throw new JsonataException("D3030", SR.D3030_UnableToCastValueToANumber, 0);
                     }
 
                     if (prefix is 'b' or 'B')
@@ -513,7 +513,7 @@ internal static class BuiltInFunctions
                             return Sequence.FromDouble(binVal, env.Workspace);
                         }
 
-                        throw new JsonataException("D3030", "Unable to cast value to a number", 0);
+                        throw new JsonataException("D3030", SR.D3030_UnableToCastValueToANumber, 0);
                     }
 
                     if (prefix is 'o' or 'O')
@@ -523,7 +523,7 @@ internal static class BuiltInFunctions
                             return Sequence.FromDouble(octVal, env.Workspace);
                         }
 
-                        throw new JsonataException("D3030", "Unable to cast value to a number", 0);
+                        throw new JsonataException("D3030", SR.D3030_UnableToCastValueToANumber, 0);
                     }
                 }
 
@@ -531,18 +531,18 @@ internal static class BuiltInFunctions
                 {
                     if (double.IsInfinity(parsed))
                     {
-                        throw new JsonataException("D3030", "Unable to cast value to a number", 0);
+                        throw new JsonataException("D3030", SR.D3030_UnableToCastValueToANumber, 0);
                     }
 
                     return Sequence.FromDouble(parsed, env.Workspace);
                 }
 
-                throw new JsonataException("D3030", "Unable to cast value to a number", 0);
+                throw new JsonataException("D3030", SR.D3030_UnableToCastValueToANumber, 0);
 #else
                 string? s2 = element.GetString();
                 if (s2 is null || s2.Length == 0)
                 {
-                    throw new JsonataException("D3030", "Unable to cast value to a number", 0);
+                    throw new JsonataException("D3030", SR.D3030_UnableToCastValueToANumber, 0);
                 }
 
                 // Handle hex (0x/0X), binary (0b/0B), and octal (0o/0O) prefixes
@@ -556,7 +556,7 @@ internal static class BuiltInFunctions
                             return Sequence.FromDouble(hexVal, env.Workspace);
                         }
 
-                        throw new JsonataException("D3030", "Unable to cast value to a number", 0);
+                        throw new JsonataException("D3030", SR.D3030_UnableToCastValueToANumber, 0);
                     }
 
                     if (prefix is 'b' or 'B')
@@ -566,7 +566,7 @@ internal static class BuiltInFunctions
                             return Sequence.FromDouble(binVal, env.Workspace);
                         }
 
-                        throw new JsonataException("D3030", "Unable to cast value to a number", 0);
+                        throw new JsonataException("D3030", SR.D3030_UnableToCastValueToANumber, 0);
                     }
 
                     if (prefix is 'o' or 'O')
@@ -576,7 +576,7 @@ internal static class BuiltInFunctions
                             return Sequence.FromDouble(octVal, env.Workspace);
                         }
 
-                        throw new JsonataException("D3030", "Unable to cast value to a number", 0);
+                        throw new JsonataException("D3030", SR.D3030_UnableToCastValueToANumber, 0);
                     }
                 }
 
@@ -584,13 +584,13 @@ internal static class BuiltInFunctions
                 {
                     if (double.IsInfinity(parsed))
                     {
-                        throw new JsonataException("D3030", "Unable to cast value to a number", 0);
+                        throw new JsonataException("D3030", SR.D3030_UnableToCastValueToANumber, 0);
                     }
 
                     return Sequence.FromDouble(parsed, env.Workspace);
                 }
 
-                throw new JsonataException("D3030", "Unable to cast value to a number", 0);
+                throw new JsonataException("D3030", SR.D3030_UnableToCastValueToANumber, 0);
 #endif
             }
 
@@ -694,7 +694,7 @@ internal static class BuiltInFunctions
     {
         if (args.Length > 1)
         {
-            throw new JsonataException("T0410", "$boolean expects 0 or 1 arguments", 0);
+            throw new JsonataException("T0410", SR.T0410_BooleanExpects0Or1Arguments, 0);
         }
 
         var arg = args.Length == 1 ? args[0] : ContextArg;
@@ -721,7 +721,7 @@ internal static class BuiltInFunctions
     {
         if (args.Length != 1)
         {
-            throw new JsonataException("T0410", "$not expects 1 argument", 0);
+            throw new JsonataException("T0410", SR.T0410_NotExpects1Argument, 0);
         }
 
         var arg = args[0];
@@ -741,7 +741,7 @@ internal static class BuiltInFunctions
     {
         if (args.Length != 1)
         {
-            throw new JsonataException("T0410", "$exists expects 1 argument", 0);
+            throw new JsonataException("T0410", SR.T0410_ExistsExpects1Argument, 0);
         }
 
         var arg = args[0];
@@ -763,7 +763,7 @@ internal static class BuiltInFunctions
     {
         if (args.Length != 1)
         {
-            throw new JsonataException("T0410", "$type expects 1 argument", 0);
+            throw new JsonataException("T0410", SR.T0410_TypeExpects1Argument, 0);
         }
 
         var arg = args[0];
@@ -801,7 +801,7 @@ internal static class BuiltInFunctions
     {
         if (args.Length > 1)
         {
-            throw new JsonataException("T0410", "$length expects 0 or 1 arguments", 0);
+            throw new JsonataException("T0410", SR.T0410_LengthExpects0Or1Arguments, 0);
         }
 
         bool isContextArg = args.Length == 0;
@@ -831,7 +831,7 @@ internal static class BuiltInFunctions
             // Wrong type: T0411 when context-derived, T0410 when explicit arg
             throw new JsonataException(
                 isContextArg ? "T0411" : "T0410",
-                "Argument 1 of function $length is not of the correct type",
+                SR.T0410_Argument1OfFunctionLengthIsNotCorrectType,
                 0);
         };
     }
@@ -840,7 +840,7 @@ internal static class BuiltInFunctions
     {
         if (args.Length < 2 || args.Length > 3)
         {
-            throw new JsonataException("T0410", "$substring expects 2 or 3 arguments", 0);
+            throw new JsonataException("T0410", SR.T0410_SubstringExpects2Or3Arguments, 0);
         }
 
         var strArg = args[0];
@@ -860,13 +860,13 @@ internal static class BuiltInFunctions
             var strElem = strSeq.FirstOrDefault;
             if (strElem.ValueKind != JsonValueKind.String)
             {
-                throw new JsonataException("T0410", "Argument 1 of function $substring is not a string", 0);
+                throw new JsonataException("T0410", SR.T0410_Argument1OfFunctionSubstringIsNotAString, 0);
             }
 
             var startElem = startSeq.FirstOrDefault;
             if (!FunctionalCompiler.TryCoerceToNumber(startElem, out double startD))
             {
-                throw new JsonataException("T0410", "Argument 2 of function $substring is not a number", 0);
+                throw new JsonataException("T0410", SR.T0410_Argument2OfFunctionSubstringIsNotANumber, 0);
             }
 
 #if NET
@@ -888,7 +888,7 @@ internal static class BuiltInFunctions
                 var lenSeq = lengthArg(input, env);
                 if (!FunctionalCompiler.TryCoerceToNumber(lenSeq.FirstOrDefault, out double lenD))
                 {
-                    throw new JsonataException("T0410", "Argument 3 of function $substring is not a number", 0);
+                    throw new JsonataException("T0410", SR.T0410_Argument3OfFunctionSubstringIsNotANumber, 0);
                 }
 
                 count = Math.Max(0, (int)lenD);
@@ -928,7 +928,7 @@ internal static class BuiltInFunctions
                 var lenSeq = lengthArg(input, env);
                 if (!FunctionalCompiler.TryCoerceToNumber(lenSeq.FirstOrDefault, out double lenD))
                 {
-                    throw new JsonataException("T0410", "Argument 3 of function $substring is not a number", 0);
+                    throw new JsonataException("T0410", SR.T0410_Argument3OfFunctionSubstringIsNotANumber, 0);
                 }
 
                 count = Math.Max(0, (int)lenD);
@@ -954,7 +954,7 @@ internal static class BuiltInFunctions
 
         if (args.Length != 2)
         {
-            throw new JsonataException("T0411", "$substringBefore expects 2 arguments", 0);
+            throw new JsonataException("T0411", SR.T0411_SubstringbeforeExpects2Arguments, 0);
         }
 
         return CompileStringSearch(args[0], args[1], before: true);
@@ -969,7 +969,7 @@ internal static class BuiltInFunctions
 
         if (args.Length != 2)
         {
-            throw new JsonataException("T0411", "$substringAfter expects 2 arguments", 0);
+            throw new JsonataException("T0411", SR.T0411_SubstringafterExpects2Arguments, 0);
         }
 
         return CompileStringSearch(args[0], args[1], before: false);
@@ -992,13 +992,13 @@ internal static class BuiltInFunctions
             {
                 throw new JsonataException(
                     contextImplied ? "T0411" : "T0410",
-                    "Argument 1 of string function is not a string",
+                    SR.T0410_Argument1OfStringFunctionIsNotAString,
                     0);
             }
 
             if (searchSeq.IsUndefined || searchSeq.FirstOrDefault.ValueKind != JsonValueKind.String)
             {
-                throw new JsonataException("T0410", "Argument 2 of string function is not a string", 0);
+                throw new JsonataException("T0410", SR.T0410_Argument2OfStringFunctionIsNotAString, 0);
             }
 
 #if NET
@@ -1060,7 +1060,7 @@ internal static class BuiltInFunctions
     {
         if (args.Length > 1)
         {
-            throw new JsonataException("T0410", "String function expects 0 or 1 arguments", 0);
+            throw new JsonataException("T0410", SR.T0410_StringFunctionExpects0Or1Arguments, 0);
         }
 
         var arg = args.Length == 1 ? args[0] : ContextArg;
@@ -1080,7 +1080,7 @@ internal static class BuiltInFunctions
 
             if (elem.ValueKind != JsonValueKind.String)
             {
-                throw new JsonataException("T0410", "String function argument must be a string", 0);
+                throw new JsonataException("T0410", SR.T0410_StringFunctionArgumentMustBeAString, 0);
             }
 
             string? str = elem.GetString();
@@ -1104,7 +1104,7 @@ internal static class BuiltInFunctions
     {
         if (args.Length > 1)
         {
-            throw new JsonataException("T0410", "String function expects 0 or 1 arguments", 0);
+            throw new JsonataException("T0410", SR.T0410_StringFunctionExpects0Or1Arguments, 0);
         }
 
         var arg = args.Length == 1 ? args[0] : ContextArg;
@@ -1124,7 +1124,7 @@ internal static class BuiltInFunctions
 
             if (elem.ValueKind != JsonValueKind.String)
             {
-                throw new JsonataException("T0410", "String function argument must be a string", 0);
+                throw new JsonataException("T0410", SR.T0410_StringFunctionArgumentMustBeAString, 0);
             }
 
             using UnescapedUtf16JsonString utf16 = elem.GetUtf16String();
@@ -1163,7 +1163,7 @@ internal static class BuiltInFunctions
     {
         if (args.Length < 1 || args.Length > 2)
         {
-            throw new JsonataException("T0410", "$join expects 1 or 2 arguments", 0);
+            throw new JsonataException("T0410", SR.T0410_JoinExpects1Or2Arguments, 0);
         }
 
         var arrArg = args[0];
@@ -1185,7 +1185,7 @@ internal static class BuiltInFunctions
                 var sepSeq = sepArg(input, env);
                 if (!sepSeq.IsUndefined && sepSeq.FirstOrDefault.ValueKind != JsonValueKind.String)
                 {
-                    throw new JsonataException("T0410", "Second argument of $join must be a string", 0);
+                    throw new JsonataException("T0410", SR.T0410_SecondArgumentOfJoinMustBeAString, 0);
                 }
 
                 if (!sepSeq.IsUndefined && sepSeq.FirstOrDefault.ValueKind == JsonValueKind.String)
@@ -1232,7 +1232,7 @@ internal static class BuiltInFunctions
                     }
                     else
                     {
-                        throw new JsonataException("T0412", "Argument 1 of function $join must be an array of strings", 0);
+                        throw new JsonataException("T0412", SR.T0412_Argument1OfFunctionJoinMustBeAnArrayOfStrings, 0);
                     }
                 }
 
@@ -1280,7 +1280,7 @@ internal static class BuiltInFunctions
         }
         else
         {
-            throw new JsonataException("T0410", "$split expects 1-3 arguments", 0);
+            throw new JsonataException("T0410", SR.T0410_SplitExpects13Arguments, 0);
         }
 
         return (in JsonElement input, Environment env) =>
@@ -1296,7 +1296,7 @@ internal static class BuiltInFunctions
             // Validate input is a string
             if (strSeq.IsLambda || strSeq.FirstOrDefault.ValueKind != JsonValueKind.String)
             {
-                throw new JsonataException("T0410", "Argument 1 of function $split is not of the correct type", 0);
+                throw new JsonataException("T0410", SR.T0410_Argument1OfFunctionSplitIsNotOfTheCorrectType, 0);
             }
 
             string? str = strSeq.FirstOrDefault.GetString();
@@ -1310,12 +1310,12 @@ internal static class BuiltInFunctions
             {
                 if (sepSeq.IsLambda)
                 {
-                    throw new JsonataException("T1010", "The function argument to '$split' does not match function signature", 0);
+                    throw new JsonataException("T1010", SR.T1010_TheFunctionArgumentToSplitDoesNotMatchFunctionSignature, 0);
                 }
 
                 if (sepSeq.IsUndefined || sepSeq.FirstOrDefault.ValueKind != JsonValueKind.String)
                 {
-                    throw new JsonataException("T0410", "Argument 2 of function $split is not of the correct type", 0);
+                    throw new JsonataException("T0410", SR.T0410_Argument2OfFunctionSplitIsNotOfTheCorrectType, 0);
                 }
             }
 
@@ -1327,14 +1327,14 @@ internal static class BuiltInFunctions
                 {
                     if (limitSeq.IsLambda || limitSeq.FirstOrDefault.ValueKind != JsonValueKind.Number)
                     {
-                        throw new JsonataException("T0410", "Argument 3 of function $split is not of the correct type", 0);
+                        throw new JsonataException("T0410", SR.T0410_Argument3OfFunctionSplitIsNotOfTheCorrectType, 0);
                     }
 
                     if (FunctionalCompiler.TryCoerceToNumber(limitSeq.FirstOrDefault, out double limitD))
                     {
                         if (limitD < 0)
                         {
-                            throw new JsonataException("D3020", "Third argument of the split function must evaluate to a positive number", 0);
+                            throw new JsonataException("D3020", SR.D3020_ThirdArgumentOfTheSplitFunctionMustEvaluateToAPositiveNumber, 0);
                         }
 
                         // Floor the limit (JSONata accepts non-integer limits)
@@ -1400,7 +1400,7 @@ internal static class BuiltInFunctions
         }
         else
         {
-            throw new JsonataException("T0410", "$contains expects 1 or 2 arguments", 0);
+            throw new JsonataException("T0410", SR.T0410_ContainsExpects1Or2Arguments, 0);
         }
 
         return (in JsonElement input, Environment env) =>
@@ -1416,7 +1416,7 @@ internal static class BuiltInFunctions
 #if NET
             if (strSeq.FirstOrDefault.ValueKind != JsonValueKind.String)
             {
-                throw new JsonataException("T0410", "Argument 1 of function $contains must be a string", 0);
+                throw new JsonataException("T0410", SR.T0410_Argument1OfFunctionContainsMustBeAString, 0);
             }
 
             using UnescapedUtf16JsonString strUtf16 = strSeq.FirstOrDefault.GetUtf16String();
@@ -1430,7 +1430,7 @@ internal static class BuiltInFunctions
 
             if (searchSeq.IsUndefined || searchSeq.FirstOrDefault.ValueKind != JsonValueKind.String)
             {
-                throw new JsonataException("T0410", "Argument 2 of function $contains must be a string or regex", 0);
+                throw new JsonataException("T0410", SR.T0410_Argument2OfFunctionContainsMustBeAStringOrRegex, 0);
             }
 
             using UnescapedUtf16JsonString searchUtf16 = searchSeq.FirstOrDefault.GetUtf16String();
@@ -1467,7 +1467,7 @@ internal static class BuiltInFunctions
     {
         if (args.Length != 1)
         {
-            throw new JsonataException("T0410", "$sqrt expects 1 argument", 0);
+            throw new JsonataException("T0410", SR.T0410_SqrtExpects1Argument, 0);
         }
 
         var arg = args[0];
@@ -1481,7 +1481,7 @@ internal static class BuiltInFunctions
 
             if (num < 0)
             {
-                throw new JsonataException("D3060", "The argument of the $sqrt function must be non-negative", 0);
+                throw new JsonataException("D3060", SR.D3060_TheArgumentOfTheSqrtFunctionMustBeNonNegative, 0);
             }
 
             return Sequence.FromDouble(Math.Sqrt(num), env.Workspace);
@@ -1492,7 +1492,7 @@ internal static class BuiltInFunctions
     {
         if (args.Length < 1 || args.Length > 2)
         {
-            throw new JsonataException("T0410", "$round expects 1 or 2 arguments", 0);
+            throw new JsonataException("T0410", SR.T0410_RoundExpects1Or2Arguments, 0);
         }
 
         var numArg = args[0];
@@ -1539,7 +1539,7 @@ internal static class BuiltInFunctions
     {
         if (args.Length != 2)
         {
-            throw new JsonataException("T0410", "$power expects 2 arguments", 0);
+            throw new JsonataException("T0410", SR.T0410_PowerExpects2Arguments, 0);
         }
 
         var baseArg = args[0];
@@ -1559,7 +1559,7 @@ internal static class BuiltInFunctions
             double result = Math.Pow(baseNum, expNum);
             if (double.IsInfinity(result) || double.IsNaN(result))
             {
-                throw new JsonataException("D3061", "The power function has resulted in a value that cannot be represented as a JSON number", 0);
+                throw new JsonataException("D3061", SR.D3061_PowerFunctionResultOutOfRange, 0);
             }
 
             return Sequence.FromDouble(result, env.Workspace);
@@ -1570,7 +1570,7 @@ internal static class BuiltInFunctions
     {
         if (args.Length != 1)
         {
-            throw new JsonataException("T0410", "Math function expects 1 argument", 0);
+            throw new JsonataException("T0410", SR.T0410_MathFunctionExpects1Argument, 0);
         }
 
         var arg = args[0];
@@ -1591,7 +1591,7 @@ internal static class BuiltInFunctions
     {
         if (args.Length != 1)
         {
-            throw new JsonataException("T0410", "$keys expects 1 argument", 0);
+            throw new JsonataException("T0410", SR.T0410_KeysExpects1Argument, 0);
         }
 
         var arg = args[0];
@@ -1658,7 +1658,7 @@ internal static class BuiltInFunctions
     {
         if (args.Length != 1)
         {
-            throw new JsonataException("T0410", "$values expects 1 argument", 0);
+            throw new JsonataException("T0410", SR.T0410_ValuesExpects1Argument, 0);
         }
 
         var arg = args[0];
@@ -1690,7 +1690,7 @@ internal static class BuiltInFunctions
     {
         if (args.Length != 2)
         {
-            throw new JsonataException("T0410", "$append expects 2 arguments", 0);
+            throw new JsonataException("T0410", SR.T0410_AppendExpects2Arguments, 0);
         }
 
         var arr1 = args[0];
@@ -1729,7 +1729,7 @@ internal static class BuiltInFunctions
     {
         if (args.Length < 1 || args.Length > 2)
         {
-            throw new JsonataException("T0410", "$sort expects 1-2 arguments", 0);
+            throw new JsonataException("T0410", SR.T0410_SortExpects12Arguments, 0);
         }
 
         var arrArg = args[0];
@@ -1828,7 +1828,7 @@ internal static class BuiltInFunctions
 
                 if (hasObjects)
                 {
-                    throw new JsonataException("D3070", "The single argument form of the $sort function can only be used on an array of strings or an array of numbers", 0);
+                    throw new JsonataException("D3070", SR.D3070_SortSingleArgRequiresStringsOrNumbers, 0);
                 }
 
                 StableSort(ref elements, (a, b) =>
@@ -1852,7 +1852,7 @@ internal static class BuiltInFunctions
     {
         if (args.Length != 1)
         {
-            throw new JsonataException("T0410", "$reverse expects 1 argument", 0);
+            throw new JsonataException("T0410", SR.T0410_ReverseExpects1Argument, 0);
         }
 
         var arg = args[0];
@@ -1886,7 +1886,7 @@ internal static class BuiltInFunctions
     {
         if (args.Length != 1)
         {
-            throw new JsonataException("T0410", "$distinct expects 1 argument", 0);
+            throw new JsonataException("T0410", SR.T0410_DistinctExpects1Argument, 0);
         }
 
         var arg = args[0];
@@ -1944,7 +1944,7 @@ internal static class BuiltInFunctions
     {
         if (args.Length != 1)
         {
-            throw new JsonataException("T0410", "$flatten expects 1 argument", 0);
+            throw new JsonataException("T0410", SR.T0410_FlattenExpects1Argument, 0);
         }
 
         var arg = args[0];
@@ -1989,7 +1989,7 @@ internal static class BuiltInFunctions
     {
         if (args.Length != 2)
         {
-            throw new JsonataException("T0410", "$map expects 2 arguments", 0);
+            throw new JsonataException("T0410", SR.T0410_MapExpects2Arguments, 0);
         }
 
         var arrArg = args[0];
@@ -2091,7 +2091,7 @@ internal static class BuiltInFunctions
     {
         if (args.Length != 2)
         {
-            throw new JsonataException("T0410", "$filter expects 2 arguments", 0);
+            throw new JsonataException("T0410", SR.T0410_FilterExpects2Arguments, 0);
         }
 
         var arrArg = args[0];
@@ -2232,7 +2232,7 @@ internal static class BuiltInFunctions
     {
         if (args.Length < 2 || args.Length > 3)
         {
-            throw new JsonataException("T0410", "$reduce expects 2-3 arguments", 0);
+            throw new JsonataException("T0410", SR.T0410_ReduceExpects23Arguments, 0);
         }
 
         var arrArg = args[0];
@@ -2255,7 +2255,7 @@ internal static class BuiltInFunctions
             // (skip for built-in functions which have dynamic arity)
             if (lambda.NativeFunc is null && lambda.Arity < 2)
             {
-                throw new JsonataException("D3050", "The second argument of the $reduce function must be a function with at least two arguments", 0);
+                throw new JsonataException("D3050", SR.D3050_ReduceSecondArgMustBeFunction, 0);
             }
 
             // Collect items using SequenceBuilder instead of List<Sequence>
@@ -2355,7 +2355,7 @@ internal static class BuiltInFunctions
     {
         if (args.Length < 1 || args.Length > 2)
         {
-            throw new JsonataException("T0410", "$each expects 1-2 arguments", 0);
+            throw new JsonataException("T0410", SR.T0410_EachExpects12Arguments, 0);
         }
 
         // When called with 1 arg, the object is the current context
@@ -2411,7 +2411,7 @@ internal static class BuiltInFunctions
     {
         if (args.Length != 1)
         {
-            throw new JsonataException("T0410", "$merge expects 1 argument", 0);
+            throw new JsonataException("T0410", SR.T0410_MergeExpects1Argument, 0);
         }
 
         var arg = args[0];
@@ -2468,7 +2468,7 @@ internal static class BuiltInFunctions
     {
         if (args.Length != 1)
         {
-            throw new JsonataException("T0410", "$spread expects 1 argument", 0);
+            throw new JsonataException("T0410", SR.T0410_SpreadExpects1Argument, 0);
         }
 
         var arg = args[0];
@@ -2550,7 +2550,7 @@ internal static class BuiltInFunctions
     {
         if (args.Length != 2)
         {
-            throw new JsonataException("T0410", "$lookup expects 2 arguments", 0);
+            throw new JsonataException("T0410", SR.T0410_LookupExpects2Arguments, 0);
         }
 
         var objArg = args[0];
@@ -2667,7 +2667,7 @@ internal static class BuiltInFunctions
     {
         if (args.Length < 1 || args.Length > 2)
         {
-            throw new JsonataException("T0410", "$single expects 1-2 arguments", 0);
+            throw new JsonataException("T0410", SR.T0410_SingleExpects12Arguments, 0);
         }
 
         var arrArg = args[0];
@@ -2702,13 +2702,13 @@ internal static class BuiltInFunctions
                 if (elements.Count == 0)
                 {
                     elements.ReturnArray();
-                    throw new JsonataException("D3139", "The $single function matched zero results", 0);
+                    throw new JsonataException("D3139", SR.D3139_TheSingleFunctionMatchedZeroResults, 0);
                 }
 
                 if (elements.Count != 1)
                 {
                     elements.ReturnArray();
-                    throw new JsonataException("D3138", "The $single function expected exactly one matching result", 0);
+                    throw new JsonataException("D3138", SR.D3138_TheSingleFunctionExpectedExactlyOneMatchingResult, 0);
                 }
 
                 var result = new Sequence(elements[0]);
@@ -2752,7 +2752,7 @@ internal static class BuiltInFunctions
                     if (match.HasValue)
                     {
                         elements.ReturnArray();
-                        throw new JsonataException("D3138", "The $single function expected exactly one matching result", 0);
+                        throw new JsonataException("D3138", SR.D3138_TheSingleFunctionExpectedExactlyOneMatchingResult, 0);
                     }
 
                     match = elements[i];
@@ -2763,7 +2763,7 @@ internal static class BuiltInFunctions
 
             if (!match.HasValue)
             {
-                throw new JsonataException("D3139", "The $single function matched zero results", 0);
+                throw new JsonataException("D3139", SR.D3139_TheSingleFunctionMatchedZeroResults, 0);
             }
 
             return new Sequence(match.Value);
@@ -2774,7 +2774,7 @@ internal static class BuiltInFunctions
     {
         if (args.Length < 1 || args.Length > 2)
         {
-            throw new JsonataException("T0410", "$sift expects 1-2 arguments", 0);
+            throw new JsonataException("T0410", SR.T0410_SiftExpects12Arguments, 0);
         }
 
         // When called with 1 arg, the object is the current context
@@ -2827,7 +2827,7 @@ internal static class BuiltInFunctions
     {
         if (args.Length < 2 || args.Length > 3)
         {
-            throw new JsonataException("T0410", "$pad expects 2-3 arguments", 0);
+            throw new JsonataException("T0410", SR.T0410_PadExpects23Arguments, 0);
         }
 
         var strArg = args[0];
@@ -2920,7 +2920,7 @@ internal static class BuiltInFunctions
         }
         else
         {
-            throw new JsonataException("T0410", "$match expects 1-3 arguments", 0);
+            throw new JsonataException("T0410", SR.T0410_MatchExpects13Arguments, 0);
         }
 
         return (in JsonElement input, Environment env) =>
@@ -3117,7 +3117,7 @@ internal static class BuiltInFunctions
         }
         else
         {
-            throw new JsonataException("T0410", "$replace expects 2-4 arguments", 0);
+            throw new JsonataException("T0410", SR.T0410_ReplaceExpects24Arguments, 0);
         }
 
         return (in JsonElement input, Environment env) =>
@@ -3133,7 +3133,7 @@ internal static class BuiltInFunctions
             // Validate input is a string
             if (strSeq.IsLambda || strSeq.FirstOrDefault.ValueKind != JsonValueKind.String)
             {
-                throw new JsonataException("T0410", "Argument 1 of function $replace is not of the correct type", 0);
+                throw new JsonataException("T0410", SR.T0410_Argument1OfFunctionReplaceIsNotOfTheCorrectType, 0);
             }
 
             // Validate pattern is a string or regex
@@ -3141,7 +3141,7 @@ internal static class BuiltInFunctions
             {
                 if (patSeq.IsUndefined || patSeq.IsLambda || patSeq.FirstOrDefault.ValueKind != JsonValueKind.String)
                 {
-                    throw new JsonataException("T0410", "Argument 2 of function $replace is not of the correct type", 0);
+                    throw new JsonataException("T0410", SR.T0410_Argument2OfFunctionReplaceIsNotOfTheCorrectType, 0);
                 }
             }
 
@@ -3151,7 +3151,7 @@ internal static class BuiltInFunctions
             {
                 if (repSeq.IsUndefined || repSeq.FirstOrDefault.ValueKind != JsonValueKind.String)
                 {
-                    throw new JsonataException("T0410", "Argument 3 of function $replace is not of the correct type", 0);
+                    throw new JsonataException("T0410", SR.T0410_Argument3OfFunctionReplaceIsNotOfTheCorrectType, 0);
                 }
             }
 
@@ -3164,14 +3164,14 @@ internal static class BuiltInFunctions
                 {
                     if (limSeq.IsLambda || limSeq.FirstOrDefault.ValueKind != JsonValueKind.Number)
                     {
-                        throw new JsonataException("T0410", "Argument 4 of function $replace is not of the correct type", 0);
+                        throw new JsonataException("T0410", SR.T0410_Argument4OfFunctionReplaceIsNotOfTheCorrectType, 0);
                     }
 
                     if (FunctionalCompiler.TryCoerceToNumber(limSeq.FirstOrDefault, out double n))
                     {
                         if (n < 0)
                         {
-                            throw new JsonataException("D3011", "The fourth argument of the $replace function must be a positive number", 0);
+                            throw new JsonataException("D3011", SR.D3011_TheFourthArgumentOfTheReplaceFunctionMustBeAPositiveNumber, 0);
                         }
 
                         limit = (int)n;
@@ -3199,7 +3199,7 @@ internal static class BuiltInFunctions
                 // Empty string pattern is an error
                 if (pattern.Length == 0)
                 {
-                    throw new JsonataException("D3010", "The second argument of the $replace function cannot be an empty string", 0);
+                    throw new JsonataException("D3010", SR.D3010_TheSecondArgumentOfTheReplaceFunctionCannotBeAnEmptyString, 0);
                 }
 
                 string replacement = FunctionalCompiler.CoerceElementToString(repSeq.FirstOrDefault);
@@ -3238,7 +3238,7 @@ internal static class BuiltInFunctions
 
             if (m.Length == 0)
             {
-                throw new JsonataException("D1004", "Regular expression matches zero length string", 0);
+                throw new JsonataException("D1004", SR.D1004_RegularExpressionMatchesZeroLengthString, 0);
             }
 
             sb.Append(str, searchStart, m.Index - searchStart);
@@ -3278,7 +3278,7 @@ internal static class BuiltInFunctions
 
             if (m.Length == 0)
             {
-                throw new JsonataException("D1004", "Regular expression matches zero length string", 0);
+                throw new JsonataException("D1004", SR.D1004_RegularExpressionMatchesZeroLengthString, 0);
             }
 
             sb.Append(str, searchStart, m.Index - searchStart);
@@ -3294,7 +3294,7 @@ internal static class BuiltInFunctions
 
             if (result.IsUndefined || result.FirstOrDefault.ValueKind != JsonValueKind.String)
             {
-                throw new JsonataException("D3012", "The replacement function must return a string", 0);
+                throw new JsonataException("D3012", SR.D3012_TheReplacementFunctionMustReturnAString, 0);
             }
 
             sb.Append(result.FirstOrDefault.GetString());
@@ -3391,7 +3391,7 @@ internal static class BuiltInFunctions
     {
         if (args.Length > 1)
         {
-            throw new JsonataException("T0410", "$base64encode expects 0-1 arguments", 0);
+            throw new JsonataException("T0410", SR.T0410_Base64encodeExpects01Arguments, 0);
         }
 
         if (args.Length == 0)
@@ -3418,7 +3418,7 @@ internal static class BuiltInFunctions
     {
         if (args.Length > 1)
         {
-            throw new JsonataException("T0410", "$base64decode expects 0-1 arguments", 0);
+            throw new JsonataException("T0410", SR.T0410_Base64decodeExpects01Arguments, 0);
         }
 
         if (args.Length == 0)
@@ -3445,7 +3445,7 @@ internal static class BuiltInFunctions
     {
         if (args.Length != 1)
         {
-            throw new JsonataException("T0410", "$encodeUrlComponent expects 1 argument", 0);
+            throw new JsonataException("T0410", SR.T0410_EncodeurlcomponentExpects1Argument, 0);
         }
 
         var arg = args[0];
@@ -3464,7 +3464,7 @@ internal static class BuiltInFunctions
             }
             catch (InvalidOperationException)
             {
-                throw new JsonataException("D3140", "Malformed URL passed to $encodeUrlComponent(): invalid string", 0);
+                throw new JsonataException("D3140", SR.D3140_MalformedUrlEncodeUrlComponent, 0);
             }
 
             ValidateNoUnpairedSurrogates(str, "$encodeUrlComponent");
@@ -3476,7 +3476,7 @@ internal static class BuiltInFunctions
     {
         if (args.Length != 1)
         {
-            throw new JsonataException("T0410", "$decodeUrlComponent expects 1 argument", 0);
+            throw new JsonataException("T0410", SR.T0410_DecodeurlcomponentExpects1Argument, 0);
         }
 
         var arg = args[0];
@@ -3492,7 +3492,7 @@ internal static class BuiltInFunctions
 
             if (HasInvalidPercentEncoding(str))
             {
-                throw new JsonataException("D3140", $"Malformed URL passed to $decodeUrlComponent(): \"{str}\"", 0);
+                throw new JsonataException("D3140", SR.Format(SR.D3140_MalformedUrlPassedToDecodeUrlComponent, str), 0);
             }
 
             try
@@ -3501,7 +3501,7 @@ internal static class BuiltInFunctions
             }
             catch (Exception ex) when (ex is UriFormatException or ArgumentException or FormatException)
             {
-                throw new JsonataException("D3140", $"Malformed URL passed to $decodeUrlComponent(): \"{str}\"", 0);
+                throw new JsonataException("D3140", SR.Format(SR.D3140_MalformedUrlPassedToDecodeUrlComponent, str), 0);
             }
         };
     }
@@ -3511,7 +3511,7 @@ internal static class BuiltInFunctions
     {
         if (args.Length != 1)
         {
-            throw new JsonataException("T0410", "$encodeUrl expects 1 argument", 0);
+            throw new JsonataException("T0410", SR.T0410_EncodeurlExpects1Argument, 0);
         }
 
         var arg = args[0];
@@ -3530,7 +3530,7 @@ internal static class BuiltInFunctions
             }
             catch (InvalidOperationException)
             {
-                throw new JsonataException("D3140", "Malformed URL passed to $encodeUrl(): invalid string", 0);
+                throw new JsonataException("D3140", SR.D3140_MalformedUrlEncodeUrl, 0);
             }
 
             ValidateNoUnpairedSurrogates(str, "$encodeUrl");
@@ -3543,7 +3543,7 @@ internal static class BuiltInFunctions
     {
         if (args.Length != 1)
         {
-            throw new JsonataException("T0410", "$decodeUrl expects 1 argument", 0);
+            throw new JsonataException("T0410", SR.T0410_DecodeurlExpects1Argument, 0);
         }
 
         var arg = args[0];
@@ -3559,7 +3559,7 @@ internal static class BuiltInFunctions
 
             if (HasInvalidPercentEncoding(str))
             {
-                throw new JsonataException("D3140", $"Malformed URL passed to $decodeUrl(): \"{str}\"", 0);
+                throw new JsonataException("D3140", SR.Format(SR.D3140_MalformedUrlPassedToDecodeUrl, str), 0);
             }
 
             try
@@ -3568,7 +3568,7 @@ internal static class BuiltInFunctions
             }
             catch (Exception ex) when (ex is UriFormatException or ArgumentException or FormatException)
             {
-                throw new JsonataException("D3140", $"Malformed URL passed to $decodeUrl(): \"{str}\"", 0);
+                throw new JsonataException("D3140", SR.Format(SR.D3140_MalformedUrlPassedToDecodeUrl, str), 0);
             }
         };
     }
@@ -3601,14 +3601,14 @@ internal static class BuiltInFunctions
             {
                 if (i + 1 >= str.Length || !char.IsLowSurrogate(str[i + 1]))
                 {
-                    throw new JsonataException("D3140", $"Malformed URL passed to {funcName}(): \"{str}\"", 0);
+                    throw new JsonataException("D3140", SR.Format(SR.D3140_MalformedUrlPassedToFunc, funcName, str), 0);
                 }
 
                 i++;
             }
             else if (char.IsLowSurrogate(c))
             {
-                throw new JsonataException("D3140", $"Malformed URL passed to {funcName}(): \"{str}\"", 0);
+                throw new JsonataException("D3140", SR.Format(SR.D3140_MalformedUrlPassedToFunc, funcName, str), 0);
             }
         }
     }
@@ -3628,7 +3628,7 @@ internal static class BuiltInFunctions
     {
         if (args.Length < 2 || args.Length > 3)
         {
-            throw new JsonataException("T0410", "$formatNumber expects 2 or 3 arguments", 0);
+            throw new JsonataException("T0410", SR.T0410_FormatnumberExpects2Or3Arguments, 0);
         }
 
         var numArg = args[0];
@@ -3709,7 +3709,7 @@ internal static class BuiltInFunctions
         string[] subPics = picture.Split(patSep);
         if (subPics.Length > 2)
         {
-            throw new JsonataException("D3080", "The picture string must not contain more than one pattern separator", 0);
+            throw new JsonataException("D3080", SR.D3080_ThePictureStringMustNotContainMoreThanOnePatternSeparator, 0);
         }
 
         // Parse each sub-picture.
@@ -3801,7 +3801,7 @@ internal static class BuiltInFunctions
 
             if (sub.IndexOf(decSep) != sub.LastIndexOf(decSep))
             {
-                throw new JsonataException("D3081", "The picture string must not contain more than one decimal separator", 0);
+                throw new JsonataException("D3081", SR.D3081_ThePictureStringMustNotContainMoreThanOneDecimalSeparator, 0);
             }
 
             if (pct.Length > 0)
@@ -3809,7 +3809,7 @@ internal static class BuiltInFunctions
                 int firstPct = sub.IndexOf(pct, StringComparison.Ordinal);
                 if (firstPct != -1 && sub.IndexOf(pct, firstPct + pct.Length, StringComparison.Ordinal) != -1)
                 {
-                    throw new JsonataException("D3082", "The picture string must not contain more than one percent character", 0);
+                    throw new JsonataException("D3082", SR.D3082_ThePictureStringMustNotContainMoreThanOnePercentCharacter, 0);
                 }
             }
 
@@ -3818,7 +3818,7 @@ internal static class BuiltInFunctions
                 int firstPm = sub.IndexOf(perMille, StringComparison.Ordinal);
                 if (firstPm != -1 && sub.IndexOf(perMille, firstPm + perMille.Length, StringComparison.Ordinal) != -1)
                 {
-                    throw new JsonataException("D3083", "The picture string must not contain more than one per-mille character", 0);
+                    throw new JsonataException("D3083", SR.D3083_ThePictureStringMustNotContainMoreThanOnePerMilleCharacter, 0);
                 }
             }
 
@@ -3826,7 +3826,7 @@ internal static class BuiltInFunctions
                 sub.IndexOf(pct, StringComparison.Ordinal) != -1 &&
                 sub.IndexOf(perMille, StringComparison.Ordinal) != -1)
             {
-                throw new JsonataException("D3084", "The picture string must not contain both percent and per-mille characters", 0);
+                throw new JsonataException("D3084", SR.D3084_PictureStringBothPercentAndPerMille, 0);
             }
 
             bool hasDigit = false;
@@ -3841,14 +3841,14 @@ internal static class BuiltInFunctions
 
             if (!hasDigit)
             {
-                throw new JsonataException("D3085", "The mantissa part of the picture string must contain at least one digit or optional digit character", 0);
+                throw new JsonataException("D3085", SR.D3085_MantissaMustContainDigit, 0);
             }
 
             for (int i = 0; i < activeParts[p].Length; i++)
             {
                 if (!IsActive(activeParts[p][i]))
                 {
-                    throw new JsonataException("D3086", "The picture string must not contain a passive character between active characters", 0);
+                    throw new JsonataException("D3086", SR.D3086_PassiveCharacterBetweenActive, 0);
                 }
             }
 
@@ -3858,21 +3858,21 @@ internal static class BuiltInFunctions
                 if ((decPosInSub > 0 && sub[decPosInSub - 1] == grpSep) ||
                     (decPosInSub < sub.Length - 1 && sub[decPosInSub + 1] == grpSep))
                 {
-                    throw new JsonataException("D3087", "The picture string must not contain a grouping separator adjacent to the decimal separator", 0);
+                    throw new JsonataException("D3087", SR.D3087_GroupingSeparatorAdjacentToDecimal, 0);
                 }
             }
             else
             {
                 if (integerParts[p].Length > 0 && integerParts[p][integerParts[p].Length - 1] == grpSep)
                 {
-                    throw new JsonataException("D3088", "The integer part of the picture string must not end with a grouping separator", 0);
+                    throw new JsonataException("D3088", SR.D3088_IntegerPartEndsWithGroupingSeparator, 0);
                 }
             }
 
             string doubleGrp = new string(grpSep, 2);
             if (sub.IndexOf(doubleGrp, StringComparison.Ordinal) != -1)
             {
-                throw new JsonataException("D3089", "The picture string must not contain adjacent grouping separators", 0);
+                throw new JsonataException("D3089", SR.D3089_ThePictureStringMustNotContainAdjacentGroupingSeparators, 0);
             }
 
             int optPos = integerParts[p].IndexOf(optDigit);
@@ -3882,7 +3882,7 @@ internal static class BuiltInFunctions
                 {
                     if (IsInDigitFamily(integerParts[p][i]))
                     {
-                        throw new JsonataException("D3090", "The integer part must not contain a mandatory digit before an optional digit", 0);
+                        throw new JsonataException("D3090", SR.D3090_MandatoryDigitBeforeOptional, 0);
                     }
                 }
             }
@@ -3894,7 +3894,7 @@ internal static class BuiltInFunctions
                 {
                     if (IsInDigitFamily(fractionalParts[p][i]))
                     {
-                        throw new JsonataException("D3091", "The fractional part must not contain a mandatory digit after an optional digit", 0);
+                        throw new JsonataException("D3091", SR.D3091_MandatoryDigitAfterOptional, 0);
                     }
                 }
             }
@@ -3904,21 +3904,21 @@ internal static class BuiltInFunctions
                 (sub.IndexOf(pct, StringComparison.Ordinal) != -1 ||
                  sub.IndexOf(perMille, StringComparison.Ordinal) != -1))
             {
-                throw new JsonataException("D3092", "The picture string must not contain an exponent with percent or per-mille", 0);
+                throw new JsonataException("D3092", SR.D3092_ExponentWithPercentOrPerMille, 0);
             }
 
             if (expExists)
             {
                 if (exponentParts[p]!.Length == 0)
                 {
-                    throw new JsonataException("D3093", "The exponent part of the picture string must contain at least one digit", 0);
+                    throw new JsonataException("D3093", SR.D3093_TheExponentPartOfThePictureStringMustContainAtLeastOneDigit, 0);
                 }
 
                 for (int i = 0; i < exponentParts[p]!.Length; i++)
                 {
                     if (!IsInDigitFamily(exponentParts[p]![i]))
                     {
-                        throw new JsonataException("D3093", "The exponent part of the picture string must contain only digit characters", 0);
+                        throw new JsonataException("D3093", SR.D3093_TheExponentPartOfThePictureStringMustContainOnlyDigitCharact, 0);
                     }
                 }
             }
@@ -4316,7 +4316,7 @@ internal static class BuiltInFunctions
     {
         if (args.Length < 1 || args.Length > 2)
         {
-            throw new JsonataException("T0410", "$formatBase expects 1 or 2 arguments", 0);
+            throw new JsonataException("T0410", SR.T0410_FormatbaseExpects1Or2Arguments, 0);
         }
 
         var numArg = args[0];
@@ -4353,7 +4353,7 @@ internal static class BuiltInFunctions
 
             if (radixInt < 2 || radixInt > 36)
             {
-                throw new JsonataException("D3100", $"The radix of the $formatBase function must be between 2 and 36. It was given {radixInt}", 0);
+                throw new JsonataException("D3100", SR.Format(SR.D3100_FormatBaseRadixOutOfRange, radixInt), 0);
             }
 
             long numLong = (long)Math.Round(num, MidpointRounding.ToEven);
@@ -4399,7 +4399,7 @@ internal static class BuiltInFunctions
     {
         if (args.Length != 1)
         {
-            throw new JsonataException("T0410", "$shuffle expects 1 argument", 0);
+            throw new JsonataException("T0410", SR.T0410_ShuffleExpects1Argument, 0);
         }
 
         var arg = args[0];
@@ -4519,7 +4519,7 @@ internal static class BuiltInFunctions
                     var el = msgSeq.FirstOrDefault;
                     if (el.ValueKind != JsonValueKind.String)
                     {
-                        throw new JsonataException("T0410", "$error expects a string argument", 0);
+                        throw new JsonataException("T0410", SR.T0410_ErrorExpectsAStringArgument, 0);
                     }
 
                     message = el.GetString() ?? message;
@@ -4534,7 +4534,7 @@ internal static class BuiltInFunctions
     {
         if (args.Length < 1 || args.Length > 2)
         {
-            throw new JsonataException("T0410", "$assert expects 1-2 arguments", 0);
+            throw new JsonataException("T0410", SR.T0410_AssertExpects12Arguments, 0);
         }
 
         var condArg = args[0];
@@ -4546,7 +4546,7 @@ internal static class BuiltInFunctions
             // $assert requires a boolean argument
             if (cond.IsUndefined || cond.FirstOrDefault.ValueKind is not (JsonValueKind.True or JsonValueKind.False))
             {
-                throw new JsonataException("T0410", "Argument 1 of function $assert must be a boolean", 0);
+                throw new JsonataException("T0410", SR.T0410_Argument1OfFunctionAssertMustBeABoolean, 0);
             }
 
             if (cond.FirstOrDefault.ValueKind == JsonValueKind.False)
@@ -4711,14 +4711,14 @@ internal static class BuiltInFunctions
             return Sequence.FromDouble(dt.ToUnixTimeMilliseconds(), workspace);
         }
 
-        throw new JsonataException("D3110", $"The string \"{str}\" cannot be parsed as a valid timestamp", 0);
+        throw new JsonataException("D3110", SR.Format(SR.D3110_StringCannotBeParsedAsTimestamp, str), 0);
     }
 
     private static ExpressionEvaluator CompileToMillis(ExpressionEvaluator[] args)
     {
         if (args.Length < 1)
         {
-            throw new JsonataException("T0410", "$toMillis expects at least 1 argument", 0);
+            throw new JsonataException("T0410", SR.T0410_TomillisExpectsAtLeast1Argument, 0);
         }
 
         var strArg = args[0];
@@ -4767,7 +4767,7 @@ internal static class BuiltInFunctions
     {
         if (args.Length < 2)
         {
-            throw new JsonataException("T0410", "$formatInteger expects at least 2 arguments", 0);
+            throw new JsonataException("T0410", SR.T0410_FormatintegerExpectsAtLeast2Arguments, 0);
         }
 
         var numArg = args[0];
@@ -4818,7 +4818,7 @@ internal static class BuiltInFunctions
     {
         if (args.Length < 2)
         {
-            throw new JsonataException("T0410", "$parseInteger expects at least 2 arguments", 0);
+            throw new JsonataException("T0410", SR.T0410_ParseintegerExpectsAtLeast2Arguments, 0);
         }
 
         var strArg = args[0];
@@ -4850,7 +4850,7 @@ internal static class BuiltInFunctions
     {
         if (args.Length < 1 || args.Length > 2)
         {
-            throw new JsonataException("T0410", "$eval expects 1 or 2 arguments", 0);
+            throw new JsonataException("T0410", SR.T0410_EvalExpects1Or2Arguments, 0);
         }
 
         var exprArg = args[0];
@@ -4866,7 +4866,7 @@ internal static class BuiltInFunctions
             var el = exprSeq.FirstOrDefault;
             if (el.ValueKind != JsonValueKind.String)
             {
-                throw new JsonataException("T0410", "$eval expects a string argument", 0);
+                throw new JsonataException("T0410", SR.T0410_EvalExpectsAStringArgument, 0);
             }
 
             string expr = el.GetString() ?? string.Empty;
@@ -4878,7 +4878,7 @@ internal static class BuiltInFunctions
             }
             catch (JsonataException ex)
             {
-                throw new JsonataException("D3120", $"Syntax error in expression passed to $eval: {ex.Message}", 0);
+                throw new JsonataException("D3120", SR.Format(SR.D3120_SyntaxErrorInEval, ex.Message), 0);
             }
 
             ExpressionEvaluator compiled;
@@ -4888,7 +4888,7 @@ internal static class BuiltInFunctions
             }
             catch (JsonataException ex)
             {
-                throw new JsonataException("D3121", $"Dynamic error in expression passed to $eval: {ex.Message}", 0);
+                throw new JsonataException("D3121", SR.Format(SR.D3121_DynamicErrorInEval, ex.Message), 0);
             }
 
             // Determine input for the compiled expression
@@ -4914,7 +4914,7 @@ internal static class BuiltInFunctions
             }
             catch (JsonataException ex)
             {
-                throw new JsonataException("D3121", $"Dynamic error in expression passed to $eval: {ex.Message}", 0);
+                throw new JsonataException("D3121", SR.Format(SR.D3121_DynamicErrorInEval, ex.Message), 0);
             }
         };
     }
@@ -4956,7 +4956,7 @@ internal static class BuiltInFunctions
         }
         else if (el.ValueKind is JsonValueKind.String or JsonValueKind.True or JsonValueKind.False or JsonValueKind.Object or JsonValueKind.Array)
         {
-            throw new JsonataException("T0412", "Argument 1 of aggregate function must be an array of numbers", 0);
+            throw new JsonataException("T0412", SR.T0412_Argument1OfAggregateFunctionMustBeAnArrayOfNumbers, 0);
         }
     }
 
@@ -5095,7 +5095,7 @@ internal static class BuiltInFunctions
     {
         if (el.ValueKind != JsonValueKind.String)
         {
-            throw new JsonataException("T0412", "Argument 1 of function $join must be an array of strings", 0);
+            throw new JsonataException("T0412", SR.T0412_Argument1OfFunctionJoinMustBeAnArrayOfStrings, 0);
         }
 
         if (!first && sepBuffer is not null)

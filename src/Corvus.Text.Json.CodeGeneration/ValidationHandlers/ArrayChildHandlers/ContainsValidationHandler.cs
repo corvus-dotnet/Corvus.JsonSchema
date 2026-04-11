@@ -56,7 +56,7 @@ public class ContainsValidationHandler : IChildArrayItemValidationHandler2, IJso
 
         public string Keyword { get; }
 
-        public string ContainsCountVariableName { get => field ?? throw new InvalidOperationException("You must set the contains count variable name."); internal set; }
+        public string ContainsCountVariableName { get => field ?? throw new InvalidOperationException(SR.ContainsCountVariableNameNotSet); internal set; }
     }
 
     private class ContainsOperator
@@ -95,7 +95,7 @@ public class ContainsValidationHandler : IChildArrayItemValidationHandler2, IJso
                         {
                             if (!constant.TryGetDouble(out double constantValueAsDouble))
                             {
-                                throw new InvalidOperationException($"Expected constant value to be a number that can be represented as an int or double. Actual value: {constant}");
+                                throw new InvalidOperationException(SR.Format(SR.ExpectedNumericConstantValue, constant));
                             }
 
                             value = (int)constantValueAsDouble;
@@ -217,7 +217,7 @@ public static class ContainsValidationExtensions
             Operator.LessThanOrEquals => "JsonSchemaEvaluation.MatchContainsCountLessThanOrEquals",
             Operator.GreaterThan => "JsonSchemaEvaluation.MatchContainsCountGreaterThan",
             Operator.GreaterThanOrEquals => "JsonSchemaEvaluation.MatchContainsCountGreaterThanOrEquals",
-            _ => throw new InvalidOperationException($"Unsupported operator: {op}")
+            _ => throw new InvalidOperationException(SR.Format(SR.UnsupportedOperator, op))
         };
 
         return generator

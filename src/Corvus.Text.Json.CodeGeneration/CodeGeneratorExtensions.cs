@@ -2343,6 +2343,6 @@ internal static partial class CodeGeneratorExtensions
             return provider.GetOrEmitNamedTypeInRootNamespace(name, key, emitter);
         }
 
-        throw new InvalidOperationException("Expected a CSharpLanguageProvider.");
+        throw new InvalidOperationException(SR.ExpectedCSharpLanguageProvider);
     }
 }

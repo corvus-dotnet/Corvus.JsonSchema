@@ -340,7 +340,7 @@ internal sealed class Environment
     {
         throw new JsonataException(
             "U1001",
-            "Stack overflow error: Check for non-terminating recursive function. Consider rewriting as tail-recursive.",
+            SR.U1001_StackOverflowError,
             -1);
     }
 
@@ -350,7 +350,7 @@ internal sealed class Environment
         long elapsed = Stopwatch.GetTimestamp() - r.startTicks;
         if (elapsed > r.timeLimitTicks)
         {
-            throw new JsonataException("U1001", "Expression evaluation timeout: Check for infinite loop", -1);
+            throw new JsonataException("U1001", SR.U1001_ExpressionEvaluationTimeoutCheckForInfiniteLoop, -1);
         }
     }
 }

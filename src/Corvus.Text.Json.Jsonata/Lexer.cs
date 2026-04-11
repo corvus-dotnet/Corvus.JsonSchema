@@ -71,7 +71,7 @@ internal struct Lexer
                 this.position++;
             }
 
-            throw new JsonataException("S0106", "Comment not terminated", commentStart);
+            throw new JsonataException("S0106", SR.S0106_CommentNotTerminated, commentStart);
         }
 
         char c = this.Peek();
@@ -120,7 +120,7 @@ internal struct Lexer
         // Characters that are only valid as part of multi-char operators (e.g. ! in !=, ~ in ~>)
         if (c == '!' || c == '~')
         {
-            throw new JsonataException("S0204", $"Unknown operator: {c}", this.position, c.ToString());
+            throw new JsonataException("S0204", SR.Format(SR.S0204_UnknownOperator, c), this.position, c.ToString());
         }
 
         // String literals
@@ -210,7 +210,7 @@ internal struct Lexer
                 this.position++;
                 if (this.position >= this.source.Length)
                 {
-                    throw new JsonataException("S0101", "String literal not terminated", start);
+                    throw new JsonataException("S0101", SR.S0101_StringLiteralNotTerminated, start);
                 }
 
                 c = this.source[this.position];
@@ -227,7 +227,7 @@ internal struct Lexer
                     case 'u':
                         if (this.position + 4 >= this.source.Length)
                         {
-                            throw new JsonataException("S0104", "Invalid unicode escape", this.position);
+                            throw new JsonataException("S0104", SR.S0104_InvalidUnicodeEscape, this.position);
                         }
 
                         string hex = this.source.Substring(this.position + 1, 4);
@@ -238,12 +238,12 @@ internal struct Lexer
                         }
                         else
                         {
-                            throw new JsonataException("S0104", "Invalid unicode escape", this.position);
+                            throw new JsonataException("S0104", SR.S0104_InvalidUnicodeEscape, this.position);
                         }
 
                         break;
                     default:
-                        throw new JsonataException("S0103", $"Illegal escape sequence: \\{c}", this.position, c.ToString());
+                        throw new JsonataException("S0103", SR.Format(SR.S0103_IllegalEscapeSequence, c), this.position, c.ToString());
                 }
             }
             else if (c == quote)
@@ -259,7 +259,7 @@ internal struct Lexer
             this.position++;
         }
 
-        throw new JsonataException("S0101", "String literal not terminated", start);
+        throw new JsonataException("S0101", SR.S0101_StringLiteralNotTerminated, start);
     }
 
     private Token? TryScanNumber()
@@ -336,7 +336,7 @@ internal struct Lexer
             return new Token(TokenType.Number, numStr, start) { NumericValue = value };
         }
 
-        throw new JsonataException("S0102", $"Invalid number: {numStr}", start, numStr);
+        throw new JsonataException("S0102", SR.Format(SR.S0102_InvalidNumber, numStr), start, numStr);
     }
 
     private Token ScanBacktickName()
@@ -348,7 +348,7 @@ internal struct Lexer
         if (end == -1)
         {
             this.position = this.source.Length;
-            throw new JsonataException("S0105", "Backtick-quoted name not terminated", start);
+            throw new JsonataException("S0105", SR.S0105_BacktickQuotedNameNotTerminated, start);
         }
 
         string name = this.source.Substring(this.position, end - this.position);
@@ -416,7 +416,7 @@ internal struct Lexer
                     string pattern = this.source.Substring(start, this.position - start);
                     if (pattern.Length == 0)
                     {
-                        throw new JsonataException("S0301", "Empty regular expression", this.position);
+                        throw new JsonataException("S0301", SR.S0301_EmptyRegularExpression, this.position);
                     }
 
                     this.position++;
@@ -452,6 +452,6 @@ internal struct Lexer
             this.position++;
         }
 
-        throw new JsonataException("S0302", "Regular expression not terminated", this.position);
+        throw new JsonataException("S0302", SR.S0302_RegularExpressionNotTerminated, this.position);
     }
 }
