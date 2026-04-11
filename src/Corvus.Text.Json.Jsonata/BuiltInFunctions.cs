@@ -5119,30 +5119,24 @@ internal static class BuiltInFunctions
     }
 
     /// <summary>
-    /// Performs a stable sort on a list using the given comparison function.
-    /// .NET's List&lt;T&gt;.Sort is not guaranteed stable; this preserves
-    /// the relative order of elements that compare equal.
+    /// Performs a stable sort on a <see cref="SequenceBuilder"/> using insertion sort.
+    /// Insertion sort is inherently stable (preserves relative order of equal elements)
+    /// and allocates nothing. O(n²) is acceptable for the small arrays typical in JSONata.
     /// </summary>
     private static void StableSort(ref SequenceBuilder builder, Comparison<JsonElement> comparison)
     {
         int count = builder.Count;
-
-        // Pair each element with its original index to break ties
-        var indexed = new (JsonElement Element, int Index)[count];
-        for (int i = 0; i < count; i++)
+        for (int i = 1; i < count; i++)
         {
-            indexed[i] = (builder[i], i);
-        }
+            JsonElement key = builder[i];
+            int j = i - 1;
+            while (j >= 0 && comparison(builder[j], key) > 0)
+            {
+                builder[j + 1] = builder[j];
+                j--;
+            }
 
-        Array.Sort(indexed, (a, b) =>
-        {
-            int cmp = comparison(a.Element, b.Element);
-            return cmp != 0 ? cmp : a.Index.CompareTo(b.Index);
-        });
-
-        for (int i = 0; i < count; i++)
-        {
-            builder[i] = indexed[i].Element;
+            builder[j + 1] = key;
         }
     }
 }

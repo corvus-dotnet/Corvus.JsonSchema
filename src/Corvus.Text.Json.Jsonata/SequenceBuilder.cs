@@ -111,6 +111,8 @@ internal struct SequenceBuilder
     {
         if (this.count == 0)
         {
+            // Return any rented arrays — the Sequence doesn't need them.
+            this.ReturnArraysToPool();
             return Sequence.Undefined;
         }
 
@@ -119,23 +121,33 @@ internal struct SequenceBuilder
         {
             if (this.count == 1)
             {
-                return Sequence.FromDouble(this.doubleArray![0], this.doubleWorkspace!);
+                var result = Sequence.FromDouble(this.doubleArray![0], this.doubleWorkspace!);
+                this.ReturnArraysToPool();
+                return result;
             }
 
             // Transfer ownership of the double array to the Sequence.
             var da = this.doubleArray!;
             this.doubleArray = null;
+
+            // Return element array if rented (not needed).
+            this.ReturnElementArray();
             return Sequence.FromDoubleArray(da, this.rawDoubleCount, this.doubleWorkspace!);
         }
 
         if (this.count == 1)
         {
-            return new Sequence(this.array![0]);
+            var result = new Sequence(this.array![0]);
+            this.ReturnArraysToPool();
+            return result;
         }
 
         // Transfer ownership of the element array to the Sequence.
         var arr = this.array!;
         this.array = null;
+
+        // Return double array if rented (not needed after materialization).
+        this.ReturnDoubleArray();
         return new Sequence(arr, this.count);
     }
 
@@ -144,20 +156,14 @@ internal struct SequenceBuilder
     /// Call this after the <see cref="Sequence"/> returned by <see cref="ToSequence"/>
     /// is no longer needed.
     /// </summary>
+    /// <remarks>
+    /// After <see cref="ToSequence"/>, this is always a safe no-op: for count ≤ 1 the
+    /// arrays were already returned inside <see cref="ToSequence"/>; for count ≥ 2
+    /// ownership transferred to the <see cref="Sequence"/>.
+    /// </remarks>
     public void ReturnArray()
     {
-        if (this.array is not null)
-        {
-            ArrayPool<JsonElement>.Shared.Return(this.array);
-            this.array = null;
-        }
-
-        if (this.doubleArray is not null)
-        {
-            ArrayPool<double>.Shared.Return(this.doubleArray);
-            this.doubleArray = null;
-        }
-
+        this.ReturnArraysToPool();
         this.count = 0;
         this.rawDoubleCount = 0;
     }
@@ -170,6 +176,33 @@ internal struct SequenceBuilder
     {
         this.count = 0;
         this.rawDoubleCount = 0;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void ReturnArraysToPool()
+    {
+        this.ReturnElementArray();
+        this.ReturnDoubleArray();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void ReturnElementArray()
+    {
+        if (this.array is not null)
+        {
+            ArrayPool<JsonElement>.Shared.Return(this.array);
+            this.array = null;
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void ReturnDoubleArray()
+    {
+        if (this.doubleArray is not null)
+        {
+            ArrayPool<double>.Shared.Return(this.doubleArray);
+            this.doubleArray = null;
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -214,11 +247,7 @@ internal struct SequenceBuilder
         }
 
         // Free the double array (no longer needed).
-        if (this.doubleArray is not null)
-        {
-            ArrayPool<double>.Shared.Return(this.doubleArray);
-            this.doubleArray = null;
-        }
+        this.ReturnDoubleArray();
 
         this.rawDoubleCount = 0;
     }

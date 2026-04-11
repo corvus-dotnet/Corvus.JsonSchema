@@ -5010,26 +5010,44 @@ public static class JsonataCodeGenHelpers
             return input;
         }
 
-        // Collect elements into an array for sorting
-        JsonElement[] elements = new JsonElement[count];
-        int idx = 0;
-        foreach (JsonElement item in input.EnumerateArray())
+        // Collect elements into a rented array
+        JsonElement[] elements = ArrayPool<JsonElement>.Shared.Rent(count);
+        try
         {
-            elements[idx++] = item;
+            int idx = 0;
+            foreach (JsonElement item in input.EnumerateArray())
+            {
+                elements[idx++] = item;
+            }
+
+            // Stable insertion sort: comparator returns true if a should be placed AFTER b
+            for (int i = 1; i < count; i++)
+            {
+                JsonElement key = elements[i];
+                int j = i - 1;
+                while (j >= 0 && comparator(elements[j], key, workspace))
+                {
+                    elements[j + 1] = elements[j];
+                    j--;
+                }
+
+                elements[j + 1] = key;
+            }
+
+            // Build result array
+            var doc = JsonElement.CreateArrayBuilder(workspace, count);
+            JsonElement.Mutable root = doc.RootElement;
+            for (int i = 0; i < count; i++)
+            {
+                root.AddItem(elements[i]);
+            }
+
+            return (JsonElement)root;
         }
-
-        // Sort: comparator returns true if a should be placed AFTER b (JSONata convention)
-        Array.Sort(elements, (a, b) => comparator(a, b, workspace) ? 1 : comparator(b, a, workspace) ? -1 : 0);
-
-        // Build result array
-        var doc = JsonElement.CreateArrayBuilder(workspace, count);
-        JsonElement.Mutable root = doc.RootElement;
-        for (int i = 0; i < count; i++)
+        finally
         {
-            root.AddItem(elements[i]);
+            ArrayPool<JsonElement>.Shared.Return(elements, clearArray: true);
         }
-
-        return (JsonElement)root;
     }
 
     // ===== HOF Inline Helpers =====
