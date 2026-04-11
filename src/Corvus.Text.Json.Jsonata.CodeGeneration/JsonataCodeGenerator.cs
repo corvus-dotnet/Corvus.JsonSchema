@@ -1089,7 +1089,9 @@ public static class JsonataCodeGenerator
             else
             {
                 // Has pre-predicate steps. Build condition for steps 0 through predStepIdx-1,
-                // then handle the predicate step's source being Object or Array.
+                // then inline-handle predicate when source is Object. If the source turns
+                // out to be Array (auto-map), the else falls through to the helper which
+                // handles CollectAndContinue via FusedCollectAndContinue.
                 var preCond = new List<string>();
                 string prevVar = dataVar;
 
@@ -1101,31 +1103,19 @@ public static class JsonataCodeGenerator
                     prevVar = stepVar;
                 }
 
-                // prevVar is now __ip{predStepIdx-1} — the source of the predicate step
+                // prevVar is now __ip{predStepIdx-1} — the source of the predicate step.
+                // Add source-is-Object + TryGetProperty for predicate step to the same condition
+                // so that Arrays at this level fall through to the helper.
                 string sourceVar = prevVar;
                 string predStepEscaped = EscapeStringLiteral(propertyNames[predStepIdx]);
                 string predArrayVar = $"__ip{predStepIdx}";
+                preCond.Add($"{sourceVar}.ValueKind == JsonValueKind.Object && {sourceVar}.TryGetProperty(\"{predStepEscaped}\"u8, out var {predArrayVar})");
 
                 L(sb, indent, $"if ({string.Join($"\n{indent}    && ", preCond)})");
                 L(sb, indent, "{");
                 string i1 = indent + "    ";
-                string i2 = i1 + "    ";
 
-                // Case 1: source is Object — direct navigation to predicate step
-                L(sb, i1, $"if ({sourceVar}.ValueKind == JsonValueKind.Object && {sourceVar}.TryGetProperty(\"{predStepEscaped}\"u8, out var {predArrayVar}))");
-                L(sb, i1, "{");
-
-                EmitInlinePredicateHandling(sb, i2, i2 + "    ", predArrayVar, pred, propertyNames, predStepIdx, resultVar, wsVar);
-
-                L(sb, i1, "}");
-
-                // Case 2: source is Array — outer iteration loop
-                L(sb, i1, $"else if ({sourceVar}.ValueKind == JsonValueKind.Array)");
-                L(sb, i1, "{");
-
-                EmitInlineOuterArrayLoop(sb, i2, sourceVar, predStepEscaped, pred, propertyNames, predStepIdx, resultVar, wsVar);
-
-                L(sb, i1, "}");
+                EmitInlinePredicateHandling(sb, i1, i1 + "    ", predArrayVar, pred, propertyNames, predStepIdx, resultVar, wsVar);
 
                 L(sb, indent, "}");
             }
