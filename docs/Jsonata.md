@@ -14,7 +14,7 @@ Three evaluation modes are available:
 | **Source generator** | Expressions are known at build time, embedded in your project | `Corvus.Text.Json.Jsonata.SourceGenerator` |
 | **CLI code generation** | Expressions are known ahead of time, generated outside the build | `Corvus.Json.CodeGenerator` (the `jsonata` command) |
 
-The source generator and CLI tool produce optimized static C# that eliminates delegate dispatch. Benchmarks show the interpreted evaluator is **up to 3.5× faster** than [Jsonata.Net.Native](https://github.com/nicoleaudia/jsonata.net.native) (the .NET reference implementation) with **90–100% less memory allocation**, and code-generated evaluators are faster still.
+The source generator and CLI tool produce optimized static C# that eliminates delegate dispatch. Benchmarks show the interpreted evaluator is **up to 3.5× faster** than [Jsonata.Net.Native](https://github.com/mikhail-barg/jsonata.net.native) (the .NET reference implementation) with **90–100% less memory allocation**, and code-generated evaluators are faster still.
 
 ## Conformance
 
@@ -622,7 +622,7 @@ All Runtime benchmarks use caller-managed `JsonWorkspace` for zero-allocation ev
 
 #### Employee transform (reference benchmark)
 
-This benchmark replicates the [Jsonata.Net.Native benchmark scenario](https://github.com/nicoleaudia/jsonata.net.native) — a multi-step expression with property navigation, string concatenation, and array predicate filtering against a real-world employee dataset:
+This benchmark replicates the [Jsonata.Net.Native benchmark scenario](https://github.com/mikhail-barg/jsonata.net.native) — a multi-step expression with property navigation, string concatenation, and array predicate filtering against a real-world employee dataset:
 
 ```jsonata
 {

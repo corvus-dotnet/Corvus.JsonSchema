@@ -44,4 +44,4 @@ Evaluate JSON-encoded logic rules against JSON data using the interpreted evalua
 
 ## [JSONata Query Language](/docs/jsonata.html)
 
-Query and transform JSON data using the [JSONata](https://jsonata.org/) functional language. `Corvus.Text.Json.Jsonata` provides interpreted evaluation, a Roslyn source generator, and a CLI code generator — all with zero-allocation pooled-memory evaluation. Passes 1,845 of 1,847 official test suite cases (99.89% conformance). Benchmarks show the interpreted evaluator is **up to 3.5× faster** than [Jsonata.Net.Native](https://github.com/nicoleaudia/jsonata.net.native) with 90–100% less memory allocation.
+Query and transform JSON data using the [JSONata](https://jsonata.org/) functional language. `Corvus.Text.Json.Jsonata` provides interpreted evaluation, a Roslyn source generator, and a CLI code generator — all with zero-allocation pooled-memory evaluation. Passes 1,845 of 1,847 official test suite cases (99.89% conformance). Benchmarks show the interpreted evaluator is **up to 3.5× faster** than [Jsonata.Net.Native](https://github.com/mikhail-barg/jsonata.net.native) with 90–100% less memory allocation.
