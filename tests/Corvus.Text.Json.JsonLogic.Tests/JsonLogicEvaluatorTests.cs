@@ -22,6 +22,7 @@ public class JsonLogicEvaluatorTests
     /// <param name="data">The data as a JSON string.</param>
     /// <param name="expected">The expected result as a JSON string.</param>
     [Theory]
+    [Trait("category", "testsuite")]
     [MemberData(nameof(GetTestCases))]
     public void OfficialTestSuite(int index, string rule, string data, string expected)
     {
