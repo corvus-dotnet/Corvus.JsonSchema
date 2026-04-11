@@ -141,6 +141,7 @@ Rules to follow:
 - **EditorConfig** — 4-space indentation, `csharp_new_line_before_open_brace = all`. Generated files must be marked `generated_code = true` in `.editorconfig` entries.
 - **JSON Schema test suite** — `JSON-Schema-Test-Suite/` is a git submodule. The `Corvus.JsonSchemaTestSuite.CodeGenerator` project regenerates the xUnit test classes from it; re-run it after updating the submodule.
 - **`BigNumber`** — the custom arbitrary-precision decimal struct lives in `Corvus.Numerics`. Prefer it over `decimal` when the JSON value may have precision beyond 28 significant digits.
+- **Test-first bug fixes** — never implement a fix for a suspected bug without first writing a test that reproduces the problem. The test must fail before the fix and pass after. If you cannot reproduce the bug with a test, do not change production code.
 
 ## JsonWorkspace and Mutable Documents
 
