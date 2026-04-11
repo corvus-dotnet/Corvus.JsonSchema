@@ -409,9 +409,6 @@ The Corvus JSONata implementation is designed for high-throughput scenarios wher
 | Custom functions | Via bindings | Via API |
 | Recursion depth limit | Configurable (default 500) | Not configurable |
 | Execution timeout | Configurable (milliseconds) | Not available |
-| Regular expressions | Full support | Full support |
-| Parent operator (`%`) | Supported | Supported |
-| Order-by (`^()`) | Supported | Supported |
 
 ### Benchmark summary
 
