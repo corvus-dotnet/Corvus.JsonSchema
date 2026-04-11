@@ -112,11 +112,11 @@ public class BenchmarkObjectConstruction : JsonataBenchmarkBase
 
 #if !NETFRAMEWORK
     /// <summary>
-    /// Native: simple object with aggregation.
+    /// Jsonata.Net.Native (reference impl): simple object with aggregation.
     /// </summary>
     [BenchmarkCategory("SimpleObject")]
     [Benchmark(Baseline = true)]
-    public JToken Native_SimpleObject() =>
+    public JToken JsonataDotNet_SimpleObject() =>
         this.nativeSimpleObject.Eval(this.nativeData);
 #endif
 
@@ -133,11 +133,11 @@ public class BenchmarkObjectConstruction : JsonataBenchmarkBase
 
 #if !NETFRAMEWORK
     /// <summary>
-    /// Native: per-element object construction.
+    /// Jsonata.Net.Native (reference impl): per-element object construction.
     /// </summary>
     [BenchmarkCategory("GroupByObject")]
     [Benchmark(Baseline = true)]
-    public JToken Native_GroupByObject() =>
+    public JToken JsonataDotNet_GroupByObject() =>
         this.nativeGroupByObject.Eval(this.nativeData);
 #endif
 
@@ -154,11 +154,11 @@ public class BenchmarkObjectConstruction : JsonataBenchmarkBase
 
 #if !NETFRAMEWORK
     /// <summary>
-    /// Native: array of constructed objects.
+    /// Jsonata.Net.Native (reference impl): array of constructed objects.
     /// </summary>
     [BenchmarkCategory("ArrayOfObjects")]
     [Benchmark(Baseline = true)]
-    public JToken Native_ArrayOfObjects() =>
+    public JToken JsonataDotNet_ArrayOfObjects() =>
         this.nativeArrayOfObjects.Eval(this.nativeData);
 #endif
 

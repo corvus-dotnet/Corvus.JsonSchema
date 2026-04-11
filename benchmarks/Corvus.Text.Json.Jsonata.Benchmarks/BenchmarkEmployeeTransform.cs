@@ -80,11 +80,11 @@ public class BenchmarkEmployeeTransform : JsonataBenchmarkBase
 
 #if !NETFRAMEWORK
     /// <summary>
-    /// Native: evaluate only (query pre-compiled, data pre-parsed).
+    /// Jsonata.Net.Native (reference impl): evaluate only (query pre-compiled, data pre-parsed).
     /// </summary>
     [BenchmarkCategory("CachedEval")]
     [Benchmark(Baseline = true)]
-    public JToken Native_Evaluate()
+    public JToken JsonataDotNet_Evaluate()
     {
         return this.nativeQuery.Eval(this.nativeData);
     }
@@ -103,11 +103,11 @@ public class BenchmarkEmployeeTransform : JsonataBenchmarkBase
 
 #if !NETFRAMEWORK
     /// <summary>
-    /// Native: compile + evaluate (fresh query, data pre-parsed).
+    /// Jsonata.Net.Native (reference impl): compile + evaluate (fresh query, data pre-parsed).
     /// </summary>
     [BenchmarkCategory("ColdStart")]
     [Benchmark(Baseline = true)]
-    public JToken Native_ParseAndEvaluate()
+    public JToken JsonataDotNet_ParseAndEvaluate()
     {
         var freshQuery = new JsonataQuery(Query);
         return freshQuery.Eval(this.nativeData);

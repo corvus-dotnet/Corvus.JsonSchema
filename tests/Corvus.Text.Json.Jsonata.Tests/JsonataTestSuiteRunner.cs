@@ -45,7 +45,7 @@ public class JsonataTestSuiteRunner
     }
 
     [Theory]
-    [Trait("Category", "testsuite")]
+    [Trait("category", "testsuite")]
     [MemberData(nameof(GetTestCases))]
     public void RunTestCase(string group, string caseName, string caseFilePath)
     {

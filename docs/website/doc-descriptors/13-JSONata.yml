@@ -1,0 +1,3 @@
+source: JSONata.md
+navTitle: "JSONata Query Language"
+description: "Query and transform JSON data using the JSONata functional language. Supports interpreted evaluation, Roslyn source generator, and CLI code generation with 99.89% conformance and zero-allocation evaluation."

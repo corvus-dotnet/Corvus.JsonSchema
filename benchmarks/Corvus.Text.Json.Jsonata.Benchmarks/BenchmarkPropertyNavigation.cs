@@ -112,11 +112,11 @@ public class BenchmarkPropertyNavigation : JsonataBenchmarkBase
 
 #if !NETFRAMEWORK
     /// <summary>
-    /// Native: deep path traversal through arrays.
+    /// Jsonata.Net.Native (reference impl): deep path traversal through arrays.
     /// </summary>
     [BenchmarkCategory("DeepPath")]
     [Benchmark(Baseline = true)]
-    public JToken Native_DeepPath() =>
+    public JToken JsonataDotNet_DeepPath() =>
         this.nativeDeepPath.Eval(this.nativeData);
 #endif
 
@@ -133,11 +133,11 @@ public class BenchmarkPropertyNavigation : JsonataBenchmarkBase
 
 #if !NETFRAMEWORK
     /// <summary>
-    /// Native: quoted property name access.
+    /// Jsonata.Net.Native (reference impl): quoted property name access.
     /// </summary>
     [BenchmarkCategory("QuotedProperty")]
     [Benchmark(Baseline = true)]
-    public JToken Native_QuotedProperty() =>
+    public JToken JsonataDotNet_QuotedProperty() =>
         this.nativeQuotedProperty.Eval(this.nativeData);
 #endif
 
@@ -154,11 +154,11 @@ public class BenchmarkPropertyNavigation : JsonataBenchmarkBase
 
 #if !NETFRAMEWORK
     /// <summary>
-    /// Native: array index access.
+    /// Jsonata.Net.Native (reference impl): array index access.
     /// </summary>
     [BenchmarkCategory("ArrayIndex")]
     [Benchmark(Baseline = true)]
-    public JToken Native_ArrayIndex() =>
+    public JToken JsonataDotNet_ArrayIndex() =>
         this.nativeArrayIndex.Eval(this.nativeData);
 #endif
 

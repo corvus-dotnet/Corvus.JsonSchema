@@ -118,11 +118,11 @@ public class BenchmarkPredicateFilter : JsonataBenchmarkBase
 
 #if !NETFRAMEWORK
     /// <summary>
-    /// Native: Contact.Phone[type='mobile'].number.
+    /// Jsonata.Net.Native (reference impl): Contact.Phone[type='mobile'].number.
     /// </summary>
     [BenchmarkCategory("SinglePredicate")]
     [Benchmark(Baseline = true)]
-    public JToken Native_SinglePredicate() =>
+    public JToken JsonataDotNet_SinglePredicate() =>
         this.nativeSinglePredicate.Eval(this.nativeData);
 #endif
 
@@ -139,11 +139,11 @@ public class BenchmarkPredicateFilter : JsonataBenchmarkBase
 
 #if !NETFRAMEWORK
     /// <summary>
-    /// Native: Contact[ssn='...'].Phone[0].number.
+    /// Jsonata.Net.Native (reference impl): Contact[ssn='...'].Phone[0].number.
     /// </summary>
     [BenchmarkCategory("ChainedPredicate")]
     [Benchmark(Baseline = true)]
-    public JToken Native_ChainedPredicate() =>
+    public JToken JsonataDotNet_ChainedPredicate() =>
         this.nativeChainedPredicate.Eval(this.nativeData);
 #endif
 
@@ -160,11 +160,11 @@ public class BenchmarkPredicateFilter : JsonataBenchmarkBase
 
 #if !NETFRAMEWORK
     /// <summary>
-    /// Native: Contact.Phone[type='office' or type='mobile'].number.
+    /// Jsonata.Net.Native (reference impl): Contact.Phone[type='office' or type='mobile'].number.
     /// </summary>
     [BenchmarkCategory("CompoundPredicate")]
     [Benchmark(Baseline = true)]
-    public JToken Native_CompoundPredicate() =>
+    public JToken JsonataDotNet_CompoundPredicate() =>
         this.nativeCompoundPredicate.Eval(this.nativeData);
 #endif
 

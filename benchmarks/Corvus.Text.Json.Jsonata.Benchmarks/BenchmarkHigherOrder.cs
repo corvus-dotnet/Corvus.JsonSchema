@@ -115,11 +115,11 @@ public class BenchmarkHigherOrder : JsonataBenchmarkBase
 
 #if !NETFRAMEWORK
     /// <summary>
-    /// Native: $map extracting product names.
+    /// Jsonata.Net.Native (reference impl): $map extracting product names.
     /// </summary>
     [BenchmarkCategory("Map")]
     [Benchmark(Baseline = true)]
-    public JToken Native_Map() =>
+    public JToken JsonataDotNet_Map() =>
         this.nativeMap.Eval(this.nativeData);
 #endif
 
@@ -136,11 +136,11 @@ public class BenchmarkHigherOrder : JsonataBenchmarkBase
 
 #if !NETFRAMEWORK
     /// <summary>
-    /// Native: $filter with price predicate.
+    /// Jsonata.Net.Native (reference impl): $filter with price predicate.
     /// </summary>
     [BenchmarkCategory("Filter")]
     [Benchmark(Baseline = true)]
-    public JToken Native_Filter() =>
+    public JToken JsonataDotNet_Filter() =>
         this.nativeFilter.Eval(this.nativeData);
 #endif
 
@@ -157,11 +157,11 @@ public class BenchmarkHigherOrder : JsonataBenchmarkBase
 
 #if !NETFRAMEWORK
     /// <summary>
-    /// Native: $reduce with accumulator.
+    /// Jsonata.Net.Native (reference impl): $reduce with accumulator.
     /// </summary>
     [BenchmarkCategory("Reduce")]
     [Benchmark(Baseline = true)]
-    public JToken Native_Reduce() =>
+    public JToken JsonataDotNet_Reduce() =>
         this.nativeReduce.Eval(this.nativeData);
 #endif
 
@@ -178,11 +178,11 @@ public class BenchmarkHigherOrder : JsonataBenchmarkBase
 
 #if !NETFRAMEWORK
     /// <summary>
-    /// Native: $sort with comparator.
+    /// Jsonata.Net.Native (reference impl): $sort with comparator.
     /// </summary>
     [BenchmarkCategory("Sort")]
     [Benchmark(Baseline = true)]
-    public JToken Native_Sort() =>
+    public JToken JsonataDotNet_Sort() =>
         this.nativeSort.Eval(this.nativeData);
 #endif
 

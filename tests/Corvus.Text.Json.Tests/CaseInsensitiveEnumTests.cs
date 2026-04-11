@@ -14,7 +14,7 @@ namespace Corvus.Text.Json.Tests.CaseInsensitiveEnumValidation;
 /// Tests that enum schemas with values that differ only by casing (e.g. "Microsoft" and "microsoft")
 /// generate valid code with deduplicated EnumValues member names.
 /// </summary>
-[Trait("Category", "CodeGen")]
+[Trait("category", "CodeGen")]
 public class CaseInsensitiveEnumValues : IClassFixture<CaseInsensitiveEnumValues.Fixture>
 {
     private readonly Fixture fixture;

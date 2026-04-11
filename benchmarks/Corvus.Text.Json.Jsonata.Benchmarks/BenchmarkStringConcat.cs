@@ -101,11 +101,11 @@ public class BenchmarkStringConcat : JsonataBenchmarkBase
 
 #if !NETFRAMEWORK
     /// <summary>
-    /// Native: simple string concatenation.
+    /// Jsonata.Net.Native (reference impl): simple string concatenation.
     /// </summary>
     [BenchmarkCategory("SimpleConcat")]
     [Benchmark(Baseline = true)]
-    public JToken Native_SimpleConcat() =>
+    public JToken JsonataDotNet_SimpleConcat() =>
         this.nativeSimpleConcat.Eval(this.nativeData);
 #endif
 
@@ -122,11 +122,11 @@ public class BenchmarkStringConcat : JsonataBenchmarkBase
 
 #if !NETFRAMEWORK
     /// <summary>
-    /// Native: string concat with number coercion.
+    /// Jsonata.Net.Native (reference impl): string concat with number coercion.
     /// </summary>
     [BenchmarkCategory("ConcatWithNumber")]
     [Benchmark(Baseline = true)]
-    public JToken Native_ConcatWithNumber() =>
+    public JToken JsonataDotNet_ConcatWithNumber() =>
         this.nativeConcatWithNumber.Eval(this.nativeData);
 #endif
 
@@ -143,11 +143,11 @@ public class BenchmarkStringConcat : JsonataBenchmarkBase
 
 #if !NETFRAMEWORK
     /// <summary>
-    /// Native: $join with array and separator.
+    /// Jsonata.Net.Native (reference impl): $join with array and separator.
     /// </summary>
     [BenchmarkCategory("JoinArray")]
     [Benchmark(Baseline = true)]
-    public JToken Native_JoinArray() =>
+    public JToken JsonataDotNet_JoinArray() =>
         this.nativeJoinArray.Eval(this.nativeData);
 #endif
 

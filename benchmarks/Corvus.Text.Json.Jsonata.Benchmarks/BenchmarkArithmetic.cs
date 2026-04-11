@@ -109,11 +109,11 @@ public class BenchmarkArithmetic : JsonataBenchmarkBase
 
 #if !NETFRAMEWORK
     /// <summary>
-    /// Native: $sum(Account.Order.Product.(Price * Quantity)).
+    /// Jsonata.Net.Native (reference impl): $sum(Account.Order.Product.(Price * Quantity)).
     /// </summary>
     [BenchmarkCategory("SumProduct")]
     [Benchmark(Baseline = true)]
-    public JToken Native_SumProduct() =>
+    public JToken JsonataDotNet_SumProduct() =>
         this.nativeSumProduct.Eval(this.nativeData);
 #endif
 
@@ -130,11 +130,11 @@ public class BenchmarkArithmetic : JsonataBenchmarkBase
 
 #if !NETFRAMEWORK
     /// <summary>
-    /// Native: Account.Order.Product.(Price * Quantity).
+    /// Jsonata.Net.Native (reference impl): Account.Order.Product.(Price * Quantity).
     /// </summary>
     [BenchmarkCategory("MapArithmetic")]
     [Benchmark(Baseline = true)]
-    public JToken Native_MapArithmetic() =>
+    public JToken JsonataDotNet_MapArithmetic() =>
         this.nativeMapArithmetic.Eval(this.nativeData);
 #endif
 
@@ -151,11 +151,11 @@ public class BenchmarkArithmetic : JsonataBenchmarkBase
 
 #if !NETFRAMEWORK
     /// <summary>
-    /// Native: pure arithmetic with no data access.
+    /// Jsonata.Net.Native (reference impl): pure arithmetic with no data access.
     /// </summary>
     [BenchmarkCategory("PureArithmetic")]
     [Benchmark(Baseline = true)]
-    public JToken Native_PureArithmetic() =>
+    public JToken JsonataDotNet_PureArithmetic() =>
         this.nativePureArithmetic.Eval(this.nativeData);
 #endif
 

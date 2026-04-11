@@ -13,7 +13,7 @@ Always exclude the `failing` and `outerloop` categories when running the full su
 
 ## Test projects
 
-The solution contains five runnable test projects and four supporting model/utility projects.
+The solution contains eleven runnable test projects and four supporting model/utility projects.
 
 ### Runnable test projects
 
@@ -24,6 +24,12 @@ The solution contains five runnable test projects and four supporting model/util
 | `Corvus.Text.Json.CodeGenerator.Tests` | net10.0 | CLI code generator |
 | `Corvus.Text.Json.Migration.Analyzers.Tests` | net10.0 | V4→V5 migration Roslyn analyzers and code fixes |
 | `Corvus.Numerics.Tests` | net9.0, net10.0, net481 | `BigNumber` / `BigInteger` arithmetic |
+| `Corvus.Text.Json.Jsonata.Tests` | net10.0, net481 | JSONata runtime conformance — official test suite |
+| `Corvus.Text.Json.Jsonata.CodeGeneration.Tests` | net10.0 | JSONata code generation conformance and edge-case tests |
+| `Corvus.Text.Json.Jsonata.SourceGenerator.Tests` | net10.0 | JSONata source generator integration tests |
+| `Corvus.Text.Json.JsonLogic.Tests` | net10.0, net481 | JsonLogic runtime conformance — official test suite |
+| `Corvus.Text.Json.JsonLogic.CodeGeneration.Tests` | net10.0 | JsonLogic code generation tests |
+| `Corvus.Text.Json.JsonLogic.SourceGenerator.Tests` | net10.0 | JsonLogic source generator integration tests |
 
 ### Supporting projects (not runnable)
 
@@ -94,6 +100,80 @@ dotnet test tests\Corvus.Text.Json.Validator.Tests --filter "category!=failing&c
 ```powershell
 dotnet test tests\Corvus.Text.Json.CodeGenerator.Tests
 ```
+
+### JSONata tests
+
+The JSONata test projects exercise the runtime evaluator, the code generator, and the source generator.
+
+#### Runtime conformance (official test suite)
+
+The `Corvus.Text.Json.Jsonata.Tests` project runs the full [JSONata test suite](https://github.com/jsonata-org/jsonata) against the interpreted evaluator. Each test case is loaded from the `Jsonata-Test-Suite/` submodule and exercises expression evaluation, error handling, variable bindings, recursion depth limits, and execution timeouts. Tests are tagged with the `testsuite` category.
+
+```powershell
+# All runtime conformance tests
+dotnet test tests\Corvus.Text.Json.Jsonata.Tests --filter "category!=failing&category!=outerloop"
+
+# On a specific framework
+dotnet test tests\Corvus.Text.Json.Jsonata.Tests -f net10.0 --filter "category!=failing&category!=outerloop"
+dotnet test tests\Corvus.Text.Json.Jsonata.Tests -f net481 --filter "category!=failing&category!=outerloop"
+```
+
+Individual test cases have a 10-second timeout to catch runaway recursive expressions.
+
+#### Code generation conformance
+
+The `Corvus.Text.Json.Jsonata.CodeGeneration.Tests` project compiles every JSONata expression to C# using the code generator, then executes the generated code and compares results against the expected output. Tests are tagged with the `codegen-conformance` category.
+
+```powershell
+# All CG conformance tests
+dotnet test tests\Corvus.Text.Json.Jsonata.CodeGeneration.Tests --filter "category=codegen-conformance"
+```
+
+A separate set of edge-case tests (tagged `codegen-edge`) exercises code paths that the conformance suite may not cover thoroughly — nested higher-order functions, lambda variable capture, parameter shadowing, and root-reference (`$$`) propagation:
+
+```powershell
+# CG edge-case tests only
+dotnet test tests\Corvus.Text.Json.Jsonata.CodeGeneration.Tests --filter "category=codegen-edge"
+
+# All CG tests (conformance + edge cases)
+dotnet test tests\Corvus.Text.Json.Jsonata.CodeGeneration.Tests
+```
+
+#### Source generator integration
+
+```powershell
+dotnet test tests\Corvus.Text.Json.Jsonata.SourceGenerator.Tests
+```
+
+These tests verify that the Roslyn incremental source generator produces correct evaluators for representative expressions (property paths, arithmetic, string concatenation, aggregate functions, predicate filtering, higher-order functions).
+
+### JsonLogic tests
+
+The JsonLogic test projects mirror the JSONata structure: runtime conformance, code generation, and source generator integration.
+
+#### Runtime conformance (official test suite)
+
+The `Corvus.Text.Json.JsonLogic.Tests` project runs the full [official JsonLogic test suite](https://jsonlogic.com/tests.json) against the interpreted evaluator.
+
+```powershell
+dotnet test tests\Corvus.Text.Json.JsonLogic.Tests --filter "category!=failing&category!=outerloop"
+```
+
+#### Code generation
+
+```powershell
+dotnet test tests\Corvus.Text.Json.JsonLogic.CodeGeneration.Tests
+```
+
+Tests that the code generator produces valid C# for representative JsonLogic rules (variable access, arithmetic, comparison, string concatenation, conditional logic).
+
+#### Source generator integration
+
+```powershell
+dotnet test tests\Corvus.Text.Json.JsonLogic.SourceGenerator.Tests
+```
+
+Verifies that source-generated evaluators produce correct results for addition, conditional logic, string concatenation, array filtering, and missing-data checks.
 
 ## Running a single test class or method
 
