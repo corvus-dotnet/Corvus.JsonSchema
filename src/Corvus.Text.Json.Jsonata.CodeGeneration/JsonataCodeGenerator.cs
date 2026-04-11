@@ -3404,11 +3404,15 @@ public static class JsonataCodeGenerator
                 return docVar;
             }
 
-            // Classify each value: can it be emitted as a raw double?
-            // This avoids intermediate DoubleToElement / NumberFromDouble allocations.
+            // Classify each value: double, concat bytes, or JsonElement.
+            // Double avoids NumberFromDouble allocation.
+            // Concat bytes avoids StringFromUnescapedUtf8 intermediate document builder.
             string[] keyLiterals = new string[n];
-            string[] valueVars = new string[n];
+            string?[] valueVars = new string?[n];
             bool[] isDouble = new bool[n];
+            bool[] isConcat = new bool[n];
+            string?[] concatBufVars = new string?[n];
+            string?[] concatLenVars = new string?[n];
 
             for (int i = 0; i < n; i++)
             {
@@ -3421,53 +3425,119 @@ public static class JsonataCodeGenerator
                 {
                     valueVars[i] = doubleVar;
                     isDouble[i] = true;
+                    continue;
                 }
-                else
+
+                var concatVars = TryEmitValueAsConcatBytes(sb, obj.Pairs[i].Value, indent, dataVar, wsVar);
+                if (concatVars != null)
                 {
-                    valueVars[i] = EmitExpression(sb, obj.Pairs[i].Value, indent, dataVar, wsVar);
+                    isConcat[i] = true;
+                    concatBufVars[i] = concatVars.Value.BufVar;
+                    concatLenVars[i] = concatVars.Value.LenVar;
+                    continue;
                 }
+
+                valueVars[i] = EmitExpression(sb, obj.Pairs[i].Value, indent, dataVar, wsVar);
             }
 
-            // Use CVB (ComplexValueBuilder) pattern: CreateBuilder with a static callback
-            // writes properties forward-only into the metadata buffer, avoiding the
-            // version-tracking and property-name-scan overhead of SetProperty.
-
-            // Build the tuple type and expression. Mixed types when some values are doubles.
-            string[] types = new string[n];
-            for (int i = 0; i < n; i++)
-            {
-                types[i] = isDouble[i] ? "double" : "JsonElement";
-            }
-
-            string ctxExpr = n == 1
-                ? $"ValueTuple.Create({valueVars[0]})"
-                : $"({string.Join(", ", valueVars)})";
-
-            string ctxType = n == 1
-                ? $"ValueTuple<{types[0]}>"
-                : $"({string.Join(", ", types)})";
-
-            string builderVar = NextVar();
-            L(sb, indent, $"var {builderVar} = JsonElement.CreateBuilder({wsVar}, {ctxExpr}, static (in {ctxType} __ctx, ref JsonElement.ObjectBuilder __b) =>");
-            L(sb, indent, "{");
+            // Build context tuple. Each property contributes:
+            //   double → 1 slot (double)
+            //   concat → 2 slots (byte[], int)
+            //   element → 1 slot (JsonElement)
+            List<string> slotTypes = new();
+            List<string> slotExprs = new();
+            int[] firstSlot = new int[n];
 
             for (int i = 0; i < n; i++)
             {
-                string itemRef = n == 1 ? "__ctx.Item1" : $"__ctx.Item{i + 1}";
+                firstSlot[i] = slotTypes.Count + 1; // 1-based for __ctx.ItemN
                 if (isDouble[i])
                 {
-                    L(sb, indent, $"    if (!double.IsNaN({itemRef})) __b.AddProperty({keyLiterals[i]}, {itemRef});");
+                    slotTypes.Add("double");
+                    slotExprs.Add(valueVars[i]!);
+                }
+                else if (isConcat[i])
+                {
+                    slotTypes.Add("byte[]");
+                    slotTypes.Add("int");
+                    slotExprs.Add(concatBufVars[i]!);
+                    slotExprs.Add(concatLenVars[i]!);
                 }
                 else
                 {
-                    L(sb, indent, $"    if ({itemRef}.ValueKind != JsonValueKind.Undefined) __b.AddProperty({keyLiterals[i]}, {itemRef});");
+                    slotTypes.Add("JsonElement");
+                    slotExprs.Add(valueVars[i]!);
                 }
             }
 
-            L(sb, indent, $"}}, {n});");
+            int totalSlots = slotTypes.Count;
+            string ctxType = totalSlots == 1
+                ? $"ValueTuple<{slotTypes[0]}>"
+                : $"({string.Join(", ", slotTypes)})";
+            string ctxExpr = totalSlots == 1
+                ? $"ValueTuple.Create({slotExprs[0]})"
+                : $"({string.Join(", ", slotExprs)})";
 
+            bool hasConcat = Array.Exists(isConcat, c => c);
+
+            // If concat buffers need cleanup, declare result before try/finally
             string v = NextVar();
-            L(sb, indent, $"var {v} = (JsonElement){builderVar}.RootElement;");
+            string cbIndent = indent;
+            if (hasConcat)
+            {
+                L(sb, indent, $"JsonElement {v};");
+                L(sb, indent, "try");
+                L(sb, indent, "{");
+                cbIndent = indent + "    ";
+            }
+
+            string builderVar = NextVar();
+            L(sb, cbIndent, $"var {builderVar} = JsonElement.CreateBuilder({wsVar}, {ctxExpr}, static (in {ctxType} __ctx, ref JsonElement.ObjectBuilder __b) =>");
+            L(sb, cbIndent, "{");
+
+            for (int i = 0; i < n; i++)
+            {
+                int slot = firstSlot[i];
+                string itemRef = totalSlots == 1 ? "__ctx.Item1" : $"__ctx.Item{slot}";
+                if (isDouble[i])
+                {
+                    L(sb, cbIndent, $"    if (!double.IsNaN({itemRef})) __b.AddProperty({keyLiterals[i]}, {itemRef});");
+                }
+                else if (isConcat[i])
+                {
+                    string bufRef = totalSlots == 1 ? "__ctx.Item1" : $"__ctx.Item{slot}";
+                    string lenRef = $"__ctx.Item{slot + 1}";
+                    L(sb, cbIndent, $"    __b.AddProperty({keyLiterals[i]}, new ReadOnlySpan<byte>({bufRef}, 0, {lenRef}));");
+                }
+                else
+                {
+                    L(sb, cbIndent, $"    if ({itemRef}.ValueKind != JsonValueKind.Undefined) __b.AddProperty({keyLiterals[i]}, {itemRef});");
+                }
+            }
+
+            L(sb, cbIndent, $"}}, {n});");
+
+            if (hasConcat)
+            {
+                L(sb, cbIndent, $"{v} = (JsonElement){builderVar}.RootElement;");
+                L(sb, indent, "}");
+                L(sb, indent, "finally");
+                L(sb, indent, "{");
+                for (int i = 0; i < n; i++)
+                {
+                    if (isConcat[i])
+                    {
+                        L(sb, indent, $"    System.Buffers.ArrayPool<byte>.Shared.Return({concatBufVars[i]});");
+                    }
+                }
+
+                L(sb, indent, "}");
+            }
+            else
+            {
+                L(sb, cbIndent, $"var {v} = (JsonElement){builderVar}.RootElement;");
+            }
+
             return v;
         }
 
@@ -3508,6 +3578,109 @@ public static class JsonataCodeGenerator
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// Attempts to emit a concat expression (<c>&amp;</c> operator) as rented UTF-8 bytes
+        /// instead of an intermediate <see cref="JsonElement"/>. Uses
+        /// <see cref="JsonataCodeGenHelpers.ConcatBuilder.DetachWrittenBytes"/> backed by
+        /// <see cref="ArrayPool{T}"/> to avoid the document builder allocation.
+        /// </summary>
+        /// <returns>
+        /// A tuple of (bufferVar, lengthVar) naming the <c>byte[]</c> and <c>int</c> variables,
+        /// or <c>null</c> if the expression isn't a concat suitable for byte detachment.
+        /// </returns>
+        private (string BufVar, string LenVar)? TryEmitValueAsConcatBytes(
+            StringBuilder sb, JsonataNode value, string indent, string dataVar, string wsVar)
+        {
+            if (value is not BinaryNode { Operator: "&" } binary)
+            {
+                return null;
+            }
+
+            // Check AST structure before emitting any code — if the concat
+            // doesn't use literals or auto-maps, it goes through StringConcat
+            // helpers which return JsonElement and can't be converted to bytes.
+            if (!ConcatHasLiteralsOrAutoMaps(binary))
+            {
+                return null;
+            }
+
+            List<(string Var, bool IsLiteral, string? AutoMapPropField)> operands = new();
+            FlattenConcatOperands(sb, binary, indent, dataVar, wsVar, operands);
+
+            string cbVar = NextVar();
+            string bufVar = NextVar();
+            string lenVar = NextVar();
+
+            L(sb, indent, $"var {cbVar} = {H}.BeginConcatRented();");
+
+            for (int i = 0; i < operands.Count; i++)
+            {
+                if (operands[i].IsLiteral)
+                {
+                    L(sb, indent, $"{cbVar}.AppendLiteral({operands[i].Var});");
+                }
+                else if (operands[i].AutoMapPropField != null)
+                {
+                    L(sb, indent, $"{cbVar}.AppendAutoMap({operands[i].Var}, {operands[i].AutoMapPropField});");
+                }
+                else
+                {
+                    L(sb, indent, $"{cbVar}.AppendElement({operands[i].Var});");
+                }
+            }
+
+            L(sb, indent, $"var ({bufVar}, {lenVar}) = {cbVar}.DetachWrittenBytes();");
+            L(sb, indent, "");
+            return (bufVar, lenVar);
+        }
+
+        /// <summary>
+        /// Checks whether a concat chain uses any string literals or auto-map property
+        /// paths. Only those concats use <see cref="JsonataCodeGenHelpers.ConcatBuilder"/>
+        /// and can be detached as bytes.
+        /// </summary>
+        private static bool ConcatHasLiteralsOrAutoMaps(BinaryNode binary)
+        {
+            if (binary.Lhs is StringNode || binary.Rhs is StringNode)
+            {
+                return true;
+            }
+
+            if (binary.Lhs is BinaryNode { Operator: "&" } leftConcat
+                && ConcatHasLiteralsOrAutoMaps(leftConcat))
+            {
+                return true;
+            }
+
+            if (binary.Rhs is BinaryNode { Operator: "&" } rightConcat
+                && ConcatHasLiteralsOrAutoMaps(rightConcat))
+            {
+                return true;
+            }
+
+            if (IsAutoMapCandidate(binary.Lhs) || IsAutoMapCandidate(binary.Rhs))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Checks whether a node is a 2+-step simple property chain suitable for
+        /// <see cref="JsonataCodeGenHelpers.ConcatBuilder.AppendAutoMap"/>.
+        /// </summary>
+        private static bool IsAutoMapCandidate(JsonataNode node)
+        {
+            return node is PathNode path
+                && path.Steps.Count >= 2
+                && IsSimplePropertyChain(path.Steps)
+                && path.Annotations?.Group is null
+                && !path.KeepSingletonArray
+                && !path.KeepArray
+                && !path.Steps.Exists(s => s.KeepArray);
         }
 
         /// <summary>

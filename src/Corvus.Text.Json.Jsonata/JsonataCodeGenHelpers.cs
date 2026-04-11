@@ -1434,6 +1434,19 @@ public static class JsonataCodeGenHelpers
     public static ConcatBuilder BeginConcat(Span<byte> initialBuffer) => new(initialBuffer);
 
     /// <summary>
+    /// Begins a concat operation backed by a rented <see cref="ArrayPool{T}"/> buffer.
+    /// Use <see cref="ConcatBuilder.DetachWrittenBytes"/> to take ownership of the buffer
+    /// when the result needs to outlive the builder (e.g. to pass through a context tuple).
+    /// </summary>
+    /// <param name="initialCapacity">The initial buffer size to rent.</param>
+    /// <returns>A <see cref="ConcatBuilder"/> backed by a rented buffer.</returns>
+    public static ConcatBuilder BeginConcatRented(int initialCapacity = 256)
+    {
+        byte[] buf = ArrayPool<byte>.Shared.Rent(initialCapacity);
+        return new ConcatBuilder(buf);
+    }
+
+    /// <summary>
     /// A ref struct for building concatenated strings from a mix of <see cref="JsonElement"/>
     /// values and UTF-8 literal spans. Wraps the internal <see cref="Utf8ValueStringBuilder"/>
     /// to provide a public API for generated code.
@@ -1441,10 +1454,18 @@ public static class JsonataCodeGenHelpers
     public ref struct ConcatBuilder
     {
         private Utf8ValueStringBuilder _sb;
+        private byte[]? _initialRentedBuffer;
 
         internal ConcatBuilder(Span<byte> initialBuffer)
         {
             _sb = new Utf8ValueStringBuilder(initialBuffer);
+            _initialRentedBuffer = null;
+        }
+
+        internal ConcatBuilder(byte[] rentedBuffer)
+        {
+            _sb = new Utf8ValueStringBuilder(rentedBuffer);
+            _initialRentedBuffer = rentedBuffer;
         }
 
         /// <summary>
@@ -1513,10 +1534,45 @@ public static class JsonataCodeGenHelpers
             JsonataHelpers.StringFromUnescapedUtf8(_sb.AsSpan(), workspace);
 
         /// <summary>
-        /// Releases resources used by this builder.
+        /// Detaches the written bytes into a caller-owned <see langword="byte"/>[] from
+        /// <see cref="ArrayPool{T}.Shared"/>. Only valid when constructed via
+        /// <see cref="BeginConcatRented"/>. Disposes this builder. The caller must return
+        /// the result buffer to <see cref="ArrayPool{T}.Shared"/> when done.
         /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Dispose() => _sb.Dispose();
+        /// <returns>A tuple of the buffer and the number of valid bytes written.</returns>
+        public (byte[] Buffer, int Length) DetachWrittenBytes()
+        {
+            int length = _sb.Length;
+            (byte[]? grownBuf, _) = _sb.GetRentedBufferAndLengthAndDispose();
+            if (grownBuf != null)
+            {
+                // Builder grew beyond initial buffer; return initial, use grown
+                if (_initialRentedBuffer != null)
+                {
+                    ArrayPool<byte>.Shared.Return(_initialRentedBuffer);
+                }
+
+                return (grownBuf, length);
+            }
+
+            // Data is still in the initial rented buffer (no growth) — zero copy
+            System.Diagnostics.Debug.Assert(_initialRentedBuffer != null, "DetachWrittenBytes requires BeginConcatRented");
+            return (_initialRentedBuffer!, length);
+        }
+
+        /// <summary>
+        /// Releases resources used by this builder. If constructed via
+        /// <see cref="BeginConcatRented"/>, returns the initial rented buffer.
+        /// </summary>
+        public void Dispose()
+        {
+            _sb.Dispose();
+            if (_initialRentedBuffer != null)
+            {
+                ArrayPool<byte>.Shared.Return(_initialRentedBuffer);
+                _initialRentedBuffer = null;
+            }
+        }
     }
 
     /// <summary>
