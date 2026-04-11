@@ -15,6 +15,7 @@ namespace Corvus.Text.Json.Jsonata.SourceGenerator;
 /// <summary>
 /// Roslyn incremental source generator that produces a static <c>Evaluate</c> method
 /// from a JSONata expression file referenced via <c>[JsonataExpression("path.jsonata")]</c>.
+/// Custom function definitions from <c>.jfn</c> files are discovered automatically.
 /// </summary>
 [Generator(LanguageNames.CSharp)]
 public sealed class JsonataSourceGenerator : IIncrementalGenerator
@@ -32,6 +33,13 @@ public sealed class JsonataSourceGenerator : IIncrementalGenerator
         IncrementalValueProvider<ImmutableArray<AdditionalText>> collectedFiles =
             jsonataFiles.Collect();
 
+        // Discover all .jfn files for custom function definitions
+        IncrementalValuesProvider<AdditionalText> jfnFiles =
+            context.AdditionalTextsProvider.Where(static f => f.Path.EndsWith(".jfn", StringComparison.OrdinalIgnoreCase));
+
+        IncrementalValueProvider<ImmutableArray<AdditionalText>> collectedJfnFiles =
+            jfnFiles.Collect();
+
         // Find partial classes/structs annotated with [JsonataExpression]
         IncrementalValuesProvider<GenerationSpec> specs =
             context.SyntaxProvider.ForAttributeWithMetadataName(
@@ -39,11 +47,12 @@ public sealed class JsonataSourceGenerator : IIncrementalGenerator
                 predicate: IsValidTarget,
                 transform: ExtractSpec);
 
-        // Combine each spec with all available .jsonata files
-        IncrementalValuesProvider<(GenerationSpec Spec, ImmutableArray<AdditionalText> Files)> combined =
+        // Combine each spec with all available .jsonata and .jfn files
+        IncrementalValuesProvider<(GenerationSpec Spec, ImmutableArray<AdditionalText> Files, ImmutableArray<AdditionalText> JfnFiles)> combined =
             specs
                 .Combine(collectedFiles)
-                .Select(static (pair, _) => (pair.Left, pair.Right));
+                .Combine(collectedJfnFiles)
+                .Select(static (pair, _) => (pair.Left.Left, pair.Left.Right, pair.Right));
 
         context.RegisterSourceOutput(combined, Execute);
     }
@@ -112,7 +121,7 @@ public sealed class JsonataSourceGenerator : IIncrementalGenerator
 
     private static void Execute(
         SourceProductionContext context,
-        (GenerationSpec Spec, ImmutableArray<AdditionalText> Files) input)
+        (GenerationSpec Spec, ImmutableArray<AdditionalText> Files, ImmutableArray<AdditionalText> JfnFiles) input)
     {
         GenerationSpec spec = input.Spec;
         ImmutableArray<AdditionalText> files = input.Files;
@@ -161,9 +170,12 @@ public sealed class JsonataSourceGenerator : IIncrementalGenerator
             return;
         }
 
+        // Parse custom functions from .jfn files
+        IReadOnlyList<CustomFunction>? customFunctions = ParseJfnFiles(context, input.JfnFiles);
+
         try
         {
-            string generated = JsonataCodeGenerator.Generate(expression!, spec.TypeName, spec.NamespaceName);
+            string generated = JsonataCodeGenerator.Generate(expression!, spec.TypeName, spec.NamespaceName, customFunctions);
 
             // Transform the standalone static class into a partial type body
             string source = TransformToPartialType(generated, spec);
@@ -186,8 +198,50 @@ public sealed class JsonataSourceGenerator : IIncrementalGenerator
         }
     }
 
+    private static IReadOnlyList<CustomFunction>? ParseJfnFiles(
+        SourceProductionContext context,
+        ImmutableArray<AdditionalText> jfnFiles)
+    {
+        if (jfnFiles.IsDefaultOrEmpty)
+        {
+            return null;
+        }
+
+        List<CustomFunction> allFunctions = new();
+        foreach (AdditionalText jfnFile in jfnFiles)
+        {
+            string? content = jfnFile.GetText(context.CancellationToken)?.ToString();
+            if (string.IsNullOrEmpty(content))
+            {
+                continue;
+            }
+
+            try
+            {
+                IReadOnlyList<CustomFunction> fns = JfnParser.Parse(content!);
+                allFunctions.AddRange(fns);
+            }
+            catch (FormatException ex)
+            {
+                context.ReportDiagnostic(Diagnostic.Create(
+                    new DiagnosticDescriptor(
+                        "JASG004",
+                        "Custom function parse error",
+                        "Failed to parse .jfn file '{0}': {1}",
+                        "Corvus.Text.Json.Jsonata",
+                        DiagnosticSeverity.Error,
+                        isEnabledByDefault: true),
+                    Location.None,
+                    jfnFile.Path,
+                    ex.Message));
+            }
+        }
+
+        return allFunctions.Count > 0 ? allFunctions : null;
+    }
+
     /// <summary>
-    /// Transforms the output of <see cref="JsonataCodeGenerator.Generate"/> from a standalone
+    /// Transforms the output of <see cref="JsonataCodeGenerator.Generate(string, string, string)"/> from a standalone
     /// static class into a partial type body matching the user's declaration.
     /// </summary>
     private static string TransformToPartialType(string generated, GenerationSpec spec)

@@ -839,4 +839,148 @@ public class EvaluatorTests
         Assert.True(double.TryParse(result, out double ms));
         Assert.True(ms > 1_000_000_000_000);
     }
+
+    // ── Function binding tests ───────────────────────────────
+
+    [Fact]
+    public void FunctionBindingSimple()
+    {
+        var evaluator = new JsonataEvaluator();
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"x": 5}"""u8.ToArray());
+
+        var bindings = new Dictionary<string, JsonataBinding>
+        {
+            ["double"] = JsonataBinding.FromFunction(
+                (args, ws) =>
+                {
+                    double val = args[0].GetDouble();
+                    return JsonataCodeGenHelpers.DoubleToElement(val * 2, ws);
+                },
+                parameterCount: 1),
+        };
+
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        var result = evaluator.Evaluate("$double(x)", doc.RootElement, workspace, bindings);
+        Assert.Equal(10.0, result.GetDouble());
+    }
+
+    [Fact]
+    public void FunctionBindingMultipleArgs()
+    {
+        var evaluator = new JsonataEvaluator();
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{}"u8.ToArray());
+
+        var bindings = new Dictionary<string, JsonataBinding>
+        {
+            ["add"] = JsonataBinding.FromFunction(
+                (args, ws) =>
+                {
+                    double a = args[0].GetDouble();
+                    double b = args[1].GetDouble();
+                    return JsonataCodeGenHelpers.DoubleToElement(a + b, ws);
+                },
+                parameterCount: 2),
+        };
+
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        var result = evaluator.Evaluate("$add(3, 7)", doc.RootElement, workspace, bindings);
+        Assert.Equal(10.0, result.GetDouble());
+    }
+
+    [Fact]
+    public void FunctionBindingWithValueBinding()
+    {
+        var evaluator = new JsonataEvaluator();
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{}"u8.ToArray());
+
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+
+        // Create a JsonElement for the value binding
+        var thresholdDoc = ParsedJsonDocument<JsonElement>.Parse("100"u8.ToArray());
+        JsonElement thresholdElement = thresholdDoc.RootElement.Clone();
+        thresholdDoc.Dispose();
+
+        var bindings = new Dictionary<string, JsonataBinding>
+        {
+            ["threshold"] = thresholdElement,  // implicit conversion
+            ["clamp"] = JsonataBinding.FromFunction(
+                (args, ws) =>
+                {
+                    double val = args[0].GetDouble();
+                    double max = args[1].GetDouble();
+                    double result = val > max ? max : val;
+                    return JsonataCodeGenHelpers.DoubleToElement(result, ws);
+                },
+                parameterCount: 2),
+        };
+
+        var result = evaluator.Evaluate("$clamp(150, $threshold)", doc.RootElement, workspace, bindings);
+        Assert.Equal(100.0, result.GetDouble());
+    }
+
+    [Fact]
+    public void FunctionBindingUsedInMapHof()
+    {
+        var evaluator = new JsonataEvaluator();
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"items": [1, 2, 3]}"""u8.ToArray());
+
+        var bindings = new Dictionary<string, JsonataBinding>
+        {
+            ["triple"] = JsonataBinding.FromFunction(
+                (args, ws) =>
+                {
+                    double val = args[0].GetDouble();
+                    return JsonataCodeGenHelpers.DoubleToElement(val * 3, ws);
+                },
+                parameterCount: 1),
+        };
+
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        var result = evaluator.Evaluate("$map(items, $triple)", doc.RootElement, workspace, bindings);
+        Assert.Equal("[3,6,9]", result.GetRawText());
+    }
+
+    [Fact]
+    public void FunctionBindingReturnsString()
+    {
+        var evaluator = new JsonataEvaluator();
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"name": "world"}"""u8.ToArray());
+
+        var bindings = new Dictionary<string, JsonataBinding>
+        {
+            ["greet"] = JsonataBinding.FromFunction(
+                (args, ws) =>
+                {
+                    string name = args[0].GetString()!;
+                    return JsonataHelpers.StringFromString("Hello, " + name + "!", ws);
+                },
+                parameterCount: 1),
+        };
+
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        var result = evaluator.Evaluate("$greet(name)", doc.RootElement, workspace, bindings);
+        Assert.Equal("Hello, world!", result.GetString());
+    }
+
+    [Fact]
+    public void FunctionBindingWithoutWorkspaceOverload()
+    {
+        // Test the non-workspace Evaluate overload (result is cloned)
+        var evaluator = new JsonataEvaluator();
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"x": 7}"""u8.ToArray());
+
+        var bindings = new Dictionary<string, JsonataBinding>
+        {
+            ["square"] = JsonataBinding.FromFunction(
+                (args, ws) =>
+                {
+                    double val = args[0].GetDouble();
+                    return JsonataCodeGenHelpers.DoubleToElement(val * val, ws);
+                },
+                parameterCount: 1),
+        };
+
+        var result = evaluator.Evaluate("$square(x)", doc.RootElement, bindings);
+        Assert.Equal(49.0, result.GetDouble());
+    }
 }

@@ -218,7 +218,11 @@ Bindings accept any JSON value — numbers, strings, booleans, objects, and arra
 
 ### Custom functions
 
-JSONata has first-class support for user-defined functions via its `function` keyword. Define functions directly in the expression, or compose them with variable binding (`$var := ...`) blocks:
+JSONata has first-class support for user-defined functions. You can define functions directly in the expression, bind external C# functions from interpreted mode, or provide compiled C# functions for the code generator via `.jfn` files.
+
+#### Functions defined in the expression
+
+Use JSONata's `function` keyword to define functions inline or via variable binding blocks:
 
 **Inline lambda:**
 
@@ -270,7 +274,92 @@ JsonElement sorted = JsonataEvaluator.Default.Evaluate(
     workspace);
 ```
 
-> **Note:** Custom functions are defined *within* the JSONata expression itself, not passed programmatically from C#. The bindings parameter accepts JSON values (`JsonElement`), not callable delegates. This design keeps the evaluation model pure and enables the code generator to optimize the entire expression statically.
+#### External C# function bindings (interpreted mode)
+
+Use `JsonataBinding.FromFunction()` to bind C# functions that can be called from JSONata expressions. External functions receive `JsonElement[]` arguments and a `JsonWorkspace`, and return a `JsonElement`:
+
+```csharp
+using JsonWorkspace workspace = JsonWorkspace.Create();
+
+var bindings = new Dictionary<string, JsonataBinding>
+{
+    // A custom function that doubles a number
+    ["double_it"] = JsonataBinding.FromFunction(
+        (args, ws) =>
+        {
+            double result = args[0].GetDouble() * 2;
+            return JsonElement.ParseValue($"{result}"u8.ToArray());
+        },
+        parameterCount: 1),
+
+    // Value bindings use implicit conversion from JsonElement
+    ["tax_rate"] = JsonElement.ParseValue("0.2"u8),
+};
+
+JsonElement result = JsonataEvaluator.Default.Evaluate(
+    "$double_it(price) * (1 + $tax_rate)",
+    dataDoc.RootElement,
+    workspace,
+    bindings: bindings);
+```
+
+**Signature validation:** Optionally provide a JSONata signature string to type-check arguments before the C# function is called:
+
+```csharp
+["to_upper"] = JsonataBinding.FromFunction(
+    (args, ws) =>
+    {
+        string s = args[0].GetString()!.ToUpperInvariant();
+        return JsonElement.ParseValue($"\"{s}\""u8.ToArray());
+    },
+    parameterCount: 1,
+    signature: "<s:s>"),  // expects a string argument, returns a string
+```
+
+You can mix value bindings and function bindings in the same dictionary. External functions are available as `$name(...)` in the expression.
+
+#### Custom functions for code generation (`.jfn` files)
+
+For code-generated expressions (source generator or CLI tool), define custom functions in `.jfn` files. These contain raw C# code that runs at the same performance level as built-in functions:
+
+**Expression form:**
+
+```jfn
+// celsius_to_fahrenheit.jfn
+fn celsius_to_fahrenheit(temp) => JsonataCodeGenHelpers.NumberFromDouble(temp.GetDouble() * 9.0 / 5.0 + 32.0, workspace);
+```
+
+**Block form:**
+
+```jfn
+fn clamp(value, lo, hi)
+{
+    double v = value.GetDouble();
+    double low = lo.GetDouble();
+    double high = hi.GetDouble();
+    double result = Math.Max(low, Math.Min(high, v));
+    return JsonataCodeGenHelpers.NumberFromDouble(result, workspace);
+}
+```
+
+Each parameter receives a `JsonElement`. The `workspace` variable is implicitly available. Use `JsonataCodeGenHelpers` for helper methods like `NumberFromDouble`, `BooleanElement`, etc.
+
+**Using with the source generator:** Add `.jfn` files as `AdditionalFiles` in your project:
+
+```xml
+<ItemGroup>
+  <AdditionalFiles Include="MyFunctions.jfn" />
+  <AdditionalFiles Include="MyExpression.jsonata" />
+</ItemGroup>
+```
+
+The source generator automatically discovers `.jfn` files and makes the functions available to all `[JsonataExpression]`-annotated types in the project.
+
+**Using with the CLI tool:** Pass the `--customFunctions` option:
+
+```bash
+generatejsonschematypes jsonata MyExpression.jsonata --customFunctions MyFunctions.jfn
+```
 
 ### Recursion depth and execution timeouts
 
@@ -520,7 +609,8 @@ The Corvus JSONata implementation is designed for high-throughput scenarios wher
 | Conformance (official suite) | 1,665 / 1,665 (100%) | 1,370 passed, 287 skipped ([badge](https://github.com/mikhail-barg/jsonata.net.native)) |
 | .NET Framework support | net9.0+, netstandard2.0/2.1 | net6.0+ |
 | Variable bindings | Supported | Supported |
-| Custom functions | Via bindings | Via API |
+| Custom function bindings | `JsonataBinding.FromFunction()` (interpreted) | Via API |
+| Custom functions (code-gen) | Via `.jfn` files | N/A |
 | Recursion depth limit | Configurable (default 500) | Not configurable |
 | Execution timeout | Configurable (milliseconds) | Not available |
 

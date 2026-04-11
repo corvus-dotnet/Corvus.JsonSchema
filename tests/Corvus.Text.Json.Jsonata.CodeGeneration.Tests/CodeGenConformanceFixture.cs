@@ -62,7 +62,31 @@ public sealed class CodeGenConformanceFixture : IDisposable
 
     public CompiledExpression GetOrCompile(string expression)
     {
-        return Cache.GetOrAdd(expression, static expr =>
+        return GetOrCompile(expression, customFunctions: null);
+    }
+
+    /// <summary>
+    /// Generate C# for a JSONata expression with custom functions, dynamically compile it,
+    /// and return the <c>Evaluate</c> methods.
+    /// </summary>
+    /// <param name="expression">The JSONata expression text.</param>
+    /// <param name="customFunctions">Optional custom function definitions to include.</param>
+    /// <returns>
+    /// A <see cref="CompiledExpression"/> containing the compiled method (or null
+    /// if the expression could not be parsed/generated/compiled), plus the generated
+    /// source text for diagnostics.
+    /// </returns>
+    public CompiledExpression GetOrCompile(string expression, IReadOnlyList<CustomFunction>? customFunctions)
+    {
+        if (customFunctions is not null)
+        {
+            return CompileExpression(expression, customFunctions);
+        }
+
+        return Cache.GetOrAdd(expression, static expr => CompileExpression(expr, null));
+    }
+
+    private static CompiledExpression CompileExpression(string expr, IReadOnlyList<CustomFunction>? customFunctions)
         {
             string? generatedCode = null;
             try
@@ -73,7 +97,7 @@ public sealed class CodeGenConformanceFixture : IDisposable
                 // Wrap the entire pipeline in a timeout — code gen AND Roslyn emit.
                 var compileTask = Task.Run(() =>
                 {
-                    string code = JsonataCodeGenerator.Generate(expr, className, GeneratedNamespace);
+                    string code = JsonataCodeGenerator.Generate(expr, className, GeneratedNamespace, customFunctions);
 
                     var (references, parseOptions) = CompilationContext.Value;
                     SyntaxTree tree = CSharpSyntaxTree.ParseText(code, options: parseOptions);
@@ -148,7 +172,6 @@ public sealed class CodeGenConformanceFixture : IDisposable
                 string? errorCode = ex is JsonataException jex ? jex.Code : null;
                 return new CompiledExpression(null, null, generatedCode, ex.Message, errorCode);
             }
-        });
     }
 
 

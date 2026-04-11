@@ -38,8 +38,41 @@ public static class JsonataCodeGenerator
     /// </exception>
     public static string Generate(string expression, string className, string namespaceName)
     {
+        return Generate(expression, className, namespaceName, null);
+    }
+
+    /// <summary>
+    /// Generates a complete C# source file containing a static class with an
+    /// <c>Evaluate</c> method that evaluates the given JSONata expression,
+    /// with optional custom function definitions from <c>.jfn</c> files.
+    /// </summary>
+    /// <param name="expression">The JSONata expression string.</param>
+    /// <param name="className">The name of the generated static class.</param>
+    /// <param name="namespaceName">The namespace for the generated class.</param>
+    /// <param name="customFunctions">
+    /// Optional custom function definitions parsed from <c>.jfn</c> files.
+    /// Functions referenced in the expression are emitted as <c>private static</c>
+    /// helper methods in the generated class.
+    /// </param>
+    /// <returns>A complete C# source file as a string.</returns>
+    /// <exception cref="JsonataException">
+    /// Thrown if <paramref name="expression"/> is not a valid JSONata expression.
+    /// </exception>
+    public static string Generate(string expression, string className, string namespaceName, IReadOnlyList<CustomFunction>? customFunctions)
+    {
         JsonataNode ast = Parser.Parse(expression);
-        Emitter emitter = new();
+
+        Dictionary<string, CustomFunction>? customFnMap = null;
+        if (customFunctions is { Count: > 0 })
+        {
+            customFnMap = new(StringComparer.Ordinal);
+            foreach (CustomFunction fn in customFunctions)
+            {
+                customFnMap[fn.Name] = fn;
+            }
+        }
+
+        Emitter emitter = new(customFnMap);
         StringBuilder body = new(4096);
 
         try
@@ -130,6 +163,9 @@ public static class JsonataCodeGenerator
         // 5-parameter overload with bindings, depth, and timeout
         Blank(sb);
         EmitBindingsOverload(sb, emitter.UsesBindings);
+
+        // Custom function helper methods
+        EmitCustomFunctionMethods(sb, emitter.UsedCustomFunctions);
 
         sb.Append('}');
         return sb.ToString();
@@ -231,6 +267,80 @@ public static class JsonataCodeGenerator
         L(sb, "    ", "}");
     }
 
+    private static void EmitCustomFunctionMethods(
+        StringBuilder sb, IReadOnlyDictionary<string, CustomFunction>? usedFunctions)
+    {
+        if (usedFunctions is null || usedFunctions.Count == 0)
+        {
+            return;
+        }
+
+        foreach (KeyValuePair<string, CustomFunction> kvp in usedFunctions)
+        {
+            CustomFunction fn = kvp.Value;
+            string methodName = $"CustomFn_{SanitizeIdentifier(fn.Name)}";
+
+            // Build parameter list: each param is in JsonElement, plus workspace
+            StringBuilder paramList = new();
+            for (int j = 0; j < fn.Parameters.Length; j++)
+            {
+                if (j > 0)
+                {
+                    paramList.Append(", ");
+                }
+
+                paramList.Append($"in JsonElement {fn.Parameters[j]}");
+            }
+
+            if (fn.Parameters.Length > 0)
+            {
+                paramList.Append(", ");
+            }
+
+            paramList.Append("JsonWorkspace workspace");
+
+            Blank(sb);
+            L(sb, "    ", $"private static JsonElement {methodName}({paramList})");
+            L(sb, "    ", "{");
+
+            if (fn.IsExpression)
+            {
+                L(sb, "        ", $"return {fn.Body};");
+            }
+            else
+            {
+                // Block body — emit each line with indentation
+                string[] bodyLines = fn.Body.Split('\n');
+                foreach (string bodyLine in bodyLines)
+                {
+                    string trimmed = bodyLine.TrimEnd('\r');
+                    if (trimmed.Trim().Length == 0)
+                    {
+                        Blank(sb);
+                    }
+                    else
+                    {
+                        L(sb, "        ", trimmed.TrimStart());
+                    }
+                }
+            }
+
+            L(sb, "    ", "}");
+        }
+    }
+
+    private static string SanitizeIdentifier(string name)
+    {
+        char[] chars = new char[name.Length];
+        for (int i = 0; i < name.Length; i++)
+        {
+            char c = name[i];
+            chars[i] = char.IsLetterOrDigit(c) || c == '_' ? c : '_';
+        }
+
+        return new string(chars);
+    }
+
     private static string EscapeStringLiteral(string s)
     {
         return s
@@ -263,7 +373,7 @@ public static class JsonataCodeGenerator
 
     /// <summary>
     /// Thrown when the emitter encounters an AST construct that cannot be statically compiled.
-    /// Caught by <see cref="Generate"/> to fall back to the runtime wrapper.
+    /// Caught by <see cref="Generate(string, string, string)"/> to fall back to the runtime wrapper.
     /// </summary>
     private sealed class FallbackException : Exception
     {
@@ -289,6 +399,9 @@ public static class JsonataCodeGenerator
         /// the result is reused instead of emitting a redundant navigation.
         /// </summary>
         private readonly Dictionary<(string, string), string> _propertyStepCache = new();
+
+        private readonly Dictionary<string, CustomFunction>? _customFunctions;
+        private readonly Dictionary<string, CustomFunction> _usedCustomFunctions = new(StringComparer.Ordinal);
 
         private int _varCounter;
         private int _nameFieldCounter;
@@ -332,6 +445,15 @@ public static class JsonataCodeGenerator
 
         /// <summary>Gets whether the expression uses external bindings.</summary>
         internal bool UsesBindings => _usesBindings;
+
+        /// <summary>Gets the custom functions that were actually referenced in the expression.</summary>
+        internal IReadOnlyDictionary<string, CustomFunction>? UsedCustomFunctions =>
+            _usedCustomFunctions.Count > 0 ? _usedCustomFunctions : null;
+
+        internal Emitter(Dictionary<string, CustomFunction>? customFunctions = null)
+        {
+            _customFunctions = customFunctions;
+        }
 
         internal string NextVar() => $"v{_varCounter++}";
 
@@ -3906,8 +4028,47 @@ public static class JsonataCodeGenerator
                 "replace" => EmitBuiltinReplace(sb, func, indent, dataVar, wsVar),
                 "zip" => EmitBuiltinZip(sb, func, indent, dataVar, wsVar),
 
-                _ => throw new FallbackException(),
+                _ => EmitCustomFunctionCallOrFallback(sb, func, procVar.Name, indent, dataVar, wsVar),
             };
+        }
+
+        private string EmitCustomFunctionCallOrFallback(
+            StringBuilder sb, FunctionCallNode func, string name, string indent, string dataVar, string wsVar)
+        {
+            if (_customFunctions is not null && _customFunctions.TryGetValue(name, out CustomFunction? customFn))
+            {
+                if (func.Arguments.Count != customFn.Parameters.Length)
+                {
+                    throw new InvalidOperationException(
+                        $"Custom function '{name}' expects {customFn.Parameters.Length} argument(s) but got {func.Arguments.Count}.");
+                }
+
+                _usedCustomFunctions[name] = customFn;
+
+                // Emit argument evaluations
+                string[] argVars = new string[func.Arguments.Count];
+                for (int i = 0; i < func.Arguments.Count; i++)
+                {
+                    argVars[i] = EmitExpression(sb, func.Arguments[i], indent, dataVar, wsVar);
+                }
+
+                string v = NextVar();
+                StringBuilder call = new();
+                call.Append($"CustomFn_{SanitizeIdentifier(name)}(");
+                for (int j = 0; j < argVars.Length; j++)
+                {
+                    call.Append(argVars[j]);
+                    call.Append(", ");
+                }
+
+                call.Append(wsVar);
+                call.Append(')');
+
+                L(sb, indent, $"var {v} = {call};");
+                return v;
+            }
+
+            throw new FallbackException();
         }
 
         private string EmitBuiltinUnary(

@@ -49,7 +49,7 @@ public sealed class JsonataEvaluator
     /// </returns>
     public JsonElement Evaluate(string expression, JsonElement data, int maxDepth = Environment.DefaultMaxDepth, int timeLimitMs = 0)
     {
-        return this.Evaluate(expression, data, null, maxDepth, timeLimitMs);
+        return this.Evaluate(expression, data, (IReadOnlyDictionary<string, JsonElement>?)null, maxDepth, timeLimitMs);
     }
 
     /// <summary>
@@ -208,6 +208,182 @@ public sealed class JsonataEvaluator
         finally
         {
             Environment.ReturnRoot(env);
+        }
+    }
+
+    /// <summary>
+    /// Evaluates a JSONata expression against input data with optional typed bindings
+    /// that can include both values and callable functions.
+    /// </summary>
+    /// <param name="expression">The JSONata expression string.</param>
+    /// <param name="data">The input JSON data element.</param>
+    /// <param name="bindings">Optional pre-defined bindings (name → value or function).</param>
+    /// <param name="maxDepth">Maximum recursion depth (default 500).</param>
+    /// <param name="timeLimitMs">Maximum evaluation time in milliseconds (0 = no limit).</param>
+    /// <returns>The evaluation result as a <see cref="JsonElement"/>, or <c>default</c> if the result is undefined.</returns>
+    public JsonElement Evaluate(string expression, JsonElement data, IReadOnlyDictionary<string, JsonataBinding>? bindings, int maxDepth = Environment.DefaultMaxDepth, int timeLimitMs = 0)
+    {
+        var compiled = this.GetOrCompile(expression);
+
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+
+        var env = Environment.RentRoot();
+        try
+        {
+            env.RootInput = data;
+            env.MaxDepth = maxDepth;
+            env.Workspace = workspace;
+
+            if (timeLimitMs > 0)
+            {
+                env.TimeLimitMs = timeLimitMs;
+                env.StartTimer();
+            }
+
+            ApplyBindings(env, bindings, workspace);
+
+            var result = compiled(data, env);
+
+            if (result.IsUndefined)
+            {
+                return default;
+            }
+
+            JsonElement resultElement = result.IsSingleton
+                ? result.FirstOrDefault
+                : JsonataHelpers.ArrayFromSequence(result, workspace);
+
+            // All elements consumed — return the backing array to the pool.
+            result.ReturnBackingArray();
+
+            if (resultElement.ValueKind == JsonValueKind.Undefined)
+            {
+                return default;
+            }
+
+            // Clone the result into a standalone element before the workspace is disposed.
+            return resultElement.Clone();
+        }
+        finally
+        {
+            Environment.ReturnRoot(env);
+        }
+    }
+
+    /// <summary>
+    /// Evaluates a JSONata expression against input data using the caller's workspace,
+    /// with optional typed bindings that can include both values and callable functions.
+    /// </summary>
+    /// <param name="expression">The JSONata expression string.</param>
+    /// <param name="data">The input JSON data element.</param>
+    /// <param name="workspace">
+    /// The workspace for intermediate document allocation. The returned <see cref="JsonElement"/>
+    /// may reference documents owned by this workspace, so it remains valid only while the
+    /// workspace is alive and has not been reset.
+    /// </param>
+    /// <param name="bindings">Optional pre-defined bindings (name → value or function).</param>
+    /// <param name="maxDepth">Maximum recursion depth (default 500).</param>
+    /// <param name="timeLimitMs">Maximum evaluation time in milliseconds (0 = no limit).</param>
+    /// <returns>The evaluation result as a <see cref="JsonElement"/>, or <c>default</c> if the result is undefined.</returns>
+    /// <remarks>
+    /// <para>
+    /// Because the result is not cloned, this overload avoids allocation at the evaluation
+    /// boundary. The caller is responsible for ensuring the workspace outlives any use of
+    /// the returned element.
+    /// </para>
+    /// </remarks>
+    public JsonElement Evaluate(string expression, JsonElement data, JsonWorkspace workspace, IReadOnlyDictionary<string, JsonataBinding>? bindings, int maxDepth = Environment.DefaultMaxDepth, int timeLimitMs = 0)
+    {
+        var compiled = this.GetOrCompile(expression);
+
+        var env = Environment.RentRoot();
+        try
+        {
+            env.RootInput = data;
+            env.MaxDepth = maxDepth;
+            env.Workspace = workspace;
+
+            if (timeLimitMs > 0)
+            {
+                env.TimeLimitMs = timeLimitMs;
+                env.StartTimer();
+            }
+
+            ApplyBindings(env, bindings, workspace);
+
+            var result = compiled(data, env);
+
+            if (result.IsUndefined)
+            {
+                return default;
+            }
+
+            JsonElement resultElement = result.IsSingleton
+                ? result.FirstOrDefault
+                : JsonataHelpers.ArrayFromSequence(result, workspace);
+
+            // All elements consumed — return the backing array to the pool.
+            result.ReturnBackingArray();
+
+            if (resultElement.ValueKind == JsonValueKind.Undefined)
+            {
+                return default;
+            }
+
+            return resultElement;
+        }
+        finally
+        {
+            Environment.ReturnRoot(env);
+        }
+    }
+
+    private static void ApplyBindings(Environment env, IReadOnlyDictionary<string, JsonataBinding>? bindings, JsonWorkspace workspace)
+    {
+        if (bindings is null)
+        {
+            return;
+        }
+
+        foreach (var kvp in bindings)
+        {
+            if (kvp.Value.IsFunction)
+            {
+                var func = kvp.Value.GetFunction();
+                int paramCount = kvp.Value.GetParameterCount();
+                string? signature = kvp.Value.GetSignature();
+
+                var lambda = new LambdaValue(
+                    (Sequence[] args, JsonElement input, Environment callEnv) =>
+                    {
+                        // Convert Sequence args to JsonElement[]
+                        JsonElement[] jsonArgs = new JsonElement[args.Length];
+                        for (int i = 0; i < args.Length; i++)
+                        {
+                            jsonArgs[i] = args[i].IsSingleton
+                                ? args[i].FirstOrDefault
+                                : args[i].IsUndefined
+                                    ? default
+                                    : JsonataHelpers.ArrayFromSequence(args[i], workspace);
+                        }
+
+                        // Validate signature if provided
+                        if (signature is not null)
+                        {
+                            SignatureValidator.ValidateArgs(signature, args, -1);
+                        }
+
+                        JsonElement result = func(jsonArgs, workspace);
+                        return new Sequence(result);
+                    },
+                    paramCount);
+
+                env.Bind(kvp.Key, new Sequence(lambda));
+            }
+            else
+            {
+                env.Bind(kvp.Key, new Sequence(kvp.Value.GetValue()));
+            }
         }
     }
 

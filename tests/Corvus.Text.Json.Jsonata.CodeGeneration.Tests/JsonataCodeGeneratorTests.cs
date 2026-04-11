@@ -520,4 +520,105 @@ public class JsonataCodeGeneratorTests
         Assert.Contains("class RangeExpr", result);
         Assert.Contains("Evaluate", result);
     }
+
+    /// <summary>
+    /// Verifies that a custom function call generates a <c>CustomFn_</c> method.
+    /// </summary>
+    [Fact]
+    public void Generate_CustomFunction_EmitsCustomMethod()
+    {
+        var customFns = new[]
+        {
+            new CustomFunction("double_it", new[] { "x" }, "JsonataCodeGenHelpers.NumberFromDouble(x.GetDouble() * 2, workspace)", isExpression: true),
+        };
+
+        string result = JsonataCodeGenerator.Generate(
+            "$double_it(42)",
+            "CustomFnExpr",
+            "Test.Generated",
+            customFns);
+
+        Assert.Contains("CustomFn_double_it", result);
+        Assert.Contains("private static JsonElement CustomFn_double_it(in JsonElement x, JsonWorkspace workspace)", result);
+    }
+
+    /// <summary>
+    /// Verifies that unused custom functions are not emitted.
+    /// </summary>
+    [Fact]
+    public void Generate_UnusedCustomFunction_NotEmitted()
+    {
+        var customFns = new[]
+        {
+            new CustomFunction("unused_fn", new[] { "x" }, "x", isExpression: true),
+        };
+
+        string result = JsonataCodeGenerator.Generate(
+            "1 + 2",
+            "UnusedFnExpr",
+            "Test.Generated",
+            customFns);
+
+        Assert.DoesNotContain("CustomFn_unused_fn", result);
+    }
+
+    /// <summary>
+    /// Verifies that custom function arity mismatch throws.
+    /// </summary>
+    [Fact]
+    public void Generate_CustomFunctionArityMismatch_Throws()
+    {
+        var customFns = new[]
+        {
+            new CustomFunction("add", new[] { "a", "b" }, "a", isExpression: true),
+        };
+
+        Assert.ThrowsAny<Exception>(() =>
+            JsonataCodeGenerator.Generate(
+                "$add(1)",
+                "ArityMismatchExpr",
+                "Test.Generated",
+                customFns));
+    }
+
+    /// <summary>
+    /// Verifies that multi-param custom functions emit correct signatures.
+    /// </summary>
+    [Fact]
+    public void Generate_CustomFunctionMultiParam_EmitsAllParams()
+    {
+        var customFns = new[]
+        {
+            new CustomFunction("add3", new[] { "a", "b", "c" }, "a", isExpression: true),
+        };
+
+        string result = JsonataCodeGenerator.Generate(
+            "$add3(1, 2, 3)",
+            "MultiParamExpr",
+            "Test.Generated",
+            customFns);
+
+        Assert.Contains("CustomFn_add3(in JsonElement a, in JsonElement b, in JsonElement c, JsonWorkspace workspace)", result);
+    }
+
+    /// <summary>
+    /// Verifies that a block-form custom function emits the block body.
+    /// </summary>
+    [Fact]
+    public void Generate_CustomFunctionBlockForm_EmitsBlockBody()
+    {
+        var customFns = new[]
+        {
+            new CustomFunction("clamp", new[] { "val", "lo", "hi" }, "double v = val.GetDouble();\nreturn JsonataCodeGenHelpers.NumberFromDouble(v, workspace);", isExpression: false),
+        };
+
+        string result = JsonataCodeGenerator.Generate(
+            "$clamp(5, 0, 10)",
+            "BlockFnExpr",
+            "Test.Generated",
+            customFns);
+
+        Assert.Contains("CustomFn_clamp", result);
+        Assert.Contains("double v = val.GetDouble();", result);
+    }
 }

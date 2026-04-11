@@ -459,4 +459,120 @@ public class CodeGenEdgeCaseTests : IClassFixture<CodeGenConformanceFixture>
 
         Assert.Equal(expected.GetRawText(), actual.GetRawText());
     }
+
+    [Fact]
+    [Trait("category", "codegen-edge")]
+    public void EvaluateExpressionWithCustomFunction_ExpressionForm()
+    {
+        var customFns = new[]
+        {
+            new CustomFunction(
+                "double_it",
+                new[] { "x" },
+                "JsonataCodeGenHelpers.NumberFromDouble(x.GetDouble() * 2, workspace)",
+                isExpression: true),
+        };
+
+        CompiledExpression compiled = this.fixture.GetOrCompile("$double_it(21)", customFns);
+
+        this.output.WriteLine($"Error: {compiled.Error}");
+        if (compiled.GeneratedCode is not null)
+        {
+            this.output.WriteLine($"Generated:\n{compiled.GeneratedCode}");
+        }
+
+        Assert.Null(compiled.Error);
+        Assert.NotNull(compiled.Method);
+
+        using var inputDoc = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("null"));
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        JsonElement result = Invoke(compiled.Method, inputDoc.RootElement, workspace);
+        Assert.Equal("42", result.GetRawText());
+    }
+
+    [Fact]
+    [Trait("category", "codegen-edge")]
+    public void EvaluateExpressionWithCustomFunction_BlockForm()
+    {
+        var customFns = new[]
+        {
+            new CustomFunction(
+                "clamp",
+                new[] { "val", "lo", "hi" },
+                "double v = val.GetDouble();\ndouble low = lo.GetDouble();\ndouble high = hi.GetDouble();\ndouble result = Math.Max(low, Math.Min(high, v));\nreturn JsonataCodeGenHelpers.NumberFromDouble(result, workspace);",
+                isExpression: false),
+        };
+
+        CompiledExpression compiled = this.fixture.GetOrCompile("$clamp(15, 0, 10)", customFns);
+
+        this.output.WriteLine($"Error: {compiled.Error}");
+        if (compiled.GeneratedCode is not null)
+        {
+            this.output.WriteLine($"Generated:\n{compiled.GeneratedCode}");
+        }
+
+        Assert.Null(compiled.Error);
+        Assert.NotNull(compiled.Method);
+
+        using var inputDoc = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("null"));
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        JsonElement result = Invoke(compiled.Method, inputDoc.RootElement, workspace);
+        Assert.Equal("10", result.GetRawText());
+    }
+
+    [Fact]
+    [Trait("category", "codegen-edge")]
+    public void EvaluateExpressionWithCustomFunction_UsedInMap()
+    {
+        var customFns = new[]
+        {
+            new CustomFunction(
+                "triple",
+                new[] { "x" },
+                "JsonataCodeGenHelpers.NumberFromDouble(x.GetDouble() * 3, workspace)",
+                isExpression: true),
+        };
+
+        CompiledExpression compiled = this.fixture.GetOrCompile(
+            "$map([1,2,3], function($v) { $triple($v) })", customFns);
+
+        this.output.WriteLine($"Error: {compiled.Error}");
+        if (compiled.GeneratedCode is not null)
+        {
+            this.output.WriteLine($"Generated:\n{compiled.GeneratedCode}");
+        }
+
+        Assert.Null(compiled.Error);
+        Assert.NotNull(compiled.Method);
+
+        using var inputDoc = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("null"));
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        JsonElement result = Invoke(compiled.Method, inputDoc.RootElement, workspace);
+        Assert.Equal("[3,6,9]", result.GetRawText());
+    }
+
+    [Fact]
+    [Trait("category", "codegen-edge")]
+    public void EvaluateExpressionWithCustomFunction_WithDataInput()
+    {
+        var customFns = new[]
+        {
+            new CustomFunction(
+                "add_bonus",
+                new[] { "price" },
+                "JsonataCodeGenHelpers.NumberFromDouble(price.GetDouble() + 10, workspace)",
+                isExpression: true),
+        };
+
+        CompiledExpression compiled = this.fixture.GetOrCompile("$add_bonus(price)", customFns);
+
+        Assert.Null(compiled.Error);
+        Assert.NotNull(compiled.Method);
+
+        using var inputDoc = ParsedJsonDocument<JsonElement>.Parse(
+            Encoding.UTF8.GetBytes("""{"price":50}"""));
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        JsonElement result = Invoke(compiled.Method, inputDoc.RootElement, workspace);
+        Assert.Equal("60", result.GetRawText());
+    }
 }

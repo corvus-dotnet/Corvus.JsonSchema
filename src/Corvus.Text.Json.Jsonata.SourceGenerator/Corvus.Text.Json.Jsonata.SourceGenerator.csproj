@@ -70,6 +70,8 @@
   <!-- Link the JSONata code generation engine -->
   <ItemGroup>
     <Compile Include="$(CorvusTextJsonJsonataCodeGenPath)JsonataCodeGenerator.cs" LinkBase="CodeGeneration" />
+    <Compile Include="$(CorvusTextJsonJsonataCodeGenPath)CustomFunction.cs" LinkBase="CodeGeneration" />
+    <Compile Include="$(CorvusTextJsonJsonataCodeGenPath)JfnParser.cs" LinkBase="CodeGeneration" />
   </ItemGroup>
 
   <!-- Link the JSONata parser, lexer, and AST (no external dependencies) -->
