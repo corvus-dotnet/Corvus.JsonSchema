@@ -3394,18 +3394,6 @@ public static class JsonataCodeGenerator
                 }
             }
 
-            // Emit value expressions first (before building the object)
-            string[] keyLiterals = new string[obj.Pairs.Count];
-            string[] valueVars = new string[obj.Pairs.Count];
-
-            for (int i = 0; i < obj.Pairs.Count; i++)
-            {
-                string keyValue = obj.Pairs[i].Key is StringNode s ? s.Value
-                    : ((NameNode)obj.Pairs[i].Key).Value;
-                keyLiterals[i] = $"\"{EscapeStringLiteral(keyValue)}\"u8";
-                valueVars[i] = EmitExpression(sb, obj.Pairs[i].Value, indent, dataVar, wsVar);
-            }
-
             int n = obj.Pairs.Count;
 
             if (n == 0)
@@ -3416,20 +3404,48 @@ public static class JsonataCodeGenerator
                 return docVar;
             }
 
+            // Classify each value: can it be emitted as a raw double?
+            // This avoids intermediate DoubleToElement / NumberFromDouble allocations.
+            string[] keyLiterals = new string[n];
+            string[] valueVars = new string[n];
+            bool[] isDouble = new bool[n];
+
+            for (int i = 0; i < n; i++)
+            {
+                string keyValue = obj.Pairs[i].Key is StringNode s ? s.Value
+                    : ((NameNode)obj.Pairs[i].Key).Value;
+                keyLiterals[i] = $"\"{EscapeStringLiteral(keyValue)}\"u8";
+
+                string? doubleVar = TryEmitValueAsDouble(sb, obj.Pairs[i].Value, indent, dataVar, wsVar);
+                if (doubleVar != null)
+                {
+                    valueVars[i] = doubleVar;
+                    isDouble[i] = true;
+                }
+                else
+                {
+                    valueVars[i] = EmitExpression(sb, obj.Pairs[i].Value, indent, dataVar, wsVar);
+                }
+            }
+
             // Use CVB (ComplexValueBuilder) pattern: CreateBuilder with a static callback
             // writes properties forward-only into the metadata buffer, avoiding the
             // version-tracking and property-name-scan overhead of SetProperty.
 
-            // Build a value tuple of computed values for the callback context.
-            // For n==1 we must use ValueTuple.Create() since (x) is not a tuple literal.
+            // Build the tuple type and expression. Mixed types when some values are doubles.
+            string[] types = new string[n];
+            for (int i = 0; i < n; i++)
+            {
+                types[i] = isDouble[i] ? "double" : "JsonElement";
+            }
+
             string ctxExpr = n == 1
                 ? $"ValueTuple.Create({valueVars[0]})"
                 : $"({string.Join(", ", valueVars)})";
 
-            // Build the tuple type for the lambda parameter
             string ctxType = n == 1
-                ? $"ValueTuple<JsonElement>"
-                : $"({string.Join(", ", Enumerable.Range(0, n).Select(i => "JsonElement"))})";
+                ? $"ValueTuple<{types[0]}>"
+                : $"({string.Join(", ", types)})";
 
             string builderVar = NextVar();
             L(sb, indent, $"var {builderVar} = JsonElement.CreateBuilder({wsVar}, {ctxExpr}, static (in {ctxType} __ctx, ref JsonElement.ObjectBuilder __b) =>");
@@ -3438,7 +3454,14 @@ public static class JsonataCodeGenerator
             for (int i = 0; i < n; i++)
             {
                 string itemRef = n == 1 ? "__ctx.Item1" : $"__ctx.Item{i + 1}";
-                L(sb, indent, $"    if ({itemRef}.ValueKind != JsonValueKind.Undefined) __b.AddProperty({keyLiterals[i]}, {itemRef});");
+                if (isDouble[i])
+                {
+                    L(sb, indent, $"    if (!double.IsNaN({itemRef})) __b.AddProperty({keyLiterals[i]}, {itemRef});");
+                }
+                else
+                {
+                    L(sb, indent, $"    if ({itemRef}.ValueKind != JsonValueKind.Undefined) __b.AddProperty({keyLiterals[i]}, {itemRef});");
+                }
             }
 
             L(sb, indent, $"}}, {n});");
@@ -3446,6 +3469,121 @@ public static class JsonataCodeGenerator
             string v = NextVar();
             L(sb, indent, $"var {v} = (JsonElement){builderVar}.RootElement;");
             return v;
+        }
+
+        /// <summary>
+        /// Attempts to emit a value expression as a raw <see langword="double"/> variable,
+        /// avoiding the intermediate <see cref="JsonElement"/> document allocation.
+        /// Returns the variable name if successful, <c>null</c> otherwise.
+        /// Currently handles:
+        /// <list type="bullet">
+        /// <item><c>$sum(path.(arithmetic))</c> — uses <c>SumOverElementsDoubleRaw</c></item>
+        /// <item>Simple arithmetic (<c>a op b</c>) on property accesses</item>
+        /// </list>
+        /// </summary>
+        private string? TryEmitValueAsDouble(
+            StringBuilder sb, JsonataNode value, string indent, string dataVar, string wsVar)
+        {
+            // $sum(path.(arithmetic)) → SumOverElementsDoubleRaw
+            if (value is FunctionCallNode func
+                && func.Procedure is VariableNode procVar
+                && procVar.Name == "sum")
+            {
+                return TryEmitSumDoubleRaw(sb, func, indent, dataVar, wsVar);
+            }
+
+            // Simple arithmetic: binary op on two property accesses
+            if (value is BinaryNode bin
+                && IsArithmeticOp(bin.Operator, out string? csOp, out string? helperName))
+            {
+                string lhsVar = EmitExpression(sb, bin.Lhs, indent, dataVar, wsVar);
+                string rhsVar = EmitExpression(sb, bin.Rhs, indent, dataVar, wsVar);
+                string dL = NextVar();
+                string dR = NextVar();
+                string dRes = NextVar();
+                L(sb, indent, $"double {dL} = {H}.ToArithmeticDoubleLeft({lhsVar});");
+                L(sb, indent, $"double {dR} = {H}.ToArithmeticDoubleRight({rhsVar});");
+                L(sb, indent, $"double {dRes} = {H}.Arithmetic{helperName}({dL}, {dR});");
+                return dRes;
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Emits <c>$sum(path.(arithmetic))</c> as a raw <see langword="double"/>
+        /// using <c>SumOverElementsDoubleRaw</c> instead of <c>SumOverElementsDouble</c>.
+        /// </summary>
+        private string? TryEmitSumDoubleRaw(
+            StringBuilder sb, FunctionCallNode func, string indent, string dataVar, string wsVar)
+        {
+            if (func.Arguments.Count != 1)
+            {
+                return null;
+            }
+
+            // Unwrap single-step path wrapper to get the real path.
+            JsonataNode arg = func.Arguments[0];
+            if (arg is PathNode outerPath && outerPath.Steps.Count == 1)
+            {
+                arg = outerPath.Steps[0];
+            }
+
+            if (arg is not PathNode path || path.Steps.Count < 2)
+            {
+                return null;
+            }
+
+            // The last step must be a block containing arithmetic.
+            JsonataNode lastStep = path.Steps[path.Steps.Count - 1];
+            BinaryNode? arithmetic = GetArithmeticBody(lastStep);
+            if (arithmetic is null)
+            {
+                return null;
+            }
+
+            // Build the lambda body for the arithmetic step.
+            int lambdaIdx = _lambdaCounter++;
+            string elParam = $"el_{lambdaIdx}";
+            string wsParam = $"ws_{lambdaIdx}";
+            string innerIndent = indent + "    ";
+            StringBuilder lambdaBody = new();
+            string doubleResult = EmitArithmeticAsDouble(lambdaBody, arithmetic, innerIndent, elParam, wsParam);
+
+            // Collect prefix steps (all except the last computed step).
+            List<JsonataNode> prefixSteps = new();
+            for (int i = 0; i < path.Steps.Count - 1; i++)
+            {
+                prefixSteps.Add(path.Steps[i]);
+            }
+
+            // Fused chain: if the prefix is a simple property chain, use
+            // SumOverChainDoubleRaw which navigates + sums without intermediate builders.
+            if (IsSimplePropertyChain(prefixSteps))
+            {
+                string chainField = GetOrCreateChainField(prefixSteps, 0, prefixSteps.Count);
+                string v = NextVar();
+                L(sb, indent, $"double {v} = {H}.SumOverChainDoubleRaw({dataVar}, {chainField}, {Static}(JsonElement {elParam}, JsonWorkspace {wsParam}) =>");
+                L(sb, indent, "{");
+                sb.Append(lambdaBody);
+                L(sb, innerIndent, $"return {doubleResult};");
+                L(sb, indent, $"}}, {wsVar});");
+                return v;
+            }
+
+            // Fallback: emit prefix path navigation + SumOverElementsDoubleRaw.
+            PathNode prefixPath = new();
+            prefixPath.Steps.AddRange(prefixSteps);
+
+            string inputVar = EmitPath(sb, prefixPath, indent, dataVar, wsVar);
+
+            string vFallback = NextVar();
+            L(sb, indent, $"double {vFallback} = {H}.SumOverElementsDoubleRaw({inputVar}, {Static}(JsonElement {elParam}, JsonWorkspace {wsParam}) =>");
+            L(sb, indent, "{");
+            sb.Append(lambdaBody);
+            L(sb, innerIndent, $"return {doubleResult};");
+            L(sb, indent, $"}}, {wsVar});");
+            return vFallback;
         }
 
         // ── Function call ────────────────────────────────────
@@ -3605,38 +3743,55 @@ public static class JsonataCodeGenerator
             }
 
             // The last step must be a block containing arithmetic.
-            JsonataNode lastStep = path.Steps[^1];
+            JsonataNode lastStep = path.Steps[path.Steps.Count - 1];
             BinaryNode? arithmetic = GetArithmeticBody(lastStep);
             if (arithmetic is null)
             {
                 return null;
             }
 
-            // Emit the prefix path (all steps except the last computed step).
-            PathNode prefixPath = new();
-            for (int i = 0; i < path.Steps.Count - 1; i++)
-            {
-                prefixPath.Steps.Add(path.Steps[i]);
-            }
-
-            string inputVar = EmitPath(sb, prefixPath, indent, dataVar, wsVar);
-
-            // Emit the fused SumOverElementsDouble call with a double-returning lambda.
+            // Build the lambda body for the arithmetic step.
             int lambdaIdx = _lambdaCounter++;
             string elParam = $"el_{lambdaIdx}";
             string wsParam = $"ws_{lambdaIdx}";
             string innerIndent = indent + "    ";
             StringBuilder lambdaBody = new();
-
             string doubleResult = EmitArithmeticAsDouble(lambdaBody, arithmetic, innerIndent, elParam, wsParam);
 
-            string v = NextVar();
-            L(sb, indent, $"var {v} = {H}.SumOverElementsDouble({inputVar}, {Static}(JsonElement {elParam}, JsonWorkspace {wsParam}) =>");
+            // Collect prefix steps (all except the last computed step).
+            List<JsonataNode> prefixSteps = new();
+            for (int i = 0; i < path.Steps.Count - 1; i++)
+            {
+                prefixSteps.Add(path.Steps[i]);
+            }
+
+            // Fused chain: if the prefix is a simple property chain, use
+            // SumOverChainDouble which navigates + sums without intermediate builders.
+            if (IsSimplePropertyChain(prefixSteps))
+            {
+                string chainField = GetOrCreateChainField(prefixSteps, 0, prefixSteps.Count);
+                string v = NextVar();
+                L(sb, indent, $"var {v} = {H}.SumOverChainDouble({dataVar}, {chainField}, {Static}(JsonElement {elParam}, JsonWorkspace {wsParam}) =>");
+                L(sb, indent, "{");
+                sb.Append(lambdaBody);
+                L(sb, innerIndent, $"return {doubleResult};");
+                L(sb, indent, $"}}, {wsVar});");
+                return v;
+            }
+
+            // Fallback: emit prefix path navigation + SumOverElementsDouble.
+            PathNode prefixPath = new();
+            prefixPath.Steps.AddRange(prefixSteps);
+
+            string inputVar = EmitPath(sb, prefixPath, indent, dataVar, wsVar);
+
+            string vFallback = NextVar();
+            L(sb, indent, $"var {vFallback} = {H}.SumOverElementsDouble({inputVar}, {Static}(JsonElement {elParam}, JsonWorkspace {wsParam}) =>");
             L(sb, indent, "{");
             sb.Append(lambdaBody);
             L(sb, innerIndent, $"return {doubleResult};");
             L(sb, indent, $"}}, {wsVar});");
-            return v;
+            return vFallback;
         }
 
         /// <summary>

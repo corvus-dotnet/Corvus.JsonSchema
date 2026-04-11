@@ -1897,9 +1897,26 @@ public static class JsonataCodeGenHelpers
         Func<JsonElement, JsonWorkspace, double> step,
         JsonWorkspace workspace)
     {
+        double raw = SumOverElementsDoubleRaw(data, step, workspace);
+        return double.IsNaN(raw) ? default : JsonataHelpers.NumberFromDouble(raw, workspace);
+    }
+
+    /// <summary>
+    /// Raw double variant of <see cref="SumOverElementsDouble"/>: returns the
+    /// accumulated sum as a <see langword="double"/> (<see cref="double.NaN"/>
+    /// when the input is undefined or a single NaN element). Avoids the
+    /// <see cref="JsonataHelpers.NumberFromDouble"/> document allocation so the
+    /// caller can pass the result directly to
+    /// <see cref="JsonElement.ObjectBuilder.AddProperty(ReadOnlySpan{byte}, double, bool, bool)"/>.
+    /// </summary>
+    public static double SumOverElementsDoubleRaw(
+        in JsonElement data,
+        Func<JsonElement, JsonWorkspace, double> step,
+        JsonWorkspace workspace)
+    {
         if (data.ValueKind == JsonValueKind.Undefined)
         {
-            return default;
+            return double.NaN;
         }
 
         double sum = 0;
@@ -1920,13 +1937,103 @@ public static class JsonataCodeGenHelpers
             double val = step(data, workspace);
             if (double.IsNaN(val))
             {
-                return default;
+                return double.NaN;
             }
 
             sum = val;
         }
 
-        return JsonataHelpers.NumberFromDouble(sum, workspace);
+        return sum;
+    }
+
+    /// <summary>
+    /// Fused sum-over-property-chain: navigates a property name chain from the input,
+    /// auto-flattening arrays at each step, then applies <paramref name="step"/> to each
+    /// leaf element and accumulates the sum. Returns <see cref="double.NaN"/> when no
+    /// numeric values are found.
+    /// </summary>
+    /// <remarks>
+    /// This avoids the intermediate <see cref="JsonElement"/> array that
+    /// <see cref="NavigatePropertyChain(in JsonElement, byte[][], JsonWorkspace)"/>
+    /// would create — no document builder is allocated for the chain navigation.
+    /// </remarks>
+    public static double SumOverChainDoubleRaw(
+        in JsonElement input,
+        byte[][] names,
+        Func<JsonElement, JsonWorkspace, double> step,
+        JsonWorkspace workspace)
+    {
+        double sum = 0;
+        bool hasValue = false;
+        SumOverChainCore(input, names, 0, step, workspace, ref sum, ref hasValue);
+        return hasValue ? sum : double.NaN;
+    }
+
+    /// <summary>
+    /// <see cref="JsonElement"/>-returning variant of <see cref="SumOverChainDoubleRaw"/>.
+    /// </summary>
+    public static JsonElement SumOverChainDouble(
+        in JsonElement input,
+        byte[][] names,
+        Func<JsonElement, JsonWorkspace, double> step,
+        JsonWorkspace workspace)
+    {
+        double raw = SumOverChainDoubleRaw(input, names, step, workspace);
+        return double.IsNaN(raw) ? default : JsonataHelpers.NumberFromDouble(raw, workspace);
+    }
+
+    private static void SumOverChainCore(
+        in JsonElement current,
+        byte[][] names,
+        int index,
+        Func<JsonElement, JsonWorkspace, double> step,
+        JsonWorkspace workspace,
+        ref double sum,
+        ref bool hasValue)
+    {
+        if (index >= names.Length)
+        {
+            // At the leaf: apply the step function.
+            if (current.ValueKind == JsonValueKind.Array)
+            {
+                foreach (JsonElement el in current.EnumerateArray())
+                {
+                    double d = step(el, workspace);
+                    if (!double.IsNaN(d))
+                    {
+                        sum += d;
+                        hasValue = true;
+                    }
+                }
+            }
+            else
+            {
+                double d = step(current, workspace);
+                if (!double.IsNaN(d))
+                {
+                    sum += d;
+                    hasValue = true;
+                }
+            }
+
+            return;
+        }
+
+        if (current.ValueKind == JsonValueKind.Object)
+        {
+            if (current.TryGetProperty(names[index], out JsonElement prop))
+            {
+                SumOverChainCore(prop, names, index + 1, step, workspace, ref sum, ref hasValue);
+            }
+        }
+        else if (current.ValueKind == JsonValueKind.Array)
+        {
+            // Auto-flatten: iterate array elements and continue chain from same index.
+            foreach (JsonElement el in current.EnumerateArray())
+            {
+                SumOverChainCore(el, names, index, step, workspace, ref sum, ref hasValue);
+            }
+        }
     }
 
     /// <summary>

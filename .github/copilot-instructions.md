@@ -291,7 +291,7 @@ All 37+ benchmark models follow the same pattern — no special cases. (GeoJson 
 
 ```bash
 cd benchmarks\Corvus.Text.Json.Benchmarks
-dotnet run -c Release -f net10.0 -- --filter=*<SchemaName>* --buildTimeout 1200
+dotnet run -c Release -f net10.0 -- --filter='*<SchemaName>*' --buildTimeout 1200
 ```
 
 The `--buildTimeout 1200` flag is required because the default 120s is too short for this solution with source generators. Always ask the user to confirm their PC is idle before running benchmarks (they are CPU-intensive and results are unreliable under load).
@@ -317,7 +317,7 @@ Remove-Item "$benchDir\BenchmarkDotNet.Artifacts\results\*" -Force -ErrorAction 
 
 # 4. Run benchmarks (takes ~15-25 minutes)
 cd benchmarks\Corvus.Text.Json.Jsonata.Benchmarks
-dotnet run -c Release -f net10.0 -- --filter *
+dotnet run -c Release -f net10.0 -- --filter '*'
 ```
 
 ### Critical rules
@@ -326,7 +326,7 @@ dotnet run -c Release -f net10.0 -- --filter *
 2. **Never pipe BDN output through `Select-Object -First N`** or any truncating command. This kills the BDN host process mid-run, producing incomplete/corrupt results.
 3. **Use `mode="sync"` with `initial_wait=30`** when running from the Copilot shell. BDN runs for 15-25 minutes. After initial_wait expires it continues in background — you'll be notified on completion. Use `read_powershell` with `delay=600` (call twice if needed for the full output).
 4. **Build timeout is pre-configured** in `Program.cs` at 15 minutes (`WithBuildTimeout(TimeSpan.FromMinutes(15))`). No `--buildTimeout` flag needed.
-5. **Always pass `-- --filter *`** to run all benchmarks non-interactively. Without `--filter`, BDN presents an interactive menu that blocks in the shell.
+5. **Always pass `-- --filter '*'`** to run all benchmarks non-interactively. The `*` **must be single-quoted** in PowerShell to prevent glob expansion. Without quoting, PowerShell expands `*` to filenames, BDN receives no valid filter, and presents an interactive menu that blocks the shell.
 
 ### Result locations and naming
 
