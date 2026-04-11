@@ -1463,6 +1463,47 @@ public static class JsonataCodeGenHelpers
         public void AppendLiteral(ReadOnlySpan<byte> literal) => _sb.Append(literal);
 
         /// <summary>
+        /// Appends the result of auto-mapping a property over a source element directly into
+        /// the concat buffer, avoiding intermediate document creation.
+        /// When the source is an array, iterates elements and writes <c>[val1,val2,...]</c>
+        /// as raw JSON text. When the source is an object, extracts the property and appends
+        /// its coerced string representation. When the source is undefined/null, appends nothing.
+        /// </summary>
+        /// <param name="source">The source element (may be object, array, or undefined).</param>
+        /// <param name="propertyName">The UTF-8 property name to extract.</param>
+        public void AppendAutoMap(in JsonElement source, byte[] propertyName)
+        {
+            if (source.ValueKind == JsonValueKind.Array)
+            {
+                _sb.Append((byte)'[');
+                bool first = true;
+                foreach (JsonElement el in source.EnumerateArray())
+                {
+                    if (el.TryGetProperty(propertyName, out JsonElement val) && !val.IsNullOrUndefined())
+                    {
+                        if (!first)
+                        {
+                            _sb.Append((byte)',');
+                        }
+
+                        using RawUtf8JsonString raw = JsonMarshal.GetRawUtf8Value(val);
+                        _sb.Append(raw.Span);
+                        first = false;
+                    }
+                }
+
+                _sb.Append((byte)']');
+            }
+            else if (source.ValueKind == JsonValueKind.Object
+                     && source.TryGetProperty(propertyName, out JsonElement val))
+            {
+                AppendCoercedValue(val, ref _sb);
+            }
+
+            // Undefined/null/other kinds: nothing to append (matches RT's undefined → no-op)
+        }
+
+        /// <summary>
         /// Completes the concatenation and returns the result as a string <see cref="JsonElement"/>.
         /// </summary>
         /// <param name="workspace">The workspace for the result element.</param>
