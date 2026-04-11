@@ -2394,6 +2394,39 @@ public static class JsonataCodeGenerator
                 return v;
             }
 
+            // Fused array-of-objects: [path.path.path.{StringKey: expr, ...}]
+            // Detect single-expression ArrayConstructor wrapping a PathNode that ends with
+            // an ObjectConstructorNode (all-StringNode keys) preceded by 2+ NameNode chain steps.
+            // Emits FusedChainBuildArray which builds objects directly into the array document.
+            if (arr.Expressions.Count == 1
+                && arr.Expressions[0] is PathNode path
+                && path.Steps.Count >= 3
+                && path.Steps[path.Steps.Count - 1] is ObjectConstructorNode objCtor
+                && !HasComplexAnnotations(path.Steps[path.Steps.Count - 1]))
+            {
+                // Check: all preceding steps are plain NameNodes, last step is ObjectConstructor with all StringNode keys
+                bool allNameSteps = true;
+                for (int s = 0; s < path.Steps.Count - 1; s++)
+                {
+                    if (path.Steps[s] is not NameNode || HasComplexAnnotations(path.Steps[s]))
+                    {
+                        allNameSteps = false;
+                        break;
+                    }
+                }
+
+                bool allStringKeys = true;
+                foreach ((JsonataNode key, _) in objCtor.Pairs)
+                {
+                    if (key is not StringNode) { allStringKeys = false; break; }
+                }
+
+                if (allNameSteps && allStringKeys)
+                {
+                    return EmitFusedArrayOfObjects(sb, path, objCtor, indent, dataVar, wsVar);
+                }
+            }
+
             string[] elemVars = new string[arr.Expressions.Count];
             long isArrayCtorMask = 0;
             for (int i = 0; i < arr.Expressions.Count; i++)
@@ -2463,6 +2496,73 @@ public static class JsonataCodeGenerator
 
             string v = NextVar();
             L(sb, indent, $"var {v} = (JsonElement){docVar}.RootElement;");
+            return v;
+        }
+
+        /// <summary>
+        /// Emits fused array-of-objects construction: navigates a property chain,
+        /// then builds objects directly into the array document via
+        /// <c>AddItem&lt;TContext&gt;(ctx, ObjectBuilder.Build, count)</c>.
+        /// Eliminates intermediate object document allocations.
+        /// Pattern: <c>[path.path.path.{StringKey: expr, ...}]</c>.
+        /// </summary>
+        private string EmitFusedArrayOfObjects(
+            StringBuilder sb, PathNode path, ObjectConstructorNode objCtor,
+            string indent, string dataVar, string wsVar)
+        {
+            // Build chain field for prefix NameNode steps
+            int chainLen = path.Steps.Count - 1;
+            string[] chainNames = new string[chainLen];
+            for (int i = 0; i < chainLen; i++)
+            {
+                chainNames[i] = ((NameNode)path.Steps[i]).Value;
+            }
+
+            string chainField = CreatePathField(chainNames);
+
+            // Lambda parameters
+            int lambdaIdx = _lambdaCounter++;
+            string elParam = $"__el_{lambdaIdx}";
+            string wsParam = $"__ws_{lambdaIdx}";
+            string arrParam = $"__arr_{lambdaIdx}";
+            string innerIndent = indent + "    ";
+
+            // Build body: compute value expressions, then AddItem with ObjectBuilder callback
+            StringBuilder body = new();
+            int n = objCtor.Pairs.Count;
+            string[] keyLiterals = new string[n];
+            string[] valueVars = new string[n];
+
+            for (int i = 0; i < n; i++)
+            {
+                string keyValue = ((StringNode)objCtor.Pairs[i].Key).Value;
+                keyLiterals[i] = $"\"{EscapeStringLiteral(keyValue)}\"u8";
+                valueVars[i] = EmitExpression(body, objCtor.Pairs[i].Value, innerIndent, elParam, wsParam);
+            }
+
+            // Build the tuple context and type for the ObjectBuilder callback
+            string ctxExpr = n == 1
+                ? $"ValueTuple.Create({valueVars[0]})"
+                : $"({string.Join(", ", valueVars)})";
+            string ctxType = n == 1
+                ? "ValueTuple<JsonElement>"
+                : $"({string.Join(", ", Enumerable.Range(0, n).Select(_ => "JsonElement"))})";
+
+            // Emit the fused call
+            string v = NextVar();
+            L(sb, indent, $"var {v} = {H}.FusedChainBuildArray({dataVar}, {chainField}, {Static}(JsonElement {elParam}, JsonWorkspace {wsParam}, JsonElement.Mutable {arrParam}) =>");
+            L(sb, indent, "{");
+            sb.Append(body);
+            L(sb, innerIndent, $"{arrParam}.AddItem({ctxExpr}, {Static}(in {ctxType} __ctx, ref JsonElement.ObjectBuilder __b) =>");
+            L(sb, innerIndent, "{");
+            for (int i = 0; i < n; i++)
+            {
+                string itemRef = n == 1 ? "__ctx.Item1" : $"__ctx.Item{i + 1}";
+                L(sb, innerIndent, $"    if ({itemRef}.ValueKind != JsonValueKind.Undefined) __b.AddProperty({keyLiterals[i]}, {itemRef});");
+            }
+
+            L(sb, innerIndent, $"}}, {n});");
+            L(sb, indent, $"}}, {wsVar});");
             return v;
         }
 

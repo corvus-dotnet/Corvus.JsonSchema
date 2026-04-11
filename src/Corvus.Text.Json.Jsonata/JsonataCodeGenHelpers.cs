@@ -1942,6 +1942,48 @@ public static class JsonataCodeGenHelpers
     }
 
     /// <summary>
+    /// Fused property-chain navigation + per-element array construction.
+    /// Navigates <paramref name="names"/> into an <see cref="ElementBuffer"/>,
+    /// creates a single array builder, and calls <paramref name="buildItem"/> for each element.
+    /// The callback adds items directly into the array root, enabling
+    /// <c>arrRoot.AddItem(ctx, ObjectBuilder.Build, count)</c> to build objects without
+    /// intermediate document allocations. This mirrors the RT's
+    /// <c>CompileFusedArrayOfObjects</c> pattern.
+    /// </summary>
+    public static JsonElement FusedChainBuildArray(
+        in JsonElement data,
+        byte[][] names,
+        Action<JsonElement, JsonWorkspace, JsonElement.Mutable> buildItem,
+        JsonWorkspace workspace)
+    {
+        var buffer = default(ElementBuffer);
+        try
+        {
+            NavigatePropertyChainInto(data, names, ref buffer);
+
+            if (buffer.Count == 0)
+            {
+                var emptyDoc = JsonElement.CreateArrayBuilder(workspace, 0);
+                return (JsonElement)emptyDoc.RootElement;
+            }
+
+            var doc = JsonElement.CreateArrayBuilder(workspace, buffer.Count * 3);
+            JsonElement.Mutable root = doc.RootElement;
+
+            for (int i = 0; i < buffer.Count; i++)
+            {
+                buildItem(buffer[i], workspace, root);
+            }
+
+            return (JsonElement)root;
+        }
+        finally
+        {
+            buffer.Dispose();
+        }
+    }
+
+    /// <summary>
     /// Fused property-chain navigation + element map.
     /// Navigates <paramref name="names"/> into an <see cref="ElementBuffer"/>,
     /// then maps each element through <paramref name="transform"/>.
