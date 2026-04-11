@@ -255,6 +255,16 @@ public static class JsonataCodeGenerator
         private int _lambdaCounter;
 
         /// <summary>
+        /// When set to a data variable name, <see cref="EmitName"/> and
+        /// <see cref="EmitSimplePropertyChain"/> emit inline
+        /// <c>TryGetProperty</c> instead of <c>NavigateProperty</c>. This
+        /// avoids the function-call overhead and the Array auto-map branch
+        /// when the data source is known to be a per-element variable from
+        /// an array iteration (e.g. inside the fused array-of-objects callback).
+        /// </summary>
+        private string? _knownObjectDataVar;
+
+        /// <summary>
         /// When true, the expression references <c>$$</c> (root data). Lambdas cannot
         /// be <c>static</c> because they need to capture <c>__rootData</c>.
         /// </summary>
@@ -1567,7 +1577,17 @@ public static class JsonataCodeGenerator
             {
                 string nameField = GetOrCreateNameField(((NameNode)steps[0]).Value);
                 string v = NextVar();
-                L(sb, indent, $"var {v} = {H}.NavigateProperty({dataVar}, {nameField}, {wsVar});");
+
+                if (_knownObjectDataVar != null && dataVar == _knownObjectDataVar)
+                {
+                    string tmp = NextVar();
+                    L(sb, indent, $"var {v} = {dataVar}.ValueKind == JsonValueKind.Object && {dataVar}.TryGetProperty((ReadOnlySpan<byte>){nameField}, out var {tmp}) ? {tmp} : default;");
+                }
+                else
+                {
+                    L(sb, indent, $"var {v} = {H}.NavigateProperty({dataVar}, {nameField}, {wsVar});");
+                }
+
                 return v;
             }
 
@@ -2876,7 +2896,18 @@ public static class JsonataCodeGenerator
         {
             string nameField = GetOrCreateNameField(name.Value);
             string v = NextVar();
-            L(sb, indent, $"var {v} = {H}.NavigateProperty({dataVar}, {nameField}, {wsVar});");
+
+            if (_knownObjectDataVar != null && dataVar == _knownObjectDataVar)
+            {
+                // Inline TryGetProperty — skips NavigateProperty function call + Array branch
+                string tmp = NextVar();
+                L(sb, indent, $"var {v} = {dataVar}.ValueKind == JsonValueKind.Object && {dataVar}.TryGetProperty((ReadOnlySpan<byte>){nameField}, out var {tmp}) ? {tmp} : default;");
+            }
+            else
+            {
+                L(sb, indent, $"var {v} = {H}.NavigateProperty({dataVar}, {nameField}, {wsVar});");
+            }
+
             return v;
         }
 
@@ -3137,27 +3168,185 @@ public static class JsonataCodeGenerator
 
             string chainField = CreatePathField(chainNames);
 
-            // Lambda parameters
+            // Try fully-fused path: evaluate values inside ObjectBuilder callback.
+            // This eliminates DoubleToElement allocations for arithmetic and avoids
+            // intermediate ValueTuple + delegate overhead.
+            int n = objCtor.Pairs.Count;
+            string[] keyLiterals = new string[n];
+            string?[] simpleProps = new string?[n];
+            (string left, string right, string csOp, string helper)?[] arithmeticPairs = new (string, string, string, string)?[n];
+            bool allSimple = true;
+
+            for (int i = 0; i < n; i++)
+            {
+                string keyValue = ((StringNode)objCtor.Pairs[i].Key).Value;
+                keyLiterals[i] = $"\"{EscapeStringLiteral(keyValue)}\"u8";
+
+                JsonataNode valNode = objCtor.Pairs[i].Value;
+
+                if (TryGetSinglePropertyName(valNode, out string? propName))
+                {
+                    simpleProps[i] = propName;
+                }
+                else if (valNode is BinaryNode bin
+                    && IsArithmeticOp(bin.Operator, out string? csOp, out string? helperName)
+                    && TryGetSinglePropertyName(bin.Lhs, out string? leftProp)
+                    && TryGetSinglePropertyName(bin.Rhs, out string? rightProp))
+                {
+                    arithmeticPairs[i] = (leftProp!, rightProp!, csOp!, helperName!);
+                }
+                else
+                {
+                    allSimple = false;
+                    break;
+                }
+            }
+
+            if (allSimple)
+            {
+                return EmitFusedInlineObjectBuilder(sb, chainField, keyLiterals, simpleProps, arithmeticPairs, n, indent, dataVar, wsVar);
+            }
+
+            // Fallback: evaluate values outside callback, pass via ValueTuple.
+            return EmitFusedTupleObjectBuilder(sb, objCtor, chainField, keyLiterals, n, indent, dataVar, wsVar);
+        }
+
+        /// <summary>
+        /// Extracts the property name from a node that is a simple single-step property access:
+        /// either a bare <see cref="NameNode"/> or a <see cref="PathNode"/> wrapping a single
+        /// <see cref="NameNode"/> step with no annotations.
+        /// </summary>
+        private static bool TryGetSinglePropertyName(JsonataNode node, out string? name)
+        {
+            if (node is NameNode nn && !HasComplexAnnotations(nn) && !HasStages(nn))
+            {
+                name = nn.Value;
+                return true;
+            }
+
+            if (node is PathNode pn && pn.Steps.Count == 1
+                && pn.Steps[0] is NameNode pnn
+                && !HasComplexAnnotations(pn) && !HasStages(pn)
+                && !HasComplexAnnotations(pnn) && !HasStages(pnn)
+                && !pn.KeepArray && !pn.KeepSingletonArray)
+            {
+                name = pnn.Value;
+                return true;
+            }
+
+            name = null;
+            return false;
+        }
+
+        /// <summary>
+        /// Maps a JSONata arithmetic operator to its C# equivalent and helper name.
+        /// </summary>
+        private static bool IsArithmeticOp(string op, out string? csOp, out string? helperName)
+        {
+            switch (op)
+            {
+                case "+": csOp = "+"; helperName = "Add"; return true;
+                case "-": csOp = "-"; helperName = "Subtract"; return true;
+                case "*": csOp = "*"; helperName = "Multiply"; return true;
+                case "/": csOp = "/"; helperName = "Divide"; return true;
+                case "%": csOp = "%"; helperName = "Modulo"; return true;
+                default: csOp = null; helperName = null; return false;
+            }
+        }
+
+        /// <summary>
+        /// Emits the fully-fused path: values are evaluated INSIDE the ObjectBuilder
+        /// callback. Context is just the per-element JsonElement. Arithmetic results
+        /// use <c>AddProperty(key, double)</c> directly — no <c>DoubleToElement</c>
+        /// allocation.
+        /// </summary>
+        private string EmitFusedInlineObjectBuilder(
+            StringBuilder sb, string chainField,
+            string[] keyLiterals, string?[] simpleProps,
+            (string left, string right, string csOp, string helper)?[] arithmeticPairs,
+            int n, string indent, string dataVar, string wsVar)
+        {
+            int lambdaIdx = _lambdaCounter++;
+            string elParam = $"__el_{lambdaIdx}";
+            string wsParam = $"__ws_{lambdaIdx}";
+            string arrParam = $"__arr_{lambdaIdx}";
+            string innerIndent = indent + "    ";
+            string bodyIndent = innerIndent + "    ";
+            string propIndent = bodyIndent + "    ";
+
+            string v = NextVar();
+            L(sb, indent, $"var {v} = {H}.FusedChainBuildArray({dataVar}, {chainField}, {Static}(JsonElement {elParam}, JsonWorkspace {wsParam}, JsonElement.Mutable {arrParam}) =>");
+            L(sb, indent, "{");
+
+            // Pass element as context; evaluate everything inside the callback
+            L(sb, innerIndent, $"{arrParam}.AddItem({elParam}, {Static}(in JsonElement __ctx, ref JsonElement.ObjectBuilder __b) =>");
+            L(sb, innerIndent, "{");
+            L(sb, bodyIndent, "if (__ctx.ValueKind == JsonValueKind.Object)");
+            L(sb, bodyIndent, "{");
+
+            for (int i = 0; i < n; i++)
+            {
+                if (simpleProps[i] != null)
+                {
+                    // Simple property: TryGetProperty → AddProperty(key, element)
+                    string nameField = GetOrCreateNameField(simpleProps[i]!);
+                    string tmpVar = NextVar();
+                    L(sb, propIndent, $"if (__ctx.TryGetProperty((ReadOnlySpan<byte>){nameField}, out var {tmpVar}))");
+                    L(sb, propIndent, $"    __b.AddProperty({keyLiterals[i]}, {tmpVar});");
+                }
+                else if (arithmeticPairs[i] is var (left, right, csOp, helper))
+                {
+                    // Arithmetic: TryGetProperty × 2 → ArithmeticOp → AddProperty(key, double)
+                    string leftField = GetOrCreateNameField(left);
+                    string rightField = GetOrCreateNameField(right);
+                    string lv = NextVar();
+                    string rv = NextVar();
+                    string ld = NextVar();
+                    string rd = NextVar();
+                    string res = NextVar();
+                    L(sb, propIndent, $"if (__ctx.TryGetProperty((ReadOnlySpan<byte>){leftField}, out var {lv}) && {lv}.TryGetDouble(out double {ld})");
+                    L(sb, propIndent, $"    && __ctx.TryGetProperty((ReadOnlySpan<byte>){rightField}, out var {rv}) && {rv}.TryGetDouble(out double {rd}))");
+                    L(sb, propIndent, "{");
+                    L(sb, propIndent, $"    double {res} = {H}.Arithmetic{helper}({ld}, {rd});");
+                    L(sb, propIndent, $"    if (!double.IsNaN({res})) __b.AddProperty({keyLiterals[i]}, {res});");
+                    L(sb, propIndent, "}");
+                }
+            }
+
+            L(sb, bodyIndent, "}");
+            L(sb, innerIndent, $"}}, {n});");
+            L(sb, indent, $"}}, {wsVar});");
+            return v;
+        }
+
+        /// <summary>
+        /// Fallback: evaluates values outside the ObjectBuilder callback, passes
+        /// results via ValueTuple. Used when value expressions are too complex
+        /// for the inline path.
+        /// </summary>
+        private string EmitFusedTupleObjectBuilder(
+            StringBuilder sb, ObjectConstructorNode objCtor, string chainField,
+            string[] keyLiterals, int n, string indent, string dataVar, string wsVar)
+        {
             int lambdaIdx = _lambdaCounter++;
             string elParam = $"__el_{lambdaIdx}";
             string wsParam = $"__ws_{lambdaIdx}";
             string arrParam = $"__arr_{lambdaIdx}";
             string innerIndent = indent + "    ";
 
-            // Build body: compute value expressions, then AddItem with ObjectBuilder callback
             StringBuilder body = new();
-            int n = objCtor.Pairs.Count;
-            string[] keyLiterals = new string[n];
             string[] valueVars = new string[n];
+
+            string? prevKnownObj = _knownObjectDataVar;
+            _knownObjectDataVar = elParam;
 
             for (int i = 0; i < n; i++)
             {
-                string keyValue = ((StringNode)objCtor.Pairs[i].Key).Value;
-                keyLiterals[i] = $"\"{EscapeStringLiteral(keyValue)}\"u8";
                 valueVars[i] = EmitExpression(body, objCtor.Pairs[i].Value, innerIndent, elParam, wsParam);
             }
 
-            // Build the tuple context and type for the ObjectBuilder callback
+            _knownObjectDataVar = prevKnownObj;
+
             string ctxExpr = n == 1
                 ? $"ValueTuple.Create({valueVars[0]})"
                 : $"({string.Join(", ", valueVars)})";
@@ -3165,7 +3354,6 @@ public static class JsonataCodeGenerator
                 ? "ValueTuple<JsonElement>"
                 : $"({string.Join(", ", Enumerable.Range(0, n).Select(_ => "JsonElement"))})";
 
-            // Emit the fused call
             string v = NextVar();
             L(sb, indent, $"var {v} = {H}.FusedChainBuildArray({dataVar}, {chainField}, {Static}(JsonElement {elParam}, JsonWorkspace {wsParam}, JsonElement.Mutable {arrParam}) =>");
             L(sb, indent, "{");
