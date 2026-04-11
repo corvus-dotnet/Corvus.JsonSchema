@@ -85,23 +85,51 @@ public static class JsonataCodeGenerator
         L(sb, "    ", "private static readonly JsonataEvaluator s_evaluator = new();");
         Blank(sb);
 
-        // Primary Evaluate overload - inline code
-        EmitXmlDoc(sb, "    ", expression);
-        L(sb, string.Empty, "#if !NETFRAMEWORK");
-        L(sb, "    ", "[MethodImpl(MethodImplOptions.AggressiveOptimization)]");
-        L(sb, string.Empty, "#endif");
-        L(sb, "    ", "public static JsonElement Evaluate(in JsonElement data, JsonWorkspace workspace)");
-        L(sb, "    ", "{");
+        if (emitter.UsesBindings)
+        {
+            // 2-parameter forwarding overload
+            EmitXmlDoc(sb, "    ", expression);
+            L(sb, string.Empty, "#if !NETFRAMEWORK");
+            L(sb, "    ", "[MethodImpl(MethodImplOptions.AggressiveOptimization)]");
+            L(sb, string.Empty, "#endif");
+            L(sb, "    ", "public static JsonElement Evaluate(in JsonElement data, JsonWorkspace workspace)");
+            L(sb, "    ", "    => Evaluate(in data, workspace, null);");
+            Blank(sb);
 
-        // Copy data to a local so it can be captured in lambdas (in parameters cannot be captured).
-        L(sb, "        ", "var __rootData = data;");
-        sb.Append(body);
-        L(sb, "        ", $"return {resultVar};");
-        L(sb, "    ", "}");
+            // Primary inline overload with bindings parameter
+            L(sb, "    ", "/// <inheritdoc cref=\"Evaluate(in JsonElement, JsonWorkspace)\"/>");
+            L(sb, "    ", "/// <param name=\"bindings\">Optional external variable bindings.</param>");
+            L(sb, string.Empty, "#if !NETFRAMEWORK");
+            L(sb, "    ", "[MethodImpl(MethodImplOptions.AggressiveOptimization)]");
+            L(sb, string.Empty, "#endif");
+            L(sb, "    ", "public static JsonElement Evaluate(in JsonElement data, JsonWorkspace workspace, System.Collections.Generic.IReadOnlyDictionary<string, JsonElement>? bindings)");
+            L(sb, "    ", "{");
+            L(sb, "        ", "var __rootData = data;");
+            L(sb, "        ", "var __bindings = bindings;");
+            sb.Append(body);
+            L(sb, "        ", $"return {resultVar};");
+            L(sb, "    ", "}");
+        }
+        else
+        {
+            // Primary Evaluate overload - inline code (no bindings needed)
+            EmitXmlDoc(sb, "    ", expression);
+            L(sb, string.Empty, "#if !NETFRAMEWORK");
+            L(sb, "    ", "[MethodImpl(MethodImplOptions.AggressiveOptimization)]");
+            L(sb, string.Empty, "#endif");
+            L(sb, "    ", "public static JsonElement Evaluate(in JsonElement data, JsonWorkspace workspace)");
+            L(sb, "    ", "{");
 
-        // Bindings overload - runtime fallback
+            // Copy data to a local so it can be captured in lambdas (in parameters cannot be captured).
+            L(sb, "        ", "var __rootData = data;");
+            sb.Append(body);
+            L(sb, "        ", $"return {resultVar};");
+            L(sb, "    ", "}");
+        }
+
+        // 5-parameter overload with bindings, depth, and timeout
         Blank(sb);
-        EmitBindingsOverload(sb);
+        EmitBindingsOverload(sb, emitter.UsesBindings);
 
         sb.Append('}');
         return sb.ToString();
@@ -137,7 +165,7 @@ public static class JsonataCodeGenerator
         L(sb, "    ", "}");
 
         Blank(sb);
-        EmitBindingsOverload(sb);
+        EmitBindingsOverload(sb, hasInlineBindings: false);
 
         sb.Append('}');
         return sb.ToString();
@@ -164,7 +192,7 @@ public static class JsonataCodeGenerator
         L(sb, indent, "/// <returns>The result of the evaluation, or a <c>default</c> <see cref=\"JsonElement\"/> if the expression produces no result.</returns>");
     }
 
-    private static void EmitBindingsOverload(StringBuilder sb)
+    private static void EmitBindingsOverload(StringBuilder sb, bool hasInlineBindings)
     {
         L(sb, "    ", "/// <summary>");
         L(sb, "    ", "/// Evaluates the JSONata expression with external variable bindings and resource limits.");
@@ -185,6 +213,20 @@ public static class JsonataCodeGenerator
         L(sb, "        ", "int maxDepth = 500,");
         L(sb, "        ", "int timeLimitMs = 0)");
         L(sb, "    ", "{");
+
+        if (hasInlineBindings)
+        {
+            // Route to inline code when depth/timeout are defaults; RT fallback otherwise.
+            L(sb, "        ", "if (maxDepth == 500 && timeLimitMs == 0)");
+            L(sb, "            ", "return Evaluate(in data, workspace, bindings);");
+        }
+        else
+        {
+            // Route to inline code when no bindings and depth/timeout are defaults.
+            L(sb, "        ", "if (bindings is null && maxDepth == 500 && timeLimitMs == 0)");
+            L(sb, "            ", "return Evaluate(in data, workspace);");
+        }
+
         L(sb, "        ", "return s_evaluator.Evaluate(Expression, data, workspace, bindings, maxDepth, timeLimitMs);");
         L(sb, "    ", "}");
     }
@@ -271,13 +313,24 @@ public static class JsonataCodeGenerator
         private bool _usesRootRef;
 
         /// <summary>
-        /// Returns <c>"static "</c> when lambdas can be static, or <c>""</c> when
-        /// they need to capture <c>__rootData</c>.
+        /// When true, the expression references unresolved variables that must be
+        /// resolved via external bindings at runtime. The primary <c>Evaluate</c>
+        /// method gains an <c>IReadOnlyDictionary&lt;string, JsonElement&gt;?</c>
+        /// parameter.
         /// </summary>
-        private string Static => _usesRootRef ? "" : "static ";
+        private bool _usesBindings;
+
+        /// <summary>
+        /// Returns <c>"static "</c> when lambdas can be static, or <c>""</c> when
+        /// they need to capture <c>__rootData</c> or <c>__bindings</c>.
+        /// </summary>
+        private string Static => _usesRootRef || _usesBindings ? "" : "static ";
 
         /// <summary>Gets the static field declarations collected during emission.</summary>
         internal IReadOnlyList<string> StaticFieldDeclarations => _staticFieldDeclarations;
+
+        /// <summary>Gets whether the expression uses external bindings.</summary>
+        internal bool UsesBindings => _usesBindings;
 
         internal string NextVar() => $"v{_varCounter++}";
 
@@ -2939,9 +2992,11 @@ public static class JsonataCodeGenerator
                 throw new FallbackException();
             }
 
-            // Undefined variable
+            // Unresolved variable — look up in external bindings at runtime.
+            _usesBindings = true;
             string v = NextVar();
-            L(sb, indent, $"var {v} = default(JsonElement);");
+            string escaped = EscapeStringLiteral(variable.Name);
+            L(sb, indent, $"var {v} = __bindings is not null && __bindings.TryGetValue(\"{escaped}\", out var __bv{v}) ? __bv{v} : default;");
             return v;
         }
 

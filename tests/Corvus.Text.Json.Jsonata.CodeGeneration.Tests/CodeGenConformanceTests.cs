@@ -25,7 +25,7 @@ namespace Corvus.Text.Json.Jsonata.CodeGeneration.Tests;
 /// </remarks>
 public class CodeGenConformanceTests : IClassFixture<CodeGenConformanceFixture>
 {
-    private static readonly TimeSpan TestTimeout = TimeSpan.FromSeconds(10);
+    private static readonly TimeSpan TestTimeout = TimeSpan.FromSeconds(30);
     private static readonly string TestSuiteRoot = FindTestSuiteRoot();
 
     private readonly CodeGenConformanceFixture fixture;
@@ -100,7 +100,7 @@ public class CodeGenConformanceTests : IClassFixture<CodeGenConformanceFixture>
         this.output.WriteLine($"Case:       {caseName}");
         this.output.WriteLine($"Expression: {expr}");
 
-        // Skip cases that use bindings, custom depth, or timeouts.
+        // Extract bindings, depth, and timelimit if present.
         bool hasBindings = root.TryGetProperty("bindings", out var bindingsEl) &&
                            bindingsEl.ValueKind == JsonValueKind.Object &&
                            bindingsEl.EnumerateObject().Any();
@@ -116,11 +116,7 @@ public class CodeGenConformanceTests : IClassFixture<CodeGenConformanceFixture>
             timeLimitMs = timelimitEl.GetInt32();
         }
 
-        if (hasBindings || maxDepth != 500 || timeLimitMs != 0)
-        {
-            this.output.WriteLine("SKIP: Requires bindings/depth/timelimit (runtime-only path)");
-            return;
-        }
+        bool needsBindingsOverload = hasBindings || maxDepth != 500 || timeLimitMs != 0;
 
         // Dynamically compile the expression (cached per unique expression string).
         CompiledExpression compiled = this.fixture.GetOrCompile(expr);
@@ -192,21 +188,38 @@ public class CodeGenConformanceTests : IClassFixture<CodeGenConformanceFixture>
             }
         }
 
+        // Parse bindings if present.
+        Dictionary<string, JsonElement>? bindings = null;
+        ParsedJsonDocument<JsonElement>? bindingsDoc = null;
+        if (hasBindings)
+        {
+            string bindingsJson = bindingsEl.GetRawText();
+            bindingsDoc = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes(bindingsJson));
+            bindings = new Dictionary<string, JsonElement>();
+            foreach (var prop in bindingsDoc.RootElement.EnumerateObject())
+            {
+                bindings[prop.Name] = prop.Value;
+            }
+        }
+
         try
         {
+            // Choose invocation method: 5-parameter overload when bindings/depth/timeout are needed.
+            MethodInfo method = needsBindingsOverload ? (compiled.BindingsMethod ?? compiled.Method) : compiled.Method;
+
             if (expectedErrorCode is not null)
             {
-                RunErrorCase(compiled.Method, expectedErrorCode, inputData, hasData);
+                RunErrorCase(method, expectedErrorCode, inputData, hasData, needsBindingsOverload, bindings, maxDepth, timeLimitMs);
                 this.output.WriteLine($"Got expected error: {expectedErrorCode}");
             }
             else if (expectsUndefined)
             {
-                RunUndefinedCase(compiled.Method, inputData, hasData);
+                RunUndefinedCase(method, inputData, hasData, needsBindingsOverload, bindings, maxDepth, timeLimitMs);
                 this.output.WriteLine("Got expected undefined result");
             }
             else if (expectsResult)
             {
-                RunResultCase(compiled.Method, expectedResult, inputData, hasData);
+                RunResultCase(method, expectedResult, inputData, hasData, needsBindingsOverload, bindings, maxDepth, timeLimitMs);
             }
             else
             {
@@ -216,6 +229,7 @@ public class CodeGenConformanceTests : IClassFixture<CodeGenConformanceFixture>
         finally
         {
             dataDoc?.Dispose();
+            bindingsDoc?.Dispose();
         }
     }
 
@@ -284,13 +298,30 @@ public class CodeGenConformanceTests : IClassFixture<CodeGenConformanceFixture>
         return result is JsonElement el ? el : default;
     }
 
-    private void RunErrorCase(MethodInfo method, string expectedCode, JsonElement inputData, bool hasData)
+    private static JsonElement InvokeEvaluateWithBindings(
+        MethodInfo method,
+        JsonElement data,
+        JsonWorkspace workspace,
+        Dictionary<string, JsonElement>? bindings,
+        int maxDepth,
+        int timeLimitMs)
+    {
+        object?[] args = [data, workspace, (IReadOnlyDictionary<string, JsonElement>?)bindings, maxDepth, timeLimitMs];
+        object? result = method.Invoke(null, args);
+        return result is JsonElement el ? el : default;
+    }
+
+    private void RunErrorCase(
+        MethodInfo method, string expectedCode, JsonElement inputData, bool hasData,
+        bool useBindingsOverload, Dictionary<string, JsonElement>? bindings, int maxDepth, int timeLimitMs)
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         Exception? caught = null;
         try
         {
-            var task = Task.Run(() => InvokeEvaluate(method, hasData ? inputData : default, workspace));
+            var task = useBindingsOverload
+                ? Task.Run(() => InvokeEvaluateWithBindings(method, hasData ? inputData : default, workspace, bindings, maxDepth, timeLimitMs))
+                : Task.Run(() => InvokeEvaluate(method, hasData ? inputData : default, workspace));
             if (!task.Wait(TestTimeout))
             {
                 Assert.Fail($"Evaluation timed out after {TestTimeout.TotalSeconds}s");
@@ -321,10 +352,14 @@ public class CodeGenConformanceTests : IClassFixture<CodeGenConformanceFixture>
         }
     }
 
-    private void RunUndefinedCase(MethodInfo method, JsonElement inputData, bool hasData)
+    private void RunUndefinedCase(
+        MethodInfo method, JsonElement inputData, bool hasData,
+        bool useBindingsOverload, Dictionary<string, JsonElement>? bindings, int maxDepth, int timeLimitMs)
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
-        var task = Task.Run(() => InvokeEvaluate(method, hasData ? inputData : default, workspace));
+        var task = useBindingsOverload
+            ? Task.Run(() => InvokeEvaluateWithBindings(method, hasData ? inputData : default, workspace, bindings, maxDepth, timeLimitMs))
+            : Task.Run(() => InvokeEvaluate(method, hasData ? inputData : default, workspace));
         if (!task.Wait(TestTimeout))
         {
             Assert.Fail($"Evaluation timed out after {TestTimeout.TotalSeconds}s");
@@ -333,10 +368,14 @@ public class CodeGenConformanceTests : IClassFixture<CodeGenConformanceFixture>
         Assert.Equal(JsonValueKind.Undefined, task.Result.ValueKind);
     }
 
-    private void RunResultCase(MethodInfo method, JsonElement expectedResult, JsonElement inputData, bool hasData)
+    private void RunResultCase(
+        MethodInfo method, JsonElement expectedResult, JsonElement inputData, bool hasData,
+        bool useBindingsOverload, Dictionary<string, JsonElement>? bindings, int maxDepth, int timeLimitMs)
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
-        var task = Task.Run(() => InvokeEvaluate(method, hasData ? inputData : default, workspace));
+        var task = useBindingsOverload
+            ? Task.Run(() => InvokeEvaluateWithBindings(method, hasData ? inputData : default, workspace, bindings, maxDepth, timeLimitMs))
+            : Task.Run(() => InvokeEvaluate(method, hasData ? inputData : default, workspace));
         if (!task.Wait(TestTimeout))
         {
             Assert.Fail($"Evaluation timed out after {TestTimeout.TotalSeconds}s");

@@ -106,7 +106,7 @@ public sealed class CodeGenConformanceFixture : IDisposable
                 if (!compileTask.Wait(CompilationTimeout))
                 {
                     return new CompiledExpression(
-                        null, generatedCode,
+                        null, null, generatedCode,
                         $"Pipeline timed out after {CompilationTimeout.TotalSeconds}s for: {(expr.Length > 80 ? expr[..80] + "..." : expr)}");
                 }
 
@@ -115,7 +115,7 @@ public sealed class CodeGenConformanceFixture : IDisposable
 
                 if (error is not null)
                 {
-                    return new CompiledExpression(null, generatedCode, error);
+                    return new CompiledExpression(null, null, generatedCode, error);
                 }
 
                 string fullTypeName = $"{GeneratedNamespace}.{className}";
@@ -124,18 +124,29 @@ public sealed class CodeGenConformanceFixture : IDisposable
                     "Evaluate",
                     [typeof(Corvus.Text.Json.JsonElement).MakeByRefType(), typeof(Corvus.Text.Json.JsonWorkspace)]);
 
-                return new CompiledExpression(method, generatedCode, method is null ? $"Type or method not found: {fullTypeName}" : null);
+                // Also resolve the 5-parameter overload for bindings/depth/timeout.
+                MethodInfo? bindingsMethod = type?.GetMethod(
+                    "Evaluate",
+                    [
+                        typeof(Corvus.Text.Json.JsonElement).MakeByRefType(),
+                        typeof(Corvus.Text.Json.JsonWorkspace),
+                        typeof(IReadOnlyDictionary<string, Corvus.Text.Json.JsonElement>),
+                        typeof(int),
+                        typeof(int),
+                    ]);
+
+                return new CompiledExpression(method, bindingsMethod, generatedCode, method is null ? $"Type or method not found: {fullTypeName}" : null);
             }
             catch (AggregateException ae) when (ae.InnerException is not null)
             {
                 Exception inner = ae.InnerException;
                 string? errorCode = inner is JsonataException jex ? jex.Code : null;
-                return new CompiledExpression(null, generatedCode, inner.Message, errorCode);
+                return new CompiledExpression(null, null, generatedCode, inner.Message, errorCode);
             }
             catch (Exception ex)
             {
                 string? errorCode = ex is JsonataException jex ? jex.Code : null;
-                return new CompiledExpression(null, generatedCode, ex.Message, errorCode);
+                return new CompiledExpression(null, null, generatedCode, ex.Message, errorCode);
             }
         });
     }
@@ -198,10 +209,11 @@ public sealed class CodeGenConformanceFixture : IDisposable
 /// The result of generating and dynamically compiling a JSONata expression.
 /// </summary>
 /// <param name="Method">The compiled <c>Evaluate(in JsonElement, JsonWorkspace)</c> method, or null on failure.</param>
+/// <param name="BindingsMethod">The compiled <c>Evaluate(in JsonElement, JsonWorkspace, IReadOnlyDictionary, int, int)</c> method, or null on failure.</param>
 /// <param name="GeneratedCode">The generated C# source code, or null if generation failed.</param>
 /// <param name="Error">An error message if generation or compilation failed.</param>
 /// <param name="ErrorCode">The JSONata error code (e.g. <c>S0201</c>) if the failure was a parse error, or null otherwise.</param>
-public record CompiledExpression(MethodInfo? Method, string? GeneratedCode, string? Error, string? ErrorCode = null)
+public record CompiledExpression(MethodInfo? Method, MethodInfo? BindingsMethod, string? GeneratedCode, string? Error, string? ErrorCode = null)
 {
     /// <summary>
     /// Gets a value indicating whether the expression uses inlined code (not the runtime fallback).
