@@ -4609,30 +4609,101 @@ public static class JsonataCodeGenerator
 
             string inputVar = EmitExpression(sb, func.Arguments[0], indent, dataVar, wsVar);
 
+            // Indentation levels: if > try > for > while > body
+            string ind1 = indent + "    ";
+            string ind2 = ind1 + "    ";
+            string ind3 = ind2 + "    ";
+            string ind4 = ind3 + "    ";
+            string ind5 = ind4 + "    ";
+
+            // Compile comparator body at the while-loop-body depth
             int lambdaIdx = _lambdaCounter++;
             string aParam = $"a_{lambdaIdx}";
             string bParam = $"b_{lambdaIdx}";
-            string wsParam = $"ws_{lambdaIdx}";
-            string innerIndent = indent + "    ";
+
             StringBuilder lambdaBody = new();
 
             string? savedA = StashVariable(lambda.Parameters[0], aParam);
             string? savedB = StashVariable(lambda.Parameters[1], bParam);
             bool prevRootRef = _usesRootRef;
             _usesRootRef = true;
-            string bodyResult = EmitExpression(lambdaBody, lambda.Body, innerIndent, aParam, wsParam);
+            string bodyResult = EmitExpression(lambdaBody, lambda.Body, ind5, aParam, wsVar);
             _usesRootRef = prevRootRef;
             RestoreVariable(lambda.Parameters[1], savedB);
             RestoreVariable(lambda.Parameters[0], savedA);
 
             string v = NextVar();
-            L(sb, indent, $"var {v} = {H}.Sort({inputVar},");
-            L(sb, indent + "    ", $"{Static}(JsonElement {aParam}, JsonElement {bParam}, JsonWorkspace {wsParam}) =>");
-            L(sb, indent + "    ", "{");
+            string countVar = NextVar();
+            string arrVar = NextVar();
+            string idxVar = NextVar();
+            string iVar = NextVar();
+            string jVar = NextVar();
+            string keyVar = NextVar();
+            string elVar = NextVar();
+            string docVar = NextVar();
+            string rootVar = NextVar();
+            string riVar = NextVar();
+
+            // Short-circuit: null/undefined, non-array, or single element
+            L(sb, indent, $"JsonElement {v};");
+            L(sb, indent, $"if ({inputVar}.ValueKind == JsonValueKind.Array && {inputVar}.GetArrayLength() > 1)");
+            L(sb, indent, "{");
+
+            L(sb, ind1, $"int {countVar} = {inputVar}.GetArrayLength();");
+            L(sb, ind1, $"var {arrVar} = System.Buffers.ArrayPool<JsonElement>.Shared.Rent({countVar});");
+            L(sb, ind1, "try");
+            L(sb, ind1, "{");
+
+            // Collect elements
+            L(sb, ind2, $"int {idxVar} = 0;");
+            L(sb, ind2, $"foreach (var {elVar} in {inputVar}.EnumerateArray())");
+            L(sb, ind2, "{");
+            L(sb, ind2, $"    {arrVar}[{idxVar}++] = {elVar};");
+            L(sb, ind2, "}");
+            L(sb, ind2, "");
+
+            // Insertion sort — stable, no closure, no delegate
+            L(sb, ind2, $"for (int {iVar} = 1; {iVar} < {countVar}; {iVar}++)");
+            L(sb, ind2, "{");
+            L(sb, ind3, $"var {keyVar} = {arrVar}[{iVar}];");
+            L(sb, ind3, $"int {jVar} = {iVar} - 1;");
+            L(sb, ind3, $"while ({jVar} >= 0)");
+            L(sb, ind3, "{");
+
+            // Bind comparator params and inline body
+            L(sb, ind4, $"var {aParam} = {arrVar}[{jVar}];");
+            L(sb, ind4, $"var {bParam} = {keyVar};");
             sb.Append(lambdaBody);
-            L(sb, innerIndent, $"return {H}.IsTruthy({bodyResult});");
-            L(sb, indent + "    ", "},");
-            L(sb, indent + "    ", $"{wsVar});");
+            L(sb, ind4, $"if (!{H}.IsTruthy({bodyResult})) break;");
+            L(sb, ind4, $"{arrVar}[{jVar} + 1] = {arrVar}[{jVar}];");
+            L(sb, ind4, $"{jVar}--;");
+
+            L(sb, ind3, "}");
+            L(sb, ind3, $"{arrVar}[{jVar} + 1] = {keyVar};");
+            L(sb, ind2, "}");
+            L(sb, ind2, "");
+
+            // Build result array
+            L(sb, ind2, $"var {docVar} = JsonElement.CreateArrayBuilder({wsVar}, {countVar});");
+            L(sb, ind2, $"var {rootVar} = {docVar}.RootElement;");
+            L(sb, ind2, $"for (int {riVar} = 0; {riVar} < {countVar}; {riVar}++)");
+            L(sb, ind2, "{");
+            L(sb, ind2, $"    {rootVar}.AddItem({arrVar}[{riVar}]);");
+            L(sb, ind2, "}");
+            L(sb, ind2, $"{v} = (JsonElement){rootVar};");
+
+            L(sb, ind1, "}");
+            L(sb, ind1, "finally");
+            L(sb, ind1, "{");
+            L(sb, ind1, $"    System.Buffers.ArrayPool<JsonElement>.Shared.Return({arrVar}, clearArray: true);");
+            L(sb, ind1, "}");
+
+            L(sb, indent, "}");
+            L(sb, indent, "else");
+            L(sb, indent, "{");
+            L(sb, ind1, $"{v} = {inputVar}.IsNullOrUndefined() ? default : {inputVar};");
+            L(sb, indent, "}");
+
             return v;
         }
 
