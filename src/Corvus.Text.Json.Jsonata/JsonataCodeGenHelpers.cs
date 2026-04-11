@@ -290,18 +290,42 @@ public static class JsonataCodeGenHelpers
                 return default;
             }
 
-            var doc = JsonElement.CreateArrayBuilder(workspace, buffer.Count);
+            var doc = JsonElement.CreateArrayBuilder(workspace, buffer.Count * 2);
             JsonElement.Mutable root = doc.RootElement;
             int count = 0;
 
             for (int i = 0; i < buffer.Count; i++)
             {
-                JsonElement obj = BuildSingleEntryObject(buffer[i], keyPropUtf8, valuePropUtf8, workspace);
-                if (obj.ValueKind != JsonValueKind.Undefined)
+                JsonElement item = buffer[i];
+                if (item.ValueKind != JsonValueKind.Object)
                 {
-                    root.AddItem(obj);
-                    count++;
+                    continue;
                 }
+
+                if (!item.TryGetProperty(keyPropUtf8, out JsonElement keyEl))
+                {
+                    continue;
+                }
+
+                if (keyEl.ValueKind == JsonValueKind.Number)
+                {
+                    throw new JsonataException("T1003", "Key in object structure must evaluate to a string; got: number", 0);
+                }
+
+                if (keyEl.ValueKind != JsonValueKind.String)
+                {
+                    continue;
+                }
+
+                if (!item.TryGetProperty(valuePropUtf8, out JsonElement valEl))
+                {
+                    continue;
+                }
+
+                // Build object directly into the array document via AddItem callback.
+                var ctx = new GroupByObjectContext(keyEl, valEl);
+                root.AddItem(ctx, GroupByObjectCallback, 1);
+                count++;
             }
 
             return count == 0 ? default : count == 1 ? root[0] : (JsonElement)root;
@@ -310,6 +334,24 @@ public static class JsonataCodeGenHelpers
         {
             buffer.Dispose();
         }
+    }
+
+    private readonly struct GroupByObjectContext
+    {
+        public readonly JsonElement Key;
+        public readonly JsonElement Value;
+
+        public GroupByObjectContext(JsonElement key, JsonElement value)
+        {
+            Key = key;
+            Value = value;
+        }
+    }
+
+    private static void GroupByObjectCallback(in GroupByObjectContext ctx, ref JsonElement.ObjectBuilder builder)
+    {
+        using var keyUtf8 = ctx.Key.GetUtf8String();
+        builder.AddProperty(keyUtf8.Span, ctx.Value);
     }
 
     /// <summary>
@@ -5176,18 +5218,41 @@ public static class JsonataCodeGenHelpers
                 return default;
             }
 
-            var doc = JsonElement.CreateArrayBuilder(workspace, len);
+            var doc = JsonElement.CreateArrayBuilder(workspace, len * 2);
             JsonElement.Mutable root = doc.RootElement;
             int count = 0;
 
             foreach (JsonElement item in input.EnumerateArray())
             {
-                JsonElement obj = BuildSingleEntryObject(item, keyPropUtf8, valuePropUtf8, workspace);
-                if (obj.ValueKind != JsonValueKind.Undefined)
+                if (item.ValueKind != JsonValueKind.Object)
                 {
-                    root.AddItem(obj);
-                    count++;
+                    continue;
                 }
+
+                if (!item.TryGetProperty(keyPropUtf8, out JsonElement keyEl))
+                {
+                    continue;
+                }
+
+                if (keyEl.ValueKind == JsonValueKind.Number)
+                {
+                    throw new JsonataException("T1003", "Key in object structure must evaluate to a string; got: number", 0);
+                }
+
+                if (keyEl.ValueKind != JsonValueKind.String)
+                {
+                    continue;
+                }
+
+                if (!item.TryGetProperty(valuePropUtf8, out JsonElement valEl))
+                {
+                    continue;
+                }
+
+                // Build object directly into the array document via AddItem callback.
+                var ctx = new GroupByObjectContext(keyEl, valEl);
+                root.AddItem(ctx, GroupByObjectCallback, 1);
+                count++;
             }
 
             return count == 0 ? default : count == 1 ? root[0] : (JsonElement)root;
