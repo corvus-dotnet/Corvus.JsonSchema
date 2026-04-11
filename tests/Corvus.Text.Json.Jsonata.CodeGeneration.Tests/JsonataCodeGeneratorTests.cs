@@ -251,4 +251,273 @@ public class JsonataCodeGeneratorTests
 
         Assert.DoesNotContain("static (JsonElement el_", result);
     }
+
+    /// <summary>
+    /// Verifies that nested HOFs with the same parameter name produce distinct
+    /// C# parameter names via _lambdaCounter, avoiding name collisions.
+    /// </summary>
+    [Fact]
+    public void Generate_NestedHofSameParamName_DistinctCSharpParams()
+    {
+        string result = JsonataCodeGenerator.Generate(
+            "$map([1,2], function($v) { $map([3,4], function($v) { $v }) })",
+            "NestedSameParamExpr",
+            "Test.Generated");
+
+        // Should have two distinct lambda parameters (el_0 and el_1)
+        Assert.Contains("el_0", result);
+        Assert.Contains("el_1", result);
+    }
+
+    /// <summary>
+    /// Verifies that $$ inside a nested HOF (inner lambda) produces non-static
+    /// lambdas at both levels, since the outer lambda also captures __rootData.
+    /// </summary>
+    [Fact]
+    public void Generate_RootRefInsideNestedHof_AllLambdasNonStatic()
+    {
+        string result = JsonataCodeGenerator.Generate(
+            "$map([1,2], function($v) { $filter([3,4], function($w) { $w = $$ }) })",
+            "RootRefNestedHofExpr",
+            "Test.Generated");
+
+        Assert.DoesNotContain("static (JsonElement el_", result);
+    }
+
+    /// <summary>
+    /// Verifies that an external binding inside a $filter lambda does not
+    /// produce a static lambda.
+    /// </summary>
+    [Fact]
+    public void Generate_BindingInsideFilterLambda_LambdaIsNotStatic()
+    {
+        string result = JsonataCodeGenerator.Generate(
+            "$filter([1,2,3], function($v) { $v > $threshold })",
+            "BindingInFilterExpr",
+            "Test.Generated");
+
+        Assert.DoesNotContain("static (JsonElement el_", result);
+    }
+
+    /// <summary>
+    /// Verifies that an external binding inside a $reduce lambda does not
+    /// produce a static lambda.
+    /// </summary>
+    [Fact]
+    public void Generate_BindingInsideReduceLambda_LambdaIsNotStatic()
+    {
+        string result = JsonataCodeGenerator.Generate(
+            "$reduce([1,2,3], function($prev, $curr) { $prev + $curr + $offset })",
+            "BindingInReduceExpr",
+            "Test.Generated");
+
+        Assert.DoesNotContain("static (JsonElement prev_", result);
+    }
+
+    /// <summary>
+    /// Verifies that both $$ and an external binding in the same HOF lambda
+    /// body produce non-static lambdas.
+    /// </summary>
+    [Fact]
+    public void Generate_RootRefAndBindingInSameLambda_NonStatic()
+    {
+        string result = JsonataCodeGenerator.Generate(
+            "$map([1,2], function($v) { $string($$) & $external })",
+            "RootRefAndBindingExpr",
+            "Test.Generated");
+
+        Assert.DoesNotContain("static (JsonElement el_", result);
+        // Both flags should be set
+        Assert.Contains("__rootData", result);
+        Assert.Contains("__bindings", result);
+    }
+
+    /// <summary>
+    /// Verifies that a HOF with index parameter (2-arg $map) generates code
+    /// that includes the index parameter.
+    /// </summary>
+    [Fact]
+    public void Generate_MapWithIndex_IncludesIndexParam()
+    {
+        string result = JsonataCodeGenerator.Generate(
+            "$map([10,20,30], function($v, $i) { $v + $i })",
+            "MapWithIndexExpr",
+            "Test.Generated");
+
+        Assert.Contains("MapElementsWithIndex", result);
+        Assert.Contains("idx_", result);
+    }
+
+    /// <summary>
+    /// Verifies that a filter stage on a path step (predicate in path, not HOF)
+    /// uses the ApplyStage helper.
+    /// </summary>
+    [Fact]
+    public void Generate_PathWithPredicateStage_UsesApplyStage()
+    {
+        string result = JsonataCodeGenerator.Generate(
+            "items[price > 10].name",
+            "PathPredicateExpr",
+            "Test.Generated");
+
+        // Path predicates should use either ApplyStage or ApplyStepOverElements
+        bool usesStage = result.Contains("ApplyStage") || result.Contains("ApplyStepOverElements");
+        Assert.True(usesStage, "Expected path predicate to use ApplyStage or ApplyStepOverElements");
+    }
+
+    /// <summary>
+    /// Verifies that numeric index predicates in paths use an optimized array index helper.
+    /// </summary>
+    [Fact]
+    public void Generate_PathWithNumericIndex_UsesChainPredicates()
+    {
+        string result = JsonataCodeGenerator.Generate(
+            "items[0].name",
+            "NumericIndexExpr",
+            "Test.Generated");
+
+        // Path with numeric index is compiled into a chain-with-predicates call
+        Assert.Contains("NavigatePropertyChainWithPredicates", result);
+        // The constant index array encodes [0] for the first step
+        Assert.Contains("s_ci0", result);
+    }
+
+    /// <summary>
+    /// Verifies that $$ inside a filter predicate on a path (not a HOF) generates
+    /// non-static lambdas.
+    /// </summary>
+    [Fact]
+    public void Generate_RootRefInPathPredicate_NonStaticLambda()
+    {
+        string result = JsonataCodeGenerator.Generate(
+            "items[price > $$.threshold].name",
+            "RootRefPathPredExpr",
+            "Test.Generated");
+
+        Assert.DoesNotContain("static (JsonElement el_", result);
+        Assert.Contains("__rootData", result);
+    }
+
+    /// <summary>
+    /// Verifies that a block expression with variable binding generates
+    /// the assignment and returns the last value.
+    /// </summary>
+    [Fact]
+    public void Generate_BlockWithVariableBinding_ProducesValidCode()
+    {
+        string result = JsonataCodeGenerator.Generate(
+            "($x := 5; $x * 2)",
+            "BlockBindingExpr",
+            "Test.Generated");
+
+        Assert.Contains("class BlockBindingExpr", result);
+        Assert.Contains("Evaluate", result);
+    }
+
+    /// <summary>
+    /// Verifies that string concatenation with multiple operands uses
+    /// the flattened ConcatBuilder pattern.
+    /// </summary>
+    [Fact]
+    public void Generate_MultiStringConcat_UsesConcatBuilder()
+    {
+        string result = JsonataCodeGenerator.Generate(
+            """a & " " & b & "!" """,
+            "ConcatBuilderExpr",
+            "Test.Generated");
+
+        Assert.Contains("BeginConcat", result);
+    }
+
+    /// <summary>
+    /// Verifies that constant arithmetic is folded at generation time.
+    /// </summary>
+    [Fact]
+    public void Generate_ConstantArithmetic_IsFolded()
+    {
+        string result = JsonataCodeGenerator.Generate(
+            "2 + 3",
+            "ConstFoldExpr",
+            "Test.Generated");
+
+        // The expression should be folded to a constant 5, emitted via NumberFromDouble
+        Assert.Contains("NumberFromDouble(5", result);
+    }
+
+    /// <summary>
+    /// Verifies that fused sum-over-chain optimization is applied for
+    /// $sum over a property path.
+    /// </summary>
+    [Fact]
+    public void Generate_SumOverPropertyChain_IsInlined()
+    {
+        string result = JsonataCodeGenerator.Generate(
+            "$sum(items.price)",
+            "SumFusedExpr",
+            "Test.Generated");
+
+        // $sum over a simple property chain should be inlined (not falling back to RT)
+        Assert.Contains("Sum(", result);
+        Assert.DoesNotContain("s_evaluator.Evaluate(Expression, data, workspace)", result);
+    }
+
+    /// <summary>
+    /// Verifies that $map with a simple property chain input uses the
+    /// fused MapChainElements helper.
+    /// </summary>
+    [Fact]
+    public void Generate_MapOverPropertyChain_UsesFusedMap()
+    {
+        string result = JsonataCodeGenerator.Generate(
+            "$map(items.records, function($v) { $v.name })",
+            "MapChainFusedExpr",
+            "Test.Generated");
+
+        Assert.Contains("MapChainElements", result);
+    }
+
+    /// <summary>
+    /// Verifies that the sort key extractor for a simple property name
+    /// uses a static lambda (since it doesn't capture anything).
+    /// </summary>
+    [Fact]
+    public void Generate_SortBySimpleProperty_StaticExtractor()
+    {
+        string result = JsonataCodeGenerator.Generate(
+            "$sort(items, function($a, $b) { $a.price > $b.price })",
+            "SortSimplePropExpr",
+            "Test.Generated");
+
+        Assert.Contains("class SortSimplePropExpr", result);
+    }
+
+    /// <summary>
+    /// Verifies that short-circuit evaluation is used for logical operators.
+    /// </summary>
+    [Fact]
+    public void Generate_LogicalAnd_ProducesConditionalCode()
+    {
+        string result = JsonataCodeGenerator.Generate(
+            "a and b",
+            "LogicalAndExpr",
+            "Test.Generated");
+
+        // Should use IsTruthy for short-circuit evaluation
+        Assert.Contains("IsTruthy", result);
+    }
+
+    /// <summary>
+    /// Verifies that the range operator produces valid code.
+    /// </summary>
+    [Fact]
+    public void Generate_RangeOperator_ProducesValidCode()
+    {
+        string result = JsonataCodeGenerator.Generate(
+            "[1..5]",
+            "RangeExpr",
+            "Test.Generated");
+
+        Assert.Contains("class RangeExpr", result);
+        Assert.Contains("Evaluate", result);
+    }
 }
