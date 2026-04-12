@@ -1,3 +1,6 @@
+using Corvus.Text.Json;
+using Corvus.Text.Json.Jsonata;
+
 namespace Corvus.Text.Json.Jsonata.Playground.Samples;
 
 /// <summary>
@@ -12,6 +15,16 @@ public sealed class Sample
     public required string Data { get; init; }
 
     public required string Expression { get; init; }
+
+    /// <summary>
+    /// Gets optional external function/value bindings passed to the evaluator.
+    /// </summary>
+    public IReadOnlyDictionary<string, JsonataBinding>? Bindings { get; init; }
+
+    /// <summary>
+    /// Gets C# source code shown in the Bindings panel to illustrate how the bindings are created.
+    /// </summary>
+    public string? BindingsCode { get; init; }
 }
 
 /// <summary>
@@ -337,6 +350,67 @@ public static class SampleRegistry
                                "Hot"
               }
             )
+            """,
+        },
+
+        new Sample
+        {
+            Id = "bindings",
+            DisplayName = "Bindings",
+            Data = """
+            {
+              "angle": 1.5707963267948966
+            }
+            """,
+            Expression = """
+            {
+              "cos": $cos(angle),
+              "sin": $sin(angle),
+              "identity": $sqrt($cos(angle) * $cos(angle) + $sin(angle) * $sin(angle))
+            }
+            """,
+            Bindings = new Dictionary<string, JsonataBinding>
+            {
+                ["cos"] = JsonataBinding.FromFunction(
+                    (args, ws) =>
+                    {
+                        using var doc = ParsedJsonDocument<JsonElement>.Parse(
+                            System.Text.Encoding.UTF8.GetBytes(Math.Cos(args[0].GetDouble()).ToString("R")));
+                        return doc.RootElement.Clone();
+                    },
+                    1,
+                    "<n:n>"),
+                ["sin"] = JsonataBinding.FromFunction(
+                    (args, ws) =>
+                    {
+                        using var doc = ParsedJsonDocument<JsonElement>.Parse(
+                            System.Text.Encoding.UTF8.GetBytes(Math.Sin(args[0].GetDouble()).ToString("R")));
+                        return doc.RootElement.Clone();
+                    },
+                    1,
+                    "<n:n>"),
+                ["sqrt"] = JsonataBinding.FromFunction(
+                    (args, ws) =>
+                    {
+                        using var doc = ParsedJsonDocument<JsonElement>.Parse(
+                            System.Text.Encoding.UTF8.GetBytes(Math.Sqrt(args[0].GetDouble()).ToString("R")));
+                        return doc.RootElement.Clone();
+                    },
+                    1,
+                    "<n:n>"),
+            },
+            BindingsCode = """
+            var bindings = new Dictionary<string, JsonataBinding>
+            {
+                ["cos"]  = JsonataBinding.FromFunction(
+                    (args, _) => ToElement(Math.Cos(args[0].GetDouble())), 1, "<n:n>"),
+                ["sin"]  = JsonataBinding.FromFunction(
+                    (args, _) => ToElement(Math.Sin(args[0].GetDouble())), 1, "<n:n>"),
+                ["sqrt"] = JsonataBinding.FromFunction(
+                    (args, _) => ToElement(Math.Sqrt(args[0].GetDouble())), 1, "<n:n>"),
+            };
+
+            evaluator.Evaluate(expression, data, bindings);
             """,
         },
     ];

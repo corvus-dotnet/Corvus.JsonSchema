@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Corvus.Text.Json;
 using Corvus.Text.Json.Jsonata;
 
 namespace Corvus.Text.Json.Jsonata.Playground.Services;
@@ -24,7 +25,8 @@ public sealed class EvaluationService
 {
     public async Task<EvaluationResult> EvaluateAsync(
         string expression,
-        string jsonData)
+        string jsonData,
+        IReadOnlyDictionary<string, JsonataBinding>? bindings = null)
     {
         if (string.IsNullOrWhiteSpace(expression))
         {
@@ -43,14 +45,23 @@ public sealed class EvaluationService
             {
                 string data = string.IsNullOrWhiteSpace(jsonData) ? "{}" : jsonData;
 
-                string? result = JsonataEvaluator.Default.EvaluateToString(expression, data);
+                using var doc = ParsedJsonDocument<JsonElement>.Parse(System.Text.Encoding.UTF8.GetBytes(data));
+
+                JsonElement result = JsonataEvaluator.Default.Evaluate(
+                    expression,
+                    doc.RootElement,
+                    bindings);
 
                 sw.Stop();
+
+                string? resultText = result.ValueKind == JsonValueKind.Undefined
+                    ? "/* no result */"
+                    : result.GetRawText();
 
                 return new EvaluationResult
                 {
                     Success = true,
-                    ResultJson = result ?? "/* no result */",
+                    ResultJson = resultText,
                     ElapsedMs = sw.Elapsed.TotalMilliseconds,
                 };
             }

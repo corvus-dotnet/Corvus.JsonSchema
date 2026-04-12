@@ -22,7 +22,7 @@
 </div>
 
 <div class="jsonata-grid">
-    @* Left: JSON data *@
+    @* Left column: JSON data (top) and Bindings (bottom) *@
     <div class="playground-panel panel-data">
         <div class="panel-header">JSON Data</div>
         <div class="panel-body">
@@ -30,6 +30,15 @@
                                   Id="data-editor"
                                   ConstructionOptions="DataEditorOptions"
                                   OnDidChangeModelContent="OnDataChanged" />
+        </div>
+    </div>
+
+    <div class="playground-panel panel-bindings">
+        <div class="panel-header">Bindings</div>
+        <div class="panel-body">
+            <StandaloneCodeEditor @ref="bindingsEditor"
+                                  Id="bindings-editor"
+                                  ConstructionOptions="BindingsEditorOptions" />
         </div>
     </div>
 
@@ -92,6 +101,7 @@
     private StandaloneCodeEditor dataEditor = null!;
     private StandaloneCodeEditor expressionEditor = null!;
     private StandaloneCodeEditor outputEditor = null!;
+    private StandaloneCodeEditor bindingsEditor = null!;
 
     private string? activeSampleId;
     private EvaluationResult? lastResult;
@@ -152,9 +162,24 @@
         ScrollBeyondLastLine = false,
     };
 
+    private StandaloneEditorConstructionOptions BindingsEditorOptions(StandaloneCodeEditor editor) => new()
+    {
+        Language = "csharp",
+        Theme = resolvedTheme == "light" ? "vs" : "vs-dark",
+        Value = initialBindingsCode,
+        AutomaticLayout = true,
+        Minimap = new EditorMinimapOptions { Enabled = false },
+        FontSize = 13,
+        TabSize = 4,
+        ReadOnly = true,
+        ScrollBeyondLastLine = false,
+    };
+
     // ── Initial values (set before render) ──
     private string initialData = SampleRegistry.All[0].Data;
     private string initialExpression = SampleRegistry.All[0].Expression;
+    private string initialBindingsCode = SampleRegistry.All[0].BindingsCode ?? "// No external bindings for this sample";
+    private IReadOnlyDictionary<string, JsonataBinding>? activeBindings = SampleRegistry.All[0].Bindings;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -208,6 +233,7 @@
     private void OnDataChanged(ModelContentChangedEvent e)
     {
         activeSampleId = null;
+        activeBindings = null;
         DebounceEvaluate();
         DebounceSave();
     }
@@ -215,6 +241,7 @@
     private void OnExpressionChanged(ModelContentChangedEvent e)
     {
         activeSampleId = null;
+        activeBindings = null;
         DebounceEvaluate();
         DebounceSave();
     }
@@ -229,8 +256,10 @@
         }
 
         activeSampleId = sample.Id;
+        activeBindings = sample.Bindings;
         await dataEditor.SetValue(sample.Data);
         await expressionEditor.SetValue(sample.Expression);
+        await bindingsEditor.SetValue(sample.BindingsCode ?? "// No external bindings for this sample");
         await EvaluateAsync();
     }
 
@@ -269,7 +298,7 @@
             var data = await dataEditor.GetValue();
             var expression = await expressionEditor.GetValue();
 
-            lastResult = await EvalService.EvaluateAsync(expression, data);
+            lastResult = await EvalService.EvaluateAsync(expression, data, activeBindings);
 
             if (lastResult.Success && outputEditor is not null)
             {
