@@ -354,10 +354,30 @@
 
     private async Task NewProjectAsync()
     {
-        var defaultSample = SampleRegistry.All[0];
         await CheckDirtyAndConfirm(async () =>
         {
-            await LoadSample(defaultSample);
+            isLoadingSample = true;
+            try
+            {
+                activeSampleId = null;
+                await dataEditor.SetValue("{}");
+                await expressionEditor.SetValue("/* Enter a JSONata expression */");
+                await bindingsEditor.SetValue(DefaultBindingsPlaceholder);
+            }
+            finally
+            {
+                isLoadingSample = false;
+            }
+
+            await SyncCleanBaselines();
+            await ClearLocalStorage();
+            lastResult = null;
+            if (outputEditor is not null)
+            {
+                await outputEditor.SetValue("");
+            }
+
+            StateHasChanged();
         });
     }
 
@@ -422,10 +442,13 @@
         }
     }
 
-    private void CancelDirtyConfirmation()
+    private async Task CancelDirtyConfirmation()
     {
         showDirtyConfirmation = false;
         pendingDirtyAction = null;
+
+        // The browser already updated the <select> natively; reset it to match our state
+        await JSRuntime.InvokeVoidAsync("resetSampleSelect", activeSampleId ?? "");
     }
 
     private List<string> GetDirtyEditorNames() => dirtyEditorSnapshot;

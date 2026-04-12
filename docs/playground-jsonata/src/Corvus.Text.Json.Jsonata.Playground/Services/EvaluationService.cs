@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Jsonata;
 
@@ -74,11 +75,90 @@ public sealed class EvaluationService
                 return new EvaluationResult
                 {
                     Success = false,
-                    ErrorMessage = ex.Message,
+                    ErrorMessage = FixBrokenSRFormat(ex.Message),
                     ElapsedMs = sw.Elapsed.TotalMilliseconds,
                 };
             }
         });
+    }
+
+    /// <summary>
+    /// Fixes broken <c>SR.Format</c> output in Blazor WASM.
+    /// <para>
+    /// When <c>SR.UsingResourceKeys()</c> returns <see langword="true"/> (as it does in WASM),
+    /// <c>SR.Format(format, args)</c> falls back to <c>string.Join(", ", format, args)</c>
+    /// instead of calling <see cref="string.Format(string,object[])"/>. This affects
+    /// <c>System.Text.Json</c> and other runtime libraries.
+    /// </para>
+    /// <para>
+    /// The resulting message looks like:
+    /// <c>'{0}' is an invalid end of a number. Expected a delimiter., r LineNumber: 1 | ...</c>
+    /// </para>
+    /// <para>
+    /// This method detects the pattern (unsubstituted <c>{0}</c> placeholders with
+    /// comma-separated arguments appended), extracts the arguments, and applies
+    /// <see cref="string.Format(string,object[])"/> properly.
+    /// </para>
+    /// </summary>
+    private static string FixBrokenSRFormat(string message)
+    {
+        if (!message.Contains("{0}"))
+        {
+            return message;
+        }
+
+        // Strip the position suffix that JsonException appends (e.g., " LineNumber: 1 | BytePositionInLine: 39.")
+        string suffix = string.Empty;
+        Match posMatch = Regex.Match(message, @"\s*LineNumber: \d+ \| BytePositionInLine: \d+\.\s*$");
+        string body = message;
+        if (posMatch.Success)
+        {
+            suffix = posMatch.Value;
+            body = message[..posMatch.Index];
+        }
+
+        // Find the highest numbered placeholder to determine argument count
+        int maxPlaceholder = -1;
+        for (int i = 9; i >= 0; i--)
+        {
+            if (body.Contains($"{{{i}}}"))
+            {
+                maxPlaceholder = i;
+                break;
+            }
+        }
+
+        if (maxPlaceholder < 0)
+        {
+            return message;
+        }
+
+        int argCount = maxPlaceholder + 1;
+
+        // SR.Format joins as: "format_string, arg0, arg1, ..."
+        // Split from the right to peel off argCount arguments
+        string remaining = body;
+        string[] args = new string[argCount];
+        for (int i = argCount - 1; i >= 0; i--)
+        {
+            int lastComma = remaining.LastIndexOf(", ", StringComparison.Ordinal);
+            if (lastComma < 0)
+            {
+                return message; // Can't parse — return original
+            }
+
+            args[i] = remaining[(lastComma + 2)..];
+            remaining = remaining[..lastComma];
+        }
+
+        try
+        {
+            return string.Format(remaining, args) + suffix;
+        }
+        catch
+        {
+            return message;
+        }
     }
 
     /// <summary>

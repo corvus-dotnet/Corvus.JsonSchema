@@ -50,6 +50,13 @@ window.registerPlaygroundShortcuts = function (dotNetHelper) {
     });
 };
 
+// ── Select reset (after dirty-cancel) ──
+
+window.resetSampleSelect = function (value) {
+    var sel = document.querySelector('.toolbar-select');
+    if (sel) { sel.value = value; }
+};
+
 // ── File operations ──
 
 window.downloadFileFromBytes = function (filename, contentType, bytes) {
