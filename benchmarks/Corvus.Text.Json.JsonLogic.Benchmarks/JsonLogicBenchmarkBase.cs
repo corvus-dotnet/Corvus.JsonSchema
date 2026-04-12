@@ -42,15 +42,17 @@ public abstract class JsonLogicBenchmarkBase
     /// <summary>
     /// Parses rule and data JSON for both libraries, and pre-warms the Corvus compilation cache.
     /// </summary>
-    protected void Setup(string ruleJson, string dataJson)
+    protected void Setup(string ruleJson, string dataJson, int maxDepth = 64)
     {
         // JsonEverything setup
-        this.jeRule = JsonNode.Parse(ruleJson);
-        this.jeData = JsonNode.Parse(dataJson);
+        System.Text.Json.JsonDocumentOptions stjDocOptions = new() { MaxDepth = maxDepth };
+        this.jeRule = JsonNode.Parse(ruleJson, nodeOptions: null, documentOptions: stjDocOptions);
+        this.jeData = JsonNode.Parse(dataJson, nodeOptions: null, documentOptions: stjDocOptions);
 
         // Corvus setup
-        CorvusJsonElement corvusRule = CorvusJsonElement.ParseValue(Encoding.UTF8.GetBytes(ruleJson));
-        this.corvusData = CorvusJsonElement.ParseValue(Encoding.UTF8.GetBytes(dataJson));
+        Corvus.Text.Json.JsonDocumentOptions corvusDocOptions = new() { MaxDepth = maxDepth };
+        CorvusJsonElement corvusRule = CorvusJsonElement.ParseValue(Encoding.UTF8.GetBytes(ruleJson), corvusDocOptions);
+        this.corvusData = CorvusJsonElement.ParseValue(Encoding.UTF8.GetBytes(dataJson), corvusDocOptions);
         this.corvusLogicRule = new JsonLogicRule(corvusRule);
 
         // Pre-warm the Corvus compilation cache so benchmarks measure evaluation only

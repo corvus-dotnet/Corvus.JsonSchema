@@ -26,7 +26,7 @@ public class BenchmarkDeepNestedRules : JsonLogicBenchmarkBase
     /// Global setup.
     /// </summary>
     [GlobalSetup]
-    public void GlobalSetup() => this.Setup(RuleJson, DataJson);
+    public void GlobalSetup() => this.Setup(RuleJson, DataJson, maxDepth: 512);
 
     /// <summary>
     /// Evaluate using JsonEverything.
