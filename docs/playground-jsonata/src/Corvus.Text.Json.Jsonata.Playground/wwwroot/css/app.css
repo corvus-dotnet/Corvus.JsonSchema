@@ -29,6 +29,12 @@
     --status-bar-bg: #007acc;
     --status-bar-fg: #fff;
     --status-error-bg: #c72e2e;
+    --modal-overlay-bg: rgba(0, 0, 0, 0.6);
+    --modal-bg: #1e1e2e;
+    --modal-border: #444;
+    --modal-shadow: rgba(0, 0, 0, 0.5);
+    --modal-heading-color: #f0c040;
+    --modal-text-color: #b0b0c0;
 }
 
 [data-theme="light"] {
@@ -56,6 +62,12 @@
     --status-bar-bg: #007acc;
     --status-bar-fg: #fff;
     --status-error-bg: #c72e2e;
+    --modal-overlay-bg: rgba(0, 0, 0, 0.35);
+    --modal-bg: #ffffff;
+    --modal-border: #d4d4d4;
+    --modal-shadow: rgba(0, 0, 0, 0.15);
+    --modal-heading-color: #b8860b;
+    --modal-text-color: #555;
 }
 
 @media (prefers-color-scheme: light) {
@@ -84,6 +96,12 @@
         --status-bar-bg: #007acc;
         --status-bar-fg: #fff;
         --status-error-bg: #c72e2e;
+        --modal-overlay-bg: rgba(0, 0, 0, 0.35);
+        --modal-bg: #ffffff;
+        --modal-border: #d4d4d4;
+        --modal-shadow: rgba(0, 0, 0, 0.15);
+        --modal-heading-color: #b8860b;
+        --modal-text-color: #555;
     }
 }
 
@@ -320,4 +338,75 @@ html, body {
 .shortcut-hint {
     opacity: 0.7;
     font-size: 10px;
+}
+
+/* ── Panel copy button ── */
+.panel-copy-btn {
+    background: none;
+    border: none;
+    color: var(--fg-muted);
+    cursor: pointer;
+    font-size: 14px;
+    padding: 0 4px;
+    line-height: 1;
+}
+
+.panel-copy-btn:hover {
+    color: var(--fg-secondary);
+}
+
+/* ── Dirty confirmation modal ── */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--modal-overlay-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-dialog {
+    background: var(--modal-bg);
+    border: 1px solid var(--modal-border);
+    border-radius: 8px;
+    padding: 24px;
+    max-width: 420px;
+    width: 90%;
+    color: var(--fg-secondary);
+    box-shadow: 0 8px 32px var(--modal-shadow);
+}
+
+.modal-dialog h3 {
+    margin: 0 0 12px;
+    font-size: 16px;
+    color: var(--modal-heading-color);
+}
+
+.modal-dialog p {
+    margin: 0 0 10px;
+    font-size: 13px;
+    color: var(--modal-text-color);
+}
+
+.dirty-file-list {
+    margin: 8px 0 16px;
+    padding-left: 20px;
+    font-size: 13px;
+    color: var(--fg-secondary);
+    font-family: 'Cascadia Code', 'Fira Code', monospace;
+}
+
+.dirty-file-list li {
+    margin: 4px 0;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 16px;
 }

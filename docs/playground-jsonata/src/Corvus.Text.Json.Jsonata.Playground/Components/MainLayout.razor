@@ -7,6 +7,7 @@
 
 <div class="playground-toolbar">
     <h1>JSONata Playground</h1>
+    <button class="toolbar-btn secondary" @onclick="NewProjectAsync" title="New blank project">📄 New</button>
     <select class="toolbar-select" value="@(activeSampleId ?? "")" @onchange="OnSampleChanged">
         @if (activeSampleId is null)
         {
@@ -24,7 +25,11 @@
 <div class="jsonata-grid">
     @* Left column: JSON data (top) and Bindings (bottom) *@
     <div class="playground-panel panel-data">
-        <div class="panel-header">JSON Data</div>
+        <div class="panel-header">
+            JSON Data
+            <div class="spacer"></div>
+            <button class="panel-copy-btn" @onclick="CopyData" title="Copy data">📋</button>
+        </div>
         <div class="panel-body">
             <StandaloneCodeEditor @ref="dataEditor"
                                   Id="data-editor"
@@ -40,6 +45,8 @@
             {
                 <span class="bindings-error-indicator" title="@bindingsError">⚠</span>
             }
+            <div class="spacer"></div>
+            <button class="panel-copy-btn" @onclick="CopyBindings" title="Copy bindings">📋</button>
         </div>
         <div class="panel-body">
             <StandaloneCodeEditor @ref="bindingsEditor"
@@ -51,7 +58,11 @@
 
     @* Top-right: JSONata expression *@
     <div class="playground-panel panel-expression">
-        <div class="panel-header">JSONata Expression</div>
+        <div class="panel-header">
+            JSONata Expression
+            <div class="spacer"></div>
+            <button class="panel-copy-btn" @onclick="CopyExpression" title="Copy expression">📋</button>
+        </div>
         <div class="panel-body">
             <StandaloneCodeEditor @ref="expressionEditor"
                                   Id="expression-editor"
@@ -72,6 +83,7 @@
                     @($"{lastResult.ElapsedMs:F1}ms")
                 </span>
             }
+            <button class="panel-copy-btn" @onclick="CopyResult" title="Copy result">📋</button>
         </div>
         <div class="panel-body" style="@(lastResult is not null && !lastResult.Success ? "display:none" : "")">
             <StandaloneCodeEditor @ref="outputEditor"
@@ -86,6 +98,26 @@
         }
     </div>
 </div>
+
+@if (showDirtyConfirmation)
+{
+    <div class="modal-overlay" @onclick="CancelDirtyConfirmation">
+        <div class="modal-dialog" @onclick:stopPropagation="true">
+            <h3>Unsaved Changes</h3>
+            <p>Your editors have been modified. Do you want to discard these changes?</p>
+            <ul class="dirty-file-list">
+                @foreach (string name in GetDirtyEditorNames())
+                {
+                    <li>@name</li>
+                }
+            </ul>
+            <div class="modal-actions">
+                <button class="toolbar-btn secondary" @onclick="CancelDirtyConfirmation">Cancel</button>
+                <button class="toolbar-btn primary" @onclick="ConfirmDirtyAction">Discard Changes</button>
+            </div>
+        </div>
+    </div>
+}
 
 <div class="status-bar @(lastResult is not null && !lastResult.Success ? "error" : "")">
     <span>Corvus.Text.Json.Jsonata — Interpreted Runtime</span>
@@ -124,6 +156,14 @@
     private bool isCompiling;
     private bool isInitializing = true;
     private bool isLoadingSample;
+
+    // Dirty checking
+    private bool showDirtyConfirmation;
+    private Func<Task>? pendingDirtyAction;
+    private string cleanData = "";
+    private string cleanExpression = "";
+    private string cleanBindings = "";
+    private List<string> dirtyEditorSnapshot = new();
 
     // Compiled bindings (null = no bindings or empty)
     private Dictionary<string, JsonataBinding>? activeBindings;
@@ -261,8 +301,9 @@
 
             StateHasChanged();
 
-            // Initialization complete — enable change handlers, then compile+evaluate
+            // Initialization complete — sync clean baselines, enable change handlers, then compile+evaluate
             isInitializing = false;
+            await SyncCleanBaselines();
             await CompileAndEvaluateAsync();
         }
     }
@@ -305,6 +346,23 @@
             return;
         }
 
+        await CheckDirtyAndConfirm(async () =>
+        {
+            await LoadSample(sample);
+        });
+    }
+
+    private async Task NewProjectAsync()
+    {
+        var defaultSample = SampleRegistry.All[0];
+        await CheckDirtyAndConfirm(async () =>
+        {
+            await LoadSample(defaultSample);
+        });
+    }
+
+    private async Task LoadSample(Sample sample)
+    {
         isLoadingSample = true;
         try
         {
@@ -318,7 +376,98 @@
             isLoadingSample = false;
         }
 
+        await SyncCleanBaselines();
+        await ClearLocalStorage();
         await CompileAndEvaluateAsync();
+    }
+
+    // ── Dirty checking ──
+
+    private async Task CheckDirtyAndConfirm(Func<Task> action)
+    {
+        var currentData = await dataEditor.GetValue();
+        var currentExpr = await expressionEditor.GetValue();
+        var currentBindings = await bindingsEditor.GetValue();
+
+        bool dataDirty = currentData != cleanData;
+        bool exprDirty = currentExpr != cleanExpression;
+        bool bindingsDirty = currentBindings != cleanBindings;
+
+        if (!dataDirty && !exprDirty && !bindingsDirty)
+        {
+            await action();
+            return;
+        }
+
+        // Snapshot which editors are dirty for synchronous rendering
+        dirtyEditorSnapshot = new List<string>();
+        if (dataDirty) { dirtyEditorSnapshot.Add("JSON Data"); }
+        if (exprDirty) { dirtyEditorSnapshot.Add("JSONata Expression"); }
+        if (bindingsDirty) { dirtyEditorSnapshot.Add("Bindings (C#)"); }
+
+        pendingDirtyAction = action;
+        showDirtyConfirmation = true;
+        StateHasChanged();
+    }
+
+    private async Task ConfirmDirtyAction()
+    {
+        showDirtyConfirmation = false;
+        var action = pendingDirtyAction;
+        pendingDirtyAction = null;
+
+        if (action is not null)
+        {
+            await action();
+        }
+    }
+
+    private void CancelDirtyConfirmation()
+    {
+        showDirtyConfirmation = false;
+        pendingDirtyAction = null;
+    }
+
+    private List<string> GetDirtyEditorNames() => dirtyEditorSnapshot;
+
+    private async Task SyncCleanBaselines()
+    {
+        cleanData = await dataEditor.GetValue();
+        cleanExpression = await expressionEditor.GetValue();
+        cleanBindings = await bindingsEditor.GetValue();
+    }
+
+    // ── Copy helpers ──
+
+    private async Task CopyData()
+    {
+        var text = await dataEditor.GetValue();
+        await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", text);
+    }
+
+    private async Task CopyExpression()
+    {
+        var text = await expressionEditor.GetValue();
+        await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", text);
+    }
+
+    private async Task CopyBindings()
+    {
+        var text = await bindingsEditor.GetValue();
+        await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", text);
+    }
+
+    private async Task CopyResult()
+    {
+        if (lastResult is not null && !lastResult.Success)
+        {
+            await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", lastResult.ErrorMessage ?? "");
+        }
+        else if (outputEditor is not null)
+        {
+            var text = await outputEditor.GetValue();
+            await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", text);
+        }
     }
 
     [JSInvokable]
@@ -599,6 +748,20 @@
         try
         {
             await JSRuntime.InvokeVoidAsync("localStorage.setItem", key, value);
+        }
+        catch
+        {
+            // ignore
+        }
+    }
+
+    private async Task ClearLocalStorage()
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("localStorage.removeItem", DataStorageKey);
+            await JSRuntime.InvokeVoidAsync("localStorage.removeItem", ExpressionStorageKey);
+            await JSRuntime.InvokeVoidAsync("localStorage.removeItem", BindingsStorageKey);
         }
         catch
         {
