@@ -249,6 +249,17 @@ html, body {
 .panel-body {
     flex: 1;
     overflow: hidden;
+    position: relative;
+    min-height: 0;
+}
+
+/* BlazorMonaco editor containers must fill their parent */
+.panel-body .monaco-editor-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
 }
 
 /* ── Error display ── */
