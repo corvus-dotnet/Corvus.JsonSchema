@@ -590,9 +590,6 @@
   <data name="T0410_UnableToInvokeBuiltInFunction" xml:space="preserve">
     <value>Unable to invoke built-in function</value>
   </data>
-  <data name="T0410_BindingFunctionExpectsNArguments" xml:space="preserve">
-    <value>Binding function "${0}" expects {1} argument(s), got {2}</value>
-  </data>
   <data name="T0410_ValuesExpects1Argument" xml:space="preserve">
     <value>$values expects 1 argument</value>
   </data>
