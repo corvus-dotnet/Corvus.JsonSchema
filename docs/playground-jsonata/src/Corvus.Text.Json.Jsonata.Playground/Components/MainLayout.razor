@@ -123,6 +123,7 @@
     private bool isEvaluating;
     private bool isCompiling;
     private bool isInitializing = true;
+    private bool isLoadingSample;
 
     // Compiled bindings (null = no bindings or empty)
     private Dictionary<string, JsonataBinding>? activeBindings;
@@ -270,7 +271,7 @@
 
     private void OnDataChanged(ModelContentChangedEvent e)
     {
-        if (isInitializing) { return; }
+        if (isInitializing || isLoadingSample) { return; }
 
         activeSampleId = null;
         DebounceEvaluate();
@@ -279,7 +280,7 @@
 
     private void OnExpressionChanged(ModelContentChangedEvent e)
     {
-        if (isInitializing) { return; }
+        if (isInitializing || isLoadingSample) { return; }
 
         activeSampleId = null;
         DebounceEvaluate();
@@ -288,7 +289,7 @@
 
     private void OnBindingsChanged(ModelContentChangedEvent e)
     {
-        if (isInitializing) { return; }
+        if (isInitializing || isLoadingSample) { return; }
 
         activeSampleId = null;
         DebounceCompileBindings();
@@ -304,10 +305,19 @@
             return;
         }
 
-        activeSampleId = sample.Id;
-        await dataEditor.SetValue(sample.Data);
-        await expressionEditor.SetValue(sample.Expression);
-        await bindingsEditor.SetValue(sample.BindingsCode ?? DefaultBindingsPlaceholder);
+        isLoadingSample = true;
+        try
+        {
+            activeSampleId = sample.Id;
+            await dataEditor.SetValue(sample.Data);
+            await expressionEditor.SetValue(sample.Expression);
+            await bindingsEditor.SetValue(sample.BindingsCode ?? DefaultBindingsPlaceholder);
+        }
+        finally
+        {
+            isLoadingSample = false;
+        }
+
         await CompileAndEvaluateAsync();
     }
 
