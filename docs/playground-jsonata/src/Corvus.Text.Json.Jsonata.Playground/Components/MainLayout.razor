@@ -1,0 +1,417 @@
+@inherits LayoutComponentBase
+@implements IDisposable
+@page "/"
+@inject EvaluationService EvalService
+@inject IJSRuntime JSRuntime
+
+<div class="playground-toolbar">
+    <h1>JSONata Playground</h1>
+    <select class="toolbar-select" value="@(activeSampleId ?? "")" @onchange="OnSampleChanged">
+        @if (activeSampleId is null)
+        {
+            <option value="" disabled>— Custom —</option>
+        }
+        @foreach (var sample in SampleRegistry.All)
+        {
+            <option value="@sample.Id">@sample.DisplayName</option>
+        }
+    </select>
+    <div class="spacer"></div>
+    <span class="shortcut-hint">Ctrl+Enter to evaluate</span>
+    <button class="theme-toggle-btn" @onclick="CycleTheme" title="@themeTooltip">@themeIcon</button>
+    <button class="toolbar-btn primary" @onclick="EvaluateAsync" disabled="@isEvaluating">
+        @(isEvaluating ? "Evaluating…" : "▶ Evaluate")
+    </button>
+</div>
+
+<div class="jsonata-grid">
+    @* Left: JSON data *@
+    <div class="playground-panel panel-data">
+        <div class="panel-header">JSON Data</div>
+        <div class="panel-body">
+            <StandaloneCodeEditor @ref="dataEditor"
+                                  Id="data-editor"
+                                  ConstructionOptions="DataEditorOptions"
+                                  OnDidChangeModelContent="OnDataChanged" />
+        </div>
+    </div>
+
+    @* Top-right: JSONata expression *@
+    <div class="playground-panel panel-expression">
+        <div class="panel-header">JSONata Expression</div>
+        <div class="panel-body">
+            <StandaloneCodeEditor @ref="expressionEditor"
+                                  Id="expression-editor"
+                                  ConstructionOptions="ExpressionEditorOptions"
+                                  OnDidChangeModelContent="OnExpressionChanged" />
+        </div>
+    </div>
+
+    @* Bottom-right: Result output *@
+    <div class="playground-panel panel-output">
+        <div class="panel-header">
+            Result
+            <div class="spacer"></div>
+            @if (lastResult is not null)
+            {
+                <span style="font-weight:normal;text-transform:none;">
+                    @(lastResult.Success ? "✓" : "✗")
+                    @($"{lastResult.ElapsedMs:F1}ms")
+                </span>
+            }
+        </div>
+        <div class="panel-body">
+            @if (lastResult is not null && !lastResult.Success)
+            {
+                <div class="error-output">@lastResult.ErrorMessage</div>
+            }
+            else
+            {
+                <StandaloneCodeEditor @ref="outputEditor"
+                                      Id="output-editor"
+                                      ConstructionOptions="OutputEditorOptions" />
+            }
+        </div>
+    </div>
+</div>
+
+<div class="status-bar @(lastResult is not null && !lastResult.Success ? "error" : "")">
+    <span>Corvus.Text.Json.Jsonata — Interpreted Runtime</span>
+    <div class="spacer"></div>
+    @if (isEvaluating)
+    {
+        <span>Evaluating…</span>
+    }
+    else if (lastResult is not null)
+    {
+        <span>@(lastResult.Success ? "OK" : "Error") — @($"{lastResult.ElapsedMs:F1}ms")</span>
+    }
+    else
+    {
+        <span>Ready</span>
+    }
+</div>
+
+@code {
+    private StandaloneCodeEditor dataEditor = null!;
+    private StandaloneCodeEditor expressionEditor = null!;
+    private StandaloneCodeEditor outputEditor = null!;
+
+    private string? activeSampleId;
+    private EvaluationResult? lastResult;
+    private bool isEvaluating;
+
+    // Theme state
+    private string themePref = "auto";
+    private string resolvedTheme = "dark";
+    private string themeIcon = "🌙";
+    private string themeTooltip = "Toggle theme";
+    private DotNetObjectReference<MainLayout>? dotNetRef;
+
+    // Debounce
+    private CancellationTokenSource? evaluateDebounce;
+    private CancellationTokenSource? saveDebounce;
+
+    private const string DataStorageKey = "jsonata-playground-data";
+    private const string ExpressionStorageKey = "jsonata-playground-expression";
+    private const string ThemeStorageKey = "jsonata-playground-theme";
+
+    // ── Editor options ──
+
+    private StandaloneEditorConstructionOptions DataEditorOptions(StandaloneCodeEditor editor) => new()
+    {
+        Language = "json",
+        Theme = resolvedTheme == "light" ? "vs" : "vs-dark",
+        Value = initialData,
+        AutomaticLayout = true,
+        Minimap = new EditorMinimapOptions { Enabled = false },
+        FontSize = 13,
+        TabSize = 2,
+        ScrollBeyondLastLine = false,
+    };
+
+    private StandaloneEditorConstructionOptions ExpressionEditorOptions(StandaloneCodeEditor editor) => new()
+    {
+        Language = "jsonata",
+        Theme = resolvedTheme == "light" ? "vs" : "vs-dark",
+        Value = initialExpression,
+        AutomaticLayout = true,
+        Minimap = new EditorMinimapOptions { Enabled = false },
+        FontSize = 14,
+        TabSize = 2,
+        ScrollBeyondLastLine = false,
+        WordWrap = "on",
+    };
+
+    private StandaloneEditorConstructionOptions OutputEditorOptions(StandaloneCodeEditor editor) => new()
+    {
+        Language = "json",
+        Theme = resolvedTheme == "light" ? "vs" : "vs-dark",
+        Value = "",
+        AutomaticLayout = true,
+        Minimap = new EditorMinimapOptions { Enabled = false },
+        FontSize = 13,
+        TabSize = 2,
+        ReadOnly = true,
+        ScrollBeyondLastLine = false,
+    };
+
+    // ── Initial values (set before render) ──
+    private string initialData = SampleRegistry.All[0].Data;
+    private string initialExpression = SampleRegistry.All[0].Expression;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            dotNetRef = DotNetObjectReference.Create(this);
+            await JSRuntime.InvokeVoidAsync("registerPlaygroundShortcuts", dotNetRef);
+            await JSRuntime.InvokeVoidAsync("onSystemThemeChange", dotNetRef);
+
+            // Load saved theme preference
+            var savedTheme = await GetLocalStorage(ThemeStorageKey);
+            if (!string.IsNullOrEmpty(savedTheme))
+            {
+                themePref = savedTheme;
+            }
+
+            resolvedTheme = await JSRuntime.InvokeAsync<string>("getInitialTheme");
+            UpdateThemeIcon();
+
+            // Load saved data
+            var savedData = await GetLocalStorage(DataStorageKey);
+            var savedExpr = await GetLocalStorage(ExpressionStorageKey);
+
+            if (!string.IsNullOrEmpty(savedData) || !string.IsNullOrEmpty(savedExpr))
+            {
+                activeSampleId = null;
+                if (!string.IsNullOrEmpty(savedData))
+                {
+                    await dataEditor.SetValue(savedData);
+                }
+
+                if (!string.IsNullOrEmpty(savedExpr))
+                {
+                    await expressionEditor.SetValue(savedExpr);
+                }
+            }
+            else
+            {
+                activeSampleId = SampleRegistry.All[0].Id;
+            }
+
+            StateHasChanged();
+
+            // Trigger initial evaluation
+            await EvaluateAsync();
+        }
+    }
+
+    // ── Event handlers ──
+
+    private void OnDataChanged(ModelContentChangedEvent e)
+    {
+        activeSampleId = null;
+        DebounceEvaluate();
+        DebounceSave();
+    }
+
+    private void OnExpressionChanged(ModelContentChangedEvent e)
+    {
+        activeSampleId = null;
+        DebounceEvaluate();
+        DebounceSave();
+    }
+
+    private async Task OnSampleChanged(ChangeEventArgs e)
+    {
+        var sampleId = e.Value?.ToString();
+        var sample = SampleRegistry.All.FirstOrDefault(s => s.Id == sampleId);
+        if (sample is null)
+        {
+            return;
+        }
+
+        activeSampleId = sample.Id;
+        await dataEditor.SetValue(sample.Data);
+        await expressionEditor.SetValue(sample.Expression);
+        await EvaluateAsync();
+    }
+
+    [JSInvokable]
+    public async Task OnEvaluateShortcut()
+    {
+        await EvaluateAsync();
+    }
+
+    [JSInvokable]
+    public void OnSystemThemeChanged(string systemTheme)
+    {
+        if (themePref == "auto")
+        {
+            resolvedTheme = systemTheme;
+            UpdateThemeIcon();
+            _ = JSRuntime.InvokeVoidAsync("applyTheme", resolvedTheme);
+            StateHasChanged();
+        }
+    }
+
+    // ── Evaluation ──
+
+    private async Task EvaluateAsync()
+    {
+        if (isEvaluating)
+        {
+            return;
+        }
+
+        isEvaluating = true;
+        StateHasChanged();
+
+        try
+        {
+            var data = await dataEditor.GetValue();
+            var expression = await expressionEditor.GetValue();
+
+            lastResult = await EvalService.EvaluateAsync(expression, data);
+
+            if (lastResult.Success && outputEditor is not null)
+            {
+                await outputEditor.SetValue(lastResult.ResultJson ?? "");
+            }
+        }
+        catch (Exception ex)
+        {
+            lastResult = new EvaluationResult
+            {
+                Success = false,
+                ErrorMessage = ex.Message,
+                ElapsedMs = 0,
+            };
+        }
+        finally
+        {
+            isEvaluating = false;
+            StateHasChanged();
+        }
+    }
+
+    // ── Debounce helpers ──
+
+    private void DebounceEvaluate()
+    {
+        evaluateDebounce?.Cancel();
+        evaluateDebounce = new CancellationTokenSource();
+        var token = evaluateDebounce.Token;
+
+        _ = Task.Delay(300, token).ContinueWith(async _ =>
+        {
+            if (!token.IsCancellationRequested)
+            {
+                await InvokeAsync(EvaluateAsync);
+            }
+        }, token, TaskContinuationOptions.OnlyOnRanToCompletion, TaskScheduler.Current);
+    }
+
+    private void DebounceSave()
+    {
+        saveDebounce?.Cancel();
+        saveDebounce = new CancellationTokenSource();
+        var token = saveDebounce.Token;
+
+        _ = Task.Delay(2000, token).ContinueWith(async _ =>
+        {
+            if (!token.IsCancellationRequested)
+            {
+                await InvokeAsync(SaveToLocalStorage);
+            }
+        }, token, TaskContinuationOptions.OnlyOnRanToCompletion, TaskScheduler.Current);
+    }
+
+    private async Task SaveToLocalStorage()
+    {
+        try
+        {
+            var data = await dataEditor.GetValue();
+            var expr = await expressionEditor.GetValue();
+            await SetLocalStorage(DataStorageKey, data);
+            await SetLocalStorage(ExpressionStorageKey, expr);
+        }
+        catch
+        {
+            // localStorage may be unavailable
+        }
+    }
+
+    // ── Theme ──
+
+    private async Task CycleTheme()
+    {
+        themePref = themePref switch
+        {
+            "dark" => "light",
+            "light" => "auto",
+            _ => "dark",
+        };
+
+        if (themePref == "auto")
+        {
+            resolvedTheme = await JSRuntime.InvokeAsync<string>("getSystemTheme");
+        }
+        else
+        {
+            resolvedTheme = themePref;
+        }
+
+        UpdateThemeIcon();
+        await JSRuntime.InvokeVoidAsync("applyTheme", resolvedTheme);
+        await SetLocalStorage(ThemeStorageKey, themePref);
+    }
+
+    private void UpdateThemeIcon()
+    {
+        (themeIcon, themeTooltip) = themePref switch
+        {
+            "dark" => ("🌙", "Theme: Dark (click for Light)"),
+            "light" => ("☀️", "Theme: Light (click for Auto)"),
+            _ => ("🌓", "Theme: Auto (click for Dark)"),
+        };
+    }
+
+    // ── localStorage helpers ──
+
+    private async Task<string?> GetLocalStorage(string key)
+    {
+        try
+        {
+            return await JSRuntime.InvokeAsync<string?>("localStorage.getItem", key);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private async Task SetLocalStorage(string key, string value)
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("localStorage.setItem", key, value);
+        }
+        catch
+        {
+            // ignore
+        }
+    }
+
+    // ── Dispose ──
+
+    public void Dispose()
+    {
+        evaluateDebounce?.Cancel();
+        evaluateDebounce?.Dispose();
+        saveDebounce?.Cancel();
+        saveDebounce?.Dispose();
+        dotNetRef?.Dispose();
+    }
+}

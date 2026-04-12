@@ -744,6 +744,48 @@ $playgroundSize = (Get-ChildItem $playgroundOutputDir -Recurse -File | Measure-O
 Write-Host "  Playground: $([math]::Round($playgroundSize/1MB, 1)) MB" -ForegroundColor Gray
 Write-StepDuration "Playground build" $sw
 
+# -- Step 9b: Build JSONata Playground (Blazor WASM) ---------------------------
+Write-Host "`n[9b/10] Building JSONata Playground..." -ForegroundColor Cyan
+$sw = [System.Diagnostics.Stopwatch]::StartNew()
+
+# Bundle monaco-jsonata (npm)
+$jsonataPlaygroundRoot = Join-Path $repoRoot "docs\playground-jsonata"
+Push-Location $jsonataPlaygroundRoot
+try {
+    & npm ci --ignore-scripts --no-audit --no-fund 2>&1 | Out-Null
+    & node esbuild.mjs
+    if ($LASTEXITCODE -ne 0) { throw "monaco-jsonata bundle failed" }
+} finally {
+    Pop-Location
+}
+
+$jsonataProject = Join-Path $repoRoot "docs\playground-jsonata\src\Corvus.Text.Json.Jsonata.Playground\Corvus.Text.Json.Jsonata.Playground.csproj"
+$jsonataPublishDir = Join-Path $here ".playground-jsonata-publish"
+$jsonataOutputDir = Join-Path $outputDir "playground-jsonata"
+
+& dotnet publish $jsonataProject -c Release -o $jsonataPublishDir --nologo
+if ($LASTEXITCODE -ne 0) { throw "JSONata Playground publish failed" }
+
+$jsonataWwwroot = Join-Path $jsonataPublishDir "wwwroot"
+if (!(Test-Path $jsonataWwwroot)) {
+    throw "JSONata Playground wwwroot not found at $jsonataWwwroot"
+}
+Copy-Item -Path $jsonataWwwroot -Destination $jsonataOutputDir -Recurse -Force
+
+$jsonataIndex = Join-Path $jsonataOutputDir "index.html"
+if (Test-Path $jsonataIndex) {
+    $indexContent = [System.IO.File]::ReadAllText($jsonataIndex)
+    $indexContent = $indexContent -replace '<base href="/" />', "<base href=`"$BasePathPrefix/playground-jsonata/`" />"
+    [System.IO.File]::WriteAllText($jsonataIndex, $indexContent)
+    Write-Host "  Updated base href to $BasePathPrefix/playground-jsonata/" -ForegroundColor Gray
+}
+
+Remove-Item $jsonataPublishDir -Recurse -Force -ErrorAction SilentlyContinue
+
+$jsonataSize = (Get-ChildItem $jsonataOutputDir -Recurse -File | Measure-Object -Property Length -Sum).Sum
+Write-Host "  JSONata Playground: $([math]::Round($jsonataSize/1MB, 1)) MB" -ForegroundColor Gray
+Write-StepDuration "JSONata Playground build" $sw
+
 # Tell Jekyll to include _-prefixed directories needed by the Blazor playground.
 # We cannot use .nojekyll (which bypasses Jekyll entirely) because the resulting
 # unprocessed artifact exceeds GitHub Pages deployment limits.
@@ -796,6 +838,7 @@ $lycheeArgs = @(
     "--no-progress"
     "--exclude-path", "api[/\\]v4"
     "--exclude-path", "playground"
+    "--exclude-path", "playground-jsonata"
     "."
 )
 
@@ -817,9 +860,9 @@ if ($BasePathPrefix) {
     Write-Host "`n[11] Rewriting paths for base prefix '$BasePathPrefix'..." -ForegroundColor Cyan
     $sw = [System.Diagnostics.Stopwatch]::StartNew()
 
-    # Rewrite HTML files (excluding playground which uses <base href>)
+    # Rewrite HTML files (excluding playgrounds which use <base href>)
     $htmlFiles = Get-ChildItem $outputDir -Filter "*.html" -Recurse -File |
-        Where-Object { $_.FullName -notlike "*\playground\*" }
+        Where-Object { $_.FullName -notlike "*\playground\*" -and $_.FullName -notlike "*\playground-jsonata\*" }
     $rewriteCount = 0
     foreach ($htmlFile in $htmlFiles) {
         $content = [System.IO.File]::ReadAllText($htmlFile.FullName)
@@ -843,7 +886,7 @@ if ($BasePathPrefix) {
         $original = $content
 
         # Rewrite string literals containing root-relative paths: '/api/', '/search-index.json', etc.
-        $content = $content -replace "(['""])(/(?!/)(?:api|search|docs|examples|getting-started|assets|playground))", "`$1$BasePathPrefix`$2"
+        $content = $content -replace "(['""])(/(?!/)(?:api|search|docs|examples|getting-started|assets|playground|playground-jsonata))", "`$1$BasePathPrefix`$2"
 
         if ($content -ne $original) {
             [System.IO.File]::WriteAllText($jsFile.FullName, $content)
@@ -885,7 +928,7 @@ $defaultGitHubUrl = "https://github.com/corvus-dotnet/Corvus.JsonSchema"
 if ($canonicalRepoUrl -ne $defaultGitHubUrl) {
     Write-Host "`n  Rewriting GitHub URLs: $defaultGitHubUrl -> $canonicalRepoUrl" -ForegroundColor Cyan
     $htmlFiles = Get-ChildItem $outputDir -Filter "*.html" -Recurse -File |
-        Where-Object { $_.FullName -notlike "*\playground\*" }
+        Where-Object { $_.FullName -notlike "*\playground\*" -and $_.FullName -notlike "*\playground-jsonata\*" }
     $ghRewriteCount = 0
     foreach ($htmlFile in $htmlFiles) {
         $content = [System.IO.File]::ReadAllText($htmlFile.FullName)
