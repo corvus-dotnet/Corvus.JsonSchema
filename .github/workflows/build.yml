@@ -85,6 +85,7 @@ jobs:
       publishPhaseEnv: ${{ needs.prepareConfig.outputs.RESOLVED_ENV_VARS }}
       additionalCachePaths: |
         JSON-Schema-Test-Suite
+        tests/json-patch-tests
         docs/website/.endjin
         docs/website/.output
         **/bin
@@ -120,6 +121,7 @@ jobs:
             Solutions
             solutions
             JSON-Schema-Test-Suite
+            tests/json-patch-tests
             docs/website/.endjin
             docs/website/.output
             **/bin
@@ -152,6 +154,7 @@ jobs:
             Solutions
             solutions
             JSON-Schema-Test-Suite
+            tests/json-patch-tests
             docs/website/.endjin
             docs/website/.output
             **/bin
