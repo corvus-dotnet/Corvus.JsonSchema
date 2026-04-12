@@ -389,12 +389,26 @@ public sealed class JsonataEvaluator
         var lambda = new LambdaValue(
             (ReadOnlySpan<Sequence> args, in JsonElement input, Environment callEnv) =>
             {
-                if (signature is not null)
+                if (args.Length < paramCount)
                 {
-                    SignatureValidator.ValidateArgs(signature, args, -1);
+                    throw new JsonataException(
+                        "T0410",
+                        SR.Format(SR.T0410_BindingFunctionExpectsNArguments, name, paramCount, args.Length),
+                        0);
                 }
 
-                return func(args, workspace);
+                // Slice to paramCount — extra args from HOFs are silently ignored
+                // (matches JSONata convention for user-defined functions).
+                ReadOnlySpan<Sequence> effective = args.Length > paramCount
+                    ? args.Slice(0, paramCount)
+                    : args;
+
+                if (signature is not null)
+                {
+                    SignatureValidator.ValidateArgs(signature, effective, -1);
+                }
+
+                return func(effective, workspace);
             },
             paramCount);
 
@@ -414,20 +428,33 @@ public sealed class JsonataEvaluator
         var lambda = new LambdaValue(
             (ReadOnlySpan<Sequence> args, in JsonElement input, Environment callEnv) =>
             {
-                // Convert Sequence args to JsonElement[]
-                JsonElement[] jsonArgs = new JsonElement[args.Length];
-                for (int i = 0; i < args.Length; i++)
+                if (args.Length < paramCount)
                 {
-                    jsonArgs[i] = args[i].IsSingleton
-                        ? args[i].FirstOrDefault
-                        : args[i].IsUndefined
+                    throw new JsonataException(
+                        "T0410",
+                        SR.Format(SR.T0410_BindingFunctionExpectsNArguments, name, paramCount, args.Length),
+                        0);
+                }
+
+                // Slice to paramCount — extra args from HOFs are silently ignored.
+                ReadOnlySpan<Sequence> effective = args.Length > paramCount
+                    ? args.Slice(0, paramCount)
+                    : args;
+
+                // Convert Sequence args to JsonElement[]
+                JsonElement[] jsonArgs = new JsonElement[effective.Length];
+                for (int i = 0; i < effective.Length; i++)
+                {
+                    jsonArgs[i] = effective[i].IsSingleton
+                        ? effective[i].FirstOrDefault
+                        : effective[i].IsUndefined
                             ? default
-                            : JsonataHelpers.ArrayFromSequence(args[i], workspace);
+                            : JsonataHelpers.ArrayFromSequence(effective[i], workspace);
                 }
 
                 if (signature is not null)
                 {
-                    SignatureValidator.ValidateArgs(signature, args, -1);
+                    SignatureValidator.ValidateArgs(signature, effective, -1);
                 }
 
                 JsonElement result = func(jsonArgs, workspace);

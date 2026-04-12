@@ -983,4 +983,55 @@ public class EvaluatorTests
         var result = evaluator.Evaluate("$square(x)", doc.RootElement, bindings);
         Assert.Equal(49.0, result.GetDouble());
     }
+
+    [Fact]
+    public void FunctionBindingTooFewArgsThrows()
+    {
+        var evaluator = new JsonataEvaluator();
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{}"u8.ToArray());
+
+        var bindings = new Dictionary<string, JsonataBinding>
+        {
+            ["hypot"] = JsonataBinding.FromFunction(
+                (args, ws) =>
+                {
+                    double a = args[0].GetDouble();
+                    double b = args[1].GetDouble();
+                    return JsonataCodeGenHelpers.DoubleToElement(Math.Sqrt((a * a) + (b * b)), ws);
+                },
+                parameterCount: 2),
+        };
+
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        var ex = Assert.Throws<JsonataException>(() =>
+            evaluator.Evaluate("$hypot(3)", doc.RootElement, workspace, bindings));
+        Assert.Equal("T0410", ex.Code);
+        Assert.Contains("expects 2", ex.Message);
+        Assert.Contains("got 1", ex.Message);
+    }
+
+    [Fact]
+    public void FunctionBindingExtraArgsSlicedSilently()
+    {
+        var evaluator = new JsonataEvaluator();
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{}"u8.ToArray());
+
+        var bindings = new Dictionary<string, JsonataBinding>
+        {
+            ["hypot"] = JsonataBinding.FromFunction(
+                (args, ws) =>
+                {
+                    double a = args[0].GetDouble();
+                    double b = args[1].GetDouble();
+                    return JsonataCodeGenHelpers.DoubleToElement(Math.Sqrt((a * a) + (b * b)), ws);
+                },
+                parameterCount: 2),
+        };
+
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+
+        // Extra 3rd arg is silently sliced away (matches JSONata convention).
+        var result = evaluator.Evaluate("$hypot(3, 4, 999)", doc.RootElement, workspace, bindings);
+        Assert.Equal(5.0, result.GetDouble());
+    }
 }
