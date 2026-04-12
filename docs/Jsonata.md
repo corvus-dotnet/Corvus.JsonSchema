@@ -198,11 +198,41 @@ This produces a self-contained `.cs` file with the same static `Evaluate` method
 
 ### Variable bindings
 
-Pass external variables into an expression using the `bindings` parameter. Variables are referenced in expressions with the `$` prefix:
+Pass external variables into an expression using the `bindings` parameter. Variables are referenced in expressions with the `$` prefix.
+
+**Using `JsonataBinding` (recommended):**
 
 ```csharp
 using JsonWorkspace workspace = JsonWorkspace.Create();
 
+var bindings = new Dictionary<string, JsonataBinding>
+{
+    ["threshold"] = JsonataBinding.FromValue(100.0),    // double — stored inline, zero allocation
+    ["label"]     = JsonataBinding.FromValue("High"),    // string
+    ["active"]    = JsonataBinding.FromValue(true),      // bool — pre-cached singleton
+};
+
+JsonElement result = JsonataEvaluator.Default.Evaluate(
+    "$filter(items, function($v) { $v.price > $threshold })",
+    dataDoc.RootElement,
+    workspace,
+    bindings);
+```
+
+`JsonataBinding.FromValue()` has overloads for `JsonElement`, `double`, `string`, and `bool`. The primitive overloads avoid allocating a `JsonElement` until the value is actually consumed by the expression. Implicit conversions from `JsonElement`, `double`, and `bool` are also available:
+
+```csharp
+var bindings = new Dictionary<string, JsonataBinding>
+{
+    ["rate"]  = 0.15,                                     // implicit double → JsonataBinding
+    ["debug"] = true,                                     // implicit bool → JsonataBinding
+    ["config"] = JsonElement.ParseValue("""{"a":1}"""u8), // implicit JsonElement → JsonataBinding
+};
+```
+
+**Using `JsonElement` dictionary (legacy):**
+
+```csharp
 var bindings = new Dictionary<string, JsonElement>
 {
     ["threshold"] = JsonElement.ParseValue("100"u8),
@@ -216,7 +246,7 @@ JsonElement result = JsonataEvaluator.Default.Evaluate(
     bindings: bindings);
 ```
 
-Bindings accept any JSON value — numbers, strings, booleans, objects, and arrays. The bound values are available as `$name` in the expression.
+The `IReadOnlyDictionary<string, JsonElement>` overload is retained for backwards compatibility but cannot express function bindings. Prefer the `JsonataBinding` overload for new code.
 
 ### Custom functions
 
@@ -278,47 +308,118 @@ JsonElement sorted = JsonataEvaluator.Default.Evaluate(
 
 #### External C# function bindings (interpreted mode)
 
-Use `JsonataBinding.FromFunction()` to bind C# functions that can be called from JSONata expressions. External functions receive `JsonElement[]` arguments and a `JsonWorkspace`, and return a `JsonElement`:
+Bind C# functions to JSONata variables using `JsonataBinding.FromFunction()`. Three overload families are available:
+
+##### `SequenceFunction` — the recommended approach
+
+The `SequenceFunction` delegate receives arguments as a `ReadOnlySpan<Sequence>` and returns a `Sequence` result. This avoids materializing `JsonElement` values for numeric operations and integrates directly with the JSONata runtime's value proxy system:
 
 ```csharp
 using JsonWorkspace workspace = JsonWorkspace.Create();
 
 var bindings = new Dictionary<string, JsonataBinding>
 {
-    // A custom function that doubles a number
-    ["double_it"] = JsonataBinding.FromFunction(
-        (args, ws) =>
+    // A function that returns the hypotenuse of two numbers
+    ["hypot"] = JsonataBinding.FromFunction(
+        (ReadOnlySpan<Sequence> args, JsonWorkspace ws) =>
         {
-            double result = args[0].GetDouble() * 2;
-            return JsonElement.ParseValue($"{result}"u8.ToArray());
+            double a = args[0].AsDouble();
+            double b = args[1].AsDouble();
+            return Sequence.FromDouble(Math.Sqrt(a * a + b * b), ws);
+        },
+        parameterCount: 2),
+
+    // A function that returns a string
+    ["greet"] = JsonataBinding.FromFunction(
+        (ReadOnlySpan<Sequence> args, JsonWorkspace ws) =>
+        {
+            string name = args[0].AsElement().GetString()!;
+            return Sequence.FromString($"Hello, {name}!", ws);
         },
         parameterCount: 1),
-
-    // Value bindings use implicit conversion from JsonElement
-    ["tax_rate"] = JsonElement.ParseValue("0.2"u8),
 };
 
-JsonElement result = JsonataEvaluator.Default.Evaluate(
-    "$double_it(price) * (1 + $tax_rate)",
+JsonElement result = evaluator.Evaluate(
+    "$hypot(3, 4) & ' from ' & $greet('World')",
     dataDoc.RootElement,
     workspace,
-    bindings: bindings);
+    bindings);
 ```
 
-**Signature validation:** Optionally provide a JSONata signature string to type-check arguments before the C# function is called:
+Key `Sequence` methods for function bindings:
+
+| Read arguments | Create results |
+|---------------|----------------|
+| `args[i].AsDouble()` — extract number | `Sequence.FromDouble(value, workspace)` — zero allocation |
+| `args[i].TryGetDouble(out double v)` — try extract | `Sequence.FromString(value, workspace)` — materializes immediately |
+| `args[i].AsElement()` — materialize to `JsonElement` | `Sequence.FromBool(value)` — pre-cached singleton |
+| `args[i].AsElement(workspace)` — materialize with workspace | `new Sequence(in jsonElement)` — wrap existing element |
+
+**Signature validation:** Optionally provide a JSONata type signature string to type-check arguments before the C# function is called:
 
 ```csharp
 ["to_upper"] = JsonataBinding.FromFunction(
     (args, ws) =>
     {
-        string s = args[0].GetString()!.ToUpperInvariant();
-        return JsonElement.ParseValue($"\"{s}\""u8.ToArray());
+        string s = args[0].AsElement().GetString()!.ToUpperInvariant();
+        return Sequence.FromString(s, ws);
     },
     parameterCount: 1,
     signature: "<s:s>"),  // expects a string argument, returns a string
 ```
 
-You can mix value bindings and function bindings in the same dictionary. External functions are available as `$name(...)` in the expression.
+##### `Func<double, double>` and `Func<double, double, double>` — numeric convenience
+
+For pure numeric functions, shorthand overloads automatically extract `double` arguments and wrap the result with zero allocation:
+
+```csharp
+var bindings = new Dictionary<string, JsonataBinding>
+{
+    // Unary: double → double (parameter count is inferred as 1)
+    ["cosine"]   = JsonataBinding.FromFunction((double v) => Math.Cos(v)),
+    ["to_celsius"] = JsonataBinding.FromFunction((double f) => (f - 32) * 5.0 / 9.0),
+
+    // Binary: (double, double) → double (parameter count is inferred as 2)
+    ["max"]      = JsonataBinding.FromFunction((double a, double b) => Math.Max(a, b)),
+    ["distance"] = JsonataBinding.FromFunction((double x, double y) => Math.Sqrt(x * x + y * y)),
+};
+```
+
+These are equivalent to writing the full `SequenceFunction` with `args[0].AsDouble()` / `Sequence.FromDouble(...)` boilerplate.
+
+##### `Func<JsonElement[], JsonWorkspace, JsonElement>` — legacy overload
+
+The original function binding API receives `JsonElement[]` arguments and returns a `JsonElement`. It is retained for backwards compatibility:
+
+```csharp
+["double_it"] = JsonataBinding.FromFunction(
+    (JsonElement[] args, JsonWorkspace ws) =>
+    {
+        double result = args[0].GetDouble() * 2;
+        return JsonElement.ParseValue($"{result}"u8.ToArray());
+    },
+    parameterCount: 1),
+```
+
+Prefer the `SequenceFunction` overload for new code — it avoids the `JsonElement[]` array allocation and the `JsonElement.ParseValue` materialization overhead.
+
+##### Mixing value and function bindings
+
+You can mix value bindings and function bindings in the same dictionary. External functions are available as `$name(...)` in the expression:
+
+```csharp
+var bindings = new Dictionary<string, JsonataBinding>
+{
+    ["tax_rate"]  = 0.2,                                                   // value (implicit double)
+    ["round"]     = JsonataBinding.FromFunction((double v) => Math.Round(v, 2)),  // function
+};
+
+JsonElement result = evaluator.Evaluate(
+    "$round(price * (1 + $tax_rate))",
+    dataDoc.RootElement,
+    workspace,
+    bindings);
+```
 
 #### Custom functions for code generation (`.jfn` files)
 
@@ -425,6 +526,19 @@ JsonElement result = evaluator.Evaluate(expression, data);
 
 This overload creates a workspace internally, evaluates the expression, clones the result into a standalone `JsonElement`, and disposes the workspace. It is convenient for one-off evaluations but allocates on every call.
 
+**Clearing the expression cache:**
+
+The evaluator caches compiled delegate trees per expression string. If your application dynamically generates many unique expressions over time, the cache can grow unbounded. Use `ClearCache()` to release all cached compilations:
+
+```csharp
+var evaluator = new JsonataEvaluator();
+// ... many evaluations with unique expressions ...
+
+evaluator.ClearCache(); // releases all cached delegate trees
+```
+
+Subsequent evaluations will recompile their expressions on first use. This is a no-op on `JsonataEvaluator.Default` in practice, since the static instance's cache grows with the application lifetime. Create a separate instance if you need isolated cache management.
+
 ### Error handling
 
 All evaluation errors throw `JsonataException` with a standard error code, message, and character position:
@@ -447,6 +561,7 @@ Error codes follow the [jsonata-js](https://github.com/jsonata-js/jsonata) conve
 |--------|----------|---------|
 | `S0xxx` | Syntax/parse errors | `S0101`: String literal not terminated |
 | `T0xxx` | Type errors | `T0410`: Argument type mismatch |
+| `T0410` | Binding argument count | External function called with too few arguments |
 | `D0xxx` | Runtime/data errors | `D3001`: Cannot convert value to string |
 | `T1xxx` | Evaluation errors | `T1005`: Attempted to invoke a non-function |
 | `T2xxx` | Operator errors | `T2001`: Left side of arithmetic is not a number |
