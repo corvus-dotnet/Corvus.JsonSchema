@@ -1,0 +1,1 @@
+$filter(items, function($v) { $v.value > 2500 })
