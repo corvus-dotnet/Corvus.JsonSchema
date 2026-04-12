@@ -6500,9 +6500,9 @@ internal static class FunctionalCompiler
                     var lhsLambda = lhsResult.Lambda!;
                     var rhsLambda = rhsResult.Lambda!;
                     var composedLambda = new LambdaValue(
-                        (args, compInput, compEnv) =>
+                        (ReadOnlySpan<Sequence> args, in JsonElement compInput, Environment compEnv) =>
                         {
-                            var intermediate = lhsLambda.Invoke(args, args.Length, compInput, compEnv);
+                            var intermediate = lhsLambda.Invoke(args.ToArray(), args.Length, compInput, compEnv);
                             return rhsLambda.Invoke([intermediate], 1, compInput, compEnv);
                         },
                         lhsLambda.Arity > 0 ? lhsLambda.Arity : 1);
@@ -7182,7 +7182,7 @@ internal static class FunctionalCompiler
                 var capturedCompiler = builtInCompiler;
 
                 return new Sequence(new LambdaValue(
-                    (runtimeArgs, innerInput, innerEnv) =>
+                    (ReadOnlySpan<Sequence> runtimeArgs, in JsonElement innerInput, Environment innerEnv) =>
                     {
                         // Fill placeholder positions with runtime arguments
                         var fullArgEvals = new ExpressionEvaluator[capturedArgs.Length];
@@ -7221,7 +7221,7 @@ internal static class FunctionalCompiler
                 var originalLambda = funcResult.Lambda!;
 
                 return new Sequence(new LambdaValue(
-                    (runtimeArgs, innerInput, innerEnv) =>
+                    (ReadOnlySpan<Sequence> runtimeArgs, in JsonElement innerInput, Environment innerEnv) =>
                     {
                         int fullArgCount = capturedArgs.Length;
                         var fullArgs = ArrayPool<Sequence>.Shared.Rent(fullArgCount);
@@ -7765,7 +7765,7 @@ internal static class FunctionalCompiler
     internal static LambdaValue CreateBuiltInLambda(Func<ExpressionEvaluator[], ExpressionEvaluator> compiler)
     {
         return new LambdaValue(
-            (args, input, env) =>
+            (ReadOnlySpan<Sequence> args, in JsonElement input, Environment env) =>
             {
                 // Try invoking with decreasing arg counts to handle HOF over-arity
                 // (e.g. $map passes (value, index, array) but $boolean expects 1 arg)

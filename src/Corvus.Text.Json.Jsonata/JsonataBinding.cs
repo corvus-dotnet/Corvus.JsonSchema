@@ -5,12 +5,23 @@
 namespace Corvus.Text.Json.Jsonata;
 
 /// <summary>
+/// A function that can be bound to a JSONata variable.
+/// Receives its evaluated arguments as a correctly-sized <see cref="ReadOnlySpan{T}"/>
+/// of <see cref="Sequence"/> values. Use <see cref="Sequence.AsDouble"/>,
+/// <see cref="Sequence.AsElement()"/>, etc. to read argument values.
+/// </summary>
+/// <param name="args">The evaluated arguments, sliced to the actual call-site argument count.</param>
+/// <param name="workspace">The current <see cref="JsonWorkspace"/> for memory allocation.</param>
+/// <returns>The function result as a <see cref="Sequence"/>.</returns>
+public delegate Sequence SequenceFunction(ReadOnlySpan<Sequence> args, JsonWorkspace workspace);
+
+/// <summary>
 /// Represents a binding that can be passed to the JSONata evaluator.
 /// A binding is either a JSON value or a callable function.
 /// </summary>
 /// <remarks>
 /// <para>
-/// Use <see cref="FromValue(JsonElement)"/> to create a value binding, or <see cref="FromFunction(Func{Sequence[], JsonWorkspace, Sequence}, int, string?)"/>
+/// Use <see cref="FromValue(JsonElement)"/> to create a value binding, or <see cref="FromFunction(SequenceFunction, int, string?)"/>
 /// to create a function binding. Value bindings are equivalent to the existing
 /// <c>IReadOnlyDictionary&lt;string, JsonElement&gt;</c> API. Function bindings allow
 /// calling C# functions from within JSONata expressions.
@@ -63,7 +74,7 @@ public readonly struct JsonataBinding
         this.kind = BindingKind.BoolValue;
     }
 
-    private JsonataBinding(Func<Sequence[], JsonWorkspace, Sequence> function, int parameterCount, string? signature)
+    private JsonataBinding(SequenceFunction function, int parameterCount, string? signature)
     {
         this.payload = function;
         this.parameterCount = parameterCount;
@@ -133,8 +144,9 @@ public readonly struct JsonataBinding
     /// runtime's value proxy system, avoiding unnecessary <see cref="JsonElement"/> materialization.
     /// </summary>
     /// <param name="function">
-    /// The function to call. Receives the evaluated arguments as <see cref="Sequence"/> values
-    /// and the current <see cref="JsonWorkspace"/>. Returns a <see cref="Sequence"/> result.
+    /// The function to call. Receives the evaluated arguments as a correctly-sized
+    /// <see cref="ReadOnlySpan{T}"/> of <see cref="Sequence"/> values and the current
+    /// <see cref="JsonWorkspace"/>. Returns a <see cref="Sequence"/> result.
     /// Use <see cref="Sequence.TryGetDouble"/>, <see cref="Sequence.AsElement()"/>, etc. to
     /// read argument values, and <see cref="Sequence.FromDouble"/>, <see cref="Sequence.FromString"/>,
     /// <see cref="Sequence.FromBool"/>, or the <see cref="Sequence(in JsonElement)"/> constructor
@@ -149,7 +161,7 @@ public readonly struct JsonataBinding
     /// <exception cref="ArgumentNullException"><paramref name="function"/> is <see langword="null"/>.</exception>
     /// <exception cref="ArgumentOutOfRangeException"><paramref name="parameterCount"/> is negative.</exception>
     public static JsonataBinding FromFunction(
-        Func<Sequence[], JsonWorkspace, Sequence> function,
+        SequenceFunction function,
         int parameterCount,
         string? signature = null)
     {
@@ -192,7 +204,7 @@ public readonly struct JsonataBinding
 #endif
 
         return new JsonataBinding(
-            (Sequence[] args, JsonWorkspace ws) => Sequence.FromDouble(function(args[0].AsDouble()), ws),
+            (ReadOnlySpan<Sequence> args, JsonWorkspace ws) => Sequence.FromDouble(function(args[0].AsDouble()), ws),
             1,
             null);
     }
@@ -218,7 +230,7 @@ public readonly struct JsonataBinding
 #endif
 
         return new JsonataBinding(
-            (Sequence[] args, JsonWorkspace ws) => Sequence.FromDouble(function(args[0].AsDouble(), args[1].AsDouble()), ws),
+            (ReadOnlySpan<Sequence> args, JsonWorkspace ws) => Sequence.FromDouble(function(args[0].AsDouble(), args[1].AsDouble()), ws),
             2,
             null);
     }
@@ -308,8 +320,8 @@ public readonly struct JsonataBinding
     /// <summary>
     /// Gets the <see cref="Sequence"/>-based function delegate.
     /// </summary>
-    internal Func<Sequence[], JsonWorkspace, Sequence> GetSequenceFunction() =>
-        (Func<Sequence[], JsonWorkspace, Sequence>)this.payload!;
+    internal SequenceFunction GetSequenceFunction() =>
+        (SequenceFunction)this.payload!;
 
     /// <summary>
     /// Gets the <see cref="JsonElement"/>-based function delegate.

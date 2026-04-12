@@ -138,7 +138,7 @@ public class BindingsCompilationService
                 /// Creates a Sequence-native function binding for full control.
                 /// </summary>
                 public static JsonataBinding Function(
-                    Func<Sequence[], JsonWorkspace, Sequence> func,
+                    SequenceFunction func,
                     int parameterCount,
                     string? signature = null)
                     => JsonataBinding.FromFunction(func, parameterCount, signature);

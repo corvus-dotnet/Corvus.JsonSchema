@@ -353,11 +353,18 @@ public static class SampleRegistry
             DisplayName = "Bindings",
             Data = """
             {
-              "angle": 60
+              "angle": 60,
+              "values": [3, 1, 4, 1, 5, 9, 2, 6],
+              "name": "world"
             }
             """,
             Expression = """
-            $cosine(angle * $pi / 180)
+            {
+              "cosine": $cosine(angle * $pi / 180),
+              "clamped": $clamp(42, 0, 10),
+              "greeting": $greet(name),
+              "distance": $hypot(3, 4)
+            }
 
             /*
             JSONata can be extended by binding variables to external
@@ -371,14 +378,41 @@ public static class SampleRegistry
             Helper functions available in bindings code:
               Value(double|string|bool)                — value binding
               Function((v) => ...)                     — unary double→double
-              Function((a, b) => ...)                  — binary double→double
-              Function(Func<Sequence[],JW,Seq>, n)     — full control
+              Function((a, b) => ...)                  — binary (double,double)→double
+              Function(SequenceFunction, n)             — full control (n params)
             */
             """,
             BindingsCode = """
             {
+                // Value bindings — constants available as $pi, $greeting
                 ["pi"] = Value(Math.PI),
+                ["greeting"] = Value("Hello"),
+
+                // Unary double→double convenience
                 ["cosine"] = Function((v) => Math.Cos(v)),
+
+                // Binary double→double convenience
+                ["hypot"] = Function((a, b) => Math.Sqrt(a * a + b * b)),
+
+                // 3-parameter function using SequenceFunction delegate
+                // (beyond the convenience overloads)
+                ["clamp"] = Function(
+                    (ReadOnlySpan<Sequence> args, JsonWorkspace ws) =>
+                    {
+                        double value = args[0].AsDouble();
+                        double min = args[1].AsDouble();
+                        double max = args[2].AsDouble();
+                        return Sequence.FromDouble(Math.Clamp(value, min, max), ws);
+                    }, 3),
+
+                // Mixed parameter types — string input, double output
+                ["greet"] = Function(
+                    (ReadOnlySpan<Sequence> args, JsonWorkspace ws) =>
+                    {
+                        // AsElement() materializes any Sequence variant
+                        string name = args[0].AsElement().GetString() ?? "stranger";
+                        return Sequence.FromString($"Hello, {name}!", ws);
+                    }, 1),
             }
             """,
         },

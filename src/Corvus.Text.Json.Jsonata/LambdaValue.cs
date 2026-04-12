@@ -43,11 +43,18 @@ internal sealed class LambdaValue
     }
 
     /// <summary>
+    /// Represents a native function implementation that receives its arguments
+    /// as a <see cref="ReadOnlySpan{T}"/> of <see cref="Sequence"/> values,
+    /// sliced to the actual argument count.
+    /// </summary>
+    internal delegate Sequence NativeFuncDelegate(ReadOnlySpan<Sequence> args, in JsonElement input, Environment callerEnv);
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="LambdaValue"/> class for a built-in function wrapper.
     /// </summary>
     /// <param name="nativeFunc">A native function that takes evaluated arguments.</param>
     /// <param name="paramCount">The expected parameter count (for display/arity checking).</param>
-    public LambdaValue(Func<Sequence[], JsonElement, Environment, Sequence> nativeFunc, int paramCount)
+    public LambdaValue(NativeFuncDelegate nativeFunc, int paramCount)
     {
         this.NativeFunc = nativeFunc;
         this.paramNames = new string[paramCount];
@@ -57,7 +64,7 @@ internal sealed class LambdaValue
     /// <summary>
     /// Gets the native function implementation, if this is a built-in wrapper.
     /// </summary>
-    public Func<Sequence[], JsonElement, Environment, Sequence>? NativeFunc { get; }
+    public NativeFuncDelegate? NativeFunc { get; }
 
     /// <summary>
     /// Gets the parameter names.
@@ -109,7 +116,7 @@ internal sealed class LambdaValue
     {
         if (this.NativeFunc is not null)
         {
-            return this.NativeFunc(args, input, callerEnv);
+            return this.NativeFunc(args.AsSpan(0, argsCount), input, callerEnv);
         }
 
         // User-defined lambda: create a child of the DEFINING env (closure semantics)

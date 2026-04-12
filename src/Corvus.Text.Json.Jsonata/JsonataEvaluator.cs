@@ -387,7 +387,7 @@ public sealed class JsonataEvaluator
         string? signature = binding.GetSignature();
 
         var lambda = new LambdaValue(
-            (Sequence[] args, JsonElement input, Environment callEnv) =>
+            (ReadOnlySpan<Sequence> args, in JsonElement input, Environment callEnv) =>
             {
                 if (signature is not null)
                 {
@@ -412,7 +412,7 @@ public sealed class JsonataEvaluator
         string? signature = binding.GetSignature();
 
         var lambda = new LambdaValue(
-            (Sequence[] args, JsonElement input, Environment callEnv) =>
+            (ReadOnlySpan<Sequence> args, in JsonElement input, Environment callEnv) =>
             {
                 // Convert Sequence args to JsonElement[]
                 JsonElement[] jsonArgs = new JsonElement[args.Length];
