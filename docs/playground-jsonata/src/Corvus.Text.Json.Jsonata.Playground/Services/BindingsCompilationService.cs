@@ -125,16 +125,14 @@ public class BindingsCompilationService
                 /// <example><c>Function((v) => Math.Cos(v))</c></example>
                 /// </summary>
                 public static JsonataBinding Function(Func<double, double> func)
-                    => JsonataBinding.FromFunction(
-                        (args, ws) => Sequence.FromDouble(func(args[0].AsDouble()), ws), 1);
+                    => JsonataBinding.FromFunction(func);
 
                 /// <summary>
                 /// Creates a binary (double, double)→double function binding.
                 /// <example><c>Function((a, b) => Math.Min(a, b) + 1)</c></example>
                 /// </summary>
                 public static JsonataBinding Function(Func<double, double, double> func)
-                    => JsonataBinding.FromFunction(
-                        (args, ws) => Sequence.FromDouble(func(args[0].AsDouble(), args[1].AsDouble()), ws), 2);
+                    => JsonataBinding.FromFunction(func);
 
                 /// <summary>
                 /// Creates a Sequence-native function binding for full control.

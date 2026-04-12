@@ -172,6 +172,58 @@ public readonly struct JsonataBinding
     }
 
     /// <summary>
+    /// Creates a unary <see langword="double"/>→<see langword="double"/> function binding.
+    /// The argument is automatically extracted via <see cref="Sequence.AsDouble"/> and the
+    /// result is stored as a raw double proxy (zero allocation).
+    /// </summary>
+    /// <example><c>JsonataBinding.FromFunction((v) =&gt; Math.Cos(v))</c></example>
+    /// <param name="function">A function that takes a single double and returns a double.</param>
+    /// <returns>A new function binding with parameter count 1.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="function"/> is <see langword="null"/>.</exception>
+    public static JsonataBinding FromFunction(Func<double, double> function)
+    {
+#if NET
+        ArgumentNullException.ThrowIfNull(function);
+#else
+        if (function is null)
+        {
+            throw new ArgumentNullException(nameof(function));
+        }
+#endif
+
+        return new JsonataBinding(
+            (Sequence[] args, JsonWorkspace ws) => Sequence.FromDouble(function(args[0].AsDouble()), ws),
+            1,
+            null);
+    }
+
+    /// <summary>
+    /// Creates a binary (<see langword="double"/>, <see langword="double"/>)→<see langword="double"/>
+    /// function binding. Arguments are automatically extracted via <see cref="Sequence.AsDouble"/>
+    /// and the result is stored as a raw double proxy (zero allocation).
+    /// </summary>
+    /// <example><c>JsonataBinding.FromFunction((a, b) =&gt; Math.Min(a, b) + 1)</c></example>
+    /// <param name="function">A function that takes two doubles and returns a double.</param>
+    /// <returns>A new function binding with parameter count 2.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="function"/> is <see langword="null"/>.</exception>
+    public static JsonataBinding FromFunction(Func<double, double, double> function)
+    {
+#if NET
+        ArgumentNullException.ThrowIfNull(function);
+#else
+        if (function is null)
+        {
+            throw new ArgumentNullException(nameof(function));
+        }
+#endif
+
+        return new JsonataBinding(
+            (Sequence[] args, JsonWorkspace ws) => Sequence.FromDouble(function(args[0].AsDouble(), args[1].AsDouble()), ws),
+            2,
+            null);
+    }
+
+    /// <summary>
     /// Creates a function binding using <see cref="JsonElement"/>-based arguments and return value.
     /// </summary>
     /// <param name="function">

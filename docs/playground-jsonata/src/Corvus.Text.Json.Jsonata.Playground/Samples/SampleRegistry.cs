@@ -377,7 +377,7 @@ public static class SampleRegistry
             """,
             BindingsCode = """
             {
-                ["pi"] = Value(3.1415926535898),
+                ["pi"] = Value(Math.PI),
                 ["cosine"] = Function((v) => Math.Cos(v)),
             }
             """,
