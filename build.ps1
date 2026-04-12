@@ -154,6 +154,78 @@ $IsPreviewDeployment = ($env:BUILDVAR_IsPreviewDeployment -eq 'true') -or ($env:
 $covenantVersion = "0.24.0"
 
 
+# Helper function: strip <Output> blocks from TRX files to prevent
+# lxml "huge text node" errors in publish-unit-test-result-action.
+# Uses line-by-line streaming to handle 100 MB+ files without OOM.
+function _StripTrxOutputBlocks {
+    Get-ChildItem -Path $SourcesDir -Filter "test-results_*.trx" -Recurse -ErrorAction SilentlyContinue |
+        ForEach-Object {
+            $sizeMB = [math]::Round($_.Length / 1MB, 1)
+            if ($sizeMB -lt 5) {
+                Write-Build Yellow "_StripTrxOutputBlocks: $($_.Name) ($sizeMB MB) — small, skipping"
+                return
+            }
+            Write-Build Yellow "_StripTrxOutputBlocks: processing $($_.Name) ($sizeMB MB)"
+            try {
+                $tempPath = "$($_.FullName).stripped"
+                $inOutput = $false
+                $linesStripped = 0
+                $reader = [System.IO.StreamReader]::new($_.FullName)
+                $writer = [System.IO.StreamWriter]::new($tempPath)
+                try {
+                    while ($null -ne ($line = $reader.ReadLine())) {
+                        # Handle single-line <Output>...</Output>
+                        if (-not $inOutput -and $line -match '<Output>' -and $line -match '</Output>') {
+                            # Strip the Output block but keep surrounding content on the same line
+                            $stripped = $line -replace '<Output>.*?</Output>', ''
+                            if ($stripped.Trim()) {
+                                $writer.WriteLine($stripped)
+                            }
+                            $linesStripped++
+                            continue
+                        }
+                        # Multi-line: entering <Output> block
+                        if (-not $inOutput -and $line -match '<Output>') {
+                            $inOutput = $true
+                            $linesStripped++
+                            continue
+                        }
+                        # Multi-line: exiting </Output> block
+                        if ($inOutput -and $line -match '</Output>') {
+                            $inOutput = $false
+                            $linesStripped++
+                            continue
+                        }
+                        # Inside multi-line Output block: skip
+                        if ($inOutput) {
+                            $linesStripped++
+                            continue
+                        }
+                        $writer.WriteLine($line)
+                    }
+                }
+                finally {
+                    $reader.Close()
+                    $writer.Close()
+                }
+
+                if ($linesStripped -gt 0) {
+                    Move-Item -Path $tempPath -Destination $_.FullName -Force
+                    $newSizeMB = [math]::Round((Get-Item $_.FullName).Length / 1MB, 1)
+                    Write-Build Yellow "  Stripped $linesStripped lines: $sizeMB MB -> $newSizeMB MB"
+                }
+                else {
+                    Remove-Item $tempPath -Force -ErrorAction SilentlyContinue
+                    Write-Build Yellow "  No Output blocks found"
+                }
+            }
+            catch {
+                Write-Build Yellow "  Error processing TRX: $_"
+                Remove-Item "$($_.FullName).stripped" -Force -ErrorAction SilentlyContinue
+            }
+        }
+}
+
 #
 # Build process configuration
 #
@@ -265,6 +337,13 @@ task RunTestsWithDotNetCoverage -If {!$SkipTest -and $SolutionToBuild -and !$Use
         if ((Test-Path $DotNetTestLogFile) -and $IsAzureDevOps) {
             Write-Host "##vso[artifact.upload artifactname=logs]$((Resolve-Path $DotNetTestLogFile).Path)"
         }
+
+        # Strip <Output> blocks from TRX files BEFORE test reports are generated.
+        # This runs in the finally block so it executes even when tests fail —
+        # which is exactly when the publish-unit-test-result-action needs to parse
+        # the TRX files. Without stripping, lxml hits "huge text node" limits on
+        # the 100 MB+ V4 spec TRX files.
+        _StripTrxOutputBlocks
 
         if (!$SkipTestReport) {
             if ($GenerateTestReport) {
