@@ -107,7 +107,7 @@ The JSONata test projects exercise the runtime evaluator, the code generator, an
 
 #### Runtime conformance (official test suite)
 
-The `Corvus.Text.Json.Jsonata.Tests` project runs the full [JSONata test suite](https://github.com/jsonata-org/jsonata) against the interpreted evaluator. Each test case is loaded from the `Jsonata-Test-Suite/` submodule and exercises expression evaluation, error handling, variable bindings, recursion depth limits, and execution timeouts. Tests are tagged with the `testsuite` category.
+The `Corvus.Text.Json.Jsonata.Tests` project runs the full [JSONata test suite](https://github.com/jsonata-js/jsonata) against the interpreted evaluator. Each test case is loaded from the `Jsonata-Test-Suite/` submodule and exercises expression evaluation, error handling, variable bindings, recursion depth limits, and execution timeouts. Tests are tagged with the `testsuite` category.
 
 ```powershell
 # All runtime conformance tests
