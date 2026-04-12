@@ -393,7 +393,7 @@ public sealed class JsonataEvaluator
                 {
                     throw new JsonataException(
                         "T0410",
-                        $"""Binding function "${name}" expects {paramCount} argument(s), got {args.Length}""",
+                        SR.Format(SR.T0410_BindingFunctionExpectsNArguments, name, paramCount, args.Length),
                         0);
                 }
 
@@ -432,7 +432,7 @@ public sealed class JsonataEvaluator
                 {
                     throw new JsonataException(
                         "T0410",
-                        $"""Binding function "${name}" expects {paramCount} argument(s), got {args.Length}""",
+                        SR.Format(SR.T0410_BindingFunctionExpectsNArguments, name, paramCount, args.Length),
                         0);
                 }
 
