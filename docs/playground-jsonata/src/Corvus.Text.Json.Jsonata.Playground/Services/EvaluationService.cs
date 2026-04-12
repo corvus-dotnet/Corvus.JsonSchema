@@ -89,7 +89,7 @@ public sealed class EvaluationService
     private static string FormatWithG15Numbers(JsonElement element)
     {
         using var stream = new MemoryStream();
-        using (var writer = new Utf8JsonWriter(stream, new JsonWriterOptions { Indented = false }))
+        using (var writer = new Utf8JsonWriter(stream, new JsonWriterOptions { Indented = true }))
         {
             WriteG15(element, writer);
         }
