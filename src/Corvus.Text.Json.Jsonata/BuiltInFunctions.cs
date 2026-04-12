@@ -2014,10 +2014,9 @@ internal static class BuiltInFunctions
             if (seq.IsSingleton && seq.FirstOrDefault.ValueKind == JsonValueKind.Array)
             {
                 var arr = seq.FirstOrDefault;
-                int len = arr.GetArrayLength();
-                for (int idx = 0; idx < len; idx++)
+                foreach (var item in arr.EnumerateArray())
                 {
-                    items.Add(arr[idx]);
+                    items.Add(item);
                 }
             }
             else
@@ -2027,10 +2026,9 @@ internal static class BuiltInFunctions
                     var elem = seq[i];
                     if (elem.ValueKind == JsonValueKind.Array)
                     {
-                        int len = elem.GetArrayLength();
-                        for (int j = 0; j < len; j++)
+                        foreach (var item in elem.EnumerateArray())
                         {
-                            items.Add(elem[j]);
+                            items.Add(item);
                         }
                     }
                     else
@@ -2149,8 +2147,7 @@ internal static class BuiltInFunctions
                 }
             }
 
-            JsonDocumentBuilder<JsonElement.Mutable> filterDoc = JsonElement.CreateArrayBuilder(env.Workspace, 16);
-            JsonElement.Mutable filterRoot = filterDoc.RootElement;
+            var matchBuilder = default(SequenceBuilder);
             int matchCount = 0;
 
             // Reuse args array and child environment across all iterations.
@@ -2162,26 +2159,28 @@ internal static class BuiltInFunctions
             if (inputWasArray)
             {
                 var arr = seq.FirstOrDefault;
-                int len = arr.GetArrayLength();
                 if (arity >= 3)
                 {
                     lambdaArgs[2] = seq;
                 }
 
-                for (int i = 0; i < len; i++)
+                int i = 0;
+                foreach (var item in arr.EnumerateArray())
                 {
-                    lambdaArgs[0] = new Sequence(arr[i]);
+                    lambdaArgs[0] = new Sequence(item);
                     if (arity >= 2)
                     {
                         lambdaArgs[1] = Sequence.FromDouble(i, env.Workspace);
                     }
 
-                    var result = lambda.InvokeReusing(lambdaArgs, 3, arr[i], invokeEnv, env);
+                    var result = lambda.InvokeReusing(lambdaArgs, 3, item, invokeEnv, env);
                     if (FunctionalCompiler.IsTruthy(result))
                     {
-                        filterRoot.AddItem(arr[i]);
+                        matchBuilder.Add(item);
                         matchCount++;
                     }
+
+                    i++;
                 }
             }
             else
@@ -2202,28 +2201,30 @@ internal static class BuiltInFunctions
                     var result = lambda.InvokeReusing(lambdaArgs, 3, seq[i], invokeEnv, env);
                     if (FunctionalCompiler.IsTruthy(result))
                     {
-                        filterRoot.AddItem(seq[i]);
+                        matchBuilder.Add(seq[i]);
                         matchCount++;
                     }
                 }
             }
-
-            var resultArr = (JsonElement)filterRoot;
 
             // If input was not an array, unwrap single results
             if (!inputWasArray)
             {
                 if (matchCount == 0)
                 {
+                    matchBuilder.ReturnArray();
                     return Sequence.Undefined;
                 }
 
                 if (matchCount == 1)
                 {
-                    return new Sequence(resultArr[0]);
+                    var single = matchBuilder[0];
+                    matchBuilder.ReturnArray();
+                    return new Sequence(single);
                 }
             }
 
+            var resultArr = JsonataHelpers.ArrayFromBuilder(ref matchBuilder, env.Workspace);
             return new Sequence(resultArr);
         };
     }

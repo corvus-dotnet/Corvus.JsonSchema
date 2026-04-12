@@ -111,6 +111,29 @@ public struct ElementBuffer : IDisposable
     }
 
     /// <summary>
+    /// Materializes the buffer contents as a JSON array <see cref="JsonElement"/>.
+    /// Always returns an array, even for empty or single-element buffers.
+    /// Used by <c>$map</c> which always produces an array result.
+    /// </summary>
+    public readonly JsonElement ToArrayResult(JsonWorkspace workspace)
+    {
+        if (this.count == 0)
+        {
+            return JsonataHelpers.EmptyArray();
+        }
+
+        JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateArrayBuilder(workspace, this.count);
+        JsonElement.Mutable root = doc.RootElement;
+
+        for (int i = 0; i < this.count; i++)
+        {
+            root.AddItem(this.array![i]);
+        }
+
+        return (JsonElement)root;
+    }
+
+    /// <summary>
     /// Returns the rented array to the pool and resets the buffer.
     /// </summary>
     public void Dispose()

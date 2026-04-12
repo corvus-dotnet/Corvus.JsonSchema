@@ -5068,19 +5068,24 @@ public static class JsonataCodeGenHelpers
 
         if (input.ValueKind == JsonValueKind.Array)
         {
-            var doc = JsonElement.CreateArrayBuilder(workspace, input.GetArrayLength());
-            JsonElement.Mutable root = doc.RootElement;
-
-            foreach (JsonElement item in input.EnumerateArray())
+            var buffer = default(ElementBuffer);
+            try
             {
-                JsonElement result = transform(item, workspace);
-                if (result.ValueKind != JsonValueKind.Undefined)
+                foreach (JsonElement item in input.EnumerateArray())
                 {
-                    root.AddItem(result);
+                    JsonElement result = transform(item, workspace);
+                    if (result.ValueKind != JsonValueKind.Undefined)
+                    {
+                        buffer.Add(result);
+                    }
                 }
-            }
 
-            return (JsonElement)root;
+                return buffer.ToArrayResult(workspace);
+            }
+            finally
+            {
+                buffer.Dispose();
+            }
         }
 
         // Single value — map once, wrap in array
@@ -5119,21 +5124,24 @@ public static class JsonataCodeGenHelpers
                 return default;
             }
 
-            var doc = JsonElement.CreateArrayBuilder(workspace, len);
-            JsonElement.Mutable root = doc.RootElement;
-            int count = 0;
-
-            foreach (JsonElement item in input.EnumerateArray())
+            var buffer = default(ElementBuffer);
+            try
             {
-                JsonElement result = transform(item, workspace);
-                if (result.ValueKind != JsonValueKind.Undefined)
+                foreach (JsonElement item in input.EnumerateArray())
                 {
-                    root.AddItem(result);
-                    count++;
+                    JsonElement result = transform(item, workspace);
+                    if (result.ValueKind != JsonValueKind.Undefined)
+                    {
+                        buffer.Add(result);
+                    }
                 }
-            }
 
-            return count == 0 ? default : count == 1 ? root[0] : (JsonElement)root;
+                return buffer.ToResult(workspace);
+            }
+            finally
+            {
+                buffer.Dispose();
+            }
         }
 
         // Single value — transform once
@@ -5155,24 +5163,28 @@ public static class JsonataCodeGenHelpers
 
         if (input.ValueKind == JsonValueKind.Array)
         {
-            int len = input.GetArrayLength();
-            var doc = JsonElement.CreateArrayBuilder(workspace, len);
-            JsonElement.Mutable root = doc.RootElement;
-
-            int i = 0;
-            foreach (JsonElement item in input.EnumerateArray())
+            var buffer = default(ElementBuffer);
+            try
             {
-                JsonElement idx = JsonataHelpers.NumberFromDouble(i, workspace);
-                JsonElement result = transform(item, idx, workspace);
-                if (result.ValueKind != JsonValueKind.Undefined)
+                int i = 0;
+                foreach (JsonElement item in input.EnumerateArray())
                 {
-                    root.AddItem(result);
+                    JsonElement idx = JsonataHelpers.NumberFromDouble(i, workspace);
+                    JsonElement result = transform(item, idx, workspace);
+                    if (result.ValueKind != JsonValueKind.Undefined)
+                    {
+                        buffer.Add(result);
+                    }
+
+                    i++;
                 }
 
-                i++;
+                return buffer.ToArrayResult(workspace);
             }
-
-            return (JsonElement)root;
+            finally
+            {
+                buffer.Dispose();
+            }
         }
 
         // Single value — map once with index 0
@@ -5355,21 +5367,31 @@ public static class JsonataCodeGenHelpers
                 return hasInit ? initial : default;
             }
 
-            int startIdx;
             if (hasInit)
             {
                 accumulator = initial;
-                startIdx = 0;
+                foreach (JsonElement item in input.EnumerateArray())
+                {
+                    accumulator = reducer(accumulator, item, workspace);
+                }
             }
             else
             {
-                accumulator = input[0];
-                startIdx = 1;
-            }
-
-            for (int i = startIdx; i < len; i++)
-            {
-                accumulator = reducer(accumulator, input[i], workspace);
+                // Skip the first element (use it as the initial accumulator)
+                bool first = true;
+                accumulator = default;
+                foreach (JsonElement item in input.EnumerateArray())
+                {
+                    if (first)
+                    {
+                        accumulator = item;
+                        first = false;
+                    }
+                    else
+                    {
+                        accumulator = reducer(accumulator, item, workspace);
+                    }
+                }
             }
         }
         else
