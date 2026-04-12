@@ -2,6 +2,7 @@
 @implements IDisposable
 @page "/"
 @inject EvaluationService EvalService
+@inject BindingsCompilationService BindingsCompiler
 @inject IJSRuntime JSRuntime
 
 <div class="playground-toolbar">
@@ -34,11 +35,18 @@
     </div>
 
     <div class="playground-panel panel-bindings">
-        <div class="panel-header">Bindings</div>
+        <div class="panel-header">
+            Bindings (C#)
+            @if (bindingsError is not null)
+            {
+                <span class="bindings-error-indicator" title="@bindingsError">⚠</span>
+            }
+        </div>
         <div class="panel-body">
             <StandaloneCodeEditor @ref="bindingsEditor"
                                   Id="bindings-editor"
-                                  ConstructionOptions="BindingsEditorOptions" />
+                                  ConstructionOptions="BindingsEditorOptions"
+                                  OnDidChangeModelContent="OnBindingsChanged" />
         </div>
     </div>
 
@@ -83,9 +91,17 @@
 <div class="status-bar @(lastResult is not null && !lastResult.Success ? "error" : "")">
     <span>Corvus.Text.Json.Jsonata — Interpreted Runtime</span>
     <div class="spacer"></div>
-    @if (isEvaluating)
+    @if (isCompiling)
+    {
+        <span>Compiling bindings…</span>
+    }
+    else if (isEvaluating)
     {
         <span>Evaluating…</span>
+    }
+    else if (bindingsError is not null)
+    {
+        <span class="bindings-status-error">Bindings error</span>
     }
     else if (lastResult is not null)
     {
@@ -106,6 +122,11 @@
     private string? activeSampleId;
     private EvaluationResult? lastResult;
     private bool isEvaluating;
+    private bool isCompiling;
+
+    // Compiled bindings (null = no bindings or empty)
+    private Dictionary<string, JsonataBinding>? activeBindings;
+    private string? bindingsError;
 
     // Theme state
     private string themePref = "auto";
@@ -116,11 +137,23 @@
 
     // Debounce
     private CancellationTokenSource? evaluateDebounce;
+    private CancellationTokenSource? bindingsDebounce;
     private CancellationTokenSource? saveDebounce;
 
     private const string DataStorageKey = "jsonata-playground-data";
     private const string ExpressionStorageKey = "jsonata-playground-expression";
+    private const string BindingsStorageKey = "jsonata-playground-bindings";
     private const string ThemeStorageKey = "jsonata-playground-theme";
+
+    private const string DefaultBindingsPlaceholder =
+        """
+        // Define bindings as dictionary entries.
+        // Value bindings:   ["name"] = Value(3.14)
+        // Function bindings: ["name"] = Function((args, ws) => ToElement(...), paramCount)
+        {
+            // ["myVar"] = Value(42),
+        }
+        """;
 
     // ── Editor options ──
 
@@ -171,15 +204,13 @@
         Minimap = new EditorMinimapOptions { Enabled = false },
         FontSize = 13,
         TabSize = 4,
-        ReadOnly = true,
         ScrollBeyondLastLine = false,
     };
 
     // ── Initial values (set before render) ──
     private string initialData = SampleRegistry.All[0].Data;
     private string initialExpression = SampleRegistry.All[0].Expression;
-    private string initialBindingsCode = SampleRegistry.All[0].BindingsCode ?? "// No external bindings for this sample";
-    private IReadOnlyDictionary<string, JsonataBinding>? activeBindings = SampleRegistry.All[0].Bindings;
+    private string initialBindingsCode = SampleRegistry.All[0].BindingsCode ?? DefaultBindingsPlaceholder;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -202,6 +233,7 @@
             // Load saved data
             var savedData = await GetLocalStorage(DataStorageKey);
             var savedExpr = await GetLocalStorage(ExpressionStorageKey);
+            var savedBindings = await GetLocalStorage(BindingsStorageKey);
 
             if (!string.IsNullOrEmpty(savedData) || !string.IsNullOrEmpty(savedExpr))
             {
@@ -215,6 +247,11 @@
                 {
                     await expressionEditor.SetValue(savedExpr);
                 }
+
+                if (!string.IsNullOrEmpty(savedBindings))
+                {
+                    await bindingsEditor.SetValue(savedBindings);
+                }
             }
             else
             {
@@ -223,8 +260,8 @@
 
             StateHasChanged();
 
-            // Trigger initial evaluation
-            await EvaluateAsync();
+            // Compile initial bindings, then evaluate
+            await CompileAndEvaluateAsync();
         }
     }
 
@@ -233,7 +270,6 @@
     private void OnDataChanged(ModelContentChangedEvent e)
     {
         activeSampleId = null;
-        activeBindings = null;
         DebounceEvaluate();
         DebounceSave();
     }
@@ -241,8 +277,14 @@
     private void OnExpressionChanged(ModelContentChangedEvent e)
     {
         activeSampleId = null;
-        activeBindings = null;
         DebounceEvaluate();
+        DebounceSave();
+    }
+
+    private void OnBindingsChanged(ModelContentChangedEvent e)
+    {
+        activeSampleId = null;
+        DebounceCompileBindings();
         DebounceSave();
     }
 
@@ -256,17 +298,16 @@
         }
 
         activeSampleId = sample.Id;
-        activeBindings = sample.Bindings;
         await dataEditor.SetValue(sample.Data);
         await expressionEditor.SetValue(sample.Expression);
-        await bindingsEditor.SetValue(sample.BindingsCode ?? "// No external bindings for this sample");
-        await EvaluateAsync();
+        await bindingsEditor.SetValue(sample.BindingsCode ?? DefaultBindingsPlaceholder);
+        await CompileAndEvaluateAsync();
     }
 
     [JSInvokable]
     public async Task OnEvaluateShortcut()
     {
-        await EvaluateAsync();
+        await CompileAndEvaluateAsync();
     }
 
     [JSInvokable]
@@ -279,6 +320,77 @@
             _ = JSRuntime.InvokeVoidAsync("applyTheme", resolvedTheme);
             StateHasChanged();
         }
+    }
+
+    // ── Bindings compilation ──
+
+    private async Task CompileBindingsAsync()
+    {
+        isCompiling = true;
+        StateHasChanged();
+
+        try
+        {
+            var code = await bindingsEditor.GetValue();
+
+            if (string.IsNullOrWhiteSpace(code) || IsPlaceholderOnly(code))
+            {
+                activeBindings = null;
+                bindingsError = null;
+                return;
+            }
+
+            var result = await BindingsCompiler.CompileAsync(code);
+
+            if (result.Success)
+            {
+                activeBindings = result.Bindings;
+                bindingsError = null;
+            }
+            else
+            {
+                activeBindings = null;
+                bindingsError = result.ErrorMessage;
+            }
+        }
+        catch (Exception ex)
+        {
+            activeBindings = null;
+            bindingsError = ex.Message;
+        }
+        finally
+        {
+            isCompiling = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task CompileAndEvaluateAsync()
+    {
+        await CompileBindingsAsync();
+        await EvaluateAsync();
+    }
+
+    private static bool IsPlaceholderOnly(string code)
+    {
+        foreach (var line in code.Split('\n'))
+        {
+            var trimmed = line.Trim();
+            if (trimmed.Length == 0 || trimmed.StartsWith("//"))
+            {
+                continue;
+            }
+
+            // Just braces with nothing inside
+            if (trimmed is "{" or "}")
+            {
+                continue;
+            }
+
+            return false;
+        }
+
+        return true;
     }
 
     // ── Evaluation ──
@@ -338,6 +450,21 @@
         }, token, TaskContinuationOptions.OnlyOnRanToCompletion, TaskScheduler.Current);
     }
 
+    private void DebounceCompileBindings()
+    {
+        bindingsDebounce?.Cancel();
+        bindingsDebounce = new CancellationTokenSource();
+        var token = bindingsDebounce.Token;
+
+        _ = Task.Delay(800, token).ContinueWith(async _ =>
+        {
+            if (!token.IsCancellationRequested)
+            {
+                await InvokeAsync(CompileAndEvaluateAsync);
+            }
+        }, token, TaskContinuationOptions.OnlyOnRanToCompletion, TaskScheduler.Current);
+    }
+
     private void DebounceSave()
     {
         saveDebounce?.Cancel();
@@ -359,8 +486,10 @@
         {
             var data = await dataEditor.GetValue();
             var expr = await expressionEditor.GetValue();
+            var bindings = await bindingsEditor.GetValue();
             await SetLocalStorage(DataStorageKey, data);
             await SetLocalStorage(ExpressionStorageKey, expr);
+            await SetLocalStorage(BindingsStorageKey, bindings);
         }
         catch
         {
@@ -435,6 +564,8 @@
     {
         evaluateDebounce?.Cancel();
         evaluateDebounce?.Dispose();
+        bindingsDebounce?.Cancel();
+        bindingsDebounce?.Dispose();
         saveDebounce?.Cancel();
         saveDebounce?.Dispose();
         dotNetRef?.Dispose();

@@ -282,6 +282,19 @@ html, body {
     background: var(--bg-primary);
 }
 
+/* ── Bindings error indicators ── */
+
+.bindings-error-indicator {
+    color: var(--console-error);
+    margin-left: 8px;
+    cursor: help;
+    font-size: 14px;
+}
+
+.bindings-status-error {
+    color: #ffcc00;
+}
+
 /* ── Status bar ── */
 .status-bar {
     display: flex;

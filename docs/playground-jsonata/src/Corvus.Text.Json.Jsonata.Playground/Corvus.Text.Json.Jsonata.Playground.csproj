@@ -4,7 +4,10 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>14</LangVersion>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <StaticWebAssetBasePath>/</StaticWebAssetBasePath>
+    <!-- Disable WebCIL to output regular .dll files that Roslyn can read -->
+    <WasmEnableWebcil>false</WasmEnableWebcil>
     <!-- Disable the Endjin analyzers for this standalone tool -->
     <EndjinDisableCreateEditorConfig>true</EndjinDisableCreateEditorConfig>
     <EndjinDisableAutoPackagesLock>true</EndjinDisableAutoPackagesLock>
@@ -14,10 +17,42 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.0" />
     <PackageReference Include="BlazorMonaco" Version="3.4.0" />
+    <!-- Roslyn for in-browser compilation of user-defined bindings -->
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="5.3.0" />
   </ItemGroup>
 
   <!-- JSONata runtime evaluator -->
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\src\Corvus.Text.Json.Jsonata\Corvus.Text.Json.Jsonata.csproj" />
   </ItemGroup>
+
+  <!-- Preserve assemblies from trimming for dynamic Roslyn compilation -->
+  <ItemGroup>
+    <TrimmerRootAssembly Include="System.Private.CoreLib" />
+    <TrimmerRootAssembly Include="System.Runtime" />
+    <TrimmerRootAssembly Include="System.Collections" />
+    <TrimmerRootAssembly Include="System.Linq" />
+    <TrimmerRootAssembly Include="System.Buffers" />
+    <TrimmerRootAssembly Include="System.Memory" />
+    <TrimmerRootAssembly Include="netstandard" />
+    <TrimmerRootAssembly Include="Corvus.Text.Json" />
+    <TrimmerRootAssembly Include="Corvus.Text.Json.Jsonata" />
+    <TrimmerRootAssembly Include="Microsoft.CodeAnalysis" />
+    <TrimmerRootAssembly Include="Microsoft.CodeAnalysis.CSharp" />
+  </ItemGroup>
+
+  <!-- Copy static web assets manifest to wwwroot for Roslyn assembly resolution -->
+  <Target Name="CopyAssetManifestBuild" AfterTargets="Build">
+    <Copy SourceFiles="$(OutputPath)$(AssemblyName).staticwebassets.endpoints.json"
+          DestinationFiles="$(OutputPath)wwwroot/_framework/asset-manifest.json"
+          SkipUnchangedFiles="true"
+          Condition="Exists('$(OutputPath)$(AssemblyName).staticwebassets.endpoints.json')" />
+  </Target>
+
+  <Target Name="CopyAssetManifestPublish" AfterTargets="Publish">
+    <Copy SourceFiles="$(PublishDir)$(AssemblyName).staticwebassets.endpoints.json"
+          DestinationFiles="$(PublishDir)wwwroot/_framework/asset-manifest.json"
+          SkipUnchangedFiles="true"
+          Condition="Exists('$(PublishDir)$(AssemblyName).staticwebassets.endpoints.json')" />
+  </Target>
 </Project>

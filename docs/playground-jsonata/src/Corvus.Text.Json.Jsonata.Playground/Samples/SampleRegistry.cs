@@ -1,6 +1,3 @@
-using Corvus.Text.Json;
-using Corvus.Text.Json.Jsonata;
-
 namespace Corvus.Text.Json.Jsonata.Playground.Samples;
 
 /// <summary>
@@ -17,12 +14,9 @@ public sealed class Sample
     public required string Expression { get; init; }
 
     /// <summary>
-    /// Gets optional external function/value bindings passed to the evaluator.
-    /// </summary>
-    public IReadOnlyDictionary<string, JsonataBinding>? Bindings { get; init; }
-
-    /// <summary>
-    /// Gets C# source code shown in the Bindings panel to illustrate how the bindings are created.
+    /// Gets C# source code for the Bindings panel. When non-null, this is compiled
+    /// via Roslyn into a <c>Dictionary&lt;string, JsonataBinding&gt;</c> at runtime.
+    /// Must be a dictionary initializer body (the <c>{ ... }</c> part).
     /// </summary>
     public string? BindingsCode { get; init; }
 }
@@ -359,58 +353,33 @@ public static class SampleRegistry
             DisplayName = "Bindings",
             Data = """
             {
-              "angle": 1.5707963267948966
+              "angle": 60
             }
             """,
             Expression = """
-            {
-              "cos": $cos(angle),
-              "sin": $sin(angle),
-              "identity": $sqrt($cos(angle) * $cos(angle) + $sin(angle) * $sin(angle))
-            }
-            """,
-            Bindings = new Dictionary<string, JsonataBinding>
-            {
-                ["cos"] = JsonataBinding.FromFunction(
-                    (args, ws) =>
-                    {
-                        using var doc = ParsedJsonDocument<JsonElement>.Parse(
-                            System.Text.Encoding.UTF8.GetBytes(Math.Cos(args[0].GetDouble()).ToString("R")));
-                        return doc.RootElement.Clone();
-                    },
-                    1,
-                    "<n:n>"),
-                ["sin"] = JsonataBinding.FromFunction(
-                    (args, ws) =>
-                    {
-                        using var doc = ParsedJsonDocument<JsonElement>.Parse(
-                            System.Text.Encoding.UTF8.GetBytes(Math.Sin(args[0].GetDouble()).ToString("R")));
-                        return doc.RootElement.Clone();
-                    },
-                    1,
-                    "<n:n>"),
-                ["sqrt"] = JsonataBinding.FromFunction(
-                    (args, ws) =>
-                    {
-                        using var doc = ParsedJsonDocument<JsonElement>.Parse(
-                            System.Text.Encoding.UTF8.GetBytes(Math.Sqrt(args[0].GetDouble()).ToString("R")));
-                        return doc.RootElement.Clone();
-                    },
-                    1,
-                    "<n:n>"),
-            },
-            BindingsCode = """
-            var bindings = new Dictionary<string, JsonataBinding>
-            {
-                ["cos"]  = JsonataBinding.FromFunction(
-                    (args, _) => ToElement(Math.Cos(args[0].GetDouble())), 1, "<n:n>"),
-                ["sin"]  = JsonataBinding.FromFunction(
-                    (args, _) => ToElement(Math.Sin(args[0].GetDouble())), 1, "<n:n>"),
-                ["sqrt"] = JsonataBinding.FromFunction(
-                    (args, _) => ToElement(Math.Sqrt(args[0].GetDouble())), 1, "<n:n>"),
-            };
+            $cosine(angle * $pi / 180)
 
-            evaluator.Evaluate(expression, data, bindings);
+            /*
+            JSONata can be extended by binding variables to external
+            functions and values.
+
+            The Bindings panel contains C# code that defines a dictionary
+            of JsonataBinding entries. Value bindings (like $pi) make a
+            constant available; function bindings (like $cosine) let you
+            call .NET methods from your expression.
+
+            Helper functions available in bindings code:
+              Value(double|string|bool)  — create a value binding
+              Function(func, paramCount) — create a function binding
+              ToElement(double|string|bool) — convert .NET value to JsonElement
+            */
+            """,
+            BindingsCode = """
+            {
+                ["pi"] = Value(3.1415926535898),
+                ["cosine"] = Function(
+                    (args, ws) => ToElement(Math.Cos(args[0].GetDouble())), 1),
+            }
             """,
         },
     ];
