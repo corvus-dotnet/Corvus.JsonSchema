@@ -5,8 +5,11 @@ namespace Corvus.Text.Json.Jsonata.Playground.Services;
 
 /// <summary>
 /// Loads .NET assemblies from the WASM _framework/ directory as Roslyn MetadataReferences.
-/// This enables in-browser compilation of user-defined bindings code.
+/// This enables in-browser compilation of user bindings code against the Corvus.Text.Json runtime.
 /// </summary>
+/// <remarks>
+/// Uses the same HTTP + asset-manifest approach as the CTJ Playground's WorkspaceService.
+/// </remarks>
 public class WorkspaceService
 {
     private readonly HttpClient httpClient;
@@ -14,20 +17,21 @@ public class WorkspaceService
     private bool referencesLoaded;
     private readonly SemaphoreSlim loadLock = new(1, 1);
     private Dictionary<string, string>? assetMappings;
+    private readonly List<string> loadLog = [];
 
+    // Assemblies needed to compile bindings code
     private static readonly string[] RequiredAssemblies =
     [
+        // Core runtime
         "System.Private.CoreLib",
         "System.Runtime",
         "System.Collections",
         "System.Linq",
         "System.Buffers",
         "System.Memory",
-        "System.Numerics.Vectors",
-        "System.Runtime.Numerics",
         "netstandard",
-        "System.Text.Json",
-        "System.Text.Encodings.Web",
+
+        // Corvus runtime (what bindings reference)
         "Corvus.Text.Json",
         "Corvus.Text.Json.Jsonata",
     ];
@@ -37,10 +41,10 @@ public class WorkspaceService
     /// </summary>
     public const string Preamble =
         """
-        using System;
-        using System.Collections.Generic;
-        using Corvus.Text.Json;
-        using Corvus.Text.Json.Jsonata;
+        global using System;
+        global using System.Collections.Generic;
+        global using Corvus.Text.Json;
+        global using Corvus.Text.Json.Jsonata;
         """;
 
     public WorkspaceService(HttpClient httpClient)
@@ -48,8 +52,19 @@ public class WorkspaceService
         this.httpClient = httpClient;
     }
 
+    /// <summary>
+    /// Gets the loaded metadata references.
+    /// </summary>
     public IReadOnlyList<MetadataReference> References => this.references;
 
+    /// <summary>
+    /// Gets a diagnostic summary of assembly loading (for troubleshooting).
+    /// </summary>
+    public string LoadDiagnostics => string.Join("\n", this.loadLog);
+
+    /// <summary>
+    /// Ensures assemblies are loaded and ready for compilation.
+    /// </summary>
     public async Task EnsureInitializedAsync()
     {
         if (this.referencesLoaded)
@@ -65,7 +80,11 @@ public class WorkspaceService
                 return;
             }
 
+            this.loadLog.Add($"HttpClient base: {this.httpClient.BaseAddress}");
+
             await this.LoadAssetMappingsAsync();
+
+            this.loadLog.Add($"Asset mappings: {this.assetMappings?.Count ?? 0} entries");
 
             foreach (string assemblyName in RequiredAssemblies)
             {
@@ -76,14 +95,20 @@ public class WorkspaceService
                     {
                         MetadataReference reference = MetadataReference.CreateFromImage(bytes);
                         this.references.Add(reference);
+                        this.loadLog.Add($"  OK: {assemblyName} ({bytes.Length} bytes)");
+                    }
+                    else
+                    {
+                        this.loadLog.Add($"  MISS: {assemblyName} (no valid PE found)");
                     }
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // Assembly load failures are non-fatal.
+                    this.loadLog.Add($"  FAIL: {assemblyName}: {ex.GetType().Name}: {ex.Message}");
                 }
             }
 
+            this.loadLog.Add($"Total references loaded: {this.references.Count}");
             this.referencesLoaded = true;
         }
         finally
@@ -92,6 +117,9 @@ public class WorkspaceService
         }
     }
 
+    /// <summary>
+    /// Creates a CSharpCompilation for the given source code.
+    /// </summary>
     public CSharpCompilation CreateCompilation(string sourceCode)
     {
         CSharpParseOptions parseOptions = new CSharpParseOptions(LanguageVersion.Latest)
@@ -125,19 +153,21 @@ public class WorkspaceService
             HttpResponseMessage response = await this.httpClient.GetAsync("_framework/asset-manifest.json");
             if (!response.IsSuccessStatusCode)
             {
+                this.loadLog.Add($"Manifest fetch failed: HTTP {(int)response.StatusCode}");
                 return;
             }
 
             string json = await response.Content.ReadAsStringAsync();
+            this.loadLog.Add($"Manifest fetched: {json.Length} chars");
+
             using var doc = System.Text.Json.JsonDocument.Parse(json);
 
             if (!doc.RootElement.TryGetProperty("Endpoints", out System.Text.Json.JsonElement endpoints))
             {
+                this.loadLog.Add("Manifest has no 'Endpoints' property");
                 return;
             }
 
-            // Build mapping: clean Route (e.g. _framework/System.Runtime.dll)
-            // → fingerprinted AssetFile (e.g. _framework/System.Runtime.abc123.dll)
             foreach (System.Text.Json.JsonElement endpoint in endpoints.EnumerateArray())
             {
                 if (!endpoint.TryGetProperty("Route", out System.Text.Json.JsonElement routeEl) ||
@@ -155,57 +185,75 @@ public class WorkspaceService
                     continue;
                 }
 
-                // Skip compressed entries
-                if (endpoint.TryGetProperty("Selectors", out System.Text.Json.JsonElement selectors) &&
-                    selectors.GetArrayLength() > 0)
+                // Skip compressed versions
+                if (assetFile.Contains(".dll.br") || assetFile.Contains(".dll.gz"))
                 {
                     continue;
                 }
 
-                // We want clean-name routes that map to fingerprinted asset files.
-                // Clean routes look like _framework/System.Runtime.dll (no fingerprint in the name).
-                // Fingerprinted routes look like _framework/System.Runtime.abc123.dll.
-                // When route != assetFile, route is the clean one and assetFile is fingerprinted.
-                if (!route.Equals(assetFile, StringComparison.Ordinal))
+                // Map non-fingerprinted route to the actual fingerprinted file
+                string routeFileName = route[(route.LastIndexOf('/') + 1)..];
+                int dllIndex = routeFileName.LastIndexOf(".dll", StringComparison.Ordinal);
+                string baseFileName = routeFileName[..dllIndex];
+
+                int lastDot = baseFileName.LastIndexOf('.');
+                if (lastDot > 0)
                 {
-                    this.assetMappings[route] = assetFile;
+                    string lastSegment = baseFileName[(lastDot + 1)..];
+                    bool isFingerprint = lastSegment.Length >= 8 && lastSegment.Length <= 12 &&
+                                         lastSegment.All(c => char.IsLetterOrDigit(c) && char.IsLower(c));
+                    if (isFingerprint)
+                    {
+                        continue;
+                    }
                 }
+
+                this.assetMappings[route] = assetFile;
             }
         }
-        catch
+        catch (Exception ex)
         {
-            // Non-fatal.
+            this.loadLog.Add($"Manifest error: {ex.GetType().Name}: {ex.Message}");
         }
     }
 
     private async Task<byte[]?> TryLoadAssemblyBytesAsync(string assemblyName)
     {
-        // The asset manifest maps clean routes → fingerprinted asset files.
-        // e.g. "_framework/System.Runtime.dll" → "_framework/System.Runtime.abc123.dll"
-        string cleanRoute = $"_framework/{assemblyName}.dll";
+        string virtualPath = $"_framework/{assemblyName}.dll";
 
-        string url = this.assetMappings is not null &&
-                     this.assetMappings.TryGetValue(cleanRoute, out string? mappedPath)
+        string actualPath = this.assetMappings is not null &&
+                            this.assetMappings.TryGetValue(virtualPath, out string? mappedPath)
             ? mappedPath
-            : cleanRoute;
+            : virtualPath;
 
-        try
+        string[] patterns = [actualPath, $"_framework/{assemblyName}.wasm"];
+
+        foreach (string pattern in patterns)
         {
-            HttpResponseMessage response = await this.httpClient.GetAsync(url);
-            if (response.IsSuccessStatusCode)
+            try
             {
-                byte[] bytes = await response.Content.ReadAsByteArrayAsync();
-
-                // Verify valid PE (starts with MZ)
-                if (bytes.Length > 2 && bytes[0] == 0x4D && bytes[1] == 0x5A)
+                HttpResponseMessage response = await this.httpClient.GetAsync(pattern);
+                if (response.IsSuccessStatusCode)
                 {
-                    return bytes;
+                    byte[] bytes = await response.Content.ReadAsByteArrayAsync();
+
+                    // Verify it's a valid PE file (starts with MZ)
+                    if (bytes.Length > 2 && bytes[0] == 0x4D && bytes[1] == 0x5A)
+                    {
+                        return bytes;
+                    }
+
+                    this.loadLog.Add($"    {pattern}: {bytes.Length} bytes but not PE (first bytes: {bytes[0]:X2} {bytes[1]:X2})");
+                }
+                else
+                {
+                    this.loadLog.Add($"    {pattern}: HTTP {(int)response.StatusCode}");
                 }
             }
-        }
-        catch
-        {
-            // Non-fatal.
+            catch (Exception ex)
+            {
+                this.loadLog.Add($"    {pattern}: {ex.GetType().Name}: {ex.Message}");
+            }
         }
 
         return null;

@@ -123,6 +123,7 @@
     private EvaluationResult? lastResult;
     private bool isEvaluating;
     private bool isCompiling;
+    private bool isInitializing = true;
 
     // Compiled bindings (null = no bindings or empty)
     private Dictionary<string, JsonataBinding>? activeBindings;
@@ -260,7 +261,8 @@
 
             StateHasChanged();
 
-            // Compile initial bindings, then evaluate
+            // Initialization complete — enable change handlers, then compile+evaluate
+            isInitializing = false;
             await CompileAndEvaluateAsync();
         }
     }
@@ -269,6 +271,8 @@
 
     private void OnDataChanged(ModelContentChangedEvent e)
     {
+        if (isInitializing) { return; }
+
         activeSampleId = null;
         DebounceEvaluate();
         DebounceSave();
@@ -276,6 +280,8 @@
 
     private void OnExpressionChanged(ModelContentChangedEvent e)
     {
+        if (isInitializing) { return; }
+
         activeSampleId = null;
         DebounceEvaluate();
         DebounceSave();
@@ -283,6 +289,8 @@
 
     private void OnBindingsChanged(ModelContentChangedEvent e)
     {
+        if (isInitializing) { return; }
+
         activeSampleId = null;
         DebounceCompileBindings();
         DebounceSave();
@@ -351,12 +359,37 @@
             {
                 activeBindings = null;
                 bindingsError = result.ErrorMessage;
+
+                // Show bindings errors in the Result panel
+                lastResult = new EvaluationResult
+                {
+                    Success = false,
+                    ErrorMessage = $"Bindings compilation error:\n{result.ErrorMessage}",
+                    ElapsedMs = 0,
+                };
+
+                if (outputEditor is not null)
+                {
+                    await outputEditor.SetValue("");
+                }
             }
         }
         catch (Exception ex)
         {
             activeBindings = null;
             bindingsError = ex.Message;
+
+            lastResult = new EvaluationResult
+            {
+                Success = false,
+                ErrorMessage = $"Bindings compilation error:\n{ex.Message}",
+                ElapsedMs = 0,
+            };
+
+            if (outputEditor is not null)
+            {
+                await outputEditor.SetValue("");
+            }
         }
         finally
         {
@@ -368,7 +401,12 @@
     private async Task CompileAndEvaluateAsync()
     {
         await CompileBindingsAsync();
-        await EvaluateAsync();
+
+        // Only evaluate if bindings compiled successfully (or are empty)
+        if (bindingsError is null)
+        {
+            await EvaluateAsync();
+        }
     }
 
     private static bool IsPlaceholderOnly(string code)
@@ -397,7 +435,8 @@
 
     private async Task EvaluateAsync()
     {
-        if (isEvaluating)
+        // Don't evaluate while bindings have compilation errors
+        if (bindingsError is not null || isEvaluating)
         {
             return;
         }

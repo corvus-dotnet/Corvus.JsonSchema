@@ -347,44 +347,95 @@ public sealed class JsonataEvaluator
 
         foreach (var kvp in bindings)
         {
-            if (kvp.Value.IsFunction)
+            switch (kvp.Value.Kind)
             {
-                var func = kvp.Value.GetFunction();
-                int paramCount = kvp.Value.GetParameterCount();
-                string? signature = kvp.Value.GetSignature();
+                case JsonataBinding.BindingKind.SequenceFunction:
+                    ApplySequenceFunction(env, kvp.Key, kvp.Value, workspace);
+                    break;
 
-                var lambda = new LambdaValue(
-                    (Sequence[] args, JsonElement input, Environment callEnv) =>
-                    {
-                        // Convert Sequence args to JsonElement[]
-                        JsonElement[] jsonArgs = new JsonElement[args.Length];
-                        for (int i = 0; i < args.Length; i++)
-                        {
-                            jsonArgs[i] = args[i].IsSingleton
-                                ? args[i].FirstOrDefault
-                                : args[i].IsUndefined
-                                    ? default
-                                    : JsonataHelpers.ArrayFromSequence(args[i], workspace);
-                        }
+                case JsonataBinding.BindingKind.ElementFunction:
+                    ApplyElementFunction(env, kvp.Key, kvp.Value, workspace);
+                    break;
 
-                        // Validate signature if provided
-                        if (signature is not null)
-                        {
-                            SignatureValidator.ValidateArgs(signature, args, -1);
-                        }
+                case JsonataBinding.BindingKind.DoubleValue:
+                    env.Bind(kvp.Key, Sequence.FromDouble(kvp.Value.GetDoubleValue(), workspace));
+                    break;
 
-                        JsonElement result = func(jsonArgs, workspace);
-                        return new Sequence(result);
-                    },
-                    paramCount);
+                case JsonataBinding.BindingKind.StringValue:
+                    env.Bind(kvp.Key, Sequence.FromString(kvp.Value.GetStringValue(), workspace));
+                    break;
 
-                env.Bind(kvp.Key, new Sequence(lambda));
-            }
-            else
-            {
-                env.Bind(kvp.Key, new Sequence(kvp.Value.GetValue()));
+                case JsonataBinding.BindingKind.BoolValue:
+                    env.Bind(kvp.Key, Sequence.FromBool(kvp.Value.GetBoolValue()));
+                    break;
+
+                default: // ElementValue
+                    env.Bind(kvp.Key, new Sequence(kvp.Value.GetElementValue()));
+                    break;
             }
         }
+    }
+
+    private static void ApplySequenceFunction(
+        Environment env,
+        string name,
+        JsonataBinding binding,
+        JsonWorkspace workspace)
+    {
+        var func = binding.GetSequenceFunction();
+        int paramCount = binding.GetParameterCount();
+        string? signature = binding.GetSignature();
+
+        var lambda = new LambdaValue(
+            (Sequence[] args, JsonElement input, Environment callEnv) =>
+            {
+                if (signature is not null)
+                {
+                    SignatureValidator.ValidateArgs(signature, args, -1);
+                }
+
+                return func(args, workspace);
+            },
+            paramCount);
+
+        env.Bind(name, new Sequence(lambda));
+    }
+
+    private static void ApplyElementFunction(
+        Environment env,
+        string name,
+        JsonataBinding binding,
+        JsonWorkspace workspace)
+    {
+        var func = binding.GetElementFunction();
+        int paramCount = binding.GetParameterCount();
+        string? signature = binding.GetSignature();
+
+        var lambda = new LambdaValue(
+            (Sequence[] args, JsonElement input, Environment callEnv) =>
+            {
+                // Convert Sequence args to JsonElement[]
+                JsonElement[] jsonArgs = new JsonElement[args.Length];
+                for (int i = 0; i < args.Length; i++)
+                {
+                    jsonArgs[i] = args[i].IsSingleton
+                        ? args[i].FirstOrDefault
+                        : args[i].IsUndefined
+                            ? default
+                            : JsonataHelpers.ArrayFromSequence(args[i], workspace);
+                }
+
+                if (signature is not null)
+                {
+                    SignatureValidator.ValidateArgs(signature, args, -1);
+                }
+
+                JsonElement result = func(jsonArgs, workspace);
+                return new Sequence(result);
+            },
+            paramCount);
+
+        env.Bind(name, new Sequence(lambda));
     }
 
     private ExpressionEvaluator GetOrCompile(string expression)

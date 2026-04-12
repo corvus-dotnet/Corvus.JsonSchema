@@ -369,16 +369,16 @@ public static class SampleRegistry
             call .NET methods from your expression.
 
             Helper functions available in bindings code:
-              Value(double|string|bool)  — create a value binding
-              Function(func, paramCount) — create a function binding
-              ToElement(double|string|bool) — convert .NET value to JsonElement
+              Value(double|string|bool)                — value binding
+              Function((v) => ...)                     — unary double→double
+              Function((a, b) => ...)                  — binary double→double
+              Function(Func<Sequence[],JW,Seq>, n)     — full control
             */
             """,
             BindingsCode = """
             {
                 ["pi"] = Value(3.1415926535898),
-                ["cosine"] = Function(
-                    (args, ws) => ToElement(Math.Cos(args[0].GetDouble())), 1),
+                ["cosine"] = Function((v) => Math.Cos(v)),
             }
             """,
         },

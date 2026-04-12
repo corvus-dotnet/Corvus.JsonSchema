@@ -282,7 +282,7 @@ html, body {
     background: var(--bg-primary);
 }
 
-/* ── Bindings error indicators ── */
+/* ── Bindings error indicator ── */
 
 .bindings-error-indicator {
     color: var(--console-error);

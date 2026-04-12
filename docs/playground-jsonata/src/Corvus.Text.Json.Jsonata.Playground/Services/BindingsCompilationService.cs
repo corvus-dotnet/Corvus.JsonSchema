@@ -100,70 +100,59 @@ public class BindingsCompilationService
                 /// Creates a value binding from a number.
                 /// </summary>
                 public static JsonataBinding Value(double v)
-                {
-                    using var doc = ParsedJsonDocument<JsonElement>.Parse(
-                        System.Text.Encoding.UTF8.GetBytes(v.ToString("R")));
-                    return JsonataBinding.FromValue(doc.RootElement.Clone());
-                }
+                    => JsonataBinding.FromValue(v);
 
                 /// <summary>
                 /// Creates a value binding from a string.
                 /// </summary>
                 public static JsonataBinding Value(string v)
-                {
-                    using var doc = ParsedJsonDocument<JsonElement>.Parse(
-                        System.Text.Encoding.UTF8.GetBytes("\"" + v.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\""));
-                    return JsonataBinding.FromValue(doc.RootElement.Clone());
-                }
+                    => JsonataBinding.FromValue(v);
 
                 /// <summary>
                 /// Creates a value binding from a boolean.
                 /// </summary>
                 public static JsonataBinding Value(bool v)
-                {
-                    using var doc = ParsedJsonDocument<JsonElement>.Parse(
-                        System.Text.Encoding.UTF8.GetBytes(v ? "true" : "false"));
-                    return JsonataBinding.FromValue(doc.RootElement.Clone());
-                }
+                    => JsonataBinding.FromValue(v);
 
                 /// <summary>
-                /// Creates a function binding.
+                /// Creates a value binding from a JsonElement.
+                /// </summary>
+                public static JsonataBinding Value(JsonElement v)
+                    => JsonataBinding.FromValue(v);
+
+                /// <summary>
+                /// Creates a unary double→double function binding.
+                /// <example><c>Function((v) => Math.Cos(v))</c></example>
+                /// </summary>
+                public static JsonataBinding Function(Func<double, double> func)
+                    => JsonataBinding.FromFunction(
+                        (args, ws) => Sequence.FromDouble(func(args[0].AsDouble()), ws), 1);
+
+                /// <summary>
+                /// Creates a binary (double, double)→double function binding.
+                /// <example><c>Function((a, b) => Math.Min(a, b) + 1)</c></example>
+                /// </summary>
+                public static JsonataBinding Function(Func<double, double, double> func)
+                    => JsonataBinding.FromFunction(
+                        (args, ws) => Sequence.FromDouble(func(args[0].AsDouble(), args[1].AsDouble()), ws), 2);
+
+                /// <summary>
+                /// Creates a Sequence-native function binding for full control.
                 /// </summary>
                 public static JsonataBinding Function(
-                    Func<JsonElement[], JsonWorkspace, JsonElement> func,
+                    Func<Sequence[], JsonWorkspace, Sequence> func,
                     int parameterCount,
                     string? signature = null)
                     => JsonataBinding.FromFunction(func, parameterCount, signature);
 
                 /// <summary>
-                /// Converts a double to a JsonElement (for use in function bodies).
+                /// Creates a JsonElement-based function binding (legacy API).
                 /// </summary>
-                public static JsonElement ToElement(double v)
-                {
-                    using var doc = ParsedJsonDocument<JsonElement>.Parse(
-                        System.Text.Encoding.UTF8.GetBytes(v.ToString("R")));
-                    return doc.RootElement.Clone();
-                }
-
-                /// <summary>
-                /// Converts a string to a JsonElement (for use in function bodies).
-                /// </summary>
-                public static JsonElement ToElement(string v)
-                {
-                    using var doc = ParsedJsonDocument<JsonElement>.Parse(
-                        System.Text.Encoding.UTF8.GetBytes("\"" + v.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\""));
-                    return doc.RootElement.Clone();
-                }
-
-                /// <summary>
-                /// Converts a boolean to a JsonElement (for use in function bodies).
-                /// </summary>
-                public static JsonElement ToElement(bool v)
-                {
-                    using var doc = ParsedJsonDocument<JsonElement>.Parse(
-                        System.Text.Encoding.UTF8.GetBytes(v ? "true" : "false"));
-                    return doc.RootElement.Clone();
-                }
+                public static JsonataBinding ElementFunction(
+                    Func<JsonElement[], JsonWorkspace, JsonElement> func,
+                    int parameterCount,
+                    string? signature = null)
+                    => JsonataBinding.FromFunction(func, parameterCount, signature);
 
                 public static Dictionary<string, JsonataBinding> Create()
                 {

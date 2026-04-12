@@ -28,7 +28,7 @@ namespace Corvus.Text.Json.Jsonata;
 /// </list>
 /// </para>
 /// </remarks>
-internal readonly struct Sequence
+public readonly struct Sequence
 {
     // --- Tagged union layout: 32 bytes on x64 (was ~116) ---
     //
@@ -75,7 +75,7 @@ internal readonly struct Sequence
     /// Initializes a new instance of the <see cref="Sequence"/> struct with a single value.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public Sequence(in JsonElement value)
+    internal Sequence(in JsonElement value)
     {
         this.singleValue = value;
         this.countAndTag = Pack(TagSingleton, 1);
@@ -87,7 +87,7 @@ internal readonly struct Sequence
     /// <param name="values">The backing array (typically rented from a pool).</param>
     /// <param name="count">The number of valid elements in the array.</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public Sequence(JsonElement[] values, int count)
+    internal Sequence(JsonElement[] values, int count)
     {
         Debug.Assert(count >= 0, "Count must be non-negative");
         Debug.Assert(values.Length >= count, "Array must be large enough for count");
@@ -113,7 +113,7 @@ internal readonly struct Sequence
     /// </summary>
     /// <param name="lambda">The lambda (function) value.</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public Sequence(LambdaValue lambda)
+    internal Sequence(LambdaValue lambda)
     {
         this.payload = lambda;
         this.countAndTag = Pack(TagLambda, 0);
@@ -124,7 +124,7 @@ internal readonly struct Sequence
     /// </summary>
     /// <param name="regex">The compiled regular expression.</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public Sequence(Regex regex)
+    internal Sequence(Regex regex)
     {
         this.payload = regex;
         this.countAndTag = Pack(TagRegex, 0);
@@ -135,7 +135,7 @@ internal readonly struct Sequence
     /// </summary>
     /// <param name="tailCall">The tail-call continuation.</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public Sequence(TailCallContinuation tailCall)
+    internal Sequence(TailCallContinuation tailCall)
     {
         this.payload = tailCall;
         this.countAndTag = Pack(TagTailCall, 0);
@@ -147,7 +147,7 @@ internal readonly struct Sequence
     /// </summary>
     /// <param name="nonFiniteValue">The non-finite double value.</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public Sequence(double nonFiniteValue)
+    internal Sequence(double nonFiniteValue)
     {
         Debug.Assert(double.IsInfinity(nonFiniteValue) || double.IsNaN(nonFiniteValue), "Use this constructor only for non-finite values; use FromDouble for finite doubles");
         this.rawValue = nonFiniteValue;
@@ -167,6 +167,31 @@ internal readonly struct Sequence
     {
         Debug.Assert(!double.IsInfinity(value) && !double.IsNaN(value), "Use Sequence(double) constructor for non-finite values");
         return new Sequence(value, workspace);
+    }
+
+    /// <summary>
+    /// Creates a <see cref="Sequence"/> holding a string value. The string is materialized
+    /// to a <see cref="JsonElement"/> immediately using the given workspace.
+    /// </summary>
+    /// <param name="value">The string value.</param>
+    /// <param name="workspace">The workspace used to create the string element.</param>
+    /// <returns>A singleton sequence representing the string.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Sequence FromString(string value, JsonWorkspace workspace)
+    {
+        return new Sequence(JsonataHelpers.StringFromString(value, workspace));
+    }
+
+    /// <summary>
+    /// Creates a <see cref="Sequence"/> holding a boolean value. Boolean elements are
+    /// pre-cached singletons, so this incurs no allocation.
+    /// </summary>
+    /// <param name="value">The boolean value.</param>
+    /// <returns>A singleton sequence representing <c>true</c> or <c>false</c>.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Sequence FromBool(bool value)
+    {
+        return new Sequence(JsonataHelpers.BooleanElement(value));
     }
 
     /// <summary>
@@ -211,7 +236,7 @@ internal readonly struct Sequence
     /// </summary>
     /// <param name="tupleItems">The sub-sequences, one per array element.</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public Sequence(Sequence[] tupleItems)
+    internal Sequence(Sequence[] tupleItems)
     {
         this.payload = tupleItems;
         this.countAndTag = Pack(TagTuple, tupleItems.Length);
@@ -225,7 +250,7 @@ internal readonly struct Sequence
     /// <param name="value">The JSON element.</param>
     /// <param name="objectLambdas">Dictionary mapping property names to their lambda values.</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public Sequence(in JsonElement value, Dictionary<string, LambdaValue> objectLambdas)
+    internal Sequence(in JsonElement value, Dictionary<string, LambdaValue> objectLambdas)
     {
         this.singleValue = value;
         this.payload = objectLambdas;
@@ -239,14 +264,14 @@ internal readonly struct Sequence
     /// </summary>
     /// <param name="rangeInfo">The lazy range bounds and workspace reference.</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public Sequence(LazyRangeInfo rangeInfo)
+    internal Sequence(LazyRangeInfo rangeInfo)
     {
         this.payload = rangeInfo;
         this.countAndTag = Pack(TagLazyRange, rangeInfo.End - rangeInfo.Start + 1);
     }
 
     /// <summary>Gets the number of values in the sequence.</summary>
-    public int Count
+    internal int Count
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get => this.countAndTag & CountMask;
@@ -328,14 +353,14 @@ internal readonly struct Sequence
     }
 
     /// <summary>Gets a value indicating whether this is a singleton sequence.</summary>
-    public bool IsSingleton
+    internal bool IsSingleton
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get => (this.countAndTag & CountMask) == 1;
     }
 
     /// <summary>Gets a value indicating whether this sequence holds a raw finite double value.</summary>
-    public bool IsRawDouble
+    internal bool IsRawDouble
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get => this.Tag == TagRawDouble;
@@ -349,7 +374,7 @@ internal readonly struct Sequence
     }
 
     /// <summary>Gets a value indicating whether this sequence is backed by an array of raw doubles.</summary>
-    public bool IsRawDoubleArray
+    internal bool IsRawDoubleArray
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get => this.Tag == TagRawDoubleArray;
@@ -359,7 +384,7 @@ internal readonly struct Sequence
     /// <param name="index">The zero-based index.</param>
     /// <returns>The raw double value.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public double GetRawDoubleAt(int index)
+    internal double GetRawDoubleAt(int index)
     {
         Debug.Assert(this.Tag == TagRawDoubleArray, "Not a raw double array sequence");
         return ((RawDoubleArrayPayload)this.payload!).Values[index];
@@ -387,6 +412,22 @@ internal readonly struct Sequence
 
         value = 0;
         return false;
+    }
+
+    /// <summary>
+    /// Gets the double value of this sequence, whether it is a raw double proxy or
+    /// a singleton JSON number element.
+    /// </summary>
+    /// <returns>The double value.</returns>
+    /// <exception cref="InvalidOperationException">The sequence does not hold a numeric value.</exception>
+    public double AsDouble()
+    {
+        if (this.TryGetDouble(out double value))
+        {
+            return value;
+        }
+
+        throw new InvalidOperationException("The sequence does not hold a numeric value.");
     }
 
     /// <summary>
@@ -428,7 +469,7 @@ internal readonly struct Sequence
     /// Gets the <see cref="JsonValueKind"/> of this sequence's value without materializing.
     /// Returns <see cref="JsonValueKind.Number"/> for raw doubles and non-finite values.
     /// </summary>
-    public JsonValueKind SequenceValueKind
+    internal JsonValueKind SequenceValueKind
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get
@@ -449,70 +490,70 @@ internal readonly struct Sequence
     }
 
     /// <summary>Gets a value indicating whether this sequence holds a lambda (function) value.</summary>
-    public bool IsLambda
+    internal bool IsLambda
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get => this.Tag == TagLambda;
     }
 
     /// <summary>Gets the lambda value, or <c>null</c> if this is not a lambda.</summary>
-    public LambdaValue? Lambda
+    internal LambdaValue? Lambda
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get => this.Tag == TagLambda ? (LambdaValue?)this.payload : null;
     }
 
     /// <summary>Gets a value indicating whether this sequence holds a regular expression value.</summary>
-    public bool IsRegex
+    internal bool IsRegex
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get => this.Tag == TagRegex;
     }
 
     /// <summary>Gets the compiled regular expression, or <c>null</c> if this is not a regex.</summary>
-    public Regex? Regex
+    internal Regex? Regex
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get => this.Tag == TagRegex ? (Regex?)this.payload : null;
     }
 
     /// <summary>Gets a value indicating whether this sequence holds a tail-call continuation.</summary>
-    public bool IsTailCall
+    internal bool IsTailCall
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get => this.Tag == TagTailCall;
     }
 
     /// <summary>Gets the tail-call continuation, or <c>null</c> if this is not a tail call.</summary>
-    public TailCallContinuation? TailCall
+    internal TailCallContinuation? TailCall
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get => this.Tag == TagTailCall ? (TailCallContinuation?)this.payload : null;
     }
 
     /// <summary>Gets a value indicating whether this sequence holds a non-finite numeric value (Infinity or NaN).</summary>
-    public bool IsNonFinite
+    internal bool IsNonFinite
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get => this.Tag == TagNonFinite;
     }
 
     /// <summary>Gets the non-finite double value. Only valid when <see cref="IsNonFinite"/> is <c>true</c>.</summary>
-    public double NonFiniteValue
+    internal double NonFiniteValue
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get => this.rawValue;
     }
 
     /// <summary>Gets a value indicating whether this is a tuple sequence holding sub-sequences (e.g. an array containing lambdas).</summary>
-    public bool IsTupleSequence
+    internal bool IsTupleSequence
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get => this.Tag == TagTuple;
     }
 
     /// <summary>Gets a value indicating whether this is a lazy range sequence.</summary>
-    public bool IsLazyRange
+    internal bool IsLazyRange
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get => this.Tag == TagLazyRange;
@@ -523,7 +564,7 @@ internal readonly struct Sequence
     /// Used by the custom matcher protocol to retrieve function-valued properties
     /// (such as <c>next</c>) that cannot be represented in JSON.
     /// </summary>
-    public Dictionary<string, LambdaValue>? ObjectLambdas
+    internal Dictionary<string, LambdaValue>? ObjectLambdas
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get => this.Tag == TagObjectLambdas ? (Dictionary<string, LambdaValue>?)this.payload : null;
@@ -535,7 +576,7 @@ internal readonly struct Sequence
     /// sequences, this wraps the JSON element at the index.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public Sequence GetItemSequence(int index)
+    internal Sequence GetItemSequence(int index)
     {
         if (this.Tag == TagTuple)
         {
@@ -548,7 +589,7 @@ internal readonly struct Sequence
     /// <summary>
     /// Gets the element at the specified index.
     /// </summary>
-    public JsonElement this[int index]
+    internal JsonElement this[int index]
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get
@@ -601,7 +642,7 @@ internal readonly struct Sequence
     /// using the stored workspace reference. Callers on the arithmetic hot path should use
     /// <see cref="TryGetDouble"/> instead to avoid this materialization.
     /// </remarks>
-    public JsonElement FirstOrDefault
+    internal JsonElement FirstOrDefault
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get
@@ -643,7 +684,7 @@ internal readonly struct Sequence
     /// Returns an enumerator over the values in this sequence.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public Enumerator GetEnumerator() => new(this);
+    internal Enumerator GetEnumerator() => new(this);
 
     [MethodImpl(MethodImplOptions.NoInlining)]
     private static void ThrowIndexOutOfRange()
@@ -654,7 +695,7 @@ internal readonly struct Sequence
     /// <summary>
     /// Enumerator for iterating over sequence values without allocation.
     /// </summary>
-    public struct Enumerator
+    internal struct Enumerator
     {
         private readonly Sequence sequence;
         private readonly int count;
