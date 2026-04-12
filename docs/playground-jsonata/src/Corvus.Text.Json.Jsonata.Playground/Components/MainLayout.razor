@@ -19,9 +19,6 @@
     <div class="spacer"></div>
     <span class="shortcut-hint">Ctrl+Enter to evaluate</span>
     <button class="theme-toggle-btn" @onclick="CycleTheme" title="@themeTooltip">@themeIcon</button>
-    <button class="toolbar-btn primary" @onclick="EvaluateAsync" disabled="@isEvaluating">
-        @(isEvaluating ? "Evaluating…" : "▶ Evaluate")
-    </button>
 </div>
 
 <div class="jsonata-grid">
@@ -60,18 +57,17 @@
                 </span>
             }
         </div>
-        <div class="panel-body">
-            @if (lastResult is not null && !lastResult.Success)
-            {
-                <div class="error-output">@lastResult.ErrorMessage</div>
-            }
-            else
-            {
-                <StandaloneCodeEditor @ref="outputEditor"
-                                      Id="output-editor"
-                                      ConstructionOptions="OutputEditorOptions" />
-            }
+        <div class="panel-body" style="@(lastResult is not null && !lastResult.Success ? "display:none" : "")">
+            <StandaloneCodeEditor @ref="outputEditor"
+                                  Id="output-editor"
+                                  ConstructionOptions="OutputEditorOptions" />
         </div>
+        @if (lastResult is not null && !lastResult.Success)
+        {
+            <div class="panel-body">
+                <div class="error-output">@lastResult.ErrorMessage</div>
+            </div>
+        }
     </div>
 </div>
 
@@ -373,8 +369,8 @@
         (themeIcon, themeTooltip) = themePref switch
         {
             "dark" => ("🌙", "Theme: Dark (click for Light)"),
-            "light" => ("☀️", "Theme: Light (click for Auto)"),
-            _ => ("🌓", "Theme: Auto (click for Dark)"),
+            "light" => ("☀️", "Theme: Light (click for System)"),
+            _ => ("🖥️", "Theme: System (click for Dark)"),
         };
     }
 

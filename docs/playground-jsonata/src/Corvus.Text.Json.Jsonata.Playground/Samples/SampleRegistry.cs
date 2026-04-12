@@ -27,53 +27,246 @@ public static class SampleRegistry
             DisplayName = "Invoice Total",
             Data = """
             {
-              "Account": "ACC-001",
-              "Order": [
-                { "Product": "Widget A", "Quantity": 4, "Price": 9.99 },
-                { "Product": "Widget B", "Quantity": 2, "Price": 24.50 },
-                { "Product": "Gadget C", "Quantity": 1, "Price": 199.00 }
-              ]
+              "Account": {
+                "Account Name": "Firefly",
+                "Order": [
+                  {
+                    "OrderID": "order103",
+                    "Product": [
+                      {
+                        "Product Name": "Bowler Hat",
+                        "ProductID": 858383,
+                        "SKU": "0406654608",
+                        "Description": {
+                          "Colour": "Purple",
+                          "Width": 300,
+                          "Height": 200,
+                          "Depth": 210,
+                          "Weight": 0.75
+                        },
+                        "Price": 34.45,
+                        "Quantity": 2
+                      },
+                      {
+                        "Product Name": "Trilby hat",
+                        "ProductID": 858236,
+                        "SKU": "0406634348",
+                        "Description": {
+                          "Colour": "Orange",
+                          "Width": 300,
+                          "Height": 200,
+                          "Depth": 210,
+                          "Weight": 0.6
+                        },
+                        "Price": 21.67,
+                        "Quantity": 1
+                      }
+                    ]
+                  },
+                  {
+                    "OrderID": "order104",
+                    "Product": [
+                      {
+                        "Product Name": "Bowler Hat",
+                        "ProductID": 858383,
+                        "SKU": "040657863",
+                        "Description": {
+                          "Colour": "Purple",
+                          "Width": 300,
+                          "Height": 200,
+                          "Depth": 210,
+                          "Weight": 0.75
+                        },
+                        "Price": 34.45,
+                        "Quantity": 4
+                      },
+                      {
+                        "ProductID": 345664,
+                        "SKU": "0406654603",
+                        "Product Name": "Cloak",
+                        "Description": {
+                          "Colour": "Black",
+                          "Width": 30,
+                          "Height": 20,
+                          "Depth": 210,
+                          "Weight": 2
+                        },
+                        "Price": 107.99,
+                        "Quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
             }
             """,
-            Expression = """$sum(Order.(Price * Quantity))""",
+            Expression = """$sum(Account.Order.Product.(Price * Quantity))""",
         },
 
         new Sample
         {
-            Id = "transform-object",
-            DisplayName = "Object Transform",
+            Id = "address-transform",
+            DisplayName = "Address Transform",
             Data = """
             {
-              "FirstName": "Alice",
-              "LastName": "Smith",
-              "Age": 30,
-              "Email": "alice@example.com"
+              "FirstName": "Fred",
+              "Surname": "Smith",
+              "Age": 28,
+              "Address": {
+                "Street": "Hursley Park",
+                "City": "Winchester",
+                "Postcode": "SO21 2JN"
+              },
+              "Phone": [
+                { "type": "home", "number": "0203 544 1234" },
+                { "type": "office", "number": "01962 001234" },
+                { "type": "office", "number": "01962 001235" },
+                { "type": "mobile", "number": "077 7700 1234" }
+              ],
+              "Email": [
+                {
+                  "type": "office",
+                  "address": ["fred.smith@my-work.com", "fsmith@my-work.com"]
+                },
+                {
+                  "type": "home",
+                  "address": ["freddy@my-social.com", "frederic.smith@very-serious.com"]
+                }
+              ],
+              "Other": {
+                "Over 18 ?": true,
+                "Misc": null,
+                "Alternative.Address": {
+                  "Street": "Brick Lane",
+                  "City": "London",
+                  "Postcode": "E1 6RF"
+                }
+              }
             }
             """,
             Expression = """
             {
-              "name": FirstName & " " & LastName,
-              "email": Email,
-              "isAdult": Age >= 18
+              "name": FirstName & " " & Surname,
+              "mobile": Phone[type = "mobile"].number
             }
             """,
         },
 
         new Sample
         {
-            Id = "filter-array",
-            DisplayName = "Array Filter",
+            Id = "library-join",
+            DisplayName = "Library Join",
             Data = """
             {
-              "Products": [
-                { "Name": "Laptop", "Price": 999, "InStock": true },
-                { "Name": "Phone", "Price": 699, "InStock": false },
-                { "Name": "Tablet", "Price": 449, "InStock": true },
-                { "Name": "Watch", "Price": 299, "InStock": true }
-              ]
+              "library": {
+                "books": [
+                  {
+                    "title": "Structure and Interpretation of Computer Programs",
+                    "authors": ["Abelson", "Sussman"],
+                    "isbn": "9780262510875",
+                    "price": 38.90,
+                    "copies": 2
+                  },
+                  {
+                    "title": "The C Programming Language",
+                    "authors": ["Kernighan", "Richie"],
+                    "isbn": "9780131103627",
+                    "price": 33.59,
+                    "copies": 3
+                  },
+                  {
+                    "title": "The AWK Programming Language",
+                    "authors": ["Aho", "Kernighan", "Weinberger"],
+                    "isbn": "9780201079814",
+                    "copies": 1
+                  },
+                  {
+                    "title": "Compilers: Principles, Techniques, and Tools",
+                    "authors": ["Aho", "Lam", "Sethi", "Ullman"],
+                    "isbn": "9780201100884",
+                    "price": 23.38,
+                    "copies": 1
+                  }
+                ],
+                "loans": [
+                  { "customer": "10001", "isbn": "9780262510875", "return": "2016-12-05" },
+                  { "customer": "10003", "isbn": "9780201100884", "return": "2016-10-22" },
+                  { "customer": "10003", "isbn": "9780262510875", "return": "2016-12-22" }
+                ],
+                "customers": [
+                  {
+                    "id": "10001",
+                    "name": "Joe Doe",
+                    "address": { "street": "2 Long Road", "city": "Winchester", "postcode": "SO22 5PU" }
+                  },
+                  {
+                    "id": "10002",
+                    "name": "Fred Bloggs",
+                    "address": { "street": "56 Letsby Avenue", "city": "Winchester", "postcode": "SO22 4WD" }
+                  },
+                  {
+                    "id": "10003",
+                    "name": "Jason Arthur",
+                    "address": { "street": "1 Preddy Gate", "city": "Southampton", "postcode": "SO14 0MG" }
+                  }
+                ]
+              }
             }
             """,
-            Expression = """Products[InStock and Price < 500].Name""",
+            Expression = """
+            library.loans@$L.books@$B[$L.isbn=$B.isbn].customers[$L.customer=id].{
+              "customer": name,
+              "book": $B.title,
+              "due": $L.return
+            }
+            """,
+        },
+
+        new Sample
+        {
+            Id = "schema-keys",
+            DisplayName = "Schema Keys",
+            Data = """
+            {
+              "$schema": "http://json-schema.org/draft-04/schema#",
+              "required": ["Account"],
+              "type": "object",
+              "properties": {
+                "Account": {
+                  "required": ["Order"],
+                  "type": "object",
+                  "properties": {
+                    "Account Name": { "type": "string" },
+                    "Order": {
+                      "type": "array",
+                      "items": {
+                        "required": ["OrderID", "Product"],
+                        "type": "object",
+                        "properties": {
+                          "OrderID": { "type": "string" },
+                          "Product": {
+                            "type": "array",
+                            "items": {
+                              "required": ["ProductID", "Product Name", "Price", "Quantity"],
+                              "type": "object",
+                              "properties": {
+                                "ProductID": { "type": "integer" },
+                                "Product Name": { "type": "string" },
+                                "SKU": { "type": "string" },
+                                "Price": { "type": "number" },
+                                "Quantity": { "type": "integer" }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            """,
+            Expression = """**.properties ~> $keys()""",
         },
 
         new Sample
@@ -105,36 +298,6 @@ public static class SampleRegistry
               "factorial5": $reduce([1,2,3,4,5], function($prev, $curr) { $prev * $curr })
             }
             """,
-        },
-
-        new Sample
-        {
-            Id = "nested-nav",
-            DisplayName = "Nested Navigation",
-            Data = """
-            {
-              "Company": {
-                "Name": "Acme Corp",
-                "Departments": [
-                  {
-                    "Name": "Engineering",
-                    "Employees": [
-                      { "Name": "Alice", "Role": "Lead" },
-                      { "Name": "Bob", "Role": "Developer" }
-                    ]
-                  },
-                  {
-                    "Name": "Marketing",
-                    "Employees": [
-                      { "Name": "Charlie", "Role": "Manager" },
-                      { "Name": "Diana", "Role": "Designer" }
-                    ]
-                  }
-                ]
-              }
-            }
-            """,
-            Expression = """Company.Departments.{"dept": Name, "people": Employees.Name}""",
         },
 
         new Sample
