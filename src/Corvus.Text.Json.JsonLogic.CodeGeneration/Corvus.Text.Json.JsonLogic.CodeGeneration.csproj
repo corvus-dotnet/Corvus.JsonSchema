@@ -14,6 +14,7 @@
     <NoWarn Condition="$(TargetFrameworks.Contains('netstandard'))">$(NoWarn);CA1510;CA1511;CA1512;CA1513;CA1845;CA1846;CA1847</NoWarn>
     <EndjinDisableCreateEditorConfig>true</EndjinDisableCreateEditorConfig>
     <IsPackable>true</IsPackable>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <RootNamespace>Corvus.Text.Json.JsonLogic.CodeGeneration</RootNamespace>
     <Description>Code generation engine for Corvus.Text.Json.JsonLogic — walks JsonLogic rules and emits optimized C# evaluation code.</Description>
   </PropertyGroup>

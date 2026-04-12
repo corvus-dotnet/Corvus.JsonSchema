@@ -15,6 +15,7 @@
     <EndjinDisableCreateEditorConfig>true</EndjinDisableCreateEditorConfig>
     <EnableDefaultEmbeddedResourceItems>false</EnableDefaultEmbeddedResourceItems>
     <IsPackable>true</IsPackable>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <RootNamespace>Corvus.Text.Json.Jsonata.CodeGeneration</RootNamespace>
     <Description>Code generation engine for Corvus.Text.Json.Jsonata — parses JSONata expressions and emits optimized C# evaluation code.</Description>
   </PropertyGroup>
