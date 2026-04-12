@@ -508,7 +508,7 @@ The implementation supports the full set of [JSONata built-in functions](https:/
 | `$round(n[, precision])` | Round |
 | `$power(base, exp)` | Exponentiation |
 | `$sqrt(n)` | Square root |
-| `$random()` | Random number [0, 1) |
+| `$random()` | Random number `[0, 1)` |
 | `$formatNumber(n, picture[, options])` | Format number with picture string |
 | `$formatBase(n, radix)` | Format number in given radix |
 | `$formatInteger(n, picture)` | Format integer with picture string |
