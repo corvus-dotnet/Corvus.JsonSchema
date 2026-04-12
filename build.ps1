@@ -344,7 +344,10 @@ task PostTest {
 
     # TRX files from large test suites (V4 Specs ~105 MB, V5 ~40K+ tests) can
     # exceed lxml limits or become corrupted when the test host is killed mid-write.
-    # Strip per-test <Output> elements to shrink files, then validate XML.
+    # The publish-unit-test-result-action uses lxml which has a default text-node
+    # size limit; individual <Output> blocks with large StdOut, ErrorInfo, or
+    # StackTrace content trigger "huge text node" errors.
+    # Strip ALL <Output>...</Output> blocks (not just StdOut), then validate XML.
     # Corrupted files are removed so publish-unit-test-result-action doesn't fail.
     Get-ChildItem -Path $SourcesDir -Filter "test-results_*.trx" -Recurse -ErrorAction SilentlyContinue |
         ForEach-Object {
@@ -352,9 +355,11 @@ task PostTest {
             Write-Build Yellow "PostTest: processing $($_.FullName) ($sizeMB MB)"
             try {
                 $content = [System.IO.File]::ReadAllText($_.FullName)
+                # Strip all <Output> blocks — covers StdOut, ErrorInfo, StackTrace.
+                # The publish action only needs pass/fail/skip status, not output text.
                 $stripped = [regex]::Replace(
                     $content,
-                    '<Output>\s*<StdOut>.*?</StdOut>\s*</Output>',
+                    '<Output>.*?</Output>',
                     '',
                     [System.Text.RegularExpressions.RegexOptions]::Singleline)
                 if ($stripped.Length -ne $content.Length) {

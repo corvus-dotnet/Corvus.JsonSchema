@@ -99,6 +99,25 @@ public sealed class JsonLogicEvaluator
     }
 
     /// <summary>
+    /// Evaluates a JsonLogic rule expressed as a JSON string against a JSON data string.
+    /// </summary>
+    /// <param name="ruleJson">The JsonLogic rule as a JSON string.</param>
+    /// <param name="dataJson">The input data as a JSON string.</param>
+    /// <returns>The result as a JSON string, or <c>null</c> if the result is undefined.</returns>
+    public string? EvaluateToString(string ruleJson, string dataJson)
+    {
+        using var ruleDoc = ParsedJsonDocument<JsonElement>.Parse(System.Text.Encoding.UTF8.GetBytes(ruleJson));
+        using var dataDoc = ParsedJsonDocument<JsonElement>.Parse(System.Text.Encoding.UTF8.GetBytes(dataJson));
+        var result = this.Evaluate(new JsonLogicRule(ruleDoc.RootElement), dataDoc.RootElement);
+        if (result.ValueKind == JsonValueKind.Undefined)
+        {
+            return null;
+        }
+
+        return result.GetRawText();
+    }
+
+    /// <summary>
     /// Clears the compiled rule cache.
     /// </summary>
     /// <remarks>

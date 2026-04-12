@@ -465,6 +465,17 @@ public sealed class JsonataEvaluator
         env.Bind(name, new Sequence(lambda));
     }
 
+    /// <summary>
+    /// Clears the compiled expression cache, freeing memory used by cached delegate trees.
+    /// </summary>
+    /// <remarks>
+    /// Subsequent evaluations will recompile their expressions on first use.
+    /// </remarks>
+    public void ClearCache()
+    {
+        this.cache.Clear();
+    }
+
     private ExpressionEvaluator GetOrCompile(string expression)
     {
         if (this.cache.TryGetValue(expression, out var cached))
