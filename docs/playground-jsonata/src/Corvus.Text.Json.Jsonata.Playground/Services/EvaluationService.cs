@@ -1,4 +1,7 @@
 using System.Diagnostics;
+using System.Globalization;
+using System.Text;
+using System.Text.Json;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Jsonata;
 
@@ -56,7 +59,7 @@ public sealed class EvaluationService
 
                 string? resultText = result.ValueKind == JsonValueKind.Undefined
                     ? "/* no result */"
-                    : result.GetRawText();
+                    : FormatWithG15Numbers(result);
 
                 return new EvaluationResult
                 {
@@ -76,5 +79,66 @@ public sealed class EvaluationService
                 };
             }
         });
+    }
+
+    /// <summary>
+    /// Serializes a <see cref="JsonElement"/> to a JSON string, formatting all
+    /// numbers with G15 precision to match JavaScript's <c>Number(val.toPrecision(15))</c>
+    /// output semantics (e.g. <c>0.5</c> instead of <c>0.5000000000000001</c>).
+    /// </summary>
+    private static string FormatWithG15Numbers(JsonElement element)
+    {
+        using var stream = new MemoryStream();
+        using (var writer = new Utf8JsonWriter(stream, new JsonWriterOptions { Indented = false }))
+        {
+            WriteG15(element, writer);
+        }
+
+        return Encoding.UTF8.GetString(stream.ToArray());
+    }
+
+    private static void WriteG15(JsonElement element, Utf8JsonWriter writer)
+    {
+        switch (element.ValueKind)
+        {
+            case JsonValueKind.Object:
+                writer.WriteStartObject();
+                foreach (var prop in element.EnumerateObject())
+                {
+                    writer.WritePropertyName(prop.Name);
+                    WriteG15(prop.Value, writer);
+                }
+
+                writer.WriteEndObject();
+                break;
+
+            case JsonValueKind.Array:
+                writer.WriteStartArray();
+                foreach (var item in element.EnumerateArray())
+                {
+                    WriteG15(item, writer);
+                }
+
+                writer.WriteEndArray();
+                break;
+
+            case JsonValueKind.Number:
+                double d = element.GetDouble();
+                if (double.IsNaN(d) || double.IsInfinity(d))
+                {
+                    writer.WriteNullValue();
+                }
+                else
+                {
+                    // G15 matches JavaScript's toPrecision(15) semantics.
+                    writer.WriteRawValue(d.ToString("G15", CultureInfo.InvariantCulture));
+                }
+
+                break;
+
+            default:
+                element.WriteTo(writer);
+                break;
+        }
     }
 }
