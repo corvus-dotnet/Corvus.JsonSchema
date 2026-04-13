@@ -368,9 +368,26 @@ public static class JsonataCodeGenHelpers
         byte[][] names,
         ref ElementBuffer buffer)
     {
+        NavigatePropertyChainInto(data, names, 0, ref buffer);
+    }
+
+    /// <summary>
+    /// Navigates a property chain starting at <paramref name="startIndex"/> into an
+    /// <see cref="ElementBuffer"/>, skipping already-resolved prefix steps.
+    /// </summary>
+    /// <param name="data">The element at the start position.</param>
+    /// <param name="names">The full UTF-8 encoded property names array.</param>
+    /// <param name="startIndex">The index into <paramref name="names"/> to start navigating from.</param>
+    /// <param name="buffer">The buffer to collect results into.</param>
+    public static void NavigatePropertyChainInto(
+        in JsonElement data,
+        byte[][] names,
+        int startIndex,
+        ref ElementBuffer buffer)
+    {
         JsonElement current = data;
 
-        for (int i = 0; i < names.Length; i++)
+        for (int i = startIndex; i < names.Length; i++)
         {
             if (current.ValueKind == JsonValueKind.Object)
             {
@@ -3746,14 +3763,118 @@ public static class JsonataCodeGenHelpers
             return input;
         }
 
-        JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(workspace, input.GetArrayLength());
+        int count = input.GetArrayLength();
+        if (count <= 1)
+        {
+            return input;
+        }
+
+        var (parentDoc, _) = JsonElementHelpers.GetParentDocumentAndIndex(input);
+
+        Span<int> buckets = count <= UniqueItemsHashSet.StackAllocBucketSize
+            ? stackalloc int[UniqueItemsHashSet.StackAllocBucketSize]
+            : default;
+        int entryBytes = count * 12;
+        Span<byte> entries = entryBytes <= UniqueItemsHashSet.StackAllocEntrySize
+            ? stackalloc byte[UniqueItemsHashSet.StackAllocEntrySize]
+            : default;
+
+        using var hashSet = new UniqueItemsHashSet(parentDoc, count, buckets, entries);
+
+        JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(workspace, count);
         JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
-        var seen = new HashSet<string>();
         foreach (var item in input.EnumerateArray())
         {
-            if (seen.Add(item.GetRawText()))
+            var (_, idx) = JsonElementHelpers.GetParentDocumentAndIndex(item);
+            if (hashSet.AddItemIfNotExists(idx))
             {
                 arrayRoot.AddItem(item);
+            }
+        }
+
+        return (JsonElement)arrayRoot;
+    }
+
+    /// <summary>
+    /// Fused chain navigation + distinct: navigates a property chain into a lightweight
+    /// <see cref="ElementBuffer"/> (no intermediate builder), then deduplicates directly.
+    /// </summary>
+    /// <param name="data">The input data element.</param>
+    /// <param name="names">UTF-8 encoded property name chain.</param>
+    /// <param name="workspace">The workspace for pooled memory.</param>
+    /// <returns>The deduplicated result.</returns>
+    public static JsonElement ChainDistinct(in JsonElement data, byte[][] names, JsonWorkspace workspace)
+    {
+        var buffer = default(ElementBuffer);
+        try
+        {
+            NavigatePropertyChainInto(data, names, ref buffer);
+            return DistinctFromBuffer(ref buffer, workspace);
+        }
+        finally
+        {
+            buffer.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Fused chain navigation + distinct with a start index for partially-resolved chains.
+    /// </summary>
+    /// <param name="data">The element at the start position (already resolved up to <paramref name="startIndex"/>).</param>
+    /// <param name="names">The full UTF-8 encoded property names array.</param>
+    /// <param name="startIndex">The index into <paramref name="names"/> to start navigating from.</param>
+    /// <param name="workspace">The workspace for pooled memory.</param>
+    /// <returns>The deduplicated result.</returns>
+    public static JsonElement ChainDistinct(in JsonElement data, byte[][] names, int startIndex, JsonWorkspace workspace)
+    {
+        var buffer = default(ElementBuffer);
+        try
+        {
+            NavigatePropertyChainInto(data, names, startIndex, ref buffer);
+            return DistinctFromBuffer(ref buffer, workspace);
+        }
+        finally
+        {
+            buffer.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Deduplicates elements from an <see cref="ElementBuffer"/> using
+    /// <see cref="UniqueItemsHashSet"/> and builds the result array in one pass.
+    /// </summary>
+    private static JsonElement DistinctFromBuffer(ref ElementBuffer buffer, JsonWorkspace workspace)
+    {
+        if (buffer.Count == 0)
+        {
+            return default;
+        }
+
+        if (buffer.Count == 1)
+        {
+            return buffer[0];
+        }
+
+        var (parentDoc, _) = JsonElementHelpers.GetParentDocumentAndIndex(buffer[0]);
+
+        Span<int> buckets = buffer.Count <= UniqueItemsHashSet.StackAllocBucketSize
+            ? stackalloc int[UniqueItemsHashSet.StackAllocBucketSize]
+            : default;
+        int entryBytes = buffer.Count * 12;
+        Span<byte> entries = entryBytes <= UniqueItemsHashSet.StackAllocEntrySize
+            ? stackalloc byte[UniqueItemsHashSet.StackAllocEntrySize]
+            : default;
+
+        using var hashSet = new UniqueItemsHashSet(parentDoc, buffer.Count, buckets, entries);
+
+        JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(workspace, buffer.Count);
+        JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
+        for (int i = 0; i < buffer.Count; i++)
+        {
+            var (_, idx) = JsonElementHelpers.GetParentDocumentAndIndex(buffer[i]);
+            if (hashSet.AddItemIfNotExists(idx))
+            {
+                arrayRoot.AddItem(buffer[i]);
             }
         }
 
@@ -3807,46 +3928,55 @@ public static class JsonataCodeGenHelpers
 
         if (input.ValueKind == JsonValueKind.Array)
         {
-            // Array of objects — need dedup, fall back to collection approach
-            var keys = new List<string>();
-            var seen = new HashSet<string>();
-            foreach (var item in input.EnumerateArray())
-            {
-                CollectKeys(item, keys, seen);
-            }
+            // Array of objects — use Utf8KeyHashSet for allocation-free dedup
+            int arrayLen = input.GetArrayLength();
+            Span<int> keyBuckets = arrayLen <= Utf8KeyHashSet.StackAllocBucketSize
+                ? stackalloc int[Utf8KeyHashSet.StackAllocBucketSize]
+                : default;
+            Span<byte> keyEntries = arrayLen * 20 <= Utf8KeyHashSet.StackAllocEntrySize
+                ? stackalloc byte[Utf8KeyHashSet.StackAllocEntrySize]
+                : default;
+            Span<byte> keyBuffer = stackalloc byte[Utf8KeyHashSet.StackAllocKeyBufferSize];
 
-            if (keys.Count == 0)
+            var keySet = new Utf8KeyHashSet(arrayLen, keyBuckets, keyEntries, keyBuffer);
+            try
             {
-                return default;
-            }
+                JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(workspace, arrayLen);
+                JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
 
-            if (keys.Count == 1)
+                CollectUniqueKeys(input, ref keySet, ref arrayRoot);
+
+                if (keySet.Count == 0)
+                {
+                    return default;
+                }
+
+                if (keySet.Count == 1)
+                {
+                    return arrayRoot[0];
+                }
+
+                return (JsonElement)arrayRoot;
+            }
+            finally
             {
-                return JsonataHelpers.StringFromString(keys[0], workspace);
+                keySet.Dispose();
             }
-
-            JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(workspace, keys.Count);
-            JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
-            foreach (var key in keys)
-            {
-                arrayRoot.AddItem(JsonataHelpers.StringFromString(key, workspace));
-            }
-
-            return (JsonElement)arrayRoot;
         }
 
         return default;
     }
 
-    private static void CollectKeys(JsonElement el, List<string> keys, HashSet<string> seen)
+    private static void CollectUniqueKeys(JsonElement el, ref Utf8KeyHashSet keySet, ref JsonElement.Mutable arrayRoot)
     {
         if (el.ValueKind == JsonValueKind.Object)
         {
             foreach (var prop in el.EnumerateObject())
             {
-                if (seen.Add(prop.Name))
+                using UnescapedUtf8JsonString nameUtf8 = prop.Utf8NameSpan;
+                if (keySet.AddIfNotExists(nameUtf8.Span))
                 {
-                    keys.Add(prop.Name);
+                    arrayRoot.AddItem(nameUtf8.Span);
                 }
             }
         }
@@ -3854,7 +3984,7 @@ public static class JsonataCodeGenHelpers
         {
             foreach (var item in el.EnumerateArray())
             {
-                CollectKeys(item, keys, seen);
+                CollectUniqueKeys(item, ref keySet, ref arrayRoot);
             }
         }
     }

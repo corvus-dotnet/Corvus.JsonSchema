@@ -1573,55 +1573,71 @@ internal static class BuiltInFunctions
                 return Sequence.Undefined;
             }
 
-            // Collect unique keys from objects (handles arrays of objects too)
-            var keys = new List<string>();
-            var seen = new HashSet<string>();
+            return KeysCore(seq, env);
+        };
+    }
 
-            void CollectKeys(JsonElement el)
-            {
-                if (el.ValueKind == JsonValueKind.Object)
-                {
-                    foreach (var prop in el.EnumerateObject())
-                    {
-                        if (seen.Add(prop.Name))
-                        {
-                            keys.Add(prop.Name);
-                        }
-                    }
-                }
-                else if (el.ValueKind == JsonValueKind.Array)
-                {
-                    foreach (var item in el.EnumerateArray())
-                    {
-                        CollectKeys(item);
-                    }
-                }
-            }
+    private static Sequence KeysCore(Sequence seq, Environment env)
+    {
+        const int estimate = 8;
+
+        Span<int> keyBuckets = estimate <= Utf8KeyHashSet.StackAllocBucketSize
+            ? stackalloc int[Utf8KeyHashSet.StackAllocBucketSize]
+            : default;
+        Span<byte> keyEntries = estimate * 20 <= Utf8KeyHashSet.StackAllocEntrySize
+            ? stackalloc byte[Utf8KeyHashSet.StackAllocEntrySize]
+            : default;
+        Span<byte> keyBuffer = stackalloc byte[Utf8KeyHashSet.StackAllocKeyBufferSize];
+
+        var keySet = new Utf8KeyHashSet(estimate, keyBuckets, keyEntries, keyBuffer);
+        try
+        {
+            JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(env.Workspace, estimate);
+            JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
 
             for (int i = 0; i < seq.Count; i++)
             {
-                CollectKeys(seq[i]);
+                CollectUniqueKeysRT(seq[i], ref keySet, ref arrayRoot);
             }
 
-            if (keys.Count == 0)
+            if (keySet.Count == 0)
             {
                 return Sequence.Undefined;
             }
 
-            if (keys.Count == 1)
+            if (keySet.Count == 1)
             {
-                return new Sequence(JsonataHelpers.StringFromString(keys[0], env.Workspace));
-            }
-
-            JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(env.Workspace, keys.Count);
-            JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
-            foreach (var key in keys)
-            {
-                arrayRoot.AddItem(JsonataHelpers.StringFromString(key, env.Workspace));
+                return new Sequence(arrayRoot[0]);
             }
 
             return new Sequence((JsonElement)arrayRoot);
-        };
+        }
+        finally
+        {
+            keySet.Dispose();
+        }
+    }
+
+    private static void CollectUniqueKeysRT(JsonElement el, ref Utf8KeyHashSet keySet, ref JsonElement.Mutable arrayRoot)
+    {
+        if (el.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var prop in el.EnumerateObject())
+            {
+                using UnescapedUtf8JsonString nameUtf8 = prop.Utf8NameSpan;
+                if (keySet.AddIfNotExists(nameUtf8.Span))
+                {
+                    arrayRoot.AddItem(nameUtf8.Span);
+                }
+            }
+        }
+        else if (el.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var item in el.EnumerateArray())
+            {
+                CollectUniqueKeysRT(item, ref keySet, ref arrayRoot);
+            }
+        }
     }
 
     private static ExpressionEvaluator CompileValues(ExpressionEvaluator[] args)
@@ -1886,38 +1902,57 @@ internal static class BuiltInFunctions
                 return Sequence.Undefined;
             }
 
-            // Collect all items to deduplicate, flattening arrays in multi-valued sequences
-            var items = default(SequenceBuilder);
-            for (int si = 0; si < seq.Count; si++)
+            return DistinctCore(seq, env);
+        };
+    }
+
+    private static Sequence DistinctCore(Sequence seq, Environment env)
+    {
+        // Collect all items to deduplicate, flattening arrays in multi-valued sequences
+        var items = default(SequenceBuilder);
+        for (int si = 0; si < seq.Count; si++)
+        {
+            var el = seq[si];
+            if (el.ValueKind == JsonValueKind.Array)
             {
-                var el = seq[si];
-                if (el.ValueKind == JsonValueKind.Array)
+                foreach (var item in el.EnumerateArray())
                 {
-                    foreach (var item in el.EnumerateArray())
-                    {
-                        items.Add(item);
-                    }
-                }
-                else
-                {
-                    items.Add(el);
+                    items.Add(item);
                 }
             }
-
-            // If only one non-array item, return as-is
-            if (items.Count <= 1 && seq.Count == 1 && seq.FirstOrDefault.ValueKind != JsonValueKind.Array)
+            else
             {
-                items.ReturnArray();
-                return seq;
+                items.Add(el);
             }
+        }
 
+        // If only one non-array item, return as-is
+        if (items.Count <= 1 && seq.Count == 1 && seq.FirstOrDefault.ValueKind != JsonValueKind.Array)
+        {
+            items.ReturnArray();
+            return seq;
+        }
+
+        // Use UniqueItemsHashSet for allocation-free dedup
+        var (parentDoc, _) = JsonElementHelpers.GetParentDocumentAndIndex(items[0]);
+
+        Span<int> buckets = items.Count <= UniqueItemsHashSet.StackAllocBucketSize
+            ? stackalloc int[UniqueItemsHashSet.StackAllocBucketSize]
+            : default;
+        int entryBytes = items.Count * 12;
+        Span<byte> entries = entryBytes <= UniqueItemsHashSet.StackAllocEntrySize
+            ? stackalloc byte[UniqueItemsHashSet.StackAllocEntrySize]
+            : default;
+
+        var hashSet = new UniqueItemsHashSet(parentDoc, items.Count, buckets, entries);
+        try
+        {
             JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(env.Workspace, items.Count);
             JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
-            var seen = new HashSet<string>();
             for (int i = 0; i < items.Count; i++)
             {
-                var raw = items[i].GetRawText();
-                if (seen.Add(raw))
+                var (_, idx) = JsonElementHelpers.GetParentDocumentAndIndex(items[i]);
+                if (hashSet.AddItemIfNotExists(idx))
                 {
                     arrayRoot.AddItem(items[i]);
                 }
@@ -1925,7 +1960,11 @@ internal static class BuiltInFunctions
 
             items.ReturnArray();
             return new Sequence((JsonElement)arrayRoot);
-        };
+        }
+        finally
+        {
+            hashSet.Dispose();
+        }
     }
 
     private static ExpressionEvaluator CompileFlatten(ExpressionEvaluator[] args)

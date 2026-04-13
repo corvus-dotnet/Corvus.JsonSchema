@@ -4072,7 +4072,7 @@ public static class JsonataCodeGenerator
                 // Phase 1d: Array/Object ops
                 "append" => EmitBuiltinBinary(sb, func, indent, dataVar, wsVar, "Append"),
                 "reverse" => EmitBuiltinUnary(sb, func, indent, dataVar, wsVar, "Reverse"),
-                "distinct" => EmitBuiltinUnary(sb, func, indent, dataVar, wsVar, "Distinct"),
+                "distinct" => EmitDistinct(sb, func, indent, dataVar, wsVar),
                 "keys" => EmitBuiltinUnary(sb, func, indent, dataVar, wsVar, "Keys"),
                 "values" => EmitBuiltinUnary(sb, func, indent, dataVar, wsVar, "Values"),
                 "lookup" => EmitBuiltinBinary(sb, func, indent, dataVar, wsVar, "Lookup"),
@@ -4169,6 +4169,32 @@ public static class JsonataCodeGenerator
             string v = NextVar();
             L(sb, indent, $"var {v} = {H}.{helperName}({arg}, {wsVar});");
             return v;
+        }
+
+        /// <summary>
+        /// Emits <c>$distinct</c>. When the argument is a simple property chain, emits a
+        /// fused <c>ChainDistinct</c> call that navigates into an <see cref="ElementBuffer"/>
+        /// and deduplicates in one pass, avoiding the intermediate mutable builder.
+        /// </summary>
+        private string EmitDistinct(
+            StringBuilder sb, FunctionCallNode func, string indent, string dataVar, string wsVar)
+        {
+            if (func.Arguments.Count != 1)
+            {
+                throw new FallbackException();
+            }
+
+            // Check if argument is a simple property chain
+            string? chainField = TryGetSimpleChainField(func.Arguments[0]);
+            if (chainField is not null)
+            {
+                string v = NextVar();
+                L(sb, indent, $"var {v} = {H}.ChainDistinct({dataVar}, {chainField}, {wsVar});");
+                return v;
+            }
+
+            // Fallback: standard emit
+            return EmitBuiltinUnary(sb, func, indent, dataVar, wsVar, "Distinct");
         }
 
         /// <summary>
