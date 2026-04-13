@@ -5278,6 +5278,23 @@ internal static class FunctionalCompiler
 
     private static void AppendG15FormattedNumber(double value, ref byte[] buffer, ref int pos)
     {
+#if NET8_0_OR_GREATER
+        // Try formatting G15 directly to UTF-8 (zero alloc for non-exponent case)
+        Span<byte> scratch = stackalloc byte[64];
+        if (value.TryFormat(scratch, out int written, "G15", System.Globalization.CultureInfo.InvariantCulture))
+        {
+            ReadOnlySpan<byte> result = scratch.Slice(0, written);
+            if (result.IndexOf((byte)'E') < 0)
+            {
+                JsonataHelpers.GrowBufferIfNeeded(ref buffer, pos, written);
+                result.CopyTo(buffer.AsSpan(pos));
+                pos += written;
+                return;
+            }
+        }
+#endif
+
+        // Exponent case or pre-.NET 8: fall back to string-based formatting
         string formatted = FormatNumberLikeJavaScript(value);
         JsonataHelpers.GrowBufferIfNeeded(ref buffer, pos, formatted.Length);
         for (int i = 0; i < formatted.Length; i++)

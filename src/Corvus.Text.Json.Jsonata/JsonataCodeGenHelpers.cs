@@ -7006,7 +7006,8 @@ public static class JsonataCodeGenHelpers
     /// <summary>
     /// Appends a number formatted like JavaScript to a UTF-8 builder.
     /// Integer values with plain literal representation use raw UTF-8 (zero alloc).
-    /// Non-integer values use G15 formatting (one string alloc for format, written as ASCII bytes).
+    /// Non-integer values use G15 formatting directly to UTF-8 (zero alloc on .NET 8+
+    /// for the common non-exponent case; falls back to string allocation for exponent forms).
     /// </summary>
     private static void AppendFormattedNumber(in JsonElement element, ref Utf8ValueStringBuilder sb)
     {
@@ -7029,7 +7030,21 @@ public static class JsonataCodeGenHelpers
             }
         }
 
-        // Non-integer: format via G15 then write as ASCII bytes
+#if NET8_0_OR_GREATER
+        // Non-integer: format G15 directly to UTF-8 bytes (zero alloc for non-exponent case)
+        Span<byte> scratch = stackalloc byte[64];
+        if (value.TryFormat(scratch, out int written, "G15", System.Globalization.CultureInfo.InvariantCulture))
+        {
+            ReadOnlySpan<byte> result = scratch.Slice(0, written);
+            if (result.IndexOf((byte)'E') < 0)
+            {
+                sb.Append(result);
+                return;
+            }
+        }
+#endif
+
+        // Exponent case or pre-.NET 8: fall back to string-based formatting
         string formatted = FunctionalCompiler.FormatNumberLikeJavaScript(value);
         Span<byte> dest = sb.AppendSpan(formatted.Length);
         for (int i = 0; i < formatted.Length; i++)
