@@ -875,6 +875,12 @@ public static class JsonataCodeGenHelpers
             },
             estimatedMemberCount: data.GetArrayLength() * 2 + 2);
 
+        // If nothing was collected, return undefined (not an empty array).
+        if (doc.RootElement.GetArrayLength() == 0)
+        {
+            return default;
+        }
+
         return (JsonElement)doc.RootElement;
     }
 

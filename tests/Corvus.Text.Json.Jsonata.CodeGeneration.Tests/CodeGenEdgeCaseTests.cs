@@ -192,6 +192,16 @@ public class CodeGenEdgeCaseTests : IClassFixture<CodeGenConformanceFixture>
     [InlineData("$values(x)", """{"x":{"a":1,"b":2}}""", "[1,2]")]
     // Autoboxing: scalar with index 0
     [InlineData("a[0]", """{"a":42}""", "42")]
+    // KeepArray ([]) — single match wraps in array
+    [InlineData("items.a[]", """{"items":[{"a":42}]}""", "[42]")]
+    // KeepArray ([]) — multiple matches with array property values flatten
+    [InlineData("items.a[]", """{"items":[{"a":[1,2]},{"a":[3]}]}""", "[1,2,3]")]
+    // KeepArray ([]) — 3-level deep nesting flattens correctly
+    [InlineData("items.a[]", """{"items":[[[{"a":1}]]]}""", "[1]")]
+    // KeepArray ([]) — mixed types: only objects and nested arrays contribute
+    [InlineData("items.x[]", """{"items":[1,"str",{"x":5},null,[{"x":6}]]}""", "[5,6]")]
+    // KeepArray ([]) — object input wraps scalar property in array
+    [InlineData("data.name[]", """{"data":{"name":"Alice"}}""", """["Alice"]""")]
     // $length on string
     [InlineData("""$length("hello")""", "null", "5")]
     // $substringBefore/$substringAfter
@@ -231,6 +241,12 @@ public class CodeGenEdgeCaseTests : IClassFixture<CodeGenConformanceFixture>
     [InlineData("items[val > 100].name", """{"items":[{"val":1,"name":"a"}]}""")]
     // Negative index out of range returns undefined
     [InlineData("[1,2,3][-10]", "null")]
+    // KeepArray ([]) — no matching properties returns undefined
+    [InlineData("items.nonexistent[]", """{"items":[{"a":1},{"b":2}]}""")]
+    // KeepArray ([]) — empty array input returns undefined
+    [InlineData("items.a[]", """{"items":[]}""")]
+    // KeepArray ([]) — missing property on object input returns undefined
+    [InlineData("data.missing[]", """{"data":{"name":"Alice"}}""")]
     public void EvaluateExpressionReturnsUndefined(string expression, string inputJson)
     {
         CompiledExpression compiled = this.fixture.GetOrCompile(expression);

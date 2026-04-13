@@ -1034,4 +1034,84 @@ public class EvaluatorTests
         var result = evaluator.Evaluate("$hypot(3, 4, 999)", doc.RootElement, workspace, bindings);
         Assert.Equal(5.0, result.GetDouble());
     }
+
+    [Fact]
+    public void KeepArrayOverArrayWithNoMatchingProperties_ReturnsUndefined()
+    {
+        // path[] over an array of objects where no object has the property should be undefined
+        var result = Evaluator.EvaluateToString(
+            """items.nonexistent[]""",
+            """{"items": [{"a": 1}, {"b": 2}]}""");
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public void KeepArrayOverEmptyArray_ReturnsUndefined()
+    {
+        // path[] over an empty array should be undefined
+        var result = Evaluator.EvaluateToString(
+            """items.a[]""",
+            """{"items": []}""");
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public void KeepArrayWithDeepNesting_FlattensCorrectly()
+    {
+        // 3 levels of array nesting: [[[ {a:1} ]]].a[] should flatten to [1]
+        var result = Evaluator.EvaluateToString(
+            """items.a[]""",
+            """{"items": [[[{"a": 1}]]]}""");
+        Assert.Equal("[1]", result);
+    }
+
+    [Fact]
+    public void KeepArrayWithMixedTypes_SkipsNonObjects()
+    {
+        // Mixed array: only objects with the property contribute; primitives and nulls are skipped
+        var result = Evaluator.EvaluateToString(
+            """items.x[]""",
+            """{"items": [1, "str", {"x": 5}, null, [{"x": 6}]]}""");
+        Assert.Equal("[5,6]", result);
+    }
+
+    [Fact]
+    public void KeepArrayWithSingleMatch_WrapsInArray()
+    {
+        // Single match with [] should still wrap in array
+        var result = Evaluator.EvaluateToString(
+            """items.a[]""",
+            """{"items": [{"a": 42}]}""");
+        Assert.Equal("[42]", result);
+    }
+
+    [Fact]
+    public void KeepArrayWithArrayPropertyValues_Flattens()
+    {
+        // Property values that are arrays should be flattened into the result
+        var result = Evaluator.EvaluateToString(
+            """items.a[]""",
+            """{"items": [{"a": [1, 2]}, {"a": [3]}]}""");
+        Assert.Equal("[1,2,3]", result);
+    }
+
+    [Fact]
+    public void KeepArrayOnObjectInput_WrapsPropertyValue()
+    {
+        // path[] on an object (not array) should wrap the property value in an array
+        var result = Evaluator.EvaluateToString(
+            """data.name[]""",
+            """{"data": {"name": "Alice"}}""");
+        Assert.Equal("[\"Alice\"]", result);
+    }
+
+    [Fact]
+    public void KeepArrayOnObjectWithMissingProperty_ReturnsUndefined()
+    {
+        // path[] on an object where the property doesn't exist should be undefined
+        var result = Evaluator.EvaluateToString(
+            """data.missing[]""",
+            """{"data": {"name": "Alice"}}""");
+        Assert.Null(result);
+    }
 }
