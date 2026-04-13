@@ -4076,7 +4076,7 @@ public static class JsonataCodeGenerator
                 "keys" => EmitBuiltinUnary(sb, func, indent, dataVar, wsVar, "Keys"),
                 "values" => EmitBuiltinUnary(sb, func, indent, dataVar, wsVar, "Values"),
                 "lookup" => EmitBuiltinBinary(sb, func, indent, dataVar, wsVar, "Lookup"),
-                "merge" => EmitBuiltinUnary(sb, func, indent, dataVar, wsVar, "Merge"),
+                "merge" => EmitMerge(sb, func, indent, dataVar, wsVar),
                 "spread" => EmitBuiltinUnary(sb, func, indent, dataVar, wsVar, "Spread"),
                 "single" => EmitBuiltinSingle(sb, func, indent, dataVar, wsVar),
                 "flatten" => EmitBuiltinUnary(sb, func, indent, dataVar, wsVar, "Flatten"),
@@ -4195,6 +4195,30 @@ public static class JsonataCodeGenerator
 
             // Fallback: standard emit
             return EmitBuiltinUnary(sb, func, indent, dataVar, wsVar, "Distinct");
+        }
+
+        /// <summary>
+        /// Emits <c>$merge(arg)</c>, fusing with chain navigation when possible.
+        /// </summary>
+        private string EmitMerge(
+            StringBuilder sb, FunctionCallNode func, string indent, string dataVar, string wsVar)
+        {
+            if (func.Arguments.Count != 1)
+            {
+                throw new FallbackException();
+            }
+
+            // Check if argument is a simple property chain
+            string? chainField = TryGetSimpleChainField(func.Arguments[0]);
+            if (chainField is not null)
+            {
+                string v = NextVar();
+                L(sb, indent, $"var {v} = {H}.ChainMerge({dataVar}, {chainField}, {wsVar});");
+                return v;
+            }
+
+            // Fallback: standard emit
+            return EmitBuiltinUnary(sb, func, indent, dataVar, wsVar, "Merge");
         }
 
         /// <summary>

@@ -3840,6 +3840,89 @@ public static class JsonataCodeGenHelpers
     }
 
     /// <summary>
+    /// Fused chain navigation + merge. Navigates the property chain into an
+    /// <see cref="ElementBuffer"/> (no intermediate builder), then merges object
+    /// properties from the buffer elements into a single result.
+    /// </summary>
+    /// <param name="data">The root element to navigate from.</param>
+    /// <param name="names">The UTF-8 encoded property names for the chain.</param>
+    /// <param name="workspace">The workspace for pooled memory.</param>
+    /// <returns>The merged object result.</returns>
+    public static JsonElement ChainMerge(in JsonElement data, byte[][] names, JsonWorkspace workspace)
+    {
+        var buffer = default(ElementBuffer);
+        try
+        {
+            NavigatePropertyChainInto(data, names, ref buffer);
+            return MergeFromBuffer(ref buffer, workspace);
+        }
+        finally
+        {
+            buffer.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Fused chain navigation + merge with a start index for partially-resolved chains.
+    /// </summary>
+    /// <param name="data">The element at the start position (already resolved up to <paramref name="startIndex"/>).</param>
+    /// <param name="names">The full UTF-8 encoded property names array.</param>
+    /// <param name="startIndex">The index into <paramref name="names"/> to start navigating from.</param>
+    /// <param name="workspace">The workspace for pooled memory.</param>
+    /// <returns>The merged object result.</returns>
+    public static JsonElement ChainMerge(in JsonElement data, byte[][] names, int startIndex, JsonWorkspace workspace)
+    {
+        var buffer = default(ElementBuffer);
+        try
+        {
+            NavigatePropertyChainInto(data, names, startIndex, ref buffer);
+            return MergeFromBuffer(ref buffer, workspace);
+        }
+        finally
+        {
+            buffer.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Merges object properties from an <see cref="ElementBuffer"/> into a single object
+    /// using the CVB pattern. Last-wins for duplicate property names.
+    /// </summary>
+    private static JsonElement MergeFromBuffer(ref ElementBuffer buffer, JsonWorkspace workspace)
+    {
+        if (buffer.Count == 0)
+        {
+            return default;
+        }
+
+        if (buffer.Count == 1)
+        {
+            return buffer[0].ValueKind == JsonValueKind.Object ? buffer[0] : default;
+        }
+
+        JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(
+            workspace,
+            buffer,
+            static (in ElementBuffer ctx, ref JsonElement.ObjectBuilder builder) =>
+            {
+                for (int i = 0; i < ctx.Count; i++)
+                {
+                    if (ctx[i].ValueKind == JsonValueKind.Object)
+                    {
+                        foreach (var prop in ctx[i].EnumerateObject())
+                        {
+                            using UnescapedUtf8JsonString nameUtf8 = prop.Utf8NameSpan;
+                            builder.AddProperty(nameUtf8.Span, prop.Value, escapeName: false, nameRequiresUnescaping: false);
+                        }
+                    }
+                }
+            },
+            estimatedMemberCount: 16);
+
+        return (JsonElement)doc.RootElement;
+    }
+
+    /// <summary>
     /// Deduplicates elements from an <see cref="ElementBuffer"/> using
     /// <see cref="UniqueItemsHashSet"/> and builds the result array in one pass.
     /// </summary>
