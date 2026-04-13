@@ -362,6 +362,9 @@
   <data name="T0410_Argument1OfFunctionNumberIsNotOfTheCorrectType" xml:space="preserve">
     <value>Argument 1 of function $number is not of the correct type</value>
   </data>
+  <data name="T0410_Argument1OfFunctionMatchIsNotOfTheCorrectType" xml:space="preserve">
+    <value>Argument 1 of function $match is not of the correct type</value>
+  </data>
   <data name="T0410_Argument1OfFunctionNumberIsNotOfTheCorrectType2" xml:space="preserve">
     <value>Argument 1 of function 'number' is not of the correct type</value>
   </data>
@@ -391,6 +394,9 @@
   </data>
   <data name="T0410_Argument2OfStringFunctionIsNotAString" xml:space="preserve">
     <value>Argument 2 of string function is not a string</value>
+  </data>
+  <data name="T0410_Argument3OfFunctionMatchIsNotOfTheCorrectType" xml:space="preserve">
+    <value>Argument 3 of function $match is not of the correct type</value>
   </data>
   <data name="T0410_Argument3OfFunctionReplaceIsNotOfTheCorrectType" xml:space="preserve">
     <value>Argument 3 of function $replace is not of the correct type</value>

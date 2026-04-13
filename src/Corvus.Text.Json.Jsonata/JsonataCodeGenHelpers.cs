@@ -4371,6 +4371,394 @@ public static class JsonataCodeGenHelpers
     }
 
     /// <summary>
+    /// JSONata <c>$replace</c> function — regex form.
+    /// Uses <see cref="ValueStringBuilder"/> and <see cref="UnescapedUtf16JsonString"/>
+    /// to avoid intermediate string allocations. On NET, uses
+    /// <see cref="Regex.EnumerateMatches(ReadOnlySpan{char})"/> when the replacement
+    /// contains no backreferences.
+    /// </summary>
+    /// <param name="input">The input string element.</param>
+    /// <param name="regex">The pre-compiled <see cref="Regex"/> pattern.</param>
+    /// <param name="replacement">The replacement string element.</param>
+    /// <param name="limitElement">Optional limit element (number or undefined).</param>
+    /// <param name="workspace">The workspace for building the result.</param>
+    /// <returns>The replaced string, or <c>default</c> if input is undefined.</returns>
+    public static JsonElement ReplaceRegex(
+        in JsonElement input,
+        Regex regex,
+        in JsonElement replacement,
+        in JsonElement limitElement,
+        JsonWorkspace workspace)
+    {
+        if (input.IsUndefined())
+        {
+            return default;
+        }
+
+        if (input.ValueKind != JsonValueKind.String)
+        {
+            throw new JsonataException("T0410", SR.T0410_Argument1OfFunctionReplaceIsNotOfTheCorrectType, 0);
+        }
+
+        if (replacement.IsUndefined() || replacement.ValueKind != JsonValueKind.String)
+        {
+            throw new JsonataException("T0410", SR.T0410_Argument3OfFunctionReplaceIsNotOfTheCorrectType, 0);
+        }
+
+        int limit = int.MaxValue;
+        if (!limitElement.IsUndefined())
+        {
+            if (limitElement.ValueKind == JsonValueKind.Null || limitElement.ValueKind != JsonValueKind.Number)
+            {
+                throw new JsonataException("T0410", SR.T0410_Argument4OfFunctionReplaceIsNotOfTheCorrectType, 0);
+            }
+
+            double n = limitElement.GetDouble();
+            if (n < 0)
+            {
+                throw new JsonataException("D3011", SR.D3011_TheFourthArgumentOfTheReplaceFunctionMustBeAPositiveNumber, 0);
+            }
+
+            limit = (int)n;
+        }
+
+        if (limit <= 0)
+        {
+            return input;
+        }
+
+        using var utf16Str = input.GetUtf16String();
+        ReadOnlySpan<char> strChars = utf16Str.Span;
+
+        using var utf16Rep = replacement.GetUtf16String();
+        ReadOnlySpan<char> repChars = utf16Rep.Span;
+
+        ValueStringBuilder sb = new(stackalloc char[JsonConstants.StackallocCharThreshold]);
+        try
+        {
+#if NET
+            bool hasBackrefs = repChars.Contains('$');
+
+            if (!hasBackrefs)
+            {
+                int count = 0;
+                int searchStart = 0;
+                foreach (ValueMatch vm in regex.EnumerateMatches(strChars))
+                {
+                    if (count >= limit)
+                    {
+                        break;
+                    }
+
+                    if (vm.Length == 0)
+                    {
+                        throw new JsonataException("D1004", SR.D1004_RegularExpressionMatchesZeroLengthString, 0);
+                    }
+
+                    sb.Append(strChars.Slice(searchStart, vm.Index - searchStart));
+                    sb.Append(repChars);
+                    searchStart = vm.Index + vm.Length;
+                    count++;
+                }
+
+                sb.Append(strChars.Slice(searchStart));
+            }
+            else
+            {
+                string str = input.GetString()!;
+                int count = 0;
+                int searchStart = 0;
+                while (count < limit && searchStart <= str.Length)
+                {
+                    System.Text.RegularExpressions.Match m = regex.Match(str, searchStart);
+                    if (!m.Success)
+                    {
+                        break;
+                    }
+
+                    if (m.Length == 0)
+                    {
+                        throw new JsonataException("D1004", SR.D1004_RegularExpressionMatchesZeroLengthString, 0);
+                    }
+
+                    sb.Append(strChars.Slice(searchStart, m.Index - searchStart));
+                    ApplyJsonataBackreferencesSpan(repChars, m, ref sb);
+                    searchStart = m.Index + m.Length;
+                    count++;
+                }
+
+                sb.Append(strChars.Slice(searchStart));
+            }
+#else
+            string str = input.GetString()!;
+            int count = 0;
+            int searchStart = 0;
+            while (count < limit && searchStart <= str.Length)
+            {
+                System.Text.RegularExpressions.Match m = regex.Match(str, searchStart);
+                if (!m.Success)
+                {
+                    break;
+                }
+
+                if (m.Length == 0)
+                {
+                    throw new JsonataException("D1004", SR.D1004_RegularExpressionMatchesZeroLengthString, 0);
+                }
+
+                sb.Append(strChars.Slice(searchStart, m.Index - searchStart));
+                ApplyJsonataBackreferencesSpan(repChars, m, ref sb);
+                searchStart = m.Index + m.Length;
+                count++;
+            }
+
+            sb.Append(strChars.Slice(searchStart));
+#endif
+
+            return JsonataHelpers.StringFromChars(sb.AsSpan(), workspace);
+        }
+        finally
+        {
+            sb.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Applies JSONata backreference substitution ($0, $1, etc.) from a replacement span
+    /// directly into a <see cref="ValueStringBuilder"/>.
+    /// </summary>
+    private static void ApplyJsonataBackreferencesSpan(
+        ReadOnlySpan<char> replacement, System.Text.RegularExpressions.Match match, ref ValueStringBuilder sb)
+    {
+        int numGroups = match.Groups.Count - 1;
+        int segStart = 0;
+
+        for (int i = 0; i < replacement.Length; i++)
+        {
+            if (replacement[i] != '$')
+            {
+                continue;
+            }
+
+            if (i > segStart)
+            {
+                sb.Append(replacement.Slice(segStart, i - segStart));
+            }
+
+            if (i + 1 >= replacement.Length)
+            {
+                sb.Append('$');
+                segStart = i + 1;
+                continue;
+            }
+
+            char next = replacement[i + 1];
+
+            if (next == '$')
+            {
+                sb.Append('$');
+                i++;
+                segStart = i + 1;
+            }
+            else if (next >= '0' && next <= '9')
+            {
+                int digitStart = i + 1;
+                int digitEnd = digitStart;
+                while (digitEnd < replacement.Length && replacement[digitEnd] >= '0' && replacement[digitEnd] <= '9')
+                {
+                    digitEnd++;
+                }
+
+                int consumed = digitEnd - digitStart;
+                bool found = false;
+                while (consumed > 0)
+                {
+                    int groupNum = ParseDigits(replacement.Slice(digitStart, consumed));
+                    if (groupNum <= numGroups)
+                    {
+#if NET
+                        sb.Append(match.Groups[groupNum].ValueSpan);
+#else
+                        sb.Append(match.Groups[groupNum].Value);
+#endif
+
+                        if (digitEnd > digitStart + consumed)
+                        {
+                            sb.Append(replacement.Slice(digitStart + consumed, digitEnd - digitStart - consumed));
+                        }
+
+                        found = true;
+                        break;
+                    }
+
+                    consumed--;
+                }
+
+                if (!found && digitEnd > digitStart + 1)
+                {
+                    sb.Append(replacement.Slice(digitStart + 1, digitEnd - digitStart - 1));
+                }
+
+                i = digitEnd - 1;
+                segStart = digitEnd;
+            }
+            else
+            {
+                sb.Append('$');
+                sb.Append(next);
+                i++;
+                segStart = i + 1;
+            }
+        }
+
+        if (segStart < replacement.Length)
+        {
+            sb.Append(replacement.Slice(segStart));
+        }
+    }
+
+    private static int ParseDigits(ReadOnlySpan<char> digits)
+    {
+        int result = 0;
+        for (int i = 0; i < digits.Length; i++)
+        {
+            result = (result * 10) + (digits[i] - '0');
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// JSONata <c>$match</c> function — matches a string against a compiled <see cref="Regex"/>
+    /// and returns an array of match objects <c>{"match","index","groups"}</c>.
+    /// Uses <see cref="Regex.EnumerateMatches(ReadOnlySpan{char})"/> for patterns without
+    /// capture groups (zero <see cref="Match"/> allocations), and CVB for building results.
+    /// </summary>
+    /// <param name="input">The input string element.</param>
+    /// <param name="regex">The pre-compiled <see cref="Regex"/> pattern.</param>
+    /// <param name="limitElement">Optional limit element (number or undefined).</param>
+    /// <param name="workspace">The workspace for building the result.</param>
+    /// <returns>A match object, array of match objects, or <c>default</c> if no matches.</returns>
+    public static JsonElement Match(
+        in JsonElement input,
+        Regex regex,
+        in JsonElement limitElement,
+        JsonWorkspace workspace)
+    {
+        if (input.IsUndefined())
+        {
+            return default;
+        }
+
+        if (input.ValueKind != JsonValueKind.String)
+        {
+            throw new JsonataException("T0410", SR.T0410_Argument1OfFunctionMatchIsNotOfTheCorrectType, 0);
+        }
+
+        int limit = int.MaxValue;
+        if (limitElement.ValueKind != JsonValueKind.Undefined)
+        {
+            if (limitElement.ValueKind != JsonValueKind.Number)
+            {
+                throw new JsonataException("T0410", SR.T0410_Argument3OfFunctionMatchIsNotOfTheCorrectType, 0);
+            }
+
+            if (FunctionalCompiler.TryCoerceToNumber(limitElement, out double limitD))
+            {
+                limit = (int)limitD;
+            }
+        }
+
+        var results = default(SequenceBuilder);
+        int count = 0;
+
+#if NET
+        bool hasGroups = regex.GetGroupNumbers().Length > 1;
+
+        if (!hasGroups)
+        {
+            // Zero-alloc fast path: EnumerateMatches yields ValueMatch structs —
+            // no Match/Group objects. GetUtf16String avoids managed string allocation.
+            using UnescapedUtf16JsonString utf16Str = input.GetUtf16String();
+            ReadOnlyMemory<char> charMemory = utf16Str.Memory;
+
+            foreach (ValueMatch vm in regex.EnumerateMatches(charMemory.Span))
+            {
+                if (count >= limit)
+                {
+                    break;
+                }
+
+                results.Add(JsonataHelpers.CreateMatchObjectNoGroups(charMemory, vm.Index, vm.Length, workspace));
+                count++;
+            }
+        }
+        else
+        {
+            // Groups path: Regex.Match requires a string (unavoidable).
+            // Use Group.Index/Length to slice the original char memory — no Group.Value strings.
+            string regexStr = input.GetString()!;
+            ReadOnlyMemory<char> charMemory = regexStr.AsMemory();
+
+            System.Text.RegularExpressions.Match m = regex.Match(regexStr);
+            while (m.Success && count < limit)
+            {
+                results.Add(JsonataHelpers.CreateMatchObjectFromMatch(charMemory, m, workspace));
+                count++;
+                m = m.NextMatch();
+            }
+        }
+#else
+        string? regexStr = input.GetString();
+        if (regexStr is null)
+        {
+            return default;
+        }
+
+        ReadOnlyMemory<char> charMemory = regexStr.AsMemory();
+        MatchCollection matches = regex.Matches(regexStr);
+
+        foreach (System.Text.RegularExpressions.Match m in matches)
+        {
+            if (count >= limit)
+            {
+                break;
+            }
+
+            results.Add(JsonataHelpers.CreateMatchObjectFromMatch(charMemory, m, workspace));
+            count++;
+        }
+#endif
+
+        Sequence resultSeq = results.ToSequence();
+        if (resultSeq.IsUndefined)
+        {
+            results.ReturnArray();
+            return default;
+        }
+
+        if (resultSeq.Count == 1)
+        {
+            results.ReturnArray();
+            return resultSeq[0];
+        }
+
+        // Multi-match: build an array document from the results
+        var doc = JsonElement.CreateBuilder(
+            workspace,
+            (resultSeq, resultSeq.Count),
+            static (in (Sequence Seq, int Count) ctx, ref JsonElement.ArrayBuilder builder) =>
+            {
+                for (int i = 0; i < ctx.Count; i++)
+                {
+                    builder.AddItem(ctx.Seq[i]);
+                }
+            },
+            estimatedMemberCount: resultSeq.Count + 2);
+        return (JsonElement)doc.RootElement;
+    }
+
+    /// <summary>
     /// JSONata <c>$zip</c> function — transposes arrays.
     /// Takes multiple arrays and returns an array of arrays where the i-th inner array
     /// contains the i-th element from each input array.
@@ -5101,6 +5489,101 @@ public static class JsonataCodeGenHelpers
     }
 
     /// <summary>
+    /// Specialized map that keeps results as raw <c>double</c> values, avoiding the per-element
+    /// <see cref="DoubleToElement"/> and intermediate <c>FixedJsonValueDocument</c> creation.
+    /// The result array is built via CVB <see cref="JsonElement.ArrayBuilder.AddItem(double)"/>
+    /// which writes doubles directly to the MetadataDb.
+    /// </summary>
+    public static JsonElement MapElementsDouble(
+        in JsonElement input,
+        Func<JsonElement, JsonWorkspace, double> transform,
+        JsonWorkspace workspace)
+    {
+        if (input.IsNullOrUndefined())
+        {
+            return default;
+        }
+
+        if (input.ValueKind == JsonValueKind.Array)
+        {
+            int len = input.GetArrayLength();
+            if (len == 0)
+            {
+                return JsonataHelpers.EmptyArray();
+            }
+
+            // Collect doubles into a rented array, then build via CVB in one pass.
+            // Always rent (never stackalloc) so we can pass the array directly
+            // as the CVB context tuple without a ToArray() heap allocation.
+            double[] rented = ArrayPool<double>.Shared.Rent(len);
+
+            try
+            {
+                int count = 0;
+                foreach (JsonElement item in input.EnumerateArray())
+                {
+                    double d = transform(item, workspace);
+                    if (!double.IsNaN(d))
+                    {
+                        if (count == rented.Length)
+                        {
+                            // Grow — extremely rare (NaN filtering changed count estimate)
+                            double[] bigger = ArrayPool<double>.Shared.Rent(rented.Length * 2);
+                            rented.AsSpan(0, count).CopyTo(bigger);
+                            ArrayPool<double>.Shared.Return(rented);
+                            rented = bigger;
+                        }
+
+                        rented[count++] = d;
+                    }
+                }
+
+                if (count == 0)
+                {
+                    return JsonataHelpers.EmptyArray();
+                }
+
+                JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(
+                    workspace,
+                    (rented, count),
+                    static (in (double[] Array, int Count) ctx, ref JsonElement.ArrayBuilder builder) =>
+                    {
+                        for (int i = 0; i < ctx.Count; i++)
+                        {
+                            builder.AddItem(ctx.Array[i]);
+                        }
+                    },
+                    estimatedMemberCount: count + 2,
+                    initialValueBufferSize: Math.Max(8192, count * 28));
+
+                return (JsonElement)doc.RootElement;
+            }
+            finally
+            {
+                ArrayPool<double>.Shared.Return(rented);
+            }
+        }
+
+        // Single value — map once, wrap in array
+        double single = transform(input, workspace);
+        if (double.IsNaN(single))
+        {
+            return default;
+        }
+
+        JsonDocumentBuilder<JsonElement.Mutable> singleDoc = JsonElement.CreateBuilder(
+            workspace,
+            single,
+            static (in double ctx, ref JsonElement.ArrayBuilder builder) =>
+            {
+                builder.AddItem(ctx);
+            },
+            estimatedMemberCount: 3);
+
+        return (JsonElement)singleDoc.RootElement;
+    }
+
+    /// <summary>
     /// Per-element object construction with groupby semantics: returns <c>default</c> for
     /// empty or null/undefined input, singularises a 1-element result, and skips undefined
     /// transform results. Used for <c>path.{StringKey: expr, ...}</c> where all keys are
@@ -5409,6 +5892,48 @@ public static class JsonataCodeGenHelpers
         }
 
         return accumulator;
+    }
+
+    /// <summary>
+    /// Specialized reduce that keeps the accumulator as a raw <c>double</c> throughout the loop,
+    /// avoiding the per-iteration <see cref="DoubleToElement"/>/<see cref="ToArithmeticDoubleLeft"/>
+    /// roundtrip that creates a <see cref="JsonataHelpers.NumberFromDouble"/> document per iteration.
+    /// Only the final result is materialized to <see cref="JsonElement"/>.
+    /// </summary>
+    public static JsonElement ReduceElementsDouble(
+        in JsonElement input,
+        double initial,
+        Func<double, JsonElement, JsonWorkspace, double> reducer,
+        JsonWorkspace workspace)
+    {
+        if (input.IsNullOrUndefined())
+        {
+            return default;
+        }
+
+        double accumulator;
+
+        if (input.ValueKind == JsonValueKind.Array)
+        {
+            int len = input.GetArrayLength();
+            if (len == 0)
+            {
+                return DoubleToElement(initial, workspace);
+            }
+
+            accumulator = initial;
+            foreach (JsonElement item in input.EnumerateArray())
+            {
+                accumulator = reducer(accumulator, item, workspace);
+            }
+        }
+        else
+        {
+            // Scalar input treated as single-element sequence
+            accumulator = reducer(initial, input, workspace);
+        }
+
+        return DoubleToElement(accumulator, workspace);
     }
 
     // ===== Object Construction =====

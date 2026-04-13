@@ -33,6 +33,7 @@
   <ItemGroup>
     <Compile Include="..\Common\JsonConstants.cs" Link="Common\JsonConstants.cs" />
     <Compile Include="$(CommonPath)System\Text\Utf8ValueStringBuilder.cs" Link="Common\Utf8ValueStringBuilder.cs" />
+    <Compile Include="$(CommonPath)System\Text\ValueStringBuilder.cs" Link="Common\ValueStringBuilder.cs" />
     <Compile Include="$(CoreLibSharedDir)System\Collections\Generic\ValueListBuilder.cs" Link="Common\System\Collections\Generic\ValueListBuilder.cs" />
     <Compile Include="$(CoreLibSharedDir)System\Collections\Generic\ValueListBuilder.Pop.cs" Link="Common\System\Collections\Generic\ValueListBuilder.Pop.cs" />
   </ItemGroup>

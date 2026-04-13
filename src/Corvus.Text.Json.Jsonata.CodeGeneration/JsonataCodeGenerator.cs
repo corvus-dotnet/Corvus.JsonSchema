@@ -213,6 +213,7 @@ public static class JsonataCodeGenerator
         L(sb, string.Empty, "#nullable enable");
         L(sb, string.Empty, "using System;");
         L(sb, string.Empty, "using System.Runtime.CompilerServices;");
+        L(sb, string.Empty, "using System.Text.RegularExpressions;");
         L(sb, string.Empty, "using Corvus.Text.Json;");
         L(sb, string.Empty, "using Corvus.Text.Json.Jsonata;");
         Blank(sb);
@@ -408,6 +409,7 @@ public static class JsonataCodeGenerator
         private int _pathFieldCounter;
         private int _predicateFieldCounter;
         private int _lambdaCounter;
+        private int _regexFieldCounter;
 
         /// <summary>
         /// When set to a data variable name, <see cref="EmitName"/> and
@@ -432,6 +434,14 @@ public static class JsonataCodeGenerator
         /// parameter.
         /// </summary>
         private bool _usesBindings;
+
+        /// <summary>
+        /// Tracks variable names that are typed as <c>double</c> in the generated code
+        /// (e.g. the accumulator parameter in a double-specialized reduce lambda).
+        /// <see cref="EmitArithmeticOperandAsDouble"/> uses this to skip the
+        /// <c>ToArithmeticDoubleLeft/Right</c> extraction when the variable is already a double.
+        /// </summary>
+        private HashSet<string>? _doubleVariables;
 
         /// <summary>
         /// Returns <c>"static "</c> when lambdas can be static, or <c>""</c> when
@@ -504,6 +514,37 @@ public static class JsonataCodeGenerator
             }
 
             return CreatePathField(names);
+        }
+
+        /// <summary>
+        /// Creates a static <c>Regex</c> field for a compiled regex pattern.
+        /// </summary>
+        private string CreateRegexField(string pattern, string flags)
+        {
+            string fieldName = $"s_rx{_regexFieldCounter++}";
+
+            // Verbatim string literal: only " needs doubling; \ is literal
+            string escapedPattern = pattern.Replace("\"", "\"\"");
+
+            // Map JSONata flags to RegexOptions
+            var options = new List<string> { "RegexOptions.Compiled" };
+            foreach (char flag in flags)
+            {
+                switch (flag)
+                {
+                    case 'i':
+                        options.Add("RegexOptions.IgnoreCase");
+                        break;
+                    case 'm':
+                        options.Add("RegexOptions.Multiline");
+                        break;
+                }
+            }
+
+            string optionsExpr = string.Join(" | ", options);
+            _staticFieldDeclarations.Add(
+                $"private static readonly Regex {fieldName} = new(@\"{escapedPattern}\", {optionsExpr});");
+            return fieldName;
         }
 
         /// <summary>
@@ -2563,6 +2604,10 @@ public static class JsonataCodeGenerator
                 case BinaryNode { Operator: "+" or "-" or "*" or "/" or "%" } binary:
                     return EmitArithmeticAsDouble(sb, binary, indent, dataVar, wsVar);
 
+                case VariableNode vn when _doubleVariables?.Contains(vn.Name) == true:
+                    // Variable is already typed as double (e.g. reduce accumulator) — use directly.
+                    return _variables[vn.Name];
+
                 default:
                     // Non-arithmetic leaf: emit as element, extract double
                     string elem = EmitExpression(sb, node, indent, dataVar, wsVar);
@@ -4024,8 +4069,9 @@ public static class JsonataCodeGenerator
                 "formatInteger" => EmitBuiltinBinary(sb, func, indent, dataVar, wsVar, "FormatInteger"),
                 "parseInteger" => EmitBuiltinBinary(sb, func, indent, dataVar, wsVar, "ParseInteger"),
 
-                // Phase 2: Replace and Zip
+                // Phase 2: Replace, Match, and Zip
                 "replace" => EmitBuiltinReplace(sb, func, indent, dataVar, wsVar),
+                "match" => EmitBuiltinMatch(sb, func, indent, dataVar, wsVar),
                 "zip" => EmitBuiltinZip(sb, func, indent, dataVar, wsVar),
 
                 _ => EmitCustomFunctionCallOrFallback(sb, func, procVar.Name, indent, dataVar, wsVar),
@@ -4599,6 +4645,42 @@ public static class JsonataCodeGenerator
 
             bool hasIndex = lambda.Parameters.Count >= 2 && helperName == "MapElements";
 
+            // Double-map specialization: when the map lambda body is pure arithmetic,
+            // keep results as raw doubles — avoids per-element DoubleToElement and
+            // FixedJsonValueDocument creation. Uses MapElementsDouble which writes
+            // doubles directly to MetadataDb via ArrayBuilder.AddItem(double).
+            if (helperName == "MapElements" && returnsElement && !hasIndex
+                && lambda.Body is BinaryNode { Operator: "+" or "-" or "*" or "/" or "%" } mapArithBody
+                && !IsConstantNumericExpression(mapArithBody))
+            {
+                string mapInputVar = EmitExpression(sb, func.Arguments[0], indent, dataVar, wsVar);
+
+                int mapLambdaIdx = _lambdaCounter++;
+                string mapElParam = $"el_{mapLambdaIdx}";
+                string mapWsParam = $"ws_{mapLambdaIdx}";
+                string mapInnerIndent = indent + "    ";
+                StringBuilder mapLambdaBody = new();
+
+                string? mapSavedVar = StashVariable(lambda.Parameters[0], mapElParam);
+                bool mapPrevRootRef = _usesRootRef;
+                _usesRootRef = true;
+
+                string bodyDouble = EmitArithmeticAsDouble(mapLambdaBody, mapArithBody, mapInnerIndent, mapElParam, mapWsParam);
+
+                bool mapBodyUsedRoot = bodyDouble.Contains("__rootData")
+                    || mapLambdaBody.ToString().Contains("__rootData");
+                _usesRootRef = mapPrevRootRef || mapBodyUsedRoot;
+                RestoreVariable(lambda.Parameters[0], mapSavedVar);
+
+                string mapV = NextVar();
+                L(sb, indent, $"var {mapV} = {H}.MapElementsDouble({mapInputVar}, {Static}(JsonElement {mapElParam}, JsonWorkspace {mapWsParam}) =>");
+                L(sb, indent, "{");
+                sb.Append(mapLambdaBody);
+                L(sb, mapInnerIndent, $"return {bodyDouble};");
+                L(sb, indent, $"}}, {wsVar});");
+                return mapV;
+            }
+
             // Fusion: detect simple property chain input BEFORE evaluating it,
             // so we skip the intermediate NavigatePropertyChain when fusing.
             string? chainField = !hasIndex ? TryGetSimpleChainField(func.Arguments[0]) : null;
@@ -4704,37 +4786,187 @@ public static class JsonataCodeGenerator
             }
 
             string inputVar = EmitExpression(sb, func.Arguments[0], indent, dataVar, wsVar);
+
+            // Try the double-accumulator specialization: if the lambda body is pure arithmetic
+            // and the init is a numeric literal, keep the accumulator as a raw double throughout
+            // the loop and only materialize to JsonElement at the end.
+            if (func.Arguments.Count >= 3
+                && func.Arguments[2] is NumberNode initNum
+                && lambda.Body is BinaryNode { Operator: "+" or "-" or "*" or "/" or "%" } arithBody
+                && IsParamSafeForDoubleReduce(arithBody, lambda.Parameters[0]))
+            {
+                string initLiteral = initNum.Value.ToString("R", CultureInfo.InvariantCulture);
+
+                int lambdaIdx = _lambdaCounter++;
+                string prevParam = $"prev_{lambdaIdx}";
+                string currParam = $"curr_{lambdaIdx}";
+                string wsParam = $"ws_{lambdaIdx}";
+                string innerIndent = indent + "    ";
+                StringBuilder lambdaBody = new();
+
+                // Register $prev as a double variable so EmitArithmeticOperandAsDouble
+                // can use it directly without ToArithmeticDoubleLeft/Right extraction.
+                (_doubleVariables ??= new(StringComparer.Ordinal)).Add(lambda.Parameters[0]);
+                string? savedPrev = StashVariable(lambda.Parameters[0], prevParam);
+                string? savedCurr = StashVariable(lambda.Parameters[1], currParam);
+                bool prevRootRef = _usesRootRef;
+                _usesRootRef = true;
+
+                string bodyDouble = EmitArithmeticAsDouble(lambdaBody, arithBody, innerIndent, currParam, wsParam);
+
+                bool bodyUsedRoot = bodyDouble.Contains("__rootData")
+                    || lambdaBody.ToString().Contains("__rootData");
+                _usesRootRef = prevRootRef || bodyUsedRoot;
+                RestoreVariable(lambda.Parameters[1], savedCurr);
+                RestoreVariable(lambda.Parameters[0], savedPrev);
+                _doubleVariables.Remove(lambda.Parameters[0]);
+
+                string v = NextVar();
+                L(sb, indent, $"var {v} = {H}.ReduceElementsDouble({inputVar}, {initLiteral},");
+                L(sb, indent + "    ", $"{Static}(double {prevParam}, JsonElement {currParam}, JsonWorkspace {wsParam}) =>");
+                L(sb, indent + "    ", "{");
+                sb.Append(lambdaBody);
+                L(sb, innerIndent, $"return {bodyDouble};");
+                L(sb, indent + "    ", "},");
+                L(sb, indent + "    ", $"{wsVar});");
+                return v;
+            }
+
+            // Standard path — full JsonElement accumulator
             string initVar = func.Arguments.Count >= 3
                 ? EmitExpression(sb, func.Arguments[2], indent, dataVar, wsVar)
                 : "default";
 
-            int lambdaIdx = _lambdaCounter++;
-            string prevParam = $"prev_{lambdaIdx}";
-            string currParam = $"curr_{lambdaIdx}";
-            string wsParam = $"ws_{lambdaIdx}";
-            string innerIndent = indent + "    ";
-            StringBuilder lambdaBody = new();
+            int stdLambdaIdx = _lambdaCounter++;
+            string stdPrevParam = $"prev_{stdLambdaIdx}";
+            string stdCurrParam = $"curr_{stdLambdaIdx}";
+            string stdWsParam = $"ws_{stdLambdaIdx}";
+            string stdInnerIndent = indent + "    ";
+            StringBuilder stdLambdaBody = new();
 
-            string? savedPrev = StashVariable(lambda.Parameters[0], prevParam);
-            string? savedCurr = StashVariable(lambda.Parameters[1], currParam);
-            bool prevRootRef = _usesRootRef;
+            string? stdSavedPrev = StashVariable(lambda.Parameters[0], stdPrevParam);
+            string? stdSavedCurr = StashVariable(lambda.Parameters[1], stdCurrParam);
+            bool stdPrevRootRef = _usesRootRef;
             _usesRootRef = true;
-            string bodyResult = EmitExpression(lambdaBody, lambda.Body, innerIndent, currParam, wsParam);
-            bool bodyUsedRoot = bodyResult.Contains("__rootData")
-                || lambdaBody.ToString().Contains("__rootData");
-            _usesRootRef = prevRootRef || bodyUsedRoot;
-            RestoreVariable(lambda.Parameters[1], savedCurr);
-            RestoreVariable(lambda.Parameters[0], savedPrev);
+            string stdBodyResult = EmitExpression(stdLambdaBody, lambda.Body, stdInnerIndent, stdCurrParam, stdWsParam);
+            bool stdBodyUsedRoot = stdBodyResult.Contains("__rootData")
+                || stdLambdaBody.ToString().Contains("__rootData");
+            _usesRootRef = stdPrevRootRef || stdBodyUsedRoot;
+            RestoreVariable(lambda.Parameters[1], stdSavedCurr);
+            RestoreVariable(lambda.Parameters[0], stdSavedPrev);
 
-            string v = NextVar();
-            L(sb, indent, $"var {v} = {H}.ReduceElements({inputVar}, {initVar},");
-            L(sb, indent + "    ", $"{Static}(JsonElement {prevParam}, JsonElement {currParam}, JsonWorkspace {wsParam}) =>");
+            string stdV = NextVar();
+            L(sb, indent, $"var {stdV} = {H}.ReduceElements({inputVar}, {initVar},");
+            L(sb, indent + "    ", $"{Static}(JsonElement {stdPrevParam}, JsonElement {stdCurrParam}, JsonWorkspace {stdWsParam}) =>");
             L(sb, indent + "    ", "{");
-            sb.Append(lambdaBody);
-            L(sb, innerIndent, $"return {bodyResult};");
+            sb.Append(stdLambdaBody);
+            L(sb, stdInnerIndent, $"return {stdBodyResult};");
             L(sb, indent + "    ", "},");
             L(sb, indent + "    ", $"{wsVar});");
-            return v;
+            return stdV;
+        }
+
+        /// <summary>
+        /// Checks whether the accumulator parameter (<paramref name="paramName"/>) is safe
+        /// to type as <c>double</c> in a reduce lambda. Returns <see langword="true"/> only
+        /// when every reference to the parameter in the arithmetic <paramref name="body"/>
+        /// is in a position that <see cref="EmitArithmeticOperandAsDouble"/> handles directly
+        /// (direct operand of arithmetic operators or unary minus).
+        /// </summary>
+        private static bool IsParamSafeForDoubleReduce(BinaryNode body, string paramName)
+        {
+            return IsOperandSafe(body.Lhs, paramName) && IsOperandSafe(body.Rhs, paramName);
+
+            static bool IsOperandSafe(JsonataNode operand, string paramName)
+            {
+                // Direct variable reference — will be handled by the VariableNode case
+                // in EmitArithmeticOperandAsDouble.
+                if (operand is VariableNode v)
+                {
+                    return true; // Whether it matches paramName or not, it's in a safe position.
+                }
+
+                // Unary minus — recurse
+                if (operand is UnaryNode { Operator: "-" } unary)
+                {
+                    return IsOperandSafe(unary.Expression, paramName);
+                }
+
+                // Nested arithmetic — recurse into both sides
+                if (operand is BinaryNode { Operator: "+" or "-" or "*" or "/" or "%" } binary)
+                {
+                    return IsOperandSafe(binary.Lhs, paramName) && IsOperandSafe(binary.Rhs, paramName);
+                }
+
+                // Any other node type (path, function call, condition, etc.) —
+                // the operand goes through EmitExpression in the default case.
+                // If it internally references $prev, the generated code would
+                // pass a double where JsonElement is expected → compile error.
+                return !SubtreeReferencesParam(operand, paramName);
+            }
+        }
+
+        /// <summary>
+        /// Returns <see langword="true"/> if any <see cref="VariableNode"/> in the subtree
+        /// references the given parameter name. Unknown node types conservatively return
+        /// <see langword="true"/> to avoid unsafe double-typing.
+        /// </summary>
+        private static bool SubtreeReferencesParam(JsonataNode node, string paramName)
+        {
+            switch (node)
+            {
+                case VariableNode v:
+                    return v.Name == paramName;
+
+                case NumberNode or StringNode or RegexNode or NameNode or WildcardNode or ValueNode:
+                    return false;
+
+                case BinaryNode b:
+                    return SubtreeReferencesParam(b.Lhs, paramName)
+                        || SubtreeReferencesParam(b.Rhs, paramName);
+
+                case UnaryNode u:
+                    return SubtreeReferencesParam(u.Expression, paramName);
+
+                case PathNode p:
+                    foreach (JsonataNode step in p.Steps)
+                    {
+                        if (SubtreeReferencesParam(step, paramName))
+                        {
+                            return true;
+                        }
+                    }
+
+                    return false;
+
+                case FunctionCallNode f:
+                    foreach (JsonataNode arg in f.Arguments)
+                    {
+                        if (SubtreeReferencesParam(arg, paramName))
+                        {
+                            return true;
+                        }
+                    }
+
+                    return false;
+
+                case FilterNode f:
+                    return SubtreeReferencesParam(f.Expression, paramName);
+
+                case ConditionNode c:
+                    return SubtreeReferencesParam(c.Condition, paramName)
+                        || SubtreeReferencesParam(c.Then, paramName)
+                        || (c.Else is not null && SubtreeReferencesParam(c.Else, paramName));
+
+                case LambdaNode l:
+                    // If the inner lambda shadows the parameter, it doesn't reference the outer one.
+                    return !l.Parameters.Contains(paramName)
+                        && SubtreeReferencesParam(l.Body, paramName);
+
+                default:
+                    // Unknown node type — conservatively assume it references the param.
+                    return true;
+            }
         }
 
         /// <summary>
@@ -5065,8 +5297,8 @@ public static class JsonataCodeGenerator
             StringBuilder sb, FunctionCallNode func, string indent, string dataVar, string wsVar)
         {
             // $replace(str, pattern, replacement [, limit])
-            // Runtime also supports 2-arg context form, but that uses ~> which we can't handle
-            if (func.Arguments.Count < 3 || func.Arguments.Count > 4)
+            // 2-arg context form uses ~> which we handle as context-implied
+            if (func.Arguments.Count < 2 || func.Arguments.Count > 4)
             {
                 if (func.Arguments.Count is 0 or 1)
                 {
@@ -5076,21 +5308,121 @@ public static class JsonataCodeGenerator
                 throw new FallbackException();
             }
 
-            // If the pattern is a regex literal, fall back to runtime
-            if (func.Arguments[1] is RegexNode)
+            // Determine argument positions based on count
+            int strArgIdx, patArgIdx, repArgIdx;
+            if (func.Arguments.Count == 2)
+            {
+                // Context-implied: $replace(pattern, replacement) — str is context data
+                strArgIdx = -1; // use dataVar
+                patArgIdx = 0;
+                repArgIdx = 1;
+            }
+            else
+            {
+                strArgIdx = 0;
+                patArgIdx = 1;
+                repArgIdx = 2;
+            }
+
+            // If replacement is a lambda, fall back
+            if (func.Arguments[repArgIdx] is LambdaNode)
             {
                 throw new FallbackException();
             }
 
-            string arg0 = EmitExpression(sb, func.Arguments[0], indent, dataVar, wsVar);
-            string arg1 = EmitExpression(sb, func.Arguments[1], indent, dataVar, wsVar);
-            string arg2 = EmitExpression(sb, func.Arguments[2], indent, dataVar, wsVar);
-            string arg3 = func.Arguments.Count >= 4
-                ? EmitExpression(sb, func.Arguments[3], indent, dataVar, wsVar)
-                : "default";
+            if (func.Arguments[patArgIdx] is RegexNode regexNode)
+            {
+                // Regex pattern: emit a static compiled Regex field
+                string rxField = CreateRegexField(regexNode.Pattern, regexNode.Flags);
+
+                string arg0 = strArgIdx >= 0
+                    ? EmitExpression(sb, func.Arguments[strArgIdx], indent, dataVar, wsVar)
+                    : dataVar;
+                string arg2 = EmitExpression(sb, func.Arguments[repArgIdx], indent, dataVar, wsVar);
+                string arg3 = func.Arguments.Count >= (strArgIdx >= 0 ? 4 : 3)
+                    ? EmitExpression(sb, func.Arguments[^1], indent, dataVar, wsVar)
+                    : "default";
+
+                string v = NextVar();
+                L(sb, indent, $"var {v} = {arg0}.ValueKind == JsonValueKind.Undefined ? default : {H}.ReplaceRegex({arg0}, {rxField}, {arg2}, {arg3}, {wsVar});");
+                return v;
+            }
+            else
+            {
+                // String pattern: emit H.Replace(str, pattern, replacement, limit, ws)
+                if (func.Arguments.Count < 3)
+                {
+                    throw new FallbackException();
+                }
+
+                string arg0 = EmitExpression(sb, func.Arguments[0], indent, dataVar, wsVar);
+                string arg1 = EmitExpression(sb, func.Arguments[1], indent, dataVar, wsVar);
+                string arg2 = EmitExpression(sb, func.Arguments[2], indent, dataVar, wsVar);
+                string arg3 = func.Arguments.Count >= 4
+                    ? EmitExpression(sb, func.Arguments[3], indent, dataVar, wsVar)
+                    : "default";
+
+                string v = NextVar();
+                L(sb, indent, $"var {v} = {H}.Replace({arg0}, {arg1}, {arg2}, {arg3}, {wsVar});");
+                return v;
+            }
+        }
+
+        /// <summary>
+        /// Emits a $match call: <c>$match(str, regex [, limit])</c>.
+        /// </summary>
+        private string EmitBuiltinMatch(
+            StringBuilder sb, FunctionCallNode func, string indent, string dataVar, string wsVar)
+        {
+            // $match(str, pattern [, limit]) — 1-arg context-implied, 2-arg, or 3-arg
+            if (func.Arguments.Count < 1 || func.Arguments.Count > 3)
+            {
+                throw new JsonataException("T0410", SR.T0410_MatchExpects13Arguments, 0);
+            }
+
+            // Determine which argument is the regex pattern
+            int patternArgIndex;
+            string arg0;
+
+            if (func.Arguments.Count == 1)
+            {
+                // Context-implied: $match(pattern) — str is the context data
+                patternArgIndex = 0;
+                arg0 = dataVar;
+            }
+            else
+            {
+                // Explicit: $match(str, pattern [, limit])
+                patternArgIndex = 1;
+                arg0 = EmitExpression(sb, func.Arguments[0], indent, dataVar, wsVar);
+            }
+
+            // Only handle regex literal patterns; lambda matchers fall back to runtime
+            if (func.Arguments[patternArgIndex] is not RegexNode regexNode)
+            {
+                throw new FallbackException();
+            }
+
+            // Create a static compiled Regex field
+            string regexField = CreateRegexField(regexNode.Pattern, regexNode.Flags);
+
+            string arg2 = func.Arguments.Count == 3
+                ? EmitExpression(sb, func.Arguments[2], indent, dataVar, wsVar)
+                : func.Arguments.Count == 1 ? "default" // 1-arg form has no limit
+                : "default"; // 2-arg form has no limit
 
             string v = NextVar();
-            L(sb, indent, $"var {v} = {H}.Replace({arg0}, {arg1}, {arg2}, {arg3}, {wsVar});");
+            if (func.Arguments.Count == 1)
+            {
+                // Context-implied: no undefined guard (matches RT behavior)
+                L(sb, indent, $"var {v} = {H}.Match({arg0}, {regexField}, {arg2}, {wsVar});");
+            }
+            else
+            {
+                // Explicit first arg: undefined input returns undefined
+                L(sb, indent, $"var {v} = {arg0}.ValueKind == JsonValueKind.Undefined ? default : {H}.Match({arg0}, {regexField}, {arg2}, {wsVar});");
+            }
+
             return v;
         }
 

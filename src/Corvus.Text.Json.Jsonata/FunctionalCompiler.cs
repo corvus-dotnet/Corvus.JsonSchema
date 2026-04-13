@@ -1241,9 +1241,9 @@ internal static class FunctionalCompiler
 
         return (in JsonElement input, Environment env) =>
         {
-            return EvalPathFrom(new Sequence(input), 0);
+            return EvalPathFrom(new Sequence(input), 0, env);
 
-            Sequence EvalPathFrom(Sequence initial, int startStep)
+            Sequence EvalPathFrom(Sequence initial, int startStep, Environment env)
             {
                 Sequence current = initial;
 
@@ -1350,7 +1350,7 @@ internal static class FunctionalCompiler
                     {
                         // Relinquish ownership — EvalAncestorStep iterates current's elements.
                         if (currentArrayOwned) { current.ReturnBackingArray(); currentArrayOwned = false; }
-                        return EvalAncestorStep(current, stepIdx);
+                        return EvalAncestorStep(current, stepIdx, env);
                     }
 
                     // Tuple block step — when a step is a tuple-mode block (containing
@@ -1362,7 +1362,7 @@ internal static class FunctionalCompiler
                     if (tLabels is not null)
                     {
                         if (currentArrayOwned) { current.ReturnBackingArray(); currentArrayOwned = false; }
-                        return EvalTupleBlockStep(current, stepIdx, tLabels);
+                        return EvalTupleBlockStep(current, stepIdx, tLabels, env);
                     }
 
                     // Focus binding (@$var) — cross-join semantics.
@@ -1373,7 +1373,7 @@ internal static class FunctionalCompiler
                     if (focusVar is not null)
                     {
                         if (currentArrayOwned) { current.ReturnBackingArray(); currentArrayOwned = false; }
-                        return EvalFocusStep(current, stepIdx);
+                        return EvalFocusStep(current, stepIdx, env);
                     }
 
                     // Index binding (#$var) without focus — per-element propagation.
@@ -1398,7 +1398,7 @@ internal static class FunctionalCompiler
                         if (downstreamSortIdx < 0)
                         {
                             if (currentArrayOwned) { current.ReturnBackingArray(); currentArrayOwned = false; }
-                            return EvalIndexStep(current, stepIdx);
+                            return EvalIndexStep(current, stepIdx, env);
                         }
                         else if (downstreamSortIdx == stepIdx + 1)
                         {
@@ -1409,7 +1409,7 @@ internal static class FunctionalCompiler
                             // Sort is downstream but not immediate — evaluate index step
                             // and intermediate steps, then sort globally with index tracking.
                             if (currentArrayOwned) { current.ReturnBackingArray(); currentArrayOwned = false; }
-                            return EvalIndexWithSort(current, stepIdx, downstreamSortIdx);
+                            return EvalIndexWithSort(current, stepIdx, downstreamSortIdx, env);
                         }
                     }
 
@@ -1451,22 +1451,7 @@ internal static class FunctionalCompiler
                                 // round-tripping through JSON which breaks element identity).
                                 var terms = sortTermsPerStep[stepIdx]!;
                                 var indices = RentSortIndices(sortElems.Count);
-                                SortIndices(indices, sortElems.Count, (a, b) =>
-                                {
-                                    for (int t = 0; t < terms.Length; t++)
-                                    {
-                                        var (expr, desc) = terms[t];
-                                        var aVal = expr(sortElems[a], env);
-                                        var bVal = expr(sortElems[b], env);
-                                        int cmp = CompareSortKeys(aVal, bVal);
-                                        if (cmp != 0)
-                                        {
-                                            return desc ? -cmp : cmp;
-                                        }
-                                    }
-
-                                    return a.CompareTo(b);
-                                });
+                                SortByTerms(indices, sortElems, terms, env);
 
                                 // Reorder elements and groups
                                 var sortedElems = default(SequenceBuilder);
@@ -1763,7 +1748,7 @@ internal static class FunctionalCompiler
             // For the last step in a path, there are no remaining steps to evaluate.
             // In that case, we accumulate the inner __t_ bindings across all input
             // elements so the outer path can read the correctly accumulated values.
-            Sequence EvalTupleBlockStep(Sequence inputContext, int stepIdx, string[] tLabels)
+            Sequence EvalTupleBlockStep(Sequence inputContext, int stepIdx, string[] tLabels, Environment env)
             {
                 var step = steps[stepIdx];
                 bool shouldFlatten = stepIdx > 0 || isPropertyStep[stepIdx];
@@ -1907,7 +1892,7 @@ internal static class FunctionalCompiler
                                 }
                             }
 
-                            var subResult = EvalPathFrom(elementSeq, stepIdx + 1);
+                            var subResult = EvalPathFrom(elementSeq, stepIdx + 1, env);
                             if (!subResult.IsUndefined)
                             {
                                 for (int k = 0; k < subResult.Count; k++)
@@ -1938,7 +1923,7 @@ internal static class FunctionalCompiler
             // Evaluates a focus-bound step (@$var) with cross-join semantics.
             // The step's result elements are bound to the focus variable,
             // and remaining steps evaluate from the parent context (this step's input).
-            Sequence EvalFocusStep(Sequence parentContext, int stepIdx)
+            Sequence EvalFocusStep(Sequence parentContext, int stepIdx, Environment env)
             {
                 var step = steps[stepIdx];
                 var focusVar = focusVars[stepIdx]!;
@@ -2171,7 +2156,8 @@ internal static class FunctionalCompiler
                 {
                     return EvalCrossJoinFocus(
                         elements, parentContext, stepIdx, crossJoinNextStep,
-                        focusVar, indexVar, survivingOriginalIndices);
+                        focusVar, indexVar, survivingOriginalIndices,
+                        env);
                 }
 
                 // For each surviving focus element: bind, evaluate remaining steps
@@ -2199,7 +2185,7 @@ internal static class FunctionalCompiler
                     Sequence subResult;
                     if (nextStep < steps.Length)
                     {
-                        subResult = EvalPathFrom(parentContext, nextStep);
+                        subResult = EvalPathFrom(parentContext, nextStep, env);
                     }
                     else
                     {
@@ -2262,7 +2248,8 @@ internal static class FunctionalCompiler
                 int innerStepIdx,
                 string outerFocusVar,
                 string? outerIndexVar,
-                List<int>? outerSurvivingIndices)
+                List<int>? outerSurvivingIndices,
+                Environment env)
             {
                 var innerStep = steps[innerStepIdx];
                 var innerFocusVar = focusVars[innerStepIdx]!;
@@ -2543,7 +2530,7 @@ internal static class FunctionalCompiler
                     Sequence subResult;
                     if (remainingStart < steps.Length)
                     {
-                        subResult = EvalPathFrom(parentContext, remainingStart);
+                        subResult = EvalPathFrom(parentContext, remainingStart, env);
                     }
                     else
                     {
@@ -2565,7 +2552,7 @@ internal static class FunctionalCompiler
             // The INPUT to this step is bound under the ancestor labels so that
             // downstream % operators can look it up. We process per-element to
             // ensure each element carries its correct parent binding.
-            Sequence EvalAncestorStep(Sequence inputContext, int stepIdx)
+            Sequence EvalAncestorStep(Sequence inputContext, int stepIdx, Environment env)
             {
                 var step = steps[stepIdx];
                 var labels = ancestorLabels[stepIdx]!;
@@ -2604,7 +2591,7 @@ internal static class FunctionalCompiler
 
                 if (sortStepIndex >= 0)
                 {
-                    return EvalAncestorWithSort(inputElements, stepIdx, labels, sortStepIndex);
+                    return EvalAncestorWithSort(inputElements, stepIdx, labels, sortStepIndex, env);
                 }
 
                 // Determine group-by handling
@@ -2658,7 +2645,7 @@ internal static class FunctionalCompiler
                     Sequence subResult;
                     if (stepIdx + 1 < steps.Length)
                     {
-                        subResult = EvalPathFrom(stepResult, stepIdx + 1);
+                        subResult = EvalPathFrom(stepResult, stepIdx + 1, env);
 
                         // stepResult was consumed by EvalPathFrom — return its array.
                         stepResult.ReturnBackingArray();
@@ -2743,7 +2730,7 @@ internal static class FunctionalCompiler
             // Handles the case where an ancestor step has a downstream sort.
             // Collects (element, ancestor) pairs through intermediate steps,
             // sorts with per-element ancestor binding, then continues remaining steps.
-            Sequence EvalAncestorWithSort(SequenceBuilder inputElements, int stepIdx, string[] labels, int sortStepIdx)
+            Sequence EvalAncestorWithSort(SequenceBuilder inputElements, int stepIdx, string[] labels, int sortStepIdx, Environment env)
             {
                 var step = steps[stepIdx];
 
@@ -3044,19 +3031,18 @@ internal static class FunctionalCompiler
                         }
                     }
 
-                    var subResult = EvalPathFrom(new Sequence(finalElements[i]), sortStepIdx + 1);
+                    var subResult = EvalPathFrom(new Sequence(finalElements[i]), sortStepIdx + 1, env);
                     builder.AddRange(subResult);
                 }
 
                 finalElements.ReturnArray();
-
                 return builder.ToSequence();
             }
 
             // Evaluates a step with index binding (#$var) without focus binding.
             // The step's result elements each get their index bound, then remaining
             // steps are evaluated per-element so each carries the correct index.
-            Sequence EvalIndexStep(Sequence inputContext, int stepIdx)
+            Sequence EvalIndexStep(Sequence inputContext, int stepIdx, Environment env)
             {
                 var step = steps[stepIdx];
                 var indexVar = indexVars[stepIdx]!;
@@ -3162,7 +3148,7 @@ internal static class FunctionalCompiler
                     }
 
                     // Evaluate remaining steps on this element (not parent context — unlike focus)
-                    Sequence subResult = EvalPathFrom(new Sequence(el), stepIdx + 1);
+                    Sequence subResult = EvalPathFrom(new Sequence(el), stepIdx + 1, env);
 
                     // Handle group-by accumulation
                     if (applyGroupByHere && !subResult.IsUndefined)
@@ -3188,7 +3174,7 @@ internal static class FunctionalCompiler
             // intermediate steps per-element, collecting all results with their group
             // indices, then sorts globally and continues remaining steps with restored
             // index bindings.
-            Sequence EvalIndexWithSort(Sequence inputContext, int stepIdx, int sortStepIdx)
+            Sequence EvalIndexWithSort(Sequence inputContext, int stepIdx, int sortStepIdx, Environment env)
             {
                 var step = steps[stepIdx];
                 var idxVar = indexVars[stepIdx]!;
@@ -3373,7 +3359,7 @@ internal static class FunctionalCompiler
                         env.Bind(idxVar, Sequence.FromDouble(groupIndices[i], env.Workspace));
                     }
 
-                    var subResult = EvalPathFrom(new Sequence(finalElements[i]), sortStepIdx + 1);
+                    var subResult = EvalPathFrom(new Sequence(finalElements[i]), sortStepIdx + 1, env);
                     builder.AddRange(subResult);
                 }
 
@@ -6818,6 +6804,37 @@ internal static class FunctionalCompiler
     private static void ReturnSortIndices(int[] indices)
     {
         ArrayPool<int>.Shared.Return(indices);
+    }
+
+    /// <summary>
+    /// Sorts a rented index array by the given sort terms.
+    /// Extracted from inline lambdas to prevent the compiler from hoisting
+    /// <paramref name="env"/> into a display-class on the calling method's
+    /// entry path — the display-class would allocate on every invocation
+    /// even when sorting is not needed.
+    /// </summary>
+    private static void SortByTerms(
+        int[] indices,
+        SequenceBuilder elements,
+        (ExpressionEvaluator Expr, bool Descending)[] terms,
+        Environment env)
+    {
+        SortIndices(indices, elements.Count, (a, b) =>
+        {
+            for (int t = 0; t < terms.Length; t++)
+            {
+                var (expr, desc) = terms[t];
+                var aVal = expr(elements[a], env);
+                var bVal = expr(elements[b], env);
+                int cmp = CompareSortKeys(aVal, bVal);
+                if (cmp != 0)
+                {
+                    return desc ? -cmp : cmp;
+                }
+            }
+
+            return a.CompareTo(b);
+        });
     }
 
     /// <summary>

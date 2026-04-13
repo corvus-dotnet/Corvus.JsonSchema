@@ -214,11 +214,21 @@ internal sealed class LambdaValue
     /// functions do not use the environment for parameter binding.
     /// </para>
     /// </remarks>
-    internal Sequence InvokeReusing(Sequence[] args, int argsCount, in JsonElement input, Environment reuseEnv, Environment callerEnv)
+    internal Sequence InvokeReusing(ReadOnlySpan<Sequence> args, in JsonElement input, Environment reuseEnv, Environment callerEnv)
     {
         if (this.NativeFunc is not null)
         {
-            return this.Invoke(args, argsCount, input, callerEnv);
+            // Native functions don't use the environment for parameter binding.
+            var result = this.NativeFunc(args, input, callerEnv);
+
+            // Trampoline for tail calls
+            while (result.IsTailCall)
+            {
+                var tc = result.TailCall!;
+                result = tc.Target.InvokeBody(tc.Args, tc.ArgsCount, tc.Input, tc.CallerEnv);
+            }
+
+            return result;
         }
 
         // Rebind parameters in the reused environment
@@ -226,23 +236,23 @@ internal sealed class LambdaValue
         {
             reuseEnv.Bind(
                 this.paramNames[i],
-                i < argsCount ? args[i] : Sequence.Undefined);
+                i < args.Length ? args[i] : Sequence.Undefined);
         }
 
         if (this.signature is not null)
         {
-            SignatureValidator.ValidateArgs(this.signature, args.AsSpan(0, argsCount), -1);
+            SignatureValidator.ValidateArgs(this.signature, args, -1);
         }
 
-        var result = this.body(this.definingInput, reuseEnv);
+        var bodyResult = this.body(this.definingInput, reuseEnv);
 
         // Trampoline for tail calls
-        while (result.IsTailCall)
+        while (bodyResult.IsTailCall)
         {
-            var tc = result.TailCall!;
-            result = tc.Target.InvokeBody(tc.Args, tc.ArgsCount, tc.Input, tc.CallerEnv);
+            var tc = bodyResult.TailCall!;
+            bodyResult = tc.Target.InvokeBody(tc.Args, tc.ArgsCount, tc.Input, tc.CallerEnv);
         }
 
-        return result;
+        return bodyResult;
     }
 }

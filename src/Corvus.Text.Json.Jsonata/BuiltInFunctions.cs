@@ -1768,14 +1768,16 @@ internal static class BuiltInFunctions
                 {
                     var lambda = funcSeq.Lambda!;
                     var sortInput = input;
-                    var sortArgs = new Sequence[2];
-                    var reverseArgs = new Sequence[2];
                     var invokeEnv = lambda.CreateInvokeEnv(env);
                     StableSort(ref elements, (a, b) =>
                     {
-                        sortArgs[0] = new Sequence(a);
-                        sortArgs[1] = new Sequence(b);
-                        var result = lambda.InvokeReusing(sortArgs, 2, sortInput, invokeEnv, env);
+                        Sequence sa = new Sequence(a);
+                        Sequence sb = new Sequence(b);
+#if NET9_0_OR_GREATER
+                        var result = lambda.InvokeReusing([sa, sb], sortInput, invokeEnv, env);
+#else
+                        var result = lambda.InvokeReusing(new Sequence[] { sa, sb }, sortInput, invokeEnv, env);
+#endif
                         if (result.IsUndefined)
                         {
                             return 0;
@@ -1792,9 +1794,11 @@ internal static class BuiltInFunctions
 
                         if (el.ValueKind == JsonValueKind.False)
                         {
-                            reverseArgs[0] = sortArgs[1];
-                            reverseArgs[1] = sortArgs[0];
-                            var reverseResult = lambda.InvokeReusing(reverseArgs, 2, sortInput, invokeEnv, env);
+#if NET9_0_OR_GREATER
+                            var reverseResult = lambda.InvokeReusing([sb, sa], sortInput, invokeEnv, env);
+#else
+                            var reverseResult = lambda.InvokeReusing(new Sequence[] { sb, sa }, sortInput, invokeEnv, env);
+#endif
                             if (!reverseResult.IsUndefined
                                 && reverseResult.FirstOrDefault.ValueKind == JsonValueKind.True)
                             {
@@ -2007,7 +2011,6 @@ internal static class BuiltInFunctions
 
             var lambda = funcSeq.Lambda!;
             int arity = lambda.Arity;
-            var builder = default(SequenceBuilder);
 
             // Collect all items into a flat list for indexing
             var items = default(SequenceBuilder);
@@ -2053,35 +2056,135 @@ internal static class BuiltInFunctions
                 flatArrSeq = new Sequence((JsonElement)flatRoot);
             }
 
-            // Reuse args array and child environment across all iterations.
-            // Always pass 3 args (the standard for $map), but skip computing expensive
-            // index/array values when the lambda won't use them.
-            var lambdaArgs = new Sequence[3];
-            if (arity >= 3)
-            {
-                lambdaArgs[2] = flatArrSeq;
-            }
-
             var invokeEnv = lambda.CreateInvokeEnv(env);
-            for (int i = 0; i < items.Count; i++)
+
+            // Dual-mode collection: optimistic doubles, fallback to elements.
+            // Then build via CVB for direct MetadataDb writes (no Mutable.AddItem overhead).
+            double[]? doubleResults = ArrayPool<double>.Shared.Rent(items.Count);
+            JsonElement[]? elementResults = null;
+            bool allDoubles = true;
+            int resultCount = 0;
+
+            try
             {
-                lambdaArgs[0] = new Sequence(items[i]);
-                if (arity >= 2)
+                for (int i = 0; i < items.Count; i++)
                 {
-                    lambdaArgs[1] = Sequence.FromDouble(i, env.Workspace);
+                    Sequence arg0 = new Sequence(items[i]);
+                    Sequence arg1 = arity >= 2 ? Sequence.FromDouble(i, env.Workspace) : default;
+
+#if NET9_0_OR_GREATER
+                    var result = lambda.InvokeReusing([arg0, arg1, flatArrSeq], items[i], invokeEnv, env);
+#else
+                    var result = lambda.InvokeReusing(new Sequence[] { arg0, arg1, flatArrSeq }, items[i], invokeEnv, env);
+#endif
+
+                    if (allDoubles && result.IsSingleton && result.IsRawDouble)
+                    {
+                        result.TryGetDouble(out double d);
+                        if (resultCount == doubleResults.Length)
+                        {
+                            var bigger = ArrayPool<double>.Shared.Rent(doubleResults.Length * 2);
+                            doubleResults.AsSpan(0, resultCount).CopyTo(bigger);
+                            ArrayPool<double>.Shared.Return(doubleResults);
+                            doubleResults = bigger;
+                        }
+
+                        doubleResults[resultCount++] = d;
+                    }
+                    else
+                    {
+                        if (allDoubles)
+                        {
+                            // Switch from double to element mode.
+                            allDoubles = false;
+                            elementResults = ArrayPool<JsonElement>.Shared.Rent(Math.Max(items.Count, resultCount + result.Count));
+
+                            // Materialize pending doubles.
+                            for (int j = 0; j < resultCount; j++)
+                            {
+                                elementResults[j] = JsonataHelpers.NumberFromDouble(doubleResults[j], env.Workspace);
+                            }
+                        }
+
+                        for (int j = 0; j < result.Count; j++)
+                        {
+                            if (resultCount >= elementResults!.Length)
+                            {
+                                var bigger = ArrayPool<JsonElement>.Shared.Rent(elementResults.Length * 2);
+                                elementResults.AsSpan(0, resultCount).CopyTo(bigger);
+                                ArrayPool<JsonElement>.Shared.Return(elementResults);
+                                elementResults = bigger;
+                            }
+
+                            elementResults![resultCount++] = result[j];
+                        }
+                    }
                 }
 
-                var result = lambda.InvokeReusing(lambdaArgs, 3, items[i], invokeEnv, env);
-                builder.AddRange(result);
+                items.ReturnArray();
+
+                if (resultCount == 0)
+                {
+                    return Sequence.Undefined;
+                }
+
+                // Singleton auto-unwrap: JSONata returns just the value, not [value].
+                if (resultCount == 1)
+                {
+                    if (allDoubles)
+                    {
+                        return Sequence.FromDouble(doubleResults![0], env.Workspace);
+                    }
+
+                    return new Sequence(elementResults![0]);
+                }
+
+                // Build via CVB — writes directly to MetadataDb, no Mutable per-item overhead.
+                JsonDocumentBuilder<JsonElement.Mutable> doc;
+                if (allDoubles)
+                {
+                    doc = JsonElement.CreateBuilder(
+                        env.Workspace,
+                        (doubleResults!, resultCount),
+                        static (in (double[] Array, int Count) ctx, ref JsonElement.ArrayBuilder builder) =>
+                        {
+                            for (int i = 0; i < ctx.Count; i++)
+                            {
+                                builder.AddItem(ctx.Array[i]);
+                            }
+                        },
+                        estimatedMemberCount: resultCount + 2,
+                        initialValueBufferSize: Math.Max(8192, resultCount * 28));
+                }
+                else
+                {
+                    doc = JsonElement.CreateBuilder(
+                        env.Workspace,
+                        (elementResults!, resultCount),
+                        static (in (JsonElement[] Array, int Count) ctx, ref JsonElement.ArrayBuilder builder) =>
+                        {
+                            for (int i = 0; i < ctx.Count; i++)
+                            {
+                                builder.AddItem(ctx.Array[i]);
+                            }
+                        },
+                        estimatedMemberCount: resultCount + 2);
+                }
+
+                return new Sequence((JsonElement)doc.RootElement);
             }
+            finally
+            {
+                if (doubleResults is not null)
+                {
+                    ArrayPool<double>.Shared.Return(doubleResults);
+                }
 
-            items.ReturnArray();
-
-            // Return as a multi-value Sequence (not wrapped in a JSON array).
-            // The evaluator's Sequence→JsonElement conversion handles array
-            // creation when there are multiple results, and auto-unwraps
-            // singletons. This matches JSONata's auto-wrap/unwrap semantics.
-            return builder.ToSequence();
+                if (elementResults is not null)
+                {
+                    ArrayPool<JsonElement>.Shared.Return(elementResults);
+                }
+            }
         };
     }
 
@@ -2147,85 +2250,102 @@ internal static class BuiltInFunctions
                 }
             }
 
-            var matchBuilder = default(SequenceBuilder);
+            // Collect matching elements into a pooled array, then build via CVB.
+            JsonElement[]? matchResults = null;
             int matchCount = 0;
 
-            // Reuse args array and child environment across all iterations.
-            // Always pass 3 args (the standard for $filter), but skip computing expensive
-            // index/array values when the lambda won't use them.
-            var lambdaArgs = new Sequence[3];
             var invokeEnv = lambda.CreateInvokeEnv(env);
+            Sequence arrSeq = arity >= 3 ? seq : default;
 
-            if (inputWasArray)
+            try
             {
-                var arr = seq.FirstOrDefault;
-                if (arity >= 3)
+                if (inputWasArray)
                 {
-                    lambdaArgs[2] = seq;
-                }
+                    var arr = seq.FirstOrDefault;
+                    int arrLen = arr.GetArrayLength();
+                    matchResults = ArrayPool<JsonElement>.Shared.Rent(Math.Max(arrLen, 4));
 
-                int i = 0;
-                foreach (var item in arr.EnumerateArray())
-                {
-                    lambdaArgs[0] = new Sequence(item);
-                    if (arity >= 2)
+                    int i = 0;
+                    foreach (var item in arr.EnumerateArray())
                     {
-                        lambdaArgs[1] = Sequence.FromDouble(i, env.Workspace);
-                    }
+                        Sequence arg0 = new Sequence(item);
+                        Sequence arg1 = arity >= 2 ? Sequence.FromDouble(i, env.Workspace) : default;
 
-                    var result = lambda.InvokeReusing(lambdaArgs, 3, item, invokeEnv, env);
-                    if (FunctionalCompiler.IsTruthy(result))
-                    {
-                        matchBuilder.Add(item);
-                        matchCount++;
-                    }
+#if NET9_0_OR_GREATER
+                        var result = lambda.InvokeReusing([arg0, arg1, arrSeq], item, invokeEnv, env);
+#else
+                        var result = lambda.InvokeReusing(new Sequence[] { arg0, arg1, arrSeq }, item, invokeEnv, env);
+#endif
+                        if (FunctionalCompiler.IsTruthy(result))
+                        {
+                            matchResults[matchCount++] = item;
+                        }
 
-                    i++;
-                }
-            }
-            else
-            {
-                if (arity >= 3)
-                {
-                    lambdaArgs[2] = seq;
-                }
-
-                for (int i = 0; i < seq.Count; i++)
-                {
-                    lambdaArgs[0] = new Sequence(seq[i]);
-                    if (arity >= 2)
-                    {
-                        lambdaArgs[1] = Sequence.FromDouble(i, env.Workspace);
-                    }
-
-                    var result = lambda.InvokeReusing(lambdaArgs, 3, seq[i], invokeEnv, env);
-                    if (FunctionalCompiler.IsTruthy(result))
-                    {
-                        matchBuilder.Add(seq[i]);
-                        matchCount++;
+                        i++;
                     }
                 }
-            }
+                else
+                {
+                    matchResults = ArrayPool<JsonElement>.Shared.Rent(Math.Max(seq.Count, 4));
 
-            // If input was not an array, unwrap single results
-            if (!inputWasArray)
-            {
+                    for (int i = 0; i < seq.Count; i++)
+                    {
+                        Sequence arg0 = new Sequence(seq[i]);
+                        Sequence arg1 = arity >= 2 ? Sequence.FromDouble(i, env.Workspace) : default;
+
+#if NET9_0_OR_GREATER
+                        var result = lambda.InvokeReusing([arg0, arg1, arrSeq], seq[i], invokeEnv, env);
+#else
+                        var result = lambda.InvokeReusing(new Sequence[] { arg0, arg1, arrSeq }, seq[i], invokeEnv, env);
+#endif
+                        if (FunctionalCompiler.IsTruthy(result))
+                        {
+                            matchResults[matchCount++] = seq[i];
+                        }
+                    }
+                }
+
+                // If input was not an array, unwrap single results
+                if (!inputWasArray)
+                {
+                    if (matchCount == 0)
+                    {
+                        return Sequence.Undefined;
+                    }
+
+                    if (matchCount == 1)
+                    {
+                        return new Sequence(matchResults[0]);
+                    }
+                }
+
                 if (matchCount == 0)
                 {
-                    matchBuilder.ReturnArray();
-                    return Sequence.Undefined;
+                    return new Sequence(JsonataHelpers.EmptyArray());
                 }
 
-                if (matchCount == 1)
+                // Build via CVB — writes directly to MetadataDb, no Mutable per-item overhead.
+                var doc = JsonElement.CreateBuilder(
+                    env.Workspace,
+                    (matchResults!, matchCount),
+                    static (in (JsonElement[] Array, int Count) ctx, ref JsonElement.ArrayBuilder builder) =>
+                    {
+                        for (int i = 0; i < ctx.Count; i++)
+                        {
+                            builder.AddItem(ctx.Array[i]);
+                        }
+                    },
+                    estimatedMemberCount: matchCount + 2);
+
+                return new Sequence((JsonElement)doc.RootElement);
+            }
+            finally
+            {
+                if (matchResults is not null)
                 {
-                    var single = matchBuilder[0];
-                    matchBuilder.ReturnArray();
-                    return new Sequence(single);
+                    ArrayPool<JsonElement>.Shared.Return(matchResults);
                 }
             }
-
-            var resultArr = JsonataHelpers.ArrayFromBuilder(ref matchBuilder, env.Workspace);
-            return new Sequence(resultArr);
         };
     }
 
@@ -2323,27 +2443,29 @@ internal static class BuiltInFunctions
                 arrSeq = Sequence.Undefined;
             }
 
-            // Reuse args array across iterations, but use standard Invoke
-            // (not InvokeReusing) because the accumulator can be a closure
-            // that captures the iteration environment (e.g., function composition via $reduce).
-            // Always pass 4 args (the standard for $reduce), but skip computing expensive
-            // index/array values when the lambda won't use them.
-            var lambdaArgs = new Sequence[4];
-            if (arity >= 4)
-            {
-                lambdaArgs[3] = arrSeq;
-            }
+            // Use InvokeReusing to avoid per-iteration Environment allocation.
+            // After each iteration, check if the body captured the reused environment
+            // (e.g. by defining a closure). If so, create a fresh one — correct but rare.
+            var invokeEnv = lambda.CreateInvokeEnv(env);
 
             for (int i = startIdx; i < itemCount; i++)
             {
-                lambdaArgs[0] = accumulator;
-                lambdaArgs[1] = isTuple ? seq.GetItemSequence(i) : new Sequence(items[i]);
-                if (arity >= 3)
-                {
-                    lambdaArgs[2] = Sequence.FromDouble(i, env.Workspace);
-                }
+                Sequence arg0 = accumulator;
+                Sequence arg1 = isTuple ? seq.GetItemSequence(i) : new Sequence(items[i]);
+                Sequence arg2 = arity >= 3 ? Sequence.FromDouble(i, env.Workspace) : default;
 
-                accumulator = lambda.Invoke(lambdaArgs, 4, input, env);
+#if NET9_0_OR_GREATER
+                accumulator = lambda.InvokeReusing([arg0, arg1, arg2, arrSeq], input, invokeEnv, env);
+#else
+                accumulator = lambda.InvokeReusing(new Sequence[] { arg0, arg1, arg2, arrSeq }, input, invokeEnv, env);
+#endif
+
+                // If the body created a closure that captured our reused environment,
+                // we must not overwrite its bindings — allocate a fresh one.
+                if (invokeEnv.IsCaptured)
+                {
+                    invokeEnv = lambda.CreateInvokeEnv(env);
+                }
             }
 
             items.ReturnArray();
@@ -3032,12 +3154,6 @@ internal static class BuiltInFunctions
                 return Sequence.Undefined;
             }
 
-            string? regexStr = strSeq.FirstOrDefault.GetString();
-            if (regexStr is null)
-            {
-                return Sequence.Undefined;
-            }
-
             int limit = int.MaxValue;
             if (limitArg is not null)
             {
@@ -3049,10 +3165,60 @@ internal static class BuiltInFunctions
             }
 
             Regex regex = patSeq.Regex!;
-            MatchCollection matches = regex.Matches(regexStr);
-
             var results = default(SequenceBuilder);
             int count = 0;
+
+#if NET
+            if (strSeq.FirstOrDefault.ValueKind != JsonValueKind.String)
+            {
+                return Sequence.Undefined;
+            }
+
+            bool hasGroups = regex.GetGroupNumbers().Length > 1;
+
+            if (!hasGroups)
+            {
+                // Zero-alloc fast path: EnumerateMatches yields ValueMatch structs —
+                // no Match/Group objects. GetUtf16String avoids managed string allocation.
+                using UnescapedUtf16JsonString utf16Str = strSeq.FirstOrDefault.GetUtf16String();
+                ReadOnlyMemory<char> charMemory = utf16Str.Memory;
+
+                foreach (ValueMatch vm in regex.EnumerateMatches(charMemory.Span))
+                {
+                    if (count >= limit)
+                    {
+                        break;
+                    }
+
+                    results.Add(JsonataHelpers.CreateMatchObjectNoGroups(charMemory, vm.Index, vm.Length, env.Workspace));
+                    count++;
+                }
+            }
+            else
+            {
+                // Groups path: Regex.Match requires a string (unavoidable).
+                // Use Group.Index/Length to slice the original char memory — no Group.Value strings.
+                string regexStr = strSeq.FirstOrDefault.GetString()!;
+                ReadOnlyMemory<char> charMemory = regexStr.AsMemory();
+
+                Match m = regex.Match(regexStr);
+                while (m.Success && count < limit)
+                {
+                    results.Add(JsonataHelpers.CreateMatchObjectFromMatch(charMemory, m, env.Workspace));
+                    count++;
+                    m = m.NextMatch();
+                }
+            }
+#else
+            string? regexStr = strSeq.FirstOrDefault.GetString();
+            if (regexStr is null)
+            {
+                return Sequence.Undefined;
+            }
+
+            ReadOnlyMemory<char> charMemory = regexStr.AsMemory();
+            MatchCollection matches = regex.Matches(regexStr);
+
             foreach (Match m in matches)
             {
                 if (count >= limit)
@@ -3060,15 +3226,10 @@ internal static class BuiltInFunctions
                     break;
                 }
 
-                var groups = new List<string>();
-                for (int g = 1; g < m.Groups.Count; g++)
-                {
-                    groups.Add(m.Groups[g].Value);
-                }
-
-                results.Add(JsonataHelpers.CreateMatchObject(m.Value, m.Index, groups, env.Workspace));
+                results.Add(JsonataHelpers.CreateMatchObjectFromMatch(charMemory, m, env.Workspace));
                 count++;
             }
+#endif
 
             Sequence resultSeq = results.ToSequence();
             if (resultSeq.IsUndefined)
@@ -3156,7 +3317,6 @@ internal static class BuiltInFunctions
                 }
             }
 
-            string str = FunctionalCompiler.CoerceElementToString(strSeq.FirstOrDefault);
             int limit = int.MaxValue;
             if (limitArg is not null)
             {
@@ -3185,16 +3345,19 @@ internal static class BuiltInFunctions
                 Regex regex = patSeq.Regex!;
                 if (isLambdaReplacement)
                 {
+                    string str = FunctionalCompiler.CoerceElementToString(strSeq.FirstOrDefault);
                     str = RegexReplaceWithFunction(str, regex, repSeq.Lambda!, limit, input, env);
+                    return new Sequence(JsonataHelpers.StringFromString(str, env.Workspace));
                 }
                 else
                 {
-                    string replacement = FunctionalCompiler.CoerceElementToString(repSeq.FirstOrDefault);
-                    str = RegexReplaceWithString(str, regex, replacement, limit);
+                    return new Sequence(RegexReplaceWithStringElement(
+                        strSeq.FirstOrDefault, regex, repSeq.FirstOrDefault, limit, env.Workspace));
                 }
             }
             else
             {
+                string str = FunctionalCompiler.CoerceElementToString(strSeq.FirstOrDefault);
                 string pattern = FunctionalCompiler.CoerceElementToString(patSeq.FirstOrDefault);
 
                 // Empty string pattern is an error
@@ -3212,9 +3375,9 @@ internal static class BuiltInFunctions
                     str = str.Substring(0, idx) + replacement + str.Substring(idx + pattern.Length);
                     count++;
                 }
-            }
 
-            return new Sequence(JsonataHelpers.StringFromString(str, env.Workspace));
+                return new Sequence(JsonataHelpers.StringFromString(str, env.Workspace));
+            }
         };
     }
 
@@ -3385,6 +3548,245 @@ internal static class BuiltInFunctions
         }
 
         return sb.ToString();
+    }
+
+    // --- Optimized regex replace ---
+
+    /// <summary>
+    /// Optimized regex replace: uses <see cref="ValueStringBuilder"/> and
+    /// <see cref="UnescapedUtf16JsonString"/> to avoid intermediate string allocations.
+    /// On NET, uses <see cref="Regex.EnumerateMatches(ReadOnlySpan{char})"/> for patterns
+    /// whose replacement string contains no backreferences.
+    /// </summary>
+    private static JsonElement RegexReplaceWithStringElement(
+        in JsonElement strElement,
+        Regex regex,
+        in JsonElement repElement,
+        int limit,
+        JsonWorkspace workspace)
+    {
+        if (limit <= 0)
+        {
+            return strElement;
+        }
+
+        using var utf16Str = strElement.GetUtf16String();
+        ReadOnlySpan<char> strChars = utf16Str.Span;
+
+        using var utf16Rep = repElement.GetUtf16String();
+        ReadOnlySpan<char> repChars = utf16Rep.Span;
+
+        ValueStringBuilder sb = new(stackalloc char[JsonConstants.StackallocCharThreshold]);
+        try
+        {
+#if NET
+            bool hasBackrefs = repChars.Contains('$');
+
+            if (!hasBackrefs)
+            {
+                // Fast path: EnumerateMatches, no group access needed
+                int count = 0;
+                int searchStart = 0;
+                foreach (ValueMatch vm in regex.EnumerateMatches(strChars))
+                {
+                    if (count >= limit)
+                    {
+                        break;
+                    }
+
+                    if (vm.Length == 0)
+                    {
+                        throw new JsonataException("D1004", SR.D1004_RegularExpressionMatchesZeroLengthString, 0);
+                    }
+
+                    sb.Append(strChars.Slice(searchStart, vm.Index - searchStart));
+                    sb.Append(repChars);
+                    searchStart = vm.Index + vm.Length;
+                    count++;
+                }
+
+                sb.Append(strChars.Slice(searchStart));
+            }
+            else
+            {
+                // Backreference path: need Match objects for group access
+                string str = strElement.GetString()!;
+                int count = 0;
+                int searchStart = 0;
+                while (count < limit && searchStart <= str.Length)
+                {
+                    Match m = regex.Match(str, searchStart);
+                    if (!m.Success)
+                    {
+                        break;
+                    }
+
+                    if (m.Length == 0)
+                    {
+                        throw new JsonataException("D1004", SR.D1004_RegularExpressionMatchesZeroLengthString, 0);
+                    }
+
+                    sb.Append(strChars.Slice(searchStart, m.Index - searchStart));
+                    ApplyJsonataBackreferencesSpan(repChars, m, ref sb);
+                    searchStart = m.Index + m.Length;
+                    count++;
+                }
+
+                sb.Append(strChars.Slice(searchStart));
+            }
+#else
+            // netstandard: use Match objects
+            string str = strElement.GetString()!;
+            int count = 0;
+            int searchStart = 0;
+            while (count < limit && searchStart <= str.Length)
+            {
+                Match m = regex.Match(str, searchStart);
+                if (!m.Success)
+                {
+                    break;
+                }
+
+                if (m.Length == 0)
+                {
+                    throw new JsonataException("D1004", SR.D1004_RegularExpressionMatchesZeroLengthString, 0);
+                }
+
+                sb.Append(strChars.Slice(searchStart, m.Index - searchStart));
+                ApplyJsonataBackreferencesSpan(repChars, m, ref sb);
+                searchStart = m.Index + m.Length;
+                count++;
+            }
+
+            sb.Append(strChars.Slice(searchStart));
+#endif
+
+            return JsonataHelpers.StringFromChars(sb.AsSpan(), workspace);
+        }
+        finally
+        {
+            sb.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Applies JSONata backreference substitution ($0, $1, etc.) from a replacement span
+    /// directly into a <see cref="ValueStringBuilder"/>, avoiding intermediate string allocations.
+    /// </summary>
+    private static void ApplyJsonataBackreferencesSpan(
+        ReadOnlySpan<char> replacement, Match match, ref ValueStringBuilder sb)
+    {
+        int numGroups = match.Groups.Count - 1;
+        int segStart = 0;
+
+        for (int i = 0; i < replacement.Length; i++)
+        {
+            if (replacement[i] != '$')
+            {
+                continue;
+            }
+
+            // Flush segment before '$'
+            if (i > segStart)
+            {
+                sb.Append(replacement.Slice(segStart, i - segStart));
+            }
+
+            if (i + 1 >= replacement.Length)
+            {
+                // $ at end of string → literal $
+                sb.Append('$');
+                segStart = i + 1;
+                continue;
+            }
+
+            char next = replacement[i + 1];
+
+            if (next == '$')
+            {
+                // $$ → literal $
+                sb.Append('$');
+                i++;
+                segStart = i + 1;
+            }
+            else if (next >= '0' && next <= '9')
+            {
+                // Read all following digits
+                int digitStart = i + 1;
+                int digitEnd = digitStart;
+                while (digitEnd < replacement.Length && replacement[digitEnd] >= '0' && replacement[digitEnd] <= '9')
+                {
+                    digitEnd++;
+                }
+
+                // Try longest valid prefix (shorten from the right)
+                int consumed = digitEnd - digitStart;
+                bool found = false;
+                while (consumed > 0)
+                {
+                    int groupNum = ParseDigits(replacement.Slice(digitStart, consumed));
+                    if (groupNum <= numGroups)
+                    {
+#if NET
+                        sb.Append(match.Groups[groupNum].ValueSpan);
+#else
+                        sb.Append(match.Groups[groupNum].Value);
+#endif
+
+                        // Remaining digits become literal
+                        if (digitEnd > digitStart + consumed)
+                        {
+                            sb.Append(replacement.Slice(digitStart + consumed, digitEnd - digitStart - consumed));
+                        }
+
+                        found = true;
+                        break;
+                    }
+
+                    consumed--;
+                }
+
+                if (!found)
+                {
+                    // No valid group reference; remaining digits after the single invalid digit are literal
+                    if (digitEnd > digitStart + 1)
+                    {
+                        sb.Append(replacement.Slice(digitStart + 1, digitEnd - digitStart - 1));
+                    }
+                }
+
+                i = digitEnd - 1;
+                segStart = digitEnd;
+            }
+            else
+            {
+                // $ followed by non-digit, non-$ → literal $<char>
+                sb.Append('$');
+                sb.Append(next);
+                i++;
+                segStart = i + 1;
+            }
+        }
+
+        // Flush remaining segment
+        if (segStart < replacement.Length)
+        {
+            sb.Append(replacement.Slice(segStart));
+        }
+    }
+
+    /// <summary>
+    /// Parses a span of ASCII digit characters as a non-negative integer.
+    /// </summary>
+    private static int ParseDigits(ReadOnlySpan<char> digits)
+    {
+        int result = 0;
+        for (int i = 0; i < digits.Length; i++)
+        {
+            result = (result * 10) + (digits[i] - '0');
+        }
+
+        return result;
     }
 
     // --- Encoding functions ---
