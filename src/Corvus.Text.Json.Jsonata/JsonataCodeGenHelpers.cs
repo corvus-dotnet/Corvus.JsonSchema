@@ -203,12 +203,21 @@ public static class JsonataCodeGenHelpers
             }
             else if (current.ValueKind == JsonValueKind.Array)
             {
-                // First array encountered — collect ALL remaining results into one builder.
-                var doc = JsonElement.CreateArrayBuilder(workspace, current.GetArrayLength());
-                JsonElement.Mutable root = doc.RootElement;
-                int count = 0;
-                CollectChainFlat(current, names, i, root, ref count);
-                return count == 0 ? default : count == 1 ? root[0] : (JsonElement)root;
+                // First array encountered — collect via ElementBuffer to avoid builder overhead.
+                var buffer = default(ElementBuffer);
+                try
+                {
+                    CollectChainFlatInto(current, names, i, ref buffer);
+                    return buffer.Count == 0
+                        ? default
+                        : buffer.Count == 1
+                            ? buffer[0]
+                            : buffer.ToResult(workspace);
+                }
+                finally
+                {
+                    buffer.Dispose();
+                }
             }
             else
             {
@@ -245,11 +254,20 @@ public static class JsonataCodeGenHelpers
             }
             else if (current.ValueKind == JsonValueKind.Array)
             {
-                var doc = JsonElement.CreateArrayBuilder(workspace, current.GetArrayLength());
-                JsonElement.Mutable root = doc.RootElement;
-                int count = 0;
-                CollectChainFlat(current, names, i, root, ref count);
-                return count == 0 ? default : count == 1 ? root[0] : (JsonElement)root;
+                var buffer = default(ElementBuffer);
+                try
+                {
+                    CollectChainFlatInto(current, names, i, ref buffer);
+                    return buffer.Count == 0
+                        ? default
+                        : buffer.Count == 1
+                            ? buffer[0]
+                            : buffer.ToResult(workspace);
+                }
+                finally
+                {
+                    buffer.Dispose();
+                }
             }
             else
             {
@@ -7155,17 +7173,38 @@ public static class JsonataCodeGenHelpers
     private static JsonElement NavigatePropertyOverArray(
         in JsonElement array, byte[] name, JsonWorkspace workspace)
     {
-        int count = 0;
-        var doc = JsonElement.CreateArrayBuilder(workspace, array.GetArrayLength());
-        JsonElement.Mutable root = doc.RootElement;
-
-        foreach (JsonElement item in array.EnumerateArray())
+        var buffer = default(ElementBuffer);
+        try
         {
-            JsonElement result = NavigateProperty(item, name, workspace);
-            count = AddResultWithFlatten(root, result, count);
-        }
+            foreach (JsonElement item in array.EnumerateArray())
+            {
+                if (item.ValueKind == JsonValueKind.Object)
+                {
+                    if (item.TryGetProperty((ReadOnlySpan<byte>)name, out var val))
+                    {
+                        buffer.AddFlatten(val);
+                    }
+                }
+                else if (item.ValueKind == JsonValueKind.Array)
+                {
+                    JsonElement nested = NavigatePropertyOverArray(item, name, workspace);
+                    if (!nested.IsNullOrUndefined())
+                    {
+                        buffer.AddFlatten(nested);
+                    }
+                }
+            }
 
-        return count == 0 ? default : count == 1 ? root[0] : (JsonElement)root;
+            return buffer.Count == 0
+                ? default
+                : buffer.Count == 1
+                    ? buffer[0]
+                    : buffer.ToResult(workspace);
+        }
+        finally
+        {
+            buffer.Dispose();
+        }
     }
 
     /// <summary>
