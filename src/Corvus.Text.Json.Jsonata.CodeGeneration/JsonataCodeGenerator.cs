@@ -2915,6 +2915,15 @@ public static class JsonataCodeGenerator
                 return;
             }
 
+            // $string(x) in concat context — AppendElement already coerces to string,
+            // so emit the argument directly and skip the intermediate document allocation.
+            if (operand is FunctionCallNode { Procedure: VariableNode { Name: "string" } } stringFunc
+                && stringFunc.Arguments.Count == 1)
+            {
+                operands.Add((EmitExpression(sb, stringFunc.Arguments[0], indent, dataVar, wsVar), false, null));
+                return;
+            }
+
             // Detect auto-map candidate: PathNode with 2+ simple name steps, no annotations
             if (operand is PathNode autoMapPath
                 && autoMapPath.Steps.Count >= 2
