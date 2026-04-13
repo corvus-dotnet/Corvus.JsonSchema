@@ -1739,52 +1739,59 @@ internal static class BuiltInFunctions
                     var lambda = funcSeq.Lambda!;
                     var sortInput = input;
                     var invokeEnv = lambda.CreateInvokeEnv(env);
-                    StableSort(ref elements, (a, b) =>
+                    try
                     {
-                        Sequence sa = new Sequence(a);
-                        Sequence sb = new Sequence(b);
+                        StableSort(ref elements, (a, b) =>
+                        {
+                            Sequence sa = new Sequence(a);
+                            Sequence sb = new Sequence(b);
 #if NET9_0_OR_GREATER
-                        var result = lambda.InvokeReusing([sa, sb], sortInput, invokeEnv, env);
+                            var result = lambda.InvokeReusing([sa, sb], sortInput, invokeEnv, env);
 #else
-                        var result = lambda.InvokeReusing(new Sequence[] { sa, sb }, sortInput, invokeEnv, env);
+                            var result = lambda.InvokeReusing(new Sequence[] { sa, sb }, sortInput, invokeEnv, env);
 #endif
-                        if (result.IsUndefined)
-                        {
-                            return 0;
-                        }
-
-                        var el = result.FirstOrDefault;
-
-                        // Boolean comparator: true means a > b (a should come after b).
-                        // false could mean a < b OR a == b, so check the reverse.
-                        if (el.ValueKind == JsonValueKind.True)
-                        {
-                            return 1;
-                        }
-
-                        if (el.ValueKind == JsonValueKind.False)
-                        {
-#if NET9_0_OR_GREATER
-                            var reverseResult = lambda.InvokeReusing([sb, sa], sortInput, invokeEnv, env);
-#else
-                            var reverseResult = lambda.InvokeReusing(new Sequence[] { sb, sa }, sortInput, invokeEnv, env);
-#endif
-                            if (!reverseResult.IsUndefined
-                                && reverseResult.FirstOrDefault.ValueKind == JsonValueKind.True)
+                            if (result.IsUndefined)
                             {
-                                return -1;
+                                return 0;
+                            }
+
+                            var el = result.FirstOrDefault;
+
+                            // Boolean comparator: true means a > b (a should come after b).
+                            // false could mean a < b OR a == b, so check the reverse.
+                            if (el.ValueKind == JsonValueKind.True)
+                            {
+                                return 1;
+                            }
+
+                            if (el.ValueKind == JsonValueKind.False)
+                            {
+#if NET9_0_OR_GREATER
+                                var reverseResult = lambda.InvokeReusing([sb, sa], sortInput, invokeEnv, env);
+#else
+                                var reverseResult = lambda.InvokeReusing(new Sequence[] { sb, sa }, sortInput, invokeEnv, env);
+#endif
+                                if (!reverseResult.IsUndefined
+                                    && reverseResult.FirstOrDefault.ValueKind == JsonValueKind.True)
+                                {
+                                    return -1;
+                                }
+
+                                return 0;
+                            }
+
+                            if (FunctionalCompiler.TryCoerceToNumber(el, out double num))
+                            {
+                                return num < 0 ? -1 : (num > 0 ? 1 : 0);
                             }
 
                             return 0;
-                        }
-
-                        if (FunctionalCompiler.TryCoerceToNumber(el, out double num))
-                        {
-                            return num < 0 ? -1 : (num > 0 ? 1 : 0);
-                        }
-
-                        return 0;
-                    });
+                        });
+                    }
+                    finally
+                    {
+                        Environment.ReturnChild(invokeEnv);
+                    }
                 }
             }
             else
@@ -2145,6 +2152,8 @@ internal static class BuiltInFunctions
             }
             finally
             {
+                Environment.ReturnChild(invokeEnv);
+
                 if (doubleResults is not null)
                 {
                     ArrayPool<double>.Shared.Return(doubleResults);
@@ -2311,6 +2320,8 @@ internal static class BuiltInFunctions
             }
             finally
             {
+                Environment.ReturnChild(invokeEnv);
+
                 if (matchResults is not null)
                 {
                     ArrayPool<JsonElement>.Shared.Return(matchResults);
@@ -2439,6 +2450,7 @@ internal static class BuiltInFunctions
             }
 
             items.ReturnArray();
+            Environment.ReturnChild(invokeEnv);
 
             return accumulator;
         };
@@ -2504,6 +2516,7 @@ internal static class BuiltInFunctions
             finally
             {
                 ArrayPool<Sequence>.Shared.Return(lambdaArgs);
+                Environment.ReturnChild(reuseEnv);
             }
 
             return new Sequence((JsonElement)arrayRoot);
@@ -2925,6 +2938,7 @@ internal static class BuiltInFunctions
             finally
             {
                 ArrayPool<Sequence>.Shared.Return(lambdaArgs);
+                Environment.ReturnChild(reuseEnv);
             }
 
             if (!anyMatch)

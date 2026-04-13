@@ -4,6 +4,7 @@
 
 using System.Buffers;
 using System.Buffers.Text;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
@@ -4883,9 +4884,17 @@ internal static class FunctionalCompiler
 
     private static ExpressionEvaluator CompileBinary(BinaryNode binary)
     {
+        var op = binary.Operator;
+
+        // String concat gets special handling to inline $string() calls —
+        // avoids intermediate string allocation by coercing directly to UTF-8.
+        if (op == "&")
+        {
+            return CompileStringConcatInlined(binary.Lhs, binary.Rhs);
+        }
+
         var lhs = Compile(binary.Lhs);
         var rhs = Compile(binary.Rhs);
-        var op = binary.Operator;
 
         return op switch
         {
@@ -4900,7 +4909,6 @@ internal static class FunctionalCompiler
             "<=" => CompileNumericComparison(lhs, rhs, static (a, b) => a <= b),
             ">" => CompileNumericComparison(lhs, rhs, static (a, b) => a > b),
             ">=" => CompileNumericComparison(lhs, rhs, static (a, b) => a >= b),
-            "&" => CompileStringConcat(lhs, rhs),
             "and" => CompileAnd(lhs, rhs),
             "or" => CompileOr(lhs, rhs),
             "in" => CompileIn(lhs, rhs),
@@ -5088,6 +5096,34 @@ internal static class FunctionalCompiler
             // Type mismatch (e.g. string vs number)
             throw new JsonataException("T2009", SR.T2009_TheValuesEitherSideOfTheOperatorMustBeOfTheSameDataType, 0);
         };
+    }
+
+    /// <summary>
+    /// Compiles a string concatenation (<c>&amp;</c>) with $string() inlining.
+    /// When an operand is <c>$string(x)</c> with a single argument, compiles just <c>x</c>
+    /// and lets the existing <see cref="AppendCoercedToBuffer"/> handle the coercion
+    /// directly to UTF-8, avoiding intermediate string allocation.
+    /// </summary>
+    private static ExpressionEvaluator CompileStringConcatInlined(JsonataNode lhsNode, JsonataNode rhsNode)
+    {
+        var lhs = IsSimpleStringCall(lhsNode, out var innerLhs) ? Compile(innerLhs) : Compile(lhsNode);
+        var rhs = IsSimpleStringCall(rhsNode, out var innerRhs) ? Compile(innerRhs) : Compile(rhsNode);
+        return CompileStringConcat(lhs, rhs);
+    }
+
+    /// <summary>
+    /// Checks whether a node is a simple <c>$string(x)</c> call (1 argument, no pretty-print).
+    /// </summary>
+    private static bool IsSimpleStringCall(JsonataNode node, [NotNullWhen(true)] out JsonataNode? innerArg)
+    {
+        if (node is FunctionCallNode { Procedure: VariableNode { Name: "string" }, Arguments: { Count: 1 } args })
+        {
+            innerArg = args[0];
+            return true;
+        }
+
+        innerArg = null;
+        return false;
     }
 
     private static ExpressionEvaluator CompileStringConcat(ExpressionEvaluator lhs, ExpressionEvaluator rhs)

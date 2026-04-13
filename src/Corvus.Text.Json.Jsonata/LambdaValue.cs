@@ -195,7 +195,7 @@ internal sealed class LambdaValue
     /// <returns>A child environment to pass to <see cref="InvokeReusing"/>.</returns>
     internal Environment CreateInvokeEnv(Environment callerEnv)
     {
-        return (this.definingEnv ?? callerEnv).CreateChild();
+        return Environment.RentChild(this.definingEnv ?? callerEnv);
     }
 
     /// <summary>
