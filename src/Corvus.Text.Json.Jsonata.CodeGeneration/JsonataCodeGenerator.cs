@@ -392,6 +392,7 @@ public static class JsonataCodeGenerator
         private readonly Dictionary<string, string> _nameFields = new(StringComparer.Ordinal);
         private readonly List<string> _staticFieldDeclarations = new();
         private readonly Dictionary<string, string> _variables = new(StringComparer.Ordinal);
+        private readonly Dictionary<string, string> _doubleVars = new(StringComparer.Ordinal);
 
         /// <summary>
         /// CSE cache for property navigation steps.
@@ -578,6 +579,7 @@ public static class JsonataCodeGenerator
                 ArrayConstructorNode arr => EmitArrayConstructor(sb, arr, indent, dataVar, wsVar),
                 ObjectConstructorNode obj => EmitObjectConstructor(sb, obj, indent, dataVar, wsVar),
                 FunctionCallNode func => EmitFunctionCall(sb, func, indent, dataVar, wsVar),
+                ApplyNode apply => EmitApply(sb, apply, indent, dataVar, wsVar),
                 FilterNode => throw new FallbackException(),
                 _ => throw new FallbackException(),
             };
@@ -833,6 +835,30 @@ public static class JsonataCodeGenerator
                     if (HasComplexAnnotations(step))
                     {
                         throw new FallbackException();
+                    }
+
+                    // Fuse descendant + property into single-pass when the next step is a simple NameNode
+                    if (step is DescendantNode
+                        && i + 1 < steps.Count
+                        && steps[i + 1] is NameNode nextName
+                        && !HasStages(nextName)
+                        && !HasComplexAnnotations(nextName)
+                        && !HasGroupAnnotation(nextName))
+                    {
+                        string nameField = GetOrCreateNameField(nextName.Value);
+                        string v = NextVar();
+                        if (i == 0)
+                        {
+                            L(sb, indent, $"var {v} = {H}.EnumerateDescendantProperty({currentVar}, {nameField}, {wsVar});");
+                        }
+                        else
+                        {
+                            L(sb, indent, $"var {v} = {H}.ApplyStepOverElements({currentVar}, static (el, ws) => {H}.EnumerateDescendantProperty(el, {nameField}, ws), {wsVar});");
+                        }
+
+                        currentVar = v;
+                        i += 2; // consumed both descendant and property steps
+                        continue;
                     }
 
                     string helperName = step is WildcardNode ? "EnumerateWildcard" : "EnumerateDescendant";
@@ -2556,7 +2582,62 @@ public static class JsonataCodeGenerator
             return v2;
         }
 
-        // ── Binary ───────────────────────────────────────────
+        // ── Apply (pipe) ────────────────────────────────────
+
+        /// <summary>
+        /// Emits the <c>~&gt;</c> (apply/pipe) operator. Desugars into a direct function call
+        /// with LHS as the first argument when the RHS is a known built-in.
+        /// </summary>
+        private string EmitApply(
+            StringBuilder sb, ApplyNode apply, string indent, string dataVar, string wsVar)
+        {
+            // RHS is a VariableNode referencing a built-in unary function
+            // e.g. expr ~> $sum → H.Sum(lhs, workspace)
+            if (apply.Rhs is VariableNode varNode && TryGetUnaryBuiltinHelperName(varNode.Name) is string helperName)
+            {
+                string lhs = EmitExpression(sb, apply.Lhs, indent, dataVar, wsVar);
+                string v = NextVar();
+                L(sb, indent, $"var {v} = {H}.{helperName}({lhs}, {wsVar});");
+                return v;
+            }
+
+            throw new FallbackException();
+        }
+
+        /// <summary>
+        /// Returns the CG helper method name for a built-in function that can be called
+        /// as a unary function (single argument), or <c>null</c> if not a known unary built-in.
+        /// </summary>
+        private static string? TryGetUnaryBuiltinHelperName(string name)
+        {
+            return name switch
+            {
+                "sum" => "Sum",
+                "count" => "Count",
+                "max" => "Max",
+                "min" => "Min",
+                "average" => "Average",
+                "string" => "String",
+                "boolean" => "Boolean",
+                "number" => "Number",
+                "abs" => "Abs",
+                "floor" => "Floor",
+                "ceil" => "Ceil",
+                "sqrt" => "Sqrt",
+                "length" => "Length",
+                "reverse" => "Reverse",
+                "distinct" => "Distinct",
+                "keys" => "Keys",
+                "values" => "Values",
+                "spread" => "Spread",
+                "flatten" => "Flatten",
+                "shuffle" => "Shuffle",
+                "exists" => "Exists",
+                "type" => "Type",
+                _ => null,
+            };
+        }
+
         private string EmitBinary(
             StringBuilder sb, BinaryNode binary, string indent, string dataVar, string wsVar)
         {
@@ -2777,6 +2858,50 @@ public static class JsonataCodeGenerator
             if (expr is not BinaryNode binary)
             {
                 return null;
+            }
+
+            string? csharpOp = binary.Operator switch
+            {
+                ">" => ">",
+                ">=" => ">=",
+                "<" => "<",
+                "<=" => "<=",
+                _ => null,
+            };
+
+            if (csharpOp is null)
+            {
+                return null;
+            }
+
+            // Fast path: double variable vs constant → direct double comparison
+            // Avoids DoubleToElement, NumberFromDouble, and element-level GreaterThan.
+            if (binary.Rhs is NumberNode rightConst
+                && binary.Lhs is VariableNode rightLhsVar
+                && _doubleVars.TryGetValue(rightLhsVar.Name, out string? dblVar))
+            {
+                string literal = rightConst.Value.ToString("R", CultureInfo.InvariantCulture);
+                string v = NextVar();
+                L(sb, indent, $"bool {v} = {dblVar} {csharpOp} {literal};");
+                return v;
+            }
+
+            if (binary.Lhs is NumberNode leftConst
+                && binary.Rhs is VariableNode leftRhsVar
+                && _doubleVars.TryGetValue(leftRhsVar.Name, out string? dblVar2))
+            {
+                string flippedOp = binary.Operator switch
+                {
+                    ">" => "<",
+                    ">=" => "<=",
+                    "<" => ">",
+                    "<=" => ">=",
+                    _ => null!,
+                };
+                string literal = leftConst.Value.ToString("R", CultureInfo.InvariantCulture);
+                string v = NextVar();
+                L(sb, indent, $"bool {v} = {dblVar2} {flippedOp} {literal};");
+                return v;
             }
 
             // Map operator → fused helper name (element on left, constant on right)
@@ -3255,10 +3380,22 @@ public static class JsonataCodeGenerator
         private string EmitCondition(
             StringBuilder sb, ConditionNode cond, string indent, string dataVar, string wsVar)
         {
-            string condVar = EmitExpression(sb, cond.Condition, indent, dataVar, wsVar);
+            // Try to emit the condition as a raw bool, avoiding element-level comparisons
+            // and IsTruthy. Handles arithmetic-bound double variables compared to constants.
+            string? boolVar = TryEmitExpressionAsBool(sb, cond.Condition, indent, dataVar, wsVar);
             string v = NextVar();
             L(sb, indent, $"JsonElement {v};");
-            L(sb, indent, $"if ({H}.IsTruthy({condVar}))");
+
+            if (boolVar is not null)
+            {
+                L(sb, indent, $"if ({boolVar})");
+            }
+            else
+            {
+                string condVar = EmitExpression(sb, cond.Condition, indent, dataVar, wsVar);
+                L(sb, indent, $"if ({H}.IsTruthy({condVar}))");
+            }
+
             L(sb, indent, "{");
 
             string thenVar = EmitExpression(sb, cond.Then, indent + "    ", dataVar, wsVar);
@@ -3298,16 +3435,34 @@ public static class JsonataCodeGenerator
             }
 
             // Track variables bound in this block so we can restore outer scope
-            var boundVars = new List<(string name, string? saved)>();
+            var boundVars = new List<(string name, string? saved, string? savedDouble)>();
             string lastVar = dataVar;
             foreach (JsonataNode expr in block.Expressions)
             {
                 if (expr is BindNode bind && bind.Lhs is VariableNode varNode)
                 {
-                    string rhsVar = EmitExpression(sb, bind.Rhs, indent, dataVar, wsVar);
-                    string? saved = StashVariable(varNode.Name, rhsVar);
-                    boundVars.Add((varNode.Name, saved));
-                    lastVar = rhsVar;
+                    // When the RHS is arithmetic, keep the raw double for optimized comparisons.
+                    if (bind.Rhs is BinaryNode arith && arith.Operator is "+" or "-" or "*" or "/" or "%")
+                    {
+                        string doubleVar = EmitArithmeticAsDouble(sb, arith, indent, dataVar, wsVar);
+                        string elementVar = NextVar();
+                        L(sb, indent, $"var {elementVar} = {H}.DoubleToElement({doubleVar}, {wsVar});");
+
+                        string? saved = StashVariable(varNode.Name, elementVar);
+                        _doubleVars.TryGetValue(varNode.Name, out string? savedDouble);
+                        _doubleVars[varNode.Name] = doubleVar;
+                        boundVars.Add((varNode.Name, saved, savedDouble));
+                        lastVar = elementVar;
+                    }
+                    else
+                    {
+                        string rhsVar = EmitExpression(sb, bind.Rhs, indent, dataVar, wsVar);
+                        string? saved = StashVariable(varNode.Name, rhsVar);
+                        _doubleVars.TryGetValue(varNode.Name, out string? savedDouble);
+                        _doubleVars.Remove(varNode.Name);
+                        boundVars.Add((varNode.Name, saved, savedDouble));
+                        lastVar = rhsVar;
+                    }
                 }
                 else
                 {
@@ -3319,6 +3474,15 @@ public static class JsonataCodeGenerator
             for (int i = boundVars.Count - 1; i >= 0; i--)
             {
                 RestoreVariable(boundVars[i].name, boundVars[i].saved);
+
+                if (boundVars[i].savedDouble is not null)
+                {
+                    _doubleVars[boundVars[i].name] = boundVars[i].savedDouble!;
+                }
+                else
+                {
+                    _doubleVars.Remove(boundVars[i].name);
+                }
             }
 
             return lastVar;
@@ -3330,6 +3494,19 @@ public static class JsonataCodeGenerator
             if (bind.Lhs is not VariableNode varNode)
             {
                 throw new FallbackException();
+            }
+
+            // When the RHS is arithmetic, keep the raw double for optimized comparisons.
+            // The element form is still emitted for general use, but TryEmitExpressionAsBool
+            // can use the double directly for constant comparisons like $p > 50.
+            if (bind.Rhs is BinaryNode arith && arith.Operator is "+" or "-" or "*" or "/" or "%")
+            {
+                string doubleVar = EmitArithmeticAsDouble(sb, arith, indent, dataVar, wsVar);
+                string elementVar = NextVar();
+                L(sb, indent, $"var {elementVar} = {H}.DoubleToElement({doubleVar}, {wsVar});");
+                _variables[varNode.Name] = elementVar;
+                _doubleVars[varNode.Name] = doubleVar;
+                return elementVar;
             }
 
             string rhsVar = EmitExpression(sb, bind.Rhs, indent, dataVar, wsVar);

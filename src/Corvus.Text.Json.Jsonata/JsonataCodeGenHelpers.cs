@@ -1003,6 +1003,56 @@ public static class JsonataCodeGenHelpers
     }
 
     /// <summary>
+    /// Fused descendant + property navigation. Recursively collects the named property
+    /// from all descendant objects in a single pass, avoiding intermediate array materialization.
+    /// </summary>
+    /// <param name="input">The input element to traverse.</param>
+    /// <param name="name">The UTF-8 encoded property name to collect.</param>
+    /// <param name="workspace">The workspace for intermediate allocations.</param>
+    /// <returns>The collected values, or <c>default</c> if none found.</returns>
+    public static JsonElement EnumerateDescendantProperty(in JsonElement input, byte[] name, JsonWorkspace workspace)
+    {
+        var buffer = default(ElementBuffer);
+        try
+        {
+            CollectDescendantProperty(input, name, ref buffer);
+
+            return buffer.Count == 0
+                ? default
+                : buffer.Count == 1
+                    ? buffer[0]
+                    : buffer.ToResult(workspace);
+        }
+        finally
+        {
+            buffer.Dispose();
+        }
+
+        static void CollectDescendantProperty(in JsonElement element, byte[] name, ref ElementBuffer buffer)
+        {
+            if (element.ValueKind == JsonValueKind.Object)
+            {
+                if (element.TryGetProperty((ReadOnlySpan<byte>)name, out JsonElement val))
+                {
+                    buffer.AddFlatten(val);
+                }
+
+                foreach (var prop in element.EnumerateObject())
+                {
+                    CollectDescendantProperty(prop.Value, name, ref buffer);
+                }
+            }
+            else if (element.ValueKind == JsonValueKind.Array)
+            {
+                foreach (JsonElement item in element.EnumerateArray())
+                {
+                    CollectDescendantProperty(item, name, ref buffer);
+                }
+            }
+        }
+    }
+
+    /// <summary>
     /// Gets an element from an array by index, supporting negative indices (from end).
     /// Used for global (post-aggregation) indexing.
     /// </summary>
@@ -3661,8 +3711,12 @@ public static class JsonataCodeGenHelpers
         }
 
         // Build code-point array for the pad string so cycling works correctly with surrogates.
+        // Pad strings are typically 1-2 characters; stackalloc avoids the heap allocation.
         int padCpCount = CountCodePoints(padSpan);
-        int[] padCodePoints = new int[padCpCount];
+        int[]? rentedCpArray = null;
+        Span<int> padCodePoints = padCpCount <= 32
+            ? stackalloc int[32]
+            : (rentedCpArray = ArrayPool<int>.Shared.Rent(padCpCount));
         int cpIdx = 0;
         for (int ci = 0; ci < padSpan.Length; ci++)
         {
@@ -3716,6 +3770,11 @@ public static class JsonataCodeGenHelpers
             if (rentedChars is not null)
             {
                 ArrayPool<char>.Shared.Return(rentedChars);
+            }
+
+            if (rentedCpArray is not null)
+            {
+                ArrayPool<int>.Shared.Return(rentedCpArray);
             }
         }
     }
@@ -4352,7 +4411,7 @@ public static class JsonataCodeGenHelpers
 
         if (input.ValueKind == JsonValueKind.Array)
         {
-            JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(workspace, input.GetArrayLength());
+            JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(workspace, input.GetArrayLength() * 3);
             JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
             foreach (var item in input.EnumerateArray())
             {
@@ -4360,10 +4419,7 @@ public static class JsonataCodeGenHelpers
                 {
                     foreach (var prop in item.EnumerateObject())
                     {
-                        JsonDocumentBuilder<JsonElement.Mutable> propDoc = JsonElement.CreateObjectBuilder(workspace, 1);
-                        JsonElement.Mutable propRoot = propDoc.RootElement;
-                        propRoot.SetProperty(prop.Name, prop.Value);
-                        arrayRoot.AddItem((JsonElement)propRoot);
+                        arrayRoot.AddItem(prop, SpreadPropertyCallback, 1);
                     }
                 }
             }
@@ -4391,13 +4447,16 @@ public static class JsonataCodeGenHelpers
         JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
         foreach (var prop in obj.EnumerateObject())
         {
-            JsonDocumentBuilder<JsonElement.Mutable> propDoc = JsonElement.CreateObjectBuilder(workspace, 1);
-            JsonElement.Mutable propRoot = propDoc.RootElement;
-            propRoot.SetProperty(prop.Name, prop.Value);
-            arrayRoot.AddItem((JsonElement)propRoot);
+            arrayRoot.AddItem(prop, SpreadPropertyCallback, 1);
         }
 
         return (JsonElement)arrayRoot;
+    }
+
+    private static void SpreadPropertyCallback(in JsonProperty<JsonElement> ctx, ref JsonElement.ObjectBuilder builder)
+    {
+        using UnescapedUtf8JsonString nameUtf8 = ctx.Utf8NameSpan;
+        builder.AddProperty(nameUtf8.Span, ctx.Value, escapeName: false, nameRequiresUnescaping: false);
     }
 
     /// <summary>

@@ -2676,8 +2676,58 @@ internal static class BuiltInFunctions
                 return Sequence.Undefined;
             }
 
-            // Collect all elements to spread
-            var objects = default(SequenceBuilder);
+            // Single-element fast path: delegate to the CG helper which uses CVB
+            if (seq.Count == 1)
+            {
+                var el = seq[0];
+                if (el.ValueKind == JsonValueKind.Object || el.ValueKind == JsonValueKind.Array)
+                {
+                    JsonElement result = JsonataCodeGenHelpers.Spread(el, env.Workspace);
+                    return result.IsNullOrUndefined() ? Sequence.Undefined : new Sequence(result);
+                }
+
+                return new Sequence(el);
+            }
+
+            // Multi-element sequence: count total properties for capacity, then build
+            int totalProps = 0;
+            for (int i = 0; i < seq.Count; i++)
+            {
+                var el = seq[i];
+                if (el.ValueKind == JsonValueKind.Object)
+                {
+                    foreach (var p in el.EnumerateObject())
+                    {
+                        totalProps++;
+                    }
+                }
+                else if (el.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var item in el.EnumerateArray())
+                    {
+                        if (item.ValueKind == JsonValueKind.Object)
+                        {
+                            foreach (var p in item.EnumerateObject())
+                            {
+                                totalProps++;
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    // Non-objects return as-is
+                    return new Sequence(el);
+                }
+            }
+
+            if (totalProps == 0)
+            {
+                return Sequence.Undefined;
+            }
+
+            JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(env.Workspace, totalProps);
+            JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
             for (int i = 0; i < seq.Count; i++)
             {
                 var el = seq[i];
@@ -2685,10 +2735,7 @@ internal static class BuiltInFunctions
                 {
                     foreach (var prop in el.EnumerateObject())
                     {
-                        JsonDocumentBuilder<JsonElement.Mutable> propDoc = JsonElement.CreateObjectBuilder(env.Workspace, 1);
-                        JsonElement.Mutable propRoot = propDoc.RootElement;
-                        propRoot.SetProperty(prop.Name, prop.Value);
-                        objects.Add((JsonElement)propRoot);
+                        arrayRoot.AddItem(prop, SpreadPropertyCallback, 1);
                     }
                 }
                 else if (el.ValueKind == JsonValueKind.Array)
@@ -2699,39 +2746,26 @@ internal static class BuiltInFunctions
                         {
                             foreach (var prop in item.EnumerateObject())
                             {
-                                JsonDocumentBuilder<JsonElement.Mutable> propDoc = JsonElement.CreateObjectBuilder(env.Workspace, 1);
-                                JsonElement.Mutable propRoot = propDoc.RootElement;
-                                propRoot.SetProperty(prop.Name, prop.Value);
-                                objects.Add((JsonElement)propRoot);
+                                arrayRoot.AddItem(prop, SpreadPropertyCallback, 1);
                             }
                         }
                     }
                 }
-                else
-                {
-                    // Non-objects return as-is
-                    objects.ReturnArray();
-                    return new Sequence(el);
-                }
             }
 
-            Sequence objSeqResult = objects.ToSequence();
-            if (objSeqResult.IsUndefined)
+            if (totalProps == 1)
             {
-                objects.ReturnArray();
-                return Sequence.Undefined;
+                return new Sequence(arrayRoot[0]);
             }
 
-            if (objSeqResult.Count == 1)
-            {
-                objects.ReturnArray();
-                return new Sequence(objSeqResult[0]);
-            }
-
-            JsonElement arrResult = JsonataHelpers.ArrayFromSequence(objSeqResult, env.Workspace);
-            objects.ReturnArray();
-            return new Sequence(arrResult);
+            return new Sequence((JsonElement)arrayRoot);
         };
+    }
+
+    private static void SpreadPropertyCallback(in JsonProperty<JsonElement> ctx, ref JsonElement.ObjectBuilder builder)
+    {
+        using UnescapedUtf8JsonString nameUtf8 = ctx.Utf8NameSpan;
+        builder.AddProperty(nameUtf8.Span, ctx.Value, escapeName: false, nameRequiresUnescaping: false);
     }
 
     private static ExpressionEvaluator CompileLookup(ExpressionEvaluator[] args)

@@ -733,7 +733,7 @@ The Corvus JSONata implementation is designed for high-throughput scenarios wher
 
 ### Benchmark summary
 
-Measured on .NET 10.0 (13th Gen Intel Core i7-13800H) across 50 scenarios covering property navigation, arithmetic, string operations, pattern matching, higher-order functions, predicate filtering, object construction, array functions, and object functions. Each benchmark compares three implementations: `Corvus` (interpreted), `CodeGen` (source-generated), and `Jsonata.Net.Native` (reference .NET implementation, v3.0.0).
+Measured on .NET 10.0 (13th Gen Intel Core i7-13800H) across 59 scenarios covering property navigation, arithmetic, string operations, pattern matching, higher-order functions, predicate filtering, object construction, array functions, object functions, language operators, and variable bindings. Each benchmark compares three implementations: `Corvus` (interpreted), `CodeGen` (source-generated), and `Jsonata.Net.Native` (reference .NET implementation, v3.0.0).
 
 All Runtime benchmarks use caller-managed `JsonWorkspace` for zero-allocation evaluation. Jsonata.Net.Native uses pre-compiled `JsonataQuery` objects with pre-parsed `JToken` data. The "Alloc" columns show per-invocation GC allocation.
 
@@ -814,8 +814,9 @@ Code-gen is **2–5× faster** than the reference implementation for string oper
 | $substring | `$substring(Product."Product Name", 0, 6)` | 737 ns | 541 ns | 1,301 ns | 0 B | 0 B | 3,416 B |
 | $substringBefore | `$substringBefore(Product."Product Name", " ")` | 444 ns | 366 ns | 1,125 ns | 0 B | 0 B | 3,120 B |
 | $substringAfter | `$substringAfter(Product."Product Name", " ")` | 403 ns | 367 ns | 1,216 ns | 0 B | 0 B | 3,112 B |
+| $pad | `$pad(Account.Order[0].Product[0]."Product Name", 20)` | 631 ns | 701 ns | 1,451 ns | 360 B | 0 B | 3,808 B |
 
-String functions show **2–4× speedup** across the board with **zero allocation** for both runtime and code-gen. The reference implementation allocates 2–3 KB per call due to `JToken` intermediaries.
+String functions show **2–4× speedup** across the board with **zero or minimal allocation** for both runtime and code-gen. Code-gen `$pad` achieves zero allocation by using `stackalloc` for code-point indexing. The reference implementation allocates 2–4 KB per call due to `JToken` intermediaries.
 
 ##### Pattern matching
 
@@ -887,8 +888,9 @@ Code-gen achieves **2–3× speedup** for object construction with **98–99% le
 | $append | `$append(Order[0].Product, Order[1].Product)` | 470 ns | 449 ns | 709 ns | 120 B | 120 B | 3,280 B |
 | $reverse | `$reverse(Account.Order[0].Product)` | 268 ns | 254 ns | 460 ns | 120 B | 120 B | 2,136 B |
 | $distinct | `$distinct(Account.Order.Product."Product Name")` | 645 ns | 577 ns | 655 ns | 400 B | 120 B | 2,848 B |
+| $single | `$single(Account.Order[0].Product, function($v) { $v.Price > 30 })` | 1,551 ns | 725 ns | 2,045 ns | 1,352 B | 0 B | 4,960 B |
 
-Array functions are **1.5–3× faster** with zero or minimal allocation. `$distinct` uses a zero-copy `UniqueItemsHashSet` that deduplicates via document-internal element references — no intermediate strings are created.
+Array functions are **1.5–3× faster** with zero or minimal allocation. `$distinct` uses a zero-copy `UniqueItemsHashSet` that deduplicates via document-internal element references — no intermediate strings are created. Code-gen `$single` achieves **zero allocation** and is **2.8× faster** than native by inlining the predicate as a direct comparison.
 
 ##### Object functions
 
@@ -897,7 +899,28 @@ Array functions are **1.5–3× faster** with zero or minimal allocation. `$dist
 | $keys | `$keys(Account.Order[0].Product[0])` | 577 ns | 492 ns | 951 ns | 120 B | 120 B | 2,696 B |
 | $merge | `$merge(Account.Order.Product)` | 861 ns | 769 ns | 1,417 ns | 400 B | 120 B | 2,784 B |
 | $each (as $values) | `$each(obj, function($v){$v})` | 1,133 ns | 372 ns | 1,448 ns | 200 B | 120 B | 4,232 B |
+| $lookup | `$lookup(Account.Order[0].Product[0], "Price")` | 273 ns | 261 ns | 1,137 ns | 0 B | 120 B | 2,752 B |
+| $spread | `$spread(Account.Order[0].Product[0])` | 870 ns | 784 ns | 1,165 ns | 120 B | 120 B | 3,400 B |
 
-Object functions are **1.6–2× faster** for runtime, **2–4× faster** for code-gen. `$keys` uses a `Utf8KeyHashSet` for zero-copy deduplication over raw UTF-8 property names. `$merge` uses fused chain navigation to eliminate intermediate document builders. Corvus also provides `$values()` as an extension function (not available in standard JSONata).
+Object functions are **1.6–4× faster** for runtime, **2–4× faster** for code-gen. `$keys` uses a `Utf8KeyHashSet` for zero-copy deduplication over raw UTF-8 property names. `$merge` uses fused chain navigation to eliminate intermediate document builders. `$lookup` achieves **4× speedup** over native with zero allocation by resolving directly from the document backing store. `$spread` uses a CVB (create-via-builder) pattern that constructs single-key objects in a single pass without intermediate builders. Corvus also provides `$values()` as an extension function (not available in standard JSONata).
+
+##### Language operators
+
+| Scenario | Expression | Runtime | CodeGen | Jsonata.Net.Native | Runtime Alloc | CodeGen Alloc | Native Alloc |
+|----------|-----------|-------:|--------:|-------------------:|-------------:|--------------:|-------------:|
+| Conditional | `Account.Order[0].Product[0].Price > 30 ? "expensive" : "cheap"` | 237 ns | 236 ns | 792 ns | 0 B | 0 B | 2,280 B |
+| Descendant | `**."Product Name"` | 1,655 ns | 786 ns | 1,376 ns | 656 B | 120 B | 2,432 B |
+| Transform pipe | `Account.Order.Product.Price ~> $sum` | 930 ns | 1,003 ns | 1,328 ns | 776 B | 120 B | 2,792 B |
+
+Conditional expressions are **3.4× faster** than native with **zero allocation** — both runtime and code-gen emit a direct comparison and branch with no element construction overhead. The descendant operator (`**`) uses a fused single-pass traversal in code-gen that collects only matching properties during recursive descent, achieving **1.8× speedup** over native with 120 B allocation (vs 2,432 B). The transform pipe operator (`~>`) maps directly to a helper call for built-in functions; code-gen emits the pipe inline rather than falling back to the generic evaluator.
+
+##### Variable bindings
+
+| Scenario | Expression | Runtime | CodeGen | Jsonata.Net.Native | Runtime Alloc | CodeGen Alloc | Native Alloc |
+|----------|-----------|-------:|--------:|-------------------:|-------------:|--------------:|-------------:|
+| Let binding | `($total := $sum(...); $total > 100 ? "high" : "low")` | 2,497 ns | 1,008 ns | 3,141 ns | 304 B | 0 B | 6,992 B |
+| Binding in HOF | `$map(Products, function($v) { ($p := $v.Price * $v.Quantity; ...) })` | 4,467 ns | 3,249 ns | 5,309 ns | 912 B | 120 B | 11,792 B |
+
+Code-gen eliminates all allocation for simple let-bindings by keeping intermediate values in local variables (0 B vs 6,992 B for native). For bindings inside higher-order functions, code-gen emits a direct `double > constant` comparison shortcut that avoids element round-trips, achieving **1.6× speedup** with 120 B allocation (vs 11,792 B).
 
 > *Benchmarks run with BenchmarkDotNet v0.15.8 on .NET 10.0.5, 13th Gen Intel Core i7-13800H, Windows 11. All Runtime benchmarks use `JsonWorkspace` for pooled evaluation. Jsonata.Net.Native v3.0.0 uses pre-compiled `JsonataQuery` with pre-parsed `JToken` data. OutlierMode=RemoveAll, RunStrategy=Throughput.*
