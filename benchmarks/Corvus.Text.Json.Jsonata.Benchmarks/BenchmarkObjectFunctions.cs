@@ -42,6 +42,7 @@ public class BenchmarkObjectFunctions : JsonataBenchmarkBase
 
     private const string ExprKeys = "$keys(Account.Order[0].Product[0])";
     private const string ExprValues = "$values(Account.Order[0].Product[0])";
+    private const string ExprValuesStd = """$each(Account.Order[0].Product[0], function($v){$v})""";
     private const string ExprMerge = "$merge(Account.Order.Product)";
 
     private JsonataEvaluator evaluator = null!;
@@ -52,6 +53,7 @@ public class BenchmarkObjectFunctions : JsonataBenchmarkBase
 #if !NETFRAMEWORK
     private JsonataQuery nativeKeys = null!;
     private JsonataQuery nativeValues = null!;
+    private JsonataQuery nativeValuesStd = null!;
     private JsonataQuery nativeMerge = null!;
     private JToken nativeData = null!;
 #endif
@@ -70,17 +72,20 @@ public class BenchmarkObjectFunctions : JsonataBenchmarkBase
         // Warm up RT
         this.evaluator.Evaluate(ExprKeys, this.data);
         this.evaluator.Evaluate(ExprValues, this.data);
+        this.evaluator.Evaluate(ExprValuesStd, this.data);
         this.evaluator.Evaluate(ExprMerge, this.data);
 
         // Warm up CG
         KeysCodeGen.Evaluate(this.data, this.workspace); this.workspace.Reset();
         ValuesCodeGen.Evaluate(this.data, this.workspace); this.workspace.Reset();
+        ValuesStdCodeGen.Evaluate(this.data, this.workspace); this.workspace.Reset();
         MergeCodeGen.Evaluate(this.data, this.workspace); this.workspace.Reset();
 
 #if !NETFRAMEWORK
         this.nativeData = JToken.Parse(DataJson);
         this.nativeKeys = new JsonataQuery(ExprKeys);
         this.nativeValues = new JsonataQuery(ExprValues);
+        this.nativeValuesStd = new JsonataQuery(ExprValuesStd);
         this.nativeMerge = new JsonataQuery(ExprMerge);
 #endif
     }
@@ -147,6 +152,33 @@ public class BenchmarkObjectFunctions : JsonataBenchmarkBase
     {
         this.workspace.Reset();
         return ValuesCodeGen.Evaluate(this.data, this.workspace);
+    }
+
+    // ── values standard syntax ($each) ─────────────────────
+
+    /// <summary>Corvus RT: standard values via $each.</summary>
+    [BenchmarkCategory("ValuesStd")]
+    [Benchmark]
+    public JsonElement Corvus_ValuesStd()
+    {
+        this.workspace.Reset();
+        return this.evaluator.Evaluate(ExprValuesStd, this.data, this.workspace);
+    }
+
+#if !NETFRAMEWORK
+    /// <summary>Native: standard values via $each.</summary>
+    [BenchmarkCategory("ValuesStd")]
+    [Benchmark(Baseline = true)]
+    public JToken JsonataDotNet_ValuesStd() => this.nativeValuesStd.Eval(this.nativeData);
+#endif
+
+    /// <summary>CodeGen: standard values via $each.</summary>
+    [BenchmarkCategory("ValuesStd")]
+    [Benchmark]
+    public JsonElement Corvus_CodeGen_ValuesStd()
+    {
+        this.workspace.Reset();
+        return ValuesStdCodeGen.Evaluate(this.data, this.workspace);
     }
 
     // ── $merge ───────────────────────────────────────────────
