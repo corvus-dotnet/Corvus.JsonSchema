@@ -3716,14 +3716,19 @@ public static class JsonataCodeGenHelpers
         }
 
         int len = input.GetArrayLength();
-        JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(workspace, len);
-        JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
-        for (int i = len - 1; i >= 0; i--)
-        {
-            arrayRoot.AddItem(input[i]);
-        }
+        JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(
+            workspace,
+            (input, len),
+            static (in (JsonElement Input, int Len) ctx, ref JsonElement.ArrayBuilder builder) =>
+            {
+                for (int i = ctx.Len - 1; i >= 0; i--)
+                {
+                    builder.AddItem(ctx.Input[i]);
+                }
+            },
+            estimatedMemberCount: len + 2);
 
-        return (JsonElement)arrayRoot;
+        return (JsonElement)doc.RootElement;
     }
 
     /// <summary>
@@ -3765,28 +3770,72 @@ public static class JsonataCodeGenHelpers
             return default;
         }
 
-        var keys = new List<string>();
-        var seen = new HashSet<string>();
-        CollectKeys(input, keys, seen);
-
-        if (keys.Count == 0)
+        if (input.ValueKind == JsonValueKind.Object)
         {
-            return default;
+            // Fast path for single object: use CVB array builder with UTF-8 property names
+            int propCount = 0;
+            foreach (var p in input.EnumerateObject())
+            {
+                propCount++;
+            }
+
+            if (propCount == 0)
+            {
+                return default;
+            }
+
+            JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(
+                workspace,
+                input,
+                static (in JsonElement ctx, ref JsonElement.ArrayBuilder builder) =>
+                {
+                    foreach (var prop in ctx.EnumerateObject())
+                    {
+                        using UnescapedUtf8JsonString nameUtf8 = prop.Utf8NameSpan;
+                        builder.AddItem(nameUtf8.Span);
+                    }
+                },
+                estimatedMemberCount: propCount + 2);
+
+            if (propCount == 1)
+            {
+                return doc.RootElement[0];
+            }
+
+            return (JsonElement)doc.RootElement;
         }
 
-        if (keys.Count == 1)
+        if (input.ValueKind == JsonValueKind.Array)
         {
-            return JsonataHelpers.StringFromString(keys[0], workspace);
+            // Array of objects — need dedup, fall back to collection approach
+            var keys = new List<string>();
+            var seen = new HashSet<string>();
+            foreach (var item in input.EnumerateArray())
+            {
+                CollectKeys(item, keys, seen);
+            }
+
+            if (keys.Count == 0)
+            {
+                return default;
+            }
+
+            if (keys.Count == 1)
+            {
+                return JsonataHelpers.StringFromString(keys[0], workspace);
+            }
+
+            JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(workspace, keys.Count);
+            JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
+            foreach (var key in keys)
+            {
+                arrayRoot.AddItem(JsonataHelpers.StringFromString(key, workspace));
+            }
+
+            return (JsonElement)arrayRoot;
         }
 
-        JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(workspace, keys.Count);
-        JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
-        foreach (var key in keys)
-        {
-            arrayRoot.AddItem(JsonataHelpers.StringFromString(key, workspace));
-        }
-
-        return (JsonElement)arrayRoot;
+        return default;
     }
 
     private static void CollectKeys(JsonElement el, List<string> keys, HashSet<string> seen)
@@ -3812,6 +3861,8 @@ public static class JsonataCodeGenHelpers
 
     /// <summary>
     /// JSONata <c>$values</c> function — returns values from an object.
+    /// Uses <see cref="ElementBuffer"/> to avoid
+    /// document creation when the object has a single property.
     /// </summary>
     public static JsonElement Values(in JsonElement input, JsonWorkspace workspace)
     {
@@ -3820,20 +3871,20 @@ public static class JsonataCodeGenHelpers
             return default;
         }
 
-        int propCount = 0;
-        foreach (var p in input.EnumerateObject())
+        var buffer = default(ElementBuffer);
+        try
         {
-            propCount++;
-        }
+            foreach (var prop in input.EnumerateObject())
+            {
+                buffer.Add(prop.Value);
+            }
 
-        JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(workspace, propCount);
-        JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
-        foreach (var prop in input.EnumerateObject())
+            return buffer.ToArrayResult(workspace);
+        }
+        finally
         {
-            arrayRoot.AddItem(prop.Value);
+            buffer.Dispose();
         }
-
-        return (JsonElement)arrayRoot;
     }
 
     /// <summary>
@@ -3903,24 +3954,34 @@ public static class JsonataCodeGenHelpers
             return input;
         }
 
-        JsonDocumentBuilder<JsonElement.Mutable> objDoc = JsonElement.CreateObjectBuilder(workspace, 16);
-        JsonElement.Mutable objRoot = objDoc.RootElement;
-
-        if (input.ValueKind == JsonValueKind.Array)
+        if (input.ValueKind != JsonValueKind.Array)
         {
-            foreach (var item in input.EnumerateArray())
-            {
-                if (item.ValueKind == JsonValueKind.Object)
-                {
-                    foreach (var prop in item.EnumerateObject())
-                    {
-                        objRoot.SetProperty(prop.Name, prop.Value);
-                    }
-                }
-            }
+            return default;
         }
 
-        return (JsonElement)objRoot;
+        // Use CVB ObjectBuilder — AddProperty is forward-only append (no O(n) scan).
+        // Last-wins semantics are handled by the fact that the document builder
+        // keeps the last value for duplicate property names when serialised.
+        JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(
+            workspace,
+            input,
+            static (in JsonElement ctx, ref JsonElement.ObjectBuilder builder) =>
+            {
+                foreach (var item in ctx.EnumerateArray())
+                {
+                    if (item.ValueKind == JsonValueKind.Object)
+                    {
+                        foreach (var prop in item.EnumerateObject())
+                        {
+                            using UnescapedUtf8JsonString nameUtf8 = prop.Utf8NameSpan;
+                            builder.AddProperty(nameUtf8.Span, prop.Value, escapeName: false, nameRequiresUnescaping: false);
+                        }
+                    }
+                }
+            },
+            estimatedMemberCount: 16);
+
+        return (JsonElement)doc.RootElement;
     }
 
     /// <summary>
@@ -4137,24 +4198,30 @@ public static class JsonataCodeGenHelpers
             return input;
         }
 
-        JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(workspace, input.GetArrayLength());
-        JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
-        FlattenElement(input, ref arrayRoot);
-        return (JsonElement)arrayRoot;
+        JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(
+            workspace,
+            input,
+            static (in JsonElement ctx, ref JsonElement.ArrayBuilder builder) =>
+            {
+                FlattenIntoBuilder(ctx, ref builder);
+            },
+            estimatedMemberCount: 16);
+
+        return (JsonElement)doc.RootElement;
     }
 
-    private static void FlattenElement(JsonElement element, ref JsonElement.Mutable arrayRoot)
+    private static void FlattenIntoBuilder(JsonElement element, ref JsonElement.ArrayBuilder builder)
     {
         if (element.ValueKind == JsonValueKind.Array)
         {
             foreach (var item in element.EnumerateArray())
             {
-                FlattenElement(item, ref arrayRoot);
+                FlattenIntoBuilder(item, ref builder);
             }
         }
         else
         {
-            arrayRoot.AddItem(element);
+            builder.AddItem(element);
         }
     }
 
@@ -7130,6 +7197,17 @@ public static class JsonataCodeGenHelpers
     public delegate JsonElement EachTransform(JsonElement value, ReadOnlySpan<byte> keyUtf8, JsonWorkspace workspace);
 
     /// <summary>
+    /// Delegate for <c>$each</c> transform with original object: receives the property value,
+    /// the property key as unescaped UTF-8 bytes, the original object, and the workspace.
+    /// </summary>
+    /// <param name="value">The property value.</param>
+    /// <param name="keyUtf8">The property name as unescaped UTF-8 bytes.</param>
+    /// <param name="obj">The original object being iterated.</param>
+    /// <param name="workspace">The workspace for memory allocation.</param>
+    /// <returns>The transformed element.</returns>
+    public delegate JsonElement EachTransformWithObject(JsonElement value, ReadOnlySpan<byte> keyUtf8, JsonElement obj, JsonWorkspace workspace);
+
+    /// <summary>
     /// Delegate for <c>$sift</c> predicate: receives the property value and
     /// the property key as unescaped UTF-8 bytes, avoiding intermediate <see cref="JsonElement"/> creation for the key.
     /// </summary>
@@ -7138,6 +7216,17 @@ public static class JsonataCodeGenHelpers
     /// <param name="workspace">The workspace for memory allocation.</param>
     /// <returns><see langword="true"/> if the property should be included.</returns>
     public delegate bool SiftPredicate(JsonElement value, ReadOnlySpan<byte> keyUtf8, JsonWorkspace workspace);
+
+    /// <summary>
+    /// Delegate for <c>$sift</c> predicate with original object: receives the property value,
+    /// the property key as unescaped UTF-8 bytes, the original object, and the workspace.
+    /// </summary>
+    /// <param name="value">The property value.</param>
+    /// <param name="keyUtf8">The property name as unescaped UTF-8 bytes.</param>
+    /// <param name="obj">The original object being sifted.</param>
+    /// <param name="workspace">The workspace for memory allocation.</param>
+    /// <returns><see langword="true"/> if the property should be included.</returns>
+    public delegate bool SiftPredicateWithObject(JsonElement value, ReadOnlySpan<byte> keyUtf8, JsonElement obj, JsonWorkspace workspace);
 
     /// <summary>
     /// Creates a JSON string element from unescaped UTF-8 bytes.
@@ -7195,6 +7284,49 @@ public static class JsonataCodeGenHelpers
     }
 
     /// <summary>
+    /// JSONata <c>$each(obj, fn($v,$k,$o))</c> — iterates properties with access to the original object.
+    /// </summary>
+    /// <param name="input">The object to iterate.</param>
+    /// <param name="transform">A delegate <c>(value, keyUtf8, obj, workspace) → JsonElement</c>.</param>
+    /// <param name="workspace">The workspace for memory allocation.</param>
+    /// <returns>An array of transform results, or undefined if input is not an object.</returns>
+    public static JsonElement EachProperty(
+        in JsonElement input,
+        EachTransformWithObject transform,
+        JsonWorkspace workspace)
+    {
+        if (input.IsNullOrUndefined())
+        {
+            return default;
+        }
+
+        if (input.ValueKind != JsonValueKind.Object)
+        {
+            return default;
+        }
+
+        var buffer = default(ElementBuffer);
+        try
+        {
+            foreach (var prop in input.EnumerateObject())
+            {
+                using UnescapedUtf8JsonString nameUtf8 = prop.Utf8NameSpan;
+                JsonElement result = transform(prop.Value, nameUtf8.Span, input, workspace);
+                if (result.ValueKind != JsonValueKind.Undefined)
+                {
+                    buffer.Add(result);
+                }
+            }
+
+            return buffer.ToArrayResult(workspace);
+        }
+        finally
+        {
+            buffer.Dispose();
+        }
+    }
+
+    /// <summary>
     /// JSONata <c>$sift</c> — filters the properties of an object,
     /// returning a new object containing only properties for which the predicate returns truthy.
     /// Uses the CVB pattern for forward-only object construction.
@@ -7227,6 +7359,49 @@ public static class JsonataCodeGenHelpers
                 {
                     using UnescapedUtf8JsonString nameUtf8 = prop.Utf8NameSpan;
                     if (ctx.predicate(prop.Value, nameUtf8.Span, ctx.workspace))
+                    {
+                        builder.AddProperty(nameUtf8.Span, prop.Value);
+                    }
+                }
+            },
+            estimatedMemberCount: 16);
+
+        JsonElement result = (JsonElement)doc.RootElement;
+        var enumerator = result.EnumerateObject();
+        return enumerator.MoveNext() ? result : default;
+    }
+
+    /// <summary>
+    /// JSONata <c>$sift(obj, fn($v,$k,$o))</c> — filters properties with access to the original object.
+    /// </summary>
+    /// <param name="input">The object to filter.</param>
+    /// <param name="predicate">A delegate <c>(value, keyUtf8, obj, workspace) → bool</c>.</param>
+    /// <param name="workspace">The workspace for memory allocation.</param>
+    /// <returns>A filtered object, or undefined if no properties match or input is not an object.</returns>
+    public static JsonElement SiftProperty(
+        in JsonElement input,
+        SiftPredicateWithObject predicate,
+        JsonWorkspace workspace)
+    {
+        if (input.IsNullOrUndefined())
+        {
+            return default;
+        }
+
+        if (input.ValueKind != JsonValueKind.Object)
+        {
+            return default;
+        }
+
+        JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(
+            workspace,
+            (input, predicate, workspace),
+            static (in (JsonElement input, SiftPredicateWithObject predicate, JsonWorkspace workspace) ctx, ref JsonElement.ObjectBuilder builder) =>
+            {
+                foreach (var prop in ctx.input.EnumerateObject())
+                {
+                    using UnescapedUtf8JsonString nameUtf8 = prop.Utf8NameSpan;
+                    if (ctx.predicate(prop.Value, nameUtf8.Span, ctx.input, ctx.workspace))
                     {
                         builder.AddProperty(nameUtf8.Span, prop.Value);
                     }

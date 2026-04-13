@@ -5253,6 +5253,7 @@ public static class JsonataCodeGenerator
             int lambdaIdx = _lambdaCounter++;
             string elParam = $"el_{lambdaIdx}";
             string keyUtf8Param = $"keyUtf8_{lambdaIdx}";
+            string objParam = $"obj_{lambdaIdx}";
             string wsParam = $"ws_{lambdaIdx}";
             string innerIndent = indent + "    ";
             StringBuilder lambdaBody = new();
@@ -5269,6 +5270,14 @@ public static class JsonataCodeGenerator
                 (_utf8SpanVariables ??= new(StringComparer.Ordinal)).Add(lambda.Parameters[1]);
             }
 
+            // Map $o to the original object parameter.
+            string? savedObj = null;
+            bool hasObjParam = lambda.Parameters.Count >= 3;
+            if (hasObjParam)
+            {
+                savedObj = StashVariable(lambda.Parameters[2], objParam);
+            }
+
             bool prevRootRef = _usesRootRef;
             _usesRootRef = true;
 
@@ -5277,6 +5286,11 @@ public static class JsonataCodeGenerator
             bool bodyUsedRoot = bodyResult.Contains("__rootData")
                 || lambdaBody.ToString().Contains("__rootData");
             _usesRootRef = prevRootRef || bodyUsedRoot;
+
+            if (hasObjParam)
+            {
+                RestoreVariable(lambda.Parameters[2], savedObj);
+            }
 
             if (hasKeyParam)
             {
@@ -5287,7 +5301,15 @@ public static class JsonataCodeGenerator
             RestoreVariable(lambda.Parameters[0], savedVal);
 
             string v = NextVar();
-            L(sb, indent, $"var {v} = {H}.EachProperty({inputVar}, {Static}(JsonElement {elParam}, ReadOnlySpan<byte> {keyUtf8Param}, JsonWorkspace {wsParam}) =>");
+            if (hasObjParam)
+            {
+                L(sb, indent, $"var {v} = {H}.EachProperty({inputVar}, {Static}(JsonElement {elParam}, ReadOnlySpan<byte> {keyUtf8Param}, JsonElement {objParam}, JsonWorkspace {wsParam}) =>");
+            }
+            else
+            {
+                L(sb, indent, $"var {v} = {H}.EachProperty({inputVar}, {Static}(JsonElement {elParam}, ReadOnlySpan<byte> {keyUtf8Param}, JsonWorkspace {wsParam}) =>");
+            }
+
             L(sb, indent, "{");
 
             sb.Append(lambdaBody);
@@ -5315,6 +5337,7 @@ public static class JsonataCodeGenerator
             int lambdaIdx = _lambdaCounter++;
             string elParam = $"el_{lambdaIdx}";
             string keyUtf8Param = $"keyUtf8_{lambdaIdx}";
+            string objParam = $"obj_{lambdaIdx}";
             string wsParam = $"ws_{lambdaIdx}";
             string innerIndent = indent + "    ";
             StringBuilder lambdaBody = new();
@@ -5330,6 +5353,14 @@ public static class JsonataCodeGenerator
                 (_utf8SpanVariables ??= new(StringComparer.Ordinal)).Add(lambda.Parameters[1]);
             }
 
+            // Map $o to the original object parameter.
+            string? savedObj = null;
+            bool hasObjParam = lambda.Parameters.Count >= 3;
+            if (hasObjParam)
+            {
+                savedObj = StashVariable(lambda.Parameters[2], objParam);
+            }
+
             bool prevRootRef = _usesRootRef;
             _usesRootRef = true;
 
@@ -5341,6 +5372,11 @@ public static class JsonataCodeGenerator
                 || lambdaBody.ToString().Contains("__rootData");
             _usesRootRef = prevRootRef || bodyUsedRoot;
 
+            if (hasObjParam)
+            {
+                RestoreVariable(lambda.Parameters[2], savedObj);
+            }
+
             if (hasKeyParam)
             {
                 _utf8SpanVariables!.Remove(lambda.Parameters[1]);
@@ -5350,7 +5386,15 @@ public static class JsonataCodeGenerator
             RestoreVariable(lambda.Parameters[0], savedVal);
 
             string v = NextVar();
-            L(sb, indent, $"var {v} = {H}.SiftProperty({inputVar}, {Static}(JsonElement {elParam}, ReadOnlySpan<byte> {keyUtf8Param}, JsonWorkspace {wsParam}) =>");
+            if (hasObjParam)
+            {
+                L(sb, indent, $"var {v} = {H}.SiftProperty({inputVar}, {Static}(JsonElement {elParam}, ReadOnlySpan<byte> {keyUtf8Param}, JsonElement {objParam}, JsonWorkspace {wsParam}) =>");
+            }
+            else
+            {
+                L(sb, indent, $"var {v} = {H}.SiftProperty({inputVar}, {Static}(JsonElement {elParam}, ReadOnlySpan<byte> {keyUtf8Param}, JsonWorkspace {wsParam}) =>");
+            }
+
             L(sb, indent, "{");
 
             sb.Append(lambdaBody);

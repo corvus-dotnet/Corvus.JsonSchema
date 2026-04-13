@@ -1641,17 +1641,19 @@ internal static class BuiltInFunctions
             }
 
             var obj = seq.FirstOrDefault;
-            int propCount = 0;
-            foreach (var p in obj.EnumerateObject()) { propCount++; }
+            JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(
+                env.Workspace,
+                obj,
+                static (in JsonElement ctx, ref JsonElement.ArrayBuilder builder) =>
+                {
+                    foreach (var prop in ctx.EnumerateObject())
+                    {
+                        builder.AddItem(prop.Value);
+                    }
+                },
+                estimatedMemberCount: 10);
 
-            JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(env.Workspace, propCount);
-            JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
-            foreach (var prop in obj.EnumerateObject())
-            {
-                arrayRoot.AddItem(prop.Value);
-            }
-
-            return new Sequence((JsonElement)arrayRoot);
+            return new Sequence((JsonElement)doc.RootElement);
         };
     }
 
@@ -1852,14 +1854,19 @@ internal static class BuiltInFunctions
             }
 
             int len = arr.GetArrayLength();
-            JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(env.Workspace, len);
-            JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
-            for (int i = len - 1; i >= 0; i--)
-            {
-                arrayRoot.AddItem(arr[i]);
-            }
+            JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(
+                env.Workspace,
+                (arr, len),
+                static (in (JsonElement Arr, int Len) ctx, ref JsonElement.ArrayBuilder builder) =>
+                {
+                    for (int i = ctx.Len - 1; i >= 0; i--)
+                    {
+                        builder.AddItem(ctx.Arr[i]);
+                    }
+                },
+                estimatedMemberCount: len + 2);
 
-            return new Sequence((JsonElement)arrayRoot);
+            return new Sequence((JsonElement)doc.RootElement);
         };
     }
 
@@ -1943,24 +1950,30 @@ internal static class BuiltInFunctions
                 return seq;
             }
 
-            JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(env.Workspace, arr.GetArrayLength());
-            JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
-            FlattenElement(arr, ref arrayRoot);
-            return new Sequence((JsonElement)arrayRoot);
+            JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(
+                env.Workspace,
+                arr,
+                static (in JsonElement ctx, ref JsonElement.ArrayBuilder builder) =>
+                {
+                    FlattenIntoBuilder(ctx, ref builder);
+                },
+                estimatedMemberCount: 16);
+
+            return new Sequence((JsonElement)doc.RootElement);
         };
 
-        static void FlattenElement(JsonElement element, ref JsonElement.Mutable arrayRoot)
+        static void FlattenIntoBuilder(JsonElement element, ref JsonElement.ArrayBuilder builder)
         {
             if (element.ValueKind == JsonValueKind.Array)
             {
                 foreach (var item in element.EnumerateArray())
                 {
-                    FlattenElement(item, ref arrayRoot);
+                    FlattenIntoBuilder(item, ref builder);
                 }
             }
             else
             {
-                arrayRoot.AddItem(element);
+                builder.AddItem(element);
             }
         }
     }
@@ -2545,38 +2558,58 @@ internal static class BuiltInFunctions
                 return seq;
             }
 
-            JsonDocumentBuilder<JsonElement.Mutable> objDoc = JsonElement.CreateObjectBuilder(env.Workspace, 16);
-            JsonElement.Mutable objRoot = objDoc.RootElement;
-
             if (seq.IsSingleton && seq.FirstOrDefault.ValueKind == JsonValueKind.Array)
             {
-                foreach (var item in seq.FirstOrDefault.EnumerateArray())
-                {
-                    if (item.ValueKind == JsonValueKind.Object)
+                JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(
+                    env.Workspace,
+                    seq.FirstOrDefault,
+                    static (in JsonElement ctx, ref JsonElement.ObjectBuilder builder) =>
                     {
-                        foreach (var prop in item.EnumerateObject())
+                        foreach (var item in ctx.EnumerateArray())
                         {
-                            objRoot.SetProperty(prop.Name, prop.Value);
+                            if (item.ValueKind == JsonValueKind.Object)
+                            {
+                                foreach (var prop in item.EnumerateObject())
+                                {
+                                    using UnescapedUtf8JsonString nameUtf8 = prop.Utf8NameSpan;
+                                    builder.AddProperty(nameUtf8.Span, prop.Value, escapeName: false, nameRequiresUnescaping: false);
+                                }
+                            }
                         }
-                    }
-                }
-            }
-            else if (seq.Count > 1)
-            {
-                for (int i = 0; i < seq.Count; i++)
-                {
-                    var item = seq[i];
-                    if (item.ValueKind == JsonValueKind.Object)
-                    {
-                        foreach (var prop in item.EnumerateObject())
-                        {
-                            objRoot.SetProperty(prop.Name, prop.Value);
-                        }
-                    }
-                }
+                    },
+                    estimatedMemberCount: 16);
+
+                return new Sequence((JsonElement)doc.RootElement);
             }
 
-            return new Sequence((JsonElement)objRoot);
+            if (seq.Count > 1)
+            {
+                // Multi-element sequence — build from first element that is an object,
+                // then overlay remaining. Use CVB with the first object as seed.
+                JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(
+                    env.Workspace,
+                    seq,
+                    static (in Sequence ctx, ref JsonElement.ObjectBuilder builder) =>
+                    {
+                        for (int i = 0; i < ctx.Count; i++)
+                        {
+                            var item = ctx[i];
+                            if (item.ValueKind == JsonValueKind.Object)
+                            {
+                                foreach (var prop in item.EnumerateObject())
+                                {
+                                    using UnescapedUtf8JsonString nameUtf8 = prop.Utf8NameSpan;
+                                    builder.AddProperty(nameUtf8.Span, prop.Value, escapeName: false, nameRequiresUnescaping: false);
+                                }
+                            }
+                        }
+                    },
+                    estimatedMemberCount: 16);
+
+                return new Sequence((JsonElement)doc.RootElement);
+            }
+
+            return Sequence.Undefined;
         };
     }
 
