@@ -16,7 +16,7 @@ Three evaluation modes are available:
 | **Source generator** | Expressions are known at build time, embedded in your project | `Corvus.Text.Json.Jsonata.SourceGenerator` |
 | **CLI code generation** | Expressions are known ahead of time, generated outside the build | `Corvus.Json.CodeGenerator` (the `jsonata` command) |
 
-The source generator and CLI tool produce optimized static C# that eliminates delegate dispatch. Benchmarks show the interpreted evaluator is **up to 3.5× faster** than [Jsonata.Net.Native](https://github.com/mikhail-barg/jsonata.net.native) (the .NET reference implementation) with **90–100% less memory allocation**, and code-generated evaluators are faster still.
+The source generator and CLI tool produce optimized static C# that eliminates delegate dispatch. Benchmarks show the interpreted evaluator is **up to 4× faster** than [Jsonata.Net.Native](https://github.com/mikhail-barg/jsonata.net.native) (the .NET reference implementation) with **90–100% less memory allocation**, and code-generated evaluators can be **up to 7× faster**.
 
 ## Conformance
 
@@ -733,7 +733,7 @@ The Corvus JSONata implementation is designed for high-throughput scenarios wher
 
 ### Benchmark summary
 
-Measured on .NET 10.0 (13th Gen Intel Core i7-13800H) across 20 representative scenarios covering property navigation, arithmetic, string operations, higher-order functions, predicate filtering, and object construction. Each benchmark compares three implementations: `Corvus` (interpreted), `CodeGen` (source-generated), and `Jsonata.Net.Native` (reference .NET implementation, v3.0.0).
+Measured on .NET 10.0 (13th Gen Intel Core i7-13800H) across 50 scenarios covering property navigation, arithmetic, string operations, pattern matching, higher-order functions, predicate filtering, object construction, array functions, and object functions. Each benchmark compares three implementations: `Corvus` (interpreted), `CodeGen` (source-generated), and `Jsonata.Net.Native` (reference .NET implementation, v3.0.0).
 
 All Runtime benchmarks use caller-managed `JsonWorkspace` for zero-allocation evaluation. Jsonata.Net.Native uses pre-compiled `JsonataQuery` objects with pre-parsed `JToken` data. The "Alloc" columns show per-invocation GC allocation.
 
@@ -752,18 +752,18 @@ This benchmark replicates the [Jsonata.Net.Native benchmark scenario](https://gi
 
 | Method | Mean | Allocated |
 |--------|-----:|----------:|
-| Runtime (interpreted) | 1,180 ns | 960 B |
-| Runtime (code-gen) | 1,183 ns | 240 B |
-| Jsonata.Net.Native | 2,067 ns | 9,920 B |
+| Runtime (interpreted) | 1,226 ns | 960 B |
+| Runtime (code-gen) | 1,123 ns | 240 B |
+| Jsonata.Net.Native | 2,297 ns | 9,920 B |
 
-The runtime evaluator is **1.8× faster** with **90% less allocation** than the reference implementation. Code-gen reduces allocation to 240 B (98% reduction).
+The runtime evaluator is **1.9× faster** with **90% less allocation** than the reference implementation. Code-gen matches interpreted speed with 75% less allocation (240 B vs 960 B).
 
 **Cold start** (fresh compile + evaluate):
 
 | Method | Mean | Allocated |
 |--------|-----:|----------:|
-| Runtime (interpreted) | 6,964 ns | 10,800 B |
-| Jsonata.Net.Native | 6,703 ns | 19,264 B |
+| Runtime (interpreted) | 4,353 ns | 10,800 B |
+| Jsonata.Net.Native | 4,765 ns | 19,296 B |
 
 Cold start is comparable in speed, but Corvus allocates 44% less memory.
 
@@ -773,61 +773,131 @@ Cold start is comparable in speed, but Corvus allocates 44% less memory.
 
 | Scenario | Expression | Runtime | CodeGen | Jsonata.Net.Native | Runtime Alloc | CodeGen Alloc | Native Alloc |
 |----------|-----------|-------:|--------:|-------------------:|-------------:|--------------:|-------------:|
-| Deep path | `Account.Order.Product.Price` | 764 ns | 736 ns | 654 ns | 120 B | 120 B | 1,816 B |
-| Quoted property | `` Account.`Account Name` `` | 76 ns | 59 ns | 258 ns | 0 B | 0 B | 1,024 B |
-| Array index | `Account.Order[0].OrderID` | 103 ns | 94 ns | 370 ns | 0 B | 0 B | 1,408 B |
+| Deep path | `Account.Order.Product.Price` | 446 ns | 313 ns | 403 ns | 120 B | 120 B | 1,816 B |
+| Flatten path | `Account.Order.Product[]` | 489 ns | 328 ns | 274 ns | 120 B | 120 B | 1,520 B |
+| Quoted property | `` Account.`Account Name` `` | 45 ns | 32 ns | 167 ns | 0 B | 0 B | 1,024 B |
+| Array index | `Account.Order[0].OrderID` | 63 ns | 53 ns | 242 ns | 0 B | 0 B | 1,408 B |
+| 5-level path | `a.b.c.d.e.value` | 151 ns | 176 ns | 574 ns | 0 B | 0 B | 1,936 B |
+| 10-level path | `a.b.c.d.e.f.g.h.i.j.value` | 151 ns | 456 ns | 946 ns | 0 B | 0 B | 3,328 B |
 
-The runtime evaluator is **3–4× faster** for simple property access and array indexing, with zero allocation. Deep path traversal through nested arrays is comparable in speed but uses **93% less memory**.
+The runtime evaluator is **3–6× faster** for simple property access and deep navigation, with zero allocation. Flatten path (`Product[]`) through nested arrays is slower due to document model overhead, but uses **92% less memory**. Code-gen is **2–5× faster** for most navigation patterns.
 
 ##### Arithmetic
 
 | Scenario | Expression | Runtime | CodeGen | Jsonata.Net.Native | Runtime Alloc | CodeGen Alloc | Native Alloc |
 |----------|-----------|-------:|--------:|-------------------:|-------------:|--------------:|-------------:|
-| Sum-product | `$sum(Account.Order.Product.(Price * Quantity))` | 1,261 ns | 424 ns | 1,424 ns | 216 B | 0 B | 6,480 B |
-| Map arithmetic | `Account.Order.Product.(Price * Quantity)` | 1,149 ns | 817 ns | 1,174 ns | 184 B | 120 B | 5,536 B |
-| Pure arithmetic | `1 + 2 * 3 - 4 / 2 + 10 % 3` | 186 ns | 58 ns | 250 ns | 0 B | 0 B | 1,352 B |
+| Sum-product | `$sum(Account.Order.Product.(Price * Quantity))` | 1,247 ns | 426 ns | 1,441 ns | 184 B | 0 B | 6,480 B |
+| Map arithmetic | `Account.Order.Product.(Price * Quantity)` | 1,138 ns | 842 ns | 1,199 ns | 152 B | 120 B | 5,536 B |
+| Pure arithmetic | `1 + 2 * 3 - 4 / 2 + 10 % 3` | 182 ns | 59 ns | 276 ns | 0 B | 0 B | 1,352 B |
 
-Code-gen achieves **3–4× speedup** over the reference implementation for arithmetic with **zero allocation**. Pure arithmetic shows the largest CG win (4.3× faster than interpreted) because computation dominates over data traversal.
+Code-gen achieves **3–5× speedup** over the reference implementation for arithmetic with **zero allocation**. Pure arithmetic shows the largest CG win (4.7× faster) because computation dominates over data traversal.
 
-##### String operations
+##### String concatenation
 
 | Scenario | Expression | Runtime | CodeGen | Jsonata.Net.Native | Runtime Alloc | CodeGen Alloc | Native Alloc |
 |----------|-----------|-------:|--------:|-------------------:|-------------:|--------------:|-------------:|
-| Simple concat | `FirstName & ' ' & Surname` | 416 ns | 220 ns | 382 ns | 0 B | 0 B | 1,408 B |
-| Concat + number | `FirstName & ' ' & Surname & ', age ' & $string(Age)` | 1,139 ns | 428 ns | 1,069 ns | 32 B | 0 B | 3,136 B |
-| Join array | `$join([Address.Street, Address.City, Address.Postcode], ', ')` | 860 ns | 281 ns | 1,518 ns | 120 B | 0 B | 4,040 B |
+| Simple concat | `FirstName & ' ' & Surname` | 467 ns | 245 ns | 441 ns | 0 B | 0 B | 1,408 B |
+| Concat + number | `FirstName & ' ' & Surname & ', age ' & $string(Age)` | 928 ns | 287 ns | 1,212 ns | 0 B | 0 B | 3,136 B |
+| Join array | `$join([Address.Street, Address.City, Address.Postcode], ', ')` | 982 ns | 319 ns | 1,511 ns | 120 B | 0 B | 4,040 B |
 
-Code-gen is **2–5× faster** than the reference implementation for string operations with zero allocation.
+Code-gen is **2–5× faster** than the reference implementation for string operations with zero allocation. The interpreted evaluator matches or beats native for multi-part concatenation.
+
+##### String functions
+
+| Scenario | Expression | Runtime | CodeGen | Jsonata.Net.Native | Runtime Alloc | CodeGen Alloc | Native Alloc |
+|----------|-----------|-------:|--------:|-------------------:|-------------:|--------------:|-------------:|
+| $contains | `$contains(Product."Product Name", "Hat")` | 328 ns | 273 ns | 1,214 ns | 0 B | 0 B | 3,136 B |
+| $length | `$length(Product."Product Name")` | 375 ns | 279 ns | 993 ns | 0 B | 0 B | 2,864 B |
+| $lowercase | `$lowercase(Product."Product Name")` | 334 ns | 261 ns | 1,022 ns | 0 B | 0 B | 2,864 B |
+| $uppercase | `$uppercase(Product."Product Name")` | 341 ns | 284 ns | 1,098 ns | 0 B | 0 B | 2,864 B |
+| $trim | `$trim(Product."Product Name")` | 463 ns | 319 ns | 1,445 ns | 96 B | 0 B | 2,864 B |
+| $substring | `$substring(Product."Product Name", 0, 6)` | 737 ns | 541 ns | 1,301 ns | 0 B | 0 B | 3,416 B |
+| $substringBefore | `$substringBefore(Product."Product Name", " ")` | 444 ns | 366 ns | 1,125 ns | 0 B | 0 B | 3,120 B |
+| $substringAfter | `$substringAfter(Product."Product Name", " ")` | 403 ns | 367 ns | 1,216 ns | 0 B | 0 B | 3,112 B |
+
+String functions show **2–4× speedup** across the board with **zero allocation** for both runtime and code-gen. The reference implementation allocates 2–3 KB per call due to `JToken` intermediaries.
+
+##### Pattern matching
+
+| Scenario | Expression | Runtime | CodeGen | Jsonata.Net.Native | Runtime Alloc | CodeGen Alloc | Native Alloc |
+|----------|-----------|-------:|--------:|-------------------:|-------------:|--------------:|-------------:|
+| $match | `$match(text, /\d{3}-\d{3}-\d{4}/)` | 1,687 ns | 1,378 ns | 1,611 ns | 632 B | 912 B | 8,072 B |
+| $replace (regex) | `$replace(text, /\d{3}-\d{3}-\d{4}/, "***")` | 522 ns | 386 ns | 1,855 ns | 0 B | 0 B | 9,312 B |
+| $replace (string) | `$replace(text, "555", "XXX")` | 227 ns | 317 ns | 863 ns | 0 B | 0 B | 3,264 B |
+| $split (regex) | `$split(text, /\d{3}-\d{3}-\d{4}/)` | 2,431 ns | 1,745 ns | 2,811 ns | 120 B | 120 B | 7,536 B |
+| $split (string) | `$split(text, ". ")` | 1,118 ns | 1,147 ns | 1,172 ns | 120 B | 120 B | 2,552 B |
+
+Pattern matching shows **92–100% less allocation**. Regex replacement is **3.6–4.8× faster** than native with zero allocation thanks to UTF-8 span processing. String replacement is **2.7–3.8× faster**. Regex split is **1.3–1.7× faster** while string split approaches parity.
 
 ##### Higher-order functions
 
 | Scenario | Expression | Runtime | CodeGen | Jsonata.Net.Native | Runtime Alloc | CodeGen Alloc | Native Alloc |
 |----------|-----------|-------:|--------:|-------------------:|-------------:|--------------:|-------------:|
-| $map | `$map(Account.Order.Product, function($v) { ... })` | 2,069 ns | 1,362 ns | 2,069 ns | 1,184 B | 120 B | 6,768 B |
-| $filter | `$filter(Account.Order.Product, function($v) { ... })` | 2,197 ns | 1,477 ns | 2,647 ns | 1,184 B | 120 B | 7,632 B |
-| $reduce | `$reduce(Account.Order.Product, function($prev, $curr) { ... }, 0)` | 3,158 ns | 2,985 ns | 3,623 ns | 2,528 B | 120 B | 10,120 B |
-| $sort | `$sort(Account.Order.Product, function($a, $b) { ... })` | 3,646 ns | 2,395 ns | 3,517 ns | 1,576 B | 240 B | 9,992 B |
+| $map | `$map(Account.Order.Product, function($v) { ... })` | 1,051 ns | 765 ns | 1,380 ns | 480 B | 120 B | 6,768 B |
+| $filter | `$filter(Account.Order.Product, function($v) { ... })` | 1,268 ns | 838 ns | 1,713 ns | 480 B | 120 B | 7,632 B |
+| $reduce | `$reduce(Account.Order.Product, function($prev, $curr) { ... }, 0)` | 1,619 ns | 833 ns | 2,271 ns | 360 B | 120 B | 10,120 B |
+| $sort | `$sort(Account.Order.Product, function($a, $b) { ... })` | 5,248 ns | 2,419 ns | 6,862 ns | 600 B | 240 B | 9,992 B |
 
-Higher-order functions show **75–98% less allocation** than the reference implementation. Code-gen eliminates most allocation (120–240 B vs 1,184–2,528 B for interpreted).
+Higher-order functions show **93–98% less allocation** than the reference implementation. Code-gen eliminates most allocation (120–240 B vs 480–600 B for interpreted, vs 6–10 KB for native).
+
+**Large array (5,000 items):**
+
+| Scenario | Expression | Runtime | CodeGen | Jsonata.Net.Native | Runtime Alloc | CodeGen Alloc | Native Alloc |
+|----------|-----------|-------:|--------:|-------------------:|-------------:|--------------:|-------------:|
+| $map | `$map(items, function($v) { $v.value * 2 })` | 2,931 μs | 1,396 μs | 8,092 μs | 200 B | 120 B | ~12 MB |
+| $filter | `$filter(items, function($v) { $v.value > 2500 })` | 2,475 μs | 984 μs | 4,090 μs | 200 B | 120 B | ~12 MB |
+| $reduce | `$reduce(items, function($prev, $curr) { ... }, 0)` | 2,552 μs | 586 μs | 4,173 μs | 80 B | 0 B | ~11 MB |
+
+At scale (5,000 items), code-gen is **4–7× faster** than native with **near-zero allocation** (0–200 B vs ~12 MB). The interpreted evaluator is **1.6–2.8× faster** with 200 B or less per call.
+
+##### Iteration functions
+
+| Scenario | Expression | Runtime | CodeGen | Jsonata.Net.Native | Runtime Alloc | CodeGen Alloc | Native Alloc |
+|----------|-----------|-------:|--------:|-------------------:|-------------:|--------------:|-------------:|
+| $each | `$each(obj, function($v, $k) { $k & ": " & $string($v) })` | 2,672 ns | 720 ns | 3,501 ns | 200 B | 120 B | 8,096 B |
+| $sift | `$sift(obj, function($v) { $type($v) = "number" })` | 1,099 ns | 736 ns | 1,658 ns | 200 B | 120 B | 7,088 B |
+
+Code-gen `$each` is **4.9× faster** than native. Both functions show **97–98% less allocation**.
 
 ##### Predicate filtering
 
 | Scenario | Expression | Runtime | CodeGen | Jsonata.Net.Native | Runtime Alloc | CodeGen Alloc | Native Alloc |
 |----------|-----------|-------:|--------:|-------------------:|-------------:|--------------:|-------------:|
-| Single predicate | `Contact.Phone[type = 'mobile'].number` | 980 ns | 976 ns | 1,888 ns | 120 B | 120 B | 5,760 B |
-| Chained predicate | `Contact[ssn = '496913021'].Phone[0].number` | 259 ns | 218 ns | 903 ns | 0 B | 0 B | 3,072 B |
-| Compound predicate | `Contact.Phone[type = 'office' or type = 'mobile'].number` | 1,253 ns | 1,153 ns | 3,554 ns | 120 B | 120 B | 10,376 B |
+| Single predicate | `Contact.Phone[type = 'mobile'].number` | 589 ns | 492 ns | 1,300 ns | 120 B | 120 B | 5,760 B |
+| Chained predicate | `Contact[ssn = '496913021'].Phone[0].number` | 286 ns | 239 ns | 981 ns | 0 B | 0 B | 3,072 B |
+| Compound predicate | `Contact.Phone[type = 'office' or type = 'mobile'].number` | 1,459 ns | 573 ns | 2,497 ns | 120 B | 120 B | 10,376 B |
 
-Predicate filtering shows the largest speedup: the runtime evaluator is **2–3.5× faster** than the reference implementation with **97–100% less allocation**.
+Predicate filtering shows **2–4× speedup** over the reference implementation with **97–100% less allocation**.
 
 ##### Object construction
 
 | Scenario | Expression | Runtime | CodeGen | Jsonata.Net.Native | Runtime Alloc | CodeGen Alloc | Native Alloc |
 |----------|-----------|-------:|--------:|-------------------:|-------------:|--------------:|-------------:|
-| Simple object | `{"name": Account.`Account Name`, "total": $sum(...)}` | 2,439 ns | 990 ns | 2,926 ns | 336 B | 120 B | 7,840 B |
-| Group-by object | `` Account.Order.Product.{`Product Name`: Price} `` | 3,095 ns | 1,054 ns | 2,051 ns | 632 B | 120 B | 7,104 B |
-| Array of objects | `[Account.Order.Product.{"name": ..., "total": ...}]` | 2,277 ns | 1,990 ns | 3,104 ns | 120 B | 120 B | 9,664 B |
+| Simple object | `` {"name": Account.`Account Name`, "total": $sum(...)} `` | 2,717 ns | 1,130 ns | 3,168 ns | 304 B | 120 B | 7,840 B |
+| Group-by object | `` Account.Order.Product.{`Product Name`: Price} `` | 3,171 ns | 1,165 ns | 2,268 ns | 600 B | 120 B | 7,104 B |
+| Array of objects | `[Account.Order.Product.{"name": ..., "total": ...}]` | 2,238 ns | 2,004 ns | 3,423 ns | 120 B | 120 B | 9,664 B |
 
-Code-gen achieves **2–3× speedup** for object construction with **98–99% less allocation**.
+Code-gen achieves **2–3× speedup** for object construction with **98–99% less allocation**. Group-by is the only scenario where the runtime evaluator is slower than native (1.4×), due to the overhead of building grouped object keys.
+
+##### Array functions
+
+| Scenario | Expression | Runtime | CodeGen | Jsonata.Net.Native | Runtime Alloc | CodeGen Alloc | Native Alloc |
+|----------|-----------|-------:|--------:|-------------------:|-------------:|--------------:|-------------:|
+| $count | `$count(Account.Order[0].Product)` | 145 ns | 115 ns | 437 ns | 0 B | 0 B | 2,112 B |
+| $append | `$append(Order[0].Product, Order[1].Product)` | 470 ns | 449 ns | 709 ns | 120 B | 120 B | 3,280 B |
+| $reverse | `$reverse(Account.Order[0].Product)` | 268 ns | 254 ns | 460 ns | 120 B | 120 B | 2,136 B |
+| $distinct | `$distinct(Account.Order.Product."Product Name")` | 645 ns | 577 ns | 655 ns | 400 B | 120 B | 2,848 B |
+
+Array functions are **1.5–3× faster** with zero or minimal allocation. `$distinct` uses a zero-copy `UniqueItemsHashSet` that deduplicates via document-internal element references — no intermediate strings are created.
+
+##### Object functions
+
+| Scenario | Expression | Runtime | CodeGen | Jsonata.Net.Native | Runtime Alloc | CodeGen Alloc | Native Alloc |
+|----------|-----------|-------:|--------:|-------------------:|-------------:|--------------:|-------------:|
+| $keys | `$keys(Account.Order[0].Product[0])` | 577 ns | 492 ns | 951 ns | 120 B | 120 B | 2,696 B |
+| $merge | `$merge(Account.Order.Product)` | 861 ns | 769 ns | 1,417 ns | 400 B | 120 B | 2,784 B |
+| $each (as $values) | `$each(obj, function($v){$v})` | 1,133 ns | 372 ns | 1,448 ns | 200 B | 120 B | 4,232 B |
+
+Object functions are **1.6–2× faster** for runtime, **2–4× faster** for code-gen. `$keys` uses a `Utf8KeyHashSet` for zero-copy deduplication over raw UTF-8 property names. `$merge` uses fused chain navigation to eliminate intermediate document builders. Corvus also provides `$values()` as an extension function (not available in standard JSONata).
 
 > *Benchmarks run with BenchmarkDotNet v0.15.8 on .NET 10.0.5, 13th Gen Intel Core i7-13800H, Windows 11. All Runtime benchmarks use `JsonWorkspace` for pooled evaluation. Jsonata.Net.Native v3.0.0 uses pre-compiled `JsonataQuery` with pre-parsed `JToken` data. OutlierMode=RemoveAll, RunStrategy=Throughput.*
