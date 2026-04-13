@@ -7103,4 +7103,124 @@ public static class JsonataCodeGenHelpers
                 break;
         }
     }
+
+    /// <summary>
+    /// Delegate for <c>$each</c> transform: receives the property value and
+    /// the property key as unescaped UTF-8 bytes, avoiding intermediate <see cref="JsonElement"/> creation for the key.
+    /// </summary>
+    /// <param name="value">The property value.</param>
+    /// <param name="keyUtf8">The property name as unescaped UTF-8 bytes.</param>
+    /// <param name="workspace">The workspace for memory allocation.</param>
+    /// <returns>The transformed element.</returns>
+    public delegate JsonElement EachTransform(JsonElement value, ReadOnlySpan<byte> keyUtf8, JsonWorkspace workspace);
+
+    /// <summary>
+    /// Delegate for <c>$sift</c> predicate: receives the property value and
+    /// the property key as unescaped UTF-8 bytes, avoiding intermediate <see cref="JsonElement"/> creation for the key.
+    /// </summary>
+    /// <param name="value">The property value.</param>
+    /// <param name="keyUtf8">The property name as unescaped UTF-8 bytes.</param>
+    /// <param name="workspace">The workspace for memory allocation.</param>
+    /// <returns><see langword="true"/> if the property should be included.</returns>
+    public delegate bool SiftPredicate(JsonElement value, ReadOnlySpan<byte> keyUtf8, JsonWorkspace workspace);
+
+    /// <summary>
+    /// Creates a JSON string element from unescaped UTF-8 bytes.
+    /// Forwarding method so generated code can use the single <c>H.</c> prefix.
+    /// </summary>
+    /// <param name="unescapedUtf8">The unescaped UTF-8 bytes.</param>
+    /// <param name="workspace">The workspace for memory allocation.</param>
+    /// <returns>A JSON string element.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static JsonElement StringFromUnescapedUtf8(ReadOnlySpan<byte> unescapedUtf8, JsonWorkspace workspace)
+        => JsonataHelpers.StringFromUnescapedUtf8(unescapedUtf8, workspace);
+
+    /// <summary>
+    /// JSONata <c>$each</c> — maps a function over each property of an object,
+    /// returning an array of the transform results.
+    /// </summary>
+    /// <param name="input">The object to iterate.</param>
+    /// <param name="transform">A delegate <c>(value, keyUtf8, workspace) → result</c>.</param>
+    /// <param name="workspace">The workspace for memory allocation.</param>
+    /// <returns>An array of transform results, or undefined if input is not an object.</returns>
+    public static JsonElement EachProperty(
+        in JsonElement input,
+        EachTransform transform,
+        JsonWorkspace workspace)
+    {
+        if (input.IsNullOrUndefined())
+        {
+            return default;
+        }
+
+        if (input.ValueKind != JsonValueKind.Object)
+        {
+            return default;
+        }
+
+        var buffer = default(ElementBuffer);
+        try
+        {
+            foreach (var prop in input.EnumerateObject())
+            {
+                using UnescapedUtf8JsonString nameUtf8 = prop.Utf8NameSpan;
+                JsonElement result = transform(prop.Value, nameUtf8.Span, workspace);
+                if (result.ValueKind != JsonValueKind.Undefined)
+                {
+                    buffer.Add(result);
+                }
+            }
+
+            return buffer.ToArrayResult(workspace);
+        }
+        finally
+        {
+            buffer.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// JSONata <c>$sift</c> — filters the properties of an object,
+    /// returning a new object containing only properties for which the predicate returns truthy.
+    /// Uses the CVB pattern for forward-only object construction.
+    /// </summary>
+    /// <param name="input">The object to filter.</param>
+    /// <param name="predicate">A delegate <c>(value, keyUtf8, workspace) → bool</c>.</param>
+    /// <param name="workspace">The workspace for memory allocation.</param>
+    /// <returns>A filtered object, or undefined if no properties match or input is not an object.</returns>
+    public static JsonElement SiftProperty(
+        in JsonElement input,
+        SiftPredicate predicate,
+        JsonWorkspace workspace)
+    {
+        if (input.IsNullOrUndefined())
+        {
+            return default;
+        }
+
+        if (input.ValueKind != JsonValueKind.Object)
+        {
+            return default;
+        }
+
+        JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(
+            workspace,
+            (input, predicate, workspace),
+            static (in (JsonElement input, SiftPredicate predicate, JsonWorkspace workspace) ctx, ref JsonElement.ObjectBuilder builder) =>
+            {
+                foreach (var prop in ctx.input.EnumerateObject())
+                {
+                    using UnescapedUtf8JsonString nameUtf8 = prop.Utf8NameSpan;
+                    if (ctx.predicate(prop.Value, nameUtf8.Span, ctx.workspace))
+                    {
+                        builder.AddProperty(nameUtf8.Span, prop.Value);
+                    }
+                }
+            },
+            estimatedMemberCount: 16);
+
+        JsonElement result = (JsonElement)doc.RootElement;
+        var enumerator = result.EnumerateObject();
+        return enumerator.MoveNext() ? result : default;
+    }
 }

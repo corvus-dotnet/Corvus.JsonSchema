@@ -2475,25 +2475,35 @@ internal static class BuiltInFunctions
             JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(env.Workspace, 16);
             JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
 
-            foreach (var prop in obj.EnumerateObject())
+            Environment reuseEnv = lambda.CreateInvokeEnv(env);
+            Sequence[] lambdaArgs = ArrayPool<Sequence>.Shared.Rent(2);
+            try
             {
-                var valSeq = new Sequence(prop.Value);
-                var keySeq = new Sequence(JsonataHelpers.StringFromString(prop.Name, env.Workspace));
-                var result = lambda.Invoke(new[] { valSeq, keySeq }, 2, input, env);
-                if (!result.IsUndefined)
+                foreach (var prop in obj.EnumerateObject())
                 {
-                    if (result.IsSingleton)
+                    lambdaArgs[0] = new Sequence(prop.Value);
+                    using UnescapedUtf8JsonString nameUtf8 = prop.Utf8NameSpan;
+                    lambdaArgs[1] = new Sequence(JsonataHelpers.StringFromUnescapedUtf8(nameUtf8.Span, env.Workspace));
+                    var result = lambda.InvokeReusing(lambdaArgs, input, reuseEnv, env);
+                    if (!result.IsUndefined)
                     {
-                        arrayRoot.AddItem(result.FirstOrDefault);
-                    }
-                    else
-                    {
-                        for (int i = 0; i < result.Count; i++)
+                        if (result.IsSingleton)
                         {
-                            arrayRoot.AddItem(result[i]);
+                            arrayRoot.AddItem(result.FirstOrDefault);
+                        }
+                        else
+                        {
+                            for (int i = 0; i < result.Count; i++)
+                            {
+                                arrayRoot.AddItem(result[i]);
+                            }
                         }
                     }
                 }
+            }
+            finally
+            {
+                ArrayPool<Sequence>.Shared.Return(lambdaArgs);
             }
 
             return new Sequence((JsonElement)arrayRoot);
@@ -2892,18 +2902,29 @@ internal static class BuiltInFunctions
             var lambda = funcSeq.Lambda!;
             JsonDocumentBuilder<JsonElement.Mutable> objDoc = JsonElement.CreateObjectBuilder(env.Workspace, 16);
             JsonElement.Mutable objRoot = objDoc.RootElement;
-            var objSeq = new Sequence(obj);
             bool anyMatch = false;
-            foreach (var prop in obj.EnumerateObject())
+
+            Environment reuseEnv = lambda.CreateInvokeEnv(env);
+            Sequence[] lambdaArgs = ArrayPool<Sequence>.Shared.Rent(3);
+            try
             {
-                var valSeq = new Sequence(prop.Value);
-                var keySeq = new Sequence(JsonataHelpers.StringFromString(prop.Name, env.Workspace));
-                var result = lambda.Invoke(new[] { valSeq, keySeq, objSeq }, 3, input, env);
-                if (FunctionalCompiler.IsTruthy(result))
+                lambdaArgs[2] = new Sequence(obj);
+                foreach (var prop in obj.EnumerateObject())
                 {
-                    objRoot.SetProperty(prop.Name, prop.Value);
-                    anyMatch = true;
+                    lambdaArgs[0] = new Sequence(prop.Value);
+                    using UnescapedUtf8JsonString nameUtf8 = prop.Utf8NameSpan;
+                    lambdaArgs[1] = new Sequence(JsonataHelpers.StringFromUnescapedUtf8(nameUtf8.Span, env.Workspace));
+                    var result = lambda.InvokeReusing(lambdaArgs, input, reuseEnv, env);
+                    if (FunctionalCompiler.IsTruthy(result))
+                    {
+                        objRoot.SetProperty(nameUtf8.Span, prop.Value);
+                        anyMatch = true;
+                    }
                 }
+            }
+            finally
+            {
+                ArrayPool<Sequence>.Shared.Return(lambdaArgs);
             }
 
             if (!anyMatch)

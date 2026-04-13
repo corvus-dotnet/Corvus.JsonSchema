@@ -444,6 +444,14 @@ public static class JsonataCodeGenerator
         private HashSet<string>? _doubleVariables;
 
         /// <summary>
+        /// Set of JSONata parameter names that are currently bound to a
+        /// <c>ReadOnlySpan&lt;byte&gt;</c> (unescaped UTF-8 property name).
+        /// In concat context the span is appended directly via <c>AppendLiteral</c>;
+        /// elsewhere <c>StringFromUnescapedUtf8</c> materialises a <see cref="JsonElement"/>.
+        /// </summary>
+        private HashSet<string>? _utf8SpanVariables;
+
+        /// <summary>
         /// Returns <c>"static "</c> when lambdas can be static, or <c>""</c> when
         /// they need to capture <c>__rootData</c>, <c>__bindings</c>, or local
         /// block-scoped variables.
@@ -563,7 +571,7 @@ public static class JsonataCodeGenerator
                 StringNode str => EmitString(sb, str, indent, wsVar),
                 ValueNode val => EmitValue(sb, val, indent),
                 NameNode name => EmitName(sb, name, indent, dataVar, wsVar),
-                VariableNode variable => EmitVariable(sb, variable, indent, dataVar),
+                VariableNode variable => EmitVariable(sb, variable, indent, dataVar, wsVar),
                 ConditionNode cond => EmitCondition(sb, cond, indent, dataVar, wsVar),
                 BlockNode block => EmitBlock(sb, block, indent, dataVar, wsVar),
                 BindNode bind => EmitBind(sb, bind, indent, dataVar, wsVar),
@@ -665,7 +673,7 @@ public static class JsonataCodeGenerator
                     throw new FallbackException();
                 }
 
-                currentVar = EmitVariable(sb, leadVar, indent, dataVar);
+                currentVar = EmitVariable(sb, leadVar, indent, dataVar, wsVar);
 
                 // Apply stages on the variable (e.g. $[0] applies index to root)
                 if (HasStages(leadVar))
@@ -2898,6 +2906,15 @@ public static class JsonataCodeGenerator
             StringBuilder sb, JsonataNode operand, string indent, string dataVar,
             string wsVar, List<(string Var, bool IsLiteral, string? AutoMapPropField)> operands)
         {
+            // UTF-8 span variable (e.g. $k in $each/$sift) — append directly, no materialisation.
+            if (operand is VariableNode spanVarNode
+                && _utf8SpanVariables?.Contains(spanVarNode.Name) == true
+                && _variables.TryGetValue(spanVarNode.Name, out string? spanCsVar))
+            {
+                operands.Add((spanCsVar, true, null));
+                return;
+            }
+
             // Detect auto-map candidate: PathNode with 2+ simple name steps, no annotations
             if (operand is PathNode autoMapPath
                 && autoMapPath.Steps.Count >= 2
@@ -3133,7 +3150,7 @@ public static class JsonataCodeGenerator
         }
 
         private string EmitVariable(
-            StringBuilder sb, VariableNode variable, string indent, string dataVar)
+            StringBuilder sb, VariableNode variable, string indent, string dataVar, string wsVar)
         {
             // $ (empty name) -> current data context
             if (string.IsNullOrEmpty(variable.Name))
@@ -3150,6 +3167,15 @@ public static class JsonataCodeGenerator
 
             if (_variables.TryGetValue(variable.Name, out string? csVar))
             {
+                // Variable is a ReadOnlySpan<byte> (e.g. $k in $each/$sift lambda) —
+                // materialise a JsonElement on demand for non-concat usage sites.
+                if (_utf8SpanVariables?.Contains(variable.Name) == true)
+                {
+                    string temp = NextVar();
+                    L(sb, indent, $"var {temp} = {H}.StringFromUnescapedUtf8({csVar}, {wsVar});");
+                    return temp;
+                }
+
                 return csVar;
             }
 
@@ -4073,6 +4099,10 @@ public static class JsonataCodeGenerator
                 "replace" => EmitBuiltinReplace(sb, func, indent, dataVar, wsVar),
                 "match" => EmitBuiltinMatch(sb, func, indent, dataVar, wsVar),
                 "zip" => EmitBuiltinZip(sb, func, indent, dataVar, wsVar),
+
+                // Phase 3: Object HOFs
+                "each" => EmitHofEach(sb, func, indent, dataVar, wsVar),
+                "sift" => EmitHofSift(sb, func, indent, dataVar, wsVar),
 
                 _ => EmitCustomFunctionCallOrFallback(sb, func, procVar.Name, indent, dataVar, wsVar),
             };
@@ -5195,7 +5225,140 @@ public static class JsonataCodeGenerator
             return v;
         }
 
-        // ── Filter (standalone) ──────────────────────────────
+        // ── HOF: $each ──────────────────────────────────────
+        private string EmitHofEach(
+            StringBuilder sb, FunctionCallNode func, string indent, string dataVar, string wsVar)
+        {
+            if (func.Arguments.Count < 2 || func.Arguments[1] is not LambdaNode lambda)
+            {
+                throw new FallbackException();
+            }
+
+            if (lambda.Parameters.Count < 1)
+            {
+                throw new FallbackException();
+            }
+
+            string inputVar = EmitExpression(sb, func.Arguments[0], indent, dataVar, wsVar);
+
+            int lambdaIdx = _lambdaCounter++;
+            string elParam = $"el_{lambdaIdx}";
+            string keyUtf8Param = $"keyUtf8_{lambdaIdx}";
+            string wsParam = $"ws_{lambdaIdx}";
+            string innerIndent = indent + "    ";
+            StringBuilder lambdaBody = new();
+
+            string? savedVal = StashVariable(lambda.Parameters[0], elParam);
+
+            // Map $k directly to the ReadOnlySpan<byte> parameter — in concat context
+            // the span is appended directly (zero alloc); non-concat sites materialise on demand.
+            string? savedKey = null;
+            bool hasKeyParam = lambda.Parameters.Count >= 2;
+            if (hasKeyParam)
+            {
+                savedKey = StashVariable(lambda.Parameters[1], keyUtf8Param);
+                (_utf8SpanVariables ??= new(StringComparer.Ordinal)).Add(lambda.Parameters[1]);
+            }
+
+            bool prevRootRef = _usesRootRef;
+            _usesRootRef = true;
+
+            string bodyResult = EmitExpression(lambdaBody, lambda.Body, innerIndent, elParam, wsParam);
+
+            bool bodyUsedRoot = bodyResult.Contains("__rootData")
+                || lambdaBody.ToString().Contains("__rootData");
+            _usesRootRef = prevRootRef || bodyUsedRoot;
+
+            if (hasKeyParam)
+            {
+                _utf8SpanVariables!.Remove(lambda.Parameters[1]);
+                RestoreVariable(lambda.Parameters[1], savedKey);
+            }
+
+            RestoreVariable(lambda.Parameters[0], savedVal);
+
+            string v = NextVar();
+            L(sb, indent, $"var {v} = {H}.EachProperty({inputVar}, {Static}(JsonElement {elParam}, ReadOnlySpan<byte> {keyUtf8Param}, JsonWorkspace {wsParam}) =>");
+            L(sb, indent, "{");
+
+            sb.Append(lambdaBody);
+            L(sb, innerIndent, $"return {bodyResult};");
+            L(sb, indent, $"}}, {wsVar});");
+            return v;
+        }
+
+        // ── HOF: $sift ──────────────────────────────────────
+        private string EmitHofSift(
+            StringBuilder sb, FunctionCallNode func, string indent, string dataVar, string wsVar)
+        {
+            if (func.Arguments.Count < 2 || func.Arguments[1] is not LambdaNode lambda)
+            {
+                throw new FallbackException();
+            }
+
+            if (lambda.Parameters.Count < 1)
+            {
+                throw new FallbackException();
+            }
+
+            string inputVar = EmitExpression(sb, func.Arguments[0], indent, dataVar, wsVar);
+
+            int lambdaIdx = _lambdaCounter++;
+            string elParam = $"el_{lambdaIdx}";
+            string keyUtf8Param = $"keyUtf8_{lambdaIdx}";
+            string wsParam = $"ws_{lambdaIdx}";
+            string innerIndent = indent + "    ";
+            StringBuilder lambdaBody = new();
+
+            string? savedVal = StashVariable(lambda.Parameters[0], elParam);
+
+            // Map $k directly to the ReadOnlySpan<byte> parameter.
+            string? savedKey = null;
+            bool hasKeyParam = lambda.Parameters.Count >= 2;
+            if (hasKeyParam)
+            {
+                savedKey = StashVariable(lambda.Parameters[1], keyUtf8Param);
+                (_utf8SpanVariables ??= new(StringComparer.Ordinal)).Add(lambda.Parameters[1]);
+            }
+
+            bool prevRootRef = _usesRootRef;
+            _usesRootRef = true;
+
+            // Try to emit as direct boolean expression for the predicate
+            string? boolResult = TryEmitExpressionAsBool(lambdaBody, lambda.Body, innerIndent, elParam, wsParam);
+            string bodyResult = boolResult ?? EmitExpression(lambdaBody, lambda.Body, innerIndent, elParam, wsParam);
+
+            bool bodyUsedRoot = bodyResult.Contains("__rootData")
+                || lambdaBody.ToString().Contains("__rootData");
+            _usesRootRef = prevRootRef || bodyUsedRoot;
+
+            if (hasKeyParam)
+            {
+                _utf8SpanVariables!.Remove(lambda.Parameters[1]);
+                RestoreVariable(lambda.Parameters[1], savedKey);
+            }
+
+            RestoreVariable(lambda.Parameters[0], savedVal);
+
+            string v = NextVar();
+            L(sb, indent, $"var {v} = {H}.SiftProperty({inputVar}, {Static}(JsonElement {elParam}, ReadOnlySpan<byte> {keyUtf8Param}, JsonWorkspace {wsParam}) =>");
+            L(sb, indent, "{");
+
+            sb.Append(lambdaBody);
+
+            if (boolResult != null)
+            {
+                L(sb, innerIndent, $"return {boolResult};");
+            }
+            else
+            {
+                L(sb, innerIndent, $"return {H}.IsTruthy({bodyResult});");
+            }
+
+            L(sb, indent, $"}}, {wsVar});");
+            return v;
+        }
+
         // ── Variable scoping helpers ─────────────────────────
         private string? StashVariable(string name, string csVar)
         {
