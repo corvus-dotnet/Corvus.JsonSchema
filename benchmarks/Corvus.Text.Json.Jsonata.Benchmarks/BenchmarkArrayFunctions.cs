@@ -42,7 +42,6 @@ public class BenchmarkArrayFunctions : JsonataBenchmarkBase
         """;
 
     private const string ExprCount = "$count(Account.Order[0].Product)";
-    private const string ExprFlatten = "$flatten(Account.Order.Product)";
     private const string ExprFlattenStd = "Account.Order.Product[]";
     private const string ExprDistinct = """$distinct(Account.Order.Product."Product Name")""";
     private const string ExprAppend = "$append(Account.Order[0].Product, Account.Order[1].Product)";
@@ -55,7 +54,6 @@ public class BenchmarkArrayFunctions : JsonataBenchmarkBase
 
 #if !NETFRAMEWORK
     private JsonataQuery nativeCount = null!;
-    private JsonataQuery nativeFlatten = null!;
     private JsonataQuery nativeFlattenStd = null!;
     private JsonataQuery nativeDistinct = null!;
     private JsonataQuery nativeAppend = null!;
@@ -76,7 +74,6 @@ public class BenchmarkArrayFunctions : JsonataBenchmarkBase
 
         // Warm up RT
         this.evaluator.Evaluate(ExprCount, this.data);
-        this.evaluator.Evaluate(ExprFlatten, this.data);
         this.evaluator.Evaluate(ExprFlattenStd, this.data);
         this.evaluator.Evaluate(ExprDistinct, this.data);
         this.evaluator.Evaluate(ExprAppend, this.data);
@@ -84,7 +81,6 @@ public class BenchmarkArrayFunctions : JsonataBenchmarkBase
 
         // Warm up CG
         CountCodeGen.Evaluate(this.data, this.workspace); this.workspace.Reset();
-        FlattenCodeGen.Evaluate(this.data, this.workspace); this.workspace.Reset();
         FlattenStdCodeGen.Evaluate(this.data, this.workspace); this.workspace.Reset();
         DistinctCodeGen.Evaluate(this.data, this.workspace); this.workspace.Reset();
         AppendCodeGen.Evaluate(this.data, this.workspace); this.workspace.Reset();
@@ -93,7 +89,6 @@ public class BenchmarkArrayFunctions : JsonataBenchmarkBase
 #if !NETFRAMEWORK
         this.nativeData = JToken.Parse(DataJson);
         this.nativeCount = new JsonataQuery(ExprCount);
-        this.nativeFlatten = new JsonataQuery(ExprFlatten);
         this.nativeFlattenStd = new JsonataQuery(ExprFlattenStd);
         this.nativeDistinct = new JsonataQuery(ExprDistinct);
         this.nativeAppend = new JsonataQuery(ExprAppend);
@@ -136,33 +131,6 @@ public class BenchmarkArrayFunctions : JsonataBenchmarkBase
     {
         this.workspace.Reset();
         return CountCodeGen.Evaluate(this.data, this.workspace);
-    }
-
-    // ── $flatten ─────────────────────────────────────────────
-
-    /// <summary>Corvus RT: $flatten.</summary>
-    [BenchmarkCategory("Flatten")]
-    [Benchmark]
-    public JsonElement Corvus_Flatten()
-    {
-        this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprFlatten, this.data, this.workspace);
-    }
-
-#if !NETFRAMEWORK
-    /// <summary>Native: $flatten.</summary>
-    [BenchmarkCategory("Flatten")]
-    [Benchmark(Baseline = true)]
-    public JToken JsonataDotNet_Flatten() => this.nativeFlatten.Eval(this.nativeData);
-#endif
-
-    /// <summary>CodeGen: $flatten.</summary>
-    [BenchmarkCategory("Flatten")]
-    [Benchmark]
-    public JsonElement Corvus_CodeGen_Flatten()
-    {
-        this.workspace.Reset();
-        return FlattenCodeGen.Evaluate(this.data, this.workspace);
     }
 
     // ── flatten standard syntax (array[]) ──────────────────

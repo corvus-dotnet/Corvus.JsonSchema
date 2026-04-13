@@ -840,6 +840,45 @@ public static class JsonataCodeGenHelpers
     }
 
     /// <summary>
+    /// Navigates a single property over an array and returns the result as an array.
+    /// Builds directly into the CVB array builder (no intermediate <see cref="ElementBuffer"/>).
+    /// Used for <c>path[]</c> syntax where the result must always be an array.
+    /// </summary>
+    /// <param name="data">The input data element (typically an array).</param>
+    /// <param name="name">The UTF-8 encoded property name.</param>
+    /// <param name="workspace">The workspace for intermediate allocations.</param>
+    /// <returns>The array result, or <c>default</c> if no matches found.</returns>
+    public static JsonElement NavigatePropertyToArray(in JsonElement data, byte[] name, JsonWorkspace workspace)
+    {
+        if (data.ValueKind == JsonValueKind.Object)
+        {
+            if (data.TryGetProperty((ReadOnlySpan<byte>)name, out JsonElement result))
+            {
+                return KeepSingletonArray(result, workspace);
+            }
+
+            return default;
+        }
+
+        if (data.ValueKind != JsonValueKind.Array)
+        {
+            return default;
+        }
+
+        // Build the flat array directly via CVB — iterate inside the builder callback.
+        JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(
+            workspace,
+            (data, name),
+            static (in (JsonElement Array, byte[] Name) ctx, ref JsonElement.ArrayBuilder builder) =>
+            {
+                CollectPropertyFlatIntoBuilder(ctx.Array, ctx.Name, ref builder);
+            },
+            estimatedMemberCount: data.GetArrayLength() * 2 + 2);
+
+        return (JsonElement)doc.RootElement;
+    }
+
+    /// <summary>
     /// Wildcard step: enumerates all values of an object (flattening array values),
     /// or all elements of an array. Returns a collected JSON array.
     /// </summary>
@@ -7204,6 +7243,40 @@ public static class JsonataCodeGenHelpers
         finally
         {
             buffer.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Collects property values from array elements directly into an <see cref="JsonElement.ArrayBuilder"/>.
+    /// Used by <see cref="NavigatePropertyToArray"/> to avoid intermediate buffers.
+    /// </summary>
+    private static void CollectPropertyFlatIntoBuilder(
+        in JsonElement array, byte[] name, ref JsonElement.ArrayBuilder builder)
+    {
+        ReadOnlySpan<byte> nameSpan = name;
+        foreach (JsonElement item in array.EnumerateArray())
+        {
+            if (item.ValueKind == JsonValueKind.Object)
+            {
+                if (item.TryGetProperty(nameSpan, out var val))
+                {
+                    if (val.ValueKind == JsonValueKind.Array)
+                    {
+                        foreach (JsonElement child in val.EnumerateArray())
+                        {
+                            builder.AddItem(child);
+                        }
+                    }
+                    else
+                    {
+                        builder.AddItem(val);
+                    }
+                }
+            }
+            else if (item.ValueKind == JsonValueKind.Array)
+            {
+                CollectPropertyFlatIntoBuilder(item, name, ref builder);
+            }
         }
     }
 

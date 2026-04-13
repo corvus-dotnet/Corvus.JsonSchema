@@ -629,18 +629,21 @@ public static class JsonataCodeGenerator
             // Check for simple property chain (all NameNode, no annotations on steps or path)
             if (IsSimplePropertyChain(steps) && path.Annotations?.Group is null)
             {
-                // When KeepSingletonArray is needed, fuse the chain + array wrapping
-                // to avoid the intermediate mutable builder from NavigatePropertyChain.
-                if (path.KeepSingletonArray || path.KeepArray
-                    || steps.Exists(s => s.KeepArray))
+                bool keepArray = path.KeepSingletonArray || path.KeepArray
+                    || steps.Exists(s => s.KeepArray);
+
+                string result = EmitSimplePropertyChain(sb, steps, indent, dataVar, wsVar, keepArray);
+
+                // Apply KeepSingletonArray wrapping if needed (e.g. path[])
+                // This is a no-op for results already returned as arrays by NavigatePropertyToArray.
+                if (keepArray)
                 {
-                    string chainField = GetOrCreateChainField(steps, 0, steps.Count);
-                    string v = NextVar();
-                    L(sb, indent, $"var {v} = {H}.ChainKeepSingletonArray({dataVar}, {chainField}, {wsVar});");
-                    return v;
+                    string wrapped = NextVar();
+                    L(sb, indent, $"var {wrapped} = {H}.KeepSingletonArray({result}, {wsVar});");
+                    result = wrapped;
                 }
 
-                return EmitSimplePropertyChain(sb, steps, indent, dataVar, wsVar);
+                return result;
             }
 
             // Check for property chain with constant-index or string-equality predicates
@@ -1796,14 +1799,18 @@ public static class JsonataCodeGenerator
         }
 
         private string EmitSimplePropertyChain(
-            StringBuilder sb, List<JsonataNode> steps, string indent, string dataVar, string wsVar)
+            StringBuilder sb, List<JsonataNode> steps, string indent, string dataVar, string wsVar, bool keepArray = false)
         {
             if (steps.Count == 1)
             {
                 string nameField = GetOrCreateNameField(((NameNode)steps[0]).Value);
                 string v = NextVar();
 
-                if (_knownObjectDataVar != null && dataVar == _knownObjectDataVar)
+                if (keepArray)
+                {
+                    L(sb, indent, $"var {v} = {H}.NavigatePropertyToArray({dataVar}, {nameField}, {wsVar});");
+                }
+                else if (_knownObjectDataVar != null && dataVar == _knownObjectDataVar)
                 {
                     string tmp = NextVar();
                     L(sb, indent, $"var {v} = {dataVar}.ValueKind == JsonValueKind.Object && {dataVar}.TryGetProperty((ReadOnlySpan<byte>){nameField}, out var {tmp}) ? {tmp} : default;");
@@ -1816,12 +1823,12 @@ public static class JsonataCodeGenerator
                 return v;
             }
 
-            return EmitInlinePropertyChain(sb, steps, 0, steps.Count, indent, dataVar, wsVar);
+            return EmitInlinePropertyChain(sb, steps, 0, steps.Count, indent, dataVar, wsVar, keepArray);
         }
 
         private string EmitPropertyChainSegment(
             StringBuilder sb, List<JsonataNode> steps, int start, int end,
-            string indent, string currentVar, string wsVar)
+            string indent, string currentVar, string wsVar, bool keepArray = false)
         {
             int count = end - start;
             if (count == 1)
@@ -1829,20 +1836,33 @@ public static class JsonataCodeGenerator
                 string name = ((NameNode)steps[start]).Value;
 
                 // CSE: reuse if this (source, property) was already navigated.
-                var cacheKey = (currentVar, name);
-                if (_propertyStepCache.TryGetValue(cacheKey, out string? cached))
+                // Skip CSE when keepArray is true (different method needed).
+                if (!keepArray)
                 {
-                    return cached;
+                    var cacheKey = (currentVar, name);
+                    if (_propertyStepCache.TryGetValue(cacheKey, out string? cached))
+                    {
+                        return cached;
+                    }
                 }
 
                 string nameField = GetOrCreateNameField(name);
                 string v = NextVar();
-                L(sb, indent, $"var {v} = {H}.NavigateProperty({currentVar}, {nameField}, {wsVar});");
-                _propertyStepCache[cacheKey] = v;
+
+                if (keepArray)
+                {
+                    L(sb, indent, $"var {v} = {H}.NavigatePropertyToArray({currentVar}, {nameField}, {wsVar});");
+                }
+                else
+                {
+                    L(sb, indent, $"var {v} = {H}.NavigateProperty({currentVar}, {nameField}, {wsVar});");
+                    _propertyStepCache[(currentVar, name)] = v;
+                }
+
                 return v;
             }
 
-            return EmitInlinePropertyChain(sb, steps, start, end, indent, currentVar, wsVar);
+            return EmitInlinePropertyChain(sb, steps, start, end, indent, currentVar, wsVar, keepArray);
         }
 
         /// <summary>
@@ -1854,16 +1874,16 @@ public static class JsonataCodeGenerator
         /// </summary>
         private string EmitInlinePropertyChain(
             StringBuilder sb, List<JsonataNode> steps, int start, int end,
-            string indent, string dataVar, string wsVar)
+            string indent, string dataVar, string wsVar, bool keepArray = false)
         {
             int count = end - start;
 
             if (count <= 2)
             {
-                return EmitPerStepInlineChain(sb, steps, start, end, indent, dataVar, wsVar);
+                return EmitPerStepInlineChain(sb, steps, start, end, indent, dataVar, wsVar, keepArray);
             }
 
-            return EmitAndChainWithFlatFallback(sb, steps, start, end, indent, dataVar, wsVar);
+            return EmitAndChainWithFlatFallback(sb, steps, start, end, indent, dataVar, wsVar, keepArray);
         }
 
         /// <summary>
@@ -1874,20 +1894,26 @@ public static class JsonataCodeGenerator
         /// </summary>
         private string EmitPerStepInlineChain(
             StringBuilder sb, List<JsonataNode> steps, int start, int end,
-            string indent, string dataVar, string wsVar)
+            string indent, string dataVar, string wsVar, bool keepArray = false)
         {
             string prevVar = dataVar;
 
             for (int i = start; i < end; i++)
             {
                 string name = ((NameNode)steps[i]).Value;
+                bool isLastStep = i == end - 1;
+                bool useToArray = keepArray && isLastStep;
 
                 // CSE: if this exact (source, property) pair was already navigated, reuse.
-                var cacheKey = (prevVar, name);
-                if (_propertyStepCache.TryGetValue(cacheKey, out string? cached))
+                // Skip CSE when useToArray (different method).
+                if (!useToArray)
                 {
-                    prevVar = cached;
-                    continue;
+                    var cacheKey = (prevVar, name);
+                    if (_propertyStepCache.TryGetValue(cacheKey, out string? cached))
+                    {
+                        prevVar = cached;
+                        continue;
+                    }
                 }
 
                 string escapedName = EscapeStringLiteral(name);
@@ -1900,11 +1926,24 @@ public static class JsonataCodeGenerator
                 L(sb, indent, "}");
                 L(sb, indent, "else");
                 L(sb, indent, "{");
-                L(sb, indent, $"    {resultVar} = {H}.NavigateProperty({prevVar}, {nameField}, {wsVar});");
+
+                if (useToArray)
+                {
+                    L(sb, indent, $"    {resultVar} = {H}.NavigatePropertyToArray({prevVar}, {nameField}, {wsVar});");
+                }
+                else
+                {
+                    L(sb, indent, $"    {resultVar} = {H}.NavigateProperty({prevVar}, {nameField}, {wsVar});");
+                }
+
                 L(sb, indent, "}");
                 L(sb, indent, "");
 
-                _propertyStepCache[cacheKey] = resultVar;
+                if (!useToArray)
+                {
+                    _propertyStepCache[(prevVar, name)] = resultVar;
+                }
+
                 prevVar = resultVar;
             }
 
@@ -1920,7 +1959,7 @@ public static class JsonataCodeGenerator
         /// </summary>
         private string EmitAndChainWithFlatFallback(
             StringBuilder sb, List<JsonataNode> steps, int start, int end,
-            string indent, string dataVar, string wsVar)
+            string indent, string dataVar, string wsVar, bool keepArray = false)
         {
             int count = end - start;
 
@@ -1984,7 +2023,16 @@ public static class JsonataCodeGenerator
                 {
                     // Last step failed — just navigate single property from previous chain var
                     string nameField = GetOrCreateNameField(names[i]);
-                    L(sb, indent, $"    {resultVar} = {H}.NavigateProperty({chainVars[i - 1]}, {nameField}, {wsVar});");
+
+                    if (keepArray)
+                    {
+                        // Build directly into array (no intermediate ElementBuffer)
+                        L(sb, indent, $"    {resultVar} = {H}.NavigatePropertyToArray({chainVars[i - 1]}, {nameField}, {wsVar});");
+                    }
+                    else
+                    {
+                        L(sb, indent, $"    {resultVar} = {H}.NavigateProperty({chainVars[i - 1]}, {nameField}, {wsVar});");
+                    }
                 }
                 else
                 {
