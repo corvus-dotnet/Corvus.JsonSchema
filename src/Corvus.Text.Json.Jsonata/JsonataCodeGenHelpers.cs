@@ -3287,7 +3287,7 @@ public static class JsonataCodeGenHelpers
     }
 
     /// <summary>
-    /// JSONata <c>$split</c> function (string separator only; regex falls back to runtime).
+    /// JSONata <c>$split</c> function (string separator only).
     /// </summary>
     public static JsonElement Split(in JsonElement input, in JsonElement separator, in JsonElement limitElement, JsonWorkspace workspace)
     {
@@ -3354,43 +3354,138 @@ public static class JsonataCodeGenHelpers
         }
         else
         {
-            // Collect split results using UTF-8 byte-level IndexOf
-            var parts = new List<(int Start, int Length)>();
+            // Two-pass approach to avoid List<> allocation:
+            // Pass 1: count the splits
+            int partCount = 1;
             int searchStart = 0;
-            while (parts.Count < limit)
+            while (partCount < limit)
             {
                 int idx = str.Slice(searchStart).IndexOf(sep);
                 if (idx < 0)
                 {
-                    parts.Add((searchStart, str.Length - searchStart));
                     break;
                 }
 
-                parts.Add((searchStart, idx));
+                partCount++;
                 searchStart += idx + sep.Length;
 
-                if (searchStart > str.Length)
+                if (searchStart >= str.Length)
                 {
-                    break;
-                }
+                    if (searchStart == str.Length && partCount < limit)
+                    {
+                        partCount++;
+                    }
 
-                if (searchStart == str.Length && parts.Count < limit)
-                {
-                    parts.Add((searchStart, 0));
                     break;
                 }
             }
 
-            int resultCount = Math.Min(parts.Count, limit);
+            int resultCount = Math.Min(partCount, limit);
             JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(workspace, resultCount);
             JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
-            for (int i = 0; i < resultCount; i++)
+
+            // Pass 2: emit the parts
+            searchStart = 0;
+            for (int i = 0; i < resultCount - 1; i++)
             {
-                arrayRoot.AddItem(JsonataHelpers.StringFromUnescapedUtf8(str.Slice(parts[i].Start, parts[i].Length), workspace));
+                int idx = str.Slice(searchStart).IndexOf(sep);
+                arrayRoot.AddItem(JsonataHelpers.StringFromUnescapedUtf8(str.Slice(searchStart, idx), workspace));
+                searchStart += idx + sep.Length;
             }
+
+            // Final part: remainder of string
+            arrayRoot.AddItem(JsonataHelpers.StringFromUnescapedUtf8(str.Slice(searchStart), workspace));
 
             return (JsonElement)arrayRoot;
         }
+    }
+
+    /// <summary>
+    /// JSONata <c>$split</c> function — regex separator form.
+    /// Uses a pre-compiled <see cref="Regex"/> passed from the code-generated static field.
+    /// On NET, uses <see cref="Regex.EnumerateMatches(ReadOnlySpan{char})"/>
+    /// to avoid per-match object allocations.
+    /// </summary>
+    public static JsonElement SplitRegex(in JsonElement input, Regex regex, in JsonElement limitElement, JsonWorkspace workspace)
+    {
+        if (input.ValueKind != JsonValueKind.String)
+        {
+            throw new JsonataException("T0410", SR.T0410_Argument1OfFunctionSplitIsNotOfTheCorrectType, 0);
+        }
+
+        int limit = int.MaxValue;
+        if (!limitElement.IsUndefined())
+        {
+            if (limitElement.ValueKind != JsonValueKind.Number)
+            {
+                throw new JsonataException("T0410", SR.T0410_Argument3OfFunctionSplitIsNotOfTheCorrectType, 0);
+            }
+
+            if (FunctionalCompiler.TryCoerceToNumber(limitElement, out double limitD))
+            {
+                if (limitD < 0)
+                {
+                    throw new JsonataException("D3020", SR.D3020_ThirdArgumentOfTheSplitFunctionMustEvaluateToAPositiveNumber, 0);
+                }
+
+                limit = (int)Math.Floor(limitD);
+            }
+        }
+
+        using UnescapedUtf16JsonString utf16Str = input.GetUtf16String();
+        ReadOnlySpan<char> chars = utf16Str.Span;
+
+#if NET8_0_OR_GREATER
+        // Fast path: use EnumerateMatches to count parts without allocating Match objects,
+        // then iterate again to emit the parts.
+        // Pass 1: count matches
+        int matchCount = 0;
+        foreach (ValueMatch vm0 in regex.EnumerateMatches(chars))
+        {
+            matchCount++;
+            if (matchCount >= limit)
+            {
+                break;
+            }
+        }
+
+        int resultCount = Math.Min(matchCount + 1, limit);
+        JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(workspace, resultCount);
+        JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
+
+        // Pass 2: emit the split parts
+        int emitted = 0;
+        int pos = 0;
+        foreach (ValueMatch vm in regex.EnumerateMatches(chars))
+        {
+            if (emitted >= resultCount - 1)
+            {
+                break;
+            }
+
+            arrayRoot.AddItem(JsonataHelpers.StringFromChars(chars.Slice(pos, vm.Index - pos), workspace));
+            pos = vm.Index + vm.Length;
+            emitted++;
+        }
+
+        // Final part: remainder
+        arrayRoot.AddItem(JsonataHelpers.StringFromChars(chars.Slice(pos), workspace));
+
+        return (JsonElement)arrayRoot;
+#else
+        // Fallback: use Regex.Split on a string
+        string str = chars.ToString();
+        string[] parts = regex.Split(str);
+        int resultCount = Math.Min(parts.Length, limit);
+        JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(workspace, resultCount);
+        JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
+        for (int i = 0; i < resultCount; i++)
+        {
+            arrayRoot.AddItem(JsonataHelpers.StringFromString(parts[i], workspace));
+        }
+
+        return (JsonElement)arrayRoot;
+#endif
     }
 
     /// <summary>

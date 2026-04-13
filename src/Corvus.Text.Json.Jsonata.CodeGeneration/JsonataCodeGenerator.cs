@@ -4578,47 +4578,76 @@ public static class JsonataCodeGenerator
                 throw new FallbackException();
             }
 
-            string arg0;
-            string arg1;
-            string arg2;
+            // Determine argument positions
+            int strArgIdx, sepArgIdx, limitArgIdx;
             bool contextImplied;
-
             if (func.Arguments.Count == 1)
             {
-                arg0 = dataVar;
-                arg1 = EmitExpression(sb, func.Arguments[0], indent, dataVar, wsVar);
-                arg2 = "default";
+                strArgIdx = -1; // context data
+                sepArgIdx = 0;
+                limitArgIdx = -1;
                 contextImplied = true;
             }
             else if (func.Arguments.Count == 2)
             {
-                arg0 = EmitExpression(sb, func.Arguments[0], indent, dataVar, wsVar);
-                arg1 = EmitExpression(sb, func.Arguments[1], indent, dataVar, wsVar);
-                arg2 = "default";
+                strArgIdx = 0;
+                sepArgIdx = 1;
+                limitArgIdx = -1;
                 contextImplied = false;
             }
             else
             {
-                arg0 = EmitExpression(sb, func.Arguments[0], indent, dataVar, wsVar);
-                arg1 = EmitExpression(sb, func.Arguments[1], indent, dataVar, wsVar);
-                arg2 = EmitExpression(sb, func.Arguments[2], indent, dataVar, wsVar);
+                strArgIdx = 0;
+                sepArgIdx = 1;
+                limitArgIdx = 2;
                 contextImplied = false;
             }
 
-            string v = NextVar();
+            // Regex separator: emit static compiled Regex field + H.SplitRegex(...)
+            if (func.Arguments[sepArgIdx] is RegexNode regexNode)
+            {
+                string rxField = CreateRegexField(regexNode.Pattern, regexNode.Flags);
+
+                string arg0 = strArgIdx >= 0
+                    ? EmitExpression(sb, func.Arguments[strArgIdx], indent, dataVar, wsVar)
+                    : dataVar;
+                string arg2 = limitArgIdx >= 0
+                    ? EmitExpression(sb, func.Arguments[limitArgIdx], indent, dataVar, wsVar)
+                    : "default";
+
+                string v = NextVar();
+                if (contextImplied)
+                {
+                    L(sb, indent, $"var {v} = {H}.SplitRegex({arg0}, {rxField}, {arg2}, {wsVar});");
+                }
+                else
+                {
+                    L(sb, indent, $"var {v} = {arg0}.ValueKind == JsonValueKind.Undefined ? default : {H}.SplitRegex({arg0}, {rxField}, {arg2}, {wsVar});");
+                }
+
+                return v;
+            }
+
+            // String separator: emit H.Split(...)
+            string strVar = strArgIdx >= 0
+                ? EmitExpression(sb, func.Arguments[strArgIdx], indent, dataVar, wsVar)
+                : dataVar;
+            string sepVar = EmitExpression(sb, func.Arguments[sepArgIdx], indent, dataVar, wsVar);
+            string limitVar = limitArgIdx >= 0
+                ? EmitExpression(sb, func.Arguments[limitArgIdx], indent, dataVar, wsVar)
+                : "default";
+
+            string result = NextVar();
             if (contextImplied)
             {
-                // Context-implied: don't guard for undefined (runtime ContextArg wraps even undefined,
-                // so Split's type check fires T0410 for non-string input including undefined).
-                L(sb, indent, $"var {v} = {H}.Split({arg0}, {arg1}, {arg2}, {wsVar});");
+                L(sb, indent, $"var {result} = {H}.Split({strVar}, {sepVar}, {limitVar}, {wsVar});");
             }
             else
             {
-                // Explicit first arg: undefined input returns undefined (matches runtime seq.IsUndefined check).
-                L(sb, indent, $"var {v} = {arg0}.ValueKind == JsonValueKind.Undefined ? default : {H}.Split({arg0}, {arg1}, {arg2}, {wsVar});");
+                L(sb, indent, $"var {result} = {strVar}.ValueKind == JsonValueKind.Undefined ? default : {H}.Split({strVar}, {sepVar}, {limitVar}, {wsVar});");
             }
 
-            return v;
+            return result;
         }
 
         // ── HOF: $map / $filter ──────────────────────────────
@@ -5350,16 +5379,16 @@ public static class JsonataCodeGenerator
             else
             {
                 // String pattern: emit H.Replace(str, pattern, replacement, limit, ws)
-                if (func.Arguments.Count < 3)
-                {
-                    throw new FallbackException();
-                }
+                string arg0 = strArgIdx >= 0
+                    ? EmitExpression(sb, func.Arguments[strArgIdx], indent, dataVar, wsVar)
+                    : dataVar;
+                string arg1 = EmitExpression(sb, func.Arguments[patArgIdx], indent, dataVar, wsVar);
+                string arg2 = EmitExpression(sb, func.Arguments[repArgIdx], indent, dataVar, wsVar);
 
-                string arg0 = EmitExpression(sb, func.Arguments[0], indent, dataVar, wsVar);
-                string arg1 = EmitExpression(sb, func.Arguments[1], indent, dataVar, wsVar);
-                string arg2 = EmitExpression(sb, func.Arguments[2], indent, dataVar, wsVar);
-                string arg3 = func.Arguments.Count >= 4
-                    ? EmitExpression(sb, func.Arguments[3], indent, dataVar, wsVar)
+                // Limit is the last arg when we have more args than the 3 positional ones (or 2 for context-implied)
+                int expectedMinArgs = strArgIdx >= 0 ? 3 : 2;
+                string arg3 = func.Arguments.Count > expectedMinArgs
+                    ? EmitExpression(sb, func.Arguments[^1], indent, dataVar, wsVar)
                     : "default";
 
                 string v = NextVar();
