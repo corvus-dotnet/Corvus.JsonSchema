@@ -629,18 +629,18 @@ public static class JsonataCodeGenerator
             // Check for simple property chain (all NameNode, no annotations on steps or path)
             if (IsSimplePropertyChain(steps) && path.Annotations?.Group is null)
             {
-                string result = EmitSimplePropertyChain(sb, steps, indent, dataVar, wsVar);
-
-                // Still apply KeepSingletonArray wrapping if needed (e.g. number[])
+                // When KeepSingletonArray is needed, fuse the chain + array wrapping
+                // to avoid the intermediate mutable builder from NavigatePropertyChain.
                 if (path.KeepSingletonArray || path.KeepArray
                     || steps.Exists(s => s.KeepArray))
                 {
-                    string wrapped = NextVar();
-                    L(sb, indent, $"var {wrapped} = {H}.KeepSingletonArray({result}, {wsVar});");
-                    result = wrapped;
+                    string chainField = GetOrCreateChainField(steps, 0, steps.Count);
+                    string v = NextVar();
+                    L(sb, indent, $"var {v} = {H}.ChainKeepSingletonArray({dataVar}, {chainField}, {wsVar});");
+                    return v;
                 }
 
-                return result;
+                return EmitSimplePropertyChain(sb, steps, indent, dataVar, wsVar);
             }
 
             // Check for property chain with constant-index or string-equality predicates

@@ -3840,6 +3840,51 @@ public static class JsonataCodeGenHelpers
     }
 
     /// <summary>
+    /// Fused chain navigation + keep-singleton-array (<c>[]</c> syntax).
+    /// Navigates the property chain into an <see cref="ElementBuffer"/> (no intermediate builder),
+    /// then builds the result array directly from the buffer.
+    /// </summary>
+    /// <param name="data">The root element to navigate from.</param>
+    /// <param name="names">The UTF-8 encoded property names for the chain.</param>
+    /// <param name="workspace">The workspace for pooled memory.</param>
+    /// <returns>The flattened array result.</returns>
+    public static JsonElement ChainKeepSingletonArray(in JsonElement data, byte[][] names, JsonWorkspace workspace)
+    {
+        var buffer = default(ElementBuffer);
+        try
+        {
+            NavigatePropertyChainInto(data, names, ref buffer);
+            return ArrayFromBuffer(ref buffer, workspace);
+        }
+        finally
+        {
+            buffer.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Fused chain navigation + keep-singleton-array with a start index for partially-resolved chains.
+    /// </summary>
+    /// <param name="data">The element at the start position (already resolved up to <paramref name="startIndex"/>).</param>
+    /// <param name="names">The full UTF-8 encoded property names array.</param>
+    /// <param name="startIndex">The index into <paramref name="names"/> to start navigating from.</param>
+    /// <param name="workspace">The workspace for pooled memory.</param>
+    /// <returns>The flattened array result.</returns>
+    public static JsonElement ChainKeepSingletonArray(in JsonElement data, byte[][] names, int startIndex, JsonWorkspace workspace)
+    {
+        var buffer = default(ElementBuffer);
+        try
+        {
+            NavigatePropertyChainInto(data, names, startIndex, ref buffer);
+            return ArrayFromBuffer(ref buffer, workspace);
+        }
+        finally
+        {
+            buffer.Dispose();
+        }
+    }
+
+    /// <summary>
     /// Fused chain navigation + merge. Navigates the property chain into an
     /// <see cref="ElementBuffer"/> (no intermediate builder), then merges object
     /// properties from the buffer elements into a single result.
@@ -3882,6 +3927,36 @@ public static class JsonataCodeGenHelpers
         {
             buffer.Dispose();
         }
+    }
+
+    /// <summary>
+    /// Builds an array from an <see cref="ElementBuffer"/>. If the buffer is empty,
+    /// returns undefined. If it has exactly one element, returns that element wrapped
+    /// in an array. Otherwise, builds a full array document.
+    /// </summary>
+    private static JsonElement ArrayFromBuffer(ref ElementBuffer buffer, JsonWorkspace workspace)
+    {
+        if (buffer.Count == 0)
+        {
+            return default;
+        }
+
+        if (buffer.Count == 1)
+        {
+            // Single element — wrap in a 1-element array
+            var singleDoc = JsonElement.CreateArrayBuilder(workspace, 1);
+            singleDoc.RootElement.AddItem(buffer[0]);
+            return (JsonElement)singleDoc.RootElement;
+        }
+
+        JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(workspace, buffer.Count);
+        JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
+        for (int i = 0; i < buffer.Count; i++)
+        {
+            arrayRoot.AddItem(buffer[i]);
+        }
+
+        return (JsonElement)arrayRoot;
     }
 
     /// <summary>
