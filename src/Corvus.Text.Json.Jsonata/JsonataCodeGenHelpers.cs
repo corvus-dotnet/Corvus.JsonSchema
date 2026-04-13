@@ -3352,13 +3352,17 @@ public static class JsonataCodeGenHelpers
 
             return (JsonElement)arrayRoot;
         }
+        else if (limit <= 0)
+        {
+            JsonDocumentBuilder<JsonElement.Mutable> emptyDoc = JsonElement.CreateArrayBuilder(workspace, 0);
+            return (JsonElement)emptyDoc.RootElement;
+        }
         else
         {
-            // Two-pass approach to avoid List<> allocation:
-            // Pass 1: count the splits
-            int partCount = 1;
+            // Count splits up to limit - 1 (to produce limit parts)
+            int matchCount = 0;
             int searchStart = 0;
-            while (partCount < limit)
+            while (matchCount < limit - 1)
             {
                 int idx = str.Slice(searchStart).IndexOf(sep);
                 if (idx < 0)
@@ -3366,25 +3370,20 @@ public static class JsonataCodeGenHelpers
                     break;
                 }
 
-                partCount++;
+                matchCount++;
                 searchStart += idx + sep.Length;
 
-                if (searchStart >= str.Length)
+                if (searchStart > str.Length)
                 {
-                    if (searchStart == str.Length && partCount < limit)
-                    {
-                        partCount++;
-                    }
-
                     break;
                 }
             }
 
-            int resultCount = Math.Min(partCount, limit);
+            bool exhausted = matchCount < limit - 1;
+            int resultCount = exhausted ? matchCount + 1 : limit;
             JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(workspace, resultCount);
             JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
 
-            // Pass 2: emit the parts
             searchStart = 0;
             for (int i = 0; i < resultCount - 1; i++)
             {
@@ -3393,8 +3392,16 @@ public static class JsonataCodeGenHelpers
                 searchStart += idx + sep.Length;
             }
 
-            // Final part: remainder of string
-            arrayRoot.AddItem(JsonataHelpers.StringFromUnescapedUtf8(str.Slice(searchStart), workspace));
+            if (exhausted)
+            {
+                arrayRoot.AddItem(JsonataHelpers.StringFromUnescapedUtf8(str.Slice(searchStart), workspace));
+            }
+            else
+            {
+                int idx = str.Slice(searchStart).IndexOf(sep);
+                int partLen = idx >= 0 ? idx : str.Length - searchStart;
+                arrayRoot.AddItem(JsonataHelpers.StringFromUnescapedUtf8(str.Slice(searchStart, partLen), workspace));
+            }
 
             return (JsonElement)arrayRoot;
         }
@@ -3435,21 +3442,26 @@ public static class JsonataCodeGenHelpers
         using UnescapedUtf16JsonString utf16Str = input.GetUtf16String();
         ReadOnlySpan<char> chars = utf16Str.Span;
 
+        if (limit <= 0)
+        {
+            JsonDocumentBuilder<JsonElement.Mutable> emptyDoc = JsonElement.CreateArrayBuilder(workspace, 0);
+            return (JsonElement)emptyDoc.RootElement;
+        }
+
 #if NET8_0_OR_GREATER
-        // Fast path: use EnumerateMatches to count parts without allocating Match objects,
-        // then iterate again to emit the parts.
-        // Pass 1: count matches
+        // Pass 1: count matches up to limit - 1
         int matchCount = 0;
         foreach (ValueMatch vm0 in regex.EnumerateMatches(chars))
         {
             matchCount++;
-            if (matchCount >= limit)
+            if (matchCount >= limit - 1)
             {
                 break;
             }
         }
 
-        int resultCount = Math.Min(matchCount + 1, limit);
+        bool exhausted = matchCount < limit - 1;
+        int resultCount = exhausted ? matchCount + 1 : limit;
         JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(workspace, resultCount);
         JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
 
@@ -3468,8 +3480,30 @@ public static class JsonataCodeGenHelpers
             emitted++;
         }
 
-        // Final part: remainder
-        arrayRoot.AddItem(JsonataHelpers.StringFromChars(chars.Slice(pos), workspace));
+        if (exhausted)
+        {
+            arrayRoot.AddItem(JsonataHelpers.StringFromChars(chars.Slice(pos), workspace));
+        }
+        else
+        {
+            // Hit limit: find next match boundary and take text up to it
+            int nextEnd = chars.Length;
+            int scan = 0;
+            int mIdx = 0;
+            foreach (ValueMatch vm2 in regex.EnumerateMatches(chars))
+            {
+                if (mIdx == resultCount - 1)
+                {
+                    nextEnd = vm2.Index;
+                    break;
+                }
+
+                scan = vm2.Index + vm2.Length;
+                mIdx++;
+            }
+
+            arrayRoot.AddItem(JsonataHelpers.StringFromChars(chars.Slice(pos, nextEnd - pos), workspace));
+        }
 
         return (JsonElement)arrayRoot;
 #else

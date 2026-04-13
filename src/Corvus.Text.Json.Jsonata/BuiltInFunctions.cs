@@ -1299,8 +1299,8 @@ internal static class BuiltInFunctions
                 throw new JsonataException("T0410", SR.T0410_Argument1OfFunctionSplitIsNotOfTheCorrectType, 0);
             }
 
-            string? str = strSeq.FirstOrDefault.GetString();
-            if (str is null)
+            JsonElement strElement = strSeq.FirstOrDefault;
+            if (strElement.ValueKind != JsonValueKind.String)
             {
                 return Sequence.Undefined;
             }
@@ -1343,44 +1343,14 @@ internal static class BuiltInFunctions
                 }
             }
 
-            string[] parts;
             if (sepSeq.IsRegex)
             {
-                parts = sepSeq.Regex!.Split(str);
+                return new Sequence(SplitRegex(strElement, sepSeq.Regex!, limit, env.Workspace));
             }
             else
             {
-                string? sep = sepSeq.FirstOrDefault.GetString();
-                if (sep is null)
-                {
-                    return Sequence.Undefined;
-                }
-
-                if (sep.Length == 0)
-                {
-                    // Empty separator: split into individual characters
-                    parts = new string[str.Length];
-                    for (int i = 0; i < str.Length; i++)
-                    {
-                        parts[i] = str[i].ToString();
-                    }
-                }
-                else
-                {
-                    parts = str.Split(new[] { sep }, StringSplitOptions.None);
-                }
+                return new Sequence(SplitString(strElement, sepSeq.FirstOrDefault, limit, env.Workspace));
             }
-
-            int count = Math.Min(parts.Length, limit);
-
-            JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(env.Workspace, count);
-            JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
-            for (int i = 0; i < count; i++)
-            {
-                arrayRoot.AddItem(JsonataHelpers.StringFromString(parts[i], env.Workspace));
-            }
-
-            return new Sequence((JsonElement)arrayRoot);
         };
     }
 
@@ -3357,26 +3327,8 @@ internal static class BuiltInFunctions
             }
             else
             {
-                string str = FunctionalCompiler.CoerceElementToString(strSeq.FirstOrDefault);
-                string pattern = FunctionalCompiler.CoerceElementToString(patSeq.FirstOrDefault);
-
-                // Empty string pattern is an error
-                if (pattern.Length == 0)
-                {
-                    throw new JsonataException("D3010", SR.D3010_TheSecondArgumentOfTheReplaceFunctionCannotBeAnEmptyString, 0);
-                }
-
-                string replacement = FunctionalCompiler.CoerceElementToString(repSeq.FirstOrDefault);
-
-                int count = 0;
-                int idx;
-                while (count < limit && (idx = str.IndexOf(pattern, StringComparison.Ordinal)) >= 0)
-                {
-                    str = str.Substring(0, idx) + replacement + str.Substring(idx + pattern.Length);
-                    count++;
-                }
-
-                return new Sequence(JsonataHelpers.StringFromString(str, env.Workspace));
+                return new Sequence(StringReplaceElement(
+                    strSeq.FirstOrDefault, patSeq.FirstOrDefault, repSeq.FirstOrDefault, limit, env.Workspace));
             }
         };
     }
@@ -3548,6 +3500,57 @@ internal static class BuiltInFunctions
         }
 
         return sb.ToString();
+    }
+
+    // --- Optimized string replace ---
+
+    /// <summary>
+    /// Optimized string-pattern replace: uses <see cref="Utf8ValueStringBuilder"/> and
+    /// UTF-8 byte-level <see cref="MemoryExtensions.IndexOf{T}(ReadOnlySpan{T}, ReadOnlySpan{T})"/>
+    /// to avoid intermediate string allocations.
+    /// </summary>
+    private static JsonElement StringReplaceElement(
+        in JsonElement strElement,
+        in JsonElement patElement,
+        in JsonElement repElement,
+        int limit,
+        JsonWorkspace workspace)
+    {
+        using UnescapedUtf8JsonString utf8Str = strElement.GetUtf8String();
+        using UnescapedUtf8JsonString utf8Pat = patElement.GetUtf8String();
+        using UnescapedUtf8JsonString utf8Rep = repElement.GetUtf8String();
+
+        ReadOnlySpan<byte> str = utf8Str.Span;
+        ReadOnlySpan<byte> pat = utf8Pat.Span;
+        ReadOnlySpan<byte> rep = utf8Rep.Span;
+
+        if (pat.Length == 0)
+        {
+            throw new JsonataException("D3010", SR.D3010_TheSecondArgumentOfTheReplaceFunctionCannotBeAnEmptyString, 0);
+        }
+
+        Utf8ValueStringBuilder sb = new(stackalloc byte[JsonConstants.StackallocByteThreshold]);
+        try
+        {
+            int count = 0;
+            int searchStart = 0;
+            int idx;
+            while (count < limit && (idx = str.Slice(searchStart).IndexOf(pat)) >= 0)
+            {
+                sb.Append(str.Slice(searchStart, idx));
+                sb.Append(rep);
+                searchStart += idx + pat.Length;
+                count++;
+            }
+
+            sb.Append(str.Slice(searchStart));
+
+            return JsonataHelpers.StringFromUnescapedUtf8(sb.AsSpan(), workspace);
+        }
+        finally
+        {
+            sb.Dispose();
+        }
     }
 
     // --- Optimized regex replace ---
@@ -3787,6 +3790,197 @@ internal static class BuiltInFunctions
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// Span-based string split for RT. Uses UTF-8 byte-level IndexOf to avoid
+    /// allocating <c>string[]</c> or <c>GetString()</c> calls.
+    /// </summary>
+    private static JsonElement SplitString(
+        in JsonElement strElement, in JsonElement sepElement, int limit, JsonWorkspace workspace)
+    {
+        if (sepElement.ValueKind != JsonValueKind.String)
+        {
+            return default;
+        }
+
+        using UnescapedUtf8JsonString utf8Str = strElement.GetUtf8String();
+        using UnescapedUtf8JsonString utf8Sep = sepElement.GetUtf8String();
+        ReadOnlySpan<byte> str = utf8Str.Span;
+        ReadOnlySpan<byte> sep = utf8Sep.Span;
+
+        if (sep.Length == 0)
+        {
+            // Split into individual UTF-8 code points
+            int cpCount = 0;
+            for (int i = 0; i < str.Length;)
+            {
+                cpCount++;
+                byte b = str[i];
+                i += b < 0x80 ? 1 : b < 0xE0 ? 2 : b < 0xF0 ? 3 : 4;
+            }
+
+            int count = Math.Min(cpCount, limit);
+            JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(workspace, count);
+            JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
+            int pos = 0;
+            for (int c = 0; c < count; c++)
+            {
+                byte b = str[pos];
+                int cpLen = b < 0x80 ? 1 : b < 0xE0 ? 2 : b < 0xF0 ? 3 : 4;
+                arrayRoot.AddItem(JsonataHelpers.StringFromUnescapedUtf8(str.Slice(pos, cpLen), workspace));
+                pos += cpLen;
+            }
+
+            return (JsonElement)arrayRoot;
+        }
+        else if (limit <= 0)
+        {
+            JsonDocumentBuilder<JsonElement.Mutable> emptyDoc = JsonElement.CreateArrayBuilder(workspace, 0);
+            return (JsonElement)emptyDoc.RootElement;
+        }
+        else
+        {
+            // Count splits up to limit - 1 (to produce limit parts)
+            int matchCount = 0;
+            int searchStart = 0;
+            while (matchCount < limit - 1)
+            {
+                int idx = str.Slice(searchStart).IndexOf(sep);
+                if (idx < 0)
+                {
+                    break;
+                }
+
+                matchCount++;
+                searchStart += idx + sep.Length;
+
+                if (searchStart > str.Length)
+                {
+                    break;
+                }
+            }
+
+            // JSONata: limit caps the number of results. If we found fewer splits
+            // than limit-1, all parts fit. Otherwise, emit exactly limit parts
+            // (no remainder appended beyond limit).
+            bool exhausted = matchCount < limit - 1;
+            int resultCount = exhausted ? matchCount + 1 : limit;
+            JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(workspace, resultCount);
+            JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
+
+            searchStart = 0;
+            for (int i = 0; i < resultCount - 1; i++)
+            {
+                int idx = str.Slice(searchStart).IndexOf(sep);
+                arrayRoot.AddItem(JsonataHelpers.StringFromUnescapedUtf8(str.Slice(searchStart, idx), workspace));
+                searchStart += idx + sep.Length;
+            }
+
+            if (exhausted)
+            {
+                // All parts fit — add remainder
+                arrayRoot.AddItem(JsonataHelpers.StringFromUnescapedUtf8(str.Slice(searchStart), workspace));
+            }
+            else
+            {
+                // Hit limit: take text up to next separator (or end)
+                int idx = str.Slice(searchStart).IndexOf(sep);
+                int partLen = idx >= 0 ? idx : str.Length - searchStart;
+                arrayRoot.AddItem(JsonataHelpers.StringFromUnescapedUtf8(str.Slice(searchStart, partLen), workspace));
+            }
+
+            return (JsonElement)arrayRoot;
+        }
+    }
+
+    /// <summary>
+    /// Span-based regex split for RT. On NET8+, uses <see cref="Regex.EnumerateMatches(ReadOnlySpan{char})"/>
+    /// to avoid per-match object allocations.
+    /// </summary>
+    private static JsonElement SplitRegex(
+        in JsonElement strElement, Regex regex, int limit, JsonWorkspace workspace)
+    {
+        using UnescapedUtf16JsonString utf16Str = strElement.GetUtf16String();
+        ReadOnlySpan<char> chars = utf16Str.Span;
+
+        if (limit <= 0)
+        {
+            JsonDocumentBuilder<JsonElement.Mutable> emptyDoc = JsonElement.CreateArrayBuilder(workspace, 0);
+            return (JsonElement)emptyDoc.RootElement;
+        }
+
+#if NET8_0_OR_GREATER
+        // Pass 1: count matches up to limit - 1
+        int matchCount = 0;
+        foreach (ValueMatch vm0 in regex.EnumerateMatches(chars))
+        {
+            matchCount++;
+            if (matchCount >= limit - 1)
+            {
+                break;
+            }
+        }
+
+        bool exhausted = matchCount < limit - 1;
+        int resultCount = exhausted ? matchCount + 1 : limit;
+        JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(workspace, resultCount);
+        JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
+
+        // Pass 2: emit parts
+        int emitted = 0;
+        int pos = 0;
+        foreach (ValueMatch vm in regex.EnumerateMatches(chars))
+        {
+            if (emitted >= resultCount - 1)
+            {
+                break;
+            }
+
+            arrayRoot.AddItem(JsonataHelpers.StringFromChars(chars.Slice(pos, vm.Index - pos), workspace));
+            pos = vm.Index + vm.Length;
+            emitted++;
+        }
+
+        if (exhausted)
+        {
+            arrayRoot.AddItem(JsonataHelpers.StringFromChars(chars.Slice(pos), workspace));
+        }
+        else
+        {
+            // Hit limit: find next match boundary and take text up to it
+            int nextEnd = chars.Length;
+            int scan = 0;
+            int mIdx = 0;
+            foreach (ValueMatch vm2 in regex.EnumerateMatches(chars))
+            {
+                if (mIdx == resultCount - 1)
+                {
+                    nextEnd = vm2.Index;
+                    break;
+                }
+
+                scan = vm2.Index + vm2.Length;
+                mIdx++;
+            }
+
+            arrayRoot.AddItem(JsonataHelpers.StringFromChars(chars.Slice(pos, nextEnd - pos), workspace));
+        }
+
+        return (JsonElement)arrayRoot;
+#else
+        string str = chars.ToString();
+        string[] parts = regex.Split(str);
+        int resultCount = Math.Min(parts.Length, limit);
+        JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(workspace, resultCount);
+        JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
+        for (int i = 0; i < resultCount; i++)
+        {
+            arrayRoot.AddItem(JsonataHelpers.StringFromString(parts[i], workspace));
+        }
+
+        return (JsonElement)arrayRoot;
+#endif
     }
 
     // --- Encoding functions ---
