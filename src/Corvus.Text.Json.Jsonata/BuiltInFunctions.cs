@@ -21,6 +21,22 @@ internal static class BuiltInFunctions
 {
     private static readonly Regex WhitespaceCollapseRegex = new(@"\s+", RegexOptions.Compiled);
 
+    private static readonly string[] Iso8601Formats =
+    [
+        "yyyy-MM-ddTHH:mm:ss.fffzzz",
+        "yyyy-MM-ddTHH:mm:ss.fffZ",
+        "yyyy-MM-ddTHH:mm:ss.fff",
+        "yyyy-MM-ddTHH:mm:sszzz",
+        "yyyy-MM-ddTHH:mm:ssZ",
+        "yyyy-MM-ddTHH:mm:ss",
+        "yyyy-MM-ddTHH:mmzzz",
+        "yyyy-MM-ddTHH:mmZ",
+        "yyyy-MM-ddTHH:mm",
+        "yyyy-MM-dd",
+        "yyyy-MM",
+        "yyyy",
+    ];
+
     /// <summary>
     /// Evaluator that returns the current context as a singleton sequence.
     /// Used for context-binding (0-arg calls like <c>$number()</c>).
@@ -5607,26 +5623,9 @@ internal static class BuiltInFunctions
     /// </summary>
     internal static Sequence ParseIso8601ToMillis(string str, JsonWorkspace workspace)
     {
-        // ISO 8601 formats: YYYY, YYYY-MM, YYYY-MM-DD, YYYY-MM-DDThh:mm:ss[.fff][Z|±hh:mm]
-        string[] iso8601Formats =
-        [
-            "yyyy-MM-ddTHH:mm:ss.fffzzz",
-            "yyyy-MM-ddTHH:mm:ss.fffZ",
-            "yyyy-MM-ddTHH:mm:ss.fff",
-            "yyyy-MM-ddTHH:mm:sszzz",
-            "yyyy-MM-ddTHH:mm:ssZ",
-            "yyyy-MM-ddTHH:mm:ss",
-            "yyyy-MM-ddTHH:mmzzz",
-            "yyyy-MM-ddTHH:mmZ",
-            "yyyy-MM-ddTHH:mm",
-            "yyyy-MM-dd",
-            "yyyy-MM",
-            "yyyy",
-        ];
-
         if (DateTimeOffset.TryParseExact(
             str,
-            iso8601Formats,
+            Iso8601Formats,
             CultureInfo.InvariantCulture,
             DateTimeStyles.AssumeUniversal,
             out var dt))
