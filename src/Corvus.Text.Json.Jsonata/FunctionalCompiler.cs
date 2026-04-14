@@ -240,6 +240,21 @@ internal static class FunctionalCompiler
         return new Sequence(JsonataHelpers.ArrayFromSequence(seq, workspace));
     }
 
+    /// <summary>
+    /// Applies KeepSingletonArray semantics: if the result is a single non-array value,
+    /// wrap it in a one-element JSON array. Used by the simple property chain fast path.
+    /// </summary>
+    private static Sequence ApplyKeepSingletonArray(Sequence result, JsonWorkspace workspace)
+    {
+        if (!result.IsUndefined && result.IsSingleton
+            && result.FirstOrDefault.ValueKind != JsonValueKind.Array)
+        {
+            return MaterializeAsArray(result, workspace);
+        }
+
+        return result;
+    }
+
     private static ExpressionEvaluator CompileNumber(NumberNode num)
     {
         double value = num.Value;
@@ -998,12 +1013,15 @@ internal static class FunctionalCompiler
     private static bool TryCompileSimplePropertyChain(PathNode path, out ExpressionEvaluator evaluator)
     {
         // Check all steps are NameNodes with no annotations (or simple constant-integer predicates
-        // or simple string equality predicates like [type = 'mobile'])
-        if (path.KeepArray || path.KeepSingletonArray || GetStepAnnotations(path) is not null)
+        // or simple string equality predicates like [type = 'mobile']).
+        // KeepSingletonArray (from the [] modifier) is handled below — it doesn't block the fast path.
+        if (path.KeepArray || GetStepAnnotations(path) is not null)
         {
             evaluator = default!;
             return false;
         }
+
+        bool keepSingletonArray = path.KeepSingletonArray;
 
         var utf8Names = new byte[path.Steps.Count][];
         int[]? constantIndices = null;
@@ -1097,17 +1115,39 @@ internal static class FunctionalCompiler
                 constantIndices.AsSpan().Fill(-1);
             }
 
-            evaluator = (in JsonElement input, Environment env) =>
+            if (keepSingletonArray)
             {
-                return EvalPropertyChainWithPredicates(input, utf8Names, constantIndices, equalityPredicates);
-            };
+                evaluator = (in JsonElement input, Environment env) =>
+                {
+                    var result = EvalPropertyChainWithPredicates(input, utf8Names, constantIndices, equalityPredicates);
+                    return ApplyKeepSingletonArray(result, env.Workspace);
+                };
+            }
+            else
+            {
+                evaluator = (in JsonElement input, Environment env) =>
+                {
+                    return EvalPropertyChainWithPredicates(input, utf8Names, constantIndices, equalityPredicates);
+                };
+            }
         }
         else
         {
-            evaluator = (in JsonElement input, Environment env) =>
+            if (keepSingletonArray)
             {
-                return EvalSimplePropertyChain(input, utf8Names);
-            };
+                evaluator = (in JsonElement input, Environment env) =>
+                {
+                    var result = EvalSimplePropertyChain(input, utf8Names);
+                    return ApplyKeepSingletonArray(result, env.Workspace);
+                };
+            }
+            else
+            {
+                evaluator = (in JsonElement input, Environment env) =>
+                {
+                    return EvalSimplePropertyChain(input, utf8Names);
+                };
+            }
         }
 
         return true;

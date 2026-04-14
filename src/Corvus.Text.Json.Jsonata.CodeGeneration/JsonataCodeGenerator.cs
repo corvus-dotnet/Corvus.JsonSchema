@@ -651,15 +651,8 @@ public static class JsonataCodeGenerator
 
                 string result = EmitSimplePropertyChain(sb, steps, indent, dataVar, wsVar, keepArray);
 
-                // Apply KeepSingletonArray wrapping if needed (e.g. path[])
-                // This is a no-op for results already returned as arrays by NavigatePropertyToArray.
-                if (keepArray)
-                {
-                    string wrapped = NextVar();
-                    L(sb, indent, $"var {wrapped} = {H}.KeepSingletonArray({result}, {wsVar});");
-                    result = wrapped;
-                }
-
+                // KeepSingletonArray is now handled inside EmitSimplePropertyChain's branches
+                // (inline success, NavigatePropertyToArray, ChainKeepSingletonArray fallbacks).
                 return result;
             }
 
@@ -1964,12 +1957,20 @@ public static class JsonataCodeGenerator
                 L(sb, indent, $"JsonElement {resultVar};");
                 L(sb, indent, $"if ({prevVar}.ValueKind == JsonValueKind.Object && {prevVar}.TryGetProperty(\"{escapedName}\"u8, out {resultVar}))");
                 L(sb, indent, "{");
+
+                if (useToArray)
+                {
+                    // Inline success: apply KeepSingletonArray so caller doesn't need an outer wrapper.
+                    L(sb, indent, $"    {resultVar} = {H}.KeepSingletonArray({resultVar}, {wsVar});");
+                }
+
                 L(sb, indent, "}");
                 L(sb, indent, "else");
                 L(sb, indent, "{");
 
                 if (useToArray)
                 {
+                    // NavigatePropertyToArray handles KeepSingletonArray internally.
                     L(sb, indent, $"    {resultVar} = {H}.NavigatePropertyToArray({prevVar}, {nameField}, {wsVar});");
                 }
                 else
@@ -2045,7 +2046,14 @@ public static class JsonataCodeGenerator
                 indent += "    ";
             }
 
-            // Innermost block: all steps succeeded — nothing more to do (resultVar is set)
+            // Innermost block: all steps succeeded via inline TryGetProperty.
+            // When keepArray is set, apply KeepSingletonArray here so that the
+            // caller does not need a redundant outer wrapper.
+            if (keepArray)
+            {
+                L(sb, indent, $"{resultVar} = {H}.KeepSingletonArray({resultVar}, {wsVar});");
+            }
+
             indent = indent.Substring(0, indent.Length - 4); // back one level
 
             // Close each nesting level with an else that falls back to NavigatePropertyChain
@@ -2058,7 +2066,14 @@ public static class JsonataCodeGenerator
                 if (i == 0)
                 {
                     // First step failed — navigate full chain from dataVar
-                    L(sb, indent, $"    {resultVar} = {H}.NavigatePropertyChain({dataVar}, {chainField}, {wsVar});");
+                    if (keepArray)
+                    {
+                        L(sb, indent, $"    {resultVar} = {H}.ChainKeepSingletonArray({dataVar}, {chainField}, {wsVar});");
+                    }
+                    else
+                    {
+                        L(sb, indent, $"    {resultVar} = {H}.NavigatePropertyChain({dataVar}, {chainField}, {wsVar});");
+                    }
                 }
                 else if (i == count - 1)
                 {
@@ -2067,7 +2082,8 @@ public static class JsonataCodeGenerator
 
                     if (keepArray)
                     {
-                        // Build directly into array (no intermediate ElementBuffer)
+                        // Build directly into array (no intermediate ElementBuffer).
+                        // NavigatePropertyToArray handles KeepSingletonArray internally.
                         L(sb, indent, $"    {resultVar} = {H}.NavigatePropertyToArray({chainVars[i - 1]}, {nameField}, {wsVar});");
                     }
                     else
@@ -2078,7 +2094,14 @@ public static class JsonataCodeGenerator
                 else
                 {
                     // Middle step failed — navigate remaining chain from previous chain var
-                    L(sb, indent, $"    {resultVar} = {H}.NavigatePropertyChain({chainVars[i - 1]}, {chainField}, {i}, {wsVar});");
+                    if (keepArray)
+                    {
+                        L(sb, indent, $"    {resultVar} = {H}.ChainKeepSingletonArray({chainVars[i - 1]}, {chainField}, {i}, {wsVar});");
+                    }
+                    else
+                    {
+                        L(sb, indent, $"    {resultVar} = {H}.NavigatePropertyChain({chainVars[i - 1]}, {chainField}, {i}, {wsVar});");
+                    }
                 }
 
                 L(sb, indent, "}");
