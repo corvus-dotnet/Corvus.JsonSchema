@@ -140,6 +140,19 @@ public struct ElementBuffer : IDisposable
     }
 
     /// <summary>
+    /// Exposes the backing array and count for direct consumption (e.g., by buffer-fused zip).
+    /// The caller must NOT modify or return the array; the buffer retains ownership.
+    /// </summary>
+    /// <param name="backingArray">The backing array (may be larger than <paramref name="elementCount"/>).</param>
+    /// <param name="elementCount">The number of valid elements in <paramref name="backingArray"/>.</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public readonly void GetContents(out JsonElement[]? backingArray, out int elementCount)
+    {
+        backingArray = this.array;
+        elementCount = this.count;
+    }
+
+    /// <summary>
     /// Returns the rented array to the pool and resets the buffer.
     /// </summary>
     public void Dispose()

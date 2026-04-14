@@ -440,8 +440,71 @@ public class JsonataCodeGeneratorTests
             "ConstFoldExpr",
             "Test.Generated");
 
-        // The expression should be folded to a constant 5, emitted via NumberFromDouble
-        Assert.Contains("NumberFromDouble(5", result);
+        // The expression should be folded to a constant 5, emitted as a static field
+        Assert.Contains("JsonElement.ParseValue(\"5\"u8)", result);
+    }
+
+    /// <summary>
+    /// Verifies that constant arrays are folded to static fields.
+    /// </summary>
+    [Fact]
+    public void Generate_ConstantArray_IsFolded()
+    {
+        string result = JsonataCodeGenerator.Generate(
+            "[1,2,3]",
+            "ConstArrayExpr",
+            "Test.Generated");
+
+        Assert.Contains("JsonElement.ParseValue(\"[1,2,3]\"u8)", result);
+        Assert.DoesNotContain("CreateArrayWithFlatten", result);
+        Assert.DoesNotContain("NumberFromDouble", result);
+    }
+
+    /// <summary>
+    /// Verifies that constant objects are folded to static fields.
+    /// </summary>
+    [Fact]
+    public void Generate_ConstantObject_IsFolded()
+    {
+        string result = JsonataCodeGenerator.Generate(
+            """{"a": 1, "b": "hello"}""",
+            "ConstObjectExpr",
+            "Test.Generated");
+
+        Assert.Contains("JsonElement.ParseValue(", result);
+        Assert.DoesNotContain("ObjectBuilder", result);
+        Assert.DoesNotContain("NumberFromDouble", result);
+    }
+
+    /// <summary>
+    /// Verifies that $zip with all-constant args is evaluated at codegen time.
+    /// </summary>
+    [Fact]
+    public void Generate_ConstantZip_IsFolded()
+    {
+        string result = JsonataCodeGenerator.Generate(
+            "$zip([1,2],[3,4])",
+            "ConstZipExpr",
+            "Test.Generated");
+
+        // The entire zip should be a single static field with the transposed result
+        Assert.Contains("JsonElement.ParseValue(\"[[1,3],[2,4]]\"u8)", result);
+        Assert.DoesNotContain("Zip(", result);
+    }
+
+    /// <summary>
+    /// Verifies that constant string literals are folded to static fields.
+    /// </summary>
+    [Fact]
+    public void Generate_ConstantString_IsFolded()
+    {
+        string result = JsonataCodeGenerator.Generate(
+            "\"hello world\"",
+            "ConstStringExpr",
+            "Test.Generated");
+
+        Assert.Contains("JsonElement.ParseValue(", result);
+        Assert.DoesNotContain("StringElement(", result);
     }
 
     /// <summary>

@@ -5627,6 +5627,169 @@ public static class JsonataCodeGenHelpers
     }
 
     /// <summary>
+    /// Buffer-fused 2-arg zip: takes raw backing arrays from <see cref="ElementBuffer.GetContents"/>
+    /// and produces the zip result with a single builder document (no intermediate array materialization).
+    /// </summary>
+    public static JsonElement ZipFromBuffers(
+        JsonElement[]? arr0, int cnt0,
+        JsonElement[]? arr1, int cnt1,
+        JsonWorkspace workspace)
+    {
+        if (cnt0 == 0 || cnt1 == 0)
+        {
+            var emptyDoc = JsonElement.CreateArrayBuilder(workspace, 0);
+            return (JsonElement)emptyDoc.RootElement;
+        }
+
+        int minLen = cnt0 < cnt1 ? cnt0 : cnt1;
+
+        var doc = JsonElement.CreateBuilder(
+            workspace,
+            (arr0!, arr1!, minLen),
+            static (in (JsonElement[] A0, JsonElement[] A1, int MinLen) ctx, ref JsonElement.ArrayBuilder outer) =>
+            {
+                for (int i = 0; i < ctx.MinLen; i++)
+                {
+                    outer.AddItem(
+                        (ctx.A0, ctx.A1, i),
+                        static (in (JsonElement[] A0, JsonElement[] A1, int I) ictx, ref JsonElement.ArrayBuilder inner) =>
+                        {
+                            inner.AddItem(ictx.A0[ictx.I]);
+                            inner.AddItem(ictx.A1[ictx.I]);
+                        });
+                }
+            },
+            estimatedMemberCount: (minLen * 3) + 2);
+
+        return (JsonElement)doc.RootElement;
+    }
+
+    /// <summary>
+    /// Buffer-fused 3-arg zip.
+    /// </summary>
+    public static JsonElement ZipFromBuffers(
+        JsonElement[]? arr0, int cnt0,
+        JsonElement[]? arr1, int cnt1,
+        JsonElement[]? arr2, int cnt2,
+        JsonWorkspace workspace)
+    {
+        int minLen = cnt0;
+        if (cnt1 < minLen)
+        {
+            minLen = cnt1;
+        }
+
+        if (cnt2 < minLen)
+        {
+            minLen = cnt2;
+        }
+
+        if (minLen == 0)
+        {
+            var emptyDoc = JsonElement.CreateArrayBuilder(workspace, 0);
+            return (JsonElement)emptyDoc.RootElement;
+        }
+
+        var doc = JsonElement.CreateBuilder(
+            workspace,
+            (arr0!, arr1!, arr2!, minLen),
+            static (in (JsonElement[] A0, JsonElement[] A1, JsonElement[] A2, int MinLen) ctx, ref JsonElement.ArrayBuilder outer) =>
+            {
+                for (int i = 0; i < ctx.MinLen; i++)
+                {
+                    outer.AddItem(
+                        (ctx.A0, ctx.A1, ctx.A2, i),
+                        static (in (JsonElement[] A0, JsonElement[] A1, JsonElement[] A2, int I) ictx, ref JsonElement.ArrayBuilder inner) =>
+                        {
+                            inner.AddItem(ictx.A0[ictx.I]);
+                            inner.AddItem(ictx.A1[ictx.I]);
+                            inner.AddItem(ictx.A2[ictx.I]);
+                        });
+                }
+            },
+            estimatedMemberCount: (minLen * 4) + 2);
+
+        return (JsonElement)doc.RootElement;
+    }
+
+    /// <summary>
+    /// Buffer-fused mixed zip: one arg is a pre-resolved JsonElement (e.g., a constant),
+    /// the other is a raw buffer from property chain navigation.
+    /// </summary>
+    public static JsonElement ZipElementAndBuffer(
+        in JsonElement resolved,
+        JsonElement[]? arr1, int cnt1,
+        JsonWorkspace workspace)
+    {
+        ResolveZipArg(resolved, out bool isArray0, out int len0);
+        if (len0 == 0 || cnt1 == 0)
+        {
+            var emptyDoc = JsonElement.CreateArrayBuilder(workspace, 0);
+            return (JsonElement)emptyDoc.RootElement;
+        }
+
+        int minLen = len0 < cnt1 ? len0 : cnt1;
+
+        var doc = JsonElement.CreateBuilder(
+            workspace,
+            (resolved, isArray0, arr1!, minLen),
+            static (in (JsonElement R, bool IsArr, JsonElement[] A1, int MinLen) ctx, ref JsonElement.ArrayBuilder outer) =>
+            {
+                for (int i = 0; i < ctx.MinLen; i++)
+                {
+                    outer.AddItem(
+                        (ctx.R, ctx.IsArr, ctx.A1, i),
+                        static (in (JsonElement R, bool IsArr, JsonElement[] A1, int I) ictx, ref JsonElement.ArrayBuilder inner) =>
+                        {
+                            inner.AddItem(ictx.IsArr ? ictx.R[ictx.I] : ictx.R);
+                            inner.AddItem(ictx.A1[ictx.I]);
+                        });
+                }
+            },
+            estimatedMemberCount: (minLen * 3) + 2);
+
+        return (JsonElement)doc.RootElement;
+    }
+
+    /// <summary>
+    /// Buffer-fused mixed zip: first arg is a raw buffer, second is a pre-resolved JsonElement.
+    /// </summary>
+    public static JsonElement ZipBufferAndElement(
+        JsonElement[]? arr0, int cnt0,
+        in JsonElement resolved,
+        JsonWorkspace workspace)
+    {
+        ResolveZipArg(resolved, out bool isArray1, out int len1);
+        if (cnt0 == 0 || len1 == 0)
+        {
+            var emptyDoc = JsonElement.CreateArrayBuilder(workspace, 0);
+            return (JsonElement)emptyDoc.RootElement;
+        }
+
+        int minLen = cnt0 < len1 ? cnt0 : len1;
+
+        var doc = JsonElement.CreateBuilder(
+            workspace,
+            (arr0!, resolved, isArray1, minLen),
+            static (in (JsonElement[] A0, JsonElement R, bool IsArr, int MinLen) ctx, ref JsonElement.ArrayBuilder outer) =>
+            {
+                for (int i = 0; i < ctx.MinLen; i++)
+                {
+                    outer.AddItem(
+                        (ctx.A0, ctx.R, ctx.IsArr, i),
+                        static (in (JsonElement[] A0, JsonElement R, bool IsArr, int I) ictx, ref JsonElement.ArrayBuilder inner) =>
+                        {
+                            inner.AddItem(ictx.A0[ictx.I]);
+                            inner.AddItem(ictx.IsArr ? ictx.R[ictx.I] : ictx.R);
+                        });
+                }
+            },
+            estimatedMemberCount: (minLen * 3) + 2);
+
+        return (JsonElement)doc.RootElement;
+    }
+
+    /// <summary>
     /// Sort step helper: sorts an array by evaluating sort key expressions per element.
     /// Uses a stable index-based sort that preserves relative order of equal elements.
     /// </summary>

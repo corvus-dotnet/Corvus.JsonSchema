@@ -411,6 +411,7 @@ public static class JsonataCodeGenerator
         private int _predicateFieldCounter;
         private int _lambdaCounter;
         private int _regexFieldCounter;
+        private int _constantFieldCounter;
 
         /// <summary>
         /// When set to a data variable name, <see cref="EmitName"/> and
@@ -553,6 +554,19 @@ public static class JsonataCodeGenerator
             string optionsExpr = string.Join(" | ", options);
             _staticFieldDeclarations.Add(
                 $"private static readonly Regex {fieldName} = new(@\"{escapedPattern}\", {optionsExpr});");
+            return fieldName;
+        }
+
+        /// <summary>
+        /// Emits a <c>private static readonly JsonElement</c> field initialized by
+        /// <c>JsonElement.ParseValue</c> from a UTF-8 JSON literal. Returns the field name.
+        /// </summary>
+        private string EmitConstantField(string json)
+        {
+            string fieldName = $"s_c{_constantFieldCounter++}";
+            string escaped = EscapeStringLiteral(json);
+            _staticFieldDeclarations.Add(
+                $"private static readonly JsonElement {fieldName} = JsonElement.ParseValue(\"{escaped}\"u8);");
             return fieldName;
         }
 
@@ -2818,6 +2832,168 @@ public static class JsonataCodeGenerator
             };
         }
 
+        /// <summary>
+        /// Returns <see langword="true"/> if the entire subtree is a constant expression
+        /// (no data dependencies) that can be pre-parsed at class initialization time.
+        /// Nodes with annotations (stages, predicates, group-by) are excluded.
+        /// </summary>
+        private static bool IsConstantExpression(JsonataNode node)
+        {
+            if (node.Annotations is not null)
+            {
+                return false;
+            }
+
+            switch (node)
+            {
+                case NumberNode:
+                case StringNode:
+                case ValueNode:
+                    return true;
+
+                case UnaryNode { Operator: "-" } u:
+                    return IsConstantExpression(u.Expression);
+
+                case ArrayConstructorNode arr:
+                    if (arr.Expressions.Count == 0)
+                    {
+                        return false; // handled by EmptyArray
+                    }
+
+                    for (int i = 0; i < arr.Expressions.Count; i++)
+                    {
+                        if (!IsConstantExpression(arr.Expressions[i]))
+                        {
+                            return false;
+                        }
+                    }
+
+                    return true;
+
+                case ObjectConstructorNode obj:
+                    if (obj.Pairs.Count == 0)
+                    {
+                        return false; // handled by EmptyObject
+                    }
+
+                    for (int i = 0; i < obj.Pairs.Count; i++)
+                    {
+                        if (obj.Pairs[i].Key is not StringNode
+                            || !IsConstantExpression(obj.Pairs[i].Value))
+                        {
+                            return false;
+                        }
+                    }
+
+                    return true;
+
+                default:
+                    return false;
+            }
+        }
+
+        /// <summary>
+        /// Serializes a constant AST subtree to its JSON representation.
+        /// Only call after <see cref="IsConstantExpression"/> returns <see langword="true"/>.
+        /// </summary>
+        private static string SerializeConstantJson(JsonataNode node)
+        {
+            switch (node)
+            {
+                case NumberNode num:
+                    return num.Value.ToString("R", CultureInfo.InvariantCulture);
+
+                case StringNode str:
+                    return $"\"{EscapeJsonStringContent(str.Value)}\"";
+
+                case ValueNode val:
+                    return val.Value; // "true", "false", "null"
+
+                case UnaryNode { Operator: "-" } u:
+                    if (u.Expression is NumberNode inner)
+                    {
+                        return (-inner.Value).ToString("R", CultureInfo.InvariantCulture);
+                    }
+
+                    return $"-{SerializeConstantJson(u.Expression)}";
+
+                case ArrayConstructorNode arr:
+                {
+                    var sb = new StringBuilder("[");
+                    for (int i = 0; i < arr.Expressions.Count; i++)
+                    {
+                        if (i > 0)
+                        {
+                            sb.Append(',');
+                        }
+
+                        sb.Append(SerializeConstantJson(arr.Expressions[i]));
+                    }
+
+                    sb.Append(']');
+                    return sb.ToString();
+                }
+
+                case ObjectConstructorNode obj:
+                {
+                    var sb = new StringBuilder("{");
+                    for (int i = 0; i < obj.Pairs.Count; i++)
+                    {
+                        if (i > 0)
+                        {
+                            sb.Append(',');
+                        }
+
+                        sb.Append('"');
+                        sb.Append(EscapeJsonStringContent(((StringNode)obj.Pairs[i].Key).Value));
+                        sb.Append("\":");
+                        sb.Append(SerializeConstantJson(obj.Pairs[i].Value));
+                    }
+
+                    sb.Append('}');
+                    return sb.ToString();
+                }
+
+                default:
+                    throw new InvalidOperationException("Not a constant expression");
+            }
+        }
+
+        /// <summary>
+        /// Escapes a string value for embedding inside a JSON string (handles
+        /// backslash, double-quote, and control characters).
+        /// </summary>
+        private static string EscapeJsonStringContent(string s)
+        {
+            var sb = new StringBuilder(s.Length);
+            foreach (char c in s)
+            {
+                switch (c)
+                {
+                    case '\\': sb.Append("\\\\"); break;
+                    case '"': sb.Append("\\\""); break;
+                    case '\n': sb.Append("\\n"); break;
+                    case '\r': sb.Append("\\r"); break;
+                    case '\t': sb.Append("\\t"); break;
+                    case '\b': sb.Append("\\b"); break;
+                    case '\f': sb.Append("\\f"); break;
+                    default:
+                        if (c < ' ')
+                        {
+                            sb.AppendFormat("\\u{0:X4}", (int)c);
+                        }
+                        else
+                        {
+                            sb.Append(c);
+                        }
+
+                        break;
+                }
+            }
+
+            return sb.ToString();
+        }
+
         private string EmitEqualityComparison(
             StringBuilder sb, BinaryNode binary, string indent, string dataVar,
             string wsVar, string helperName)
@@ -3273,7 +3449,8 @@ public static class JsonataCodeGenerator
             else
             {
                 string literal = value.ToString("R", CultureInfo.InvariantCulture);
-                L(sb, indent, $"var {v} = {H}.NumberFromDouble({literal}, {wsVar});");
+                string field = EmitConstantField(literal);
+                L(sb, indent, $"var {v} = {field};");
             }
 
             return v;
@@ -3288,8 +3465,9 @@ public static class JsonataCodeGenerator
             }
             else
             {
-                string escaped = EscapeStringLiteral(str.Value);
-                L(sb, indent, $"var {v} = {H}.StringElement(\"{escaped}\", {wsVar});");
+                string json = $"\"{EscapeJsonStringContent(str.Value)}\"";
+                string field = EmitConstantField(json);
+                L(sb, indent, $"var {v} = {field};");
             }
 
             return v;
@@ -3522,6 +3700,16 @@ public static class JsonataCodeGenerator
             {
                 string v = NextVar();
                 L(sb, indent, $"var {v} = (JsonElement)JsonElement.CreateArrayBuilder({wsVar}, 0).RootElement;");
+                return v;
+            }
+
+            // All-constant array: emit as static field, zero per-call cost.
+            if (IsConstantExpression(arr))
+            {
+                string json = SerializeConstantJson(arr);
+                string field = EmitConstantField(json);
+                string v = NextVar();
+                L(sb, indent, $"var {v} = {field};");
                 return v;
             }
 
@@ -3885,6 +4073,16 @@ public static class JsonataCodeGenerator
                 string docVar = NextVar();
                 L(sb, indent, $"var {docVar} = (JsonElement)JsonElement.CreateObjectBuilder({wsVar}, 0).RootElement;");
                 return docVar;
+            }
+
+            // All-constant object: emit as static field, zero per-call cost.
+            if (IsConstantExpression(obj))
+            {
+                string json = SerializeConstantJson(obj);
+                string constField = EmitConstantField(json);
+                string constVar = NextVar();
+                L(sb, indent, $"var {constVar} = {constField};");
+                return constVar;
             }
 
             // Classify each value: double, concat bytes, or JsonElement.
@@ -5959,7 +6157,44 @@ public static class JsonataCodeGenerator
                 return undef;
             }
 
-            // Emit all args
+            // Fully-constant zip: all args are constant arrays → evaluate at codegen time.
+            if (TryEmitConstantZip(sb, func, indent, out string? constVar))
+            {
+                return constVar!;
+            }
+
+            // Classify each arg: constant (static field), chain (buffer-navigate), or other (emit normally).
+            int argCount = func.Arguments.Count;
+            string?[] chainFields = new string?[argCount];
+            bool[] isConstant = new bool[argCount];
+            bool anyChain = false;
+
+            for (int i = 0; i < argCount; i++)
+            {
+                var arg = func.Arguments[i];
+
+                if (IsConstantExpression(arg))
+                {
+                    isConstant[i] = true;
+                }
+                else
+                {
+                    string? cf = TryGetSimpleChainField(arg);
+                    if (cf != null)
+                    {
+                        chainFields[i] = cf;
+                        anyChain = true;
+                    }
+                }
+            }
+
+            // If any arg is a chain, use the buffer-fused path
+            if (anyChain && argCount <= 3)
+            {
+                return EmitBufferFusedZip(sb, func, indent, dataVar, wsVar, chainFields, isConstant);
+            }
+
+            // Fallback: emit all args normally
             var argVars = new List<string>();
             foreach (var arg in func.Arguments)
             {
@@ -5970,7 +6205,6 @@ public static class JsonataCodeGenerator
 
             if (argVars.Count <= 3)
             {
-                // Use specialized overload to avoid new JsonElement[] allocation
                 string argList = string.Join(", ", argVars);
                 L(sb, indent, $"var {v} = {H}.Zip({argList}, {wsVar});");
             }
@@ -5981,6 +6215,211 @@ public static class JsonataCodeGenerator
             }
 
             return v;
+        }
+
+        /// <summary>
+        /// Emits buffer-fused zip code for 2-3 args where at least one is a simple property chain.
+        /// Chain args navigate into ElementBuffers; constant/other args are emitted normally.
+        /// </summary>
+        private string EmitBufferFusedZip(
+            StringBuilder sb, FunctionCallNode func, string indent, string dataVar, string wsVar,
+            string?[] chainFields, bool[] isConstant)
+        {
+            int argCount = func.Arguments.Count;
+            string[] bufVars = new string[argCount];
+            string[] arrVars = new string[argCount];
+            string[] cntVars = new string[argCount];
+            string?[] elemVars = new string?[argCount]; // for non-chain args
+
+            // Declare result variable before try/finally
+            string result = NextVar();
+            L(sb, indent, $"JsonElement {result};");
+
+            // Declare buffers for chain args
+            for (int i = 0; i < argCount; i++)
+            {
+                if (chainFields[i] != null)
+                {
+                    bufVars[i] = $"__zbuf{i}";
+                    L(sb, indent, $"var {bufVars[i]} = default(ElementBuffer);");
+                }
+            }
+
+            L(sb, indent, "try");
+            L(sb, indent, "{");
+            string inner = indent + "    ";
+
+            // Emit each arg
+            for (int i = 0; i < argCount; i++)
+            {
+                if (chainFields[i] != null)
+                {
+                    // Chain arg: navigate into buffer
+                    L(sb, inner, $"{H}.NavigatePropertyChainInto({dataVar}, {chainFields[i]}, ref {bufVars[i]});");
+                    arrVars[i] = $"__zarr{i}";
+                    cntVars[i] = $"__zcnt{i}";
+                    L(sb, inner, $"{bufVars[i]}.GetContents(out var {arrVars[i]}, out var {cntVars[i]});");
+                }
+                else
+                {
+                    // Constant or other: emit as normal expression
+                    elemVars[i] = EmitExpression(sb, func.Arguments[i], inner, dataVar, wsVar);
+                }
+            }
+
+            // Choose the optimal zip call based on arg classification
+            EmitZipCall(sb, inner, result, argCount, chainFields, bufVars, arrVars, cntVars, elemVars, wsVar);
+
+            L(sb, indent, "}");
+            L(sb, indent, "finally");
+            L(sb, indent, "{");
+
+            for (int i = 0; i < argCount; i++)
+            {
+                if (chainFields[i] != null)
+                {
+                    L(sb, indent + "    ", $"{bufVars[i]}.Dispose();");
+                }
+            }
+
+            L(sb, indent, "}");
+
+            return result;
+        }
+
+        private void EmitZipCall(
+            StringBuilder sb, string indent, string result, int argCount,
+            string?[] chainFields, string[] bufVars, string[] arrVars, string[] cntVars, string?[] elemVars, string wsVar)
+        {
+            // Count how many are chains vs elements
+            int chainCount = 0;
+            for (int i = 0; i < argCount; i++)
+            {
+                if (chainFields[i] != null)
+                {
+                    chainCount++;
+                }
+            }
+
+            if (chainCount == argCount)
+            {
+                // All args are chains: use ZipFromBuffers
+                if (argCount == 2)
+                {
+                    L(sb, indent, $"{result} = {H}.ZipFromBuffers({arrVars[0]}, {cntVars[0]}, {arrVars[1]}, {cntVars[1]}, {wsVar});");
+                }
+                else
+                {
+                    L(sb, indent, $"{result} = {H}.ZipFromBuffers({arrVars[0]}, {cntVars[0]}, {arrVars[1]}, {cntVars[1]}, {arrVars[2]}, {cntVars[2]}, {wsVar});");
+                }
+            }
+            else if (argCount == 2)
+            {
+                // Mixed 2-arg: one chain, one element
+                if (chainFields[0] != null)
+                {
+                    L(sb, indent, $"{result} = {H}.ZipBufferAndElement({arrVars[0]}, {cntVars[0]}, {elemVars[1]!}, {wsVar});");
+                }
+                else
+                {
+                    L(sb, indent, $"{result} = {H}.ZipElementAndBuffer({elemVars[0]!}, {arrVars[1]}, {cntVars[1]}, {wsVar});");
+                }
+            }
+            else
+            {
+                // Mixed 3-arg: materialize chain buffers via ToResult and use standard Zip
+                var allVars = new string[argCount];
+                for (int i = 0; i < argCount; i++)
+                {
+                    if (chainFields[i] != null)
+                    {
+                        allVars[i] = NextVar();
+                        L(sb, indent, $"var {allVars[i]} = {bufVars[i]}.ToResult({wsVar});");
+                    }
+                    else
+                    {
+                        allVars[i] = elemVars[i]!;
+                    }
+                }
+
+                string argList = string.Join(", ", allVars);
+                L(sb, indent, $"{result} = {H}.Zip({argList}, {wsVar});");
+            }
+        }
+
+        /// <summary>
+        /// When all zip arguments are constant array constructors, evaluates the
+        /// zip at codegen time and emits the result as a single static field.
+        /// </summary>
+        private bool TryEmitConstantZip(
+            StringBuilder sb, FunctionCallNode func, string indent, out string? resultVar)
+        {
+            resultVar = null;
+
+            // All args must be constant ArrayConstructorNodes
+            var arrays = new List<List<string>>();
+            foreach (var arg in func.Arguments)
+            {
+                if (arg is not ArrayConstructorNode arr || !IsConstantExpression(arr))
+                {
+                    return false;
+                }
+
+                var elements = new List<string>(arr.Expressions.Count);
+                for (int i = 0; i < arr.Expressions.Count; i++)
+                {
+                    elements.Add(SerializeConstantJson(arr.Expressions[i]));
+                }
+
+                arrays.Add(elements);
+            }
+
+            // Compute the zip result at codegen time
+            int minLen = int.MaxValue;
+            for (int i = 0; i < arrays.Count; i++)
+            {
+                if (arrays[i].Count < minLen)
+                {
+                    minLen = arrays[i].Count;
+                }
+            }
+
+            if (minLen == 0)
+            {
+                string emptyField = EmitConstantField("[]");
+                resultVar = NextVar();
+                L(sb, indent, $"var {resultVar} = {emptyField};");
+                return true;
+            }
+
+            var json = new StringBuilder("[");
+            for (int i = 0; i < minLen; i++)
+            {
+                if (i > 0)
+                {
+                    json.Append(',');
+                }
+
+                json.Append('[');
+                for (int a = 0; a < arrays.Count; a++)
+                {
+                    if (a > 0)
+                    {
+                        json.Append(',');
+                    }
+
+                    json.Append(arrays[a][i]);
+                }
+
+                json.Append(']');
+            }
+
+            json.Append(']');
+
+            string field = EmitConstantField(json.ToString());
+            resultVar = NextVar();
+            L(sb, indent, $"var {resultVar} = {field};");
+            return true;
         }
 
         private static bool IsBuiltinFunctionName(string name)
