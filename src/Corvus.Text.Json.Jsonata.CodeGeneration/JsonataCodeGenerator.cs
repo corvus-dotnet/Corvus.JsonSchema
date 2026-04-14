@@ -412,6 +412,7 @@ public static class JsonataCodeGenerator
         private int _lambdaCounter;
         private int _regexFieldCounter;
         private int _constantFieldCounter;
+        private int _fmtPicFieldCounter;
 
         /// <summary>
         /// When set to a data variable name, <see cref="EmitName"/> and
@@ -4522,7 +4523,7 @@ public static class JsonataCodeGenerator
                 // Phase 1g: Date/time formatting
                 "fromMillis" => EmitBuiltinUpToThree(sb, func, indent, dataVar, wsVar, "FromMillis"),
                 "toMillis" => EmitBuiltinOptionalSecond(sb, func, indent, dataVar, wsVar, "ToMillis"),
-                "formatNumber" => EmitBuiltinOptionalThird(sb, func, indent, dataVar, wsVar, "FormatNumber"),
+                "formatNumber" => EmitBuiltinFormatNumber(sb, func, indent, dataVar, wsVar),
                 "formatBase" => EmitBuiltinOptionalSecond(sb, func, indent, dataVar, wsVar, "FormatBase"),
                 "formatInteger" => EmitBuiltinBinary(sb, func, indent, dataVar, wsVar, "FormatInteger"),
                 "parseInteger" => EmitBuiltinBinary(sb, func, indent, dataVar, wsVar, "ParseInteger"),
@@ -5021,6 +5022,40 @@ public static class JsonataCodeGenerator
             string v = NextVar();
             L(sb, indent, $"var {v} = {H}.{helperName}({arg0}, {arg1}, {arg2}, {wsVar});");
             return v;
+        }
+
+        /// <summary>
+        /// Emit <c>$formatNumber</c> with compile-time picture caching when the picture
+        /// is a constant string with no options argument.
+        /// </summary>
+        private string EmitBuiltinFormatNumber(
+            StringBuilder sb, FunctionCallNode func, string indent, string dataVar,
+            string wsVar)
+        {
+            if (func.Arguments.Count < 2 || func.Arguments.Count > 3)
+            {
+                throw new FallbackException();
+            }
+
+            // Cache the picture when it's a constant string and no options arg is present.
+            // When options are provided they may reference runtime data, so fall back.
+            if (func.Arguments.Count == 2 && func.Arguments[1] is StringNode picNode)
+            {
+                string arg0 = EmitExpression(sb, func.Arguments[0], indent, dataVar, wsVar);
+
+                // Emit a static field for the pre-parsed picture.
+                string picField = $"s_fp{_fmtPicFieldCounter++}";
+                string escapedPic = EscapeStringLiteral(picNode.Value);
+                _staticFieldDeclarations.Add(
+                    $"private static readonly CachedFormatNumberPicture {picField} = {H}.CreateFormatNumberPicture(\"{escapedPic}\");");
+
+                string v = NextVar();
+                L(sb, indent, $"var {v} = {H}.FormatNumberPreParsed({arg0}, {picField}, {wsVar});");
+                return v;
+            }
+
+            // Non-constant picture or has options: fall back to per-call parsing.
+            return EmitBuiltinOptionalThird(sb, func, indent, dataVar, wsVar, "FormatNumber");
         }
 
         /// <summary>

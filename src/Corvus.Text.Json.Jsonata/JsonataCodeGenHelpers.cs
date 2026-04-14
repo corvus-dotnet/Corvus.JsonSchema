@@ -6219,6 +6219,51 @@ public static class JsonataCodeGenHelpers
     }
 
     /// <summary>
+    /// Creates a pre-parsed format-number picture for use with <see cref="FormatNumberPreParsed"/>.
+    /// Called once from a static field initializer in generated code.
+    /// </summary>
+    public static CachedFormatNumberPicture CreateFormatNumberPicture(string picture, JsonElement options)
+    {
+        return new CachedFormatNumberPicture(FormatNumberPicture.Parse(picture, options));
+    }
+
+    /// <summary>
+    /// Creates a pre-parsed format-number picture with no options for use with <see cref="FormatNumberPreParsed"/>.
+    /// Called once from a static field initializer in generated code.
+    /// </summary>
+    public static CachedFormatNumberPicture CreateFormatNumberPicture(string picture)
+    {
+        return new CachedFormatNumberPicture(FormatNumberPicture.Parse(picture, default));
+    }
+
+    /// <summary>
+    /// JSONata <c>$formatNumber</c> using a pre-parsed picture. Zero per-call allocations.
+    /// </summary>
+    public static JsonElement FormatNumberPreParsed(in JsonElement input, CachedFormatNumberPicture cached, JsonWorkspace workspace)
+    {
+        if (input.IsNullOrUndefined())
+        {
+            return default;
+        }
+
+        if (!FunctionalCompiler.TryCoerceToNumber(input, out double num))
+        {
+            return default;
+        }
+
+        Utf8ValueStringBuilder sb = new(stackalloc byte[JsonConstants.StackallocByteThreshold]);
+        try
+        {
+            cached.Picture.Format(num, ref sb);
+            return JsonataHelpers.StringFromRawUtf8Content(sb.AsSpan(), workspace);
+        }
+        finally
+        {
+            sb.Dispose();
+        }
+    }
+
+    /// <summary>
     /// JSONata <c>$formatBase</c> function.
     /// </summary>
     public static JsonElement FormatBase(in JsonElement input, in JsonElement radixElement, JsonWorkspace workspace)
