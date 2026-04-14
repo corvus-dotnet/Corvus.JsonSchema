@@ -35,6 +35,11 @@ internal static class FunctionalCompiler
     [ThreadStatic]
     private static bool[]? t_singleFlagArray;
 
+#if !NET
+    [ThreadStatic]
+    private static Random? t_shuffleRandom;
+#endif
+
     // Pre-compiled regex for stripping leading zeros from exponents in number formatting
     private static readonly Regex ExponentLeadingZeroRegex = new(@"e([+-])0+(\d)", RegexOptions.Compiled);
 
@@ -648,6 +653,53 @@ internal static class FunctionalCompiler
                 buf0.Dispose();
                 buf1.Dispose();
                 buf2.Dispose();
+            }
+        };
+    }
+
+    /// <summary>
+    /// Compiles a buffer-fused <c>$shuffle</c> where the single argument is a simple property chain.
+    /// Navigates the chain directly into an <see cref="ElementBuffer"/>, shuffles in-place on the
+    /// pooled backing array, and builds one result document.
+    /// </summary>
+    private static ExpressionEvaluator CompileBufferFusedShuffle(byte[][] chainNames)
+    {
+        return (in JsonElement input, Environment env) =>
+        {
+            var buf = default(ElementBuffer);
+            try
+            {
+                JsonataCodeGenHelpers.NavigatePropertyChainInto(input, chainNames, ref buf);
+                buf.GetContents(out var elements, out var count);
+
+                if (count == 0)
+                {
+                    return Sequence.Undefined;
+                }
+
+                // Fisher-Yates shuffle directly on the pooled backing array
+                for (int i = count - 1; i > 0; i--)
+                {
+#if NET
+                    int j = Random.Shared.Next(i + 1);
+#else
+                    int j = (t_shuffleRandom ??= new Random()).Next(i + 1);
+#endif
+                    (elements![i], elements[j]) = (elements[j], elements[i]);
+                }
+
+                JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(env.Workspace, count);
+                JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
+                for (int k = 0; k < count; k++)
+                {
+                    arrayRoot.AddItem(elements![k]);
+                }
+
+                return new Sequence((JsonElement)arrayRoot);
+            }
+            finally
+            {
+                buf.Dispose();
             }
         };
     }
@@ -6743,6 +6795,17 @@ internal static class FunctionalCompiler
 
                 // 3-arg with mixed const/chain falls through to standard path
             }
+        }
+
+        // Buffer-fused $shuffle: when the single argument is a simple property chain,
+        // navigate directly into an ElementBuffer, shuffle in-place, and build
+        // one result document — eliminating intermediate Sequence and builder allocations.
+        if (func.Procedure is VariableNode shuffleFusedCheck
+            && shuffleFusedCheck.Name == "shuffle"
+            && func.Arguments.Count == 1
+            && TryExtractSimpleChainNames(func.Arguments[0], out var shuffleChainNames))
+        {
+            return CompileBufferFusedShuffle(shuffleChainNames);
         }
 
         var args = func.Arguments.Select(Compile).ToArray();

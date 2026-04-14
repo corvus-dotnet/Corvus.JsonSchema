@@ -5226,16 +5226,37 @@ internal static class BuiltInFunctions
                 return Sequence.Undefined;
             }
 
-            var arr = seq.FirstOrDefault;
-            if (arr.ValueKind != JsonValueKind.Array)
+            var elements = default(SequenceBuilder);
+
+            if (seq.IsSingleton && seq.FirstOrDefault.ValueKind == JsonValueKind.Array)
             {
+                // Singleton array element — extract items into builder
+                var arr = seq.FirstOrDefault;
+                foreach (var item in arr.EnumerateArray())
+                {
+                    elements.Add(item);
+                }
+            }
+            else if (seq.Count > 1)
+            {
+                // Multi-element Sequence — treat the elements as the array to shuffle
+                for (int i = 0; i < seq.Count; i++)
+                {
+                    elements.Add(seq[i]);
+                }
+
+                seq.ReturnBackingArray();
+            }
+            else
+            {
+                // Singleton non-array — return as-is
                 return seq;
             }
 
-            var elements = default(SequenceBuilder);
-            foreach (var item in arr.EnumerateArray())
+            if (elements.Count == 0)
             {
-                elements.Add(item);
+                elements.ReturnArray();
+                return Sequence.Undefined;
             }
 
             // Fisher-Yates shuffle

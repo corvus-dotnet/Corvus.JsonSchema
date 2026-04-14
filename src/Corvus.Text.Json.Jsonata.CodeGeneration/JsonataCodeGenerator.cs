@@ -4503,7 +4503,7 @@ public static class JsonataCodeGenerator
                 "spread" => EmitBuiltinUnary(sb, func, indent, dataVar, wsVar, "Spread"),
                 "single" => EmitBuiltinSingle(sb, func, indent, dataVar, wsVar),
                 "flatten" => EmitBuiltinUnary(sb, func, indent, dataVar, wsVar, "Flatten"),
-                "shuffle" => EmitBuiltinUnary(sb, func, indent, dataVar, wsVar, "Shuffle"),
+                "shuffle" => EmitBuiltinShuffle(sb, func, indent, dataVar, wsVar),
 
                 // Phase 1e: Error/utility
                 "error" => EmitBuiltinNullaryOrUnary(sb, func, indent, dataVar, wsVar, "Error"),
@@ -6420,6 +6420,47 @@ public static class JsonataCodeGenerator
             resultVar = NextVar();
             L(sb, indent, $"var {resultVar} = {field};");
             return true;
+        }
+
+        /// <summary>
+        /// Emits <c>$shuffle</c>. When the argument is a simple property chain, emits buffer-fused
+        /// code that navigates into an <see cref="ElementBuffer"/> and shuffles directly from
+        /// the pooled backing array — avoiding the intermediate chain builder.
+        /// Falls back to the standard <c>Shuffle(input, workspace)</c> call for non-chain args.
+        /// </summary>
+        private string EmitBuiltinShuffle(
+            StringBuilder sb, FunctionCallNode func, string indent, string dataVar, string wsVar)
+        {
+            if (func.Arguments.Count != 1)
+            {
+                throw new FallbackException();
+            }
+
+            string? chainField = TryGetSimpleChainField(func.Arguments[0]);
+            if (chainField is null)
+            {
+                // Non-chain argument: fall back to standard unary emission
+                return EmitBuiltinUnary(sb, func, indent, dataVar, wsVar, "Shuffle");
+            }
+
+            // Buffer-fused path: navigate chain into buffer, shuffle from buffer
+            string result = NextVar();
+            const string bufVar = "__sbuf0";
+
+            L(sb, indent, $"JsonElement {result};");
+            L(sb, indent, $"var {bufVar} = default(ElementBuffer);");
+            L(sb, indent, "try");
+            L(sb, indent, "{");
+            string inner = indent + "    ";
+            L(sb, inner, $"{H}.NavigatePropertyChainInto({dataVar}, {chainField}, ref {bufVar});");
+            L(sb, inner, $"{result} = {H}.ShuffleFromBuffer(ref {bufVar}, {wsVar});");
+            L(sb, indent, "}");
+            L(sb, indent, "finally");
+            L(sb, indent, "{");
+            L(sb, indent + "    ", $"{bufVar}.Dispose();");
+            L(sb, indent, "}");
+
+            return result;
         }
 
         private static bool IsBuiltinFunctionName(string name)

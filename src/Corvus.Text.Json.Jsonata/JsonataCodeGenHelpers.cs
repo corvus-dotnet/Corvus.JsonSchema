@@ -4651,28 +4651,74 @@ public static class JsonataCodeGenHelpers
         }
 
         int len = input.GetArrayLength();
-        var elements = new JsonElement[len];
-        int idx = 0;
-        foreach (var item in input.EnumerateArray())
+
+        // Use ElementBuffer (ArrayPool-backed) instead of heap-allocating new JsonElement[].
+        var buf = default(ElementBuffer);
+        try
         {
-            elements[idx++] = item;
+            foreach (var item in input.EnumerateArray())
+            {
+                buf.Add(item);
+            }
+
+            buf.GetContents(out var elements, out var count);
+
+            // Fisher-Yates shuffle directly on the backing array
+            for (int i = count - 1; i > 0; i--)
+            {
+#if NET
+                int j = Random.Shared.Next(i + 1);
+#else
+                int j = ThreadLocalRandom.Next(i + 1);
+#endif
+                (elements![i], elements[j]) = (elements[j], elements[i]);
+            }
+
+            JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(workspace, count);
+            JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
+            for (int k = 0; k < count; k++)
+            {
+                arrayRoot.AddItem(elements![k]);
+            }
+
+            return (JsonElement)arrayRoot;
+        }
+        finally
+        {
+            buf.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Shuffles elements from a pre-populated <see cref="ElementBuffer"/> (e.g., from a
+    /// chain navigation) and builds a single result array document. Used by the buffer-fused
+    /// CG path to avoid the intermediate chain builder.
+    /// </summary>
+    public static JsonElement ShuffleFromBuffer(ref ElementBuffer buf, JsonWorkspace workspace)
+    {
+        buf.GetContents(out var elements, out var count);
+
+        if (count == 0)
+        {
+            return default;
         }
 
-        for (int i = len - 1; i > 0; i--)
+        // Fisher-Yates shuffle directly on the pooled backing array
+        for (int i = count - 1; i > 0; i--)
         {
 #if NET
             int j = Random.Shared.Next(i + 1);
 #else
             int j = ThreadLocalRandom.Next(i + 1);
 #endif
-            (elements[i], elements[j]) = (elements[j], elements[i]);
+            (elements![i], elements[j]) = (elements[j], elements[i]);
         }
 
-        JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(workspace, len);
+        JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(workspace, count);
         JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
-        for (int k = 0; k < len; k++)
+        for (int k = 0; k < count; k++)
         {
-            arrayRoot.AddItem(elements[k]);
+            arrayRoot.AddItem(elements![k]);
         }
 
         return (JsonElement)arrayRoot;

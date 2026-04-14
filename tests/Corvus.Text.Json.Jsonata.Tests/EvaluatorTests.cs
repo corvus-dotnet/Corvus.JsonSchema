@@ -780,6 +780,33 @@ public class EvaluatorTests
     }
 
     [Fact]
+    public void ShufflePropertyChainActuallyShuffles()
+    {
+        // a.b produces a multi-element Sequence [1,2,...,10] via auto-flatten.
+        // $shuffle must treat this as an array and randomize the element order.
+        // With 10 elements the probability of the original order is 1/10! ≈ 0.
+        string json = """{"a": [{"b": 1}, {"b": 2}, {"b": 3}, {"b": 4}, {"b": 5}, {"b": 6}, {"b": 7}, {"b": 8}, {"b": 9}, {"b": 10}]}""";
+        string original = "[1,2,3,4,5,6,7,8,9,10]";
+
+        bool foundDifferent = false;
+        for (int i = 0; i < 5; i++)
+        {
+            var result = Evaluator.EvaluateToString("$shuffle(a.b)", json);
+            if (result != original)
+            {
+                foundDifferent = true;
+
+                // Also verify all elements are preserved (same values, just reordered)
+                var sorted = Evaluator.EvaluateToString("$sort($shuffle(a.b))", json);
+                Assert.Equal(original, sorted);
+                break;
+            }
+        }
+
+        Assert.True(foundDifferent, "$shuffle on a property chain through arrays must actually shuffle the elements");
+    }
+
+    [Fact]
     public void ZipFunction()
     {
         var result = Evaluator.EvaluateToString("""$zip([1,2],[3,4])""", "{}");
