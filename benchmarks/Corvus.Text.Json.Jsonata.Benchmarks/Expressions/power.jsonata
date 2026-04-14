@@ -1,0 +1,1 @@
+$power(Account.Order.Product.Price[0], 2)

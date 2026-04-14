@@ -1,0 +1,1 @@
+$abs(Account.Order.Product.Price[0] - 50)

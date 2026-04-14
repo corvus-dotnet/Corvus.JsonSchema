@@ -1,0 +1,1 @@
+$formatInteger(1234, "w")
