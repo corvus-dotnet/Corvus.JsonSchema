@@ -4470,9 +4470,12 @@ public static class JsonataCodeGenerator
                 "type" => EmitBuiltinUnary(sb, func, indent, dataVar, wsVar, "Type"),
                 "length" => EmitBuiltinUnary(sb, func, indent, dataVar, wsVar, "Length"),
                 "number" => EmitBuiltinContextOptional(sb, func, indent, dataVar, wsVar, "Number"),
-                "max" => EmitBuiltinUnaryOrError(sb, func, indent, dataVar, wsVar, "Max", "max"),
-                "min" => EmitBuiltinUnaryOrError(sb, func, indent, dataVar, wsVar, "Min", "min"),
-                "average" => EmitBuiltinUnaryOrError(sb, func, indent, dataVar, wsVar, "Average", "average"),
+                "max" => TryEmitAggregationChainFusion(sb, func, indent, dataVar, wsVar, "MaxOverChainDouble")
+                         ?? EmitBuiltinUnaryOrError(sb, func, indent, dataVar, wsVar, "Max", "max"),
+                "min" => TryEmitAggregationChainFusion(sb, func, indent, dataVar, wsVar, "MinOverChainDouble")
+                         ?? EmitBuiltinUnaryOrError(sb, func, indent, dataVar, wsVar, "Min", "min"),
+                "average" => TryEmitAggregationChainFusion(sb, func, indent, dataVar, wsVar, "AverageOverChainDouble")
+                             ?? EmitBuiltinUnaryOrError(sb, func, indent, dataVar, wsVar, "Average", "average"),
 
                 // Phase 1b: Math functions
                 "abs" => EmitBuiltinUnary(sb, func, indent, dataVar, wsVar, "Abs"),
@@ -4762,6 +4765,43 @@ public static class JsonataCodeGenerator
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// Attempts to fuse a simple property chain argument with an aggregation function
+        /// ($max, $min, $average), eliminating the intermediate array materialization.
+        /// Returns <c>null</c> if the argument is not a simple property chain.
+        /// </summary>
+        private string? TryEmitAggregationChainFusion(
+            StringBuilder sb, FunctionCallNode func, string indent,
+            string dataVar, string wsVar, string fusedHelper)
+        {
+            if (func.Arguments.Count != 1)
+            {
+                return null;
+            }
+
+            // Unwrap single-step path wrapper to get the real path.
+            JsonataNode arg = func.Arguments[0];
+            if (arg is PathNode outerPath && outerPath.Steps.Count == 1)
+            {
+                arg = outerPath.Steps[0];
+            }
+
+            if (arg is not PathNode path || path.Steps.Count < 2)
+            {
+                return null;
+            }
+
+            if (!IsSimplePropertyChain(path.Steps))
+            {
+                return null;
+            }
+
+            string chainField = GetOrCreateChainField(path.Steps, 0, path.Steps.Count);
+            string v = NextVar();
+            L(sb, indent, $"var {v} = {H}.{fusedHelper}({dataVar}, {chainField}, {wsVar});");
+            return v;
         }
 
         /// <summary>

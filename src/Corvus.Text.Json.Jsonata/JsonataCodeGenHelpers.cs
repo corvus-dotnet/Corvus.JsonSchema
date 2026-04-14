@@ -2718,11 +2718,11 @@ public static class JsonataCodeGenHelpers
             }
         }
 
-        // For arrays and objects, produce JSON representation
+        // For arrays and objects, produce JSON representation directly to UTF-8 bytes,
+        // bypassing the intermediate string allocation and StreamReader overhead.
         if (value.ValueKind is JsonValueKind.Array or JsonValueKind.Object)
         {
-            string json = StringifyElement(value, prettyPrint);
-            return JsonataHelpers.StringFromString(json, workspace);
+            return StringifyElementDirect(value, prettyPrint, workspace);
         }
 
         // true/false
@@ -2970,6 +2970,179 @@ public static class JsonataCodeGenHelpers
         }
 
         return count == 0 ? default : JsonataHelpers.NumberFromDouble(total / count, workspace);
+    }
+
+    /// <summary>
+    /// Fused navigate-and-max: walks a property chain and finds the maximum
+    /// numeric value without materializing an intermediate array.
+    /// </summary>
+    public static JsonElement MaxOverChainDouble(
+        in JsonElement input, byte[][] names, JsonWorkspace workspace)
+    {
+        double max = double.NegativeInfinity;
+        bool found = false;
+        AggregateOverChainCore(input, names, 0, ref max, ref found, AggregateOp.Max);
+        return found ? JsonataHelpers.NumberFromDouble(max, workspace) : default;
+    }
+
+    /// <summary>
+    /// Fused navigate-and-min: walks a property chain and finds the minimum
+    /// numeric value without materializing an intermediate array.
+    /// </summary>
+    public static JsonElement MinOverChainDouble(
+        in JsonElement input, byte[][] names, JsonWorkspace workspace)
+    {
+        double min = double.PositiveInfinity;
+        bool found = false;
+        AggregateOverChainCore(input, names, 0, ref min, ref found, AggregateOp.Min);
+        return found ? JsonataHelpers.NumberFromDouble(min, workspace) : default;
+    }
+
+    /// <summary>
+    /// Fused navigate-and-average: walks a property chain and computes the
+    /// average of all numeric leaf values without materializing an intermediate array.
+    /// </summary>
+    public static JsonElement AverageOverChainDouble(
+        in JsonElement input, byte[][] names, JsonWorkspace workspace)
+    {
+        double sum = 0;
+        bool found = false;
+        int count = 0;
+        AverageOverChainCore(input, names, 0, ref sum, ref count);
+        found = count > 0;
+        return found ? JsonataHelpers.NumberFromDouble(sum / count, workspace) : default;
+    }
+
+    private enum AggregateOp
+    {
+        Max,
+        Min,
+    }
+
+    private static void AggregateOverChainCore(
+        in JsonElement current,
+        byte[][] names,
+        int index,
+        ref double accumulator,
+        ref bool hasValue,
+        AggregateOp op)
+    {
+        if (index >= names.Length)
+        {
+            if (current.ValueKind == JsonValueKind.Array)
+            {
+                foreach (JsonElement el in current.EnumerateArray())
+                {
+                    if (el.ValueKind == JsonValueKind.Number)
+                    {
+                        double val = el.GetDouble();
+                        if (op == AggregateOp.Max ? val > accumulator : val < accumulator)
+                        {
+                            accumulator = val;
+                        }
+
+                        hasValue = true;
+                    }
+                    else if (!el.IsNullOrUndefined())
+                    {
+                        ThrowAggregateTypeError(op);
+                    }
+                }
+            }
+            else if (current.ValueKind == JsonValueKind.Number)
+            {
+                double val = current.GetDouble();
+                if (op == AggregateOp.Max ? val > accumulator : val < accumulator)
+                {
+                    accumulator = val;
+                }
+
+                hasValue = true;
+            }
+            else if (!current.IsNullOrUndefined())
+            {
+                ThrowAggregateTypeError(op);
+            }
+
+            return;
+        }
+
+        if (current.ValueKind == JsonValueKind.Object)
+        {
+            if (current.TryGetProperty(names[index], out JsonElement prop))
+            {
+                AggregateOverChainCore(prop, names, index + 1, ref accumulator, ref hasValue, op);
+            }
+        }
+        else if (current.ValueKind == JsonValueKind.Array)
+        {
+            foreach (JsonElement el in current.EnumerateArray())
+            {
+                AggregateOverChainCore(el, names, index, ref accumulator, ref hasValue, op);
+            }
+        }
+    }
+
+    private static void AverageOverChainCore(
+        in JsonElement current,
+        byte[][] names,
+        int index,
+        ref double sum,
+        ref int count)
+    {
+        if (index >= names.Length)
+        {
+            if (current.ValueKind == JsonValueKind.Array)
+            {
+                foreach (JsonElement el in current.EnumerateArray())
+                {
+                    if (el.ValueKind == JsonValueKind.Number)
+                    {
+                        sum += el.GetDouble();
+                        count++;
+                    }
+                    else if (!el.IsNullOrUndefined())
+                    {
+                        throw new JsonataException("T0412", SR.T0412_Argument1OfFunctionAverageMustBeAnArrayOfNumbers, 0);
+                    }
+                }
+            }
+            else if (current.ValueKind == JsonValueKind.Number)
+            {
+                sum += current.GetDouble();
+                count++;
+            }
+            else if (!current.IsNullOrUndefined())
+            {
+                throw new JsonataException("T0412", SR.T0412_Argument1OfFunctionAverageMustBeAnArrayOfNumbers, 0);
+            }
+
+            return;
+        }
+
+        if (current.ValueKind == JsonValueKind.Object)
+        {
+            if (current.TryGetProperty(names[index], out JsonElement prop))
+            {
+                AverageOverChainCore(prop, names, index + 1, ref sum, ref count);
+            }
+        }
+        else if (current.ValueKind == JsonValueKind.Array)
+        {
+            foreach (JsonElement el in current.EnumerateArray())
+            {
+                AverageOverChainCore(el, names, index, ref sum, ref count);
+            }
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static void ThrowAggregateTypeError(AggregateOp op)
+    {
+        string msg = op == AggregateOp.Max
+            ? SR.T0412_Argument1OfFunctionMaxMustBeAnArrayOfNumbers
+            : SR.T0412_Argument1OfFunctionMinMustBeAnArrayOfNumbers;
+        throw new JsonataException("T0412", msg, 0);
     }
 
     // ===== Phase 1b: Math Functions =====
@@ -8054,6 +8227,32 @@ public static class JsonataCodeGenHelpers
         ms.Position = 0;
         using var reader = new System.IO.StreamReader(ms);
         return reader.ReadToEnd();
+    }
+
+    /// <summary>
+    /// Serializes a JSON element directly to a JSON string element, bypassing
+    /// the intermediate <see langword="string"/> allocation by reading the
+    /// <see cref="System.IO.MemoryStream"/> buffer directly as UTF-8 bytes.
+    /// </summary>
+    private static JsonElement StringifyElementDirect(
+        in JsonElement element, bool prettyPrint, JsonWorkspace workspace)
+    {
+        using var ms = new System.IO.MemoryStream(256);
+        using var writer = new Utf8JsonWriter(ms, new JsonWriterOptions
+        {
+            Indented = prettyPrint,
+            NewLine = "\n",
+            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+        });
+
+        WriteStringifiedElement(element, writer);
+        writer.Flush();
+
+        // Read directly from the MemoryStream's internal buffer as UTF-8 bytes,
+        // avoiding StreamReader allocation, intermediate char[] buffer, and
+        // the string allocation from ReadToEnd().
+        return JsonataHelpers.StringFromUnescapedUtf8(
+            new ReadOnlySpan<byte>(ms.GetBuffer(), 0, (int)ms.Length), workspace);
     }
 
     private static void WriteStringifiedElement(in JsonElement element, Utf8JsonWriter writer)
