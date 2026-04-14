@@ -97,6 +97,7 @@ jobs:
         docs/website/.output
         **/bin
         **/obj
+        .zf
     secrets:
       compilePhaseAzureCredentials: ${{ secrets.AZURE_READER_CREDENTIALS }}
       compilePhaseSecrets: ${{ needs.prepareConfig.outputs.RESOLVED_SECRETS }}
@@ -134,6 +135,7 @@ jobs:
             docs/website/.output
             **/bin
             **/obj
+            .zf
           key: build-state-${{ github.run_id }}-compile
           enableCrossOsArchive: true
 
@@ -168,6 +170,7 @@ jobs:
             docs/website/.output
             **/bin
             **/obj
+            .zf
           key: build-state-${{ github.run_id }}-compile
           enableCrossOsArchive: true
 
