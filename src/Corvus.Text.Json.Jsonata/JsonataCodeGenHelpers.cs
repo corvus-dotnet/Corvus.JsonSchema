@@ -8,6 +8,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using Corvus.Runtime.InteropServices;
+using Corvus.Text;
 using Corvus.Text.Json.Internal;
 
 namespace Corvus.Text.Json.Jsonata;
@@ -6204,8 +6205,17 @@ public static class JsonataCodeGenHelpers
         string picture = FunctionalCompiler.CoerceElementToString(pictureElement);
         JsonElement options = optionsElement.ValueKind != JsonValueKind.Undefined ? optionsElement : default;
 
-        return JsonataHelpers.StringFromString(
-            BuiltInFunctions.FormatNumberXPath(num, picture, options), workspace);
+        FormatNumberPicture parsedPic = FormatNumberPicture.Parse(picture, options);
+        Utf8ValueStringBuilder sb = new(stackalloc byte[JsonConstants.StackallocByteThreshold]);
+        try
+        {
+            parsedPic.Format(num, ref sb);
+            return JsonataHelpers.StringFromRawUtf8Content(sb.AsSpan(), workspace);
+        }
+        finally
+        {
+            sb.Dispose();
+        }
     }
 
     /// <summary>

@@ -9,6 +9,7 @@ using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using Corvus.Runtime.InteropServices;
+using Corvus.Text;
 using Corvus.Text.Json.Internal;
 using Corvus.Text.Json.Jsonata.Ast;
 
@@ -700,6 +701,42 @@ internal static class FunctionalCompiler
             finally
             {
                 buf.Dispose();
+            }
+        };
+    }
+
+    /// <summary>
+    /// Compiles a $formatNumber call with a pre-parsed picture. Zero managed allocations
+    /// per evaluation: the mantissa is formatted directly into a stackalloc-seeded
+    /// <see cref="Utf8ValueStringBuilder"/> and the result element is created from the
+    /// raw UTF-8 span.
+    /// </summary>
+    private static ExpressionEvaluator CompilePreParsedFormatNumber(
+        ExpressionEvaluator numArg,
+        FormatNumberPicture parsedPicture)
+    {
+        return (in JsonElement input, Environment env) =>
+        {
+            var numSeq = numArg(input, env);
+            if (numSeq.IsUndefined)
+            {
+                return Sequence.Undefined;
+            }
+
+            if (!TryCoerceToNumber(numSeq.FirstOrDefault, out double num))
+            {
+                return Sequence.Undefined;
+            }
+
+            Utf8ValueStringBuilder sb = new(stackalloc byte[JsonConstants.StackallocByteThreshold]);
+            try
+            {
+                parsedPicture.Format(num, ref sb);
+                return new Sequence(JsonataHelpers.StringFromRawUtf8Content(sb.AsSpan(), env.Workspace));
+            }
+            finally
+            {
+                sb.Dispose();
             }
         };
     }
@@ -6806,6 +6843,31 @@ internal static class FunctionalCompiler
             && TryExtractSimpleChainNames(func.Arguments[0], out var shuffleChainNames))
         {
             return CompileBufferFusedShuffle(shuffleChainNames);
+        }
+
+        // Pre-parsed $formatNumber: when the picture (and optional options) are constants,
+        // parse the picture once at compile time and use zero-alloc UTF-8 formatting at runtime.
+        if (func.Procedure is VariableNode fmtNumCheck
+            && fmtNumCheck.Name == "formatNumber"
+            && func.Arguments.Count >= 2
+            && func.Arguments.Count <= 3
+            && func.Arguments[1] is StringNode fmtPicNode)
+        {
+            JsonElement fmtOptions = default;
+            bool optionsAreConstant = func.Arguments.Count < 3 || IsConstantExpression(func.Arguments[2]);
+            if (func.Arguments.Count >= 3 && optionsAreConstant)
+            {
+                string optJson = SerializeConstantJson(func.Arguments[2]);
+                byte[] optUtf8 = System.Text.Encoding.UTF8.GetBytes(optJson);
+                fmtOptions = JsonElement.ParseValue(optUtf8);
+            }
+
+            if (optionsAreConstant)
+            {
+                FormatNumberPicture parsedPic = FormatNumberPicture.Parse(fmtPicNode.Value, fmtOptions);
+                var numArg = Compile(func.Arguments[0]);
+                return CompilePreParsedFormatNumber(numArg, parsedPic);
+            }
         }
 
         var args = func.Arguments.Select(Compile).ToArray();
