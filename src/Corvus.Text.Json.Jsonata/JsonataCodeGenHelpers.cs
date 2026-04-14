@@ -6335,19 +6335,25 @@ public static class JsonataCodeGenHelpers
             return default;
         }
 
-        string str = FunctionalCompiler.CoerceElementToString(input);
-
         if (pictureElement.ValueKind == JsonValueKind.Undefined)
         {
+            // Fast path: parse directly from UTF-8 backing (zero-alloc for standard ISO 8601)
+            if (input.ValueKind == JsonValueKind.String && input.TryGetDateTimeOffset(out var dto))
+            {
+                return JsonataHelpers.NumberFromDouble(dto.ToUnixTimeMilliseconds(), workspace);
+            }
+
+            string str = FunctionalCompiler.CoerceElementToString(input);
             Sequence result = BuiltInFunctions.ParseIso8601ToMillis(str, workspace);
             return result.IsUndefined ? default : result.FirstOrDefault;
         }
 
+        string strVal = FunctionalCompiler.CoerceElementToString(input);
         string picture = FunctionalCompiler.CoerceElementToString(pictureElement);
 
         try
         {
-            if (XPathDateTimeFormatter.TryParseDateTime(str, picture, out long millis))
+            if (XPathDateTimeFormatter.TryParseDateTime(strVal, picture, out long millis))
             {
                 return JsonataHelpers.NumberFromDouble(millis, workspace);
             }

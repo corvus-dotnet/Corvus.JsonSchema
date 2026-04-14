@@ -5654,24 +5654,33 @@ internal static class BuiltInFunctions
                 return Sequence.Undefined;
             }
 
-            string str = FunctionalCompiler.CoerceElementToString(strSeq.FirstOrDefault);
+            JsonElement el = strSeq.FirstOrDefault;
 
             if (pictureArg == null)
             {
+                // Fast path: parse directly from UTF-8 backing (zero-alloc for standard ISO 8601)
+                if (el.ValueKind == JsonValueKind.String && el.TryGetDateTimeOffset(out var dto))
+                {
+                    return Sequence.FromDouble(dto.ToUnixTimeMilliseconds(), env.Workspace);
+                }
+
+                string str = FunctionalCompiler.CoerceElementToString(el);
                 return ParseIso8601ToMillis(str, env.Workspace);
             }
 
             var picSeq = pictureArg(input, env);
+            string strVal = FunctionalCompiler.CoerceElementToString(el);
+
             if (picSeq.IsUndefined)
             {
-                return ParseIso8601ToMillis(str, env.Workspace);
+                return ParseIso8601ToMillis(strVal, env.Workspace);
             }
 
             string picture = FunctionalCompiler.CoerceElementToString(picSeq.FirstOrDefault);
 
             try
             {
-                if (XPathDateTimeFormatter.TryParseDateTime(str, picture, out long millis))
+                if (XPathDateTimeFormatter.TryParseDateTime(strVal, picture, out long millis))
                 {
                     return Sequence.FromDouble(millis, env.Workspace);
                 }
