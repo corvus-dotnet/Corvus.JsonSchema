@@ -530,6 +530,128 @@ internal static class FunctionalCompiler
         return (in JsonElement input, Environment env) => new Sequence(element);
     }
 
+    /// <summary>
+    /// Checks whether a node is a simple property chain (PathNode with all NameNode
+    /// steps, no annotations or predicates) and extracts the UTF-8 encoded property names.
+    /// </summary>
+    private static bool TryExtractSimpleChainNames(JsonataNode node, [NotNullWhen(true)] out byte[][]? utf8Names)
+    {
+        if (node is not PathNode path
+            || path.KeepArray
+            || path.KeepSingletonArray
+            || path.Steps.Count == 0
+            || GetStepAnnotations(path) is not null)
+        {
+            utf8Names = null;
+            return false;
+        }
+
+        var names = new byte[path.Steps.Count][];
+        for (int i = 0; i < path.Steps.Count; i++)
+        {
+            if (path.Steps[i] is not NameNode nameNode
+                || GetStepAnnotations(path.Steps[i]) is not null)
+            {
+                utf8Names = null;
+                return false;
+            }
+
+            names[i] = System.Text.Encoding.UTF8.GetBytes(nameNode.Value);
+        }
+
+        utf8Names = names;
+        return true;
+    }
+
+    /// <summary>
+    /// Compiles a buffer-fused <c>$zip</c> where all arguments are simple property chains.
+    /// Navigates each chain directly into an <see cref="ElementBuffer"/>, extracts the
+    /// backing arrays, and builds the result in a single document — eliminating intermediate
+    /// Sequence wrappers.
+    /// </summary>
+    private static ExpressionEvaluator CompileBufferFusedZip2(byte[][] names0, byte[][] names1)
+    {
+        return (in JsonElement input, Environment env) =>
+        {
+            var buf0 = default(ElementBuffer);
+            var buf1 = default(ElementBuffer);
+            try
+            {
+                JsonataCodeGenHelpers.NavigatePropertyChainInto(input, names0, ref buf0);
+                JsonataCodeGenHelpers.NavigatePropertyChainInto(input, names1, ref buf1);
+                buf0.GetContents(out var arr0, out var cnt0);
+                buf1.GetContents(out var arr1, out var cnt1);
+                return new Sequence(JsonataCodeGenHelpers.ZipFromBuffers(arr0, cnt0, arr1, cnt1, env.Workspace));
+            }
+            finally
+            {
+                buf0.Dispose();
+                buf1.Dispose();
+            }
+        };
+    }
+
+    /// <summary>
+    /// Compiles a buffer-fused <c>$zip</c> where one argument is a pre-resolved constant
+    /// element and the other is a simple property chain navigated into an <see cref="ElementBuffer"/>.
+    /// </summary>
+    private static ExpressionEvaluator CompileBufferFusedZipMixed2(
+        JsonElement constElement, bool constIsFirst,
+        byte[][] chainNames)
+    {
+        return (in JsonElement input, Environment env) =>
+        {
+            var buf = default(ElementBuffer);
+            try
+            {
+                JsonataCodeGenHelpers.NavigatePropertyChainInto(input, chainNames, ref buf);
+                buf.GetContents(out var arr, out var cnt);
+
+                if (constIsFirst)
+                {
+                    return new Sequence(JsonataCodeGenHelpers.ZipElementAndBuffer(constElement, arr, cnt, env.Workspace));
+                }
+                else
+                {
+                    return new Sequence(JsonataCodeGenHelpers.ZipBufferAndElement(arr, cnt, constElement, env.Workspace));
+                }
+            }
+            finally
+            {
+                buf.Dispose();
+            }
+        };
+    }
+
+    /// <summary>
+    /// Compiles a buffer-fused <c>$zip</c> with 3 arguments that are simple property chains.
+    /// </summary>
+    private static ExpressionEvaluator CompileBufferFusedZip3(byte[][] names0, byte[][] names1, byte[][] names2)
+    {
+        return (in JsonElement input, Environment env) =>
+        {
+            var buf0 = default(ElementBuffer);
+            var buf1 = default(ElementBuffer);
+            var buf2 = default(ElementBuffer);
+            try
+            {
+                JsonataCodeGenHelpers.NavigatePropertyChainInto(input, names0, ref buf0);
+                JsonataCodeGenHelpers.NavigatePropertyChainInto(input, names1, ref buf1);
+                JsonataCodeGenHelpers.NavigatePropertyChainInto(input, names2, ref buf2);
+                buf0.GetContents(out var arr0, out var cnt0);
+                buf1.GetContents(out var arr1, out var cnt1);
+                buf2.GetContents(out var arr2, out var cnt2);
+                return new Sequence(JsonataCodeGenHelpers.ZipFromBuffers(arr0, cnt0, arr1, cnt1, arr2, cnt2, env.Workspace));
+            }
+            finally
+            {
+                buf0.Dispose();
+                buf1.Dispose();
+                buf2.Dispose();
+            }
+        };
+    }
+
     private static ExpressionEvaluator CompileValue(ValueNode val)
     {
         return val.Value switch
@@ -6550,6 +6672,77 @@ internal static class FunctionalCompiler
             && func.Arguments.All(a => a is ArrayConstructorNode && IsConstantExpression(a)))
         {
             return CompileConstantZip(func);
+        }
+
+        // Buffer-fused $zip: when all arguments are simple property chains (or constants),
+        // navigate chains directly into ElementBuffers and build the zip result in a single
+        // document — eliminating intermediate Sequence wrappers and rented arrays.
+        if (func.Procedure is VariableNode zipFusedCheck
+            && zipFusedCheck.Name == "zip"
+            && func.Arguments.Count >= 2
+            && func.Arguments.Count <= 3)
+        {
+            // Classify each arg: chain, constant, or other
+            bool allFusible = true;
+            bool anyChain = false;
+            int chainCount = 0;
+            int constCount = 0;
+
+            // Use fixed-size arrays to avoid allocation during classification
+            byte[][]?[] chainNames = new byte[][]?[func.Arguments.Count];
+            JsonElement[] constElements = new JsonElement[func.Arguments.Count];
+            bool[] isConst = new bool[func.Arguments.Count];
+
+            for (int i = 0; i < func.Arguments.Count; i++)
+            {
+                if (TryExtractSimpleChainNames(func.Arguments[i], out var names))
+                {
+                    chainNames[i] = names;
+                    anyChain = true;
+                    chainCount++;
+                }
+                else if (IsConstantExpression(func.Arguments[i]))
+                {
+                    string json = SerializeConstantJson(func.Arguments[i]);
+                    byte[] utf8 = System.Text.Encoding.UTF8.GetBytes(json);
+                    constElements[i] = JsonElement.ParseValue(utf8);
+                    isConst[i] = true;
+                    constCount++;
+                }
+                else
+                {
+                    allFusible = false;
+                    break;
+                }
+            }
+
+            if (allFusible && anyChain)
+            {
+                if (func.Arguments.Count == 2)
+                {
+                    if (chainCount == 2)
+                    {
+                        return CompileBufferFusedZip2(chainNames[0]!, chainNames[1]!);
+                    }
+
+                    // Mixed: one constant + one chain
+                    if (isConst[0])
+                    {
+                        return CompileBufferFusedZipMixed2(constElements[0], constIsFirst: true, chainNames[1]!);
+                    }
+                    else
+                    {
+                        return CompileBufferFusedZipMixed2(constElements[1], constIsFirst: false, chainNames[0]!);
+                    }
+                }
+
+                if (func.Arguments.Count == 3 && chainCount == 3)
+                {
+                    return CompileBufferFusedZip3(chainNames[0]!, chainNames[1]!, chainNames[2]!);
+                }
+
+                // 3-arg with mixed const/chain falls through to standard path
+            }
         }
 
         var args = func.Arguments.Select(Compile).ToArray();

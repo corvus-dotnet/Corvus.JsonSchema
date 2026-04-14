@@ -5285,6 +5285,8 @@ internal static class BuiltInFunctions
 
             if (minLen == 0)
             {
+                seq0.ReturnBackingArray();
+                seq1.ReturnBackingArray();
                 var emptyDoc = JsonElement.CreateArrayBuilder(env.Workspace, 0);
                 return new Sequence((JsonElement)emptyDoc.RootElement);
             }
@@ -5306,6 +5308,12 @@ internal static class BuiltInFunctions
                     }
                 },
                 estimatedMemberCount: (minLen * 3) + 2);
+
+            // Return rented backing arrays to the pool now that the builder has
+            // consumed all elements. The CreateBuilder callback executes synchronously,
+            // so the arrays are no longer referenced by the time we reach this point.
+            seq0.ReturnBackingArray();
+            seq1.ReturnBackingArray();
 
             return new Sequence((JsonElement)doc.RootElement);
         };
@@ -5332,6 +5340,11 @@ internal static class BuiltInFunctions
 
             if (minLen == 0 || minLen == int.MaxValue)
             {
+                for (int a = 0; a < evaluated.Length; a++)
+                {
+                    evaluated[a].Seq.ReturnBackingArray();
+                }
+
                 var emptyDoc = JsonElement.CreateArrayBuilder(env.Workspace, 0);
                 return new Sequence((JsonElement)emptyDoc.RootElement);
             }
@@ -5355,6 +5368,11 @@ internal static class BuiltInFunctions
                     }
                 },
                 estimatedMemberCount: (minLen * (evaluated.Length + 1)) + 2);
+
+            for (int a = 0; a < evaluated.Length; a++)
+            {
+                evaluated[a].Seq.ReturnBackingArray();
+            }
 
             return new Sequence((JsonElement)doc.RootElement);
         };
