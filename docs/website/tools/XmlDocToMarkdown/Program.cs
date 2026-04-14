@@ -347,7 +347,29 @@ if (File.Exists(pdbPath))
 
     // Auto-detect repo root and current branch from git
     string repoRoot = RunGit("rev-parse --show-toplevel")?.Trim() ?? "";
-    string branch = RunGit("rev-parse --abbrev-ref HEAD")?.Trim() ?? "main";
+
+    // Detect branch: prefer GitHub Actions env vars (which are always correct for PR/push),
+    // fall back to git rev-parse for local development.
+    // GITHUB_HEAD_REF is the PR source branch (e.g., "feature/v5") — set only on pull_request events.
+    // GITHUB_REF is "refs/heads/main" on push, "refs/pull/NNN/merge" on PR — always set in Actions.
+    // git rev-parse --abbrev-ref HEAD can return garbled refs in CI (e.g., "heads/pull/NNN/merge").
+    string branch = Environment.GetEnvironmentVariable("GITHUB_HEAD_REF") ?? "";
+    if (string.IsNullOrWhiteSpace(branch))
+    {
+        string? ghRef = Environment.GetEnvironmentVariable("GITHUB_REF");
+        if (ghRef is not null && ghRef.StartsWith("refs/heads/", StringComparison.Ordinal))
+        {
+            branch = ghRef["refs/heads/".Length..];
+        }
+        else
+        {
+            branch = RunGit("rev-parse --abbrev-ref HEAD")?.Trim() ?? "main";
+            if (branch == "HEAD")
+            {
+                branch = "main";
+            }
+        }
+    }
 
     // Auto-detect repo URL from git remote if not provided
     if (repoUrl is null)

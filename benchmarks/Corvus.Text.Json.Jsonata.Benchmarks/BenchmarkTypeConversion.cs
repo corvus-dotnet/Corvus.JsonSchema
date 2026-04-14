@@ -41,12 +41,12 @@ public class BenchmarkTypeConversion : JsonataBenchmarkBase
         }
         """;
 
-    private const string ExprType = "$type(Account.Order.Product.Price[0])";
+    private const string ExprType = "$type(Account.Order[0].Product[0].Price)";
     private const string ExprExists = "$exists(Account.Order.Product)";
     private const string ExprNot = """$not(Account."Account Name" = "Firefly")""";
-    private const string ExprBoolean = "$boolean(Account.Order.Product.Price[0])";
+    private const string ExprBoolean = "$boolean(Account.Order[0].Product[0].Price)";
     private const string ExprNumber = """$number("34.45")""";
-    private const string ExprString = "$string(Account.Order.Product.Price[0])";
+    private const string ExprString = "$string(Account.Order[0].Product[0].Price)";
 
     private JsonataEvaluator evaluator = null!;
     private ParsedJsonDocument<JsonElement>? doc;

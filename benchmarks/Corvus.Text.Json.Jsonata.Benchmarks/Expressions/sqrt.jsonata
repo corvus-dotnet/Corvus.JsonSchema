@@ -1,1 +1,1 @@
-$sqrt(Account.Order.Product.Price[0])
+$sqrt(Account.Order[0].Product[0].Price)

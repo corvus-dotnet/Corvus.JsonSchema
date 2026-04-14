@@ -40,12 +40,12 @@ public class BenchmarkMathFunctions : JsonataBenchmarkBase
         }
         """;
 
-    private const string ExprAbs = "$abs(Account.Order.Product.Price[0] - 50)";
-    private const string ExprFloor = "$floor(Account.Order.Product.Price[0])";
-    private const string ExprCeil = "$ceil(Account.Order.Product.Price[0])";
-    private const string ExprRound = "$round(Account.Order.Product.Price[0], 1)";
-    private const string ExprSqrt = "$sqrt(Account.Order.Product.Price[0])";
-    private const string ExprPower = "$power(Account.Order.Product.Price[0], 2)";
+    private const string ExprAbs = "$abs(Account.Order[0].Product[0].Price - 50)";
+    private const string ExprFloor = "$floor(Account.Order[0].Product[0].Price)";
+    private const string ExprCeil = "$ceil(Account.Order[0].Product[0].Price)";
+    private const string ExprRound = "$round(Account.Order[0].Product[0].Price, 1)";
+    private const string ExprSqrt = "$sqrt(Account.Order[0].Product[0].Price)";
+    private const string ExprPower = "$power(Account.Order[0].Product[0].Price, 2)";
 
     private JsonataEvaluator evaluator = null!;
     private ParsedJsonDocument<JsonElement>? doc;
